@@ -3,13 +3,13 @@ package licenses
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 	"io"
 
 	"github.com/google/licensecheck"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg"
 )
 
 const (
@@ -17,10 +17,15 @@ const (
 	DefaultIncludeLicenseContent = false
 )
 
+type Evidence struct {
+	//...
+}
+
 type Scanner interface {
 	IdentifyLicenseIDs(context.Context, io.Reader) ([]string, []byte, error)
-	FileSearch(context.Context, file.LocationReadCloser) ([]file.License, error)
-	PkgSearch(context.Context, file.LocationReadCloser) ([]pkg.License, error)
+	//FileSearch(context.Context, file.LocationReadCloser) ([]file.License, error)
+	//PkgSearch(context.Context, file.LocationReadCloser) ([]pkg.License, error)
+	Search(context.Context, file.LocationReadCloser) ([]Evidence, error)
 }
 
 var _ Scanner = (*scanner)(nil)

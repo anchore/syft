@@ -1,7 +1,9 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"sort"
 	"strings"
@@ -34,7 +36,7 @@ type License struct {
 	SPDXExpression string
 	Value          string
 	Type           license.Type
-	Contents       string
+	Contents       string           `hash:"ignore"`
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
 }
@@ -71,11 +73,17 @@ func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-func NewLicense(value string) License {
-	return NewLicenseFromType(value, license.Declared)
+func NewLicense(ctx context.Context, value string) License {
+	return NewLicenseFromType(ctx, value, license.Declared)
 }
 
-func NewLicenseFromType(value string, t license.Type) License {
+func NewLicenseFromContent(ctx context.Context, reader io.ReadCloser) ([]License, error) {
+	// access the scanner if it's there
+	// - auto ID detection
+	// - populate contents
+}
+
+func NewLicenseFromType(ctx context.Context, value string, t license.Type) License {
 	var (
 		spdxExpression string
 		fullText       string
