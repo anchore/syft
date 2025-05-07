@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-const defaultImage = "./syft/syft.test"
+const defaultImage = "alpine:3.19"
 
 func main() {
 	// automagically get a source.Source for arbitrary string input
