@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-var updateSnapshot = flag.Bool("update-purl-list", false, "update the *.golden files for purl-list format")
+var updateSnapshot = flag.Bool("update-purls", false, "update the *.golden files for purls format")
 
 func Test_Encoder(t *testing.T) {
 	pkgs := []pkg.Package{

@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-const ID sbom.FormatID = "purl-list"
+const ID sbom.FormatID = "purls"
 const version = "1"
 
 type encoder struct {
@@ -28,7 +28,6 @@ func (e encoder) ID() sbom.FormatID {
 func (e encoder) Aliases() []string {
 	return []string{
 		"purl",
-		"purls",
 	}
 }
 
