@@ -20,6 +20,14 @@ var _ sbom.FormatDecoder = (*decoder)(nil)
 
 type decoder struct{}
 
+type PURLLiteralMetadata struct {
+	PURL string
+}
+
+type PURLFileMetadata struct {
+	Path string
+}
+
 func NewFormatDecoder() sbom.FormatDecoder {
 	return decoder{}
 }

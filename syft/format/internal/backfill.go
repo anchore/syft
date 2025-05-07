@@ -2,9 +2,12 @@ package internal
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -16,11 +19,31 @@ func Backfill(p *pkg.Package) {
 	if p.PURL == "" {
 		return
 	}
-	pu, err := packageurl.FromString(p.PURL)
+	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
 		log.Debug("unable to parse purl: %s: %w", p.PURL, err)
 		return
 	}
+
+	var cpes []cpe.CPE
+	epoch := "0"
+
+	for _, qualifier := range purl.Qualifiers {
+		switch qualifier.Key {
+		case pkg.PURLQualifierCPES:
+			rawCpes := strings.Split(qualifier.Value, ",")
+			for _, rawCpe := range rawCpes {
+				c, err := cpe.New(rawCpe, "")
+				if err != nil {
+					log.Debugf("unable to decode cpe %s in purl %s: %w", rawCpe, p.PURL, err)
+				}
+				cpes = append(cpes, c)
+			}
+		case pkg.PURLQualifierEpoch:
+			epoch = qualifier.Value
+		}
+	}
+
 	if p.Type == "" {
 		setTypeFromPurl(p)
 	}
@@ -28,13 +51,20 @@ func Backfill(p *pkg.Package) {
 		setLanguageFromPurl(p)
 	}
 	if p.Name == "" {
-		setNameFromPurl(p, pu)
+		setNameFromPurl(p, purl)
 	}
-	if p.Version == "" {
-		setVersionFromPurl(p, pu)
-	}
+
+	setVersionFromPurl(p, purl, epoch)
+
 	if p.Language == pkg.Java {
-		setJavaMetadataFromPurl(p, pu)
+		setJavaMetadataFromPurl(p, purl)
+	}
+
+	for _, c := range cpes {
+		if slices.Contains(p.CPEs, c) {
+			continue
+		}
+		p.CPEs = append(p.CPEs, c)
 	}
 }
 
@@ -81,9 +111,15 @@ func setJavaMetadataFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
 	}
 }
 
-func setVersionFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
+func setVersionFromPurl(p *pkg.Package, purl packageurl.PackageURL, epoch string) {
 	if p.Version == "" {
 		p.Version = purl.Version
+	}
+
+	if epoch != "" {
+		if p.Type == pkg.RpmPkg && !strings.HasPrefix(p.Version, fmt.Sprintf("%s:", epoch)) {
+			p.Version = fmt.Sprintf("%s:%s", epoch, p.Version)
+		}
 	}
 }
 
