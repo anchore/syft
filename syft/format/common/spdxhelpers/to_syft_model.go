@@ -509,7 +509,12 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Metadata: extractMetadata(p, info),
 	}
 
-	sP.SetID()
+	if p.PackageSPDXIdentifier != "" {
+		// always prefer the IDs from the SBOM over derived IDs
+		sP.OverrideID(artifact.ID(p.PackageSPDXIdentifier))
+	} else {
+		sP.SetID()
+	}
 
 	return *sP
 }

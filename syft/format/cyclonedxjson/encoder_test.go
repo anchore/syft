@@ -3,6 +3,7 @@ package cyclonedxjson
 import (
 	"bytes"
 	"flag"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -116,6 +117,14 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).
+		WithPatternRedactorSpec(
+			testutil.PatternReplacement{
+				// only the source component bom-ref (not package or other component bom-refs)
+				Search:  regexp.MustCompile(`"component": \{[^}]*"bom-ref":\s*"(?P<redact>.+)"[^}]*}`),
+				Groups:  []string{"redact"}, // use the regex to anchore the search, but only replace bytes within the capture group
+				Replace: "redacted",
+			},
+		).
 		WithPatternRedactors(
 			map[string]string{
 				// UUIDs
@@ -126,9 +135,6 @@ func redactor(values ...string) testutil.Redactor {
 
 				// image hashes
 				`sha256:[A-Fa-f0-9]{64}`: `sha256:redacted`,
-
-				// BOM refs
-				`"bom-ref":\s*"[^"]+"`: `"bom-ref":"redacted"`,
 			},
 		)
 }
