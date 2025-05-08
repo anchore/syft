@@ -21,7 +21,7 @@ func ParseExpression(expression string) (ex string, err error) {
 	// https://github.com/anchore/syft/issues/1837
 	// The current spdx library can panic when parsing some expressions
 	// This is a temporary fix to recover and patch until we can investigate and contribute
-	// a fix to the upstream github library
+	// a fix to the upstream library
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("recovered from panic while parsing license expression at: \n%s", string(debug.Stack()))
