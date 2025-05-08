@@ -499,14 +499,15 @@ func extractPkgInfo(p *spdx.Package) pkgInfo {
 func toSyftPackage(p *spdx.Package) pkg.Package {
 	info := extractPkgInfo(p)
 	sP := &pkg.Package{
-		Type:     info.typ,
-		Name:     p.PackageName,
-		Version:  p.PackageVersion,
-		Licenses: pkg.NewLicenseSet(parseSPDXLicenses(p)...),
-		CPEs:     extractCPEs(p),
-		PURL:     purlValue(info.purl),
-		Language: info.lang,
-		Metadata: extractMetadata(p, info),
+		Type:             info.typ,
+		Name:             p.PackageName,
+		Version:          p.PackageVersion,
+		Licenses:         pkg.NewLicenseSet(parseSPDXLicenses(p)...),
+		CPEs:             extractCPEs(p),
+		PURL:             purlValue(info.purl),
+		Language:         info.lang,
+		Metadata:         extractMetadata(p, info),
+		SupplementalData: []any{artifact.ID(p.PackageSPDXIdentifier)},
 	}
 
 	sP.SetID()

@@ -3,6 +3,8 @@ package bitnami
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -493,6 +495,28 @@ func TestBitnamiCataloger(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, tt.fixture).
+				WithCompareOptions(cmpopts.IgnoreFields(pkg.Package{}, "SupplementalData")).
+				ExpectsAssertion(
+					func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+						for _, p := range pkgs {
+							// assert there are supplemental data as artifact.ID and ID() matches
+							assert.NotEmpty(t, p.SupplementalData)
+							var id artifact.ID
+							for _, data := range p.SupplementalData {
+								switch d := data.(type) {
+								case artifact.ID:
+									id = d
+									break
+								case artifact.Identifiable:
+									id = d.ID()
+									break
+								}
+							}
+							assert.NotEmpty(t, id)
+							assert.Equal(t, p.ID(), id)
+						}
+					},
+				).
 				Expects(tt.wantPkgs, tt.wantRelationships).
 				WithErrorAssertion(tt.wantErr).
 				TestCataloger(t, NewCataloger())

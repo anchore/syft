@@ -70,7 +70,6 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 		if syftID != "" {
 			idMap[syftID] = p
 		}
-		// TODO there must be a better way than needing to call this manually:
 		p.SetID()
 		s.Artifacts.Packages.Add(*p)
 	}

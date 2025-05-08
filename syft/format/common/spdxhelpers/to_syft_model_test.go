@@ -589,12 +589,18 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			got, err := ToSyftModel(doc)
 			require.NoError(t, err)
 
+			for _, p := range got.Artifacts.Packages.Sorted() {
+				// all decoders should be setting an ID of sorts here (another test will verify the correctness of the value)
+				assert.NotEmpty(t, p.SupplementalData)
+			}
+
 			if diff := cmp.Diff(&s, got,
 				cmpopts.IgnoreUnexported(artifact.Relationship{}),
 				cmpopts.IgnoreUnexported(file.LocationSet{}),
 				cmpopts.IgnoreUnexported(pkg.Collection{}),
 				cmpopts.IgnoreUnexported(pkg.Package{}),
 				cmpopts.IgnoreUnexported(pkg.LicenseSet{}),
+				cmpopts.IgnoreFields(pkg.Package{}, "SupplementalData"), // this is used by decoders to store additional data from the original format
 				cmpopts.IgnoreFields(sbom.Artifacts{}, "FileMetadata", "FileDigests"),
 			); diff != "" {
 				t.Fatalf("packages do not match:\n%s", diff)
@@ -664,7 +670,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "some-package",
-				PackageSPDXIdentifier: "1",
+				PackageSPDXIdentifier: "1", // important!
 				PackageVersion:        "1.0.5",
 				Files: []*spdx.File{
 					{
@@ -686,10 +692,11 @@ func Test_directPackageFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	p := pkg.Package{
-		Name:    "some-package",
-		Version: "1.0.5",
+		Name:             "some-package",
+		Version:          "1.0.5",
+		SupplementalData: []any{artifact.ID("1")}, // set by the decoders from the original element ID
 	}
-	p.SetID()
+	p.OverrideID("1") // the same as the spdxID on the package element
 	f := file.Location{
 		LocationData: file.LocationData{
 			Coordinates: file.Coordinates{

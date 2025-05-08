@@ -6,6 +6,7 @@ import (
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
@@ -84,12 +85,13 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	}
 
 	p := &pkg.Package{
-		Name:      c.Name,
-		Version:   c.Version,
-		Locations: decodeLocations(values),
-		Licenses:  pkg.NewLicenseSet(decodeLicenses(c)...),
-		CPEs:      decodeCPEs(c),
-		PURL:      c.PackageURL,
+		Name:             c.Name,
+		Version:          c.Version,
+		Locations:        decodeLocations(values),
+		Licenses:         pkg.NewLicenseSet(decodeLicenses(c)...),
+		CPEs:             decodeCPEs(c),
+		PURL:             c.PackageURL,
+		SupplementalData: []any{artifact.ID(c.BOMRef)},
 	}
 
 	DecodeInto(p, values, "syft:package", CycloneDXFields)
