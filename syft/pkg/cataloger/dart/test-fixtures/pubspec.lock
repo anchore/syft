@@ -36,6 +36,11 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.6.0"
+  flutter:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   key_binder:
     dependency: "direct main"
     description:
@@ -47,3 +52,4 @@ packages:
     version: "1.11.20"
 sdks:
   dart: ">=2.12.0 <3.0.0"
+  flutter: ">=3.24.5"

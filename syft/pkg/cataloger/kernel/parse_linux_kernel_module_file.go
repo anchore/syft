@@ -1,20 +1,21 @@
 package kernel
 
 import (
+	"context"
 	"debug/elf"
 	"fmt"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/unionreader"
 )
 
 const modinfoName = ".modinfo"
 
-func parseLinuxKernelModuleFile(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseLinuxKernelModuleFile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
@@ -27,7 +28,7 @@ func parseLinuxKernelModuleFile(_ file.Resolver, _ *generic.Environment, reader 
 		return nil, nil, nil
 	}
 
-	metadata.Path = reader.Location.RealPath
+	metadata.Path = reader.RealPath
 
 	return []pkg.Package{
 		newLinuxKernelModulePackage(
@@ -37,7 +38,7 @@ func parseLinuxKernelModuleFile(_ file.Resolver, _ *generic.Environment, reader 
 	}, nil, nil
 }
 
-func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModuleMetadata, err error) {
+func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModule, err error) {
 	// filename:       /lib/modules/5.15.0-1031-aws/kernel/zfs/zzstd.ko
 	// version:        1.4.5a
 	// license:        Dual BSD/GPL
@@ -64,7 +65,7 @@ func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKern
 	// retpoline:      Y
 	// name:           8821cu
 	// vermagic:       5.10.121-linuxkit SMP mod_unload
-	p = &pkg.LinuxKernelModuleMetadata{
+	p = &pkg.LinuxKernelModule{
 		Parameters: make(map[string]pkg.LinuxKernelModuleParameter),
 	}
 	f, err := elf.NewFile(r)
@@ -100,7 +101,7 @@ func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKern
 	return p, nil
 }
 
-func addLinuxKernelModuleEntry(k *pkg.LinuxKernelModuleMetadata, entry []byte) error {
+func addLinuxKernelModuleEntry(k *pkg.LinuxKernelModule, entry []byte) error {
 	if len(entry) == 0 {
 		return nil
 	}

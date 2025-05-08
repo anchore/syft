@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 	"strings"
 	"testing"
@@ -56,7 +57,7 @@ func TestExcludingResolver(t *testing.T) {
 			resolver := &mockResolver{
 				locations: test.locations,
 			}
-			er := NewExcluding(resolver, test.excludeFn)
+			er := NewExcludingDecorator(resolver, test.excludeFn)
 
 			locations, _ := er.FilesByPath()
 			assert.ElementsMatch(t, locationPaths(locations), test.expected)
@@ -69,7 +70,9 @@ func TestExcludingResolver(t *testing.T) {
 
 			locations = []file.Location{}
 
-			channel := er.AllLocations()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			channel := er.AllLocations(ctx)
 			for location := range channel {
 				locations = append(locations, location)
 			}
@@ -182,13 +185,18 @@ func (r *mockResolver) RelativeFileByPath(_ file.Location, path string) *file.Lo
 	return &l
 }
 
-func (r *mockResolver) AllLocations() <-chan file.Location {
+func (r *mockResolver) AllLocations(ctx context.Context) <-chan file.Location {
 	c := make(chan file.Location)
 	go func() {
 		defer close(c)
 		locations, _ := r.getLocations()
 		for _, location := range locations {
-			c <- location
+			select {
+			case <-ctx.Done():
+				return
+			case c <- location:
+				continue
+			}
 		}
 	}()
 	return c

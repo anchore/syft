@@ -1,11 +1,13 @@
 package php
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -14,18 +16,18 @@ import (
 
 var _ generic.Parser = parseComposerLock
 
-type parsedData struct {
+type parsedLockData struct {
 	License []string `json:"license"`
-	pkg.PhpComposerJSONMetadata
+	pkg.PhpComposerLockEntry
 }
 
 type composerLock struct {
-	Packages   []parsedData `json:"packages"`
-	PackageDev []parsedData `json:"packages-dev"`
+	Packages   []parsedLockData `json:"packages"`
+	PackageDev []parsedLockData `json:"packages-dev"` // TODO: these are not currently included as packages in the SBOM... should they be?
 }
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseComposerLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseComposerLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
@@ -36,21 +38,16 @@ func parseComposerLock(_ file.Resolver, _ *generic.Environment, reader file.Loca
 		} else if err != nil {
 			return nil, nil, fmt.Errorf("failed to parse composer.lock file: %w", err)
 		}
-		for _, m := range lock.Packages {
+		for _, pd := range lock.Packages {
 			pkgs = append(
 				pkgs,
 				newComposerLockPackage(
-					m,
-					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					pd,
+					reader.Location,
 				),
 			)
 		}
-
-		// TODO: did we omit this on purpose?
-		// for _, m := range lock.PackageDev {
-		//	pkgs = append(pkgs, newComposerLockPackage(m, reader.Location))
-		//}
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

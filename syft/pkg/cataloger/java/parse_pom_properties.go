@@ -6,15 +6,15 @@ import (
 	"io"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/syft/pkg"
 )
 
 const pomPropertiesGlob = "*pom.properties"
 
-func parsePomProperties(path string, reader io.Reader) (*pkg.PomProperties, error) {
-	var props pkg.PomProperties
+func parsePomProperties(path string, reader io.Reader) (*pkg.JavaPomProperties, error) {
+	var props pkg.JavaPomProperties
 	propMap := make(map[string]string)
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {

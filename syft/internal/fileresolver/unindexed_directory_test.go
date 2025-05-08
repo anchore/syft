@@ -4,6 +4,7 @@
 package fileresolver
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -14,10 +15,10 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
@@ -91,13 +92,13 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	cases := []struct {
-		name                string
-		cwd                 string
-		root                string
-		base                string
-		input               string
-		expectedRealPath    string
-		expectedVirtualPath string
+		name               string
+		cwd                string
+		root               string
+		base               string
+		input              string
+		expectedRealPath   string
+		expectedAccessPath string // if empty, the virtual path should be the same as the real path
 	}{
 		{
 			name:             "relative root, relative request, direct",
@@ -320,32 +321,32 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 		},
 		// link to outside of root cases...
 		{
-			name:                "relative root, relative request, abs indirect (outside of root)",
-			root:                filepath.Join(relative, "path"),
-			input:               "to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "relative root, relative request, abs indirect (outside of root)",
+			root:               filepath.Join(relative, "path"),
+			input:              "to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
-			name:                "abs root, relative request, abs indirect (outside of root)",
-			root:                filepath.Join(absolute, "path"),
-			input:               "to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "abs root, relative request, abs indirect (outside of root)",
+			root:               filepath.Join(absolute, "path"),
+			input:              "to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
-			name:                "relative root, abs request, abs indirect (outside of root)",
-			root:                filepath.Join(relative, "path"),
-			input:               "/to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "relative root, abs request, abs indirect (outside of root)",
+			root:               filepath.Join(relative, "path"),
+			input:              "/to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
-			name:                "abs root, abs request, abs indirect (outside of root)",
-			root:                filepath.Join(absolute, "path"),
-			input:               "/to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "abs root, abs request, abs indirect (outside of root)",
+			root:               filepath.Join(absolute, "path"),
+			input:              "/to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
 			name:  "relative root, relative request, relative indirect (outside of root)",
@@ -353,8 +354,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "abs root, relative request, relative indirect (outside of root)",
@@ -362,8 +363,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "relative root, abs request, relative indirect (outside of root)",
@@ -371,8 +372,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "/to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "abs root, abs request, relative indirect (outside of root)",
@@ -380,41 +381,41 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "/to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		// link to outside of root cases... cwd within symlink root
 		{
-			name:                "relative root, relative request, abs indirect (outside of root), cwd within symlink root",
-			cwd:                 relativeViaLink,
-			root:                "path",
-			input:               "to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "relative root, relative request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                relativeViaLink,
+			root:               "path",
+			input:              "to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
-			name:                "abs root, relative request, abs indirect (outside of root), cwd within symlink root",
-			cwd:                 relativeViaLink,
-			root:                filepath.Join(absolute, "path"),
-			input:               "to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "abs root, relative request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                relativeViaLink,
+			root:               filepath.Join(absolute, "path"),
+			input:              "to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
-			name:                "relative root, abs request, abs indirect (outside of root), cwd within symlink root",
-			cwd:                 relativeViaLink,
-			root:                "path",
-			input:               "/to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "relative root, abs request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                relativeViaLink,
+			root:               "path",
+			input:              "/to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
-			name:                "abs root, abs request, abs indirect (outside of root), cwd within symlink root",
-			cwd:                 relativeViaLink,
-			root:                filepath.Join(absolute, "path"),
-			input:               "/to/the/abs-outside.txt",
-			expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
-			expectedVirtualPath: "to/the/abs-outside.txt",
+			name:               "abs root, abs request, abs indirect (outside of root), cwd within symlink root",
+			cwd:                relativeViaLink,
+			root:               filepath.Join(absolute, "path"),
+			input:              "/to/the/abs-outside.txt",
+			expectedRealPath:   filepath.Join(absolute, "/somewhere/outside.txt"),
+			expectedAccessPath: "to/the/abs-outside.txt",
 		},
 		{
 			name:  "relative root, relative request, relative indirect (outside of root), cwd within symlink root",
@@ -423,8 +424,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "abs root, relative request, relative indirect (outside of root), cwd within symlink root",
@@ -433,8 +434,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "relative root, abs request, relative indirect (outside of root), cwd within symlink root",
@@ -443,8 +444,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "/to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "abs root, abs request, relative indirect (outside of root), cwd within symlink root",
@@ -453,8 +454,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "/to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "relative root, relative request, relative indirect (outside of root), cwd within DOUBLE symlink root",
@@ -463,8 +464,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "abs root, relative request, relative indirect (outside of root), cwd within DOUBLE symlink root",
@@ -473,8 +474,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "relative root, abs request, relative indirect (outside of root), cwd within DOUBLE symlink root",
@@ -483,8 +484,8 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "/to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 		{
 			name:  "abs root, abs request, relative indirect (outside of root), cwd within DOUBLE symlink root",
@@ -493,12 +494,15 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			input: "/to/the/rel-outside.txt",
 			//expectedRealPath:    filepath.Join(absolute, "/somewhere/outside.txt"),
 			// TODO: the real path is not correct
-			expectedRealPath:    "../somewhere/outside.txt",
-			expectedVirtualPath: "to/the/rel-outside.txt",
+			expectedRealPath:   "../somewhere/outside.txt",
+			expectedAccessPath: "to/the/rel-outside.txt",
 		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			if c.expectedAccessPath == "" {
+				c.expectedAccessPath = c.expectedRealPath
+			}
 
 			// we need to mimic a shell, otherwise we won't get a path within a symlink
 			targetPath := filepath.Join(testDir, c.cwd)
@@ -521,7 +525,7 @@ func Test_UnindexDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 			}
 			require.Len(t, refs, 1)
 			assert.Equal(t, c.expectedRealPath, refs[0].RealPath, "real path different")
-			assert.Equal(t, c.expectedVirtualPath, refs[0].VirtualPath, "virtual path different")
+			assert.Equal(t, c.expectedAccessPath, refs[0].AccessPath, "virtual path different")
 		})
 	}
 }
@@ -534,6 +538,19 @@ func Test_UnindexedDirectoryResolver_Basic(t *testing.T) {
 	locations, err := r.FilesByGlob("image-symlinks/*")
 	require.NoError(t, err)
 	require.Len(t, locations, 5)
+}
+
+func Test_UnindexedDirectoryResolver_NoGoroutineLeak(t *testing.T) {
+	defer goleak.VerifyNone(t)
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	r := NewFromUnindexedDirectory(path.Join(wd, "test-fixtures"))
+	ctx, cancel := context.WithCancel(context.Background())
+	for range r.AllLocations(ctx) {
+		break
+	}
+	cancel()
 }
 
 func Test_UnindexedDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
@@ -816,7 +833,7 @@ func Test_UnindexedDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.
 	// 4: within target/
 	// 1: target/link --> relative path to "place" // NOTE: this is filtered out since it not unique relative to outside_root/link_target/place
 	// 1: outside_root/link_target/place
-	assert.Len(t, locations, 5)
+	assert.Len(t, locations, 6)
 
 	// ensure that symlink indexing outside of root worked
 	testLocation := "../outside_root/link_target/place"
@@ -845,14 +862,14 @@ func Test_UnindexedDirectoryResover_IndexingNestedSymLinks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
 	assert.Equal(t, "readme", locations[0].RealPath)
-	assert.Equal(t, "link_to_new_readme", locations[0].VirtualPath)
+	assert.Equal(t, "link_to_new_readme", locations[0].AccessPath)
 
 	// check that we can access the same file via 2 symlinks
 	locations, err = resolver.FilesByPath("./link_to_link_to_new_readme")
 	require.NoError(t, err)
 	require.Len(t, locations, 1)
 	assert.Equal(t, "readme", locations[0].RealPath)
-	assert.Equal(t, "link_to_link_to_new_readme", locations[0].VirtualPath)
+	assert.Equal(t, "link_to_link_to_new_readme", locations[0].AccessPath)
 
 	// check that we can access the same file via 2 symlinks
 	locations, err = resolver.FilesByGlob("**/link_*")
@@ -860,7 +877,7 @@ func Test_UnindexedDirectoryResover_IndexingNestedSymLinks(t *testing.T) {
 	require.Len(t, locations, 1) // you would think this is 2, however, they point to the same file, and glob only returns unique files
 
 	// returned locations can be in any order
-	expectedVirtualPaths := []string{
+	expectedAccessPaths := []string{
 		"link_to_link_to_new_readme",
 		//"link_to_new_readme", // we filter out this one because the first symlink resolves to the same file
 	}
@@ -870,13 +887,13 @@ func Test_UnindexedDirectoryResover_IndexingNestedSymLinks(t *testing.T) {
 	}
 
 	actualRealPaths := strset.New()
-	actualVirtualPaths := strset.New()
+	actualAccessPaths := strset.New()
 	for _, a := range locations {
-		actualVirtualPaths.Add(a.VirtualPath)
+		actualAccessPaths.Add(a.AccessPath)
 		actualRealPaths.Add(a.RealPath)
 	}
 
-	assert.ElementsMatch(t, expectedVirtualPaths, actualVirtualPaths.List())
+	assert.ElementsMatch(t, expectedAccessPaths, actualAccessPaths.List())
 	assert.ElementsMatch(t, expectedRealPaths, actualRealPaths.List())
 }
 
@@ -1091,7 +1108,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				file.NewLocation("file-1.txt"),
 				file.NewLocation("file-2.txt"),
 				file.NewLocation("file-3.txt"),
-				file.NewLocation("parent/file-4.txt"),
+				file.NewVirtualLocation("parent/file-4.txt", "parent-link/file-4.txt"),
 			},
 		},
 		{
@@ -1121,7 +1138,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 				file.NewLocation("file-1.txt"),
 				file.NewLocation("file-2.txt"),
 				file.NewLocation("file-3.txt"),
-				file.NewLocation("parent/file-4.txt"),
+				file.NewVirtualLocation("parent/file-4.txt", "parent-link/file-4.txt"),
 			},
 		},
 		{
@@ -1166,7 +1183,9 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 func Test_UnindexedDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-prune-indexing")
 
-	allLocations := resolver.AllLocations()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	allLocations := resolver.AllLocations(ctx)
 	var allRealPaths []stereoscopeFile.Path
 	for l := range allLocations {
 		allRealPaths = append(allRealPaths, stereoscopeFile.Path(l.RealPath))
@@ -1198,7 +1217,9 @@ func Test_UnindexedDirectoryResolver_AllLocations(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture")
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		if strings.HasPrefix(loc.RealPath, "/") {
 			// ignore outside of the fixture root for now
 			continue
@@ -1262,24 +1283,4 @@ func testWithTimeout(t *testing.T, timeout time.Duration, test func(*testing.T))
 		t.Fatal("test timed out")
 	case <-done:
 	}
-}
-
-func compareLocations(t *testing.T, expected, actual []file.Location) {
-	t.Helper()
-	ignoreUnexported := cmpopts.IgnoreFields(file.LocationData{}, "ref")
-	ignoreMetadata := cmpopts.IgnoreFields(file.LocationMetadata{}, "Annotations")
-	ignoreFS := cmpopts.IgnoreFields(file.Coordinates{}, "FileSystemID")
-
-	sort.Sort(file.Locations(expected))
-	sort.Sort(file.Locations(actual))
-
-	if d := cmp.Diff(expected, actual,
-		ignoreUnexported,
-		ignoreFS,
-		ignoreMetadata,
-	); d != "" {
-
-		t.Errorf("unexpected locations (-want +got):\n%s", d)
-	}
-
 }

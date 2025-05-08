@@ -1,6 +1,7 @@
 package pkgtest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -209,8 +210,8 @@ func (r *ObservingResolver) FileContentsByLocation(location file.Location) (io.R
 
 // For the remaining resolver methods...
 
-func (r *ObservingResolver) AllLocations() <-chan file.Location {
-	return r.decorated.AllLocations()
+func (r *ObservingResolver) AllLocations(ctx context.Context) <-chan file.Location {
+	return r.decorated.AllLocations(ctx)
 }
 
 func (r *ObservingResolver) HasPath(s string) bool {

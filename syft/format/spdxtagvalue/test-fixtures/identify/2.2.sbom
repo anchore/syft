@@ -1,0 +1,50 @@
+SPDXVersion: SPDX-2.2
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: go.mod
+DocumentNamespace: https://anchore.com/syft/file/go.mod-022ab85e-2140-4cce-9d31-180ceb152d81
+LicenseListVersion: 3.21
+Creator: Organization: Anchore, Inc
+Creator: Tool: syft-0.91.0
+Created: 2023-09-29T15:16:29Z
+
+##### Unpackaged files
+
+FileName: /go.mod
+SPDXID: SPDXRef-File-go.mod-3fc5a8d3d86e9790
+FileChecksum: SHA1: 0000000000000000000000000000000000000000
+LicenseConcluded: NOASSERTION
+
+##### Package: go.mod
+
+PackageName: go.mod
+SPDXID: SPDXRef-DocumentRoot-File-go.mod
+PackageVersion: sha256:sha256:dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageChecksum: SHA256: dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd
+
+##### Package: github.com/wagoodman/go-partybus
+
+PackageName: github.com/wagoodman/go-partybus
+SPDXID: SPDXRef-Package-go-module-github.com-wagoodman-go-partybus-2ff71a67fb024c86
+PackageVersion: v0.0.0-20230516145632-8ccac152c651
+PackageSupplier: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageSourceInfo: acquired package info from go module information: /go.mod
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:wagoodman:go-partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:wagoodman:go_partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651
+
+##### Relationships
+
+Relationship: SPDXRef-Package-go-module-github.com-wagoodman-go-partybus-2ff71a67fb024c86 OTHER SPDXRef-File-go.mod-3fc5a8d3d86e9790
+RelationshipComment: evident-by: indicates the package's existence is evident by the given file
+Relationship: SPDXRef-DocumentRoot-File-go.mod CONTAINS SPDXRef-Package-go-module-github.com-wagoodman-go-partybus-2ff71a67fb024c86
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-File-go.mod
+

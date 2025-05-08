@@ -1,6 +1,7 @@
 package java
 
 import (
+	"context"
 	"os"
 	"path"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_parseTarWrappedJavaArchive(t *testing.T) {
@@ -40,7 +42,8 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actualPkgs, _, err := parseTarWrappedJavaArchive(nil, nil, file.LocationReadCloser{
+			gtp := newGenericTarWrappedJavaArchiveParser(ArchiveCatalogerConfig{})
+			actualPkgs, _, err := gtp.parseTarWrappedJavaArchive(context.Background(), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: fixture,
 			})
@@ -54,4 +57,12 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, actualNames)
 		})
 	}
+}
+
+func Test_corruptTarArchive(t *testing.T) {
+	ap := newGenericTarWrappedJavaArchiveParser(DefaultArchiveCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/example.tar").
+		WithError().
+		TestParser(t, ap.parseTarWrappedJavaArchive)
 }

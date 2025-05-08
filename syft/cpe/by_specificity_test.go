@@ -10,81 +10,81 @@ import (
 func Test_BySpecificity(t *testing.T) {
 	tests := []struct {
 		name     string
-		input    []CPE
-		expected []CPE
+		input    []Attributes
+		expected []Attributes
 	}{
 		{
 			name: "sort strictly by wfn *",
-			input: []CPE{
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:some:*:*"),
-				Must("cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
-				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+			input: []Attributes{
+				MustAttributes("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:*:package:1:*:*:*:*:some:*:*"),
+				MustAttributes("cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				MustAttributes("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
 			},
-			expected: []CPE{
-				Must("cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
-				Must("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:some:*:*"),
-				Must("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
+			expected: []Attributes{
+				MustAttributes("cpe:2.3:a:some:package:1:*:*:*:*:some:*:*"),
+				MustAttributes("cpe:2.3:a:some:package:1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:some:package:*:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:*:package:1:*:*:*:*:some:*:*"),
+				MustAttributes("cpe:2.3:a:*:package:1:*:*:*:*:*:*:*"),
 			},
 		},
 		{
 			name: "sort strictly by field length",
-			input: []CPE{
-				Must("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:1:333:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:666666:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:1:1:*:*:*:*:4444:*:*"),
+			input: []Attributes{
+				MustAttributes("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:333:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:666666:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:1:*:*:*:*:4444:*:*"),
 			},
-			expected: []CPE{
-				Must("cpe:2.3:a:1:666666:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:1:1:*:*:*:*:4444:*:*"),
-				Must("cpe:2.3:a:1:1:333:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
+			expected: []Attributes{
+				MustAttributes("cpe:2.3:a:1:666666:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:1:*:*:*:*:4444:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:333:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
 			},
 		},
 		{
 			name: "sort by mix of field length and specificity",
-			input: []CPE{
-				Must("cpe:2.3:a:1:666666:*:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:*:1:1:*:*:*:*:4444:*:*"),
-				Must("cpe:2.3:a:1:*:333:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
+			input: []Attributes{
+				MustAttributes("cpe:2.3:a:1:666666:*:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:*:1:1:*:*:*:*:4444:*:*"),
+				MustAttributes("cpe:2.3:a:1:*:333:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
 			},
-			expected: []CPE{
-				Must("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:1:666666:*:*:*:*:*:1:*:*"),
-				Must("cpe:2.3:a:*:1:1:*:*:*:*:4444:*:*"),
-				Must("cpe:2.3:a:1:*:333:*:*:*:*:*:*:*"),
+			expected: []Attributes{
+				MustAttributes("cpe:2.3:a:55555:1:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:22:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:1:1:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:1:666666:*:*:*:*:*:1:*:*"),
+				MustAttributes("cpe:2.3:a:*:1:1:*:*:*:*:4444:*:*"),
+				MustAttributes("cpe:2.3:a:1:*:333:*:*:*:*:*:*:*"),
 			},
 		},
 		{
 			name: "sort by mix of field length, specificity, dash",
-			input: []CPE{
-				Must("cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+			input: []Attributes{
+				MustAttributes("cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
-			expected: []CPE{
-				Must("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
-				Must("cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+			expected: []Attributes{
+				MustAttributes("cpe:2.3:a:alpine-keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine-keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine_keys:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine_keys:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine:alpine-keys:2.3-r1:*:*:*:*:*:*:*"),
+				MustAttributes("cpe:2.3:a:alpine:alpine_keys:2.3-r1:*:*:*:*:*:*:*"),
 			},
 		},
 	}

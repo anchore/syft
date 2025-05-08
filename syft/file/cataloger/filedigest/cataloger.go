@@ -1,19 +1,24 @@
 package filedigest
 
 import (
+	"context"
 	"crypto"
 	"errors"
+	"fmt"
 
-	"github.com/wagoodman/go-partybus"
-	"github.com/wagoodman/go-progress"
+	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/go-sync"
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/cataloging"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
-	internal2 "github.com/anchore/syft/syft/file/cataloger/internal"
+	intCataloger "github.com/anchore/syft/syft/file/cataloger/internal"
 )
 
 var ErrUndigestableFile = errors.New("undigestable file")
@@ -24,48 +29,65 @@ type Cataloger struct {
 
 func NewCataloger(hashes []crypto.Hash) *Cataloger {
 	return &Cataloger{
-		hashes: hashes,
+		hashes: intFile.NormalizeHashes(hashes),
 	}
 }
 
-func (i *Cataloger) Catalog(resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates][]file.Digest, error) {
+func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordinates ...file.Coordinates) (map[file.Coordinates][]file.Digest, error) {
 	results := make(map[file.Coordinates][]file.Digest)
 	var locations []file.Location
 
 	if len(coordinates) == 0 {
-		locations = internal2.AllRegularFiles(resolver)
+		locations = intCataloger.AllRegularFiles(ctx, resolver)
 	} else {
 		for _, c := range coordinates {
-			locations = append(locations, file.NewLocationFromCoordinates(c))
+			locs, err := resolver.FilesByPath(c.RealPath)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get file locations for path %q: %w", c.RealPath, err)
+			}
+			locations = append(locations, locs...)
 		}
 	}
 
-	stage, prog := digestsCatalogingProgress(int64(len(locations)))
-	for _, location := range locations {
-		stage.Current = location.RealPath
-		result, err := i.catalogLocation(resolver, location)
+	prog := catalogingProgress(int64(len(locations)))
+
+	err := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locations), func(location file.Location) ([]file.Digest, error) {
+		result, err := i.catalogLocation(ctx, resolver, location)
 
 		if errors.Is(err, ErrUndigestableFile) {
-			continue
+			return nil, nil
 		}
+
+		prog.AtomicStage.Set(location.Path())
 
 		if internal.IsErrPathPermission(err) {
 			log.Debugf("file digests cataloger skipping %q: %+v", location.RealPath, err)
-			continue
+			return nil, unknown.New(location, err)
 		}
 
 		if err != nil {
-			return nil, err
+			prog.SetError(err)
+			return nil, unknown.New(location, err)
 		}
+
 		prog.Increment()
-		results[location.Coordinates] = result
-	}
+
+		return result, nil
+	}, func(location file.Location, digests []file.Digest) {
+		if len(digests) > 0 {
+			results[location.Coordinates] = digests
+		}
+	})
+
 	log.Debugf("file digests cataloger processed %d files", prog.Current())
+
+	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
-	return results, nil
+
+	return results, err
 }
 
-func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) ([]file.Digest, error) {
+func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver, location file.Location) ([]file.Digest, error) {
 	meta, err := resolver.FileMetadataByLocation(location)
 	if err != nil {
 		return nil, err
@@ -80,9 +102,9 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	if err != nil {
 		return nil, err
 	}
-	defer internal.CloseAndLogError(contentReader, location.VirtualPath)
+	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
-	digests, err := file.NewDigestsFromFile(contentReader, i.hashes)
+	digests, err := intFile.NewDigestsFromFile(ctx, contentReader, i.hashes)
 	if err != nil {
 		return nil, internal.ErrPath{Context: "digests-cataloger", Path: location.RealPath, Err: err}
 	}
@@ -90,20 +112,13 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return digests, nil
 }
 
-func digestsCatalogingProgress(locations int64) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
-	prog := progress.NewManual(locations)
-
-	bus.Publish(partybus.Event{
-		Type: event.FileDigestsCatalogerStarted,
-		Value: struct {
-			progress.Stager
-			progress.Progressable
-		}{
-			Stager:       progress.Stager(stage),
-			Progressable: prog,
+func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+	info := monitor.GenericTask{
+		Title: monitor.Title{
+			Default: "File digests",
 		},
-	})
+		ParentID: monitor.TopLevelCatalogingTaskID,
+	}
 
-	return stage, prog
+	return bus.StartCatalogerTask(info, locations, "")
 }

@@ -1,0 +1,130 @@
+{
+ "artifacts": [
+  {
+   "id": "72567175418f73f8",
+   "name": "package-1",
+   "version": "1.0.1",
+   "type": "python",
+   "foundBy": "the-cataloger-1",
+   "locations": [
+    {
+     "path": "/somefile-1.txt",
+     "layerID": "sha256:dfefe618c89b08fef0f9c7f1a2682521dddbe03d6678f4a9fb9b078381d8eb45",
+     "accessPath": "/somefile-1.txt"
+    }
+   ],
+   "licenses": [
+    {
+     "value": "MIT",
+     "fullText": "",
+     "spdxExpression": "MIT",
+     "type": "declared",
+     "urls": [],
+     "locations": []
+    }
+   ],
+   "language": "python",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+     "source": "syft-generated"
+    }
+   ],
+   "purl": "a-purl-1",
+   "metadataType": "python-package",
+   "metadata": {
+    "name": "package-1",
+    "version": "1.0.1",
+    "author": "",
+    "authorEmail": "",
+    "platform": "",
+    "sitePackagesRootPath": ""
+   }
+  },
+  {
+   "id": "4b756c6f6fb127a3",
+   "name": "package-2",
+   "version": "2.0.1",
+   "type": "deb",
+   "foundBy": "the-cataloger-2",
+   "locations": [
+    {
+     "path": "/somefile-2.txt",
+     "layerID": "sha256:38ddc2847fb6bcafd7401b4bf27c10014b5d60e2400bc188890c7cb7cdd7cd6c",
+     "accessPath": "/somefile-2.txt"
+    }
+   ],
+   "licenses": [],
+   "language": "",
+   "cpes": [
+    {
+     "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "source": "nvd-cpe-dictionary"
+    }
+   ],
+   "purl": "pkg:deb/debian/package-2@2.0.1",
+   "metadataType": "dpkg-db-entry",
+   "metadata": {
+    "package": "package-2",
+    "source": "",
+    "version": "2.0.1",
+    "sourceVersion": "",
+    "architecture": "",
+    "maintainer": "",
+    "installedSize": 0,
+    "files": null
+   }
+  }
+ ],
+ "artifactRelationships": [],
+ "source": {
+  "id": "62d3f24eca2930d1ebfe6ee78ef47964fd8dc624b2e22886275facf322d1720a",
+  "name": "user-image-input",
+  "version": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+  "type": "image",
+  "metadata": {
+   "userInput": "user-image-input",
+   "imageID": "sha256:35a6658e24fab92eae9ec6fc252dec58986c4c007891758d4d37c7e43fbbe0c5",
+   "manifestDigest": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+   "tags": [
+    "stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b"
+   ],
+   "imageSize": 38,
+   "layers": [
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:dfefe618c89b08fef0f9c7f1a2682521dddbe03d6678f4a9fb9b078381d8eb45",
+     "size": 22
+    },
+    {
+     "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+     "digest": "sha256:38ddc2847fb6bcafd7401b4bf27c10014b5d60e2400bc188890c7cb7cdd7cd6c",
+     "size": 16
+    }
+   ],
+   "manifest": "eyJzY2hlbWFWZXJzaW9uIjoyLCJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmRpc3RyaWJ1dGlvbi5tYW5pZmVzdC52Mitqc29uIiwiY29uZmlnIjp7Im1lZGlhVHlwZSI6ImFwcGxpY2F0aW9uL3ZuZC5kb2NrZXIuY29udGFpbmVyLmltYWdlLnYxK2pzb24iLCJzaXplIjo2NTgsImRpZ2VzdCI6InNoYTI1NjozNWE2NjU4ZTI0ZmFiOTJlYWU5ZWM2ZmMyNTJkZWM1ODk4NmM0YzAwNzg5MTc1OGQ0ZDM3YzdlNDNmYmJlMGM1In0sImxheWVycyI6W3sibWVkaWFUeXBlIjoiYXBwbGljYXRpb24vdm5kLmRvY2tlci5pbWFnZS5yb290ZnMuZGlmZi50YXIuZ3ppcCIsInNpemUiOjIwNDgsImRpZ2VzdCI6InNoYTI1NjpkZmVmZTYxOGM4OWIwOGZlZjBmOWM3ZjFhMjY4MjUyMWRkZGJlMDNkNjY3OGY0YTlmYjliMDc4MzgxZDhlYjQ1In0seyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQuZG9ja2VyLmltYWdlLnJvb3Rmcy5kaWZmLnRhci5nemlwIiwic2l6ZSI6MjA0OCwiZGlnZXN0Ijoic2hhMjU2OjM4ZGRjMjg0N2ZiNmJjYWZkNzQwMWI0YmYyN2MxMDAxNGI1ZDYwZTI0MDBiYzE4ODg5MGM3Y2I3Y2RkN2NkNmMifV19",
+   "config": "eyJhcmNoaXRlY3R1cmUiOiJhbWQ2NCIsImNvbmZpZyI6eyJFbnYiOlsiUEFUSD0vdXNyL2xvY2FsL3NiaW46L3Vzci9sb2NhbC9iaW46L3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4iXSwiV29ya2luZ0RpciI6Ii8ifSwiY3JlYXRlZCI6IjIwMjQtMTEtMDRUMDQ6MTM6NDMuMzQwNTA3MTc1WiIsImhpc3RvcnkiOlt7ImNyZWF0ZWQiOiIyMDI0LTExLTA0VDA0OjEzOjQzLjMyMDg2OTk2OFoiLCJjcmVhdGVkX2J5IjoiQUREIGZpbGUtMS50eHQgL3NvbWVmaWxlLTEudHh0ICMgYnVpbGRraXQiLCJjb21tZW50IjoiYnVpbGRraXQuZG9ja2VyZmlsZS52MCJ9LHsiY3JlYXRlZCI6IjIwMjQtMTEtMDRUMDQ6MTM6NDMuMzQwNTA3MTc1WiIsImNyZWF0ZWRfYnkiOiJBREQgZmlsZS0yLnR4dCAvc29tZWZpbGUtMi50eHQgIyBidWlsZGtpdCIsImNvbW1lbnQiOiJidWlsZGtpdC5kb2NrZXJmaWxlLnYwIn1dLCJvcyI6ImxpbnV4Iiwicm9vdGZzIjp7InR5cGUiOiJsYXllcnMiLCJkaWZmX2lkcyI6WyJzaGEyNTY6ZGZlZmU2MThjODliMDhmZWYwZjljN2YxYTI2ODI1MjFkZGRiZTAzZDY2NzhmNGE5ZmI5YjA3ODM4MWQ4ZWI0NSIsInNoYTI1NjozOGRkYzI4NDdmYjZiY2FmZDc0MDFiNGJmMjdjMTAwMTRiNWQ2MGUyNDAwYmMxODg4OTBjN2NiN2NkZDdjZDZjIl19fQ==",
+   "repoDigests": [],
+   "architecture": "",
+   "os": ""
+  }
+ },
+ "distro": {
+  "prettyName": "debian",
+  "name": "debian",
+  "id": "debian",
+  "idLike": [
+   "like!"
+  ],
+  "version": "1.2.3",
+  "versionID": "1.2.3"
+ },
+ "descriptor": {
+  "name": "syft",
+  "version": "v0.42.0-bogus",
+  "configuration": {
+   "config-key": "config-value"
+  }
+ }
+}

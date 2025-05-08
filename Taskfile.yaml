@@ -1,0 +1,662 @@
+
+version: "3"
+vars:
+  OWNER: anchore
+  PROJECT: syft
+
+  CACHE_IMAGE: ghcr.io/{{ .OWNER }}/{{ .PROJECT }}/test-fixture-cache:latest
+
+  # static file dirs
+  TOOL_DIR: .tool
+  TMP_DIR: .tmp
+  ORAS_CACHE: "{{ .TMP_DIR }}/oras-cache"
+  CACHE_PATHS_FILE: "{{ .TMP_DIR }}/cache_paths.json"
+  LAST_CACHE_PULL_FILE: "{{ .TMP_DIR }}/last_cache_paths.json"
+
+  # TOOLS
+  ORAS: "{{ .TOOL_DIR }}/oras"
+  YQ: "{{ .TOOL_DIR }}/yq"
+  TASK: "{{ .TOOL_DIR }}/task"
+
+  # used for changelog generation
+  CHANGELOG: CHANGELOG.md
+  NEXT_VERSION: VERSION
+
+  # used for snapshot builds
+  OS:
+    sh: uname -s | tr '[:upper:]' '[:lower:]'
+  ARCH:
+    sh: |
+      [ "$(uname -m)" = "x86_64" ] && echo "amd64_v1" || { [ "$(uname -m)" = "aarch64" ] && echo "arm64_v8.0" || echo $(uname -m); }
+  PROJECT_ROOT:
+    sh: echo $PWD
+  # note: the snapshot dir must be a relative path starting with ./
+  SNAPSHOT_DIR: ./snapshot
+  SNAPSHOT_BIN: "{{ .PROJECT_ROOT }}/{{ .SNAPSHOT_DIR }}/{{ .OS }}-build_{{ .OS }}_{{ .ARCH }}/{{ .PROJECT }}"
+  SNAPSHOT_CMD: "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --skip=publish --skip=sign"
+  BUILD_CMD:    "{{ .TOOL_DIR }}/goreleaser build   --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --single-target"
+  RELEASE_CMD:  "{{ .TOOL_DIR }}/goreleaser release --clean --release-notes {{ .CHANGELOG }}"
+  VERSION:
+    sh: git describe --dirty --always --tags
+
+  # used for install and acceptance testing
+  COMPARE_DIR: ./test/compare
+  COMPARE_TEST_IMAGE: centos:8.2.2004
+
+env:
+  GNUMAKEFLAGS: '--no-print-directory'
+
+tasks:
+
+  ## High-level tasks #################################
+
+  default:
+    desc: Run all validation tasks
+    aliases:
+      - pr-validations
+      - validations
+    cmds:
+      - task: static-analysis
+      - task: test
+      - task: install-test
+
+  static-analysis:
+    desc: Run all static analysis tasks
+    cmds:
+      - task: check-go-mod-tidy
+      - task: check-licenses
+      - task: lint
+      - task: check-json-schema-drift
+      - task: check-binary-fixture-size
+
+  test:
+    desc: Run all levels of test
+    cmds:
+      - task: unit
+      - task: integration
+      - task: validate-cyclonedx-schema
+      - task: benchmark
+      - task: test-utils
+      - task: cli
+      - task: check-docker-cache
+
+  ## Bootstrap tasks #################################
+
+  binny:
+    internal: true
+    # desc: Get the binny tool
+    generates:
+      - "{{ .TOOL_DIR }}/binny"
+    status:
+      - "test -f {{ .TOOL_DIR }}/binny"
+    cmd: "curl -sSfL https://raw.githubusercontent.com/anchore/binny/main/install.sh | sh -s -- -b .tool"
+    silent: true
+
+  tools:
+    desc: Install all tools needed for CI and local development
+    deps: [binny]
+    aliases:
+      - bootstrap
+    generates:
+      - ".binny.yaml"
+      - "{{ .TOOL_DIR }}/*"
+    status:
+      - "{{ .TOOL_DIR }}/binny check -v"
+    cmd: "{{ .TOOL_DIR }}/binny install -v"
+    silent: true
+
+  update-tools:
+    desc: Update pinned versions of all tools to their latest available versions
+    deps: [binny]
+    generates:
+      - ".binny.yaml"
+      - "{{ .TOOL_DIR }}/*"
+    cmd: "{{ .TOOL_DIR }}/binny update -v"
+    silent: true
+
+  list-tools:
+    desc: List all tools needed for CI and local development
+    deps: [binny]
+    cmd: "{{ .TOOL_DIR }}/binny list"
+    silent: true
+
+  list-tool-updates:
+    desc: List all tools that are not up to date relative to the binny config
+    deps: [binny]
+    cmd: "{{ .TOOL_DIR }}/binny list --updates"
+    silent: true
+
+  tmpdir:
+    silent: true
+    generates:
+      - "{{ .TMP_DIR }}"
+    cmd: "mkdir -p {{ .TMP_DIR }}"
+
+  ## Static analysis tasks #################################
+
+  format:
+    desc: Auto-format all source code
+    deps: [tools]
+    cmds:
+      - gofmt -w -s .
+      - "{{ .TOOL_DIR }}/gosimports -local github.com/anchore -w ."
+      - go mod tidy
+
+  lint-fix:
+    desc: Auto-format all source code + run golangci lint fixers
+    deps: [tools]
+    cmds:
+      - task: format
+      - "{{ .TOOL_DIR }}/golangci-lint run --tests=false --fix"
+
+  lint:
+    desc: Run gofmt + golangci lint checks
+    vars:
+      BAD_FMT_FILES:
+        sh: gofmt -l -s .
+      BAD_FILE_NAMES:
+        sh: "find . | grep -e ':' || true"
+    deps: [tools]
+    cmds:
+      # ensure there are no go fmt differences
+      - cmd: 'test -z "{{ .BAD_FMT_FILES }}" || (echo "files with gofmt issues: [{{ .BAD_FMT_FILES }}]"; exit 1)'
+        silent: true
+      # ensure there are no files with ":" in it (a known back case in the go ecosystem)
+      - cmd: 'test -z "{{ .BAD_FILE_NAMES }}" || (echo "files with bad names: [{{ .BAD_FILE_NAMES }}]"; exit 1)'
+        silent: true
+      # run linting
+      - "{{ .TOOL_DIR }}/golangci-lint run --tests=false"
+
+
+  check-licenses:
+    # desc: Ensure transitive dependencies are compliant with the current license policy
+    deps: [tools]
+    cmd: "{{ .TOOL_DIR }}/bouncer check ./..."
+
+  check-go-mod-tidy:
+    # desc: Ensure go.mod and go.sum are up to date
+    cmds:
+      - cmd: .github/scripts/go-mod-tidy-check.sh && echo "go.mod and go.sum are tidy!"
+        silent: true
+
+  check-json-schema-drift:
+    desc: Ensure there is no drift between the JSON schema and the code
+    cmds:
+      - .github/scripts/json-schema-drift-check.sh
+
+  check-binary-fixture-size:
+    desc: Ensure that the binary test fixtures are not too large
+    cmds:
+      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/test-fixtures/classifiers/snippets
+
+
+  ## Testing tasks #################################
+  update-format-golden-files:
+    desc: "Update golden (i.e. snapshot) files used by unit tests"
+    cmds:
+      - go test ./syft/format/spdxjson -update-spdx-json
+      - go test ./syft/format/spdxtagvalue -update-spdx-tv
+      - go test ./syft/format/cyclonedxxml -update-cyclonedx-xml
+      - go test ./syft/format/cyclonedxjson -update-cyclonedx-json
+      - go test ./syft/format/syftjson -update-json
+
+  unit:
+    desc: Run unit tests
+    deps:
+      - tmpdir
+      - fixtures
+    vars:
+      TEST_PKGS:
+        sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | grep -v {{ .OWNER }}/{{ .PROJECT }}/cmd/syft/internal/test | tr '\n' ' '"
+
+      # unit test coverage threshold (in % coverage)
+      COVERAGE_THRESHOLD: 62
+    cmds:
+      - "go test -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
+      - cmd: ".github/scripts/coverage.py {{ .COVERAGE_THRESHOLD }} {{ .TMP_DIR }}/unit-coverage-details.txt"
+        silent: true
+
+  integration:
+    desc: Run integration tests
+    cmds:
+      - "go test -v ./cmd/syft/internal/test/integration"
+      # exercise most of the CLI with the data race detector
+      - "go run -race cmd/syft/main.go alpine:latest"
+
+  validate-cyclonedx-schema:
+    desc: Validate that Syft produces valid CycloneDX documents
+    cmds:
+      - "cd schema/cyclonedx && make"
+
+  cli:
+    desc: Run CLI tests
+    # note: we don't want to regenerate the snapshot unless we have to. In CI it's probable
+    # that the cache being restored with the correct binary will be rebuilt since the timestamps
+    # and local checksums will not line up.
+    deps: [tools, snapshot]
+    cmds:
+      - cmd: "echo 'testing binary: {{ .SNAPSHOT_BIN }}'"
+        silent: true
+      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found for {{ .SNAPSHOT_BIN }}' && false)"
+        silent: true
+
+      - "go test -count=1 -timeout=15m -v ./test/cli"
+    env:
+      SYFT_BINARY_LOCATION: "{{ .SNAPSHOT_BIN }}"
+
+  test-utils:
+    desc: Run tests for pipeline utils
+    cmds:
+      - cmd: .github/scripts/labeler_test.py
+
+
+  ## Benchmark test targets #################################
+
+  benchmark:
+    deps: [tmpdir]
+    generates:
+      - "{{ .TMP_DIR }}/benchmark-main.txt"
+    cmds:
+      - "go test -p 1 -run=^Benchmark -bench=. -count=7 -benchmem ./... | tee {{ .TMP_DIR }}/benchmark-{{ .VERSION }}.txt"
+      - |
+        bash -c "(test -s {{ .TMP_DIR }}/benchmark-main.txt && \
+        {{ .TOOL_DIR }}/benchstat {{ .TMP_DIR }}/benchmark-main.txt {{ .TMP_DIR }}/benchmark-{{ .VERSION }}.txt || \
+        {{ .TOOL_DIR }}/benchstat {{ .TMP_DIR }}/benchmark-{{ .VERSION }}.txt) \
+        | tee {{ .TMP_DIR }}/benchstat.txt"
+
+  show-benchstat:
+    deps: [benchmark, tmpdir]
+    cmds:
+      - cmd: "cat {{ .TMP_DIR }}/benchstat.txt"
+        silent: true
+
+
+  ## Test-fixture-related targets #################################
+
+  fingerprints:
+    desc: Generate fingerprints for all non-docker test fixture
+    silent: true
+    # this will look for `test-fixtures/Makefile` and invoke the `fingerprint` target to calculate all cache input fingerprint files
+    generates:
+      - '**/test-fixtures/**/*.fingerprint'
+      - test/install/cache.fingerprint
+    cmds:
+      - |
+        BOLD='\033[1m'
+        YELLOW='\033[0;33m'
+        RESET='\033[0m'
+
+        echo -e "${YELLOW}creating fingerprint files for non-docker fixtures...${RESET}"        
+        for dir in $(find . -type d -name 'test-fixtures'); do
+          if [ -f "$dir/Makefile" ]; then
+            # for debugging...
+            #echo -e "${YELLOW}• calculating fingerprints in $dir... ${RESET}"
+            
+            (make -C "$dir" fingerprint)
+          fi
+        done
+
+        # for debugging...
+        # echo -e "generated all fixture fingerprints"
+
+      - .github/scripts/fingerprint_docker_fixtures.py
+      - |
+        # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then we don't need to calculate the fingerprint for the cache
+        if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
+          exit 0
+        fi
+        .github/scripts/find_cache_paths.py {{ .CACHE_PATHS_FILE }} > /dev/null
+
+
+  refresh-fixtures:
+    desc: Clear and fetch all test fixture cache
+    aliases:
+      - fixtures
+    silent: true
+    deps:
+      - tools
+    cmds:
+      - |
+        BOLD='\033[1m'
+        PURPLE='\033[0;35m'
+        RESET='\033[0m'
+        
+        # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then skip the cache download and always build
+        if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
+            echo -e "${BOLD}${PURPLE}skipping cache download, rebuilding cache...${RESET}"
+            {{ .TASK }} build-fixtures
+            exit 0
+        fi
+        
+        LATEST_FINGERPRINT=$(docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint')
+
+        echo "latest cache:      $LATEST_FINGERPRINT"
+        
+        if [ -f {{ .LAST_CACHE_PULL_FILE }} ]; then
+          LAST_PULL_FINGERPRINT=$(cat {{ .LAST_CACHE_PULL_FILE }} | {{ .YQ }} -r '.digest')
+        else
+          echo -e "${BOLD}${PURPLE}empty cache, downloading cache...${RESET}"
+          {{ .TASK }} download-test-fixture-cache
+          exit 0
+        fi
+        
+        {{ .TASK }} fingerprints
+
+        WANT_FINGERPRINT=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')        
+
+        echo "desired cache:     $WANT_FINGERPRINT"
+        echo "last pulled cache: $LAST_PULL_FINGERPRINT"
+  
+        # if we already have the latest cache, skip the refresh
+        if [ "$LAST_PULL_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
+            echo -e "${BOLD}${PURPLE}already have the latest cache (skipping cache download)${RESET}"
+            exit 0
+        fi
+  
+        # at this point we only refresh the cache if we want the same cache that is currently available.
+        # we don't by default refresh the cache if the cache if it is simply different from what we have,
+        # because we may be working on a code change that doesn't require a cache refresh (but could trigger one,
+        # which would be annoying to deal with in a development workflow).
+  
+        if [ "$LATEST_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
+          echo -e "${BOLD}${PURPLE}found newer cache! downloading cache...${RESET}"
+          {{ .TASK }} download-test-fixture-cache
+        else
+          echo -e "${BOLD}${PURPLE}found different cache, but isn't clear if it's newer (skipping cache download and manually building)${RESET}"
+        
+          {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .LAST_CACHE_PULL_FILE }} > .tmp/last_cache_lines
+          {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .CACHE_PATHS_FILE }} > .tmp/cache_lines
+          diff .tmp/last_cache_lines .tmp/cache_lines || true
+        
+          echo -e "${BOLD}${PURPLE}diff with more context...${RESET}"
+        
+          diff -U10000 {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }} || true
+        
+          echo -e "${BOLD}${PURPLE}detected changes to input material, manually building fixtures...${RESET}"
+        
+          {{ .TASK }} build-fixtures
+        fi
+
+  build-fixtures:
+    desc: Generate all non-docker test fixtures
+    silent: true
+    # this will look for `test-fixtures/Makefile` and invoke the `fixtures` target to generate any and all test fixtures
+    cmds:
+      - |
+        BOLD='\033[1m'
+        YELLOW='\033[0;33m'
+        RESET='\033[0m'
+        
+        # Use a for loop with command substitution to avoid subshell issues
+        for dir in $(find . -type d -name 'test-fixtures'); do
+          if [ -f "$dir/Makefile" ]; then
+            echo -e "${YELLOW}${BOLD}generating fixtures in $dir${RESET}"
+            (make -C "$dir" fixtures)
+          fi
+        done
+        echo -e "${BOLD}generated all fixtures${RESET}"
+
+  download-test-fixture-cache:
+    desc: Download test fixture cache from ghcr.io
+    deps: [tools, clean-cache]
+    vars:
+      CACHE_DIGEST:
+        sh: docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint'
+    cmds:
+      - silent: true
+        cmd: |
+          # if oras cache is > 4 GB, delete it
+          if [ -d {{ .ORAS_CACHE }} ]; then
+            total_size=$(du -c {{ .ORAS_CACHE }} | grep total | awk '{print $1}')
+            if [ "$total_size" -gt 4194304 ]; then
+              echo 'deleting oras cache'
+              rm -rf {{ .ORAS_CACHE }}
+            fi
+          fi
+      - "ORAS_CACHE={{ .ORAS_CACHE }} {{ .ORAS }} pull {{ .CACHE_IMAGE }}"
+      - "cp {{ .CACHE_PATHS_FILE }} {{ .LAST_CACHE_PULL_FILE }}"
+
+  upload-test-fixture-cache:
+    desc: Upload the test fixture cache to ghcr.io
+    deps: [tools, fingerprints]
+    silent: true
+    cmd: |
+      set -eu
+      oras_command="{{ .ORAS }} push {{ .CACHE_IMAGE }}"
+
+      paths=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.paths[].path')      
+      for path in $paths; do
+        oras_command+=" $path"
+      done
+      oras_command+=" {{ .CACHE_PATHS_FILE }}"
+      
+      oras_command+=" --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .PROJECT }}"
+      oras_command+=" --annotation fingerprint=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')"
+    
+      echo "Executing: $oras_command"
+      eval $oras_command
+
+  show-test-image-cache:
+    silent: true
+    cmds:
+      - "echo 'Docker daemon cache:'"
+      - "docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}:{{`{{.Tag}}`}}' | grep stereoscope-fixture- | sort"
+      - "echo '\nTar cache:'"
+      - 'find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" | sort'
+
+  check-docker-cache:
+    desc: Ensure docker caches aren't using too much disk space
+    silent: true
+    cmd: |
+      total_size=$(find . | grep cache | grep tar | xargs du -c | grep total | awk '{print $1}')
+      find . | grep cache | grep tar | xargs du
+      echo "total $total_size KB"
+
+      if [ "$total_size" -gt 1048576 ]; then
+        echo 'docker cache is larger than 1GB'
+        exit 1
+      fi
+
+  ## install.sh testing targets #################################
+
+  install-test:
+    cmds:
+      - "cd test/install && make"
+
+  install-test-cache-save:
+    cmds:
+      - "cd test/install && make save"
+
+  install-test-cache-load:
+    cmds:
+      - "cd test/install && make load"
+
+  install-test-ci-mac:
+    cmds:
+      - "cd test/install && make ci-test-mac"
+
+  generate-compare-file:
+    cmd: "go run ./cmd/syft {{ .COMPARE_TEST_IMAGE }} -o json > {{ .COMPARE_DIR }}/test-fixtures/acceptance-{{ .COMPARE_TEST_IMAGE }}.json"
+
+  compare-mac:
+    deps: [tmpdir]
+    cmd: |
+      {{ .COMPARE_DIR }}/mac.sh \
+        {{ .SNAPSHOT_DIR }} \
+        {{ .COMPARE_DIR }} \
+        {{ .COMPARE_TEST_IMAGE }} \
+        {{ .TMP_DIR }}
+
+  compare-linux:
+    cmds:
+      - task: compare-test-deb-package-install
+      - task: compare-test-rpm-package-install
+
+  compare-test-deb-package-install:
+    deps: [tmpdir]
+    cmd: |
+      {{ .COMPARE_DIR }}/deb.sh \
+        {{ .SNAPSHOT_DIR }} \
+        {{ .COMPARE_DIR }} \
+        {{ .COMPARE_TEST_IMAGE }} \
+        {{ .TMP_DIR }}
+
+  compare-test-rpm-package-install:
+    deps: [tmpdir]
+    cmd: |
+      {{ .COMPARE_DIR }}/rpm.sh \
+        {{ .SNAPSHOT_DIR }} \
+        {{ .COMPARE_DIR }} \
+        {{ .COMPARE_TEST_IMAGE }} \
+        {{ .TMP_DIR }}
+
+
+  ## Code and data generation targets #################################
+
+  generate:
+    desc: Add data generation tasks
+    cmds:
+      - task: generate-json-schema
+      - task: generate-license-list
+      - task: generate-cpe-dictionary-index
+
+  generate-json-schema:
+    desc: Generate a new JSON schema
+    cmds:
+      - "cd syft/internal && go generate . && cd jsonschema && go run . && go fmt ../..."
+
+  generate-license-list:
+    desc: Generate an updated license processing code off of the latest available SPDX license list
+    cmds:
+      - "go generate ./internal/spdxlicense/..."
+      - "gofmt -s -w ./internal/spdxlicense"
+
+  generate-cpe-dictionary-index:
+    desc: Generate the CPE index based off of the latest available CPE dictionary
+    dir: "syft/pkg/cataloger/internal/cpegenerate/dictionary"
+    cmds:
+      - "go generate"
+
+
+  ## Build-related targets #################################
+
+  build:
+    desc: Build the project
+    deps: [tools, tmpdir]
+    generates:
+      - "{{ .PROJECT }}"
+    cmds:
+      - silent: true
+        cmd: |
+          echo "dist: {{ .SNAPSHOT_DIR }}" > {{ .TMP_DIR }}/goreleaser.yaml
+          cat .goreleaser.yaml >> {{ .TMP_DIR }}/goreleaser.yaml
+
+      - "{{ .BUILD_CMD }}"
+
+  snapshot:
+    desc: Create a snapshot release
+    aliases:
+      - build
+    deps: [tools, tmpdir]
+    sources:
+      - cmd/**/*.go
+      - syft/**/*.go
+      - internal/**/*.go
+    method: checksum
+    generates:
+      - "{{ .SNAPSHOT_BIN }}"
+    cmds:
+      - silent: true
+        cmd: |
+          echo "dist: {{ .SNAPSHOT_DIR }}" > {{ .TMP_DIR }}/goreleaser.yaml
+          cat .goreleaser.yaml >> {{ .TMP_DIR }}/goreleaser.yaml
+
+      - "{{ .SNAPSHOT_CMD }}"
+
+  changelog:
+    desc: Generate a changelog
+    deps: [tools]
+    generates:
+      - "{{ .CHANGELOG }}"
+      - "{{ .NEXT_VERSION }}"
+    cmds:
+      - "{{ .TOOL_DIR }}/chronicle -vv -n --version-file {{ .NEXT_VERSION }} > {{ .CHANGELOG }}"
+      - "{{ .TOOL_DIR }}/glow -w 0 {{ .CHANGELOG }}"
+
+
+  ## Release targets #################################
+
+  release:
+    desc: Create a release
+    interactive: true
+    deps: [tools]
+    cmds:
+      - cmd: .github/scripts/trigger-release.sh
+        silent: true
+
+
+  ## CI-only targets #################################
+
+  ci-check:
+    # desc: "[CI only] Are you in CI?"
+    cmds:
+      - cmd: .github/scripts/ci-check.sh
+        silent: true
+
+  ci-release:
+    # desc: "[CI only] Create a release"
+    deps: [tools]
+    cmds:
+      - task: ci-check
+      - "{{ .TOOL_DIR }}/chronicle -vvv > CHANGELOG.md"
+      - cmd: "cat CHANGELOG.md"
+        silent: true
+      - "{{ .RELEASE_CMD }}"
+
+  ci-release-version-file:
+    # desc: "[CI only] Update the version file"
+    deps: [tools]
+    cmds:
+      - task: ci-check
+      - ".github/scripts/update-version-file.sh {{ .RELEASE_VERSION }}"
+    requires:
+      vars:
+        - RELEASE_VERSION
+
+
+  ## Cleanup targets #################################
+
+  clean-snapshot:
+    desc: Remove any snapshot builds
+    cmds:
+      - "rm -rf {{ .SNAPSHOT_DIR }}"
+      - "rm -rf {{ .TMP_DIR }}/goreleaser.yaml"
+
+  clean-docker-cache:
+    desc: Remove all docker cache tars and images from the daemon
+    cmds:
+      - find . -type d -wholename "**/test-fixtures/cache" | xargs rm -rf
+      - docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}' | grep stereoscope-fixture- | awk '{print $1}' | uniq | xargs -r docker rmi --force
+
+  clean-oras-cache:
+    desc: Remove all cache for oras commands
+    cmd: rm -rf {{ .ORAS_CACHE }}
+
+  clean-cache:
+    desc: Remove all image docker tar cache, images from the docker daemon, and ephemeral test fixtures
+    cmds:
+      - task: clean-docker-cache
+      - |
+        BOLD='\033[1m'
+        YELLOW='\033[0;33m'
+        RESET='\033[0m'
+        
+        # Use a for loop with command substitution to avoid subshell issues
+        for dir in $(find . -type d -name 'test-fixtures'); do
+        if [ -f "$dir/Makefile" ]; then
+          echo -e "${YELLOW}${BOLD}deleting ephemeral test fixtures in $dir${RESET}"
+          (make -C "$dir" clean)
+        fi
+        done
+        echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
+      - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}

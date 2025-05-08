@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/wagoodman/go-partybus"
@@ -15,13 +14,13 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/event"
+	"github.com/anchore/syft/syft/internal/windows"
 )
 
-type PathIndexVisitor func(string, os.FileInfo, error) error
+type PathIndexVisitor func(string, string, os.FileInfo, error) error
 
 type directoryIndexer struct {
 	path              string
@@ -34,12 +33,19 @@ type directoryIndexer struct {
 
 func newDirectoryIndexer(path, base string, visitors ...PathIndexVisitor) *directoryIndexer {
 	i := &directoryIndexer{
-		path:              path,
-		base:              base,
-		tree:              filetree.New(),
-		index:             filetree.NewIndex(),
-		pathIndexVisitors: append([]PathIndexVisitor{requireFileInfo, disallowByFileType, disallowUnixSystemRuntimePath}, visitors...),
-		errPaths:          make(map[string]error),
+		path:  path,
+		base:  base,
+		tree:  filetree.New(),
+		index: filetree.NewIndex(),
+		pathIndexVisitors: append(
+			[]PathIndexVisitor{
+				requireFileInfo,
+				disallowByFileType,
+				skipPathsByMountTypeAndName(path),
+			},
+			visitors...,
+		),
+		errPaths: make(map[string]error),
 	}
 
 	// these additional stateful visitors should be the first thing considered when walking / indexing
@@ -176,6 +182,13 @@ func isRealPath(root string) (bool, error) {
 func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]string, error) {
 	rootRealPath, err := filepath.EvalSymlinks(root)
 	if err != nil {
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) {
+			// we can't index the path, but we shouldn't consider this to be fatal
+			// TODO: known-unknowns
+			log.WithFields("root", root, "error", err).Trace("unable to evaluate symlink while indexing branch")
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -239,14 +252,14 @@ func allContainedPaths(p string) []string {
 	return all
 }
 
-func (r *directoryIndexer) indexPath(path string, info os.FileInfo, err error) (string, error) {
+func (r *directoryIndexer) indexPath(givenPath string, info os.FileInfo, err error) (string, error) {
 	// ignore any path which a filter function returns true
 	for _, filterFn := range r.pathIndexVisitors {
 		if filterFn == nil {
 			continue
 		}
 
-		if filterErr := filterFn(path, info, err); filterErr != nil {
+		if filterErr := filterFn(r.base, givenPath, info, err); filterErr != nil {
 			if errors.Is(filterErr, fs.SkipDir) {
 				// signal to walk() to skip this directory entirely (even if we're processing a file)
 				return "", filterErr
@@ -258,24 +271,24 @@ func (r *directoryIndexer) indexPath(path string, info os.FileInfo, err error) (
 
 	if info == nil {
 		// walk may not be able to provide a FileInfo object, don't allow for this to stop indexing; keep track of the paths and continue.
-		r.errPaths[path] = fmt.Errorf("no file info observable at path=%q", path)
+		r.errPaths[givenPath] = fmt.Errorf("no file info observable at path=%q", givenPath)
 		return "", nil
 	}
 
 	// here we check to see if we need to normalize paths to posix on the way in coming from windows
-	if runtime.GOOS == WindowsOS {
-		path = windowsToPosix(path)
+	if windows.HostRunningOnWindows() {
+		givenPath = windows.ToPosix(givenPath)
 	}
 
-	newRoot, err := r.addPathToIndex(path, info)
-	if r.isFileAccessErr(path, err) {
+	newRoot, err := r.addPathToIndex(givenPath, info)
+	if r.isFileAccessErr(givenPath, err) {
 		return "", nil
 	}
 
 	return newRoot, nil
 }
 
-func (r *directoryIndexer) disallowFileAccessErr(path string, _ os.FileInfo, err error) error {
+func (r *directoryIndexer) disallowFileAccessErr(_, path string, _ os.FileInfo, err error) error {
 	if r.isFileAccessErr(path, err) {
 		return ErrSkipPath
 	}
@@ -332,13 +345,30 @@ func (r directoryIndexer) addFileToIndex(p string, info os.FileInfo) error {
 func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string, error) {
 	linkTarget, err := os.Readlink(p)
 	if err != nil {
-		return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+		isOnWindows := windows.HostRunningOnWindows()
+		if isOnWindows {
+			p = windows.FromPosix(p)
+		}
+
+		linkTarget, err = filepath.EvalSymlinks(p)
+
+		if isOnWindows {
+			p = windows.ToPosix(p)
+		}
+
+		if err != nil {
+			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
+		}
 	}
 
 	if filepath.IsAbs(linkTarget) {
+		linkTarget = filepath.Clean(linkTarget)
 		// if the link is absolute (e.g, /bin/ls -> /bin/busybox) we need to
-		// resolve relative to the root of the base directory
-		linkTarget = filepath.Join(r.base, filepath.Clean(linkTarget))
+		// resolve relative to the root of the base directory, if it is not already
+		// prefixed with a volume name
+		if filepath.VolumeName(linkTarget) == "" {
+			linkTarget = filepath.Join(r.base, filepath.Clean(linkTarget))
+		}
 	} else {
 		// if the link is not absolute (e.g, /dev/stderr -> fd/2 ) we need to
 		// resolve it relative to the directory in question (e.g. resolve to
@@ -349,6 +379,28 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 			// if the base is set, then we first need to resolve the link,
 			// before finding it's location in the base
 			dir, err := filepath.Rel(r.base, filepath.Dir(p))
+			// if the relative path to the base contains "..",i.e. p is the parent or ancestor of the base
+			// For example:
+			// dir: "/root/asymlink" -> "/root/realdir" (linkTarget:"realdir")
+			// base: "/root/asymlink"
+			// so the relative path of /root to the "/root/asymlink" is ".."
+			// we cannot directly concatenate ".." to "/root/symlink",however,
+			// the parent directory of linkTarget should be "/root"
+			for strings.HasPrefix(dir, "..") {
+				if strings.HasPrefix(dir, "../") {
+					dir = strings.TrimPrefix(dir, "../")
+				} else {
+					dir = strings.TrimPrefix(dir, "..")
+				}
+				lastSlash := strings.LastIndex(r.base, "/")
+				if lastSlash != -1 {
+					r.base = r.base[:lastSlash]
+				}
+				// In case of the root directory
+				if r.base == "" {
+					r.base = "/"
+				}
+			}
 			if err != nil {
 				return "", fmt.Errorf("unable to resolve relative path for path=%q: %w", p, err)
 			}
@@ -405,7 +457,7 @@ func (r directoryIndexer) hasBeenIndexed(p string) (bool, *file.Metadata) {
 	return true, &entry.Metadata
 }
 
-func (r *directoryIndexer) disallowRevisitingVisitor(path string, _ os.FileInfo, _ error) error {
+func (r *directoryIndexer) disallowRevisitingVisitor(_, path string, _ os.FileInfo, _ error) error {
 	// this prevents visiting:
 	// - link destinations twice, once for the real file and another through the virtual path
 	// - infinite link cycles
@@ -419,14 +471,7 @@ func (r *directoryIndexer) disallowRevisitingVisitor(path string, _ os.FileInfo,
 	return nil
 }
 
-func disallowUnixSystemRuntimePath(path string, _ os.FileInfo, _ error) error {
-	if internal.HasAnyOfPrefixes(path, unixSystemRuntimePrefixes...) {
-		return fs.SkipDir
-	}
-	return nil
-}
-
-func disallowByFileType(_ string, info os.FileInfo, _ error) error {
+func disallowByFileType(_, _ string, info os.FileInfo, _ error) error {
 	if info == nil {
 		// we can't filter out by filetype for non-existent files
 		return nil
@@ -441,7 +486,7 @@ func disallowByFileType(_ string, info os.FileInfo, _ error) error {
 	return nil
 }
 
-func requireFileInfo(_ string, info os.FileInfo, _ error) error {
+func requireFileInfo(_, _ string, info os.FileInfo, _ error) error {
 	if info == nil {
 		return ErrSkipPath
 	}

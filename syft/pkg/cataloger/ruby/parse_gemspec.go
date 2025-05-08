@@ -2,12 +2,13 @@ package ruby
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
@@ -22,7 +23,7 @@ type postProcessor func(string) []string
 
 type gemData struct {
 	Licenses        []string `mapstructure:"licenses" json:"licenses,omitempty"`
-	pkg.GemMetadata `mapstructure:",squash" json:",inline"`
+	pkg.RubyGemspec `mapstructure:",squash" json:",inline"`
 }
 
 // match example:      Al\u003Ex   --->   003E
@@ -64,7 +65,8 @@ func processList(s string) []string {
 	return results
 }
 
-func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parseGemSpecEntries parses the gemspec file and returns the packages and relationships found.
+func parseGemSpecEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
@@ -112,7 +114,7 @@ func parseGemSpecEntries(_ file.Resolver, _ *generic.Environment, reader file.Lo
 	return pkgs, nil, nil
 }
 
-// renderUtf8 takes any string escaped string sub-sections from the ruby string and replaces those sections with the UTF8 runes.
+// renderUtf8 takes any string escaped string subsections from the ruby string and replaces those sections with the UTF8 runes.
 func renderUtf8(s string) string {
 	fullReplacement := unicodePattern.ReplaceAllStringFunc(s, func(unicodeSection string) string {
 		var replacement string

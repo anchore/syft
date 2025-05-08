@@ -1,0 +1,163 @@
+{
+  "ecosystems": {
+    "go_modules": {
+      "aahframe.work": [
+        "cpe:2.3:a:aahframework:aah:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/ecnepsnai/web": [
+        "cpe:2.3:a:web_project:web:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/square/squalor": [
+        "cpe:2.3:a:square:squalor:*:*:*:*:*:go:*:*"
+      ],
+      "gopkg.in/yaml.v3": [
+        "cpe:2.3:a:yaml_project:yaml:*:*:*:*:*:go:*:*"
+      ]
+    },
+    "jenkins_plugins": {
+      "anchore-container-scanner": [
+        "cpe:2.3:a:anchore:container_image_scanner:*:*:*:*:*:jenkins:*:*",
+        "cpe:2.3:a:jenkins:anchore_container_image_scanner:*:*:*:*:*:jenkins:*:*"
+      ],
+      "fireline": [
+        "cpe:2.3:a:jenkins:360_fireline:*:*:*:*:*:jenkins:*:*"
+      ],
+      "sonarqube": [
+        "cpe:2.3:a:sonarsource:sonarqube_scanner:*:*:*:*:*:jenkins:*:*"
+      ],
+      "svn-partial-release-mgr": [
+        "cpe:2.3:a:jenkins:subversion_partial_release_manager:*:*:*:*:*:jenkins:*:*"
+      ]
+    },
+    "npm": {
+      "merge-recursive": [
+        "cpe:2.3:a:umbraengineering:merge-recursive:*:*:*:*:*:node.js:*:*"
+      ],
+      "ps": [
+        "cpe:2.3:a:umbraengineering:ps:*:*:*:*:*:node.js:*:*"
+      ],
+      "static-dev-server": [
+        "cpe:2.3:a:static-dev-server_project:static-dev-server:*:*:*:*:*:node.js:*:*"
+      ],
+      "umount": [
+        "cpe:2.3:a:umount_project:umount:*:*:*:*:*:node.js:*:*"
+      ],
+      "undefsafe": [
+        "cpe:2.3:a:undefsafe_project:undefsafe:*:*:*:*:*:node.js:*:*"
+      ],
+      "underscore": [
+        "cpe:2.3:a:underscorejs:underscore:*:*:*:*:*:node.js:*:*"
+      ],
+      "underscore-99xp": [
+        "cpe:2.3:a:underscore-99xp_project:underscore-99xp:*:*:*:*:*:node.js:*:*"
+      ],
+      "ungit": [
+        "cpe:2.3:a:ungit_project:ungit:*:*:*:*:*:node.js:*:*"
+      ],
+      "unicode": [
+        "cpe:2.3:a:unicode_project:unicode:*:*:*:*:*:node.js:*:*"
+      ],
+      "unicode-json": [
+        "cpe:2.3:a:unicode:unicode-json:*:*:*:*:*:node.js:*:*"
+      ],
+      "unicorn-list": [
+        "cpe:2.3:a:unicorn-list_project:unicorn-list:*:*:*:*:*:node.js:*:*"
+      ]
+    },
+    "php_composer": {
+      "frappant/frp-form-answers": [
+        "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:typo3:*:*"
+      ]
+    },
+    "php_pear": {
+      "HTML_QuickForm": [
+        "cpe:2.3:a:html_quickform_project:html_quickform:*:*:*:*:*:*:*:*"
+      ],
+      "PEAR": [
+        "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*"
+      ],
+      "XML_RPC": [
+        "cpe:2.3:a:php:xml_rpc:*:*:*:*:*:pear:*:*"
+      ]
+    },
+    "php_pecl": {
+      "imagick": [
+        "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*"
+      ],
+      "memcached": [
+        "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*"
+      ],
+      "xhprof": [
+        "cpe:2.3:a:php:xhprof:*:*:*:*:*:*:*:*"
+      ]
+    },
+    "pypi": {
+      "vault-cli": [
+        "cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*"
+      ]
+    },
+    "rubygems": {
+      "openssl": [
+        "cpe:2.3:a:ruby-lang:openssl:*:*:*:*:*:*:*:*",
+        "cpe:2.3:a:ruby-lang:openssl:*:*:*:*:*:ruby:*:*"
+      ]
+    },
+    "rust_crates": {
+      "unicycle": [
+        "cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*"
+      ]
+    },
+    "wordpress_plugins": {
+      "0mk-shortener": [
+        "cpe:2.3:a:0mk_shortener_project:0mk_shortener:*:*:*:*:*:wordpress:*:*"
+      ],
+      "jobboardwp": [
+        "cpe:2.3:a:ultimatemember:jobboardwp:*:*:*:*:*:wordpress:*:*"
+      ],
+      "nofollow": [
+        "cpe:2.3:a:ultimate_nofollow_project:ultimate_nofollow:*:*:*:*:*:wordpress:*:*"
+      ],
+      "petfinder-listings": [
+        "cpe:2.3:a:unboxinteractive:petfinder-listings:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-instagram-feed": [
+        "cpe:2.3:a:ultimate_instagram_feed_project:ultimate_instagram_feed:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-member": [
+        "cpe:2.3:a:ultimatemember:ultimate_member:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:ultimatemember:user_profile_\\\u0026_membership:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-noindex-nofollow-tool-ii": [
+        "cpe:2.3:a:ultimate_noindex_nofollow_tool_ii_project:ultimate_noindex_nofollow_tool_ii:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-sms-notifications": [
+        "cpe:2.3:a:ultimatesmsnotifications:ultimate_sms_notifications_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-weather-plugin": [
+        "cpe:2.3:a:ultimate-weather_project:ultimate-weather:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ultimate-wp-query-search-filter": [
+        "cpe:2.3:a:ultimate_wp_query_search_filter_project:ultimate_wp_query_search_filter:*:*:*:*:*:wordpress:*:*"
+      ],
+      "uncanny-automator": [
+        "cpe:2.3:a:uncannyowl:uncanny_automator:*:*:*:*:*:wordpress:*:*"
+      ],
+      "uncanny-learndash-toolkit": [
+        "cpe:2.3:a:uncannyowl:uncanny_toolkit_for_learndash:*:*:*:*:*:*:*:*",
+        "cpe:2.3:a:uncannyowl:uncanny_toolkit_for_learndash:*:*:*:*:*:wordpress:*:*"
+      ],
+      "unconfirmed": [
+        "cpe:2.3:a:unconfirmed_project:unconfirmed:*:*:*:*:*:wordpress:*:*"
+      ],
+      "underconstruction": [
+        "cpe:2.3:a:underconstruction_project:underconstruction:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-cleanfix": [
+        "cpe:2.3:a:undolog:wp_cleanfix:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-ultra-simple-paypal-shopping-cart": [
+        "cpe:2.3:a:ultra-prod:wordpress_ultra_simple_paypal_shopping_cart:*:*:*:*:*:wordpress:*:*"
+      ]
+    }
+  }
+}

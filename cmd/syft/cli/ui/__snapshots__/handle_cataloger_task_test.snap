@@ -1,0 +1,24 @@
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_task_in_progress - 1]
+ ⠙ Cataloging contents             
+ ⠙ some task title                 ━━━━━━━━━━━━━━━━━━━━  [some stage]  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_in_progress - 1]
+ ⠙ Cataloging contents             
+   └── ⠙ some task title                 ━━━━━━━━━━━━━━━━━━━━  [some stage]  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_complete - 1]
+ ⠙ Cataloging contents             
+   └── ✔ some task done                  [some stage]  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_complete_--_hide_stage - 1]
+ ⠙ Cataloging contents             
+   └── ✔ some task done                  
+---
+
+[TestHandler_handleCatalogerTaskStarted/cataloging_sub_task_complete_with_removal - 1]
+ ⠙ Cataloging contents             
+---

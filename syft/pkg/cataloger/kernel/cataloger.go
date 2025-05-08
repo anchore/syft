@@ -4,27 +4,28 @@ Package kernel provides a concrete Cataloger implementation for linux kernel and
 package kernel
 
 import (
-	"github.com/hashicorp/go-multierror"
+	"context"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ pkg.Cataloger = (*LinuxKernelCataloger)(nil)
+var _ pkg.Cataloger = (*linuxKernelCataloger)(nil)
 
-type LinuxCatalogerConfig struct {
-	CatalogModules bool
+type LinuxKernelCatalogerConfig struct {
+	CatalogModules bool `yaml:"catalog-modules" json:"catalog-modules" mapstructure:"catalog-modules"`
 }
 
-type LinuxKernelCataloger struct {
-	cfg LinuxCatalogerConfig
+type linuxKernelCataloger struct {
+	cfg LinuxKernelCatalogerConfig
 }
 
-func DefaultLinuxCatalogerConfig() LinuxCatalogerConfig {
-	return LinuxCatalogerConfig{
+func DefaultLinuxKernelCatalogerConfig() LinuxKernelCatalogerConfig {
+	return LinuxKernelCatalogerConfig{
 		CatalogModules: true,
 	}
 }
@@ -43,33 +44,33 @@ var kernelModuleGlobs = []string{
 }
 
 // NewLinuxKernelCataloger returns a new kernel files cataloger object.
-func NewLinuxKernelCataloger(cfg LinuxCatalogerConfig) *LinuxKernelCataloger {
-	return &LinuxKernelCataloger{
+func NewLinuxKernelCataloger(cfg LinuxKernelCatalogerConfig) pkg.Cataloger {
+	return &linuxKernelCataloger{
 		cfg: cfg,
 	}
 }
 
-func (l LinuxKernelCataloger) Name() string {
+func (l linuxKernelCataloger) Name() string {
 	return "linux-kernel-cataloger"
 }
 
-func (l LinuxKernelCataloger) Catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (l linuxKernelCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var allPackages []pkg.Package
 	var allRelationships []artifact.Relationship
 	var errs error
 
-	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(resolver)
+	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(ctx, resolver)
 	if err != nil {
-		errs = multierror.Append(errs, err)
+		errs = unknown.Join(errs, err)
 	}
 
 	allRelationships = append(allRelationships, kernelRelationships...)
 	allPackages = append(allPackages, kernelPackages...)
 
 	if l.cfg.CatalogModules {
-		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(resolver)
+		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(ctx, resolver)
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = unknown.Join(errs, err)
 		}
 
 		allPackages = append(allPackages, modulePackages...)
@@ -91,7 +92,7 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 
 	modulesByKernelVersion := make(map[string][]*pkg.Package)
 	for idx, p := range modulePackages {
-		m, ok := p.Metadata.(pkg.LinuxKernelModuleMetadata)
+		m, ok := p.Metadata.(pkg.LinuxKernelModule)
 		if !ok {
 			log.Debug("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
 			continue

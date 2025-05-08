@@ -21,6 +21,11 @@ func TestParseExpression(t *testing.T) {
 			want:       "MIT OR Apache-2.0",
 		},
 		{
+			name:       "accept redundant parentheses",
+			expression: "(MIT OR Apache-2.0)",
+			want:       "(MIT OR Apache-2.0)",
+		},
+		{
 			name:       "Invalid SPDX expression returns error",
 			expression: "MIT OR Apache-2.0 OR invalid",
 			want:       "",

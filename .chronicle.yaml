@@ -1,0 +1,78 @@
+enforce-v0: false
+title: ""
+
+github:
+  host: github.com
+  include-issue-pr-authors: true
+  include-issue-prs: true
+  include-issues-not-planned: false
+  include-prs: true
+  include-issues: true
+  include-unlabeled-issues: true
+  include-unlabeled-prs: true
+  issues-require-linked-prs: false
+  consider-pr-merge-commits: true
+
+  exclude-labels:
+    - duplicate
+    - question
+    - invalid
+    - wontfix
+    - wont-fix
+    - release-ignore
+    - changelog-ignore
+    - ignore
+
+  changes:
+
+    - name: security-fixes
+      title: Security Fixes
+      semver-field: patch
+      labels:
+        - security
+        - vulnerability
+
+    - name: added-feature
+      title: Added Features
+      semver-field: minor
+      labels:
+        - enhancement
+        - feature
+        - minor
+
+    - name: bug-fix
+      title: Bug Fixes
+      semver-field: patch
+      labels:
+        - bug
+        - fix
+        - bug-fix
+        - patch
+
+    - name: breaking-feature
+      title: Breaking Changes
+      semver-field: major
+      labels:
+        - breaking
+        - backwards-incompatible
+        - breaking-change
+        - breaking-feature
+        - major
+        - detected-breaking-change
+
+    - name: removed-feature
+      title: Removed Features
+      semver-field: major
+      labels:
+        - removed
+
+    - name: deprecated-feature
+      title: Deprecated Features
+      semver-field: minor
+      labels:
+        - deprecated
+
+    - name: unknown
+      title: Additional Changes
+      semver-field: ""
+      labels: []

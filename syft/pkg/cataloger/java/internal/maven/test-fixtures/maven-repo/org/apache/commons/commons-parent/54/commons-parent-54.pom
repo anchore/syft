@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements... http://www.apache.org/licenses/LICENSE-2.0
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>27</version>
+  </parent>
+  <groupId>org.apache.commons</groupId>
+  <artifactId>commons-parent</artifactId>
+  <version>54</version>
+  <packaging>pom</packaging>
+  <name>Apache Commons Parent</name>
+  <description>The Apache Commons Parent POM provides common settings for all Apache Commons components.</description>
+  <inceptionYear>2006</inceptionYear>
+  <url>https://commons.apache.org/commons-parent-pom.html</url>
+
+  <properties>
+    <minimalMavenBuildVersion>3.3.9</minimalMavenBuildVersion>
+    <commons.release.version>${project.version}</commons.release.version>
+    <commons.release.isDistModule>true</commons.release.isDistModule>
+    <commons.releaseManagerName>Gary Gregory</commons.releaseManagerName>    
+    <commons.releaseManagerKey>86fdc7e2a11262cb</commons.releaseManagerKey>
+
+    <maven.compiler.source>1.3</maven.compiler.source>
+    <maven.compiler.target>1.3</maven.compiler.target>
+    <commons.compiler.fork>false</commons.compiler.fork>
+    <commons.compiler.compilerVersion />
+    <commons.compiler.javac />
+    <commons.compiler.javadoc />
+
+    <commons.animal-sniffer.version>1.22</commons.animal-sniffer.version>
+    <commons.animal-sniffer.signature.version>1.0</commons.animal-sniffer.signature.version>
+    <commons.assembly-plugin.version>3.4.2</commons.assembly-plugin.version>
+    <commons.build-helper.version>3.3.0</commons.build-helper.version>
+    <commons.build-plugin.version>1.12</commons.build-plugin.version>
+    <commons.changes.version>2.12.1</commons.changes.version>
+    <commons.checkstyle-plugin.version>3.2.0</commons.checkstyle-plugin.version>
+    <commons.checkstyle.version>9.3</commons.checkstyle.version>
+    <commons.cobertura.version>2.7</commons.cobertura.version>
+    <commons.compiler.version>3.10.1</commons.compiler.version>
+    <commons.coveralls.version>4.3.0</commons.coveralls.version>
+    <commons.coveralls.timestampFormat>EpochMillis</commons.coveralls.timestampFormat>
+    <commons.cyclonedx.version>2.7.1</commons.cyclonedx.version>
+    <commons.spdx.version>0.5.5</commons.spdx.version>
+    <commons.junit.version>5.9.0</commons.junit.version>
+
+    <commons.site-plugin.version>3.12.1</commons.site-plugin.version>
+    <commons.source-plugin.version>3.2.1</commons.source-plugin.version>
+    <commons.spotbugs.plugin.version>4.7.2.0</commons.spotbugs.plugin.version>
+    <commons.wagon-ssh.version>3.5.2</commons.wagon-ssh.version>
+
+    <!-- Default values for the download-page generation by commons-build-plugin -->
+    <commons.release.name>${project.artifactId}-${commons.release.version}</commons.release.name>
+    <commons.release.desc />
+    <commons.binary.suffix>-bin</commons.binary.suffix>
+    <commons.release.2.name>${project.artifactId}-${commons.release.2.version}</commons.release.2.name>
+    <commons.release.2.desc />
+    <commons.release.2.binary.suffix>-bin</commons.release.2.binary.suffix>
+    <commons.release.3.name>${project.artifactId}-${commons.release.3.version}</commons.release.3.name>
+    <commons.release.3.desc />
+    <commons.release.3.binary.suffix>-bin</commons.release.3.binary.suffix>
+    <commons.release.4.desc />
+    <commons.release.4.binary.suffix>-bin</commons.release.4.binary.suffix>
+
+    <!-- Default values for the jacoco-maven-plugin reports -->
+    <commons.jacoco.classRatio>1.00</commons.jacoco.classRatio>
+    <commons.jacoco.instructionRatio>0.90</commons.jacoco.instructionRatio>
+    <commons.jacoco.methodRatio>0.95</commons.jacoco.methodRatio>
+    <commons.jacoco.branchRatio>0.85</commons.jacoco.branchRatio>
+    <commons.jacoco.complexityRatio>0.85</commons.jacoco.complexityRatio>
+    <commons.jacoco.lineRatio>0.90</commons.jacoco.lineRatio>
+    <commons.jacoco.haltOnFailure>false</commons.jacoco.haltOnFailure>
+
+    <commons.componentid>${project.artifactId}</commons.componentid>
+
+    <commons.packageId>${project.artifactId}</commons.packageId>
+
+    <!-- Configuration properties for the OSGi maven-bundle-plugin -->
+    <commons.osgi.symbolicName>org.apache.commons.${commons.packageId}</commons.osgi.symbolicName>
+    <commons.osgi.export>org.apache.commons.*;version=${project.version};-noimport:=true</commons.osgi.export>
+    <commons.osgi.import>*</commons.osgi.import>
+    <commons.osgi.dynamicImport />
+    <commons.osgi.private />
+    <commons.osgi.excludeDependencies>true</commons.osgi.excludeDependencies>
+
+    <!-- location of any manifest file used by maven-jar-plugin -->
+    <commons.manifestfile>${project.build.directory}/osgi/MANIFEST.MF</commons.manifestfile>
+
+    <commons.deployment.protocol>scp</commons.deployment.protocol>
+
+    <commons.encoding>iso-8859-1</commons.encoding>
+    <commons.docEncoding>${commons.encoding}</commons.docEncoding>
+    <project.build.sourceEncoding>${commons.encoding}</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>${commons.encoding}</project.reporting.outputEncoding>
+    <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
+    <implementation.build>${scmBranch}@r${buildNumber}; ${maven.build.timestamp}</implementation.build>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${commons.junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>site-basic</id>
+      <properties>
+        <skipTests>true</skipTests>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <cobertura.skip>true</cobertura.skip>
+        <spotbugs.skip>true</spotbugs.skip>
+        <checkstyle.skip>true</checkstyle.skip>
+        <rat.skip>true</rat.skip> <!-- from version 0.12 -->
+        <jacoco.skip>true</jacoco.skip>
+        <skipSurefireReport>true</skipSurefireReport>
+      </properties>
+    </profile>
+  </profiles>
+</project>

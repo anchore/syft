@@ -1,12 +1,14 @@
 package swift
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -25,7 +27,7 @@ type podfileLock struct {
 }
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
-func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePodfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
@@ -61,14 +63,14 @@ func parsePodfileLock(_ file.Resolver, _ *generic.Environment, reader file.Locat
 
 		pkgs = append(
 			pkgs,
-			newPackage(
+			newCocoaPodsPackage(
 				podName,
 				podVersion,
 				pkgHash,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }

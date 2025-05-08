@@ -1,7 +1,10 @@
 package erlang
 
 import (
+	"context"
+
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -10,8 +13,8 @@ import (
 
 // parseRebarLock parses a rebar.lock and returns the discovered Elixir packages.
 //
-//nolint:funlen
-func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+
+func parseRebarLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseErlang(reader)
 	if err != nil {
 		return nil, nil, err
@@ -48,12 +51,12 @@ func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 			version = versionNode.Get(2).Get(1).String()
 		}
 
-		p := newPackage(
-			pkg.RebarLockMetadata{
+		p := newPackageFromRebar(
+			pkg.ErlangRebarLockEntry{
 				Name:    name,
 				Version: version,
 			},
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
 		pkgMap[name] = &p
@@ -69,12 +72,12 @@ func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 
 			sourcePkg := pkgMap[name]
 			if sourcePkg == nil {
-				log.WithFields("package", name).Warn("unable find source package")
+				log.WithFields("package", name).Debug("unable find source package")
 				continue
 			}
-			metadata, ok := sourcePkg.Metadata.(pkg.RebarLockMetadata)
+			metadata, ok := sourcePkg.Metadata.(pkg.ErlangRebarLockEntry)
 			if !ok {
-				log.WithFields("package", name).Warn("unable to extract rebar.lock metadata to add hash metadata")
+				log.WithFields("package", name).Debug("unable to extract rebar.lock metadata to add hash metadata")
 				continue
 			}
 
@@ -93,7 +96,7 @@ func parseRebarLock(_ file.Resolver, _ *generic.Environment, reader file.Locatio
 		p.SetID()
 		packages = append(packages, *p)
 	}
-	return packages, nil, nil
+	return packages, nil, unknown.IfEmptyf(packages, "unable to determine packages")
 }
 
 // integrity check

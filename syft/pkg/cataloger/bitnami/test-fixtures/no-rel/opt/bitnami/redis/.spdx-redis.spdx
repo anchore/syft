@@ -1,0 +1,38 @@
+{
+  "SPDXID": "SPDXRef-redis",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2024-08-08T11:12:35.680Z",
+    "creators": ["Organization: VMware, Inc."]
+  },
+  "name": "SPDX document for Redis(R) 7.4.0",
+  "dataLicense": "CC0-1.0",
+  "documentDescribes": ["SPDXRef-redis"],
+  "documentNamespace": "redis-7.4.0",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-redis",
+      "name": "redis",
+      "versionInfo": "7.4.0-0",
+      "downloadLocation": "http://download.redis.io/releases/redis-7.4.0.tar.gz",
+      "licenseConcluded": "RSALv2",
+      "licenseDeclared": "RSALv2",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:*:redis:redis:7.4.0:*:*:*:*:*:*:*"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:bitnami/redis@7.4.0-0?arch=arm64&distro=debian-12"
+        }
+      ],
+      "copyrightText": "NOASSERTION"
+    }
+  ],
+  "files": [],
+  "relationships": []
+}

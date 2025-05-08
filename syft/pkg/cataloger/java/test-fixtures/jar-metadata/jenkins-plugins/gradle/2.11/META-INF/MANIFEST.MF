@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Plugin-Dependencies: maven-plugin:3.14;resolution:=optional...snip
+Group-Id: org.jenkins-ci.plugins
+Minimum-Java-Version: 1.8
+Short-Name: gradle
+Extension-Name: gradle
+Long-Name: Gradle Plugin
+Jenkins-Version: 2.303.3
+Url: https://github.com/jenkinsci/gradle-plugin
+Compatible-Since-Version: 1.0
+Plugin-Version: 2.11
+Plugin-Developers: Stefan Wolf:wolfs:
+

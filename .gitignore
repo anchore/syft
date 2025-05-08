@@ -1,12 +1,40 @@
-CHANGELOG.md
-VERSION
-/test/results
+# local development tailoring
+go.work
+go.work.sum
+.tool-versions
+
+# app configuration
+/.syft.yaml
+
+# tool and bin directories
+.tmp/
+bin/
+/bin
+/.bin
+/build
 /dist
 /snapshot
-.server/
+/.tool
+/.task
+
+# changelog generation
+CHANGELOG.md
+VERSION
+
+# IDE configuration
 .vscode/
+.idea/
+.server/
 .history/
+
+# test related
 *.fingerprint
+/test/results
+coverage.txt
+*.log
+
+# probable archives
+.images
 *.tar
 *.jar
 *.war
@@ -14,12 +42,7 @@ VERSION
 *.jpi
 *.hpi
 *.zip
-.idea/
-*.log
-.images
-.tmp/
-coverage.txt
-bin/
+*.iml
 
 # Binaries for programs and plugins
 *.exe
@@ -42,3 +65,8 @@ bin/
 # attestation
 cosign.key
 cosign.pub
+
+# Byte-compiled object files for python
+__pycache__/
+*.py[cod]
+*$py.class

@@ -1,0 +1,152 @@
+{
+ "artifacts": [
+  {
+   "id": "2ff71a67fb024c86",
+   "name": "github.com/wagoodman/go-partybus",
+   "version": "v0.0.0-20230516145632-8ccac152c651",
+   "type": "go-module",
+   "foundBy": "go-module-file-cataloger",
+   "locations": [
+    {
+     "path": "/go.mod",
+     "annotations": {
+      "evidence": "primary"
+     }
+    }
+   ],
+   "licenses": [],
+   "language": "go",
+   "cpes": [
+    "cpe:2.3:a:wagoodman:go-partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*",
+    "cpe:2.3:a:wagoodman:go_partybus:v0.0.0-20230516145632-8ccac152c651:*:*:*:*:*:*:*"
+   ],
+   "purl": "pkg:golang/github.com/wagoodman/go-partybus@v0.0.0-20230516145632-8ccac152c651",
+   "metadataType": "GolangModMetadata",
+   "metadata": {}
+  }
+ ],
+ "artifactRelationships": [
+  {
+   "parent": "0bc762d3cbc1598aacb33550d32b58cf8a6f6c4b639a8520f1a8987a6747c288",
+   "child": "2ff71a67fb024c86",
+   "type": "contains"
+  },
+  {
+   "parent": "2ff71a67fb024c86",
+   "child": "3fc5a8d3d86e9790",
+   "type": "evident-by"
+  }
+ ],
+ "files": [
+  {
+   "id": "3fc5a8d3d86e9790",
+   "location": {
+    "path": "/go.mod"
+   }
+  }
+ ],
+ "source": {
+  "id": "0bc762d3cbc1598aacb33550d32b58cf8a6f6c4b639a8520f1a8987a6747c288",
+  "name": "go.mod",
+  "version": "sha256:sha256:dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd",
+  "type": "file",
+  "metadata": {
+   "path": ".tmp/go.mod",
+   "digests": [
+    {
+     "algorithm": "sha256",
+     "value": "dc333f342905248a52e424d8dfd061251d01867d01a4f9d7397144a775ff9ebd"
+    }
+   ],
+   "mimeType": "text/plain"
+  }
+ },
+ "distro": {},
+ "descriptor": {
+  "name": "syft",
+  "version": "0.91.0",
+  "configuration": {
+   "catalogers": null,
+   "package": {
+    "cataloger": {
+     "enabled": true,
+     "scope": "Squashed"
+    },
+    "search-unindexed-archives": false,
+    "search-indexed-archives": true
+   },
+   "golang": {
+    "search-local-mod-cache-licenses": false,
+    "local-mod-cache-dir": "",
+    "search-remote-licenses": false,
+    "proxy": "",
+    "no-proxy": ""
+   },
+   "linux-kernel": {
+    "catalog-modules": true
+   },
+   "python": {
+    "guess-unpinned-requirements": false
+   },
+   "file-metadata": {
+    "cataloger": {
+     "enabled": false,
+     "scope": "Squashed"
+    },
+    "digests": [
+     "sha256"
+    ]
+   },
+   "file-classification": {
+    "cataloger": {
+     "enabled": false,
+     "scope": "Squashed"
+    }
+   },
+   "file-contents": {
+    "cataloger": {
+     "enabled": false,
+     "scope": "Squashed"
+    },
+    "skip-files-above-size": 1048576,
+    "globs": null
+   },
+   "secrets": {
+    "cataloger": {
+     "enabled": false,
+     "scope": "AllLayers"
+    },
+    "additional-patterns": null,
+    "exclude-pattern-names": null,
+    "reveal-values": false,
+    "skip-files-above-size": 1048576
+   },
+   "registry": {
+    "insecure-skip-tls-verify": false,
+    "insecure-use-http": false,
+    "auth": null,
+    "ca-cert": ""
+   },
+   "exclude": [],
+   "platform": "",
+   "name": "",
+   "source": {
+    "name": "",
+    "version": "",
+    "file": {
+     "digests": [
+      "sha256"
+     ]
+    }
+   },
+   "parallelism": 1,
+   "default-image-pull-source": "",
+   "base-path": "",
+   "exclude-binary-overlap-by-ownership": true
+  }
+ },
+ "schema": {
+  "version": "11.0.0",
+  "url": "https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-11.0.0.json"
+ }
+}

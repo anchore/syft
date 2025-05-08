@@ -9,33 +9,45 @@ type Type string
 
 const (
 	// the full set of supported packages
-	UnknownPkg            Type = "UnknownPackage"
-	AlpmPkg               Type = "alpm"
-	ApkPkg                Type = "apk"
-	BinaryPkg             Type = "binary"
-	CocoapodsPkg          Type = "pod"
-	ConanPkg              Type = "conan"
-	DartPubPkg            Type = "dart-pub"
-	DebPkg                Type = "deb"
-	DotnetPkg             Type = "dotnet"
-	GemPkg                Type = "gem"
-	GoModulePkg           Type = "go-module"
-	GraalVMNativeImagePkg Type = "graalvm-native-image"
-	HackagePkg            Type = "hackage"
-	HexPkg                Type = "hex"
-	JavaPkg               Type = "java-archive"
-	JenkinsPluginPkg      Type = "jenkins-plugin"
-	KbPkg                 Type = "msrc-kb"
-	LinuxKernelPkg        Type = "linux-kernel"
-	LinuxKernelModulePkg  Type = "linux-kernel-module"
-	NixPkg                Type = "nix"
-	NpmPkg                Type = "npm"
-	PhpComposerPkg        Type = "php-composer"
-	PortagePkg            Type = "portage"
-	PythonPkg             Type = "python"
-	Rpkg                  Type = "R-package"
-	RpmPkg                Type = "rpm"
-	RustPkg               Type = "rust-crate"
+	UnknownPkg              Type = "UnknownPackage"
+	AlpmPkg                 Type = "alpm"
+	ApkPkg                  Type = "apk"
+	BinaryPkg               Type = "binary"
+	BitnamiPkg              Type = "bitnami"
+	CocoapodsPkg            Type = "pod"
+	ConanPkg                Type = "conan"
+	DartPubPkg              Type = "dart-pub"
+	DebPkg                  Type = "deb"
+	DotnetPkg               Type = "dotnet"
+	ErlangOTPPkg            Type = "erlang-otp"
+	GemPkg                  Type = "gem"
+	GithubActionPkg         Type = "github-action"
+	GithubActionWorkflowPkg Type = "github-action-workflow"
+	GoModulePkg             Type = "go-module"
+	GraalVMNativeImagePkg   Type = "graalvm-native-image"
+	HackagePkg              Type = "hackage"
+	HexPkg                  Type = "hex"
+	JavaPkg                 Type = "java-archive"
+	JenkinsPluginPkg        Type = "jenkins-plugin"
+	KbPkg                   Type = "msrc-kb"
+	LinuxKernelPkg          Type = "linux-kernel"
+	LinuxKernelModulePkg    Type = "linux-kernel-module"
+	NixPkg                  Type = "nix"
+	NpmPkg                  Type = "npm"
+	OpamPkg                 Type = "opam"
+	PhpComposerPkg          Type = "php-composer"
+	PhpPeclPkg              Type = "php-pecl" // Deprecated: will be removed in syft v2.0
+	PhpPearPkg              Type = "php-pear"
+	PortagePkg              Type = "portage"
+	PythonPkg               Type = "python"
+	Rpkg                    Type = "R-package"
+	LuaRocksPkg             Type = "lua-rocks"
+	RpmPkg                  Type = "rpm"
+	RustPkg                 Type = "rust-crate"
+	SwiftPkg                Type = "swift"
+	SwiplPackPkg            Type = "swiplpack"
+	TerraformPkg            Type = "terraform"
+	WordpressPluginPkg      Type = "wordpress-plugin"
 )
 
 // AllPkgs represents all supported package types
@@ -43,12 +55,17 @@ var AllPkgs = []Type{
 	AlpmPkg,
 	ApkPkg,
 	BinaryPkg,
+	BitnamiPkg,
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
 	DebPkg,
 	DotnetPkg,
+	ErlangOTPPkg,
 	GemPkg,
+	GithubActionPkg,
+	GithubActionWorkflowPkg,
+	GraalVMNativeImagePkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,
@@ -59,21 +76,33 @@ var AllPkgs = []Type{
 	LinuxKernelModulePkg,
 	NixPkg,
 	NpmPkg,
+	OpamPkg,
 	PhpComposerPkg,
+	PhpPeclPkg,
+	PhpPearPkg,
 	PortagePkg,
 	PythonPkg,
 	Rpkg,
+	LuaRocksPkg,
 	RpmPkg,
 	RustPkg,
+	SwiftPkg,
+	SwiplPackPkg,
+	TerraformPkg,
+	WordpressPluginPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
+//
+//nolint:funlen, gocyclo
 func (t Type) PackageURLType() string {
 	switch t {
 	case AlpmPkg:
 		return "alpm"
 	case ApkPkg:
 		return packageurl.TypeAlpine
+	case BitnamiPkg:
+		return packageurl.TypeBitnami
 	case CocoapodsPkg:
 		return packageurl.TypeCocoapods
 	case ConanPkg:
@@ -83,11 +112,16 @@ func (t Type) PackageURLType() string {
 	case DebPkg:
 		return "deb"
 	case DotnetPkg:
-		return packageurl.TypeDotnet
+		return "dotnet"
+	case ErlangOTPPkg:
+		return packageurl.TypeOTP
 	case GemPkg:
 		return packageurl.TypeGem
 	case HexPkg:
 		return packageurl.TypeHex
+	case GithubActionPkg, GithubActionWorkflowPkg:
+		// note: this is not a real purl type, but it is the closest thing we have for now
+		return packageurl.TypeGithub
 	case GoModulePkg:
 		return packageurl.TypeGolang
 	case HackagePkg:
@@ -100,20 +134,34 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
+	case PhpPearPkg, PhpPeclPkg:
+		return "pear"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
 		return "portage"
+	case LuaRocksPkg:
+		return packageurl.TypeLuaRocks
 	case NixPkg:
 		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
+	case OpamPkg:
+		return "opam"
 	case Rpkg:
 		return packageurl.TypeCran
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
 		return "cargo"
+	case SwiftPkg:
+		return packageurl.TypeSwift
+	case SwiplPackPkg:
+		return "swiplpack"
+	case TerraformPkg:
+		return "terraform"
+	case WordpressPluginPkg:
+		return "wordpress-plugin"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -133,33 +181,30 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
+//nolint:funlen,gocyclo
 func TypeByName(name string) Type {
 	switch name {
-	case packageurl.TypeDebian:
-		return DebPkg
-	case packageurl.TypeRPM:
-		return RpmPkg
 	case "alpm":
 		return AlpmPkg
 	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
-	case packageurl.TypeMaven:
-		return JavaPkg
+	case packageurl.TypeBitnami:
+		return BitnamiPkg
+	case packageurl.TypeDebian:
+		return DebPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
+	case "pear", "pecl":
+		return PhpPearPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
-	case packageurl.TypeNPM:
-		return NpmPkg
-	case packageurl.TypePyPi:
-		return PythonPkg
 	case packageurl.TypeGem:
 		return GemPkg
 	case "cargo", "crate":
 		return RustPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	case packageurl.TypeDotnet:
+	case "dotnet": // here to support legacy use cases
 		return DotnetPkg
 	case packageurl.TypeCocoapods:
 		return CocoapodsPkg
@@ -167,18 +212,40 @@ func TypeByName(name string) Type {
 		return ConanPkg
 	case packageurl.TypeHackage:
 		return HackagePkg
-	case "portage":
-		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case packageurl.TypeLuaRocks:
+		return LuaRocksPkg
+	case packageurl.TypeMaven:
+		return JavaPkg
+	case packageurl.TypeNPM:
+		return NpmPkg
+	case packageurl.TypePyPi:
+		return PythonPkg
+	case "portage":
+		return PortagePkg
+	case packageurl.TypeOTP:
+		return ErlangOTPPkg
 	case "linux-kernel":
 		return LinuxKernelPkg
 	case "linux-kernel-module":
 		return LinuxKernelModulePkg
 	case "nix":
 		return NixPkg
+	case "opam":
+		return OpamPkg
 	case packageurl.TypeCran:
 		return Rpkg
+	case packageurl.TypeRPM:
+		return RpmPkg
+	case packageurl.TypeSwift:
+		return SwiftPkg
+	case "swiplpack":
+		return SwiplPackPkg
+	case "terraform":
+		return TerraformPkg
+	case "wordpress-plugin":
+		return WordpressPluginPkg
 	default:
 		return UnknownPkg
 	}

@@ -1,0 +1,124 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:redacted",
+  "version": 1,
+  "metadata": {
+    "timestamp": "timestamp:redacted",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "anchore",
+          "name": "syft",
+          "version": "v0.42.0-bogus"
+        }
+      ]
+    },
+    "component": {
+      "bom-ref":"redacted",
+      "type": "file",
+      "name": "some/path"
+    }
+  },
+  "components": [
+    {
+      "bom-ref":"redacted",
+      "type": "library",
+      "name": "package-1",
+      "version": "1.0.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "a-purl-2",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-1"
+        },
+        {
+          "name": "syft:package:language",
+          "value": "python"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "python"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "python-package"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/some/path/pkg1"
+        }
+      ]
+    },
+    {
+      "bom-ref":"redacted",
+      "type": "library",
+      "name": "package-2",
+      "version": "2.0.1",
+      "cpe": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+      "purl": "pkg:deb/debian/package-2@2.0.1",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "the-cataloger-2"
+        },
+        {
+          "name": "syft:package:type",
+          "value": "deb"
+        },
+        {
+          "name": "syft:package:metadataType",
+          "value": "dpkg-db-entry"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/some/path/pkg1"
+        },
+        {
+          "name": "syft:metadata:installedSize",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "bom-ref":"redacted",
+      "type": "operating-system",
+      "name": "debian",
+      "version": "1.2.3",
+      "description": "debian",
+      "swid": {
+        "tagId": "debian",
+        "name": "debian",
+        "version": "1.2.3"
+      },
+      "properties": [
+        {
+          "name": "syft:distro:id",
+          "value": "debian"
+        },
+        {
+          "name": "syft:distro:idLike:0",
+          "value": "like!"
+        },
+        {
+          "name": "syft:distro:prettyName",
+          "value": "debian"
+        },
+        {
+          "name": "syft:distro:versionID",
+          "value": "1.2.3"
+        }
+      ]
+    }
+  ]
+}

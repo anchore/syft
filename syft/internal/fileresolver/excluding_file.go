@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -16,9 +17,9 @@ type excluding struct {
 	excludeFn excludeFn
 }
 
-// NewExcluding create a new resolver which wraps the provided delegate and excludes
+// NewExcludingDecorator create a new resolver which wraps the provided delegate and excludes
 // entries based on a provided path exclusion function
-func NewExcluding(delegate file.Resolver, excludeFn excludeFn) file.Resolver {
+func NewExcludingDecorator(delegate file.Resolver, excludeFn excludeFn) file.Resolver {
 	return &excluding{
 		delegate,
 		excludeFn,
@@ -69,13 +70,18 @@ func (r *excluding) RelativeFileByPath(location file.Location, path string) *fil
 	return l
 }
 
-func (r *excluding) AllLocations() <-chan file.Location {
+func (r *excluding) AllLocations(ctx context.Context) <-chan file.Location {
 	c := make(chan file.Location)
 	go func() {
 		defer close(c)
-		for location := range r.delegate.AllLocations() {
+		for location := range r.delegate.AllLocations(ctx) {
 			if !locationMatches(&location, r.excludeFn) {
-				c <- location
+				select {
+				case <-ctx.Done():
+					return
+				case c <- location:
+					continue
+				}
 			}
 		}
 	}()
@@ -83,7 +89,7 @@ func (r *excluding) AllLocations() <-chan file.Location {
 }
 
 func locationMatches(location *file.Location, exclusionFn excludeFn) bool {
-	return exclusionFn(location.RealPath) || exclusionFn(location.VirtualPath)
+	return exclusionFn(location.RealPath) || exclusionFn(location.AccessPath)
 }
 
 func filterLocations(locations []file.Location, err error, exclusionFn excludeFn) ([]file.Location, error) {

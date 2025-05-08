@@ -3,7 +3,7 @@ package artifact
 import (
 	"fmt"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 )
 
 // ID represents a unique value for each package added to a package catalog.
@@ -14,7 +14,7 @@ type Identifiable interface {
 }
 
 func IDByHash(obj interface{}) (ID, error) {
-	f, err := hashstructure.Hash(obj, hashstructure.FormatV2, &hashstructure.HashOptions{
+	f, err := hashstructure.Hash(obj, &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})
@@ -22,5 +22,5 @@ func IDByHash(obj interface{}) (ID, error) {
 		return "", fmt.Errorf("could not build ID for object=%+v: %w", obj, err)
 	}
 
-	return ID(fmt.Sprintf("%x", f)), nil
+	return ID(fmt.Sprintf("%016x", f)), nil
 }

@@ -12,8 +12,6 @@ import (
 
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
-	"github.com/anchore/syft/syft/file/cataloger/secrets"
-	"github.com/anchore/syft/syft/pkg/cataloger"
 )
 
 type ErrBadPayload struct {
@@ -23,7 +21,7 @@ type ErrBadPayload struct {
 }
 
 func (e *ErrBadPayload) Error() string {
-	return fmt.Sprintf("event='%s' has bad event payload field='%v': '%+v'", string(e.Type), e.Field, e.Value)
+	return fmt.Sprintf("event='%s' has bad event payload field=%q: %q", string(e.Type), e.Field, e.Value)
 }
 
 func newPayloadErr(t partybus.EventType, field string, value interface{}) error {
@@ -39,58 +37,6 @@ func checkEventType(actual, expected partybus.EventType) error {
 		return newPayloadErr(expected, "Type", actual)
 	}
 	return nil
-}
-
-func ParsePackageCatalogerStarted(e partybus.Event) (*cataloger.Monitor, error) {
-	if err := checkEventType(e.Type, event.PackageCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	monitor, ok := e.Value.(cataloger.Monitor)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return &monitor, nil
-}
-
-func ParseSecretsCatalogingStarted(e partybus.Event) (*secrets.Monitor, error) {
-	if err := checkEventType(e.Type, event.SecretsCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	monitor, ok := e.Value.(secrets.Monitor)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return &monitor, nil
-}
-
-func ParseFileMetadataCatalogingStarted(e partybus.Event) (progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.FileMetadataCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	prog, ok := e.Value.(progress.StagedProgressable)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return prog, nil
-}
-
-func ParseFileDigestsCatalogingStarted(e partybus.Event) (progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.FileDigestsCatalogerStarted); err != nil {
-		return nil, err
-	}
-
-	prog, ok := e.Value.(progress.StagedProgressable)
-	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return prog, nil
 }
 
 func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgressable, error) {
@@ -111,61 +57,24 @@ func ParseFileIndexingStarted(e partybus.Event) (string, progress.StagedProgress
 	return path, prog, nil
 }
 
-func ParseCatalogerTaskStarted(e partybus.Event) (*event.CatalogerTask, error) {
+func ParseCatalogerTaskStarted(e partybus.Event) (progress.StagedProgressable, *monitor.GenericTask, error) {
 	if err := checkEventType(e.Type, event.CatalogerTaskStarted); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	source, ok := e.Source.(*event.CatalogerTask)
+	var mon progress.StagedProgressable
+
+	source, ok := e.Source.(monitor.GenericTask)
 	if !ok {
-		return nil, newPayloadErr(e.Type, "Source", e.Source)
+		return nil, nil, newPayloadErr(e.Type, "Source", e.Source)
 	}
 
-	return source, nil
-}
-
-func ParseExit(e partybus.Event) (func() error, error) {
-	if err := checkEventType(e.Type, event.Exit); err != nil {
-		return nil, err
-	}
-
-	fn, ok := e.Value.(func() error)
+	mon, ok = e.Value.(progress.StagedProgressable)
 	if !ok {
-		return nil, newPayloadErr(e.Type, "Value", e.Value)
+		mon = nil
 	}
 
-	return fn, nil
-}
-
-func ParseAppUpdateAvailable(e partybus.Event) (string, error) {
-	if err := checkEventType(e.Type, event.AppUpdateAvailable); err != nil {
-		return "", err
-	}
-
-	newVersion, ok := e.Value.(string)
-	if !ok {
-		return "", newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return newVersion, nil
-}
-
-func ParseImportStarted(e partybus.Event) (string, progress.StagedProgressable, error) {
-	if err := checkEventType(e.Type, event.ImportStarted); err != nil {
-		return "", nil, err
-	}
-
-	host, ok := e.Source.(string)
-	if !ok {
-		return "", nil, newPayloadErr(e.Type, "Source", e.Source)
-	}
-
-	prog, ok := e.Value.(progress.StagedProgressable)
-	if !ok {
-		return "", nil, newPayloadErr(e.Type, "Value", e.Value)
-	}
-
-	return host, prog, nil
+	return mon, &source, nil
 }
 
 func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progressable, *monitor.GenericTask, error) {
@@ -183,5 +92,63 @@ func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progres
 		return nil, nil, nil, newPayloadErr(e.Type, "Value", e.Value)
 	}
 
-	return sp.Reader, sp.Manual, &source, nil
+	return sp.Reader, sp.Progressable, &source, nil
+}
+
+// CLI event types
+
+type UpdateCheck struct {
+	New     string
+	Current string
+}
+
+func ParseCLIAppUpdateAvailable(e partybus.Event) (*UpdateCheck, error) {
+	if err := checkEventType(e.Type, event.CLIAppUpdateAvailable); err != nil {
+		return nil, err
+	}
+
+	updateCheck, ok := e.Value.(UpdateCheck)
+	if !ok {
+		return nil, newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return &updateCheck, nil
+}
+
+func ParseCLIReport(e partybus.Event) (string, string, error) {
+	if err := checkEventType(e.Type, event.CLIReport); err != nil {
+		return "", "", err
+	}
+
+	context, ok := e.Source.(string)
+	if !ok {
+		// this is optional
+		context = ""
+	}
+
+	report, ok := e.Value.(string)
+	if !ok {
+		return "", "", newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return context, report, nil
+}
+
+func ParseCLINotification(e partybus.Event) (string, string, error) {
+	if err := checkEventType(e.Type, event.CLINotification); err != nil {
+		return "", "", err
+	}
+
+	context, ok := e.Source.(string)
+	if !ok {
+		// this is optional
+		context = ""
+	}
+
+	notification, ok := e.Value.(string)
+	if !ok {
+		return "", "", newPayloadErr(e.Type, "Value", e.Value)
+	}
+
+	return context, notification, nil
 }

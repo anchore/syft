@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,14 +9,12 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
-
-// integrity check
-var _ generic.Parser = parsePackageLock
 
 // packageLock represents a JavaScript package.lock json file
 type packageLock struct {
@@ -30,6 +29,7 @@ type lockDependency struct {
 	Version   string `json:"version"`
 	Resolved  string `json:"resolved"`
 	Integrity string `json:"integrity"`
+	Dev       bool   `json:"dev"`
 }
 
 type lockPackage struct {
@@ -38,16 +38,27 @@ type lockPackage struct {
 	Resolved  string             `json:"resolved"`
 	Integrity string             `json:"integrity"`
 	License   packageLockLicense `json:"license"`
+	Dev       bool               `json:"dev"`
 }
 
 // packageLockLicense
 type packageLockLicense []string
 
+type genericPackageLockAdapter struct {
+	cfg CatalogerConfig
+}
+
+func newGenericPackageLockAdapter(cfg CatalogerConfig) genericPackageLockAdapter {
+	return genericPackageLockAdapter{
+		cfg: cfg,
+	}
+}
+
 // parsePackageLock parses a package-lock.json and returns the discovered JavaScript packages.
-func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (a genericPackageLockAdapter) parsePackageLock(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find package-lock.json files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the root project
-	if pathContainsNodeModulesDirectory(reader.AccessPath()) {
+	if pathContainsNodeModulesDirectory(reader.Path()) {
 		return nil, nil, nil
 	}
 
@@ -65,7 +76,12 @@ func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader fil
 
 	if lock.LockfileVersion == 1 {
 		for name, pkgMeta := range lock.Dependencies {
-			pkgs = append(pkgs, newPackageLockV1Package(resolver, reader.Location, name, pkgMeta))
+			// skip packages that are only present as a dev dependency
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+				continue
+			}
+
+			pkgs = append(pkgs, newPackageLockV1Package(a.cfg, resolver, reader.Location, name, pkgMeta))
 		}
 	}
 
@@ -78,6 +94,11 @@ func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader fil
 				name = pkgMeta.Name
 			}
 
+			// skip packages that are only present as a dev dependency
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+				continue
+			}
+
 			// handles alias names
 			if pkgMeta.Name != "" {
 				name = pkgMeta.Name
@@ -85,14 +106,14 @@ func parsePackageLock(resolver file.Resolver, _ *generic.Environment, reader fil
 
 			pkgs = append(
 				pkgs,
-				newPackageLockV2Package(resolver, reader.Location, getNameFromPath(name), pkgMeta),
+				newPackageLockV2Package(a.cfg, resolver, reader.Location, getNameFromPath(name), pkgMeta),
 			)
 		}
 	}
 
 	pkg.Sort(pkgs)
 
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {

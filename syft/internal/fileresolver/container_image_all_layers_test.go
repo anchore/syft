@@ -1,9 +1,8 @@
 package fileresolver
 
 import (
-	"fmt"
+	"context"
 	"io"
-	"runtime"
 	"sort"
 	"testing"
 
@@ -95,9 +94,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.linkPath)
 			if !c.forcePositiveHasPath {
@@ -111,9 +108,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 			}
 
 			refs, err := resolver.FilesByPath(c.linkPath)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(refs) != len(c.resolutions) {
 				t.Fatalf("unexpected number of resolutions: %d", len(refs))
@@ -209,14 +204,10 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageAllLayers(img)
-			if err != nil {
-				t.Fatalf("could not create resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			refs, err := resolver.FilesByGlob(c.glob)
-			if err != nil {
-				t.Fatalf("could not use resolver: %+v", err)
-			}
+			require.NoError(t, err)
 
 			if len(refs) != len(c.resolutions) {
 				t.Fatalf("unexpected number of resolutions: %d", len(refs))
@@ -368,7 +359,9 @@ func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.img.FileCatalog.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir() {
@@ -523,25 +516,32 @@ func Test_imageAllLayersResolver_resolvesLinks(t *testing.T) {
 func TestAllLayersResolver_AllLocations(t *testing.T) {
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
-	arch := "x86_64"
-	if runtime.GOARCH == "arm64" {
-		arch = "aarch64"
-	}
-
 	resolver, err := NewFromContainerImageAllLayers(img)
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	visibleSet := strset.New()
+	hiddenSet := strset.New()
+	for loc := range resolver.AllLocations(ctx) {
 		paths.Add(loc.RealPath)
+		switch loc.Annotations[file.VisibleAnnotationKey] {
+		case file.VisibleAnnotation:
+			visibleSet.Add(loc.RealPath)
+		case file.HiddenAnnotation:
+			hiddenSet.Add(loc.RealPath)
+		case "":
+			t.Errorf("expected visibility annotation for location: %+v", loc)
+		}
 	}
-	expected := []string{
+	visible := []string{
 		"/Dockerfile",
-		"/file-1.txt",
-		"/file-3.txt",
+		"/file-3.txt", // this is a deadlink pointing to /file-1.txt (which has been deleted)
 		"/target",
 		"/target/file-2.txt",
-
+	}
+	hidden := []string{
 		"/.wh.bin",
 		"/.wh.file-1.txt",
 		"/.wh.lib",
@@ -629,6 +629,7 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		"/bin/usleep",
 		"/bin/watch",
 		"/bin/zcat",
+		"/file-1.txt",
 		"/lib",
 		"/lib/apk",
 		"/lib/apk/db",
@@ -638,9 +639,9 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		"/lib/apk/db/triggers",
 		"/lib/apk/exec",
 		"/lib/firmware",
-		fmt.Sprintf("/lib/ld-musl-%s.so.1", arch),
+		"/lib/ld-musl-x86_64.so.1",
 		"/lib/libapk.so.3.12.0",
-		fmt.Sprintf("/lib/libc.musl-%s.so.1", arch),
+		"/lib/libc.musl-x86_64.so.1",
 		"/lib/libcrypto.so.3",
 		"/lib/libssl.so.3",
 		"/lib/libz.so.1",
@@ -651,12 +652,41 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		"/lib/sysctl.d/00-alpine.conf",
 	}
 
-	// depending on how the image is built (either from linux or mac), sys and proc might accidentally be added to the image.
-	// this isn't important for the test, so we remove them.
-	paths.Remove("/proc", "/sys", "/dev", "/etc")
+	var expected []string
+	expected = append(expected, visible...)
+	expected = append(expected, hidden...)
+	sort.Strings(expected)
+
+	cleanPaths := func(s *strset.Set) {
+		// depending on how the image is built (either from linux or mac), sys and proc might accidentally be added to the image.
+		// this isn't important for the test, so we remove them.
+		s.Remove("/proc", "/sys", "/dev", "/etc")
+
+		// Remove cache created by Mac Rosetta when emulating different arches
+		s.Remove("/.cache/rosetta", "/.cache")
+	}
+
+	cleanPaths(paths)
+	cleanPaths(visibleSet)
+	cleanPaths(hiddenSet)
 
 	pathsList := paths.List()
 	sort.Strings(pathsList)
+	visibleSetList := visibleSet.List()
+	sort.Strings(visibleSetList)
+	hiddenSetList := hiddenSet.List()
+	sort.Strings(hiddenSetList)
 
-	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
+	if d := cmp.Diff(expected, pathsList); d != "" {
+		t.Errorf("unexpected paths (-want +got):\n%s", d)
+	}
+
+	if d := cmp.Diff(visible, visibleSetList); d != "" {
+		t.Errorf("unexpected visible paths (-want +got):\n%s", d)
+	}
+
+	if d := cmp.Diff(hidden, hiddenSetList); d != "" {
+		t.Errorf("unexpected hidden paths (-want +got):\n%s", d)
+	}
+
 }

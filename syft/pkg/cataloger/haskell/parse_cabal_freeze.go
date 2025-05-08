@@ -2,6 +2,7 @@ package haskell
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -16,13 +17,13 @@ import (
 var _ generic.Parser = parseCabalFreeze
 
 // parseCabalFreeze is a parser function for cabal.project.freeze contents, returning all packages discovered.
-func parseCabalFreeze(_ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseCabalFreeze(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	var pkgs []pkg.Package
 	for {
 		line, err := r.ReadString('\n')
 		switch {
-		case errors.Is(io.EOF, err):
+		case errors.Is(err, io.EOF):
 			return pkgs, nil, nil
 		case err != nil:
 			return nil, nil, fmt.Errorf("failed to parse cabal.project.freeze file: %w", err)
@@ -52,7 +53,7 @@ func parseCabalFreeze(_ file.Resolver, _ *generic.Environment, reader file.Locat
 				pkgName,
 				pkgVersion,
 				nil,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.Location,
 			),
 		)
 	}

@@ -1,11 +1,11 @@
 package pkg
 
 import (
+	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
 
-	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 )
@@ -97,7 +97,7 @@ func TestLicenseSet_Add(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           internal.NewStringSet("https://example.com"),
+					URLs:           []string{"https://example.com"},
 					Locations:      file.NewLocationSet(file.NewLocation("/place")),
 				},
 			},
@@ -115,15 +115,31 @@ func TestLicenseSet_Add(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Concluded,
-					URLs:           internal.NewStringSet(),
 					Locations:      file.NewLocationSet(),
 				},
 				{
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           internal.NewStringSet("https://example.com"),
+					URLs:           []string{"https://example.com"},
 					Locations:      file.NewLocationSet(file.NewLocation("/place")),
+				},
+			},
+		},
+		{
+			name: "licenses that are unknown with different contents can exist in the same set",
+			licenses: []License{
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+			},
+			want: []License{
+				{
+					Contents: readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
+					Type:     license.Declared,
+				},
+				{
+					Contents: readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
+					Type:     license.Declared,
 				},
 			},
 		},
@@ -133,7 +149,40 @@ func TestLicenseSet_Add(t *testing.T) {
 			s := NewLicenseSet()
 			s.Add(tt.licenses...)
 			testMe := s.ToSlice()
-			assert.Equal(t, tt.want, testMe)
+			if d := cmp.Diff(tt.want, testMe, cmp.Comparer(defaultLicenseComparer)); d != "" {
+				t.Errorf("unexpected license set (-want +got):\n%s", d)
+			}
 		})
 	}
+}
+
+func defaultLocationComparer(x, y file.Location) bool {
+	return cmp.Equal(x.Coordinates, y.Coordinates) && cmp.Equal(x.AccessPath, y.AccessPath)
+}
+
+func defaultLicenseComparer(x, y License) bool {
+	return cmp.Equal(x, y, cmp.Comparer(defaultLocationComparer), cmp.Comparer(
+		func(x, y file.LocationSet) bool {
+			xs := x.ToSlice()
+			ys := y.ToSlice()
+			if len(xs) != len(ys) {
+				return false
+			}
+			for i, xe := range xs {
+				ye := ys[i]
+				if !defaultLocationComparer(xe, ye) {
+					return false
+				}
+			}
+			return true
+		},
+	))
+}
+
+func readFileAsString(filepath string) string {
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }

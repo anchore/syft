@@ -1,11 +1,14 @@
  flask == 4.0.0
 # a line that is ignored
-sqlalchemy >= 1.0.0
+sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0
  foo == 1.0.0 # a comment that needs to be ignored
+bar >= 1.0.0, <= 2.0.0, \
+  != 3.0.0, <= 3.0.0
 -e https://github.com/pecan/pecan.git
 -r other-requirements.txt
 --requirements super-secretrequirements.txt
 SomeProject ==5.4 ; python_version < '3.8'
+dots-._allowed == 1.0.0
 coverage != 3.5 # Version Exclusion. Anything except version 3.5
 numpyNew; sys_platform == 'win32'
 numpy >= 3.4.1; sys_platform == 'win32'
@@ -20,3 +23,4 @@ argh==0.26.3 --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971
 celery[redis, pytest] == 4.4.7 # should remove [redis, pytest]
 requests[security] == 2.8.* ; python_version < "2.7" and sys_platform == "linux"
 GithubSampleProject == 3.7.1 @ git+https://github.com/owner/repo@releases/tag/v3.7.1
+FrIeNdLy-_-bArD == 1.0.0

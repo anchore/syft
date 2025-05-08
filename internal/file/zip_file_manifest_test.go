@@ -117,6 +117,10 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 			"some-dir/a-file.txt",
 		},
 		{
+			"*/A-file.txt",
+			"some-dir/a-file.txt",
+		},
+		{
 			"**/*.zip",
 			"nested.zip",
 		},
@@ -126,7 +130,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 		t.Run(tc.glob, func(t *testing.T) {
 			glob := tc.glob
 
-			results := z.GlobMatch(glob)
+			results := z.GlobMatch(true, glob)
 
 			if len(results) == 1 && results[0] == tc.expected {
 				return

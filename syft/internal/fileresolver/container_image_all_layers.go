@@ -1,6 +1,7 @@
 package fileresolver
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -15,8 +16,9 @@ var _ file.Resolver = (*ContainerImageAllLayers)(nil)
 
 // ContainerImageAllLayers implements path and content access for the AllLayers source option for container image data sources.
 type ContainerImageAllLayers struct {
-	img    *image.Image
-	layers []int
+	img            *image.Image
+	layers         []int
+	markVisibility bool
 }
 
 // NewFromContainerImageAllLayers returns a new resolver from the perspective of all image layers for the given image.
@@ -32,6 +34,10 @@ func NewFromContainerImageAllLayers(img *image.Image) (*ContainerImageAllLayers,
 	return &ContainerImageAllLayers{
 		img:    img,
 		layers: layers,
+		// This is the entrypoint for the user-facing implementation, which should always annotate locations.
+		// We have other resolvers that use this implementation that are already responsible
+		// for marking visibility, so we don't need to do it all of the time (a small performance optimization).
+		markVisibility: true,
 	}, nil
 }
 
@@ -56,7 +62,7 @@ func (r *ContainerImageAllLayers) fileByRef(ref stereoscopeFile.Reference, uniqu
 		return nil, fmt.Errorf("unable to fetch metadata (ref=%+v): %w", ref, err)
 	}
 
-	if entry.Metadata.Type == stereoscopeFile.TypeHardLink || entry.Metadata.Type == stereoscopeFile.TypeSymLink {
+	if entry.Type == stereoscopeFile.TypeHardLink || entry.Type == stereoscopeFile.TypeSymLink {
 		// a link may resolve in this layer or higher, assuming a squashed tree is used to search
 		// we should search all possible resolutions within the valid source
 		for _, subLayerIdx := range r.layers[layerIdx:] {
@@ -101,7 +107,7 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 				if err != nil {
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 				}
-				if metadata.Metadata.IsDir() {
+				if metadata.IsDir() {
 					continue
 				}
 			}
@@ -111,7 +117,9 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 				return nil, err
 			}
 			for _, result := range results {
-				uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(path, result, r.img))
+				l := file.NewLocationFromImage(path, result, r.img)
+				r.annotateLocation(&l)
+				uniqueLocations = append(uniqueLocations, l)
 			}
 		}
 	}
@@ -119,7 +127,8 @@ func (r *ContainerImageAllLayers) FilesByPath(paths ...string) ([]file.Location,
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-// nolint:gocognit
+//
+//nolint:gocognit
 func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]file.Location, 0)
@@ -144,7 +153,7 @@ func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Locati
 						return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 					}
 					// don't consider directories
-					if metadata.Metadata.IsDir() {
+					if metadata.IsDir() {
 						continue
 					}
 				}
@@ -154,7 +163,9 @@ func (r *ContainerImageAllLayers) FilesByGlob(patterns ...string) ([]file.Locati
 					return nil, err
 				}
 				for _, refResult := range refResults {
-					uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(string(result.RequestPath), refResult, r.img))
+					l := file.NewLocationFromImage(string(result.RequestPath), refResult, r.img)
+					r.annotateLocation(&l)
+					uniqueLocations = append(uniqueLocations, l)
 				}
 			}
 		}
@@ -170,7 +181,7 @@ func (r *ContainerImageAllLayers) RelativeFileByPath(location file.Location, pat
 
 	exists, relativeRef, err := layer.SquashedTree.File(stereoscopeFile.Path(path), filetree.FollowBasenameLinks)
 	if err != nil {
-		log.Errorf("failed to find path=%q in squash: %+w", path, err)
+		log.Errorf("failed to find path=%q in squash: %+v", path, err)
 		return nil
 	}
 	if !exists && !relativeRef.HasReference() {
@@ -178,6 +189,7 @@ func (r *ContainerImageAllLayers) RelativeFileByPath(location file.Location, pat
 	}
 
 	relativeLocation := file.NewLocationFromImage(path, *relativeRef.Reference, r.img)
+	r.annotateLocation(&relativeLocation)
 
 	return &relativeLocation
 }
@@ -190,13 +202,13 @@ func (r *ContainerImageAllLayers) FileContentsByLocation(location file.Location)
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
 	}
 
-	switch entry.Metadata.Type {
+	switch entry.Type {
 	case stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
-		newLocation := r.RelativeFileByPath(location, location.VirtualPath)
+		newLocation := r.RelativeFileByPath(location, location.AccessPath)
 		if newLocation == nil {
 			// this is a dead link
-			return nil, fmt.Errorf("no contents for location=%q", location.VirtualPath)
+			return nil, fmt.Errorf("no contents for location=%q", location.AccessPath)
 		}
 		location = *newLocation
 	case stereoscopeFile.TypeDirectory:
@@ -226,7 +238,9 @@ func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Locat
 				return nil, err
 			}
 			for _, refResult := range refResults {
-				uniqueLocations = append(uniqueLocations, file.NewLocationFromImage(string(ref.RequestPath), refResult, r.img))
+				l := file.NewLocationFromImage(string(ref.RequestPath), refResult, r.img)
+				r.annotateLocation(&l)
+				uniqueLocations = append(uniqueLocations, l)
 			}
 		}
 	}
@@ -234,14 +248,21 @@ func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Locat
 	return uniqueLocations, nil
 }
 
-func (r *ContainerImageAllLayers) AllLocations() <-chan file.Location {
+func (r *ContainerImageAllLayers) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
 		for _, layerIdx := range r.layers {
 			tree := r.img.Layers[layerIdx].Tree
 			for _, ref := range tree.AllFiles(stereoscopeFile.AllTypes()...) {
-				results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
+				l := file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
+				r.annotateLocation(&l)
+				select {
+				case <-ctx.Done():
+					return
+				case results <- l:
+					continue
+				}
 			}
 		}
 	}()
@@ -250,4 +271,37 @@ func (r *ContainerImageAllLayers) AllLocations() <-chan file.Location {
 
 func (r *ContainerImageAllLayers) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	return fileMetadataByLocation(r.img, location)
+}
+
+func (r *ContainerImageAllLayers) annotateLocation(l *file.Location) {
+	if !r.markVisibility || l == nil {
+		return
+	}
+
+	givenRef := l.Reference()
+	annotation := file.VisibleAnnotation
+
+	// if we find a location for a path that matches the query (e.g. **/node_modules) but is not present in the squashed tree, skip it
+	ref, err := r.img.SquashedSearchContext.SearchByPath(l.RealPath, filetree.DoNotFollowDeadBasenameLinks)
+	if err != nil || !ref.HasReference() {
+		annotation = file.HiddenAnnotation
+	} else if ref.ID() != givenRef.ID() {
+		// we may have the path in the squashed tree, but this must not be in the same layer
+		annotation = file.HiddenAnnotation
+	}
+
+	// not only should the real path to the file exist, but the way we took to get there should also exist
+	// (e.g. if we are looking for /etc/passwd, but the real path is /etc/passwd -> /etc/passwd-1, then we should
+	// make certain that /etc/passwd-1 exists)
+	if annotation == file.VisibleAnnotation && l.AccessPath != "" {
+		ref, err := r.img.SquashedSearchContext.SearchByPath(l.AccessPath, filetree.DoNotFollowDeadBasenameLinks)
+		if err != nil || !ref.HasReference() {
+			annotation = file.HiddenAnnotation
+		} else if ref.ID() != givenRef.ID() {
+			// we may have the path in the squashed tree, but this must not be in the same layer
+			annotation = file.HiddenAnnotation
+		}
+	}
+
+	l.Annotations[file.VisibleAnnotationKey] = annotation
 }

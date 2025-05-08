@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/acarl005/stripansi"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/format/syftjson/model"
 )
 
 type traitAssertion func(tb testing.TB, stdout, stderr string, rc int)
@@ -85,11 +86,26 @@ func assertNotInOutput(data string) traitAssertion {
 	}
 }
 
+func assertNoStderr(tb testing.TB, _, stderr string, _ int) {
+	tb.Helper()
+	if len(stderr) > 0 {
+		tb.Errorf("expected stderr to be empty, but wasn't")
+		if showOutput != nil && *showOutput {
+			tb.Errorf("STDERR:%s", stderr)
+		}
+	}
+}
+
 func assertInOutput(data string) traitAssertion {
 	return func(tb testing.TB, stdout, stderr string, _ int) {
 		tb.Helper()
-		if !strings.Contains(stripansi.Strip(stderr), data) && !strings.Contains(stripansi.Strip(stdout), data) {
+		stdout = stripansi.Strip(stdout)
+		stderr = stripansi.Strip(stderr)
+		if !strings.Contains(stdout, data) && !strings.Contains(stderr, data) {
 			tb.Errorf("data=%q was NOT found in any output, but should have been there", data)
+			if showOutput != nil && *showOutput {
+				tb.Errorf("STDOUT:%s\nSTDERR:%s", stdout, stderr)
+			}
 		}
 	}
 }
@@ -109,6 +125,7 @@ func assertPackageCount(length uint) traitAssertion {
 		type NameAndVersion struct {
 			Name    string `json:"name"`
 			Version string `json:"version"`
+			Type    string `json:"type"`
 		}
 		type partial struct {
 			Artifacts []NameAndVersion `json:"artifacts"`
@@ -123,13 +140,41 @@ func assertPackageCount(length uint) traitAssertion {
 			tb.Errorf("expected package count of %d, but found %d", length, len(data.Artifacts))
 			debugArtifacts := make([]string, len(data.Artifacts))
 			for i, a := range data.Artifacts {
-				debugArtifacts[i] = fmt.Sprintf("%s:%s", a.Name, a.Version)
+				debugArtifacts[i] = fmt.Sprintf("%s@%s (%s)", a.Name, a.Version, a.Type)
 			}
 			sort.Strings(debugArtifacts)
 			for i, a := range debugArtifacts {
 				tb.Errorf("package %d: %s", i+1, a)
 			}
 
+		}
+	}
+}
+
+func assertUnknownLicenseContent(required bool) traitAssertion {
+	return func(tb testing.TB, stdout, _ string, _ int) {
+		tb.Helper()
+		type NameAndLicense struct {
+			Name     string          `json:"name"`
+			Licenses []model.License `json:"Licenses"`
+		}
+		type partial struct {
+			Artifacts []NameAndLicense `json:"artifacts"`
+		}
+
+		var data partial
+		if err := json.Unmarshal([]byte(stdout), &data); err != nil {
+			tb.Errorf("expected to find a JSON report, but was unmarshalable: %+v", err)
+		}
+
+		for _, pkg := range data.Artifacts {
+			for _, lic := range pkg.Licenses {
+				if strings.Contains(lic.SPDXExpression, "UNKNOWN") && required {
+					assert.NotZero(tb, len(lic.Contents))
+				} else {
+					assert.Empty(tb, lic.Contents)
+				}
+			}
 		}
 	}
 }
@@ -145,46 +190,6 @@ func assertSuccessfulReturnCode(tb testing.TB, _, _ string, rc int) {
 	tb.Helper()
 	if rc != 0 {
 		tb.Errorf("expected no failure but got rc=%d", rc)
-	}
-}
-
-func assertVerifyAttestation(coverageImage string) traitAssertion {
-	return func(tb testing.TB, stdout, _ string, _ int) {
-		tb.Helper()
-		cosignPath := filepath.Join(repoRoot(tb), ".tmp/cosign")
-		err := os.WriteFile("attestation.json", []byte(stdout), 0664)
-		if err != nil {
-			tb.Errorf("could not write attestation to disk")
-		}
-		defer os.Remove("attestation.json")
-		attachCmd := exec.Command(
-			cosignPath,
-			"attach",
-			"attestation",
-			"--attestation",
-			"attestation.json",
-			coverageImage, // TODO which remote image to use?
-		)
-
-		stdout, stderr, _ := runCommand(attachCmd, nil)
-		if attachCmd.ProcessState.ExitCode() != 0 {
-			tb.Log("STDOUT", stdout)
-			tb.Log("STDERR", stderr)
-			tb.Fatalf("could not attach image")
-		}
-
-		verifyCmd := exec.Command(
-			cosignPath,
-			"verify-attestation",
-			coverageImage, // TODO which remote image to use?
-		)
-
-		stdout, stderr, _ = runCommand(verifyCmd, nil)
-		if attachCmd.ProcessState.ExitCode() != 0 {
-			tb.Log("STDOUT", stdout)
-			tb.Log("STDERR", stderr)
-			tb.Fatalf("could not verify attestation")
-		}
 	}
 }
 

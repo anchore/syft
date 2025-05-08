@@ -94,6 +94,9 @@ func TestLicensePermutations(t *testing.T) {
 				"gpl3orlater",
 				"gpl3.0orlater",
 				"gpl3.0.0orlater",
+				"gpl3.0.0+",
+				"gpl3.0+",
+				"gpl3+",
 			},
 		},
 		{

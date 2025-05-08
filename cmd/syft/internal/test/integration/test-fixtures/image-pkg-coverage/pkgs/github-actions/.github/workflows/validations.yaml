@@ -1,0 +1,18 @@
+name: "Validations"
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  call-workflow-1-in-local-repo:
+    uses: octo-org/this-repo/.github/workflows/workflow-1.yml@172239021f7ba04fe7327647b213799853a9eb89
+
+  Unit-Test:
+    name: "Unit tests"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4

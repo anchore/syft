@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -50,15 +50,16 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
-		// we only want to add licenses that have a value
+		// we only want to add licenses that are not empty
+		if l.Empty() {
+			continue
+		}
 		// note, this check should be moved to the license constructor in the future
-		if l.Value != "" {
-			if id, merged, err := s.addToExisting(l); err == nil && !merged {
-				// doesn't exist, add it
-				s.set[id] = l
-			} else if err != nil {
-				log.Trace("license set failed to add license %#v: %+v", l, err)
-			}
+		if id, merged, err := s.addToExisting(l); err == nil && !merged {
+			// doesn't exist, add it
+			s.set[id] = l
+		} else if err != nil {
+			log.WithFields("error", err, "license", l).Trace("failed to add license to license set")
 		}
 	}
 }
@@ -77,7 +78,7 @@ func (s LicenseSet) ToSlice() []License {
 
 func (s LicenseSet) Hash() (uint64, error) {
 	// access paths and filesystem IDs are not considered when hashing a license set, only the real paths
-	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
+	return hashstructure.Hash(s.ToSlice(), &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

@@ -17,84 +17,19 @@ Similar to the cataloging process, Linux distribution identification is also per
 package syft
 
 import (
-	"fmt"
-
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/go-logger"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/linux"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger"
-	"github.com/anchore/syft/syft/source"
 )
-
-// CatalogPackages takes an inventory of packages from the given image from a particular perspective
-// (e.g. squashed source, all-layers source). Returns the discovered  set of packages, the identified Linux
-// distribution, and the source object used to wrap the data source.
-func CatalogPackages(src *source.Source, cfg cataloger.Config) (*pkg.Collection, []artifact.Relationship, *linux.Release, error) {
-	resolver, err := src.FileResolver(cfg.Search.Scope)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to determine resolver while cataloging packages: %w", err)
-	}
-
-	// find the distro
-	release := linux.IdentifyRelease(resolver)
-	if release != nil {
-		log.Infof("identified distro: %s", release.String())
-	} else {
-		log.Info("could not identify distro")
-	}
-
-	// if the catalogers have been configured, use them regardless of input type
-	var catalogers []pkg.Cataloger
-	if len(cfg.Catalogers) > 0 {
-		catalogers = cataloger.AllCatalogers(cfg)
-	} else {
-		// otherwise conditionally use the correct set of loggers based on the input type (container image or directory)
-		switch src.Metadata.Scheme {
-		case source.ImageScheme:
-			log.Info("cataloging image")
-			catalogers = cataloger.ImageCatalogers(cfg)
-		case source.FileScheme:
-			log.Info("cataloging file")
-			catalogers = cataloger.AllCatalogers(cfg)
-		case source.DirectoryScheme:
-			log.Info("cataloging directory")
-			catalogers = cataloger.DirectoryCatalogers(cfg)
-		default:
-			return nil, nil, nil, fmt.Errorf("unable to determine cataloger set from scheme=%+v", src.Metadata.Scheme)
-		}
-	}
-
-	catalog, relationships, err := cataloger.Catalog(resolver, release, cfg.Parallelism, catalogers...)
-
-	relationships = append(relationships, newSourceRelationshipsFromCatalog(src, catalog)...)
-
-	return catalog, relationships, release, err
-}
-
-func newSourceRelationshipsFromCatalog(src *source.Source, c *pkg.Collection) []artifact.Relationship {
-	relationships := make([]artifact.Relationship, 0) // Should we pre-allocate this by giving catalog a Len() method?
-	for p := range c.Enumerate() {
-		relationships = append(relationships, artifact.Relationship{
-			From: src,
-			To:   p,
-			Type: artifact.ContainsRelationship,
-		})
-	}
-
-	return relationships
-}
 
 // SetLogger sets the logger object used for all syft logging calls.
 func SetLogger(logger logger.Logger) {
-	log.Log = logger
+	log.Set(logger)
 }
 
 // SetBus sets the event bus for all syft library bus publish events onto (in-library subscriptions are not allowed).
 func SetBus(b *partybus.Bus) {
-	bus.SetPublisher(b)
+	bus.Set(b)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func TestIdentifyRelease(t *testing.T) {
@@ -106,7 +107,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/redhat",
+			fixture: "test-fixtures/os/redhat/from-os-release",
 			release: &Release{
 				PrettyName:   "Red Hat Enterprise Linux Server 7.3 (Maipo)",
 				Name:         "Red Hat Enterprise Linux Server",
@@ -117,6 +118,17 @@ func TestIdentifyRelease(t *testing.T) {
 				HomeURL:      "https://www.redhat.com/",
 				BugReportURL: "https://bugzilla.redhat.com/",
 				CPEName:      "cpe:/o:redhat:enterprise_linux:7.3:GA:server",
+			},
+		},
+		{
+			fixture: "test-fixtures/os/redhat/from-redhat-release",
+			release: &Release{
+				PrettyName: "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+				Name:       "Red Hat Enterprise Linux",
+				ID:         "rhel",
+				IDLike:     []string{"rhel"},
+				Version:    "8.10 (Ootpa)",
+				VersionID:  "8.10",
 			},
 		},
 		{
@@ -265,8 +277,8 @@ func TestIdentifyRelease(t *testing.T) {
 		{
 			fixture: "test-fixtures/os/centos5",
 			release: &Release{
-				PrettyName: "CentOS",
-				Name:       "centos",
+				PrettyName: "CentOS release 5.7 (Final)",
+				Name:       "CentOS",
 				ID:         "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",
@@ -336,7 +348,9 @@ func TestIdentifyRelease(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			s, err := source.NewFromDirectory(test.fixture)
+			s, err := directorysource.New(directorysource.Config{
+				Path: test.fixture,
+			})
 			require.NoError(t, err)
 
 			resolver, err := s.FileResolver(source.SquashedScope)
@@ -503,8 +517,8 @@ func TestParseRedhatRelease(t *testing.T) {
 			fixture: "test-fixtures/os/centos5/etc/redhat-release",
 			name:    "Centos 5",
 			release: &Release{
-				PrettyName: "CentOS",
-				Name:       "centos",
+				PrettyName: "CentOS release 5.7 (Final)",
+				Name:       "CentOS",
 				ID:         "centos",
 				IDLike:     []string{"centos"},
 				Version:    "5.7",
