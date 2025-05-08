@@ -66,7 +66,7 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary:
 		p := decodeComponent(component)
 		idMap[component.BOMRef] = p
-		syftID := extractSyftPacakgeID(component.BOMRef)
+		syftID := extractSyftPackageID(component.BOMRef)
 		if syftID != "" {
 			idMap[syftID] = p
 		}
@@ -86,7 +86,7 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	}
 }
 
-func extractSyftPacakgeID(i string) string {
+func extractSyftPackageID(i string) string {
 	instance, err := packageurl.FromString(i)
 	if err != nil {
 		return ""
