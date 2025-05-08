@@ -505,7 +505,7 @@ func (s *Section) Data() ([]byte, error) {
 // 	return dwarf.New(abbrev, nil, nil, info, line, nil, ranges, str)
 // }
 
-// readImportID returns the import file IDs stored inside the .loader section.
+// readImportIDs returns the import file IDs stored inside the .loader section.
 // Library name pattern is either path/base/member or base/member
 func (f *File) readImportIDs(s *Section) ([]string, error) {
 	// Read loader header

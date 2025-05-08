@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 )
@@ -46,6 +47,7 @@ func NewCataloger(cfg Config) *Cataloger {
 func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file.Coordinates]string, error) {
 	results := make(map[file.Coordinates]string)
 	var locations []file.Location
+	var errs error
 
 	locations, err := resolver.FilesByGlob(i.globs...)
 	if err != nil {
@@ -59,8 +61,9 @@ func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file
 
 		metadata, err := resolver.FileMetadataByLocation(location)
 		if err != nil {
+			errs = unknown.Append(errs, location, err)
 			prog.SetError(err)
-			return nil, err
+			continue
 		}
 
 		if i.skipFilesAboveSizeInBytes > 0 && metadata.Size() > i.skipFilesAboveSizeInBytes {
@@ -69,12 +72,12 @@ func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file
 
 		result, err := i.catalogLocation(resolver, location)
 		if internal.IsErrPathPermission(err) {
-			log.Debugf("file contents cataloger skipping - %+v", err)
+			errs = unknown.Append(errs, location, fmt.Errorf("permission error reading file contents: %w", err))
 			continue
 		}
 		if err != nil {
-			prog.SetError(err)
-			return nil, err
+			errs = unknown.Append(errs, location, err)
+			continue
 		}
 
 		prog.Increment()
@@ -87,7 +90,7 @@ func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file
 	prog.AtomicStage.Set(fmt.Sprintf("%s files", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
-	return results, nil
+	return results, errs
 }
 
 func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Location) (string, error) {

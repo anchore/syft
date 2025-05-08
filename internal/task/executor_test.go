@@ -16,9 +16,8 @@ func Test_TaskExecutor_PanicHandling(t *testing.T) {
 	tsk := NewTask("panicking-cataloger", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
 		panic("something bad happened")
 	})
-	ex := NewTaskExecutor([]Task{tsk}, 1)
 
-	err := ex.Execute(context.Background(), nil, nil, &monitor.CatalogerTaskProgress{
+	err := RunTask(context.Background(), tsk, nil, nil, &monitor.CatalogerTaskProgress{
 		Manual: progress.NewManual(-1),
 	})
 

@@ -78,6 +78,13 @@ func (m *UI) Handle(e partybus.Event) error {
 }
 
 func (m *UI) Teardown(force bool) error {
+	defer func() {
+		// allow for traditional logging to resume now that the UI is shutting down
+		if logWrapper, ok := log.Get().(logger.Controller); ok {
+			logWrapper.SetOutput(m.err)
+		}
+	}()
+
 	if !force {
 		m.handler.Wait()
 		m.program.Quit()
@@ -143,7 +150,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case partybus.Event:
-		log.WithFields("component", "ui").Tracef("event: %q", msg.Type)
+		log.WithFields("component", "ui", "event", msg.Type).Trace("event")
 
 		switch msg.Type {
 		case event.CLIReport, event.CLINotification, event.CLIAppUpdateAvailable:

@@ -58,32 +58,14 @@ func joinLicenses(licenses []SPDXLicense) string {
 }
 
 type SPDXLicense struct {
-	ID    string
-	Value string
+	ID       string
+	Value    string
+	FullText string
 }
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	for _, l := range raw {
-		if l.Value == "" {
-			continue
-		}
-
-		candidate := SPDXLicense{}
-		if l.SPDXExpression != "" {
-			candidate.ID = l.SPDXExpression
-		} else {
-			// we did not find a valid SPDX license ID so treat as separate license
-			if len(l.Value) <= 64 {
-				// if the license text is less than the size of the hash,
-				// just use it directly so the id is more readable
-				candidate.ID = spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
-			} else {
-				hash := sha256.Sum256([]byte(l.Value))
-				candidate.ID = fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
-			}
-			candidate.Value = l.Value
-		}
-
+		candidate := createSPDXLicense(l)
 		switch l.Type {
 		case license.Concluded:
 			concluded = append(concluded, candidate)
@@ -93,4 +75,34 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 	}
 
 	return concluded, declared
+}
+
+func createSPDXLicense(l pkg.License) SPDXLicense {
+	candidate := SPDXLicense{
+		ID:       generateLicenseID(l),
+		FullText: l.Contents,
+	}
+
+	if l.SPDXExpression == "" {
+		candidate.Value = l.Value
+	}
+	return candidate
+}
+
+func generateLicenseID(l pkg.License) string {
+	if l.SPDXExpression != "" {
+		return l.SPDXExpression
+	}
+	if l.Value != "" {
+		return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+	}
+	return licenseSum(l.Contents)
+}
+
+func licenseSum(s string) string {
+	if len(s) <= 64 {
+		return spdxlicense.LicenseRefPrefix + SanitizeElementID(s)
+	}
+	hash := sha256.Sum256([]byte(s))
+	return fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
 }

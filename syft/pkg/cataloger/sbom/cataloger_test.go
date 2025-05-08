@@ -450,3 +450,10 @@ func Test_Cataloger_Globs(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptSBOM(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/app.spdx.json").
+		WithError().
+		TestParser(t, parseSBOM)
+}

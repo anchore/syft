@@ -44,7 +44,7 @@ func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.En
 
 	_, err := reader.Read(buffer)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Location.Path(), err)
+		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Path(), err)
 	}
 
 	fields := extractFields(string(buffer))

@@ -12,6 +12,8 @@ const DpkgDBGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
 var _ FileOwner = (*DpkgDBEntry)(nil)
 
+type DpkgArchiveEntry DpkgDBEntry
+
 // DpkgDBEntry represents all captured data for a Debian package DB entry; available fields are described
 // at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section.
 // Additional information about how these fields are used can be found at

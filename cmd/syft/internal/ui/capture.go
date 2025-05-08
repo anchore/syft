@@ -17,11 +17,11 @@ const defaultStdoutLogBufferSize = 1024
 //	restore := CaptureStdoutToTraceLog()
 //	// here, stdout will be captured and redirected to the provided writer
 //	restore() // block until the output has all been sent to the writer and restore the original stdout
-func CaptureStdoutToTraceLog() (close func()) {
+func CaptureStdoutToTraceLog() func() {
 	return capture(&os.Stdout, newLogWriter(), defaultStdoutLogBufferSize)
 }
 
-func capture(target **os.File, writer io.Writer, bufSize int) (close func()) {
+func capture(target **os.File, writer io.Writer, bufSize int) func() {
 	original := *target
 
 	r, w, _ := os.Pipe()
@@ -36,11 +36,7 @@ func capture(target **os.File, writer io.Writer, bufSize int) (close func()) {
 		}()
 
 		buf := make([]byte, bufSize)
-		for {
-			if original == nil {
-				break
-			}
-
+		for original != nil {
 			n, err := r.Read(buf)
 			if n > 0 {
 				_, _ = writer.Write(buf[0:n])

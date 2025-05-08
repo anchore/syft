@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -52,6 +53,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedLanguages.Remove(pkg.Dart.String())
 	definedLanguages.Remove(pkg.Swift.String())
 	definedLanguages.Remove(pkg.Swipl.String())
+	definedLanguages.Remove(pkg.OCaml.String())
 	definedLanguages.Remove(pkg.CPP.String())
 	definedLanguages.Remove(pkg.Haskell.String())
 	definedLanguages.Remove(pkg.Elixir.String())
@@ -73,13 +75,18 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.ConanPkg))
 	definedPkgs.Remove(string(pkg.HackagePkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.BitnamiPkg))
+	definedPkgs.Remove(string(pkg.GraalVMNativeImagePkg))
 	definedPkgs.Remove(string(pkg.HexPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.SwiftPkg))
 	definedPkgs.Remove(string(pkg.SwiplPackPkg))
+	definedPkgs.Remove(string(pkg.OpamPkg))
 	definedPkgs.Remove(string(pkg.GithubActionPkg))
 	definedPkgs.Remove(string(pkg.GithubActionWorkflowPkg))
+	definedPkgs.Remove(string(pkg.TerraformPkg))
+	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // we have coverage for pear instead
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -87,40 +94,7 @@ func TestPkgCoverageImage(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			pkgCount := 0
-
-			for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
-				if a.Language.String() != "" {
-					observedLanguages.Add(a.Language.String())
-				}
-
-				observedPkgs.Add(string(a.Type))
-				expectedVersion, ok := c.pkgInfo[a.Name]
-				if !ok {
-					t.Errorf("unexpected package found: %s", a.Name)
-				}
-
-				if expectedVersion != a.Version {
-					t.Errorf("unexpected package version (pkg=%s): %s, expected: %s", a.Name, a.Version, expectedVersion)
-				}
-
-				if a.Language != c.pkgLanguage {
-					t.Errorf("bad language (pkg=%+v): %+v", a.Name, a.Language)
-				}
-
-				if a.Type != c.pkgType {
-					t.Errorf("bad package type (pkg=%+v): %+v", a.Name, a.Type)
-				}
-				pkgCount++
-			}
-
-			if pkgCount != len(c.pkgInfo)+c.duplicates {
-				t.Logf("Discovered packages of type %+v", c.pkgType)
-				for a := range sbom.Artifacts.Packages.Enumerate(c.pkgType) {
-					t.Log("   ", a)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", pkgCount, len(c.pkgInfo))
-			}
+			assertPackages(t, sbom, c, observedLanguages, observedPkgs)
 		})
 	}
 
@@ -170,44 +144,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			actualPkgCount := 0
-
-			for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
-				observedLanguages.Add(actualPkg.Language.String())
-				observedPkgs.Add(string(actualPkg.Type))
-
-				expectedVersion, ok := test.pkgInfo[actualPkg.Name]
-				if !ok {
-					t.Errorf("unexpected package found: %s", actualPkg.Name)
-				}
-
-				if expectedVersion != actualPkg.Version {
-					t.Errorf("unexpected package version (pkg=%s): %s", actualPkg.Name, actualPkg.Version)
-				}
-
-				var foundLang bool
-				for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
-					if actualPkg.Language.String() == lang {
-						foundLang = true
-						break
-					}
-				}
-				if !foundLang {
-					t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
-				}
-
-				if actualPkg.Type != test.pkgType {
-					t.Errorf("bad package type (pkg=%+v): %+v", actualPkg.Name, actualPkg.Type)
-				}
-				actualPkgCount++
-			}
-
-			if actualPkgCount != len(test.pkgInfo)+test.duplicates {
-				for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
-					t.Log("   ", actualPkg)
-				}
-				t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
-			}
+			assertPackages(t, sbom, test, observedLanguages, observedPkgs)
 		})
 	}
 
@@ -216,10 +153,13 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedLanguages.Remove(pkg.R.String())
 	observedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.BinaryPkg))
+	definedPkgs.Remove(string(pkg.BitnamiPkg))
+	definedPkgs.Remove(string(pkg.GraalVMNativeImagePkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelPkg))
 	definedPkgs.Remove(string(pkg.LinuxKernelModulePkg))
 	definedPkgs.Remove(string(pkg.Rpkg))
 	definedPkgs.Remove(string(pkg.UnknownPkg))
+	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // this is covered as pear packages
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
@@ -231,6 +171,61 @@ func TestPkgCoverageDirectory(t *testing.T) {
 
 	if observedPkgs.Size() < definedPkgs.Size() {
 		t.Errorf("package coverage incomplete (packages=%d, coverage=%d)", definedPkgs.Size(), observedPkgs.Size())
+	}
+}
+
+func assertPackages(t *testing.T, sbom sbom.SBOM, test testCase, observedLanguages *strset.Set, observedPkgs *strset.Set) {
+	actualPkgCount := 0
+
+	for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
+		observedLanguages.Add(actualPkg.Language.String())
+		observedPkgs.Add(string(actualPkg.Type))
+
+		expectedVersion, ok := test.pkgInfo[actualPkg.Name]
+		if !ok {
+			t.Errorf("unexpected package found: %s", actualPkg.Name)
+		}
+
+		if expectedVersion != actualPkg.Version {
+			t.Errorf("unexpected package version (pkg=%s): %s", actualPkg.Name, actualPkg.Version)
+		}
+
+		var foundLang bool
+		for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
+			if actualPkg.Language.String() == lang {
+				foundLang = true
+				break
+			}
+		}
+		if !foundLang {
+			t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
+		}
+
+		if actualPkg.Type != test.pkgType {
+			t.Errorf("bad package type (pkg=%+v): %+v", actualPkg.Name, actualPkg.Type)
+		}
+		actualPkgCount++
+
+		// all packages should have at least one location associated with it, and of those locations at least one should be primary evidence
+		locs := actualPkg.Locations.ToSlice()
+		assert.NotEmpty(t, locs, "package %q has no locations (type=%q)", actualPkg.Name, actualPkg.Type)
+		var primaryEvidenceFound bool
+		for _, l := range locs {
+			if _, exists := l.Annotations[pkg.EvidenceAnnotationKey]; !exists {
+				t.Errorf("missing evidence annotation (pkg=%s type=%s)", actualPkg.Name, actualPkg.Type)
+			}
+			if l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
+				primaryEvidenceFound = true
+			}
+		}
+		assert.True(t, primaryEvidenceFound, "no primary evidence found for package %q", actualPkg.Name)
+	}
+
+	if actualPkgCount != len(test.pkgInfo)+test.duplicates {
+		for actualPkg := range sbom.Artifacts.Packages.Enumerate(test.pkgType) {
+			t.Log("   ", actualPkg)
+		}
+		t.Fatalf("unexpected package count: %d!=%d", actualPkgCount, len(test.pkgInfo))
 	}
 }
 

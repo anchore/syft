@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -19,16 +18,17 @@ func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
 	zipReader, err := OpenZip(archivePath)
 	manifest := make(ZipFileManifest)
 	if err != nil {
-		return manifest, fmt.Errorf("unable to open zip archive (%s): %w", archivePath, err)
+		log.Debugf("unable to open zip archive (%s): %v", archivePath, err)
+		return manifest, err
 	}
 	defer func() {
 		err = zipReader.Close()
 		if err != nil {
-			log.Warnf("unable to close zip archive (%s): %+v", archivePath, err)
+			log.Debugf("unable to close zip archive (%s): %+v", archivePath, err)
 		}
 	}()
 
-	for _, file := range zipReader.Reader.File {
+	for _, file := range zipReader.File {
 		manifest.Add(file.Name, file.FileInfo())
 	}
 	return manifest, nil

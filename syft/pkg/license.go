@@ -2,7 +2,9 @@ package pkg
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -23,10 +25,16 @@ var _ sort.Interface = (*Licenses)(nil)
 // in order to distinguish if packages should be kept separate
 // this is different for licenses since we're only looking for evidence
 // of where a license was declared/concluded for a given package
+// If a license is given as it's full text in the metadata rather than it's value or SPDX expression
+
+// The Contents field is used to represent this data
+// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
+// The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
 type License struct {
-	Value          string
 	SPDXExpression string
+	Value          string
 	Type           license.Type
+	Contents       string
 	URLs           []string         `hash:"ignore"`
 	Locations      file.LocationSet `hash:"ignore"`
 }
@@ -41,13 +49,16 @@ func (l Licenses) Less(i, j int) bool {
 	if l[i].Value == l[j].Value {
 		if l[i].SPDXExpression == l[j].SPDXExpression {
 			if l[i].Type == l[j].Type {
-				// While URLs and location are not exclusive fields
-				// returning true here reduces the number of swaps
-				// while keeping a consistent sort order of
-				// the order that they appear in the list initially
-				// If users in the future have preference to sorting based
-				// on the slice representation of either field we can update this code
-				return true
+				if l[i].Contents == l[j].Contents {
+					// While URLs and location are not exclusive fields
+					// returning true here reduces the number of swaps
+					// while keeping a consistent sort order of
+					// the order that they appear in the list initially
+					// If users in the future have preference to sorting based
+					// on the slice representation of either field we can update this code
+					return true
+				}
+				return l[i].Contents < l[j].Contents
 			}
 			return l[i].Type < l[j].Type
 		}
@@ -65,12 +76,28 @@ func NewLicense(value string) License {
 }
 
 func NewLicenseFromType(value string, t license.Type) License {
-	var spdxExpression string
-	if value != "" {
+	var (
+		spdxExpression string
+		fullText       string
+	)
+	// Check parsed value for newline character to see if it's the full license text
+	// License: <HERE IS THE FULL TEXT> <Expressions>
+	// DO we want to also submit file name when determining fulltext
+	if strings.Contains(strings.TrimSpace(value), "\n") {
+		fullText = value
+	} else {
 		var err error
 		spdxExpression, err = license.ParseExpression(value)
 		if err != nil {
 			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
+		}
+	}
+
+	if fullText != "" {
+		return License{
+			Contents:  fullText,
+			Type:      t,
+			Locations: file.NewLocationSet(),
 		}
 	}
 
@@ -96,7 +123,7 @@ func NewLicensesFromLocation(location file.Location, values ...string) (licenses
 		}
 		licenses = append(licenses, NewLicenseFromLocations(v, location))
 	}
-	return
+	return licenses
 }
 
 func NewLicenseFromLocations(value string, locations ...file.Location) License {
@@ -112,7 +139,12 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	s := strset.New()
 	for _, url := range urls {
 		if url != "" {
-			s.Add(url)
+			sanitizedURL, err := stripUnwantedCharacters(url)
+			if err != nil {
+				log.Tracef("unable to sanitize url=%q: %s", url, err)
+				continue
+			}
+			s.Add(sanitizedURL)
 		}
 	}
 
@@ -122,16 +154,35 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	return l
 }
 
+func stripUnwantedCharacters(rawURL string) (string, error) {
+	cleanedURL := strings.TrimSpace(rawURL)
+	_, err := url.ParseRequestURI(cleanedURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+
+	return cleanedURL, nil
+}
+
 func NewLicenseFromFields(value, url string, location *file.Location) License {
 	l := NewLicense(value)
 	if location != nil {
 		l.Locations.Add(*location)
 	}
 	if url != "" {
-		l.URLs = append(l.URLs, url)
+		sanitizedURL, err := stripUnwantedCharacters(url)
+		if err != nil {
+			log.Tracef("unable to sanitize url=%q: %s", url, err)
+		} else {
+			l.URLs = append(l.URLs, sanitizedURL)
+		}
 	}
 
 	return l
+}
+
+func (s License) Empty() bool {
+	return s.Value == "" && s.SPDXExpression == "" && s.Contents == ""
 }
 
 // Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields

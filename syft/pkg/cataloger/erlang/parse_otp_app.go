@@ -2,6 +2,7 @@ package erlang
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
@@ -17,7 +18,7 @@ func parseOTPApp(_ context.Context, _ file.Resolver, _ *generic.Environment, rea
 		// there are multiple file formats that use the *.app extension, so it's possible that this is not an OTP app file at all
 		// ... which means we should not return an error here
 		log.WithFields("error", err).Trace("unable to parse Erlang OTP app")
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("unable to parse Erlang OTP app")
 	}
 
 	var packages []pkg.Package
@@ -34,7 +35,7 @@ func parseOTPApp(_ context.Context, _ file.Resolver, _ *generic.Environment, rea
 
 			p := newPackageFromOTP(
 				name, version,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
 
 			packages = append(packages, p)

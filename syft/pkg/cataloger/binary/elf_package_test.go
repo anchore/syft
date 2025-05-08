@@ -26,7 +26,7 @@ func Test_packageURL(t *testing.T) {
 					System: "syftsys",
 				},
 			},
-			want: "pkg:generic/syftsys/github.com/anchore/syft@v0.1.0",
+			want: "pkg:generic/syftsys/github.com%2Fanchore%2Fsyft@v0.1.0",
 		},
 		{
 			name: "elf binary package short name",
@@ -109,6 +109,18 @@ func Test_packageURL(t *testing.T) {
 				Version: "1.0",
 				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
 					System: "system",
+				},
+			},
+			want: "pkg:generic/system/test@1.0",
+		},
+		{
+			name: "bad or missing OSCPE data cannot be parsed allows for correct string",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					System: "system",
+					OSCPE:  "%$#*(#*@&$(",
 				},
 			},
 			want: "pkg:generic/system/test@1.0",

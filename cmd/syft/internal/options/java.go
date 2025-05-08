@@ -6,22 +6,24 @@ import (
 )
 
 type javaConfig struct {
-	UseNetwork              bool   `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
-	UseMavenLocalRepository bool   `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
-	MavenLocalRepositoryDir string `yaml:"maven-local-repository-dir" json:"maven-local-repository-dir" mapstructure:"maven-local-repository-dir"`
-	MavenURL                string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
-	MaxParentRecursiveDepth int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
+	UseNetwork                    *bool  `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
+	UseMavenLocalRepository       *bool  `yaml:"use-maven-local-repository" json:"use-maven-local-repository" mapstructure:"use-maven-local-repository"`
+	MavenLocalRepositoryDir       string `yaml:"maven-local-repository-dir" json:"maven-local-repository-dir" mapstructure:"maven-local-repository-dir"`
+	MavenURL                      string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
+	MaxParentRecursiveDepth       int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
+	ResolveTransitiveDependencies bool   `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
 }
 
 func defaultJavaConfig() javaConfig {
 	def := java.DefaultArchiveCatalogerConfig()
 
 	return javaConfig{
-		UseNetwork:              def.UseNetwork,
-		MaxParentRecursiveDepth: def.MaxParentRecursiveDepth,
-		UseMavenLocalRepository: def.UseMavenLocalRepository,
-		MavenLocalRepositoryDir: def.MavenLocalRepositoryDir,
-		MavenURL:                def.MavenBaseURL,
+		UseNetwork:                    nil, // this defaults to false, which is the API default
+		MaxParentRecursiveDepth:       def.MaxParentRecursiveDepth,
+		UseMavenLocalRepository:       nil, // this defaults to false, which is the API default
+		MavenLocalRepositoryDir:       def.MavenLocalRepositoryDir,
+		MavenURL:                      def.MavenBaseURL,
+		ResolveTransitiveDependencies: def.ResolveTransitiveDependencies,
 	}
 }
 
@@ -43,4 +45,5 @@ TIP: If you want to download all required pom files to the local repository with
 build, run 'mvn help:effective-pom' before performing the scan with syft.`)
 	descriptions.Add(&o.MavenLocalRepositoryDir, `override the default location of the local Maven repository. 
 the default is the subdirectory '.m2/repository' in your home directory`)
+	descriptions.Add(&o.ResolveTransitiveDependencies, `resolve transient dependencies such as those defined in a dependency's POM on Maven central`)
 }

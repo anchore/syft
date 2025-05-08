@@ -69,6 +69,11 @@ if ! command -v xxd &> /dev/null; then
     exit 1
 fi
 
+# check if xargs is even installed
+if ! command -v xargs &> /dev/null; then
+    echo "xargs not found. Please install xargs."
+    exit 1
+fi
 
 PATTERN=${SEARCH_FOR:-$VERSION}
 
@@ -116,7 +121,7 @@ while $CONTINUE_LOOP; do
   fi
 
   # search for the pattern in the binary file and capture the offset
-  OFFSET=$(echo "${SELECTED_RESULT}" | cut -d ' ' -f 1)
+  OFFSET=$(echo "${SELECTED_RESULT}" | xargs | cut -d ' ' -f 1)
 
   if [ -z "$OFFSET" ]; then
       echo "Pattern not found."

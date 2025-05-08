@@ -50,6 +50,18 @@ func TestSpdxValidationTooling(t *testing.T) {
 			images:   images,
 			env:      env,
 		},
+		{
+			name:     "spdx validation tooling tag value",
+			syftArgs: []string{"scan", "-o", "spdx@2.2"},
+			images:   images,
+			env:      env,
+		},
+		{
+			name:     "spdx validation tooling json",
+			syftArgs: []string{"scan", "-o", "spdx-json@2.2"},
+			images:   images,
+			env:      env,
+		},
 	}
 
 	for _, test := range tests {

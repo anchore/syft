@@ -5,9 +5,11 @@ RUN dnf update -y; \
 	dnf clean all
 RUN mkdir -p /usr/local/bin/elftests/elfbinwithnestedlib
 RUN mkdir -p /usr/local/bin/elftests/elfbinwithsisterlib
+RUN mkdir -p /usr/local/bin/elftests/elfbinwithcorrupt
 
 COPY ./elfbinwithnestedlib /usr/local/bin/elftests/elfbinwithnestedlib
 COPY ./elfbinwithsisterlib /usr/local/bin/elftests/elfbinwithsisterlib
+COPY ./elfbinwithcorrupt /usr/local/bin/elftests/elfbinwithcorrupt
 
 ENV LD_LIBRARY_PATH=/usr/local/bin/elftests/elfbinwithnestedlib/bin/lib
 
@@ -15,6 +17,8 @@ WORKDIR /usr/local/bin/elftests/elfbinwithnestedlib/
 RUN make
 
 WORKDIR /usr/local/bin/elftests/elfbinwithsisterlib
+RUN make
+WORKDIR /usr/local/bin/elftests/elfbinwithcorrupt
 RUN make
 
 # let's make the test image smaller, since we only require the built binaries and supporting libraries

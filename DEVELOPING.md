@@ -227,6 +227,16 @@ rough outline how that works:
 
 ## Testing
 
+### Testing commands
+
+* `make help` shows a list of available commands
+* `make unit`, `make integration`, `make cli`, and `make acceptance` run those test suites (see below)
+* `make test` runs all those tests (and is therefore pretty slow)
+* `make fixtures` clears and re-fetches all test fixtures.
+* `go test ./syft/pkg/` for example can test particular packages, assuming fixtures are already made
+* `make clean-cache` cleans all test cache. Note that subsequent test runs will be slower after this
+
+
 ### Levels of testing
 
 - `unit`: The default level of test which is distributed throughout the repo are unit tests. Any `_test.go` file that 
@@ -367,11 +377,11 @@ package under test and should always be updated by invoking `go test` on the spe
 update flag provided.
 
 Many of the `Format` tests make use of this approach, where the raw SBOM report is saved in the repo and the test 
-compares that SBOM with what is generated from the latest presenter code. For instance, at the time of this writing 
-the CycloneDX presenter snapshots can be updated by running:
+compares that SBOM with what is generated from the latest presenter code. The following command can be used to
+update the golden files for the various snapshot tests:
 
 ```bash
-go test ./internal/formats -update-cyclonedx
+make update-format-golden-files
 ```
 
 These flags are defined at the top of the test files that have tests that use the snapshot files.

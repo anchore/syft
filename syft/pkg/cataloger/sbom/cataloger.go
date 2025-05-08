@@ -40,7 +40,7 @@ func NewCataloger() pkg.Cataloger {
 func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	readSeeker, err := adaptToReadSeeker(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.Location.RealPath, err)
+		return nil, nil, fmt.Errorf("unable to read SBOM file %q: %w", reader.RealPath, err)
 	}
 	s, _, _, err := format.Decode(readSeeker)
 	if err != nil {
@@ -48,7 +48,7 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	}
 
 	if s == nil {
-		log.WithFields("path", reader.Location.RealPath).Trace("file is not an SBOM")
+		log.WithFields("path", reader.RealPath).Trace("file is not an SBOM")
 		return nil, nil, nil
 	}
 
@@ -60,14 +60,14 @@ func parseSBOM(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 		// where there is evidence of this file, and the catalogers have not run against any file other than,
 		// the SBOM, this is the only location that is relevant for this cataloger.
 		p.Locations = file.NewLocationSet(
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		p.FoundBy = catalogerName
 
 		pkgs = append(pkgs, p)
 		relationships = append(relationships, artifact.Relationship{
 			From: p,
-			To:   reader.Location.Coordinates,
+			To:   reader.Coordinates,
 			Type: artifact.DescribedByRelationship,
 		})
 	}

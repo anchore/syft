@@ -184,6 +184,24 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "delete idsBy key entries when all deleted",
+			pkgs: []Package{
+				{
+					id:      artifact.ID("pkg:deb/debian/1"),
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/1"),
+			},
+			expectedIndexes: expectedIndexes{},
+		},
 	}
 
 	for _, test := range tests {
@@ -381,7 +399,7 @@ func TestCatalog_MergeRecords(t *testing.T) {
 					Type: RpmPkg,
 				},
 				{
-					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:b:package:1:1:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
+					CPEs: []cpe.CPE{cpe.Must("cpe:2.3:a:package:2:2:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource)},
 					Locations: file.NewLocationSet(
 						file.NewVirtualLocationFromCoordinates(
 							file.Coordinates{

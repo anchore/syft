@@ -17,20 +17,16 @@ type Index struct {
 
 // NewIndex returns a new relationship Index
 func NewIndex(relationships ...artifact.Relationship) *Index {
-	out := Index{}
+	out := Index{
+		fromID: make(map[artifact.ID]*mappedRelationships),
+		toID:   make(map[artifact.ID]*mappedRelationships),
+	}
 	out.Add(relationships...)
 	return &out
 }
 
 // Add adds all the given relationships to the index, without adding duplicates
 func (i *Index) Add(relationships ...artifact.Relationship) {
-	if i.fromID == nil {
-		i.fromID = map[artifact.ID]*mappedRelationships{}
-	}
-	if i.toID == nil {
-		i.toID = map[artifact.ID]*mappedRelationships{}
-	}
-
 	// store appropriate indexes for stable ordering to minimize ID() calls
 	for _, r := range relationships {
 		// prevent duplicates
@@ -66,6 +62,39 @@ func (i *Index) Add(relationships ...artifact.Relationship) {
 		}
 		mapped.add(fromID, relationship)
 	}
+}
+
+func (i *Index) Remove(id artifact.ID) {
+	delete(i.fromID, id)
+	delete(i.toID, id)
+
+	for idx := 0; idx < len(i.all); {
+		if i.all[idx].from == id || i.all[idx].to == id {
+			i.all = append(i.all[:idx], i.all[idx+1:]...)
+		} else {
+			idx++
+		}
+	}
+}
+
+func (i *Index) Replace(ogID artifact.ID, replacement artifact.Identifiable) {
+	for _, mapped := range fromMappedByID(i.fromID, ogID) {
+		i.Add(artifact.Relationship{
+			From: replacement,
+			To:   mapped.relationship.To,
+			Type: mapped.relationship.Type,
+		})
+	}
+
+	for _, mapped := range fromMappedByID(i.toID, ogID) {
+		i.Add(artifact.Relationship{
+			From: mapped.relationship.From,
+			To:   replacement,
+			Type: mapped.relationship.Type,
+		})
+	}
+
+	i.Remove(ogID)
 }
 
 // From returns all relationships from the given identifiable, with specified types
@@ -110,10 +139,17 @@ func (i *Index) All(types ...artifact.RelationshipType) []artifact.Relationship 
 }
 
 func fromMapped(idMap map[artifact.ID]*mappedRelationships, identifiable artifact.Identifiable) []*sortableRelationship {
-	if identifiable == nil || idMap == nil {
+	if identifiable == nil {
 		return nil
 	}
-	mapped := idMap[identifiable.ID()]
+	return fromMappedByID(idMap, identifiable.ID())
+}
+
+func fromMappedByID(idMap map[artifact.ID]*mappedRelationships, id artifact.ID) []*sortableRelationship {
+	if idMap == nil {
+		return nil
+	}
+	mapped := idMap[id]
 	if mapped == nil {
 		return nil
 	}

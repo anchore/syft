@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/anchore/syft/syft"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -29,7 +30,6 @@ func main() {
 	if err := enc.Encode(sbom.Descriptor.Configuration); err != nil {
 		panic(err)
 	}
-
 }
 
 func imageReference() string {
@@ -55,7 +55,7 @@ func getSBOM(src source.Source, defaultTags ...string) sbom.SBOM {
 		WithCatalogerSelection(
 			// here you can sub-select, add, remove catalogers from the default selection...
 			// or replace the default selection entirely!
-			pkgcataloging.NewSelectionRequest().
+			cataloging.NewSelectionRequest().
 				WithDefaults(defaultTags...),
 		)
 

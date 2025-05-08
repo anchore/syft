@@ -27,7 +27,7 @@ type Package struct {
 	Type      Type             `cyclonedx:"type"`                   // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
 	CPEs      []cpe.CPE        `hash:"ignore"`                      // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
 	PURL      string           `hash:"ignore"`                      // the Package URL (see https://github.com/package-url/purl-spec)
-	Metadata  interface{}      // additional data found while parsing the package source
+	Metadata  any              // additional data found while parsing the package source
 }
 
 func (p *Package) OverrideID(id artifact.ID) {
@@ -38,7 +38,7 @@ func (p *Package) SetID() {
 	id, err := artifact.IDByHash(p)
 	if err != nil {
 		// TODO: what to do in this case?
-		log.Warnf("unable to get fingerprint of package=%s@%s: %+v", p.Name, p.Version, err)
+		log.Debugf("unable to get fingerprint of package=%s@%s: %+v", p.Name, p.Version, err)
 		return
 	}
 	p.id = id
@@ -59,7 +59,7 @@ func (p *Package) merge(other Package) error {
 	}
 
 	if p.PURL != other.PURL {
-		log.Warnf("merging packages have with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
+		log.Debugf("merging packages have with different pURLs: %q=%q vs %q=%q", p.id, p.PURL, other.id, other.PURL)
 	}
 
 	p.Locations.Add(other.Locations.ToSlice()...)

@@ -89,7 +89,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 
 	usesTemplateOutput := names.Has(string(template.ID))
 
-	if usesTemplateOutput && o.Format.Template.Path == "" {
+	if usesTemplateOutput && o.Template.Path == "" {
 		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
 	}
 

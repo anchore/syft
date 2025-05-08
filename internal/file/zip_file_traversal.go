@@ -53,7 +53,7 @@ func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths
 		}
 	}()
 
-	for _, file := range zipReader.Reader.File {
+	for _, file := range zipReader.File {
 		// if no paths are given then assume that all files should be traversed
 		if len(paths) > 0 {
 			if _, ok := request[file.Name]; !ok {

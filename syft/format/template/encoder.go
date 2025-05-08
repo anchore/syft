@@ -11,8 +11,8 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/mitchellh/go-homedir"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
 )

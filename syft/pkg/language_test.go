@@ -86,6 +86,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:luarocks/kong@3.7.0",
 			want: Lua,
 		},
+		{
+			purl: "pkg:opam/ocaml-base-compiler@5.2.0",
+			want: OCaml,
+		},
 	}
 
 	var languages = strset.New()
@@ -226,6 +230,10 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "swiplpack",
 			language: Swipl,
+		},
+		{
+			name:     "opam",
+			language: OCaml,
 		},
 		{
 			name:     "pod",

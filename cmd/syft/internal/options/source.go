@@ -5,9 +5,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/dustin/go-humanize"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/clio"
+	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
@@ -27,6 +29,8 @@ var _ interface {
 	clio.FieldDescriber
 } = (*sourceConfig)(nil)
 
+var _ clio.PostLoader = (*imageSource)(nil)
+
 func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
 	descriptions.Add(&o.Image.DefaultPullSource, `allows users to specify which image source should be used to generate the sbom
@@ -35,6 +39,7 @@ valid values are: registry, docker, podman`)
 
 type imageSource struct {
 	DefaultPullSource string `json:"default-pull-source" yaml:"default-pull-source" mapstructure:"default-pull-source"`
+	MaxLayerSize      string `json:"max-layer-size" yaml:"max-layer-size" mapstructure:"max-layer-size"`
 }
 
 func defaultSourceConfig() sourceConfig {
@@ -56,7 +61,14 @@ func (c *fileSource) PostLoad() error {
 	return nil
 }
 
-func (c imageSource) PostLoad() error {
+func (c *imageSource) PostLoad() error {
+	if c.MaxLayerSize != "" {
+		perFileReadLimit, err := humanize.ParseBytes(c.MaxLayerSize)
+		if err != nil {
+			return err
+		}
+		stereoscopeFile.SetPerFileReadLimit(int64(perFileReadLimit))
+	}
 	return checkDefaultSourceValues(c.DefaultPullSource)
 }
 

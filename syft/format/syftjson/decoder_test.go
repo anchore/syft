@@ -221,6 +221,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 					},
 				},
 			},
+			Unknowns: map[file.Coordinates][]string{},
 			Executables: map[file.Coordinates]file.Executable{
 				c: {
 					Format: file.ELF,

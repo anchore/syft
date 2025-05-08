@@ -22,7 +22,7 @@ func less(i, j artifact.Relationship) bool {
 	jFrom, ok3 := j.From.(pkg.Package)
 	jTo, ok4 := j.To.(pkg.Package)
 
-	if !(ok1 && ok2 && ok3 && ok4) {
+	if !ok1 && !ok2 && !ok3 && !ok4 {
 		return false
 	}
 

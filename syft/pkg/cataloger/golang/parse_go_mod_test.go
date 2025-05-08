@@ -29,6 +29,20 @@ func TestParseGoMod(t *testing.T) {
 			},
 		},
 		{
+			fixture: "test-fixtures/relative-replace",
+			expected: []pkg.Package{
+				{
+					Name:      "github.com/aws/aws-sdk-go-v2",
+					Version:   "",
+					PURL:      "pkg:golang/github.com/aws/aws-sdk-go-v2",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/relative-replace")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+			},
+		},
+		{
 
 			fixture: "test-fixtures/many-packages",
 			expected: []pkg.Package{
@@ -156,4 +170,12 @@ func Test_GoSumHashes(t *testing.T) {
 				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
 		})
 	}
+}
+
+func Test_corruptGoMod(t *testing.T) {
+	c := NewGoModuleFileCataloger(DefaultCatalogerConfig().WithSearchRemoteLicenses(false))
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/corrupt").
+		WithError().
+		TestCataloger(t, c)
 }

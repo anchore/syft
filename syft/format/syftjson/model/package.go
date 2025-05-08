@@ -47,10 +47,12 @@ type licenses []License
 
 type License struct {
 	Value          string          `json:"value"`
+	FullText       string          `json:"fullText"`
 	SPDXExpression string          `json:"spdxExpression"`
 	Type           license.Type    `json:"type"`
 	URLs           []string        `json:"urls"`
 	Locations      []file.Location `json:"locations"`
+	Contents       string          `json:"contents,omitempty"`
 }
 
 func newModelLicensesFromValues(licenses []string) (ml []License) {

@@ -180,14 +180,14 @@ func candidateTargetSw(p pkg.Package) []string {
 	return []string{cpe.Any}
 }
 
-//nolint:funlen
 func candidateVendors(p pkg.Package) []string {
 	// in ecosystems where the packaging metadata does not have a clear field to indicate a vendor (or a field that
 	// could be interpreted indirectly as such) the project name tends to be a common stand in. Examples of this
 	// are the elasticsearch gem, xstream jar, and rack gem... all of these cases you can find vulnerabilities
 	// with CPEs where the vendor is the product name and doesn't appear to be derived from any available package
 	// metadata.
-	vendors := newFieldCandidateSet(candidateProducts(p)...)
+	vendors := newFieldCandidateSet()
+	vendors.union(candidateProductSet(p))
 
 	switch p.Language {
 	case pkg.JavaScript:
@@ -208,7 +208,10 @@ func candidateVendors(p pkg.Package) []string {
 	}
 
 	switch p.Metadata.(type) {
-	case pkg.RpmDBEntry:
+	case pkg.DotnetDepsEntry, pkg.DotnetPackagesLockEntry, pkg.DotnetPortableExecutableEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForDotnet(p))
+	case pkg.RpmDBEntry, pkg.RpmArchive:
 		vendors.union(candidateVendorsForRPM(p))
 	case pkg.RubyGemspec:
 		vendors.union(candidateVendorsForRuby(p))
@@ -257,18 +260,25 @@ func candidateVendors(p pkg.Package) []string {
 }
 
 func candidateProducts(p pkg.Package) []string {
+	return candidateProductSet(p).uniqueValues()
+}
+
+func candidateProductSet(p pkg.Package) fieldCandidateSet {
 	products := newFieldCandidateSet(p.Name)
 
 	_, hasJavaMetadata := p.Metadata.(pkg.JavaArchive)
 
 	switch {
-	case p.Language == pkg.Python:
+	case p.Language == pkg.Dotnet || p.Type == pkg.DotnetPkg:
+		products.clear()
+		products.union(candidateProductsForDotnet(p))
+	case p.Language == pkg.Python || p.Type == pkg.PythonPkg:
 		if !strings.HasPrefix(p.Name, "python") {
 			products.addValue("python-" + p.Name)
 		}
-	case p.Language == pkg.Java || hasJavaMetadata:
+	case p.Language == pkg.Java || hasJavaMetadata || p.Type == pkg.JavaPkg:
 		products.addValue(candidateProductsForJava(p)...)
-	case p.Language == pkg.Go:
+	case p.Language == pkg.Go || p.Type == pkg.GoModulePkg:
 		// replace all candidates with only the golang-specific helper
 		products.clear()
 
@@ -278,11 +288,10 @@ func candidateProducts(p pkg.Package) []string {
 		}
 	}
 
-	if _, hasAPKMetadata := p.Metadata.(pkg.ApkDBEntry); hasAPKMetadata {
+	switch p.Metadata.(type) {
+	case pkg.ApkDBEntry:
 		products.union(candidateProductsForAPK(p))
-	}
-
-	if _, hasWordpressMetadata := p.Metadata.(pkg.WordpressPluginEntry); hasWordpressMetadata {
+	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))
 	}
@@ -300,7 +309,7 @@ func candidateProducts(p pkg.Package) []string {
 	// remove known candidate removals
 	products.removeByValue(findProductsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
 
-	return products.uniqueValues()
+	return products
 }
 
 func addAllSubSelections(fields fieldCandidateSet) {
