@@ -17,7 +17,7 @@ func TestDefaultScanner_FindEvidence(t *testing.T) {
 		minMatch int      // minimum # of matches required
 	}{
 		{
-			name:     "Apache 2.0",
+			name:     "Single licenses are able to be recognized and returned Apache 2.0",
 			fixture:  "test-fixtures/apache-license-2.0",
 			wantIDs:  []string{"Apache-2.0"},
 			minMatch: 1,

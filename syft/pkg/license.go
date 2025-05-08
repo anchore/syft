@@ -112,13 +112,16 @@ func (l Licenses) Swap(i, j int) {
 
 type LicenseBuilder struct {
 	value     string
-	contents  *file.LocationReadCloser
-	locations file.LocationSet
 	tp        license.Type
+	locations file.LocationSet
+	contents  file.LocationReadCloser
 }
 
 func NewLicenseBuilder() *LicenseBuilder {
-	return &LicenseBuilder{}
+	return &LicenseBuilder{
+		locations: file.NewLocationSet(),
+		tp:        license.Declared,
+	}
 }
 
 func (b *LicenseBuilder) WithValue(expr string) *LicenseBuilder {
@@ -126,8 +129,9 @@ func (b *LicenseBuilder) WithValue(expr string) *LicenseBuilder {
 	return b
 }
 
-func (b *LicenseBuilder) WithContents(contents *file.LocationReadCloser) *LicenseBuilder {
+func (b *LicenseBuilder) WithContents(contents file.LocationReadCloser) *LicenseBuilder {
 	b.contents = contents
+	b.locations.Add(contents.Location)
 	return b
 }
 
@@ -137,18 +141,18 @@ func (b *LicenseBuilder) WithType(t license.Type) *LicenseBuilder {
 }
 
 func (b *LicenseBuilder) WithLocations(locations file.LocationSet) *LicenseBuilder {
-	b.locations = locations
+	b.locations.Add(locations.ToSlice()...)
 	return b
 }
 
 func (b *LicenseBuilder) Build(ctx context.Context) []License {
-	if b.contents == nil && b.value == "" {
+	if b.value == "" && b.contents.ReadCloser == nil {
 		return nil // no inputs at all
 	}
 
 	// If value looks like full text (contains newline), treat it as content
-	if b.contents == nil && strings.Contains(b.value, "\n") {
-		b.contents = &file.LocationReadCloser{
+	if strings.Contains(b.value, "\n") {
+		b.contents = file.LocationReadCloser{
 			Location:   file.Location{},
 			ReadCloser: io.NopCloser(strings.NewReader(b.value)),
 		}
@@ -165,7 +169,7 @@ func (b *LicenseBuilder) Build(ctx context.Context) []License {
 
 func (b *LicenseBuilder) buildFromValue() []License {
 	content := ""
-	if b.contents != nil {
+	if b.contents.ReadCloser != nil {
 		var err error
 		content, err = contentFromReader(b.contents)
 		if err != nil {
@@ -188,14 +192,13 @@ func (b *LicenseBuilder) buildFromValue() []License {
 }
 
 func (b *LicenseBuilder) buildFromContents(ctx context.Context) []License {
-	contents, err := contentFromReader(b.contents)
-	if err != nil {
-		log.WithFields("error", err, "path", b.contents.Path()).Trace("could not read content")
-		return nil
-	}
-
 	scanner, err := licenses.ContextLicenseScanner(ctx)
 	if err != nil {
+		contents, err := contentFromReader(b.contents)
+		if err != nil {
+			log.WithFields("error", err, "path", b.contents.Path()).Trace("could not read content")
+			return nil
+		}
 		// we have no scanner so we sha256 the content and value populated
 		return []License{b.licenseFromContentHash(contents)}
 	}
@@ -209,7 +212,7 @@ func (b *LicenseBuilder) buildFromContents(ctx context.Context) []License {
 	if len(evidence) > 0 {
 		return b.licensesFromEvidenceAndContent(evidence, []byte(content))
 	}
-	return []License{b.licenseFromContentHash(contents)}
+	return []License{b.licenseFromContentHash(string(content))}
 }
 
 func (b *LicenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evidence, content []byte) []License {
@@ -224,7 +227,7 @@ func (b *LicenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evid
 			candidate.Contents = string(content[e.Start:e.End])
 		}
 		// check for SPDX Validity
-		if ex, err := license.ParseExpression(b.value); err == nil {
+		if ex, err := license.ParseExpression(e.ID); err == nil {
 			candidate.SPDXExpression = ex
 		}
 
