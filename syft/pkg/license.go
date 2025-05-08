@@ -114,7 +114,7 @@ type LicenseBuilder struct {
 	value     string
 	tp        license.Type
 	locations file.LocationSet
-	contents  file.LocationReadCloser
+	content   file.LocationReadCloser
 }
 
 func NewLicenseBuilder() *LicenseBuilder {
@@ -123,14 +123,13 @@ func NewLicenseBuilder() *LicenseBuilder {
 		tp:        license.Declared,
 	}
 }
-
 func (b *LicenseBuilder) WithValue(expr string) *LicenseBuilder {
 	b.value = expr
 	return b
 }
 
 func (b *LicenseBuilder) WithContents(contents file.LocationReadCloser) *LicenseBuilder {
-	b.contents = contents
+	b.content = contents
 	b.locations.Add(contents.Location)
 	return b
 }
@@ -140,24 +139,25 @@ func (b *LicenseBuilder) WithType(t license.Type) *LicenseBuilder {
 	return b
 }
 
-func (b *LicenseBuilder) WithLocations(locations file.LocationSet) *LicenseBuilder {
-	b.locations.Add(locations.ToSlice()...)
+func (b *LicenseBuilder) WithLocation(location file.Location) *LicenseBuilder {
+	b.locations.Add(location)
 	return b
 }
 
 func (b *LicenseBuilder) Build(ctx context.Context) []License {
-	if b.value == "" && b.contents.ReadCloser == nil {
+	if b.value == "" && b.content.ReadCloser == nil {
 		return nil // no inputs at all
 	}
 
-	// If value looks like full text (contains newline), treat it as content
+	// If value looks like full text (contains newline), treat it as content and zero the value
 	if strings.Contains(b.value, "\n") {
-		b.contents = file.LocationReadCloser{
+		b.content = file.LocationReadCloser{
 			Location:   file.Location{},
 			ReadCloser: io.NopCloser(strings.NewReader(b.value)),
 		}
 		b.value = ""
 	}
+
 	// value present; easy license construction
 	if b.value != "" {
 		return b.buildFromValue()
@@ -169,11 +169,11 @@ func (b *LicenseBuilder) Build(ctx context.Context) []License {
 
 func (b *LicenseBuilder) buildFromValue() []License {
 	content := ""
-	if b.contents.ReadCloser != nil {
+	if b.content.ReadCloser != nil {
 		var err error
-		content, err = contentFromReader(b.contents)
+		content, err = contentFromReader(b.content)
 		if err != nil {
-			log.WithFields("error", err, "path", b.contents.Path()).Trace("could not read content from path")
+			log.WithFields("error", err, "path", b.content.Path()).Trace("could not read content from path")
 		}
 	}
 
@@ -194,18 +194,18 @@ func (b *LicenseBuilder) buildFromValue() []License {
 func (b *LicenseBuilder) buildFromContents(ctx context.Context) []License {
 	scanner, err := licenses.ContextLicenseScanner(ctx)
 	if err != nil {
-		contents, err := contentFromReader(b.contents)
+		contents, err := contentFromReader(b.content)
 		if err != nil {
-			log.WithFields("error", err, "path", b.contents.Path()).Trace("could not read content")
+			log.WithFields("error", err, "path", b.content.Path()).Trace("could not read content")
 			return nil
 		}
 		// we have no scanner so we sha256 the content and value populated
 		return []License{b.licenseFromContentHash(contents)}
 	}
 
-	evidence, content, err := scanner.FindEvidence(ctx, b.contents)
+	evidence, content, err := scanner.FindEvidence(ctx, b.content)
 	if err != nil {
-		log.WithFields("error", err, "path", b.contents.Path()).Trace("scanner failed")
+		log.WithFields("error", err, "path", b.content.Path()).Trace("scanner failed")
 		return nil
 	}
 

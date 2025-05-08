@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -54,12 +55,19 @@ func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.R
 	return p
 }
 
-func newDebArchivePackage(location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
+func newDebArchivePackage(ctx context.Context, location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
+	licenses := pkg.NewLicenseSet()
+	for _, licenseString := range licenseStrings {
+		licenses.Add(pkg.NewLicenseBuilder().
+			WithValue(licenseString).
+			WithLocation(location).
+			Build(ctx)...)
+	}
 	p := pkg.Package{
 		Name:     metadata.Package,
 		Version:  metadata.Version,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenseStrings...)...),
 		Type:     pkg.DebPkg,
+		Licenses: licenses,
 		PURL: packageURL(
 			pkg.DpkgDBEntry(metadata),
 			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
