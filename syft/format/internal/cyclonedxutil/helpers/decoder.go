@@ -69,9 +69,11 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 		syftID := extractSyftPacakgeID(component.BOMRef)
 		if syftID != "" {
 			idMap[syftID] = p
-			p.OverrideID(artifact.ID(syftID))
+		}
+		if component.BOMRef != "" {
+			// always prefer the IDs from the SBOM over derived IDs
+			p.OverrideID(artifact.ID(component.BOMRef))
 		} else {
-			// TODO there must be a better way than needing to call this manually:
 			p.SetID()
 		}
 		s.Artifacts.Packages.Add(*p)

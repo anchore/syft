@@ -664,7 +664,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "some-package",
-				PackageSPDXIdentifier: "1",
+				PackageSPDXIdentifier: "1", // important!
 				PackageVersion:        "1.0.5",
 				Files: []*spdx.File{
 					{
@@ -689,7 +689,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Name:    "some-package",
 		Version: "1.0.5",
 	}
-	p.SetID()
+	p.OverrideID("1") // the same as the spdxID on the package element
 	f := file.Location{
 		LocationData: file.LocationData{
 			Coordinates: file.Coordinates{
@@ -729,4 +729,33 @@ func Test_directPackageFiles(t *testing.T) {
 	}
 
 	require.Equal(t, s, got)
+}
+
+func Test_useSPDXIdentifierOverDerivedSyftArtifactID(t *testing.T) {
+	doc := &spdx.Document{
+		SPDXVersion: "SPDX-2.3",
+		Packages: []*spdx.Package{
+			{
+				PackageName:           "some-package",
+				PackageSPDXIdentifier: "1", // important!
+				PackageVersion:        "1.0.5",
+				Files: []*spdx.File{
+					{
+						FileName:           "some-file",
+						FileSPDXIdentifier: "2",
+						Checksums: []spdx.Checksum{
+							{
+								Algorithm: "SHA1",
+								Value:     "a8d733c64f9123",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	s, err := ToSyftModel(doc)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
 }

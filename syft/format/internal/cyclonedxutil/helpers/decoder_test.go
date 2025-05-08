@@ -422,7 +422,7 @@ func Test_decodeDependencies(t *testing.T) {
 	}
 }
 
-func Test_useSyftIDWhenProvided(t *testing.T) {
+func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 
 	packageWithId := cyclonedx.Component{
 		BOMRef:     "pkg:maven/org.springframework.boot/spring-boot-starter-test?package-id=646a5a71a4abeee0",
@@ -431,8 +431,6 @@ func Test_useSyftIDWhenProvided(t *testing.T) {
 		Version:    "",
 		PackageURL: "pkg:maven/org.springframework.boot/spring-boot-starter-test",
 	}
-
-	packageID := extractSyftPacakgeID(packageWithId.BOMRef)
 
 	packageWithoutId := cyclonedx.Component{
 		BOMRef:     "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
@@ -448,12 +446,12 @@ func Test_useSyftIDWhenProvided(t *testing.T) {
 			packageWithoutId,
 		}}
 
-	sbom, err := ToSyftModel(&bom)
+	s, err := ToSyftModel(&bom)
 
 	assert.Nil(t, err)
-	assert.NotNil(t, sbom.Artifacts.Packages.Package(artifact.ID(packageID)))
+	assert.NotNil(t, s.Artifacts.Packages.Package("pkg:maven/org.springframework.boot/spring-boot-starter-test?package-id=646a5a71a4abeee0"))
 
-	pkgsWithoutID := sbom.Artifacts.Packages.PackagesByName(packageWithoutId.Name)
+	pkgsWithoutID := s.Artifacts.Packages.PackagesByName(packageWithoutId.Name)
 
 	assert.Len(t, pkgsWithoutID, 1)
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
