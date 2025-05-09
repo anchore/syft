@@ -261,13 +261,6 @@ func moduleDir(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
 }
 
-func requireCollection[T any](licenses []T) []T {
-	if licenses == nil {
-		return make([]T, 0)
-	}
-	return licenses
-}
-
 var capReplacer = regexp.MustCompile("[A-Z]")
 
 func processCaps(s string) string {

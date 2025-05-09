@@ -4,15 +4,15 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/anchore/syft/internal/licenses"
-	"golang.org/x/net/context"
 	"io"
 	"net/url"
 	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
+	"golang.org/x/net/context"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -322,7 +322,7 @@ func (b *licenseBuilder) buildFromCandidate(c licenseCandidate) []License {
 	// we'll never have both c.Contents and c.Locations
 	// these fields should always be mutually exclusive
 	// contents is for the scanner, location is for where we read the metadata
-	if c.Contents.Location.Path() != "" {
+	if c.Contents.Path() != "" {
 		output.Locations = file.NewLocationSet(c.Contents.Location)
 	}
 
@@ -339,7 +339,6 @@ func (b *licenseBuilder) buildFromCandidate(c licenseCandidate) []License {
 			Contents: output.Contents,
 			Type:     output.Type,
 		}
-
 	}
 
 	// we want to check if the SPDX field should be set
