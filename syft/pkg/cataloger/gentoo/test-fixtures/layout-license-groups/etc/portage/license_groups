@@ -1,0 +1,8 @@
+# The FSF-APPROVED group includes the entire GPL-COMPATIBLE group and more.
+FSF-APPROVED @GPL-COMPATIBLE Apache-1.1 BSD-4 MPL-1.0 MPL-1.1 PSF-2.0
+# The GPL-COMPATIBLE group includes all licenses compatible with the GNU GPL.
+GPL-COMPATIBLE Apache-2.0 BSD BSD-2 GPL-2 GPL-3 LGPL-2.1 LGPL-3 X11 ZLIB
+# for skopeo
+GROUP1 Apache-2.0 @BSD-COMPATIBLE CC-BY-SA-4.0
+BSD-COMPATIBLE BSD BSD-2
+MIT-LIKE ISC MIT
