@@ -248,8 +248,8 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 			continue
 		}
 		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
-		urlDirInPath := Uncapitalize(urlDir)
-		nameInPath := Uncapitalize(nameWithoutVersion)
+		urlDirInPath := uncapitalize(urlDir)
+		nameInPath := uncapitalize(nameWithoutVersion)
 		// the sym is not a mark of third-party function
 		if len(urlDir) == 0 {
 			continue
@@ -286,7 +286,7 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 	return uniqueModules
 }
 
-func Uncapitalize(name string) (newName string) {
+func uncapitalize(name string) (newName string) {
 	parts := strings.Split(name, "/")
 	for i, part := range parts {
 		var hasUpper bool
