@@ -26,7 +26,7 @@ func TestParsePear(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPearPkg,
@@ -49,7 +49,7 @@ func TestParsePear(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPearPkg,
@@ -87,7 +87,7 @@ func TestParsePecl(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPeclPkg, // important!
@@ -110,7 +110,7 @@ func TestParsePecl(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPeclPkg, // important!

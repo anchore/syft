@@ -98,7 +98,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+						pkg.NewLicenseFromLocationsWithContext("MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
@@ -128,7 +128,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations: file.NewLocationSet(packagesLocation),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+						pkg.NewLicenseFromLocationsWithContext("MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",

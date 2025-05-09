@@ -280,7 +280,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
-	lics := pkg.NewLicensesFromLocation(ctx, j.location, selectLicenses(manifest)...)
+	lics := pkg.NewLicensesFromLocationWithContext(ctx, j.location, selectLicenses(manifest)...)
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1

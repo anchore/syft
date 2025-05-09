@@ -16,7 +16,7 @@ func newDBPackage(ctx context.Context, dbOrRpmLocation file.Location, m pkg.RpmD
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   toELVersion(m.Epoch, m.Version, m.Release),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, dbOrRpmLocation, licenses...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, dbOrRpmLocation, licenses...)...),
 		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, distro),
 		Locations: file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.RpmPkg,
@@ -31,7 +31,7 @@ func newArchivePackage(ctx context.Context, archiveLocation file.Location, m pkg
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   toELVersion(m.Epoch, m.Version, m.Release),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, archiveLocation, licenses...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, archiveLocation, licenses...)...),
 		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, nil),
 		Locations: file.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.RpmPkg,

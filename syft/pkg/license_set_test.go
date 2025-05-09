@@ -21,51 +21,51 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "add one simple license",
 			licenses: []License{
-				NewLicense(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "MIT"),
 			},
 			want: []License{
-				NewLicense(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "MIT"),
 			},
 		},
 		{
 			name: "add multiple simple licenses",
 			licenses: []License{
-				NewLicense(ctx, "MIT"),
-				NewLicense(ctx, "MIT"),
-				NewLicense(ctx, "Apache-2.0"),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "Apache-2.0"),
 			},
 			want: []License{
-				NewLicense(ctx, "Apache-2.0"),
-				NewLicense(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "Apache-2.0"),
+				NewLicenseWithContext(ctx, "MIT"),
 			},
 		},
 		{
 			name: "attempt to add a license with no name",
 			licenses: []License{
-				NewLicense(ctx, ""),
+				NewLicenseWithContext(ctx, ""),
 			},
 			want: nil,
 		},
 		{
 			name: "keep multiple licenses sorted",
 			licenses: []License{
-				NewLicense(ctx, "MIT"),
-				NewLicense(ctx, "Apache-2.0"),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "Apache-2.0"),
 			},
 			want: []License{
-				NewLicense(ctx, "Apache-2.0"),
-				NewLicense(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "Apache-2.0"),
+				NewLicenseWithContext(ctx, "MIT"),
 			},
 		},
 		{
 			name: "deduplicate licenses with locations",
 			licenses: []License{
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"})),
 			},
 			want: []License{
-				NewLicenseFromLocations(
+				NewLicenseFromLocationsWithContext(
 					ctx,
 					"MIT",
 					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"}),
@@ -76,12 +76,12 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "same licenses with different locations",
 			licenses: []License{
-				NewLicense(ctx, "MIT"),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"})),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "2"})),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"})),
 			},
 			want: []License{
-				NewLicenseFromLocations(
+				NewLicenseFromLocationsWithContext(
 					ctx,
 					"MIT",
 					file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/place", FileSystemID: "1"}),
@@ -92,9 +92,9 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "same license from different sources",
 			licenses: []License{
-				NewLicense(ctx, "MIT"),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("/place")),
-				NewLicenseFromURLs(ctx, "MIT", "https://example.com"),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("/place")),
+				NewLicenseFromURLsWithContext(ctx, "MIT", "https://example.com"),
 			},
 			want: []License{
 				{
@@ -109,10 +109,10 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "different licenses from different sources with different types constitute two licenses",
 			licenses: []License{
-				NewLicenseFromType(ctx, "MIT", license.Concluded),
-				NewLicenseFromType(ctx, "MIT", license.Declared),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("/place")),
-				NewLicenseFromURLs(ctx, "MIT", "https://example.com"),
+				NewLicenseFromTypeWithContext(ctx, "MIT", license.Concluded),
+				NewLicenseFromTypeWithContext(ctx, "MIT", license.Declared),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("/place")),
+				NewLicenseFromURLsWithContext(ctx, "MIT", "https://example.com"),
 			},
 			want: []License{
 				{
@@ -133,8 +133,8 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "licenses that are unknown with different contents can exist in the same set",
 			licenses: []License{
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
 			},
 			want: []License{
 				{

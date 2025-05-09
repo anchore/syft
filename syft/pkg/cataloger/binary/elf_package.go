@@ -14,7 +14,7 @@ func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, location
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, metadata.License)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, metadata.License)),
 		PURL:      packageURL(metadata),
 		Type:      pkgType(metadata.Type),
 		Locations: locations,

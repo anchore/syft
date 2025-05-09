@@ -533,14 +533,14 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 
 	// concluded
 	if p.PackageLicenseConcluded != helpers.NOASSERTION && p.PackageLicenseConcluded != helpers.NONE && p.PackageLicenseConcluded != "" {
-		l := pkg.NewLicense(context.TODO(), cleanSPDXID(p.PackageLicenseConcluded))
+		l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseConcluded))
 		l.Type = license.Concluded
 		licenses = append(licenses, l)
 	}
 
 	// declared
 	if p.PackageLicenseDeclared != helpers.NOASSERTION && p.PackageLicenseDeclared != helpers.NONE && p.PackageLicenseDeclared != "" {
-		l := pkg.NewLicense(context.TODO(), cleanSPDXID(p.PackageLicenseDeclared))
+		l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseDeclared))
 		l.Type = license.Declared
 		licenses = append(licenses, l)
 	}

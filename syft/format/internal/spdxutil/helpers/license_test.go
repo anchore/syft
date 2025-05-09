@@ -31,7 +31,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicense("made-up")),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext("made-up")),
 			},
 			expected: expected{
 				concluded: "NOASSERTION",
@@ -41,7 +41,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext("MIT")),
 			},
 			expected: struct {
 				concluded string
@@ -55,8 +55,8 @@ func Test_License(t *testing.T) {
 			name: "with SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT"),
-					pkg.NewLicense("GPL-3.0-only"),
+					pkg.NewLicenseWithContext("MIT"),
+					pkg.NewLicenseWithContext("GPL-3.0-only"),
 				),
 			},
 			expected: expected{
@@ -69,9 +69,9 @@ func Test_License(t *testing.T) {
 			name: "includes valid LicenseRef-",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("one thing first"),
-					pkg.NewLicense("two things/#$^second"),
-					pkg.NewLicense("MIT"),
+					pkg.NewLicenseWithContext("one thing first"),
+					pkg.NewLicenseWithContext("two things/#$^second"),
+					pkg.NewLicenseWithContext("MIT"),
 				),
 			},
 			expected: expected{
@@ -84,9 +84,9 @@ func Test_License(t *testing.T) {
 			name: "join parentheses correctly",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("one thing first"),
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicense("MIT OR APACHE-2.0"),
+					pkg.NewLicenseWithContext("one thing first"),
+					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext("MIT OR APACHE-2.0"),
 				),
 			},
 			expected: expected{

@@ -20,7 +20,7 @@ func TestParseWordpressPluginFiles(t *testing.T) {
 		Locations: locations,
 		Type:      pkg.WordpressPluginPkg,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPLv2"),
+			pkg.NewLicenseFromLocationsWithContext("GPLv2"),
 		),
 		Language: pkg.PHP,
 		Metadata: pkg.WordpressPluginEntry{

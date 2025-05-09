@@ -309,7 +309,7 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 
 func getLicenseSetFromValues(ctx context.Context, locations []file.Location, licenseValues ...string) pkg.LicenseSet {
 	if len(locations) == 0 {
-		return pkg.NewLicenseSet(pkg.NewLicensesFromValues(ctx, licenseValues...)...)
+		return pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseValues...)...)
 	}
 
 	licenseSet := pkg.NewLicenseSet()
@@ -318,7 +318,7 @@ func getLicenseSetFromValues(ctx context.Context, locations []file.Location, lic
 			continue
 		}
 
-		licenseSet.Add(pkg.NewLicenseFromLocations(ctx, value, locations...))
+		licenseSet.Add(pkg.NewLicenseFromLocationsWithContext(ctx, value, locations...))
 	}
 	return licenseSet
 }

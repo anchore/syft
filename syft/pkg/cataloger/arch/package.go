@@ -20,7 +20,7 @@ func newPackage(ctx context.Context, m *parsedData, release *linux.Release, dbLo
 		Name:      m.Package,
 		Version:   m.Version,
 		Locations: locs,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, dbLocation.WithoutAnnotations(), licenseCandidates...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, dbLocation.WithoutAnnotations(), licenseCandidates...)...),
 		Type:      pkg.AlpmPkg,
 		PURL:      packageURL(m, release),
 		Metadata:  m.AlpmDBEntry,

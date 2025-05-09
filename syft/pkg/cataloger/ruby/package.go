@@ -27,7 +27,7 @@ func newGemspecPackage(ctx context.Context, m gemData, gemSpecLocation file.Loca
 		Name:      m.Name,
 		Version:   m.Version,
 		Locations: file.NewLocationSet(gemSpecLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, gemSpecLocation, m.Licenses...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, gemSpecLocation, m.Licenses...)...),
 		PURL:      packageURL(m.Name, m.Version),
 		Language:  pkg.Ruby,
 		Type:      pkg.GemPkg,

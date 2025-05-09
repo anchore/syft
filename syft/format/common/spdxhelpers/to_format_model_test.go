@@ -769,7 +769,7 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "single licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("foobar"),
+					pkg.NewLicenseWithContext("foobar"),
 				),
 			},
 			expected: []*spdx.OtherLicense{
@@ -783,8 +783,8 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("internal made up license name"),
-					pkg.NewLicense("new apple license 2.0"),
+					pkg.NewLicenseWithContext("internal made up license name"),
+					pkg.NewLicenseWithContext("new apple license 2.0"),
 				),
 			},
 			expected: []*spdx.OtherLicense{
@@ -802,7 +802,7 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "LicenseRef as a valid spdx expression",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("LicenseRef-Fedora-Public-Domain"),
+					pkg.NewLicenseWithContext("LicenseRef-Fedora-Public-Domain"),
 				),
 			},
 			expected: []*spdx.OtherLicense{
@@ -816,7 +816,7 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("(MIT AND LicenseRef-Fedora-Public-Domain)"),
+					pkg.NewLicenseWithContext("(MIT AND LicenseRef-Fedora-Public-Domain)"),
 				),
 			},
 			expected: nil,
@@ -906,14 +906,14 @@ func Test_otherLicenses(t *testing.T) {
 		Name:    "first-pkg",
 		Version: "1.1",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext("MIT"),
 		),
 	}
 	pkg2 := pkg.Package{
 		Name:    "second-pkg",
 		Version: "2.2",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("non spdx license"),
+			pkg.NewLicenseWithContext("non spdx license"),
 		),
 	}
 	bigText := `
@@ -923,7 +923,7 @@ func Test_otherLicenses(t *testing.T) {
 		Name:    "third-pkg",
 		Version: "3.3",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense(bigText),
+			pkg.NewLicenseWithContext(bigText),
 		),
 	}
 

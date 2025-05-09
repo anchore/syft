@@ -24,7 +24,7 @@ func newPackage(ctx context.Context, d parsedData, release *linux.Release, dbLoc
 		Name:      d.Package,
 		Version:   d.Version,
 		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, dbLocation, licenseStrings...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, licenseStrings...)...),
 		PURL:      packageURL(d.ApkDBEntry, release),
 		Type:      pkg.ApkPkg,
 		Metadata:  d.ApkDBEntry,

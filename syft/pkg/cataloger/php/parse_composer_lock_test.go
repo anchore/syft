@@ -20,7 +20,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			PURL:      "pkg:composer/adoy/fastcgi-client@1.0.2",
 			Locations: locations,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext("MIT", file.NewLocation(fixture)),
 			),
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
@@ -60,7 +60,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			PURL:      "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
 			Language:  pkg.PHP,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext("MIT", file.NewLocation(fixture)),
 			),
 			Type: pkg.PhpComposerPkg,
 			Metadata: pkg.PhpComposerLockEntry{

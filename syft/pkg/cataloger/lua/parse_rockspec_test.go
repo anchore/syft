@@ -22,7 +22,7 @@ func TestParseRockspec(t *testing.T) {
 				Type:     pkg.LuaRocksPkg,
 				Language: pkg.Lua,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Apache-2.0", file.NewLocation("test-fixtures/rockspec/kong-3.7.0-0.rockspec")),
+					pkg.NewLicenseFromLocationsWithContext("Apache-2.0", file.NewLocation("test-fixtures/rockspec/kong-3.7.0-0.rockspec")),
 				),
 				Metadata: pkg.LuaRocksPackage{
 					Name:        "kong",
@@ -43,7 +43,7 @@ func TestParseRockspec(t *testing.T) {
 				Type:     pkg.LuaRocksPkg,
 				Language: pkg.Lua,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT/X11", file.NewLocation("test-fixtures/rockspec/lpeg-1.0.2-1.rockspec")),
+					pkg.NewLicenseFromLocationsWithContext("MIT/X11", file.NewLocation("test-fixtures/rockspec/lpeg-1.0.2-1.rockspec")),
 				),
 				Metadata: pkg.LuaRocksPackage{
 					Name:        "LPeg",
@@ -64,7 +64,7 @@ func TestParseRockspec(t *testing.T) {
 				Type:     pkg.LuaRocksPkg,
 				Language: pkg.Lua,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/rockspec/kong-pgmoon-1.16.2-1.rockspec")),
+					pkg.NewLicenseFromLocationsWithContext("MIT", file.NewLocation("test-fixtures/rockspec/kong-pgmoon-1.16.2-1.rockspec")),
 				),
 				Metadata: pkg.LuaRocksPackage{
 					Name:        "kong-pgmoon",
@@ -85,7 +85,7 @@ func TestParseRockspec(t *testing.T) {
 				Type:     pkg.LuaRocksPkg,
 				Language: pkg.Lua,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT/X11", file.NewLocation("test-fixtures/rockspec/luasyslog-2.0.1-1.rockspec")),
+					pkg.NewLicenseFromLocationsWithContext("MIT/X11", file.NewLocation("test-fixtures/rockspec/luasyslog-2.0.1-1.rockspec")),
 				),
 				Metadata: pkg.LuaRocksPackage{
 					Name:        "luasyslog",

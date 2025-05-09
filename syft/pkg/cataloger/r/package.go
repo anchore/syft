@@ -57,7 +57,7 @@ func parseLicenseData(ctx context.Context, license string, locations ...file.Loc
 			licenseVersion := strings.SplitN(l, " ", 2)
 			if len(licenseVersion) == 2 {
 				l = strings.Join([]string{licenseVersion[0], parseVersion(licenseVersion[1])}, "")
-				licenses = append(licenses, pkg.NewLicenseFromLocations(ctx, l, locations...))
+				licenses = append(licenses, pkg.NewLicenseFromLocationsWithContext(ctx, l, locations...))
 				continue
 			}
 		}
@@ -66,7 +66,7 @@ func parseLicenseData(ctx context.Context, license string, locations ...file.Loc
 		if strings.Contains(l, "+") && strings.Contains(l, "LICENSE") {
 			splitField := strings.Split(l, " ")
 			if len(splitField) > 0 {
-				licenses = append(licenses, pkg.NewLicenseFromLocations(ctx, splitField[0], locations...))
+				licenses = append(licenses, pkg.NewLicenseFromLocationsWithContext(ctx, splitField[0], locations...))
 				continue
 			}
 		}
@@ -78,7 +78,7 @@ func parseLicenseData(ctx context.Context, license string, locations ...file.Loc
 
 		// no specific case found for the above so assume case 2
 		// check if the common name in case 2 is valid SDPX otherwise value will be populated
-		licenses = append(licenses, pkg.NewLicenseFromLocations(ctx, l, locations...))
+		licenses = append(licenses, pkg.NewLicenseFromLocationsWithContext(ctx, l, locations...))
 		continue
 	}
 	return licenses

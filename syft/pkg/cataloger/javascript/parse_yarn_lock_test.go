@@ -262,7 +262,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 					Version:   "7.10.4",
 					Locations: locations,
 					PURL:      "pkg:npm/%40babel/code-frame@7.10.4",
-					Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "MIT")),
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MIT")),
 					Language:  pkg.JavaScript,
 					Type:      pkg.NpmPkg,
 					Metadata: pkg.YarnLockEntry{

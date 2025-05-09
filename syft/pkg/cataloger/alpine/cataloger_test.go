@@ -21,7 +21,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-3.0-or-later", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext("GPL-3.0-or-later", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
@@ -50,7 +50,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-2.0-only", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext("GPL-2.0-only", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
@@ -79,7 +79,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext("MIT", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
@@ -106,7 +106,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-2.0-or-later", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext("GPL-2.0-or-later", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{

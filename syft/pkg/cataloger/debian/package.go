@@ -59,7 +59,7 @@ func newDebArchivePackage(ctx context.Context, location file.Location, metadata 
 	p := pkg.Package{
 		Name:     metadata.Package,
 		Version:  metadata.Version,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues(ctx, licenseStrings...)...),
+		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
 		Type:     pkg.DebPkg,
 		PURL: packageURL(
 			pkg.DpkgDBEntry(metadata),
@@ -124,7 +124,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 		// attach the licenses
 		licenseStrs := parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
-			p.Licenses.Add(pkg.NewLicenseFromLocations(ctx, licenseStr, copyrightLocation.WithoutAnnotations()))
+			p.Licenses.Add(pkg.NewLicenseFromLocationsWithContext(ctx, licenseStr, copyrightLocation.WithoutAnnotations()))
 		}
 		// keep a record of the file where this was discovered
 		p.Locations.Add(*copyrightLocation)

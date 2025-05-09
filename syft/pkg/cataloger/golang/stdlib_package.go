@@ -61,7 +61,7 @@ func newGoStdLib(ctx context.Context, version string, location file.LocationSet)
 		PURL:      packageURL("stdlib", strings.TrimPrefix(version, "go")),
 		CPEs:      []cpe.CPE{stdlibCpe},
 		Locations: location,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "BSD-3-Clause")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "BSD-3-Clause")),
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{

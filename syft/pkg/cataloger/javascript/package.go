@@ -24,7 +24,7 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 		log.Debugf("unable to extract licenses from javascript package.json: %+v", err)
 	}
 
-	license := pkg.NewLicensesFromLocation(ctx, indexLocation, licenseCandidates...)
+	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, licenseCandidates...)
 	p := pkg.Package{
 		Name:      u.Name,
 		Version:   u.Version,
@@ -70,7 +70,7 @@ func newPackageLockV1Package(ctx context.Context, cfg CatalogerConfig, resolver 
 	if cfg.SearchRemoteLicenses {
 		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
 		if err == nil && license != "" {
-			licenses := pkg.NewLicensesFromValues(ctx, license)
+			licenses := pkg.NewLicensesFromValuesWithContext(ctx, license)
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
@@ -99,11 +99,11 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 	var licenseSet pkg.LicenseSet
 
 	if u.License != nil {
-		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, location, u.License...)...)
+		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, location, u.License...)...)
 	} else if cfg.SearchRemoteLicenses {
 		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, u.Version)
 		if err == nil && license != "" {
-			licenses := pkg.NewLicensesFromValues(ctx, license)
+			licenses := pkg.NewLicensesFromValuesWithContext(ctx, license)
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
@@ -150,7 +150,7 @@ func newYarnLockPackage(ctx context.Context, cfg CatalogerConfig, resolver file.
 	if cfg.SearchRemoteLicenses {
 		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
 		if err == nil && license != "" {
-			licenses := pkg.NewLicensesFromValues(ctx, license)
+			licenses := pkg.NewLicensesFromValuesWithContext(ctx, license)
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
@@ -233,7 +233,7 @@ func getLicenseFromNpmRegistry(baseURL, packageName, version string) (string, er
 
 func finalizeLockPkg(ctx context.Context, resolver file.Resolver, location file.Location, p pkg.Package) pkg.Package {
 	licenseCandidate := addLicenses(p.Name, resolver, location)
-	p.Licenses.Add(pkg.NewLicensesFromLocation(ctx, location, licenseCandidate...)...)
+	p.Licenses.Add(pkg.NewLicensesFromLocationWithContext(ctx, location, licenseCandidate...)...)
 	p.SetID()
 	return p
 }

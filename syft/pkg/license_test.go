@@ -47,57 +47,57 @@ func Test_Sort(t *testing.T) {
 		{
 			name: "single",
 			licenses: []License{
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("place!")),
 			},
 			expected: []License{
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("place!")),
 			},
 		},
 		{
 			name: "multiple",
 			licenses: []License{
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
-				NewLicenseFromURLs(ctx, "MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
-				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
-				NewLicenseFromLocations(ctx, "gpl2+", file.NewLocation("area!")),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromURLsWithContext(ctx, "MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
+				NewLicenseFromLocationsWithContext(ctx, "Apache", file.NewLocation("area!")),
+				NewLicenseFromLocationsWithContext(ctx, "gpl2+", file.NewLocation("area!")),
 			},
 			expected: Licenses{
-				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
-				NewLicenseFromURLs(ctx, "MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
-				NewLicenseFromLocations(ctx, "gpl2+", file.NewLocation("area!")),
+				NewLicenseFromLocationsWithContext(ctx, "Apache", file.NewLocation("area!")),
+				NewLicenseFromURLsWithContext(ctx, "MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromLocationsWithContext(ctx, "gpl2+", file.NewLocation("area!")),
 			},
 		},
 		{
 			name: "multiple with location variants",
 			licenses: []License{
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("park!")),
-				NewLicense(ctx, "MIT"),
-				NewLicense(ctx, "AAL"),
-				NewLicense(ctx, "Adobe-2006"),
-				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("park!")),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseWithContext(ctx, "AAL"),
+				NewLicenseWithContext(ctx, "Adobe-2006"),
+				NewLicenseFromLocationsWithContext(ctx, "Apache", file.NewLocation("area!")),
 			},
 			expected: Licenses{
-				NewLicense(ctx, "AAL"),
-				NewLicense(ctx, "Adobe-2006"),
-				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
-				NewLicense(ctx, "MIT"),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("park!")),
-				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseWithContext(ctx, "AAL"),
+				NewLicenseWithContext(ctx, "Adobe-2006"),
+				NewLicenseFromLocationsWithContext(ctx, "Apache", file.NewLocation("area!")),
+				NewLicenseWithContext(ctx, "MIT"),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("park!")),
+				NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("place!")),
 			},
 		},
 		{
 			name: "multiple licenses with only contents",
 			licenses: []License{
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
 			},
 			expected: Licenses{
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
 			},
 		},
 	}
@@ -264,7 +264,7 @@ func TestFullText(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewLicense(ctx, tt.value)
+			got := NewLicenseWithContext(ctx, tt.value)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -300,7 +300,7 @@ func TestLicenseConstructors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := NewLicenseFromURLs(ctx, test.input.value, test.input.urls...)
+			got := NewLicenseFromURLsWithContext(ctx, test.input.value, test.input.urls...)
 			assert.Equal(t, test.expected, got)
 		})
 	}

@@ -32,7 +32,7 @@ func TestParseOpamPackage(t *testing.T) {
 					PURL:      "pkg:opam/ocaml-base-compiler@4.14.0",
 					Locations: file.NewLocationSet(location1),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(ctx, location1, "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception")...,
+						pkg.NewLicensesFromLocationWithContext(ctx, location1, "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception")...,
 					),
 					Language: pkg.OCaml,
 					Type:     pkg.OpamPkg,
@@ -58,7 +58,7 @@ func TestParseOpamPackage(t *testing.T) {
 					PURL:      "pkg:opam/alcotest@1.5.0",
 					Locations: file.NewLocationSet(location2),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
+						pkg.NewLicensesFromLocationWithContext(
 							ctx,
 							location2,
 							"ISC",

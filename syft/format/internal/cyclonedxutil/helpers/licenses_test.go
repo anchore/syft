@@ -25,7 +25,7 @@ func Test_encodeLicense(t *testing.T) {
 			name: "no SPDX licenses",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("RandomLicense"),
+					pkg.NewLicenseWithContext("RandomLicense"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -40,8 +40,8 @@ func Test_encodeLicense(t *testing.T) {
 			name: "single SPDX ID and Non SPDX ID",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("mit"),
-					pkg.NewLicense("FOOBAR"),
+					pkg.NewLicenseWithContext("mit"),
+					pkg.NewLicenseWithContext("FOOBAR"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -61,7 +61,7 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with complex SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -74,8 +74,8 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple complex SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicense("MIT AND GPL-3.0-only WITH Classpath-exception-2.0"),
+					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only WITH Classpath-exception-2.0"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -88,9 +88,9 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple URLs and expressions",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicenseFromURLs("FakeLicense", "htts://someurl.com"),
+					pkg.NewLicenseFromURLsWithContext("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
+					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseFromURLsWithContext("FakeLicense", "htts://someurl.com"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -123,8 +123,8 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple values licenses are deduplicated",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("Apache-2"),
-					pkg.NewLicense("Apache-2.0"),
+					pkg.NewLicenseWithContext("Apache-2"),
+					pkg.NewLicenseWithContext("Apache-2.0"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -139,9 +139,9 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple URLs and single with no URLs",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT"),
-					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext("MIT"),
+					pkg.NewLicenseFromURLsWithContext("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
+					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -167,7 +167,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "single parenthesized SPDX expression",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("(MIT OR Apache-2.0)")...),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext("(MIT OR Apache-2.0)")...),
 			},
 			expected: &cyclonedx.Licenses{
 				{
@@ -179,7 +179,7 @@ func Test_encodeLicense(t *testing.T) {
 			name: "single license AND to parenthesized SPDX expression",
 			// (LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later")...),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext("(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later")...),
 			},
 			expected: &cyclonedx.Licenses{
 				{

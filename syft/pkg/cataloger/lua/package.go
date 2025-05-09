@@ -8,7 +8,7 @@ import (
 )
 
 func newLuaRocksPackage(ctx context.Context, u luaRocksPackage, indexLocation file.Location) pkg.Package {
-	license := pkg.NewLicensesFromLocation(ctx, indexLocation, u.License)
+	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, u.License)
 	p := pkg.Package{
 		Name:      u.Name,
 		Version:   u.Version,

@@ -32,7 +32,7 @@ func TestAlpmCataloger(t *testing.T) {
 		Type:    pkg.AlpmPkg,
 		FoundBy: "alpm-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", treeSitterDbLocation),
+			pkg.NewLicenseFromLocationsWithContext("MIT", treeSitterDbLocation),
 		),
 		Locations: file.NewLocationSet(treeSitterDbLocation),
 		Metadata: pkg.AlpmDBEntry{
@@ -58,7 +58,7 @@ func TestAlpmCataloger(t *testing.T) {
 		Type:    pkg.AlpmPkg,
 		FoundBy: "alpm-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL3", emacsDbLocation),
+			pkg.NewLicenseFromLocationsWithContext("GPL3", emacsDbLocation),
 		),
 		Locations: file.NewLocationSet(emacsDbLocation),
 		Metadata: pkg.AlpmDBEntry{
@@ -123,8 +123,8 @@ func TestAlpmCataloger(t *testing.T) {
 		Type:    pkg.AlpmPkg,
 		FoundBy: "alpm-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("LGPL3", gmpDbLocation),
-			pkg.NewLicenseFromLocations("GPL", gmpDbLocation),
+			pkg.NewLicenseFromLocationsWithContext("LGPL3", gmpDbLocation),
+			pkg.NewLicenseFromLocationsWithContext("GPL", gmpDbLocation),
 		),
 		Locations: file.NewLocationSet(
 			gmpDbLocation,

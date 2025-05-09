@@ -110,7 +110,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		),
 		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext("MIT"),
 		),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
@@ -161,7 +161,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		),
 		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext("MIT"),
 		),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",

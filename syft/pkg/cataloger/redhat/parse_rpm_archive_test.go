@@ -26,7 +26,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:   "rpm-archive-cataloger",
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", abcRpmLocation),
+						pkg.NewLicenseFromLocationsWithContext("MIT", abcRpmLocation),
 					),
 					Metadata: pkg.RpmArchive{
 						Name:      "abc",
@@ -54,7 +54,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:   "rpm-archive-cataloger",
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("Public Domain", zorkRpmLocation),
+						pkg.NewLicenseFromLocationsWithContext("Public Domain", zorkRpmLocation),
 					),
 					Metadata: pkg.RpmArchive{
 						Name:      "zork",

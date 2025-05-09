@@ -24,7 +24,7 @@ func newWordpressPluginPackage(ctx context.Context, name, version string, m plug
 	}
 
 	if len(m.Licenses) > 0 {
-		p.Licenses = pkg.NewLicenseSet(pkg.NewLicense(ctx, m.Licenses[0]))
+		p.Licenses = pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, m.Licenses[0]))
 	}
 
 	p.SetID()

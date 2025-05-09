@@ -24,7 +24,7 @@ func Test_DBCataloger(t *testing.T) {
 		Version:   "11-13.el9",
 		Type:      pkg.RpmPkg,
 		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", dbLocation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext("Public Domain", dbLocation)),
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/basesystem@11-13.el9?arch=noarch&upstream=basesystem-11-13.el9.src.rpm",
 		Metadata: pkg.RpmDBEntry{
@@ -54,7 +54,7 @@ func Test_DBCataloger(t *testing.T) {
 		Version:   "5.1.8-6.el9_1",
 		Type:      pkg.RpmPkg,
 		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("GPLv3+", dbLocation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext("GPLv3+", dbLocation)),
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/bash@5.1.8-6.el9_1?arch=x86_64&upstream=bash-5.1.8-6.el9_1.src.rpm",
 		Metadata: pkg.RpmDBEntry{
@@ -106,7 +106,7 @@ func Test_DBCataloger(t *testing.T) {
 		Version:   "3.16-2.el9",
 		Type:      pkg.RpmPkg,
 		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", dbLocation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext("Public Domain", dbLocation)),
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/filesystem@3.16-2.el9?arch=x86_64&upstream=filesystem-3.16-2.el9.src.rpm",
 		Metadata: pkg.RpmDBEntry{

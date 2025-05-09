@@ -111,7 +111,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			FoundBy:  "the-cataloger-1",
 			Language: pkg.Python,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicenseWithContext("MIT"),
 			),
 			Metadata: pkg.PythonPackage{
 				Name:    "package-1",

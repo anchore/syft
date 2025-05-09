@@ -121,7 +121,7 @@ func TestParseJar(t *testing.T) {
 					Version: "1.0-SNAPSHOT",
 					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations(ctx, "MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					),
 					Language: pkg.Java,
 					Type:     pkg.JenkinsPluginPkg,
@@ -1185,7 +1185,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					PURL:      "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
+						pkg.NewLicensesFromLocationWithContext(
 							ctx,
 							file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
@@ -1240,7 +1240,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					PURL:      "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
+						pkg.NewLicensesFromLocationWithContext(
 							ctx,
 							file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",

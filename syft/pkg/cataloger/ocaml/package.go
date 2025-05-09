@@ -11,7 +11,7 @@ func newOpamPackage(ctx context.Context, m pkg.OpamPackage, fileLocation file.Lo
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, fileLocation, m.Licenses...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, fileLocation, m.Licenses...)...),
 		PURL:      opamPackageURL(m.Name, m.Version),
 		Locations: file.NewLocationSet(fileLocation),
 		Type:      pkg.OpamPkg,

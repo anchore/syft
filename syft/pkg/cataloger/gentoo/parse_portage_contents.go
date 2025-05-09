@@ -121,7 +121,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	}
 
 	licenseCandidates := findings.List()
-	p.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, *location, licenseCandidates...)...)
+	p.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, *location, licenseCandidates...)...)
 	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }
 
