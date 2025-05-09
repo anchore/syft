@@ -100,6 +100,36 @@ func Test_toSyftSourceData(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "unknown",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "image",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id...",
+					Version:     "version..",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id...",
+					Version:     "version..",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -159,6 +189,30 @@ func Test_toSyftSourceData(t *testing.T) {
 					ID:             "id...",
 					ManifestDigest: "digest...",
 					MediaType:      "type...",
+				},
+			},
+		},
+		{
+			name: "unknown - no name/version",
+			src: model.Source{
+				ID:   "the-id",
+				Type: "image",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id...",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.UnknownMetadata{
+					UserInput:   "user-input",
+					ID:          "id...",
+					Group:       "group..",
+					Description: "desc..",
+					PackageURL:  "purl",
 				},
 			},
 		},

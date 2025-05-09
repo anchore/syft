@@ -239,7 +239,19 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			Metadata: source.FileMetadata{Path: c.Name},
 		}
 	}
-	return source.Description{}
+	return source.Description{
+		Metadata: source.UnknownMetadata{
+			UserInput:   c.Name,
+			ID:          c.BOMRef,
+			Version:     c.Version,
+			Group:       c.Group,
+			Authors:     c.Authors,
+			Description: c.Description,
+			PackageURL:  c.PackageURL,
+			Licenses:    c.Licenses,
+			ExternalRef: c.ExternalReferences,
+		},
+	}
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used

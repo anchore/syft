@@ -289,6 +289,32 @@ func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
 	return nil
 }
 
+func toBomUnknownComponent(name string, version string, metadata source.UnknownMetadata) *cyclonedx.Component {
+	if name == "" {
+		name = metadata.UserInput
+	}
+	if version == "" {
+		version = metadata.Version
+	}
+	bomRef, err := artifact.IDByHash(metadata.ID)
+	if err != nil {
+		log.Debugf("unable to get fingerprint of unknown source metadata=%s: %+v", metadata.ID, err)
+	}
+
+	return &cyclonedx.Component{
+		BOMRef:             string(bomRef),
+		Type:               "unknown",
+		Name:               name,
+		Version:            version,
+		Licenses:           metadata.Licenses,
+		Group:              metadata.Group,
+		PackageURL:         metadata.PackageURL,
+		ExternalReferences: metadata.ExternalRef,
+		Authors:            metadata.Authors,
+		Description:        metadata.Description,
+	}
+}
+
 func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Component {
 	name := srcMetadata.Name
 	version := srcMetadata.Version
@@ -340,6 +366,8 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
+	case source.UnknownMetadata:
+		return toBomUnknownComponent(name, version, metadata)
 	}
 
 	return nil
