@@ -124,7 +124,8 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner l
 
 		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, dep.Path, dep.Version)
 		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
-		p := c.newGoBinaryPackage(
+
+		m := newBinaryMetadata(
 			dep,
 			mod.Main.Path,
 			gover,
@@ -132,6 +133,11 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, licenseScanner l
 			nil,
 			mod.cryptoSettings,
 			experiments,
+		)
+
+		p := c.newGoBinaryPackage(
+			dep,
+			m,
 			lics,
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
@@ -163,7 +169,8 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanne
 	gbs := getBuildSettings(mod.Settings)
 	lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, mod.Main.Path, mod.Main.Version)
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
-	main := c.newGoBinaryPackage(
+
+	m := newBinaryMetadata(
 		&mod.Main,
 		mod.Main.Path,
 		gover,
@@ -171,32 +178,26 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, licenseScanne
 		gbs,
 		mod.cryptoSettings,
 		experiments,
+	)
+
+	if mod.Main.Version == devel {
+		version := c.findMainModuleVersion(&m, gbs, reader)
+
+		if version != "" {
+			// make sure version is prefixed with v as some build systems parsed
+			// during `findMainModuleVersion` can include incomplete semver
+			// vx.x.x is correct
+			version = ensurePrefix(version, "v")
+		}
+		mod.Main.Version = version
+	}
+
+	main := c.newGoBinaryPackage(
+		&mod.Main,
+		m,
 		lics,
 		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-
-	if main.Version != devel {
-		// found a full package with a non-development version... return it as is...
-		return main
-	}
-
-	// we have a package, but the version is "devel"... let's try and find a better answer
-	var metadata *pkg.GolangBinaryBuildinfoEntry
-	if v, ok := main.Metadata.(pkg.GolangBinaryBuildinfoEntry); ok {
-		metadata = &v
-	}
-	version := c.findMainModuleVersion(metadata, gbs, reader)
-
-	if version != "" {
-		// make sure version is prefixed with v as some build systems parsed
-		// during `findMainModuleVersion` can include incomplete semver
-		// vx.x.x is correct
-		version = ensurePrefix(version, "v")
-		main.Version = version
-		main.PURL = packageURL(main.Name, main.Version)
-
-		main.SetID()
-	}
 
 	return main
 }
