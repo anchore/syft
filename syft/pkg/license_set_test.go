@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -17,13 +18,9 @@ func TestLicenseSet_Add(t *testing.T) {
 		want     []License
 	}{
 		{
-			name: "add one simple license",
-			licenses: []License{
-				NewLicense("MIT"),
-			},
-			want: []License{
-				NewLicense("MIT"),
-			},
+			name:     "add one simple license",
+			licenses: NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
+			want:     NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
 		},
 		{
 			name: "add multiple simple licenses",

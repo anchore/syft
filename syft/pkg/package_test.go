@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -28,8 +29,7 @@ func TestIDUniqueness(t *testing.T) {
 			originalLocation,
 		),
 		Licenses: NewLicenseSet(
-			NewLicense("MIT"),
-			NewLicense("cc0-1.0"),
+			NewLicenseBuilder().WithValues("MIT", "cc0-1.0").Build(context.TODO())...,
 		),
 		Language: "math",
 		Type:     PythonPkg,

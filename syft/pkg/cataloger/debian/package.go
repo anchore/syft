@@ -60,7 +60,7 @@ func newDebArchivePackage(ctx context.Context, location file.Location, metadata 
 		Name:     metadata.Package,
 		Version:  metadata.Version,
 		Type:     pkg.DebPkg,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicenseBuilder().WithValues(licenseStrings...).Build(ctx)...),
+		Licenses: pkg.NewLicenseBuilder().WithValues(licenseStrings...).Build(ctx),
 		PURL: packageURL(
 			pkg.DpkgDBEntry(metadata),
 			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro

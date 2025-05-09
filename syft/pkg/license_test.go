@@ -20,7 +20,7 @@ func TestLicenseBuilder_Build(t *testing.T) {
 	tests := []struct {
 		name                    string
 		values                  []string
-		candidates              []Candidate
+		candidates              []LicenseCandidate
 		contents                []file.LocationReadCloser
 		locations               []file.Location
 		tp                      license.Type
@@ -42,7 +42,7 @@ func TestLicenseBuilder_Build(t *testing.T) {
 		},
 		{
 			name: "single: candidate with metadata location correctly adds location",
-			candidates: []Candidate{
+			candidates: []LicenseCandidate{
 				{
 					Value:    "mit",
 					Location: file.NewLocation("/SomeMetadata"),
@@ -72,7 +72,7 @@ func TestLicenseBuilder_Build(t *testing.T) {
 		{
 			name:   "multiple: builder with multiple candidates and values that overlap return the correct list of licenses with associated locations",
 			values: []string{"mit", "0BSD", "Aladdin", "apache-2.0", "BSD-3-Clause-HP"},
-			candidates: []Candidate{
+			candidates: []LicenseCandidate{
 				{
 					Value: "Apache-2.0",
 					Contents: file.NewLocationReadCloser(
@@ -106,7 +106,7 @@ func TestLicenseBuilder_Build(t *testing.T) {
 				WithContents(tt.contents...).
 				WithValues(tt.values...)
 
-			result := builder.Build(ctx)
+			_ := builder.Build(ctx)
 			var (
 				actualValues          []string
 				actualSPDXExpressions []string

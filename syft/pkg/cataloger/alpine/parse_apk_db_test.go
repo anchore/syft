@@ -86,9 +86,9 @@ func TestSinglePackageDetails(t *testing.T) {
 				Name:    "musl-utils",
 				Version: "1.1.24-r2",
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT"),
-					pkg.NewLicense("BSD"),
-					pkg.NewLicense("GPL2+"),
+					pkg.NewLicenseBuilder().
+						WithValues("MIT", "BSD", "GPL2+").
+						Build(context.TODO())...,
 				),
 				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkDBEntry{

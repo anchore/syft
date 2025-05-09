@@ -38,7 +38,7 @@ type pluginData struct {
 	pkg.WordpressPluginEntry `mapstructure:",squash" json:",inline"`
 }
 
-func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWordpressPluginFiles(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	buffer := make([]byte, contentBufferSize)
 
@@ -80,6 +80,7 @@ func parseWordpressPluginFiles(_ context.Context, _ file.Resolver, _ *generic.En
 		pkgs = append(
 			pkgs,
 			newWordpressPluginPackage(
+				ctx,
 				name.(string),
 				version.(string),
 				metadata,

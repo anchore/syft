@@ -110,21 +110,21 @@ func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-type Candidate struct {
+type LicenseCandidate struct {
 	Value    string
 	Contents file.LocationReadCloser // this is for cases where we know we have license content and want to do analysis
 	Location file.Location           // this is for cases where we just want the metadata file location
 }
 
 type LicenseBuilder struct {
-	candidates []Candidate
+	candidates []LicenseCandidate
 	contents   []file.LocationReadCloser
 	tp         license.Type
 }
 
 func NewLicenseBuilder() *LicenseBuilder {
 	return &LicenseBuilder{
-		candidates: make([]Candidate, 0),
+		candidates: make([]LicenseCandidate, 0),
 		contents:   make([]file.LocationReadCloser, 0),
 		tp:         license.Declared,
 	}
@@ -136,15 +136,15 @@ func (b *LicenseBuilder) WithValues(expr ...string) *LicenseBuilder {
 	return b
 }
 
-func (b *LicenseBuilder) WithCandidates(candidates ...Candidate) *LicenseBuilder {
+func (b *LicenseBuilder) WithCandidates(candidates ...LicenseCandidate) *LicenseBuilder {
 	b.candidates = append(b.candidates, candidates...)
 	return b
 }
 
-func candidatesFromExpr(expr []string) []Candidate {
-	candidates := make([]Candidate, 0)
+func candidatesFromExpr(expr []string) []LicenseCandidate {
+	candidates := make([]LicenseCandidate, 0)
 	for _, expr := range expr {
-		candidates = append(candidates, Candidate{
+		candidates = append(candidates, LicenseCandidate{
 			Value: expr,
 		})
 	}
@@ -161,14 +161,14 @@ func (b *LicenseBuilder) WithType(t license.Type) *LicenseBuilder {
 	return b
 }
 
-func (b *LicenseBuilder) Build(ctx context.Context) []License {
-	output := make([]License, 0)
+func (b *LicenseBuilder) Build(ctx context.Context) LicenseSet {
+	output := NewLicenseSet()
 	if len(b.candidates) == 0 && len(b.contents) == 0 {
 		return output // we have no inputs that could make any licenses; return empty list
 	}
 
-	// let's go through our candidates and make sure non of them are full license texts!
-	var filtered []Candidate
+	// let's go through our candidates and make sure none of them are full license texts!
+	var filtered []LicenseCandidate
 	for _, l := range b.candidates {
 		if strings.Contains(l.Value, "\n") {
 			// we want to add a new content item and remove the bad value
@@ -183,21 +183,21 @@ func (b *LicenseBuilder) Build(ctx context.Context) []License {
 	// now we're sure that our value:contents pairings are not contents:contents
 	b.candidates = filtered
 
-	// values present so easy output construction
+	// values are present so easy output construction
 	for _, l := range b.candidates {
-		output = append(output, b.buildFromCandidate(l)...)
+		output.Add(b.buildFromCandidate(l)...)
 	}
 
 	// we have some readers (with no values) that we've been asked to turn into licenses if we can
 	for _, content := range b.contents {
-		output = append(output, b.buildFromContents(ctx, content)...)
+		output.Add(b.buildFromContents(ctx, content)...)
 	}
 
 	return output
 }
 
 // Question - if a candidate is provided with a value do we still want the scanner to search for additional ID?
-func (b *LicenseBuilder) buildFromCandidate(c Candidate) []License {
+func (b *LicenseBuilder) buildFromCandidate(c LicenseCandidate) []License {
 	content := ""
 	if c.Contents.ReadCloser != nil {
 		var err error
