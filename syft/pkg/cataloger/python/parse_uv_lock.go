@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -49,7 +50,7 @@ type Dependencies []struct {
 }
 
 type Distribution struct {
-	Url  string `toml:"url"`
+	URL  string `toml:"url"`
 	Hash string `toml:"hash"`
 	Size int    `toml:"size"`
 }
@@ -76,25 +77,6 @@ func parseUvLock(_ context.Context, _ file.Resolver, _ *generic.Environment, rea
 	return pkgs, dependency.Resolve(uvLockDependencySpecifier, pkgs), err
 }
 
-type PythonUvLockDependencyEntry struct {
-	Name     string   `json:"name"`
-	Version  string   `json:"version"`
-	Optional bool     `json:"optional"`
-	Markers  string   `json:"markers,omitempty"`
-	Extras   []string `json:"extras,omitempty"`
-}
-
-type PythonUvLockExtraEntry struct {
-	Name         string   `json:"name"`
-	Dependencies []string `json:"dependencies"`
-}
-
-type PythonUvLockEntry struct {
-	Index        string                        `mapstructure:"index" json:"index"`
-	Dependencies []PythonUvLockDependencyEntry `json:"dependencies"`
-	Extras       []PythonUvLockExtraEntry      `json:"extras,omitempty"`
-}
-
 func extractUvIndex(p Package) string {
 	// This is a map, but there should only be one key, value pair
 	var rvalue string
@@ -105,10 +87,10 @@ func extractUvIndex(p Package) string {
 	return rvalue
 }
 
-func extractUvDependencies(p Package, pkgVerMap map[string]string) []PythonUvLockDependencyEntry {
-	var deps []PythonUvLockDependencyEntry
+func extractUvDependencies(p Package, pkgVerMap map[string]string) []pkg.PythonUvLockDependencyEntry {
+	var deps []pkg.PythonUvLockDependencyEntry
 	for _, d := range p.Dependencies {
-		deps = append(deps, PythonUvLockDependencyEntry{
+		deps = append(deps, pkg.PythonUvLockDependencyEntry{
 			Name:    d.Name,
 			Extras:  d.Extras,
 			Markers: d.Markers,
@@ -121,23 +103,23 @@ func extractUvDependencies(p Package, pkgVerMap map[string]string) []PythonUvLoc
 	return deps
 }
 
-func extractUvExtras(p Package) []PythonUvLockExtraEntry {
-	var extras []PythonUvLockExtraEntry
-	for name, deps_struct := range p.OptionalDependencies {
-		var extra_deps []string
-		for _, deps := range deps_struct {
-			extra_deps = append(extra_deps, deps.Name)
+func extractUvExtras(p Package) []pkg.PythonUvLockExtraEntry {
+	var extras []pkg.PythonUvLockExtraEntry
+	for name, depsStruct := range p.OptionalDependencies {
+		var extraDeps []string
+		for _, deps := range depsStruct {
+			extraDeps = append(extraDeps, deps.Name)
 		}
-		extras = append(extras, PythonUvLockExtraEntry{
+		extras = append(extras, pkg.PythonUvLockExtraEntry{
 			Name:         name,
-			Dependencies: extra_deps,
+			Dependencies: extraDeps,
 		})
 	}
 	return extras
 }
 
-func newPythonUvLockEntry(p Package, pkgVerMap map[string]string) PythonUvLockEntry {
-	return PythonUvLockEntry{
+func newPythonUvLockEntry(p Package, pkgVerMap map[string]string) pkg.PythonUvLockEntry {
+	return pkg.PythonUvLockEntry{
 		Index:        extractUvIndex(p),
 		Dependencies: extractUvDependencies(p, pkgVerMap),
 		Extras:       extractUvExtras(p),
@@ -157,7 +139,7 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	// lock file versions should they arise, but this gets us
 	// started down this road for now.
 	if parsedLockFileVersion.Version > 1 {
-		return nil, fmt.Errorf("could not parse UV Lock file version %d:", parsedLockFile.Version)
+		return nil, fmt.Errorf("could not parse uv lock file version %d", parsedLockFile.Version)
 	}
 
 	_, err = toml.NewDecoder(reader).Decode(&parsedLockFile)
@@ -169,8 +151,7 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	// The uv lock file doesn't store the dependency version in the dependency structure.
 	// Thus, we need a name -> version map for invoking extractUvDependencies.
 	// We then, of course, have to pass it down the call stack.
-	var pkgVerMap map[string]string
-	pkgVerMap = make(map[string]string)
+	var pkgVerMap = make(map[string]string)
 	for _, p := range parsedLockFile.Packages {
 		pkgVerMap[p.Name] = p.Version
 	}
@@ -190,16 +171,16 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	return pkgs, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
-func isDependencyForUvExtra(dep PythonUvLockDependencyEntry) bool {
+func isDependencyForUvExtra(dep pkg.PythonUvLockDependencyEntry) bool {
 	return strings.Contains(dep.Markers, "extra ==")
 }
 
 // This is identical to poetryLockDependencySpecifier since it operates on identical
-// data structurs. Keeping it separate for now since it's always possible for data
+// data structures. Keeping it separate for now since it's always possible for data
 // structures to change down the line.
 // It *is* possible we may be able to merge the Uv and Poetry data structures
 func uvLockDependencySpecifier(p pkg.Package) dependency.Specification {
-	meta, ok := p.Metadata.(PythonUvLockEntry)
+	meta, ok := p.Metadata.(pkg.PythonUvLockEntry)
 	if !ok {
 		log.Tracef("cataloger failed to extract UV lock metadata for package %+v", p.Name)
 		return dependency.Specification{}
@@ -238,5 +219,4 @@ func uvLockDependencySpecifier(p pkg.Package) dependency.Specification {
 		},
 		Variants: variants,
 	}
-
 }
