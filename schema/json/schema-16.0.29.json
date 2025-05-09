@@ -2615,7 +2615,7 @@
         "sourceRpm": {
           "type": "string"
         },
-        "pgp": {
+        "signature": {
           "type": "string"
         },
         "size": {
@@ -2654,7 +2654,6 @@
         "architecture",
         "release",
         "sourceRpm",
-        "pgp",
         "size",
         "vendor",
         "files"
@@ -2687,7 +2686,7 @@
         "sourceRpm": {
           "type": "string"
         },
-        "pgp": {
+        "signature": {
           "type": "string"
         },
         "size": {
@@ -2726,7 +2725,6 @@
         "architecture",
         "release",
         "sourceRpm",
-        "pgp",
         "size",
         "vendor",
         "files"
