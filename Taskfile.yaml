@@ -221,7 +221,8 @@ tasks:
     cmds:
       - "go test -v ./cmd/syft/internal/test/integration"
       # exercise most of the CLI with the data race detector
-      - "go run -race cmd/syft/main.go alpine:latest"
+      # we use a larger image to ensure we're using multiple catalogers at a time
+      - "go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2"
 
   validate-cyclonedx-schema:
     desc: Validate that Syft produces valid CycloneDX documents
