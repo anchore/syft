@@ -11,7 +11,6 @@ import (
 	"golang.org/x/mod/modfile"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -34,12 +33,6 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 //nolint:funlen
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	packages := make(map[string]pkg.Package)
-
-	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to create default license scanner: %w", err)
-	}
-
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
@@ -56,7 +49,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 	}
 
 	for _, m := range f.Require {
-		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, m.Mod.Path, m.Mod.Version)
+		lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
 		packages[m.Mod.Path] = pkg.Package{
 			Name:      m.Mod.Path,
 			Version:   m.Mod.Version,
@@ -73,7 +66,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 
 	// remove any old packages and replace with new ones...
 	for _, m := range f.Replace {
-		lics := c.licenseResolver.getLicenses(ctx, licenseScanner, resolver, m.New.Path, m.New.Version)
+		lics := c.licenseResolver.getLicenses(ctx, resolver, m.New.Path, m.New.Version)
 
 		// the old path and new path may be the same, in which case this is a noop,
 		// but if they're different we need to remove the old package.

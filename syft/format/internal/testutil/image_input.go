@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"github.com/docker/distribution/context"
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
