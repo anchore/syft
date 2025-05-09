@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestParseInstalledJsonComposerV1(t *testing.T) {
+	ctx := context.TODO()
 	fixtures := []string{
 		"test-fixtures/vendor/composer_1/installed.json",
 		"test-fixtures/vendor/composer_2/installed.json",
@@ -24,7 +26,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicenseWithContext(ctx, "MIT"),
 			),
 			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "asm89/stack-cors",
@@ -73,7 +75,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicenseWithContext(ctx, "MIT"),
 			),
 			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "behat/mink",

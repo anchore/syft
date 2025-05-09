@@ -163,7 +163,7 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 	// create relationships between packages within each global site package directory
 	for _, globalSitePackage := range globalSitePackages {
 		sitePkgs := collectPackages(pkgsBySitePackageAndName, []string{globalSitePackage})
-		_, siteRels, err := relationshipsProcessor(sitePkgs, nil, nil)
+		_, siteRels, err := relationshipsProcessor(ctx, sitePkgs, nil, nil)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to resolve relationships for global site package %q: %w", globalSitePackage, err)
 		}
@@ -176,7 +176,7 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 			continue
 		}
 		sitePkgs := collectPackages(pkgsBySitePackageAndName, []string{venv.SitePackagesPath})
-		_, siteRels, err := relationshipsProcessor(sitePkgs, nil, nil)
+		_, siteRels, err := relationshipsProcessor(ctx, sitePkgs, nil, nil)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to resolve relationships for virtualenv site package %q: %w", venv.SitePackagesPath, err)
 		}
@@ -192,7 +192,7 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		globalSitePackage := venv.matchSystemPackagesPath(globalSitePackages)
 
 		sitePkgs := collectPackages(pkgsBySitePackageAndName, []string{venv.SitePackagesPath, globalSitePackage})
-		_, siteRels, err := relationshipsProcessor(sitePkgs, nil, nil)
+		_, siteRels, err := relationshipsProcessor(ctx, sitePkgs, nil, nil)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to resolve relationships for virtualenv + global site package path %q + %q: %w", venv.SitePackagesPath, globalSitePackage, err)
 		}

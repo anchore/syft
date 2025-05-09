@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -9,6 +10,7 @@ import (
 )
 
 func Test_JavascriptCataloger(t *testing.T) {
+	ctx := context.TODO()
 	locationSet := file.NewLocationSet(file.NewLocation("package-lock.json"))
 	expectedPkgs := []pkg.Package{
 		{
@@ -20,7 +22,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation("package-lock.json")),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("package-lock.json")),
 			),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@actions/core/-/core-1.6.0.tgz", Integrity: "sha512-NB1UAZomZlCV/LmJqkLhNTqtKfFXJZAUPcfl/zqG7EfsQdeUJtaWO98SGbuQ3pydJ3fHl2CvI/51OKYlCYYcaw=="},
 		},
@@ -43,7 +45,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation("package-lock.json")),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("package-lock.json")),
 			),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/cowsay/-/cowsay-1.4.0.tgz", Integrity: "sha512-rdg5k5PsHFVJheO/pmE3aDg2rUDDTfPJau6yYkZYlHFktUz+UxbE+IgnUAEyyCyv4noL5ltxXD0gZzmHPCy/9g=="},
 		},

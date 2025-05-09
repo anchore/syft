@@ -1,6 +1,8 @@
 package binary
 
 import (
+	"context"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
@@ -8,11 +10,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newELFPackage(metadata elfBinaryPackageNotes, locations file.LocationSet) pkg.Package {
+func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, locations file.LocationSet) pkg.Package {
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(metadata.License)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, metadata.License)),
 		PURL:      packageURL(metadata),
 		Type:      pkgType(metadata.Type),
 		Locations: locations,

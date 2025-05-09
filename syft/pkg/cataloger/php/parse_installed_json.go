@@ -48,7 +48,7 @@ func (w *installedJSONComposerV2) UnmarshalJSON(data []byte) error {
 }
 
 // parseInstalledJSON is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseInstalledJSON(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseInstalledJSON(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
@@ -63,6 +63,7 @@ func parseInstalledJSON(_ context.Context, _ file.Resolver, _ *generic.Environme
 			pkgs = append(
 				pkgs,
 				newComposerInstalledPackage(
+					ctx,
 					pd,
 					reader.Location,
 				),

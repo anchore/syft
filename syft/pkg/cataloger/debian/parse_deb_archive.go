@@ -72,7 +72,7 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 	}
 
 	return []pkg.Package{
-		newDebArchivePackage(reader.Location, *metadata, licenses),
+		newDebArchivePackage(ctx, reader.Location, *metadata, licenses),
 	}, nil, nil
 }
 

@@ -52,7 +52,7 @@ func (c *elfPackageCataloger) Name() string {
 	return "elf-binary-package-cataloger"
 }
 
-func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *elfPackageCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var errs error
 	locations, err := resolver.FilesByMIMEType(mimetype.ExecutableMIMETypeSet.List()...)
 	if err != nil {
@@ -84,7 +84,7 @@ func (c *elfPackageCataloger) Catalog(_ context.Context, resolver file.Resolver)
 		}
 
 		// create a package for each unique name/version pair (based on the first note found)
-		pkgs = append(pkgs, newELFPackage(notes[0], noteLocations))
+		pkgs = append(pkgs, newELFPackage(ctx, notes[0], noteLocations))
 	}
 
 	// why not return relationships? We have an executable cataloger that will note the dynamic libraries imported by

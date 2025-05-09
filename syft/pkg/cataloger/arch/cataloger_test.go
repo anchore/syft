@@ -1,6 +1,7 @@
 package arch
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -25,6 +26,7 @@ func TestAlpmCataloger(t *testing.T) {
 	emacsDbLocation := file.NewLocation("var/lib/pacman/local/emacs-29.3-3/desc")
 	fuzzyDbLocation := file.NewLocation("var/lib/pacman/local/fuzzy-1.2-3/desc")
 	madeupDbLocation := file.NewLocation("var/lib/pacman/local/madeup-20.30-4/desc")
+	ctx := context.TODO()
 
 	treeSitterPkg := pkg.Package{
 		Name:    "tree-sitter",
@@ -32,7 +34,7 @@ func TestAlpmCataloger(t *testing.T) {
 		Type:    pkg.AlpmPkg,
 		FoundBy: "alpm-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", treeSitterDbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", treeSitterDbLocation),
 		),
 		Locations: file.NewLocationSet(treeSitterDbLocation),
 		Metadata: pkg.AlpmDBEntry{
@@ -58,7 +60,7 @@ func TestAlpmCataloger(t *testing.T) {
 		Type:    pkg.AlpmPkg,
 		FoundBy: "alpm-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL3", emacsDbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPL3", emacsDbLocation),
 		),
 		Locations: file.NewLocationSet(emacsDbLocation),
 		Metadata: pkg.AlpmDBEntry{
@@ -123,8 +125,8 @@ func TestAlpmCataloger(t *testing.T) {
 		Type:    pkg.AlpmPkg,
 		FoundBy: "alpm-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("LGPL3", gmpDbLocation),
-			pkg.NewLicenseFromLocations("GPL", gmpDbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "LGPL3", gmpDbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPL", gmpDbLocation),
 		),
 		Locations: file.NewLocationSet(
 			gmpDbLocation,

@@ -15,7 +15,7 @@ import (
 
 const modinfoName = ".modinfo"
 
-func parseLinuxKernelModuleFile(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
@@ -32,6 +32,7 @@ func parseLinuxKernelModuleFile(_ context.Context, _ file.Resolver, _ *generic.E
 
 	return []pkg.Package{
 		newLinuxKernelModulePackage(
+			ctx,
 			*metadata,
 			reader.Location,
 		),

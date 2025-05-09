@@ -27,7 +27,7 @@ type composerLock struct {
 }
 
 // parseComposerLock is a parser function for Composer.lock contents, returning "Default" php packages discovered.
-func parseComposerLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseComposerLock(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
@@ -42,6 +42,7 @@ func parseComposerLock(_ context.Context, _ file.Resolver, _ *generic.Environmen
 			pkgs = append(
 				pkgs,
 				newComposerLockPackage(
+					ctx,
 					pd,
 					reader.Location,
 				),

@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -235,6 +236,7 @@ type handlerPath struct {
 }
 
 func TestSearchYarnForLicenses(t *testing.T) {
+	ctx := context.TODO()
 	fixture := "test-fixtures/yarn-remote/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setup()
@@ -262,7 +264,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 					Version:   "7.10.4",
 					Locations: locations,
 					PURL:      "pkg:npm/%40babel/code-frame@7.10.4",
-					Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MIT")),
 					Language:  pkg.JavaScript,
 					Type:      pkg.NpmPkg,
 					Metadata: pkg.YarnLockEntry{

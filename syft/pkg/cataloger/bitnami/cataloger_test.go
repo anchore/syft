@@ -1,6 +1,7 @@
 package bitnami
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,14 +24,15 @@ func mustCPEs(s ...string) (c []cpe.CPE) {
 }
 
 func TestBitnamiCataloger(t *testing.T) {
+	ctx := context.TODO()
 	postgresqlMainPkg := pkg.Package{
 		Name:      "postgresql",
 		Version:   "17.2.0-8",
 		Type:      pkg.BitnamiPkg,
 		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromType("PostgreSQL", license.Concluded),
-			pkg.NewLicenseFromType("PostgreSQL", license.Declared),
+			pkg.NewLicenseFromTypeWithContext(ctx, "PostgreSQL", license.Concluded),
+			pkg.NewLicenseFromTypeWithContext(ctx, "PostgreSQL", license.Declared),
 		),
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/postgresql@17.2.0-8?arch=arm64&distro=debian-12",
@@ -56,8 +58,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("LGPL-2.1-only", license.Concluded),
-				pkg.NewLicenseFromType("LGPL-2.1-only", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "LGPL-2.1-only", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "LGPL-2.1-only", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/geos@3.13.0?arch=arm64&distro=debian-12",
@@ -78,8 +80,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("MIT", license.Concluded),
-				pkg.NewLicenseFromType("MIT", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/proj@6.3.2?arch=arm64&distro=debian-12",
@@ -100,8 +102,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("MIT", license.Concluded),
-				pkg.NewLicenseFromType("MIT", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/gdal@3.10.1?arch=arm64&distro=debian-12",
@@ -122,8 +124,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("MIT", license.Concluded),
-				pkg.NewLicenseFromType("MIT", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/json-c@0.16.20220414?arch=arm64&distro=debian-12",
@@ -144,8 +146,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("0BSD", license.Concluded),
-				pkg.NewLicenseFromType("0BSD", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "0BSD", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "0BSD", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/orafce@4.14.1?arch=arm64&distro=debian-12",
@@ -166,8 +168,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pljava@1.6.8?arch=arm64&distro=debian-12",
@@ -193,8 +195,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("LGPL-2.1-only", license.Concluded),
-				pkg.NewLicenseFromType("LGPL-2.1-only", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "LGPL-2.1-only", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "LGPL-2.1-only", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/unixodbc@2.3.12?arch=arm64&distro=debian-12",
@@ -215,8 +217,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("LGPL-3.0-only", license.Concluded),
-				pkg.NewLicenseFromType("LGPL-3.0-only", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "LGPL-3.0-only", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "LGPL-3.0-only", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/psqlodbc@16.0.0?arch=arm64&distro=debian-12",
@@ -237,8 +239,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/protobuf@3.21.12?arch=arm64&distro=debian-12",
@@ -259,8 +261,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("BSD-2-Clause", license.Concluded),
-				pkg.NewLicenseFromType("BSD-2-Clause", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-2-Clause", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-2-Clause", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/protobuf-c@1.5.1?arch=arm64&distro=debian-12",
@@ -281,8 +283,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("GPL-2.0-or-later", license.Concluded),
-				pkg.NewLicenseFromType("GPL-2.0-or-later", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "GPL-2.0-or-later", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "GPL-2.0-or-later", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/postgis@3.4.4?arch=arm64&distro=debian-12",
@@ -303,8 +305,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("PostgreSQL", license.Concluded),
-				pkg.NewLicenseFromType("PostgreSQL", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "PostgreSQL", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "PostgreSQL", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pgaudit@17.0.0?arch=arm64&distro=debian-12",
@@ -322,8 +324,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("MIT", license.Concluded),
-				pkg.NewLicenseFromType("MIT", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "MIT", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/pgbackrest@2.54.2?arch=arm64&distro=debian-12",
@@ -344,8 +346,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/wal2json@2.6.0?arch=arm64&distro=debian-12",
@@ -366,8 +368,8 @@ func TestBitnamiCataloger(t *testing.T) {
 			Type:      pkg.BitnamiPkg,
 			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/postgresql/.spdx-postgresql.spdx")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Concluded),
-				pkg.NewLicenseFromType("BSD-3-Clause", license.Declared),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Concluded),
+				pkg.NewLicenseFromTypeWithContext(ctx, "BSD-3-Clause", license.Declared),
 			),
 			FoundBy: catalogerName,
 			PURL:    "pkg:bitnami/nss_wrapper@1.1.16?arch=arm64&distro=debian-12",
@@ -402,8 +404,8 @@ func TestBitnamiCataloger(t *testing.T) {
 		Type:      pkg.BitnamiPkg,
 		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/render-template/.spdx-render-template.spdx")),
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromType("Apache-2.0", license.Concluded),
-			pkg.NewLicenseFromType("Apache-2.0", license.Declared),
+			pkg.NewLicenseFromTypeWithContext(ctx, "Apache-2.0", license.Concluded),
+			pkg.NewLicenseFromTypeWithContext(ctx, "Apache-2.0", license.Declared),
 		),
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/render-template@1.0.7-4?arch=arm64&distro=debian-12",
@@ -427,8 +429,8 @@ func TestBitnamiCataloger(t *testing.T) {
 		Type:      pkg.BitnamiPkg,
 		Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/redis/.spdx-redis.spdx")),
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromType("RSALv2", license.Concluded),
-			pkg.NewLicenseFromType("RSALv2", license.Declared),
+			pkg.NewLicenseFromTypeWithContext(ctx, "RSALv2", license.Concluded),
+			pkg.NewLicenseFromTypeWithContext(ctx, "RSALv2", license.Declared),
 		),
 		FoundBy: catalogerName,
 		PURL:    "pkg:bitnami/redis@7.4.0-0?arch=arm64&distro=debian-12",

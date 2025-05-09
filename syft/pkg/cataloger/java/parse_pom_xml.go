@@ -117,7 +117,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	if err != nil {
 		log.Tracef("error resolving licenses: %v", err)
 	}
-	licenses := toPkgLicenses(&location, pomLicenses)
+	licenses := toPkgLicenses(ctx, &location, pomLicenses)
 
 	m := pkg.JavaArchive{
 		PomProject: &pkg.JavaPomProject{
@@ -240,7 +240,7 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 	var pomProject *pkg.JavaPomProject
 	if dependencyPom != nil {
 		depLicenses, _ := r.ResolveLicenses(ctx, dependencyPom)
-		licenses = append(licenses, toPkgLicenses(nil, depLicenses)...)
+		licenses = append(licenses, toPkgLicenses(ctx, nil, depLicenses)...)
 		pomProject = &pkg.JavaPomProject{
 			Parent:      pomParent(ctx, r, dependencyPom),
 			GroupID:     id.GroupID,

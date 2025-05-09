@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,7 +16,7 @@ import (
 )
 
 func Test_stdlibPackageAndRelationships(t *testing.T) {
-
+	ctx := context.Background()
 	tests := []struct {
 		name     string
 		pkgs     []pkg.Package
@@ -87,7 +88,7 @@ func Test_stdlibPackageAndRelationships(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotPkgs, gotRels := stdlibPackageAndRelationships(tt.pkgs)
+			gotPkgs, gotRels := stdlibPackageAndRelationships(ctx, tt.pkgs)
 			assert.Len(t, gotPkgs, tt.wantPkgs)
 			assert.Len(t, gotRels, tt.wantRels)
 		})
@@ -97,6 +98,7 @@ func Test_stdlibPackageAndRelationships(t *testing.T) {
 func Test_stdlibPackageAndRelationships_values(t *testing.T) {
 	loc := file.NewLocation("/bin/my-app")
 	locSet := file.NewLocationSet(loc)
+	ctx := context.TODO()
 	p := pkg.Package{
 		Name:      "github.com/something/go",
 		Version:   "1.0.0",
@@ -114,7 +116,7 @@ func Test_stdlibPackageAndRelationships_values(t *testing.T) {
 		PURL:     packageURL("stdlib", "1.22.2"),
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
+		Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "BSD-3-Clause")),
 		CPEs: []cpe.CPE{
 			{
 				Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.22.2:-:*:*:*:*:*:*"),
@@ -135,7 +137,7 @@ func Test_stdlibPackageAndRelationships_values(t *testing.T) {
 		Type: artifact.DependencyOfRelationship,
 	}
 
-	gotPkgs, gotRels := stdlibPackageAndRelationships([]pkg.Package{p})
+	gotPkgs, gotRels := stdlibPackageAndRelationships(ctx, []pkg.Package{p})
 	require.Len(t, gotPkgs, 1)
 
 	gotPkg := gotPkgs[0]

@@ -36,7 +36,7 @@ type parsedData struct {
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen
-func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
 	var errs error
@@ -132,7 +132,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
-		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
+		pkgs = append(pkgs, newPackage(ctx, apk, r, reader.Location))
 	}
 
 	return pkgs, nil, errs

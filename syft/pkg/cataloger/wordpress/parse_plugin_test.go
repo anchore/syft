@@ -1,6 +1,7 @@
 package wordpress
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,14 +14,14 @@ import (
 func TestParseWordpressPluginFiles(t *testing.T) {
 	fixture := "test-fixtures/glob-paths/wp-content/plugins/akismet/akismet.php"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
-
+	ctx := context.TODO()
 	var expectedPkg = pkg.Package{
 		Name:      "Akismet Anti-spam: Spam Protection",
 		Version:   "5.3",
 		Locations: locations,
 		Type:      pkg.WordpressPluginPkg,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPLv2"),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPLv2"),
 		),
 		Language: pkg.PHP,
 		Metadata: pkg.WordpressPluginEntry{
