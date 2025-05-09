@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"runtime/debug"
 	"strings"
+	"unicode"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -137,15 +138,24 @@ func getCachedChecksum(pkgDir fs.FS, name string, version string) (content strin
 }
 
 func trimmedAsURL(name string) (urlDir string, urlName string) {
-	parts := strings.Split(name, "/")
-	if len(parts) >= 3 {
-		versionWithFunc := parts[2]
-		if idx := strings.Index(versionWithFunc, "."); idx != -1 {
-			parts[2] = versionWithFunc[:idx]
-		}
-		urlDir = strings.Join(parts[:2], "/")
-		urlName = parts[2]
+	if strings.HasPrefix(name, "vendor") {
+		return
 	}
+	parts := strings.Split(name, "/")
+	var lastIndex int
+	if len(parts) >= 3 {
+		lastIndex = 2
+	} else {
+		lastIndex = len(parts) - 1
+	}
+	versionWithFunc := parts[lastIndex]
+	if idx := strings.Index(versionWithFunc, "."); idx != -1 {
+		parts[lastIndex] = versionWithFunc[:idx]
+	}
+	if lastIndex != 0 {
+		urlDir = strings.Join(parts[:lastIndex], "/")
+	}
+	urlName = parts[lastIndex]
 	return
 }
 
@@ -230,25 +240,30 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 			continue
 		}
 		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
+		urlDirInPath := Uncapitalize(urlDir)
+		nameInPath := Uncapitalize(nameWithoutVersion)
 		// the sym is not a mark of third-party function
 		if len(urlDir) == 0 {
 			continue
 		}
 		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		modPairInPath := fmt.Sprintf("%s/%s", urlDirInPath, nameInPath)
 		if _, exists := uniqueModules[modPair]; exists {
 			continue
 		}
-		dir, err := fs.Sub(goPath, urlDir)
+		_, err := goPath.Open(urlDirInPath)
 		if err != nil {
 			continue
 		}
-		Version, err := findVersionInCache(dir, nameWithoutVersion)
+		dir, _ := fs.Sub(goPath, urlDirInPath)
+
+		Version, err := findVersionInCache(dir, nameInPath)
 		// No such module
 		if err != nil || len(Version) == 0 {
 			continue
 		}
 
-		cachedir, err2 := fs.Sub(goPath, "cache/download/"+modPair+"/@v")
+		cachedir, err2 := fs.Sub(goPath, "cache/download/"+modPairInPath+"/@v")
 		if err2 != nil {
 			continue
 		}
@@ -261,6 +276,30 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 		}
 	}
 	return uniqueModules
+}
+
+func Uncapitalize(name string) (newName string) {
+	parts := strings.Split(name, "/")
+	for i, part := range parts {
+		var hasUpper bool
+		var sb strings.Builder
+		for _, r := range part {
+			if unicode.IsUpper(r) {
+				hasUpper = true
+				sb.WriteRune('!')
+				sb.WriteRune(unicode.ToLower(r))
+			} else {
+				sb.WriteRune(r)
+			}
+		}
+
+		parts[i] = sb.String()
+		if hasUpper {
+			parts[i] = fmt.Sprintf("'%s'", parts[i])
+		}
+	}
+	newName = strings.Join(parts, "/")
+	return
 }
 
 func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.FS) map[string]*debug.Module {

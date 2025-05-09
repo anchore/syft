@@ -1120,12 +1120,12 @@ func TestTestGoPkgSymbols(t *testing.T) {
 			},
 			symbols: []elf.Symbol{
 				{
-					Name:       "github.com/davecgh/go-spew..gobytes.1",
+					Name:       "github.com/davecgh/go-spew.gobytes",
 					Info:       0x12,
 					HasVersion: false,
 				},
 				{
-					Name:       "github.com/google/go-cmp/cmp/internal/diff..typeAsserts.0",
+					Name:       "github.com/google/go-cmp/cmp/internal/diff.typeAsserts",
 					Info:       0x12,
 					HasVersion: false,
 				},
@@ -1159,6 +1159,16 @@ func TestTestGoPkgSymbols(t *testing.T) {
 					Info:       0x11,
 					HasVersion: false,
 				},
+				{
+					Name:       "github.com/STARRY-S/zip.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "k8s.io/api.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
 			},
 			binaryContent: "",
 			expected: []pkg.Package{
@@ -1182,6 +1192,20 @@ func TestTestGoPkgSymbols(t *testing.T) {
 						Architecture: archDetails,
 						H1Digest:     "",
 						MainModule:   "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/STARRY-S/zip",
+					Version:   "v0.2.1",
+					PURL:      "pkg:golang/github.com/STARRY-S/zip@v0.2.1",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:pWBd4tuSGm3wtpoqRZZ2EAwOmcHK6XFf7bU9qcJXyFg=",
+						MainModule:        "command-line-arguments.test",
 					},
 				},
 				{
@@ -1223,6 +1247,20 @@ func TestTestGoPkgSymbols(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "k8s.io/api",
+					Version:   "v0.33.0",
+					PURL:      "pkg:golang/k8s.io/api@v0.33.0",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:yTgZVn1XEe6opVpP1FylmNrIFWuDqe2H0V8CT5gxfIU=",
 						MainModule:        "command-line-arguments.test",
 					},
 				},

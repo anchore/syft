@@ -12,3 +12,7 @@ github.com/davecgh/go-spew/spew
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
+# github.com/STARRY-S/zip v0.2.1
+## explicit; go 1.13
+# k8s.io/api v0.33.0
+## explicit; go 1.13
