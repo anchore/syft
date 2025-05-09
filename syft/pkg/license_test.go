@@ -6,7 +6,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"log"
 	"os"
@@ -20,55 +19,76 @@ func TestLicenseBuilder_Build(t *testing.T) {
 
 	tests := []struct {
 		name                    string
-		value                   string
-		contents                file.LocationReadCloser
-		locations               file.LocationSet
+		values                  []string
+		candidates              []Candidate
+		contents                []file.LocationReadCloser
+		locations               []file.Location
 		tp                      license.Type
 		expectedValues          []string
 		expectedSPDXExpressions []string
 		expectedLocations       []file.Location
 	}{
 		{
-			name:                    "spdx value returns a license with SPDXExpression populated",
-			value:                   "mit",
-			locations:               file.NewLocationSet(file.NewLocation("/LICENSE")),
+			name:                    "single: spdx value returns a license with SPDXExpression populated",
+			values:                  []string{"mit"},
 			expectedValues:          []string{"mit"},
 			expectedSPDXExpressions: []string{"MIT"},
-			expectedLocations:       []file.Location{file.NewLocation("/LICENSE")},
 		},
 		{
-			name:                    "value that could be a full license text is converted to content, checked against a scanner, sha256ed, and returned as value",
-			value:                   "MIT License\nPermission is hereby granted...",
-			locations:               file.NewLocationSet(file.NewLocation("/LICENSE")),
+			name:                    "single: value that could be a full license text is converted to content, checked against a scanner, sha256ed, and returned as value",
+			values:                  []string{"MIT License\nPermission is hereby granted..."},
 			expectedValues:          []string{"LicenseRef-sha256:7f160118c68e1f2548da8d6ebb1bf370b2a61f9a1e0e966a98c479e5d73ff5e4"},
 			expectedSPDXExpressions: []string{""},
 			expectedLocations:       []file.Location{file.NewLocation("/LICENSE")},
 		},
 		{
-			name: "builder with only content is checked against scanner in ctx and returned as a license",
-			contents: file.NewLocationReadCloser(
+			name: "single: builder with only content is checked against scanner in ctx and returned as a license",
+			contents: []file.LocationReadCloser{file.NewLocationReadCloser(
 				file.NewLocation("../../internal/licenses/test-fixtures/apache-license-2.0"),
-				mustReadCloser("../../internal/licenses/test-fixtures/apache-license-2.0"),
-			),
+				mustReadCloser("../../internal/licenses/test-fixtures/apache-license-2.0")),
+			},
 			expectedValues:          []string{"Apache-2.0"},
 			expectedSPDXExpressions: []string{"Apache-2.0"},
 			expectedLocations:       []file.Location{file.NewLocation("../../internal/licenses/test-fixtures/apache-license-2.0")},
+		},
+		{
+			name:   "multiple: builder with multiple candidates and values that overlap return the correct list of licenses with associated locations",
+			values: []string{"mit", "0BSD", "Aladdin", "apache-2.0", "BSD-3-Clause-HP"},
+			candidates: []Candidate{
+				{
+					Value: "Apache-2.0",
+					Contents: file.NewLocationReadCloser(
+						file.NewLocation("../../internal/licenses/test-fixtures/apache-license-2.0"),
+						mustReadCloser("../../internal/licenses/test-fixtures/apache-license-2.0"),
+					),
+				},
+				{
+					Value: "BSD-4-Clause",
+					Contents: file.NewLocationReadCloser(
+						file.NewLocation("../../internal/licenses/test-fixtures/BSD-4-Clause"),
+						mustReadCloser("../../internal/licenses/test-fixtures/BSD-4-Clause"),
+					),
+				},
+			},
+			// We should get two Apache-2.0 licenses; One from the raw value and one from content analysis
+			// We should get 7 licenses total from the builder
+			expectedValues:          []string{"mit", "0BSD", "Aladdin", "apache-2.0", "BSD-3-Clause-HP", "Apache-2.0", "BSD-4-Clause"},
+			expectedSPDXExpressions: []string{"MIT", "0BSD", "Aladdin", "Apache-2.0", "Apache-2.0", "BSD-3-Clause-HP", "BSD-4-Clause"},
+			expectedLocations: []file.Location{
+				file.NewLocation("../../internal/licenses/test-fixtures/apache-license-2.0"),
+				file.NewLocation("../../internal/licenses/test-fixtures/BSD-4-Clause"),
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			builder := NewLicenseBuilder().
-				WithContents(tt.contents).
-				WithValue(tt.value).
-				WithLocations(tt.locations)
-			if tt.tp != "" {
-				builder = builder.WithType(tt.tp)
-			}
+				WithCandidates(tt.candidates...).
+				WithContents(tt.contents...).
+				WithValues(tt.values...)
 
 			result := builder.Build(ctx)
-			require.Len(t, result, len(tt.expectedValues))
-
 			var (
 				actualValues          []string
 				actualSPDXExpressions []string

@@ -110,27 +110,48 @@ func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
+type Candidate struct {
+	Value    string
+	Contents file.LocationReadCloser
+}
+
 type LicenseBuilder struct {
-	value     string
-	tp        license.Type
-	locations file.LocationSet
-	content   file.LocationReadCloser
+	candidates []Candidate
+	contents   []file.LocationReadCloser
+	tp         license.Type
 }
 
 func NewLicenseBuilder() *LicenseBuilder {
 	return &LicenseBuilder{
-		locations: file.NewLocationSet(),
-		tp:        license.Declared,
+		candidates: make([]Candidate, 0),
+		contents:   make([]file.LocationReadCloser, 0),
+		tp:         license.Declared,
 	}
 }
-func (b *LicenseBuilder) WithValue(expr string) *LicenseBuilder {
-	b.value = expr
+
+func (b *LicenseBuilder) WithValues(expr ...string) *LicenseBuilder {
+	candidates := candidatesFromExpr(expr)
+	b.candidates = append(b.candidates, candidates...)
 	return b
 }
 
-func (b *LicenseBuilder) WithContents(contents file.LocationReadCloser) *LicenseBuilder {
-	b.content = contents
-	b.locations.Add(contents.Location)
+func (b *LicenseBuilder) WithCandidates(candidates ...Candidate) *LicenseBuilder {
+	b.candidates = append(b.candidates, candidates...)
+	return b
+}
+
+func candidatesFromExpr(expr []string) []Candidate {
+	candidates := make([]Candidate, 0)
+	for _, expr := range expr {
+		candidates = append(candidates, Candidate{
+			Value: expr,
+		})
+	}
+	return candidates
+}
+
+func (b *LicenseBuilder) WithContents(contents ...file.LocationReadCloser) *LicenseBuilder {
+	b.contents = append(b.contents, contents...)
 	return b
 }
 
@@ -139,83 +160,95 @@ func (b *LicenseBuilder) WithType(t license.Type) *LicenseBuilder {
 	return b
 }
 
-func (b *LicenseBuilder) WithLocation(location file.Location) *LicenseBuilder {
-	b.locations.Add(location)
-	return b
-}
-
 func (b *LicenseBuilder) Build(ctx context.Context) []License {
-	if b.value == "" && b.content.ReadCloser == nil {
-		return nil // no inputs at all
+	output := make([]License, 0)
+	if len(b.candidates) == 0 && len(b.contents) == 0 {
+		return nil // we have no inputs that could make any licenses
 	}
 
-	// If value looks like full text (contains newline), treat it as content and zero the value
-	if strings.Contains(b.value, "\n") {
-		b.content = file.LocationReadCloser{
-			Location:   file.Location{},
-			ReadCloser: io.NopCloser(strings.NewReader(b.value)),
+	// let's go through our candidates and make sure non of them are full license texts!
+	var filtered []Candidate
+	for _, l := range b.candidates {
+		if strings.Contains(l.Value, "\n") {
+			// we want to add a new content item and remove the bad value
+			b.contents = append(b.contents, file.LocationReadCloser{
+				Location:   file.Location{},
+				ReadCloser: io.NopCloser(strings.NewReader(l.Value)),
+			})
+		} else {
+			filtered = append(filtered, l)
 		}
-		b.value = ""
+	}
+	// now we're sure that our value:contents pairings are not contents:contents
+	b.candidates = filtered
+
+	// values present so easy output construction
+	for _, l := range b.candidates {
+		output = append(output, b.buildFromCandidate(l)...)
 	}
 
-	// value present; easy license construction
-	if b.value != "" {
-		return b.buildFromValue()
+	// we have some readers (with no values) that we've been asked to turn into licenses if we can
+	for _, content := range b.contents {
+		output = append(output, b.buildFromContents(ctx, content)...)
 	}
 
-	// Case 2: Only contents provided — scan for licenses
-	return b.buildFromContents(ctx)
+	return output
 }
 
-func (b *LicenseBuilder) buildFromValue() []License {
+// Question - if a candidate is provided with a value do we still want the scanner to search for additional ID?
+func (b *LicenseBuilder) buildFromCandidate(c Candidate) []License {
 	content := ""
-	if b.content.ReadCloser != nil {
+	if c.Contents.ReadCloser != nil {
 		var err error
-		content, err = contentFromReader(b.content)
+		content, err = contentFromReader(c.Contents)
 		if err != nil {
-			log.WithFields("error", err, "path", b.content.Path()).Trace("could not read content from path")
+			log.WithFields("error", err, "path", c.Contents.Path()).Trace("could not read content from path")
 		}
 	}
-
-	candidate := License{
-		Value:     b.value,
-		Contents:  content,
-		Type:      b.tp,
-		Locations: b.locations,
+	output := License{
+		Value:    c.Value,
+		Contents: content,
+		Type:     b.tp,
 	}
 
-	if ex, err := license.ParseExpression(b.value); err == nil {
-		candidate.SPDXExpression = ex
+	if c.Contents.Location.Path() != "" {
+		output.Locations = file.NewLocationSet(c.Contents.Location)
 	}
 
-	return []License{candidate}
+	if ex, err := license.ParseExpression(c.Value); err == nil {
+		output.SPDXExpression = ex
+	}
+
+	return []License{output}
 }
 
-func (b *LicenseBuilder) buildFromContents(ctx context.Context) []License {
+func (b *LicenseBuilder) buildFromContents(ctx context.Context, contents file.LocationReadCloser) []License {
 	scanner, err := licenses.ContextLicenseScanner(ctx)
 	if err != nil {
-		contents, err := contentFromReader(b.content)
+		internal, err := contentFromReader(contents)
 		if err != nil {
-			log.WithFields("error", err, "path", b.content.Path()).Trace("could not read content")
+			log.WithFields("error", err, "path", contents.Path()).Trace("could not read content")
 			return nil
 		}
 		// we have no scanner so we sha256 the content and value populated
-		return []License{b.licenseFromContentHash(contents)}
+		return []License{b.licenseFromContentHash(internal, contents.Location)}
 	}
 
-	evidence, content, err := scanner.FindEvidence(ctx, b.content)
+	evidence, content, err := scanner.FindEvidence(ctx, contents)
 	if err != nil {
-		log.WithFields("error", err, "path", b.content.Path()).Trace("scanner failed")
+		log.WithFields("error", err, "path", contents.Path()).Trace("scanner failed")
 		return nil
 	}
 
 	if len(evidence) > 0 {
-		return b.licensesFromEvidenceAndContent(evidence, []byte(content))
+		// we have some ID and offsets to apply to our content; let's make some detailed licenses
+		return b.licensesFromEvidenceAndContent(evidence, []byte(content), contents.Location)
 	}
-	return []License{b.licenseFromContentHash(string(content))}
+	// scanner couldn't find anything, but we still have the file contents; sha256 and send it back with value
+	return []License{b.licenseFromContentHash(string(content), contents.Location)}
 }
 
-func (b *LicenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evidence, content []byte) []License {
+func (b *LicenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evidence, content []byte, location file.Location) []License {
 	licenses := make([]License, 0)
 	for _, e := range evidence {
 		// basic license
@@ -233,13 +266,13 @@ func (b *LicenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evid
 
 		// add other builder values that don't change between licenses for single content
 		candidate.Type = b.tp
-		candidate.Locations = b.locations
+		candidate.Locations = file.NewLocationSet(location)
 		licenses = append(licenses, candidate)
 	}
 	return licenses
 }
 
-func (b *LicenseBuilder) licenseFromContentHash(content string) License {
+func (b *LicenseBuilder) licenseFromContentHash(content string, location file.Location) License {
 	hash := sha256HexFromString(content)
 	value := "LicenseRef-sha256:" + hash
 
@@ -247,7 +280,7 @@ func (b *LicenseBuilder) licenseFromContentHash(content string) License {
 		Value:     value,
 		Contents:  content,
 		Type:      b.tp,
-		Locations: b.locations,
+		Locations: file.NewLocationSet(location),
 	}
 }
 

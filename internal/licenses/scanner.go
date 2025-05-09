@@ -10,7 +10,10 @@ import (
 )
 
 const (
+	UnknownLicensePrefix     = unknownLicenseType + "_"
 	DefaultCoverageThreshold = 75 // determined by experimentation
+
+	unknownLicenseType = "UNKNOWN"
 )
 
 type Evidence struct {
