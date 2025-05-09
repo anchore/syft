@@ -2,11 +2,12 @@ package licenses
 
 import (
 	"context"
-	"github.com/google/licensecheck"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/google/licensecheck"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDefaultScanner_FindEvidence(t *testing.T) {

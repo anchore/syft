@@ -1,6 +1,7 @@
 package ocaml
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,14 +31,9 @@ func TestParseOpamPackage(t *testing.T) {
 					Version:   "4.14.0",
 					PURL:      "pkg:opam/ocaml-base-compiler@4.14.0",
 					Locations: file.NewLocationSet(location1),
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
-							location1,
-							"LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception",
-						)...,
-					),
-					Language: pkg.OCaml,
-					Type:     pkg.OpamPkg,
+					Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(location1, "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception").Build(context.TODO()),
+					Language:  pkg.OCaml,
+					Type:      pkg.OpamPkg,
 					Metadata: pkg.OpamPackage{
 						Name:     "ocaml-base-compiler",
 						Version:  "4.14.0",
@@ -59,14 +55,9 @@ func TestParseOpamPackage(t *testing.T) {
 					Version:   "1.5.0",
 					PURL:      "pkg:opam/alcotest@1.5.0",
 					Locations: file.NewLocationSet(location2),
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
-							location2,
-							"ISC",
-						)...,
-					),
-					Language: pkg.OCaml,
-					Type:     pkg.OpamPkg,
+					Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(location2, "ISC").Build(context.TODO()),
+					Language:  pkg.OCaml,
+					Type:      pkg.OpamPkg,
 					Metadata: pkg.OpamPackage{
 						Name:     "alcotest",
 						Version:  "1.5.0",

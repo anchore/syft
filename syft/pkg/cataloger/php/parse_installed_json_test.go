@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -23,9 +24,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			PURL:     "pkg:composer/asm89/stack-cors@1.3.0",
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
 			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "asm89/stack-cors",
 				Version: "1.3.0",
@@ -72,9 +71,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			PURL:     "pkg:composer/behat/mink@v1.8.1",
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
 			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "behat/mink",
 				Version: "v1.8.1",

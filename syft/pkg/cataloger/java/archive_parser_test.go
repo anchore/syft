@@ -86,18 +86,20 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			defer cleanupFn()
 
 			// assert licenses are discovered from upstream
-			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
-			resolvedLicenses, _ := ap.maven.ResolveLicenses(context.Background(), parsedPom.project)
+			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(ctx)
+			resolvedLicenses, _ := ap.maven.ResolveLicenses(ctx, parsedPom.project)
 			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(nil, resolvedLicenses))
 		})
 	}
 }
 
 func TestParseJar(t *testing.T) {
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
+	ctx := context.Background()
+	scanner, err := licenses.NewDefaultScanner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
 
 	tests := []struct {
 		name         string
@@ -117,12 +119,10 @@ func TestParseJar(t *testing.T) {
 			},
 			expected: map[string]pkg.Package{
 				"example-jenkins-plugin": {
-					Name:    "example-jenkins-plugin",
-					Version: "1.0-SNAPSHOT",
-					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
-					),
+					Name:     "example-jenkins-plugin",
+					Version:  "1.0-SNAPSHOT",
+					PURL:     "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
+					Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi"), "MIT License").Build(ctx),
 					Language: pkg.Java,
 					Type:     pkg.JenkinsPluginPkg,
 					Metadata: pkg.JavaArchive{
@@ -180,8 +180,8 @@ func TestParseJar(t *testing.T) {
 						pkg.License{
 							Value:          "Apache-2.0",
 							SPDXExpression: "Apache-2.0",
-							Type:           license.Concluded,
-							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")),
+							Type:           license.Declared,
+							Contents:       "",
 						},
 					),
 					Metadata: pkg.JavaArchive{
@@ -369,7 +369,7 @@ func TestParseJar(t *testing.T) {
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse(context.Background(), nil)
+			actual, _, err := parser.parse(ctx, nil)
 			if test.wantErr != nil {
 				test.wantErr(t, err)
 			} else {
@@ -443,6 +443,12 @@ func TestParseJar(t *testing.T) {
 }
 
 func TestParseNestedJar(t *testing.T) {
+	ctx := context.Background()
+	scanner, err := licenses.NewDefaultScanner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
 	tests := []struct {
 		fixture      string
 		expected     []pkg.Package
@@ -644,7 +650,7 @@ func TestParseNestedJar(t *testing.T) {
 			require.NoError(t, err)
 			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 
-			actual, _, err := gap.processJavaArchive(context.Background(), file.LocationReadCloser{
+			actual, _, err := gap.processJavaArchive(ctx, file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			}, nil)
@@ -712,6 +718,12 @@ func TestParseNestedJar(t *testing.T) {
 }
 
 func Test_newPackageFromMavenData(t *testing.T) {
+	ctx := context.Background()
+	scanner, err := licenses.NewDefaultScanner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
 	virtualPath := "given/virtual/path"
 	tests := []struct {
 		name            string
@@ -1062,7 +1074,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			test.expectedParent.Locations = locations
 
 			r := maven.NewResolver(nil, maven.DefaultConfig())
-			actualPackage := newPackageFromMavenData(context.Background(), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(ctx, r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

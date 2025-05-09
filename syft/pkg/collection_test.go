@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
@@ -27,24 +28,18 @@ func TestCatalogMergePackageLicenses(t *testing.T) {
 			name: "merges licenses of packages with equal ID",
 			pkgs: []Package{
 				{
-					id: "equal",
-					Licenses: NewLicenseSet(
-						NewLicensesFromValues("foo", "baq", "quz")...,
-					),
+					id:       "equal",
+					Licenses: NewLicenseBuilder().WithValues("foo", "baq", "quz").Build(context.Background()),
 				},
 				{
-					id: "equal",
-					Licenses: NewLicenseSet(
-						NewLicensesFromValues("bar", "baz", "foo", "qux")...,
-					),
+					id:       "equal",
+					Licenses: NewLicenseBuilder().WithValues("bar", "baz", "foo", "qux").Build(context.Background()),
 				},
 			},
 			expectedPkgs: []Package{
 				{
-					id: "equal",
-					Licenses: NewLicenseSet(
-						NewLicensesFromValues("foo", "baq", "quz", "qux", "bar", "baz")...,
-					),
+					id:       "equal",
+					Licenses: NewLicenseBuilder().WithValues("foo", "baq", "quz", "qux", "bar", "baz").Build(context.Background()),
 				},
 			},
 		},

@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -768,9 +769,7 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "single licenseRef",
 			pkg: pkg.Package{
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("foobar"),
-				),
+				Licenses: pkg.NewLicenseBuilder().WithValues("foobar").Build(context.Background()),
 			},
 			expected: []*spdx.OtherLicense{
 				{
@@ -782,10 +781,10 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("internal made up license name"),
-					pkg.NewLicense("new apple license 2.0"),
-				),
+				Licenses: pkg.NewLicenseBuilder().WithValues(
+					"internal made up license name",
+					"new apple license 2.0",
+				).Build(context.Background()),
 			},
 			expected: []*spdx.OtherLicense{
 				{
@@ -801,9 +800,7 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "LicenseRef as a valid spdx expression",
 			pkg: pkg.Package{
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("LicenseRef-Fedora-Public-Domain"),
-				),
+				Licenses: pkg.NewLicenseBuilder().WithValues("LicenseRef-Fedora-Public-Domain").Build(context.Background()),
 			},
 			expected: []*spdx.OtherLicense{
 				{
@@ -815,9 +812,9 @@ func Test_OtherLicenses(t *testing.T) {
 		{
 			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
 			pkg: pkg.Package{
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("(MIT AND LicenseRef-Fedora-Public-Domain)"),
-				),
+				Licenses: pkg.NewLicenseBuilder().
+					WithValues("(MIT AND LicenseRef-Fedora-Public-Domain)").
+					Build(context.Background()),
 			},
 			expected: nil,
 		},
@@ -875,28 +872,22 @@ func Test_toSPDXID(t *testing.T) {
 
 func Test_otherLicenses(t *testing.T) {
 	pkg1 := pkg.Package{
-		Name:    "first-pkg",
-		Version: "1.1",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
-		),
+		Name:     "first-pkg",
+		Version:  "1.1",
+		Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.Background()),
 	}
 	pkg2 := pkg.Package{
-		Name:    "second-pkg",
-		Version: "2.2",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("non spdx license"),
-		),
+		Name:     "second-pkg",
+		Version:  "2.2",
+		Licenses: pkg.NewLicenseBuilder().WithValues("non spdx license").Build(context.Background()),
 	}
 	bigText := `
                                  Apache License
                            Version 2.0, January 2004`
 	pkg3 := pkg.Package{
-		Name:    "third-pkg",
-		Version: "3.3",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense(bigText),
-		),
+		Name:     "third-pkg",
+		Version:  "3.3",
+		Licenses: pkg.NewLicenseBuilder().WithValues(bigText).Build(context.Background()),
 	}
 
 	tests := []struct {

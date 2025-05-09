@@ -28,9 +28,7 @@ func TestIDUniqueness(t *testing.T) {
 		Locations: file.NewLocationSet(
 			originalLocation,
 		),
-		Licenses: NewLicenseSet(
-			NewLicenseBuilder().WithValues("MIT", "cc0-1.0").Build(context.TODO())...,
-		),
+		Licenses: NewLicenseBuilder().WithValues("MIT", "cc0-1.0").Build(context.TODO()),
 		Language: "math",
 		Type:     PythonPkg,
 		CPEs: []cpe.CPE{
@@ -81,10 +79,7 @@ func TestIDUniqueness(t *testing.T) {
 			name: "licenses order is ignored",
 			transform: func(pkg Package) Package {
 				// note: same as the original package, only a different order
-				pkg.Licenses = NewLicenseSet(
-					NewLicense("cc0-1.0"),
-					NewLicense("MIT"),
-				)
+				pkg.Licenses = NewLicenseBuilder().WithValues("cc0-1.0", "MIT").Build(context.Background())
 				return pkg
 			},
 			expectedIDComparison: assert.Equal,
@@ -110,7 +105,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "licenses is reflected",
 			transform: func(pkg Package) Package {
-				pkg.Licenses = NewLicenseSet(NewLicense("new!"))
+				pkg.Licenses = NewLicenseBuilder().WithValues("new!").Build(context.Background())
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,

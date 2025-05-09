@@ -492,7 +492,7 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 }
 
 func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
-	var fileLicenses []pkg.License
+	licenseBuilder := pkg.NewLicenseBuilder()
 	for _, filename := range licenses.FileNames() {
 		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
 		if len(licenseMatches) == 0 {
@@ -501,6 +501,7 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 		}
 
 		if len(licenseMatches) > 0 {
+
 			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
@@ -508,20 +509,13 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 
 			for _, licenseMatch := range licenseMatches {
 				licenseContents := contents[licenseMatch]
-				r := strings.NewReader(licenseContents)
-				parsed, err := j.licenseScanner.PkgSearch(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
-				if err != nil {
-					return nil, err
-				}
-
-				if len(parsed) > 0 {
-					fileLicenses = append(fileLicenses, parsed...)
-				}
+				readCloser := file.NewLocationReadCloser(file.NewLocation(licenseMatch), io.NopCloser(strings.NewReader(licenseContents)))
+				licenseBuilder.WithContents(readCloser)
 			}
 		}
 	}
 
-	return fileLicenses, nil
+	return licenseBuilder.Build(ctx).ToSlice(), nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {

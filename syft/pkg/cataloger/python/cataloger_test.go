@@ -1,13 +1,17 @@
 package python
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
@@ -215,15 +219,11 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("with-license-file-declared.dist-info/top_level.txt"),
 						file.NewLocation("with-license-file-declared.dist-info/direct_url.json"),
 					),
-					Licenses: pkg.NewLicenseSet(
-						pkg.License{
-							Value:          "BSD-3-Clause",
-							SPDXExpression: "BSD-3-Clause",
-							Type:           "concluded",
-							// we read the path from the LicenseFile field in the METADATA file, then read the license file directly
-							Locations: file.NewLocationSet(file.NewLocation("with-license-file-declared.dist-info/LICENSE.txt")),
-						},
-					),
+					Licenses: pkg.NewLicenseBuilder().WithCandidates(pkg.LicenseCandidate{
+						Value:    "BSD-3-Clause",
+						Type:     license.Declared,
+						Contents: newLocationReadCloser(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt"),
+					}).Build(context.TODO()),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
 						Name:                 "Pygments",
@@ -261,15 +261,11 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("without-license-file-declared.dist-info/top_level.txt"),
 						file.NewLocation("without-license-file-declared.dist-info/direct_url.json"),
 					),
-					Licenses: pkg.NewLicenseSet(
-						pkg.License{
-							Value:          "BSD-3-Clause",
-							SPDXExpression: "BSD-3-Clause",
-							Type:           "concluded",
-							// we discover license files automatically
-							Locations: file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
-						},
-					),
+					Licenses: pkg.NewLicenseBuilder().WithCandidates(pkg.LicenseCandidate{
+						Value:    "BSD-3-Clause",
+						Type:     license.Declared,
+						Contents: newLocationReadCloser(t, "test-fixtures/site-packages/license/without-license-file-declared.dist-info/LICENSE.txt"),
+					}).Build(context.TODO()),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
 						Name:                 "Pygments",
@@ -741,7 +737,7 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				//
 				// in the container, you can get a sense for dependencies with :
 				//   $ source /app/project1/venv/bin/activate
-				//   $ pip list | tail -n +3 | awk '{print $1}' | xargs pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-' -e 'Location:' | grep -A 1 -B 1 '\-packages'
+				//   $ pip list | tail -n +3 | awk '{print $1}' | xargs pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-' -e 'Locations:' | grep -A 1 -B 1 '\-packages'
 				//
 				// which approximates to (some in virtual env, some in system packages):
 				//
@@ -761,7 +757,7 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				//
 				// in the container, you can get a sense for dependencies with :
 				//   $ source /app/project2/venv/bin/activate
-				//   $ pip list | tail -n +3 | awk '{print $1}' | xargs pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-' -e 'Location:'
+				//   $ pip list | tail -n +3 | awk '{print $1}' | xargs pip show | grep -e 'Name:' -e 'Requires:' -e '\-\-\-' -e 'Locations:'
 				//
 				// which approximates to (all in virtual env):
 				//
@@ -801,4 +797,15 @@ func stringPackage(p pkg.Package) string {
 	}
 
 	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
+}
+
+func newLocationReadCloser(t *testing.T, path string) file.LocationReadCloser {
+	f, err := os.Open(path)
+	require.NoError(t, err)
+	t.Cleanup(func() { f.Close() })
+
+	// maniuplation for relative location: test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt
+	prefix := "test-fixtures/site-packages/license/"
+	relative := strings.TrimPrefix(path, prefix)
+	return file.NewLocationReadCloser(file.NewLocation(relative), f)
 }

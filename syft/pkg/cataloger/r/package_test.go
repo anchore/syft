@@ -1,6 +1,7 @@
 package r
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
@@ -19,9 +20,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				Version: "1",
 				License: "MIT",
 			},
-			[]pkg.License{
-				pkg.NewLicense("MIT"),
-			},
+			pkg.NewLicenseBuilder().WithValues("MIT").Build(context.TODO()).ToSlice(),
 		},
 		{
 			"License field with single version separator no +",
@@ -30,9 +29,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				Version: "2",
 				License: "LGPL (== 2.0)",
 			},
-			[]pkg.License{
-				pkg.NewLicense("LGPL2.0"),
-			},
+			pkg.NewLicenseBuilder().WithValues("LGPL2.0").Build(context.TODO()).ToSlice(),
 		},
 		{
 			"License field with multiple version separator",
@@ -41,9 +38,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				Version: "2",
 				License: "LGPL (>= 2.0, < 3)",
 			},
-			[]pkg.License{
-				pkg.NewLicense("LGPL2.0+"),
-			},
+			pkg.NewLicenseBuilder().WithValues("LGPL2.0+").Build(context.TODO()).ToSlice(),
 		},
 		{
 			"License field with file reference",
@@ -52,9 +47,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				Version: "3",
 				License: "GPL-2 + file LICENSE",
 			},
-			[]pkg.License{
-				pkg.NewLicense("GPL-2"),
-			},
+			pkg.NewLicenseBuilder().WithValues("GPL-2").Build(context.TODO()).ToSlice(),
 		},
 		{
 			"License field which covers no case",
@@ -63,9 +56,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				Version: "3",
 				License: "Mozilla Public License",
 			},
-			[]pkg.License{
-				pkg.NewLicense("Mozilla Public License"),
-			},
+			pkg.NewLicenseBuilder().WithValues("Mozilla Public License").Build(context.TODO()).ToSlice(),
 		},
 		{
 			"License field with multiple cases",
@@ -74,10 +65,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				Version: "3",
 				License: "GPL-2 | file LICENSE | LGPL (>= 2.0)",
 			},
-			[]pkg.License{
-				pkg.NewLicense("GPL-2"),
-				pkg.NewLicense("LGPL2.0+"),
-			},
+			pkg.NewLicenseBuilder().WithValues("GPL-2", "LGPL2.0+").Build(context.TODO()).ToSlice(),
 		},
 	}
 

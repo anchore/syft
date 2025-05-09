@@ -79,7 +79,7 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense) {
 
 func createSPDXLicense(l pkg.License) SPDXLicense {
 	candidate := SPDXLicense{
-		ID:       generateLicenseID(l),
+		ID:       l.Value,
 		FullText: l.Contents,
 	}
 

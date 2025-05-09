@@ -54,6 +54,7 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		return licenses
 	}
 
+	// TODO: update with new builder pattern and add URL constructors
 	for _, l := range *c.Licenses {
 		// these fields are mutually exclusive in the spec
 		switch {

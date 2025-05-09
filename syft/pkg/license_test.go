@@ -2,21 +2,25 @@ package pkg
 
 import (
 	"context"
-	"github.com/anchore/syft/internal/licenses"
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/internal/licenses"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 )
 
 func TestLicenseBuilder_Build(t *testing.T) {
 	ctx := context.Background()
-	scanner, _ := licenses.NewDefaultScanner()
-	licenses.SetContextLicenseScanner(ctx, scanner)
-
+	scanner, err := licenses.NewDefaultScanner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
 	tests := []struct {
 		name                    string
 		values                  []string
@@ -44,8 +48,8 @@ func TestLicenseBuilder_Build(t *testing.T) {
 			name: "single: candidate with metadata location correctly adds location",
 			candidates: []LicenseCandidate{
 				{
-					Value:    "mit",
-					Location: file.NewLocation("/SomeMetadata"),
+					Value:     "mit",
+					Locations: []file.Location{file.NewLocation("/SomeMetadata")},
 				},
 			},
 			expectedValues:          []string{"mit"},
@@ -53,11 +57,17 @@ func TestLicenseBuilder_Build(t *testing.T) {
 			expectedLocations:       []file.Location{file.NewLocation("/SomeMetadata")},
 		},
 		{
+			name:                    "single: candidate with no value is not valid",
+			values:                  []string{""},
+			expectedValues:          []string{},
+			expectedSPDXExpressions: []string{},
+			expectedLocations:       []file.Location{},
+		},
+		{
 			name:                    "single: value that could be a full license text is converted to content, checked against a scanner, sha256ed, and returned as value",
 			values:                  []string{"MIT License\nPermission is hereby granted..."},
 			expectedValues:          []string{"LicenseRef-sha256:7f160118c68e1f2548da8d6ebb1bf370b2a61f9a1e0e966a98c479e5d73ff5e4"},
 			expectedSPDXExpressions: []string{""},
-			expectedLocations:       []file.Location{file.NewLocation("/LICENSE")},
 		},
 		{
 			name: "single: builder with only content is checked against scanner in ctx and returned as a license",
@@ -70,6 +80,17 @@ func TestLicenseBuilder_Build(t *testing.T) {
 			expectedLocations:       []file.Location{file.NewLocation("../../internal/licenses/test-fixtures/apache-license-2.0")},
 		},
 		{
+			// This is important for the bitnami folks who sometimes include both in their packages
+			name: "multiple: candidates with different types but similar values are not deduplicated",
+			candidates: []LicenseCandidate{
+				{Value: "mit", Type: license.Declared},
+				{Value: "mit", Type: license.Concluded},
+			},
+			expectedValues:          []string{"mit", "mit"},
+			expectedSPDXExpressions: []string{"MIT", "MIT"},
+		},
+		{
+			// we expect to get 7 licenses from this - the set should not deduplicate any of these
 			name:   "multiple: builder with multiple candidates and values that overlap return the correct list of licenses with associated locations",
 			values: []string{"mit", "0BSD", "Aladdin", "apache-2.0", "BSD-3-Clause-HP"},
 			candidates: []LicenseCandidate{
@@ -105,14 +126,13 @@ func TestLicenseBuilder_Build(t *testing.T) {
 				WithCandidates(tt.candidates...).
 				WithContents(tt.contents...).
 				WithValues(tt.values...)
-
-			_ := builder.Build(ctx)
+			result := builder.Build(ctx)
 			var (
 				actualValues          []string
 				actualSPDXExpressions []string
 				actualLocations       []file.Location
 			)
-			for _, lic := range result {
+			for _, lic := range result.ToSlice() {
 				actualValues = append(actualValues, lic.Value)
 				actualSPDXExpressions = append(actualSPDXExpressions, lic.SPDXExpression)
 				actualLocations = append(actualLocations, lic.Locations.ToSlice()...)

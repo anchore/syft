@@ -13,6 +13,9 @@ import (
 )
 
 func TestDpkgCataloger(t *testing.T) {
+	lbpamCopywriteLocation := file.NewLocation("/usr/share/doc/libpam-runtime/copyright")
+	libsqlite3CopywriteLocation := file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")
+	lbpamCopywriteLocation := file.NewLocation("/usr/share/doc/libpam-runtime/copyright")
 	tests := []struct {
 		name     string
 		expected []pkg.Package
@@ -21,14 +24,10 @@ func TestDpkgCataloger(t *testing.T) {
 			name: "image-dpkg",
 			expected: []pkg.Package{
 				{
-					Name:    "libpam-runtime",
-					Version: "1.1.8-3.6",
-					FoundBy: "dpkg-db-cataloger",
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("GPL-1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
-						pkg.NewLicenseFromLocations("LGPL-2.1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
-					),
+					Name:     "libpam-runtime",
+					Version:  "1.1.8-3.6",
+					FoundBy:  "dpkg-db-cataloger",
+					Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(copywriteLocation, "GPL-1", "GPL-2", "LGPL-2.1").Build(context.Background()),
 					Locations: file.NewLocationSet(
 						file.NewLocation("/var/lib/dpkg/status").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 						file.NewLocation("/var/lib/dpkg/info/libpam-runtime.preinst").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
@@ -96,14 +95,10 @@ func TestDpkgCataloger(t *testing.T) {
 			name: "image-distroless-deb",
 			expected: []pkg.Package{
 				{
-					Name:    "libsqlite3-0",
-					Version: "3.34.1-3",
-					FoundBy: "dpkg-db-cataloger",
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("public-domain", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2+", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
-					),
+					Name:     "libsqlite3-0",
+					Version:  "3.34.1-3",
+					FoundBy:  "dpkg-db-cataloger",
+					Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(libsqlite3CopywriteLocation, "public-domain", "GPL-2+", "GPL-2").Build(context.Background()),
 					Locations: file.NewLocationSet(
 						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0.md5sums").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
@@ -240,11 +235,9 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 					Locations: file.NewLocationSet(
 						file.NewLocation("/zlib1g.deb"),
 					),
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("Zlib"),
-					),
-					PURL: "pkg:deb/zlib1g@1%3A1.3.dfsg-3.1ubuntu2.1?arch=amd64&upstream=zlib",
-					Type: pkg.DebPkg,
+					Licenses: pkg.NewLicenseBuilder().WithValues("Zlib").Build(context.Background()),
+					PURL:     "pkg:deb/zlib1g@1%3A1.3.dfsg-3.1ubuntu2.1?arch=amd64&upstream=zlib",
+					Type:     pkg.DebPkg,
 					Metadata: pkg.DpkgArchiveEntry{
 						Package:       "zlib1g",
 						Source:        "zlib",

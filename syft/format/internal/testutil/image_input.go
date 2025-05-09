@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"github.com/docker/distribution/context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -110,9 +111,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			Type:     pkg.PythonPkg,
 			FoundBy:  "the-cataloger-1",
 			Language: pkg.Python,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.Background()),
 			Metadata: pkg.PythonPackage{
 				Name:    "package-1",
 				Version: "1.0.1",

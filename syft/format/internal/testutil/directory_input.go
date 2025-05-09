@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -109,9 +110,7 @@ func newDirectoryCatalog() *pkg.Collection {
 			file.NewLocation("/some/path/pkg1"),
 		),
 		Language: pkg.Python,
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
-		),
+		Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.Background()),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -160,9 +159,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 			file.NewLocation("/some/path/pkg1"),
 		),
 		Language: pkg.Python,
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
-		),
+		Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.Background()),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",

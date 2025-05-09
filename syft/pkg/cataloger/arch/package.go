@@ -1,6 +1,7 @@
 package arch
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -9,17 +10,16 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(m *parsedData, release *linux.Release, dbLocation file.Location, otherLocations ...file.Location) pkg.Package {
+func newPackage(ctx context.Context, m *parsedData, release *linux.Release, dbLocation file.Location, otherLocations ...file.Location) pkg.Package {
 	licenseCandidates := strings.Split(m.Licenses, "\n")
 
 	locs := file.NewLocationSet(dbLocation)
 	locs.Add(otherLocations...)
-
 	p := pkg.Package{
 		Name:      m.Package,
 		Version:   m.Version,
 		Locations: locs,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation.WithoutAnnotations(), licenseCandidates...)...),
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(dbLocation, licenseCandidates...).Build(ctx),
 		Type:      pkg.AlpmPkg,
 		PURL:      packageURL(m, release),
 		Metadata:  m.AlpmDBEntry,

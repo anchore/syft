@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -60,7 +61,7 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 		PURL:      packageURL("stdlib", strings.TrimPrefix(version, "go")),
 		CPEs:      []cpe.CPE{stdlibCpe},
 		Locations: location,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
+		Licenses:  pkg.NewLicenseBuilder().WithValues("BSD-3-Clause").Build(context.TODO()),
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{

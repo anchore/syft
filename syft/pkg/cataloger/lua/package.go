@@ -1,20 +1,21 @@
 package lua
 
 import (
+	"context"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newLuaRocksPackage(u luaRocksPackage, indexLocation file.Location) pkg.Package {
-	license := pkg.NewLicensesFromLocation(indexLocation, u.License)
+func newLuaRocksPackage(ctx context.Context, u luaRocksPackage, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      u.Name,
 		Version:   u.Version,
 		PURL:      packageURL(u.Name, u.Version),
 		Locations: file.NewLocationSet(indexLocation),
 		Language:  pkg.Lua,
-		Licenses:  pkg.NewLicenseSet(license...),
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(indexLocation, u.License).Build(ctx),
 		Type:      pkg.LuaRocksPkg,
 		Metadata: pkg.LuaRocksPackage{
 			Name:         u.Name,

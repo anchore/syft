@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -262,7 +263,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 					Version:   "7.10.4",
 					Locations: locations,
 					PURL:      "pkg:npm/%40babel/code-frame@7.10.4",
-					Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+					Licenses:  pkg.NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
 					Language:  pkg.JavaScript,
 					Type:      pkg.NpmPkg,
 					Metadata: pkg.YarnLockEntry{

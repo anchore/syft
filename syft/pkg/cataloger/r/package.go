@@ -1,6 +1,7 @@
 package r
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -45,7 +46,7 @@ func packageURL(m parseData) string {
 // (surrounded by spaces) in which case the user can choose any of the above cases.
 // https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Licensing
 func parseLicenseData(license string, locations ...file.Location) []pkg.License {
-	licenses := make([]pkg.License, 0)
+	licenseBuilder := pkg.NewLicenseBuilder()
 
 	// check if multiple licenses are separated by |
 	splitField := strings.Split(license, "|")
@@ -56,7 +57,7 @@ func parseLicenseData(license string, locations ...file.Location) []pkg.License 
 			licenseVersion := strings.SplitN(l, " ", 2)
 			if len(licenseVersion) == 2 {
 				l = strings.Join([]string{licenseVersion[0], parseVersion(licenseVersion[1])}, "")
-				licenses = append(licenses, pkg.NewLicenseFromLocations(l, locations...))
+				licenseBuilder.WithCandidates(pkg.LicenseCandidate{Value: l, Locations: locations})
 				continue
 			}
 		}
@@ -65,7 +66,7 @@ func parseLicenseData(license string, locations ...file.Location) []pkg.License 
 		if strings.Contains(l, "+") && strings.Contains(l, "LICENSE") {
 			splitField := strings.Split(l, " ")
 			if len(splitField) > 0 {
-				licenses = append(licenses, pkg.NewLicenseFromLocations(splitField[0], locations...))
+				licenseBuilder.WithCandidates(pkg.LicenseCandidate{Value: splitField[0], Locations: locations})
 				continue
 			}
 		}
@@ -77,10 +78,10 @@ func parseLicenseData(license string, locations ...file.Location) []pkg.License 
 
 		// no specific case found for the above so assume case 2
 		// check if the common name in case 2 is valid SDPX otherwise value will be populated
-		licenses = append(licenses, pkg.NewLicenseFromLocations(l, locations...))
+		licenseBuilder.WithCandidates(pkg.LicenseCandidate{Value: l, Locations: locations})
 		continue
 	}
-	return licenses
+	return licenseBuilder.Build(context.Background()).ToSlice()
 }
 
 // attempt to make best guess at SPDX license ID from version operator in case 2

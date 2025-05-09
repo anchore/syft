@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"strings"
 	"testing"
@@ -144,7 +145,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Type:     pkg.PythonPkg,
 		FoundBy:  "the-cataloger-1",
 		Language: pkg.Python,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		Licenses: pkg.NewLicenseBuilder().WithValues("MIT").Build(context.Background()),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",

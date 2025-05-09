@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/google/licensecheck"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 const (

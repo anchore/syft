@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -128,9 +129,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation(fixture), "MIT").Build(context.Background()),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
 		},
 		{
@@ -139,9 +138,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:     "pkg:npm/%40types/react@18.0.17",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation(fixture), "MIT").Build(context.Background()),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
 		},
 		{
@@ -150,9 +147,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation(fixture), "MIT").Build(context.Background()),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
 		},
 		{
@@ -161,9 +156,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			PURL:     "pkg:npm/csstype@3.1.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation(fixture), "MIT").Build(context.Background()),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
 		},
 	}
@@ -265,9 +258,9 @@ func TestParsePackageLockAlias(t *testing.T) {
 		PURL:     "pkg:npm/alias-check@1.0.0",
 		Language: pkg.JavaScript,
 		Type:     pkg.NpmPkg,
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("ISC", file.NewLocation(packageLockV2)),
-		),
+		Licenses: pkg.NewLicenseBuilder().
+			WithValuesAndLocation(file.NewLocation(packageLockV2), "ISC").
+			Build(context.Background()),
 		Metadata: pkg.NpmPackageLockEntry{},
 	}
 
@@ -296,9 +289,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Version:  "1.0.0",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation(fixture), "ISC").Build(context.Background()),
 			PURL:     "pkg:npm/tmp@1.0.0",
 			Metadata: pkg.NpmPackageLockEntry{},
 		},
@@ -307,11 +298,9 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Version:  "0.0.11",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-				pkg.NewLicenseFromLocations("Apache2", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().
+				WithValuesAndLocation(file.NewLocation(fixture), "MIT", "Apache2").
+				Build(context.Background()),
 			PURL:     "pkg:npm/pause-stream@0.0.11",
 			Metadata: pkg.NpmPackageLockEntry{},
 		},
@@ -320,9 +309,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Version:  "2.3.8",
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-			),
+			Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation(fixture), "MIT").Build(context.Background()),
 			PURL:     "pkg:npm/through@2.3.8",
 			Metadata: pkg.NpmPackageLockEntry{},
 		},

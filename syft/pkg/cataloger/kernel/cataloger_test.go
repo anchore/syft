@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -48,14 +49,12 @@ func Test_KernelCataloger(t *testing.T) {
 				"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 			),
 		),
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL v2",
+		Licenses: pkg.NewLicenseBuilder().
+			WithValuesAndLocation(
 				file.NewVirtualLocation(
 					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
-				),
-			),
-		),
+				), "GPL v2").Build(context.Background()),
 		Type: pkg.LinuxKernelModulePkg,
 		PURL: "pkg:generic/ttynull",
 		Metadata: pkg.LinuxKernelModule{

@@ -1,6 +1,7 @@
 package alpine
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,13 +17,11 @@ func TestApkDBCataloger(t *testing.T) {
 	dbLocation := file.NewLocation("lib/apk/db/installed")
 
 	bashPkg := pkg.Package{
-		Name:    "bash",
-		Version: "5.2.21-r0",
-		Type:    pkg.ApkPkg,
-		FoundBy: "apk-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-3.0-or-later", dbLocation),
-		),
+		Name:      "bash",
+		Version:   "5.2.21-r0",
+		Type:      pkg.ApkPkg,
+		FoundBy:   "apk-db-cataloger",
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(dbLocation, "GPL-3.0-or-later").Build(context.Background()),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
 			Package:       "bash",
@@ -45,13 +44,11 @@ func TestApkDBCataloger(t *testing.T) {
 	}
 
 	busyboxBinshPkg := pkg.Package{
-		Name:    "busybox-binsh",
-		Version: "1.36.1-r15",
-		Type:    pkg.ApkPkg,
-		FoundBy: "apk-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-2.0-only", dbLocation),
-		),
+		Name:      "busybox-binsh",
+		Version:   "1.36.1-r15",
+		Type:      pkg.ApkPkg,
+		FoundBy:   "apk-db-cataloger",
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(dbLocation, "GPL-2.0-only").Build(context.Background()),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
 			Package:       "busybox-binsh",
@@ -74,13 +71,11 @@ func TestApkDBCataloger(t *testing.T) {
 	}
 
 	muslPkg := pkg.Package{
-		Name:    "musl",
-		Version: "1.2.4_git20230717-r4",
-		Type:    pkg.ApkPkg,
-		FoundBy: "apk-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", dbLocation),
-		),
+		Name:      "musl",
+		Version:   "1.2.4_git20230717-r4",
+		Type:      pkg.ApkPkg,
+		FoundBy:   "apk-db-cataloger",
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(dbLocation, "MIT").Build(ctx),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
 			Package:       "musl",
@@ -101,13 +96,11 @@ func TestApkDBCataloger(t *testing.T) {
 	}
 
 	readlinePkg := pkg.Package{
-		Name:    "readline",
-		Version: "8.2.1-r2",
-		Type:    pkg.ApkPkg,
-		FoundBy: "apk-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-2.0-or-later", dbLocation),
-		),
+		Name:      "readline",
+		Version:   "8.2.1-r2",
+		Type:      pkg.ApkPkg,
+		FoundBy:   "apk-db-cataloger",
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(dbLocation, "GPL-2.0-or-later").Build(context.Background()),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
 			Package:       "readline",

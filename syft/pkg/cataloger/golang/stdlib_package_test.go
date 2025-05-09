@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -114,7 +115,7 @@ func Test_stdlibPackageAndRelationships_values(t *testing.T) {
 		PURL:     packageURL("stdlib", "1.22.2"),
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
+		Licenses: pkg.NewLicenseBuilder().WithValues("BSD-3-Clause").Build(context.TODO()),
 		CPEs: []cpe.CPE{
 			{
 				Attributes: cpe.MustAttributes("cpe:2.3:a:golang:go:1.22.2:-:*:*:*:*:*:*"),

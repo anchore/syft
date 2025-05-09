@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,9 +24,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:     "pkg:npm/npm@6.14.6",
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package.json")),
-				),
+				Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation("test-fixtures/pkg-json/package.json"), "Artistic-2.0").Build(context.Background()),
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -44,9 +43,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:     "pkg:npm/npm@6.14.6",
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("ISC", file.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
-				),
+				Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation("test-fixtures/pkg-json/package-license-object.json"), "ISC").Build(context.Background()),
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
 					Version:     "6.14.6",
@@ -64,10 +61,11 @@ func TestParsePackageJSON(t *testing.T) {
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
-					pkg.NewLicenseFromLocations("Apache-2.0", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
-				),
+				Licenses: pkg.NewLicenseBuilder().
+					WithValuesAndLocation(
+						file.NewLocation("test-fixtures/pkg-json/package-license-objects.json"),
+						"MIT", "Apache-2.0").
+					Build(context.Background()),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -118,13 +116,11 @@ func TestParsePackageJSON(t *testing.T) {
 		{
 			Fixture: "test-fixtures/pkg-json/package-nested-author.json",
 			ExpectedPkg: pkg.Package{
-				Name:    "npm",
-				Version: "6.14.6",
-				PURL:    "pkg:npm/npm@6.14.6",
-				Type:    pkg.NpmPkg,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
-				),
+				Name:     "npm",
+				Version:  "6.14.6",
+				PURL:     "pkg:npm/npm@6.14.6",
+				Type:     pkg.NpmPkg,
+				Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(file.NewLocation("test-fixtures/pkg-json/package-nested-author.json"), "Artistic-2.0").Build(context.Background()),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -143,9 +139,9 @@ func TestParsePackageJSON(t *testing.T) {
 				Version: "1.1.1",
 				PURL:    "pkg:npm/function-bind@1.1.1",
 				Type:    pkg.NpmPkg,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
-				),
+				Licenses: pkg.NewLicenseBuilder().
+					WithValuesAndLocation(file.NewLocation("test-fixtures/pkg-json/package-repo-string.json"), "MIT").
+					Build(context.Background()),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
 					Name:        "function-bind",
@@ -164,9 +160,9 @@ func TestParsePackageJSON(t *testing.T) {
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-private.json")),
-				),
+				Licenses: pkg.NewLicenseBuilder().
+					WithValuesAndLocation(file.NewLocation("test-fixtures/pkg-json/package-private.json"), "Artistic-2.0").
+					Build(context.Background()),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -186,9 +182,9 @@ func TestParsePackageJSON(t *testing.T) {
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-author-non-standard.json")),
-				),
+				Licenses: pkg.NewLicenseBuilder().
+					WithValuesAndLocation(file.NewLocation("test-fixtures/pkg-json/package-author-non-standard.json"), "Artistic-2.0").
+					Build(context.Background()),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",

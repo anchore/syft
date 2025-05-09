@@ -1,18 +1,22 @@
 package pkg
 
 import (
+	"sort"
+	"strings"
+
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
-	"github.com/scylladb/go-set/strset"
-	"sort"
-	"strings"
 )
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicense(value string) License {
 	return NewLicenseFromType(value, license.Declared)
 }
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicenseFromType(value string, t license.Type) License {
 	var (
 		spdxExpression string
@@ -47,6 +51,7 @@ func NewLicenseFromType(value string, t license.Type) License {
 	}
 }
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicensesFromValues(values ...string) (licenses []License) {
 	for _, v := range values {
 		licenses = append(licenses, NewLicense(v))
@@ -54,6 +59,7 @@ func NewLicensesFromValues(values ...string) (licenses []License) {
 	return
 }
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicensesFromLocation(location file.Location, values ...string) (licenses []License) {
 	for _, v := range values {
 		if v == "" {
@@ -64,6 +70,7 @@ func NewLicensesFromLocation(location file.Location, values ...string) (licenses
 	return licenses
 }
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicenseFromLocations(value string, locations ...file.Location) License {
 	l := NewLicense(value)
 	for _, loc := range locations {
@@ -72,6 +79,7 @@ func NewLicenseFromLocations(value string, locations ...file.Location) License {
 	return l
 }
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicenseFromURLs(value string, urls ...string) License {
 	l := NewLicense(value)
 	s := strset.New()
@@ -92,6 +100,7 @@ func NewLicenseFromURLs(value string, urls ...string) License {
 	return l
 }
 
+// Deprecated: Use NewLicenseBuilder instead.
 func NewLicenseFromFields(value, url string, location *file.Location) License {
 	l := NewLicense(value)
 	if location != nil {

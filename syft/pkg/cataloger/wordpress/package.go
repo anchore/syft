@@ -2,6 +2,7 @@ package wordpress
 
 import (
 	"context"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -23,11 +24,7 @@ func newWordpressPluginPackage(ctx context.Context, name, version string, m plug
 	}
 
 	if len(m.Licenses) > 0 {
-		licenseCandidates := make([]pkg.LicenseCandidate, 0)
-		for _, l := range m.Licenses {
-			licenseCandidates = append(licenseCandidates, pkg.LicenseCandidate{Value: l, Location: location})
-		}
-		p.Licenses = pkg.NewLicenseBuilder().WithCandidates(licenseCandidates...).Build(ctx)
+		p.Licenses = pkg.NewLicenseBuilder().WithValuesAndLocation(location, m.Licenses...).Build(ctx)
 	}
 
 	p.SetID()

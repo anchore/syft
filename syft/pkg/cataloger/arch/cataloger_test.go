@@ -1,6 +1,7 @@
 package arch
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -27,13 +28,11 @@ func TestAlpmCataloger(t *testing.T) {
 	madeupDbLocation := file.NewLocation("var/lib/pacman/local/madeup-20.30-4/desc")
 
 	treeSitterPkg := pkg.Package{
-		Name:    "tree-sitter",
-		Version: "0.22.6-1",
-		Type:    pkg.AlpmPkg,
-		FoundBy: "alpm-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", treeSitterDbLocation),
-		),
+		Name:      "tree-sitter",
+		Version:   "0.22.6-1",
+		Type:      pkg.AlpmPkg,
+		FoundBy:   "alpm-db-cataloger",
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(treeSitterDbLocation, "MIT").Build(context.Background()),
 		Locations: file.NewLocationSet(treeSitterDbLocation),
 		Metadata: pkg.AlpmDBEntry{
 			BasePackage:  "tree-sitter",
@@ -53,13 +52,11 @@ func TestAlpmCataloger(t *testing.T) {
 	}
 
 	emacsPkg := pkg.Package{
-		Name:    "emacs",
-		Version: "29.3-3",
-		Type:    pkg.AlpmPkg,
-		FoundBy: "alpm-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL3", emacsDbLocation),
-		),
+		Name:      "emacs",
+		Version:   "29.3-3",
+		Type:      pkg.AlpmPkg,
+		FoundBy:   "alpm-db-cataloger",
+		Licenses:  pkg.NewLicenseBuilder().WithValuesAndLocation(emacsDbLocation, "GPL3").Build(context.Background()),
 		Locations: file.NewLocationSet(emacsDbLocation),
 		Metadata: pkg.AlpmDBEntry{
 			BasePackage:  "emacs",
@@ -118,14 +115,11 @@ func TestAlpmCataloger(t *testing.T) {
 	}
 
 	gmpPkg := pkg.Package{
-		Name:    "gmp",
-		Version: "6.2.1-2",
-		Type:    pkg.AlpmPkg,
-		FoundBy: "alpm-db-cataloger",
-		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("LGPL3", gmpDbLocation),
-			pkg.NewLicenseFromLocations("GPL", gmpDbLocation),
-		),
+		Name:     "gmp",
+		Version:  "6.2.1-2",
+		Type:     pkg.AlpmPkg,
+		FoundBy:  "alpm-db-cataloger",
+		Licenses: pkg.NewLicenseBuilder().WithValuesAndLocation(gmpDbLocation, "LGPL3", "GPL").Build(context.Background()),
 		Locations: file.NewLocationSet(
 			gmpDbLocation,
 			file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/files"),

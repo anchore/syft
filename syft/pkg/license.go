@@ -5,22 +5,24 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"net/url"
+	"sort"
+	"strings"
+
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
-	"github.com/scylladb/go-set/strset"
-	"io"
-	"net/url"
-	"sort"
-	"strings"
 )
 
 var _ sort.Interface = (*Licenses)(nil)
 
 // License represents an SPDX Expression or license value extracted from a package's metadata
-// We want to hash ignore URLs and Location since we merge these fields across equal licenses.
+// We want to hash ignore URLs and Locations since we merge these fields across equal licenses.
 // We also Ignore hashing contents here. - when missing value/expression, put in "LicenseRef-sha256:xxxx..." as the value
 
 // The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
@@ -111,11 +113,16 @@ func (l Licenses) Swap(i, j int) {
 }
 
 type LicenseCandidate struct {
-	Value    string
-	Contents file.LocationReadCloser // this is for cases where we know we have license content and want to do analysis
-	Location file.Location           // this is for cases where we just want the metadata file location
+	Value     string
+	Type      license.Type            // this is optional; if not set use default from builder
+	Contents  file.LocationReadCloser // this is for cases where we know we have license content and want to do analysis
+	Locations []file.Location         // this is for cases where we just want the metadata file location
 }
 
+// Reviewer note: we should be very diligent to make sure that
+// licenses.ContextLicenseScanner is not called mulitple times
+// this funtion results in a default scanner being created each call if one is not set in ctx
+// this is VERY expensive
 type LicenseBuilder struct {
 	candidates []LicenseCandidate
 	contents   []file.LocationReadCloser
@@ -136,6 +143,12 @@ func (b *LicenseBuilder) WithValues(expr ...string) *LicenseBuilder {
 	return b
 }
 
+func (b *LicenseBuilder) WithValuesAndLocation(location file.Location, expr ...string) *LicenseBuilder {
+	for _, ex := range expr {
+		b.candidates = append(b.candidates, LicenseCandidate{Value: ex, Locations: []file.Location{location}})
+	}
+	return b
+}
 func (b *LicenseBuilder) WithCandidates(candidates ...LicenseCandidate) *LicenseBuilder {
 	b.candidates = append(b.candidates, candidates...)
 	return b
@@ -144,6 +157,9 @@ func (b *LicenseBuilder) WithCandidates(candidates ...LicenseCandidate) *License
 func candidatesFromExpr(expr []string) []LicenseCandidate {
 	candidates := make([]LicenseCandidate, 0)
 	for _, expr := range expr {
+		if expr == "" {
+			continue
+		}
 		candidates = append(candidates, LicenseCandidate{
 			Value: expr,
 		})
@@ -206,23 +222,43 @@ func (b *LicenseBuilder) buildFromCandidate(c LicenseCandidate) []License {
 			log.WithFields("error", err, "path", c.Contents.Path()).Trace("could not read content from path")
 		}
 	}
+
 	output := License{
-		Value:    c.Value,
-		Contents: content,
-		Type:     b.tp,
+		Value:     c.Value,
+		Contents:  content,
+		Type:      b.tp,
+		Locations: file.NewLocationSet(),
 	}
 
-	// we'll never have both c.Contents and c.Location
+	// optional custom type
+	if c.Type != "" {
+		output.Type = c.Type
+	}
+
+	// we'll never have both c.Contents and c.Locations
 	// these fields should always be mutually exclusive
 	// contents is for the scanner, location is for where we read the metadata
 	if c.Contents.Location.Path() != "" {
 		output.Locations = file.NewLocationSet(c.Contents.Location)
 	}
 
-	if c.Location.Path() != "" {
-		output.Locations = file.NewLocationSet(c.Location)
+	for _, l := range c.Locations {
+		if l.Path() != "" {
+			output.Locations.Add(l)
+		}
 	}
 
+	if output.Locations.Empty() {
+		// we don't even want the empty set
+		output = License{
+			Value:    output.Value,
+			Contents: output.Contents,
+			Type:     output.Type,
+		}
+
+	}
+
+	// we want to check if the SPDX field should be set
 	if ex, err := license.ParseExpression(c.Value); err == nil {
 		output.SPDXExpression = ex
 	}
@@ -231,20 +267,31 @@ func (b *LicenseBuilder) buildFromCandidate(c LicenseCandidate) []License {
 }
 
 func (b *LicenseBuilder) buildFromContents(ctx context.Context, contents file.LocationReadCloser) []License {
-	scanner, err := licenses.ContextLicenseScanner(ctx)
-	if err != nil {
+	defer contents.Close()
+	if !licenses.IsContextLicenseScannerSet(ctx) {
+		// we have no scanner so we sha256 the content and value populated
 		internal, err := contentFromReader(contents)
 		if err != nil {
 			log.WithFields("error", err, "path", contents.Path()).Trace("could not read content")
 			return nil
 		}
-		// we have no scanner so we sha256 the content and value populated
+		return []License{b.licenseFromContentHash(internal, contents.Location)}
+	}
+
+	scanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		log.WithFields("error", err).Trace("could not find license scanner")
+		internal, err := contentFromReader(contents)
+		if err != nil {
+			log.WithFields("error", err, "path", contents.Path()).Trace("could not read content")
+			return nil
+		}
 		return []License{b.licenseFromContentHash(internal, contents.Location)}
 	}
 
 	evidence, content, err := scanner.FindEvidence(ctx, contents)
 	if err != nil {
-		log.WithFields("error", err, "path", contents.Path()).Trace("scanner failed")
+		log.WithFields("error", err, "path", contents.Path()).Trace("scanner failed to scan contents at path")
 		return nil
 	}
 
@@ -284,12 +331,15 @@ func (b *LicenseBuilder) licenseFromContentHash(content string, location file.Lo
 	hash := sha256HexFromString(content)
 	value := "LicenseRef-sha256:" + hash
 
-	return License{
-		Value:     value,
-		Contents:  content,
-		Type:      b.tp,
-		Locations: file.NewLocationSet(location),
+	lic := License{
+		Value:    value,
+		Contents: content,
+		Type:     b.tp,
 	}
+	if location.Path() != "" {
+		lic.Locations = file.NewLocationSet(location)
+	}
+	return lic
 }
 
 func contentFromReader(r io.Reader) (string, error) {

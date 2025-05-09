@@ -83,14 +83,10 @@ func TestSinglePackageDetails(t *testing.T) {
 		{
 			fixture: "test-fixtures/single",
 			expected: pkg.Package{
-				Name:    "musl-utils",
-				Version: "1.1.24-r2",
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseBuilder().
-						WithValues("MIT", "BSD", "GPL2+").
-						Build(context.TODO())...,
-				),
-				Type: pkg.ApkPkg,
+				Name:     "musl-utils",
+				Version:  "1.1.24-r2",
+				Licenses: pkg.NewLicenseBuilder().WithValues("MIT", "BSD", "GPL2+").Build(context.TODO()),
+				Type:     pkg.ApkPkg,
 				Metadata: pkg.ApkDBEntry{
 					Package:       "musl-utils",
 					OriginPackage: "musl",
@@ -172,12 +168,10 @@ func TestSinglePackageDetails(t *testing.T) {
 		{
 			fixture: "test-fixtures/empty-deps-and-provides",
 			expected: pkg.Package{
-				Name:    "alpine-baselayout-data",
-				Version: "3.4.0-r0",
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("GPL-2.0-only"),
-				),
-				Type: pkg.ApkPkg,
+				Name:     "alpine-baselayout-data",
+				Version:  "3.4.0-r0",
+				Licenses: pkg.NewLicenseBuilder().WithValues("GPL-2.0-only").Build(context.TODO()),
+				Type:     pkg.ApkPkg,
 				Metadata: pkg.ApkDBEntry{
 					Package:       "alpine-baselayout-data",
 					OriginPackage: "alpine-baselayout",
@@ -216,13 +210,11 @@ func TestSinglePackageDetails(t *testing.T) {
 		{
 			fixture: "test-fixtures/base",
 			expected: pkg.Package{
-				Name:    "alpine-baselayout",
-				Version: "3.2.0-r6",
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("GPL-2.0-only"),
-				),
-				Type: pkg.ApkPkg,
-				PURL: "",
+				Name:     "alpine-baselayout",
+				Version:  "3.2.0-r6",
+				Licenses: pkg.NewLicenseBuilder().WithValues("GPL-2.0-only").Build(context.TODO()),
+				Type:     pkg.ApkPkg,
+				PURL:     "",
 				Metadata: pkg.ApkDBEntry{
 					Package:       "alpine-baselayout",
 					OriginPackage: "alpine-baselayout",

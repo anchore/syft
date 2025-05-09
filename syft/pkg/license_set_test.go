@@ -19,38 +19,20 @@ func TestLicenseSet_Add(t *testing.T) {
 	}{
 		{
 			name:     "add one simple license",
-			licenses: NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
-			want:     NewLicenseBuilder().WithValues("MIT").Build(context.TODO()),
+			licenses: NewLicenseBuilder().WithValues("MIT").Build(context.TODO()).ToSlice(),
+			want:     NewLicenseBuilder().WithValues("MIT").Build(context.TODO()).ToSlice(),
 		},
 		{
 			name: "add multiple simple licenses",
-			licenses: []License{
-				NewLicense("MIT"),
-				NewLicense("MIT"),
-				NewLicense("Apache-2.0"),
-			},
-			want: []License{
-				NewLicense("Apache-2.0"),
-				NewLicense("MIT"),
-			},
+			licenses: NewLicenseBuilder().WithValues("MIT", "MIT", "Apache-2.0").
+				Build(context.Background()).ToSlice(),
+			want: NewLicenseBuilder().WithValues("MIT", "Apache-2.0").
+				Build(context.Background()).ToSlice(),
 		},
 		{
-			name: "attempt to add a license with no name",
-			licenses: []License{
-				NewLicense(""),
-			},
-			want: nil,
-		},
-		{
-			name: "keep multiple licenses sorted",
-			licenses: []License{
-				NewLicense("MIT"),
-				NewLicense("Apache-2.0"),
-			},
-			want: []License{
-				NewLicense("Apache-2.0"),
-				NewLicense("MIT"),
-			},
+			name:     "attempt to add a license with no name",
+			licenses: NewLicenseBuilder().WithValues("").Build(context.Background()).ToSlice(),
+			want:     nil,
 		},
 		{
 			name: "deduplicate licenses with locations",
@@ -101,26 +83,15 @@ func TestLicenseSet_Add(t *testing.T) {
 		},
 		{
 			name: "different licenses from different sources with different types constitute two licenses",
-			licenses: []License{
-				NewLicenseFromType("MIT", license.Concluded),
-				NewLicenseFromType("MIT", license.Declared),
-				NewLicenseFromLocations("MIT", file.NewLocation("/place")),
-				NewLicenseFromURLs("MIT", "https://example.com"),
-			},
+			licenses: NewLicenseBuilder().WithCandidates(
+				[]LicenseCandidate{
+					{Value: "MIT", Type: license.Concluded},
+					{Value: "MIT", Type: license.Declared},
+					{Value: "MIT", Type: license.Declared, Locations: []file.Location{file.NewLocation("/place")}},
+				}...).Build(context.TODO()).ToSlice(),
 			want: []License{
-				{
-					Value:          "MIT",
-					SPDXExpression: "MIT",
-					Type:           license.Concluded,
-					Locations:      file.NewLocationSet(),
-				},
-				{
-					Value:          "MIT",
-					SPDXExpression: "MIT",
-					Type:           license.Declared,
-					URLs:           []string{"https://example.com"},
-					Locations:      file.NewLocationSet(file.NewLocation("/place")),
-				},
+				{SPDXExpression: "MIT", Value: "MIT", Type: license.Concluded},
+				{SPDXExpression: "MIT", Value: "MIT", Type: license.Declared, Locations: file.NewLocationSet(file.NewLocation("/place"))},
 			},
 		},
 		{

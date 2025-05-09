@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -167,7 +168,7 @@ func Test_encodeLicense(t *testing.T) {
 		{
 			name: "single parenthesized SPDX expression",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("(MIT OR Apache-2.0)")...),
+				Licenses: pkg.NewLicenseBuilder().WithValues("(MIT OR Apache-2.0)").Build(context.Background()),
 			},
 			expected: &cyclonedx.Licenses{
 				{
@@ -179,7 +180,9 @@ func Test_encodeLicense(t *testing.T) {
 			name: "single license AND to parenthesized SPDX expression",
 			// (LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later")...),
+				Licenses: pkg.NewLicenseBuilder().
+					WithValues("(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later").
+					Build(context.Background()),
 			},
 			expected: &cyclonedx.Licenses{
 				{
