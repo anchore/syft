@@ -76,6 +76,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			Arch:            entry.Arch,
 			Release:         entry.Release,
 			SourceRpm:       entry.SourceRpm,
+			Signature:       entry.PGP,
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
