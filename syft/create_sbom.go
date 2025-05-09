@@ -107,9 +107,9 @@ func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, 
 // SetContextLicenseScanner creates and sets a license scanner
 // on the provided context using the provided license config.
 func SetContextLicenseScanner(ctx context.Context, cfg cataloging.LicenseConfig) (context.Context, error) {
-	// inject a single license scanner and content config for all package cataloging tasks into context
 	licenseScanner, err := licenses.NewDefaultScanner(
-		licenses.WithIncludeLicenseContent(cfg.IncludeUnkownLicenseContent),
+		licenses.WithIncludeFullText(cfg.IncludeFullText),
+		licenses.WithIncludeUnknownLicenseContent(cfg.IncludeUnknownLicenseContent),
 		licenses.WithCoverage(cfg.Coverage),
 	)
 	if err != nil {
