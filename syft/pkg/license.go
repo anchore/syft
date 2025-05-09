@@ -100,11 +100,11 @@ func NewLicensesFromLocationWithContext(ctx context.Context, location file.Locat
 }
 
 func NewLicenseFromLocationsWithContext(ctx context.Context, value string, locations ...file.Location) License {
-	l := NewLicenseWithContext(ctx, value)
-	for _, loc := range locations {
-		l.Locations.Add(loc)
+	lics := newLicenseBuilder().WithLocationsAndValue(value, locations...).build(ctx).ToSlice()
+	if len(lics) > 0 {
+		return lics[0]
 	}
-	return l
+	return License{}
 }
 
 func NewLicenseFromURLsWithContext(ctx context.Context, value string, urls ...string) License {
@@ -203,10 +203,6 @@ type licenseCandidate struct {
 	Locations []file.Location         // this is for cases where we just want the metadata file location
 }
 
-// Reviewer note: we should be very diligent to make sure that
-// licenses.ContextLicenseScanner is not called multiple times
-// this function results in a default scanner being created each call if one is not set in ctx
-// this is VERY expensive
 type licenseBuilder struct {
 	candidates []licenseCandidate
 	contents   []file.LocationReadCloser
@@ -233,6 +229,12 @@ func (b *licenseBuilder) withValuesAndLocation(location file.Location, expr ...s
 	}
 	return b
 }
+
+func (b *licenseBuilder) WithLocationsAndValue(expr string, locations ...file.Location) *licenseBuilder {
+	b.candidates = append(b.candidates, licenseCandidate{Value: expr, Locations: locations})
+	return b
+}
+
 func (b *licenseBuilder) withCandidates(candidates ...licenseCandidate) *licenseBuilder {
 	b.candidates = append(b.candidates, candidates...)
 	return b
@@ -280,15 +282,16 @@ func (b *licenseBuilder) build(ctx context.Context) LicenseSet {
 			filtered = append(filtered, l)
 		}
 	}
+
 	// now we're sure that our value:contents pairings are not contents:contents
 	b.candidates = filtered
 
-	// values are present so easy output construction
+	// values are present; let's get the easy output construction done first
 	for _, l := range b.candidates {
 		output.Add(b.buildFromCandidate(l)...)
 	}
 
-	// we have some readers (with no values) that we've been asked to turn into licenses if we can
+	// we have some readers (with no values); let's try to turn into licenses if we can
 	for _, content := range b.contents {
 		output.Add(b.buildFromContents(ctx, content)...)
 	}
@@ -351,7 +354,7 @@ func (b *licenseBuilder) buildFromCandidate(c licenseCandidate) []License {
 
 func (b *licenseBuilder) buildFromContents(ctx context.Context, contents file.LocationReadCloser) []License {
 	if !licenses.IsContextLicenseScannerSet(ctx) {
-		// we do not have a scanner; we sha256 the content and value populated
+		// we do not have a scanner; we don't want to create one; we sha256 the content and populate the value
 		internal, err := contentFromReader(contents)
 		if err != nil {
 			log.WithFields("error", err, "path", contents.Path()).Trace("could not read content")

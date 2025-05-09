@@ -1060,7 +1060,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			c := newGoBinaryCataloger(DefaultCatalogerConfig())
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
-			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
 			if mainPkg != nil {
 				pkgs = append(pkgs, *mainPkg)
 			}
