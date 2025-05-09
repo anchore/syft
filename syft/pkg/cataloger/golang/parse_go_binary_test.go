@@ -855,6 +855,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "parse main mod and replace devel with pattern from binary contents",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				// off by default
+				assert.False(t, c.MainModuleVersion.FromContents)
+				// override to true for this test
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
 			mod: &extendedBuildInfo{
 				BuildInfo: &debug.BuildInfo{
 					GoVersion: goCompiledVersion,
