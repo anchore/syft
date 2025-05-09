@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"github.com/anchore/syft/internal/licenses"
 	"os"
 	"testing"
 
@@ -12,6 +13,12 @@ import (
 )
 
 func TestLicenseSet_Add(t *testing.T) {
+	// configure scanner license contents
+	scanner, err := licenses.NewDefaultScanner()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
 	tests := []struct {
 		name     string
 		licenses []License
@@ -96,18 +103,24 @@ func TestLicenseSet_Add(t *testing.T) {
 		},
 		{
 			name: "licenses that are unknown with different contents can exist in the same set",
-			licenses: []License{
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
-			},
+			licenses: NewLicenseBuilder().WithContents(
+				mustLocationReadCloserFromFile(t, "../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
+				mustLocationReadCloserFromFile(t, "../../internal/licenses/test-fixtures/apache-license-2.0"),
+			).Build(ctx).ToSlice(),
 			want: []License{
 				{
-					Contents: readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
-					Type:     license.Declared,
+					SPDXExpression: "Apache-2.0",
+					Value:          "Apache-2.0",
+					Contents:       readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
+					Type:           license.Declared,
+					Locations:      file.NewLocationSet(file.NewLocation("../../internal/licenses/test-fixtures/apache-license-2.0")),
 				},
 				{
-					Contents: readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
-					Type:     license.Declared,
+					SPDXExpression: "",
+					Value:          "LicenseRef-sha256:eebcea3ab1d1a28e671de90119ffcfb35fe86951e4af1b17af52b7a82fcf7d0a",
+					Contents:       readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
+					Type:           license.Declared,
+					Locations:      file.NewLocationSet(file.NewLocation("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
 				},
 			},
 		},
@@ -145,6 +158,15 @@ func defaultLicenseComparer(x, y License) bool {
 			return true
 		},
 	))
+}
+
+func mustLocationReadCloserFromFile(t *testing.T, path string) file.LocationReadCloser {
+	t.Helper()
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("failed to open file %q: %v", path, err)
+	}
+	return file.NewLocationReadCloser(file.NewLocation(path), f)
 }
 
 func readFileAsString(filepath string) string {
