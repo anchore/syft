@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"golang.org/x/net/context"
 	"net/url"
 	"sort"
 	"strings"
@@ -71,11 +72,11 @@ func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-func NewLicense(value string) License {
-	return NewLicenseFromType(value, license.Declared)
+func NewLicense(ctx context.Context, value string) License {
+	return NewLicenseFromType(ctx, value, license.Declared)
 }
 
-func NewLicenseFromType(value string, t license.Type) License {
+func NewLicenseFromType(ctx context.Context, value string, t license.Type) License {
 	var (
 		spdxExpression string
 		fullText       string
@@ -109,33 +110,33 @@ func NewLicenseFromType(value string, t license.Type) License {
 	}
 }
 
-func NewLicensesFromValues(values ...string) (licenses []License) {
+func NewLicensesFromValues(ctx context.Context, values ...string) (licenses []License) {
 	for _, v := range values {
-		licenses = append(licenses, NewLicense(v))
+		licenses = append(licenses, NewLicense(ctx, v))
 	}
 	return
 }
 
-func NewLicensesFromLocation(location file.Location, values ...string) (licenses []License) {
+func NewLicensesFromLocation(ctx context.Context, location file.Location, values ...string) (licenses []License) {
 	for _, v := range values {
 		if v == "" {
 			continue
 		}
-		licenses = append(licenses, NewLicenseFromLocations(v, location))
+		licenses = append(licenses, NewLicenseFromLocations(ctx, v, location))
 	}
 	return licenses
 }
 
-func NewLicenseFromLocations(value string, locations ...file.Location) License {
-	l := NewLicense(value)
+func NewLicenseFromLocations(ctx context.Context, value string, locations ...file.Location) License {
+	l := NewLicense(ctx, value)
 	for _, loc := range locations {
 		l.Locations.Add(loc)
 	}
 	return l
 }
 
-func NewLicenseFromURLs(value string, urls ...string) License {
-	l := NewLicense(value)
+func NewLicenseFromURLs(ctx context.Context, value string, urls ...string) License {
+	l := NewLicense(ctx, value)
 	s := strset.New()
 	for _, url := range urls {
 		if url != "" {
@@ -164,8 +165,8 @@ func stripUnwantedCharacters(rawURL string) (string, error) {
 	return cleanedURL, nil
 }
 
-func NewLicenseFromFields(value, url string, location *file.Location) License {
-	l := NewLicense(value)
+func NewLicenseFromFields(ctx context.Context, value, url string, location *file.Location) License {
+	l := NewLicense(ctx, value)
 	if location != nil {
 		l.Locations.Add(*location)
 	}

@@ -1,6 +1,7 @@
 package dependency
 
 import (
+	"context"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
@@ -36,7 +37,7 @@ type Specifier func(pkg.Package) Specification
 
 // Processor returns a generic processor that will resolve relationships between packages based on the dependency claims.
 func Processor(s Specifier) generic.Processor {
-	return func(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	return func(ctx context.Context, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 		// we can't move forward unless all package IDs have been set
 		for idx, p := range pkgs {
 			id := p.ID()

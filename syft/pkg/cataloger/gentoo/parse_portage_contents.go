@@ -26,7 +26,7 @@ var (
 )
 
 // parses individual CONTENTS files from the portage flat-file store (e.g. /var/db/pkg/*/*/CONTENTS).
-func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePortageContents(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	cpvMatch := cpvRe.FindStringSubmatch(reader.RealPath)
 	if cpvMatch == nil {
 		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.RealPath)
@@ -51,7 +51,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 			Files: make([]pkg.PortageFileRecord, 0),
 		},
 	}
-	addLicenses(resolver, reader.Location, &p)
+	addLicenses(ctx, resolver, reader.Location, &p)
 	addSize(resolver, reader.Location, &p)
 	addFiles(resolver, reader.Location, &p)
 
@@ -94,7 +94,7 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) 
 	p.Locations.Add(dbLocation)
 }
 
-func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
+func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
@@ -121,7 +121,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 	}
 
 	licenseCandidates := findings.List()
-	p.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(*location, licenseCandidates...)...)
+	p.Licenses = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, *location, licenseCandidates...)...)
 	p.Locations.Add(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 }
 

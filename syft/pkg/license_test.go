@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"sort"
 	"testing"
 
@@ -13,13 +14,14 @@ import (
 )
 
 func Test_Hash(t *testing.T) {
+	ctx := context.TODO()
 	loc1 := file.NewLocation("place!")
 	loc1.FileSystemID = "fs1"
 	loc2 := file.NewLocation("place!")
 	loc2.FileSystemID = "fs2" // important! there is a different file system ID
 
-	lic1 := NewLicenseFromFields("MIT", "foo", &loc1)
-	lic2 := NewLicenseFromFields("MIT", "bar", &loc2)
+	lic1 := NewLicenseFromFields(ctx, "MIT", "foo", &loc1)
+	lic2 := NewLicenseFromFields(ctx, "MIT", "bar", &loc2)
 
 	hash1, err := artifact.IDByHash(lic1)
 	require.NoError(t, err)
@@ -31,6 +33,7 @@ func Test_Hash(t *testing.T) {
 }
 
 func Test_Sort(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		licenses Licenses
@@ -44,57 +47,57 @@ func Test_Sort(t *testing.T) {
 		{
 			name: "single",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
 			},
 			expected: []License{
-				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
 			},
 		},
 		{
 			name: "multiple",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
-				NewLicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
-				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
-				NewLicenseFromLocations("gpl2+", file.NewLocation("area!")),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromURLs(ctx, "MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
+				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
+				NewLicenseFromLocations(ctx, "gpl2+", file.NewLocation("area!")),
 			},
 			expected: Licenses{
-				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
-				NewLicenseFromURLs("MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
-				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
-				NewLicenseFromLocations("gpl2+", file.NewLocation("area!")),
+				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
+				NewLicenseFromURLs(ctx, "MIT", "https://github.com/anchore/syft/blob/main/LICENSE"),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromLocations(ctx, "gpl2+", file.NewLocation("area!")),
 			},
 		},
 		{
 			name: "multiple with location variants",
 			licenses: []License{
-				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
-				NewLicenseFromLocations("MIT", file.NewLocation("park!")),
-				NewLicense("MIT"),
-				NewLicense("AAL"),
-				NewLicense("Adobe-2006"),
-				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("park!")),
+				NewLicense(ctx, "MIT"),
+				NewLicense(ctx, "AAL"),
+				NewLicense(ctx, "Adobe-2006"),
+				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
 			},
 			expected: Licenses{
-				NewLicense("AAL"),
-				NewLicense("Adobe-2006"),
-				NewLicenseFromLocations("Apache", file.NewLocation("area!")),
-				NewLicense("MIT"),
-				NewLicenseFromLocations("MIT", file.NewLocation("park!")),
-				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
+				NewLicense(ctx, "AAL"),
+				NewLicense(ctx, "Adobe-2006"),
+				NewLicenseFromLocations(ctx, "Apache", file.NewLocation("area!")),
+				NewLicense(ctx, "MIT"),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("park!")),
+				NewLicenseFromLocations(ctx, "MIT", file.NewLocation("place!")),
 			},
 		},
 		{
 			name: "multiple licenses with only contents",
 			licenses: []License{
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
 			},
 			expected: Licenses{
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
 			},
 		},
 	}
@@ -240,6 +243,7 @@ func TestLicense_Merge(t *testing.T) {
 }
 
 func TestFullText(t *testing.T) {
+	ctx := context.TODO()
 	fullText := `I am a license with full text
 	my authors put new line characters in metadata for labeling a license`
 	tests := []struct {
@@ -260,13 +264,14 @@ func TestFullText(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewLicense(tt.value)
+			got := NewLicense(ctx, tt.value)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestLicenseConstructors(t *testing.T) {
+	ctx := context.TODO()
 	type input struct {
 		value string
 		urls  []string
@@ -295,7 +300,7 @@ func TestLicenseConstructors(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := NewLicenseFromURLs(test.input.value, test.input.urls...)
+			got := NewLicenseFromURLs(ctx, test.input.value, test.input.urls...)
 			assert.Equal(t, test.expected, got)
 		})
 	}

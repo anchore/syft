@@ -28,8 +28,8 @@ func TestIDUniqueness(t *testing.T) {
 			originalLocation,
 		),
 		Licenses: NewLicenseSet(
-			NewLicense("MIT"),
-			NewLicense("cc0-1.0"),
+			NewLicense(ctx, "MIT"),
+			NewLicense(ctx, "cc0-1.0"),
 		),
 		Language: "math",
 		Type:     PythonPkg,
@@ -82,8 +82,8 @@ func TestIDUniqueness(t *testing.T) {
 			transform: func(pkg Package) Package {
 				// note: same as the original package, only a different order
 				pkg.Licenses = NewLicenseSet(
-					NewLicense("cc0-1.0"),
-					NewLicense("MIT"),
+					NewLicense(ctx, "cc0-1.0"),
+					NewLicense(ctx, "MIT"),
 				)
 				return pkg
 			},
@@ -110,7 +110,7 @@ func TestIDUniqueness(t *testing.T) {
 		{
 			name: "licenses is reflected",
 			transform: func(pkg Package) Package {
-				pkg.Licenses = NewLicenseSet(NewLicense("new!"))
+				pkg.Licenses = NewLicenseSet(NewLicense(ctx, "new!"))
 				return pkg
 			},
 			expectedIDComparison: assert.NotEqual,

@@ -24,7 +24,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicense(ctx, "MIT"),
 			),
 			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "asm89/stack-cors",
@@ -73,7 +73,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicense(ctx, "MIT"),
 			),
 			Metadata: pkg.PhpComposerInstalledEntry{
 				Name:    "behat/mink",

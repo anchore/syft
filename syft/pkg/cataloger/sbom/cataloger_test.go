@@ -26,7 +26,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "3.2.0-r23",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-baselayout@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -43,7 +43,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "3.2.0-r23",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-baselayout-data@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -64,7 +64,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "2.4-r1",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "MIT")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/alpine-keys@2.4-r1?arch=x86_64&upstream=alpine-keys&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -81,7 +81,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "2.12.9-r3",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/apk-tools@2.12.9-r3?arch=x86_64&upstream=apk-tools&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -98,7 +98,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.35.0-r17",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -111,8 +111,8 @@ func Test_parseSBOM(t *testing.T) {
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MPL-2.0"),
-				pkg.NewLicense("MIT"),
+				pkg.NewLicense(ctx, "MPL-2.0"),
+				pkg.NewLicense(ctx, "MIT"),
 			),
 			FoundBy: "sbom-cataloger",
 			PURL:    "pkg:apk/alpine/ca-certificates-bundle@20220614-r0?arch=x86_64&upstream=ca-certificates&distro=alpine-3.16.3",
@@ -135,8 +135,8 @@ func Test_parseSBOM(t *testing.T) {
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("BSD-2-Clause"),
-				pkg.NewLicense("BSD-3-Clause"),
+				pkg.NewLicense(ctx, "BSD-2-Clause"),
+				pkg.NewLicense(ctx, "BSD-3-Clause"),
 			),
 			FoundBy: "sbom-cataloger",
 			PURL:    "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&upstream=libc-dev&distro=alpine-3.16.3",
@@ -154,7 +154,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.1.1s-r0",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("OpenSSL")), // SPDX expression is not set
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "OpenSSL")), // SPDX expression is not set
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libcrypto1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -166,7 +166,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.1.1s-r0",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("OpenSSL")), // SPDX expression is not set
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "OpenSSL")), // SPDX expression is not set
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/libssl1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -178,7 +178,7 @@ func Test_parseSBOM(t *testing.T) {
 			Version:   "1.2.3-r1",
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
-			Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")), // SPDX expression is not set
+			Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "MIT")), // SPDX expression is not set
 			FoundBy:   "sbom-cataloger",
 			PURL:      "pkg:apk/alpine/musl@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
 			CPEs: mustCPEs(
@@ -191,9 +191,9 @@ func Test_parseSBOM(t *testing.T) {
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
-				pkg.NewLicense("BSD"),
-				pkg.NewLicense("GPL2+"), // SPDX expression is not set
+				pkg.NewLicense(ctx, "MIT"),
+				pkg.NewLicense(ctx, "BSD"),
+				pkg.NewLicense(ctx, "GPL2+"), // SPDX expression is not set
 			),
 			FoundBy: "sbom-cataloger",
 			PURL:    "pkg:apk/alpine/musl-utils@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
@@ -212,7 +212,7 @@ func Test_parseSBOM(t *testing.T) {
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("GPL-2.0-only"),
+				pkg.NewLicense(ctx, "GPL-2.0-only"),
 			),
 			FoundBy: "sbom-cataloger",
 			PURL:    "pkg:apk/alpine/scanelf@1.3.4-r0?arch=x86_64&upstream=pax-utils&distro=alpine-3.16.3",
@@ -226,7 +226,7 @@ func Test_parseSBOM(t *testing.T) {
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("GPL-2.0-only"),
+				pkg.NewLicense(ctx, "GPL-2.0-only"),
 			),
 			FoundBy: "sbom-cataloger",
 			PURL:    "pkg:apk/alpine/ssl_client@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
@@ -245,7 +245,7 @@ func Test_parseSBOM(t *testing.T) {
 			Type:      "apk",
 			Locations: file.NewLocationSet(file.NewLocation("sbom.syft.json")),
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("Zlib"),
+				pkg.NewLicense(ctx, "Zlib"),
 			),
 			FoundBy: "sbom-cataloger",
 			PURL:    "pkg:apk/alpine/zlib@1.2.12-r3?arch=x86_64&upstream=zlib&distro=alpine-3.16.3",
@@ -269,7 +269,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.1.1s-r0",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("OpenSSL")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "OpenSSL")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/libssl1.1@1.1.1s-r0?arch=x86_64&upstream=openssl&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -282,7 +282,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.35.0-r17",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/ssl_client@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -300,7 +300,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "3.2.0-r23",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/alpine-baselayout@3.2.0-r23?arch=x86_64&upstream=alpine-baselayout&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -318,7 +318,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.35.0-r17",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("GPL-2.0-only")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "GPL-2.0-only")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/busybox@1.35.0-r17?arch=x86_64&upstream=busybox&distro=alpine-3.16.3",
 		CPEs: mustCPEs(
@@ -331,7 +331,7 @@ func Test_parseSBOM(t *testing.T) {
 		Version:   "1.2.3-r1",
 		Type:      "apk",
 		Locations: apkgdbLocation,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(ctx, "MIT")),
 		FoundBy:   "apkdb-cataloger",
 		PURL:      "pkg:apk/alpine/musl@1.2.3-r1?arch=x86_64&upstream=musl&distro=alpine-3.16.3",
 		CPEs: mustCPEs(

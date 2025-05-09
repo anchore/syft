@@ -88,7 +88,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			// assert licenses are discovered from upstream
 			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
 			resolvedLicenses, _ := ap.maven.ResolveLicenses(context.Background(), parsedPom.project)
-			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(nil, resolvedLicenses))
+			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(ctx, nil, resolvedLicenses))
 		})
 	}
 }
@@ -121,7 +121,7 @@ func TestParseJar(t *testing.T) {
 					Version: "1.0-SNAPSHOT",
 					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
+						pkg.NewLicenseFromLocations(ctx, "MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					),
 					Language: pkg.Java,
 					Type:     pkg.JenkinsPluginPkg,
@@ -207,14 +207,10 @@ func TestParseJar(t *testing.T) {
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields(
-							"Apache 2",
-							"http://www.apache.org/licenses/LICENSE-2.0.txt",
-							func() *file.Location {
-								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
-								return &l
-							}(),
-						),
+						pkg.NewLicenseFromFields(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+							l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
+							return &l
+						}()),
 					),
 					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
@@ -306,14 +302,10 @@ func TestParseJar(t *testing.T) {
 					Version: "2.9.2",
 					PURL:    "pkg:maven/joda-time/joda-time@2.9.2",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields(
-							"Apache 2",
-							"http://www.apache.org/licenses/LICENSE-2.0.txt",
-							func() *file.Location {
-								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
-								return &l
-							}(),
-						),
+						pkg.NewLicenseFromFields(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+							l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
+							return &l
+						}()),
 					),
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
@@ -1102,6 +1094,7 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 }
 
 func Test_parseJavaArchive_regressions(t *testing.T) {
+	ctx := context.TODO()
 	apiAll := pkg.Package{
 		Name:      "api-all",
 		Version:   "2.0.0",
@@ -1193,6 +1186,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicensesFromLocation(
+							ctx,
 							file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
 						)...,
@@ -1247,6 +1241,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicensesFromLocation(
+							ctx,
 							file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
 						)...,

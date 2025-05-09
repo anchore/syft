@@ -268,7 +268,7 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 
 	switch {
 	case m.LicenseExpression != "" || m.Licenses != "":
-		licenseSet = getLicenseSetFromValues(licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
+		licenseSet = getLicenseSetFromValues(ctx, licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
 	case !licenseLocations.Empty():
 		licenseSet = getLicenseSetFromFiles(ctx, scanner, resolver, licenseLocations.ToSlice()...)
 
@@ -307,9 +307,9 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 	return licenseSet
 }
 
-func getLicenseSetFromValues(locations []file.Location, licenseValues ...string) pkg.LicenseSet {
+func getLicenseSetFromValues(ctx context.Context, locations []file.Location, licenseValues ...string) pkg.LicenseSet {
 	if len(locations) == 0 {
-		return pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenseValues...)...)
+		return pkg.NewLicenseSet(pkg.NewLicensesFromValues(ctx, licenseValues...)...)
 	}
 
 	licenseSet := pkg.NewLicenseSet()
@@ -318,7 +318,7 @@ func getLicenseSetFromValues(locations []file.Location, licenseValues ...string)
 			continue
 		}
 
-		licenseSet.Add(pkg.NewLicenseFromLocations(value, locations...))
+		licenseSet.Add(pkg.NewLicenseFromLocations(ctx, value, locations...))
 	}
 	return licenseSet
 }

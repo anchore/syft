@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -8,12 +9,12 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newComposerLockPackage(pd parsedLockData, indexLocation file.Location) pkg.Package {
+func newComposerLockPackage(ctx context.Context, pd parsedLockData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, indexLocation, pd.License...)...),
 		PURL:      packageURLFromComposer(pd.Name, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpComposerPkg,
@@ -24,12 +25,12 @@ func newComposerLockPackage(pd parsedLockData, indexLocation file.Location) pkg.
 	return p
 }
 
-func newComposerInstalledPackage(pd parsedInstalledData, indexLocation file.Location) pkg.Package {
+func newComposerInstalledPackage(ctx context.Context, pd parsedInstalledData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, indexLocation, pd.License...)...),
 		PURL:      packageURLFromComposer(pd.Name, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpComposerPkg,
@@ -40,12 +41,12 @@ func newComposerInstalledPackage(pd parsedInstalledData, indexLocation file.Loca
 	return p
 }
 
-func newPearPackage(pd peclPearData, indexLocation file.Location) pkg.Package {
+func newPearPackage(ctx context.Context, pd peclPearData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, indexLocation, pd.License...)...),
 		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpPearPkg,
@@ -56,12 +57,12 @@ func newPearPackage(pd peclPearData, indexLocation file.Location) pkg.Package {
 	return p
 }
 
-func newPeclPackage(pd peclPearData, indexLocation file.Location) pkg.Package {
+func newPeclPackage(ctx context.Context, pd peclPearData, indexLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      pd.Name,
 		Version:   pd.Version,
 		Locations: file.NewLocationSet(indexLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(indexLocation, pd.License...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(ctx, indexLocation, pd.License...)...),
 		PURL:      packageURLFromPear(pd.Name, pd.Channel, pd.Version),
 		Language:  pkg.PHP,
 		Type:      pkg.PhpPeclPkg,

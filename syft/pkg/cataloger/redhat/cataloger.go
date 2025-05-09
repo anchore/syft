@@ -4,6 +4,7 @@ Package redhat provides a concrete DBCataloger implementation relating to packag
 package redhat
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/anchore/syft/internal/log"
@@ -26,7 +27,7 @@ func NewDBCataloger() pkg.Cataloger {
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier), denySelfReferences)
 }
 
-func denySelfReferences(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+func denySelfReferences(ctx context.Context, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	// it can be common for dependency evidence to be self-referential (e.g. bash depends on bash), which is not useful
 	// for the dependency graph, thus we remove these cases
 	for i := 0; i < len(rels); i++ {

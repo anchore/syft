@@ -16,7 +16,7 @@ import (
 )
 
 // Processor is a function that can filter or augment existing packages and relationships based on existing material.
-type Processor func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
+type Processor func(context.Context, []pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
 
 // ResolvingProcessor is a Processor with the additional behavior of being able to reference additional material from a file resolver.
 type ResolvingProcessor func(context.Context, file.Resolver, []pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error)
@@ -36,8 +36,8 @@ type processorWrapper struct {
 	Processor
 }
 
-func (p processorWrapper) process(_ context.Context, _ file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	return p.Processor(pkgs, rels, err)
+func (p processorWrapper) process(ctx context.Context, _ file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	return p.Processor(ctx, pkgs, rels, err)
 }
 
 type resolvingProcessorWrapper struct {

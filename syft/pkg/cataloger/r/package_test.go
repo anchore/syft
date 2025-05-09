@@ -20,7 +20,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "MIT",
 			},
 			[]pkg.License{
-				pkg.NewLicense("MIT"),
+				pkg.NewLicense(ctx, "MIT"),
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "LGPL (== 2.0)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("LGPL2.0"),
+				pkg.NewLicense(ctx, "LGPL2.0"),
 			},
 		},
 		{
@@ -42,7 +42,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "LGPL (>= 2.0, < 3)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("LGPL2.0+"),
+				pkg.NewLicense(ctx, "LGPL2.0+"),
 			},
 		},
 		{
@@ -53,7 +53,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "GPL-2 + file LICENSE",
 			},
 			[]pkg.License{
-				pkg.NewLicense("GPL-2"),
+				pkg.NewLicense(ctx, "GPL-2"),
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "Mozilla Public License",
 			},
 			[]pkg.License{
-				pkg.NewLicense("Mozilla Public License"),
+				pkg.NewLicense(ctx, "Mozilla Public License"),
 			},
 		},
 		{
@@ -75,8 +75,8 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "GPL-2 | file LICENSE | LGPL (>= 2.0)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("GPL-2"),
-				pkg.NewLicense("LGPL2.0+"),
+				pkg.NewLicense(ctx, "GPL-2"),
+				pkg.NewLicense(ctx, "LGPL2.0+"),
 			},
 		},
 	}

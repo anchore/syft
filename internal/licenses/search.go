@@ -60,7 +60,7 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 	// If the scanner threshold for matching scores < 75% then we return the license full content
 	if len(ids) > 0 {
 		for _, id := range ids {
-			lic := pkg.NewLicenseFromLocations(id, reader.Location)
+			lic := pkg.NewLicenseFromLocations(ctx, id, reader.Location)
 			lic.Type = license.Concluded
 
 			licenses = append(licenses, lic)
@@ -71,7 +71,7 @@ func (s *scanner) PkgSearch(ctx context.Context, reader file.LocationReadCloser)
 		// 2. \r   => \n   (Macintosh => UNIX)
 		content = []byte(strings.ReplaceAll(strings.ReplaceAll(string(content), "\r\n", "\n"), "\r", "\n"))
 
-		lic := pkg.NewLicenseFromLocations(unknownLicenseType, reader.Location)
+		lic := pkg.NewLicenseFromLocations(ctx, unknownLicenseType, reader.Location)
 		lic.SPDXExpression = UnknownLicensePrefix + getCustomLicenseContentHash(content)
 		if s.includeLicenseContent {
 			lic.Contents = string(content)

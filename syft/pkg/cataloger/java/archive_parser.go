@@ -280,7 +280,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
-	lics := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	lics := pkg.NewLicensesFromLocation(ctx, j.location, selectLicenses(manifest)...)
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1
@@ -351,10 +351,10 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 		}
 	}
 
-	return toPkgLicenses(&j.location, pomLicenses)
+	return toPkgLicenses(ctx, &j.location, pomLicenses)
 }
 
-func toPkgLicenses(location *file.Location, licenses []maven.License) []pkg.License {
+func toPkgLicenses(ctx context.Context, location *file.Location, licenses []maven.License) []pkg.License {
 	var out []pkg.License
 	for _, license := range licenses {
 		name := ""
@@ -368,7 +368,7 @@ func toPkgLicenses(location *file.Location, licenses []maven.License) []pkg.Lice
 		if name == "" && url == "" {
 			continue
 		}
-		out = append(out, pkg.NewLicenseFromFields(name, url, location))
+		out = append(out, pkg.NewLicenseFromFields(ctx, name, url, location))
 	}
 	return out
 }
@@ -692,7 +692,7 @@ func newPackageFromMavenData(ctx context.Context, r *maven.Resolver, pomProperti
 		log.WithFields("error", err, "mavenID", maven.NewID(pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)).Trace("error attempting to resolve licenses")
 	}
 
-	licenseSet := pkg.NewLicenseSet(toPkgLicenses(&location, pomLicenses)...)
+	licenseSet := pkg.NewLicenseSet(toPkgLicenses(ctx, &location, pomLicenses)...)
 
 	p := pkg.Package{
 		Name:    pomProperties.ArtifactID,

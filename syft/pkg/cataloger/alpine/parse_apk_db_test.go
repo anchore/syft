@@ -86,9 +86,9 @@ func TestSinglePackageDetails(t *testing.T) {
 				Name:    "musl-utils",
 				Version: "1.1.24-r2",
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT"),
-					pkg.NewLicense("BSD"),
-					pkg.NewLicense("GPL2+"),
+					pkg.NewLicense(ctx, "MIT"),
+					pkg.NewLicense(ctx, "BSD"),
+					pkg.NewLicense(ctx, "GPL2+"),
 				),
 				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkDBEntry{
@@ -175,7 +175,7 @@ func TestSinglePackageDetails(t *testing.T) {
 				Name:    "alpine-baselayout-data",
 				Version: "3.4.0-r0",
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("GPL-2.0-only"),
+					pkg.NewLicense(ctx, "GPL-2.0-only"),
 				),
 				Type: pkg.ApkPkg,
 				Metadata: pkg.ApkDBEntry{
@@ -219,7 +219,7 @@ func TestSinglePackageDetails(t *testing.T) {
 				Name:    "alpine-baselayout",
 				Version: "3.2.0-r6",
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("GPL-2.0-only"),
+					pkg.NewLicense(ctx, "GPL-2.0-only"),
 				),
 				Type: pkg.ApkPkg,
 				PURL: "",
