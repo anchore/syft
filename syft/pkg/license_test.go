@@ -29,10 +29,28 @@ func TestLicenseBuilder_Build(t *testing.T) {
 		expectedLocations       []file.Location
 	}{
 		{
+			name:                    "empty builder should return empty list",
+			expectedValues:          []string{},
+			expectedSPDXExpressions: []string{},
+			expectedLocations:       []file.Location{},
+		},
+		{
 			name:                    "single: spdx value returns a license with SPDXExpression populated",
 			values:                  []string{"mit"},
 			expectedValues:          []string{"mit"},
 			expectedSPDXExpressions: []string{"MIT"},
+		},
+		{
+			name: "single: candidate with metadata location correctly adds location",
+			candidates: []Candidate{
+				{
+					Value:    "mit",
+					Location: file.NewLocation("/SomeMetadata"),
+				},
+			},
+			expectedValues:          []string{"mit"},
+			expectedSPDXExpressions: []string{"MIT"},
+			expectedLocations:       []file.Location{file.NewLocation("/SomeMetadata")},
 		},
 		{
 			name:                    "single: value that could be a full license text is converted to content, checked against a scanner, sha256ed, and returned as value",

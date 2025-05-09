@@ -112,7 +112,8 @@ func (l Licenses) Swap(i, j int) {
 
 type Candidate struct {
 	Value    string
-	Contents file.LocationReadCloser
+	Contents file.LocationReadCloser // this is for cases where we know we have license content and want to do analysis
+	Location file.Location           // this is for cases where we just want the metadata file location
 }
 
 type LicenseBuilder struct {
@@ -163,7 +164,7 @@ func (b *LicenseBuilder) WithType(t license.Type) *LicenseBuilder {
 func (b *LicenseBuilder) Build(ctx context.Context) []License {
 	output := make([]License, 0)
 	if len(b.candidates) == 0 && len(b.contents) == 0 {
-		return nil // we have no inputs that could make any licenses
+		return output // we have no inputs that could make any licenses; return empty list
 	}
 
 	// let's go through our candidates and make sure non of them are full license texts!
@@ -211,8 +212,15 @@ func (b *LicenseBuilder) buildFromCandidate(c Candidate) []License {
 		Type:     b.tp,
 	}
 
+	// we'll never have both c.Contents and c.Location
+	// these fields should always be mutually exclusive
+	// contents is for the scanner, location is for where we read the metadata
 	if c.Contents.Location.Path() != "" {
 		output.Locations = file.NewLocationSet(c.Contents.Location)
+	}
+
+	if c.Location.Path() != "" {
+		output.Locations = file.NewLocationSet(c.Location)
 	}
 
 	if ex, err := license.ParseExpression(c.Value); err == nil {
