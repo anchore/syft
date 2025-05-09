@@ -1,6 +1,7 @@
 package redhat
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -15,7 +16,7 @@ import (
 )
 
 func Test_DBCataloger(t *testing.T) {
-
+	ctx := context.TODO()
 	dbLocation := file.NewLocation("/var/lib/rpm/rpmdb.sqlite")
 	locations := file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
@@ -24,7 +25,7 @@ func Test_DBCataloger(t *testing.T) {
 		Version:   "11-13.el9",
 		Type:      pkg.RpmPkg,
 		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext("Public Domain", dbLocation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "Public Domain", dbLocation)),
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/basesystem@11-13.el9?arch=noarch&upstream=basesystem-11-13.el9.src.rpm",
 		Metadata: pkg.RpmDBEntry{
@@ -54,7 +55,7 @@ func Test_DBCataloger(t *testing.T) {
 		Version:   "5.1.8-6.el9_1",
 		Type:      pkg.RpmPkg,
 		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext("GPLv3+", dbLocation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "GPLv3+", dbLocation)),
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/bash@5.1.8-6.el9_1?arch=x86_64&upstream=bash-5.1.8-6.el9_1.src.rpm",
 		Metadata: pkg.RpmDBEntry{
@@ -106,7 +107,7 @@ func Test_DBCataloger(t *testing.T) {
 		Version:   "3.16-2.el9",
 		Type:      pkg.RpmPkg,
 		Locations: locations,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext("Public Domain", dbLocation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "Public Domain", dbLocation)),
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/filesystem@3.16-2.el9?arch=x86_64&upstream=filesystem-3.16-2.el9.src.rpm",
 		Metadata: pkg.RpmDBEntry{
@@ -246,7 +247,7 @@ func Test_RPMFileCataloger_Globs(t *testing.T) {
 }
 
 func Test_denySelfReferences(t *testing.T) {
-
+	ctx := context.TODO()
 	a := pkg.Package{
 		Name: "a",
 	}
@@ -326,7 +327,7 @@ func Test_denySelfReferences(t *testing.T) {
 				tt.wantErr = assert.NoError
 			}
 
-			gotPkgs, gotRels, err := denySelfReferences(tt.pkgs, tt.rels, tt.err)
+			gotPkgs, gotRels, err := denySelfReferences(ctx, tt.pkgs, tt.rels, tt.err)
 
 			tt.wantErr(t, err)
 			assert.Len(t, gotPkgs, tt.wantPkgs)

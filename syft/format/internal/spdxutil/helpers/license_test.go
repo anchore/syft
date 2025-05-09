@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 )
 
 func Test_License(t *testing.T) {
+	ctx := context.TODO()
 	type expected struct {
 		concluded string
 		declared  string
@@ -31,7 +33,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext("made-up")),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "made-up")),
 			},
 			expected: expected{
 				concluded: "NOASSERTION",
@@ -41,7 +43,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext("MIT")),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MIT")),
 			},
 			expected: struct {
 				concluded string
@@ -55,8 +57,8 @@ func Test_License(t *testing.T) {
 			name: "with SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("MIT"),
-					pkg.NewLicenseWithContext("GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT"),
+					pkg.NewLicenseWithContext(ctx, "GPL-3.0-only"),
 				),
 			},
 			expected: expected{
@@ -69,9 +71,9 @@ func Test_License(t *testing.T) {
 			name: "includes valid LicenseRef-",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("one thing first"),
-					pkg.NewLicenseWithContext("two things/#$^second"),
-					pkg.NewLicenseWithContext("MIT"),
+					pkg.NewLicenseWithContext(ctx, "one thing first"),
+					pkg.NewLicenseWithContext(ctx, "two things/#$^second"),
+					pkg.NewLicenseWithContext(ctx, "MIT"),
 				),
 			},
 			expected: expected{
@@ -84,9 +86,9 @@ func Test_License(t *testing.T) {
 			name: "join parentheses correctly",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("one thing first"),
-					pkg.NewLicenseWithContext("MIT AND GPL-3.0-only"),
-					pkg.NewLicenseWithContext("MIT OR APACHE-2.0"),
+					pkg.NewLicenseWithContext(ctx, "one thing first"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT OR APACHE-2.0"),
 				),
 			},
 			expected: expected{

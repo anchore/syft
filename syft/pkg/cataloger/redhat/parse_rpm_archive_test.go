@@ -1,6 +1,7 @@
 package redhat
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -9,6 +10,7 @@ import (
 )
 
 func TestParseRpmFiles(t *testing.T) {
+	ctx := context.TODO()
 	abcRpmLocation := file.NewLocation("abc-1.01-9.hg20160905.el7.x86_64.rpm")
 	zorkRpmLocation := file.NewLocation("zork-1.0.3-1.el7.x86_64.rpm")
 	tests := []struct {
@@ -26,7 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:   "rpm-archive-cataloger",
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("MIT", abcRpmLocation),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", abcRpmLocation),
 					),
 					Metadata: pkg.RpmArchive{
 						Name:      "abc",
@@ -54,7 +56,7 @@ func TestParseRpmFiles(t *testing.T) {
 					FoundBy:   "rpm-archive-cataloger",
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("Public Domain", zorkRpmLocation),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Public Domain", zorkRpmLocation),
 					),
 					Metadata: pkg.RpmArchive{
 						Name:      "zork",

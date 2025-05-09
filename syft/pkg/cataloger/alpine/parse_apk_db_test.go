@@ -76,6 +76,7 @@ func TestExtraFileAttributes(t *testing.T) {
 }
 
 func TestSinglePackageDetails(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		fixture  string
 		expected pkg.Package

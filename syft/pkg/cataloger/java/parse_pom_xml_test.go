@@ -194,6 +194,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 func Test_parsePomXMLProject(t *testing.T) {
 	// TODO: ideally we would have the path to the contained pom.xml, not the jar
 	jarLocation := file.NewLocation("path/to/archive.jar")
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		project  *pkg.JavaPomProject
@@ -270,7 +271,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 
 			licenses, err := r.ResolveLicenses(context.Background(), pom)
 			//assert.NoError(t, err)
-			assert.Equal(t, test.licenses, toPkgLicenses(&jarLocation, licenses))
+			assert.Equal(t, test.licenses, toPkgLicenses(ctx, &jarLocation, licenses))
 		})
 	}
 }

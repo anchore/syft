@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestParsePear(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name                  string
 		fixture               string
@@ -26,7 +28,7 @@ func TestParsePear(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPearPkg,
@@ -49,7 +51,7 @@ func TestParsePear(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPearPkg,
@@ -71,6 +73,7 @@ func TestParsePear(t *testing.T) {
 }
 
 func TestParsePecl(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name                  string
 		fixture               string
@@ -87,7 +90,7 @@ func TestParsePecl(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "PHP License", file.NewLocation("test-fixtures/memcached-v6-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPeclPkg, // important!
@@ -110,7 +113,7 @@ func TestParsePecl(t *testing.T) {
 					PURL:      "pkg:pear/pecl.php.net/memcached@3.2.0",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "PHP License", file.NewLocation("test-fixtures/memcached-v5-format.reg")),
 					),
 					Language: pkg.PHP,
 					Type:     pkg.PhpPeclPkg, // important!

@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -753,6 +754,7 @@ func Test_H1Digest(t *testing.T) {
 }
 
 func Test_OtherLicenses(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name     string
 		pkg      pkg.Package
@@ -769,7 +771,7 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "single licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("foobar"),
+					pkg.NewLicenseWithContext(ctx, "foobar"),
 				),
 			},
 			expected: []*spdx.OtherLicense{
@@ -783,8 +785,8 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("internal made up license name"),
-					pkg.NewLicenseWithContext("new apple license 2.0"),
+					pkg.NewLicenseWithContext(ctx, "internal made up license name"),
+					pkg.NewLicenseWithContext(ctx, "new apple license 2.0"),
 				),
 			},
 			expected: []*spdx.OtherLicense{
@@ -802,7 +804,7 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "LicenseRef as a valid spdx expression",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("LicenseRef-Fedora-Public-Domain"),
+					pkg.NewLicenseWithContext(ctx, "LicenseRef-Fedora-Public-Domain"),
 				),
 			},
 			expected: []*spdx.OtherLicense{
@@ -816,7 +818,7 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseWithContext("(MIT AND LicenseRef-Fedora-Public-Domain)"),
+					pkg.NewLicenseWithContext(ctx, "(MIT AND LicenseRef-Fedora-Public-Domain)"),
 				),
 			},
 			expected: nil,
@@ -902,18 +904,19 @@ func Test_toSPDXID(t *testing.T) {
 }
 
 func Test_otherLicenses(t *testing.T) {
+	ctx := context.TODO()
 	pkg1 := pkg.Package{
 		Name:    "first-pkg",
 		Version: "1.1",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseWithContext("MIT"),
+			pkg.NewLicenseWithContext(ctx, "MIT"),
 		),
 	}
 	pkg2 := pkg.Package{
 		Name:    "second-pkg",
 		Version: "2.2",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseWithContext("non spdx license"),
+			pkg.NewLicenseWithContext(ctx, "non spdx license"),
 		),
 	}
 	bigText := `
@@ -923,7 +926,7 @@ func Test_otherLicenses(t *testing.T) {
 		Name:    "third-pkg",
 		Version: "3.3",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseWithContext(bigText),
+			pkg.NewLicenseWithContext(ctx, bigText),
 		),
 	}
 

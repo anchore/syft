@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestParseInstalledJsonComposerV1(t *testing.T) {
+	ctx := context.TODO()
 	fixtures := []string{
 		"test-fixtures/vendor/composer_1/installed.json",
 		"test-fixtures/vendor/composer_2/installed.json",

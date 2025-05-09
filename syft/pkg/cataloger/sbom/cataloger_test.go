@@ -1,6 +1,7 @@
 package sbom
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ func mustCPEs(s ...string) (c []cpe.CPE) {
 }
 
 func Test_parseSBOM(t *testing.T) {
+	ctx := context.TODO()
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "alpine-baselayout",

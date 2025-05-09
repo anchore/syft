@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"testing"
@@ -13,6 +14,7 @@ import (
 )
 
 func Test_PackageCataloger(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name             string
 		fixture          string
@@ -55,7 +57,7 @@ func Test_PackageCataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						// here we only used the license that was declared in the METADATA file, we did not go searching for other licenses
 						// this is the better source of truth when there is no explicit LicenseFile given
-						pkg.NewLicenseFromLocationsWithContext("BSD License", file.NewLocation("dist-name/dist-info/METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-name/dist-info/METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -94,7 +96,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("egg-name/egg-info/top_level.txt"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("Apache 2.0", file.NewLocation("egg-name/egg-info/PKG-INFO")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("egg-name/egg-info/PKG-INFO")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -138,7 +140,7 @@ func Test_PackageCataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						// here we only used the license that was declared in the METADATA file, we did not go searching for other licenses
 						// this is the better source of truth when there is no explicit LicenseFile given
-						pkg.NewLicenseFromLocationsWithContext("BSD License", file.NewLocation("dist-name/DIST-INFO/METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-name/DIST-INFO/METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -174,7 +176,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("egg-name/EGG-INFO/top_level.txt"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("Apache 2.0", file.NewLocation("egg-name/EGG-INFO/PKG-INFO")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("egg-name/EGG-INFO/PKG-INFO")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -312,7 +314,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("dist-info/RECORD"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("BSD License", file.NewLocation("dist-info/METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-info/METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -349,7 +351,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("METADATA"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("BSD License", file.NewLocation("METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -378,7 +380,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("test.egg-info"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext("Apache 2.0", file.NewLocation("test.egg-info")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("test.egg-info")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{

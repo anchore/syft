@@ -1,12 +1,14 @@
 package r
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_NewPackageLicenses(t *testing.T) {
+	ctx := context.TODO()
 	testCases := []struct {
 		name string
 		pd   parseData
@@ -83,7 +85,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseLicenseData(tt.pd.License)
+			got := parseLicenseData(ctx, tt.pd.License)
 			if len(got) != len(tt.want) {
 				t.Errorf("unexpected number of licenses: got=%d, want=%d", len(got), len(tt.want))
 			}

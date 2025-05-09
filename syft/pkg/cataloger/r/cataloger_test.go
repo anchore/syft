@@ -1,6 +1,7 @@
 package r
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestRPackageCataloger(t *testing.T) {
+	ctx := context.Background()
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "base",

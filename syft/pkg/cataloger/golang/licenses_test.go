@@ -77,6 +77,7 @@ func Test_LicenseSearch(t *testing.T) {
 	}
 	licenseScanner, err := licenses.NewScanner(sc)
 	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenseScanner)
 
 	tests := []struct {
 		name     string
@@ -226,7 +227,7 @@ func Test_LicenseSearch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenseResolver("", test.config)
-			lics := l.getLicenses(context.Background(), licenseScanner, fileresolver.Empty{}, test.name, test.version)
+			lics := l.getLicenses(ctx, fileresolver.Empty{}, test.name, test.version)
 			require.EqualValues(t, test.expected, lics)
 		})
 	}
@@ -301,10 +302,7 @@ func Test_findVersionPath(t *testing.T) {
 
 func Test_walkDirErrors(t *testing.T) {
 	resolver := newGoLicenseResolver("", CatalogerConfig{})
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	_, err = resolver.findLicensesInFS(context.Background(), scanner, "somewhere", badFS{})
+	_, err := resolver.findLicensesInFS(context.Background(), "somewhere", badFS{})
 	require.Error(t, err)
 }
 
@@ -325,6 +323,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
 	licenseScanner, err := licenses.NewScanner(sc)
 	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), licenseScanner)
 	tests := []struct {
 		name    string
 		dir     string
@@ -358,35 +357,8 @@ func Test_noLocalGoModDir(t *testing.T) {
 				SearchLocalModCacheLicenses: true,
 				LocalModCacheDir:            test.dir,
 			})
-			_, err := resolver.getLicensesFromLocal(context.Background(), licenseScanner, "mod", "ver")
+			_, err := resolver.getLicensesFromLocal(ctx, "mod", "ver")
 			test.wantErr(t, err)
 		})
 	}
-}
-
-func TestLicenseConversion(t *testing.T) {
-	inputLicenses := []pkg.License{
-		{
-			Value:          "Apache-2.0",
-			SPDXExpression: "Apache-2.0",
-			Type:           "concluded",
-			URLs:           nil,
-			Locations:      file.NewLocationSet(file.NewLocation("LICENSE")),
-			Contents:       "",
-		},
-		{
-			Value:          "UNKNOWN",
-			SPDXExpression: "UNKNOWN_4d1cffe420916f2b706300ab63fcafaf35226a0ad3725cb9f95b26036cefae32",
-			Type:           "declared",
-			URLs:           nil,
-			Locations:      file.NewLocationSet(file.NewLocation("LICENSE2")),
-			Contents:       "NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement",
-		},
-	}
-
-	goLicenses := toGoLicenses(inputLicenses)
-
-	result := toPkgLicenses(goLicenses)
-
-	require.Equal(t, inputLicenses, result)
 }
