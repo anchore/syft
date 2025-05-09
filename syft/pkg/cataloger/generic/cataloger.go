@@ -171,13 +171,12 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
 
-		var errs error
 		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, lgr, parser, &env)
 		if err != nil {
 			// parsers may return errors and valid packages / relationships
-			errs = unknown.Append(errs, location, err)
+			err = unknown.New(location, err)
 		}
-		return result{discoveredPackages, discoveredRelationships}, errs
+		return result{discoveredPackages, discoveredRelationships}, err
 	}, func(_ request, res result) {
 		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger
