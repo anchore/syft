@@ -492,7 +492,7 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 }
 
 func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
-	var fileLicenses []pkg.License
+	var out []pkg.License
 	for _, filename := range licenses.FileNames() {
 		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
 		if len(licenseMatches) == 0 {
@@ -509,19 +509,15 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 			for _, licenseMatch := range licenseMatches {
 				licenseContents := contents[licenseMatch]
 				r := strings.NewReader(licenseContents)
-				parsed, err := j.licenseScanner.PkgSearch(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
-				if err != nil {
-					return nil, err
-				}
-
-				if len(parsed) > 0 {
-					fileLicenses = append(fileLicenses, parsed...)
+				lics := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+				if len(lics) > 0 {
+					out = append(out, lics...)
 				}
 			}
 		}
 	}
 
-	return fileLicenses, nil
+	return out, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
