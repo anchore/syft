@@ -16,3 +16,5 @@ github.com/sirupsen/logrus
 ## explicit; go 1.13
 # k8s.io/api v0.33.0
 ## explicit; go 1.13
+# github.com/pelletier/go-toml/v2 v2.2.3
+## explicit; go 1.13

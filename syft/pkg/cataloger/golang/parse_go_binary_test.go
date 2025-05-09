@@ -1169,6 +1169,11 @@ func TestTestGoPkgSymbols(t *testing.T) {
 					Info:       0x12,
 					HasVersion: false,
 				},
+				{
+					Name:       "github.com/pelletier/go-toml/v2.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
 			},
 			binaryContent: "",
 			expected: []pkg.Package{
@@ -1233,6 +1238,20 @@ func TestTestGoPkgSymbols(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/pelletier/go-toml/v2",
+					Version:   "v2.2.3",
+					PURL:      "pkg:golang/github.com/pelletier/go-toml@v2.2.3#v2",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
 						MainModule:        "command-line-arguments.test",
 					},
 				},

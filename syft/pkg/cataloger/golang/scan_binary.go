@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"unicode"
@@ -143,8 +144,15 @@ func trimmedAsURL(name string) (urlDir string, urlName string) {
 	}
 	parts := strings.Split(name, "/")
 	var lastIndex int
-	if len(parts) >= 3 {
+	if len(parts) >= 4 {
+		verLikely := strings.Split(parts[3], ".")[0]
+		pattern := `^v\d+`
+		re := regexp.MustCompile(pattern)
+		match := re.MatchString(verLikely)
 		lastIndex = 2
+		if match {
+			lastIndex = 3
+		}
 	} else {
 		lastIndex = len(parts) - 1
 	}
