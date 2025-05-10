@@ -1229,15 +1229,15 @@ func TestTestGoPkgSymbols(t *testing.T) {
 				},
 				{
 					Name:      "github.com/google/go-cmp",
-					Version:   "v0.7.0",
-					PURL:      "pkg:golang/github.com/google/go-cmp@v0.7.0",
+					Version:   "v0.6.0",
+					PURL:      "pkg:golang/github.com/google/go-cmp@v0.6.0",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Locations: locationSet,
 					Metadata: pkg.GolangBinaryBuildinfoEntry{
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
-						H1Digest:          "h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=",
+						H1Digest:          "h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=",
 						MainModule:        "command-line-arguments.test",
 					},
 				},

@@ -10,13 +10,13 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/kastenhq/goversion/version"
-
+	"github.com/Masterminds/semver/v3"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
+	"github.com/kastenhq/goversion/version"
 )
 
 type extendedBuildInfo struct {
@@ -168,26 +168,33 @@ func trimmedAsURL(name string) (urlDir string, urlName string) {
 }
 
 func findVersionInCache(basePath fs.FS, baseName string) (string, error) {
-	var res string
 	entries, err := fs.ReadDir(basePath, ".")
 	if err != nil {
 		return "", fmt.Errorf("error when surfacing dir to find %s", baseName)
 	}
-
+	var winner string
 	for _, entry := range entries {
 		name := entry.Name()
 		if strings.HasPrefix(name, baseName) {
 			parts := strings.Split(name, "@")
 			if len(parts) == 2 {
-				res = strings.Split(parts[1], "/")[0]
-				break
+				newCandidate := strings.Split(parts[1], "/")[0]
+				if len(winner) == 0 {
+					winner = newCandidate
+				} else {
+					v1, _ := semver.NewVersion(newCandidate)
+					v2, _ := semver.NewVersion(winner)
+					if v1.LessThan(v2) {
+						winner = newCandidate
+					}
+				}
 			}
 		}
 	}
-	if res == "" {
+	if len(winner) == 0 {
 		return "", fmt.Errorf("%s doesn't exist in the Go Modules,hence no versioned path found for it", baseName)
 	}
-	return res, err
+	return winner, err
 }
 
 func fetchFileContents(basePath fs.FS, fileName string) (res string, err error) {
