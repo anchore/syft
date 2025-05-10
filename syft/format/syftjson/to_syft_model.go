@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/syftjson/model"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -350,6 +351,8 @@ func toSyftPackage(p model.Package, idAliases map[string]string) pkg.Package {
 		PURL:      p.PURL,
 		Metadata:  p.Metadata,
 	}
+
+	internal.Backfill(&out)
 
 	// always prefer the IDs from the SBOM over derived IDs
 	out.OverrideID(artifact.ID(p.ID))

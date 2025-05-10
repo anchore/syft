@@ -1,12 +1,14 @@
 package helpers
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -84,7 +86,6 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	}
 
 	p := &pkg.Package{
-		Name:      c.Name,
 		Version:   c.Version,
 		Locations: decodeLocations(values),
 		Licenses:  pkg.NewLicenseSet(decodeLicenses(c)...),
@@ -102,11 +103,48 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 		p.Type = pkg.TypeFromPURL(p.PURL)
 	}
 
-	if p.Language == "" {
-		p.Language = pkg.LanguageFromPURL(p.PURL)
-	}
+	setPackageName(p, c)
+
+	internal.Backfill(p)
+	p.SetID()
 
 	return p
+}
+
+func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
+	name := c.Name
+	if c.Group != "" {
+		switch p.Type {
+		case pkg.JavaPkg:
+			if p.Metadata == nil {
+				p.Metadata = pkg.JavaArchive{}
+			}
+			var pomProperties *pkg.JavaPomProperties
+			javaMetadata, ok := p.Metadata.(pkg.JavaArchive)
+			if ok {
+				pomProperties = javaMetadata.PomProperties
+				if pomProperties == nil {
+					pomProperties = &pkg.JavaPomProperties{}
+					javaMetadata.PomProperties = pomProperties
+					p.Metadata = javaMetadata
+				}
+			}
+			if pomProperties != nil {
+				if pomProperties.ArtifactID == "" {
+					pomProperties.ArtifactID = c.Name
+				}
+				if pomProperties.GroupID == "" {
+					pomProperties.GroupID = c.Group
+				}
+				if pomProperties.Version == "" {
+					pomProperties.Version = p.Version
+				}
+			}
+		default:
+			name = fmt.Sprintf("%s/%s", c.Group, name)
+		}
+	}
+	p.Name = name
 }
 
 func decodeLocations(vals map[string]string) file.LocationSet {

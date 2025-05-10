@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
@@ -508,6 +509,8 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Language: info.lang,
 		Metadata: extractMetadata(p, info),
 	}
+
+	internal.Backfill(sP)
 
 	if p.PackageSPDXIdentifier != "" {
 		// always prefer the IDs from the SBOM over derived IDs
