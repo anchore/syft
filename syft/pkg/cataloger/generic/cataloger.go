@@ -154,7 +154,6 @@ func (c *Cataloger) Name() string {
 func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
-	var errs error
 
 	lgr := log.Nested("cataloger", c.upstreamCataloger)
 
@@ -167,7 +166,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		pkgs []pkg.Package
 		rels []artifact.Relationship
 	}
-	errs = sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(req request) (result, error) {
+	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(c.selectFiles(resolver)), func(req request) (result, error) {
 		location, parser := req.Location, req.Parser
 
 		log.WithFields("path", location.RealPath).Trace("parsing file contents")
@@ -175,9 +174,9 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 		discoveredPackages, discoveredRelationships, err := invokeParser(ctx, resolver, location, lgr, parser, &env)
 		if err != nil {
 			// parsers may return errors and valid packages / relationships
-			errs = unknown.Append(errs, location, err)
+			err = unknown.New(location, err)
 		}
-		return result{discoveredPackages, discoveredRelationships}, errs
+		return result{discoveredPackages, discoveredRelationships}, err
 	}, func(_ request, res result) {
 		for _, p := range res.pkgs {
 			p.FoundBy = c.upstreamCataloger

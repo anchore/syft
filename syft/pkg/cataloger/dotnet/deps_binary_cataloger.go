@@ -149,7 +149,12 @@ func isRuntimePackageLocation(loc file.Location) (string, bool) {
 func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDepsJSON, []logicalPE, []logicalDepsJSON) {
 	// sort deps.json paths from longest to shortest. This is so we are processing the most specific match first.
 	sort.Slice(depJsons, func(i, j int) bool {
-		return len(depJsons[i].Location.RealPath) > len(depJsons[j].Location.RealPath)
+		return depJsons[i].Location.RealPath > depJsons[j].Location.RealPath
+	})
+
+	// we should be processing PE files in a stable order
+	sort.Slice(peFiles, func(i, j int) bool {
+		return peFiles[i].Location.RealPath > peFiles[j].Location.RealPath
 	})
 
 	peFilesByPath := make(map[file.Coordinates][]logicalPE)
@@ -321,8 +326,7 @@ func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg
 		if lp.Targets == nil {
 			continue
 		}
-		for depName, depVersion := range lp.Targets.Dependencies {
-			depNameVersion := createNameAndVersion(depName, depVersion)
+		for _, depNameVersion := range lp.dependencyNameVersions() {
 			thisPkg, ok := pkgMap[lp.NameVersion]
 			if !ok {
 				continue
@@ -371,8 +375,7 @@ func findNearestDependencyPackages(skippedDep logicalDepsJSONPackage, pkgMap map
 
 	processed.Add(skippedDep.NameVersion)
 
-	for depName, depVersion := range skippedDep.Targets.Dependencies {
-		depNameVersion := createNameAndVersion(depName, depVersion)
+	for _, depNameVersion := range skippedDep.dependencyNameVersions() {
 		depPkg, ok := pkgMap[depNameVersion]
 		if !ok {
 			skippedDepPkg, ok := skipped[depNameVersion]

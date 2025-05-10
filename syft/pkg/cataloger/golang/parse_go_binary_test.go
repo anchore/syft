@@ -152,8 +152,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Name:     "github.com/anchore/syft",
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Version:  "(devel)",
-		PURL:     "pkg:golang/github.com/anchore/syft@%28devel%29",
+		Version:  "", // this was (devel) but we cleared it explicitly
+		PURL:     "pkg:golang/github.com/anchore/syft",
 		Locations: file.NewLocationSet(
 			file.NewLocationFromCoordinates(
 				file.Coordinates{
@@ -178,6 +178,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		name          string
 		mod           *extendedBuildInfo
 		expected      []pkg.Package
+		cfg           *CatalogerConfig
 		binaryContent string
 	}{
 		{
@@ -282,8 +283,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/a/b/c",
-					Version:  "(devel)",
-					PURL:     "pkg:golang/github.com/a/b@%28devel%29#c",
+					Version:  "", // this was (devel) but we cleared it explicitly
+					PURL:     "pkg:golang/github.com/a/b#c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -854,6 +855,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "parse main mod and replace devel with pattern from binary contents",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				// off by default
+				assert.False(t, c.MainModuleVersion.FromContents)
+				// override to true for this test
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
 			mod: &extendedBuildInfo{
 				BuildInfo: &debug.BuildInfo{
 					GoVersion: goCompiledVersion,
@@ -934,8 +943,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				Name:     "github.com/anchore/syft",
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
-				Version:  "(devel)",
-				PURL:     "pkg:golang/github.com/anchore/syft@%28devel%29",
+				Version:  "", // this was (devel) but we cleared it explicitly
+				PURL:     "pkg:golang/github.com/anchore/syft",
 				Locations: file.NewLocationSet(
 					file.NewLocationFromCoordinates(
 						file.Coordinates{
@@ -1057,7 +1066,12 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			)
 
-			c := newGoBinaryCataloger(DefaultCatalogerConfig())
+			if test.cfg == nil {
+				c := DefaultCatalogerConfig()
+				test.cfg = &c
+			}
+
+			c := newGoBinaryCataloger(*test.cfg)
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
 			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
