@@ -18,3 +18,5 @@ github.com/sirupsen/logrus
 ## explicit; go 1.13
 # github.com/pelletier/go-toml/v2 v2.2.3
 ## explicit; go 1.13
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
+## explicit; go 1.13

@@ -1188,6 +1188,11 @@ func TestTestGoPkgSymbols(t *testing.T) {
 					Info:       0x12,
 					HasVersion: false,
 				},
+				{
+					Name:       "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
 			},
 			binaryContent: "",
 			expected: []pkg.Package{
@@ -1280,6 +1285,20 @@ func TestTestGoPkgSymbols(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+					Version:   "v0.54.0",
+					PURL:      "pkg:golang/go.opentelemetry.io/contrib/instrumentation@v0.54.0#net/http/otelhttp",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:TT4fX+nBOA/+LUkobKGW1ydGcn+G3vRw9+g5HwCphpk=",
 						MainModule:        "command-line-arguments.test",
 					},
 				},

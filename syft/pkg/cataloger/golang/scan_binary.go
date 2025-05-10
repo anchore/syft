@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"regexp"
 	"runtime/debug"
 	"strings"
 
@@ -138,24 +137,53 @@ func getCachedChecksum(pkgDir fs.FS, name string, version string) (content strin
 	return res, err
 }
 
-func trimmedAsURL(name string) (urlDir string, urlName string) {
+func trimmedAsURL(goPath fs.FS, name string) (urlDir string, urlName string) {
 	if strings.HasPrefix(name, "vendor") {
 		return
 	}
 	parts := strings.Split(name, "/")
+
 	var lastIndex int
-	if len(parts) >= 4 {
-		verLikely := strings.Split(parts[3], ".")[0]
-		pattern := `^v\d+`
-		re := regexp.MustCompile(pattern)
-		match := re.MatchString(verLikely)
-		lastIndex = 2
-		if match {
-			lastIndex = 3
+	for i, part := range parts {
+		var err error
+		newPart := processCaps(part)
+		if !strings.EqualFold(newPart, part) {
+			newPart = fmt.Sprintf("'%s'", newPart)
 		}
-	} else {
-		lastIndex = len(parts) - 1
+		_, err = goPath.Open(newPart)
+		if err != nil {
+			lastIndex = i
+			break
+		}
+		goPath, _ = fs.Sub(goPath, newPart)
 	}
+
+	versionWithFunc := parts[lastIndex]
+	if idx := strings.Index(versionWithFunc, "."); idx != -1 {
+		parts[lastIndex] = versionWithFunc[:idx]
+	}
+	if lastIndex != 0 {
+		urlDir = strings.Join(parts[:lastIndex], "/")
+	}
+	urlName = parts[lastIndex]
+	return
+}
+
+func trimmedAsURL2(lines map[string]string, name string) (urlDir string, urlName string) {
+	if strings.HasPrefix(name, "vendor") {
+		return
+	}
+	parts := strings.Split(name, "/")
+
+	var lastIndex int
+	for pkgName := range lines {
+		if strings.HasPrefix(name, pkgName) {
+			lineParts := strings.Split(pkgName, "/")
+			lastIndex = len(lineParts) - 1
+			break
+		}
+	}
+
 	versionWithFunc := parts[lastIndex]
 	if idx := strings.Index(versionWithFunc, "."); idx != -1 {
 		parts[lastIndex] = versionWithFunc[:idx]
@@ -256,7 +284,7 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 		if sym.Info != 0x12 {
 			continue
 		}
-		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
+		urlDir, nameWithoutVersion := trimmedAsURL(goPath, sym.Name)
 		urlDirInPath := uncapitalize(urlDir)
 		nameInPath := uncapitalize(nameWithoutVersion)
 		// the sym is not a mark of third-party function
@@ -318,7 +346,7 @@ func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.
 		if sym.Info != 0x12 {
 			continue
 		}
-		urlDir, nameWithoutVersion := trimmedAsURL(sym.Name)
+		urlDir, nameWithoutVersion := trimmedAsURL2(lines, sym.Name)
 		// the sym is not a mark of third-party function
 		if len(urlDir) == 0 {
 			continue
