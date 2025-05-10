@@ -21,6 +21,9 @@ const (
 
 	// DescribedByRelationship is a proxy for the SPDX 2.2.2 DESCRIBED_BY relationship.
 	DescribedByRelationship RelationshipType = "described-by"
+
+	// TestDependencyOfRelationship is a proxy for the SPDX 2.2 TEST_DEPENDENCY_OF relationship.
+	TestDependencyOfRelationship RelationshipType = "test-dependency-of"
 )
 
 func AllRelationshipTypes() []RelationshipType {
