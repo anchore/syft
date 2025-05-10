@@ -81,7 +81,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
 		var mainPkg *pkg.Package
-		if btyp == devBinaryType {
+		if btyp == releaseBinaryType {
 			mainPkg, depPkgs = c.buildGoPkgInfo(ctx, licenseScanner, resolver, reader.Location, mod, mod.arch, unionReader)
 			if mainPkg != nil {
 				rels = createModuleRelationships(*mainPkg, depPkgs)

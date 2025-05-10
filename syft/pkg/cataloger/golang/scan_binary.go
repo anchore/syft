@@ -9,14 +9,14 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
-	"unicode"
+
+	"github.com/kastenhq/goversion/version"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
-	"github.com/kastenhq/goversion/version"
 )
 
 type extendedBuildInfo struct {
@@ -27,8 +27,8 @@ type extendedBuildInfo struct {
 }
 
 const (
-	devBinaryType  binaryType = "dev"
-	testBinaryType binaryType = "test"
+	releaseBinaryType binaryType = "release"
+	testBinaryType    binaryType = "test"
 )
 
 type binaryType string
@@ -40,11 +40,11 @@ func (c *goBinaryCataloger) scanFile(location file.Location, reader unionreader.
 	readers, errs := unionreader.GetReaders(reader)
 	if errs != nil {
 		log.WithFields("error", errs).Debug("failed to open a golang binary")
-		return nil, devBinaryType, fmt.Errorf("failed to open a golang binary: %w", errs)
+		return nil, releaseBinaryType, fmt.Errorf("failed to open a golang binary: %w", errs)
 	}
 
 	var builds []*extendedBuildInfo
-	btyp := devBinaryType
+	btyp := releaseBinaryType
 	for _, r := range readers {
 		bi, err := getBuildInfo(r)
 		if err != nil {
@@ -291,21 +291,9 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 func uncapitalize(name string) (newName string) {
 	parts := strings.Split(name, "/")
 	for i, part := range parts {
-		var hasUpper bool
-		var sb strings.Builder
-		for _, r := range part {
-			if unicode.IsUpper(r) {
-				hasUpper = true
-				sb.WriteRune('!')
-				sb.WriteRune(unicode.ToLower(r))
-			} else {
-				sb.WriteRune(r)
-			}
-		}
-
-		parts[i] = sb.String()
-		if hasUpper {
-			parts[i] = fmt.Sprintf("'%s'", parts[i])
+		newPart := processCaps(part)
+		if !strings.EqualFold(newPart, part) {
+			parts[i] = fmt.Sprintf("'%s'", newPart)
 		}
 	}
 	newName = strings.Join(parts, "/")
@@ -332,16 +320,16 @@ func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.
 		if _, exists := uniqueModules[modPair]; exists {
 			continue
 		}
-		var Version string
+		var version string
 		if _, exists := lines[modPair]; exists {
-			Version = lines[modPair]
+			version = lines[modPair]
 		} else { // there's no corresponding entry in vendor/modules.txt
 			continue
 		}
 		// h1-digest/checksum is unavailable in the vendor/
 		uniqueModules[modPair] = &debug.Module{
 			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
-			Version: Version,
+			Version: version,
 			Sum:     "",
 			Replace: nil,
 		}
