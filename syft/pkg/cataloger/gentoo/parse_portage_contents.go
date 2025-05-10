@@ -27,14 +27,14 @@ var (
 
 // parses individual CONTENTS files from the portage flat-file store (e.g. /var/db/pkg/*/*/CONTENTS).
 func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	cpvMatch := cpvRe.FindStringSubmatch(reader.Location.RealPath)
+	cpvMatch := cpvRe.FindStringSubmatch(reader.RealPath)
 	if cpvMatch == nil {
-		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.Location.RealPath)
+		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.RealPath)
 	}
 
 	name, version := cpvMatch[1], cpvMatch[2]
 	if name == "" || version == "" {
-		log.WithFields("path", reader.Location.RealPath).Debug("failed to parse portage name and version")
+		log.WithFields("path", reader.RealPath).Debug("failed to parse portage name and version")
 		return nil, nil, fmt.Errorf("failed to parse portage name and version")
 	}
 
@@ -43,7 +43,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 		Version: version,
 		PURL:    packageURL(name, version),
 		Locations: file.NewLocationSet(
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Type: pkg.PortagePkg,
 		Metadata: pkg.PortageEntry{

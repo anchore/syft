@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/Masterminds/semver"
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/internal/log"
@@ -102,7 +101,7 @@ func parsePubspecLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 			newPubspecLockPackage(
 				name,
 				pubPkg,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}
@@ -136,6 +135,13 @@ func (psl *pubspecLock) getSdkVersion(sdk string) (string, error) {
 	return parseMinimumSdkVersion(constraint)
 }
 
+// semverRegex is a regex pattern that allows for both two-part (major.minor) and three-part (major.minor.patch) versions.
+// additionally allows for:
+//  1. start with either "^" or ">=" (Dart SDK constraints only use those two)
+//  2. followed by a valid semantic version (which may be two or three components)
+//  3. followed by a space (if there's a range) or end of string
+var semverRegex = regexp.MustCompile(`^(\^|>=)(?P<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*))?(?:-[0-9A-Za-z\-\.]+)?(?:\+[0-9A-Za-z\-\.]+)?)( |$)`)
+
 // Parse a given version range constraint and return its lowest supported version.
 //
 // This is intended for packages that are part of an SDK (e.g. Flutter) and don't
@@ -153,21 +159,14 @@ func (psl *pubspecLock) getSdkVersion(sdk string) (string, error) {
 // see https://dart.dev/tools/pub/dependencies#version-constraints for the
 // constraint format used in Dart SDK defintions.
 func parseMinimumSdkVersion(constraint string) (string, error) {
-	// Match strings that
-	//  1. start with either "^" or ">=" (Dart SDK constraints only use those two)
-	//  2. followed by a valid semantic version, matched as "version" named subexpression
-	//  3. followed by a space (if there's a range) or end of string (if there's only a lower boundary)
-	//                        |---1--||------------------2------------------||-3-|
-	re := regexp.MustCompile(`^(\^|>=)(?P<version>` + semver.SemVerRegex + `)( |$)`)
-
-	if !re.MatchString(constraint) {
+	if !semverRegex.MatchString(constraint) {
 		return "", fmt.Errorf("unsupported or invalid constraint '%s'", constraint)
 	}
 
-	// Read "version" subexpression (see 2. above) into version variable
+	// Read "version" subexpression into version variable
 	var version []byte
-	matchIndex := re.FindStringSubmatchIndex(constraint)
-	version = re.ExpandString(version, "$version", constraint, matchIndex)
+	matchIndex := semverRegex.FindStringSubmatchIndex(constraint)
+	version = semverRegex.ExpandString(version, "$version", constraint, matchIndex)
 
 	return string(version), nil
 }

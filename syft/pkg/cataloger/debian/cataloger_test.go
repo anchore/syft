@@ -288,7 +288,6 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 		})
 	}
 }
-
 func TestCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -305,6 +304,9 @@ func TestCataloger_Globs(t *testing.T) {
 				"var/lib/dpkg/status.d/pkg-1.0",
 				"usr/lib/opkg/info/pkg-1.0.control",
 				"usr/lib/opkg/status",
+				"usr/lib/dpkg/info/libpam-runtime.conffiles",
+				"usr/lib/dpkg/info/libpam-runtime.md5sums",
+				"usr/share/doc/libpam-runtime/copyright",
 			},
 		},
 	}

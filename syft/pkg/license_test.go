@@ -13,7 +13,6 @@ import (
 )
 
 func Test_Hash(t *testing.T) {
-
 	loc1 := file.NewLocation("place!")
 	loc1.FileSystemID = "fs1"
 	loc2 := file.NewLocation("place!")
@@ -83,6 +82,19 @@ func Test_Sort(t *testing.T) {
 				NewLicense("MIT"),
 				NewLicenseFromLocations("MIT", file.NewLocation("park!")),
 				NewLicenseFromLocations("MIT", file.NewLocation("place!")),
+			},
+		},
+		{
+			name: "multiple licenses with only contents",
+			licenses: []License{
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+			},
+			expected: Licenses{
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
 			},
 		},
 	}
@@ -227,6 +239,33 @@ func TestLicense_Merge(t *testing.T) {
 	}
 }
 
+func TestFullText(t *testing.T) {
+	fullText := `I am a license with full text
+	my authors put new line characters in metadata for labeling a license`
+	tests := []struct {
+		name  string
+		value string
+		want  License
+	}{
+		{
+			name:  "Full Text field is populated with the correct full text",
+			value: fullText,
+			want: License{
+				Value:    "",
+				Type:     license.Declared,
+				Contents: fullText,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewLicense(tt.value)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestLicenseConstructors(t *testing.T) {
 	type input struct {
 		value string
@@ -244,7 +283,6 @@ func TestLicenseConstructors(t *testing.T) {
 				urls: []string{
 					`
 						http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt
-									
 					`},
 			},
 			expected: License{

@@ -1,6 +1,7 @@
 package filesource
 
 import (
+	"context"
 	"crypto"
 	"fmt"
 	"os"
@@ -25,10 +26,11 @@ import (
 var _ source.Source = (*fileSource)(nil)
 
 type Config struct {
-	Path             string
-	Exclude          source.ExcludeConfig
-	DigestAlgorithms []crypto.Hash
-	Alias            source.Alias
+	Path               string
+	Exclude            source.ExcludeConfig
+	DigestAlgorithms   []crypto.Hash
+	Alias              source.Alias
+	SkipExtractArchive bool
 }
 
 type fileSource struct {
@@ -57,7 +59,10 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
-	analysisPath, cleanupFn := fileAnalysisPath(cfg.Path)
+	analysisPath, cleanupFn, err := fileAnalysisPath(cfg.Path, cfg.SkipExtractArchive)
+	if err != nil {
+		return nil, fmt.Errorf("unable to extract file analysis path=%q: %w", cfg.Path, err)
+	}
 
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
@@ -68,7 +73,7 @@ func New(cfg Config) (source.Source, error) {
 
 		defer fh.Close()
 
-		digests, err = intFile.NewDigestsFromFile(fh, cfg.DigestAlgorithms)
+		digests, err = intFile.NewDigestsFromFile(context.TODO(), fh, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
 		}
@@ -205,9 +210,15 @@ func (s *fileSource) Close() error {
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
 // contents have been made available. A cleanup function is provided for any temp files created (if any).
-func fileAnalysisPath(path string) (string, func() error) {
-	var analysisPath = path
+// Users can disable unpacking archives, allowing individual cataloguers to extract them instead (where
+// supported)
+func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() error, error) {
 	var cleanupFn = func() error { return nil }
+	var analysisPath = path
+
+	if skipExtractArchive {
+		return analysisPath, cleanupFn, nil
+	}
 
 	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
 	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
@@ -220,19 +231,16 @@ func fileAnalysisPath(path string) (string, func() error) {
 			// NOTE: this currently does not display any messages if an overwrite happens
 			tar.OverwriteExisting = true
 		}
-		unarchivedPath, tmpCleanup, err := unarchiveToTmp(path, unarchiver)
+
+		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
-			log.Warnf("file could not be unarchived: %+v", err)
-		} else {
-			log.Debugf("source path is an archive")
-			analysisPath = unarchivedPath
+			return "", nil, fmt.Errorf("unable to unarchive source file: %w", err)
 		}
-		if tmpCleanup != nil {
-			cleanupFn = tmpCleanup
-		}
+
+		log.Debugf("source path is an archive")
 	}
 
-	return analysisPath, cleanupFn
+	return analysisPath, cleanupFn, nil
 }
 
 func digestOfFileContents(path string) string {

@@ -145,6 +145,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.PhpPearPkg,
+			},
+			expected: []string{
+				"from PHP Pear manifest",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.DartPubPkg,
 			},
 			expected: []string{

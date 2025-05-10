@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/source"
 )
@@ -48,6 +49,7 @@ type Catalog struct {
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Nix         nixConfig         `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
 
 	// configuration for the source (the subject being analyzed)
@@ -68,12 +70,14 @@ var _ interface {
 } = (*Catalog)(nil)
 
 func DefaultCatalog() Catalog {
+	cfg := syft.DefaultCreateSBOMConfig()
 	return Catalog{
 		Compliance:    defaultComplianceConfig(),
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		Nix:           defaultNixConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -81,7 +85,7 @@ func DefaultCatalog() Catalog {
 		Relationships: defaultRelationshipsConfig(),
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
-		Parallelism:   1,
+		Parallelism:   cfg.Parallelism,
 	}
 }
 
@@ -167,7 +171,10 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Dotnet: dotnet.DefaultCatalogerConfig().
-			WithCertificateValidation(cfg.Dotnet.EnableCertificateValidation),
+			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
+			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
+			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
+			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
@@ -189,6 +196,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
+		Nix: nix.DefaultConfig().
+			WithCaptureOwnedFiles(cfg.Nix.CaptureOwnedFiles),
 		Python: python.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
@@ -222,6 +231,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.Catalogers, "catalogers", "",
 		"enable one or more package catalogers")
 
+	flags.IntVarP(&cfg.Parallelism, "parallelism", "",
+		"number of cataloger workers to run in parallel")
+
 	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
 		if err := pfp.PFlagSet().MarkDeprecated("catalogers", "use: override-default-catalogers and select-catalogers"); err != nil {
 			panic(err)
@@ -250,7 +262,8 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
-	descriptions.Add(&cfg.Parallelism, "number of cataloger workers to run in parallel")
+	descriptions.Add(&cfg.Parallelism, `number of cataloger workers to run in parallel
+by default, when set to 0: this will be based on runtime.NumCPU * 4, if set to less than 0 it will be unbounded`)
 
 	descriptions.Add(&cfg.Enrich, fmt.Sprintf(`Enable data enrichment operations, which can utilize services such as Maven Central and NPM.
 By default all enrichment is disabled, use: all to enable everything.
@@ -265,12 +278,12 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
 	}
 
-	cfg.From = flatten(cfg.From)
+	cfg.From = Flatten(cfg.From)
 
-	cfg.Catalogers = flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)
-	cfg.Enrich = flatten(cfg.Enrich)
+	cfg.Catalogers = Flatten(cfg.Catalogers)
+	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
+	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
+	cfg.Enrich = Flatten(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -288,7 +301,7 @@ func (cfg *Catalog) PostLoad() error {
 	return nil
 }
 
-func flatten(commaSeparatedEntries []string) []string {
+func Flatten(commaSeparatedEntries []string) []string {
 	var out []string
 	for _, v := range commaSeparatedEntries {
 		for _, s := range strings.Split(v, ",") {

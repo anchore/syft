@@ -80,7 +80,7 @@ func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 		newPackage(
 			data,
 			env.LinuxRelease,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			locs...,
 		),
 	}, nil, errs
