@@ -35,12 +35,25 @@ func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
 		return "", ""
 	}
 
-	buf := [4]byte{}
-	bufs := buf[:]
-	_, _ = r.Read(bufs)
-	if string(bufs) == "pkg:" {
-		return ID, version
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			// skip whitespace only lines
+			continue
+		}
+		if strings.HasPrefix(line, "pkg:") {
+			_, err := packageurl.FromString(line)
+			if err != nil {
+				log.WithFields("error", err, "line", line).Debug("unable to parse purl")
+				continue
+			}
+			return ID, version
+		}
+		// not a purl, so we can't identify the format as a list of purls
+		return "", ""
 	}
+
 	return "", ""
 }
 

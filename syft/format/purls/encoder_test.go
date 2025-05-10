@@ -18,14 +18,21 @@ func Test_Encoder(t *testing.T) {
 			Version:  "1.5.1",
 			Type:     pkg.NpmPkg,
 			Language: pkg.JavaScript,
-			PURL:     "pkg:npm/npmtest@1.0.0",
+			PURL:     "pkg:npm/npmtest@1.5.1",
 		},
 		{
-			Name:     "npmtest",
+			Name:     "npmtest2",
 			Version:  "1.5.1",
 			Type:     pkg.NpmPkg,
 			Language: pkg.JavaScript,
-			PURL:     "pkg:npm/npmtest@1.0.0", // duplicate should not be included
+			PURL:     "pkg:npm/npmtest@1.5.1", // duplicate should not be included
+		},
+		{
+			Name:     "npmtest",
+			Version:  "3.1.1",
+			Type:     pkg.NpmPkg,
+			Language: pkg.JavaScript,
+			PURL:     "http://npm/npmtest@3.1.1", // invalid PURL should not be included
 		},
 		{
 			Name:     "javatest",
@@ -36,7 +43,7 @@ func Test_Encoder(t *testing.T) {
 		},
 		{
 			Type: pkg.UnknownPkg,
-			PURL: "pkg:generic/generic@1.0.0",
+			PURL: "pkg:generic/generic@1.2.3",
 		},
 	}
 	testutil.AssertEncoderAgainstGoldenSnapshot(t,

@@ -20,6 +20,7 @@ func Backfill(p *pkg.Package) {
 	if p.PURL == "" {
 		return
 	}
+
 	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
 		log.Debug("unable to parse purl: %s: %w", p.PURL, err)
@@ -34,9 +35,10 @@ func Backfill(p *pkg.Package) {
 		case pkg.PURLQualifierCPES:
 			rawCpes := strings.Split(qualifier.Value, ",")
 			for _, rawCpe := range rawCpes {
-				c, err := cpe.New(rawCpe, "")
+				c, err := cpe.New(rawCpe, cpe.DeclaredSource)
 				if err != nil {
 					log.Debugf("unable to decode cpe %s in purl %s: %w", rawCpe, p.PURL, err)
+					continue
 				}
 				cpes = append(cpes, c)
 			}
@@ -46,13 +48,13 @@ func Backfill(p *pkg.Package) {
 	}
 
 	if p.Type == "" {
-		setTypeFromPurl(p)
+		p.Type = pkg.TypeFromPURL(p.PURL)
 	}
 	if p.Language == "" {
-		setLanguageFromPurl(p)
+		p.Language = pkg.LanguageFromPURL(p.PURL)
 	}
 	if p.Name == "" {
-		setNameFromPurl(p, purl)
+		p.Name = nameFromPurl(purl)
 	}
 
 	setVersionFromPurl(p, purl, epoch)
@@ -69,44 +71,29 @@ func Backfill(p *pkg.Package) {
 	}
 }
 
-func setTypeFromPurl(p *pkg.Package) {
-	if p.Type == "" {
-		p.Type = pkg.TypeFromPURL(p.PURL)
-	}
-}
-
-func setLanguageFromPurl(p *pkg.Package) {
-	if p.Language == "" {
-		p.Language = pkg.LanguageFromPURL(p.PURL)
-	}
-}
-
 func setJavaMetadataFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
 	if p.Type != pkg.JavaPkg {
 		return
 	}
 	if purl.Namespace != "" {
-		javaMetadata := &pkg.JavaArchive{}
-		if p.Metadata != nil {
-			javaMetadata, _ = p.Metadata.(*pkg.JavaArchive)
-		} else {
-			p.Metadata = javaMetadata
+		if p.Metadata == nil {
+			p.Metadata = pkg.JavaArchive{}
 		}
-		if javaMetadata != nil {
-			props := javaMetadata.PomProperties
-			if props == nil {
-				props = &pkg.JavaPomProperties{}
-				javaMetadata.PomProperties = props
-			}
+		meta, got := p.Metadata.(pkg.JavaArchive)
+		if got && meta.PomProperties == nil {
+			meta.PomProperties = &pkg.JavaPomProperties{}
+			p.Metadata = meta
+		}
+		if meta.PomProperties != nil {
 			// capture the group id from the purl if it is not already set
-			if props.ArtifactID == "" {
-				props.ArtifactID = purl.Name
+			if meta.PomProperties.ArtifactID == "" {
+				meta.PomProperties.ArtifactID = purl.Name
 			}
-			if props.GroupID == "" {
-				props.GroupID = purl.Namespace
+			if meta.PomProperties.GroupID == "" {
+				meta.PomProperties.GroupID = purl.Namespace
 			}
-			if props.Version == "" {
-				props.Version = purl.Version
+			if meta.PomProperties.Version == "" {
+				meta.PomProperties.Version = purl.Version
 			}
 		}
 	}
@@ -122,16 +109,29 @@ func setVersionFromPurl(p *pkg.Package, purl packageurl.PackageURL, epoch string
 	}
 }
 
-func setNameFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
-	if p.Name == "" {
-		switch {
-		// Java packages
-		case p.Type != pkg.JavaPkg && purl.Namespace != "":
-			p.Name = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
-		default:
-			p.Name = purl.Name
-		}
+var epochPrefix = regexp.MustCompile(`^\d+:`)
+
+// nameFromPurl returns the syft package name of the package from the purl. If the purl includes a namespace,
+// the name is prefixed as appropriate based on the PURL type
+func nameFromPurl(purl packageurl.PackageURL) string {
+	if !nameExcludesPurlNamespace(purl.Type) && purl.Namespace != "" {
+		return fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
 	}
+	return purl.Name
 }
 
-var epochPrefix = regexp.MustCompile(`^\d+:`)
+func nameExcludesPurlNamespace(purlType string) bool {
+	switch purlType {
+	case packageurl.TypeAlpine,
+		packageurl.TypeAlpm,
+		packageurl.TypeConan,
+		packageurl.TypeCpan,
+		packageurl.TypeDebian,
+		packageurl.TypeMaven,
+		packageurl.TypeQpkg,
+		packageurl.TypeRPM,
+		packageurl.TypeSWID:
+		return true
+	}
+	return false
+}

@@ -25,7 +25,7 @@ func TestSeekableReader(t *testing.T) {
 			name:  "empty reader",
 			input: bytes.NewBuffer([]byte{}), // does not implement io.Seeker (but does implement io.Reader)
 			assert: func(input io.Reader, got io.ReadSeeker) {
-				impl, ok := got.(*bytes.Reader) // implements bytes.Reader
+				impl, ok := got.(*bytes.Reader) // contents are copied to a byte slice, accessed via bytes.Reader
 				require.True(t, ok)
 				_, err := impl.Seek(0, io.SeekStart)
 				require.NoError(t, err)
@@ -36,9 +36,9 @@ func TestSeekableReader(t *testing.T) {
 		},
 		{
 			name:  "empty read seeker",
-			input: bytes.NewReader([]byte{}), // implements io.ReadSeeker
+			input: strings.NewReader(""), // implements io.ReadSeeker, not offset
 			assert: func(input io.Reader, got io.ReadSeeker) {
-				_, ok := got.(*offsetReadSeeker)
+				_, ok := got.(*strings.Reader) // same ReadSeeker is returned when not offset
 				require.True(t, ok)
 				_, err := got.Seek(0, io.SeekStart)
 				require.NoError(t, err)
@@ -49,9 +49,9 @@ func TestSeekableReader(t *testing.T) {
 		},
 		{
 			name:  "non-empty read seeker",
-			input: bytes.NewReader([]byte("hello world!")), // implements io.ReadSeeker
+			input: strings.NewReader("hello world!"), // implements io.ReadSeeker, not offset
 			assert: func(input io.Reader, got io.ReadSeeker) {
-				_, ok := got.(*offsetReadSeeker)
+				_, ok := got.(*strings.Reader) // same ReadSeeker is returned when not offset
 				require.True(t, ok)
 				_, err := got.Seek(0, io.SeekStart)
 				require.NoError(t, err)
@@ -71,6 +71,32 @@ func TestSeekableReader(t *testing.T) {
 				content, err := io.ReadAll(impl)
 				require.NoError(t, err)
 				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "position zero read seeker",
+			input: strings.NewReader("a string reader"), // implements io.ReadSeeker at position 0
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*strings.Reader) // returns the same ReadSeeker
+				require.True(t, ok)
+				_, err := got.Seek(0, io.SeekStart)
+				require.NoError(t, err)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("a string reader"), content)
+			},
+		},
+		{
+			name:  "offset read seeker",
+			input: moveOffset(t, bytes.NewReader([]byte{1, 2, 3, 4, 5}), 3), // implements io.ReadSeeker, with an offset
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*offsetReadSeeker) // returns an offset-tracking ReadSeeker
+				require.True(t, ok)
+				_, err := got.Seek(0, io.SeekStart)
+				require.NoError(t, err)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte{4, 5}, content)
 			},
 		},
 	}
@@ -107,14 +133,8 @@ func Test_offsetReadSeeker(t *testing.T) {
 		seek2    int64
 		whence   int
 		expected string
-		newErr   require.ErrorAssertionFunc
-		seekErr  require.ErrorAssertionFunc
+		wantErr  require.ErrorAssertionFunc
 	}{
-		{
-			name:   "nil reader",
-			input:  func() io.ReadSeeker { return nil },
-			newErr: require.Error,
-		},
 		{
 			name:     "basic reader",
 			input:    abcd1234,
@@ -141,7 +161,7 @@ func Test_offsetReadSeeker(t *testing.T) {
 			input:   abcd1234offset(1),
 			seek:    -1,
 			whence:  io.SeekCurrent,
-			seekErr: require.Error, // would be < current, which is an error
+			wantErr: require.Error, // would be < current, which is an error
 		},
 		{
 			name:     "valid negative offset from current",
@@ -159,27 +179,32 @@ func Test_offsetReadSeeker(t *testing.T) {
 			whence:   io.SeekCurrent,
 			expected: "4",
 		},
+		{
+			name:    "bad whence",
+			input:   abcd1234,
+			seek:    1,
+			whence:  io.SeekEnd,
+			wantErr: require.Error,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rdr := tt.input()
 
-			sr, err := newOffsetReadSeeker(rdr)
-			if tt.newErr != nil {
-				tt.newErr(t, err)
-				return
-			} else {
-				require.NoError(t, err)
-			}
+			off, err := rdr.Seek(0, io.SeekCurrent)
+			require.NoError(t, err)
+
+			// construct new offsetReadSeeker
+			sr := offsetReadSeeker{rdr: rdr, offset: off}
 
 			_, err = sr.Seek(tt.seek, tt.whence)
 			if tt.seek2 != 0 {
 				require.NoError(t, err)
 				_, err = sr.Seek(tt.seek2, tt.whence)
 			}
-			if tt.seekErr != nil {
-				tt.seekErr(t, err)
+			if tt.wantErr != nil {
+				tt.wantErr(t, err)
 				return
 			} else {
 				require.NoError(t, err)
@@ -191,4 +216,11 @@ func Test_offsetReadSeeker(t *testing.T) {
 			require.Equal(t, tt.expected, string(buf[:n]))
 		})
 	}
+}
+
+func moveOffset(t *testing.T, reader io.ReadSeeker, offset int64) io.Reader {
+	pos, err := reader.Seek(offset, io.SeekStart)
+	require.NoError(t, err)
+	require.Equal(t, offset, pos)
+	return reader
 }

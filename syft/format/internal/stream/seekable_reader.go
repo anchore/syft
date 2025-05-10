@@ -6,13 +6,18 @@ import (
 	"io"
 )
 
+// SeekableReader takes an io.Reader and returns an io.ReadSeeker relative to the current position of the reader.
+// Users of this function expect to be able to reset the reader to the current position, not potentially reset the
+// reader prior to the location when this reader is provided. An example is a reader with multiple JSON
+// documents separated by newlines (JSONL). After reading the first document, if a call is made to decode
+// the second and Seek(0, SeekStart) is called it would reset the overall reader back to the first document.
 func SeekableReader(reader io.Reader) (io.ReadSeeker, error) {
 	if reader == nil {
 		return nil, fmt.Errorf("no bytes provided")
 	}
 
 	if r, ok := reader.(io.ReadSeeker); ok {
-		return newOffsetReadSeeker(r)
+		return getOffsetReadSeeker(r)
 	}
 
 	content, err := io.ReadAll(reader)
@@ -28,11 +33,17 @@ type offsetReadSeeker struct {
 	offset int64
 }
 
-func newOffsetReadSeeker(r io.ReadSeeker) (io.ReadSeeker, error) {
+// getOffsetReadSeeker returns a new io.ReadSeeker that may wrap another io.ReadSeeker with the current offset, so
+// seek calls will be relative to the _current_ position, rather than relative to the reader itself
+func getOffsetReadSeeker(r io.ReadSeeker) (io.ReadSeeker, error) {
 	if r == nil {
 		return nil, fmt.Errorf("no reader provided")
 	}
 	pos, err := r.Seek(0, io.SeekCurrent)
+	if pos == 0 {
+		// if the ReadSeeker is currently at 0, we don't need to track an offset
+		return r, nil
+	}
 	return &offsetReadSeeker{
 		rdr:    r,
 		offset: pos,
