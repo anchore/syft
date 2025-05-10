@@ -169,20 +169,21 @@ func trimmedAsURL(name string) (urlDir string, urlName string) {
 
 func findVersionInCache(basePath fs.FS, baseName string) (string, error) {
 	var res string
-	err := fs.WalkDir(basePath, ".", func(filePath string, _ fs.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("error when walking down the dir to find %s", baseName)
-		}
+	entries, err := fs.ReadDir(basePath, ".")
+	if err != nil {
+		return "", fmt.Errorf("error when surfacing dir to find %s", baseName)
+	}
 
-		if strings.HasPrefix(filePath, baseName) {
-			parts := strings.Split(filePath, "@")
+	for _, entry := range entries {
+		name := entry.Name()
+		if strings.HasPrefix(name, baseName) {
+			parts := strings.Split(name, "@")
 			if len(parts) == 2 {
 				res = strings.Split(parts[1], "/")[0]
-				return nil
+				break
 			}
 		}
-		return nil
-	})
+	}
 	if res == "" {
 		return "", fmt.Errorf("%s doesn't exist in the Go Modules,hence no versioned path found for it", baseName)
 	}
@@ -207,31 +208,32 @@ func fetchFileContents(basePath fs.FS, fileName string) (res string, err error) 
 
 func findVersionsInVendor(basePath fs.FS) (map[string]string, error) {
 	res := make(map[string]string)
-	err := fs.WalkDir(basePath, ".", func(filePath string, _ fs.DirEntry, err error) error {
-		if err != nil {
-			return fmt.Errorf("error when walking down the dir to find modules.txt")
-		}
+	entries, err := fs.ReadDir(basePath, ".")
+	if err != nil {
+		return nil, err
+	}
 
-		if strings.EqualFold(filePath, "modules.txt") {
-			var contents string
-			contents, err = fetchFileContents(basePath, filePath)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if strings.EqualFold(entry.Name(), "modules.txt") {
+			contents, err := fetchFileContents(basePath, entry.Name())
 			if err == nil && len(contents) != 0 {
 				lines := strings.Split(contents, "\n")
 				for _, line := range lines {
-					// the target line is like this
-					// # github.com/google/go-cmp v0.7.0
 					if strings.HasPrefix(line, "# ") {
 						tuple := strings.Split(line, " ")
-						name := tuple[1]
-						ver := tuple[2]
-						res[name] = ver
+						if len(tuple) >= 3 {
+							name := tuple[1]
+							ver := tuple[2]
+							res[name] = ver
+						}
 					}
 				}
 			}
-			return nil
 		}
-		return nil
-	})
+	}
 	if len(res) == 0 {
 		return nil, fmt.Errorf("modules.txt doesn't exist in the Go Vendors,hence no versioned path found for it")
 	}
