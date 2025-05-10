@@ -1193,8 +1193,8 @@ func TestTestGoPkgSymbols(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:      "command-line-arguments.test",
-					Version:   "(devel)",
-					PURL:      "pkg:golang/command-line-arguments.test@%28devel%29",
+					Version:   "",
+					PURL:      "pkg:golang/command-line-arguments.test",
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Locations: locationSet,
