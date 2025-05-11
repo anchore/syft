@@ -32,6 +32,7 @@ func AllRelationshipTypes() []RelationshipType {
 		ContainsRelationship,
 		DependencyOfRelationship,
 		DescribedByRelationship,
+		TestDependencyOfRelationship,
 	}
 }
 
