@@ -1193,6 +1193,16 @@ func TestTestGoPkgSymbols(t *testing.T) {
 					Info:       0x12,
 					HasVersion: false,
 				},
+				{
+					Name:       "gopkg.in/warnings%2ev0.List.Error",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "go%2eopencensus%2eio.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
 			},
 			binaryContent: "",
 			expected: []pkg.Package{
@@ -1289,6 +1299,20 @@ func TestTestGoPkgSymbols(t *testing.T) {
 					},
 				},
 				{
+					Name:      "go.opencensus.io",
+					Version:   "v0.24.0",
+					PURL:      "pkg:golang/go.opencensus.io@v0.24.0",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
 					Name:      "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
 					Version:   "v0.54.0",
 					PURL:      "pkg:golang/go.opentelemetry.io/contrib/instrumentation@v0.54.0#net/http/otelhttp",
@@ -1299,6 +1323,20 @@ func TestTestGoPkgSymbols(t *testing.T) {
 						GoCompiledVersion: goCompiledVersion,
 						Architecture:      archDetails,
 						H1Digest:          "h1:TT4fX+nBOA/+LUkobKGW1ydGcn+G3vRw9+g5HwCphpk=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "gopkg.in/warnings.v0",
+					Version:   "v0.1.2",
+					PURL:      "pkg:golang/gopkg.in/warnings.v0@v0.1.2",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:wFXVbFY8DY5/xOe1ECiWdKCzZlxgshcYVNkBHstARME=",
 						MainModule:        "command-line-arguments.test",
 					},
 				},

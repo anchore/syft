@@ -139,7 +139,7 @@ func getCachedChecksum(pkgDir fs.FS, name string, version string) (content strin
 
 func trimmedAsURL(goPath fs.FS, name string) (urlDir string, urlName string) {
 	if strings.HasPrefix(name, "vendor") {
-		return
+		return "", ""
 	}
 	parts := strings.Split(name, "/")
 
@@ -164,14 +164,22 @@ func trimmedAsURL(goPath fs.FS, name string) (urlDir string, urlName string) {
 	}
 	if lastIndex != 0 {
 		urlDir = strings.Join(parts[:lastIndex], "/")
+	} else {
+		urlDir = "."
 	}
 	urlName = parts[lastIndex]
-	return
+	// some package contains '.' after the last slash, it's hard to tell the border between the package and its functions
+	// but in the binary, this special . is encoded as %2e, so this case should be considered
+	// e.g. gopkg.in/warnings%2ev0.List.Error -> gopkg.in/warnings.v0
+	if strings.Contains(urlName, "%2e") {
+		urlName = strings.ReplaceAll(urlName, "%2e", ".")
+	}
+	return urlDir, urlName
 }
 
 func trimmedAsURL2(lines map[string]string, name string) (urlDir string, urlName string) {
 	if strings.HasPrefix(name, "vendor") {
-		return
+		return "", ""
 	}
 	parts := strings.Split(name, "/")
 
@@ -190,9 +198,11 @@ func trimmedAsURL2(lines map[string]string, name string) (urlDir string, urlName
 	}
 	if lastIndex != 0 {
 		urlDir = strings.Join(parts[:lastIndex], "/")
+	} else {
+		urlDir = "."
 	}
 	urlName = parts[lastIndex]
-	return
+	return urlDir, urlName
 }
 
 func findVersionInCache(basePath fs.FS, baseName string) (string, error) {
@@ -249,22 +259,28 @@ func findVersionsInVendor(basePath fs.FS) (map[string]string, error) {
 	}
 
 	for _, entry := range entries {
-		if entry.IsDir() {
+		if entry.IsDir() || !strings.EqualFold(entry.Name(), "modules.txt") {
 			continue
 		}
-		if strings.EqualFold(entry.Name(), "modules.txt") {
-			contents, err := fetchFileContents(basePath, entry.Name())
-			if err == nil && len(contents) != 0 {
-				lines := strings.Split(contents, "\n")
-				for _, line := range lines {
-					if strings.HasPrefix(line, "# ") {
-						tuple := strings.Split(line, " ")
-						if len(tuple) >= 3 {
-							name := tuple[1]
-							ver := tuple[2]
-							res[name] = ver
-						}
+		contents, err2 := fetchFileContents(basePath, entry.Name())
+		if err2 != nil || len(contents) == 0 {
+			continue
+		}
+		lines := strings.Split(contents, "\n")
+		for _, line := range lines {
+			if strings.HasPrefix(line, "# ") {
+				tuple := strings.Split(line, " ")
+				if len(tuple) >= 3 {
+					name := tuple[1]
+					// see trimmedAsURL
+					arrs := strings.Split(name, "/")
+					name = strings.ReplaceAll(arrs[len(arrs)-1], ".", "%2e")
+					namePrefix := strings.Join(arrs[:len(arrs)-1], "/")
+					if len(namePrefix) != 0 {
+						name = fmt.Sprintf("%s/%s", namePrefix, name)
 					}
+					ver := tuple[2]
+					res[name] = ver
 				}
 			}
 		}
@@ -291,8 +307,14 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 		if len(urlDir) == 0 {
 			continue
 		}
-		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
-		modPairInPath := fmt.Sprintf("%s/%s", urlDirInPath, nameInPath)
+		var modPair, modPairInPath string
+		if strings.EqualFold(urlDir, ".") {
+			modPair = nameWithoutVersion
+			modPairInPath = nameInPath
+		} else {
+			modPair = fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+			modPairInPath = fmt.Sprintf("%s/%s", urlDirInPath, nameInPath)
+		}
 		if _, exists := uniqueModules[modPair]; exists {
 			continue
 		}
@@ -314,7 +336,7 @@ func (c *goBinaryCataloger) getModulesInfoInCache(syms []elf.Symbol, goPath fs.F
 		}
 		checksum, _ := getCachedChecksum(cachedir, modPair, Version)
 		uniqueModules[modPair] = &debug.Module{
-			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
+			Path:    modPair,
 			Version: Version,
 			Sum:     checksum,
 			Replace: nil,
@@ -351,7 +373,12 @@ func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.
 		if len(urlDir) == 0 {
 			continue
 		}
-		modPair := fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		var modPair string
+		if strings.EqualFold(urlDir, ".") {
+			modPair = nameWithoutVersion
+		} else {
+			modPair = fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		}
 		if _, exists := uniqueModules[modPair]; exists {
 			continue
 		}
@@ -361,9 +388,18 @@ func (c *goBinaryCataloger) getModulesInfoInVendor(syms []elf.Symbol, goPath fs.
 		} else { // there's no corresponding entry in vendor/modules.txt
 			continue
 		}
+		// see trimmedAsURL
+		if strings.Contains(nameWithoutVersion, "%2e") {
+			nameWithoutVersion = strings.ReplaceAll(nameWithoutVersion, "%2e", ".")
+		}
+		if strings.EqualFold(urlDir, ".") {
+			modPair = nameWithoutVersion
+		} else {
+			modPair = fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion)
+		}
 		// h1-digest/checksum is unavailable in the vendor/
 		uniqueModules[modPair] = &debug.Module{
-			Path:    fmt.Sprintf("%s/%s", urlDir, nameWithoutVersion),
+			Path:    modPair,
 			Version: version,
 			Sum:     "",
 			Replace: nil,

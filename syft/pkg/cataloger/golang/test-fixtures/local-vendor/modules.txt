@@ -20,3 +20,7 @@ github.com/sirupsen/logrus
 ## explicit; go 1.13
 # go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
 ## explicit; go 1.13
+# gopkg.in/warnings.v0 v0.1.2
+## explicit; go 1.13
+# go.opencensus.io v0.24.0
+## explicit; go 1.13
