@@ -66,7 +66,7 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 		}
 	}
 
-	pd.Tap = getTapFromPath(reader.Location.RealPath)
+	pd.Tap = getTapFromPath(reader.RealPath)
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 		return pd, nil
 	}
 
-	pathParts := strings.Split(reader.Location.RealPath, "/")
+	pathParts := strings.Split(reader.RealPath, "/")
 	var pkgName, pkgVersion string
 	for i, part := range pathParts {
 		if part == "Cellar" && i+2 < len(pathParts) {
@@ -89,10 +89,10 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 	if pd.Name == "" {
 		if pkgName != "" {
 			pd.Name = pkgName
-		} else if strings.HasSuffix(reader.Location.RealPath, ".rb") {
+		} else if strings.HasSuffix(reader.RealPath, ".rb") {
 			// get it from the filename
 			// e.g. foo.rb
-			pd.Name = strings.TrimSuffix(path.Base(reader.Location.RealPath), ".rb")
+			pd.Name = strings.TrimSuffix(path.Base(reader.RealPath), ".rb")
 		}
 	}
 
