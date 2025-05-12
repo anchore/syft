@@ -207,7 +207,7 @@ func TestParseJar(t *testing.T) {
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+						pkg.NewLicenseFromFieldsWithContext(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
 							l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
 							return &l
 						}()),
@@ -302,7 +302,7 @@ func TestParseJar(t *testing.T) {
 					Version: "2.9.2",
 					PURL:    "pkg:maven/joda-time/joda-time@2.9.2",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+						pkg.NewLicenseFromFieldsWithContext(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
 							l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
 							return &l
 						}()),
@@ -430,11 +430,11 @@ func TestParseJar(t *testing.T) {
 				// we can't use cmpopts.IgnoreFields for the license contents because of the set structure
 				// drop the license contents from the comparison
 				licenses := a.Licenses.ToSlice()
-				for i, _ := range licenses {
+				for i := range licenses {
 					licenses[i].Contents = ""
 				}
 				a.Licenses = pkg.NewLicenseSet(licenses...)
-			
+
 				pkgtest.AssertPackagesEqual(t, e, a, cmpopts.IgnoreFields(pkg.License{}, "Contents"))
 			}
 		})

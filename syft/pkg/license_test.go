@@ -20,8 +20,8 @@ func Test_Hash(t *testing.T) {
 	loc2 := file.NewLocation("place!")
 	loc2.FileSystemID = "fs2" // important! there is a different file system ID
 
-	lic1 := NewLicenseFromFields(ctx, "MIT", "foo", &loc1)
-	lic2 := NewLicenseFromFields(ctx, "MIT", "bar", &loc2)
+	lic1 := NewLicenseFromFieldsWithContext(ctx, "MIT", "foo", &loc1)
+	lic2 := NewLicenseFromFieldsWithContext(ctx, "MIT", "bar", &loc2)
 
 	hash1, err := artifact.IDByHash(lic1)
 	require.NoError(t, err)

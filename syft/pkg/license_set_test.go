@@ -2,13 +2,13 @@ package pkg
 
 import (
 	"context"
-	"github.com/anchore/syft/internal/licenses"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 )

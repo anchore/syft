@@ -140,7 +140,7 @@ func stripUnwantedCharacters(rawURL string) (string, error) {
 	return cleanedURL, nil
 }
 
-func NewLicenseFromFields(ctx context.Context, value, url string, location *file.Location) License {
+func NewLicenseFromFieldsWithContext(ctx context.Context, value, url string, location *file.Location) License {
 	l := NewLicenseWithContext(ctx, value)
 	if location != nil {
 		l.Locations.Add(*location)
