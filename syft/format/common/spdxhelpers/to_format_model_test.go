@@ -738,7 +738,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCollection(test.pkg)
-			pkgs := toPackages(relationship.NewIndex(), catalog, s)
+			pkgs, _ := toPackages(relationship.NewIndex(), catalog, s)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {
@@ -759,14 +759,14 @@ func Test_OtherLicenses(t *testing.T) {
 	tests := []struct {
 		name     string
 		pkg      pkg.Package
-		expected []*spdx.OtherLicense
+		expected []spdx.OtherLicense
 	}{
 		{
 			name: "no licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(),
 			},
-			expected: nil,
+			expected: []spdx.OtherLicense{},
 		},
 		{
 			name: "single licenseRef",
@@ -775,9 +775,11 @@ func Test_OtherLicenses(t *testing.T) {
 					pkg.NewLicenseWithContext(ctx, "foobar"),
 				),
 			},
-			expected: []*spdx.OtherLicense{
+			expected: []spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-foobar",
+					LicenseName:       "foobar",
+					ExtractedText:     "UNKNOWN",
 				},
 			},
 		},
@@ -789,12 +791,16 @@ func Test_OtherLicenses(t *testing.T) {
 					pkg.NewLicenseWithContext(ctx, "new apple license 2.0"),
 				),
 			},
-			expected: []*spdx.OtherLicense{
+			expected: []spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
+					ExtractedText:     "UNKNOWN",
+					LicenseName:       "internal made up license name",
 				},
 				{
 					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
+					ExtractedText:     "UNKNOWN",
+					LicenseName:       "new apple license 2.0",
 				},
 			},
 		},
@@ -805,11 +811,7 @@ func Test_OtherLicenses(t *testing.T) {
 					pkg.NewLicenseWithContext(ctx, "LicenseRef-Fedora-Public-Domain"),
 				),
 			},
-			expected: []*spdx.OtherLicense{
-				{
-					LicenseIdentifier: "LicenseRef-Fedora-Public-Domain",
-				},
-			},
+			expected: []spdx.OtherLicense{},
 		},
 		{
 			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
@@ -818,14 +820,15 @@ func Test_OtherLicenses(t *testing.T) {
 					pkg.NewLicenseWithContext(ctx, "(MIT AND LicenseRef-Fedora-Public-Domain)"),
 				),
 			},
-			expected: nil,
+			expected: []spdx.OtherLicense{},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCollection(test.pkg)
-			otherLicenses := toOtherLicenses(catalog)
+			rels := relationship.NewIndex()
+			_, otherLicenses := toPackages(rels, catalog, sbom.SBOM{})
 			require.Len(t, otherLicenses, len(test.expected))
 			require.Equal(t, test.expected, otherLicenses)
 		})
@@ -938,11 +941,13 @@ func Test_otherLicenses(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "other licenses includes original text",
+			name:     "other licenses must include some original text",
 			packages: []pkg.Package{pkg2},
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-non-spdx-license",
+					LicenseName:       "non spdx license",
+					ExtractedText:     "UNKNOWN",
 				},
 			},
 		},
@@ -952,7 +957,9 @@ func Test_otherLicenses(t *testing.T) {
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
-					ExtractedText:     strings.TrimSpace(bigText),
+					// Carries through the syft-json license value when we shasum large texts
+					LicenseName:   "LicenseRef-sha256:3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
+					ExtractedText: strings.TrimSpace(bigText),
 				},
 			},
 		},

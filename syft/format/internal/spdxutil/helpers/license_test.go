@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -100,7 +99,7 @@ func Test_License(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, d := License(test.input)
+			c, d, _ := License(test.input)
 			assert.Equal(t, test.expected.concluded, c)
 			assert.Equal(t, test.expected.declared, d)
 		})
@@ -157,34 +156,23 @@ func TestGenerateLicenseID(t *testing.T) {
 func Test_joinLicenses(t *testing.T) {
 	tests := []struct {
 		name string
-		args []string
+		args []SPDXLicense
 		want string
 	}{
 		{
 			name: "multiple licenses",
-			args: []string{"MIT", "GPL-3.0-only"},
+			args: []SPDXLicense{{ID: "MIT"}, {ID: "GPL-3.0-only"}},
 			want: "MIT AND GPL-3.0-only",
 		},
 		{
 			name: "multiple licenses with complex expressions",
-			args: []string{"MIT AND Apache", "GPL-3.0-only"},
+			args: []SPDXLicense{{ID: "MIT AND Apache"}, {ID: "GPL-3.0-only"}},
 			want: "(MIT AND Apache) AND GPL-3.0-only",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, joinLicenses(toSpdxLicenses(tt.args)), "joinLicenses(%v)", tt.args)
+			assert.Equalf(t, tt.want, joinLicenses(tt.args), "joinLicenses(%v)", tt.args)
 		})
 	}
-}
-
-func toSpdxLicenses(ids []string) (licenses []SPDXLicense) {
-	for _, l := range ids {
-		license := SPDXLicense{ID: l}
-		if strings.HasPrefix(l, spdxlicense.LicenseRefPrefix) {
-			license.Value = l
-		}
-		licenses = append(licenses, license)
-	}
-	return licenses
 }
