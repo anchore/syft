@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"context"
+	"github.com/anchore/syft/internal/licenses"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 
@@ -12,7 +14,9 @@ import (
 )
 
 func TestLicenseSet_Add(t *testing.T) {
-	ctx := context.TODO()
+	scanner, err := licenses.NewDefaultScanner()
+	require.NoError(t, err)
+	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
 	tests := []struct {
 		name     string
 		licenses []License
@@ -138,10 +142,14 @@ func TestLicenseSet_Add(t *testing.T) {
 			},
 			want: []License{
 				{
-					Contents: readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
-					Type:     license.Declared,
+					SPDXExpression: "Apache-2.0",
+					Value:          "Apache-2.0",
+					Type:           license.Declared,
+					Contents:       readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
+					Locations:      file.NewLocationSet(),
 				},
 				{
+					Value:    "LicenseRef-sha256:eebcea3ab1d1a28e671de90119ffcfb35fe86951e4af1b17af52b7a82fcf7d0a",
 					Contents: readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
 					Type:     license.Declared,
 				},

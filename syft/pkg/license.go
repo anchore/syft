@@ -76,7 +76,10 @@ func (l Licenses) Swap(i, j int) {
 }
 
 func NewLicensesFromReadCloserWithContext(ctx context.Context, closer file.LocationReadCloser) (licenses []License) {
-	return newLicenseBuilder().withContents(closer).build(ctx).ToSlice()
+	//Definition: The license that the auditor or scanning tool concludes applies, based on the actual contents of the files.
+	//Source: Derived from analyzing the source code, license headers, and full license texts in the files.
+	// Given we are scanning the contents of the file, we should use the Concluded License type.
+	return newLicenseBuilder().withContents(closer).withType(license.Concluded).build(ctx).ToSlice()
 }
 
 func NewLicenseWithContext(ctx context.Context, value string) License {
@@ -149,6 +152,7 @@ func NewLicenseFromFields(ctx context.Context, value, url string, location *file
 		} else {
 			l.URLs = append(l.URLs, sanitizedURL)
 		}
+		l.Type = license.Declared
 	}
 
 	return l
@@ -406,7 +410,9 @@ func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evid
 
 		// add other builder values that don't change between licenses
 		candidate.Type = b.tp
-		candidate.Locations = file.NewLocationSet(location)
+		if location.Path() != "" {
+			candidate.Locations = file.NewLocationSet(location)
+		}
 		ls = append(ls, candidate)
 	}
 	return ls
@@ -432,7 +438,7 @@ func contentFromReader(r io.Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(bytes), nil
+	return strings.TrimSpace(string(bytes)), nil
 }
 
 func sha256HexFromString(s string) string {

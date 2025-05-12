@@ -88,7 +88,7 @@ func Test_Sort(t *testing.T) {
 			},
 		},
 		{
-			name: "multiple licenses with only contents",
+			name: "multiple licenses with only contents are still sorted by their computed lic.value references",
 			licenses: []License{
 				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
 				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
@@ -252,10 +252,10 @@ func TestFullText(t *testing.T) {
 		want  License
 	}{
 		{
-			name:  "Full Text field is populated with the correct full text",
+			name:  "Full Text field is populated with the correct full text and contents are given a sha256 as value",
 			value: fullText,
 			want: License{
-				Value:    "",
+				Value:    "LicenseRef-sha256:108067fa71229a2b98b9696af0ce21cd11d9639634c8bc94bda70ebedf291e5a",
 				Type:     license.Declared,
 				Contents: fullText,
 			},

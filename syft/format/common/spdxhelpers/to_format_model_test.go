@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -777,7 +778,6 @@ func Test_OtherLicenses(t *testing.T) {
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-foobar",
-					ExtractedText:     "foobar",
 				},
 			},
 		},
@@ -792,11 +792,9 @@ func Test_OtherLicenses(t *testing.T) {
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
-					ExtractedText:     "internal made up license name",
 				},
 				{
 					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
-					ExtractedText:     "new apple license 2.0",
 				},
 			},
 		},
@@ -810,7 +808,6 @@ func Test_OtherLicenses(t *testing.T) {
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-Fedora-Public-Domain",
-					ExtractedText:     "Fedora-Public-Domain",
 				},
 			},
 		},
@@ -946,17 +943,16 @@ func Test_otherLicenses(t *testing.T) {
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-non-spdx-license",
-					ExtractedText:     "non spdx license",
 				},
 			},
 		},
 		{
-			name:     "big licenses get hashed",
+			name:     "big licenses get hashed and space is trimmed",
 			packages: []pkg.Package{pkg3},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-e9a1e42833d3e456f147052f4d312101bd171a0798893169fe596ca6b55c049e",
-					ExtractedText:     bigText,
+					LicenseIdentifier: "LicenseRef-3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
+					ExtractedText:     strings.TrimSpace(bigText),
 				},
 			},
 		},

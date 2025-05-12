@@ -3,6 +3,7 @@ package python
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"testing"
 
@@ -222,6 +223,7 @@ func Test_PackageCataloger(t *testing.T) {
 							Value:          "BSD-3-Clause",
 							SPDXExpression: "BSD-3-Clause",
 							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
 							// we read the path from the LicenseFile field in the METADATA file, then read the license file directly
 							Locations: file.NewLocationSet(file.NewLocation("with-license-file-declared.dist-info/LICENSE.txt")),
 						},
@@ -268,8 +270,8 @@ func Test_PackageCataloger(t *testing.T) {
 							Value:          "BSD-3-Clause",
 							SPDXExpression: "BSD-3-Clause",
 							Type:           "concluded",
-							// we discover license files automatically
-							Locations: file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
+							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
+							Locations:      file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
 						},
 					),
 					FoundBy: "python-installed-package-cataloger",
@@ -400,10 +402,10 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pkgtest.NewCatalogTester().
+			(pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
-				TestCataloger(t, NewInstalledPackageCataloger())
+				TestCataloger(t, NewInstalledPackageCataloger()))
 		})
 	}
 }
@@ -803,4 +805,27 @@ func stringPackage(p pkg.Package) string {
 	}
 
 	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
+}
+
+func mustContentsFromLocation(t *testing.T, contentsPath string, offset ...int) string {
+	t.Helper() // Marks this function as a test helper for cleaner error reporting
+	contents, err := os.ReadFile(contentsPath)
+	if err != nil {
+		t.Fatalf("failed to read file %s: %v", contentsPath, err)
+	}
+
+	if len(offset) == 0 {
+		return string(contents)
+	}
+
+	if len(offset) != 2 {
+		t.Fatalf("invalid offset provided, expected two integers: start and end")
+	}
+	start, end := offset[0], offset[1]
+
+	if start < 0 || end > len(contents) || start > end {
+		t.Fatalf("invalid offset range: start=%d, end=%d, content length=%d", start, end, len(contents))
+	}
+
+	return string(contents[start:end])
 }

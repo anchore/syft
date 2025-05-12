@@ -1,11 +1,8 @@
 package helpers
 
 import (
-	"crypto/sha256"
-	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -93,16 +90,9 @@ func generateLicenseID(l pkg.License) string {
 	if l.SPDXExpression != "" {
 		return l.SPDXExpression
 	}
-	if l.Value != "" {
-		return spdxlicense.LicenseRefPrefix + SanitizeElementID(l.Value)
+	id := strings.ReplaceAll(l.Value, "sha256:", "")
+	if !strings.HasPrefix(id, "LicenseRef-") {
+		id = "LicenseRef-" + id
 	}
-	return licenseSum(l.Contents)
-}
-
-func licenseSum(s string) string {
-	if len(s) <= 64 {
-		return spdxlicense.LicenseRefPrefix + SanitizeElementID(s)
-	}
-	hash := sha256.Sum256([]byte(s))
-	return fmt.Sprintf("%s%x", spdxlicense.LicenseRefPrefix, hash)
+	return SanitizeElementID(id)
 }

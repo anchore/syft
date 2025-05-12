@@ -361,7 +361,7 @@ func TestParseJar(t *testing.T) {
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse(context.Background(), nil)
+			actual, _, err := parser.parse(ctx, nil)
 			if test.wantErr != nil {
 				test.wantErr(t, err)
 			} else {
@@ -424,11 +424,18 @@ func TestParseJar(t *testing.T) {
 						metadata.Manifest.Main = newMain
 					}
 				}
-
 				// write censored data back
 				a.Metadata = metadata
 
-				pkgtest.AssertPackagesEqual(t, e, a)
+				// we can't use cmpopts.IgnoreFields for the license contents because of the set structure
+				// drop the license contents from the comparison
+				licenses := a.Licenses.ToSlice()
+				for i, _ := range licenses {
+					licenses[i].Contents = ""
+				}
+				a.Licenses = pkg.NewLicenseSet(licenses...)
+			
+				pkgtest.AssertPackagesEqual(t, e, a, cmpopts.IgnoreFields(pkg.License{}, "Contents"))
 			}
 		})
 	}

@@ -769,19 +769,12 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	slices.Sort(ids)
 	for _, id := range ids {
 		license := licenses[id]
-		value := license.Value
 		fullText := license.FullText
-		// handle cases where LicenseRef needs to be included in hasExtractedLicensingInfos
-		if license.Value == "" {
-			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
-		}
 		other := &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
 		}
 		if fullText != "" {
 			other.ExtractedText = fullText
-		} else {
-			other.ExtractedText = value
 		}
 		customPrefix := spdxlicense.LicenseRefPrefix + helpers.SanitizeElementID(internallicenses.UnknownLicensePrefix)
 		if strings.HasPrefix(license.ID, customPrefix) {
@@ -806,9 +799,9 @@ func isLicenseRef(s string) bool {
 // see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
 // the above link contains the SPDX algorithm for a package verification code
 func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
-	// key off of the contains relationship;
-	// spdx validator will fail if a package claims to contain a file but no sha1 provided
-	// if a sha1 for a file is provided then the validator will fail if the package does not have
+	// key off of the spdx contains relationship;
+	// spdx validator will fail if a package claims to contain a file, but no sha1 provided
+	// if a sha1 for a file is provided, then the validator will fail if the package does not have
 	// a package verification code
 	coordinates := rels.Coordinates(p, artifact.ContainsRelationship)
 	var digests []file.Digest
