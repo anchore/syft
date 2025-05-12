@@ -26,6 +26,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ErlangRebarLockEntry{},
 		pkg.GolangBinaryBuildinfoEntry{},
 		pkg.GolangModuleEntry{},
+		pkg.HomebrewFormula{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.LinuxKernel{},
@@ -357,16 +358,6 @@ func Test_OriginatorSupplier(t *testing.T) {
 			input: pkg.Package{
 				Metadata: pkg.RpmDBEntry{
 					Vendor: "auth",
-				},
-			},
-			originator: "Organization: auth",
-			supplier:   "Organization: auth",
-		},
-		{
-			name: "from homebrew",
-			input: pkg.Package{
-				Metadata: pkg.HomebrewFormula{
-					Homepage: "https://github.com/sshock/AFFLIBv3",
 				},
 			},
 			originator: "Organization: auth",

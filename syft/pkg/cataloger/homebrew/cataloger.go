@@ -8,7 +8,7 @@ import (
 func NewCataloger() pkg.Cataloger {
 	return generic.NewCataloger("homebrew-cataloger").
 		WithParserByGlobs(
-			parseHomebrewPackage,
+			parseHomebrewFormula,
 			// forumulas are located at $(brew --repository)/Cellar
 			"**/Cellar/*/*/.brew/*.rb",
 			// taps are located at $(brew --repository)/Library/Taps

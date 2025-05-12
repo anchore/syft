@@ -502,9 +502,8 @@ var commonTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find homebrew",
-		pkgType:     pkg.HomebrewPkg,
-		pkgLanguage: pkg.Ruby,
+		name:    "find homebrew",
+		pkgType: pkg.HomebrewPkg,
 		pkgInfo: map[string]string{
 			"afflib": "1.2.3",
 		},

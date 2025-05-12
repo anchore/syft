@@ -112,7 +112,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.RustCargoLockEntry{}, "rust-cargo-lock-entry", "RustCargoPackageMetadata"),
 	jsonNamesWithoutLookup(pkg.RustBinaryAuditEntry{}, "rust-cargo-audit-entry", "RustCargoPackageMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
-	jsonNames(pkg.HomebrewFormula{}, "homebrew-metadata"),
+	jsonNames(pkg.HomebrewFormula{}, "homebrew-formula"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
