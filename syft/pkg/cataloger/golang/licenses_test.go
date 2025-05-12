@@ -25,9 +25,14 @@ import (
 )
 
 func Test_LicenseSearch(t *testing.T) {
-	scanner, err := licenses.NewDefaultScanner()
+	sc := &licenses.ScannerConfig{
+		CoverageThreshold: 75,
+		Scanner:           licensecheck.Scan,
+	}
+	scanner, err := licenses.NewScanner(sc)
 	require.NoError(t, err)
 	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
+
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 	loc3 := file.NewLocation("github.com/someorg/strangelicense@v1.2.3/LiCeNsE.tXt")

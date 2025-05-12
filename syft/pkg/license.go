@@ -38,9 +38,10 @@ type License struct {
 	SPDXExpression string
 	Value          string
 	Type           license.Type
-	Contents       string
-	URLs           []string         `hash:"ignore"`
-	Locations      file.LocationSet `hash:"ignore"`
+	// we want to ignore the contents here so we can drop contents in the post-processing step
+	Contents  string           `hash:"ignore"`
+	URLs      []string         `hash:"ignore"`
+	Locations file.LocationSet `hash:"ignore"`
 }
 
 type Licenses []License

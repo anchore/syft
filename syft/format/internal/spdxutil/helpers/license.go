@@ -92,9 +92,12 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense, otherL
 func createSPDXLicense(l pkg.License) SPDXLicense {
 	var candidate SPDXLicense
 	candidate.ID = generateLicenseID(l)
+	// we have consumed a LicenseRef from the metadata of some package; we should encode all the info we have
 	if strings.Contains(candidate.ID, "LicenseRef-") {
 		candidate.LicenseName = l.Value
-		candidate.FullText = "UNKNOWN" // we need to populate this field with the license text if we have a license ref
+		// we need to populate this field in the spdx document if we have a license ref
+		// 0..1 (Mandatory, one) if there is a License Identifier assigned (LicenseRef).
+		candidate.FullText = "UNKNOWN"
 		// TODO: does this need to be configured with the new SBOMBuilder contents switch?
 		if l.Contents != "" {
 			candidate.FullText = l.Contents
@@ -108,6 +111,8 @@ func generateLicenseID(l pkg.License) string {
 		return l.SPDXExpression
 	}
 
+	// syft format includes the algo for the sha in the values
+	// we can strip this and just make LicenseRef-<sum> for spdx consumption
 	id := strings.ReplaceAll(l.Value, "sha256:", "")
 	if !strings.HasPrefix(id, "LicenseRef-") {
 		id = "LicenseRef-" + id
