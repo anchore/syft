@@ -2615,8 +2615,11 @@
         "sourceRpm": {
           "type": "string"
         },
-        "signature": {
-          "type": "string"
+        "signatures": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "size": {
           "type": "integer"
@@ -2686,8 +2689,11 @@
         "sourceRpm": {
           "type": "string"
         },
-        "signature": {
-          "type": "string"
+        "signatures": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "size": {
           "type": "integer"

@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
+	"strings"
 
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -69,6 +72,13 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		files, err := extractRpmFileRecords(resolver, *entry)
 		errs = unknown.Join(errs, err)
 
+		// there is a period of time when RPM DB entries contain both PGP and RSA signatures that are the same.
+		// This appears to be a holdover, where nowadays only the RSA Header is used.
+		signatures := strset.New(strings.TrimSpace(entry.PGP), strings.TrimSpace(entry.RSAHeader))
+		signatures.Remove("")
+		sigList := signatures.List()
+		sort.Strings(sigList)
+
 		metadata := pkg.RpmDBEntry{
 			Name:            entry.Name,
 			Version:         entry.Version,
@@ -76,7 +86,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			Arch:            entry.Arch,
 			Release:         entry.Release,
 			SourceRpm:       entry.SourceRpm,
-			Signature:       entry.PGP,
+			Signatures:      sigList,
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
