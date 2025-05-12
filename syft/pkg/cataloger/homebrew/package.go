@@ -6,21 +6,24 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newHomebrewPackage(name, version, desc, homepage string, locations file.LocationSet) pkg.Package {
+func newHomebrewPackage(pd parsedHomebrewData, formulaLocation file.Location) pkg.Package {
+	var licenses []string
+	if pd.License != "" {
+		licenses = append(licenses, pd.License)
+	}
+
 	p := pkg.Package{
-		Name:      name,
-		Version:   version,
+		Name:      pd.Name,
+		Version:   pd.Version,
 		Type:      pkg.HomebrewPkg,
-		Locations: locations,
-		Language:  pkg.Ruby,
+		Locations: file.NewLocationSet(formulaLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenses...)...),
 		FoundBy:   "homebrew-cataloger",
-		PURL:      packageURL(name, version),
-		Metadata: pkg.HomebrewMetadata{
-			Name:        name,
-			FullName:    name,
-			Tap:         "homebrew/core",
-			Homepage:    homepage,
-			Description: desc,
+		PURL:      packageURL(pd.Name, pd.Version),
+		Metadata: pkg.HomebrewFormula{
+			Tap:         pd.Tap,
+			Homepage:    pd.Homepage,
+			Description: pd.Desc,
 		},
 	}
 
@@ -30,7 +33,7 @@ func newHomebrewPackage(name, version, desc, homepage string, locations file.Loc
 
 func packageURL(name, version string) string {
 	purl := packageurl.NewPackageURL(
-		"homebrew",
+		"brew",
 		"",
 		name,
 		version,

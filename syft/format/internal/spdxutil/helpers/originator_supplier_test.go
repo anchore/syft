@@ -353,7 +353,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		{
 			name: "from homebrew",
 			input: pkg.Package{
-				Metadata: pkg.HomebrewMetadata{
+				Metadata: pkg.HomebrewFormula{
 					Homepage: "https://github.com/sshock/AFFLIBv3",
 				},
 			},

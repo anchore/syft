@@ -116,10 +116,6 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: funlen
 		typ = orgType
 		author = metadata.Author
 
-	case pkg.HomebrewMetadata:
-		typ = orgType
-		author = "auth"
-
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
 	}

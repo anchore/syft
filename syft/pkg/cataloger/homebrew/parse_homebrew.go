@@ -3,7 +3,7 @@ package homebrew
 import (
 	"bufio"
 	"context"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -15,57 +15,30 @@ import (
 )
 
 type parsedHomebrewData struct {
+	Tap      string
 	Name     string
 	Version  string
 	Desc     string
 	Homepage string
+	License  string
 }
 
-func parseHomebrewPackage(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseHomebrewPackage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-
-	pathParts := strings.Split(reader.Location.RealPath, string(filepath.Separator))
-	var pkgName, pkgVersion string
-	for i, part := range pathParts {
-		if part == "Cellar" && i+2 < len(pathParts) {
-			pkgName = pathParts[i+1]
-			pkgVersion = pathParts[i+2]
-			break
-		}
-	}
-
-	if pkgName == "" || pkgVersion == "" {
-		return nil, nil, nil
-	}
 
 	pd, err := parseFormulaFile(reader)
 	if err != nil {
-		log.WithFields("package", pkgName).Warn("failed to parse formula")
+		log.WithFields("path", reader.RealPath).Trace("failed to parse formula")
 		return nil, nil, err
 	}
 
-	locations := file.NewLocationSet()
-
-	locations.Add(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-
-	cellarPath := filepath.Dir(filepath.Dir(reader.Location.RealPath))
-	locations.Add(file.NewLocation(cellarPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
-
-	if resolver != nil {
-		if matches, err := resolver.FilesByGlob(filepath.Join("/usr/local/bin", pkgName)); err == nil && len(matches) > 0 {
-			locations.Add(matches[0].WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
-		}
-		if matches, err := resolver.FilesByGlob(filepath.Join("/opt/homebrew/bin", pkgName)); err == nil && len(matches) > 0 {
-			locations.Add(matches[0].WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
-		}
+	if pd == nil {
+		return nil, nil, nil
 	}
 
 	p := newHomebrewPackage(
-		pkgName,
-		pkgVersion,
-		pd.Desc,
-		pd.Homepage,
-		locations)
+		*pd,
+		reader.Location)
 
 	pkgs = append(pkgs, p)
 
@@ -79,33 +52,88 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
-		if strings.HasPrefix(line, "desc ") {
-			pd.Desc = extractQuotedValue(line[5:])
-		} else if strings.HasPrefix(line, "homepage ") {
-			pd.Homepage = extractQuotedValue(line[9:])
-		}
-
-		if pd.Desc != "" && pd.Homepage != "" {
-			break
+		switch {
+		case strings.HasPrefix(line, "desc "):
+			pd.Desc = getQuotedValue(line)
+		case strings.HasPrefix(line, "homepage "):
+			pd.Homepage = getQuotedValue(line)
+		case strings.HasPrefix(line, "license "):
+			pd.License = getQuotedValue(line)
+		case strings.HasPrefix(line, "name "):
+			pd.Name = getQuotedValue(line)
+		case strings.HasPrefix(line, "version "):
+			pd.Version = getQuotedValue(line)
 		}
 	}
+
+	pd.Tap = getTapFromPath(reader.Location.RealPath)
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
+	if pd.Name != "" && pd.Version != "" {
+		return pd, nil
+	}
+
+	pathParts := strings.Split(reader.Location.RealPath, "/")
+	var pkgName, pkgVersion string
+	for i, part := range pathParts {
+		if part == "Cellar" && i+2 < len(pathParts) {
+			pkgName = pathParts[i+1]
+			pkgVersion = pathParts[i+2]
+			break
+		}
+	}
+
+	if pd.Name == "" {
+		if pkgName != "" {
+			pd.Name = pkgName
+		} else if strings.HasSuffix(reader.Location.RealPath, ".rb") {
+			// get it from the filename
+			// e.g. foo.rb
+			pd.Name = strings.TrimSuffix(path.Base(reader.Location.RealPath), ".rb")
+		}
+	}
+
+	if pd.Version == "" {
+		pd.Version = pkgVersion
+	}
+
 	return pd, nil
 }
 
-func extractQuotedValue(s string) string {
+func getTapFromPath(path string) string {
+	// get testorg/sometap from opt/homebrew/Library/Taps/testorg/sometap/Formula/bar.rb
+	// key off of Library/Taps/...
+
+	paths := strings.Split(path, "Library/Taps")
+	if len(paths) < 2 {
+		return ""
+	}
+
+	paths = strings.Split(paths[1], "/")
+	if len(paths) < 3 {
+		return ""
+	}
+	return strings.Join(paths[1:3], "/")
+}
+
+func getQuotedValue(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return ""
 	}
 
-	if strings.HasPrefix(s, "\"") && strings.HasSuffix(s, "\"") {
-		return s[1 : len(s)-1]
+	start := strings.Index(s, "\"")
+	if start == -1 {
+		return ""
 	}
 
-	return s
+	end := strings.LastIndex(s, "\"")
+	if end == -1 || end <= start {
+		return ""
+	}
+
+	return s[start+1 : end]
 }

@@ -1,8 +1,9 @@
 package homebrew
 
 import (
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_packageURL(t *testing.T) {
@@ -12,28 +13,25 @@ func Test_packageURL(t *testing.T) {
 		packageVersion string
 		expected       string
 	}{
+		// preemptive based on https://github.com/package-url/purl-spec/pull/281
 		{
 			name:           "standard homebrew package URL",
 			packageName:    "foo",
 			packageVersion: "1.2.3",
-			expected:       "pkg:homebrew/foo@1.2.3",
+			expected:       "pkg:brew/foo@1.2.3",
 		},
 		{
 			name:           "another example",
 			packageName:    "bar",
 			packageVersion: "9.8.7",
-			expected:       "pkg:homebrew/bar@9.8.7",
+			expected:       "pkg:brew/bar@9.8.7",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := packageURL(test.packageName, test.packageVersion)
-			if actual != test.expected {
-				dmp := diffmatchpatch.New()
-				diffs := dmp.DiffMain(test.expected, actual, true)
-				t.Errorf("diff: %s", dmp.DiffPrettyText(diffs))
-			}
+			assert.Equal(t, test.expected, actual, "expected package URL to match")
 		})
 	}
 }

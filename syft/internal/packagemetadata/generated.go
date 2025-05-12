@@ -28,7 +28,7 @@ func AllTypes() []any {
 		pkg.GolangModuleEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.HackageStackYamlLockEntry{},
-		pkg.HomebrewMetadata{},
+		pkg.HomebrewFormula{},
 		pkg.JavaArchive{},
 		pkg.JavaVMInstallation{},
 		pkg.LinuxKernel{},

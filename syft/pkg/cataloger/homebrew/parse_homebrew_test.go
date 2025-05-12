@@ -3,42 +3,42 @@ package homebrew
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func TestParseHomebrewPackage(t *testing.T) {
-	var expectedRelationships []artifact.Relationship
+func Test_ParseHomebrewPackage(t *testing.T) {
 
-	fixture := "test-fixtures/glob-paths/Cellar/foo/1.2.3/.brew/foo.rb"
-	fixtureLocation := file.NewLocation(fixture)
-	fixtureLocation = fixtureLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
-
-	locations := file.NewLocationSet(fixtureLocation)
-
-	cellarPath := "test-fixtures/glob-paths/Cellar/foo/1.2.3"
-
-	locations.Add(file.NewLocation(cellarPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
-
-	expected := pkg.Package{
-		Name:      "foo",
-		Version:   "1.2.3",
-		Type:      pkg.HomebrewPkg,
-		Language:  pkg.Ruby,
-		Locations: locations,
-		FoundBy:   "homebrew-cataloger",
-		PURL:      "pkg:homebrew/foo@1.2.3",
-		Metadata: pkg.HomebrewMetadata{
-			Name:        "foo",
-			FullName:    "foo",
-			Tap:         "homebrew/core",
-			Homepage:    "https://example.com/foo",
-			Description: "A test Homebrew formula for Foo",
+	tests := []struct {
+		name     string
+		fixture  string
+		expected pkg.Package
+	}{
+		{
+			name:    "syft tap",
+			fixture: "test-fixtures/formulas/syft/1.23.1/.brew/syft.rb",
+			expected: pkg.Package{
+				Name:    "syft",
+				Version: "1.23.1",
+				Type:    pkg.HomebrewPkg,
+				Locations: file.NewLocationSet(
+					file.NewLocation("test-fixtures/formulas/syft/1.23.1/.brew/syft.rb").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("Apache License 2.0")...),
+				FoundBy:  "homebrew-cataloger",
+				PURL:     "pkg:brew/syft@1.23.1",
+				Metadata: pkg.HomebrewFormula{
+					Homepage:    "https://github.com/anchore/syft",
+					Description: "A tool that generates a Software Bill Of Materials (SBOM) from container images and filesystems",
+				},
+			},
 		},
 	}
-	expected.SetID()
 
-	pkgtest.TestFileParser(t, fixture, parseHomebrewPackage, []pkg.Package{expected}, expectedRelationships)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.TestFileParser(t, test.fixture, parseHomebrewPackage, []pkg.Package{test.expected}, nil)
+		})
+	}
 }

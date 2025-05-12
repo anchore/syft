@@ -1,9 +1,7 @@
 package pkg
 
-type HomebrewMetadata struct {
-	Name        string `json:"name"`
-	FullName    string `json:"fullName"`
-	Tap         string `json:"tap"`
-	Homepage    string `json:"homepage"`
-	Description string `json:"description"`
+type HomebrewFormula struct {
+	Tap         string `json:"tap,omitempty"`
+	Homepage    string `json:"homepage,omitempty"`
+	Description string `json:"description,omitempty"`
 }
