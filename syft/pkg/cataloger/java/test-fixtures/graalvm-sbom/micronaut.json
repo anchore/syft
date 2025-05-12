@@ -62,7 +62,6 @@
         },
         {
             "type": "library",
-            "group": "org.example",
             "name": "basic-lib",
             "version": "1.0"
         }
