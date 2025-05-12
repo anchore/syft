@@ -24,7 +24,7 @@
   },
   "components": [
     {
-      "bom-ref": "4dd25c6ee16b729a",
+      "bom-ref": "f04d218ff5ff50db",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
