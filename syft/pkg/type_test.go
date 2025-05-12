@@ -63,8 +63,16 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: PhpComposerPkg,
 		},
 		{
-			purl:     "pkg:pecl/memcached@3.2.0",
-			expected: PhpPeclPkg,
+			purl:     "pkg:pear/pecl.php.net/memcached@3.2.0", // pecl namespace
+			expected: PhpPearPkg,
+		},
+		{
+			purl:     "pkg:pear/pear.php.net/memcached@3.2.0", // pear namespace
+			expected: PhpPearPkg,
+		},
+		{
+			purl:     "pkg:pecl/pecl.php.net/memcached@3.2.0", // note: this is an invalid purl, but we will handle it anyway in case folks created the type pre-emptively
+			expected: PhpPearPkg,                              // we should still consider this a pear package
 		},
 		{
 			purl:     "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
@@ -124,7 +132,7 @@ func TestTypeFromPURL(t *testing.T) {
 		},
 	}
 
-	var pkgTypes []string
+	var pkgTypes = strset.New()
 	var expectedTypes = strset.New()
 	for _, ty := range AllPkgs {
 		expectedTypes.Add(string(ty))
@@ -142,19 +150,19 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(HomebrewPkg))
 	expectedTypes.Remove(string(TerraformPkg))
 	expectedTypes.Remove(string(GraalVMNativeImagePkg))
+	expectedTypes.Remove(string(PhpPeclPkg)) // we should always consider this a pear package
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {
 			actual := TypeFromPURL(test.purl)
 
 			if actual != "" {
-				pkgTypes = append(pkgTypes, string(actual))
+				pkgTypes.Add(string(actual))
 			}
 
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 
-	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes, "missing one or more package types to test against (maybe a package type was added?)")
-
+	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes.List(), "missing one or more package types to test against (maybe a package type was added?)")
 }

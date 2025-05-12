@@ -28,7 +28,7 @@ func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
 		}
 	}()
 
-	for _, file := range zipReader.Reader.File {
+	for _, file := range zipReader.File {
 		manifest.Add(file.Name, file.FileInfo())
 	}
 	return manifest, nil

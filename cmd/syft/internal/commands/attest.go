@@ -52,7 +52,7 @@ func Attest(app clio.Application) *cobra.Command {
 	opts := defaultAttestOptions()
 
 	// template format explicitly not allowed
-	opts.Format.Template.Enabled = false
+	opts.Template.Enabled = false
 
 	return app.SetupCommand(&cobra.Command{
 		Use:   "attest --output [FORMAT] <IMAGE>",
@@ -136,7 +136,7 @@ func writeSBOMToFormattedFile(s *sbom.SBOM, sbomFile io.Writer, opts *attestOpti
 		return fmt.Errorf("no output file provided")
 	}
 
-	encs, err := opts.Format.Encoders()
+	encs, err := opts.Encoders()
 	if err != nil {
 		return fmt.Errorf("unable to create encoders: %w", err)
 	}

@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal"
 )
 

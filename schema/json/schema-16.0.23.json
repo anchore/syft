@@ -586,6 +586,66 @@
         "productVersion"
       ]
     },
+    "DpkgArchiveEntry": {
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preDepends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/DpkgFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "source",
+        "version",
+        "sourceVersion",
+        "architecture",
+        "maintainer",
+        "installedSize",
+        "files"
+      ]
+    },
     "DpkgDbEntry": {
       "properties": {
         "package": {
@@ -989,33 +1049,6 @@
         }
       },
       "type": "object"
-    },
-    "HomebrewMetadata": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "fullName": {
-          "type": "string"
-        },
-        "tap": {
-          "type": "string"
-        },
-        "homepage": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "name",
-        "fullName",
-        "tap",
-        "homepage",
-        "description"
-      ]
     },
     "IDLikes": {
       "items": {
@@ -1749,6 +1782,9 @@
               "$ref": "#/$defs/DotnetPortableExecutableEntry"
             },
             {
+              "$ref": "#/$defs/DpkgArchiveEntry"
+            },
+            {
               "$ref": "#/$defs/DpkgDbEntry"
             },
             {
@@ -1771,9 +1807,6 @@
             },
             {
               "$ref": "#/$defs/HaskellHackageStackLockEntry"
-            },
-            {
-              "$ref": "#/$defs/HomebrewMetadata"
             },
             {
               "$ref": "#/$defs/JavaArchive"

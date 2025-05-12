@@ -24,9 +24,9 @@ const (
 
 func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release, evidence ...file.Location) pkg.Package {
 	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
-	licenses := make([]pkg.License, 0)
+	var licenses []pkg.License
 
-	locations := file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	locations := file.NewLocationSet(dbLocation)
 	locations.Add(evidence...)
 
 	p := pkg.Package{
@@ -51,6 +51,25 @@ func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.R
 
 	p.SetID()
 
+	return p
+}
+
+func newDebArchivePackage(location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
+	p := pkg.Package{
+		Name:     metadata.Package,
+		Version:  metadata.Version,
+		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenseStrings...)...),
+		Type:     pkg.DebPkg,
+		PURL: packageURL(
+			pkg.DpkgDBEntry(metadata),
+			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
+			&linux.Release{IDLike: []string{"debian"}},
+		),
+		Metadata:  metadata,
+		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+	}
+
+	p.SetID()
 	return p
 }
 

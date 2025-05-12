@@ -861,6 +861,34 @@ func Test_toSPDXID(t *testing.T) {
 			},
 			expected: "Package-npm-some-package",
 		},
+		{
+			name: "package with existing SPDX ID",
+			it: func() pkg.Package {
+				p := pkg.Package{
+					Type: pkg.NpmPkg,
+					Name: "some-package",
+				}
+				// SPDXRef- prefix is removed on decode (when everything is working as it should)
+				p.OverrideID("Package-npm-some-package-extra!")
+				return p
+			}(),
+			// note: we still sanitize out the "!" which is not allowed in SPDX IDs
+			expected: "Package-npm-some-package-extra",
+		},
+		{
+			name: "package with existing SPDX Ref",
+			it: func() pkg.Package {
+				p := pkg.Package{
+					Type: pkg.NpmPkg,
+					Name: "some-package",
+				}
+				// someone incorrectly added SPDXRef- prefix
+				p.OverrideID("SPDXRef-Package-npm-some-package-extra!")
+				return p
+			}(),
+			// note: we still sanitize out the "!" which is not allowed in SPDX IDs
+			expected: "Package-npm-some-package-extra",
+		},
 	}
 
 	for _, test := range tests {

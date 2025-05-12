@@ -46,7 +46,7 @@ func finalizeRelationships(resolver file.Resolver, builder sbomsync.Builder, cfg
 
 	// add relationships showing packages that are evident by a file which is owned by another package (package-to-package)
 	if cfg.PackageFileOwnershipOverlap {
-		relationship.ByFileOwnershipOverlapWorker(accessor)
+		relationship.ByFileOwnershipOverlapWorker(resolver, accessor)
 	}
 
 	// conditionally remove binary packages based on file ownership overlap relationships found

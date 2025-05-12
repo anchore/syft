@@ -43,7 +43,7 @@ func parseCargoLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 		newPkg := newPackageFromCargoMetadata(
 			p,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		pkgs = append(
 			pkgs,

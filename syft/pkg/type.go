@@ -36,7 +36,8 @@ const (
 	NpmPkg                  Type = "npm"
 	OpamPkg                 Type = "opam"
 	PhpComposerPkg          Type = "php-composer"
-	PhpPeclPkg              Type = "php-pecl"
+	PhpPeclPkg              Type = "php-pecl" // Deprecated: will be removed in syft v2.0
+	PhpPearPkg              Type = "php-pear"
 	PortagePkg              Type = "portage"
 	PythonPkg               Type = "python"
 	Rpkg                    Type = "R-package"
@@ -79,6 +80,7 @@ var AllPkgs = []Type{
 	OpamPkg,
 	PhpComposerPkg,
 	PhpPeclPkg,
+	PhpPearPkg,
 	PortagePkg,
 	PythonPkg,
 	Rpkg,
@@ -134,8 +136,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
-	case PhpPeclPkg:
-		return "pecl"
+	case PhpPearPkg, PhpPeclPkg:
+		return "pear"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
@@ -196,8 +198,8 @@ func TypeByName(name string) Type {
 		return DebPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
-	case "pecl":
-		return PhpPeclPkg
+	case "pear", "pecl":
+		return PhpPearPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
 	case packageurl.TypeGem:

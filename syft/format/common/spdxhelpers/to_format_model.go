@@ -268,21 +268,34 @@ func toRootPackage(s source.Description) *spdx.Package {
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
+	id := string(identifiable.ID())
+	if strings.HasPrefix(id, "SPDXRef-") {
+		// this is already an SPDX ID, no need to change it (except for the prefix)
+		return spdx.ElementID(helpers.SanitizeElementID(strings.TrimPrefix(id, "SPDXRef-")))
+	}
 	maxLen := 40
-	id := ""
 	switch it := identifiable.(type) {
 	case pkg.Package:
+		if strings.HasPrefix(id, "Package-") {
+			// this is already an SPDX ID, no need to change it
+			return spdx.ElementID(helpers.SanitizeElementID(id))
+		}
 		switch {
 		case it.Type != "" && it.Name != "":
-			id = fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID())
+			id = fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, id)
 		case it.Name != "":
-			id = fmt.Sprintf("Package-%s-%s", it.Name, it.ID())
+			id = fmt.Sprintf("Package-%s-%s", it.Name, id)
 		case it.Type != "":
-			id = fmt.Sprintf("Package-%s-%s", it.Type, it.ID())
+			id = fmt.Sprintf("Package-%s-%s", it.Type, id)
 		default:
-			id = fmt.Sprintf("Package-%s", it.ID())
+			id = fmt.Sprintf("Package-%s", id)
 		}
 	case file.Coordinates:
+		if strings.HasPrefix(id, "File-") {
+			// this is already an SPDX ID, no need to change it. Note: there is no way to reach this case today
+			// from within syft, however, this covers future cases where the ID can be overridden
+			return spdx.ElementID(helpers.SanitizeElementID(id))
+		}
 		p := ""
 		parts := strings.Split(it.RealPath, "/")
 		for i := len(parts); i > 0; i-- {
@@ -296,9 +309,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 			}
 			p = path.Join(part, p)
 		}
-		id = fmt.Sprintf("File-%s-%s", p, it.ID())
-	default:
-		id = string(identifiable.ID())
+		id = fmt.Sprintf("File-%s-%s", p, id)
 	}
 	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
 	return spdx.ElementID(helpers.SanitizeElementID(id))
@@ -759,13 +770,18 @@ func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
 	for _, id := range ids {
 		license := licenses[id]
 		value := license.Value
+		fullText := license.FullText
 		// handle cases where LicenseRef needs to be included in hasExtractedLicensingInfos
 		if license.Value == "" {
 			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
 		}
 		other := &spdx.OtherLicense{
 			LicenseIdentifier: license.ID,
-			ExtractedText:     value,
+		}
+		if fullText != "" {
+			other.ExtractedText = fullText
+		} else {
+			other.ExtractedText = value
 		}
 		customPrefix := spdxlicense.LicenseRefPrefix + helpers.SanitizeElementID(internallicenses.UnknownLicensePrefix)
 		if strings.HasPrefix(license.ID, customPrefix) {

@@ -3,10 +3,9 @@ package options
 import (
 	"fmt"
 
-	"github.com/mitchellh/go-homedir"
-
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/syft/sbom"
 )
 

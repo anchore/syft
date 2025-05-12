@@ -227,6 +227,16 @@ rough outline how that works:
 
 ## Testing
 
+### Testing commands
+
+* `make help` shows a list of available commands
+* `make unit`, `make integration`, `make cli`, and `make acceptance` run those test suites (see below)
+* `make test` runs all those tests (and is therefore pretty slow)
+* `make fixtures` clears and re-fetches all test fixtures.
+* `go test ./syft/pkg/` for example can test particular packages, assuming fixtures are already made
+* `make clean-cache` cleans all test cache. Note that subsequent test runs will be slower after this
+
+
 ### Levels of testing
 
 - `unit`: The default level of test which is distributed throughout the repo are unit tests. Any `_test.go` file that 

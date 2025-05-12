@@ -29,6 +29,20 @@ func TestParseGoMod(t *testing.T) {
 			},
 		},
 		{
+			fixture: "test-fixtures/relative-replace",
+			expected: []pkg.Package{
+				{
+					Name:      "github.com/aws/aws-sdk-go-v2",
+					Version:   "",
+					PURL:      "pkg:golang/github.com/aws/aws-sdk-go-v2",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/relative-replace")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+			},
+		},
+		{
 
 			fixture: "test-fixtures/many-packages",
 			expected: []pkg.Package{

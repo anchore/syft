@@ -61,7 +61,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 			Name:      m.Mod.Path,
 			Version:   m.Mod.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
@@ -77,18 +77,25 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 
 		// the old path and new path may be the same, in which case this is a noop,
 		// but if they're different we need to remove the old package.
-		delete(packages, m.Old.Path)
-
-		packages[m.New.Path] = pkg.Package{
-			Name:      m.New.Path,
+		// note that we may change the path but we should always reference the new version (since the old version
+		// cannot be trusted as a correct value).
+		var finalPath string
+		if !strings.HasPrefix(m.New.Path, ".") && !strings.HasPrefix(m.New.Path, "/") {
+			finalPath = m.New.Path
+			delete(packages, m.Old.Path)
+		} else {
+			finalPath = m.Old.Path
+		}
+		packages[finalPath] = pkg.Package{
+			Name:      finalPath,
 			Version:   m.New.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:      packageURL(m.New.Path, m.New.Version),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(finalPath, m.New.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
 			Metadata: pkg.GolangModuleEntry{
-				H1Digest: digests[fmt.Sprintf("%s %s", m.New.Path, m.New.Version)],
+				H1Digest: digests[fmt.Sprintf("%s %s", finalPath, m.New.Version)],
 			},
 		}
 	}
@@ -120,7 +127,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 		return out, fmt.Errorf("no resolver provided")
 	}
 
-	goSumPath := strings.TrimSuffix(reader.Location.RealPath, ".mod") + ".sum"
+	goSumPath := strings.TrimSuffix(reader.RealPath, ".mod") + ".sum"
 	goSumLocation := resolver.RelativeFileByPath(reader.Location, goSumPath)
 	if goSumLocation == nil {
 		return nil, fmt.Errorf("unable to resolve: %s", goSumPath)

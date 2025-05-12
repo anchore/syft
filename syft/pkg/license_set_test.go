@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -125,6 +126,23 @@ func TestLicenseSet_Add(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "licenses that are unknown with different contents can exist in the same set",
+			licenses: []License{
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
+				NewLicense(readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+			},
+			want: []License{
+				{
+					Contents: readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
+					Type:     license.Declared,
+				},
+				{
+					Contents: readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
+					Type:     license.Declared,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -159,4 +177,12 @@ func defaultLicenseComparer(x, y License) bool {
 			return true
 		},
 	))
+}
+
+func readFileAsString(filepath string) string {
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
 }

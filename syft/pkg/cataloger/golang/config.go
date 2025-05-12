@@ -5,8 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
-
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/log"
 )
 
@@ -92,7 +91,7 @@ func defaultGoModDir() string {
 func DefaultMainModuleVersionConfig() MainModuleVersionConfig {
 	return MainModuleVersionConfig{
 		FromLDFlags:       true,
-		FromContents:      true,
+		FromContents:      false,
 		FromBuildSettings: true,
 	}
 }

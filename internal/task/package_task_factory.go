@@ -245,10 +245,10 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 		}
 
 		for _, ref := range pathRefs {
-			if oldRef, ok := locations[ref.Coordinates.ID()]; ok {
+			if oldRef, ok := locations[ref.ID()]; ok {
 				log.Debugf("found path duplicate of %s", oldRef.RealPath)
 			}
-			locations[ref.Coordinates.ID()] = ref
+			locations[ref.ID()] = ref
 		}
 	}
 

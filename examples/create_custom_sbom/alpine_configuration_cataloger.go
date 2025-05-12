@@ -6,6 +6,7 @@ import (
 	"io"
 	"path"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -76,7 +77,6 @@ func newAlpineConfiguration(resolver file.Resolver) (*AlpineConfiguration, []fil
 	return &AlpineConfiguration{
 		APKKeys: keys,
 	}, locations, nil
-
 }
 
 func getVersion(resolver file.Resolver) (string, []file.Location, error) {
@@ -92,6 +92,7 @@ func getVersion(resolver file.Resolver) (string, []file.Location, error) {
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to read alpine version: %w", err)
 	}
+	defer internal.CloseAndLogError(reader, locations[0].RealPath)
 
 	version, err := io.ReadAll(reader)
 	if err != nil {
@@ -111,7 +112,11 @@ func getAPKKeys(resolver file.Resolver) (map[string]string, []file.Location, err
 	}
 	for _, location := range locations {
 		basename := path.Base(location.RealPath)
+		//nolint:gocritic
 		reader, err := resolver.FileContentsByLocation(location)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to resolve file contents by location at %s: %w", location.RealPath, err)
+		}
 		content, err := io.ReadAll(reader)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to read apk key content at %s: %w", location.RealPath, err)

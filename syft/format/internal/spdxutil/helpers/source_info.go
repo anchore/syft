@@ -40,6 +40,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from rust cargo manifest"
 	case pkg.PhpComposerPkg:
 		answer = "acquired package info from PHP composer manifest"
+	case pkg.PhpPearPkg:
+		answer = "acquired package info from PHP Pear manifest"
 	case pkg.PhpPeclPkg:
 		answer = "acquired package info from PHP Pecl manifest"
 	case pkg.CocoapodsPkg:

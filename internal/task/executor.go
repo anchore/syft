@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"runtime/debug"
 	"slices"
-	"sync"
 	"time"
-
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
@@ -18,64 +15,17 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-type Executor struct {
-	numWorkers int
-	tasks      chan Task
-}
-
-func NewTaskExecutor(tasks []Task, numWorkers int) *Executor {
-	p := &Executor{
-		numWorkers: numWorkers,
-		tasks:      make(chan Task, len(tasks)),
+func RunTask(ctx context.Context, tsk Task, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
+	err := runTaskSafely(ctx, tsk, resolver, s)
+	unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
+	if len(unknowns) > 0 {
+		appendUnknowns(s, tsk.Name(), unknowns)
 	}
-
-	for i := range tasks {
-		p.tasks <- tasks[i]
+	if remainingErrors != nil {
+		prog.SetError(remainingErrors)
 	}
-	close(p.tasks)
-
-	return p
-}
-
-func (p *Executor) Execute(ctx context.Context, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
-	var lock sync.Mutex
-	withLock := func(fn func()) {
-		lock.Lock()
-		defer lock.Unlock()
-		fn()
-	}
-	var errs error
-	wg := &sync.WaitGroup{}
-	for i := 0; i < p.numWorkers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			for {
-				tsk, ok := <-p.tasks
-				if !ok {
-					return
-				}
-
-				err := runTaskSafely(ctx, tsk, resolver, s)
-				unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
-				if len(unknowns) > 0 {
-					appendUnknowns(s, tsk.Name(), unknowns)
-				}
-				if remainingErrors != nil {
-					withLock(func() {
-						errs = multierror.Append(errs, fmt.Errorf("failed to run task: %w", remainingErrors))
-						prog.SetError(remainingErrors)
-					})
-				}
-				prog.Increment()
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	return errs
+	prog.Increment()
+	return remainingErrors
 }
 
 func appendUnknowns(builder sbomsync.Builder, taskName string, unknowns []unknown.CoordinateError) {
