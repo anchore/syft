@@ -100,7 +100,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	if err != nil {
 		// this is expected in many cases, there will be no network access and the maven resolver is unable to
 		// look up information, so we can continue with what little information we have
-		log.Trace("unable to resolve parent due to: %v", err)
+		log.Tracef("unable to resolve parent due to: %v", err)
 	}
 
 	var javaPomParent *pkg.JavaPomParent
