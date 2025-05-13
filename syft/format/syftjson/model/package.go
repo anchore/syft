@@ -47,17 +47,19 @@ type licenses []License
 
 type License struct {
 	Value          string          `json:"value"`
+	FullText       string          `json:"fullText"`
 	SPDXExpression string          `json:"spdxExpression"`
 	Type           license.Type    `json:"type"`
 	URLs           []string        `json:"urls"`
 	Locations      []file.Location `json:"locations"`
+	Contents       string          `json:"contents,omitempty"`
 }
 
 func newModelLicensesFromValues(licenses []string) (ml []License) {
 	for _, v := range licenses {
 		expression, err := license.ParseExpression(v)
 		if err != nil {
-			log.Trace("could not find valid spdx expression for %s: %w", v, err)
+			log.Tracef("could not find valid spdx expression for %s: %w", v, err)
 		}
 		ml = append(ml, License{
 			Value:          v,

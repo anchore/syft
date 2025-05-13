@@ -1,11 +1,11 @@
 package config
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"path/filepath"
 	"strings"
 
+	"github.com/OneOfOne/xxhash"
 	"gopkg.in/yaml.v3"
 )
 
@@ -68,13 +68,13 @@ func PlatformAsValue(platform string) string {
 	return strings.ReplaceAll(platform, "/", "-")
 }
 
-func (c BinaryFromImage) Fingerprint() string {
+func (c BinaryFromImage) Digest() string {
 	by, err := yaml.Marshal(c)
 	if err != nil {
 		panic(err)
 	}
 
-	hasher := sha256.New()
-	hasher.Write(by)
+	hasher := xxhash.New64()
+	_, _ = hasher.Write(by)
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }

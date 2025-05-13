@@ -2,15 +2,24 @@ package python
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal/licenses"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+func normalize(name string) string {
+	// https://packaging.python.org/en/latest/specifications/name-normalization/
+	re := regexp.MustCompile(`[-_.]+`)
+	normalized := re.ReplaceAllString(name, "-")
+	return strings.ToLower(normalized)
+}
+
 func newPackageForIndex(name, version string, locations ...file.Location) pkg.Package {
+	name = normalize(name)
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -25,7 +34,9 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPipfileLockEntry, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+	name = normalize(name)
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -42,6 +53,8 @@ func newPackageForIndexWithMetadata(name, version string, metadata pkg.PythonPip
 }
 
 func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
+	name = normalize(name)
+
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -57,42 +70,15 @@ func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.Py
 	return p
 }
 
-func newPackageForPackage(resolver file.Resolver, m parsedData, sources ...file.Location) pkg.Package {
-	var licenseSet pkg.LicenseSet
-
-	switch {
-	case m.LicenseExpression != "":
-		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.LicenseExpression)...)
-	case m.Licenses != "":
-		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...)
-	case m.LicenseLocation.Path() != "":
-		// If we have a license file then resolve and parse it
-		found, err := resolver.FilesByPath(m.LicenseLocation.Path())
-		if err != nil {
-			log.WithFields("error", err).Tracef("unable to resolve python license path %s", m.LicenseLocation.Path())
-		}
-		if len(found) > 0 {
-			metadataContents, err := resolver.FileContentsByLocation(found[0])
-			if err == nil {
-				parsed, err := licenses.Parse(metadataContents, m.LicenseLocation)
-				if err != nil {
-					log.WithFields("error", err).Tracef("unable to parse a license from the file in %s", m.LicenseLocation.Path())
-				}
-				if len(parsed) > 0 {
-					licenseSet = pkg.NewLicenseSet(parsed...)
-				}
-			} else {
-				log.WithFields("error", err).Tracef("unable to read file contents at %s", m.LicenseLocation.Path())
-			}
-		}
-	}
+func newPackageForPackage(m parsedData, licenses pkg.LicenseSet, sources ...file.Location) pkg.Package {
+	name := normalize(m.Name)
 
 	p := pkg.Package{
-		Name:      m.Name,
+		Name:      name,
 		Version:   m.Version,
-		PURL:      packageURL(m.Name, m.Version, &m.PythonPackage),
+		PURL:      packageURL(name, m.Version, &m.PythonPackage),
 		Locations: file.NewLocationSet(sources...),
-		Licenses:  licenseSet,
+		Licenses:  licenses,
 		Language:  pkg.Python,
 		Type:      pkg.PythonPkg,
 		Metadata:  m.PythonPackage,

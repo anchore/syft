@@ -1,22 +1,37 @@
 package cyclonedxhelpers
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/CycloneDX/cyclonedx-go"
+	cyclonedx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/google/uuid"
 
+	stfile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
+
+var cycloneDXValidHash = map[string]cyclonedx.HashAlgorithm{
+	"sha1":       cyclonedx.HashAlgoSHA1,
+	"md5":        cyclonedx.HashAlgoMD5,
+	"sha256":     cyclonedx.HashAlgoSHA256,
+	"sha384":     cyclonedx.HashAlgoSHA384,
+	"sha512":     cyclonedx.HashAlgoSHA512,
+	"blake2b256": cyclonedx.HashAlgoBlake2b_256,
+	"blake2b384": cyclonedx.HashAlgoBlake2b_384,
+	"blake2b512": cyclonedx.HashAlgoBlake2b_512,
+	"blake3":     cyclonedx.HashAlgoBlake3,
+}
 
 func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM := cyclonedx.NewBOM()
@@ -27,12 +42,50 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	cdxBOM.SerialNumber = uuid.New().URN()
 	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
 
+	coordinates, locationSorter := getCoordinates(s)
+
+	// Packages
 	packages := s.Artifacts.Packages.Sorted()
 	components := make([]cyclonedx.Component, len(packages))
 	for i, p := range packages {
-		components[i] = helpers.EncodeComponent(p)
+		components[i] = helpers.EncodeComponent(p, locationSorter)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
+
+	artifacts := s.Artifacts
+
+	for _, coordinate := range coordinates {
+		var metadata *file.Metadata
+		// File Info
+		fileMetadata, exists := artifacts.FileMetadata[coordinate]
+		// no file metadata then don't include in SBOM
+		// the syft config allows for sometimes only capturing files owned by packages
+		// so there can be a map miss here where we have less metadata than all coordinates
+		if !exists {
+			continue
+		}
+		if fileMetadata.Type == stfile.TypeDirectory ||
+			fileMetadata.Type == stfile.TypeSocket ||
+			fileMetadata.Type == stfile.TypeSymLink {
+			// skip dir, symlinks and sockets for the final bom
+			continue
+		}
+		metadata = &fileMetadata
+
+		// Digests
+		var digests []file.Digest
+		if digestsForLocation, exists := artifacts.FileDigests[coordinate]; exists {
+			digests = digestsForLocation
+		}
+
+		cdxHashes := digestsToHashes(digests)
+		components = append(components, cyclonedx.Component{
+			BOMRef: string(coordinate.ID()),
+			Type:   cyclonedx.ComponentTypeFile,
+			Name:   metadata.Path,
+			Hashes: &cdxHashes,
+		})
+	}
 	cdxBOM.Components = &components
 
 	dependencies := toDependencies(s.Relationships)
@@ -41,6 +94,37 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 
 	return cdxBOM
+}
+
+func getCoordinates(s sbom.SBOM) ([]file.Coordinates, func(a, b file.Location) int) {
+	var layers []string
+	if m, ok := s.Source.Metadata.(source.ImageMetadata); ok {
+		for _, l := range m.Layers {
+			layers = append(layers, l.Digest)
+		}
+	}
+
+	coordSorter := file.CoordinatesSorter(layers)
+	coordinates := s.AllCoordinates()
+
+	slices.SortFunc(coordinates, coordSorter)
+	return coordinates, file.LocationSorter(layers)
+}
+
+func digestsToHashes(digests []file.Digest) []cyclonedx.Hash {
+	var hashes []cyclonedx.Hash
+	for _, digest := range digests {
+		lookup := strings.ToLower(digest.Algorithm)
+		cdxAlgo, exists := cycloneDXValidHash[lookup]
+		if !exists {
+			continue
+		}
+		hashes = append(hashes, cyclonedx.Hash{
+			Algorithm: cdxAlgo,
+			Value:     digest.Value,
+		})
+	}
+	return hashes
 }
 
 func toOSComponent(distro *linux.Release) []cyclonedx.Component {
@@ -84,8 +168,9 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 	}
 	return []cyclonedx.Component{
 		{
-			Type: cyclonedx.ComponentTypeOS,
-			// FIXME is it idiomatic to be using SWID here for specific name and version information?
+			BOMRef: toOSBomRef(distro.ID, distro.VersionID),
+			Type:   cyclonedx.ComponentTypeOS,
+			// is it idiomatic to be using SWID here for specific name and version information?
 			SWID: &cyclonedx.SWID{
 				TagID:   distro.ID,
 				Name:    distro.ID,
@@ -94,12 +179,22 @@ func toOSComponent(distro *linux.Release) []cyclonedx.Component {
 			Description: distro.PrettyName,
 			Name:        distro.ID,
 			Version:     distro.VersionID,
-			// TODO should we add a PURL?
+			// should we add a PURL?
 			CPE:                formatCPE(distro.CPEName),
 			ExternalReferences: eRefs,
 			Properties:         properties,
 		},
 	}
+}
+
+func toOSBomRef(name string, version string) string {
+	if name == "" {
+		return "os:unknown"
+	}
+	if version == "" {
+		return fmt.Sprintf("os:%s", name)
+	}
+	return fmt.Sprintf("os:%s@%s", name, version)
 }
 
 func formatCPE(cpeString string) string {
@@ -196,9 +291,15 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 }
 
 func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
-	metadata, ok := srcMetadata.Metadata.(source.StereoscopeImageSourceMetadata)
+	metadata, ok := srcMetadata.Metadata.(source.ImageMetadata)
 	if ok {
 		props := helpers.EncodeProperties(metadata.Labels, "syft:image:labels")
+		// return nil if props is nil to avoid creating a pointer to a nil slice,
+		// which results in a null JSON value that does not comply with the CycloneDX schema.
+		// https://github.com/anchore/grype/issues/1759
+		if props == nil {
+			return nil
+		}
 		return &props
 	}
 	return nil
@@ -208,7 +309,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 	name := srcMetadata.Name
 	version := srcMetadata.Version
 	switch metadata := srcMetadata.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		if name == "" {
 			name = metadata.UserInput
 		}
@@ -217,7 +318,7 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		}
 		bomRef, err := artifact.IDByHash(metadata.ID)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
+			log.Debugf("unable to get fingerprint of source image metadata=%s: %+v", metadata.ID, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef:  string(bomRef),
@@ -225,13 +326,13 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case source.DirectorySourceMetadata:
+	case source.DirectoryMetadata:
 		if name == "" {
 			name = metadata.Path
 		}
 		bomRef, err := artifact.IDByHash(metadata.Path)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source directory metadata path=%s: %+v", metadata.Path, err)
+			log.Debugf("unable to get fingerprint of source directory metadata path=%s: %+v", metadata.Path, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
@@ -240,13 +341,13 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case source.FileSourceMetadata:
+	case source.FileMetadata:
 		if name == "" {
 			name = metadata.Path
 		}
 		bomRef, err := artifact.IDByHash(metadata.Path)
 		if err != nil {
-			log.Warnf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
+			log.Debugf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
 		}
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),

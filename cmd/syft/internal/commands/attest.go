@@ -13,6 +13,7 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
 	"github.com/anchore/syft/internal"
@@ -26,7 +27,6 @@ import (
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
 )
 
 const (
@@ -43,6 +43,7 @@ type attestOptions struct {
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
 	Attest              options.Attest `yaml:"attest" mapstructure:"attest"`
+	Cache               options.Cache  `json:"-" yaml:"cache" mapstructure:"cache"`
 }
 
 func Attest(app clio.Application) *cobra.Command {
@@ -51,7 +52,7 @@ func Attest(app clio.Application) *cobra.Command {
 	opts := defaultAttestOptions()
 
 	// template format explicitly not allowed
-	opts.Format.Template.Enabled = false
+	opts.Template.Enabled = false
 
 	return app.SetupCommand(&cobra.Command{
 		Use:   "attest --output [FORMAT] <IMAGE>",
@@ -77,6 +78,7 @@ func defaultAttestOptions() attestOptions {
 		Output:      defaultAttestOutputOptions(),
 		UpdateCheck: options.DefaultUpdateCheck(),
 		Catalog:     options.DefaultCatalog(),
+		Cache:       options.DefaultCache(),
 	}
 }
 
@@ -91,14 +93,13 @@ func defaultAttestOutputOptions() options.Output {
 			string(spdxtagvalue.ID),
 		},
 		Outputs: []string{syftjson.ID.String()},
-		OutputFile: options.OutputFile{ // nolint:staticcheck
+		OutputFile: options.OutputFile{ //nolint:staticcheck
 			Enabled: false, // explicitly not allowed
 		},
 		Format: options.DefaultFormat(),
 	}
 }
 
-//nolint:funlen
 func runAttest(ctx context.Context, id clio.Identification, opts *attestOptions, userInput string) error {
 	// TODO: what other validation here besides binary name?
 	if !commandExists(cosignBinName) {
@@ -135,7 +136,7 @@ func writeSBOMToFormattedFile(s *sbom.SBOM, sbomFile io.Writer, opts *attestOpti
 		return fmt.Errorf("no output file provided")
 	}
 
-	encs, err := opts.Format.Encoders()
+	encs, err := opts.Encoders()
 	if err != nil {
 		return fmt.Errorf("unable to create encoders: %w", err)
 	}
@@ -247,7 +248,11 @@ func predicateType(outputName string) string {
 }
 
 func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opts *options.Catalog, userInput string) (*sbom.SBOM, error) {
-	src, err := getSource(opts, userInput, onlyContainerImages)
+	if len(opts.From) > 1 || (len(opts.From) == 1 && opts.From[0] != stereoscope.RegistryTag) {
+		return nil, fmt.Errorf("attest requires use of an OCI registry directly, one or more of the specified sources is unsupported: %v", opts.From)
+	}
+
+	src, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
 
 	if err != nil {
 		return nil, err
@@ -271,13 +276,6 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 	}
 
 	return s, nil
-}
-
-func onlyContainerImages(d *source.Detection) error {
-	if !d.IsContainerImage() {
-		return fmt.Errorf("attestations are only supported for oci images at this time")
-	}
-	return nil
 }
 
 func commandExists(cmd string) bool {

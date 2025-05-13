@@ -1,11 +1,13 @@
 package helpers
 
 import (
-	"fmt"
+	"context"
+	"encoding/base64"
 	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -54,17 +56,14 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	}
 
 	for _, l := range *c.Licenses {
-		if l.License == nil {
-			continue
-		}
 		// these fields are mutually exclusive in the spec
 		switch {
-		case l.License.ID != "":
-			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.ID, l.License.URL))
-		case l.License.Name != "":
-			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.Name, l.License.URL))
+		case l.License != nil && l.License.ID != "":
+			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), l.License.ID, l.License.URL))
+		case l.License != nil && l.License.Name != "":
+			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), l.License.Name, l.License.URL))
 		case l.Expression != "":
-			licenses = append(licenses, pkg.NewLicenseFromURLs(l.Expression, l.License.URL))
+			licenses = append(licenses, pkg.NewLicenseWithContext(context.TODO(), l.Expression))
 		default:
 		}
 	}
@@ -72,7 +71,6 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 	return licenses
 }
 
-// nolint:funlen
 func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expressions []string) {
 	ex := make([]string, 0)
 	spdxc := cyclonedx.Licenses{}
@@ -115,7 +113,7 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 			continue
 		}
 
-		if l.SPDXExpression != "" {
+		if l.SPDXExpression != "" && !strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
 			// COMPLEX EXPRESSION CASE
 			ex = append(ex, l.SPDXExpression)
 			continue
@@ -123,17 +121,43 @@ func separateLicenses(p pkg.Package) (spdx, other cyclonedx.Licenses, expression
 
 		// license string that are not valid spdx expressions or ids
 		// we only use license Name here since we cannot guarantee that the license is a valid SPDX expression
-		if len(l.URLs) > 0 {
+		if len(l.URLs) > 0 && !strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
 			processLicenseURLs(l, "", &otherc)
 			continue
 		}
-		otherc = append(otherc, cyclonedx.LicenseChoice{
+
+		otherc = append(otherc, processCustomLicense(l)...)
+	}
+	return spdxc, otherc, ex
+}
+
+func processCustomLicense(l pkg.License) cyclonedx.Licenses {
+	result := cyclonedx.Licenses{}
+	if strings.HasPrefix(l.SPDXExpression, licenses.UnknownLicensePrefix) {
+		cyclonedxLicense := &cyclonedx.License{
+			Name: l.SPDXExpression,
+		}
+		if len(l.URLs) > 0 {
+			cyclonedxLicense.URL = l.URLs[0]
+		}
+		if len(l.Contents) > 0 {
+			cyclonedxLicense.Text = &cyclonedx.AttachedText{
+				Content: base64.StdEncoding.EncodeToString([]byte(l.Contents)),
+			}
+			cyclonedxLicense.Text.ContentType = "text/plain"
+			cyclonedxLicense.Text.Encoding = "base64"
+		}
+		result = append(result, cyclonedx.LicenseChoice{
+			License: cyclonedxLicense,
+		})
+	} else {
+		result = append(result, cyclonedx.LicenseChoice{
 			License: &cyclonedx.License{
 				Name: l.Value,
 			},
 		})
 	}
-	return spdxc, otherc, ex
+	return result
 }
 
 func processLicenseURLs(l pkg.License, spdxID string, populate *cyclonedx.Licenses) {
@@ -162,40 +186,44 @@ func mergeSPDX(ex []string) string {
 		// if the expression does not have balanced parens add them
 		if !strings.HasPrefix(e, "(") && !strings.HasSuffix(e, ")") {
 			e = "(" + e + ")"
-			candidate = append(candidate, e)
 		}
+		candidate = append(candidate, e)
 	}
 
 	if len(candidate) == 1 {
-		return reduceOuter(strings.Join(candidate, " AND "))
+		return reduceOuter(candidate[0])
 	}
 
-	return strings.Join(candidate, " AND ")
+	return reduceOuter(strings.Join(candidate, " AND "))
 }
 
 func reduceOuter(expression string) string {
-	var (
-		sb        strings.Builder
-		openCount int
-	)
+	expression = strings.TrimSpace(expression)
 
-	for _, c := range expression {
-		if string(c) == "(" && openCount > 0 {
-			_, _ = fmt.Fprintf(&sb, "%c", c)
+	// If the entire expression is wrapped in parentheses, check if they are redundant.
+	if strings.HasPrefix(expression, "(") && strings.HasSuffix(expression, ")") {
+		trimmed := expression[1 : len(expression)-1]
+		if isBalanced(trimmed) {
+			return reduceOuter(trimmed) // Recursively reduce the trimmed expression.
 		}
-		if string(c) == "(" {
-			openCount++
-			continue
-		}
-		if string(c) == ")" && openCount > 1 {
-			_, _ = fmt.Fprintf(&sb, "%c", c)
-		}
-		if string(c) == ")" {
-			openCount--
-			continue
-		}
-		_, _ = fmt.Fprintf(&sb, "%c", c)
 	}
 
-	return sb.String()
+	return expression
+}
+
+func isBalanced(expression string) bool {
+	count := 0
+	for _, c := range expression {
+		switch c {
+		case '(':
+			count++
+		case ')':
+			count--
+			if count < 0 {
+				return false
+			}
+		default:
+		}
+	}
+	return count == 0
 }

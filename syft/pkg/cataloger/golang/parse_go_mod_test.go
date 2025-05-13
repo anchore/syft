@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
@@ -28,9 +29,32 @@ func TestParseGoMod(t *testing.T) {
 			},
 		},
 		{
+			fixture: "test-fixtures/relative-replace",
+			expected: []pkg.Package{
+				{
+					Name:      "github.com/aws/aws-sdk-go-v2",
+					Version:   "",
+					PURL:      "pkg:golang/github.com/aws/aws-sdk-go-v2",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/relative-replace")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+			},
+		},
+		{
 
 			fixture: "test-fixtures/many-packages",
 			expected: []pkg.Package{
+				{
+					Name:      "github.com/anchore/archiver/v3",
+					Version:   "v3.5.2",
+					PURL:      "pkg:golang/github.com/anchore/archiver@v3.5.2#v3",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
 				{
 					Name:      "github.com/anchore/go-testutils",
 					Version:   "v0.0.0-20200624184116-66aa578126db",
@@ -82,10 +106,11 @@ func TestParseGoMod(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			c := goModCataloger{}
+			c := newGoModCataloger(DefaultCatalogerConfig())
 			pkgtest.NewCatalogTester().
 				FromFile(t, test.fixture).
 				Expects(test.expected, nil).
+				WithResolver(fileresolver.Empty{}).
 				TestParser(t, c.parseGoModFile)
 		})
 	}
@@ -145,4 +170,12 @@ func Test_GoSumHashes(t *testing.T) {
 				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
 		})
 	}
+}
+
+func Test_corruptGoMod(t *testing.T) {
+	c := NewGoModuleFileCataloger(DefaultCatalogerConfig().WithSearchRemoteLicenses(false))
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/corrupt").
+		WithError().
+		TestCataloger(t, c)
 }

@@ -1,0 +1,2727 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "anchore.io/schema/syft/json/16.0.18/document",
+  "$ref": "#/$defs/Document",
+  "$defs": {
+    "AlpmDbEntry": {
+      "properties": {
+        "basepackage": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "packager": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "validation": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "integer"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array"
+        },
+        "backup": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "basepackage",
+        "package",
+        "version",
+        "description",
+        "architecture",
+        "size",
+        "packager",
+        "url",
+        "validation",
+        "reason",
+        "files",
+        "backup"
+      ]
+    },
+    "AlpmFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "gid": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "size": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ApkDbEntry": {
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "originPackage": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "pullDependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "pullChecksum": {
+          "type": "string"
+        },
+        "gitCommitOfApkPort": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/ApkFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "originPackage",
+        "maintainer",
+        "version",
+        "architecture",
+        "url",
+        "description",
+        "size",
+        "installedSize",
+        "pullDependencies",
+        "provides",
+        "pullChecksum",
+        "gitCommitOfApkPort",
+        "files"
+      ]
+    },
+    "ApkFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "ownerUid": {
+          "type": "string"
+        },
+        "ownerGid": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "BinarySignature": {
+      "properties": {
+        "matches": {
+          "items": {
+            "$ref": "#/$defs/ClassifierMatch"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "matches"
+      ]
+    },
+    "CConanFileEntry": {
+      "properties": {
+        "ref": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ]
+    },
+    "CConanInfoEntry": {
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "package_id": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ]
+    },
+    "CConanLockEntry": {
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "package_id": {
+          "type": "string"
+        },
+        "prev": {
+          "type": "string"
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "build_requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "py_requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "options": {
+          "$ref": "#/$defs/KeyValues"
+        },
+        "path": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ]
+    },
+    "CConanLockV2Entry": {
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "packageID": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "recipeRevision": {
+          "type": "string"
+        },
+        "packageRevision": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ]
+    },
+    "CPE": {
+      "properties": {
+        "cpe": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "cpe"
+      ]
+    },
+    "ClassifierMatch": {
+      "properties": {
+        "classifier": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "type": "object",
+      "required": [
+        "classifier",
+        "location"
+      ]
+    },
+    "CocoaPodfileLockEntry": {
+      "properties": {
+        "checksum": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "checksum"
+      ]
+    },
+    "Coordinates": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "layerID": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "DartPubspecLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "hosted_url": {
+          "type": "string"
+        },
+        "vcs_url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "Descriptor": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "configuration": true
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "Digest": {
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ]
+    },
+    "Document": {
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/Package"
+          },
+          "type": "array"
+        },
+        "artifactRelationships": {
+          "items": {
+            "$ref": "#/$defs/Relationship"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/File"
+          },
+          "type": "array"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "distro": {
+          "$ref": "#/$defs/LinuxRelease"
+        },
+        "descriptor": {
+          "$ref": "#/$defs/Descriptor"
+        },
+        "schema": {
+          "$ref": "#/$defs/Schema"
+        }
+      },
+      "type": "object",
+      "required": [
+        "artifacts",
+        "artifactRelationships",
+        "source",
+        "distro",
+        "descriptor",
+        "schema"
+      ]
+    },
+    "DotnetDepsEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "sha512": {
+          "type": "string"
+        },
+        "hashPath": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "path",
+        "sha512",
+        "hashPath"
+      ]
+    },
+    "DotnetPortableExecutableEntry": {
+      "properties": {
+        "assemblyVersion": {
+          "type": "string"
+        },
+        "legalCopyright": {
+          "type": "string"
+        },
+        "comments": {
+          "type": "string"
+        },
+        "internalName": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        },
+        "productVersion": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "assemblyVersion",
+        "legalCopyright",
+        "companyName",
+        "productName",
+        "productVersion"
+      ]
+    },
+    "DpkgDbEntry": {
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preDepends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/DpkgFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "source",
+        "version",
+        "sourceVersion",
+        "architecture",
+        "maintainer",
+        "installedSize",
+        "files"
+      ]
+    },
+    "DpkgFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "isConfigFile": {
+          "type": "boolean"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "isConfigFile"
+      ]
+    },
+    "ELFSecurityFeatures": {
+      "properties": {
+        "symbolTableStripped": {
+          "type": "boolean"
+        },
+        "stackCanary": {
+          "type": "boolean"
+        },
+        "nx": {
+          "type": "boolean"
+        },
+        "relRO": {
+          "type": "string"
+        },
+        "pie": {
+          "type": "boolean"
+        },
+        "dso": {
+          "type": "boolean"
+        },
+        "safeStack": {
+          "type": "boolean"
+        },
+        "cfi": {
+          "type": "boolean"
+        },
+        "fortify": {
+          "type": "boolean"
+        }
+      },
+      "type": "object",
+      "required": [
+        "symbolTableStripped",
+        "nx",
+        "relRO",
+        "pie",
+        "dso"
+      ]
+    },
+    "ElfBinaryPackageNoteJsonPayload": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "osCPE": {
+          "type": "string"
+        },
+        "os": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "system": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "sourceRepo": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ElixirMixLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "pkgHash": {
+          "type": "string"
+        },
+        "pkgHashExt": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "pkgHash",
+        "pkgHashExt"
+      ]
+    },
+    "ErlangRebarLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "pkgHash": {
+          "type": "string"
+        },
+        "pkgHashExt": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "pkgHash",
+        "pkgHashExt"
+      ]
+    },
+    "Executable": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "hasExports": {
+          "type": "boolean"
+        },
+        "hasEntrypoint": {
+          "type": "boolean"
+        },
+        "importedLibraries": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "elfSecurityFeatures": {
+          "$ref": "#/$defs/ELFSecurityFeatures"
+        }
+      },
+      "type": "object",
+      "required": [
+        "format",
+        "hasExports",
+        "hasEntrypoint",
+        "importedLibraries"
+      ]
+    },
+    "File": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Coordinates"
+        },
+        "metadata": {
+          "$ref": "#/$defs/FileMetadataEntry"
+        },
+        "contents": {
+          "type": "string"
+        },
+        "digests": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "items": {
+            "$ref": "#/$defs/FileLicense"
+          },
+          "type": "array"
+        },
+        "executable": {
+          "$ref": "#/$defs/Executable"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "location"
+      ]
+    },
+    "FileLicense": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdxExpression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/FileLicenseEvidence"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type"
+      ]
+    },
+    "FileLicenseEvidence": {
+      "properties": {
+        "confidence": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "extent": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "confidence",
+        "offset",
+        "extent"
+      ]
+    },
+    "FileMetadataEntry": {
+      "properties": {
+        "mode": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "linkDestination": {
+          "type": "string"
+        },
+        "userID": {
+          "type": "integer"
+        },
+        "groupID": {
+          "type": "integer"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "mode",
+        "type",
+        "userID",
+        "groupID",
+        "mimeType",
+        "size"
+      ]
+    },
+    "GoModuleBuildinfoEntry": {
+      "properties": {
+        "goBuildSettings": {
+          "$ref": "#/$defs/KeyValues"
+        },
+        "goCompiledVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "h1Digest": {
+          "type": "string"
+        },
+        "mainModule": {
+          "type": "string"
+        },
+        "goCryptoSettings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "goExperiments": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "goCompiledVersion",
+        "architecture"
+      ]
+    },
+    "GoModuleEntry": {
+      "properties": {
+        "h1Digest": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HaskellHackageStackEntry": {
+      "properties": {
+        "pkgHash": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "HaskellHackageStackLockEntry": {
+      "properties": {
+        "pkgHash": {
+          "type": "string"
+        },
+        "snapshotURL": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IDLikes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "JavaArchive": {
+      "properties": {
+        "virtualPath": {
+          "type": "string"
+        },
+        "manifest": {
+          "$ref": "#/$defs/JavaManifest"
+        },
+        "pomProperties": {
+          "$ref": "#/$defs/JavaPomProperties"
+        },
+        "pomProject": {
+          "$ref": "#/$defs/JavaPomProject"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "virtualPath"
+      ]
+    },
+    "JavaJvmInstallation": {
+      "properties": {
+        "release": {
+          "$ref": "#/$defs/JavaVMRelease"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "release",
+        "files"
+      ]
+    },
+    "JavaManifest": {
+      "properties": {
+        "main": {
+          "$ref": "#/$defs/KeyValues"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/KeyValues"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "JavaPomParent": {
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "groupId",
+        "artifactId",
+        "version"
+      ]
+    },
+    "JavaPomProject": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "parent": {
+          "$ref": "#/$defs/JavaPomParent"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "groupId",
+        "artifactId",
+        "version",
+        "name"
+      ]
+    },
+    "JavaPomProperties": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "extraFields": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "name",
+        "groupId",
+        "artifactId",
+        "version"
+      ]
+    },
+    "JavaVMRelease": {
+      "properties": {
+        "implementor": {
+          "type": "string"
+        },
+        "implementorVersion": {
+          "type": "string"
+        },
+        "javaRuntimeVersion": {
+          "type": "string"
+        },
+        "javaVersion": {
+          "type": "string"
+        },
+        "javaVersionDate": {
+          "type": "string"
+        },
+        "libc": {
+          "type": "string"
+        },
+        "modules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "osArch": {
+          "type": "string"
+        },
+        "osName": {
+          "type": "string"
+        },
+        "osVersion": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "buildSource": {
+          "type": "string"
+        },
+        "buildSourceRepo": {
+          "type": "string"
+        },
+        "sourceRepo": {
+          "type": "string"
+        },
+        "fullVersion": {
+          "type": "string"
+        },
+        "semanticVersion": {
+          "type": "string"
+        },
+        "buildInfo": {
+          "type": "string"
+        },
+        "jvmVariant": {
+          "type": "string"
+        },
+        "jvmVersion": {
+          "type": "string"
+        },
+        "imageType": {
+          "type": "string"
+        },
+        "buildType": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "JavascriptNpmPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "private": {
+          "type": "boolean"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "homepage",
+        "description",
+        "url",
+        "private"
+      ]
+    },
+    "JavascriptNpmPackageLockEntry": {
+      "properties": {
+        "resolved": {
+          "type": "string"
+        },
+        "integrity": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "resolved",
+        "integrity"
+      ]
+    },
+    "JavascriptYarnLockEntry": {
+      "properties": {
+        "resolved": {
+          "type": "string"
+        },
+        "integrity": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "resolved",
+        "integrity"
+      ]
+    },
+    "KeyValue": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ]
+    },
+    "KeyValues": {
+      "items": {
+        "$ref": "#/$defs/KeyValue"
+      },
+      "type": "array"
+    },
+    "License": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdxExpression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "urls": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type",
+        "urls",
+        "locations"
+      ]
+    },
+    "LinuxKernelArchive": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "extendedVersion": {
+          "type": "string"
+        },
+        "buildTime": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "rwRootFS": {
+          "type": "boolean"
+        },
+        "swapDevice": {
+          "type": "integer"
+        },
+        "rootDevice": {
+          "type": "integer"
+        },
+        "videoMode": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "architecture",
+        "version"
+      ]
+    },
+    "LinuxKernelModule": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "kernelVersion": {
+          "type": "string"
+        },
+        "versionMagic": {
+          "type": "string"
+        },
+        "parameters": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/LinuxKernelModuleParameter"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "LinuxKernelModuleParameter": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LinuxRelease": {
+      "properties": {
+        "prettyName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "idLike": {
+          "$ref": "#/$defs/IDLikes"
+        },
+        "version": {
+          "type": "string"
+        },
+        "versionID": {
+          "type": "string"
+        },
+        "versionCodename": {
+          "type": "string"
+        },
+        "buildID": {
+          "type": "string"
+        },
+        "imageID": {
+          "type": "string"
+        },
+        "imageVersion": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "variantID": {
+          "type": "string"
+        },
+        "homeURL": {
+          "type": "string"
+        },
+        "supportURL": {
+          "type": "string"
+        },
+        "bugReportURL": {
+          "type": "string"
+        },
+        "privacyPolicyURL": {
+          "type": "string"
+        },
+        "cpeName": {
+          "type": "string"
+        },
+        "supportEnd": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Location": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "layerID": {
+          "type": "string"
+        },
+        "accessPath": {
+          "type": "string"
+        },
+        "annotations": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "accessPath"
+      ]
+    },
+    "LuarocksPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "dependencies": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "license",
+        "homepage",
+        "description",
+        "url",
+        "dependencies"
+      ]
+    },
+    "MicrosoftKbPatch": {
+      "properties": {
+        "product_id": {
+          "type": "string"
+        },
+        "kb": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "product_id",
+        "kb"
+      ]
+    },
+    "NixStoreEntry": {
+      "properties": {
+        "outputHash": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "outputHash",
+        "files"
+      ]
+    },
+    "OpamPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "url": {
+          "type": "string"
+        },
+        "checksum": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "licenses",
+        "url",
+        "checksum",
+        "homepage",
+        "dependencies"
+      ]
+    },
+    "Package": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "foundBy": {
+          "type": "string"
+        },
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "$ref": "#/$defs/licenses"
+        },
+        "language": {
+          "type": "string"
+        },
+        "cpes": {
+          "$ref": "#/$defs/cpes"
+        },
+        "purl": {
+          "type": "string"
+        },
+        "metadataType": {
+          "type": "string"
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/AlpmDbEntry"
+            },
+            {
+              "$ref": "#/$defs/ApkDbEntry"
+            },
+            {
+              "$ref": "#/$defs/BinarySignature"
+            },
+            {
+              "$ref": "#/$defs/CConanFileEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanInfoEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanLockEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanLockV2Entry"
+            },
+            {
+              "$ref": "#/$defs/CocoaPodfileLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DartPubspecLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DotnetDepsEntry"
+            },
+            {
+              "$ref": "#/$defs/DotnetPortableExecutableEntry"
+            },
+            {
+              "$ref": "#/$defs/DpkgDbEntry"
+            },
+            {
+              "$ref": "#/$defs/ElfBinaryPackageNoteJsonPayload"
+            },
+            {
+              "$ref": "#/$defs/ElixirMixLockEntry"
+            },
+            {
+              "$ref": "#/$defs/ErlangRebarLockEntry"
+            },
+            {
+              "$ref": "#/$defs/GoModuleBuildinfoEntry"
+            },
+            {
+              "$ref": "#/$defs/GoModuleEntry"
+            },
+            {
+              "$ref": "#/$defs/HaskellHackageStackEntry"
+            },
+            {
+              "$ref": "#/$defs/HaskellHackageStackLockEntry"
+            },
+            {
+              "$ref": "#/$defs/JavaArchive"
+            },
+            {
+              "$ref": "#/$defs/JavaJvmInstallation"
+            },
+            {
+              "$ref": "#/$defs/JavascriptNpmPackage"
+            },
+            {
+              "$ref": "#/$defs/JavascriptNpmPackageLockEntry"
+            },
+            {
+              "$ref": "#/$defs/JavascriptYarnLockEntry"
+            },
+            {
+              "$ref": "#/$defs/LinuxKernelArchive"
+            },
+            {
+              "$ref": "#/$defs/LinuxKernelModule"
+            },
+            {
+              "$ref": "#/$defs/LuarocksPackage"
+            },
+            {
+              "$ref": "#/$defs/MicrosoftKbPatch"
+            },
+            {
+              "$ref": "#/$defs/NixStoreEntry"
+            },
+            {
+              "$ref": "#/$defs/OpamPackage"
+            },
+            {
+              "$ref": "#/$defs/PhpComposerInstalledEntry"
+            },
+            {
+              "$ref": "#/$defs/PhpComposerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PhpPeclEntry"
+            },
+            {
+              "$ref": "#/$defs/PortageDbEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonPackage"
+            },
+            {
+              "$ref": "#/$defs/PythonPipRequirementsEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonPipfileLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonPoetryLockEntry"
+            },
+            {
+              "$ref": "#/$defs/RDescription"
+            },
+            {
+              "$ref": "#/$defs/RpmArchive"
+            },
+            {
+              "$ref": "#/$defs/RpmDbEntry"
+            },
+            {
+              "$ref": "#/$defs/RubyGemspec"
+            },
+            {
+              "$ref": "#/$defs/RustCargoAuditEntry"
+            },
+            {
+              "$ref": "#/$defs/RustCargoLockEntry"
+            },
+            {
+              "$ref": "#/$defs/SwiftPackageManagerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/SwiplpackPackage"
+            },
+            {
+              "$ref": "#/$defs/WordpressPluginEntry"
+            }
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "foundBy",
+        "locations",
+        "licenses",
+        "language",
+        "cpes",
+        "purl"
+      ]
+    },
+    "PhpComposerAuthors": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    },
+    "PhpComposerExternalReference": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "shasum": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "type",
+        "url",
+        "reference"
+      ]
+    },
+    "PhpComposerInstalledEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
+        },
+        "dist": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        },
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ]
+    },
+    "PhpComposerLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
+        },
+        "dist": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "type": "string"
+        },
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ]
+    },
+    "PhpPeclEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "PortageDbEntry": {
+      "properties": {
+        "installedSize": {
+          "type": "integer"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/PortageFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "installedSize",
+        "files"
+      ]
+    },
+    "PortageFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "PythonDirectURLOriginInfo": {
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "commitId": {
+          "type": "string"
+        },
+        "vcs": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "url"
+      ]
+    },
+    "PythonFileDigest": {
+      "properties": {
+        "algorithm": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ]
+    },
+    "PythonFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/PythonFileDigest"
+        },
+        "size": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "PythonPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorEmail": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/PythonFileRecord"
+          },
+          "type": "array"
+        },
+        "sitePackagesRootPath": {
+          "type": "string"
+        },
+        "topLevelPackages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "directUrlOrigin": {
+          "$ref": "#/$defs/PythonDirectURLOriginInfo"
+        },
+        "requiresPython": {
+          "type": "string"
+        },
+        "requiresDist": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "providesExtra": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "platform",
+        "sitePackagesRootPath"
+      ]
+    },
+    "PythonPipRequirementsEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "versionConstraint": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "markers": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "versionConstraint"
+      ]
+    },
+    "PythonPipfileLockEntry": {
+      "properties": {
+        "hashes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "index": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "hashes",
+        "index"
+      ]
+    },
+    "PythonPoetryLockDependencyEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "markers": {
+          "type": "string"
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "optional"
+      ]
+    },
+    "PythonPoetryLockEntry": {
+      "properties": {
+        "index": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/PythonPoetryLockDependencyEntry"
+          },
+          "type": "array"
+        },
+        "extras": {
+          "items": {
+            "$ref": "#/$defs/PythonPoetryLockExtraEntry"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "index",
+        "dependencies"
+      ]
+    },
+    "PythonPoetryLockExtraEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "dependencies"
+      ]
+    },
+    "RDescription": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "url": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "repository": {
+          "type": "string"
+        },
+        "built": {
+          "type": "string"
+        },
+        "needsCompilation": {
+          "type": "boolean"
+        },
+        "imports": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "suggests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Relationship": {
+      "properties": {
+        "parent": {
+          "type": "string"
+        },
+        "child": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": true
+      },
+      "type": "object",
+      "required": [
+        "parent",
+        "child",
+        "type"
+      ]
+    },
+    "RpmArchive": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        },
+        "sourceRpm": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "modularityLabel": {
+          "type": "string"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "files"
+      ]
+    },
+    "RpmDbEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string"
+        },
+        "sourceRpm": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "modularityLabel": {
+          "type": "string"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "files"
+      ]
+    },
+    "RpmFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "integer"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "flags": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "mode",
+        "size",
+        "digest",
+        "userName",
+        "groupName",
+        "flags"
+      ]
+    },
+    "RubyGemspec": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "homepage": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "RustCargoAuditEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source"
+      ]
+    },
+    "RustCargoLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "checksum": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "checksum",
+        "dependencies"
+      ]
+    },
+    "Schema": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "version",
+        "url"
+      ]
+    },
+    "Source": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": true
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "metadata"
+      ]
+    },
+    "SwiftPackageManagerLockEntry": {
+      "properties": {
+        "revision": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "revision"
+      ]
+    },
+    "SwiplpackPackage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorEmail": {
+          "type": "string"
+        },
+        "packager": {
+          "type": "string"
+        },
+        "packagerEmail": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "packager",
+        "packagerEmail",
+        "homepage",
+        "dependencies"
+      ]
+    },
+    "WordpressPluginEntry": {
+      "properties": {
+        "pluginInstallDirectory": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "authorUri": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "pluginInstallDirectory"
+      ]
+    },
+    "cpes": {
+      "items": {
+        "$ref": "#/$defs/CPE"
+      },
+      "type": "array"
+    },
+    "licenses": {
+      "items": {
+        "$ref": "#/$defs/License"
+      },
+      "type": "array"
+    }
+  }
+}

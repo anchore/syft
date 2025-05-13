@@ -23,6 +23,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: ApkPkg,
 		},
 		{
+			purl:     "pkg:bitnami/apache@2.4.62-3?arch=arm64&distro=debian-12",
+			expected: BitnamiPkg,
+		},
+		{
 			purl:     "pkg:deb/debian/curl@7.50.3-1?arch=i386&distro=jessie",
 			expected: DebPkg,
 		},
@@ -50,7 +54,6 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:pub/util@1.2.34?hosted_url=pub.hosted.org",
 			expected: DartPubPkg,
 		},
-
 		{
 			purl:     "pkg:dotnet/Microsoft.CodeAnalysis.Razor@2.2.0",
 			expected: DotnetPkg,
@@ -58,6 +61,18 @@ func TestTypeFromPURL(t *testing.T) {
 		{
 			purl:     "pkg:composer/laravel/laravel@5.5.0",
 			expected: PhpComposerPkg,
+		},
+		{
+			purl:     "pkg:pear/pecl.php.net/memcached@3.2.0", // pecl namespace
+			expected: PhpPearPkg,
+		},
+		{
+			purl:     "pkg:pear/pear.php.net/memcached@3.2.0", // pear namespace
+			expected: PhpPearPkg,
+		},
+		{
+			purl:     "pkg:pecl/pecl.php.net/memcached@3.2.0", // note: this is an invalid purl, but we will handle it anyway in case folks created the type pre-emptively
+			expected: PhpPearPkg,                              // we should still consider this a pear package
 		},
 		{
 			purl:     "pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1?type=zip&classifier=dist",
@@ -84,6 +99,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: HexPkg,
 		},
 		{
+			purl:     "pkg:otp/accept@0.3.5",
+			expected: ErlangOTPPkg,
+		},
+		{
 			purl:     "pkg:generic/linux-kernel@5.10.15",
 			expected: LinuxKernelPkg,
 		},
@@ -96,38 +115,54 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: Rpkg,
 		},
 		{
+			purl:     "pkg:luarocks/kong@3.7.0",
+			expected: LuaRocksPkg,
+		},
+		{
 			purl:     "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
 			expected: SwiftPkg,
 		},
+		{
+			purl:     "pkg:swiplpack/condition@0.1.1",
+			expected: SwiplPackPkg,
+		},
+		{
+			purl:     "pkg:opam/ocaml-base-compiler@5.2.0",
+			expected: OpamPkg,
+		},
 	}
 
-	var pkgTypes []string
+	var pkgTypes = strset.New()
 	var expectedTypes = strset.New()
 	for _, ty := range AllPkgs {
 		expectedTypes.Add(string(ty))
 	}
 
 	// testing microsoft packages and jenkins-plugins and custom binary type
-	// is not valid for purl at this time
+	// and terraform types is not valid for purl at this time
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
 	expectedTypes.Remove(string(PortagePkg))
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
+	expectedTypes.Remove(string(WordpressPluginPkg))
+	expectedTypes.Remove(string(HomebrewPkg))
+	expectedTypes.Remove(string(TerraformPkg))
+	expectedTypes.Remove(string(GraalVMNativeImagePkg))
+	expectedTypes.Remove(string(PhpPeclPkg)) // we should always consider this a pear package
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {
 			actual := TypeFromPURL(test.purl)
 
 			if actual != "" {
-				pkgTypes = append(pkgTypes, string(actual))
+				pkgTypes.Add(string(actual))
 			}
 
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 
-	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes, "missing one or more package types to test against (maybe a package type was added?)")
-
+	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes.List(), "missing one or more package types to test against (maybe a package type was added?)")
 }

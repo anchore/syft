@@ -13,9 +13,17 @@ on:
 jobs:
   quality-gate:
     environment: release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
+      - name: Check if running on main
+        if: github.ref != 'refs/heads/main'
+        # we are using the following flag when running `cosign blob-verify` for checksum signature verification:
+        #   --certificate-identity-regexp "https://github.com/anchore/.github/workflows/release.yaml@refs/heads/main"
+        # if we are not on the main branch, the signature will not be verifiable since the suffix requires the main branch
+        # at the time of when the OIDC token was issued on the Github Actions runner.
+        run: echo "This can only be run on the main branch otherwise releases produced will not be verifiable with cosign" && exit 1
 
       - name: Check if tag already exists
         # note: this will fail if the tag already exists
@@ -24,7 +32,7 @@ jobs:
           git tag ${{ github.event.inputs.version }}
 
       - name: Check static analysis results
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: static-analysis
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -33,7 +41,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check unit test results
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: unit
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +50,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check integration test results
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: integration
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,7 +59,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check acceptance test results (linux)
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: acceptance-linux
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +68,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check acceptance test results (mac)
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: acceptance-mac
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -69,7 +77,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Check cli test results (linux)
-        uses: fountainhead/action-wait-for-check@297be350cf8393728ea4d4b39435c7d7ae167c93 # v1.1.0
+        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
         id: cli-linux
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -90,14 +98,14 @@ jobs:
 
   release:
     needs: [quality-gate]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       packages: write
       # required for goreleaser signs section with cosign
       id-token: write
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
         with:
           fetch-depth: 0
 
@@ -105,13 +113,13 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Login to Docker Hub
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d  #v3.0.0
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  #v3.4.0
         with:
-          username: ${{ secrets.TOOLBOX_DOCKER_USER }}
-          password: ${{ secrets.TOOLBOX_DOCKER_PASS }}
+          username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
+          password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d  #v3.0.0
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  #v3.4.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -138,17 +146,15 @@ jobs:
           # for creating the release (requires write access to packages and content)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # for updating brew formula in anchore/homebrew-syft
-          GITHUB_BREW_TOKEN: ${{ secrets.ANCHORE_GIT_READ_TOKEN }}
-          # for updating the VERSION file in S3...
-          AWS_ACCESS_KEY_ID: ${{ secrets.TOOLBOX_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.TOOLBOX_AWS_SECRET_ACCESS_KEY }}
+          GITHUB_BREW_TOKEN: ${{ secrets.ANCHOREOPS_GITHUB_OSS_WRITE_TOKEN }}
 
-      - uses: anchore/sbom-action@b6a39da80722a2cb0ef5d197531764a89b5d48c3 #v0.15.8
+      - uses: anchore/sbom-action@9f7302141466aa6482940f15371237e9d9f4c34a #v0.19.0
         continue-on-error: true
         with:
+          file: go.mod
           artifact-name: sbom.spdx.json
 
-      - uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 #v3.16.2
+      - uses: 8398a7/action-slack@1750b5085f3ec60384090fb7c52965ef822e869e #v3.18.0
         continue-on-error: true
         with:
           status: ${{ job.status }}
@@ -157,3 +163,10 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
         if: ${{ success() }}
+
+  release-version-file:
+    needs: [release]
+    uses: ./.github/workflows/release-version-file.yaml
+    with:
+      version: ${{ github.event.inputs.version }}
+    secrets: inherit

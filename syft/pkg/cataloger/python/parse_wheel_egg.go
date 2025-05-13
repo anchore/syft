@@ -6,9 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -18,7 +24,7 @@ import (
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents. Contained
 // fields are governed by the PyPA core metadata specification (https://packaging.python.org/en/latest/specifications/core-metadata/).
-func parseWheelOrEgg(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err
@@ -33,12 +39,18 @@ func parseWheelOrEgg(_ context.Context, resolver file.Resolver, _ *generic.Envir
 		return nil, nil, nil
 	}
 
-	pkgs := []pkg.Package{newPackageForPackage(resolver, *pd, sources...)}
+	pkgs := []pkg.Package{
+		newPackageForPackage(
+			*pd,
+			findLicenses(ctx, resolver, *pd),
+			sources...,
+		),
+	}
 
 	return pkgs, nil, nil
 }
 
-// fetchRecordFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
+// fetchInstalledFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
 func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
@@ -60,7 +72,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 		// parse the installed-files contents
 		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.RealPath, sitePackagesRootPath)
 		if err != nil {
-			log.Warnf("unable to parse installed-files.txt for python package=%+v: %w", metadataLocation.RealPath, err)
+			log.WithFields("error", err, "path", metadataLocation.RealPath).Trace("unable to parse installed-files.txt for python package")
 			return files, sources, nil
 		}
 
@@ -194,7 +206,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	}
 	defer internal.CloseAndLogError(metadataContents, metadataLocation.AccessPath)
 
-	pd, err := parseWheelOrEggMetadata(metadataLocation.RealPath, metadataContents)
+	pd, err := parseWheelOrEggMetadata(file.NewLocationReadCloser(metadataLocation, metadataContents))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -235,4 +247,92 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	sources = append(sources, s...)
 	pd.DirectURLOrigin = d
 	return &pd, sources, nil
+}
+
+func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg.LicenseSet {
+	var licenseSet pkg.LicenseSet
+
+	licenseLocations := file.NewLocationSet()
+	if m.LicenseFilePath != "" {
+		locs, err := resolver.FilesByPath(m.LicenseFilePath)
+		if err != nil {
+			log.WithFields("error", err, "path", m.LicenseFilePath).Trace("unable to resolve python license file")
+		} else {
+			licenseLocations.Add(locs...)
+		}
+	}
+
+	switch {
+	case m.LicenseExpression != "" || m.Licenses != "":
+		licenseSet = getLicenseSetFromValues(ctx, licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
+	case !licenseLocations.Empty():
+		licenseSet = getLicenseSetFromFiles(ctx, resolver, licenseLocations.ToSlice()...)
+
+	default:
+		// search for known license paths from RECORDS file
+		licenseNames := strset.New()
+		for _, n := range licenses.FileNames() {
+			licenseNames.Add(strings.ToLower(n))
+		}
+		parent := path.Base(path.Dir(m.DistInfoLocation.Path()))
+		candidatePaths := strset.New()
+		for _, f := range m.Files {
+			if !strings.HasPrefix(f.Path, parent) || strings.Count(f.Path, "/") > 1 {
+				continue
+			}
+
+			if licenseNames.Has(strings.ToLower(filepath.Base(f.Path))) {
+				candidatePaths.Add(path.Join(m.SitePackagesRootPath, f.Path))
+			}
+		}
+
+		paths := candidatePaths.List()
+		sort.Strings(paths)
+		locationSet := file.NewLocationSet()
+		for _, p := range paths {
+			locs, err := resolver.FilesByPath(p)
+			if err != nil {
+				log.WithFields("error", err, "path", p).Trace("unable to resolve python license in dist-info")
+				continue
+			}
+			locationSet.Add(locs...)
+		}
+
+		licenseSet = getLicenseSetFromFiles(ctx, resolver, locationSet.ToSlice()...)
+	}
+	return licenseSet
+}
+
+func getLicenseSetFromValues(ctx context.Context, locations []file.Location, licenseValues ...string) pkg.LicenseSet {
+	if len(locations) == 0 {
+		return pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseValues...)...)
+	}
+
+	licenseSet := pkg.NewLicenseSet()
+	for _, value := range licenseValues {
+		if value == "" {
+			continue
+		}
+
+		licenseSet.Add(pkg.NewLicenseFromLocationsWithContext(ctx, value, locations...))
+	}
+	return licenseSet
+}
+
+func getLicenseSetFromFiles(ctx context.Context, resolver file.Resolver, locations ...file.Location) pkg.LicenseSet {
+	licenseSet := pkg.NewLicenseSet()
+	for _, loc := range locations {
+		licenseSet.Add(getLicenseSetFromFile(ctx, resolver, loc)...)
+	}
+	return licenseSet
+}
+
+func getLicenseSetFromFile(ctx context.Context, resolver file.Resolver, location file.Location) []pkg.License {
+	metadataContents, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		log.WithFields("error", err, "path", location.Path()).Trace("unable to read file contents")
+		return nil
+	}
+	defer internal.CloseAndLogError(metadataContents, location.Path())
+	return pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, metadataContents))
 }

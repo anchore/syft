@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,7 @@ import (
 )
 
 func TestParsePackageJSON(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		Fixture     string
 		ExpectedPkg pkg.Package
@@ -24,7 +26,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package.json")),
 				),
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -45,7 +47,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("ISC", file.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
 				),
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -65,8 +67,8 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
-					pkg.NewLicenseFromLocations("Apache-2.0", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Apache-2.0", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -123,7 +125,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -144,7 +146,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/function-bind@1.1.1",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("MIT", file.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -165,7 +167,7 @@ func TestParsePackageJSON(t *testing.T) {
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-private.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-private.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -175,6 +177,27 @@ func TestParsePackageJSON(t *testing.T) {
 					Homepage:    "https://docs.npmjs.com/",
 					URL:         "https://github.com/npm/cli",
 					Private:     true,
+					Description: "a package manager for JavaScript",
+				},
+			},
+		},
+		{
+			Fixture: "test-fixtures/pkg-json/package-author-non-standard.json",
+			ExpectedPkg: pkg.Package{
+				Name:    "npm",
+				Version: "6.14.6",
+				PURL:    "pkg:npm/npm@6.14.6",
+				Type:    pkg.NpmPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-author-non-standard.json")),
+				),
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
+					Name:        "npm",
+					Version:     "6.14.6",
+					Author:      "npm Inc. (https://www.npmjs.com/)",
+					Homepage:    "https://docs.npmjs.com/",
+					URL:         "https://github.com/npm/cli",
 					Description: "a package manager for JavaScript",
 				},
 			},
@@ -189,10 +212,28 @@ func TestParsePackageJSON(t *testing.T) {
 	}
 }
 
+func Test_corruptPackageJSON(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/package.json").
+		WithError().
+		TestParser(t, parsePackageJSON)
+}
+
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
 	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
 
-	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, nil, nil)
+	// raise package.json files as packages with any information we find, these will be filtered out
+	// according to compliance rules later
+	expectedPkgs := []pkg.Package{
+		{
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			PURL:      packageURL("", ""),
+			Metadata:  pkg.NpmPackage{},
+			Locations: file.NewLocationSet(file.NewLocation(fixtureFile)),
+		},
+	}
+	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, expectedPkgs, nil)
 }
 
 func Test_pathContainsNodeModulesDirectory(t *testing.T) {

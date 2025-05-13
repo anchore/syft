@@ -15,7 +15,7 @@
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "SPDXID": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "versionInfo": "1.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -74,11 +74,14 @@
      "checksumValue": "2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
     }
    ],
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
    "externalRefs": [
     {
      "referenceCategory": "PACKAGE-MANAGER",
      "referenceType": "purl",
-     "referenceLocator": "pkg:oci/user-image-input@sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch="
+     "referenceLocator": "pkg:oci/user-image-input@sha256%3A2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch="
     }
    ],
    "primaryPackagePurpose": "CONTAINER"
@@ -86,7 +89,7 @@
  ],
  "files": [
   {
-   "fileName": "/a1/f6",
+   "fileName": "a1/f6",
    "SPDXID": "SPDXRef-File-a1-f6-9c2f7510199b17f6",
    "fileTypes": [
     "OTHER"
@@ -98,10 +101,13 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION"
   },
   {
-   "fileName": "/d1/f3",
+   "fileName": "d1/f3",
    "SPDXID": "SPDXRef-File-d1-f3-c6f5b29dca12661f",
    "fileTypes": [
     "OTHER"
@@ -113,10 +119,13 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION"
   },
   {
-   "fileName": "/d2/f4",
+   "fileName": "d2/f4",
    "SPDXID": "SPDXRef-File-d2-f4-c641caa71518099f",
    "fileTypes": [
     "OTHER"
@@ -128,10 +137,13 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION"
   },
   {
-   "fileName": "/f1",
+   "fileName": "f1",
    "SPDXID": "SPDXRef-File-f1-5265a4dde3edbf7c",
    "fileTypes": [
     "OTHER"
@@ -143,10 +155,13 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION"
   },
   {
-   "fileName": "/f2",
+   "fileName": "f2",
    "SPDXID": "SPDXRef-File-f2-f9e49132a4b96ccd",
    "fileTypes": [
     "OTHER"
@@ -158,10 +173,13 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION"
   },
   {
-   "fileName": "/z1/f5",
+   "fileName": "z1/f5",
    "SPDXID": "SPDXRef-File-z1-f5-839d99ee67d9d174",
    "fileTypes": [
     "OTHER"
@@ -173,43 +191,46 @@
     }
    ],
    "licenseConcluded": "NOASSERTION",
-   "copyrightText": ""
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION"
   }
  ],
  "relationships": [
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "spdxElementId": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relatedSpdxElement": "SPDXRef-File-f1-5265a4dde3edbf7c",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "spdxElementId": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relatedSpdxElement": "SPDXRef-File-z1-f5-839d99ee67d9d174",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "spdxElementId": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relatedSpdxElement": "SPDXRef-File-a1-f6-9c2f7510199b17f6",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "spdxElementId": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relatedSpdxElement": "SPDXRef-File-d2-f4-c641caa71518099f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "spdxElementId": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relatedSpdxElement": "SPDXRef-File-d1-f3-c6f5b29dca12661f",
    "relationshipType": "CONTAINS"
   },
   {
-   "spdxElementId": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "spdxElementId": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relatedSpdxElement": "SPDXRef-File-f2-f9e49132a4b96ccd",
    "relationshipType": "CONTAINS"
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-python-package-1-80210ebcba92e632",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-2f52f617f1548337",
    "relationshipType": "CONTAINS"
   },
   {

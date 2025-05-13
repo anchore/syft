@@ -15,7 +15,7 @@
  "packages": [
   {
    "name": "package-1",
-   "SPDXID": "SPDXRef-Package-python-package-1-fb6bef15e281ea43",
+   "SPDXID": "SPDXRef-Package-python-package-1-f04d218ff5ff50db",
    "versionInfo": "1.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -67,13 +67,16 @@
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
    "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
    "primaryPackagePurpose": "FILE"
   }
  ],
  "relationships": [
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
-   "relatedSpdxElement": "SPDXRef-Package-python-package-1-fb6bef15e281ea43",
+   "relatedSpdxElement": "SPDXRef-Package-python-package-1-f04d218ff5ff50db",
    "relationshipType": "CONTAINS"
   },
   {

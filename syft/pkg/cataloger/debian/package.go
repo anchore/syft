@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -22,14 +23,18 @@ const (
 	docsPath     = "/usr/share/doc"
 )
 
-func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release) pkg.Package {
+func newDpkgPackage(ctx context.Context, d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release, evidence ...file.Location) pkg.Package {
 	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
-	licenses := make([]pkg.License, 0)
+	var licenses []pkg.License
+
+	locations := file.NewLocationSet(dbLocation)
+	locations.Add(evidence...)
+
 	p := pkg.Package{
 		Name:      d.Package,
 		Version:   d.Version,
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+		Locations: locations,
 		PURL:      packageURL(d, release),
 		Type:      pkg.DebPkg,
 		Metadata:  d,
@@ -42,11 +47,30 @@ func newDpkgPackage(d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.R
 		mergeFileListing(resolver, dbLocation, &p)
 
 		// fetch additional data from the copyright file to derive the license information
-		addLicenses(resolver, dbLocation, &p)
+		addLicenses(ctx, resolver, dbLocation, &p)
 	}
 
 	p.SetID()
 
+	return p
+}
+
+func newDebArchivePackage(ctx context.Context, location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
+	p := pkg.Package{
+		Name:     metadata.Package,
+		Version:  metadata.Version,
+		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
+		Type:     pkg.DebPkg,
+		PURL: packageURL(
+			pkg.DpkgDBEntry(metadata),
+			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
+			&linux.Release{IDLike: []string{"debian"}},
+		),
+		Metadata:  metadata,
+		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+	}
+
+	p.SetID()
 	return p
 }
 
@@ -85,10 +109,10 @@ func packageURL(m pkg.DpkgDBEntry, distro *linux.Release) string {
 	).ToString()
 }
 
-func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
+func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
-		log.WithFields("package", p).Warn("unable to extract DPKG metadata to add licenses")
+		log.WithFields("package", p).Trace("unable to extract DPKG metadata to add licenses")
 		return
 	}
 
@@ -100,7 +124,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 		// attach the licenses
 		licenseStrs := parseLicensesFromCopyright(copyrightReader)
 		for _, licenseStr := range licenseStrs {
-			p.Licenses.Add(pkg.NewLicenseFromLocations(licenseStr, copyrightLocation.WithoutAnnotations()))
+			p.Licenses.Add(pkg.NewLicenseFromLocationsWithContext(ctx, licenseStr, copyrightLocation.WithoutAnnotations()))
 		}
 		// keep a record of the file where this was discovered
 		p.Locations.Add(*copyrightLocation)
@@ -110,7 +134,7 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, p *pkg.Packag
 func mergeFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {
 	metadata, ok := p.Metadata.(pkg.DpkgDBEntry)
 	if !ok {
-		log.WithFields("package", p).Warn("unable to extract DPKG metadata to file listing")
+		log.WithFields("package", p).Trace("unable to extract DPKG metadata to file listing")
 		return
 	}
 
@@ -169,7 +193,6 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	return files, locations
 }
 
-//nolint:dupl
 func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	var md5Reader io.ReadCloser
 	var err error
@@ -205,7 +228,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// this is unexpected, but not a show-stopper
 	md5Reader, err = resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
+		log.Tracef("failed to fetch deb md5 contents (package=%s): %+v", m.Package, err)
 	}
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
@@ -213,7 +236,6 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	return md5Reader, &l
 }
 
-//nolint:dupl
 func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m pkg.DpkgDBEntry) (io.ReadCloser, *file.Location) {
 	var reader io.ReadCloser
 	var err error
@@ -241,7 +263,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 	// this is unexpected, but not a show-stopper
 	reader, err = resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
+		log.Tracef("failed to fetch deb conffiles contents (package=%s): %+v", m.Package, err)
 	}
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
@@ -265,8 +287,9 @@ func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m 
 
 	reader, err := resolver.FileContentsByLocation(*location)
 	if err != nil {
-		log.Warnf("failed to fetch deb copyright contents (package=%s): %w", m.Package, err)
+		log.Tracef("failed to fetch deb copyright contents (package=%s): %s", m.Package, err)
 	}
+	defer internal.CloseAndLogError(reader, location.RealPath)
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 

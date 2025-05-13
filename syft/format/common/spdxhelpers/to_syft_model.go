@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -18,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
@@ -146,7 +148,7 @@ func containerSource(p *spdx.Package) source.Description {
 		ID:      id,
 		Name:    p.PackageName,
 		Version: p.PackageVersion,
-		Metadata: source.StereoscopeImageSourceMetadata{
+		Metadata: source.ImageMetadata{
 			UserInput:      container,
 			ID:             id,
 			Layers:         nil, // TODO handle formats with nested layer packages like Tern and K8s BOM tool
@@ -187,7 +189,7 @@ func fileSource(p *spdx.Package) source.Description {
 func fileSourceMetadata(p *spdx.Package) (any, string) {
 	version := p.PackageVersion
 
-	m := source.FileSourceMetadata{
+	m := source.FileMetadata{
 		Path: p.PackageName,
 	}
 	// if this is a Syft SBOM, we might have output a digest as the version
@@ -206,7 +208,7 @@ func fileSourceMetadata(p *spdx.Package) (any, string) {
 }
 
 func directorySourceMetadata(p *spdx.Package) (any, string) {
-	return source.DirectorySourceMetadata{
+	return source.DirectoryMetadata{
 		Path: p.PackageName,
 		Base: "",
 	}, p.PackageVersion
@@ -229,15 +231,15 @@ func extractSourceFromNamespace(ns string) source.Description {
 		switch p {
 		case helpers.InputFile:
 			return source.Description{
-				Metadata: source.FileSourceMetadata{},
+				Metadata: source.FileMetadata{},
 			}
 		case helpers.InputImage:
 			return source.Description{
-				Metadata: source.StereoscopeImageSourceMetadata{},
+				Metadata: source.ImageMetadata{},
 			}
 		case helpers.InputDirectory:
 			return source.Description{
-				Metadata: source.DirectorySourceMetadata{},
+				Metadata: source.DirectoryMetadata{},
 			}
 		}
 	}
@@ -361,6 +363,7 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
+		//nolint:staticcheck
 		if !fromOk || !(toPackageOk || toLocationOk) {
 			log.Debugf("unable to find valid relationship mapping from SPDX, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue
@@ -381,6 +384,13 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 			}
 		} else {
 			switch helpers.RelationshipType(r.Relationship) {
+			case helpers.DependencyOfRelationship:
+				typ = artifact.DependencyOfRelationship
+				to = toPackage
+			case helpers.DependsOnRelationship:
+				typ = artifact.DependencyOfRelationship
+				to = from
+				from = toPackage
 			case helpers.ContainsRelationship:
 				typ = artifact.ContainsRelationship
 				to = toPackage
@@ -501,7 +511,14 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Metadata: extractMetadata(p, info),
 	}
 
-	sP.SetID()
+	internal.Backfill(sP)
+
+	if p.PackageSPDXIdentifier != "" {
+		// always prefer the IDs from the SBOM over derived IDs
+		sP.OverrideID(artifact.ID(p.PackageSPDXIdentifier))
+	} else {
+		sP.SetID()
+	}
 
 	return *sP
 }
@@ -519,14 +536,14 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 
 	// concluded
 	if p.PackageLicenseConcluded != helpers.NOASSERTION && p.PackageLicenseConcluded != helpers.NONE && p.PackageLicenseConcluded != "" {
-		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseConcluded))
+		l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseConcluded))
 		l.Type = license.Concluded
 		licenses = append(licenses, l)
 	}
 
 	// declared
 	if p.PackageLicenseDeclared != helpers.NOASSERTION && p.PackageLicenseDeclared != helpers.NONE && p.PackageLicenseDeclared != "" {
-		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseDeclared))
+		l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseDeclared))
 		l.Type = license.Declared
 		licenses = append(licenses, l)
 	}

@@ -21,6 +21,137 @@ type candidateRemovalComposite struct {
 // select package information is discovered
 var defaultCandidateAdditions = buildCandidateLookup(
 	[]candidateComposite{
+		// Binary packages
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "curl"},
+			candidateAddition{AdditionalVendors: []string{"haxx"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "go"},
+			candidateAddition{AdditionalVendors: []string{"golang"}},
+		},
+		// Not including the various java ones for now since the raised
+		// binary package classifier name is the same but there are different CPEs
+		// for different distributions of OpenJDK.  Also, it is unlikely this name will collide
+		// with whatever might be raised by an ELF notes section, so these are unlikely to
+		// be of much use here anyways
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "julia"},
+			candidateAddition{AdditionalVendors: []string{"julialang"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "python"},
+			candidateAddition{AdditionalVendors: []string{"python_software_foundation"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "redis"},
+			candidateAddition{AdditionalVendors: []string{"redislabs"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "node"},
+			candidateAddition{AdditionalProducts: []string{"node.js"}, AdditionalVendors: []string{"nodejs"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "util-linux"},
+			candidateAddition{AdditionalVendors: []string{"kernel"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "composer"},
+			candidateAddition{AdditionalVendors: []string{"getcomposer"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "httpd"},
+			candidateAddition{AdditionalProducts: []string{"http_server"}, AdditionalVendors: []string{"apache"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "mysql"},
+			candidateAddition{AdditionalVendors: []string{"oracle"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "php-cli"},
+			candidateAddition{AdditionalProducts: []string{"php"}, AdditionalVendors: []string{"php"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "php-fpm"},
+			candidateAddition{AdditionalProducts: []string{"php"}, AdditionalVendors: []string{"php"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "libphp"},
+			candidateAddition{AdditionalProducts: []string{"php"}, AdditionalVendors: []string{"php"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "percona-server"},
+			candidateAddition{AdditionalProducts: []string{"percona_server", "mysql"}, AdditionalVendors: []string{"oracle", "percona"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "percona-xtradb-cluster"},
+			candidateAddition{AdditionalProducts: []string{"percona_server", "mysql", "xtradb_cluster"}, AdditionalVendors: []string{"oracle", "percona"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "percona-xtrabackup"},
+			candidateAddition{AdditionalProducts: []string{"xtrabackup"}, AdditionalVendors: []string{"percona"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "rust"},
+			candidateAddition{AdditionalVendors: []string{"rust-lang"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "ruby"},
+			candidateAddition{AdditionalVendors: []string{"ruby-lang"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "erlang"},
+			candidateAddition{AdditionalProducts: []string{"erlang/otp"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "swipl"},
+			candidateAddition{AdditionalProducts: []string{"erlang/otp"}, AdditionalVendors: []string{"erlang"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "consule"},
+			candidateAddition{AdditionalVendors: []string{"hashicorp"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "nginx"},
+			candidateAddition{AdditionalVendors: []string{"f5"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "bash"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "gcc"},
+			candidateAddition{AdditionalVendors: []string{"gnu"}},
+		},
+		{
+			pkg.BinaryPkg,
+			candidateKey{PkgName: "fluent-bit"},
+			candidateAddition{AdditionalProducts: []string{"fluent_bit"}, AdditionalVendors: []string{"treasuredata"}},
+		},
 		// Java packages
 		{
 			pkg.JavaPkg,
@@ -344,12 +475,29 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "wpa_supplicant"},
 			candidateAddition{AdditionalVendors: []string{"w1.fi"}},
 		},
+		{
+			pkg.ApkPkg,
+			candidateKey{PkgName: "dnsmasq", Vendor: "dnsmasq"},
+			candidateAddition{AdditionalVendors: []string{"thekelleys"}},
+		},
+		// Debian packages
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "dnsmasq", Vendor: "dnsmasq"},
+			candidateAddition{AdditionalVendors: []string{"thekelleys"}},
+		},
 		//
 		// Binary packages
 		{
 			pkg.BinaryPkg,
 			candidateKey{PkgName: "node"},
 			candidateAddition{AdditionalProducts: []string{"nodejs", "node.js"}},
+		},
+		// Conan packages
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "poco"},
+			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
 		},
 	})
 
@@ -481,6 +629,12 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			pkg.GemPkg,
 			candidateKey{PkgName: "grpc"},
 			candidateRemovals{ProductsToRemove: []string{"grpc"}},
+		},
+		// PHP Packages
+		{
+			pkg.PhpPearPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{ProductsToRemove: []string{"redis"}},
 		},
 	})
 

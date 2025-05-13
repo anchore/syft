@@ -8,6 +8,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -24,8 +25,8 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	for {
 		line, err := r.ReadString('\n')
 		switch {
-		case errors.Is(io.EOF, err):
-			return pkgs, nil, nil
+		case errors.Is(err, io.EOF):
+			return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 		case err != nil:
 			return nil, nil, fmt.Errorf("failed to parse conanfile.txt file: %w", err)
 		}
@@ -38,7 +39,7 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 
 		m := pkg.ConanfileEntry{
-			Ref: strings.Trim(line, "\n"),
+			Ref: strings.TrimSpace(line),
 		}
 
 		if !inRequirements {
@@ -47,7 +48,7 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 		p := newConanfilePackage(
 			m,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if p == nil {
 			continue

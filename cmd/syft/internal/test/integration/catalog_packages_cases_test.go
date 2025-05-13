@@ -35,7 +35,7 @@ var imageOnlyTestCases = []testCase{
 		pkgType:     pkg.PythonPkg,
 		pkgLanguage: pkg.Python,
 		pkgInfo: map[string]string{
-			"Pygments":     "2.6.1",
+			"pygments":     "2.6.1",
 			"requests":     "2.22.0",
 			"somerequests": "3.22.0",
 			"someotherpkg": "3.19.0",
@@ -78,11 +78,27 @@ var imageOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find dot net executable",
+		name:        "find .NET packages (deps.json + .dlls)",
 		pkgType:     pkg.DotnetPkg,
 		pkgLanguage: pkg.Dotnet,
 		pkgInfo: map[string]string{
+			// executable
 			"DocuSign.eSign": "6.8.0.0",
+			// deps.json
+			"AWSSDK.Core": "3.7.10.6",
+			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
+			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
+			"Microsoft.Extensions.Logging":                          "6.0.0",
+			"Microsoft.Extensions.Logging.Abstractions":             "6.0.0",
+			"Microsoft.Extensions.Options":                          "6.0.0",
+			"Microsoft.Extensions.Primitives":                       "6.0.0",
+			"Newtonsoft.Json":                                       "13.0.1",
+			"Serilog":                                               "2.10.0",
+			"Serilog.Sinks.Console":                                 "4.0.1",
+			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
+			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
+			"TestCommon":  "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 }
@@ -172,7 +188,7 @@ var dirOnlyTestCases = []testCase{
 			"passlib":            "1.7.2",
 			"mypy":               "v0.770",
 			// common to image and directory
-			"Pygments":     "2.6.1",
+			"pygments":     "2.6.1",
 			"requests":     "2.22.0",
 			"somerequests": "3.22.0",
 			"someotherpkg": "3.19.0",
@@ -241,10 +257,11 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find dotnet packages",
+		name:        "find dotnet packages (.deps.json)",
 		pkgType:     pkg.DotnetPkg,
 		pkgLanguage: pkg.Dotnet,
 		pkgInfo: map[string]string{
+			// all from deps.json
 			"AWSSDK.Core": "3.7.10.6",
 			"Microsoft.Extensions.DependencyInjection":              "6.0.0",
 			"Microsoft.Extensions.DependencyInjection.Abstractions": "6.0.0",
@@ -255,17 +272,17 @@ var dirOnlyTestCases = []testCase{
 			"Newtonsoft.Json":                                       "13.0.1",
 			"Serilog":                                               "2.10.0",
 			"Serilog.Sinks.Console":                                 "4.0.1",
-			"System.Diagnostics.DiagnosticSource":                   "6.0.0",
-			"System.Runtime.CompilerServices.Unsafe":                "6.0.0",
-			"TestCommon":                                            "1.0.0",
-			"TestLibrary":                                           "1.0.0",
+			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
+			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
+			"TestCommon":  "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 	{
 		name:        "find java packages including pom.xml", // directory scans can include packages that have yet to be installed
 		pkgType:     pkg.JavaPkg,
 		pkgLanguage: pkg.Java,
-		duplicates:  1, // joda-time is included in both pom.xml AND the .jar collection
+		duplicates:  2, // joda-time and example-java-app-maven are included in both pom.xml AND the .jar collection
 		pkgInfo: map[string]string{
 			"example-java-app-maven": "0.1.0",
 			"joda-time":              "2.9.2",
@@ -369,6 +386,14 @@ var dirOnlyTestCases = []testCase{
 		},
 	},
 	{
+		name:        "find ErLang OTP applications",
+		pkgType:     pkg.ErlangOTPPkg,
+		pkgLanguage: pkg.Erlang,
+		pkgInfo: map[string]string{
+			"accept": "0.3.5",
+		},
+	},
+	{
 		name:        "find swift package manager packages",
 		pkgType:     pkg.SwiftPkg,
 		pkgLanguage: pkg.Swift,
@@ -378,6 +403,14 @@ var dirOnlyTestCases = []testCase{
 			"swift-atomics":          "1.1.0",
 			"swift-collections":      "1.0.4",
 			"swift-numerics":         "1.0.2",
+		},
+	},
+	{
+		name:        "find swipl pack package manager packages",
+		pkgType:     pkg.SwiplPackPkg,
+		pkgLanguage: pkg.Swipl,
+		pkgInfo: map[string]string{
+			"hdt": "0.5.2",
 		},
 	},
 	{
@@ -392,6 +425,22 @@ var dirOnlyTestCases = []testCase{
 		pkgType: pkg.GithubActionWorkflowPkg,
 		pkgInfo: map[string]string{
 			"octo-org/this-repo/.github/workflows/workflow-1.yml": "172239021f7ba04fe7327647b213799853a9eb89",
+		},
+	},
+	{
+		name:        "find opam package",
+		pkgType:     pkg.OpamPkg,
+		pkgLanguage: pkg.OCaml,
+		pkgInfo: map[string]string{
+			"ocaml-base-compiler": "4.14.0",
+		},
+	},
+	{
+		name:        "find terraform packages",
+		pkgType:     pkg.TerraformPkg,
+		pkgLanguage: pkg.Go,
+		pkgInfo: map[string]string{
+			"registry.terraform.io/hashicorp/aws": "5.72.1",
 		},
 	},
 }
@@ -442,6 +491,37 @@ var commonTestCases = []testCase{
 		pkgType: pkg.NixPkg,
 		pkgInfo: map[string]string{
 			"glibc": "2.34-210",
+		},
+	},
+	{
+		name:        "find wordpress plugins",
+		pkgType:     pkg.WordpressPluginPkg,
+		pkgLanguage: pkg.PHP,
+		pkgInfo: map[string]string{
+			"Akismet Anti-spam: Spam Protection": "5.3",
+		},
+	},
+	{
+		name:    "find homebrew",
+		pkgType: pkg.HomebrewPkg,
+		pkgInfo: map[string]string{
+			"afflib": "1.2.3",
+		},
+	},
+	{
+		name:        "find php pear/pecl package",
+		pkgType:     pkg.PhpPearPkg,
+		pkgLanguage: pkg.PHP,
+		pkgInfo: map[string]string{
+			"memcached": "3.2.0",
+		},
+	},
+	{
+		name:        "find lua rock package",
+		pkgType:     pkg.LuaRocksPkg,
+		pkgLanguage: pkg.Lua,
+		pkgInfo: map[string]string{
+			"kong": "3.7.0-0",
 		},
 	},
 }

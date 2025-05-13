@@ -6,9 +6,8 @@ package kernel
 import (
 	"context"
 
-	"github.com/hashicorp/go-multierror"
-
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -62,7 +61,7 @@ func (l linuxKernelCataloger) Catalog(ctx context.Context, resolver file.Resolve
 
 	kernelPackages, kernelRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelFile, kernelArchiveGlobs...).Catalog(ctx, resolver)
 	if err != nil {
-		errs = multierror.Append(errs, err)
+		errs = unknown.Join(errs, err)
 	}
 
 	allRelationships = append(allRelationships, kernelRelationships...)
@@ -71,7 +70,7 @@ func (l linuxKernelCataloger) Catalog(ctx context.Context, resolver file.Resolve
 	if l.cfg.CatalogModules {
 		modulePackages, moduleRelationships, err := generic.NewCataloger(l.Name()).WithParserByGlobs(parseLinuxKernelModuleFile, kernelModuleGlobs...).Catalog(ctx, resolver)
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = unknown.Join(errs, err)
 		}
 
 		allPackages = append(allPackages, modulePackages...)
@@ -95,7 +94,7 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 	for idx, p := range modulePackages {
 		m, ok := p.Metadata.(pkg.LinuxKernelModule)
 		if !ok {
-			log.Debug("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
+			log.Debugf("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
 			continue
 		}
 		modulesByKernelVersion[m.KernelVersion] = append(modulesByKernelVersion[m.KernelVersion], &modulePackages[idx])

@@ -8,6 +8,7 @@ import (
 	"io"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -71,7 +72,7 @@ func parsePackageResolved(_ context.Context, _ file.Resolver, _ *generic.Environ
 
 	if packageResolvedData["version"] == nil {
 		log.Trace("no version found in Package.resolved file, skipping")
-		return nil, nil, nil
+		return nil, nil, fmt.Errorf("no version found in Package.resolved file")
 	}
 
 	version, ok := packageResolvedData["version"].(float64)
@@ -93,11 +94,11 @@ func parsePackageResolved(_ context.Context, _ file.Resolver, _ *generic.Environ
 				pkgPin.Version,
 				pkgPin.Location,
 				pkgPin.Revision,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}
-	return pkgs, nil, nil
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func pinsForVersion(data map[string]interface{}, version float64) ([]packagePin, error) {
@@ -121,7 +122,7 @@ func pinsForVersion(data map[string]interface{}, version float64) ([]packagePin,
 				pin.State.Version,
 			})
 		}
-	case 2:
+	case 2, 3:
 		t := packageResolvedV2{}
 		jsonString, err := json.Marshal(data)
 		if err != nil {

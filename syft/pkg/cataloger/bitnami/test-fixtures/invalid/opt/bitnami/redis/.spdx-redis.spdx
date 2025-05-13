@@ -1,0 +1,5 @@
+{
+    "id": "invalid-id",
+    "name": "invalid-name",
+    "description: "This is not a SPDX file"
+}

@@ -28,7 +28,7 @@ func Test_packageURL(t *testing.T) {
 				Release: "r",
 				Epoch:   nil,
 			},
-			expected: "pkg:rpm/rhel/p@v-r?distro=rhel-8.4",
+			expected: "pkg:rpm/redhat/p@v-r?distro=rhel-8.4",
 		},
 		{
 			name: "with arch and epoch",
@@ -43,7 +43,7 @@ func Test_packageURL(t *testing.T) {
 				Release: "r",
 				Epoch:   intRef(1),
 			},
-			expected: "pkg:rpm/centos/p@v-r?arch=a&epoch=1&distro=centos-7",
+			expected: "pkg:rpm/centos/p@v-r?arch=a&distro=centos-7&epoch=1",
 		},
 		{
 			name: "missing distro",
@@ -67,7 +67,7 @@ func Test_packageURL(t *testing.T) {
 				Release:   "r",
 				SourceRpm: "sourcerpm",
 			},
-			expected: "pkg:rpm/rhel/p@v-r?upstream=sourcerpm&distro=rhel-8.4",
+			expected: "pkg:rpm/redhat/p@v-r?distro=rhel-8.4&upstream=sourcerpm",
 		},
 	}
 

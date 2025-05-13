@@ -8,7 +8,6 @@ import (
 	"debug/macho"
 	"debug/pe"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,34 +17,14 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-type nativeImageCycloneDX struct {
-	BomFormat   string                 `json:"bomFormat"`
-	SpecVersion string                 `json:"specVersion"`
-	Version     int                    `json:"version"`
-	Components  []nativeImageComponent `json:"components"`
-}
-
-type nativeImageComponent struct {
-	Type       string           `json:"type"`
-	Group      string           `json:"group"`
-	Name       string           `json:"name"`
-	Version    string           `json:"version"`
-	Properties []nativeImageCPE `json:"properties"`
-}
-
-type nativeImageCPE struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
 type nativeImage interface {
-	fetchPkgs() ([]pkg.Package, error)
+	fetchPkgs() ([]pkg.Package, []artifact.Relationship, error)
 }
 
 type nativeImageElf struct {
@@ -113,40 +92,12 @@ func (c *nativeImageCataloger) Name() string {
 	return nativeImageCatalogerName
 }
 
-// getPackage returns the package given within a NativeImageComponent.
-func getPackage(component nativeImageComponent) pkg.Package {
-	var cpes []cpe.CPE
-	for _, property := range component.Properties {
-		c, err := cpe.New(property.Value, cpe.DeclaredSource)
-		if err != nil {
-			log.Debugf("unable to parse Attributes: %v", err)
-			continue
-		}
-		cpes = append(cpes, c)
-	}
-	return pkg.Package{
-		Name:     component.Name,
-		Version:  component.Version,
-		Language: pkg.Java,
-		Type:     pkg.GraalVMNativeImagePkg,
-		FoundBy:  nativeImageCatalogerName,
-		Metadata: pkg.JavaArchive{
-			PomProperties: &pkg.JavaPomProperties{
-				GroupID: component.Group,
-			},
-		},
-		CPEs: cpes,
-	}
-}
-
 // decompressSbom returns the packages given within a native image executable's SBOM.
-func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg.Package, error) {
-	var pkgs []pkg.Package
-
+func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg.Package, []artifact.Relationship, error) {
 	lengthEnd := lengthStart + 8
 	bufLen := len(dataBuf)
 	if lengthEnd > uint64(bufLen) {
-		return nil, errors.New("the 'sbom_length' symbol overflows the binary")
+		return nil, nil, errors.New("the 'sbom_length' symbol overflows the binary")
 	}
 
 	length := dataBuf[lengthStart:lengthEnd]
@@ -154,39 +105,31 @@ func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg
 	var storedLength uint64
 	err := binary.Read(p, binary.LittleEndian, &storedLength)
 	if err != nil {
-		return nil, fmt.Errorf("could not read from binary file: %w", err)
+		return nil, nil, fmt.Errorf("could not read from binary file: %w", err)
 	}
 
 	log.WithFields("len", storedLength).Trace("found java native-image SBOM")
 	sbomEnd := sbomStart + storedLength
 	if sbomEnd > uint64(bufLen) {
-		return nil, errors.New("the sbom symbol overflows the binary")
+		return nil, nil, errors.New("the sbom symbol overflows the binary")
 	}
 
 	sbomCompressed := dataBuf[sbomStart:sbomEnd]
 	p = bytes.NewBuffer(sbomCompressed)
 	gzreader, err := gzip.NewReader(p)
 	if err != nil {
-		return nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
+		return nil, nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
 	}
 
-	output, err := io.ReadAll(gzreader)
+	sbom, _, _, err := cyclonedxjson.NewFormatDecoder().Decode(gzreader)
 	if err != nil {
-		return nil, fmt.Errorf("could not read the java native-image SBOM: %w", err)
+		return nil, nil, fmt.Errorf("could not unmarshal the java native-image SBOM: %w", err)
 	}
-
-	var sbomContent nativeImageCycloneDX
-	err = json.Unmarshal(output, &sbomContent)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal the java native-image SBOM: %w", err)
-	}
-
-	for _, component := range sbomContent.Components {
-		p := getPackage(component)
+	var pkgs []pkg.Package
+	for p := range sbom.Artifacts.Packages.Enumerate() {
 		pkgs = append(pkgs, p)
 	}
-
-	return pkgs, nil
+	return pkgs, sbom.Relationships, nil
 }
 
 // fileError logs an error message when an executable cannot be read.
@@ -294,7 +237,7 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 }
 
 // fetchPkgs obtains the packages given in the binary.
-func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, retErr error) {
+func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifact.Relationship, retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -308,12 +251,12 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	var sbomLength elf.Symbol
 	var svmVersion elf.Symbol
 
-	si, err := bi.Symbols()
+	si, err := ni.getSymbols()
 	if err != nil {
-		return nil, fmt.Errorf("no symbols found in binary: %w", err)
+		return nil, nil, err
 	}
-	if si == nil {
-		return nil, errors.New(nativeImageMissingSymbolsError)
+	if len(si) == 0 {
+		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	for _, s := range si {
 		switch s.Name {
@@ -326,16 +269,16 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 		}
 	}
 	if sbom.Value == 0 || sbomLength.Value == 0 || svmVersion.Value == 0 {
-		return nil, errors.New(nativeImageMissingSymbolsError)
+		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	dataSection := bi.Section(".data")
 	if dataSection == nil {
-		return nil, fmt.Errorf("no .data section found in binary: %w", err)
+		return nil, nil, fmt.Errorf("no .data section found in binary: %w", err)
 	}
-	dataSectionBase := dataSection.SectionHeader.Addr
+	dataSectionBase := dataSection.Addr
 	data, err := dataSection.Data()
 	if err != nil {
-		return nil, fmt.Errorf("cannot read the .data section: %w", err)
+		return nil, nil, fmt.Errorf("cannot read the .data section: %w", err)
 	}
 	sbomLocation := sbom.Value - dataSectionBase
 	lengthLocation := sbomLength.Value - dataSectionBase
@@ -343,8 +286,33 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	return decompressSbom(data, sbomLocation, lengthLocation)
 }
 
+// getSymbols obtains the union of the symbols in the .symtab and .dynsym sections of the ELF file
+func (ni nativeImageElf) getSymbols() ([]elf.Symbol, error) {
+	var symbols []elf.Symbol
+	symsErr := error(nil)
+	dynErr := error(nil)
+
+	if syms, err := ni.file.Symbols(); err == nil {
+		symbols = append(symbols, syms...)
+	} else {
+		symsErr = err
+	}
+
+	if dynSyms, err := ni.file.DynamicSymbols(); err == nil {
+		symbols = append(symbols, dynSyms...)
+	} else {
+		dynErr = err
+	}
+
+	if symsErr != nil && dynErr != nil {
+		return nil, fmt.Errorf("could not retrieve symbols from binary: SHT_SYMTAB error: %v, SHT_DYNSYM error: %v", symsErr, dynErr)
+	}
+
+	return symbols, nil
+}
+
 // fetchPkgs obtains the packages from a Native Image given as a Mach O file.
-func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, retErr error) {
+func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, relationships []artifact.Relationship, retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -359,7 +327,7 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 
 	bi := ni.file
 	if bi.Symtab == nil {
-		return nil, errors.New(nativeImageMissingSymbolsError)
+		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	for _, s := range bi.Symtab.Syms {
 		switch s.Name {
@@ -372,17 +340,17 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 		}
 	}
 	if sbom.Value == 0 || sbomLength.Value == 0 || svmVersion.Value == 0 {
-		return nil, errors.New(nativeImageMissingSymbolsError)
+		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
 
 	dataSegment := bi.Segment("__DATA")
 	if dataSegment == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	dataBuf, err := dataSegment.Data()
 	if err != nil {
 		log.Tracef("cannot obtain buffer from data segment")
-		return nil, nil
+		return nil, nil, nil
 	}
 	sbomLocation := sbom.Value - dataSegment.Addr
 	lengthLocation := sbomLength.Value - dataSegment.Addr
@@ -494,7 +462,7 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 }
 
 // fetchPkgs obtains the packages from a Native Image given as a PE file.
-func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
+func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, relationships []artifact.Relationship, retErr error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -506,32 +474,32 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 	content, err := ni.fetchExportContent()
 	if err != nil {
 		log.Debugf("could not fetch the content of the export directory entry: %v", err)
-		return nil, err
+		return nil, nil, err
 	}
 	ni.fetchSbomSymbols(content)
 	if content.addressOfSbom == uint32(0) || content.addressOfSbomLength == uint32(0) || content.addressOfSvmVersion == uint32(0) {
-		return nil, errors.New(nativeImageMissingSymbolsError)
+		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
 	functionsBase := content.addressOfFunctions - ni.exportSymbols.VirtualAddress
 	sbomOffset := content.addressOfSbom
 	sbomAddress, err := ni.fetchExportFunctionPointer(functionsBase, sbomOffset)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch SBOM pointer from exported functions: %w", err)
+		return nil, nil, fmt.Errorf("could not fetch SBOM pointer from exported functions: %w", err)
 	}
 	sbomLengthOffset := content.addressOfSbomLength
 	sbomLengthAddress, err := ni.fetchExportFunctionPointer(functionsBase, sbomLengthOffset)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch SBOM length pointer from exported functions: %w", err)
+		return nil, nil, fmt.Errorf("could not fetch SBOM length pointer from exported functions: %w", err)
 	}
 	bi := ni.file
 	dataSection := bi.Section(".data")
 	if dataSection == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	dataBuf, err := dataSection.Data()
 	if err != nil {
 		log.Tracef("cannot obtain buffer from the java native-image .data section")
-		return nil, nil
+		return nil, nil, nil
 	}
 	sbomLocation := sbomAddress - dataSection.VirtualAddress
 	lengthLocation := sbomLengthAddress - dataSection.VirtualAddress
@@ -540,8 +508,9 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, retErr error) {
 }
 
 // fetchPkgs provides the packages available in a UnionReader.
-func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
+func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
 	imageFormats := []func(string, io.ReaderAt) (nativeImage, error){newElf, newMachO, newPE}
 
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
@@ -549,7 +518,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 	readers, err := unionreader.GetReaders(reader)
 	if err != nil {
 		log.Debugf("failed to open the java native-image binary: %v", err)
-		return nil
+		return nil, nil
 	}
 	for _, r := range readers {
 		for _, makeNativeImage := range imageFormats {
@@ -560,40 +529,51 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) []pkg.Package {
 			if ni == nil {
 				continue
 			}
-			newPkgs, err := ni.fetchPkgs()
+			newPkgs, newRelationships, err := ni.fetchPkgs()
 			if err != nil {
 				log.Tracef("unable to extract SBOM from possible java native-image %s: %v", filename, err)
 				continue
 			}
 			pkgs = append(pkgs, newPkgs...)
+			relationships = append(relationships, newRelationships...)
 		}
 	}
-	return pkgs
+	return pkgs, relationships
 }
 
 // Catalog attempts to find any native image executables reachable from a resolver.
 func (c *nativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
 	fileMatches, err := resolver.FilesByMIMEType(mimetype.ExecutableMIMETypeSet.List()...)
 	if err != nil {
 		return pkgs, nil, fmt.Errorf("failed to find binaries by mime types: %w", err)
 	}
 
 	for _, location := range fileMatches {
-		readerCloser, err := resolver.FileContentsByLocation(location)
-		if err != nil {
-			log.Debugf("error opening file: %v", err)
-			continue
-		}
-
-		reader, err := unionreader.GetUnionReader(readerCloser)
+		newPkgs, newRelationships, err := processLocation(location, resolver)
 		if err != nil {
 			return nil, nil, err
 		}
-		newPkgs := fetchPkgs(reader, location.RealPath)
 		pkgs = append(pkgs, newPkgs...)
-		internal.CloseAndLogError(readerCloser, location.RealPath)
+		relationships = append(relationships, newRelationships...)
 	}
 
-	return pkgs, nil, nil
+	return pkgs, relationships, nil
+}
+
+func processLocation(location file.Location, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	readerCloser, err := resolver.FileContentsByLocation(location)
+	if err != nil {
+		log.Debugf("error opening file: %v", err)
+		return nil, nil, nil
+	}
+	defer internal.CloseAndLogError(readerCloser, location.RealPath)
+
+	reader, err := unionreader.GetUnionReader(readerCloser)
+	if err != nil {
+		return nil, nil, err
+	}
+	pkgs, relationships := fetchPkgs(reader, location.RealPath)
+	return pkgs, relationships, nil
 }

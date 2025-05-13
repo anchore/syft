@@ -1,6 +1,8 @@
 package binary
 
 import (
+	"bytes"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +11,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
 func Test_ClassifierCPEs(t *testing.T) {
@@ -61,6 +64,17 @@ func Test_ClassifierCPEs(t *testing.T) {
 				"cpe:2.3:a:some:apps:1.8:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name:    "version in parts",
+			fixture: "test-fixtures/version-parts.txt",
+			classifier: Classifier{
+				Package:         "some-app",
+				FileGlob:        "**/version-parts.txt",
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)\x00(?P<major>[0-9.]+)\x00(?P<minor>[0-9.]+)\x00(?P<patch>[0-9.]+)\x00`),
+				CPEs:            []cpe.CPE{},
+			},
+			cpes: nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -70,7 +84,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, ls, 1)
 
-			pkgs, err := test.classifier.EvidenceMatcher(resolver, test.classifier, ls[0])
+			pkgs, err := test.classifier.EvidenceMatcher(test.classifier, matcherContext{resolver: resolver, location: ls[0]})
 			require.NoError(t, err)
 
 			require.Len(t, pkgs, 1)
@@ -125,6 +139,47 @@ func TestClassifier_MarshalJSON(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tt.want, string(got))
+		})
+	}
+}
+
+func TestFileContentsVersionMatcher(t *testing.T) {
+	tests := []struct {
+		name     string
+		pattern  string
+		data     string
+		expected string
+	}{
+		{
+			name:     "simple version string regexp",
+			pattern:  `some data (?P<version>[0-9]+\.[0-9]+\.[0-9]+) some data`,
+			data:     "some data 1.2.3 some data",
+			expected: "1.2.3",
+		},
+		{
+			name:     "version parts regexp",
+			pattern:  `\x00\x23(?P<major>[0-9]+)\x00\x23(?P<minor>[0-9]+)\x00\x23(?P<patch>[0-9]+)\x00\x23`,
+			data:     "\x00\x239\x00\x239\x00\x239\x00\x23",
+			expected: "9.9.9",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGetContent := func(context matcherContext) (unionreader.UnionReader, error) {
+				return unionreader.GetUnionReader(io.NopCloser(bytes.NewBufferString(tt.data)))
+			}
+			fn := FileContentsVersionMatcher(tt.pattern)
+			p, err := fn(Classifier{}, matcherContext{
+				getReader: mockGetContent,
+			})
+
+			if err != nil {
+				t.Errorf("Unexpected error %#v", err)
+			}
+
+			if p[0].Version != tt.expected {
+				t.Errorf("Versions don't match.\ngot\n%q\n\nexpected\n%q", p[0].Version, tt.expected)
+			}
 		})
 	}
 }

@@ -10,7 +10,8 @@ import (
 func TestMarinerDistroless(t *testing.T) {
 	sbom, _ := catalogFixtureImage(t, "image-mariner-distroless", source.SquashedScope)
 
-	expectedPkgs := 12
+	// 12 RPMs + 2 binaries with ELF package notes claiming to be RPMs
+	expectedPkgs := 14
 	actualPkgs := 0
 	for range sbom.Artifacts.Packages.Enumerate(pkg.RpmPkg) {
 		actualPkgs += 1

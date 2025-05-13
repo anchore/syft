@@ -38,11 +38,11 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	w.Init(writer, 0, 8, 0, '\t', tabwriter.AlignRight)
 
 	switch metadata := s.Source.Metadata.(type) {
-	case source.DirectorySourceMetadata:
+	case source.DirectoryMetadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case source.FileSourceMetadata:
+	case source.FileMetadata:
 		fmt.Fprintf(w, "[Path: %s]\n", metadata.Path)
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		fmt.Fprintln(w, "[Image]")
 
 		for idx, l := range metadata.Layers {

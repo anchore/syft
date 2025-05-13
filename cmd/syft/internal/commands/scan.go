@@ -13,6 +13,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/fangs"
+	"github.com/anchore/go-collections"
+	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/cmd/syft/internal/ui"
@@ -24,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 const (
@@ -65,6 +69,7 @@ type scanOptions struct {
 	options.Output      `yaml:",inline" mapstructure:",squash"`
 	options.UpdateCheck `yaml:",inline" mapstructure:",squash"`
 	options.Catalog     `yaml:",inline" mapstructure:",squash"`
+	Cache               options.Cache `json:"-" yaml:"cache" mapstructure:"cache"`
 }
 
 func defaultScanOptions() *scanOptions {
@@ -72,10 +77,10 @@ func defaultScanOptions() *scanOptions {
 		Output:      options.DefaultOutput(),
 		UpdateCheck: options.DefaultUpdateCheck(),
 		Catalog:     options.DefaultCatalog(),
+		Cache:       options.DefaultCache(),
 	}
 }
 
-//nolint:dupl
 func Scan(app clio.Application) *cobra.Command {
 	id := app.ID()
 
@@ -105,7 +110,7 @@ func (o *scanOptions) PostLoad() error {
 }
 
 func (o *scanOptions) validateLegacyOptionsNotUsed() error {
-	if o.Config.ConfigFile == "" {
+	if len(fangs.Flatten(o.ConfigFile)) == 0 {
 		return nil
 	}
 
@@ -117,32 +122,33 @@ func (o *scanOptions) validateLegacyOptionsNotUsed() error {
 		File                            any     `yaml:"file" json:"file" mapstructure:"file"`
 	}
 
-	by, err := os.ReadFile(o.Config.ConfigFile)
-	if err != nil {
-		return fmt.Errorf("unable to read config file during validations %q: %w", o.Config.ConfigFile, err)
-	}
+	for _, f := range fangs.Flatten(o.ConfigFile) {
+		by, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("unable to read config file during validations %q: %w", f, err)
+		}
 
-	var legacy legacyConfig
-	if err := yaml.Unmarshal(by, &legacy); err != nil {
-		return fmt.Errorf("unable to parse config file during validations %q: %w", o.Config.ConfigFile, err)
-	}
+		var legacy legacyConfig
+		if err := yaml.Unmarshal(by, &legacy); err != nil {
+			return fmt.Errorf("unable to parse config file during validations %q: %w", f, err)
+		}
 
-	if legacy.DefaultImagePullSource != nil {
-		return fmt.Errorf("the config file option 'default-image-pull-source' has been removed, please use 'source.image.default-pull-source' instead")
-	}
+		if legacy.DefaultImagePullSource != nil {
+			return fmt.Errorf("the config file option 'default-image-pull-source' has been removed, please use 'source.image.default-pull-source' instead")
+		}
 
-	if legacy.ExcludeBinaryOverlapByOwnership != nil {
-		return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'package.exclude-binary-overlap-by-ownership' instead")
-	}
+		if legacy.ExcludeBinaryOverlapByOwnership != nil {
+			return fmt.Errorf("the config file option 'exclude-binary-overlap-by-ownership' has been removed, please use 'package.exclude-binary-overlap-by-ownership' instead")
+		}
 
-	if legacy.BasePath != nil {
-		return fmt.Errorf("the config file option 'base-path' has been removed, please use 'source.base-path' instead")
-	}
+		if legacy.BasePath != nil {
+			return fmt.Errorf("the config file option 'base-path' has been removed, please use 'source.base-path' instead")
+		}
 
-	if legacy.File != nil && reflect.TypeOf(legacy.File).Kind() == reflect.String {
-		return fmt.Errorf("the config file option 'file' has been removed, please use 'outputs' instead")
+		if legacy.File != nil && reflect.TypeOf(legacy.File).Kind() == reflect.String {
+			return fmt.Errorf("the config file option 'file' has been removed, please use 'outputs' instead")
+		}
 	}
-
 	return nil
 }
 
@@ -150,26 +156,35 @@ func validateScanArgs(cmd *cobra.Command, args []string) error {
 	return validateArgs(cmd, args, "an image/directory argument is required")
 }
 
-func validateArgs(cmd *cobra.Command, args []string, error string) error {
+func validateArgs(cmd *cobra.Command, args []string, err string) error {
 	if len(args) == 0 {
 		// in the case that no arguments are given we want to show the help text and return with a non-0 return code.
 		if err := cmd.Help(); err != nil {
 			return fmt.Errorf("unable to display help: %w", err)
 		}
-		return fmt.Errorf(error)
+		return fmt.Errorf("%v", err)
 	}
 
 	return cobra.MaximumNArgs(1)(cmd, args)
 }
 
-// nolint:funlen
 func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
 	}
 
-	src, err := getSource(&opts.Catalog, userInput)
+	sources := opts.From
+	if len(sources) == 0 {
+		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
+		explicitSource, newUserInput := stereoscope.ExtractSchemeSource(userInput, allSourceProviderTags()...)
+		if explicitSource != "" {
+			sources = append(sources, explicitSource)
+			userInput = newUserInput
+		}
+	}
+
+	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
 
 	if err != nil {
 		return err
@@ -199,23 +214,21 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	return nil
 }
 
-func getSource(opts *options.Catalog, userInput string, filters ...func(*source.Detection) error) (source.Source, error) {
-	detection, err := source.Detect(
-		userInput,
-		source.DetectConfig{
-			DefaultImageSource: opts.Source.Image.DefaultPullSource,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("could not deteremine source: %w", err)
-	}
+func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, error) {
+	cfg := syft.DefaultGetSourceConfig().
+		WithRegistryOptions(opts.Registry.ToOptions()).
+		WithAlias(source.Alias{
+			Name:    opts.Source.Name,
+			Version: opts.Source.Version,
+		}).
+		WithExcludeConfig(source.ExcludeConfig{
+			Paths: opts.Exclusions,
+		}).
+		WithBasePath(opts.Source.BasePath).
+		WithSources(sources...).
+		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 
-	for _, filter := range filters {
-		if err := filter(detection); err != nil {
-			return nil, err
-		}
-	}
-
+	var err error
 	var platform *image.Platform
 
 	if opts.Platform != "" {
@@ -223,34 +236,20 @@ func getSource(opts *options.Catalog, userInput string, filters ...func(*source.
 		if err != nil {
 			return nil, fmt.Errorf("invalid platform: %w", err)
 		}
+		cfg = cfg.WithPlatform(platform)
 	}
 
-	hashers, err := file.Hashers(opts.Source.File.Digests...)
-	if err != nil {
-		return nil, fmt.Errorf("invalid hash algorithm: %w", err)
-	}
-
-	src, err := detection.NewSource(
-		source.DetectionSourceConfig{
-			Alias: source.Alias{
-				Name:    opts.Source.Name,
-				Version: opts.Source.Version,
-			},
-			RegistryOptions: opts.Registry.ToOptions(),
-			Platform:        platform,
-			Exclude: source.ExcludeConfig{
-				Paths: opts.Exclusions,
-			},
-			DigestAlgorithms: hashers,
-			BasePath:         opts.Source.BasePath,
-		},
-	)
-
-	if err != nil {
-		if userInput == "power-user" {
-			bus.Notify("Note: the 'power-user' command has been removed.")
+	if opts.Source.File.Digests != nil {
+		hashers, err := file.Hashers(opts.Source.File.Digests...)
+		if err != nil {
+			return nil, fmt.Errorf("invalid hash algorithm: %w", err)
 		}
-		return nil, fmt.Errorf("failed to construct source from user input %q: %w", userInput, err)
+		cfg = cfg.WithDigestAlgorithms(hashers...)
+	}
+
+	src, err := syft.GetSource(ctx, userInput, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("could not determine source: %w", err)
 	}
 
 	return src, nil
@@ -398,13 +397,13 @@ func getExplanation(expErr task.ErrInvalidExpression) string {
 
 	if errors.Is(err, task.ErrNamesNotAllowed) {
 		if expErr.Operation == task.SubSelectOperation {
-			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set." // nolint:goconst
+			return "However, " + err.Error() + ".\nIt seems like you are intending to add a cataloger in addition to the default set."
 		}
-		return "However, " + err.Error() + "." // nolint:goconst
+		return "However, " + err.Error() + "."
 	}
 
 	if errors.Is(err, task.ErrTagsNotAllowed) {
-		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)." // nolint:goconst
+		return "However, " + err.Error() + ".\nAdding groups of catalogers may result in surprising behavior (create inaccurate SBOMs)."
 	}
 
 	if errors.Is(err, task.ErrAllNotAllowed) {
@@ -444,4 +443,8 @@ func getHintPhrase(expErr task.ErrInvalidExpression) string {
 
 func trimOperation(x string) string {
 	return strings.TrimLeft(x, "+-")
+}
+
+func allSourceProviderTags() []string {
+	return collections.TaggedValueSet[source.Provider]{}.Join(sourceproviders.All("", nil)...).Tags()
 }

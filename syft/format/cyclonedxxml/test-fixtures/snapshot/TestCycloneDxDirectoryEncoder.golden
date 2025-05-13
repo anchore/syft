@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.5" serialNumber="redacted" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.6" serialNumber="redacted" version="1">
   <metadata>
     <timestamp>redacted</timestamp>
     <tools>
@@ -16,7 +16,7 @@
     </component>
   </metadata>
   <components>
-    <component bom-ref="redacted" type="library">
+    <component bom-ref="f04d218ff5ff50db" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -34,7 +34,7 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component bom-ref="redacted" type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
@@ -47,7 +47,7 @@
         <property name="syft:metadata:installedSize">0</property>
       </properties>
     </component>
-    <component type="operating-system">
+    <component bom-ref="os:debian@1.2.3" type="operating-system">
       <name>debian</name>
       <version>1.2.3</version>
       <description>debian</description>

@@ -1,4 +1,4 @@
-FROM centos:7.9.2009@sha256:dead07b4d8ed7e29e98de0f4504d87e8880d4347859d839686a31da35a3b532f
-# all-layers scope should pickup on vsftpd
-RUN yum install -y vsftpd
-RUN yum remove -y vsftpd
+FROM --platform=linux/amd64 alpine:3.20.2@sha256:eddacbc7e24bf8799a4ed3cdcfa50d4b88a323695ad80f317b6629883b2c2a78
+
+RUN apk add --no-cache curl
+RUN apk del curl

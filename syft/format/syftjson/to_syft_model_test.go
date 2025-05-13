@@ -2,6 +2,9 @@ package syftjson
 
 import (
 	"errors"
+	"io/fs"
+	"math"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,7 +35,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -41,7 +44,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -54,7 +57,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "file",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -64,7 +67,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -78,7 +81,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -89,7 +92,7 @@ func Test_toSyftSourceData(t *testing.T) {
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -104,14 +107,14 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
@@ -122,7 +125,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "file",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -130,7 +133,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 					MIMEType: "text/plain",
@@ -142,7 +145,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			src: model.Source{
 				ID:   "the-id",
 				Type: "image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -151,7 +154,7 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -175,7 +178,7 @@ func Test_idsHaveChanged(t *testing.T) {
 	s := toSyftModel(model.Document{
 		Source: model.Source{
 			Type:     "file",
-			Metadata: source.FileSourceMetadata{Path: "some/path"},
+			Metadata: source.FileMetadata{Path: "some/path"},
 		},
 		Artifacts: []model.Package{
 			{
@@ -231,6 +234,7 @@ func Test_toSyftFiles(t *testing.T) {
 				FileMetadata: map[file.Coordinates]file.Metadata{},
 				FileDigests:  map[file.Coordinates][]file.Digest{},
 				Executables:  map[file.Coordinates]file.Executable{},
+				Unknowns:     make(map[file.Coordinates][]string),
 			},
 		},
 		{
@@ -285,7 +289,7 @@ func Test_toSyftFiles(t *testing.T) {
 					},
 					Executable: &file.Executable{
 						Format: file.ELF,
-						SecurityFeatures: &file.ELFSecurityFeatures{
+						ELFSecurityFeatures: &file.ELFSecurityFeatures{
 							SymbolTableStripped:           false,
 							StackCanary:                   boolRef(true),
 							NoExecutable:                  false,
@@ -326,7 +330,7 @@ func Test_toSyftFiles(t *testing.T) {
 				Executables: map[file.Coordinates]file.Executable{
 					coord: {
 						Format: file.ELF,
-						SecurityFeatures: &file.ELFSecurityFeatures{
+						ELFSecurityFeatures: &file.ELFSecurityFeatures{
 							SymbolTableStripped:           false,
 							StackCanary:                   boolRef(true),
 							NoExecutable:                  false,
@@ -346,6 +350,7 @@ func Test_toSyftFiles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.want.FileContents = make(map[file.Coordinates]string)
 			tt.want.FileLicenses = make(map[file.Coordinates][]file.License)
+			tt.want.Unknowns = make(map[file.Coordinates][]string)
 			assert.Equal(t, tt.want, toSyftFiles(tt.files))
 		})
 	}
@@ -467,6 +472,48 @@ func Test_deduplicateErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := deduplicateErrors(tt.errors)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_safeFileModeConvert(t *testing.T) {
+	tests := []struct {
+		name    string
+		val     int
+		want    fs.FileMode
+		wantErr bool
+	}{
+		{
+			// fs.go ModePerm 511 = FileMode = 0777 // Unix permission bits :192
+			name:    "valid perm",
+			val:     777,
+			want:    os.FileMode(511), // 777 in octal equals 511 in decimal
+			wantErr: false,
+		},
+		{
+			name:    "outside int32 high",
+			val:     int(math.MaxInt32) + 1,
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "outside int32 low",
+			val:     int(math.MinInt32) - 1,
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeFileModeConvert(tt.val)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Equal(t, tt.want, got)
+				return
+			}
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}

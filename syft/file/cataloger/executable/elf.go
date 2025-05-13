@@ -8,17 +8,38 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
-func findELFSecurityFeatures(reader unionreader.UnionReader) (*file.ELFSecurityFeatures, error) {
+func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) error {
 	f, err := elf.NewFile(reader)
 	if err != nil {
-		return nil, nil
+		return err
 	}
 
-	features := file.ELFSecurityFeatures{
+	libs, err := f.ImportedLibraries()
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read imported libraries from elf file")
+		err = unknown.Joinf(err, "unable to read imported libraries from elf file: %w", err)
+		libs = nil
+	}
+
+	if libs == nil {
+		libs = []string{}
+	}
+
+	data.ImportedLibraries = libs
+	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
+	data.HasEntrypoint = elfHasEntrypoint(f)
+	data.HasExports = elfHasExports(f)
+
+	return err
+}
+
+func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {
+	return &file.ELFSecurityFeatures{
 		SymbolTableStripped:           isElfSymbolTableStripped(f),
 		StackCanary:                   checkElfStackCanary(f),
 		NoExecutable:                  checkElfNXProtection(f),
@@ -29,8 +50,6 @@ func findELFSecurityFeatures(reader unionreader.UnionReader) (*file.ELFSecurityF
 		LlvmControlFlowIntegrity:      checkLLVMControlFlowIntegrity(f),
 		ClangFortifySource:            checkClangFortifySource(f),
 	}
-
-	return &features, nil
 }
 
 func isElfSymbolTableStripped(file *elf.File) bool {
@@ -44,8 +63,7 @@ func checkElfStackCanary(file *elf.File) *bool {
 func hasAnyDynamicSymbols(file *elf.File, symbolNames ...string) *bool {
 	dynSyms, err := file.DynamicSymbols()
 	if err != nil {
-		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read dynamic symbols from elf file")
+		log.WithFields("error", err).Trace("unable to read dynamic symbols from elf file")
 		return nil
 	}
 
@@ -111,8 +129,7 @@ func hasBindNowDynTagOrFlag(f *elf.File) bool {
 func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS)
 	if err != nil {
-		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read DT_FLAGS from elf file")
+		log.WithFields("error", err).Trace("unable to read DT_FLAGS from elf file")
 		return false
 	}
 	for _, val := range vals {
@@ -126,8 +143,7 @@ func hasElfDynFlag(f *elf.File, flag elf.DynFlag) bool {
 func hasElfDynFlag1(f *elf.File, flag elf.DynFlag1) bool {
 	vals, err := f.DynValue(elf.DT_FLAGS_1)
 	if err != nil {
-		// TODO: known-unknowns
-		log.WithFields("error", err).Warn("unable to read DT_FLAGS_1 from elf file")
+		log.WithFields("error", err).Trace("unable to read DT_FLAGS_1 from elf file")
 		return false
 	}
 	for _, val := range vals {
@@ -185,7 +201,6 @@ func checkLLVMControlFlowIntegrity(file *elf.File) *bool {
 	// look for any symbols that are functions and end with ".cfi"
 	dynSyms, err := file.Symbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read symbols from elf file")
 		return nil
 	}
@@ -207,7 +222,6 @@ var fortifyPattern = regexp.MustCompile(`__\w+_chk@.+`)
 func checkClangFortifySource(file *elf.File) *bool {
 	dynSyms, err := file.Symbols()
 	if err != nil {
-		// TODO: known-unknowns
 		log.WithFields("error", err).Trace("unable to read symbols from elf file")
 		return nil
 	}
@@ -218,4 +232,35 @@ func checkClangFortifySource(file *elf.File) *bool {
 		}
 	}
 	return boolRef(false)
+}
+
+func elfHasEntrypoint(f *elf.File) bool {
+	// this is akin to
+	//    readelf -h ./path/to/bin | grep "Entry point address"
+	return f.Entry > 0
+}
+
+func elfHasExports(f *elf.File) bool {
+	// this is akin to:
+	//    nm -D --defined-only ./path/to/bin | grep ' T \| W \| B '
+	// where:
+	//   T - symbol in the text section
+	//   W - weak symbol that might be overwritten
+	//   B - variable located in the uninitialized data section
+	// really anything that is not marked with 'U' (undefined) is considered an export.
+	symbols, err := f.DynamicSymbols()
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to get ELF dynamic symbols")
+		return false
+	}
+
+	for _, s := range symbols {
+		// check if the section is SHN_UNDEF, which is the "U" output type from "nm -D" meaning that the symbol
+		// is undefined, meaning it is not an export. Any entry that is not undefined is considered an export.
+		if s.Section != elf.SHN_UNDEF {
+			return true
+		}
+	}
+
+	return false
 }

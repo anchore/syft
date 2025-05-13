@@ -1,0 +1,13 @@
+registry:
+  auth:
+    - authority: dir1-authority
+
+profiles:
+  no-auth:
+    registry:
+      auth: []
+
+  alt-auth:
+    registry:
+      auth:
+        - authority: dir1-alt-authority

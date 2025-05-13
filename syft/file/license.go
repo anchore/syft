@@ -10,6 +10,7 @@ type License struct {
 	SPDXExpression  string
 	Type            license.Type
 	LicenseEvidence *LicenseEvidence // evidence from license classifier
+	Contents        string           `hash:"ignore"`
 }
 
 type LicenseEvidence struct {
@@ -21,7 +22,7 @@ type LicenseEvidence struct {
 func NewLicense(value string) License {
 	spdxExpression, err := license.ParseExpression(value)
 	if err != nil {
-		log.Trace("unable to parse license expression: %s, %w", value, err)
+		log.WithFields("error", err, "value", value).Trace("unable to parse license expression")
 	}
 
 	return License{

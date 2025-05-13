@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
+	"github.com/anchore/syft/syft/format/purls"
 	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
@@ -62,6 +63,7 @@ func (o EncodersConfig) Encoders() ([]sbom.FormatEncoder, error) {
 	l.addWithErr(syftjson.ID)(o.syftJSONEncoders())
 	l.add(table.ID)(table.NewFormatEncoder())
 	l.add(text.ID)(text.NewFormatEncoder())
+	l.add(purls.ID)(purls.NewFormatEncoder())
 	l.add(github.ID)(github.NewFormatEncoder())
 	l.addWithErr(cyclonedxxml.ID)(o.cyclonedxXMLEncoders())
 	l.addWithErr(cyclonedxjson.ID)(o.cyclonedxJSONEncoders())

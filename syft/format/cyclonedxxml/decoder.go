@@ -41,6 +41,10 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, "", "", fmt.Errorf("unsupported cyclonedx xml document version")
 	}
 
+	_, err = reader.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, id, version, fmt.Errorf("unable to seek to start of CycloneDX XML SBOM: %w", err)
+	}
 	doc, err := d.decoder.Decode(reader)
 	if err != nil {
 		return nil, id, version, fmt.Errorf("unable to decode cyclonedx xml document: %w", err)

@@ -22,7 +22,7 @@ Given a version number format `MODEL.REVISION.ADDITION`:
 
 ## Adding a New `pkg.*Metadata` Type
 
-When adding a new `pkg.*Metadata` that is assigned to the `pkg.Package.Metadata` struct field you must add a test case to `test/integration/catalog_packages_cases_test.go` that exercises the new package type with the new metadata.
+When adding a new `pkg.*Metadata` that is assigned to the `pkg.Package.Metadata` struct field you must add a test case to `cmd/syft/internal/test/integration/catalog_packages_cases_test.go` that exercises the new package type with the new metadata.
 
 Additionally it is important to generate a new JSON schema since the `pkg.Package.Metadata` field is covered by the schema.
 

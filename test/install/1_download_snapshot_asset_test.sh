@@ -61,9 +61,14 @@ test_negative_snapshot_download_asset() {
 }
 
 test_sboms_have_packages() {
+  if ! command -v jq &> /dev/null; then
+    echo "jq command not found. Please install jq or ensure it is in your PATH."
+    exit 1
+  fi
+
   find "$(snapshot_dir)/" -name "*.sbom" -print0 | while IFS= read -r -d '' file; do
       count=$(cat "$file" | jq ".artifacts | length")
-      if [ "$count" -gt 80 ]; then
+      if [ "$count" -lt 80 ]; then
           echo "not enough packages found for file: $file"
           exit 1
       fi

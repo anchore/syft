@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
@@ -22,8 +23,8 @@ func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
 
 	require.NoError(t, os.MkdirAll(path, 0755))
 
-	src, err := source.NewFromDirectory(
-		source.DirectoryConfig{
+	src, err := directorysource.New(
+		directorysource.Config{
 			Path: path,
 			Base: dir,
 		},
@@ -63,8 +64,8 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 
 	require.NoError(t, os.MkdirAll(path, 0755))
 
-	src, err := source.NewFromDirectory(
-		source.DirectoryConfig{
+	src, err := directorysource.New(
+		directorysource.Config{
 			Path: path,
 			Base: dir,
 		},
@@ -98,7 +99,7 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 
 func newDirectoryCatalog() *pkg.Collection {
 	catalog := pkg.NewCollection()
-
+	ctx := context.TODO()
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
@@ -110,7 +111,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		),
 		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext(ctx, "MIT"),
 		),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
@@ -149,7 +150,7 @@ func newDirectoryCatalog() *pkg.Collection {
 
 func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 	catalog := pkg.NewCollection()
-
+	ctx := context.TODO()
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
@@ -161,7 +162,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		),
 		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext(ctx, "MIT"),
 		),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",

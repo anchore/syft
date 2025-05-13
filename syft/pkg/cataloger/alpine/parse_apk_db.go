@@ -12,6 +12,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -34,10 +35,11 @@ type parsedData struct {
 // parseApkDB parses packages from a given APK "installed" flat-file DB. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
-//nolint:funlen,gocognit
-func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+//nolint:funlen
+func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
+	var errs error
 	var apks []parsedData
 	var currentEntry parsedData
 	entryParsingInProgress := false
@@ -80,11 +82,13 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 
 		field := parseApkField(line)
 		if field == nil {
-			log.Warnf("unable to parse field data from line %q", line)
+			log.Debugf("unable to parse field data from line %q", line)
+			errs = unknown.Appendf(errs, reader, "unable to parse field data from line %q", line)
 			continue
 		}
 		if len(field.name) == 0 {
-			log.Warnf("failed to parse field name from line %q", line)
+			log.Debugf("failed to parse field name from line %q", line)
+			errs = unknown.Appendf(errs, reader, "failed to parse field name from line %q", line)
 			continue
 		}
 		if len(field.value) == 0 {
@@ -119,7 +123,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
 	if r == nil {
 		// find the repositories file from the relative directory of the DB file
-		releases := findReleases(resolver, reader.Location.RealPath)
+		releases := findReleases(resolver, reader.RealPath)
 
 		if len(releases) > 0 {
 			r = &releases[0]
@@ -128,10 +132,10 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
-		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
+		pkgs = append(pkgs, newPackage(ctx, apk, r, reader.Location))
 	}
 
-	return pkgs, discoverPackageDependencies(pkgs), nil
+	return pkgs, nil, errs
 }
 
 func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
@@ -156,6 +160,7 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 		log.Tracef("unable to fetch contents for APK repositories file %q: %+v", reposLocation, err)
 		return nil
 	}
+	defer internal.CloseAndLogError(reposReader, location.RealPath)
 
 	return parseReleasesFromAPKRepository(file.LocationReadCloser{
 		Location:   location,
@@ -168,7 +173,7 @@ func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Rele
 
 	reposB, err := io.ReadAll(reader)
 	if err != nil {
-		log.Tracef("unable to read APK repositories file %q: %+v", reader.Location.RealPath, err)
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
 		return nil
 	}
 
@@ -229,7 +234,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	case "S":
 		i, err := strconv.Atoi(f.value)
 		if err != nil {
-			log.Warnf("unable to parse value %q for field %q: %w", f.value, f.name, err)
+			log.Debugf("unable to parse value %q for field %q: %w", f.value, f.name, err)
 			return
 		}
 
@@ -237,7 +242,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 	case "I":
 		i, err := strconv.Atoi(f.value)
 		if err != nil {
-			log.Warnf("unable to parse value %q for field %q: %w", f.value, f.name, err)
+			log.Debugf("unable to parse value %q for field %q: %w", f.value, f.name, err)
 			return
 		}
 
@@ -267,7 +272,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		var ok bool
 		latest.OwnerUID, latest.OwnerGID, latest.Permissions, ok = processFileInfo(f.value)
 		if !ok {
-			log.Warnf("unexpected value for APK ACL field %q: %q", f.name, f.value)
+			log.Debugf("unexpected value for APK ACL field %q: %q", f.name, f.value)
 			return
 		}
 
@@ -293,7 +298,7 @@ func (f apkField) apply(p *parsedData, ctx *apkFileParsingContext) {
 		var ok bool
 		latest.OwnerUID, latest.OwnerGID, latest.Permissions, ok = processFileInfo(f.value)
 		if !ok {
-			log.Warnf("unexpected value for APK ACL field %q: %q", f.name, f.value)
+			log.Debugf("unexpected value for APK ACL field %q: %q", f.name, f.value)
 			return
 		}
 
@@ -384,58 +389,4 @@ func processChecksum(value string) *file.Digest {
 		Algorithm: algorithm,
 		Value:     value,
 	}
-}
-
-func discoverPackageDependencies(pkgs []pkg.Package) (relationships []artifact.Relationship) {
-	// map["provides" string] -> packages that provide the "p" key
-	lookup := make(map[string][]pkg.Package)
-	// read "Provides" (p) and add as keys for lookup keys as well as package names
-	for _, p := range pkgs {
-		apkg, ok := p.Metadata.(pkg.ApkDBEntry)
-		if !ok {
-			log.Warnf("cataloger failed to extract apk 'provides' metadata for package %+v", p.Name)
-			continue
-		}
-		lookup[p.Name] = append(lookup[p.Name], p)
-		for _, provides := range apkg.Provides {
-			k := stripVersionSpecifier(provides)
-			lookup[k] = append(lookup[k], p)
-		}
-	}
-
-	// read "Pull Dependencies" (D) and match with keys
-	for _, p := range pkgs {
-		apkg, ok := p.Metadata.(pkg.ApkDBEntry)
-		if !ok {
-			log.Warnf("cataloger failed to extract apk dependency metadata for package %+v", p.Name)
-			continue
-		}
-
-		for _, depSpecifier := range apkg.Dependencies {
-			// use the lookup to find what pkg we depend on
-			dep := stripVersionSpecifier(depSpecifier)
-			for _, depPkg := range lookup[dep] {
-				// this is a pkg that package "p" depends on... make a relationship
-				relationships = append(relationships, artifact.Relationship{
-					From: depPkg,
-					To:   p,
-					Type: artifact.DependencyOfRelationship,
-				})
-			}
-		}
-	}
-	return relationships
-}
-
-func stripVersionSpecifier(s string) string {
-	// examples:
-	// musl>=1                 --> musl
-	// cmd:scanelf=1.3.4-r0    --> cmd:scanelf
-
-	items := internal.SplitAny(s, "<>=")
-	if len(items) == 0 {
-		return s
-	}
-
-	return items[0]
 }

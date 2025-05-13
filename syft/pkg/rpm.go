@@ -35,6 +35,8 @@ type RpmDBEntry struct {
 	Size            int             `json:"size" cyclonedx:"size"`
 	Vendor          string          `json:"vendor"`
 	ModularityLabel *string         `json:"modularityLabel,omitempty"`
+	Provides        []string        `json:"provides,omitempty"`
+	Requires        []string        `json:"requires,omitempty"`
 	Files           []RpmFileRecord `json:"files"`
 }
 

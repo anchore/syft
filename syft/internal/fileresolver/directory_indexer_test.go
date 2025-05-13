@@ -1,9 +1,12 @@
 package fileresolver
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -135,7 +138,7 @@ func TestDirectoryIndexer_handleFileAccessErr(t *testing.T) {
 }
 
 func TestDirectoryIndexer_IncludeRootPathInIndex(t *testing.T) {
-	filterFn := func(path string, _ os.FileInfo, _ error) error {
+	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path != "/" {
 			return fs.SkipDir
 		}
@@ -222,9 +225,70 @@ func TestDirectoryIndexer_index(t *testing.T) {
 	}
 }
 
+func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
+	// note: this test is testing the effects from NewFromDirectory, indexTree, and addPathToIndex
+	_, filename, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	dir := filepath.Dir(filename)
+
+	tests := []struct {
+		name          string
+		path          string
+		relative_base string
+	}{
+		{
+			name:          "the parent directory has symlink target",
+			path:          "test-fixtures/system_paths/target/symlinks-to-dev",
+			relative_base: "test-fixtures/system_paths/target/symlinks-to-dev",
+		},
+		{
+			name:          "the ancestor directory has symlink target",
+			path:          "test-fixtures/system_paths/target/symlinks-to-hierarchical-dev",
+			relative_base: "test-fixtures/system_paths/target/symlinks-to-hierarchical-dev/module_1/module_1_1",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			indexer := newDirectoryIndexer("test-fixtures/system_paths/target",
+				fmt.Sprintf("%v/%v", dir, test.relative_base))
+			tree, index, err := indexer.build()
+			require.NoError(t, err)
+			info, err := os.Stat(test.path)
+			assert.NoError(t, err)
+
+			// note: the index uses absolute paths, so assertions MUST keep this in mind
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
+			p := file.Path(path.Join(cwd, test.path))
+			assert.Equal(t, true, tree.HasPath(p))
+			exists, ref, err := tree.File(p)
+			assert.Equal(t, true, exists)
+			if assert.NoError(t, err) {
+				return
+			}
+
+			entry, err := index.Get(*ref.Reference)
+			require.NoError(t, err)
+			assert.Equal(t, info.Mode(), entry.Mode)
+		})
+	}
+}
+func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
+	// test-fixtures/bad-symlinks
+	// ├── root
+	// │   ├── place
+	// │   │   └── fd -> ../somewhere/self/fd
+	// │   └── somewhere
+	// ...
+	indexer := newDirectoryIndexer("test-fixtures/bad-symlinks/root/place/fd", "test-fixtures/bad-symlinks/root/place/fd")
+	_, _, err := indexer.build()
+	require.NoError(t, err)
+}
+
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	var observedPaths []string
-	pathObserver := func(p string, _ os.FileInfo, _ error) error {
+	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {
 		fields := strings.Split(p, "test-fixtures/symlinks-prune-indexing")
 		if len(fields) < 2 {
 			return nil
@@ -382,4 +446,69 @@ func Test_allContainedPaths(t *testing.T) {
 			assert.Equal(t, tt.want, allContainedPaths(tt.path))
 		})
 	}
+}
+
+func Test_relativePath(t *testing.T) {
+	tests := []struct {
+		name      string
+		basePath  string
+		givenPath string
+		want      string
+	}{
+		{
+			name:      "root: same relative path",
+			basePath:  "a/b/c",
+			givenPath: "a/b/c",
+			want:      "/",
+		},
+		{
+			name:      "root: same absolute path",
+			basePath:  "/a/b/c",
+			givenPath: "/a/b/c",
+			want:      "/",
+		},
+		{
+			name:      "contained path: relative",
+			basePath:  "a/b/c",
+			givenPath: "a/b/c/dev",
+			want:      "/dev",
+		},
+		{
+			name:      "contained path: absolute",
+			basePath:  "/a/b/c",
+			givenPath: "/a/b/c/dev",
+			want:      "/dev",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, relativePath(tt.basePath, tt.givenPath))
+		})
+	}
+}
+
+func relativePath(basePath, givenPath string) string {
+	var relPath string
+	var relErr error
+
+	if basePath != "" {
+		relPath, relErr = filepath.Rel(basePath, givenPath)
+		cleanPath := filepath.Clean(relPath)
+		if relErr == nil {
+			if cleanPath == "." {
+				relPath = string(filepath.Separator)
+			} else {
+				relPath = cleanPath
+			}
+		}
+		if !filepath.IsAbs(relPath) {
+			relPath = string(filepath.Separator) + relPath
+		}
+	}
+
+	if relErr != nil || basePath == "" {
+		relPath = givenPath
+	}
+
+	return relPath
 }

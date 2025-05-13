@@ -16,9 +16,11 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
+	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	formatInternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -45,9 +47,10 @@ const (
 func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := helpers.DocumentNameAndNamespace(s.Source, s.Descriptor)
 
-	packages := toPackages(s.Artifacts.Packages, s)
+	rels := relationship.NewIndex(s.Relationships...)
+	packages, otherLicenses := toPackages(rels, s.Artifacts.Packages, s)
 
-	relationships := toRelationships(s.RelationshipsSorted())
+	allRelationships := toRelationships(rels.All())
 
 	// for valid SPDX we need a document describes relationship
 	describesID := spdx.ElementID("DOCUMENT")
@@ -57,7 +60,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		describesID = rootPackage.PackageSPDXIdentifier
 
 		// add all relationships from the document root to all other packages
-		relationships = append(relationships, toRootRelationships(rootPackage, packages)...)
+		allRelationships = append(allRelationships, toRootRelationships(rootPackage, packages)...)
 
 		// append the root package
 		packages = append(packages, rootPackage)
@@ -75,7 +78,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	}
 
 	// add the root document relationship
-	relationships = append(relationships, documentDescribesRelationship)
+	allRelationships = append(allRelationships, documentDescribesRelationship)
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
@@ -124,7 +127,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		CreationInfo: &spdx.CreationInfo{
 			// 6.7: License List Version
 			// Cardinality: optional, one
-			LicenseListVersion: spdxlicense.Version,
+			LicenseListVersion: trimPatchVersion(spdxlicense.Version),
 
 			// 6.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
@@ -150,8 +153,8 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		},
 		Packages:      packages,
 		Files:         toFiles(s),
-		Relationships: relationships,
-		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
+		Relationships: allRelationships,
+		OtherLicenses: convertOtherLicense(otherLicenses),
 	}
 }
 
@@ -181,7 +184,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 	purpose := ""
 	var checksums []spdx.Checksum
 	switch m := s.Metadata.(type) {
-	case source.StereoscopeImageSourceMetadata:
+	case source.ImageMetadata:
 		prefix = prefixImage
 		purpose = spdxPrimaryPurposeContainer
 
@@ -211,11 +214,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 			}
 		}
 
-	case source.DirectorySourceMetadata:
+	case source.DirectoryMetadata:
 		prefix = prefixDirectory
 		purpose = spdxPrimaryPurposeFile
 
-	case source.FileSourceMetadata:
+	case source.FileMetadata:
 		prefix = prefixFile
 		purpose = spdxPrimaryPurposeFile
 
@@ -244,7 +247,10 @@ func toRootPackage(s source.Description) *spdx.Package {
 		PackageSupplier: &spdx.Supplier{
 			Supplier: helpers.NOASSERTION,
 		},
+		PackageCopyrightText:    helpers.NOASSERTION,
 		PackageDownloadLocation: helpers.NOASSERTION,
+		PackageLicenseConcluded: helpers.NOASSERTION,
+		PackageLicenseDeclared:  helpers.NOASSERTION,
 	}
 
 	if purl != nil {
@@ -261,21 +267,34 @@ func toRootPackage(s source.Description) *spdx.Package {
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
+	id := string(identifiable.ID())
+	if strings.HasPrefix(id, "SPDXRef-") {
+		// this is already an SPDX ID, no need to change it (except for the prefix)
+		return spdx.ElementID(helpers.SanitizeElementID(strings.TrimPrefix(id, "SPDXRef-")))
+	}
 	maxLen := 40
-	id := ""
 	switch it := identifiable.(type) {
 	case pkg.Package:
+		if strings.HasPrefix(id, "Package-") {
+			// this is already an SPDX ID, no need to change it
+			return spdx.ElementID(helpers.SanitizeElementID(id))
+		}
 		switch {
 		case it.Type != "" && it.Name != "":
-			id = fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, it.ID())
+			id = fmt.Sprintf("Package-%s-%s-%s", it.Type, it.Name, id)
 		case it.Name != "":
-			id = fmt.Sprintf("Package-%s-%s", it.Name, it.ID())
+			id = fmt.Sprintf("Package-%s-%s", it.Name, id)
 		case it.Type != "":
-			id = fmt.Sprintf("Package-%s-%s", it.Type, it.ID())
+			id = fmt.Sprintf("Package-%s-%s", it.Type, id)
 		default:
-			id = fmt.Sprintf("Package-%s", it.ID())
+			id = fmt.Sprintf("Package-%s", id)
 		}
 	case file.Coordinates:
+		if strings.HasPrefix(id, "File-") {
+			// this is already an SPDX ID, no need to change it. Note: there is no way to reach this case today
+			// from within syft, however, this covers future cases where the ID can be overridden
+			return spdx.ElementID(helpers.SanitizeElementID(id))
+		}
 		p := ""
 		parts := strings.Split(it.RealPath, "/")
 		for i := len(parts); i > 0; i-- {
@@ -289,9 +308,7 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 			}
 			p = path.Join(part, p)
 		}
-		id = fmt.Sprintf("File-%s-%s", p, it.ID())
-	default:
-		id = string(identifiable.ID())
+		id = fmt.Sprintf("File-%s-%s", p, id)
 	}
 	// NOTE: the spdx library prepend SPDXRef-, so we don't do it here
 	return spdx.ElementID(helpers.SanitizeElementID(id))
@@ -300,23 +317,25 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package, otherLicenses []spdx.OtherLicense) {
+	otherLicenseSet := helpers.NewSPDXOtherLicenseSet()
 	for _, p := range catalog.Sorted() {
-		// name should be guaranteed to be unique, but semantically useful and stable
+		// name should be guaranteed to be unique but semantically useful and stable
 		id := toSPDXID(p)
 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
 		// extract these correctly to the spdx license format
-		concluded, declared := helpers.License(p)
+		concluded, declared, ol := helpers.License(p)
+		otherLicenseSet.Add(ol...)
 
 		// two ways to get filesAnalyzed == true:
 		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
 		// 2. syft has generated a sha1 digest for the package's contents
 		packageChecksums, filesAnalyzed := toPackageChecksums(p)
 
-		packageVerificationCode := newPackageVerificationCode(p, sbom)
+		packageVerificationCode := newPackageVerificationCode(rels, p, sbom)
 		if packageVerificationCode != nil {
 			filesAnalyzed = true
 		}
@@ -468,7 +487,7 @@ func toPackages(catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Packag
 			PackageAttributionTexts: nil,
 		})
 	}
-	return results
+	return results, otherLicenseSet.ToSlice()
 }
 
 func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
@@ -501,6 +520,14 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 			Algorithm: spdx.ChecksumAlgorithm(algo),
 			Value:     hexStr,
 		})
+	case pkg.OpamPackage:
+		for _, checksum := range meta.Checksums {
+			parts := strings.Split(checksum, "=")
+			checksums = append(checksums, spdx.Checksum{
+				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(parts[0])),
+				Value:     parts[1],
+			})
+		}
 	}
 	return checksums, filesAnalyzed
 }
@@ -517,9 +544,7 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 }
 
 func toPackageSupplier(p pkg.Package) *spdx.Supplier {
-	// this uses the Originator function for now until
-	// a better distinction can be made for supplier
-	kind, supplier := helpers.Originator(p)
+	kind, supplier := helpers.Supplier(p)
 	if kind == "" || supplier == "" {
 		return &spdx.Supplier{
 			Supplier: helpers.NOASSERTION,
@@ -589,14 +614,19 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
-	for _, coordinates := range s.AllCoordinates() {
+	_, coordinateSorter := formatInternal.GetLocationSorters(s)
+
+	coordinates := s.AllCoordinates()
+	slices.SortFunc(coordinates, coordinateSorter)
+
+	for _, c := range coordinates {
 		var metadata *file.Metadata
-		if metadataForLocation, exists := artifacts.FileMetadata[coordinates]; exists {
+		if metadataForLocation, exists := artifacts.FileMetadata[c]; exists {
 			metadata = &metadataForLocation
 		}
 
 		var digests []file.Digest
-		if digestsForLocation, exists := artifacts.FileDigests[coordinates]; exists {
+		if digestsForLocation, exists := artifacts.FileDigests[c]; exists {
 			digests = digestsForLocation
 		}
 
@@ -612,18 +642,28 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 		// TODO: add file classifications (?) and content as a snippet
 
 		var comment string
-		if coordinates.FileSystemID != "" {
-			comment = fmt.Sprintf("layerID: %s", coordinates.FileSystemID)
+		if c.FileSystemID != "" {
+			comment = fmt.Sprintf("layerID: %s", c.FileSystemID)
+		}
+
+		relativePath, err := convertAbsoluteToRelative(c.RealPath)
+		if err != nil {
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
+			relativePath = c.RealPath
 		}
 
 		results = append(results, &spdx.File{
-			FileSPDXIdentifier: toSPDXID(coordinates),
+			FileSPDXIdentifier: toSPDXID(c),
 			FileComment:        comment,
 			// required, no attempt made to determine license information
-			LicenseConcluded: noAssertion,
-			Checksums:        toFileChecksums(digests),
-			FileName:         coordinates.RealPath,
-			FileTypes:        toFileTypes(metadata),
+			LicenseConcluded:  noAssertion,
+			FileCopyrightText: noAssertion,
+			Checksums:         toFileChecksums(digests),
+			FileName:          relativePath,
+			FileTypes:         toFileTypes(metadata),
+			LicenseInfoInFiles: []string{ // required in SPDX 2.2
+				helpers.NOASSERTION,
+			},
 		})
 	}
 
@@ -700,53 +740,16 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 	return ty
 }
 
-// other licenses are for licenses from the pkg.Package that do not have an SPDXExpression
-// field. The spdxexpression field is only filled given a validated Value field.
-func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
-	licenses := map[string]helpers.SPDXLicense{}
-
-	for p := range catalog.Enumerate() {
-		declaredLicenses, concludedLicenses := helpers.ParseLicenses(p.Licenses.ToSlice())
-		for _, l := range declaredLicenses {
-			if l.Value != "" {
-				licenses[l.ID] = l
-			}
-		}
-		for _, l := range concludedLicenses {
-			if l.Value != "" {
-				licenses[l.ID] = l
-			}
-		}
-	}
-
-	var result []*spdx.OtherLicense
-
-	var ids []string
-	for licenseID := range licenses {
-		ids = append(ids, licenseID)
-	}
-
-	slices.Sort(ids)
-	for _, id := range ids {
-		license := licenses[id]
-		result = append(result, &spdx.OtherLicense{
-			LicenseIdentifier: license.ID,
-			ExtractedText:     license.Value,
-		})
-	}
-	return result
-}
-
 // TODO: handle SPDX excludes file case
 // f file is an "excludes" file, skip it /* exclude SPDX analysis file(s) */
 // see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
 // the above link contains the SPDX algorithm for a package verification code
-func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
-	// key off of the contains relationship;
-	// spdx validator will fail if a package claims to contain a file but no sha1 provided
-	// if a sha1 for a file is provided then the validator will fail if the package does not have
+func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
+	// key off of the spdx contains relationship;
+	// spdx validator will fail if a package claims to contain a file, but no sha1 provided
+	// if a sha1 for a file is provided, then the validator will fail if the package does not have
 	// a package verification code
-	coordinates := sbom.CoordinatesForPackage(p, artifact.ContainsRelationship)
+	coordinates := rels.Coordinates(p, artifact.ContainsRelationship)
 	var digests []file.Digest
 	for _, c := range coordinates {
 		digest := sbom.Artifacts.FileDigests[c]
@@ -787,4 +790,45 @@ func newPackageVerificationCode(p pkg.Package, sbom sbom.SBOM) *spdx.PackageVeri
 		// Cardinality: mandatory, one
 		Value: fmt.Sprintf("%+x", hasher.Sum(nil)),
 	}
+}
+
+// SPDX 2.2 spec requires that the patch version be removed from the semver string
+// for the license list version field
+func trimPatchVersion(semver string) string {
+	parts := strings.Split(semver, ".")
+	if len(parts) >= 3 {
+		return strings.Join(parts[:2], ".")
+	}
+	return semver
+}
+
+// spdx requires that the file name field is a relative filename
+// with the root of the package archive or directory
+func convertAbsoluteToRelative(absPath string) (string, error) {
+	// Ensure the absolute path is absolute (although it should already be)
+	if !path.IsAbs(absPath) {
+		// already relative
+		log.Debugf("%s is already relative", absPath)
+		return absPath, nil
+	}
+
+	// we use "/" here given that we're converting absolute paths from root to relative
+	relPath, found := strings.CutPrefix(absPath, "/")
+	if !found {
+		return "", fmt.Errorf("error calculating relative path: %s", absPath)
+	}
+
+	return relPath, nil
+}
+
+func convertOtherLicense(otherLicenses []spdx.OtherLicense) []*spdx.OtherLicense {
+	if len(otherLicenses) == 0 {
+		return nil
+	}
+
+	result := make([]*spdx.OtherLicense, 0, len(otherLicenses))
+	for i := range otherLicenses {
+		result = append(result, &otherLicenses[i])
+	}
+	return result
 }

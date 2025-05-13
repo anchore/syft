@@ -2,17 +2,23 @@ package executable
 
 import (
 	"bytes"
+	"context"
 	"debug/elf"
 	"debug/macho"
 	"encoding/binary"
 	"fmt"
+	"sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/dustin/go-humanize"
 
+	"github.com/anchore/go-sync"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
+	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -28,8 +34,10 @@ type Cataloger struct {
 }
 
 func DefaultConfig() Config {
+	m := mimetype.ExecutableMIMETypeSet.List()
+	sort.Strings(m)
 	return Config{
-		MIMETypes: mimetype.ExecutableMIMETypeSet.List(),
+		MIMETypes: m,
 		Globs:     nil,
 	}
 }
@@ -41,6 +49,10 @@ func NewCataloger(cfg Config) *Cataloger {
 }
 
 func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.Executable, error) {
+	return i.CatalogCtx(context.Background(), resolver)
+}
+
+func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map[file.Coordinates]file.Executable, error) {
 	locs, err := resolver.FilesByMIMEType(i.config.MIMETypes...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get file locations for binaries: %w", err)
@@ -54,31 +66,44 @@ func (i *Cataloger) Catalog(resolver file.Resolver) (map[file.Coordinates]file.E
 	prog := catalogingProgress(int64(len(locs)))
 
 	results := make(map[file.Coordinates]file.Executable)
-	for _, loc := range locs {
+	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locs), func(loc file.Location) (*file.Executable, error) {
 		prog.AtomicStage.Set(loc.Path())
 
-		reader, err := resolver.FileContentsByLocation(loc)
+		exec, err := processExecutableLocation(loc, resolver)
 		if err != nil {
-			// TODO: known-unknowns
-			log.WithFields("error", err).Warnf("unable to get file contents for %q", loc.RealPath)
-			continue
+			err = unknown.New(loc, err)
 		}
-		exec, err := processExecutable(loc, reader.(unionreader.UnionReader))
-		if err != nil {
-			log.WithFields("error", err).Warnf("unable to process executable %q", loc.RealPath)
-		}
+		return exec, err
+	}, func(loc file.Location, exec *file.Executable) {
 		if exec != nil {
 			prog.Increment()
 			results[loc.Coordinates] = *exec
 		}
-	}
+	})
 
 	log.Debugf("executable cataloger processed %d files", len(results))
 
 	prog.AtomicStage.Set(fmt.Sprintf("%s executables", humanize.Comma(prog.Current())))
 	prog.SetCompleted()
 
-	return results, nil
+	return results, errs
+}
+
+func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file.Executable, error) {
+	reader, err := resolver.FileContentsByLocation(loc)
+	if err != nil {
+		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get file contents")
+		return nil, fmt.Errorf("unable to get file contents: %w", err)
+	}
+	defer internal.CloseAndLogError(reader, loc.RealPath)
+
+	uReader, err := unionreader.GetUnionReader(reader)
+	if err != nil {
+		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get union reader")
+		return nil, fmt.Errorf("unable to get union reader: %w", err)
+	}
+
+	return processExecutable(loc, uReader)
 }
 
 func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
@@ -134,25 +159,42 @@ func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file
 
 	format, err := findExecutableFormat(reader)
 	if err != nil {
+		log.Debugf("unable to determine executable kind for %v: %v", loc.RealPath, err)
 		return nil, fmt.Errorf("unable to determine executable kind: %w", err)
 	}
 
 	if format == "" {
+		// this is not an "unknown", so just log -- this binary does not have parseable data in it
 		log.Debugf("unable to determine executable format for %q", loc.RealPath)
 		return nil, nil
 	}
 
 	data.Format = format
 
-	securityFeatures, err := findSecurityFeatures(format, reader)
-	if err != nil {
-		log.WithFields("error", err).Warnf("unable to determine security features for %q", loc.RealPath)
-		return nil, nil
+	switch format {
+	case file.ELF:
+		if err = findELFFeatures(&data, reader); err != nil {
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine ELF features")
+			err = fmt.Errorf("unable to determine ELF features: %w", err)
+		}
+	case file.PE:
+		if err = findPEFeatures(&data, reader); err != nil {
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
+			err = fmt.Errorf("unable to determine PE features: %w", err)
+		}
+	case file.MachO:
+		if err = findMachoFeatures(&data, reader); err != nil {
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine Macho features")
+			err = fmt.Errorf("unable to determine Macho features: %w", err)
+		}
 	}
 
-	data.SecurityFeatures = securityFeatures
+	// always allocate collections for presentation
+	if data.ImportedLibraries == nil {
+		data.ImportedLibraries = []string{}
+	}
 
-	return &data, nil
+	return &data, err
 }
 
 func findExecutableFormat(reader unionreader.UnionReader) (file.ExecutableFormat, error) {
@@ -218,17 +260,4 @@ func isPE(by []byte) bool {
 
 func isELF(by []byte) bool {
 	return bytes.HasPrefix(by, []byte(elf.ELFMAG))
-}
-
-func findSecurityFeatures(format file.ExecutableFormat, reader unionreader.UnionReader) (*file.ELFSecurityFeatures, error) {
-	// TODO: add support for PE and MachO
-	switch format { //nolint: gocritic
-	case file.ELF:
-		return findELFSecurityFeatures(reader) //nolint: gocritic
-		// case file.PE:
-		//	return findPESecurityFeatures(reader)
-		// case file.MachO:
-		//	return findMachOSecurityFeatures(reader)
-	}
-	return nil, fmt.Errorf("unsupported executable format: %q", format)
 }

@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Implementation-Title: com.newrelic.instrumentation.spring-4.3.0
+Implementation-Version: 1.0
+Illegal-Classes: 
+Weave-Violation-Filter: METHOD_MISSING_REQUIRED_ANNOTATIONS,CLASS_MISS
+ ING_REQUIRED_ANNOTATIONS
+Reference-Classes: org/springframework/core/annotation/AnnotationUtils
+ ,org/springframework/web/bind/annotation/DeleteMapping,org/springfram
+ ework/web/bind/annotation/PatchMapping,org/springframework/web/bind/a
+ nnotation/PostMapping,org/springframework/web/bind/annotation/PutMapp
+ ing,org/springframework/web/bind/annotation/RequestMapping,org/spring
+ framework/web/method/HandlerMethod,org/springframework/web/servlet/Mo
+ delAndView
+Class-Required-Annotations: 
+Method-Required-Annotations: 
+Implementation-Title-Alias: spring_annotations
+Weave-Classes: org/springframework/web/bind/annotation/GetMapping,org/
+ springframework/web/servlet/mvc/method/AbstractHandlerMethodAdapter
+Weave-Methods: "handleInternal(Ljavax/servlet/http/HttpServletRequest;
+ Ljavax/servlet/http/HttpServletResponse;Lorg/springframework/web/meth
+ od/HandlerMethod;)Lorg/springframework/web/servlet/ModelAndView;"
+Implementation-Vendor: New Relic

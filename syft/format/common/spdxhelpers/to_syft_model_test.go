@@ -199,15 +199,15 @@ func TestExtractSourceFromNamespaces(t *testing.T) {
 	}{
 		{
 			namespace: "https://anchore.com/syft/file/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.FileSourceMetadata{},
+			expected:  source.FileMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/image/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.StereoscopeImageSourceMetadata{},
+			expected:  source.ImageMetadata{},
 		},
 		{
 			namespace: "https://anchore.com/syft/dir/d42b01d0-7325-409b-b03f-74082935c4d3",
-			expected:  source.DirectorySourceMetadata{},
+			expected:  source.DirectoryMetadata{},
 		},
 		{
 			namespace: "https://another-host/blob/123",
@@ -414,6 +414,66 @@ func Test_toSyftRelationships(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "dependency-of relationship",
+			args: args{
+				spdxIDMap: map[string]any{
+					string(toSPDXID(pkg2)): pkg2,
+					string(toSPDXID(pkg3)): pkg3,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg2),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(pkg3),
+							},
+							Relationship:        spdx.RelationshipDependencyOf,
+							RelationshipComment: "dependency-of: indicates that the package in RefA is a dependency of the package in RefB",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg2,
+					To:   pkg3,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+		},
+		{
+			name: "dependends-on relationship",
+			args: args{
+				spdxIDMap: map[string]any{
+					string(toSPDXID(pkg2)): pkg2,
+					string(toSPDXID(pkg3)): pkg3,
+				},
+				doc: &spdx.Document{
+					Relationships: []*spdx.Relationship{
+						{
+							RefA: common.DocElementID{
+								ElementRefID: toSPDXID(pkg3),
+							},
+							RefB: common.DocElementID{
+								ElementRefID: toSPDXID(pkg2),
+							},
+							Relationship:        spdx.RelationshipDependsOn,
+							RelationshipComment: "dependends-on: indicates that the package in RefA depends on the package in RefB",
+						},
+					},
+				},
+			},
+			want: []artifact.Relationship{
+				{
+					From: pkg2,
+					To:   pkg3,
+					Type: artifact.DependencyOfRelationship,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -460,7 +520,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "image source",
 			source: source.Description{
 				ID: "DocumentRoot-Image-some-image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					ID:             "DocumentRoot-Image-some-image",
 					UserInput:      "some-image:some-tag",
 					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
@@ -476,7 +536,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-.",
 				Name: ".",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: ".",
 				},
 			},
@@ -488,7 +548,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "my-app",
 				},
 			},
@@ -499,7 +559,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			name: "file source",
 			source: source.Description{
 				ID: "DocumentRoot-File-my-app.exe",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path: "my-app.exe",
 					Digests: []file.Digest{
 						{
@@ -604,7 +664,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "some-package",
-				PackageSPDXIdentifier: "1",
+				PackageSPDXIdentifier: "1", // important!
 				PackageVersion:        "1.0.5",
 				Files: []*spdx.File{
 					{
@@ -629,7 +689,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Name:    "some-package",
 		Version: "1.0.5",
 	}
-	p.SetID()
+	p.OverrideID("1") // the same as the spdxID on the package element
 	f := file.Location{
 		LocationData: file.LocationData{
 			Coordinates: file.Coordinates{
@@ -669,4 +729,33 @@ func Test_directPackageFiles(t *testing.T) {
 	}
 
 	require.Equal(t, s, got)
+}
+
+func Test_useSPDXIdentifierOverDerivedSyftArtifactID(t *testing.T) {
+	doc := &spdx.Document{
+		SPDXVersion: "SPDX-2.3",
+		Packages: []*spdx.Package{
+			{
+				PackageName:           "some-package",
+				PackageSPDXIdentifier: "1", // important!
+				PackageVersion:        "1.0.5",
+				Files: []*spdx.File{
+					{
+						FileName:           "some-file",
+						FileSPDXIdentifier: "2",
+						Checksums: []spdx.Checksum{
+							{
+								Algorithm: "SHA1",
+								Value:     "a8d733c64f9123",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	s, err := ToSyftModel(doc)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
 }

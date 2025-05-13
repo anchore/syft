@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/CycloneDX/cyclonedx-go"
@@ -12,6 +13,7 @@ import (
 )
 
 func Test_encodeLicense(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -25,7 +27,7 @@ func Test_encodeLicense(t *testing.T) {
 			name: "no SPDX licenses",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("RandomLicense"),
+					pkg.NewLicenseWithContext(ctx, "RandomLicense"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -40,8 +42,8 @@ func Test_encodeLicense(t *testing.T) {
 			name: "single SPDX ID and Non SPDX ID",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("mit"),
-					pkg.NewLicense("FOOBAR"),
+					pkg.NewLicenseWithContext(ctx, "mit"),
+					pkg.NewLicenseWithContext(ctx, "FOOBAR"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -61,7 +63,7 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with complex SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -74,8 +76,8 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple complex SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicense("MIT AND GPL-3.0-only WITH Classpath-exception-2.0"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only WITH Classpath-exception-2.0"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -88,9 +90,9 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple URLs and expressions",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicenseFromURLs("FakeLicense", "htts://someurl.com"),
+					pkg.NewLicenseFromURLsWithContext(ctx, "MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only"),
+					pkg.NewLicenseFromURLsWithContext(ctx, "FakeLicense", "htts://someurl.com"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -123,8 +125,8 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple values licenses are deduplicated",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("Apache-2"),
-					pkg.NewLicense("Apache-2.0"),
+					pkg.NewLicenseWithContext(ctx, "Apache-2"),
+					pkg.NewLicenseWithContext(ctx, "Apache-2.0"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -139,9 +141,9 @@ func Test_encodeLicense(t *testing.T) {
 			name: "with multiple URLs and single with no URLs",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT"),
-					pkg.NewLicenseFromURLs("MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT"),
+					pkg.NewLicenseFromURLsWithContext(ctx, "MIT", "https://opensource.org/licenses/MIT", "https://spdx.org/licenses/MIT.html"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only"),
 				),
 			},
 			expected: &cyclonedx.Licenses{
@@ -161,6 +163,29 @@ func Test_encodeLicense(t *testing.T) {
 					License: &cyclonedx.License{
 						Name: "MIT AND GPL-3.0-only",
 					},
+				},
+			},
+		},
+		{
+			name: "single parenthesized SPDX expression",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, "(MIT OR Apache-2.0)")...),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					Expression: "MIT OR Apache-2.0",
+				},
+			},
+		},
+		{
+			name: "single license AND to parenthesized SPDX expression",
+			// (LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, "(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later")...),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					Expression: "(LGPL-3.0-or-later OR GPL-2.0-or-later OR (LGPL-3.0-or-later AND GPL-2.0-or-later)) AND GFDL-1.3-invariants-or-later",
 				},
 			},
 		},
@@ -225,7 +250,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value: "RandomLicense",
 					// CycloneDX specification doesn't give a field for determining the license type
 					Type: license.Declared,
-					URLs: []string{},
 				},
 			},
 		},
@@ -245,7 +269,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           []string{},
 				},
 			},
 		},
@@ -254,7 +277,8 @@ func TestDecodeLicenses(t *testing.T) {
 			input: &cyclonedx.Component{
 				Licenses: &cyclonedx.Licenses{
 					{
-						License:    &cyclonedx.License{},
+						// CycloneDX specification doesn't allow to provide License if Expression is provided
+						License:    nil,
 						Expression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					},
 				},
@@ -264,7 +288,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					Type:           license.Declared,
-					URLs:           []string{},
 				},
 			},
 		},

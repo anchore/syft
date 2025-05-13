@@ -1,13 +1,32 @@
 {
     "bomFormat": "CycloneDX",
-    "specVersion": "1.4",
+    "specVersion": "1.6",
     "version": 1,
+    "serialNumber": "urn:uuid:43538af4-f715-3d85-9629-336fdd3790ad",
+    "metadata": {
+        "component": {
+            "type": "library",
+            "group": "com.test",
+            "name": "main-test-app",
+            "version": "1.0-SNAPSHOT",
+            "purl": "pkg:maven/com.oracle/main-test-app@1.0-SNAPSHOT",
+            "bom-ref": "pkg:maven/com.oracle/main-test-app@1.0-SNAPSHOT",
+            "properties": [
+                {
+                    "name": "syft:cpe23",
+                    "value": "cpe:2.3:a:app:main-test-app:1.0-SNAPSHOT:*:*:*:*:*:*:*"
+                }
+            ]
+        }
+    },
     "components": [
         {
             "type": "library",
             "group": "io.netty",
             "name": "netty-codec-http2",
             "version": "4.1.73.Final",
+            "purl": "pkg:maven/io.netty/netty-codec-http2@4.1.104.Final",
+            "bom-ref": "pkg:maven/io.netty/netty-codec-http2@4.1.104.Final",
             "properties": [
                 {
                     "name": "syft:cpe23",
@@ -22,7 +41,37 @@
                     "value": "cpe:2.3:a:codec:netty_codec_http2:4.1.73.Final:*:*:*:*:*:*:*"
                 }
             ]
+        },
+        {
+            "type": "library",
+            "group": "io.micronaut",
+            "name": "core",
+            "version": "4.2.3",
+            "purl": "pkg:maven/io.micronaut/core@4.2.3",
+            "bom-ref": "pkg:maven/io.micronaut/core@4.2.3",
+            "properties": [
+                {
+                    "name": "syft:cpe23",
+                    "value": "cpe:2.3:a:core:core:4.2.3:*:*:*:*:*:*:*"
+                },
+                {
+                    "name": "syft:cpe23",
+                    "value": "cpe:2.3:a:micronaut:core:4.2.3:*:*:*:*:*:*:*"
+                }
+            ]
+        },
+        {
+            "type": "library",
+            "name": "basic-lib",
+            "version": "1.0"
         }
     ],
-    "serialNumber": "urn:uuid:43538af4-f715-3d85-9629-336fdd3790ad"
+    "dependencies": [
+        {
+            "ref": "pkg:maven/io.micronaut/core@4.2.3",
+            "dependsOn": [
+                "pkg:maven/io.netty/netty-codec-http2@4.1.104.Final"
+            ]
+        }
+    ]
 }

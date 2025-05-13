@@ -1,15 +1,17 @@
 package file
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/evidence"
 	"github.com/anchore/syft/syft/artifact"
 )
 
-func TestLocationSet(t *testing.T) {
+func TestLocationSet_SortPaths(t *testing.T) {
 
 	etcHostsLinkVar := Location{
 		LocationData: LocationData{
@@ -87,8 +89,119 @@ func TestLocationSet(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			set := NewLocationSet(test.input...)
-			assert.Equal(t, test.expected, set.ToSlice())
+			actual := NewLocationSet(test.input...).ToSlice()
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestLocationSet_SortEvidence(t *testing.T) {
+	primaryEvidence := map[string]string{evidence.AnnotationKey: evidence.PrimaryAnnotation}
+	secondaryEvidence := map[string]string{evidence.AnnotationKey: evidence.SupportingAnnotation}
+
+	binPrimary := Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "a",
+			},
+			AccessPath: "/usr/bin",
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: primaryEvidence,
+		},
+	}
+
+	binSecondary := Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "a",
+			},
+			AccessPath: "/usr/bin",
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: secondaryEvidence,
+		},
+	}
+
+	binNoEvidence := Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/bin",
+				FileSystemID: "a",
+			},
+			AccessPath: "/usr/bin",
+		},
+	}
+
+	etcHostsPrimary := Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
+			AccessPath: "/var/etc/hosts",
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: primaryEvidence,
+		},
+	}
+
+	etcHostsSecondary := Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
+			AccessPath: "/var/etc/hosts",
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: secondaryEvidence,
+		},
+	}
+
+	etcHostsNoEvidence := Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     "/etc/hosts",
+				FileSystemID: "a",
+			},
+			AccessPath: "/var/etc/hosts",
+		},
+	}
+
+	tests := []struct {
+		name     string
+		input    []Location
+		expected []Location
+	}{
+		{
+			name: "sort primary, secondary, tertiary, no evidence",
+			input: []Location{
+				binNoEvidence, binPrimary, binSecondary,
+			},
+			expected: []Location{
+				binPrimary, binSecondary, binNoEvidence,
+			},
+		},
+		{
+			name: "sort by evidence, then path",
+			input: []Location{
+				etcHostsNoEvidence, etcHostsSecondary,
+				binSecondary, binNoEvidence,
+				binPrimary, etcHostsPrimary,
+			},
+			expected: []Location{
+				binPrimary, etcHostsPrimary, binSecondary, etcHostsSecondary, binNoEvidence, etcHostsNoEvidence,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			sort.Sort(Locations(test.input))
+			assert.Equal(t, test.expected, test.input)
 		})
 	}
 }

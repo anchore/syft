@@ -9,6 +9,7 @@ import (
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -16,14 +17,20 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseRpmDb parses an "Packages" RPM DB and returns the Packages listed within it.
-func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parseRpmDB parses an "Packages" RPM DB and returns the Packages listed within it.
+//
+//nolint:funlen
+func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := os.CreateTemp("", "rpmdb")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
 	}
 
 	defer func() {
+		err = f.Close()
+		if err != nil {
+			log.Errorf("failed to close temp rpmdb file: %+v", err)
+		}
 		err = os.Remove(f.Name())
 		if err != nil {
 			log.Errorf("failed to remove temp rpmdb file: %+v", err)
@@ -39,6 +46,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	if err != nil {
 		return nil, nil, err
 	}
+	defer db.Close()
 
 	pkgList, err := db.ListPackages()
 	if err != nil {
@@ -52,10 +60,14 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		distro = env.LinuxRelease
 	}
 
+	var errs error
 	for _, entry := range pkgList {
 		if entry == nil {
 			continue
 		}
+
+		files, err := extractRpmFileRecords(resolver, *entry)
+		errs = unknown.Join(errs, err)
 
 		metadata := pkg.RpmDBEntry{
 			Name:            entry.Name,
@@ -67,10 +79,13 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
-			Files:           extractRpmFileRecords(resolver, *entry),
+			Files:           files,
+			Provides:        entry.Provides,
+			Requires:        entry.Requires,
 		}
 
 		p := newDBPackage(
+			ctx,
 			reader.Location,
 			metadata,
 			distro,
@@ -80,6 +95,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		if !pkg.IsValid(&p) {
 			log.WithFields("location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).
 				Warn("ignoring invalid package found in RPM DB")
+			errs = unknown.Appendf(errs, reader, "invalild package found; name: %s, version: %s", entry.Name, entry.Version)
 			continue
 		}
 
@@ -87,7 +103,11 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		allPkgs = append(allPkgs, p)
 	}
 
-	return allPkgs, nil, nil
+	if errs == nil && len(allPkgs) == 0 {
+		errs = fmt.Errorf("unable to determine packages")
+	}
+
+	return allPkgs, nil, errs
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].
@@ -103,13 +123,13 @@ func toELVersion(epoch *int, version, release string) string {
 	return fmt.Sprintf("%s-%s", version, release)
 }
 
-func extractRpmFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) []pkg.RpmFileRecord {
+func extractRpmFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) ([]pkg.RpmFileRecord, error) {
 	var records = make([]pkg.RpmFileRecord, 0)
 
 	files, err := entry.InstalledFiles()
 	if err != nil {
-		log.Warnf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
-		return records
+		log.Debugf("unable to parse listing of installed files for RPM DB entry: %s", err.Error())
+		return records, fmt.Errorf("unable to parse listing of installed files for RPM DB entry: %w", err)
 	}
 
 	for _, record := range files {
@@ -129,5 +149,5 @@ func extractRpmFileRecords(resolver file.PathResolver, entry rpmdb.PackageInfo) 
 			})
 		}
 	}
-	return records
+	return records, nil
 }

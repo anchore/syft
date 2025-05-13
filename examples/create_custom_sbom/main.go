@@ -44,17 +44,7 @@ func imageReference() string {
 func getSource(input string) source.Source {
 	fmt.Println("detecting source type for input:", input, "...")
 
-	detection, err := source.Detect(input,
-		source.DetectConfig{
-			DefaultImageSource: "docker",
-		},
-	)
-
-	if err != nil {
-		panic(err)
-	}
-
-	src, err := detection.NewSource(source.DefaultDetectionSourceConfig())
+	src, err := syft.GetSource(context.Background(), input, nil)
 
 	if err != nil {
 		panic(err)
@@ -84,7 +74,7 @@ func getSBOM(src source.Source) sbom.SBOM {
 		// only use OS related catalogers that would have been used with the kind of
 		// source type (container image or directory), but also add a specific python cataloger
 		WithCatalogerSelection(
-			pkgcataloging.NewSelectionRequest().
+			cataloging.NewSelectionRequest().
 				WithSubSelections("os").
 				WithAdditions("python-package-cataloger"),
 		).
@@ -134,5 +124,4 @@ func showAlpineConfiguration(s sbom.SBOM) {
 		panic(err)
 	}
 	fmt.Println(string(meta))
-
 }

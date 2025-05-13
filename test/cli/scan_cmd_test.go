@@ -9,7 +9,7 @@ import (
 const (
 	// this is the number of packages that should be found in the image-pkg-coverage fixture image
 	// when analyzed with the squashed scope.
-	coverageImageSquashedPackageCount = 27
+	coverageImageSquashedPackageCount = 43
 )
 
 func TestPackagesCmdFlags(t *testing.T) {
@@ -143,8 +143,22 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "squashed-scope-flag-hidden-packages",
 			args: []string{"scan", "-o", "json", "-s", "squashed", hiddenPackagesImage},
 			assertions: []traitAssertion{
-				assertPackageCount(162),
-				assertNotInOutput("vsftpd"), // hidden package
+				assertPackageCount(14),
+				// package 1: alpine-baselayout-data@3.6.5-r0 (apk)
+				// package 2: alpine-baselayout@3.6.5-r0 (apk)
+				// package 3: alpine-keys@2.4-r1 (apk)
+				// package 4: apk-tools@2.14.4-r0 (apk)
+				// package 5: busybox-binsh@1.36.1-r29 (apk)
+				// package 6: busybox@1.36.1-r29 (apk)
+				// package 7: ca-certificates-bundle@20240705-r0 (apk)
+				// package 8: libcrypto3@3.3.1-r3 (apk)
+				// package 9: libssl3@3.3.1-r3 (apk)
+				// package 10: musl-utils@1.2.5-r0 (apk)
+				// package 11: musl@1.2.5-r0 (apk)
+				// package 12: scanelf@1.3.7-r2 (apk)
+				// package 13: ssl_client@1.36.1-r29 (apk)
+				// package 14: zlib@1.3.1-r1 (apk)
+				assertNotInOutput(`"name":"curl"`), // hidden package
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -152,9 +166,33 @@ func TestPackagesCmdFlags(t *testing.T) {
 			name: "all-layers-scope-flag",
 			args: []string{"scan", "-o", "json", "-s", "all-layers", hiddenPackagesImage},
 			assertions: []traitAssertion{
-				assertPackageCount(163), // packages are now deduplicated for this case
+				assertPackageCount(24),
+				// package 1: alpine-baselayout-data@3.6.5-r0 (apk)
+				// package 2: alpine-baselayout@3.6.5-r0 (apk)
+				// package 3: alpine-keys@2.4-r1 (apk)
+				// package 4: apk-tools@2.14.4-r0 (apk)
+				// package 5: brotli-libs@1.1.0-r2 (apk)
+				// package 6: busybox-binsh@1.36.1-r29 (apk)
+				// package 7: busybox@1.36.1-r29 (apk)
+				// package 8: c-ares@1.28.1-r0 (apk)
+				// package 9: ca-certificates-bundle@20240705-r0 (apk)
+				// package 10: ca-certificates@20240705-r0 (apk)
+				// package 11: curl@8.9.1-r1 (apk)
+				// package 12: libcrypto3@3.3.1-r3 (apk)
+				// package 13: libcurl@8.9.1-r1 (apk)
+				// package 14: libidn2@2.3.7-r0 (apk)
+				// package 15: libpsl@0.21.5-r1 (apk)
+				// package 16: libssl3@3.3.1-r3 (apk)
+				// package 17: libunistring@1.2-r0 (apk)
+				// package 18: musl-utils@1.2.5-r0 (apk)
+				// package 19: musl@1.2.5-r0 (apk)
+				// package 20: nghttp2-libs@1.62.1-r0 (apk)
+				// package 21: scanelf@1.3.7-r2 (apk)
+				// package 22: ssl_client@1.36.1-r29 (apk)
+				// package 23: zlib@1.3.1-r1 (apk)
+				// package 24: zstd-libs@1.5.6-r0 (apk)
 				assertInOutput("all-layers"),
-				assertInOutput("vsftpd"), // hidden package
+				assertInOutput(`"name":"curl"`), // hidden package
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -165,9 +203,9 @@ func TestPackagesCmdFlags(t *testing.T) {
 				"SYFT_SCOPE": "all-layers",
 			},
 			assertions: []traitAssertion{
-				assertPackageCount(163), // packages are now deduplicated for this case
+				assertPackageCount(24), // packages are now deduplicated for this case
 				assertInOutput("all-layers"),
-				assertInOutput("vsftpd"), // hidden package
+				assertInOutput(`"name":"curl"`), // hidden package
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -190,22 +228,23 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
-		{
-			// TODO: this could be a unit test
-			name: "responds-to-package-cataloger-search-options",
-			args: []string{"--help"},
-			env: map[string]string{
-				"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
-				"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
-			},
-			assertions: []traitAssertion{
-				// the application config in the log matches that of what we expect to have been configured. Note:
-				// we are not testing further wiring of this option, only that the config responds to
-				// package-cataloger-level options.
-				assertInOutput("search-unindexed-archives: true"),
-				assertInOutput("search-indexed-archives: false"),
-			},
-		},
+		// TODO: uncomment this test when we can use `syft config`
+		//{
+		//	// TODO: this could be a unit test
+		//	name: "responds-to-package-cataloger-search-options",
+		//	args: []string{"--help"},
+		//	env: map[string]string{
+		//		"SYFT_PACKAGE_SEARCH_UNINDEXED_ARCHIVES": "true",
+		//		"SYFT_PACKAGE_SEARCH_INDEXED_ARCHIVES":   "false",
+		//	},
+		//	assertions: []traitAssertion{
+		//		// the application config in the log matches that of what we expect to have been configured. Note:
+		//		// we are not testing further wiring of this option, only that the config responds to
+		//		// package-cataloger-level options.
+		//		assertInOutput("search-unindexed-archives: true"),
+		//		assertInOutput("search-indexed-archives: false"),
+		//	},
+		//},
 		{
 			name: "platform-option-wired-up",
 			args: []string{"scan", "--platform", "arm64", "-o", "json", "registry:busybox:1.31"},
@@ -260,6 +299,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			},
 		},
 		{
+			name: "select-no-package-catalogers",
+			args: []string{"scan", "-o", "json", "--select-catalogers", "-package", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(0),
+				assertInOutput(`"used":["file-content-cataloger","file-digest-cataloger","file-executable-cataloger","file-metadata-cataloger"]`),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
 			name: "override-default-catalogers-option",
 			// This will detect enable:
 			// - python-installed-package-cataloger
@@ -269,6 +317,15 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"packages", "-o", "json", "--override-default-catalogers", "python,gemspec", coverageImage},
 			assertions: []traitAssertion{
 				assertPackageCount(13),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "override-default-catalogers-with-files",
+			args: []string{"packages", "-o", "json", "--override-default-catalogers", "file", coverageImage},
+			assertions: []traitAssertion{
+				assertPackageCount(0),
+				assertInOutput(`"used":["file-content-cataloger","file-digest-cataloger","file-executable-cataloger","file-metadata-cataloger"]`),
 				assertSuccessfulReturnCode,
 			},
 		},
@@ -297,7 +354,17 @@ func TestPackagesCmdFlags(t *testing.T) {
 			args: []string{"scan", "-vvv", "-o", "json", coverageImage},
 			assertions: []traitAssertion{
 				// the application config in the log matches that of what we expect to have been configured.
-				assertInOutput(`parallelism: 1`),
+				assertInOutput(`parallelism: 0`),
+				assertPackageCount(coverageImageSquashedPackageCount),
+				assertSuccessfulReturnCode,
+			},
+		},
+		{
+			name: "parallelism-flag",
+			args: []string{"scan", "-vvv", "--parallelism", "2", "-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				// the application config in the log matches that of what we expect to have been configured.
+				assertInOutput(`parallelism: 2`),
 				assertPackageCount(coverageImageSquashedPackageCount),
 				assertSuccessfulReturnCode,
 			},
@@ -350,7 +417,7 @@ func TestPackagesCmdFlags(t *testing.T) {
 func TestRegistryAuth(t *testing.T) {
 	host := "localhost:17"
 	image := fmt.Sprintf("%s/something:latest", host)
-	args := []string{"scan", "-vvv", fmt.Sprintf("registry:%s", image)}
+	args := []string{"scan", "-vvv", image, "--from", "registry"}
 
 	tests := []struct {
 		name       string
@@ -362,7 +429,7 @@ func TestRegistryAuth(t *testing.T) {
 			name: "fallback to keychain",
 			args: args,
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf("no registry credentials configured for %q, using the default keychain", host)),
 			},
@@ -376,7 +443,7 @@ func TestRegistryAuth(t *testing.T) {
 				"SYFT_REGISTRY_AUTH_PASSWORD":  "password",
 			},
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf(`using basic auth for registry "%s"`, host)),
 			},
@@ -389,7 +456,7 @@ func TestRegistryAuth(t *testing.T) {
 				"SYFT_REGISTRY_AUTH_TOKEN":     "my-token",
 			},
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf(`using token for registry "%s"`, host)),
 			},
@@ -401,7 +468,7 @@ func TestRegistryAuth(t *testing.T) {
 				"SYFT_REGISTRY_AUTH_AUTHORITY": host,
 			},
 			assertions: []traitAssertion{
-				assertInOutput("source=OciRegistry"),
+				assertInOutput("from registry"),
 				assertInOutput(image),
 				assertInOutput(fmt.Sprintf(`no registry credentials configured for %q, using the default keychain`, host)),
 			},

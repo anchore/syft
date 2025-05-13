@@ -41,9 +41,9 @@ func TestParseRequirementsTxt(t *testing.T) {
 			},
 		},
 		{
-			Name:      "SomeProject",
+			Name:      "someproject",
 			Version:   "5.4",
-			PURL:      "pkg:pypi/SomeProject@5.4",
+			PURL:      "pkg:pypi/someproject@5.4",
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
@@ -51,6 +51,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Name:              "SomeProject",
 				VersionConstraint: "==5.4",
 				Markers:           "python_version < '3.8'",
+			},
+		},
+		{
+			Name:      "dots-allowed",
+			Version:   "1.0.0",
+			PURL:      "pkg:pypi/dots-allowed@1.0.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "dots-._allowed",
+				VersionConstraint: "== 1.0.0",
 			},
 		},
 		{
@@ -91,9 +103,9 @@ func TestParseRequirementsTxt(t *testing.T) {
 			},
 		},
 		{
-			Name:      "GithubSampleProject",
+			Name:      "githubsampleproject",
 			Version:   "3.7.1",
-			PURL:      "pkg:pypi/GithubSampleProject@3.7.1",
+			PURL:      "pkg:pypi/githubsampleproject@3.7.1",
 			Locations: locations,
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
@@ -101,6 +113,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 				Name:              "GithubSampleProject",
 				VersionConstraint: "== 3.7.1",
 				URL:               "git+https://github.com/owner/repo@releases/tag/v3.7.1",
+			},
+		},
+		{
+			Name:      "friendly-bard",
+			Version:   "1.0.0",
+			PURL:      "pkg:pypi/friendly-bard@1.0.0",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "FrIeNdLy-_-bArD",
+				VersionConstraint: "== 1.0.0",
 			},
 		},
 	}
@@ -128,9 +152,9 @@ func TestParseRequirementsTxt(t *testing.T) {
 			},
 			expectedPkgs: append([]pkg.Package{
 				{
-					Name:      "Mopidy-Dirble",
+					Name:      "mopidy-dirble",
 					Version:   "1.1",
-					PURL:      "pkg:pypi/Mopidy-Dirble@1.1",
+					PURL:      "pkg:pypi/mopidy-dirble@1.1",
 					Locations: locations,
 					Language:  pkg.Python,
 					Type:      pkg.PythonPkg,
@@ -328,4 +352,12 @@ func Test_parseVersion(t *testing.T) {
 			assert.Equal(t, tt.want, parseVersion(tt.version, tt.guess))
 		})
 	}
+}
+
+func Test_corruptRequirementsTxt(t *testing.T) {
+	rp := newRequirementsParser(DefaultCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/requirements.txt").
+		WithError().
+		TestParser(t, rp.parseRequirementsTxt)
 }

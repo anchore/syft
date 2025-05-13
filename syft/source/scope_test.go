@@ -20,6 +20,11 @@ func TestParseScope(t *testing.T) {
 			name: "all-layers",
 			want: AllLayersScope,
 		},
+
+		{
+			name: "deep-squashed",
+			want: DeepSquashedScope,
+		},
 		// fall back to unknown
 		{
 			name: "make-believe",
@@ -47,6 +52,31 @@ func TestParseScope(t *testing.T) {
 		{
 			name: "alLlaYerS",
 			want: AllLayersScope,
+		},
+		// aliases
+		{
+			name: "all",
+			want: AllLayersScope,
+		},
+		{
+			name: "deep-squash",
+			want: DeepSquashedScope,
+		},
+		{
+			name: "deepsquashed",
+			want: DeepSquashedScope,
+		},
+		{
+			name: "squasheddeep",
+			want: DeepSquashedScope,
+		},
+		{
+			name: "squashed-deep",
+			want: DeepSquashedScope,
+		},
+		{
+			name: "deepsquash",
+			want: DeepSquashedScope,
 		},
 	}
 	for _, tt := range tests {

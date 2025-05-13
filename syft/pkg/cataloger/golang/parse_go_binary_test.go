@@ -2,12 +2,16 @@ package golang
 
 import (
 	"bufio"
+	"bytes"
+	"context"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -16,7 +20,9 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 // make will run the default make target for the given test fixture path
@@ -144,8 +150,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Name:     "github.com/anchore/syft",
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Version:  "(devel)",
-		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
+		Version:  "", // this was (devel) but we cleared it explicitly
+		PURL:     "pkg:golang/github.com/anchore/syft",
 		Locations: file.NewLocationSet(
 			file.NewLocationFromCoordinates(
 				file.Coordinates{
@@ -163,9 +169,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		mod      *extendedBuildInfo
-		expected []pkg.Package
+		name          string
+		mod           *extendedBuildInfo
+		expected      []pkg.Package
+		cfg           *CatalogerConfig
+		binaryContent string
 	}{
 		{
 			name: "package without name",
@@ -204,7 +212,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name:     "buildGoPkgInfo parses a blank mod and returns no packages",
-			mod:      &extendedBuildInfo{&debug.BuildInfo{}, nil, ""},
+			mod:      &extendedBuildInfo{BuildInfo: &debug.BuildInfo{}, cryptoSettings: nil, arch: ""},
 			expected: []pkg.Package(nil),
 		},
 		{
@@ -269,8 +277,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/a/b/c",
-					Version:  "(devel)",
-					PURL:     "pkg:golang/github.com/a/b@(devel)#c",
+					Version:  "", // this was (devel) but we cleared it explicitly
+					PURL:     "pkg:golang/github.com/a/b#c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -839,6 +847,204 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				unmodifiedMain,
 			},
 		},
+		{
+			name: "parse main mod and replace devel with pattern from binary contents",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				// off by default
+				assert.False(t, c.MainModuleVersion.FromContents)
+				// override to true for this test
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+						{Key: "vcs.time", Value: "2022-10-14T19:54:57Z"}, // important! missing revision
+						{Key: "-ldflags", Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			binaryContent: "\x00v1.0.0-somethingelse+incompatible\x00",
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/anchore/syft",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.0.0-somethingelse+incompatible",
+					PURL:     "pkg:golang/github.com/anchore/syft@v1.0.0-somethingelse%2Bincompatible",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "GOARCH",
+								Value: archDetails,
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+							{
+								Key:   "vcs.time",
+								Value: "2022-10-14T19:54:57Z",
+							},
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s -extldflags '-static' -X blah=foobar`,
+							},
+						},
+						MainModule: "github.com/anchore/syft",
+					},
+				},
+			},
+		},
+		{
+			name: "parse a mod with go experiments",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.2 X:nocoverageredesign,noallocheaders,noexectracer2",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "(devel)"},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			expected: []pkg.Package{{
+				Name:     "github.com/anchore/syft",
+				Language: pkg.Go,
+				Type:     pkg.GoModulePkg,
+				Version:  "", // this was (devel) but we cleared it explicitly
+				PURL:     "pkg:golang/github.com/anchore/syft",
+				Locations: file.NewLocationSet(
+					file.NewLocationFromCoordinates(
+						file.Coordinates{
+							RealPath:     "/a-path",
+							FileSystemID: "layer-id",
+						},
+					).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+				Metadata: pkg.GolangBinaryBuildinfoEntry{
+					GoCompiledVersion: "go1.22.2",
+					Architecture:      archDetails,
+					BuildSettings:     defaultBuildSettings,
+					MainModule:        "github.com/anchore/syft",
+					GoExperiments:     []string{"nocoverageredesign", "noallocheaders", "noexectracer2"},
+				},
+			}},
+		},
+		{
+			name: "parse a mod from path (partial build of package)",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.2",
+					Main:      debug.Module{Path: "command-line-arguments"},
+					Settings: []debug.BuildSetting{
+						{
+							Key:   "-ldflags",
+							Value: `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+						},
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Deps: []*debug.Module{
+						{
+							Path:    "github.com/kuskoman/something-else",
+							Version: "v1.2.3",
+						},
+						{
+							Path:    "github.com/kuskoman/logstash-exporter",
+							Version: "(devel)",
+						},
+					},
+				},
+				arch: archDetails,
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "github.com/kuskoman/something-else",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.2.3",
+					PURL:     "pkg:golang/github.com/kuskoman/something-else@v1.2.3",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						Architecture:      archDetails,
+						MainModule:        "github.com/kuskoman/logstash-exporter", // correctly attached the main module
+					},
+				},
+				{
+					Name:     "github.com/kuskoman/logstash-exporter",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Version:  "v1.7.0",
+					PURL:     "pkg:golang/github.com/kuskoman/logstash-exporter@v1.7.0",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: "go1.22.2",
+						BuildSettings: []pkg.KeyValue{
+							{
+								Key:   "-ldflags",
+								Value: `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+							},
+							{
+								Key:   "GOARCH",
+								Value: "amd64",
+							},
+							{
+								Key:   "GOOS",
+								Value: "darwin",
+							},
+							{
+								Key:   "GOAMD64",
+								Value: "v1",
+							},
+						},
+						Architecture: archDetails,
+						MainModule:   "github.com/kuskoman/logstash-exporter",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -854,9 +1060,22 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			)
 
-			c := goBinaryCataloger{}
-			pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch)
-			assert.Equal(t, test.expected, pkgs)
+			if test.cfg == nil {
+				c := DefaultCatalogerConfig()
+				test.cfg = &c
+			}
+
+			c := newGoBinaryCataloger(*test.cfg)
+			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
+			require.NoError(t, err)
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			if mainPkg != nil {
+				pkgs = append(pkgs, *mainPkg)
+			}
+			require.Len(t, pkgs, len(test.expected))
+			for i, p := range pkgs {
+				pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+			}
 		})
 	}
 }
@@ -864,6 +1083,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 func Test_extractVersionFromLDFlags(t *testing.T) {
 	tests := []struct {
 		name             string
+		mainModule       string
 		ldflags          string
 		wantMajorVersion string
 		wantFullVersion  string
@@ -874,12 +1094,14 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 		},
 		{
 			name:             "syft ldflags",
+			mainModule:       "github.com/anchore/syft",
 			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/anchore/syft/internal/version.version=0.79.0 -X github.com/anchore/syft/internal/version.gitCommit=b2b332e8b2b66af0905e98b54ebd713a922be1a8 -X github.com/anchore/syft/internal/version.buildDate=2023-04-21T16:20:25Z -X github.com/anchore/syft/internal/version.gitDescription=v0.79.0 "`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.79.0",
 		},
 		{
-			name: "kubectl ldflags",
+			name:       "kubectl ldflags",
+			mainModule: "k8s.io/kubernetes/vendor/k8s.io/client-go",
 			ldflags: `	build	-asmflags=all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
 	build	-compiler=gc
 	build	-gcflags="all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes "
@@ -889,24 +1111,28 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 		},
 		{
 			name:             "nerdctl ldflags",
+			mainModule:       "github.com/containerd/nerdctl",
 			ldflags:          `	build	-ldflags="-s -w -X github.com/containerd/nerdctl/pkg/version.Version=v1.3.1 -X github.com/containerd/nerdctl/pkg/version.Revision=b224b280ff3086516763c7335fc0e0997aca617a"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.3.1",
 		},
 		{
 			name:             "limactl ldflags",
+			mainModule:       "github.com/lima-vm/lima",
 			ldflags:          `	build	-ldflags="-s -w -X github.com/lima-vm/lima/pkg/version.Version=v0.15.1"`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.15.1",
 		},
 		{
 			name:             "terraform ldflags",
+			mainModule:       "github.com/hashicorp/terraform",
 			ldflags:          `	build	-ldflags="-w -s -X 'github.com/hashicorp/terraform/version.Version=1.4.6' -X 'github.com/hashicorp/terraform/version.Prerelease='"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.4.6",
 		},
 		{
-			name: "kube-apiserver ldflags",
+			name:       "kube-apiserver ldflags",
+			mainModule: "k8s.io/kubernetes/vendor/k8s.io/client-go",
 			ldflags: `	build	-asmflags=all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
 	build	-buildmode=exe
 	build	-compiler=gc
@@ -916,14 +1142,16 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 			wantFullVersion:  "v1.27.1",
 		},
 		{
-			name: "prometheus ldflags",
+			name:       "prometheus ldflags",
+			mainModule: "github.com/prometheus/common",
 			ldflags: `	build	-ldflags="-X github.com/prometheus/common/version.Version=2.44.0 -X github.com/prometheus/common/version.Revision=1ac5131f698ebc60f13fe2727f89b115a41f6558 -X github.com/prometheus/common/version.Branch=HEAD -X github.com/prometheus/common/version.BuildUser=root@739e8181c5db -X github.com/prometheus/common/version.BuildDate=20230514-06:18:11  -extldflags '-static'"
 	build	-tags=netgo,builtinassets,stringlabels`,
 			wantMajorVersion: "2",
 			wantFullVersion:  "v2.44.0",
 		},
 		{
-			name: "influxdb ldflags",
+			name:       "influxdb ldflags",
+			mainModule: "github.com/influxdata/influxdb-client-go/v2",
 			ldflags: `	build	-ldflags="-s -w -X main.version=v2.7.1 -X main.commit=407fa622e9 -X main.date=2023-04-28T13:24:27Z -linkmode=external -extld=/musl/x86_64/bin/musl-gcc -extldflags '-fno-PIC -static-pie -Wl,-z,stack-size=8388608'"
 	build	-tags=assets,sqlite_foreign_keys,sqlite_json,static_build,noasm`,
 			wantMajorVersion: "2",
@@ -931,67 +1159,105 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 		},
 		{
 			name:             "gitea ldflags",
+			mainModule:       "code.gitea.io/gitea",
 			ldflags:          `	build	-ldflags=" -X \"main.MakeVersion=GNU Make 4.1\" -X \"main.Version=1.19.3\" -X \"main.Tags=bindata sqlite sqlite_unlock_notify\" "`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.19.3",
 		},
 		{
 			name:             "docker sbom cli ldflags",
+			mainModule:       "github.com/docker/sbom-cli-plugin",
 			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/docker/sbom-cli-plugin/internal/version.version=0.6.1-SNAPSHOT-02cf1c8 -X github.com/docker/sbom-cli-plugin/internal/version.gitCommit=02cf1c888ad6662109ac6e3be618392514a56316 -X github.com/docker/sbom-cli-plugin/internal/version.gitDescription=v0.6.1-dirty "`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.6.1-SNAPSHOT-02cf1c8",
 		},
 		{
 			name:             "docker scout ldflags",
+			mainModule:       "github.com/docker/scout-cli-plugin",
 			ldflags:          `	build	-ldflags="-w -s -extldflags '-static' -X github.com/docker/scout-cli-plugin/internal.version=0.10.0 "`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.10.0",
 		},
 		{
 			name:             "influx telegraf ldflags",
+			mainModule:       "github.com/influxdata/telegraf",
 			ldflags:          `	build	-ldflags="-w -s -X github.com/influxdata/telegraf/internal.Commit=a3a884a1 -X github.com/influxdata/telegraf/internal.Branch=HEAD -X github.com/influxdata/telegraf/internal.Version=1.26.2"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.26.2",
 		},
 		{
 			name:             "argocd ldflags",
+			mainModule:       "github.com/argoproj/argo-cd/v2",
 			ldflags:          `	build	-ldflags="-X github.com/argoproj/argo-cd/v2/common.version=2.7.2 -X github.com/argoproj/argo-cd/v2/common.buildDate=2023-05-12T14:06:49Z -X github.com/argoproj/argo-cd/v2/common.gitCommit=cbee7e6011407ed2d1066c482db74e97e0cc6bdb -X github.com/argoproj/argo-cd/v2/common.gitTreeState=clean -X github.com/argoproj/argo-cd/v2/common.kubectlVersion=v0.24.2 -extldflags=\"-static\""`,
 			wantMajorVersion: "2",
 			wantFullVersion:  "v2.7.2",
 		},
 		{
 			name:             "kustomize ldflags",
+			mainModule:       "sigs.k8s.io/kustomize/api",
 			ldflags:          `	build	-ldflags="-s -X sigs.k8s.io/kustomize/api/provenance.version=kustomize/v4.5.7 -X sigs.k8s.io/kustomize/api/provenance.gitCommit=56d82a8378dfc8dc3b3b1085e5a6e67b82966bd7 -X sigs.k8s.io/kustomize/api/provenance.buildDate=2022-08-02T16:35:54Z "`,
 			wantMajorVersion: "4",
 			wantFullVersion:  "v4.5.7",
 		},
+		{
+			name:             "TiDB 7.5.0 ldflags",
+			mainModule:       "github.com/pingcap/tidb",
+			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/pkg/parser/mysql.TiDBReleaseVersion=v7.5.0\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBBuildTS=2023-11-24 08:51:04\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBGitHash=069631e2ecfedc000ffb92c67207bea81380f020\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBGitBranch=heads/refs/tags/v7.5.0\" -X \"github.com/pingcap/tidb/pkg/util/versioninfo.TiDBEdition=Community\" "`,
+			wantMajorVersion: "7",
+			wantFullVersion:  "v7.5.0",
+		},
+		{
+			name:             "TiDB 6.1.7 ldflags",
+			mainModule:       "github.com/pingcap/tidb",
+			ldflags:          `build	-ldflags="-X \"github.com/pingcap/tidb/parser/mysql.TiDBReleaseVersion=v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBBuildTS=2023-07-04 12:06:03\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitHash=613ecc5f731b2843e1d53a43915e2cd8da795936\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBGitBranch=heads/refs/tags/v6.1.7\" -X \"github.com/pingcap/tidb/util/versioninfo.TiDBEdition=Community\" "`,
+			wantMajorVersion: "6",
+			wantFullVersion:  "v6.1.7",
+		},
+		{
+			name:             "logstash-exporter",
+			ldflags:          `build	-ldflags="-w -s     -X github.com/kuskoman/logstash-exporter/config.Version=v1.7.0     -X github.com/kuskoman/logstash-exporter/config.GitCommit=db696dbcfe5a91d288d5ad44ce8ccbea97e65978     -X github.com/kuskoman/logstash-exporter/config.BuildDate=2024-07-17T08:12:17Z"`,
+			wantMajorVersion: "1",
+			wantFullVersion:  "v1.7.0",
+		},
 		//////////////////////////////////////////////////////////////////
 		// negative cases
 		{
-			name:    "hugo ldflags",
-			ldflags: `	build	-ldflags="-s -w -X github.com/gohugoio/hugo/common/hugo.vendorInfo=gohugoio"`,
+			name:       "hugo ldflags",
+			mainModule: "github.com/gohugoio/hugo",
+			ldflags:    `	build	-ldflags="-s -w -X github.com/gohugoio/hugo/common/hugo.vendorInfo=gohugoio"`,
 		},
 		{
-			name:    "ghostunnel ldflags",
-			ldflags: `	build	-ldflags="-X main.version=77d9aaa"`,
+			name:       "ghostunnel ldflags",
+			mainModule: "github.com/ghostunnel/ghostunnel",
+			ldflags:    `	build	-ldflags="-X main.version=77d9aaa"`,
 		},
 		{
-			name:    "opa ldflags",
-			ldflags: `build	-ldflags=" -X github.com/open-policy-agent/opa/version.Hostname=9549178459bc"`,
+			name:       "opa ldflags",
+			mainModule: "github.com/open-policy-agent/opa",
+			ldflags:    `build	-ldflags=" -X github.com/open-policy-agent/opa/version.Hostname=9549178459bc"`,
 		},
 		///////////////////////////////////////////////////////////////////
 		// trickier cases
 		{
 			name:             "macvlan plugin for cri-o ldflags",
+			mainModule:       "github.com/containernetworking/plugins",
 			ldflags:          `	build	-ldflags="-extldflags -static -X github.com/containernetworking/plugins/pkg/utils/buildversion.BuildVersion=v1.2.0"`,
 			wantMajorVersion: "1",
 			wantFullVersion:  "v1.2.0",
 		},
 		{
 			name:             "coder ldflags",
+			mainModule:       "github.com/coder/coder",
 			ldflags:          `	build	-ldflags="-s -w -X 'github.com/coder/coder/buildinfo.tag=0.23.4'"`,
 			wantMajorVersion: "0",
 			wantFullVersion:  "v0.23.4",
+		},
+		{
+			name:             "hypothetical multiple versions in ldflags",
+			mainModule:       "github.com/foo/baz",
+			ldflags:          `	build	-ldflags="-extldflags -static -X github.com/foo/bar/buildversion.BuildVersion=v1.2.0 -X github.com/foo/baz/buildversion.BuildVersion=v2.4.5"`,
+			wantMajorVersion: "2",
+			wantFullVersion:  "v2.4.5",
 		},
 		///////////////////////////////////////////////////////////////////
 		// don't know how to handle these... yet
@@ -1012,9 +1278,67 @@ func Test_extractVersionFromLDFlags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotMajorVersion, gotFullVersion := extractVersionFromLDFlags(tt.ldflags)
+			gotMajorVersion, gotFullVersion := extractVersionFromLDFlags(tt.ldflags, tt.mainModule)
 			assert.Equal(t, tt.wantMajorVersion, gotMajorVersion, "unexpected major version")
 			assert.Equal(t, tt.wantFullVersion, gotFullVersion, "unexpected full version")
 		})
 	}
+}
+
+func Test_extractVersionFromContents(t *testing.T) {
+	tests := []struct {
+		name     string
+		contents io.Reader
+		want     string
+	}{
+		{
+			name:     "empty string on error",
+			contents: &alwaysErrorReader{},
+			want:     "",
+		},
+		{
+			name:     "empty string on empty reader",
+			contents: bytes.NewReader([]byte{}),
+			want:     "",
+		},
+		{
+			name:     "null-byte delimited semver",
+			contents: strings.NewReader("\x001.2.3\x00"),
+			want:     "1.2.3",
+		},
+		{
+			name:     "null-byte delimited semver with v prefix",
+			contents: strings.NewReader("\x00v1.2.3\x00"),
+			want:     "v1.2.3",
+		},
+		{
+			// 01a0bfc8: 0e74 5a3b 0000 a04c 7631 2e39 2e35 0000  .tZ;...Lv1.9.5.. from nginx-ingress-controller
+			// at /nginx-ingress-controller in registry.k8s.io/ingress-nginx/controller:v1.9.5
+			// digest: sha256:b3aba22b1da80e7acfc52b115cae1d4c687172cbf2b742d5b502419c25ff340e
+			// TODO: eventually use something for managing snippets, similar to what's used with binary classifier tests
+			name:     "null byte, then random byte, then L then semver",
+			contents: strings.NewReader("\x0e\x74\x5a\x3b\x00\x00\xa0\x4cv1.9.5\x00\x00"),
+			want:     "v1.9.5",
+		},
+		{
+			// 06168a34: f98f b0be 332e 312e 3200 0000 636f 6d74  ....3.1.2...comt from /usr/local/bin/traefik
+			// in traefik:v3.1.2@sha256:3f92eba47bd4bfda91d47b72d16fef2d7ae15db61a92b2057cf0cb389f8938f6
+			// TODO: eventually use something for managing snippets, similar to what's used with binary classifier tests
+			name:     "parse traefik version",
+			contents: strings.NewReader("\xf9\x8f\xb0\xbe\x33\x2e\x31\x2e\x32\x00\x00\x00\x63\x6f\x6d\x74"),
+			want:     "3.1.2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractVersionFromContents(tt.contents)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+type alwaysErrorReader struct{}
+
+func (alwaysErrorReader) Read(_ []byte) (int, error) {
+	return 0, errors.New("read from always error reader")
 }

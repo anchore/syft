@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -106,10 +107,12 @@ func TestParsePackageLock(t *testing.T) {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockV2(t *testing.T) {
+	ctx := context.TODO()
 	fixture := "test-fixtures/pkg-lock/package-lock-2.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
@@ -128,7 +131,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha1-XxnSuFqY6VWANvajysyIGUIPBc8="},
 		},
@@ -139,7 +142,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
 		},
@@ -150,7 +153,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha1-GmL4lSVyPd4kuhsBsJK/XfitTTk="},
 		},
@@ -161,7 +164,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz", Integrity: "sha1-TdysNxjXh8+d8NG30VAzklyPKfI="},
 		},
@@ -169,7 +172,8 @@ func TestParsePackageLockV2(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockV3(t *testing.T) {
@@ -220,10 +224,12 @@ func TestParsePackageLockV3(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePackageLockAlias(t *testing.T) {
+	ctx := context.TODO()
 	var expectedRelationships []artifact.Relationship
 	commonPkgs := []pkg.Package{
 		{
@@ -263,7 +269,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 		Language: pkg.JavaScript,
 		Type:     pkg.NpmPkg,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("ISC", file.NewLocation(packageLockV2)),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation(packageLockV2)),
 		),
 		Metadata: pkg.NpmPackageLockEntry{},
 	}
@@ -279,11 +285,13 @@ func TestParsePackageLockAlias(t *testing.T) {
 		for i := range expected {
 			expected[i].Locations.Add(file.NewLocation(pl))
 		}
-		pkgtest.TestFileParser(t, pl, parsePackageLock, expected, expectedRelationships)
+		adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+		pkgtest.TestFileParser(t, pl, adapter.parsePackageLock, expected, expectedRelationships)
 	}
 }
 
 func TestParsePackageLockLicenseWithArray(t *testing.T) {
+	ctx := context.TODO()
 	fixture := "test-fixtures/pkg-lock/array-license-package-lock.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
@@ -293,7 +301,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("ISC", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/tmp@1.0.0",
 			Metadata: pkg.NpmPackageLockEntry{},
@@ -305,8 +313,8 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Type:     pkg.NpmPkg,
 
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
-				pkg.NewLicenseFromLocations("Apache2", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "Apache2", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/pause-stream@0.0.11",
 			Metadata: pkg.NpmPackageLockEntry{},
@@ -317,7 +325,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/through@2.3.8",
 			Metadata: pkg.NpmPackageLockEntry{},
@@ -326,5 +334,14 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
-	pkgtest.TestFileParser(t, fixture, parsePackageLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
+}
+
+func Test_corruptPackageLock(t *testing.T) {
+	gap := newGenericPackageLockAdapter(DefaultCatalogerConfig())
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/package-lock.json").
+		WithError().
+		TestParser(t, gap.parsePackageLock)
 }

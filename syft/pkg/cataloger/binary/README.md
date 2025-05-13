@@ -1,4 +1,4 @@
-# Adding tests for the Binary cataloger
+# Adding tests for the Binary classifier cataloger
 
 > [!TIP]
 > **TL;DR** to add a test for a new classifier:

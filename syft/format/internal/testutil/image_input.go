@@ -1,11 +1,11 @@
 package testutil
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -16,7 +16,7 @@ import (
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
@@ -42,8 +42,9 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	// this is a hard coded value that is not given by the fixture helper and must be provided manually
 	img.Metadata.ManifestDigest = "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368"
 
-	src, err := source.NewFromStereoscopeImageObject(img, "user-image-input", nil)
-	assert.NoError(t, err)
+	src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+		Reference: "user-image-input",
+	})
 
 	return sbom.SBOM{
 		Artifacts: sbom.Artifacts{
@@ -98,7 +99,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	// TODO: this helper function is coupled to the image-simple fixture, which seems like a bad idea
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
-
+	ctx := context.TODO()
 	// populate catalog with test data
 	if ref1 != nil {
 		catalog.Add(pkg.Package{
@@ -111,7 +112,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			FoundBy:  "the-cataloger-1",
 			Language: pkg.Python,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicenseWithContext(ctx, "MIT"),
 			),
 			Metadata: pkg.PythonPackage{
 				Name:    "package-1",

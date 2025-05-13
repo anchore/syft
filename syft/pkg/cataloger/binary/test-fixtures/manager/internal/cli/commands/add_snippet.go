@@ -22,7 +22,7 @@ func AddSnippet(appConfig config.Application) *cobra.Command {
 		Use:   "add-snippet",
 		Short: "capture snippets from binaries",
 		Args:  cobra.NoArgs,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, _ []string) error {
 			candidates, err := internal.ListAllBinaries(appConfig)
 			if err != nil {
 				return fmt.Errorf("unable to list binaries: %w", err)
@@ -44,7 +44,7 @@ func AddSnippet(appConfig config.Application) *cobra.Command {
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			name, version, _, err := inferInfoFromBinaryPath(appConfig, binaryPath)
 			if err != nil {
 				return fmt.Errorf("unable to infer name and version from binary path: %w", err)

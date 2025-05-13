@@ -22,3 +22,17 @@ func NewComposerLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("php-composer-lock-cataloger").
 		WithParserByGlobs(parseComposerLock, "**/composer.lock")
 }
+
+// NewPearCataloger returns a new cataloger for PHP Pear metadata (including Pecl metadata).
+func NewPearCataloger() pkg.Cataloger {
+	return generic.NewCataloger("php-pear-serialized-cataloger").
+		WithParserByGlobs(parsePear, "**/php/.registry/**/*.reg")
+}
+
+// NewPeclCataloger returns a new cataloger for PHP Pecl metadata. Note: this will also catalog Pear metadata so should
+// not be used in conjunction with the Pear Cataloger.
+// Deprecated: please use NewPearCataloger instead.
+func NewPeclCataloger() pkg.Cataloger {
+	return generic.NewCataloger("php-pecl-serialized-cataloger").
+		WithParserByGlobs(parsePecl, "**/php/.registry/.channel.*/*.reg")
+}

@@ -7,9 +7,10 @@ import (
 
 	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/file"
 )
 
-// unionReader is a single interface with all reading functions needed by multi-arch binary catalogers
+// UnionReader is a single interface with all reading functions needed by multi-arch binary catalogers
 // cataloger.
 type UnionReader interface {
 	io.Reader
@@ -18,7 +19,7 @@ type UnionReader interface {
 	io.Closer
 }
 
-// getReaders extracts one or more io.ReaderAt objects representing binaries that can be processed (multiple binaries in the case for multi-architecture binaries).
+// GetReaders extracts one or more io.ReaderAt objects representing binaries that can be processed (multiple binaries in the case for multi-architecture binaries).
 func GetReaders(f UnionReader) ([]io.ReaderAt, error) {
 	if macho.IsUniversalMachoBinary(f) {
 		machoReaders, err := macho.ExtractReaders(f)
@@ -42,6 +43,17 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 	reader, ok := readerCloser.(UnionReader)
 	if ok {
 		return reader, nil
+	}
+
+	// file.LocationReadCloser embeds a ReadCloser, which is likely
+	// to implement UnionReader. Check whether the embedded read closer
+	// implements UnionReader, and just return that if so.
+	r, ok := readerCloser.(file.LocationReadCloser)
+	if ok {
+		ur, ok := r.ReadCloser.(UnionReader)
+		if ok {
+			return ur, nil
+		}
 	}
 
 	b, err := io.ReadAll(readerCloser)

@@ -37,6 +37,7 @@ func expectedDefaultEncoders() *strset.Set {
 	expected.Add("syft-table@")                             // no version
 	expected.Add("syft-text@")                              // no version
 	expected.Add("github-json@")                            // no version
+	expected.Add("purls@")                                  // no version
 	for _, v := range spdxjson.SupportedVersions() {
 		expected.Add("spdx-json@" + v)
 	}
@@ -108,6 +109,7 @@ func TestEncodersConfig_Encoders(t *testing.T) {
 				expected.Add("syft-table@")                             // no version
 				expected.Add("syft-text@")                              // no version
 				expected.Add("github-json@")                            // no version
+				expected.Add("purls@")                                  // no version
 				expected.Add("spdx-json@" + spdxutil.DefaultVersion)
 				expected.Add("spdx-tag-value@" + spdxutil.DefaultVersion)
 				expected.Add("cyclonedx-json@" + cyclonedxutil.DefaultVersion)

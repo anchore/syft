@@ -3,18 +3,38 @@ package relationship
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
+type mockFR struct {
+	file.Resolver
+	translate map[string]string
+}
+
+func (m mockFR) FilesByPath(paths ...string) ([]file.Location, error) {
+	var results []file.Location
+	for _, p := range paths {
+		tPath, ok := m.translate[p]
+		if !ok {
+			tPath = p
+		}
+		results = append(results, file.NewLocation(tPath))
+	}
+	return results, nil
+}
+
 func TestOwnershipByFilesRelationship(t *testing.T) {
 
 	tests := []struct {
-		name  string
-		setup func(t testing.TB) ([]pkg.Package, []artifact.Relationship)
+		name     string
+		resolver file.Resolver
+		setup    func(t testing.TB) ([]pkg.Package, []artifact.Relationship)
 	}{
 		{
 			name: "owns-by-real-path",
@@ -51,6 +71,75 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 					Data: ownershipByFilesMetadata{
 						Files: []string{
 							"/d/path",
+						},
+					},
+				}
+
+				return []pkg.Package{parent, child}, []artifact.Relationship{relationship}
+			},
+		},
+		{
+			name: "misses-by-dead-symlink",
+			resolver: mockFR{
+				translate: map[string]string{
+					"/bin/gzip": "", // treat this as a dead symlink
+				},
+			},
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
+					Type: pkg.DebPkg,
+					Metadata: pkg.DpkgDBEntry{
+						Files: []pkg.DpkgFileRecord{
+							{Path: "/bin/gzip"}, // this symlinks to gzip via /bin -> /usr/bin
+						},
+					},
+				}
+				parent.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/usr/bin/gzip", "/usr/bin/gzip"),
+					),
+					Type: pkg.BinaryPkg,
+				}
+				child.SetID()
+
+				return []pkg.Package{parent, child}, nil // importantly, no relationship is expected
+			},
+		},
+		{
+			name: "owns-by-symlink",
+			resolver: mockFR{
+				translate: map[string]string{
+					"/bin/gzip": "/usr/bin/gzip", // if there is a string path of /bin/gzip then return the real path of /usr/bin/gzip
+				},
+			},
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
+					Type: pkg.DebPkg,
+					Metadata: pkg.DpkgDBEntry{
+						Files: []pkg.DpkgFileRecord{
+							{Path: "/bin/gzip"}, // this symlinks to gzip via /bin -> /usr/bin
+						},
+					},
+				}
+				parent.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/usr/bin/gzip", "/usr/bin/gzip"),
+					),
+					Type: pkg.BinaryPkg,
+				}
+				child.SetID()
+
+				relationship := artifact.Relationship{
+					From: parent,
+					To:   child,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+					Data: ownershipByFilesMetadata{
+						Files: []string{
+							"/usr/bin/gzip",
 						},
 					},
 				}
@@ -138,15 +227,14 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgs, expectedRelations := test.setup(t)
 			c := pkg.NewCollection(pkgs...)
-			relationships := byFileOwnershipOverlap(c)
+			relationships := byFileOwnershipOverlap(test.resolver, c)
 
-			assert.Len(t, relationships, len(expectedRelations))
+			require.Len(t, relationships, len(expectedRelations))
 			for idx, expectedRelationship := range expectedRelations {
 				actualRelationship := relationships[idx]
-				assert.Equal(t, expectedRelationship.From.ID(), actualRelationship.From.ID())
-				assert.Equal(t, expectedRelationship.To.ID(), actualRelationship.To.ID())
-				assert.Equal(t, expectedRelationship.Type, actualRelationship.Type)
-				assert.Equal(t, expectedRelationship.Data, actualRelationship.Data)
+				if d := cmp.Diff(expectedRelationship, actualRelationship, cmptest.DefaultOptions()...); d != "" {
+					t.Errorf("unexpected relationship (-want, +got): %s", d)
+				}
 			}
 		})
 	}

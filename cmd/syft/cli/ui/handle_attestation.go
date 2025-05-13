@@ -61,7 +61,7 @@ type backgroundLineReader struct {
 func (m *Handler) handleAttestationStarted(e partybus.Event) []tea.Model {
 	reader, prog, taskInfo, err := syftEventParsers.ParseAttestationStartedEvent(e)
 	if err != nil {
-		log.WithFields("error", err).Warn("unable to parse event")
+		log.WithFields("error", err).Debug("unable to parse event")
 		return nil
 	}
 

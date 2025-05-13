@@ -80,6 +80,40 @@ func TestParsePackageResolved(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parsePackageResolved, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePackageResolvedV3(t *testing.T) {
+	fixture := "test-fixtures/PackageV3.resolved"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "swift-mmio",
+			Version:   "",
+			PURL:      "pkg:swift/github.com/apple/swift-mmio/swift-mmio",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.SwiftPkg,
+			Metadata: pkg.SwiftPackageManagerResolvedEntry{
+				Revision: "80c109b87511041338a4d8d88064088c8dfc079b",
+			},
+		},
+		{
+			Name:      "swift-syntax",
+			Version:   "509.1.1",
+			PURL:      "pkg:swift/github.com/apple/swift-syntax.git/swift-syntax@509.1.1",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.SwiftPkg,
+			Metadata: pkg.SwiftPackageManagerResolvedEntry{
+				Revision: "64889f0c732f210a935a0ad7cda38f77f876262d",
+			},
+		},
+	}
+
+	// TODO: no relationships are under test yet
+	var expectedRelationships []artifact.Relationship
+
+	pkgtest.TestFileParser(t, fixture, parsePackageResolved, expectedPkgs, expectedRelationships)
+}
+
 func TestParsePackageResolved_empty(t *testing.T) {
 	// regression for https://github.com/anchore/syft/issues/2225
 	fixture := "test-fixtures/empty-packages.resolved"
@@ -99,4 +133,11 @@ func TestParsePackageResolved_versionNotANumber(t *testing.T) {
 	fixture := "test-fixtures/bad-version-packages.resolved"
 
 	pkgtest.NewCatalogTester().FromFile(t, fixture).WithError().TestParser(t, parsePackageResolved)
+}
+
+func Test_corruptPackageResolved(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/bad-version-packages.resolved").
+		WithError().
+		TestParser(t, parsePackageResolved)
 }

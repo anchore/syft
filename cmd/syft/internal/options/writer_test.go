@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/pkg/homedir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -228,6 +228,8 @@ func Test_newSBOMMultiWriter(t *testing.T) {
 }
 
 func Test_newSBOMWriterDescription(t *testing.T) {
+	h, err := homedir.Dir()
+	require.NoError(t, err)
 	tests := []struct {
 		name     string
 		path     string
@@ -236,7 +238,7 @@ func Test_newSBOMWriterDescription(t *testing.T) {
 		{
 			name:     "expand home dir",
 			path:     "~/place.txt",
-			expected: filepath.Join(homedir.Get(), "place.txt"),
+			expected: filepath.Join(h, "place.txt"),
 		},
 		{
 			name:     "passthrough other paths",

@@ -9,6 +9,8 @@ import (
 	"github.com/kastenhq/goversion/version"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -19,20 +21,21 @@ type extendedBuildInfo struct {
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(reader unionreader.UnionReader, filename string) []*extendedBuildInfo {
+func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extendedBuildInfo, error) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
-	readers, err := unionreader.GetReaders(reader)
-	if err != nil {
-		log.WithFields("error", err).Warnf("failed to open a golang binary")
-		return nil
+	readers, errs := unionreader.GetReaders(reader)
+	if errs != nil {
+		log.WithFields("error", errs).Debug("failed to open a golang binary")
+		return nil, fmt.Errorf("failed to open a golang binary: %w", errs)
 	}
 
 	var builds []*extendedBuildInfo
 	for _, r := range readers {
 		bi, err := getBuildInfo(r)
 		if err != nil {
-			log.WithFields("file", filename, "error", err).Trace("unable to read golang buildinfo")
+			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang buildinfo")
+
 			continue
 		}
 		// it's possible the reader just isn't a go binary, in which case just skip it
@@ -42,23 +45,25 @@ func scanFile(reader unionreader.UnionReader, filename string) []*extendedBuildI
 
 		v, err := getCryptoInformation(r)
 		if err != nil {
-			log.WithFields("file", filename, "error", err).Trace("unable to read golang version info")
+			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang version info")
 			// don't skip this build info.
 			// we can still catalog packages, even if we can't get the crypto information
+			errs = unknown.Appendf(errs, location, "unable to read golang version info: %w", err)
 		}
 		arch := getGOARCH(bi.Settings)
 		if arch == "" {
 			arch, err = getGOARCHFromBin(r)
 			if err != nil {
-				log.WithFields("file", filename, "error", err).Trace("unable to read golang arch info")
+				log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang arch info")
 				// don't skip this build info.
 				// we can still catalog packages, even if we can't get the arch information
+				errs = unknown.Appendf(errs, location, "unable to read golang arch info: %w", err)
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{bi, v, arch})
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
 	}
-	return builds
+	return builds, errs
 }
 
 func getCryptoInformation(reader io.ReaderAt) ([]string, error) {

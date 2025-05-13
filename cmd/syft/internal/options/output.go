@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
+	"github.com/anchore/syft/syft/format/purls"
 	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
@@ -24,6 +25,7 @@ import (
 var _ interface {
 	clio.FlagAdder
 	clio.PostLoader
+	clio.FieldDescriber
 } = (*Output)(nil)
 
 // Output has the standard output options syft accepts: multiple -o, --file, --template
@@ -70,6 +72,15 @@ func (o *Output) AddFlags(flags clio.FlagSet) {
 		fmt.Sprintf("report output format (<format>=<file> to output to a file), formats=%v", names))
 }
 
+func (o *Output) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.Outputs, `the output format(s) of the SBOM report (options: syft-table, syft-text, syft-json, spdx-json, ...)
+to specify multiple output files in differing formats, use a list:
+output:
+  - "syft-json=<syft-json-output-file>"
+  - "spdx-json=<spdx-json-output-file>"
+`)
+}
+
 func (o Output) SBOMWriter() (sbom.Writer, error) {
 	names := o.OutputNameSet()
 
@@ -79,7 +90,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 
 	usesTemplateOutput := names.Has(string(template.ID))
 
-	if usesTemplateOutput && o.Format.Template.Path == "" {
+	if usesTemplateOutput && o.Template.Path == "" {
 		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
 	}
 
@@ -117,6 +128,7 @@ func supportedIDs() []sbom.FormatID {
 		table.ID,
 		text.ID,
 		template.ID,
+		purls.ID,
 
 		// encoders that support multiple versions
 		cyclonedxxml.ID,

@@ -139,7 +139,7 @@ func Test_vendorsFromGroupIDs(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.groupID, func(t *testing.T) {
-			assert.ElementsMatch(t, test.expected, vendorsFromGroupIDs([]string{test.groupID}).values(), "different vendors")
+			assert.ElementsMatch(t, append(test.expected, test.groupID), vendorsFromGroupIDs([]string{test.groupID}).values(), "different vendors")
 		})
 	}
 }

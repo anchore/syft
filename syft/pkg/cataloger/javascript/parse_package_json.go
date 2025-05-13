@@ -8,10 +8,9 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -37,9 +36,9 @@ type packageJSON struct {
 }
 
 type author struct {
-	Name  string `json:"name" mapstruct:"name"`
-	Email string `json:"email" mapstruct:"email"`
-	URL   string `json:"url" mapstruct:"url"`
+	Name  string `json:"name" mapstructure:"name"`
+	Email string `json:"email" mapstructure:"email"`
+	URL   string `json:"url" mapstructure:"url"`
 }
 
 type repository struct {
@@ -52,7 +51,7 @@ type repository struct {
 var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
-func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePackageJSON(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
@@ -64,14 +63,11 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
-		if !p.hasNameAndVersionValues() {
-			log.Debugf("encountered package.json file without a name and/or version field, ignoring (path=%q)", reader.Path())
-			return nil, nil, nil
-		}
-
+		// always create a package, regardless of having a valid name and/or version,
+		// a compliance filter later will remove these packages based on compliance rules
 		pkgs = append(
 			pkgs,
-			newPackageJSONPackage(p, reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			newPackageJSONPackage(ctx, p, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		)
 	}
 
@@ -82,23 +78,23 @@ func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment
 
 func (a *author) UnmarshalJSON(b []byte) error {
 	var authorStr string
-	var fields map[string]string
 	var auth author
 
-	if err := json.Unmarshal(b, &authorStr); err != nil {
-		// string parsing did not work, assume a map was given
-		// for more information: https://docs.npmjs.com/files/package.json#people-fields-author-contributors
+	if err := json.Unmarshal(b, &authorStr); err == nil {
+		// successfully parsed as a string, now parse that string into fields
+		fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
+		if err := mapstructure.Decode(fields, &auth); err != nil {
+			return fmt.Errorf("unable to decode package.json author: %w", err)
+		}
+	} else {
+		// it's a map that may contain fields of various data types (not just strings)
+		var fields map[string]interface{}
 		if err := json.Unmarshal(b, &fields); err != nil {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
-	} else {
-		// parse out "name <email> (url)" into an author struct
-		fields = internal.MatchNamedCaptureGroups(authorPattern, authorStr)
-	}
-
-	// translate the map into a structure
-	if err := mapstructure.Decode(fields, &auth); err != nil {
-		return fmt.Errorf("unable to decode package.json author: %w", err)
+		if err := mapstructure.Decode(fields, &auth); err != nil {
+			return fmt.Errorf("unable to decode package.json author: %w", err)
+		}
 	}
 
 	*a = auth
@@ -201,10 +197,6 @@ func licensesFromJSON(b []byte) ([]npmPackageLicense, error) {
 	}
 
 	return nil, errors.New("unmarshal failed")
-}
-
-func (p packageJSON) hasNameAndVersionValues() bool {
-	return p.Name != "" && p.Version != ""
 }
 
 // this supports both windows and unix paths

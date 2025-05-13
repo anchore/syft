@@ -16,6 +16,9 @@ PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 PrimaryPackagePurpose: FILE
 FilesAnalyzed: false
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
 
 ##### Package: package-2
 
@@ -35,7 +38,7 @@ ExternalRef: PACKAGE-MANAGER purl pkg:deb/debian/package-2@2.0.1
 ##### Package: package-1
 
 PackageName: package-1
-SPDXID: SPDXRef-Package-python-package-1-fb6bef15e281ea43
+SPDXID: SPDXRef-Package-python-package-1-f04d218ff5ff50db
 PackageVersion: 1.0.1
 PackageSupplier: NOASSERTION
 PackageDownloadLocation: NOASSERTION
@@ -49,7 +52,7 @@ ExternalRef: PACKAGE-MANAGER purl a-purl-2
 
 ##### Relationships
 
-Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-python-package-1-fb6bef15e281ea43
+Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-python-package-1-f04d218ff5ff50db
 Relationship: SPDXRef-DocumentRoot-Directory-some-path CONTAINS SPDXRef-Package-deb-package-2-39392bb5e270f669
 Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-DocumentRoot-Directory-some-path
 

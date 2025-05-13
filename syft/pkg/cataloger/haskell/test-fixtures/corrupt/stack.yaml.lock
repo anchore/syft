@@ -1,0 +1,8 @@
+packages
+-comp
+al:
+    commit: a5847301404583e16d55cd4d051b8e605d704fbc
+    git: https://github.com/runtimeverification/haskell-backend.git
+    subdir: kore
+snapshots
+- complete//raw.github

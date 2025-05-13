@@ -58,7 +58,8 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 func unpackSrcMetadata(s *Source, unpacker sourceUnpacker) error {
 	rt := sourcemetadata.ReflectTypeFromJSONName(s.Type)
 	if rt == nil {
-		return fmt.Errorf("unable to find source metadata type=%q", s.Type)
+		// in cases where we are converting from an SBOM without any source information, we don't want this to be fatal
+		return nil
 	}
 
 	val := reflect.New(rt).Interface()
@@ -89,7 +90,7 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return source.DirectorySourceMetadata{
+		return source.DirectoryMetadata{
 			Path: cleanTarget,
 		}, nil
 
@@ -99,12 +100,12 @@ func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
 			cleanTarget = string(target)
 		}
 
-		return source.FileSourceMetadata{
+		return source.FileMetadata{
 			Path: cleanTarget,
 		}, nil
 
 	case "image":
-		var payload source.StereoscopeImageSourceMetadata
+		var payload source.ImageMetadata
 		if err := json.Unmarshal(target, &payload); err != nil {
 			return nil, err
 		}

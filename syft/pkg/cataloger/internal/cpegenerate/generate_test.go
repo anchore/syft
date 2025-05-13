@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -202,6 +203,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:nexus:nexus:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:sonatype:nexus:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.sonatype.nexus:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.sonatype.nexus:nexus:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -306,6 +309,23 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			name: "rpm archive vendor selection",
+			p: pkg.Package{
+				Name:    "name",
+				Version: "3.2",
+				FoundBy: "some-analyzer",
+				Type:    pkg.RpmPkg,
+				Metadata: pkg.RpmArchive{
+					Vendor: "some-vendor",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:some-vendor:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:some_vendor:name:3.2:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "rpm vendor selection",
 			p: pkg.Package{
 				Name:    "name",
@@ -370,6 +390,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:cloudbees:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:com.cloudbees.jenkins.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -393,6 +414,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:something:something:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:something:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins.plugins.name.something:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins.plugins.name.something:something:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -412,6 +435,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			expected: []string{
 				"cpe:2.3:a:name:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -433,6 +457,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:io.jenkins-ci.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -454,6 +479,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins-ci:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins:name:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:name:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.plugins:name:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -488,6 +514,9 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jira_client_core:jira-client-core:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client_core:jira:3.2:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jira_client_core:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.atlassian.jira:jira:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.atlassian.jira:jira_client_core:3.2:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.atlassian.jira:jira-client-core:3.2:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -520,6 +549,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 				"cpe:2.3:a:modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:com.cloudbees.jenkins.modules:cloudbees_installation_manager:2.89.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:com.cloudbees.jenkins.modules:cloudbees-installation-manager:2.89.0.33:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -593,6 +624,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:handlebars:3.0.8:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:handlebars:3.0.8:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ui:handlebars:3.0.8:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.ui:handlebars:3.0.8:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -630,6 +662,8 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:jenkins:active_directory:2.25.1:*:*:*:*:*:*:*", // important!
 				"cpe:2.3:a:jenkins_ci:active-directory:2.25.1:*:*:*:*:*:*:*",
 				"cpe:2.3:a:jenkins_ci:active_directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.plugins:active-directory:2.25.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:org.jenkins-ci.plugins:active_directory:2.25.1:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -716,6 +750,100 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:ruby_rake:rake:2.7.6-r0:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_rake:ruby-rake:2.7.6-r0:*:*:*:*:*:*:*",
 				"cpe:2.3:a:ruby_rake:ruby_rake:2.7.6-r0:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "wordpress plugin",
+			p: pkg.Package{
+				Name:    "WP Coder",
+				Version: "2.5.1",
+				Type:    pkg.WordpressPluginPkg,
+				Metadata: pkg.WordpressPluginEntry{
+					PluginInstallDirectory: "wp-coder",
+					Author:                 "Wow-Company",
+					AuthorURI:              "https://wow-estore.com",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:wow-company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*", // this is the correct CPE relative to CVE-2021-25053
+				"cpe:2.3:a:wow-estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow-estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_company:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp-coder:2.5.1:*:*:*:*:wordpress:*:*",
+				"cpe:2.3:a:wow_estore:wp_coder:2.5.1:*:*:*:*:wordpress:*:*",
+			},
+		},
+		{
+			name: "dotnet deps.json",
+			p: pkg.Package{
+				Name:    "Something",
+				Version: "2.5.1",
+				Type:    pkg.DotnetPkg,
+				Metadata: pkg.DotnetDepsEntry{
+					Name: "Something-Else",
+
+					Executables: map[string]pkg.DotnetPortableExecutableEntry{
+						"1": {
+							AssemblyVersion: "assembly-version!",
+							LegalCopyright:  "copyright!",
+							Comments:        "comments!",
+							InternalName:    "internal!",
+							CompanyName:     "company!",
+							ProductName:     "product!",
+							ProductVersion:  "version!",
+						},
+					},
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:company\\!:product\\!:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:company\\!:product\\!_.net:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:company\\!:something_else:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:company\\!:something_else_.net:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:something_else:product\\!:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:something_else:product\\!_.net:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:something_else:something_else:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:something_else:something_else_.net:2.5.1:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "dotnet executable",
+			p: pkg.Package{
+				Name:    "Something",
+				Version: "2.5.1",
+				Type:    pkg.DotnetPkg,
+				Metadata: pkg.DotnetPortableExecutableEntry{
+					AssemblyVersion: "assembly-version!",
+					LegalCopyright:  "copyright!",
+					Comments:        "comments!",
+					InternalName:    "internal!",
+					CompanyName:     "company!",
+					ProductName:     "product!",
+					ProductVersion:  "version!",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:company\\!:product\\!:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:company\\!:product\\!_.net:2.5.1:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "dotnet package.lock",
+			p: pkg.Package{
+				Name:    "Something",
+				Version: "2.5.1",
+				Type:    pkg.DotnetPkg,
+				Metadata: pkg.DotnetPackagesLockEntry{
+					Name: "Something-Else",
+				},
+			},
+			expected: []string{
+				"cpe:2.3:a:something_else:something_else:2.5.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:something_else:something_else_.net:2.5.1:*:*:*:*:*:*:*",
 			},
 		},
 	}
@@ -895,12 +1023,12 @@ func TestCandidateVendor(t *testing.T) {
 				Name: "Django",
 				Type: pkg.PythonPkg,
 			},
-			expected: []string{"djangoproject" /* <-- known good names | default guess --> */, "Django"},
+			expected: []string{"djangoproject", "python-Django", "python_Django" /* <-- known good names | default guess --> */, "python", "Django"},
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%+v %+v", test.p, test.expected), func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, candidateVendors(test.p))
 		})
 	}
@@ -991,7 +1119,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	tests := []struct {
 		name       string
 		pkg        pkg.Package
-		want       string
+		want       []cpe.CPE
 		wantExists bool
 	}{
 		{
@@ -1001,7 +1129,10 @@ func TestDictionaryFindIsWired(t *testing.T) {
 				Version: "1.0.2k",
 				Type:    pkg.GemPkg,
 			},
-			want: "cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*",
+			want: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:ruby-lang:openssl:1.0.2k:*:*:*:*:ruby:*:*", cpe.NVDDictionaryLookupSource),
+			},
 			// without the cpe data wired up, this would be empty (generation also creates cpe:2.3:a:openssl:openssl:1.0.2k:*:*:*:*:*:*:*)
 			wantExists: true,
 		},
@@ -1009,8 +1140,7 @@ func TestDictionaryFindIsWired(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, gotExists := FromDictionaryFind(tt.pkg)
-
-			assert.Equal(t, tt.want, got.Attributes.BindToFmtString())
+			assert.ElementsMatch(t, tt.want, got)
 			assert.Equal(t, tt.wantExists, gotExists)
 		})
 	}

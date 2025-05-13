@@ -5,8 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/archiver/v3"
-
+	"github.com/anchore/archiver/v3"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -116,16 +115,16 @@ func toPath(s source.Description, p pkg.Package) string {
 		}
 		packagePath = strings.TrimPrefix(packagePath, "/")
 		switch metadata := s.Metadata.(type) {
-		case source.StereoscopeImageSourceMetadata:
+		case source.ImageMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
-		case source.FileSourceMetadata:
+		case source.FileMetadata:
 			path := trimRelative(metadata.Path)
 			if isArchive(metadata.Path) {
 				return fmt.Sprintf("%s:/%s", path, packagePath)
 			}
 			return path
-		case source.DirectorySourceMetadata:
+		case source.DirectoryMetadata:
 			path := trimRelative(metadata.Path)
 			if path != "" {
 				return fmt.Sprintf("%s/%s", path, packagePath)
@@ -165,7 +164,7 @@ func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
 func dependencyName(p pkg.Package) string {
 	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
-		log.Warnf("Invalid PURL for package: '%s' PURL: '%s' (%w)", p.Name, p.PURL, err)
+		log.Debugf("Invalid PURL for package: '%s' PURL: '%s' (%w)", p.Name, p.PURL, err)
 		return ""
 	}
 	// don't use qualifiers for this

@@ -255,3 +255,10 @@ func TestParseRebarLock(t *testing.T) {
 		})
 	}
 }
+
+func Test_corruptRebarLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/rebar.lock").
+		WithError().
+		TestParser(t, parseRebarLock)
+}

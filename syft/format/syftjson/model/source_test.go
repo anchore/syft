@@ -23,6 +23,15 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		wantErr  require.ErrorAssertionFunc
 	}{
 		{
+			name: "empty",
+			input: []byte(`{
+				"id": "",
+				"type": "",
+				"metadata": null
+			}`),
+			expected: &Source{},
+		},
+		{
 			name: "directory",
 			input: []byte(`{
 				"id": "foobar",
@@ -32,7 +41,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "/var/lib/foo",
 					//Base: "/nope", // note: should be ignored entirely
 				},
@@ -67,14 +76,14 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "alpine:3.10",
 					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
 					ManifestDigest: "sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c",
 					MediaType:      "application/vnd.docker.distribution.manifest.v2+json",
 					Tags:           []string{},
 					Size:           5576169,
-					Layers: []source.StereoscopeLayerMetadata{
+					Layers: []source.LayerMetadata{
 						{
 							MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 							Digest:    "sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",
@@ -124,7 +133,7 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			expected: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path: "/var/lib/foo/go.mod",
 					Digests: []file.Digest{
 						{
@@ -188,7 +197,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "/var/lib/foo",
 				},
 			},
@@ -204,7 +213,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "directory",
-				Metadata: source.DirectorySourceMetadata{
+				Metadata: source.DirectoryMetadata{
 					Path: "/var/lib/foo",
 				},
 			},
@@ -239,14 +248,14 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "image",
-				Metadata: source.StereoscopeImageSourceMetadata{
+				Metadata: source.ImageMetadata{
 					UserInput:      "alpine:3.10",
 					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
 					ManifestDigest: "sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c",
 					MediaType:      "application/vnd.docker.distribution.manifest.v2+json",
 					Tags:           []string{},
 					Size:           5576169,
-					Layers: []source.StereoscopeLayerMetadata{
+					Layers: []source.LayerMetadata{
 						{
 							MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 							Digest:    "sha256:9fb3aa2f8b8023a4bebbf92aa567caf88e38e969ada9f0ac12643b2847391635",
@@ -288,7 +297,7 @@ func TestSource_UnmarshalJSON_PreSchemaV9(t *testing.T) {
 			expectedSource: &Source{
 				ID:   "foobar",
 				Type: "file",
-				Metadata: source.FileSourceMetadata{
+				Metadata: source.FileMetadata{
 					Path: "/var/lib/foo/go.mod",
 				},
 			},

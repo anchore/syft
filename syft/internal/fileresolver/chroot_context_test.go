@@ -479,3 +479,108 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 		})
 	}
 }
+
+func TestToNativeGlob(t *testing.T) {
+	tests := []struct {
+		name           string
+		chrootContext  ChrootContext
+		chrootPath     string
+		expectedResult string
+		expectedError  error
+	}{
+		{
+			name: "ignore empty path",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "",
+			expectedResult: "",
+			expectedError:  nil,
+		},
+		{
+			name: "ignore if just a path",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "/some/path/file.txt",
+			expectedResult: "/root/some/path/file.txt",
+			expectedError:  nil,
+		},
+		{
+			name: "ignore starting with glob",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "*/relative/path/*",
+			expectedResult: "*/relative/path/*",
+			expectedError:  nil,
+		},
+		{
+			name: "absolute path with glob",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "/some/path/*",
+			expectedResult: "/root/some/path/*",
+			expectedError:  nil,
+		},
+		{
+			name: "relative path with glob",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "relative/path/*",
+			expectedResult: "/cwd/relative/path/*",
+			expectedError:  nil,
+		},
+		{
+			name: "relative path with no root",
+			chrootContext: ChrootContext{
+				root:              "",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "relative/path/*",
+			expectedResult: "/cwd/relative/path/*",
+			expectedError:  nil,
+		},
+		{
+			name: "globs everywhere",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "relative/path/**/file*.txt",
+			expectedResult: "/cwd/relative/path/**/file*.txt",
+			expectedError:  nil,
+		},
+		{
+			name: "ending with glob",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "/var/lib/dpkg/info/name.*",
+			expectedResult: "/root/var/lib/dpkg/info/name.*",
+			expectedError:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.chrootContext.ToNativeGlob(tt.chrootPath)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedResult, result)
+			}
+		})
+	}
+}

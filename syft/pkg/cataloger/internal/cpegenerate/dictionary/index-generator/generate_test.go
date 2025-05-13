@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -59,31 +60,44 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRustCrates: {
-						"unicycle": "cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*",
+						"unicycle": dictionary.NewSet("cpe:2.3:a:unicycle_project:unicycle:*:*:*:*:*:rust:*:*"),
 					},
 				},
 			},
 		},
 		{
-			name:             "addEntryForJenkinsPlugin",
-			addEntryFunc:     addEntryForJenkinsPlugin,
+			name:             "addEntryForJenkinsPluginGitHub",
+			addEntryFunc:     addEntryForJenkinsPluginGitHub,
 			inputRef:         "https://github.com/jenkinsci/sonarqube-plugin",
 			inputCpeItemName: "cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*",
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemJenkinsPlugins: {
-						"sonarqube": "cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*",
+						"sonarqube": dictionary.NewSet("cpe:2.3:a:sonarsource:sonarqube_scanner:2.7:*:*:*:*:jenkins:*:*"),
 					},
 				},
 			},
 		},
 		{
-			name:             "addEntryForJenkinsPlugin: not actually a plugin",
-			addEntryFunc:     addEntryForJenkinsPlugin,
+			name:             "addEntryForJenkinsPluginGitHub: not actually a plugin",
+			addEntryFunc:     addEntryForJenkinsPluginGitHub,
 			inputRef:         "https://github.com/jenkinsci/jenkins",
 			inputCpeItemName: "cpe:2.3:a:jenkins:jenkinsci:2.7:*:*:*:*:*:*:*",
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{},
+			},
+		},
+		{
+			name:             "addEntryForJenkinsPlugin",
+			addEntryFunc:     addEntryForJenkinsPlugin,
+			inputRef:         "https://plugins.jenkins.io/svn-partial-release-mgr/release",
+			inputCpeItemName: "cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemJenkinsPlugins: {
+						"svn-partial-release-mgr": dictionary.NewSet("cpe:2.3:a:jenkins:subversion_partial_release_manager:1.0.1:*:*:*:*:jenkins:*:*"),
+					},
+				},
 			},
 		},
 		{
@@ -94,7 +108,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemPyPI: {
-						"vault-cli": "cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*",
+						"vault-cli": dictionary.NewSet("cpe:2.3:a:vault-cli_project:vault-cli:*:*:*:*:*:python:*:*"),
 					},
 				},
 			},
@@ -107,7 +121,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRubyGems: {
-						"openssl": "cpe:2.3:a:ruby-lang:openssl:-:*:*:*:*:ruby:*:*",
+						"openssl": dictionary.NewSet("cpe:2.3:a:ruby-lang:openssl:-:*:*:*:*:ruby:*:*"),
 					},
 				},
 			},
@@ -120,7 +134,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRubyGems: {
-						"actionview": "cpe:2.3:a:action_view_project:action_view:*:*:*:*:*:ruby:*:*",
+						"actionview": dictionary.NewSet("cpe:2.3:a:action_view_project:action_view:*:*:*:*:*:ruby:*:*"),
 					},
 				},
 			},
@@ -133,7 +147,7 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemRubyGems: {
-						"rbovirt": "cpe:2.3:a:amos_benari:rbovirt:*:*:*:*:*:ruby:*:*",
+						"rbovirt": dictionary.NewSet("cpe:2.3:a:amos_benari:rbovirt:*:*:*:*:*:ruby:*:*"),
 					},
 				},
 			},
@@ -146,7 +160,202 @@ func Test_addEntryFuncs(t *testing.T) {
 			expectedIndexed: dictionary.Indexed{
 				EcosystemPackages: map[string]dictionary.Packages{
 					dictionary.EcosystemNPM: {
-						"@nubosoftware/node-static": "cpe:2.3:a:\\@nubosoftware\\/node-static_project:\\@nubosoftware\\/node-static:-:*:*:*:*:node.js:*:*",
+						"@nubosoftware/node-static": dictionary.NewSet("cpe:2.3:a:\\@nubosoftware\\/node-static_project:\\@nubosoftware\\/node-static:-:*:*:*:*:node.js:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPeclPackage",
+			addEntryFunc:     addEntryForPHPPeclPackage,
+			inputRef:         "https://pecl.php.net/package/imagick/something/something/v4007.0",
+			inputCpeItemName: "cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPecl: {
+						"imagick": dictionary.NewSet("cpe:2.3:a:php:imagick:*:*:*:*:*:*:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPeclPackage http changelog",
+			addEntryFunc:     addEntryForPHPPeclPackage,
+			inputRef:         "http://pecl.php.net/package-changelog.php?package=memcached&amp;release",
+			inputCpeItemName: "cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPecl: {
+						"memcached": dictionary.NewSet("cpe:2.3:a:php:memcached:*:*:*:*:*:*:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPearPackage",
+			addEntryFunc:     addEntryForPHPPearPackage,
+			inputRef:         "https://pear.php.net/package/PEAR/download",
+			inputCpeItemName: "cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPear: {
+						"PEAR": dictionary.NewSet("cpe:2.3:a:php:pear:*:*:*:*:*:*:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPPearPackage http changelog",
+			addEntryFunc:     addEntryForPHPPearPackage,
+			inputRef:         "http://pear.php.net/package-changelog.php?package=abcdefg&amp;release",
+			inputCpeItemName: "cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPPear: {
+						"abcdefg": dictionary.NewSet("cpe:2.3:a:php:abcdefg:*:*:*:*:*:*:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForPHPComposerPackage",
+			addEntryFunc:     addEntryForPHPComposerPackage,
+			inputRef:         "https://packagist.org/packages/frappant/frp-form-answers",
+			inputCpeItemName: "cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemPHPComposer: {
+						"frappant/frp-form-answers": dictionary.NewSet("cpe:2.3:a:frappant:forms_export:*:*:*:*:*:*:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForGoModulePackage",
+			addEntryFunc:     addEntryForGoModulePackage,
+			inputRef:         "https://pkg.go.dev/github.com/abc/123?whatever=xvgfhfhf",
+			inputCpeItemName: "cpe:2.3:a:abc:123:*:*:*:*:*:go:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemGoModules: {
+						"github.com/abc/123": dictionary.NewSet("cpe:2.3:a:abc:123:*:*:*:*:*:go:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://wordpress.org/plugins/armadillo/releases",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin from Trac Browser",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://plugins.trac.wordpress.org/browser/armadillo/something",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin from Trac Log",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://plugins.trac.wordpress.org/log/armadillo/log",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin from GitHub wp-plugins archive",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://github.com/wp-plugins/armadillo/something",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressPlugin wordfence",
+			addEntryFunc:     addEntryForWordpressPlugin,
+			inputRef:         "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/armadillo/skjfhskdjhf/12344",
+			inputCpeItemName: "cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressPlugins: {
+						"armadillo": dictionary.NewSet("cpe:2.3:a:armadillo:armadillo:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://wordpress.org/themes/basic/releases",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme from Trac Browser",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://themes.trac.wordpress.org/browser/basic/something",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme from Trac Log",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://themes.trac.wordpress.org/log/basic/log",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
+					},
+				},
+			},
+		},
+		{
+			name:             "addEntryForWordpressTheme wordfence",
+			addEntryFunc:     addEntryForWordpressTheme,
+			inputRef:         "https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-themes/basic/skjfhskdjhf/12344",
+			inputCpeItemName: "cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*",
+			expectedIndexed: dictionary.Indexed{
+				EcosystemPackages: map[string]dictionary.Packages{
+					dictionary.EcosystemWordpressThemes: {
+						"basic": dictionary.NewSet("cpe:2.3:a:basic:basic:1.23:*:*:*:*:wordpress:*:*"),
 					},
 				},
 			},
@@ -161,7 +370,7 @@ func Test_addEntryFuncs(t *testing.T) {
 
 			tt.addEntryFunc(indexed, tt.inputRef, tt.inputCpeItemName)
 
-			if diff := cmp.Diff(tt.expectedIndexed, *indexed); diff != "" {
+			if diff := cmp.Diff(tt.expectedIndexed, *indexed, cmp.AllowUnexported(strset.Set{})); diff != "" {
 				t.Errorf("addEntry* mismatch (-want +got):\n%s", diff)
 			}
 		})

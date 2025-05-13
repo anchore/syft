@@ -13,11 +13,18 @@ type Coordinates struct {
 	FileSystemID string `json:"layerID,omitempty" cyclonedx:"layerID"` // An ID representing the filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank.
 }
 
+func NewCoordinates(realPath, fsID string) Coordinates {
+	return Coordinates{
+		RealPath:     realPath,
+		FileSystemID: fsID,
+	}
+}
+
 func (c Coordinates) ID() artifact.ID {
 	f, err := artifact.IDByHash(c)
 	if err != nil {
 		// TODO: what to do in this case?
-		log.Warnf("unable to get fingerprint of location coordinate=%+v: %+v", c, err)
+		log.Debugf("unable to get fingerprint of location coordinate=%+v: %+v", c, err)
 		return ""
 	}
 
@@ -31,4 +38,8 @@ func (c Coordinates) String() string {
 		str += fmt.Sprintf(" Layer=%q", c.FileSystemID)
 	}
 	return fmt.Sprintf("Location<%s>", str)
+}
+
+func (c Coordinates) GetCoordinates() Coordinates {
+	return c
 }

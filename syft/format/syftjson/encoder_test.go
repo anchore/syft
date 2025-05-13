@@ -2,6 +2,7 @@ package syftjson
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"strings"
 	"testing"
@@ -132,7 +133,7 @@ func TestImageEncoder(t *testing.T) {
 
 func TestEncodeFullJSONDocument(t *testing.T) {
 	catalog := pkg.NewCollection()
-
+	ctx := context.TODO()
 	p1 := pkg.Package{
 		Name:    "package-1",
 		Version: "1.0.1",
@@ -144,7 +145,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		Type:     pkg.PythonPkg,
 		FoundBy:  "the-cataloger-1",
 		Language: pkg.Python,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+		Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MIT")),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
 			Version: "1.0.1",
@@ -260,7 +261,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 		},
 		Source: source.Description{
 			ID: "c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
-			Metadata: source.StereoscopeImageSourceMetadata{
+			Metadata: source.ImageMetadata{
 				UserInput:      "user-image-input",
 				ID:             "sha256:c2b46b4eb06296933b7cf0722683964e9ecbd93265b9ef6ae9642e3952afbba0",
 				ManifestDigest: "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
@@ -269,7 +270,7 @@ func TestEncodeFullJSONDocument(t *testing.T) {
 					"stereoscope-fixture-image-simple:85066c51088bdd274f7a89e99e00490f666c49e72ffc955707cd6e18f0e22c5b",
 				},
 				Size: 38,
-				Layers: []source.StereoscopeLayerMetadata{
+				Layers: []source.LayerMetadata{
 					{
 						MediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
 						Digest:    "sha256:3de16c5b8659a2e8d888b8ded8427be7a5686a3c8c4e4dd30de20f362827285b",

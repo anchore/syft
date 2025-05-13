@@ -26,7 +26,7 @@ func packageURL(name, version string, metadata pkg.JavaArchive) string {
 	return pURL.ToString()
 }
 
-// GroupIDFromJavaPackage returns the authoritative group ID for a Java package.
+// groupIDFromJavaMetadata returns the authoritative group ID for a Java package.
 // The order of precedence is:
 // 1. The group ID from the POM properties
 // 2. The group ID from the POM project
@@ -64,16 +64,16 @@ func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
 		return groupID
 	}
 
-	groupIDS := cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.PrimaryJavaManifestGroupIDFields)
+	groupIDs := cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.PrimaryJavaManifestGroupIDFields)
 	// assumes that primaryJavaManifestNameFields are ordered by priority
-	if len(groupIDS) != 0 {
-		return groupIDS[0]
+	if len(groupIDs) != 0 {
+		return groupIDs[0]
 	}
 
-	groupIDS = cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.SecondaryJavaManifestGroupIDFields)
+	groupIDs = cpegenerate.GetManifestFieldGroupIDs(manifest, cpegenerate.SecondaryJavaManifestGroupIDFields)
 
-	if len(groupIDS) != 0 {
-		return groupIDS[0]
+	if len(groupIDs) != 0 {
+		return groupIDs[0]
 	}
 
 	return groupID
