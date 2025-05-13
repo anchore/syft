@@ -4,43 +4,30 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 )
 
-// IncludeLicenseContent controls whether license content should be included.
-type IncludeLicenseContent string
+// LicenseContent controls when license content should be included in the SBOM.
+type LicenseContent string
 
 const (
-	IncludeLicenseContentAll     IncludeLicenseContent = "all"
-	IncludeLicenseContentUnknown IncludeLicenseContent = "unknown"
-	IncludeLicenseContentNone    IncludeLicenseContent = "none"
+	LicenseContentIncludeAll     LicenseContent = "all"
+	LicenseContentIncludeUnknown LicenseContent = "unknown"
+	LicenseContentExcludeAll     LicenseContent = "none"
 )
 
 type LicenseConfig struct {
-	// Deprecated: use IncludeLicenseContent instead
-	IncludeUnkownLicenseContent bool                  `json:"include-unknown-license-content" yaml:"include-unknown-license-content" mapstructure:"include-unknown-license-content"`
-	IncludeLicenseContent       IncludeLicenseContent `json:"include-license-content" yaml:"include-license-content" mapstructure:"include-license-content"`
-	Coverage                    float64               `json:"coverage" yaml:"coverage" mapstructure:"coverage"`
+	// IncludeUnknownLicenseContent controls whether the content of a license should be included in the SBOM when the license ID cannot be determined.
+	// Deprecated: use IncludeContent instead
+	IncludeUnknownLicenseContent bool `json:"-" yaml:"-" mapstructure:"-"`
+
+	// IncludeContent controls whether license copy discovered should be included in the SBOM.
+	IncludeContent LicenseContent `json:"include-content" yaml:"include-content" mapstructure:"include-content"`
+
+	// Coverage is the percentage of text that must match a license for it to be considered a match.
+	Coverage float64 `json:"coverage" yaml:"coverage" mapstructure:"coverage"`
 }
 
 func DefaultLicenseConfig() LicenseConfig {
 	return LicenseConfig{
-		IncludeLicenseContent: IncludeLicenseContentNone,
-		Coverage:              licenses.DefaultCoverageThreshold,
-	}
-}
-
-// ParseIncludeLicenseContent converts a string to IncludeLicenseContent and validates it.
-func ParseIncludeLicenseContent(s string) IncludeLicenseContent {
-	val := IncludeLicenseContent(s)
-	if !val.IsValid() {
-		return IncludeLicenseContentNone
-	}
-	return val
-}
-
-func (i IncludeLicenseContent) IsValid() bool {
-	switch i {
-	case IncludeLicenseContentAll, IncludeLicenseContentUnknown, IncludeLicenseContentNone:
-		return true
-	default:
-		return false
+		IncludeContent: LicenseContentExcludeAll,
+		Coverage:       licenses.DefaultCoverageThreshold,
 	}
 }

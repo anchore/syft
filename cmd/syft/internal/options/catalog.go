@@ -157,22 +157,11 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 }
 
 func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
-	var includeContent cataloging.IncludeLicenseContent
+	var includeContent cataloging.LicenseContent
 
-	// use new field if set
-	if cfg.License.IncludeLicenseContent != "" {
-		includeContent = cataloging.ParseIncludeLicenseContent(cfg.License.IncludeLicenseContent)
-	} else {
-		// Fallback: use the deprecated boolean field
-		if cfg.License.IncludeUnknownLicenseContent {
-			includeContent = cataloging.IncludeLicenseContentUnknown
-		} else {
-			includeContent = cataloging.IncludeLicenseContentNone
-		}
-	}
 	return cataloging.LicenseConfig{
-		IncludeLicenseContent: includeContent,
-		Coverage:              cfg.License.LicenseCoverage,
+		IncludeContent: includeContent,
+		Coverage:       cfg.License.LicenseCoverage,
 	}
 }
 

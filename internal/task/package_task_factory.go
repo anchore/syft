@@ -270,14 +270,14 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 
 func applyLicenseContentRules(licenses []pkg.License, cfg cataloging.LicenseConfig) []pkg.License {
 	for i, l := range licenses {
-		switch cfg.IncludeLicenseContent {
-		case cataloging.IncludeLicenseContentUnknown:
+		switch cfg.IncludeContent {
+		case cataloging.LicenseContentIncludeUnknown:
 			// we don't have an SPDX expression, which means we didn't find an SPDX license
 			// include the unknown licenses content in the final SBOM
 			if l.SPDXExpression != "" {
 				licenses[i].Contents = ""
 			}
-		case cataloging.IncludeLicenseContentNone:
+		case cataloging.LicenseContentExcludeAll:
 			// clear it all out
 			licenses[i].Contents = ""
 		// the default case includes everything

@@ -31,7 +31,7 @@ func Test_Licenses(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
-		// IncludeLicenseContent
+		// IncludeContent
 		{
 			name: "licenses with content works without deprecated LICENSE_INCLUDE_UNKNOWN_LICENSE_CONTENT",
 			args: []string{"scan", "-o", "json", testImage, "--from", "docker-archive"},

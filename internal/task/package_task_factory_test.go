@@ -133,23 +133,23 @@ func TestApplyLicenseContentRules(t *testing.T) {
 		expectedContents []string
 	}{
 		{
-			name: "IncludeLicenseContentUnknown",
+			name: "LicenseContentIncludeUnknown",
 			cfg: cataloging.LicenseConfig{
-				IncludeLicenseContent: cataloging.IncludeLicenseContentUnknown,
+				IncludeContent: cataloging.LicenseContentIncludeUnknown,
 			},
 			expectedContents: []string{"", "Non-SPDX license content"},
 		},
 		{
-			name: "IncludeLicenseContentNone",
+			name: "LicenseContentExcludeAll",
 			cfg: cataloging.LicenseConfig{
-				IncludeLicenseContent: cataloging.IncludeLicenseContentNone,
+				IncludeContent: cataloging.LicenseContentExcludeAll,
 			},
 			expectedContents: []string{"", ""},
 		},
 		{
 			name: "IncludeLicenseContentDefault",
 			cfg: cataloging.LicenseConfig{
-				IncludeLicenseContent: cataloging.IncludeLicenseContentAll, // or any other value not explicitly handled
+				IncludeContent: cataloging.LicenseContentIncludeAll, // or any other value not explicitly handled
 			},
 			expectedContents: []string{"MIT license content", "Non-SPDX license content"},
 		},
