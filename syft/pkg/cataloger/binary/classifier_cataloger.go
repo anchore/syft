@@ -109,7 +109,7 @@ func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, er
 		return nil, err
 	}
 	for _, location := range locations {
-		pkgs, err := cls.EvidenceMatcher(cls, matcherContext{resolver: resolver, location: location})
+		pkgs, err := cls.EvidenceMatcher(cls, MatcherContext{Resolver: resolver, Location: location})
 		if err != nil {
 			errs = unknown.Append(errs, location, err)
 			continue
