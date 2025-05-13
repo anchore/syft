@@ -23,7 +23,7 @@ func Backfill(p *pkg.Package) {
 
 	purl, err := packageurl.FromString(p.PURL)
 	if err != nil {
-		log.Debug("unable to parse purl: %s: %w", p.PURL, err)
+		log.Debugf("unable to parse purl: %s: %w", p.PURL, err)
 		return
 	}
 

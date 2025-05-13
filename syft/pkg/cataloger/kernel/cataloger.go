@@ -94,7 +94,7 @@ func createKernelToModuleRelationships(kernelPackages, modulePackages []pkg.Pack
 	for idx, p := range modulePackages {
 		m, ok := p.Metadata.(pkg.LinuxKernelModule)
 		if !ok {
-			log.Debug("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
+			log.Debugf("linux-kernel-module package found without metadata: %s@%s", p.Name, p.Version)
 			continue
 		}
 		modulesByKernelVersion[m.KernelVersion] = append(modulesByKernelVersion[m.KernelVersion], &modulePackages[idx])
