@@ -247,7 +247,6 @@ func Test_RPMFileCataloger_Globs(t *testing.T) {
 }
 
 func Test_denySelfReferences(t *testing.T) {
-	ctx := context.TODO()
 	a := pkg.Package{
 		Name: "a",
 	}
@@ -327,7 +326,7 @@ func Test_denySelfReferences(t *testing.T) {
 				tt.wantErr = assert.NoError
 			}
 
-			gotPkgs, gotRels, err := denySelfReferences(ctx, tt.pkgs, tt.rels, tt.err)
+			gotPkgs, gotRels, err := denySelfReferences(tt.pkgs, tt.rels, tt.err)
 
 			tt.wantErr(t, err)
 			assert.Len(t, gotPkgs, tt.wantPkgs)

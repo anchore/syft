@@ -1,7 +1,6 @@
 package dependency
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -167,7 +166,6 @@ func abstractRelationships(t testing.TB, relationships []artifact.Relationship) 
 }
 
 func Test_Processor(t *testing.T) {
-	ctx := context.TODO()
 	a := pkg.Package{
 		Name: "a",
 	}
@@ -237,7 +235,7 @@ func Test_Processor(t *testing.T) {
 				tt.wantErr = assert.NoError
 			}
 
-			gotPkgs, gotRels, err := Processor(tt.sp)(ctx, tt.pkgs, tt.rels, tt.err)
+			gotPkgs, gotRels, err := Processor(tt.sp)(tt.pkgs, tt.rels, tt.err)
 
 			tt.wantErr(t, err)
 			assert.Len(t, gotPkgs, tt.wantPkgCount)

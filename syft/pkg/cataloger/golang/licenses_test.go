@@ -14,24 +14,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_LicenseSearch(t *testing.T) {
-	sc := &licenses.ScannerConfig{
-		CoverageThreshold: 75,
-		Scanner:           licensecheck.Scan,
-	}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
+	ctx := pkgtest.Context()
 
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
@@ -328,11 +321,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
-
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	licenseScanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), licenseScanner)
+	ctx := pkgtest.Context()
 	tests := []struct {
 		name    string
 		dir     string
@@ -374,23 +363,21 @@ func Test_noLocalGoModDir(t *testing.T) {
 
 func mustContentsFromLocation(t *testing.T, loc file.Location, offset ...int) string {
 	t.Helper()
+
 	contentsPath := "test-fixtures/licenses/pkg/mod/" + loc.RealPath
 	contents, err := os.ReadFile(contentsPath)
-	if err != nil {
-		panic(err)
-	}
+	require.NoErrorf(t, err, "could not open contents for fixture at %s", contentsPath)
 
 	if len(offset) == 0 {
 		return string(contents)
 	}
 
-	if len(offset) != 2 {
-		t.Fatalf("invalid offset provided, expected two integers: start and end")
-	}
+	require.Equal(t, 2, len(offset), "invalid offset provided, expected two integers: start and end")
+
 	start, end := offset[0], offset[1]
-	if start < 0 || end > len(contents) || start > end {
-		t.Fatalf("invalid offset range: start=%d, end=%d, content length=%d", start, end, len(contents))
-	}
+	require.GreaterOrEqual(t, start, 0, "offset start must be >= 0")
+	require.LessOrEqual(t, end, len(contents), "offset end must be <= content length")
+	require.LessOrEqual(t, start, end, "offset start must be <= end")
 
 	return string(contents[start:end])
 }

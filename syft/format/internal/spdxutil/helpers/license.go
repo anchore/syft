@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -143,10 +144,19 @@ func (s *SPDXOtherLicenseSet) Add(licenses ...spdx.OtherLicense) {
 	}
 }
 
+type ByLicenseIdentifier []spdx.OtherLicense
+
+func (o ByLicenseIdentifier) Len() int      { return len(o) }
+func (o ByLicenseIdentifier) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
+func (o ByLicenseIdentifier) Less(i, j int) bool {
+	return o[i].LicenseIdentifier < o[j].LicenseIdentifier
+}
+
 func (s *SPDXOtherLicenseSet) ToSlice() []spdx.OtherLicense {
 	values := make([]spdx.OtherLicense, 0, len(s.set))
 	for _, v := range s.set {
 		values = append(values, v)
 	}
+	sort.Sort(ByLicenseIdentifier(values))
 	return values
 }

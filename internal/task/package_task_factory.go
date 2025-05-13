@@ -108,6 +108,8 @@ func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.Path
 		}
 
 		// we want to know if the user wants to preserve license content or not in the final SBOM
+		// note: this looks incorrect, but pkg.License.Content is NOT used to compute the Package ID
+		// this does NOT change the reproducibility of the Package ID
 		p.Licenses = pkg.NewLicenseSet(applyLicenseContentRules(p.Licenses.ToSlice(), cfg.LicenseConfig)...)
 
 		pkgs[i] = p

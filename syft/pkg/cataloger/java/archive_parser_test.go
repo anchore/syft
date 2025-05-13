@@ -14,13 +14,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/licensecheck"
 	"github.com/gookit/color"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -32,10 +30,7 @@ import (
 
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
+	ctx := pkgtest.Context()
 
 	tests := []struct {
 		name             string
@@ -94,11 +89,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 }
 
 func TestParseJar(t *testing.T) {
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
-
+	ctx := pkgtest.Context()
 	tests := []struct {
 		name         string
 		fixture      string
@@ -1382,11 +1373,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
-
+	ctx := pkgtest.Context()
 	tests := []struct {
 		fixture  string
 		expected maven.ID

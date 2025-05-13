@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func stdlibProcessor(ctx context.Context, pkgs []pkg.Package, relationships []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+func stdlibProcessor(ctx context.Context, _ file.Resolver, pkgs []pkg.Package, relationships []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	compilerPkgs, newRelationships := stdlibPackageAndRelationships(ctx, pkgs)
 	return append(pkgs, compilerPkgs...), append(relationships, newRelationships...), err
 }

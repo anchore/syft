@@ -117,6 +117,58 @@ func TestFilterNonCompliantPackages(t *testing.T) {
 	assert.Equal(t, p2, droppedPkgs[0])
 }
 
+func TestApplyLicenseContentRules(t *testing.T) {
+	licenseWithSPDX := pkg.License{
+		SPDXExpression: "MIT",
+		Contents:       "MIT license content",
+	}
+	licenseWithoutSPDX := pkg.License{
+		Value:    "License-Not-A-SPDX-Expression",
+		Contents: "Non-SPDX license content",
+	}
+
+	tests := []struct {
+		name             string
+		cfg              cataloging.LicenseConfig
+		expectedContents []string
+	}{
+		{
+			name: "IncludeLicenseContentUnknown",
+			cfg: cataloging.LicenseConfig{
+				IncludeLicenseContent: cataloging.IncludeLicenseContentUnknown,
+			},
+			expectedContents: []string{"", "Non-SPDX license content"},
+		},
+		{
+			name: "IncludeLicenseContentNone",
+			cfg: cataloging.LicenseConfig{
+				IncludeLicenseContent: cataloging.IncludeLicenseContentNone,
+			},
+			expectedContents: []string{"", ""},
+		},
+		{
+			name: "IncludeLicenseContentDefault",
+			cfg: cataloging.LicenseConfig{
+				IncludeLicenseContent: cataloging.IncludeLicenseContentAll, // or any other value not explicitly handled
+			},
+			expectedContents: []string{"MIT license content", "Non-SPDX license content"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			licenses := []pkg.License{licenseWithSPDX, licenseWithoutSPDX}
+			filtered := applyLicenseContentRules(licenses, tt.cfg)
+
+			require.Len(t, filtered, len(tt.expectedContents))
+
+			for i, l := range filtered {
+				assert.Equal(t, tt.expectedContents[i], l.Contents, "unexpected license content at index %d", i)
+			}
+		})
+	}
+}
+
 func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 	p := pkg.Package{Name: "", Version: ""}
 	p.SetID()
