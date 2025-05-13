@@ -14,7 +14,7 @@ func NewPubspecLockCataloger() pkg.Cataloger {
 		WithParserByGlobs(parsePubspecLock, "**/pubspec.lock")
 }
 
-// NewPubspecLockCataloger returns a new Dartlang cataloger object base on pubspec lock files.
+// NewPubspecCataloger returns a new Dartlang cataloger object base on pubspec files.
 func NewPubspecCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dart-pubspec-cataloger").
 		WithParserByGlobs(parsePubspec, "**/pubspec.yml", "**/pubspec.yaml")

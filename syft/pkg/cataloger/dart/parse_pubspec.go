@@ -13,8 +13,20 @@ import (
 )
 
 type pubspecPackage struct {
-	Name    string `yaml:"name" mapstructure:"name"`
-	Version string `yaml:"version" mapstructure:"version"`
+	Name              string                 `mapstructure:"name" yaml:"name"`
+	Version           string                 `mapstructure:"version" yaml:"version"`
+	Homepage          string                 `mapstructure:"homepage" yaml:"homepage"`
+	Repository        string                 `mapstructure:"repository" yaml:"repository"`
+	Documentation     string                 `mapstructure:"documentation" yaml:"documentation"`
+	PublishTo         string                 `mapstructure:"publish_to" yaml:"publish_to"`
+	Environment       dartPubspecEnvironment `mapstructure:"environment" yaml:"environment"`
+	Platforms         []string               `mapstructure:"platforms" yaml:"platforms"`
+	IgnoredAdvisories []string               `mapstructure:"ignored_advisories" yaml:"ignored_advisories"`
+}
+
+type dartPubspecEnvironment struct {
+	SDK     string `mapstructure:"sdk" yaml:"sdk"`
+	Flutter string `mapstructure:"flutter" yaml:"flutter"`
 }
 
 func parsePubspec(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -30,7 +42,7 @@ func parsePubspec(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 	pkgs = append(pkgs,
 		newPubspecPackage(
 			p,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 	)
 

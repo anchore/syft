@@ -72,7 +72,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.ConanfileEntry{}, "c-conan-file-entry", "ConanMetadataType"),
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
-	jsonNames(pkg.DartPubspecEntry{}, "dart-pubspec-entry"),
+	jsonNames(pkg.DartPubspec{}, "dart-pubspec"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
