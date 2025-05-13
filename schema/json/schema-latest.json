@@ -1072,7 +1072,7 @@
       },
       "type": "object"
     },
-    "HomebrewMetadata": {
+    "HomebrewFormula": {
       "properties": {
         "tap": {
           "type": "string"
@@ -1894,7 +1894,7 @@
               "$ref": "#/$defs/HaskellHackageStackLockEntry"
             },
             {
-              "$ref": "#/$defs/HomebrewMetadata"
+              "$ref": "#/$defs/HomebrewFormula"
             },
             {
               "$ref": "#/$defs/JavaArchive"
