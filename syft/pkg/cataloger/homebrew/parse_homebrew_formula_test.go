@@ -233,3 +233,71 @@ func TestGetQuotedValue(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchesVariable(t *testing.T) {
+	tests := []struct {
+		name         string
+		line         string
+		variableName string
+		expected     bool
+	}{
+		{
+			name:         "matches with space",
+			line:         "foo = bar",
+			variableName: "foo",
+			expected:     true,
+		},
+		{
+			name:         "matches with tab",
+			line:         "bar\tvalue",
+			variableName: "bar",
+			expected:     true,
+		},
+		{
+			name:         "no match - different variable",
+			line:         "baz = value",
+			variableName: "foo",
+			expected:     false,
+		},
+		{
+			name:         "no match - substring",
+			line:         "foobar = value",
+			variableName: "foo",
+			expected:     false,
+		},
+		{
+			name:         "no match - no space or tab",
+			line:         "foo=value",
+			variableName: "foo",
+			expected:     false,
+		},
+		{
+			name:         "no match - empty line",
+			line:         "",
+			variableName: "foo",
+			expected:     false,
+		},
+		{
+			name:         "matches with space and complex value",
+			line:         "complex_var complex value with spaces",
+			variableName: "complex_var",
+			expected:     true,
+		},
+		{
+			name:         "case sensitive - different case",
+			line:         "FOO = value",
+			variableName: "foo",
+			expected:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := matchesVariable(tt.line, tt.variableName)
+			if result != tt.expected {
+				t.Errorf("matchesVariable(%q, %q) = %v, want %v",
+					tt.line, tt.variableName, result, tt.expected)
+			}
+		})
+	}
+}

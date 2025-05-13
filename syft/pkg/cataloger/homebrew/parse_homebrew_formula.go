@@ -54,15 +54,15 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 		}
 
 		switch {
-		case strings.HasPrefix(line, "desc "):
+		case matchesVariable(line, "desc"):
 			pd.Desc = getQuotedValue(line)
-		case strings.HasPrefix(line, "homepage "):
+		case matchesVariable(line, "homepage"):
 			pd.Homepage = getQuotedValue(line)
-		case strings.HasPrefix(line, "license "):
+		case matchesVariable(line, "license"):
 			pd.License = getQuotedValue(line)
-		case strings.HasPrefix(line, "name "):
+		case matchesVariable(line, "name"):
 			pd.Name = getQuotedValue(line)
-		case strings.HasPrefix(line, "version "):
+		case matchesVariable(line, "version"):
 			pd.Version = getQuotedValue(line)
 		}
 	}
@@ -80,6 +80,11 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 	pd.Name, pd.Version = getNameAndVersionFromPath(reader.RealPath)
 
 	return &pd, nil
+}
+
+func matchesVariable(line, name string) bool {
+	// should return true if the line starts with "name<space>" or "name<tab>"
+	return strings.HasPrefix(line, name+" ") || strings.HasPrefix(line, name+"\t")
 }
 
 func getNameAndVersionFromPath(p string) (string, string) {
