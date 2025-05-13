@@ -198,7 +198,6 @@ func newLicenseBuilder() *licenseBuilder {
 
 func (b *licenseBuilder) WithValues(expr ...string) *licenseBuilder {
 	for _, v := range expr {
-		v = strings.TrimSpace(v)
 		if v == "" {
 			continue
 		}
@@ -281,7 +280,7 @@ func (b *licenseBuilder) Build(ctx context.Context) LicenseSet {
 
 		set.Add(License{
 			SPDXExpression: expression,
-			Value:          v,
+			Value:          strings.TrimSpace(v),
 			Type:           b.tp,
 			URLs:           b.urls,
 			Locations:      locations,
