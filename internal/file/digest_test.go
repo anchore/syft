@@ -70,6 +70,22 @@ func TestNewDigestsFromFile(t *testing.T) {
 					Algorithm: "sha512",
 					Value:     "b49d5995456edba144dce750eaa8eae12af8fd08c076d401fcf78aac4172080feb70baaa5ed8c1b05046ec278446330fbf77e8ca9e60c03945ded761a641a7e1",
 				},
+				{
+					Algorithm: "sha3224",
+					Value:     "b4ef4f75fd7a26b1edf1cede7f41dbd4c23912f05241fa2aae0bd192",
+				},
+				{
+					Algorithm: "sha3256",
+					Value:     "9236a10cfe6d8f1c176ad45281af2656d2bc9d63d5cbc4e5443c734f868fe9e4",
+				},
+				{
+					Algorithm: "sha3384",
+					Value:     "fa19a9878155e616be5563b7bbabe96a5c43d4ece98a9bbfcd00d8ce1fc941e6a6989539f463f5d3c0047577a07e5fca",
+				},
+				{
+					Algorithm: "sha3512",
+					Value:     "1e1e8430e752a28a0a45d45d641ffa132e502f7db633cdaffa20526d00689abf1d1dcaac98880ad4eedf36503d36888a9566aff0ad7b737bf4b9439101d8e136",
+				},
 			},
 		},
 	}
@@ -101,7 +117,7 @@ func TestHashers(t *testing.T) {
 	}{
 		{
 			name:  "check supported hash algorithms",
-			names: []string{"MD-5", "shA1", "sHa224", "sha---256", "sha384", "sha512"},
+			names: []string{"MD-5", "shA1", "sHa224", "sha---256", "sha384", "sha512", "sha3-224", "SHA3-256", "sha3-384", "sha3-512"},
 			want: []crypto.Hash{
 				crypto.MD5,
 				crypto.SHA1,
@@ -109,6 +125,10 @@ func TestHashers(t *testing.T) {
 				crypto.SHA256,
 				crypto.SHA384,
 				crypto.SHA512,
+				crypto.SHA3_224,
+				crypto.SHA3_256,
+				crypto.SHA3_384,
+				crypto.SHA3_512,
 			},
 		},
 		{

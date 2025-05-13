@@ -57,6 +57,7 @@ func EncodeComponent(p pkg.Package, locationSorter func(a, b file.Location) int)
 		ExternalReferences: encodeExternalReferences(p),
 		Properties:         properties,
 		BOMRef:             DeriveBomRef(p),
+		Hashes:             encodeHashes(p),
 	}
 }
 

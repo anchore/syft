@@ -349,12 +349,18 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 		if err != nil {
 			log.Debugf("unable to get fingerprint of source file metadata path=%s: %+v", metadata.Path, err)
 		}
+		var hashes []cyclonedx.Hash
+		if len(metadata.Digests) > 0 {
+			hashes = digestsToHashes(metadata.Digests)
+		}
+
 		return &cyclonedx.Component{
 			BOMRef: string(bomRef),
 			// TODO: this is lossy... we can't know if this is a file or a directory
 			Type:    cyclonedx.ComponentTypeFile,
 			Name:    name,
 			Version: version,
+			Hashes:  &hashes,
 		}
 	}
 
