@@ -329,6 +329,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.HomebrewPkg,
+			},
+			expected: []string{
+				"acquired package info from Homebrew formula",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.TerraformPkg,
 			},
 			expected: []string{
