@@ -77,8 +77,12 @@ func DefaultClassifiers() []Classifier {
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
 			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?s)payload %5.*?(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}`),
-				FileContentsVersionMatcher(`(?s)\x00(?P<version>\d.\d\.\d\d*)[a-z0-9]{12,15}-[0-9]{19}\x00.*?payload %5`),
+				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
+				FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
+				FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
+				FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -158,7 +162,7 @@ func DefaultClassifiers() []Classifier {
 				// [NUL]v0.12.18[NUL]
 				// [NUL]v4.9.1[NUL]
 				// node.js/v22.9.0
-				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5)\.[0-9]+\.[0-9]+)\x00`),
+				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5|6)\.[0-9]+\.[0-9]+)\x00`),
 				FileContentsVersionMatcher(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "node",
@@ -167,9 +171,9 @@ func DefaultClassifiers() []Classifier {
 		},
 		{
 			Class:    "go-binary-hint",
-			FileGlob: "**/VERSION",
+			FileGlob: "**/VERSION*",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)`),
+				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
 			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -351,7 +355,7 @@ func DefaultClassifiers() []Classifier {
 		},
 		{
 			Class:    "mariadb-binary",
-			FileGlob: "**/mariadb",
+			FileGlob: "**/{mariadb,mysql}",
 			EvidenceMatcher: FileContentsVersionMatcher(
 				// 10.6.15-MariaDB
 				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
@@ -422,6 +426,10 @@ func DefaultClassifiers() []Classifier {
 					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
 					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
+				FileContentsVersionMatcher(
+					// [NUL][NUL]26.1.2[NUL][NUL][NUL][NUL][NUL][NUL][NUL]NUL[NUL][NUL]Erlang/OTP
+					`\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+Erlang/OTP`,
+				),
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),
@@ -458,7 +466,11 @@ func DefaultClassifiers() []Classifier {
 			Class:    "dart-binary",
 			FileGlob: "**/dart",
 			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)Dart,GC"\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
+				// MathAtan[NUL]2.12.4 (stable)
+				// "%s"[NUL]3.0.0 (stable)
+				// Dart,GC"[NUL]3.5.2 (stable)
+				// Dart,GC"[NUL]3.6.0-216.1.beta (beta)
+				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+(\.[0-9]+)?\.beta)?) `,
 			),
 			Package: "dart",
 			PURL:    mustPURL("pkg:generic/dart@version"),
@@ -564,7 +576,9 @@ func DefaultClassifiers() []Classifier {
 				// [NUL]3.0.2[NUL]%sFluent Bit
 				// [NUL]2.2.3[NUL]Fluent Bit
 				// [NUL]2.2.1[NUL][NUL][NUL]Fluent Bit
-				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00[^\d]*Fluent`,
+				// [NUL]1.7.0[NUL]\x1b[1m[NUL]%sFluent Bit (versions 1.7.0-dev-3 through 1.7.0-dev-9 and 1.7.0-rc4 through 1.7.0-rc8)
+				// [NUL][NUL]1.3.10[NUL][NUL]Fluent Bit v%s
+				`\x00(\x00)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00(\x1b\[1m\x00|\x00|\x00\x00)?(%s)?Fluent`,
 			),
 			Package: "fluent-bit",
 			PURL:    mustPURL("pkg:github/fluent/fluent-bit@version"),
@@ -660,6 +674,17 @@ func DefaultClassifiers() []Classifier {
 			Package: "jq",
 			PURL:    mustPURL("pkg:generic/jq@version"),
 			CPEs:    singleCPE("cpe:2.3:a:jqlang:jq:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "chrome-binary",
+			FileGlob: "**/chrome",
+			EvidenceMatcher: FileContentsVersionMatcher(
+				// [NUL]127.0.6533.119[NUL]Default
+				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00Default`,
+			),
+			Package: "chrome",
+			PURL:    mustPURL("pkg:generic/chrome@version"),
+			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
 		},
 	}
 }

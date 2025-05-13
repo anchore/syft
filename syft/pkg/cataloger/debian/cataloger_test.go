@@ -13,6 +13,7 @@ import (
 )
 
 func TestDpkgCataloger(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		expected []pkg.Package
@@ -25,16 +26,18 @@ func TestDpkgCataloger(t *testing.T) {
 					Version: "1.1.8-3.6",
 					FoundBy: "dpkg-db-cataloger",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("GPL-1", file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2", file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright")),
-						pkg.NewLicenseFromLocations("LGPL-2.1", file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "LGPL-2.1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
 					),
 					Locations: file.NewLocationSet(
-						file.NewVirtualLocation("/var/lib/dpkg/status", "/var/lib/dpkg/status"),
-						file.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.md5sums", "/var/lib/dpkg/info/libpam-runtime.md5sums"),
-						file.NewVirtualLocation("/var/lib/dpkg/info/libpam-runtime.conffiles", "/var/lib/dpkg/info/libpam-runtime.conffiles"),
-						file.NewVirtualLocation("/usr/share/doc/libpam-runtime/copyright", "/usr/share/doc/libpam-runtime/copyright"),
+						file.NewLocation("/var/lib/dpkg/status").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						file.NewLocation("/var/lib/dpkg/info/libpam-runtime.preinst").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+						file.NewLocation("/var/lib/dpkg/info/libpam-runtime.md5sums").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+						file.NewLocation("/var/lib/dpkg/info/libpam-runtime.conffiles").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+						file.NewLocation("/usr/share/doc/libpam-runtime/copyright").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 					),
+					PURL: "pkg:deb/debian/libpam-runtime@1.1.8-3.6?arch=all&distro=debian-12&upstream=pam",
 					Type: pkg.DebPkg,
 					Metadata: pkg.DpkgDBEntry{
 						Package:       "libpam-runtime",
@@ -98,14 +101,15 @@ func TestDpkgCataloger(t *testing.T) {
 					Version: "3.34.1-3",
 					FoundBy: "dpkg-db-cataloger",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("public-domain", file.NewVirtualLocation("/usr/share/doc/libsqlite3-0/copyright", "/usr/share/doc/libsqlite3-0/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2+", file.NewVirtualLocation("/usr/share/doc/libsqlite3-0/copyright", "/usr/share/doc/libsqlite3-0/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2", file.NewVirtualLocation("/usr/share/doc/libsqlite3-0/copyright", "/usr/share/doc/libsqlite3-0/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "public-domain", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2+", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
 					),
 					Locations: file.NewLocationSet(
-						file.NewVirtualLocation("/var/lib/dpkg/status.d/libsqlite3-0", "/var/lib/dpkg/status.d/libsqlite3-0"),
-						file.NewVirtualLocation("/var/lib/dpkg/status.d/libsqlite3-0.md5sums", "/var/lib/dpkg/status.d/libsqlite3-0.md5sums"),
-						file.NewVirtualLocation("/usr/share/doc/libsqlite3-0/copyright", "/usr/share/doc/libsqlite3-0/copyright"),
+						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0.md5sums").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0.preinst").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+						file.NewLocation("/usr/share/doc/libsqlite3-0/copyright").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
 					),
 					Type: pkg.DebPkg,
 					Metadata: pkg.DpkgDBEntry{
@@ -222,6 +226,70 @@ func Test_CatalogerRelationships(t *testing.T) {
 	}
 }
 
+func TestDpkgArchiveCataloger(t *testing.T) {
+	ctx := context.TODO()
+	tests := []struct {
+		name     string
+		expected []pkg.Package
+	}{
+		{
+			name: "image-single-dpkg",
+			expected: []pkg.Package{
+				{
+					Name:    "zlib1g",
+					Version: "1:1.3.dfsg-3.1ubuntu2.1",
+					FoundBy: "deb-archive-cataloger",
+					Locations: file.NewLocationSet(
+						file.NewLocation("/zlib1g.deb"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib"),
+					),
+					PURL: "pkg:deb/zlib1g@1%3A1.3.dfsg-3.1ubuntu2.1?arch=amd64&upstream=zlib",
+					Type: pkg.DebPkg,
+					Metadata: pkg.DpkgArchiveEntry{
+						Package:       "zlib1g",
+						Source:        "zlib",
+						Version:       "1:1.3.dfsg-3.1ubuntu2.1",
+						Architecture:  "amd64",
+						Maintainer:    "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>",
+						InstalledSize: 163,
+						Description: `compression library - runtime
+ zlib is a library implementing the deflate compression method found
+ in gzip and PKZIP.  This package includes the shared library.`,
+						Provides: []string{"libz1"},
+						Depends:  []string{"libc6 (>= 2.14)"},
+						Files: []pkg.DpkgFileRecord{
+							{
+								Path:   "/usr/lib/x86_64-linux-gnu/libz.so.1.3",
+								Digest: &file.Digest{Algorithm: "md5", Value: "4447b36fc5cd1b044f089553b4166f09"},
+							},
+							{
+								Path:   "/usr/share/doc/zlib1g/changelog.Debian.gz",
+								Digest: &file.Digest{Algorithm: "md5", Value: "8b870c2e94c0cf780e2a65329cf11fdc"},
+							},
+							{
+								Path:   "/usr/share/doc/zlib1g/copyright",
+								Digest: &file.Digest{Algorithm: "md5", Value: "d348307d5bf18267bcbada155a715a3e"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewArchiveCataloger()
+			pkgtest.NewCatalogTester().
+				WithImageResolver(t, tt.name).
+				IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
+				Expects(tt.expected, nil).
+				TestCataloger(t, c)
+		})
+	}
+}
 func TestCataloger_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -232,10 +300,15 @@ func TestCataloger_Globs(t *testing.T) {
 			name:    "obtain db status files",
 			fixture: "test-fixtures/glob-paths",
 			expected: []string{
+				"usr/lib/dpkg/status",
 				"var/lib/dpkg/status",
+				"usr/lib/dpkg/status.d/pkg-1.0",
 				"var/lib/dpkg/status.d/pkg-1.0",
-				"usr/lib/opkg/status",
 				"usr/lib/opkg/info/pkg-1.0.control",
+				"usr/lib/opkg/status",
+				"usr/lib/dpkg/info/libpam-runtime.conffiles",
+				"usr/lib/dpkg/info/libpam-runtime.md5sums",
+				"usr/share/doc/libpam-runtime/copyright",
 			},
 		},
 	}

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
@@ -66,7 +66,7 @@ func processList(s string) []string {
 }
 
 // parseGemSpecEntries parses the gemspec file and returns the packages and relationships found.
-func parseGemSpecEntries(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemSpecEntries(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]interface{})
 	scanner := bufio.NewScanner(reader)
@@ -105,6 +105,7 @@ func parseGemSpecEntries(_ context.Context, _ file.Resolver, _ *generic.Environm
 		pkgs = append(
 			pkgs,
 			newGemspecPackage(
+				ctx,
 				metadata,
 				reader.Location,
 			),

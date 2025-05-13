@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -107,7 +108,7 @@ func newSpyReturningFileResolver(s *spyingIoReadCloser, paths ...string) file.Re
 }
 
 func (s *spyingIoReadCloser) Read(p []byte) (n int, err error) {
-	return s.Read(p)
+	return s.rc.Read(p)
 }
 
 func (s *spyingIoReadCloser) Close() error {
@@ -186,4 +187,28 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 		_, _, _ = c.Catalog(ctx, resolver)
 	})
 	require.True(t, spy.closed)
+}
+
+func Test_genericCatalogerReturnsErrors(t *testing.T) {
+	genericErrorReturning := NewCataloger("error returning").WithParserByGlobs(func(ctx context.Context, resolver file.Resolver, environment *Environment, locationReader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		return []pkg.Package{
+			{
+				Name: "some-package-" + locationReader.Path(),
+			},
+		}, nil, unknown.Newf(locationReader, "unable to read")
+	}, "**/*")
+
+	m := file.NewMockResolverForPaths(
+		"test-fixtures/a-path.txt",
+		"test-fixtures/empty.txt",
+	)
+
+	got, _, errs := genericErrorReturning.Catalog(context.TODO(), m)
+
+	// require packages and errors
+	require.NotEmpty(t, got)
+
+	unknowns, others := unknown.ExtractCoordinateErrors(errs)
+	require.NotEmpty(t, unknowns)
+	require.Empty(t, others)
 }

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/mholt/archiver/v3"
+import "github.com/anchore/archiver/v3"
 
 func main() {
 

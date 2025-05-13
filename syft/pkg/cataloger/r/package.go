@@ -1,6 +1,7 @@
 package r
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -8,13 +9,13 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(pd parseData, locations ...file.Location) pkg.Package {
+func newPackage(ctx context.Context, pd parseData, locations ...file.Location) pkg.Package {
 	locationSet := file.NewLocationSet()
 	for _, loc := range locations {
 		locationSet.Add(loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 	}
 
-	licenses := parseLicenseData(pd.License)
+	licenses := parseLicenseData(ctx, pd.License)
 
 	result := pkg.Package{
 		Name:      pd.Package,
@@ -44,7 +45,7 @@ func packageURL(m parseData) string {
 // Multiple licences can be specified separated by ‘|’
 // (surrounded by spaces) in which case the user can choose any of the above cases.
 // https://cran.rstudio.com/doc/manuals/r-devel/R-exts.html#Licensing
-func parseLicenseData(license string, locations ...file.Location) []pkg.License {
+func parseLicenseData(ctx context.Context, license string, locations ...file.Location) []pkg.License {
 	licenses := make([]pkg.License, 0)
 
 	// check if multiple licenses are separated by |
@@ -56,7 +57,7 @@ func parseLicenseData(license string, locations ...file.Location) []pkg.License 
 			licenseVersion := strings.SplitN(l, " ", 2)
 			if len(licenseVersion) == 2 {
 				l = strings.Join([]string{licenseVersion[0], parseVersion(licenseVersion[1])}, "")
-				licenses = append(licenses, pkg.NewLicenseFromLocations(l, locations...))
+				licenses = append(licenses, pkg.NewLicenseFromLocationsWithContext(ctx, l, locations...))
 				continue
 			}
 		}
@@ -65,7 +66,7 @@ func parseLicenseData(license string, locations ...file.Location) []pkg.License 
 		if strings.Contains(l, "+") && strings.Contains(l, "LICENSE") {
 			splitField := strings.Split(l, " ")
 			if len(splitField) > 0 {
-				licenses = append(licenses, pkg.NewLicenseFromLocations(splitField[0], locations...))
+				licenses = append(licenses, pkg.NewLicenseFromLocationsWithContext(ctx, splitField[0], locations...))
 				continue
 			}
 		}
@@ -77,7 +78,7 @@ func parseLicenseData(license string, locations ...file.Location) []pkg.License 
 
 		// no specific case found for the above so assume case 2
 		// check if the common name in case 2 is valid SDPX otherwise value will be populated
-		licenses = append(licenses, pkg.NewLicenseFromLocations(l, locations...))
+		licenses = append(licenses, pkg.NewLicenseFromLocationsWithContext(ctx, l, locations...))
 		continue
 	}
 	return licenses

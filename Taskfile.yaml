@@ -27,7 +27,7 @@ vars:
     sh: uname -s | tr '[:upper:]' '[:lower:]'
   ARCH:
     sh: |
-      [ "$(uname -m)" = "x86_64" ] && echo "amd64_v1" || echo $(uname -m)
+      [ "$(uname -m)" = "x86_64" ] && echo "amd64_v1" || { [ "$(uname -m)" = "aarch64" ] && echo "arm64_v8.0" || echo $(uname -m); }
   PROJECT_ROOT:
     sh: echo $PWD
   # note: the snapshot dir must be a relative path starting with ./
@@ -191,6 +191,14 @@ tasks:
 
 
   ## Testing tasks #################################
+  update-format-golden-files:
+    desc: "Update golden (i.e. snapshot) files used by unit tests"
+    cmds:
+      - go test ./syft/format/spdxjson -update-spdx-json
+      - go test ./syft/format/spdxtagvalue -update-spdx-tv
+      - go test ./syft/format/cyclonedxxml -update-cyclonedx-xml
+      - go test ./syft/format/cyclonedxjson -update-cyclonedx-json
+      - go test ./syft/format/syftjson -update-json
 
   unit:
     desc: Run unit tests
@@ -213,10 +221,11 @@ tasks:
     cmds:
       - "go test -v ./cmd/syft/internal/test/integration"
       # exercise most of the CLI with the data race detector
-      - "go run -race cmd/syft/main.go alpine:latest"
+      # we use a larger image to ensure we're using multiple catalogers at a time
+      - "go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2"
 
   validate-cyclonedx-schema:
-    desc: Run integration tests
+    desc: Validate that Syft produces valid CycloneDX documents
     cmds:
       - "cd schema/cyclonedx && make"
 
@@ -229,8 +238,7 @@ tasks:
     cmds:
       - cmd: "echo 'testing binary: {{ .SNAPSHOT_BIN }}'"
         silent: true
-
-      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found' && false)"
+      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found for {{ .SNAPSHOT_BIN }}' && false)"
         silent: true
 
       - "go test -count=1 -timeout=15m -v ./test/cli"
@@ -444,7 +452,7 @@ tasks:
       total_size=$(find . | grep cache | grep tar | xargs du -c | grep total | awk '{print $1}')
       find . | grep cache | grep tar | xargs du
       echo "total $total_size KB"
-      
+
       if [ "$total_size" -gt 1048576 ]; then
         echo 'docker cache is larger than 1GB'
         exit 1
@@ -574,7 +582,7 @@ tasks:
       - "{{ .NEXT_VERSION }}"
     cmds:
       - "{{ .TOOL_DIR }}/chronicle -vv -n --version-file {{ .NEXT_VERSION }} > {{ .CHANGELOG }}"
-      - "{{ .TOOL_DIR }}/glow {{ .CHANGELOG }}"
+      - "{{ .TOOL_DIR }}/glow -w 0 {{ .CHANGELOG }}"
 
 
   ## Release targets #################################

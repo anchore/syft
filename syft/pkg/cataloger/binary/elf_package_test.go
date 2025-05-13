@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,7 +27,7 @@ func Test_packageURL(t *testing.T) {
 					System: "syftsys",
 				},
 			},
-			want: "pkg:generic/syftsys/github.com/anchore/syft@v0.1.0",
+			want: "pkg:generic/syftsys/github.com%2Fanchore%2Fsyft@v0.1.0",
 		},
 		{
 			name: "elf binary package short name",
@@ -113,6 +114,18 @@ func Test_packageURL(t *testing.T) {
 			},
 			want: "pkg:generic/system/test@1.0",
 		},
+		{
+			name: "bad or missing OSCPE data cannot be parsed allows for correct string",
+			metadata: elfBinaryPackageNotes{
+				Name:    "test",
+				Version: "1.0",
+				ELFBinaryPackageNoteJSONPayload: pkg.ELFBinaryPackageNoteJSONPayload{
+					System: "system",
+					OSCPE:  "%$#*(#*@&$(",
+				},
+			},
+			want: "pkg:generic/system/test@1.0",
+		},
 	}
 
 	for _, test := range tests {
@@ -123,6 +136,7 @@ func Test_packageURL(t *testing.T) {
 }
 
 func Test_newELFPackage(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		metadata elfBinaryPackageNotes
@@ -156,7 +170,7 @@ func Test_newELFPackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := newELFPackage(test.metadata, file.NewLocationSet())
+			actual := newELFPackage(ctx, test.metadata, file.NewLocationSet())
 			if diff := cmp.Diff(test.expected, actual, cmpopts.IgnoreFields(pkg.Package{}, "id"), cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationSet{}, pkg.LicenseSet{})); diff != "" {
 				t.Errorf("newELFPackage() mismatch (-want +got):\n%s", diff)
 			}

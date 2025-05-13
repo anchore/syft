@@ -80,6 +80,7 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]file.Location,
 }
 
 func TestParseRpmDB(t *testing.T) {
+	ctx := context.TODO()
 	packagesLocation := file.NewLocation("test-fixtures/Packages")
 	tests := []struct {
 		fixture     string
@@ -98,7 +99,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
@@ -128,7 +129,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations: file.NewLocationSet(packagesLocation),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
@@ -212,6 +213,13 @@ func TestToElVersion(t *testing.T) {
 			assert.Equal(t, test.expected, toELVersion(test.entry.Epoch, test.entry.Version, test.entry.Release))
 		})
 	}
+}
+
+func Test_corruptRpmDbEntry(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/usr/lib/sysimage/rpm/Packages.db").
+		WithError().
+		TestParser(t, parseRpmDB)
 }
 
 func intRef(i int) *int {

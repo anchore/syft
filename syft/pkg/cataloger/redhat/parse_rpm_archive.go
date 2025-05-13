@@ -16,10 +16,10 @@ import (
 )
 
 // parseRpmArchive parses a single RPM
-func parseRpmArchive(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	rpm, err := rpmutils.ReadRpm(reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.Location.RealPath, err)
+		return nil, nil, fmt.Errorf("RPM file found but unable to read: %s (%w)", reader.RealPath, err)
 	}
 
 	nevra, err := rpm.Header.GetNEVRA()
@@ -56,7 +56,7 @@ func parseRpmArchive(_ context.Context, _ file.Resolver, _ *generic.Environment,
 		Files:     mapFiles(files, digestAlgorithm),
 	}
 
-	return []pkg.Package{newArchivePackage(reader.Location, metadata, licenses)}, nil, nil
+	return []pkg.Package{newArchivePackage(ctx, reader.Location, metadata, licenses)}, nil, nil
 }
 
 func getDigestAlgorithm(location file.Location, header *rpmutils.RpmHeader) string {

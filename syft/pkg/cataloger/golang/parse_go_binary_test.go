@@ -3,6 +3,7 @@ package golang
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -149,8 +150,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Name:     "github.com/anchore/syft",
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Version:  "(devel)",
-		PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
+		Version:  "", // this was (devel) but we cleared it explicitly
+		PURL:     "pkg:golang/github.com/anchore/syft",
 		Locations: file.NewLocationSet(
 			file.NewLocationFromCoordinates(
 				file.Coordinates{
@@ -171,6 +172,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		name          string
 		mod           *extendedBuildInfo
 		expected      []pkg.Package
+		cfg           *CatalogerConfig
 		binaryContent string
 	}{
 		{
@@ -275,8 +277,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/a/b/c",
-					Version:  "(devel)",
-					PURL:     "pkg:golang/github.com/a/b@(devel)#c",
+					Version:  "", // this was (devel) but we cleared it explicitly
+					PURL:     "pkg:golang/github.com/a/b#c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -847,6 +849,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "parse main mod and replace devel with pattern from binary contents",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				// off by default
+				assert.False(t, c.MainModuleVersion.FromContents)
+				// override to true for this test
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
 			mod: &extendedBuildInfo{
 				BuildInfo: &debug.BuildInfo{
 					GoVersion: goCompiledVersion,
@@ -927,8 +937,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				Name:     "github.com/anchore/syft",
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
-				Version:  "(devel)",
-				PURL:     "pkg:golang/github.com/anchore/syft@(devel)",
+				Version:  "", // this was (devel) but we cleared it explicitly
+				PURL:     "pkg:golang/github.com/anchore/syft",
 				Locations: file.NewLocationSet(
 					file.NewLocationFromCoordinates(
 						file.Coordinates{
@@ -1050,10 +1060,15 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			)
 
-			c := newGoBinaryCataloger(DefaultCatalogerConfig())
+			if test.cfg == nil {
+				c := DefaultCatalogerConfig()
+				test.cfg = &c
+			}
+
+			c := newGoBinaryCataloger(*test.cfg)
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
-			mainPkg, pkgs := c.buildGoPkgInfo(fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
 			if mainPkg != nil {
 				pkgs = append(pkgs, *mainPkg)
 			}
@@ -1304,6 +1319,14 @@ func Test_extractVersionFromContents(t *testing.T) {
 			name:     "null byte, then random byte, then L then semver",
 			contents: strings.NewReader("\x0e\x74\x5a\x3b\x00\x00\xa0\x4cv1.9.5\x00\x00"),
 			want:     "v1.9.5",
+		},
+		{
+			// 06168a34: f98f b0be 332e 312e 3200 0000 636f 6d74  ....3.1.2...comt from /usr/local/bin/traefik
+			// in traefik:v3.1.2@sha256:3f92eba47bd4bfda91d47b72d16fef2d7ae15db61a92b2057cf0cb389f8938f6
+			// TODO: eventually use something for managing snippets, similar to what's used with binary classifier tests
+			name:     "parse traefik version",
+			contents: strings.NewReader("\xf9\x8f\xb0\xbe\x33\x2e\x31\x2e\x32\x00\x00\x00\x63\x6f\x6d\x74"),
+			want:     "3.1.2",
 		},
 	}
 	for _, tt := range tests {

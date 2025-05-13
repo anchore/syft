@@ -15,10 +15,11 @@ jobs:
     name: "Publish test fixture image cache"
     # we use this runner to get enough storage space for docker images and fixture cache
     runs-on: ubuntu-22.04-4core-16gb
+    if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap

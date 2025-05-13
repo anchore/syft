@@ -10,6 +10,7 @@ import (
 
 const (
 	PURLQualifierArch   = "arch"
+	PURLQualifierCPES   = "cpes"
 	PURLQualifierDistro = "distro"
 	PURLQualifierEpoch  = "epoch"
 	PURLQualifierVCSURL = "vcs_url"
@@ -39,7 +40,7 @@ func PURLQualifiers(vars map[string]string, release *linux.Release) (q packageur
 		})
 	}
 
-	distroQualifiers := []string{}
+	var distroQualifiers []string
 
 	if release == nil {
 		return q
@@ -55,10 +56,12 @@ func PURLQualifiers(vars map[string]string, release *linux.Release) (q packageur
 		distroQualifiers = append(distroQualifiers, release.BuildID)
 	}
 
-	q = append(q, packageurl.Qualifier{
-		Key:   PURLQualifierDistro,
-		Value: strings.Join(distroQualifiers, "-"),
-	})
+	if len(distroQualifiers) > 0 {
+		q = append(q, packageurl.Qualifier{
+			Key:   PURLQualifierDistro,
+			Value: strings.Join(distroQualifiers, "-"),
+		})
+	}
 
 	return q
 }

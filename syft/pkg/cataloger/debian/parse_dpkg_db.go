@@ -6,15 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -26,18 +30,47 @@ var (
 )
 
 // parseDpkgDB reads a dpkg database "status" file (and surrounding data files) and returns the packages and relationships found.
-func parseDpkgDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	metadata, err := parseDpkgStatus(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
 	}
 
+	dbLoc := reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 	var pkgs []pkg.Package
-	for _, m := range metadata {
-		pkgs = append(pkgs, newDpkgPackage(m, reader.Location, resolver, env.LinuxRelease))
+	_ = sync.CollectSlice(&ctx, cataloging.ExecutorFile, sync.ToSeq(metadata), func(m pkg.DpkgDBEntry) (pkg.Package, error) {
+		return newDpkgPackage(ctx, m, dbLoc, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...), nil
+	}, &pkgs)
+
+	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+}
+
+func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Location) []file.Location {
+	if resolver == nil {
+		return nil
+	}
+	if strings.TrimSpace(name) == "" {
+		return nil
 	}
 
-	return pkgs, nil, nil
+	// for typical debian-base distributions, the installed package info is at /var/lib/dpkg/status
+	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
+	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
+	// the same directory
+	searchPath := path.Dir(dbLocation.RealPath)
+
+	if !strings.HasSuffix(searchPath, "status.d") {
+		searchPath = path.Join(searchPath, "info")
+	}
+
+	// look for /var/lib/dpkg/info/NAME.*
+	locations, err := resolver.FilesByGlob(path.Join(searchPath, name+".*"))
+	if err != nil {
+		log.WithFields("error", err, "pkg", name).Trace("failed to fetch related dpkg info files")
+		return nil
+	}
+
+	return locations
 }
 
 // parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.

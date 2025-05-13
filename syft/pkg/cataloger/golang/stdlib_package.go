@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,12 +12,12 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func stdlibProcessor(pkgs []pkg.Package, relationships []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	compilerPkgs, newRelationships := stdlibPackageAndRelationships(pkgs)
+func stdlibProcessor(ctx context.Context, _ file.Resolver, pkgs []pkg.Package, relationships []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	compilerPkgs, newRelationships := stdlibPackageAndRelationships(ctx, pkgs)
 	return append(pkgs, compilerPkgs...), append(relationships, newRelationships...), err
 }
 
-func stdlibPackageAndRelationships(pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+func stdlibPackageAndRelationships(ctx context.Context, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
 	var goCompilerPkgs []pkg.Package
 	var relationships []artifact.Relationship
 	totalLocations := file.NewLocationSet()
@@ -32,7 +33,7 @@ func stdlibPackageAndRelationships(pkgs []pkg.Package) ([]pkg.Package, []artifac
 				continue
 			}
 
-			stdLibPkg := newGoStdLib(mValue.GoCompiledVersion, goPkg.Locations)
+			stdLibPkg := newGoStdLib(ctx, mValue.GoCompiledVersion, goPkg.Locations)
 			if stdLibPkg == nil {
 				continue
 			}
@@ -49,7 +50,7 @@ func stdlibPackageAndRelationships(pkgs []pkg.Package) ([]pkg.Package, []artifac
 	return goCompilerPkgs, relationships
 }
 
-func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
+func newGoStdLib(ctx context.Context, version string, location file.LocationSet) *pkg.Package {
 	stdlibCpe, err := generateStdlibCpe(version)
 	if err != nil {
 		return nil
@@ -60,7 +61,7 @@ func newGoStdLib(version string, location file.LocationSet) *pkg.Package {
 		PURL:      packageURL("stdlib", strings.TrimPrefix(version, "go")),
 		CPEs:      []cpe.CPE{stdlibCpe},
 		Locations: location,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicense("BSD-3-Clause")),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "BSD-3-Clause")),
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{

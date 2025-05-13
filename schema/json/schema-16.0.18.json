@@ -370,27 +370,6 @@
         "path"
       ]
     },
-    "DartPubspecEntry": {
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "hosted_url": {
-          "type": "string"
-        },
-        "vcs_url": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "name",
-        "version"
-      ]
-    },
     "DartPubspecLockEntry": {
       "properties": {
         "name": {
@@ -798,6 +777,12 @@
         },
         "executable": {
           "$ref": "#/$defs/Executable"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object",
@@ -1656,9 +1641,6 @@
             },
             {
               "$ref": "#/$defs/CocoaPodfileLockEntry"
-            },
-            {
-              "$ref": "#/$defs/DartPubspecEntry"
             },
             {
               "$ref": "#/$defs/DartPubspecLockEntry"

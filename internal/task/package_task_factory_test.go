@@ -117,6 +117,114 @@ func TestFilterNonCompliantPackages(t *testing.T) {
 	assert.Equal(t, p2, droppedPkgs[0])
 }
 
+func TestApplyLicenseContentRules(t *testing.T) {
+	licenseWithSPDX := pkg.License{
+		SPDXExpression: "MIT",
+		Contents:       "MIT license content",
+	}
+	licenseWithoutSPDX := pkg.License{
+		Value:    "License-Not-A-SPDX-Expression",
+		Contents: "Non-SPDX license content",
+	}
+
+	tests := []struct {
+		name             string
+		inputLicenses    []pkg.License
+		cfg              cataloging.LicenseConfig
+		expectedLicenses []pkg.License
+	}{
+		{
+			name: "LicenseContentIncludeUnknown",
+			inputLicenses: []pkg.License{
+				licenseWithSPDX,
+				licenseWithoutSPDX,
+			},
+			cfg: cataloging.LicenseConfig{
+				IncludeContent: cataloging.LicenseContentIncludeUnknown,
+			},
+			expectedLicenses: []pkg.License{
+				{
+					SPDXExpression: "MIT",
+					Contents:       "", // content cleared for SPDX license
+				},
+				{
+					Value:    "License-Not-A-SPDX-Expression",
+					Contents: "Non-SPDX license content", // content preserved for non-SPDX
+				},
+			},
+		},
+		{
+			name: "LicenseContentExcludeAll",
+			inputLicenses: []pkg.License{
+				licenseWithSPDX,
+				licenseWithoutSPDX,
+			},
+			cfg: cataloging.LicenseConfig{
+				IncludeContent: cataloging.LicenseContentExcludeAll,
+			},
+			expectedLicenses: []pkg.License{
+				{
+					SPDXExpression: "MIT",
+					Contents:       "", // content cleared
+				},
+				{
+					Value:    "License-Not-A-SPDX-Expression",
+					Contents: "", // content cleared
+				},
+			},
+		},
+		{
+			name: "IncludeLicenseContentDefault",
+			inputLicenses: []pkg.License{
+				licenseWithSPDX,
+				licenseWithoutSPDX,
+			},
+			cfg: cataloging.LicenseConfig{
+				IncludeContent: cataloging.LicenseContentIncludeAll,
+			},
+			expectedLicenses: []pkg.License{
+				{
+					SPDXExpression: "MIT",
+					Contents:       "MIT license content", // content preserved
+				},
+				{
+					Value:    "License-Not-A-SPDX-Expression",
+					Contents: "Non-SPDX license content", // content preserved
+				},
+			},
+		},
+		{
+			name:          "Empty licenses",
+			inputLicenses: []pkg.License{},
+			cfg: cataloging.LicenseConfig{
+				IncludeContent: cataloging.LicenseContentIncludeAll,
+			},
+			expectedLicenses: []pkg.License{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputPkg := &pkg.Package{
+				Licenses: pkg.NewLicenseSet(tt.inputLicenses...),
+			}
+
+			inputPkg.SetID()
+			originalID := inputPkg.ID()
+
+			applyLicenseContentRules(inputPkg, tt.cfg)
+
+			assert.Equal(t, originalID, inputPkg.ID(), "package ID changed unexpectedly")
+
+			actualLicenses := inputPkg.Licenses.ToSlice()
+			expectedLicenses := pkg.NewLicenseSet(tt.expectedLicenses...).ToSlice()
+
+			assert.Equal(t, expectedLicenses, actualLicenses, "license contents do not match expected values")
+
+		})
+	}
+}
+
 func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 	p := pkg.Package{Name: "", Version: ""}
 	p.SetID()

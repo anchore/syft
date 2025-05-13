@@ -11,19 +11,19 @@ jobs:
 
   Benchmark-Test:
     name: "Benchmark tests"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     # note: we want benchmarks to run on pull_request events in order to publish results to a sticky comment, and
     # we also want to run on push such that merges to main are recorded to the cache. For this reason we don't filter
     # the job by event.
     steps:
       - name: Checkout code
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
 
       - name: Restore base benchmark result
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 #v4.0.2
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 #v4.2.3
         with:
           path: test/results/benchmark-main.txt
           # use base sha for PR or new commit hash for main push in benchmark result key
@@ -39,13 +39,13 @@ jobs:
           OUTPUT="${OUTPUT//$'\r'/'%0D'}" # URL encode all '\r' characters
           echo "result=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: benchmark-test-results
           path: test/results/**/*
 
       - name: Update PR benchmark results comment
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
+        uses: marocchino/sticky-pull-request-comment@67d0dec7b07ed060a405f9b2a64b8ab319fdd7db #v2.9.2
         continue-on-error: true
         with:
           header: benchmark

@@ -3,6 +3,7 @@ package python
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"testing"
 
@@ -14,265 +15,386 @@ import (
 )
 
 func Test_PackageCataloger(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
-		name            string
-		fixtures        []string
-		expectedPackage pkg.Package
+		name             string
+		fixture          string
+		expectedPackages []pkg.Package
 	}{
 		{
-			name:     "egg-file-no-version",
-			fixtures: []string{"test-fixtures/no-version-py3.8.egg-info"},
-			expectedPackage: pkg.Package{
-				Name:     "no-version",
-				PURL:     "pkg:pypi/no-version",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				FoundBy:  "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "no-version",
-					SitePackagesRootPath: "test-fixtures",
-				},
-			},
-		},
-		{
-			name: "egg-info directory",
-			fixtures: []string{
-				"test-fixtures/egg-info/PKG-INFO",
-				"test-fixtures/egg-info/RECORD",
-				"test-fixtures/egg-info/top_level.txt",
-			},
-			expectedPackage: pkg.Package{
-				Name:     "requests",
-				Version:  "2.22.0",
-				PURL:     "pkg:pypi/requests@2.22.0",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/egg-info/PKG-INFO")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "requests",
-					Version:              "2.22.0",
-					Platform:             "UNKNOWN",
-					Author:               "Kenneth Reitz",
-					AuthorEmail:          "me@kennethreitz.org",
-					SitePackagesRootPath: "test-fixtures",
-					Files: []pkg.PythonFileRecord{
-						{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
-						{Path: "requests/__init__.py", Digest: &pkg.PythonFileDigest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
-						{Path: "requests/__pycache__/__version__.cpython-38.pyc"},
-						{Path: "requests/__pycache__/utils.cpython-38.pyc"},
-						{Path: "requests/__version__.py", Digest: &pkg.PythonFileDigest{"sha256", "Bm-GFstQaFezsFlnmEMrJDe8JNROz9n2XXYtODdvjjc"}, Size: "436"},
-						{Path: "requests/utils.py", Digest: &pkg.PythonFileDigest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
+			name:    "egg-file-no-version",
+			fixture: "test-fixtures/site-packages/no-version",
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "no-version",
+					Locations: file.NewLocationSet(file.NewLocation("no-version-py3.8.egg-info")),
+					PURL:      "pkg:pypi/no-version",
+					Type:      pkg.PythonPkg,
+					Language:  pkg.Python,
+					FoundBy:   "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "no-version",
+						SitePackagesRootPath: ".", // requires scanning the grandparent directory to get a valid path
 					},
-					TopLevelPackages: []string{"requests"},
-					RequiresPython:   ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
-					ProvidesExtra:    []string{"security", "socks"},
 				},
 			},
 		},
 		{
-			name: "egg-info directory case sensitive",
-			fixtures: []string{
-				"test-fixtures/casesensitive/EGG-INFO/PKG-INFO",
-				"test-fixtures/casesensitive/EGG-INFO/RECORD",
-				"test-fixtures/casesensitive/EGG-INFO/top_level.txt",
-			},
-			expectedPackage: pkg.Package{
-				Name:     "requests",
-				Version:  "2.22.0",
-				PURL:     "pkg:pypi/requests@2.22.0",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/casesensitive/EGG-INFO/PKG-INFO")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "requests",
-					Version:              "2.22.0",
-					Platform:             "UNKNOWN",
-					Author:               "Kenneth Reitz",
-					AuthorEmail:          "me@kennethreitz.org",
-					SitePackagesRootPath: "test-fixtures/casesensitive",
-					Files: []pkg.PythonFileRecord{
-						{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
-						{Path: "requests/__init__.py", Digest: &pkg.PythonFileDigest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
-						{Path: "requests/__pycache__/__version__.cpython-38.pyc"},
-						{Path: "requests/__pycache__/utils.cpython-38.pyc"},
-						{Path: "requests/__version__.py", Digest: &pkg.PythonFileDigest{"sha256", "Bm-GFstQaFezsFlnmEMrJDe8JNROz9n2XXYtODdvjjc"}, Size: "436"},
-						{Path: "requests/utils.py", Digest: &pkg.PythonFileDigest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
-					},
-					TopLevelPackages: []string{"requests"},
-					RequiresPython:   ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
-					ProvidesExtra:    []string{"security", "socks"},
-				},
-			},
-		},
-		{
-			name: "dist-info directory",
-			fixtures: []string{
-				"test-fixtures/dist-info/METADATA",
-				"test-fixtures/dist-info/RECORD",
-				"test-fixtures/dist-info/top_level.txt",
-				"test-fixtures/dist-info/direct_url.json",
-			},
-			expectedPackage: pkg.Package{
-				Name:     "pygments",
-				Version:  "2.6.1",
-				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/dist-info/METADATA")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "Pygments",
-					Version:              "2.6.1",
-					Platform:             "any",
-					Author:               "Georg Brandl",
-					AuthorEmail:          "georg@python.org",
-					SitePackagesRootPath: "test-fixtures",
-					Files: []pkg.PythonFileRecord{
-						{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
-						{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
-						{Path: "Pygments-2.6.1.dist-info/RECORD"},
-						{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
-						{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
+			name:    "dist-info+egg-info site-packages directory",
+			fixture: "test-fixtures/site-packages/nested",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pygments",
+					Version:  "2.6.1",
+					PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fpython-test%2Ftest.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("dist-name/dist-info/METADATA"),
+						file.NewLocation("dist-name/dist-info/RECORD"),
+						file.NewLocation("dist-name/dist-info/direct_url.json"),
+						file.NewLocation("dist-name/dist-info/top_level.txt"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						// here we only used the license that was declared in the METADATA file, we did not go searching for other licenses
+						// this is the better source of truth when there is no explicit LicenseFile given
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-name/dist-info/METADATA")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "Pygments",
+						Version:              "2.6.1",
+						Platform:             "any",
+						Author:               "Georg Brandl",
+						AuthorEmail:          "georg@python.org",
+						SitePackagesRootPath: "dist-name",
+						Files: []pkg.PythonFileRecord{
+							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
+							{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "Pygments-2.6.1.dist-info/LICENSE.txt", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "utiUvpzxqFPVpvuPnWG2_Oku6BGuay2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "Pygments-2.6.1.dist-info/RECORD"},
+							{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
+							{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
 
-						{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
+							{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
+						},
+						TopLevelPackages: []string{"pygments", "something_else"},
+						DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+						RequiresPython:   ">=3.5",
+						RequiresDist:     []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
+						ProvidesExtra:    []string{"html5lib", "lxml"},
 					},
-					TopLevelPackages: []string{"pygments", "something_else"},
-					DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
-					RequiresPython:   ">=3.5",
-					RequiresDist:     []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
-					ProvidesExtra:    []string{"html5lib", "lxml"},
+				},
+				{
+					Name:     "requests",
+					Version:  "2.22.0",
+					PURL:     "pkg:pypi/requests@2.22.0",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("egg-name/egg-info/PKG-INFO"),
+						file.NewLocation("egg-name/egg-info/RECORD"),
+						file.NewLocation("egg-name/egg-info/top_level.txt"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("egg-name/egg-info/PKG-INFO")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "requests",
+						Version:              "2.22.0",
+						Platform:             "UNKNOWN",
+						Author:               "Kenneth Reitz",
+						AuthorEmail:          "me@kennethreitz.org",
+						SitePackagesRootPath: "egg-name",
+						Files: []pkg.PythonFileRecord{
+							{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
+							{Path: "requests/__init__.py", Digest: &pkg.PythonFileDigest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
+							{Path: "requests/__pycache__/__version__.cpython-38.pyc"},
+							{Path: "requests/__pycache__/utils.cpython-38.pyc"},
+							{Path: "requests/__version__.py", Digest: &pkg.PythonFileDigest{"sha256", "Bm-GFstQaFezsFlnmEMrJDe8JNROz9n2XXYtODdvjjc"}, Size: "436"},
+							{Path: "requests/utils.py", Digest: &pkg.PythonFileDigest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
+						},
+						TopLevelPackages: []string{"requests"},
+						RequiresPython:   ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+						ProvidesExtra:    []string{"security", "socks"},
+					},
 				},
 			},
 		},
 		{
-			name: "dist-info directory case sensitive",
-			fixtures: []string{
-				"test-fixtures/casesensitive/DIST-INFO/METADATA",
-				"test-fixtures/casesensitive/DIST-INFO/RECORD",
-				"test-fixtures/casesensitive/DIST-INFO/top_level.txt",
-				"test-fixtures/casesensitive/DIST-INFO/direct_url.json",
-			},
-			expectedPackage: pkg.Package{
-				Name:     "pygments",
-				Version:  "2.6.1",
-				PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps://github.com/python-test/test.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/casesensitive/DIST-INFO/METADATA")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "Pygments",
-					Version:              "2.6.1",
-					Platform:             "any",
-					Author:               "Georg Brandl",
-					AuthorEmail:          "georg@python.org",
-					SitePackagesRootPath: "test-fixtures/casesensitive",
-					Files: []pkg.PythonFileRecord{
-						{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
-						{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
-						{Path: "Pygments-2.6.1.dist-info/RECORD"},
-						{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
-						{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
+			name:    "DIST-INFO+EGG-INFO site-packages directory (case insensitive)",
+			fixture: "test-fixtures/site-packages/uppercase",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pygments",
+					Version:  "2.6.1",
+					PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fpython-test%2Ftest.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("dist-name/DIST-INFO/METADATA"),
+						file.NewLocation("dist-name/DIST-INFO/RECORD"),
+						file.NewLocation("dist-name/DIST-INFO/direct_url.json"),
+						file.NewLocation("dist-name/DIST-INFO/top_level.txt"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						// here we only used the license that was declared in the METADATA file, we did not go searching for other licenses
+						// this is the better source of truth when there is no explicit LicenseFile given
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-name/DIST-INFO/METADATA")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "Pygments",
+						Version:              "2.6.1",
+						Platform:             "any",
+						Author:               "Georg Brandl",
+						AuthorEmail:          "georg@python.org",
+						SitePackagesRootPath: "dist-name",
+						Files: []pkg.PythonFileRecord{
+							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
+							{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "Pygments-2.6.1.dist-info/RECORD"},
+							{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
+							{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
 
-						{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
+							{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
+						},
+						TopLevelPackages: []string{"pygments", "something_else"},
+						DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+						RequiresPython:   ">=3.5",
 					},
-					TopLevelPackages: []string{"pygments", "something_else"},
-					DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
-					RequiresPython:   ">=3.5",
+				},
+				{
+					Name:     "requests",
+					Version:  "2.22.0",
+					PURL:     "pkg:pypi/requests@2.22.0",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("egg-name/EGG-INFO/PKG-INFO"),
+						file.NewLocation("egg-name/EGG-INFO/RECORD"),
+						file.NewLocation("egg-name/EGG-INFO/top_level.txt"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("egg-name/EGG-INFO/PKG-INFO")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "requests",
+						Version:              "2.22.0",
+						Platform:             "UNKNOWN",
+						Author:               "Kenneth Reitz",
+						AuthorEmail:          "me@kennethreitz.org",
+						SitePackagesRootPath: "egg-name",
+						Files: []pkg.PythonFileRecord{
+							{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
+							{Path: "requests/__init__.py", Digest: &pkg.PythonFileDigest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
+							{Path: "requests/__pycache__/__version__.cpython-38.pyc"},
+							{Path: "requests/__pycache__/utils.cpython-38.pyc"},
+							{Path: "requests/__version__.py", Digest: &pkg.PythonFileDigest{"sha256", "Bm-GFstQaFezsFlnmEMrJDe8JNROz9n2XXYtODdvjjc"}, Size: "436"},
+							{Path: "requests/utils.py", Digest: &pkg.PythonFileDigest{"sha256", "LtPJ1db6mJff2TJSJWKi7rBpzjPS3mSOrjC9zRhoD3A"}, Size: "30049"},
+						},
+						TopLevelPackages: []string{"requests"},
+						RequiresPython:   ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+						ProvidesExtra:    []string{"security", "socks"},
+					},
 				},
 			},
 		},
 		{
-			name: "malformed-record",
-			fixtures: []string{
-				"test-fixtures/malformed-record/dist-info/METADATA",
-				"test-fixtures/malformed-record/dist-info/RECORD",
-			},
-			expectedPackage: pkg.Package{
-				Name:     "pygments",
-				Version:  "2.6.1",
-				PURL:     "pkg:pypi/pygments@2.6.1",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/malformed-record/dist-info/METADATA")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "Pygments",
-					Version:              "2.6.1",
-					Platform:             "any",
-					Author:               "Georg Brandl",
-					AuthorEmail:          "georg@python.org",
-					SitePackagesRootPath: "test-fixtures/malformed-record",
-					Files: []pkg.PythonFileRecord{
-						{Path: "flask/json/tag.py", Digest: &pkg.PythonFileDigest{"sha256", "9ehzrmt5k7hxf7ZEK0NOs3swvQyU9fWNe-pnYe69N60"}, Size: "8223"},
-						{Path: "../../Scripts/flask.exe", Digest: &pkg.PythonFileDigest{"sha256", "mPrbVeZCDX20himZ_bRai1nCs_tgr7jHIOGZlcgn-T4"}, Size: "93063"},
-						{Path: "../../Scripts/flask.exe", Size: "89470", Digest: &pkg.PythonFileDigest{"sha256", "jvqh4N3qOqXLlq40i6ZOLCY9tAOwfwdzIpLDYhRjoqQ"}},
-						{Path: "Flask-1.0.2.dist-info/INSTALLER", Size: "4", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}},
+			name:    "detect licenses",
+			fixture: "test-fixtures/site-packages/license",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pygments",
+					Version:  "2.6.1",
+					PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fpython-test%2Ftest.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("with-license-file-declared.dist-info/METADATA"), // the LicenseFile is declared in the METADATA file
+						file.NewLocation("with-license-file-declared.dist-info/RECORD"),
+						file.NewLocation("with-license-file-declared.dist-info/top_level.txt"),
+						file.NewLocation("with-license-file-declared.dist-info/direct_url.json"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "BSD-3-Clause",
+							SPDXExpression: "BSD-3-Clause",
+							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
+							// we read the path from the LicenseFile field in the METADATA file, then read the license file directly
+							Locations: file.NewLocationSet(file.NewLocation("with-license-file-declared.dist-info/LICENSE.txt")),
+						},
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "Pygments",
+						Version:              "2.6.1",
+						Platform:             "any",
+						Author:               "Georg Brandl",
+						AuthorEmail:          "georg@python.org",
+						SitePackagesRootPath: ".",
+						Files: []pkg.PythonFileRecord{
+							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
+							{Path: "with-license-file-declared.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "with-license-file-declared.dist-info/LICENSE.txt", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "utiUvpzxqFPVpvuPnWG2_Oku6BGuay2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "with-license-file-declared.dist-info/RECORD"},
+							{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
+							{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
+
+							{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
+						},
+						TopLevelPackages: []string{"pygments", "something_else"},
+						DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+						RequiresPython:   ">=3.5",
+						RequiresDist:     []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
+						ProvidesExtra:    []string{"html5lib", "lxml"},
 					},
-					RequiresPython: ">=3.5",
+				},
+				{
+					Name:     "pygments",
+					Version:  "2.6.1",
+					PURL:     "pkg:pypi/pygments@2.6.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fpython-test%2Ftest.git%40aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("without-license-file-declared.dist-info/METADATA"), // the LicenseFile is declared in the METADATA file
+						file.NewLocation("without-license-file-declared.dist-info/RECORD"),
+						file.NewLocation("without-license-file-declared.dist-info/top_level.txt"),
+						file.NewLocation("without-license-file-declared.dist-info/direct_url.json"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "BSD-3-Clause",
+							SPDXExpression: "BSD-3-Clause",
+							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
+							Locations:      file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
+						},
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "Pygments",
+						Version:              "2.6.1",
+						Platform:             "any",
+						Author:               "Georg Brandl",
+						AuthorEmail:          "georg@python.org",
+						SitePackagesRootPath: ".",
+						Files: []pkg.PythonFileRecord{
+							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
+							{Path: "without-license-file-declared.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "without-license-file-declared.dist-info/LICENSE.txt", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "utiUvpzxqFPVpvuPnWG2_Oku6BGuay2I8-NIrqCvqUY"}, Size: "8449"},
+							{Path: "without-license-file-declared.dist-info/RECORD"},
+							{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
+							{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
+
+							{Path: "pygments/x_util.py", Digest: &pkg.PythonFileDigest{"sha256", "qpzzsOW31KT955agi-7NS--90I0iNiJCyLJQnRCHgKI="}, Size: "10778"},
+						},
+						TopLevelPackages: []string{"pygments", "something_else"},
+						DirectURLOrigin:  &pkg.PythonDirectURLOriginInfo{URL: "https://github.com/python-test/test.git", VCS: "git", CommitID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+						RequiresPython:   ">=3.5",
+						RequiresDist:     []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
+						ProvidesExtra:    []string{"html5lib", "lxml"},
+					},
+				},
+			},
+		},
+		{
+			name:    "malformed-record",
+			fixture: "test-fixtures/site-packages/malformed-record",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pygments",
+					Version:  "2.6.1",
+					PURL:     "pkg:pypi/pygments@2.6.1",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("dist-info/METADATA"),
+						file.NewLocation("dist-info/RECORD"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-info/METADATA")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "Pygments",
+						Version:              "2.6.1",
+						Platform:             "any",
+						Author:               "Georg Brandl",
+						AuthorEmail:          "georg@python.org",
+						SitePackagesRootPath: ".",
+						Files: []pkg.PythonFileRecord{
+							{Path: "flask/json/tag.py", Digest: &pkg.PythonFileDigest{"sha256", "9ehzrmt5k7hxf7ZEK0NOs3swvQyU9fWNe-pnYe69N60"}, Size: "8223"},
+							{Path: "../../Scripts/flask.exe", Digest: &pkg.PythonFileDigest{"sha256", "mPrbVeZCDX20himZ_bRai1nCs_tgr7jHIOGZlcgn-T4"}, Size: "93063"},
+							{Path: "../../Scripts/flask.exe", Size: "89470", Digest: &pkg.PythonFileDigest{"sha256", "jvqh4N3qOqXLlq40i6ZOLCY9tAOwfwdzIpLDYhRjoqQ"}},
+							{Path: "Flask-1.0.2.dist-info/INSTALLER", Size: "4", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}},
+						},
+						RequiresPython: ">=3.5",
+					},
 				},
 			},
 		},
 		{
 			// in cases where the metadata file is available and the record is not we should still record there is a package
 			// additionally empty top_level.txt files should not result in an error
-			name:     "partial dist-info directory",
-			fixtures: []string{"test-fixtures/partial.dist-info/METADATA"},
-			expectedPackage: pkg.Package{
-				Name:     "pygments",
-				Version:  "2.6.1",
-				PURL:     "pkg:pypi/pygments@2.6.1",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("BSD License", file.NewLocation("test-fixtures/partial.dist-info/METADATA")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "Pygments",
-					Version:              "2.6.1",
-					Platform:             "any",
-					Author:               "Georg Brandl",
-					AuthorEmail:          "georg@python.org",
-					SitePackagesRootPath: "test-fixtures",
-					RequiresPython:       ">=3.5",
+			name:    "partial dist-info directory",
+			fixture: "test-fixtures/site-packages/partial.dist-info",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "pygments",
+					Version:  "2.6.1",
+					PURL:     "pkg:pypi/pygments@2.6.1",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("METADATA"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("METADATA")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "Pygments",
+						Version:              "2.6.1",
+						Platform:             "any",
+						Author:               "Georg Brandl",
+						AuthorEmail:          "georg@python.org",
+						SitePackagesRootPath: ".",
+						RequiresPython:       ">=3.5",
+					},
 				},
 			},
 		},
 		{
-			name:     "egg-info regular file",
-			fixtures: []string{"test-fixtures/test.egg-info"},
-			expectedPackage: pkg.Package{
-				Name:     "requests",
-				Version:  "2.22.0",
-				PURL:     "pkg:pypi/requests@2.22.0",
-				Type:     pkg.PythonPkg,
-				Language: pkg.Python,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test-fixtures/test.egg-info")),
-				),
-				FoundBy: "python-installed-package-cataloger",
-				Metadata: pkg.PythonPackage{
-					Name:                 "requests",
-					Version:              "2.22.0",
-					Platform:             "UNKNOWN",
-					Author:               "Kenneth Reitz",
-					AuthorEmail:          "me@kennethreitz.org",
-					SitePackagesRootPath: "test-fixtures",
-					RequiresPython:       ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
-					ProvidesExtra:        []string{"security", "socks"},
+			name:    "egg-info regular file",
+			fixture: "test-fixtures/site-packages/test",
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "requests",
+					Version:  "2.22.0",
+					PURL:     "pkg:pypi/requests@2.22.0",
+					Type:     pkg.PythonPkg,
+					Language: pkg.Python,
+					Locations: file.NewLocationSet(
+						file.NewLocation("test.egg-info"),
+					),
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("test.egg-info")),
+					),
+					FoundBy: "python-installed-package-cataloger",
+					Metadata: pkg.PythonPackage{
+						Name:                 "requests",
+						Version:              "2.22.0",
+						Platform:             "UNKNOWN",
+						Author:               "Kenneth Reitz",
+						AuthorEmail:          "me@kennethreitz.org",
+						SitePackagesRootPath: ".",
+						RequiresPython:       ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+						ProvidesExtra:        []string{"security", "socks"},
+					},
 				},
 			},
 		},
@@ -280,17 +402,10 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := file.NewMockResolverForPaths(test.fixtures...)
-
-			locations, err := resolver.FilesByPath(test.fixtures...)
-			require.NoError(t, err)
-
-			test.expectedPackage.Locations = file.NewLocationSet(locations...)
-
-			pkgtest.NewCatalogTester().
-				WithResolver(resolver).
-				Expects([]pkg.Package{test.expectedPackage}, nil).
-				TestCataloger(t, NewInstalledPackageCataloger())
+			(pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				Expects(test.expectedPackages, nil).
+				TestCataloger(t, NewInstalledPackageCataloger()))
 		})
 	}
 }
@@ -311,7 +426,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, _, err := NewInstalledPackageCataloger().Catalog(context.Background(), resolver)
+			actual, _, err := NewInstalledPackageCataloger().Catalog(pkgtest.Context(), resolver)
 			require.NoError(t, err)
 
 			if len(actual) != 0 {
@@ -690,4 +805,27 @@ func stringPackage(p pkg.Package) string {
 	}
 
 	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
+}
+
+func mustContentsFromLocation(t *testing.T, contentsPath string, offset ...int) string {
+	t.Helper() // Marks this function as a test helper for cleaner error reporting
+	contents, err := os.ReadFile(contentsPath)
+	if err != nil {
+		t.Fatalf("failed to read file %s: %v", contentsPath, err)
+	}
+
+	if len(offset) == 0 {
+		return string(contents)
+	}
+
+	if len(offset) != 2 {
+		t.Fatalf("invalid offset provided, expected two integers: start and end")
+	}
+	start, end := offset[0], offset[1]
+
+	if start < 0 || end > len(contents) || start > end {
+		t.Fatalf("invalid offset range: start=%d, end=%d, content length=%d", start, end, len(contents))
+	}
+
+	return string(contents[start:end])
 }

@@ -134,3 +134,10 @@ func TestParsePackageResolved_versionNotANumber(t *testing.T) {
 
 	pkgtest.NewCatalogTester().FromFile(t, fixture).WithError().TestParser(t, parsePackageResolved)
 }
+
+func Test_corruptPackageResolved(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/bad-version-packages.resolved").
+		WithError().
+		TestParser(t, parsePackageResolved)
+}

@@ -52,8 +52,18 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 
 	assert.Equal(t, len(taskTagsByName), constructorCount, "mismatch in number of cataloger constructors and task names")
 
+	exceptions := strset.New(
+		// not reachable since they are deprecated
+		"dotnet-portable-executable-cataloger",
+		"dotnet-deps-cataloger",
+		"nix-store-cataloger",
+		"php-pecl-serialized-cataloger",
+		// not reachable by design
+		"sbom-cataloger",
+	)
+
 	for taskName, tags := range taskTagsByName {
-		if taskName == "sbom-cataloger" {
+		if exceptions.Has(taskName) {
 			continue // this is a special case
 		}
 		if !strset.New(tags...).HasAny(pkgcataloging.ImageTag, pkgcataloging.DirectoryTag) {

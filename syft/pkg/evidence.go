@@ -1,7 +1,9 @@
 package pkg
 
+import "github.com/anchore/syft/internal/evidence"
+
 const (
-	EvidenceAnnotationKey        = "evidence"
-	PrimaryEvidenceAnnotation    = "primary"
-	SupportingEvidenceAnnotation = "supporting"
+	EvidenceAnnotationKey        = evidence.AnnotationKey
+	PrimaryEvidenceAnnotation    = evidence.PrimaryAnnotation
+	SupportingEvidenceAnnotation = evidence.SupportingAnnotation
 )

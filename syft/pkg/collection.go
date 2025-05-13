@@ -54,7 +54,7 @@ func (c *Collection) Package(id artifact.ID) *Package {
 	}
 	var p Package
 	if err := copier.Copy(&p, &v); err != nil {
-		log.Warnf("unable to copy package id=%q name=%q: %+v", id, v.Name, err)
+		log.Debugf("unable to copy package id=%q name=%q: %+v", id, v.Name, err)
 		return nil
 	}
 	p.id = v.id
@@ -111,7 +111,7 @@ func (c *Collection) add(p Package) {
 
 	id := p.ID()
 	if id == "" {
-		log.Warnf("found package with empty ID while adding to the collection: %+v", p)
+		log.Debugf("found package with empty ID while adding to the collection: %+v", p)
 		p.SetID()
 		id = p.ID()
 	}
@@ -119,7 +119,7 @@ func (c *Collection) add(p Package) {
 	if existing, exists := c.byID[id]; exists {
 		// there is already a package with this fingerprint merge the existing record with the new one
 		if err := existing.merge(p); err != nil {
-			log.Warnf("failed to merge packages: %+v", err)
+			log.Debugf("failed to merge packages: %+v", err)
 		} else {
 			c.byID[id] = existing
 			c.addPathsToIndex(p)
@@ -201,7 +201,11 @@ func (c *Collection) deleteNameFromIndex(p Package) {
 
 	nameIndex := c.idsByName[p.Name]
 	nameIndex.delete(p.id)
-	c.idsByName[p.Name] = nameIndex
+	if len(nameIndex.slice) == 0 {
+		delete(c.idsByName, p.Name)
+	} else {
+		c.idsByName[p.Name] = nameIndex
+	}
 }
 
 func (c *Collection) deleteTypeFromIndex(p Package) {
@@ -209,7 +213,11 @@ func (c *Collection) deleteTypeFromIndex(p Package) {
 
 	typeIndex := c.idsByType[p.Type]
 	typeIndex.delete(p.id)
-	c.idsByType[p.Type] = typeIndex
+	if len(typeIndex.slice) == 0 {
+		delete(c.idsByType, p.Type)
+	} else {
+		c.idsByType[p.Type] = typeIndex
+	}
 }
 
 func (c *Collection) deletePathsFromIndex(p Package) {

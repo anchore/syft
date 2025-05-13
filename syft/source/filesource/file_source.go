@@ -1,17 +1,17 @@
 package filesource
 
 import (
+	"context"
 	"crypto"
 	"fmt"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
 	"sync"
 
-	"github.com/mholt/archiver/v3"
 	"github.com/opencontainers/go-digest"
 
+	"github.com/anchore/archiver/v3"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
@@ -26,17 +26,18 @@ import (
 var _ source.Source = (*fileSource)(nil)
 
 type Config struct {
-	Path             string
-	Exclude          source.ExcludeConfig
-	DigestAlgorithms []crypto.Hash
-	Alias            source.Alias
+	Path               string
+	Exclude            source.ExcludeConfig
+	DigestAlgorithms   []crypto.Hash
+	Alias              source.Alias
+	SkipExtractArchive bool
 }
 
 type fileSource struct {
 	id               artifact.ID
 	digestForVersion string
 	config           Config
-	resolver         *fileresolver.Directory
+	resolver         file.Resolver
 	mutex            *sync.Mutex
 	closer           func() error
 	digests          []file.Digest
@@ -58,7 +59,10 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
-	analysisPath, cleanupFn := fileAnalysisPath(cfg.Path)
+	analysisPath, cleanupFn, err := fileAnalysisPath(cfg.Path, cfg.SkipExtractArchive)
+	if err != nil {
+		return nil, fmt.Errorf("unable to extract file analysis path=%q: %w", cfg.Path, err)
+	}
 
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
@@ -69,7 +73,7 @@ func New(cfg Config) (source.Source, error) {
 
 		defer fh.Close()
 
-		digests, err = intFile.NewDigestsFromFile(fh, cfg.DigestAlgorithms)
+		digests, err = intFile.NewDigestsFromFile(context.TODO(), fh, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
 		}
@@ -165,48 +169,22 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return nil, err
 	}
 
-	var res *fileresolver.Directory
 	if isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
-		res, err = fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
+		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
-	} else {
-		// this is an analysis of a single file. We want to ultimately scan the directory that the file is in, but we
-		// don't want to include any other files except this the given file.
-		exclusionFunctions = append([]fileresolver.PathIndexVisitor{
-
-			// note: we should exclude these kinds of paths first before considering any other user-provided exclusions
-			func(_, p string, _ os.FileInfo, _ error) error {
-				if p == absParentDir {
-					// this is the root directory... always include it
-					return nil
-				}
-
-				if filepath.Dir(p) != absParentDir {
-					// we are no longer in the root directory containing the single file we want to scan...
-					// we should skip the directory this path resides in entirely!
-					return fs.SkipDir
-				}
-
-				if filepath.Base(p) != filepath.Base(s.config.Path) {
-					// we're in the root directory, but this is not the file we want to scan...
-					// we should selectively skip this file (not the directory we're in).
-					return fileresolver.ErrSkipPath
-				}
-				return nil
-			},
-		}, exclusionFunctions...)
-
-		res, err = fileresolver.NewFromDirectory(absParentDir, absParentDir, exclusionFunctions...)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
-		}
+		s.resolver = res
+		return s.resolver, nil
 	}
 
+	// This is analysis of a single file. Use file indexer.
+	res, err := fileresolver.NewFromFile(absParentDir, s.analysisPath, exclusionFunctions...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create file resolver: %w", err)
+	}
 	s.resolver = res
-
 	return s.resolver, nil
 }
 
@@ -232,9 +210,15 @@ func (s *fileSource) Close() error {
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
 // contents have been made available. A cleanup function is provided for any temp files created (if any).
-func fileAnalysisPath(path string) (string, func() error) {
-	var analysisPath = path
+// Users can disable unpacking archives, allowing individual cataloguers to extract them instead (where
+// supported)
+func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() error, error) {
 	var cleanupFn = func() error { return nil }
+	var analysisPath = path
+
+	if skipExtractArchive {
+		return analysisPath, cleanupFn, nil
+	}
 
 	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
 	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
@@ -247,19 +231,16 @@ func fileAnalysisPath(path string) (string, func() error) {
 			// NOTE: this currently does not display any messages if an overwrite happens
 			tar.OverwriteExisting = true
 		}
-		unarchivedPath, tmpCleanup, err := unarchiveToTmp(path, unarchiver)
+
+		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
-			log.Warnf("file could not be unarchived: %+v", err)
-		} else {
-			log.Debugf("source path is an archive")
-			analysisPath = unarchivedPath
+			return "", nil, fmt.Errorf("unable to unarchive source file: %w", err)
 		}
-		if tmpCleanup != nil {
-			cleanupFn = tmpCleanup
-		}
+
+		log.Debugf("source path is an archive")
 	}
 
-	return analysisPath, cleanupFn
+	return analysisPath, cleanupFn, nil
 }
 
 func digestOfFileContents(path string) string {

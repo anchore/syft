@@ -71,12 +71,35 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-15.0/bin/beam.smp
 
+  - name: erlang
+    version: 26.1.2
+    images:
+      - ref: hexpm/elixir:1.15.6-erlang-26.1.2-alpine-3.18.4@sha256:e84f6667f4e3d2fe00fcdb9d1c2cdd614733296c39b20b28b092743f1161bc11
+        platform: linux/arm64
+    paths:
+      - /usr/local/lib/erlang/erts-14.1.1/bin/beam.smp
+
   - version: 9.3.8
     images:
       - ref: swipl:9.3.8@sha256:6a15e6a03afe943228924a5502ba763e653ff28d9b3391e2b3e1fc3e991f37d4
         platform: linux/amd64
     paths:
       - /usr/lib/swipl/bin/x86_64-linux/swipl
+
+  - version: 2.12.4
+    images:
+      - ref: dart:2.12.4-sdk@sha256:0da5d8c9727f5b90e585bcc55a078d981029f4e13044f206299e00f23993a4a8
+        platform: linux/amd64
+
+    paths:
+      - /usr/lib/dart/bin/dart
+
+  - version: 3.0.0
+    images:
+      - ref: dart:3.0.0-sdk@sha256:67708c6011199d59336bf6cd0f9e618e55dd3632c79a43375f5a082795f0b724
+        platform: linux/arm
+    paths:
+      - /usr/lib/dart/bin/dart
 
   - version: 3.5.2
     images:
@@ -115,6 +138,12 @@ from-images:
     paths:
       - /usr/local/go/bin/go
 
+  - version: 1.25
+    images:
+      - ref: golang:tip@sha256:319b219d4df413ef30123a7f69bdf00032d9841af58d7b0ef6971542b29875d5
+        platform: linux/amd64
+    paths:
+      - /usr/local/go/bin/go
   # TODO: this is no longer available from dockerhub! (the snippet is vital)
   - version: 1.5.14
     images:
@@ -670,6 +699,20 @@ from-images:
     images:
       - ref: fluent/fluent-bit:2.2.1-arm64@sha256:28eb03950eb0dac0ca6faead7fdd7261291d669a2b2f010113dab2c25b52b6bf
         platform: linux/arm64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
+  - version: 1.7.0-dev-3
+    images:
+      - ref: fluent/fluent-bit:1.7.0-dev-3@sha256:d8105ebefa27ca7d8ad2233ab0a4364ff43a9b31c484bde27f0d3d18988b34a0
+        platform: linux/amd64
+    paths:
+      - /fluent-bit/bin/fluent-bit
+
+  - version: 1.3.10
+    images:
+      - ref: fluent/fluent-bit:1.3.10@sha256:98b32ef90c3ee3f6981b2cf31b70dc7d6104c9800b7287d4758318e0c19f96a9
+        platform: linux/arm
     paths:
       - /fluent-bit/bin/fluent-bit
 

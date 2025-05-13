@@ -1,9 +1,10 @@
 package helpers
 
 import (
-	"strings"
+	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal/spdxlicense"
@@ -11,6 +12,7 @@ import (
 )
 
 func Test_License(t *testing.T) {
+	ctx := context.TODO()
 	type expected struct {
 		concluded string
 		declared  string
@@ -31,7 +33,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "no SPDX licenses",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicense("made-up")),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "made-up")),
 			},
 			expected: expected{
 				concluded: "NOASSERTION",
@@ -41,7 +43,7 @@ func Test_License(t *testing.T) {
 		{
 			name: "with SPDX license",
 			input: pkg.Package{
-				Licenses: pkg.NewLicenseSet(pkg.NewLicense("MIT")),
+				Licenses: pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MIT")),
 			},
 			expected: struct {
 				concluded string
@@ -55,8 +57,8 @@ func Test_License(t *testing.T) {
 			name: "with SPDX license expression",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("MIT"),
-					pkg.NewLicense("GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT"),
+					pkg.NewLicenseWithContext(ctx, "GPL-3.0-only"),
 				),
 			},
 			expected: expected{
@@ -69,9 +71,9 @@ func Test_License(t *testing.T) {
 			name: "includes valid LicenseRef-",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("one thing first"),
-					pkg.NewLicense("two things/#$^second"),
-					pkg.NewLicense("MIT"),
+					pkg.NewLicenseWithContext(ctx, "one thing first"),
+					pkg.NewLicenseWithContext(ctx, "two things/#$^second"),
+					pkg.NewLicenseWithContext(ctx, "MIT"),
 				),
 			},
 			expected: expected{
@@ -84,9 +86,9 @@ func Test_License(t *testing.T) {
 			name: "join parentheses correctly",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("one thing first"),
-					pkg.NewLicense("MIT AND GPL-3.0-only"),
-					pkg.NewLicense("MIT OR APACHE-2.0"),
+					pkg.NewLicenseWithContext(ctx, "one thing first"),
+					pkg.NewLicenseWithContext(ctx, "MIT AND GPL-3.0-only"),
+					pkg.NewLicenseWithContext(ctx, "MIT OR APACHE-2.0"),
 				),
 			},
 			expected: expected{
@@ -98,9 +100,56 @@ func Test_License(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c, d := License(test.input)
+			c, d, _ := License(test.input)
 			assert.Equal(t, test.expected.concluded, c)
 			assert.Equal(t, test.expected.declared, d)
+		})
+	}
+}
+
+func TestGenerateLicenseID(t *testing.T) {
+	tests := []struct {
+		name     string
+		license  pkg.License
+		expected string
+	}{
+		{
+			name: "SPDX expression is preferred",
+			license: pkg.License{
+				SPDXExpression: "Apache-2.0",
+				Value:          "SomeValue",
+				Contents:       "Some text",
+			},
+			expected: "Apache-2.0",
+		},
+		{
+			name: "Uses value if no SPDX expression",
+			license: pkg.License{
+				Value: "my-sweet-custom-license",
+			},
+			expected: spdxlicense.LicenseRefPrefix + "my-sweet-custom-license",
+		},
+		{
+			// note: this is an oversight of the SPDX spec. It does NOT allow "+" in the ID even though they are
+			//  significant to the licenses in the expressions below
+			name: "Long value is sanitized correctly",
+			license: pkg.License{
+				Value: "LGPLv2+ and LGPLv2+ with exceptions and GPLv2+ and GPLv2+ with exceptions and BSD and Inner-Net and ISC and Public Domain and GFDL",
+			},
+			expected: spdxlicense.LicenseRefPrefix +
+				"LGPLv2--and-LGPLv2--with-exceptions-and-GPLv2--and-GPLv2--with-exceptions-and-BSD-and-Inner-Net-and-ISC-and-Public-Domain-and-GFDL",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			id := generateLicenseID(tt.license)
+			if tt.expected == "" {
+				assert.True(t, len(id) > len(spdxlicense.LicenseRefPrefix))
+				assert.Contains(t, id, spdxlicense.LicenseRefPrefix)
+			} else {
+				assert.Equal(t, tt.expected, id)
+			}
 		})
 	}
 }
@@ -108,34 +157,92 @@ func Test_License(t *testing.T) {
 func Test_joinLicenses(t *testing.T) {
 	tests := []struct {
 		name string
-		args []string
+		args []SPDXLicense
 		want string
 	}{
 		{
 			name: "multiple licenses",
-			args: []string{"MIT", "GPL-3.0-only"},
+			args: []SPDXLicense{{ID: "MIT"}, {ID: "GPL-3.0-only"}},
 			want: "MIT AND GPL-3.0-only",
 		},
 		{
 			name: "multiple licenses with complex expressions",
-			args: []string{"MIT AND Apache", "GPL-3.0-only"},
+			args: []SPDXLicense{{ID: "MIT AND Apache"}, {ID: "GPL-3.0-only"}},
 			want: "(MIT AND Apache) AND GPL-3.0-only",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, joinLicenses(toSpdxLicenses(tt.args)), "joinLicenses(%v)", tt.args)
+			assert.Equalf(t, tt.want, joinLicenses(tt.args), "joinLicenses(%v)", tt.args)
 		})
 	}
 }
 
-func toSpdxLicenses(ids []string) (licenses []SPDXLicense) {
-	for _, l := range ids {
-		license := SPDXLicense{ID: l}
-		if strings.HasPrefix(l, spdxlicense.LicenseRefPrefix) {
-			license.Value = l
-		}
-		licenses = append(licenses, license)
+func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    pkg.License
+		expected SPDXLicense
+	}{
+		{
+			name: "SPDX expression used as ID",
+			input: pkg.License{
+				SPDXExpression: "MIT",
+				Value:          "MIT",
+				Contents:       "",
+			},
+			expected: SPDXLicense{
+				ID:          "MIT",
+				LicenseName: "MIT",
+				FullText:    "NOASSERTION",
+			},
+		},
+		{
+			name: "LicenseRef with contents",
+			input: pkg.License{
+				Value:    "sha256:123abc",
+				Contents: "license contents here",
+			},
+			expected: SPDXLicense{
+				ID:          "LicenseRef-123abc",
+				LicenseName: "sha256:123abc",
+				FullText:    "license contents here",
+			},
+		},
+		{
+			name: "LicenseRef without contents",
+			input: pkg.License{
+				Value:    "custom-license",
+				Contents: "",
+			},
+			expected: SPDXLicense{
+				ID:          "LicenseRef-custom-license",
+				LicenseName: "custom-license",
+				FullText:    "NOASSERTION",
+			},
+		},
+		{
+			name: "URL is passed through",
+			input: pkg.License{
+				SPDXExpression: "MIT",
+				URLs: []string{
+					"https://example.com/license",
+				},
+			},
+			expected: SPDXLicense{
+				ID:       "MIT",
+				FullText: "NOASSERTION",
+				URLs:     []string{"https://example.com/license"},
+			},
+		},
 	}
-	return licenses
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			license := createSPDXLicense(tt.input)
+			if d := cmp.Diff(tt.expected, license); d != "" {
+				t.Errorf("createSPDXLicense() mismatch (-want +got):\n%s", d)
+			}
+		})
+	}
 }

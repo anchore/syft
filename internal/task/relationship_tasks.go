@@ -42,11 +42,11 @@ func finalizeRelationships(resolver file.Resolver, builder sbomsync.Builder, cfg
 
 	// remove ELF packages and Binary packages that are already
 	// represented by a source package (e.g. a package that is evident by some package manager)
-	builder.DeletePackages(binary.PackagesToRemove(resolver, accessor)...)
+	builder.DeletePackages(binary.PackagesToRemove(accessor)...)
 
 	// add relationships showing packages that are evident by a file which is owned by another package (package-to-package)
 	if cfg.PackageFileOwnershipOverlap {
-		relationship.ByFileOwnershipOverlapWorker(accessor)
+		relationship.ByFileOwnershipOverlapWorker(resolver, accessor)
 	}
 
 	// conditionally remove binary packages based on file ownership overlap relationships found

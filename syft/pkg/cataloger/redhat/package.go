@@ -1,6 +1,7 @@
 package redhat
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,11 +12,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux.Release, licenses []string) pkg.Package {
+func newDBPackage(ctx context.Context, dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux.Release, licenses []string) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   toELVersion(m.Epoch, m.Version, m.Release),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbOrRpmLocation, licenses...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, dbOrRpmLocation, licenses...)...),
 		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, distro),
 		Locations: file.NewLocationSet(dbOrRpmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.RpmPkg,
@@ -26,11 +27,11 @@ func newDBPackage(dbOrRpmLocation file.Location, m pkg.RpmDBEntry, distro *linux
 	return p
 }
 
-func newArchivePackage(archiveLocation file.Location, m pkg.RpmArchive, licenses []string) pkg.Package {
+func newArchivePackage(ctx context.Context, archiveLocation file.Location, m pkg.RpmArchive, licenses []string) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   toELVersion(m.Epoch, m.Version, m.Release),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(archiveLocation, licenses...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, archiveLocation, licenses...)...),
 		PURL:      packageURL(m.Name, m.Arch, m.Epoch, m.SourceRpm, m.Version, m.Release, nil),
 		Locations: file.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.RpmPkg,
@@ -91,6 +92,9 @@ func packageURL(name, arch string, epoch *int, srpm string, version, release str
 	}
 	if namespace == "rhel" {
 		namespace = "redhat"
+	}
+	if strings.HasPrefix(namespace, "opensuse") {
+		namespace = "opensuse"
 	}
 
 	qualifiers := map[string]string{}

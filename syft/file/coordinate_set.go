@@ -3,7 +3,7 @@ package file
 import (
 	"sort"
 
-	"github.com/mitchellh/hashstructure/v2"
+	"github.com/gohugoio/hashstructure"
 	"github.com/scylladb/go-set/strset"
 )
 
@@ -59,7 +59,34 @@ func (s CoordinateSet) Paths() []string {
 	return pathSlice
 }
 
-func (s CoordinateSet) ToSlice() []Coordinates {
+func (s CoordinateSet) ToSlice(sorters ...func(a, b Coordinates) int) []Coordinates {
+	coordinates := s.ToUnorderedSlice()
+
+	var sorted bool
+	for _, sorter := range sorters {
+		if sorter == nil {
+			continue
+		}
+		sort.Slice(coordinates, func(i, j int) bool {
+			return sorter(coordinates[i], coordinates[j]) < 0
+		})
+		sorted = true
+		break
+	}
+
+	if !sorted {
+		sort.SliceStable(coordinates, func(i, j int) bool {
+			if coordinates[i].FileSystemID == coordinates[j].FileSystemID {
+				return coordinates[i].RealPath < coordinates[j].RealPath
+			}
+			return coordinates[i].FileSystemID < coordinates[j].FileSystemID
+		})
+	}
+
+	return coordinates
+}
+
+func (s CoordinateSet) ToUnorderedSlice() []Coordinates {
 	if s.set == nil {
 		return nil
 	}
@@ -69,17 +96,11 @@ func (s CoordinateSet) ToSlice() []Coordinates {
 		coordinates[idx] = v
 		idx++
 	}
-	sort.SliceStable(coordinates, func(i, j int) bool {
-		if coordinates[i].RealPath == coordinates[j].RealPath {
-			return coordinates[i].FileSystemID < coordinates[j].FileSystemID
-		}
-		return coordinates[i].RealPath < coordinates[j].RealPath
-	})
 	return coordinates
 }
 
 func (s CoordinateSet) Hash() (uint64, error) {
-	return hashstructure.Hash(s.ToSlice(), hashstructure.FormatV2, &hashstructure.HashOptions{
+	return hashstructure.Hash(s.ToSlice(), &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,
 	})

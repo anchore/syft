@@ -3,11 +3,8 @@ package task
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
@@ -23,65 +20,16 @@ import (
 	cpeutils "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
-type packageTaskFactory func(cfg CatalogingFactoryConfig) Task
-
-type PackageTaskFactories []packageTaskFactory
-
-type CatalogingFactoryConfig struct {
-	ComplianceConfig     cataloging.ComplianceConfig
-	SearchConfig         cataloging.SearchConfig
-	RelationshipsConfig  cataloging.RelationshipsConfig
-	DataGenerationConfig cataloging.DataGenerationConfig
-	PackagesConfig       pkgcataloging.Config
-}
-
-func DefaultCatalogingFactoryConfig() CatalogingFactoryConfig {
-	return CatalogingFactoryConfig{
-		ComplianceConfig:     cataloging.DefaultComplianceConfig(),
-		SearchConfig:         cataloging.DefaultSearchConfig(),
-		RelationshipsConfig:  cataloging.DefaultRelationshipsConfig(),
-		DataGenerationConfig: cataloging.DefaultDataGenerationConfig(),
-		PackagesConfig:       pkgcataloging.DefaultConfig(),
-	}
-}
-
-func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) packageTaskFactory {
+func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) factory {
 	return func(cfg CatalogingFactoryConfig) Task {
 		return NewPackageTask(cfg, catalogerFactory(cfg), tags...)
 	}
 }
 
-func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) packageTaskFactory {
+func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) factory {
 	return func(cfg CatalogingFactoryConfig) Task {
 		return NewPackageTask(cfg, catalogerFactory(), tags...)
 	}
-}
-
-func (f PackageTaskFactories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
-	var allTasks []Task
-	taskNames := strset.New()
-	duplicateTaskNames := strset.New()
-	var err error
-	for _, factory := range f {
-		tsk := factory(cfg)
-		if tsk == nil {
-			continue
-		}
-		tskName := tsk.Name()
-		if taskNames.Has(tskName) {
-			duplicateTaskNames.Add(tskName)
-		}
-
-		allTasks = append(allTasks, tsk)
-		taskNames.Add(tskName)
-	}
-	if duplicateTaskNames.Size() > 0 {
-		names := duplicateTaskNames.List()
-		sort.Strings(names)
-		err = fmt.Errorf("duplicate cataloger task names: %v", strings.Join(names, ", "))
-	}
-
-	return allTasks, err
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
@@ -103,9 +51,6 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t := bus.StartCatalogerTask(info, -1, "")
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
-		if err != nil {
-			return fmt.Errorf("unable to catalog packages with %q: %w", catalogerName, err)
-		}
 
 		log.WithFields("cataloger", catalogerName).Debugf("discovered %d packages", len(pkgs))
 
@@ -120,7 +65,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t.SetCompleted()
 		log.WithFields("name", catalogerName).Trace("package cataloger completed")
 
-		return nil
+		return err
 	}
 	tags = append(tags, pkgcataloging.PackageTag)
 
@@ -156,11 +101,16 @@ func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.Path
 			// create file-to-package relationships for files owned by the package
 			owningRelationships, err := packageFileOwnershipRelationships(p, resolver)
 			if err != nil {
-				log.Warnf("unable to create any package-file relationships for package name=%q type=%q: %v", p.Name, p.Type, err)
+				log.Debugf("unable to create any package-file relationships for package name=%q type=%q: %v", p.Name, p.Type, err)
 			} else {
 				relationships = append(relationships, owningRelationships...)
 			}
 		}
+
+		// we want to know if the user wants to preserve license content or not in the final SBOM
+		// note: this looks incorrect, but pkg.License.Content is NOT used to compute the Package ID
+		// this does NOT change the reproducibility of the Package ID
+		applyLicenseContentRules(&p, cfg.LicenseConfig)
 
 		pkgs[i] = p
 	}
@@ -229,7 +179,7 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool
 			return true
 
 		case cataloging.ComplianceActionKeep:
-			log.WithFields("pkg", p.String(), "location", loc).Tracef("package with missing %s, taking no action", fieldName)
+			log.WithFields("pkg", p.String(), "location", loc, "field", fieldName).Trace("package with missing field, taking no action")
 		}
 		return false
 	}
@@ -300,10 +250,10 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 		}
 
 		for _, ref := range pathRefs {
-			if oldRef, ok := locations[ref.Coordinates.ID()]; ok {
+			if oldRef, ok := locations[ref.ID()]; ok {
 				log.Debugf("found path duplicate of %s", oldRef.RealPath)
 			}
-			locations[ref.Coordinates.ID()] = ref
+			locations[ref.ID()] = ref
 		}
 	}
 
@@ -316,4 +266,30 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 		})
 	}
 	return relationships, nil
+}
+
+func applyLicenseContentRules(p *pkg.Package, cfg cataloging.LicenseConfig) {
+	if p.Licenses.Empty() {
+		return
+	}
+
+	licenses := p.Licenses.ToSlice()
+	for i := range licenses {
+		l := &licenses[i]
+		switch cfg.IncludeContent {
+		case cataloging.LicenseContentIncludeUnknown:
+			// we don't have an SPDX expression, which means we didn't find an SPDX license
+			// include the unknown licenses content in the final SBOM
+			if l.SPDXExpression != "" {
+				licenses[i].Contents = ""
+			}
+		case cataloging.LicenseContentExcludeAll:
+			// clear it all out
+			licenses[i].Contents = ""
+		case cataloging.LicenseContentIncludeAll:
+			// always include the content
+		}
+	}
+
+	p.Licenses = pkg.NewLicenseSet(licenses...)
 }

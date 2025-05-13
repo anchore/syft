@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 golang:1.22.4 AS builder
+FROM --platform=linux/amd64 golang:1.23.2 AS builder
 
 RUN mkdir /app
 WORKDIR /app

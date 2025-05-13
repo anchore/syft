@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
 
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 #v4.2.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
       - run: python .github/scripts/labeler.py
         env:
@@ -40,7 +40,7 @@ jobs:
 
       - name: Delete existing comment
         if: ${{ hashFiles( env.CI_COMMENT_FILE ) == '' }}
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
+        uses: marocchino/sticky-pull-request-comment@67d0dec7b07ed060a405f9b2a64b8ab319fdd7db #v2.9.2
         with:
           header: ${{ env.COMMENT_HEADER }}
           hide: true
@@ -48,7 +48,7 @@ jobs:
 
       - name: Add comment
         if: ${{ hashFiles( env.CI_COMMENT_FILE ) != '' }}
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 #v2.9.0
+        uses: marocchino/sticky-pull-request-comment@67d0dec7b07ed060a405f9b2a64b8ab319fdd7db #v2.9.2
         with:
           header: ${{ env.COMMENT_HEADER }}
           path: ${{ env.CI_COMMENT_FILE }}

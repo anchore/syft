@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -57,7 +58,7 @@ func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment,
 	// since we would never expect to create relationships for packages across multiple poetry.lock files
 	// we should do this on a file parser level (each poetry.lock) instead of a cataloger level (across all
 	// poetry.lock files)
-	return pkgs, dependency.Resolve(poetryLockDependencySpecifier, pkgs), nil
+	return pkgs, dependency.Resolve(poetryLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
@@ -84,7 +85,7 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 			case md.PrimitiveDecode(du, &multiObj) == nil:
 				dependencies[pkgName] = append(dependencies[pkgName], multiObj...)
 			default:
-				log.Trace("failed to decode poetry lock package dependencies for %s; skipping", pkgName)
+				log.Tracef("failed to decode poetry lock package dependencies for %s; skipping", pkgName)
 			}
 		}
 		metadata.Packages[i].Dependencies = dependencies
@@ -98,7 +99,7 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 				p.Name,
 				p.Version,
 				newPythonPoetryLockEntry(p),
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

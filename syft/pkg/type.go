@@ -13,6 +13,7 @@ const (
 	AlpmPkg                 Type = "alpm"
 	ApkPkg                  Type = "apk"
 	BinaryPkg               Type = "binary"
+	BitnamiPkg              Type = "bitnami"
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
 	DartPubPkg              Type = "dart-pub"
@@ -33,8 +34,10 @@ const (
 	LinuxKernelModulePkg    Type = "linux-kernel-module"
 	NixPkg                  Type = "nix"
 	NpmPkg                  Type = "npm"
+	OpamPkg                 Type = "opam"
 	PhpComposerPkg          Type = "php-composer"
-	PhpPeclPkg              Type = "php-pecl"
+	PhpPeclPkg              Type = "php-pecl" // Deprecated: will be removed in syft v2.0
+	PhpPearPkg              Type = "php-pear"
 	PortagePkg              Type = "portage"
 	PythonPkg               Type = "python"
 	Rpkg                    Type = "R-package"
@@ -43,8 +46,9 @@ const (
 	RustPkg                 Type = "rust-crate"
 	SwiftPkg                Type = "swift"
 	SwiplPackPkg            Type = "swiplpack"
-	OpamPkg                 Type = "opam"
+	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
+	HomebrewPkg             Type = "homebrew"
 )
 
 // AllPkgs represents all supported package types
@@ -52,6 +56,7 @@ var AllPkgs = []Type{
 	AlpmPkg,
 	ApkPkg,
 	BinaryPkg,
+	BitnamiPkg,
 	CocoapodsPkg,
 	ConanPkg,
 	DartPubPkg,
@@ -61,6 +66,7 @@ var AllPkgs = []Type{
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
+	GraalVMNativeImagePkg,
 	GoModulePkg,
 	HackagePkg,
 	HexPkg,
@@ -71,8 +77,10 @@ var AllPkgs = []Type{
 	LinuxKernelModulePkg,
 	NixPkg,
 	NpmPkg,
+	OpamPkg,
 	PhpComposerPkg,
 	PhpPeclPkg,
+	PhpPearPkg,
 	PortagePkg,
 	PythonPkg,
 	Rpkg,
@@ -81,8 +89,9 @@ var AllPkgs = []Type{
 	RustPkg,
 	SwiftPkg,
 	SwiplPackPkg,
-	OpamPkg,
+	TerraformPkg,
 	WordpressPluginPkg,
+	HomebrewPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -94,6 +103,8 @@ func (t Type) PackageURLType() string {
 		return "alpm"
 	case ApkPkg:
 		return packageurl.TypeAlpine
+	case BitnamiPkg:
+		return packageurl.TypeBitnami
 	case CocoapodsPkg:
 		return packageurl.TypeCocoapods
 	case ConanPkg:
@@ -125,20 +136,22 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
-	case PhpPeclPkg:
-		return "pecl"
+	case PhpPearPkg, PhpPeclPkg:
+		return "pear"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
 		return "portage"
+	case LuaRocksPkg:
+		return packageurl.TypeLuaRocks
 	case NixPkg:
 		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
+	case OpamPkg:
+		return "opam"
 	case Rpkg:
 		return packageurl.TypeCran
-	case LuaRocksPkg:
-		return packageurl.TypeLuaRocks
 	case RpmPkg:
 		return packageurl.TypeRPM
 	case RustPkg:
@@ -147,10 +160,12 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeSwift
 	case SwiplPackPkg:
 		return "swiplpack"
-	case OpamPkg:
-		return "opam"
+	case TerraformPkg:
+		return "terraform"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
+	case HomebrewPkg:
+		return "homebrew"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -170,31 +185,23 @@ func TypeFromPURL(p string) Type {
 	return TypeByName(ptype)
 }
 
-//nolint:funlen
+//nolint:funlen,gocyclo
 func TypeByName(name string) Type {
 	switch name {
-	case packageurl.TypeDebian:
-		return DebPkg
-	case packageurl.TypeRPM:
-		return RpmPkg
-	case packageurl.TypeLuaRocks:
-		return LuaRocksPkg
 	case "alpm":
 		return AlpmPkg
 	case packageurl.TypeAlpine, "alpine":
 		return ApkPkg
-	case packageurl.TypeMaven:
-		return JavaPkg
+	case packageurl.TypeBitnami:
+		return BitnamiPkg
+	case packageurl.TypeDebian:
+		return DebPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
-	case "pecl":
-		return PhpPeclPkg
+	case "pear", "pecl":
+		return PhpPearPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
-	case packageurl.TypeNPM:
-		return NpmPkg
-	case packageurl.TypePyPi:
-		return PythonPkg
 	case packageurl.TypeGem:
 		return GemPkg
 	case "cargo", "crate":
@@ -209,10 +216,18 @@ func TypeByName(name string) Type {
 		return ConanPkg
 	case packageurl.TypeHackage:
 		return HackagePkg
-	case "portage":
-		return PortagePkg
 	case packageurl.TypeHex:
 		return HexPkg
+	case packageurl.TypeLuaRocks:
+		return LuaRocksPkg
+	case packageurl.TypeMaven:
+		return JavaPkg
+	case packageurl.TypeNPM:
+		return NpmPkg
+	case packageurl.TypePyPi:
+		return PythonPkg
+	case "portage":
+		return PortagePkg
 	case packageurl.TypeOTP:
 		return ErlangOTPPkg
 	case "linux-kernel":
@@ -221,16 +236,22 @@ func TypeByName(name string) Type {
 		return LinuxKernelModulePkg
 	case "nix":
 		return NixPkg
+	case "opam":
+		return OpamPkg
 	case packageurl.TypeCran:
 		return Rpkg
+	case packageurl.TypeRPM:
+		return RpmPkg
 	case packageurl.TypeSwift:
 		return SwiftPkg
 	case "swiplpack":
 		return SwiplPackPkg
-	case "opam":
-		return OpamPkg
+	case "terraform":
+		return TerraformPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
+	case "homebrew":
+		return HomebrewPkg
 	default:
 		return UnknownPkg
 	}

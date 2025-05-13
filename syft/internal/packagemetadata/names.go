@@ -65,6 +65,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.AlpmDBEntry{}, "alpm-db-entry", "AlpmMetadata"),
 	jsonNames(pkg.ApkDBEntry{}, "apk-db-entry", "ApkMetadata"),
 	jsonNames(pkg.BinarySignature{}, "binary-signature", "BinaryMetadata"),
+	jsonNames(pkg.BitnamiSBOMEntry{}, "bitnami-sbom-entry"),
 	jsonNames(pkg.CocoaPodfileLockEntry{}, "cocoa-podfile-lock-entry", "CocoapodsMetadataType"),
 	jsonNames(pkg.ConanV1LockEntry{}, "c-conan-lock-entry", "ConanLockMetadataType"),
 	jsonNames(pkg.ConanV2LockEntry{}, "c-conan-lock-v2-entry"),
@@ -74,9 +75,11 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.DartPubspecEntry{}, "dart-pubspec-entry"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
+	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
 	jsonNames(pkg.DpkgDBEntry{}, "dpkg-db-entry", "DpkgMetadata"),
 	jsonNames(pkg.ELFBinaryPackageNoteJSONPayload{}, "elf-binary-package-note-json-payload"),
 	jsonNames(pkg.RubyGemspec{}, "ruby-gemspec", "GemMetadata"),
+	jsonNames(pkg.GitHubActionsUseStatement{}, "github-actions-use-statement"),
 	jsonNames(pkg.GolangBinaryBuildinfoEntry{}, "go-module-buildinfo-entry", "GolangBinMetadata", "GolangMetadata"),
 	jsonNames(pkg.GolangModuleEntry{}, "go-module-entry", "GolangModMetadata"),
 	jsonNames(pkg.HackageStackYamlLockEntry{}, "haskell-hackage-stack-lock-entry", "HackageMetadataType"),
@@ -94,6 +97,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),
+	jsonNames(pkg.PhpPearEntry{}, "php-pear-entry"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
 	jsonNames(pkg.PythonPackage{}, "python-package", "PythonPackageMetadata"),
 	jsonNames(pkg.PythonPipfileLockEntry{}, "python-pipfile-lock-entry", "PythonPipfileLockMetadata"),
@@ -109,7 +113,10 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.RustCargoLockEntry{}, "rust-cargo-lock-entry", "RustCargoPackageMetadata"),
 	jsonNamesWithoutLookup(pkg.RustBinaryAuditEntry{}, "rust-cargo-audit-entry", "RustCargoPackageMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
+	jsonNames(pkg.HomebrewFormula{}, "homebrew-formula"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
+	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
+	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

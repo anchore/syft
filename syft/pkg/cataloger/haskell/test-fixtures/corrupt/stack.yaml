@@ -1,0 +1,6 @@
+flag
+extra-package-dbs: []
+packa@sha256:fbcf49ecfc3d4da53e797fd0275264cba776ffa324ee223e2a3f4ec2d2c9c4a6,2165
+  - stm-2.5.0.2@sha256:e4dc6473faaa75fbd7eccab4e3ee1d651d75bb0e49946ef0b8b751ccde771a55,2314
+ghc-options:
+  "$everything": -haddock

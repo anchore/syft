@@ -20,6 +20,7 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 			Type:      pkg.GithubActionPkg,
 			Locations: fixtureLocationSet,
 			PURL:      "pkg:github/actions/setup-go@v4",
+			Metadata:  pkg.GitHubActionsUseStatement{Value: "actions/setup-go@v4"},
 		},
 		{
 			Name:      "actions/cache",
@@ -27,9 +28,17 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 			Type:      pkg.GithubActionPkg,
 			Locations: fixtureLocationSet,
 			PURL:      "pkg:github/actions/cache@v3",
+			Metadata:  pkg.GitHubActionsUseStatement{Value: "actions/cache@v3"},
 		},
 	}
 
 	var expectedRelationships []artifact.Relationship
 	pkgtest.TestFileParser(t, fixture, parseCompositeActionForActionUsage, expected, expectedRelationships)
+}
+
+func Test_corruptCompositeAction(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/corrupt/composite-action.yaml").
+		WithError().
+		TestParser(t, parseCompositeActionForActionUsage)
 }

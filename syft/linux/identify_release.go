@@ -171,18 +171,36 @@ func parseSystemReleaseCPE(contents string) (*Release, error) {
 }
 
 // example: "CentOS release 6.10 (Final)"
-var redhatReleaseMatcher = regexp.MustCompile(`(.*?)\srelease\s(\d\.\d+)`)
+var redhatReleaseMatcher = regexp.MustCompile(`(?P<name>.*?)\srelease\s(?P<version>(?P<versionid>\d\.\d+).*)`)
 
 // parseRedhatRelease is a fallback parsing method for determining distro information in older redhat versions
 func parseRedhatRelease(contents string) (*Release, error) {
-	matches := redhatReleaseMatcher.FindAllStringSubmatch(contents, -1)
-	for _, match := range matches {
-		if len(match) < 3 {
-			continue
-		}
-		return simpleRelease(match[1], strings.ToLower(match[1]), match[2], ""), nil
+	contents = strings.TrimSpace(contents)
+	matches := internal.MatchNamedCaptureGroups(redhatReleaseMatcher, contents)
+	name := matches["name"]
+	version := matches["version"]
+	versionID := matches["versionid"]
+	if name == "" || versionID == "" {
+		return nil, nil
 	}
-	return nil, nil
+
+	id := strings.ToLower(name)
+	switch {
+	case strings.HasPrefix(id, "red hat enterprise linux"):
+		id = "rhel"
+	case strings.HasPrefix(id, "centos"):
+		// ignore the parenthetical version information
+		version = versionID
+	}
+
+	return &Release{
+		PrettyName: contents,
+		Name:       name,
+		ID:         id,
+		IDLike:     []string{id},
+		Version:    version,
+		VersionID:  versionID,
+	}, nil
 }
 
 func simpleRelease(prettyName, name, version, cpe string) *Release {

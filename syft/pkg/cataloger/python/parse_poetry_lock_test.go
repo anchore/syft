@@ -81,3 +81,10 @@ func TestParsePoetryLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parsePoetryLock, expectedPkgs, expectedRelationships)
 }
+
+func Test_corruptPoetryLock(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromFile(t, "test-fixtures/glob-paths/src/poetry.lock").
+		WithError().
+		TestParser(t, parsePoetryLock)
+}

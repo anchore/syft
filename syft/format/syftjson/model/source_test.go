@@ -23,6 +23,15 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		wantErr  require.ErrorAssertionFunc
 	}{
 		{
+			name: "empty",
+			input: []byte(`{
+				"id": "",
+				"type": "",
+				"metadata": null
+			}`),
+			expected: &Source{},
+		},
+		{
 			name: "directory",
 			input: []byte(`{
 				"id": "foobar",
