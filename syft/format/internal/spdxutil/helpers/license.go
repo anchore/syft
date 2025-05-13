@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"github.com/anchore/syft/internal/spdxlicense"
 	"strings"
 
 	"github.com/spdx/tools-golang/spdx"
@@ -71,7 +72,7 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense, otherL
 		candidate := createSPDXLicense(l)
 
 		// only add an OtherLicense if the raw license didn't present a valid SPDX license expression
-		if l.SPDXExpression == "" && strings.Contains(candidate.ID, "LicenseRef-") {
+		if l.SPDXExpression == "" && strings.Contains(candidate.ID, spdxlicense.LicenseRefPrefix) {
 			otherLicenses = append(otherLicenses, spdx.OtherLicense{
 				LicenseIdentifier: candidate.ID,
 				ExtractedText:     candidate.FullText,

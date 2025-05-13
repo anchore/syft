@@ -176,3 +176,55 @@ func Test_joinLicenses(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        pkg.License
+		expectedID   string
+		expectedName string
+		expectedText string
+	}{
+		{
+			name: "SPDX expression used as ID",
+			input: pkg.License{
+				SPDXExpression: "MIT",
+				Value:          "MIT",
+				Contents:       "",
+			},
+			expectedID:   "MIT",
+			expectedName: "",
+			expectedText: "",
+		},
+		{
+			name: "LicenseRef with contents",
+			input: pkg.License{
+				Value:    "sha256:123abc",
+				Contents: "license contents here",
+			},
+			expectedID:   "LicenseRef-123abc",
+			expectedName: "sha256:123abc",
+			expectedText: "license contents here",
+		},
+		{
+			name: "LicenseRef without contents",
+			input: pkg.License{
+				Value:    "custom-license",
+				Contents: "",
+			},
+			expectedID:   "LicenseRef-custom-license",
+			expectedName: "custom-license",
+			expectedText: "UNKNOWN",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			license := createSPDXLicense(tt.input)
+
+			assert.Equal(t, tt.expectedID, license.ID)
+			assert.Equal(t, tt.expectedName, license.LicenseName)
+			assert.Equal(t, tt.expectedText, license.FullText)
+		})
+	}
+}
