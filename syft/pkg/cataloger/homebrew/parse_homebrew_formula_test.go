@@ -16,7 +16,7 @@ func Test_ParseHomebrewPackage(t *testing.T) {
 		expected pkg.Package
 	}{
 		{
-			name:    "syft tap",
+			name:    "syft example",
 			fixture: "test-fixtures/formulas/syft/1.23.1/.brew/syft.rb",
 			expected: pkg.Package{
 				Name:    "syft",
@@ -31,6 +31,23 @@ func Test_ParseHomebrewPackage(t *testing.T) {
 				Metadata: pkg.HomebrewFormula{
 					Homepage:    "https://github.com/anchore/syft",
 					Description: "A tool that generates a Software Bill Of Materials (SBOM) from container images and filesystems",
+				},
+			},
+		},
+		{
+			name:    "crazy example",
+			fixture: "test-fixtures/formulas/crazy/1.0.0/.brew/crazy.rb",
+			expected: pkg.Package{
+				Name:    "crazy",
+				Version: "1.0.0",
+				Type:    pkg.HomebrewPkg,
+				Locations: file.NewLocationSet(
+					file.NewLocation("test-fixtures/formulas/crazy/1.0.0/.brew/crazy.rb").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				),
+				FoundBy: "homebrew-cataloger",
+				PURL:    "pkg:brew/crazy@1.0.0",
+				Metadata: pkg.HomebrewFormula{
+					Homepage: "https://www.example.com",
 				},
 			},
 		},
@@ -81,6 +98,64 @@ func TestGetTapFromPath(t *testing.T) {
 			result := getTapFromPath(tt.path)
 			if result != tt.expected {
 				t.Errorf("getTapFromPath(%q) = %q, want %q", tt.path, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGetNameAndVersionFromPath(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		expectedName string
+		expectedVer  string
+	}{
+		{
+			name:         "formula path",
+			path:         "/opt/homebrew/Cellar/foo/1.0.0/.brew/foo.rb",
+			expectedName: "foo",
+			expectedVer:  "1.0.0",
+		},
+		{
+			name:         "formula path with different version",
+			path:         "/opt/homebrew/Cellar/bar/2.3.4/.brew/bar.rb",
+			expectedName: "bar",
+			expectedVer:  "2.3.4",
+		},
+		{
+			name:         "path without .brew directory",
+			path:         "/opt/homebrew/Formula/baz.rb",
+			expectedName: "baz",
+			expectedVer:  "",
+		},
+		{
+			name:         "path with file extension different than filename",
+			path:         "/opt/homebrew/Cellar/qux-tool/5.0.1/.brew/qux.rb",
+			expectedName: "qux-tool",
+			expectedVer:  "5.0.1",
+		},
+		{
+			name:         "empty path",
+			path:         "",
+			expectedName: "",
+			expectedVer:  "",
+		},
+		{
+			name:         "path with no extension",
+			path:         "/opt/homebrew/Formula/quux",
+			expectedName: "quux",
+			expectedVer:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			name, ver := getNameAndVersionFromPath(tt.path)
+			if name != tt.expectedName {
+				t.Errorf("getNameAndVersionFromPath(%q) name = %q, want %q", tt.path, name, tt.expectedName)
+			}
+			if ver != tt.expectedVer {
+				t.Errorf("getNameAndVersionFromPath(%q) version = %q, want %q", tt.path, ver, tt.expectedVer)
 			}
 		})
 	}

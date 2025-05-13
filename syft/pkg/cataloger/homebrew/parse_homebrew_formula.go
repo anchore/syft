@@ -42,11 +42,16 @@ func parseHomebrewFormula(_ context.Context, _ file.Resolver, _ *generic.Environ
 }
 
 func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, error) {
-	pd := &parsedHomebrewData{}
+	pd := parsedHomebrewData{}
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
+		if strings.Contains(line, "class ") && strings.Contains(line, " < Formula") {
+			// this is the start of the class declaration, ignore anything before this
+			pd = parsedHomebrewData{}
+			continue
+		}
 
 		switch {
 		case strings.HasPrefix(line, "desc "):
@@ -69,50 +74,54 @@ func parseFormulaFile(reader file.LocationReadCloser) (*parsedHomebrewData, erro
 	}
 
 	if pd.Name != "" && pd.Version != "" {
-		return pd, nil
+		return &pd, nil
 	}
 
-	pathParts := strings.Split(reader.RealPath, "/")
-	var pkgName, pkgVersion string
-	for i, part := range pathParts {
-		if part == "Cellar" && i+2 < len(pathParts) {
-			pkgName = pathParts[i+1]
-			pkgVersion = pathParts[i+2]
+	pd.Name, pd.Version = getNameAndVersionFromPath(reader.RealPath)
+
+	return &pd, nil
+}
+
+func getNameAndVersionFromPath(p string) (string, string) {
+	if p == "" {
+		return "", ""
+	}
+
+	pathParts := strings.Split(p, "/")
+
+	// extract from a formula path...
+	// e.g. /opt/homebrew/Cellar/foo/1.0.0/.brew/foo.rb
+	var name, ver string
+	for i := len(pathParts) - 1; i >= 0; i-- {
+		if pathParts[i] == ".brew" && i-2 >= 0 {
+			name = pathParts[i-2]
+			ver = pathParts[i-1]
 			break
 		}
 	}
 
-	if pd.Name == "" {
-		if pkgName != "" {
-			pd.Name = pkgName
-		} else if strings.HasSuffix(reader.RealPath, ".rb") {
-			// get it from the filename
-			// e.g. foo.rb
-			pd.Name = strings.TrimSuffix(path.Base(reader.RealPath), ".rb")
-		}
+	if name == "" {
+		// get it from the filename
+		name = strings.TrimSuffix(path.Base(p), ".rb")
 	}
 
-	if pd.Version == "" {
-		pd.Version = pkgVersion
-	}
-
-	return pd, nil
+	return name, ver
 }
 
 func getTapFromPath(path string) string {
 	// get testorg/sometap from opt/homebrew/Library/Taps/testorg/sometap/Formula/bar.rb
 	// key off of Library/Taps/ as the path just before the org/tap name
 
-	paths := strings.Split(path, "Library/Taps")
+	paths := strings.Split(path, "Library/Taps/")
 	if len(paths) < 2 {
 		return ""
 	}
 
 	paths = strings.Split(paths[1], "/")
-	if len(paths) < 3 {
+	if len(paths) < 2 {
 		return ""
 	}
-	return strings.Join(paths[1:3], "/")
+	return strings.Join(paths[0:2], "/")
 }
 
 func getQuotedValue(s string) string {
