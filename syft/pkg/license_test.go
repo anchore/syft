@@ -296,6 +296,17 @@ func TestLicenseConstructors(t *testing.T) {
 				URLs:  []string{"http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt"},
 			},
 		},
+		{
+			name: "License URLs without value",
+			input: input{
+				value: "",
+				urls:  []string{"http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt"},
+			},
+			expected: License{
+				Type: license.Declared,
+				URLs: []string{"http://user-agent-utils.googlecode.com/svn/trunk/UserAgentUtils/LICENSE.txt"},
+			},
+		},
 	}
 
 	for _, test := range tests {

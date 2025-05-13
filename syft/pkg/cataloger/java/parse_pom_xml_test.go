@@ -247,6 +247,11 @@ func Test_parsePomXMLProject(t *testing.T) {
 					Type:           license.Declared,
 					Locations:      file.NewLocationSet(jarLocation),
 				},
+				{
+					Type:      license.Declared,
+					URLs:      []string{"https://opensource.org/license/unlicense/"},
+					Locations: file.NewLocationSet(jarLocation),
+				},
 			},
 		},
 	}

@@ -365,8 +365,11 @@ func toPkgLicenses(ctx context.Context, location *file.Location, licenses []mave
 		if license.URL != nil {
 			url = *license.URL
 		}
-		// pkg licenses cannot be made with only URL
-		if name == "" {
+		// note: it is possible to:
+		// - have a license without a URL
+		// - have license and a URL
+		// - have a URL without a license (this is weird, but can happen)
+		if name == "" && url == "" {
 			continue
 		}
 		out = append(out, pkg.NewLicenseFromFieldsWithContext(ctx, name, url, location))

@@ -39,7 +39,7 @@ type License struct {
 	Value          string
 	Type           license.Type
 	Contents       string           `hash:"ignore"` // we want to ignore the contents here so we can drop contents in the post-processing step
-	URLs           []string         `hash:"ignore"`
+	URLs           []string         `hash:"ignore"` // TODO: there is such thing as a url-only license, but we aren't hashing on this, which means overwriting could occur in the license set
 	Locations      file.LocationSet `hash:"ignore"`
 }
 
@@ -141,7 +141,7 @@ func NewLicenseFromFieldsWithContext(ctx context.Context, value, url string, loc
 }
 
 func (s License) Empty() bool {
-	return s.Value == "" && s.SPDXExpression == "" && s.Contents == ""
+	return s.Value == "" && s.SPDXExpression == "" && s.Contents == "" && len(s.URLs) == 0
 }
 
 // Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields
@@ -197,7 +197,13 @@ func newLicenseBuilder() *licenseBuilder {
 }
 
 func (b *licenseBuilder) WithValues(expr ...string) *licenseBuilder {
-	b.values = append(b.values, expr...)
+	for _, v := range expr {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		b.values = append(b.values, v)
+	}
 	return b
 }
 
@@ -285,6 +291,15 @@ func (b *licenseBuilder) Build(ctx context.Context) LicenseSet {
 	// we have some readers (with no values); let's try to turn into licenses if we can
 	for _, content := range b.contents {
 		set.Add(b.buildFromContents(ctx, content)...)
+	}
+
+	if set.Empty() && len(b.urls) > 0 {
+		// if we have no values or contents, but we do have URLs, let's make a license with the URLs
+		set.Add(License{
+			Type:      b.tp,
+			URLs:      b.urls,
+			Locations: locations,
+		})
 	}
 
 	return set
