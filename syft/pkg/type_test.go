@@ -147,6 +147,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))
 	expectedTypes.Remove(string(WordpressPluginPkg))
+	expectedTypes.Remove(string(HomebrewPkg))
 	expectedTypes.Remove(string(TerraformPkg))
 	expectedTypes.Remove(string(GraalVMNativeImagePkg))
 	expectedTypes.Remove(string(PhpPeclPkg)) // we should always consider this a pear package

@@ -502,6 +502,13 @@ var commonTestCases = []testCase{
 		},
 	},
 	{
+		name:    "find homebrew",
+		pkgType: pkg.HomebrewPkg,
+		pkgInfo: map[string]string{
+			"afflib": "1.2.3",
+		},
+	},
+	{
 		name:        "find php pear/pecl package",
 		pkgType:     pkg.PhpPearPkg,
 		pkgLanguage: pkg.PHP,
