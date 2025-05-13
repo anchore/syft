@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal/spdxlicense"
@@ -179,11 +180,9 @@ func Test_joinLicenses(t *testing.T) {
 
 func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
 	tests := []struct {
-		name         string
-		input        pkg.License
-		expectedID   string
-		expectedName string
-		expectedText string
+		name     string
+		input    pkg.License
+		expected SPDXLicense
 	}{
 		{
 			name: "SPDX expression used as ID",
@@ -192,9 +191,11 @@ func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
 				Value:          "MIT",
 				Contents:       "",
 			},
-			expectedID:   "MIT",
-			expectedName: "",
-			expectedText: "",
+			expected: SPDXLicense{
+				ID:          "MIT",
+				LicenseName: "MIT",
+				FullText:    "NOASSERTION",
+			},
 		},
 		{
 			name: "LicenseRef with contents",
@@ -202,9 +203,11 @@ func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
 				Value:    "sha256:123abc",
 				Contents: "license contents here",
 			},
-			expectedID:   "LicenseRef-123abc",
-			expectedName: "sha256:123abc",
-			expectedText: "license contents here",
+			expected: SPDXLicense{
+				ID:          "LicenseRef-123abc",
+				LicenseName: "sha256:123abc",
+				FullText:    "license contents here",
+			},
 		},
 		{
 			name: "LicenseRef without contents",
@@ -212,19 +215,34 @@ func TestCreateSPDXLicenseAndGenerateLicenseID(t *testing.T) {
 				Value:    "custom-license",
 				Contents: "",
 			},
-			expectedID:   "LicenseRef-custom-license",
-			expectedName: "custom-license",
-			expectedText: "UNKNOWN",
+			expected: SPDXLicense{
+				ID:          "LicenseRef-custom-license",
+				LicenseName: "custom-license",
+				FullText:    "NOASSERTION",
+			},
+		},
+		{
+			name: "URL is passed through",
+			input: pkg.License{
+				SPDXExpression: "MIT",
+				URLs: []string{
+					"https://example.com/license",
+				},
+			},
+			expected: SPDXLicense{
+				ID:       "MIT",
+				FullText: "NOASSERTION",
+				URLs:     []string{"https://example.com/license"},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			license := createSPDXLicense(tt.input)
-
-			assert.Equal(t, tt.expectedID, license.ID)
-			assert.Equal(t, tt.expectedName, license.LicenseName)
-			assert.Equal(t, tt.expectedText, license.FullText)
+			if d := cmp.Diff(tt.expected, license); d != "" {
+				t.Errorf("createSPDXLicense() mismatch (-want +got):\n%s", d)
+			}
 		})
 	}
 }

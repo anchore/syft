@@ -63,7 +63,7 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 		opts:                  opts,
 		localModCacheDir:      localModCacheDir,
 		localVendorDir:        localVendorDir,
-		licenseCache:          cache.GetResolverCachingErrors[[]pkg.License]("golang", "v1"),
+		licenseCache:          cache.GetResolverCachingErrors[[]pkg.License]("golang", "v2"),
 		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
 }

@@ -779,7 +779,7 @@ func Test_OtherLicenses(t *testing.T) {
 				{
 					LicenseIdentifier: "LicenseRef-foobar",
 					LicenseName:       "foobar",
-					ExtractedText:     "UNKNOWN",
+					ExtractedText:     "NOASSERTION",
 				},
 			},
 		},
@@ -794,12 +794,12 @@ func Test_OtherLicenses(t *testing.T) {
 			expected: []spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
-					ExtractedText:     "UNKNOWN",
+					ExtractedText:     "NOASSERTION",
 					LicenseName:       "internal made up license name",
 				},
 				{
 					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
-					ExtractedText:     "UNKNOWN",
+					ExtractedText:     "NOASSERTION",
 					LicenseName:       "new apple license 2.0",
 				},
 			},
@@ -947,7 +947,7 @@ func Test_otherLicenses(t *testing.T) {
 				{
 					LicenseIdentifier: "LicenseRef-non-spdx-license",
 					LicenseName:       "non spdx license",
-					ExtractedText:     "UNKNOWN",
+					ExtractedText:     "NOASSERTION",
 				},
 			},
 		},

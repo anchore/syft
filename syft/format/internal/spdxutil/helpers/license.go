@@ -65,18 +65,23 @@ type SPDXLicense struct {
 	// If the SPDX license is not on the SPDX License List
 	LicenseName string
 	FullText    string // 0..1 (Mandatory, one) if there is a License Identifier assigned (LicenseRef).
+	URLs        []string
 }
 
 func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense, otherLicenses []spdx.OtherLicense) {
 	for _, l := range raw {
 		candidate := createSPDXLicense(l)
 
-		// only add an OtherLicense if the raw license didn't present a valid SPDX license expression
+		// isCustomLicense determines if the candidate falls under https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/#
+		// of the SPDX spec, where:
+		// - we should not have a complex SPDX expression
+		// - if a single license, it should not be a known license (on the SPDX license list)
 		if l.SPDXExpression == "" && strings.Contains(candidate.ID, spdxlicense.LicenseRefPrefix) {
 			otherLicenses = append(otherLicenses, spdx.OtherLicense{
-				LicenseIdentifier: candidate.ID,
-				ExtractedText:     candidate.FullText,
-				LicenseName:       candidate.LicenseName,
+				LicenseIdentifier:      candidate.ID,
+				ExtractedText:          candidate.FullText,
+				LicenseName:            candidate.LicenseName,
+				LicenseCrossReferences: candidate.URLs,
 			})
 		}
 		switch l.Type {
@@ -91,22 +96,30 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense, otherL
 }
 
 func createSPDXLicense(l pkg.License) SPDXLicense {
-	var candidate SPDXLicense
-	candidate.ID = generateLicenseID(l)
-	// we have consumed a LicenseRef from the metadata of some package; we should encode all the info we have
-	if strings.Contains(candidate.ID, "LicenseRef-") {
-		candidate.LicenseName = l.Value
-		// we need to populate this field in the spdx document if we have a license ref
-		// 0..1 (Mandatory, one) if there is a License Identifier assigned (LicenseRef).
-		candidate.FullText = "UNKNOWN"
-		// TODO: does this need to be configured with the new SBOMBuilder contents switch?
-		if l.Contents != "" {
-			candidate.FullText = l.Contents
-		}
+	// source: https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/#102-extracted-text-field
+	// we need to populate this field in the spdx document if we have a license ref
+	// 0..1 (Mandatory, one) if there is a License Identifier assigned (LicenseRef).
+	ft := NOASSERTION
+	if l.Contents != "" {
+		ft = l.Contents
 	}
-	return candidate
+
+	var urls []string
+	if len(l.URLs) > 0 {
+		// only use an allocated slice if we have any URLs, otherwise we want omitempty
+		// to handle removing the field if there are no URLs
+		urls = l.URLs
+	}
+
+	return SPDXLicense{
+		ID:          generateLicenseID(l),
+		LicenseName: l.Value,
+		FullText:    ft,
+		URLs:        urls,
+	}
 }
 
+// generateLicenseID generates a license ID for the given license, which is either the license value or the SPDX expression.
 func generateLicenseID(l pkg.License) string {
 	if l.SPDXExpression != "" {
 		return l.SPDXExpression
