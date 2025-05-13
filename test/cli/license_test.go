@@ -31,11 +31,11 @@ func Test_Licenses(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
-		// IncludeContent
+		// use new license content configuration
 		{
-			name: "licenses with content works without deprecated LICENSE_INCLUDE_UNKNOWN_LICENSE_CONTENT",
+			name: "licenses with content works with new CONTENT configuration",
 			args: []string{"scan", "-o", "json", testImage, "--from", "docker-archive"},
-			env:  map[string]string{"SYFT_FORMAT_PRETTY": "true", "SYFT_LICENSE_INCLUDE_LICENSE_CONTENT": "unknown"},
+			env:  map[string]string{"SYFT_FORMAT_PRETTY": "true", "SYFT_LICENSE_CONTENT": "unknown"},
 			assertions: []traitAssertion{
 				assertJsonReport,
 				assertUnknownLicenseContent(true),
