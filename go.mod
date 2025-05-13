@@ -1,6 +1,6 @@
 module github.com/anchore/syft
 
-go 1.24.1
+go 1.24.3
 
 require (
 	github.com/BurntSushi/toml v1.5.0

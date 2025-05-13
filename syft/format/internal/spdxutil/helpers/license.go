@@ -1,11 +1,11 @@
 package helpers
 
 import (
-	"github.com/anchore/syft/internal/spdxlicense"
 	"strings"
 
 	"github.com/spdx/tools-golang/spdx"
 
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
