@@ -1072,20 +1072,6 @@
       },
       "type": "object"
     },
-    "HomebrewFormula": {
-      "properties": {
-        "tap": {
-          "type": "string"
-        },
-        "homepage": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "IDLikes": {
       "items": {
         "type": "string"
@@ -1894,9 +1880,6 @@
               "$ref": "#/$defs/HaskellHackageStackLockEntry"
             },
             {
-              "$ref": "#/$defs/HomebrewFormula"
-            },
-            {
               "$ref": "#/$defs/JavaArchive"
             },
             {
@@ -2282,6 +2265,9 @@
       "properties": {
         "installedSize": {
           "type": "integer"
+        },
+        "licenses": {
+          "type": "string"
         },
         "files": {
           "items": {

@@ -2,6 +2,7 @@ package cyclonedxjson
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,6 +44,7 @@ func TestDecoder_Decode(t *testing.T) {
 		t.Run(test.file, func(t *testing.T) {
 			reader, err := os.Open(filepath.Join("test-fixtures", test.file))
 			require.NoError(t, err)
+			reset := func() { _, err = reader.Seek(0, io.SeekStart); require.NoError(t, err) }
 
 			dec := NewFormatDecoder()
 
@@ -51,6 +53,7 @@ func TestDecoder_Decode(t *testing.T) {
 				assert.Equal(t, sbom.FormatID(""), formatID)
 				assert.Equal(t, "", formatVersion)
 
+				reset()
 				_, decodeID, decodeVersion, err := dec.Decode(reader)
 				require.Error(t, err)
 				assert.Equal(t, sbom.FormatID(""), decodeID)
@@ -61,6 +64,7 @@ func TestDecoder_Decode(t *testing.T) {
 			assert.Equal(t, ID, formatID)
 			assert.NotEmpty(t, formatVersion)
 
+			reset()
 			bom, decodeID, decodeVersion, err := dec.Decode(reader)
 			require.NotNil(t, bom)
 			require.NoError(t, err)

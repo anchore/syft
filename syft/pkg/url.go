@@ -10,6 +10,7 @@ import (
 
 const (
 	PURLQualifierArch   = "arch"
+	PURLQualifierCPES   = "cpes"
 	PURLQualifierDistro = "distro"
 	PURLQualifierEpoch  = "epoch"
 	PURLQualifierVCSURL = "vcs_url"

@@ -2,6 +2,7 @@ package spdxtagvalue
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,6 +56,10 @@ func TestDecoder_Decode(t *testing.T) {
 			}
 			assert.Equal(t, ID, formatID)
 			assert.NotEmpty(t, formatVersion)
+
+			// reset reader
+			_, err = reader.Seek(0, io.SeekStart)
+			require.NoError(t, err)
 
 			bom, decodeID, decodeVersion, err := dec.Decode(reader)
 			require.NotNil(t, bom)

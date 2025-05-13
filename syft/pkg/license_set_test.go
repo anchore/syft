@@ -42,7 +42,7 @@ func TestLicenseSet_Add(t *testing.T) {
 			licenses: []License{
 				NewLicense(""),
 			},
-			want: nil,
+			want: []License{},
 		},
 		{
 			name: "keep multiple licenses sorted",
