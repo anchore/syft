@@ -107,6 +107,11 @@ func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.Path
 			}
 		}
 
+		// we want to know if the user wants to preserve license content or not in the final SBOM
+		// note: this looks incorrect, but pkg.License.Content is NOT used to compute the Package ID
+		// this does NOT change the reproducibility of the Package ID
+		applyLicenseContentRules(&p, cfg.LicenseConfig)
+
 		pkgs[i] = p
 	}
 	return pkgs, relationships
@@ -261,4 +266,30 @@ func packageFileOwnershipRelationships(p pkg.Package, resolver file.PathResolver
 		})
 	}
 	return relationships, nil
+}
+
+func applyLicenseContentRules(p *pkg.Package, cfg cataloging.LicenseConfig) {
+	if p.Licenses.Empty() {
+		return
+	}
+
+	licenses := p.Licenses.ToSlice()
+	for i := range licenses {
+		l := &licenses[i]
+		switch cfg.IncludeContent {
+		case cataloging.LicenseContentIncludeUnknown:
+			// we don't have an SPDX expression, which means we didn't find an SPDX license
+			// include the unknown licenses content in the final SBOM
+			if l.SPDXExpression != "" {
+				licenses[i].Contents = ""
+			}
+		case cataloging.LicenseContentExcludeAll:
+			// clear it all out
+			licenses[i].Contents = ""
+		case cataloging.LicenseContentIncludeAll:
+			// always include the content
+		}
+	}
+
+	p.Licenses = pkg.NewLicenseSet(licenses...)
 }

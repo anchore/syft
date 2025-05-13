@@ -41,7 +41,7 @@ type parsedData struct {
 }
 
 // parseAlpmDB parses the arch linux pacman database flat-files and returns the packages and relationships found within.
-func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseAlpmDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var errs error
 
 	data, err := parseAlpmDBEntry(reader)
@@ -78,6 +78,7 @@ func parseAlpmDB(_ context.Context, resolver file.Resolver, env *generic.Environ
 
 	return []pkg.Package{
 		newPackage(
+			ctx,
 			data,
 			env.LinuxRelease,
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),

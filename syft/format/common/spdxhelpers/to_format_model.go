@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"path"
-	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -15,7 +14,6 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
-	internallicenses "github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/relationship"
@@ -50,7 +48,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	name, namespace := helpers.DocumentNameAndNamespace(s.Source, s.Descriptor)
 
 	rels := relationship.NewIndex(s.Relationships...)
-	packages := toPackages(rels, s.Artifacts.Packages, s)
+	packages, otherLicenses := toPackages(rels, s.Artifacts.Packages, s)
 
 	allRelationships := toRelationships(rels.All())
 
@@ -156,7 +154,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		Packages:      packages,
 		Files:         toFiles(s),
 		Relationships: allRelationships,
-		OtherLicenses: toOtherLicenses(s.Artifacts.Packages),
+		OtherLicenses: convertOtherLicense(otherLicenses),
 	}
 }
 
@@ -319,16 +317,18 @@ func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)
 //
 //nolint:funlen
-func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package) {
+func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBOM) (results []*spdx.Package, otherLicenses []spdx.OtherLicense) {
+	otherLicenseSet := helpers.NewSPDXOtherLicenseSet()
 	for _, p := range catalog.Sorted() {
-		// name should be guaranteed to be unique, but semantically useful and stable
+		// name should be guaranteed to be unique but semantically useful and stable
 		id := toSPDXID(p)
 
 		// If the Concluded License is not the same as the Declared License, a written explanation should be provided
 		// in the Comments on License field (section 7.16). With respect to NOASSERTION, a written explanation in
 		// the Comments on License field (section 7.16) is preferred.
 		// extract these correctly to the spdx license format
-		concluded, declared := helpers.License(p)
+		concluded, declared, ol := helpers.License(p)
+		otherLicenseSet.Add(ol...)
 
 		// two ways to get filesAnalyzed == true:
 		// 1. syft has generated a sha1 digest for the package itself - usually in the java cataloger
@@ -487,7 +487,7 @@ func toPackages(rels *relationship.Index, catalog *pkg.Collection, sbom sbom.SBO
 			PackageAttributionTexts: nil,
 		})
 	}
-	return results
+	return results, otherLicenseSet.ToSlice()
 }
 
 func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
@@ -740,81 +740,14 @@ func toFileTypes(metadata *file.Metadata) (ty []string) {
 	return ty
 }
 
-// other licenses are for licenses from the pkg.Package that do not have a valid SPDX Expression
-// OR are an expression that is a single `License-Ref-*`
-func toOtherLicenses(catalog *pkg.Collection) []*spdx.OtherLicense {
-	licenses := map[string]helpers.SPDXLicense{}
-
-	for p := range catalog.Enumerate() {
-		declaredLicenses, concludedLicenses := helpers.ParseLicenses(p.Licenses.ToSlice())
-		for _, l := range declaredLicenses {
-			if l.Value != "" {
-				licenses[l.ID] = l
-			}
-			if l.ID != "" && isLicenseRef(l.ID) {
-				licenses[l.ID] = l
-			}
-		}
-		for _, l := range concludedLicenses {
-			if l.Value != "" {
-				licenses[l.ID] = l
-			}
-			if l.ID != "" && isLicenseRef(l.ID) {
-				licenses[l.ID] = l
-			}
-		}
-	}
-
-	var result []*spdx.OtherLicense
-
-	var ids []string
-	for licenseID := range licenses {
-		ids = append(ids, licenseID)
-	}
-
-	slices.Sort(ids)
-	for _, id := range ids {
-		license := licenses[id]
-		value := license.Value
-		fullText := license.FullText
-		// handle cases where LicenseRef needs to be included in hasExtractedLicensingInfos
-		if license.Value == "" {
-			value, _ = strings.CutPrefix(license.ID, "LicenseRef-")
-		}
-		other := &spdx.OtherLicense{
-			LicenseIdentifier: license.ID,
-		}
-		if fullText != "" {
-			other.ExtractedText = fullText
-		} else {
-			other.ExtractedText = value
-		}
-		customPrefix := spdxlicense.LicenseRefPrefix + helpers.SanitizeElementID(internallicenses.UnknownLicensePrefix)
-		if strings.HasPrefix(license.ID, customPrefix) {
-			other.LicenseName = strings.TrimPrefix(license.ID, customPrefix)
-			other.LicenseComment = strings.Trim(internallicenses.UnknownLicensePrefix, "-_")
-		}
-		result = append(result, other)
-	}
-	return result
-}
-
-var licenseRefRegEx = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9_-]+$`)
-
-// isSingularLicenseRef checks if the string is a singular LicenseRef-* identifier
-func isLicenseRef(s string) bool {
-	// Match the input string against the regex
-	return licenseRefRegEx.MatchString(s)
-}
-
 // TODO: handle SPDX excludes file case
 // f file is an "excludes" file, skip it /* exclude SPDX analysis file(s) */
 // see: https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
 // the above link contains the SPDX algorithm for a package verification code
 func newPackageVerificationCode(rels *relationship.Index, p pkg.Package, sbom sbom.SBOM) *spdx.PackageVerificationCode {
-	// key off of the contains relationship;
-	// spdx validator will fail if a package claims to contain a file but no sha1 provided
-	// if a sha1 for a file is provided then the validator will fail if the package does not have
+	// key off of the spdx contains relationship;
+	// spdx validator will fail if a package claims to contain a file, but no sha1 provided
+	// if a sha1 for a file is provided, then the validator will fail if the package does not have
 	// a package verification code
 	coordinates := rels.Coordinates(p, artifact.ContainsRelationship)
 	var digests []file.Digest
@@ -886,4 +819,16 @@ func convertAbsoluteToRelative(absPath string) (string, error) {
 	}
 
 	return relPath, nil
+}
+
+func convertOtherLicense(otherLicenses []spdx.OtherLicense) []*spdx.OtherLicense {
+	if len(otherLicenses) == 0 {
+		return nil
+	}
+
+	result := make([]*spdx.OtherLicense, 0, len(otherLicenses))
+	for i := range otherLicenses {
+		result = append(result, &otherLicenses[i])
+	}
+	return result
 }

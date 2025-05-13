@@ -31,5 +31,5 @@ func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 			newGoBinaryCataloger(opts).parseGoBinary,
 			mimetype.ExecutableMIMETypeSet.List()...,
 		).
-		WithProcessors(stdlibProcessor)
+		WithResolvingProcessors(stdlibProcessor)
 }

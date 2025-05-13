@@ -24,7 +24,7 @@ var (
 )
 
 // parses individual CONTENTS files from the portage flat-file store (e.g. /var/db/pkg/*/*/CONTENTS).
-func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePortageContents(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	cpvMatch := cpvRe.FindStringSubmatch(reader.RealPath)
 	if cpvMatch == nil {
 		return nil, nil, fmt.Errorf("failed to match package and version in %s", reader.RealPath)
@@ -43,7 +43,7 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 
 	locations := file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
-	licenses, licenseLocations := addLicenses(resolver, reader.Location, &m)
+	licenses, licenseLocations := addLicenses(ctx, resolver, reader.Location, &m)
 	locations.Add(licenseLocations...)
 	locations.Add(addSize(resolver, reader.Location, &m)...)
 	addFiles(resolver, reader.Location, &m)
@@ -57,7 +57,6 @@ func parsePortageContents(_ context.Context, resolver file.Resolver, _ *generic.
 		Type:      pkg.PortagePkg,
 		Metadata:  m,
 	}
-
 	p.SetID()
 
 	return []pkg.Package{p}, nil, nil
@@ -89,7 +88,7 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 	}
 }
 
-func addLicenses(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
+func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
 	parentPath := filepath.Dir(dbLocation.RealPath)
 
 	location := resolver.RelativeFileByPath(dbLocation, path.Join(parentPath, "LICENSE"))
@@ -108,12 +107,8 @@ func addLicenses(resolver file.Resolver, dbLocation file.Location, entry *pkg.Po
 	og, spdxExpression := extractLicenses(resolver, location, licenseReader)
 	entry.Licenses = og
 
-	return pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations(spdxExpression, *location),
-		),
-		[]file.Location{
-			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
-		}
+	return pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, spdxExpression, *location)), []file.Location{
+		location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}
 }
 
 func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) []file.Location {

@@ -17,7 +17,7 @@
     </component>
   </metadata>
   <components>
-    <component bom-ref="72567175418f73f8" type="library">
+    <component bom-ref="2f52f617f1548337" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>

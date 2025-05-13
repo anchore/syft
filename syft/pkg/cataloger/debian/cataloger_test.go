@@ -13,6 +13,7 @@ import (
 )
 
 func TestDpkgCataloger(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		expected []pkg.Package
@@ -25,9 +26,9 @@ func TestDpkgCataloger(t *testing.T) {
 					Version: "1.1.8-3.6",
 					FoundBy: "dpkg-db-cataloger",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("GPL-1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
-						pkg.NewLicenseFromLocations("LGPL-2.1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "LGPL-2.1", file.NewLocation("/usr/share/doc/libpam-runtime/copyright")),
 					),
 					Locations: file.NewLocationSet(
 						file.NewLocation("/var/lib/dpkg/status").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
@@ -100,9 +101,9 @@ func TestDpkgCataloger(t *testing.T) {
 					Version: "3.34.1-3",
 					FoundBy: "dpkg-db-cataloger",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("public-domain", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2+", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
-						pkg.NewLicenseFromLocations("GPL-2", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "public-domain", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2+", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2", file.NewLocation("/usr/share/doc/libsqlite3-0/copyright")),
 					),
 					Locations: file.NewLocationSet(
 						file.NewLocation("/var/lib/dpkg/status.d/libsqlite3-0").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
@@ -226,6 +227,7 @@ func Test_CatalogerRelationships(t *testing.T) {
 }
 
 func TestDpkgArchiveCataloger(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		expected []pkg.Package
@@ -241,7 +243,7 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 						file.NewLocation("/zlib1g.deb"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("Zlib"),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib"),
 					),
 					PURL: "pkg:deb/zlib1g@1%3A1.3.dfsg-3.1ubuntu2.1?arch=amd64&upstream=zlib",
 					Type: pkg.DebPkg,

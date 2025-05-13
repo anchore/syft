@@ -15,11 +15,9 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -169,10 +167,6 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			MainModule:        "github.com/anchore/syft",
 		},
 	}
-
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	licenseScanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
@@ -1074,7 +1068,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			c := newGoBinaryCataloger(*test.cfg)
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
-			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
 			if mainPkg != nil {
 				pkgs = append(pkgs, *mainPkg)
 			}
