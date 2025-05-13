@@ -79,7 +79,7 @@ func NewLicensesFromReadCloserWithContext(ctx context.Context, closer file.Locat
 	//Definition: The license that the auditor or scanning tool concludes applies, based on the actual contents of the files.
 	//Source: Derived from analyzing the source code, license headers, and full license texts in the files.
 	// Given we are scanning the contents of the file, we should use the Concluded License type.
-	return newLicenseBuilder().WithContents(closer).WithType(license.Concluded).Build(ctx).ToSlice()
+	return newLicenseBuilder().WithContents(closer).WithLocations(closer.Location).WithType(license.Concluded).Build(ctx).ToSlice()
 }
 
 func NewLicenseWithContext(ctx context.Context, value string) License {
@@ -184,7 +184,7 @@ func (s License) Merge(l License) (*License, error) {
 
 type licenseBuilder struct {
 	values    []string
-	contents  []file.LocationReadCloser
+	contents  []io.ReadCloser
 	locations []file.Location
 	urls      []string
 	tp        license.Type
@@ -192,8 +192,7 @@ type licenseBuilder struct {
 
 func newLicenseBuilder() *licenseBuilder {
 	return &licenseBuilder{
-		tp:   license.Declared,
-		urls: []string{}, // we need these to be allocated since there is no omitempty for the syftjson model
+		tp: license.Declared,
 	}
 }
 
@@ -228,12 +227,20 @@ func (b *licenseBuilder) WithURLs(urls ...string) *licenseBuilder {
 }
 
 func (b *licenseBuilder) WithLocations(locations ...file.Location) *licenseBuilder {
-	b.locations = append(b.locations, locations...) // all locations will reside with all license values
+	for _, loc := range locations {
+		if loc.Path() != "" {
+			b.locations = append(b.locations, loc)
+		}
+	}
 	return b
 }
 
-func (b *licenseBuilder) WithContents(contents ...file.LocationReadCloser) *licenseBuilder {
-	b.contents = append(b.contents, contents...)
+func (b *licenseBuilder) WithContents(contents ...io.ReadCloser) *licenseBuilder {
+	for _, content := range contents {
+		if content != nil {
+			b.contents = append(b.contents, content)
+		}
+	}
 	return b
 }
 
@@ -283,15 +290,15 @@ func (b *licenseBuilder) Build(ctx context.Context) LicenseSet {
 	return set
 }
 
-func (b *licenseBuilder) buildFromContents(ctx context.Context, contents file.LocationReadCloser) []License {
+func (b *licenseBuilder) buildFromContents(ctx context.Context, contents io.ReadCloser) []License {
 	if !licenses.IsContextLicenseScannerSet(ctx) {
 		// we do not have a scanner; we don't want to create one; we sha256 the content and populate the value
 		internal, err := contentFromReader(contents)
 		if err != nil {
-			log.WithFields("error", err, "path", contents.Path()).Trace("could not read content")
+			log.WithFields("error", err).Trace("could not read content")
 			return nil
 		}
-		return []License{b.licenseFromContentHash(internal, contents.Location)}
+		return []License{b.licenseFromContentHash(internal)}
 	}
 
 	scanner, err := licenses.ContextLicenseScanner(ctx)
@@ -299,35 +306,34 @@ func (b *licenseBuilder) buildFromContents(ctx context.Context, contents file.Lo
 		log.WithFields("error", err).Trace("could not find license scanner")
 		internal, err := contentFromReader(contents)
 		if err != nil {
-			log.WithFields("error", err, "path", contents.Path()).Trace("could not read content")
+			log.WithFields("error", err).Trace("could not read content")
 			return nil
 		}
-		return []License{b.licenseFromContentHash(internal, contents.Location)}
+		return []License{b.licenseFromContentHash(internal)}
 	}
 
 	evidence, content, err := scanner.FindEvidence(ctx, contents)
 	if err != nil {
-		log.WithFields("error", err, "path", contents.Path()).Trace("scanner failed to scan contents at path")
+		log.WithFields("error", err).Trace("scanner failed to scan contents")
 		return nil
 	}
 
 	if len(evidence) > 0 {
 		// we have some ID and offsets to apply to our content; let's make some detailed licenses
-		return b.licensesFromEvidenceAndContent(evidence, content, contents.Location)
+		return b.licensesFromEvidenceAndContent(evidence, content)
 	}
 	// scanner couldn't find anything, but we still have the file contents; sha256 and send it back with value
-	return []License{b.licenseFromContentHash(string(content), contents.Location)}
+	return []License{b.licenseFromContentHash(string(content))}
 }
 
-func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evidence, content []byte, location file.Location) []License {
-	set := file.NewLocationSet(b.locations...)
-	set.Add(location)
+func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evidence, content []byte) []License {
 	ls := make([]License, 0)
 	for _, e := range evidence {
 		// basic license
 		candidate := License{
 			Value:     e.ID,
-			Locations: set,
+			Locations: file.NewLocationSet(b.locations...),
+			Type:      b.tp,
 		}
 		// get content offset
 		if e.Start >= 0 && e.End <= len(content) && e.Start <= e.End {
@@ -338,32 +344,21 @@ func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evid
 			candidate.SPDXExpression = ex
 		}
 
-		// add other builder values that don't change between licenses
-		candidate.Type = b.tp
-		if location.Path() != "" {
-			candidate.Locations = file.NewLocationSet(location)
-		}
 		ls = append(ls, candidate)
 	}
 	return ls
 }
 
-func (b *licenseBuilder) licenseFromContentHash(content string, location file.Location) License {
+func (b *licenseBuilder) licenseFromContentHash(content string) License {
 	hash := sha256HexFromString(content)
 	value := "LicenseRef-sha256:" + hash
 
-	set := file.NewLocationSet(b.locations...)
-	set.Add(location)
-
-	lic := License{
-		Value:    value,
-		Contents: content,
-		Type:     b.tp,
+	return License{
+		Value:     value,
+		Contents:  content,
+		Type:      b.tp,
+		Locations: file.NewLocationSet(b.locations...),
 	}
-	if location.Path() != "" {
-		lic.Locations = set
-	}
-	return lic
 }
 
 func contentFromReader(r io.Reader) (string, error) {

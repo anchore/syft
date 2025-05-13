@@ -250,7 +250,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value: "RandomLicense",
 					// CycloneDX specification doesn't give a field for determining the license type
 					Type: license.Declared,
-					URLs: []string{},
 				},
 			},
 		},
@@ -270,7 +269,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT",
 					SPDXExpression: "MIT",
 					Type:           license.Declared,
-					URLs:           []string{},
 				},
 			},
 		},
@@ -290,7 +288,6 @@ func TestDecodeLicenses(t *testing.T) {
 					Value:          "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					SPDXExpression: "MIT AND GPL-3.0-only WITH Classpath-exception-2.0",
 					Type:           license.Declared,
-					URLs:           []string{},
 				},
 			},
 		},

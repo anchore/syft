@@ -104,18 +104,11 @@ func createSPDXLicense(l pkg.License) SPDXLicense {
 		ft = l.Contents
 	}
 
-	var urls []string
-	if len(l.URLs) > 0 {
-		// only use an allocated slice if we have any URLs, otherwise we want omitempty
-		// to handle removing the field if there are no URLs
-		urls = l.URLs
-	}
-
 	return SPDXLicense{
 		ID:          generateLicenseID(l),
 		LicenseName: l.Value,
 		FullText:    ft,
-		URLs:        urls,
+		URLs:        l.URLs,
 	}
 }
 
