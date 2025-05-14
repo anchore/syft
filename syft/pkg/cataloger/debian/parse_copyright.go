@@ -17,7 +17,7 @@ var (
 	licensePattern                          = regexp.MustCompile(`^License: (?P<license>\S*)`)
 	commonLicensePathPattern                = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
 	licenseFirstSentenceAfterHeadingPattern = regexp.MustCompile(`(?is)^[^\n]+?\n[-]+?\n+(?P<license>.*?\.)`)
-	licenseAgreementHeadingPattern          = regexp.MustCompile(`(?i)^(?P<license>LICENSE AGREEMENT[^\n]*)$`)
+	licenseAgreementHeadingPattern          = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
 )
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
