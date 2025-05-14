@@ -30,15 +30,14 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 
 	content := string(data)
 	lines := strings.Split(content, "\n")
-
 	for _, line := range lines {
-		if value := findLicenseClause(licensePattern, "license", line); value != "" {
+		if value := findLicenseClause(licensePattern, line); value != "" {
 			findings.Add(value)
 		}
-		if value := findLicenseClause(commonLicensePathPattern, "license", line); value != "" {
+		if value := findLicenseClause(commonLicensePathPattern, line); value != "" {
 			findings.Add(value)
 		}
-		if value := findLicenseClause(licenseAgreementHeadingPattern, "license", line); value != "" {
+		if value := findLicenseClause(licenseAgreementHeadingPattern, line); value != "" {
 			findings.Add(value)
 		}
 	}
@@ -46,7 +45,7 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 	// some copyright files have a license declaration after the heading ex:
 	// End User License Agreement\n--------------------------
 	// we want to try and find these multi-line license declarations and make exceptions for them
-	if value := findLicenseClause(licenseFirstSentenceAfterHeadingPattern, "license", content); value != "" {
+	if value := findLicenseClause(licenseFirstSentenceAfterHeadingPattern, content); value != "" {
 		findings.Add(value)
 	}
 
@@ -56,7 +55,8 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 	return results
 }
 
-func findLicenseClause(pattern *regexp.Regexp, valueGroup, line string) string {
+func findLicenseClause(pattern *regexp.Regexp, line string) string {
+	valueGroup := "license"
 	matchesByGroup := internal.MatchNamedCaptureGroups(pattern, line)
 
 	candidate, ok := matchesByGroup[valueGroup]
