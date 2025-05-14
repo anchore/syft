@@ -1096,10 +1096,6 @@ func TestTestGoPkgSymbols(t *testing.T) {
 		).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	licenseScanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-
 	tests := []struct {
 		name          string
 		symbols       []elf.Symbol
@@ -1383,7 +1379,7 @@ func TestTestGoPkgSymbols(t *testing.T) {
 				reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 				require.NoError(t, err)
 
-				mainPkg, pkgs := c.buildGoTestPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.symbols, test.mod.arch, reader)
+				mainPkg, pkgs := c.buildGoTestPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.symbols, test.mod.arch, reader)
 				if mainPkg != nil {
 					pkgs = append(pkgs, *mainPkg)
 				}
