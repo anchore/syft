@@ -132,9 +132,10 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	// try to use the license classifier if parsing the copyright file failed
 	if len(licenseStrs) == 0 {
 		sr, sl := fetchCopyrightContents(resolver, dbLocation, metadata)
-		p.Licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(*sl, sr))...)
+		if sr != nil && sl != nil {
+			p.Licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(*sl, sr))...)
+		}
 	}
-
 }
 
 func mergeFileListing(resolver file.Resolver, dbLocation file.Location, p *pkg.Package) {

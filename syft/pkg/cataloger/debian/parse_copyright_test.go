@@ -39,6 +39,14 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			fixture:  "test-fixtures/copyright/cuda",
 			expected: []string{"NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement"},
 		},
+		{
+			fixture:  "test-fixtures/copyright/dev-kit",
+			expected: []string{"LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS"},
+		},
+		{
+			fixture:  "test-fixtures/copyright/microsoft",
+			expected: []string{"LICENSE AGREEMENT FOR MICROSOFT PRODUCTS"},
+		},
 	}
 
 	for _, test := range tests {
