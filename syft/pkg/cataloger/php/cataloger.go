@@ -29,12 +29,6 @@ func NewPearCataloger() pkg.Cataloger {
 		WithParserByGlobs(parsePear, "**/php/.registry/**/*.reg")
 }
 
-// NewExtensionCataloger returns a new cataloger for PHP C extensions.
-func NewExtensionCataloger() pkg.Cataloger {
-	return generic.NewCataloger("php-extension-cataloger").
-		WithParserByGlobs(parseExtension, "**/php/extensions/**/*.so")
-}
-
 // NewPeclCataloger returns a new cataloger for PHP Pecl metadata. Note: this will also catalog Pear metadata so should
 // not be used in conjunction with the Pear Cataloger.
 // Deprecated: please use NewPearCataloger instead.

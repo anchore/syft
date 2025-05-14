@@ -95,7 +95,7 @@ func evidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
 	}
 }
 
-func fileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
+func FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
 		if !pat.MatchString(context.Location.RealPath) {

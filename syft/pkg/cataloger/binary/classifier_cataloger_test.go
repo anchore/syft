@@ -249,45 +249,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			// TODO: find original binary...
-			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
-			logicalFixture: "php-cli/8.2.1/linux-amd64",
-			expected: pkg.Package{
-				Name:      "php-cli",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-cli@8.2.1",
-				Locations: locations("php"),
-				Metadata:  metadata("php-cli-binary"),
-			},
-		},
-		{
-			// TODO: find original binary...
-			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
-			logicalFixture: "php-fpm/8.2.1/linux-amd64",
-			expected: pkg.Package{
-				Name:      "php-fpm",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-fpm@8.2.1",
-				Locations: locations("php-fpm"),
-				Metadata:  metadata("php-fpm-binary"),
-			},
-		},
-		{
-			// TODO: find original binary...
-			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
-			logicalFixture: "php-apache/8.2.1/linux-amd64",
-			expected: pkg.Package{
-				Name:      "libphp",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php@8.2.1",
-				Locations: locations("libphp.so"),
-				Metadata:  metadata("php-apache-binary"),
-			},
-		},
-		{
 			// TODO: original binary is different than whats in config.yaml
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
 			logicalFixture: "perl/5.12.5/linux-amd64",

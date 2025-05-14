@@ -91,4 +91,15 @@ RUN set -ex; \
 
 FROM busybox:latest
 
+# interpreters + process manager
+COPY --from=builder  /usr/local/sbin/php-fpm       /usr/local/sbin/php-fpm
+COPY --from=builder  /usr/local/bin/php            /usr/local/bin/php
+
+# extensions
 COPY --from=builder  /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+
+# configs
+COPY --from=builder  /usr/local/etc/php-fpm.conf   /usr/local/etc/php-fpm.conf
+COPY --from=builder  /usr/local/etc/php/conf.d     /usr/local/etc/php/conf.d
+COPY --from=builder  /usr/local/etc/php-fpm.d      /usr/local/etc/php-fpm.d
+COPY --from=builder  /usr/local/etc/php-fpm.conf   /usr/local/etc/php-fpm.conf

@@ -16,7 +16,7 @@ func DefaultClassifiers() []Classifier {
 					`^libpython[0-9]+(?:\.[0-9]+)+[a-z]?\.so.*$`,
 					libpythonMatcher),
 				// check for version information in the binary
-				fileNameTemplateVersionMatcher(
+				FileNameTemplateVersionMatcher(
 					`(?:.*/|^)python(?P<version>[0-9]+(?:\.[0-9]+)+)$`,
 					pythonVersionTemplate),
 			),
@@ -216,34 +216,6 @@ func DefaultClassifiers() []Classifier {
 			Package: "perl",
 			PURL:    mustPURL("pkg:generic/perl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "php-cli-binary",
-			FileGlob: "**/php*",
-			EvidenceMatcher: fileNameTemplateVersionMatcher(
-				`(.*/|^)php[0-9]*$`,
-				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-			Package: "php-cli",
-			PURL:    mustPURL("pkg:generic/php-cli@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "php-fpm-binary",
-			FileGlob: "**/php-fpm*",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-			Package: "php-fpm",
-			PURL:    mustPURL("pkg:generic/php-fpm@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "php-apache-binary",
-			FileGlob: "**/libphp*.so",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-			Package: "libphp",
-			PURL:    mustPURL("pkg:generic/php@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "php-composer-binary",
@@ -692,7 +664,7 @@ func DefaultClassifiers() []Classifier {
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
 var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
 
-var libpythonMatcher = fileNameTemplateVersionMatcher(
+var libpythonMatcher = FileNameTemplateVersionMatcher(
 	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.so.*$`,
 	pythonVersionTemplate,
 )
