@@ -208,13 +208,13 @@ func (p interpreterCataloger) getClassifier(realPath string) (string, *binutils.
 	var match string
 	switch name {
 	case "mysqli":
-		match = `mysqlnd (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}`
+		match = `(mysqlnd|mysqli)?\s*\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+API`
 	case "opcache":
-		match = `overflow\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}Zend`
+		match = `(?m)\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`
 	case "zip":
-		match = `\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}Zip`
+		match = `\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+Zip`
 	default:
-		match = fmt.Sprintf(`(?m)(\x00+%s)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}API`, name)
+		match = fmt.Sprintf(`(?m)(\x00+%s)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+API`, name)
 	}
 
 	return name, &binutils.Classifier{

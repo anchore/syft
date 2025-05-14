@@ -1,5 +1,5 @@
 # source https://github.com/nextcloud/docker/blob/master/30/fpm-alpine/Dockerfile#L1
-FROM php:8.3-fpm-alpine3.21 AS builder
+FROM --platform=linux/amd64 php:8.3-fpm-alpine3.21 AS builder
 
 # entrypoint.sh and cron.sh dependencies
 RUN set -ex; \
