@@ -13,7 +13,7 @@ func DefaultLicenseComparer(x, y pkg.License) bool {
 	return cmp.Equal(
 		x, y,
 		cmp.Comparer(DefaultLocationComparer),
-		cmp.Comparer(buildSetComparer[file.Location, file.LocationSet](DefaultLocationComparer)),
+		cmp.Comparer(buildSetComparer[file.Location, file.LocationSet](DefaultLocationComparer, locationSorter)),
 	)
 }
 
@@ -21,6 +21,6 @@ func LicenseComparerWithoutLocationLayer(x, y pkg.License) bool {
 	return cmp.Equal(
 		x, y,
 		cmp.Comparer(LocationComparerWithoutLayer),
-		cmp.Comparer(buildSetComparer[file.Location, file.LocationSet](LocationComparerWithoutLayer)),
+		cmp.Comparer(buildSetComparer[file.Location, file.LocationSet](LocationComparerWithoutLayer, locationSorter)),
 	)
 }

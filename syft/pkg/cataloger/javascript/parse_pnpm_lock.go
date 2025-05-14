@@ -27,7 +27,7 @@ type pnpmLockYaml struct {
 	Packages     map[string]interface{} `json:"packages" yaml:"packages"`
 }
 
-func parsePnpmLock(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	bytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
@@ -66,7 +66,7 @@ func parsePnpmLock(_ context.Context, resolver file.Resolver, _ *generic.Environ
 			continue
 		}
 
-		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, name, version))
+		pkgs = append(pkgs, newPnpmPackage(ctx, resolver, reader.Location, name, version))
 	}
 
 	packageNameRegex := regexp.MustCompile(`^/?([^(]*)(?:\(.*\))*$`)
@@ -90,7 +90,7 @@ func parsePnpmLock(_ context.Context, resolver file.Resolver, _ *generic.Environ
 			continue
 		}
 
-		pkgs = append(pkgs, newPnpmPackage(resolver, reader.Location, name, version))
+		pkgs = append(pkgs, newPnpmPackage(ctx, resolver, reader.Location, name, version))
 	}
 
 	pkg.Sort(pkgs)

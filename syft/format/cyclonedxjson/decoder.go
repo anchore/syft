@@ -40,6 +40,10 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, "", "", fmt.Errorf("unsupported cyclonedx json document version")
 	}
 
+	_, err = reader.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, id, version, fmt.Errorf("unable to seek to start of CycloneDX JSON SBOM: %+v", err)
+	}
 	doc, err := d.decoder.Decode(reader)
 	if err != nil {
 		return nil, id, version, fmt.Errorf("unable to decode cyclonedx json document: %w", err)

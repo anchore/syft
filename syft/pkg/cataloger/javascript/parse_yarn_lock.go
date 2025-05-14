@@ -59,7 +59,7 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	}
 }
 
-func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// in the case we find yarn.lock files in the node_modules directories, skip those
 	// as the whole purpose of the lock file is for the specific dependencies of the project
 	if pathContainsNodeModulesDirectory(reader.Path()) {
@@ -78,7 +78,7 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 		if packageName := findPackageName(line); packageName != "" {
 			// When we find a new package, check if we have unsaved identifiers
 			if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
+				pkgs = append(pkgs, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
@@ -90,7 +90,7 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 			currentPackage = packageName
 			currentVersion = version
 		} else if integrity := findIntegrity(line); integrity != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-			pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, integrity))
+			pkgs = append(pkgs, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, integrity))
 			parsedPackages.Add(currentPackage + "@" + currentVersion)
 
 			// Cleanup to indicate no unsaved identifiers
@@ -103,7 +103,7 @@ func (a genericYarnLockAdapter) parseYarnLock(_ context.Context, resolver file.R
 
 	// check if we have valid unsaved data after end-of-file has reached
 	if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, newYarnLockPackage(a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
+		pkgs = append(pkgs, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
 

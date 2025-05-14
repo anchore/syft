@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -98,7 +99,7 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 
 func newDirectoryCatalog() *pkg.Collection {
 	catalog := pkg.NewCollection()
-
+	ctx := context.TODO()
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
@@ -110,7 +111,7 @@ func newDirectoryCatalog() *pkg.Collection {
 		),
 		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext(ctx, "MIT"),
 		),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",
@@ -149,7 +150,7 @@ func newDirectoryCatalog() *pkg.Collection {
 
 func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 	catalog := pkg.NewCollection()
-
+	ctx := context.TODO()
 	// populate catalog with test data
 	catalog.Add(pkg.Package{
 		Name:    "package-1",
@@ -161,7 +162,7 @@ func newDirectoryCatalogWithAuthorField() *pkg.Collection {
 		),
 		Language: pkg.Python,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext(ctx, "MIT"),
 		),
 		Metadata: pkg.PythonPackage{
 			Name:    "package-1",

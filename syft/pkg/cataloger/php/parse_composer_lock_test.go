@@ -1,6 +1,7 @@
 package php
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestParseComposerFileLock(t *testing.T) {
+	ctx := context.Background()
 	var expectedRelationships []artifact.Relationship
 	fixture := "test-fixtures/composer.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
@@ -20,7 +22,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			PURL:      "pkg:composer/adoy/fastcgi-client@1.0.2",
 			Locations: locations,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			Language: pkg.PHP,
 			Type:     pkg.PhpComposerPkg,
@@ -60,7 +62,7 @@ func TestParseComposerFileLock(t *testing.T) {
 			PURL:      "pkg:composer/alcaeus/mongo-php-adapter@1.1.11",
 			Language:  pkg.PHP,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
 			Type: pkg.PhpComposerPkg,
 			Metadata: pkg.PhpComposerLockEntry{

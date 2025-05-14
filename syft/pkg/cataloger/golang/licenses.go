@@ -26,25 +26,15 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
-
-type goLicense struct {
-	Value          string       `json:"val,omitempty"`
-	SPDXExpression string       `json:"spdx,omitempty"`
-	Type           license.Type `json:"type,omitempty"`
-	URLs           []string     `json:"urls,omitempty"`
-	Locations      []string     `json:"locations,omitempty"`
-	Contents       string       `json:"contents,omitempty"`
-}
 
 type goLicenseResolver struct {
 	catalogerName         string
 	opts                  CatalogerConfig
 	localModCacheDir      fs.FS
 	localVendorDir        fs.FS
-	licenseCache          cache.Resolver[[]goLicense]
+	licenseCache          cache.Resolver[[]pkg.License]
 	lowerLicenseFileNames *strset.Set
 }
 
@@ -60,7 +50,7 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 		if vendorDir == "" {
 			wd, err := os.Getwd()
 			if err != nil {
-				log.Debug("unable to get CWD while resolving the local go vendor dir: %v", err)
+				log.Debugf("unable to get CWD while resolving the local go vendor dir: %v", err)
 			} else {
 				vendorDir = filepath.Join(wd, "vendor")
 			}
@@ -73,7 +63,7 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 		opts:                  opts,
 		localModCacheDir:      localModCacheDir,
 		localVendorDir:        localVendorDir,
-		licenseCache:          cache.GetResolverCachingErrors[[]goLicense]("golang", "v1"),
+		licenseCache:          cache.GetResolverCachingErrors[[]pkg.License]("golang", "v2"),
 		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
 	}
 }
@@ -97,52 +87,52 @@ func remotesForModule(proxies []string, noProxy []string, module string) []strin
 	return proxies
 }
 
-func (c *goLicenseResolver) getLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, moduleName, moduleVersion string) []pkg.License {
+func (c *goLicenseResolver) getLicenses(ctx context.Context, resolver file.Resolver, moduleName, moduleVersion string) []pkg.License {
 	// search the scan target first, ignoring local and remote sources
-	goLicenses, err := c.findLicensesInSource(ctx, scanner, resolver,
+	pkgLicenses, err := c.findLicensesInSource(ctx, resolver,
 		fmt.Sprintf(`**/go/pkg/mod/%s@%s/*`, processCaps(moduleName), moduleVersion),
 	)
 	if err != nil {
 		log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses from source")
 	}
-	if len(goLicenses) > 0 {
-		return toPkgLicenses(goLicenses)
+	if len(pkgLicenses) > 0 {
+		return pkgLicenses
 	}
 
 	// look in the local host mod directory...
 	if c.opts.SearchLocalModCacheLicenses {
-		goLicenses, err = c.getLicensesFromLocal(ctx, scanner, moduleName, moduleVersion)
+		pkgLicenses, err = c.getLicensesFromLocal(ctx, moduleName, moduleVersion)
 		if err != nil {
 			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses local")
 		}
-		if len(goLicenses) > 0 {
-			return toPkgLicenses(goLicenses)
+		if len(pkgLicenses) > 0 {
+			return pkgLicenses
 		}
 	}
 
 	// look in the local vendor directory...
 	if c.opts.SearchLocalVendorLicenses {
-		goLicenses, err = c.getLicensesFromLocalVendor(ctx, scanner, moduleName)
+		pkgLicenses, err = c.getLicensesFromLocalVendor(ctx, moduleName)
 		if err != nil {
 			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Trace("unable to read golang licenses vendor")
 		}
-		if len(goLicenses) > 0 {
-			return toPkgLicenses(goLicenses)
+		if len(pkgLicenses) > 0 {
+			return pkgLicenses
 		}
 	}
 
 	// download from remote sources
 	if c.opts.SearchRemoteLicenses {
-		goLicenses, err = c.getLicensesFromRemote(ctx, scanner, moduleName, moduleVersion)
+		pkgLicenses, err = c.getLicensesFromRemote(ctx, moduleName, moduleVersion)
 		if err != nil {
 			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Debug("unable to read golang licenses remote")
 		}
 	}
 
-	return toPkgLicenses(goLicenses)
+	return pkgLicenses
 }
 
-func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]goLicense, error) {
+func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, moduleName, moduleVersion string) ([]pkg.License, error) {
 	if c.localModCacheDir == nil {
 		return nil, nil
 	}
@@ -158,10 +148,10 @@ func (c *goLicenseResolver) getLicensesFromLocal(ctx context.Context, scanner li
 	// if we're running against a directory on the filesystem, it may not include the
 	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
 	// we use $GOPATH/pkg/mod to avoid leaking information about the user's system
-	return c.findLicensesInFS(ctx, scanner, "file://$GOPATH/pkg/mod/"+subdir+"/", dir)
+	return c.findLicensesInFS(ctx, "file://$GOPATH/pkg/mod/"+subdir+"/", dir)
 }
 
-func (c *goLicenseResolver) getLicensesFromLocalVendor(ctx context.Context, scanner licenses.Scanner, moduleName string) ([]goLicense, error) {
+func (c *goLicenseResolver) getLicensesFromLocalVendor(ctx context.Context, moduleName string) ([]pkg.License, error) {
 	if c.localVendorDir == nil {
 		return nil, nil
 	}
@@ -177,11 +167,11 @@ func (c *goLicenseResolver) getLicensesFromLocalVendor(ctx context.Context, scan
 	// if we're running against a directory on the filesystem, it may not include the
 	// user's homedir / GOPATH, so we defer to using the localModCacheResolver
 	// we use $GOPATH/pkg/mod to avoid leaking information about the user's system
-	return c.findLicensesInFS(ctx, scanner, "file://$GO_VENDOR/"+subdir+"/", dir)
+	return c.findLicensesInFS(ctx, "file://$GO_VENDOR/"+subdir+"/", dir)
 }
 
-func (c *goLicenseResolver) getLicensesFromRemote(ctx context.Context, scanner licenses.Scanner, moduleName, moduleVersion string) ([]goLicense, error) {
-	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]goLicense, error) {
+func (c *goLicenseResolver) getLicensesFromRemote(ctx context.Context, moduleName, moduleVersion string) ([]pkg.License, error) {
+	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]pkg.License, error) {
 		proxies := remotesForModule(c.opts.Proxies, c.opts.NoProxy, moduleName)
 
 		urlPrefix, fsys, err := getModule(proxies, moduleName, moduleVersion)
@@ -189,12 +179,12 @@ func (c *goLicenseResolver) getLicensesFromRemote(ctx context.Context, scanner l
 			return nil, err
 		}
 
-		return c.findLicensesInFS(ctx, scanner, urlPrefix, fsys)
+		return c.findLicensesInFS(ctx, urlPrefix, fsys)
 	})
 }
 
-func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, scanner licenses.Scanner, urlPrefix string, fsys fs.FS) ([]goLicense, error) {
-	var out []goLicense
+func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, urlPrefix string, fsys fs.FS) ([]pkg.License, error) {
+	var out []pkg.License
 	err := fs.WalkDir(fsys, ".", func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			log.Debugf("error reading %s#%s: %v", urlPrefix, filePath, err)
@@ -213,18 +203,13 @@ func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, scanner licens
 			return nil
 		}
 		defer internal.CloseAndLogError(rdr, filePath)
-
-		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
-		if err != nil {
-			log.Debugf("error parsing license file %s: %v", filePath, err)
-			return nil
-		}
+		licenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
 		// since these licenses are found in an external fs.FS, not in the scanned source,
 		// get rid of the locations but keep information about the where the license was found
 		// by prepending the urlPrefix to the internal path for an accurate representation
-		for _, l := range toGoLicenses(parsed) {
+		for _, l := range licenses {
 			l.URLs = []string{urlPrefix + filePath}
-			l.Locations = nil
+			l.Locations = file.NewLocationSet()
 			out = append(out, l)
 		}
 		return nil
@@ -232,15 +217,15 @@ func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, scanner licens
 	return out, err
 }
 
-func (c *goLicenseResolver) findLicensesInSource(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, globMatch string) ([]goLicense, error) {
-	var out []goLicense
+func (c *goLicenseResolver) findLicensesInSource(ctx context.Context, resolver file.Resolver, globMatch string) ([]pkg.License, error) {
+	var out []pkg.License
 	locations, err := resolver.FilesByGlob(globMatch)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, l := range locations {
-		parsed, err := c.parseLicenseFromLocation(ctx, scanner, l, resolver)
+		parsed, err := c.parseLicenseFromLocation(ctx, l, resolver)
 		if err != nil {
 			return nil, err
 		}
@@ -258,8 +243,8 @@ func (c *goLicenseResolver) findLicensesInSource(ctx context.Context, scanner li
 	return out, nil
 }
 
-func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, scanner licenses.Scanner, l file.Location, resolver file.Resolver) ([]goLicense, error) {
-	var out []goLicense
+func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, l file.Location, resolver file.Resolver) ([]pkg.License, error) {
+	var out []pkg.License
 	fileName := path.Base(l.RealPath)
 	if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
 		contents, err := resolver.FileContentsByLocation(l)
@@ -267,25 +252,13 @@ func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, scanne
 			return nil, err
 		}
 		defer internal.CloseAndLogError(contents, l.RealPath)
-		parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(l, contents))
-		if err != nil {
-			return nil, err
-		}
-
-		out = append(out, toGoLicenses(parsed)...)
+		out = pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(l, contents))
 	}
 	return out, nil
 }
 
 func moduleDir(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("%s@%s", processCaps(moduleName), moduleVersion)
-}
-
-func requireCollection[T any](licenses []T) []T {
-	if licenses == nil {
-		return make([]T, 0)
-	}
-	return licenses
 }
 
 var capReplacer = regexp.MustCompile("[A-Z]")
@@ -440,49 +413,3 @@ func (l noLicensesFound) Error() string {
 }
 
 var _ error = (*noLicensesFound)(nil)
-
-func toPkgLicenses(goLicenses []goLicense) []pkg.License {
-	var out []pkg.License
-	for _, l := range goLicenses {
-		out = append(out, pkg.License{
-			Value:          l.Value,
-			SPDXExpression: l.SPDXExpression,
-			Type:           l.Type,
-			URLs:           l.URLs,
-			Locations:      toPkgLocations(l.Locations),
-			Contents:       l.Contents,
-		})
-	}
-	return requireCollection(out)
-}
-
-func toPkgLocations(goLocations []string) file.LocationSet {
-	out := file.NewLocationSet()
-	for _, l := range goLocations {
-		out.Add(file.NewLocation(l))
-	}
-	return out
-}
-
-func toGoLicenses(pkgLicenses []pkg.License) []goLicense {
-	var out []goLicense
-	for _, l := range pkgLicenses {
-		out = append(out, goLicense{
-			Value:          l.Value,
-			SPDXExpression: l.SPDXExpression,
-			Type:           l.Type,
-			URLs:           l.URLs,
-			Locations:      toGoLocations(l.Locations),
-			Contents:       l.Contents,
-		})
-	}
-	return out
-}
-
-func toGoLocations(locations file.LocationSet) []string {
-	var out []string
-	for _, l := range locations.ToSlice() {
-		out = append(out, l.RealPath)
-	}
-	return out
-}

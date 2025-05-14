@@ -630,6 +630,12 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			candidateKey{PkgName: "grpc"},
 			candidateRemovals{ProductsToRemove: []string{"grpc"}},
 		},
+		// PHP Packages
+		{
+			pkg.PhpPearPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{ProductsToRemove: []string{"redis"}},
+		},
 	})
 
 // buildCandidateLookup is a convenience function for creating the defaultCandidateAdditions set

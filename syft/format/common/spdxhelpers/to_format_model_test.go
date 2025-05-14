@@ -1,8 +1,10 @@
 package spdxhelpers
 
 import (
+	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -736,7 +738,7 @@ func Test_H1Digest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCollection(test.pkg)
-			pkgs := toPackages(relationship.NewIndex(), catalog, s)
+			pkgs, _ := toPackages(relationship.NewIndex(), catalog, s)
 			require.Len(t, pkgs, 1)
 			for _, p := range pkgs {
 				if test.expectedDigest == "" {
@@ -753,29 +755,31 @@ func Test_H1Digest(t *testing.T) {
 }
 
 func Test_OtherLicenses(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name     string
 		pkg      pkg.Package
-		expected []*spdx.OtherLicense
+		expected []spdx.OtherLicense
 	}{
 		{
 			name: "no licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(),
 			},
-			expected: nil,
+			expected: []spdx.OtherLicense{},
 		},
 		{
 			name: "single licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("foobar"),
+					pkg.NewLicenseWithContext(ctx, "foobar"),
 				),
 			},
-			expected: []*spdx.OtherLicense{
+			expected: []spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-foobar",
-					ExtractedText:     "foobar",
+					LicenseName:       "foobar",
+					ExtractedText:     "NOASSERTION",
 				},
 			},
 		},
@@ -783,18 +787,20 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "multiple licenseRef",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("internal made up license name"),
-					pkg.NewLicense("new apple license 2.0"),
+					pkg.NewLicenseWithContext(ctx, "internal made up license name"),
+					pkg.NewLicenseWithContext(ctx, "new apple license 2.0"),
 				),
 			},
-			expected: []*spdx.OtherLicense{
+			expected: []spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-internal-made-up-license-name",
-					ExtractedText:     "internal made up license name",
+					ExtractedText:     "NOASSERTION",
+					LicenseName:       "internal made up license name",
 				},
 				{
 					LicenseIdentifier: "LicenseRef-new-apple-license-2.0",
-					ExtractedText:     "new apple license 2.0",
+					ExtractedText:     "NOASSERTION",
+					LicenseName:       "new apple license 2.0",
 				},
 			},
 		},
@@ -802,31 +808,27 @@ func Test_OtherLicenses(t *testing.T) {
 			name: "LicenseRef as a valid spdx expression",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("LicenseRef-Fedora-Public-Domain"),
+					pkg.NewLicenseWithContext(ctx, "LicenseRef-Fedora-Public-Domain"),
 				),
 			},
-			expected: []*spdx.OtherLicense{
-				{
-					LicenseIdentifier: "LicenseRef-Fedora-Public-Domain",
-					ExtractedText:     "Fedora-Public-Domain",
-				},
-			},
+			expected: []spdx.OtherLicense{},
 		},
 		{
 			name: "LicenseRef as a valid spdx expression does not otherize compound spdx expressions",
 			pkg: pkg.Package{
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicense("(MIT AND LicenseRef-Fedora-Public-Domain)"),
+					pkg.NewLicenseWithContext(ctx, "(MIT AND LicenseRef-Fedora-Public-Domain)"),
 				),
 			},
-			expected: nil,
+			expected: []spdx.OtherLicense{},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			catalog := pkg.NewCollection(test.pkg)
-			otherLicenses := toOtherLicenses(catalog)
+			rels := relationship.NewIndex()
+			_, otherLicenses := toPackages(rels, catalog, sbom.SBOM{})
 			require.Len(t, otherLicenses, len(test.expected))
 			require.Equal(t, test.expected, otherLicenses)
 		})
@@ -902,18 +904,19 @@ func Test_toSPDXID(t *testing.T) {
 }
 
 func Test_otherLicenses(t *testing.T) {
+	ctx := context.TODO()
 	pkg1 := pkg.Package{
 		Name:    "first-pkg",
 		Version: "1.1",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("MIT"),
+			pkg.NewLicenseWithContext(ctx, "MIT"),
 		),
 	}
 	pkg2 := pkg.Package{
 		Name:    "second-pkg",
 		Version: "2.2",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense("non spdx license"),
+			pkg.NewLicenseWithContext(ctx, "non spdx license"),
 		),
 	}
 	bigText := `
@@ -923,7 +926,7 @@ func Test_otherLicenses(t *testing.T) {
 		Name:    "third-pkg",
 		Version: "3.3",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicense(bigText),
+			pkg.NewLicenseWithContext(ctx, bigText),
 		),
 	}
 
@@ -938,22 +941,25 @@ func Test_otherLicenses(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "other licenses includes original text",
+			name:     "other licenses must include some original text",
 			packages: []pkg.Package{pkg2},
 			expected: []*spdx.OtherLicense{
 				{
 					LicenseIdentifier: "LicenseRef-non-spdx-license",
-					ExtractedText:     "non spdx license",
+					LicenseName:       "non spdx license",
+					ExtractedText:     "NOASSERTION",
 				},
 			},
 		},
 		{
-			name:     "big licenses get hashed",
+			name:     "big licenses get hashed and space is trimmed",
 			packages: []pkg.Package{pkg3},
 			expected: []*spdx.OtherLicense{
 				{
-					LicenseIdentifier: "LicenseRef-e9a1e42833d3e456f147052f4d312101bd171a0798893169fe596ca6b55c049e",
-					ExtractedText:     bigText,
+					LicenseIdentifier: "LicenseRef-3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
+					// Carries through the syft-json license value when we shasum large texts
+					LicenseName:   "LicenseRef-sha256:3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
+					ExtractedText: strings.TrimSpace(bigText),
 				},
 			},
 		},
