@@ -35,6 +35,18 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			// note: this should not capture #, Permission, This, see ... however it's not clear how to fix this (this is probably good enough)
 			expected: []string{"#", "Apache", "Apache-2", "Apache-2.0", "Expat", "GPL-2", "ISC", "LGPL-2.1+", "PSF-2", "Permission", "Python", "This", "see"},
 		},
+		{
+			fixture:  "test-fixtures/copyright/cuda",
+			expected: []string{"NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement"},
+		},
+		{
+			fixture:  "test-fixtures/copyright/dev-kit",
+			expected: []string{"LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS"},
+		},
+		{
+			fixture:  "test-fixtures/copyright/microsoft",
+			expected: []string{"LICENSE AGREEMENT FOR MICROSOFT PRODUCTS"},
+		},
 	}
 
 	for _, test := range tests {
