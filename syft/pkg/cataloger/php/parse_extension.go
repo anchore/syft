@@ -3,6 +3,9 @@ package php
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -12,12 +15,10 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"path"
-	"strings"
 )
 
 func parseExtension(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	name, cls := getClassifier(reader.Location.RealPath)
+	name, cls := getClassifier(reader.RealPath)
 	if name == "" || cls == nil {
 		return nil, nil, nil
 	}
