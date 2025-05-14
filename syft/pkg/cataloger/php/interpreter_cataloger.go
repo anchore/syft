@@ -13,26 +13,30 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
 type interpreterCataloger struct {
+	name                   string
 	extensionsGlob         string
-	interpreterClassifiers []binary.Classifier
+	interpreterClassifiers []binutils.Classifier
 }
 
 // NewInterpreterCataloger returns a new cataloger for PHP interpreters (php and php-fpm) as well as any installed C extensions.
-func NewInterpreterCataloger() pkg.Cataloger {
+func NewInterpreterCataloger() pkg.Cataloger { //nolint:funlen
+	name := "php-interpreter-cataloger"
+	m := binutils.ContextualEvidenceMatchers{CatalogerName: name}
 	return interpreterCataloger{
+		name: name,
 		// example matches:
 		// - as found in php-fpm docker library images: /usr/local/lib/php/extensions/no-debug-non-zts-20230831/bcmath.so
 		// - as found in alpine images: /usr/lib/php83/modules/bcmath.so
 		extensionsGlob: "**/php*/**/*.so",
-		interpreterClassifiers: []binary.Classifier{
+		interpreterClassifiers: []binutils.Classifier{
 			{
 				Class:    "php-cli-binary",
 				FileGlob: "**/php*",
-				EvidenceMatcher: binary.FileNameTemplateVersionMatcher(
+				EvidenceMatcher: m.FileNameTemplateVersionMatcher(
 					`(.*/|^)php[0-9]*$`,
 					`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 				Package: "php-cli",
@@ -55,7 +59,7 @@ func NewInterpreterCataloger() pkg.Cataloger {
 			{
 				Class:    "php-fpm-binary",
 				FileGlob: "**/php-fpm*",
-				EvidenceMatcher: binary.FileContentsVersionMatcher(
+				EvidenceMatcher: m.FileContentsVersionMatcher(
 					`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 				Package: "php-fpm",
 				PURL: packageurl.PackageURL{
@@ -77,7 +81,7 @@ func NewInterpreterCataloger() pkg.Cataloger {
 			{
 				Class:    "php-apache-binary",
 				FileGlob: "**/apache*/**/libphp*.so",
-				EvidenceMatcher: binary.FileContentsVersionMatcher(
+				EvidenceMatcher: m.FileContentsVersionMatcher(
 					`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
 				Package: "libphp",
 				PURL: packageurl.PackageURL{
@@ -101,7 +105,7 @@ func NewInterpreterCataloger() pkg.Cataloger {
 }
 
 func (p interpreterCataloger) Name() string {
-	return "php-interpreter-cataloger"
+	return p.name
 }
 
 func (p interpreterCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
@@ -142,7 +146,7 @@ func (p interpreterCataloger) catalogInterpreters(resolver file.Resolver) ([]pkg
 			continue
 		}
 		for _, location := range locations {
-			pkgs, err := cls.EvidenceMatcher(cls, binary.MatcherContext{Resolver: resolver, Location: location})
+			pkgs, err := cls.EvidenceMatcher(cls, binutils.MatcherContext{Resolver: resolver, Location: location})
 			if err != nil {
 				errs = unknown.Append(errs, location, err)
 				continue
@@ -163,7 +167,7 @@ func (p interpreterCataloger) catalogExtensions(resolver file.Resolver) ([]pkg.P
 	var packages []pkg.Package
 	var errs error
 	for _, location := range locations {
-		pkgs, err := catalogExtension(resolver, location)
+		pkgs, err := p.catalogExtension(resolver, location)
 		if err != nil {
 			errs = unknown.Append(errs, location, err)
 			continue
@@ -173,19 +177,19 @@ func (p interpreterCataloger) catalogExtensions(resolver file.Resolver) ([]pkg.P
 	return packages, errs
 }
 
-func catalogExtension(resolver file.Resolver, location file.Location) ([]pkg.Package, error) {
+func (p interpreterCataloger) catalogExtension(resolver file.Resolver, location file.Location) ([]pkg.Package, error) {
 	reader, err := resolver.FileContentsByLocation(location)
 	defer internal.CloseAndLogError(reader, location.RealPath)
 	if err != nil {
 		return nil, unknown.ProcessPathErrors(err)
 	}
 
-	name, cls := getClassifier(location.RealPath)
+	name, cls := p.getClassifier(location.RealPath)
 	if name == "" || cls == nil {
 		return nil, nil
 	}
 
-	pkgs, err := cls.EvidenceMatcher(*cls, binary.MatcherContext{Resolver: resolver, Location: location})
+	pkgs, err := cls.EvidenceMatcher(*cls, binutils.MatcherContext{Resolver: resolver, Location: location})
 	if err != nil {
 		return nil, unknown.New(location, err)
 	}
@@ -193,12 +197,12 @@ func catalogExtension(resolver file.Resolver, location file.Location) ([]pkg.Pac
 	return pkgs, err
 }
 
-func getClassifier(p string) (string, *binary.Classifier) {
-	if !strings.HasSuffix(p, ".so") {
+func (p interpreterCataloger) getClassifier(realPath string) (string, *binutils.Classifier) {
+	if !strings.HasSuffix(realPath, ".so") {
 		return "", nil
 	}
 
-	base := path.Base(p)
+	base := path.Base(realPath)
 	name := strings.TrimSuffix(base, ".so")
 
 	var match string
@@ -213,9 +217,9 @@ func getClassifier(p string) (string, *binary.Classifier) {
 		match = fmt.Sprintf(`(?m)(\x00+%s)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00{2}API`, name)
 	}
 
-	return name, &binary.Classifier{
+	return name, &binutils.Classifier{
 		Class:           fmt.Sprintf("php-ext-%s-binary", name),
-		EvidenceMatcher: binary.FileContentsVersionMatcher(match),
+		EvidenceMatcher: binutils.FileContentsVersionMatcher(match, p.name),
 		Package:         name,
 		PURL: packageurl.PackageURL{
 			Type: packageurl.TypeGeneric,

@@ -1,4 +1,4 @@
-package binary
+package binutils
 
 import (
 	"reflect"
@@ -11,7 +11,7 @@ import (
 
 var emptyPURL = packageurl.PackageURL{}
 
-func newClassifierPackage(classifier Classifier, location file.Location, matchMetadata map[string]string) *pkg.Package {
+func NewClassifierPackage(classifier Classifier, location file.Location, matchMetadata map[string]string, catalogerName string) *pkg.Package {
 	version, ok := matchMetadata["version"]
 	if !ok {
 		return nil

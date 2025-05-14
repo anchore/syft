@@ -1,4 +1,4 @@
-package binary
+package binutils
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ type Classifier struct {
 	// location. If the matcher returns a package, the file will be considered a candidate.
 	EvidenceMatcher EvidenceMatcher `json:"-"`
 
-	// Information below is used to specify the Package information when returned
+	// The information below is used to specify the Package information when returned
 
 	// Package is the name to use for the package
 	Package string `json:"package"`
@@ -80,7 +80,7 @@ type MatcherContext struct {
 	GetReader func(resolver MatcherContext) (unionreader.UnionReader, error)
 }
 
-func evidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
+func EvidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
 			match, err := matcher(classifier, context)
@@ -95,7 +95,19 @@ func evidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
 	}
 }
 
-func FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
+type ContextualEvidenceMatchers struct {
+	CatalogerName string
+}
+
+func (c ContextualEvidenceMatchers) FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
+	return FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, c.CatalogerName)
+}
+
+func (c ContextualEvidenceMatchers) FileContentsVersionMatcher(pattern string) EvidenceMatcher {
+	return FileContentsVersionMatcher(pattern, c.CatalogerName)
+}
+
+func FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, catalogerName string) EvidenceMatcher {
 	pat := regexp.MustCompile(fileNamePattern)
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
 		if !pat.MatchString(context.Location.RealPath) {
@@ -135,7 +147,7 @@ func FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 			return nil, fmt.Errorf("unable to match version: %w", err)
 		}
 
-		p := newClassifierPackage(classifier, context.Location, matchMetadata)
+		p := NewClassifierPackage(classifier, context.Location, matchMetadata, catalogerName)
 		if p == nil {
 			return nil, nil
 		}
@@ -144,7 +156,7 @@ func FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate stri
 	}
 }
 
-func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
+func FileContentsVersionMatcher(pattern, catalogerName string) EvidenceMatcher {
 	pat := regexp.MustCompile(pattern)
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
 		contents, err := getReader(context)
@@ -173,7 +185,7 @@ func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 			}
 		}
 
-		p := newClassifierPackage(classifier, context.Location, matchMetadata)
+		p := NewClassifierPackage(classifier, context.Location, matchMetadata, catalogerName)
 		if p == nil {
 			return nil, nil
 		}
@@ -182,9 +194,9 @@ func FileContentsVersionMatcher(pattern string) EvidenceMatcher {
 	}
 }
 
-// matchExcluding tests the provided regular expressions against the file, and if matched, DOES NOT return
+// MatchExcluding tests the provided regular expressions against the file, and if matched, DOES NOT return
 // anything that the matcher would otherwise return
-func matchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string) EvidenceMatcher {
+func MatchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string) EvidenceMatcher {
 	var nonMatchPatterns []*regexp.Regexp
 	for _, p := range contentPatternsToExclude {
 		nonMatchPatterns = append(nonMatchPatterns, regexp.MustCompile(p))
@@ -205,7 +217,7 @@ func matchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string)
 	}
 }
 
-func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher EvidenceMatcher) EvidenceMatcher {
+func SharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher EvidenceMatcher) EvidenceMatcher {
 	pat := regexp.MustCompile(sharedLibraryPattern)
 	return func(classifier Classifier, context MatcherContext) (packages []pkg.Package, _ error) {
 		libs, err := sharedLibraries(context)
@@ -254,14 +266,6 @@ func sharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher Evide
 	}
 }
 
-func mustPURL(purl string) packageurl.PackageURL {
-	p, err := packageurl.FromString(purl)
-	if err != nil {
-		panic(fmt.Sprintf("invalid PURL: %s", p))
-	}
-	return p
-}
-
 func getReader(context MatcherContext) (unionreader.UnionReader, error) {
 	if context.GetReader != nil {
 		return context.GetReader(context)
@@ -272,18 +276,6 @@ func getReader(context MatcherContext) (unionreader.UnionReader, error) {
 	}
 
 	return unionreader.GetUnionReader(reader)
-}
-
-// singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the
-// cpe string cannot be parsed into valid CPE Attributes
-func singleCPE(cpeString string, source ...cpe.Source) []cpe.CPE {
-	src := cpe.GeneratedSource
-	if len(source) > 0 {
-		src = source[0]
-	}
-	return []cpe.CPE{
-		cpe.Must(cpeString, src),
-	}
 }
 
 // sharedLibraries returns a list of all shared libraries found within a binary, currently
