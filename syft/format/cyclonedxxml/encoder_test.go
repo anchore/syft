@@ -94,7 +94,7 @@ func redactor(values ...string) testutil.Redactor {
 			testutil.PatternReplacement{
 				// only the source component bom-ref (not package or other component bom-refs)
 				Search:  regexp.MustCompile(`<component bom-ref="(?P<redact>[^"]*)" type="file">`),
-				Groups:  []string{"redact"}, // use the regex to anchore the search, but only replace bytes within the capture group
+				Groups:  []string{"redact"}, // use the regex to anchor the search, but only replace bytes within the capture group
 				Replace: "redacted",
 			},
 		).
@@ -102,7 +102,7 @@ func redactor(values ...string) testutil.Redactor {
 			testutil.PatternReplacement{
 				// only the source component bom-ref (not package or other component bom-refs)
 				Search:  regexp.MustCompile(`<component bom-ref="(?P<redact>[^"]*)" type="container">`),
-				Groups:  []string{"redact"}, // use the regex to anchore the search, but only replace bytes within the capture group
+				Groups:  []string{"redact"}, // use the regex to anchor the search, but only replace bytes within the capture group
 				Replace: "redacted",
 			},
 		).
