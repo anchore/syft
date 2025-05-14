@@ -591,6 +591,8 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 		return true, helpers.ContainsRelationship, ""
 	case artifact.DependencyOfRelationship:
 		return true, helpers.DependencyOfRelationship, ""
+	case artifact.GeneratedFromRelationship:
+		return true, helpers.GeneratedFromRelationship, ""
 	case artifact.OwnershipByFileOverlapRelationship:
 		return true, helpers.OtherRelationship, fmt.Sprintf("%s: indicates that the parent package claims ownership of a child package since the parent metadata indicates overlap with a location that a cataloger found the child package by", ty)
 	case artifact.EvidentByRelationship:
