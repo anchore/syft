@@ -2,6 +2,7 @@ package redhat
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -79,6 +80,12 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		sigList := signatures.List()
 		sort.Strings(sigList)
 
+		sigs, err := parseSignatures(sigList)
+		if err != nil {
+			log.WithFields("error", err, "location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).Trace("unable to parse signatures for package %s", entry.Name)
+			sigs = nil
+		}
+
 		metadata := pkg.RpmDBEntry{
 			Name:            entry.Name,
 			Version:         entry.Version,
@@ -86,7 +93,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			Arch:            entry.Arch,
 			Release:         entry.Release,
 			SourceRpm:       entry.SourceRpm,
-			Signatures:      sigList,
+			Signatures:      sigs,
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
@@ -118,6 +125,67 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	}
 
 	return allPkgs, nil, errs
+}
+
+func parseSignatures(sigs []string) ([]pkg.RpmSignature, error) {
+	var parsedSigs []pkg.RpmSignature
+	var errs error
+	for _, sig := range sigs {
+		parts := strings.Split(sig, ",")
+		if len(parts) != 3 {
+			errs = errors.Join(fmt.Errorf("invalid signature format: %s", sig))
+			continue
+		}
+
+		methodParts := strings.SplitN(strings.TrimSpace(parts[0]), "/", 2)
+		if len(methodParts) != 2 {
+			errs = errors.Join(fmt.Errorf("invalid signature method format: %s", parts[0]))
+			continue
+		}
+
+		pka := strings.TrimSpace(methodParts[0])
+		hash := strings.TrimSpace(methodParts[1])
+
+		if pka == "" || hash == "" {
+			errs = errors.Join(fmt.Errorf("invalid signature method values: public-key=%q hash=%q", pka, hash))
+			continue
+		}
+
+		created := strings.TrimSpace(parts[1])
+		if created == "" {
+			errs = errors.Join(fmt.Errorf("invalid signature created value: %q", parts[1]))
+			continue
+		}
+
+		issuerFields := strings.Split(strings.TrimSpace(parts[2]), " ")
+		var issuer string
+		switch len(issuerFields) {
+		case 0:
+			errs = errors.Join(fmt.Errorf("no signature issuer value: %q", parts[2]))
+		case 1:
+			issuer = issuerFields[0]
+		default:
+			issuer = issuerFields[len(issuerFields)-1]
+			if issuer == "" {
+				errs = errors.Join(fmt.Errorf("invalid signature issuer value: %q", parts[2]))
+				continue
+			}
+		}
+
+		if len(issuer) < 5 {
+			errs = errors.Join(fmt.Errorf("invalid signature issuer length: %q", parts[2]))
+			continue
+		}
+
+		parsedSig := pkg.RpmSignature{
+			PublicKeyAlgorithm: pka,
+			HashAlgorithm:      hash,
+			Created:            created,
+			IssuerKeyID:        issuer,
+		}
+		parsedSigs = append(parsedSigs, parsedSig)
+	}
+	return parsedSigs, errs
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].

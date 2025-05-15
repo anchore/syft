@@ -263,3 +263,6 @@ retract (
 	v0.53.2
 	v0.53.1 // Published accidentally with incorrect license in depdencies
 )
+
+// adds RSA Headers from RPMDB via https://github.com/knqyf263/go-rpmdb/pull/58 (in review)
+replace github.com/knqyf263/go-rpmdb => github.com/anchore/go-rpmdb v0.0.0-20250512150743-7afaecd4fb82

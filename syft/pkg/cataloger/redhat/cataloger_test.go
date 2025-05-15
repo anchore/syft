@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -28,14 +29,15 @@ func Test_DBCataloger(t *testing.T) {
 		FoundBy:   "rpm-db-cataloger",
 		PURL:      "pkg:rpm/basesystem@11-13.el9?arch=noarch&upstream=basesystem-11-13.el9.src.rpm",
 		Metadata: pkg.RpmDBEntry{
-			Name:      "basesystem",
-			Version:   "11",
-			Arch:      "noarch",
-			Release:   "13.el9",
-			SourceRpm: "basesystem-11-13.el9.src.rpm",
-			Size:      0,
-			Vendor:    "Rocky Enterprise Software Foundation",
-			Provides:  []string{"basesystem"},
+			Name:       "basesystem",
+			Version:    "11",
+			Arch:       "noarch",
+			Release:    "13.el9",
+			SourceRpm:  "basesystem-11-13.el9.src.rpm",
+			Size:       0,
+			Vendor:     "Rocky Enterprise Software Foundation",
+			Signatures: mustParseSignatures(t, "RSA/SHA256, Wed May 11 11:12:32 2022, Key ID 702d426d350d275d"),
+			Provides:   []string{"basesystem"},
 			Requires: []string{
 				"filesystem",
 				"rpmlib(CompressedFileNames)",
@@ -64,6 +66,7 @@ func Test_DBCataloger(t *testing.T) {
 			Release:         "6.el9_1",
 			SourceRpm:       "bash-5.1.8-6.el9_1.src.rpm",
 			Size:            7738634,
+			Signatures:      mustParseSignatures(t, "RSA/SHA256, Mon Jan 23 22:49:22 2023, Key ID 702d426d350d275d"),
 			ModularityLabel: strRef(""),
 			Vendor:          "Rocky Enterprise Software Foundation",
 			Provides: []string{
@@ -116,6 +119,7 @@ func Test_DBCataloger(t *testing.T) {
 			Release:         "2.el9",
 			SourceRpm:       "filesystem-3.16-2.el9.src.rpm",
 			Size:            106,
+			Signatures:      mustParseSignatures(t, "RSA/SHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d"),
 			ModularityLabel: strRef(""),
 			Vendor:          "Rocky Enterprise Software Foundation",
 			Provides: []string{
@@ -333,4 +337,10 @@ func Test_denySelfReferences(t *testing.T) {
 			assert.Len(t, gotRels, tt.wantRelationships)
 		})
 	}
+}
+
+func mustParseSignatures(t testing.TB, sigs ...string) []pkg.RpmSignature {
+	signatures, err := parseSignatures(sigs)
+	require.NoError(t, err)
+	return signatures
 }
