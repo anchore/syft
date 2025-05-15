@@ -1,4 +1,4 @@
-package binary
+package binutils
 
 import (
 	"bytes"
@@ -27,7 +27,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`, "cataloger-name"),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -38,7 +38,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`, "cataloger-name"),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 				},
@@ -53,7 +53,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`, "cataloger-name"),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
@@ -70,7 +70,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version-parts.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)\x00(?P<major>[0-9.]+)\x00(?P<minor>[0-9.]+)\x00(?P<patch>[0-9.]+)\x00`),
+				EvidenceMatcher: FileContentsVersionMatcher(`(?m)\x00(?P<major>[0-9.]+)\x00(?P<minor>[0-9.]+)\x00(?P<patch>[0-9.]+)\x00`, "cataloger-name"),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -84,7 +84,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, ls, 1)
 
-			pkgs, err := test.classifier.EvidenceMatcher(test.classifier, matcherContext{resolver: resolver, location: ls[0]})
+			pkgs, err := test.classifier.EvidenceMatcher(test.classifier, MatcherContext{Resolver: resolver, Location: ls[0]})
 			require.NoError(t, err)
 
 			require.Len(t, pkgs, 1)
@@ -113,7 +113,7 @@ func TestClassifier_MarshalJSON(t *testing.T) {
 			classifier: Classifier{
 				Class:           "class",
 				FileGlob:        "glob",
-				EvidenceMatcher: FileContentsVersionMatcher(".thing"),
+				EvidenceMatcher: FileContentsVersionMatcher(".thing", "cataloger-name"),
 				Package:         "pkg",
 				PURL: packageurl.PackageURL{
 					Type:       "type",
@@ -165,12 +165,12 @@ func TestFileContentsVersionMatcher(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockGetContent := func(context matcherContext) (unionreader.UnionReader, error) {
+			mockGetContent := func(context MatcherContext) (unionreader.UnionReader, error) {
 				return unionreader.GetUnionReader(io.NopCloser(bytes.NewBufferString(tt.data)))
 			}
-			fn := FileContentsVersionMatcher(tt.pattern)
-			p, err := fn(Classifier{}, matcherContext{
-				getReader: mockGetContent,
+			fn := FileContentsVersionMatcher(tt.pattern, "cataloger-name")
+			p, err := fn(Classifier{}, MatcherContext{
+				GetReader: mockGetContent,
 			})
 
 			if err != nil {

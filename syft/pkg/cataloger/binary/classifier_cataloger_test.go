@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
@@ -246,45 +247,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/httpd@2.4.54",
 				Locations: locations("httpd"),
 				Metadata:  metadata("httpd-binary"),
-			},
-		},
-		{
-			// TODO: find original binary...
-			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
-			logicalFixture: "php-cli/8.2.1/linux-amd64",
-			expected: pkg.Package{
-				Name:      "php-cli",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-cli@8.2.1",
-				Locations: locations("php"),
-				Metadata:  metadata("php-cli-binary"),
-			},
-		},
-		{
-			// TODO: find original binary...
-			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
-			logicalFixture: "php-fpm/8.2.1/linux-amd64",
-			expected: pkg.Package{
-				Name:      "php-fpm",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php-fpm@8.2.1",
-				Locations: locations("php-fpm"),
-				Metadata:  metadata("php-fpm-binary"),
-			},
-		},
-		{
-			// TODO: find original binary...
-			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
-			logicalFixture: "php-apache/8.2.1/linux-amd64",
-			expected: pkg.Package{
-				Name:      "libphp",
-				Version:   "8.2.1",
-				Type:      "binary",
-				PURL:      "pkg:generic/php@8.2.1",
-				Locations: locations("libphp.so"),
-				Metadata:  metadata("php-apache-binary"),
 			},
 		},
 		{
@@ -1497,11 +1459,13 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		Locations: locations("foo"),
 		Metadata:  metadata("foo-binary"),
 	}
-	fooClassifier := Classifier{
+	fooClassifier := binutils.Classifier{
 		Class:    "foo-binary",
 		FileGlob: "**/foo",
-		EvidenceMatcher: FileContentsVersionMatcher(
-			`(?m)foobar\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+		EvidenceMatcher: binutils.FileContentsVersionMatcher(
+			`(?m)foobar\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			catalogerName,
+		),
 		Package: "foo",
 		PURL:    mustPURL("pkg:generic/foo@version"),
 		CPEs:    singleCPE("cpe:2.3:a:foo:foo:*:*:*:*:*:*:*:*"),
@@ -1516,7 +1480,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		{
 			name: "empty-negative",
 			config: ClassifierCatalogerConfig{
-				Classifiers: []Classifier{},
+				Classifiers: []binutils.Classifier{},
 			},
 			fixtureDir: "test-fixtures/custom/go-1.14",
 			expected:   nil,
@@ -1532,7 +1496,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 		{
 			name: "nodefault-negative",
 			config: ClassifierCatalogerConfig{
-				Classifiers: []Classifier{fooClassifier},
+				Classifiers: []binutils.Classifier{fooClassifier},
 			},
 			fixtureDir: "test-fixtures/custom/go-1.14",
 			expected:   nil,
@@ -1541,7 +1505,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			name: "default-extended-positive",
 			config: ClassifierCatalogerConfig{
 				Classifiers: append(
-					append([]Classifier{}, defaultClassifers...),
+					append([]binutils.Classifier{}, defaultClassifers...),
 					fooClassifier,
 				),
 			},
@@ -1553,11 +1517,11 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 
 				Classifiers: append(
-					append([]Classifier{}, defaultClassifers...),
-					Classifier{
+					append([]binutils.Classifier{}, defaultClassifers...),
+					binutils.Classifier{
 						Class:           "foo-binary",
 						FileGlob:        "**/foo",
-						EvidenceMatcher: FileContentsVersionMatcher(`(?m)not there`),
+						EvidenceMatcher: binutils.FileContentsVersionMatcher(`(?m)not there`, catalogerName),
 						Package:         "foo",
 						PURL:            mustPURL("pkg:generic/foo@version"),
 						CPEs:            singleCPE("cpe:2.3:a:foo:foo:*:*:*:*:*:*:*:*"),
@@ -1571,7 +1535,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			name: "default-cutsom-positive",
 			config: ClassifierCatalogerConfig{
 				Classifiers: append(
-					append([]Classifier{}, defaultClassifers...),
+					append([]binutils.Classifier{}, defaultClassifers...),
 					fooClassifier,
 				),
 			},
@@ -1771,11 +1735,11 @@ func TestCatalogerConfig_MarshalJSON(t *testing.T) {
 		{
 			name: "only show names of classes",
 			cfg: ClassifierCatalogerConfig{
-				Classifiers: []Classifier{
+				Classifiers: []binutils.Classifier{
 					{
 						Class:           "class",
 						FileGlob:        "glob",
-						EvidenceMatcher: FileContentsVersionMatcher(".thing"),
+						EvidenceMatcher: binutils.FileContentsVersionMatcher(".thing", catalogerName),
 						Package:         "pkg",
 						PURL: packageurl.PackageURL{
 							Type:       "type",
