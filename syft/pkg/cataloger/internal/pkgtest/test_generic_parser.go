@@ -96,6 +96,10 @@ func (p *CatalogTester) WithContext(ctx context.Context) *CatalogTester {
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
 	t.Helper()
 
+	if path == "" {
+		return p
+	}
+
 	s, err := directorysource.NewFromPath(path)
 	require.NoError(t, err)
 
@@ -108,6 +112,10 @@ func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester 
 
 func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	t.Helper()
+
+	if path == "" {
+		return p
+	}
 
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
@@ -157,6 +165,11 @@ func (p *CatalogTester) WithResolver(r file.Resolver) *CatalogTester {
 
 func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *CatalogTester {
 	t.Helper()
+
+	if fixtureName == "" {
+		return p
+	}
+
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
 	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
