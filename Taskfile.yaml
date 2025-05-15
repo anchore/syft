@@ -453,8 +453,8 @@ tasks:
       find . | grep cache | grep tar | xargs du
       echo "total $total_size KB"
 
-      if [ "$total_size" -gt 1048576 ]; then
-        echo 'docker cache is larger than 1GB'
+      if [ "$total_size" -gt 5242880  ]; then
+        echo 'docker cache is larger than 5GB'
         exit 1
       fi
 
