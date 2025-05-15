@@ -277,17 +277,17 @@ func applyLicenseContentRules(p *pkg.Package, cfg cataloging.LicenseConfig) {
 	for i := range licenses {
 		l := &licenses[i]
 		switch cfg.IncludeContent {
-		case cataloging.LicenseContentIncludeUnknown:
-			// we don't have an SPDX expression, which means we didn't find an SPDX license
-			// include the unknown licenses content in the final SBOM
-			if l.SPDXExpression != "" {
-				licenses[i].Contents = ""
-			}
 		case cataloging.LicenseContentExcludeAll:
 			// clear it all out
 			licenses[i].Contents = ""
 		case cataloging.LicenseContentIncludeAll:
 			// always include the content
+		default:
+			// we don't have an SPDX expression, which means we didn't find an SPDX license
+			// include the unknown licenses content in the final SBOM
+			if l.SPDXExpression != "" {
+				licenses[i].Contents = ""
+			}
 		}
 	}
 

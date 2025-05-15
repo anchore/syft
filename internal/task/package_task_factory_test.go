@@ -194,6 +194,25 @@ func TestApplyLicenseContentRules(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid license content cataloging config results in the default case",
+			inputLicenses: []pkg.License{
+				licenseWithSPDX,
+				licenseWithoutSPDX,
+			},
+			cfg: cataloging.LicenseConfig{
+				IncludeContent: cataloging.LicenseContent("invalid"),
+			},
+			expectedLicenses: []pkg.License{
+				{
+					SPDXExpression: "MIT",
+				},
+				{
+					Value:    "License-Not-A-SPDX-Expression",
+					Contents: "Non-SPDX license content", // content preserved
+				},
+			},
+		},
+		{
 			name:          "Empty licenses",
 			inputLicenses: []pkg.License{},
 			cfg: cataloging.LicenseConfig{
