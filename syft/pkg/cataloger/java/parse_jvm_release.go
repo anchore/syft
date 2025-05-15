@@ -88,7 +88,7 @@ func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Envir
 	installDir := path.Dir(reader.Path())
 	files, hasJdk := findJvmFiles(resolver, installDir)
 
-	vendor, product := jvmPrimaryVendorProduct(ri.Implementor, reader.Path(), ri.ImageType, hasJdk)
+	vendor, product := jvmPrimaryVendorProduct(ri.Implementor, string(reader.Reference().RealPath), ri.ImageType, hasJdk)
 
 	p := pkg.Package{
 		Name:      product,

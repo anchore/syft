@@ -3,6 +3,7 @@ package pkgtest
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/source/filesource"
 	"io"
 	"os"
 	"sort"
@@ -99,6 +100,18 @@ func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester 
 	s, err := directorysource.NewFromPath(path)
 	require.NoError(t, err)
 
+	resolver, err := s.FileResolver(source.AllLayersScope)
+	require.NoError(t, err)
+
+	p.resolver = resolver
+	return p
+}
+
+func (p *CatalogTester) FromFileSource(t *testing.T, path string) *CatalogTester {
+	t.Helper()
+
+	s, err := filesource.NewFromPath(path)
+	require.NoError(t, err)
 	resolver, err := s.FileResolver(source.AllLayersScope)
 	require.NoError(t, err)
 
@@ -325,6 +338,11 @@ func TestFileParser(t *testing.T, fixturePath string, parser generic.Parser, exp
 func TestCataloger(t *testing.T, fixtureDir string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
 	t.Helper()
 	NewCatalogTester().FromDirectory(t, fixtureDir).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
+}
+
+func TestCatalogerFromFileSource(t *testing.T, fixturePath string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
+	NewCatalogTester().FromFileSource(t, fixturePath).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
 }
 
 func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
