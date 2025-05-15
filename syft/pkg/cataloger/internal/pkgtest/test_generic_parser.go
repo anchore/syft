@@ -3,7 +3,6 @@ package pkgtest
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/syft/source/filesource"
 	"io"
 	"os"
 	"sort"
@@ -28,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
