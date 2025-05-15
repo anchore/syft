@@ -255,6 +255,7 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 		RelationshipsConfig:  c.Relationships,
 		DataGenerationConfig: c.DataGeneration,
 		PackagesConfig:       c.Packages,
+		LicenseConfig:        c.Licenses,
 		ComplianceConfig:     c.Compliance,
 		FilesConfig:          c.Files,
 	}
