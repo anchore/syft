@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/cataloging"
