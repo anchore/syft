@@ -50,9 +50,12 @@ type RpmSignature struct {
 }
 
 func (s RpmSignature) String() string {
+	if s.PublicKeyAlgorithm == "" && s.HashAlgorithm == "" && s.Created == "" && s.IssuerKeyID == "" {
+		return ""
+	}
 	// mimics the output you would see from rpm -q --qf "%{RSAHEADER}"
 	// e.g."RSA/SHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d"
-	return strings.Join([]string{s.PublicKeyAlgorithm + s.HashAlgorithm, s.Created, "Key ID " + s.IssuerKeyID}, ", ")
+	return strings.Join([]string{s.PublicKeyAlgorithm + "/" + s.HashAlgorithm, s.Created, "Key ID " + s.IssuerKeyID}, ", ")
 }
 
 // RpmFileRecord represents the file metadata for a single file attributed to a RPM package.

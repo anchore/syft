@@ -340,7 +340,7 @@ func Test_denySelfReferences(t *testing.T) {
 }
 
 func mustParseSignatures(t testing.TB, sigs ...string) []pkg.RpmSignature {
-	signatures, err := parseSignatures(sigs)
+	signatures, err := parseSignatures(sigs...)
 	require.NoError(t, err)
 	return signatures
 }

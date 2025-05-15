@@ -265,4 +265,4 @@ retract (
 )
 
 // adds RSA Headers from RPMDB via https://github.com/knqyf263/go-rpmdb/pull/58 (in review)
-replace github.com/knqyf263/go-rpmdb => github.com/anchore/go-rpmdb v0.0.0-20250512150743-7afaecd4fb82
+replace github.com/knqyf263/go-rpmdb => github.com/anchore/go-rpmdb v0.0.0-20250515151138-8248a0ad4446

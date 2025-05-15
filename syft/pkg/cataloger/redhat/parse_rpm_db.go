@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strings"
 
 	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
-	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -75,12 +73,7 @@ func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 
 		// there is a period of time when RPM DB entries contain both PGP and RSA signatures that are the same.
 		// This appears to be a holdover, where nowadays only the RSA Header is used.
-		signatures := strset.New(strings.TrimSpace(entry.PGP), strings.TrimSpace(entry.RSAHeader))
-		signatures.Remove("")
-		sigList := signatures.List()
-		sort.Strings(sigList)
-
-		sigs, err := parseSignatures(sigList)
+		sigs, err := parseSignatures(strings.TrimSpace(entry.PGP), strings.TrimSpace(entry.RSAHeader))
 		if err != nil {
 			log.WithFields("error", err, "location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).Trace("unable to parse signatures for package %s", entry.Name)
 			sigs = nil
@@ -128,10 +121,13 @@ func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 	return allPkgs, nil, errs
 }
 
-func parseSignatures(sigs []string) ([]pkg.RpmSignature, error) {
+func parseSignatures(sigs ...string) ([]pkg.RpmSignature, error) {
 	var parsedSigs []pkg.RpmSignature
 	var errs error
 	for _, sig := range sigs {
+		if sig == "" {
+			continue
+		}
 		parts := strings.Split(sig, ",")
 		if len(parts) != 3 {
 			errs = errors.Join(fmt.Errorf("invalid signature format: %s", sig))

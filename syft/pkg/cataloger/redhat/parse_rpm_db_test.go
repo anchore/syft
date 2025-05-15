@@ -264,6 +264,16 @@ func TestParseSignatures(t *testing.T) {
 			},
 		},
 		{
+			name:     "no signatures",
+			sigs:     []string{},
+			expected: nil,
+		},
+		{
+			name:     "empty signatures",
+			sigs:     []string{"", "", ""},
+			expected: nil,
+		},
+		{
 			name:          "invalid parts count",
 			sigs:          []string{"RSA/SHA256, Mon May 16 12:32:55 2022"},
 			expected:      nil,
@@ -328,7 +338,7 @@ func TestParseSignatures(t *testing.T) {
 			if tt.expectedError == nil {
 				tt.expectedError = require.NoError
 			}
-			got, err := parseSignatures(tt.sigs)
+			got, err := parseSignatures(tt.sigs...)
 			tt.expectedError(t, err)
 			if err != nil {
 				return
