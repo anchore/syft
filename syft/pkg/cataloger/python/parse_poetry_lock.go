@@ -85,7 +85,7 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 			case md.PrimitiveDecode(du, &multiObj) == nil:
 				dependencies[pkgName] = append(dependencies[pkgName], multiObj...)
 			default:
-				log.Trace("failed to decode poetry lock package dependencies for %s; skipping", pkgName)
+				log.Tracef("failed to decode poetry lock package dependencies for %s; skipping", pkgName)
 			}
 		}
 		metadata.Packages[i].Dependencies = dependencies

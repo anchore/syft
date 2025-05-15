@@ -1,6 +1,7 @@
 package ocaml
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestParseOpamPackage(t *testing.T) {
 
 	fixture2 := "test-fixtures/alcotest.opam"
 	location2 := file.NewLocation(fixture2)
-
+	ctx := context.TODO()
 	tests := []struct {
 		fixture string
 		want    []pkg.Package
@@ -31,10 +32,7 @@ func TestParseOpamPackage(t *testing.T) {
 					PURL:      "pkg:opam/ocaml-base-compiler@4.14.0",
 					Locations: file.NewLocationSet(location1),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
-							location1,
-							"LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception",
-						)...,
+						pkg.NewLicensesFromLocationWithContext(ctx, location1, "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception")...,
 					),
 					Language: pkg.OCaml,
 					Type:     pkg.OpamPkg,
@@ -60,7 +58,8 @@ func TestParseOpamPackage(t *testing.T) {
 					PURL:      "pkg:opam/alcotest@1.5.0",
 					Locations: file.NewLocationSet(location2),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
+						pkg.NewLicensesFromLocationWithContext(
+							ctx,
 							location2,
 							"ISC",
 						)...,

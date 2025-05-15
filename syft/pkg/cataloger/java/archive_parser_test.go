@@ -14,13 +14,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/google/licensecheck"
 	"github.com/gookit/color"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -32,10 +30,7 @@ import (
 
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
+	ctx := pkgtest.Context()
 
 	tests := []struct {
 		name             string
@@ -88,17 +83,13 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			// assert licenses are discovered from upstream
 			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
 			resolvedLicenses, _ := ap.maven.ResolveLicenses(context.Background(), parsedPom.project)
-			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(nil, resolvedLicenses))
+			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(ctx, nil, resolvedLicenses))
 		})
 	}
 }
 
 func TestParseJar(t *testing.T) {
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
-
+	ctx := pkgtest.Context()
 	tests := []struct {
 		name         string
 		fixture      string
@@ -121,7 +112,7 @@ func TestParseJar(t *testing.T) {
 					Version: "1.0-SNAPSHOT",
 					PURL:    "pkg:maven/io.jenkins.plugins/example-jenkins-plugin@1.0-SNAPSHOT",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT License", file.NewLocation("test-fixtures/java-builds/packages/example-jenkins-plugin.hpi")),
 					),
 					Language: pkg.Java,
 					Type:     pkg.JenkinsPluginPkg,
@@ -207,14 +198,10 @@ func TestParseJar(t *testing.T) {
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields(
-							"Apache 2",
-							"http://www.apache.org/licenses/LICENSE-2.0.txt",
-							func() *file.Location {
-								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
-								return &l
-							}(),
-						),
+						pkg.NewLicenseFromFieldsWithContext(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+							l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")
+							return &l
+						}()),
 					),
 					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
@@ -306,14 +293,10 @@ func TestParseJar(t *testing.T) {
 					Version: "2.9.2",
 					PURL:    "pkg:maven/joda-time/joda-time@2.9.2",
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields(
-							"Apache 2",
-							"http://www.apache.org/licenses/LICENSE-2.0.txt",
-							func() *file.Location {
-								l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
-								return &l
-							}(),
-						),
+						pkg.NewLicenseFromFieldsWithContext(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+							l := file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")
+							return &l
+						}()),
 					),
 					Language: pkg.Java,
 					Type:     pkg.JavaPkg,
@@ -369,7 +352,7 @@ func TestParseJar(t *testing.T) {
 			defer cleanupFn()
 			require.NoError(t, err)
 
-			actual, _, err := parser.parse(context.Background(), nil)
+			actual, _, err := parser.parse(ctx, nil)
 			if test.wantErr != nil {
 				test.wantErr(t, err)
 			} else {
@@ -432,11 +415,18 @@ func TestParseJar(t *testing.T) {
 						metadata.Manifest.Main = newMain
 					}
 				}
-
 				// write censored data back
 				a.Metadata = metadata
 
-				pkgtest.AssertPackagesEqual(t, e, a)
+				// we can't use cmpopts.IgnoreFields for the license contents because of the set structure
+				// drop the license contents from the comparison
+				licenses := a.Licenses.ToSlice()
+				for i := range licenses {
+					licenses[i].Contents = ""
+				}
+				a.Licenses = pkg.NewLicenseSet(licenses...)
+
+				pkgtest.AssertPackagesEqual(t, e, a, cmpopts.IgnoreFields(pkg.License{}, "Contents"))
 			}
 		})
 	}
@@ -1102,6 +1092,7 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 }
 
 func Test_parseJavaArchive_regressions(t *testing.T) {
+	ctx := context.TODO()
 	apiAll := pkg.Package{
 		Name:      "api-all",
 		Version:   "2.0.0",
@@ -1192,7 +1183,8 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					PURL:      "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
+						pkg.NewLicensesFromLocationWithContext(
+							ctx,
 							file.NewLocation("test-fixtures/jar-metadata/cache/jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
 						)...,
@@ -1246,7 +1238,8 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 					PURL:      "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.15.2",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar")),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicensesFromLocation(
+						pkg.NewLicensesFromLocationWithContext(
+							ctx,
 							file.NewLocation("test-fixtures/jar-metadata/cache/com.fasterxml.jackson.core.jackson-core-2.15.2.jar"),
 							"https://www.apache.org/licenses/LICENSE-2.0.txt",
 						)...,
@@ -1380,11 +1373,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	ctx := licenses.SetContextLicenseScanner(context.Background(), scanner)
-
+	ctx := pkgtest.Context()
 	tests := []struct {
 		fixture  string
 		expected maven.ID

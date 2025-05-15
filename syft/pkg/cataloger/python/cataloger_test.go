@@ -1,7 +1,9 @@
 package python
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"path"
 	"testing"
 
@@ -13,6 +15,7 @@ import (
 )
 
 func Test_PackageCataloger(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name             string
 		fixture          string
@@ -55,7 +58,7 @@ func Test_PackageCataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						// here we only used the license that was declared in the METADATA file, we did not go searching for other licenses
 						// this is the better source of truth when there is no explicit LicenseFile given
-						pkg.NewLicenseFromLocations("BSD License", file.NewLocation("dist-name/dist-info/METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-name/dist-info/METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -94,7 +97,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("egg-name/egg-info/top_level.txt"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("egg-name/egg-info/PKG-INFO")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("egg-name/egg-info/PKG-INFO")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -138,7 +141,7 @@ func Test_PackageCataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						// here we only used the license that was declared in the METADATA file, we did not go searching for other licenses
 						// this is the better source of truth when there is no explicit LicenseFile given
-						pkg.NewLicenseFromLocations("BSD License", file.NewLocation("dist-name/DIST-INFO/METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-name/DIST-INFO/METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -174,7 +177,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("egg-name/EGG-INFO/top_level.txt"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("egg-name/EGG-INFO/PKG-INFO")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("egg-name/EGG-INFO/PKG-INFO")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -220,6 +223,7 @@ func Test_PackageCataloger(t *testing.T) {
 							Value:          "BSD-3-Clause",
 							SPDXExpression: "BSD-3-Clause",
 							Type:           "concluded",
+							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
 							// we read the path from the LicenseFile field in the METADATA file, then read the license file directly
 							Locations: file.NewLocationSet(file.NewLocation("with-license-file-declared.dist-info/LICENSE.txt")),
 						},
@@ -266,8 +270,8 @@ func Test_PackageCataloger(t *testing.T) {
 							Value:          "BSD-3-Clause",
 							SPDXExpression: "BSD-3-Clause",
 							Type:           "concluded",
-							// we discover license files automatically
-							Locations: file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
+							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
+							Locations:      file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
 						},
 					),
 					FoundBy: "python-installed-package-cataloger",
@@ -312,7 +316,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("dist-info/RECORD"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("BSD License", file.NewLocation("dist-info/METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("dist-info/METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -349,7 +353,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("METADATA"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("BSD License", file.NewLocation("METADATA")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD License", file.NewLocation("METADATA")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -378,7 +382,7 @@ func Test_PackageCataloger(t *testing.T) {
 						file.NewLocation("test.egg-info"),
 					),
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("Apache 2.0", file.NewLocation("test.egg-info")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Apache 2.0", file.NewLocation("test.egg-info")),
 					),
 					FoundBy: "python-installed-package-cataloger",
 					Metadata: pkg.PythonPackage{
@@ -398,10 +402,10 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pkgtest.NewCatalogTester().
+			(pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
-				TestCataloger(t, NewInstalledPackageCataloger())
+				TestCataloger(t, NewInstalledPackageCataloger()))
 		})
 	}
 }
@@ -754,7 +758,7 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				// Note: we'll only see new relationships, so any relationship where there is at least one new player (in FROM or TO)
 				"blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",      // note: depends on global site package!
 				"python-editor @ 1.0.4 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)", // note: depends on global site package!
-				"readchar @ 4.2.0 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",
+				"readchar @ 4.2.1 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",
 				"soupsieve @ 2.3 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] beautifulsoup4 @ 4.10.0 (/app/project1/venv/lib/python3.9/site-packages)",
 
 				// project 2 virtual env
@@ -801,4 +805,27 @@ func stringPackage(p pkg.Package) string {
 	}
 
 	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
+}
+
+func mustContentsFromLocation(t *testing.T, contentsPath string, offset ...int) string {
+	t.Helper() // Marks this function as a test helper for cleaner error reporting
+	contents, err := os.ReadFile(contentsPath)
+	if err != nil {
+		t.Fatalf("failed to read file %s: %v", contentsPath, err)
+	}
+
+	if len(offset) == 0 {
+		return string(contents)
+	}
+
+	if len(offset) != 2 {
+		t.Fatalf("invalid offset provided, expected two integers: start and end")
+	}
+	start, end := offset[0], offset[1]
+
+	if start < 0 || end > len(contents) || start > end {
+		t.Fatalf("invalid offset range: start=%d, end=%d, content length=%d", start, end, len(contents))
+	}
+
+	return string(contents[start:end])
 }

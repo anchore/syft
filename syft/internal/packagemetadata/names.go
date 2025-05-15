@@ -72,6 +72,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.ConanfileEntry{}, "c-conan-file-entry", "ConanMetadataType"),
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
+	jsonNames(pkg.DartPubspec{}, "dart-pubspec"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
@@ -112,6 +113,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.RustCargoLockEntry{}, "rust-cargo-lock-entry", "RustCargoPackageMetadata"),
 	jsonNamesWithoutLookup(pkg.RustBinaryAuditEntry{}, "rust-cargo-audit-entry", "RustCargoPackageMetadata"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
+	jsonNames(pkg.HomebrewFormula{}, "homebrew-formula"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),

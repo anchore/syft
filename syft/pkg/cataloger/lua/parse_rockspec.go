@@ -27,7 +27,7 @@ type repository struct {
 }
 
 // parseRockspec parses a package.rockspec and returns the discovered Lua packages.
-func parseRockspec(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRockspec(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseRockspecData(reader)
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse Rockspec app")
@@ -64,6 +64,7 @@ func parseRockspec(_ context.Context, _ file.Resolver, _ *generic.Environment, r
 	}
 
 	p := newLuaRocksPackage(
+		ctx,
 		luaRocksPackage{
 			Name:    name,
 			Version: version,

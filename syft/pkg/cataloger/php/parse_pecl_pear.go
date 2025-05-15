@@ -34,7 +34,7 @@ func (p *peclPearData) ToPecl() pkg.PhpPeclEntry {
 	return pkg.PhpPeclEntry(p.ToPear())
 }
 
-func parsePecl(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePecl(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	m, err := parsePeclPearSerialized(reader)
 	if err != nil {
 		return nil, nil, err
@@ -42,10 +42,10 @@ func parsePecl(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	if m == nil {
 		return nil, nil, unknown.New(reader.Location, fmt.Errorf("no pecl package found"))
 	}
-	return []pkg.Package{newPeclPackage(*m, reader.Location)}, nil, nil
+	return []pkg.Package{newPeclPackage(ctx, *m, reader.Location)}, nil, nil
 }
 
-func parsePear(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePear(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	m, err := parsePeclPearSerialized(reader)
 	if err != nil {
 		return nil, nil, err
@@ -53,7 +53,7 @@ func parsePear(_ context.Context, _ file.Resolver, _ *generic.Environment, reade
 	if m == nil {
 		return nil, nil, unknown.New(reader.Location, fmt.Errorf("no pear package found"))
 	}
-	return []pkg.Package{newPearPackage(*m, reader.Location)}, nil, nil
+	return []pkg.Package{newPearPackage(ctx, *m, reader.Location)}, nil, nil
 }
 
 // parsePeclPearSerialized is a parser function for Pear metadata contents, returning "Default" php packages discovered.

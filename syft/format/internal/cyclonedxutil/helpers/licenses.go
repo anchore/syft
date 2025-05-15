@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"encoding/base64"
 	"strings"
 
@@ -58,11 +59,11 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 		// these fields are mutually exclusive in the spec
 		switch {
 		case l.License != nil && l.License.ID != "":
-			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.ID, l.License.URL))
+			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), l.License.ID, l.License.URL))
 		case l.License != nil && l.License.Name != "":
-			licenses = append(licenses, pkg.NewLicenseFromURLs(l.License.Name, l.License.URL))
+			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), l.License.Name, l.License.URL))
 		case l.Expression != "":
-			licenses = append(licenses, pkg.NewLicense(l.Expression))
+			licenses = append(licenses, pkg.NewLicenseWithContext(context.TODO(), l.Expression))
 		default:
 		}
 	}

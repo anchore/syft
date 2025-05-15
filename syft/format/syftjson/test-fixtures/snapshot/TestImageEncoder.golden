@@ -1,7 +1,7 @@
 {
  "artifacts": [
   {
-   "id": "72567175418f73f8",
+   "id": "2f52f617f1548337",
    "name": "package-1",
    "version": "1.0.1",
    "type": "python",
@@ -16,7 +16,6 @@
    "licenses": [
     {
      "value": "MIT",
-     "fullText": "",
      "spdxExpression": "MIT",
      "type": "declared",
      "urls": [],

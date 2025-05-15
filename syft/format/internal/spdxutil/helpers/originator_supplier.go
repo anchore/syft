@@ -127,6 +127,7 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,f
 		// it seems that the vast majority of the time the author is an org, not a person
 		typ = orgType
 		author = metadata.Author
+
 	case pkg.SwiplPackEntry:
 		author = formatPersonOrOrg(metadata.Author, metadata.AuthorEmail)
 	}

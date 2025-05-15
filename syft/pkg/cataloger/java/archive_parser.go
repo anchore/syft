@@ -280,7 +280,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
-	lics := pkg.NewLicensesFromLocation(j.location, selectLicenses(manifest)...)
+	lics := pkg.NewLicensesFromLocationWithContext(ctx, j.location, selectLicenses(manifest)...)
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1
@@ -351,10 +351,10 @@ func (j *archiveParser) findLicenseFromJavaMetadata(ctx context.Context, groupID
 		}
 	}
 
-	return toPkgLicenses(&j.location, pomLicenses)
+	return toPkgLicenses(ctx, &j.location, pomLicenses)
 }
 
-func toPkgLicenses(location *file.Location, licenses []maven.License) []pkg.License {
+func toPkgLicenses(ctx context.Context, location *file.Location, licenses []maven.License) []pkg.License {
 	var out []pkg.License
 	for _, license := range licenses {
 		name := ""
@@ -365,10 +365,14 @@ func toPkgLicenses(location *file.Location, licenses []maven.License) []pkg.Lice
 		if license.URL != nil {
 			url = *license.URL
 		}
+		// note: it is possible to:
+		// - have a license without a URL
+		// - have license and a URL
+		// - have a URL without a license (this is weird, but can happen)
 		if name == "" && url == "" {
 			continue
 		}
-		out = append(out, pkg.NewLicenseFromFields(name, url, location))
+		out = append(out, pkg.NewLicenseFromFieldsWithContext(ctx, name, url, location))
 	}
 	return out
 }
@@ -492,7 +496,7 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 }
 
 func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
-	var fileLicenses []pkg.License
+	var out []pkg.License
 	for _, filename := range licenses.FileNames() {
 		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
 		if len(licenseMatches) == 0 {
@@ -509,19 +513,15 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 			for _, licenseMatch := range licenseMatches {
 				licenseContents := contents[licenseMatch]
 				r := strings.NewReader(licenseContents)
-				parsed, err := j.licenseScanner.PkgSearch(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
-				if err != nil {
-					return nil, err
-				}
-
-				if len(parsed) > 0 {
-					fileLicenses = append(fileLicenses, parsed...)
+				lics := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+				if len(lics) > 0 {
+					out = append(out, lics...)
 				}
 			}
 		}
 	}
 
-	return fileLicenses, nil
+	return out, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
@@ -692,7 +692,7 @@ func newPackageFromMavenData(ctx context.Context, r *maven.Resolver, pomProperti
 		log.WithFields("error", err, "mavenID", maven.NewID(pomProperties.GroupID, pomProperties.ArtifactID, pomProperties.Version)).Trace("error attempting to resolve licenses")
 	}
 
-	licenseSet := pkg.NewLicenseSet(toPkgLicenses(&location, pomLicenses)...)
+	licenseSet := pkg.NewLicenseSet(toPkgLicenses(ctx, &location, pomLicenses)...)
 
 	p := pkg.Package{
 		Name:    pomProperties.ArtifactID,

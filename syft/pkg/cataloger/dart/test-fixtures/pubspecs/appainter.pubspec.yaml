@@ -1,0 +1,75 @@
+name: appainter
+description: A material theme editor and generator for Flutter to configure and
+  preview the overall visual theme of your material app
+publish_to: "none"
+version: 2.4.8
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: 3.29.3
+
+dependencies:
+  appainter_annotations:
+    path: packages/annotations
+  bloc: 9.0.0
+  collection: ^1.17.2
+  copy_with_extension: 6.0.1
+  cupertino_icons: 1.0.8
+  device_preview_plus: 2.3.5
+  dio: 5.8.0+1
+  dropdown_search: 6.0.2
+  enum_to_string: 2.2.1
+  equatable: 2.0.7
+  expandable: 5.0.1
+  file_picker: 10.1.2
+  firebase_analytics: 11.4.5
+  firebase_auth: 5.5.3
+  firebase_core: 3.13.0
+  flex_color_picker: 3.7.1
+  flutter:
+    sdk: flutter
+  flutter_bloc: 9.1.1
+  flutter_markdown: 0.7.7
+  google_fonts: 6.2.1
+  intl: 0.19.0
+  json_theme: 8.0.0
+  material_color_utilities: ^0.11.1
+  material_design_icons_flutter: 7.0.7296
+  ndialog: 4.4.1+1
+  path_provider: 2.1.5
+  pretty_json: 2.0.0
+  random_color_scheme: 0.1.4
+  sentry_flutter: 8.14.2
+  shared_preferences: 2.5.3
+  universal_html: 2.2.4
+  universal_io: 2.2.2
+  url_launcher: 6.3.1
+  window_manager: 0.4.3
+
+# have comments!
+dev_dependencies:
+  appainter_builder:
+    path: packages/builder
+  bloc_test: 10.0.0
+  build_runner: 2.4.15
+  copy_with_extension_gen: 6.0.1
+  flutter_lints: 5.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  mocktail: 1.0.4
+  path_provider_platform_interface: 2.1.2
+  remove_from_coverage: 2.0.0
+  sentry_dart_plugin: 2.4.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon.png
+
+sentry:
+  upload_native_symbols: true
+  upload_source_maps: true
+  include_native_sources: true
+  commits: false

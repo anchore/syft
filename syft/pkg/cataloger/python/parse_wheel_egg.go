@@ -25,10 +25,6 @@ import (
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents. Contained
 // fields are governed by the PyPA core metadata specification (https://packaging.python.org/en/latest/specifications/core-metadata/).
 func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
 	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
 	if err != nil {
 		return nil, nil, err
@@ -46,7 +42,7 @@ func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Env
 	pkgs := []pkg.Package{
 		newPackageForPackage(
 			*pd,
-			findLicenses(ctx, licenseScanner, resolver, *pd),
+			findLicenses(ctx, resolver, *pd),
 			sources...,
 		),
 	}
@@ -253,7 +249,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	return &pd, sources, nil
 }
 
-func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, m parsedData) pkg.LicenseSet {
+func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg.LicenseSet {
 	var licenseSet pkg.LicenseSet
 
 	licenseLocations := file.NewLocationSet()
@@ -268,9 +264,9 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 
 	switch {
 	case m.LicenseExpression != "" || m.Licenses != "":
-		licenseSet = getLicenseSetFromValues(licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
+		licenseSet = getLicenseSetFromValues(ctx, licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
 	case !licenseLocations.Empty():
-		licenseSet = getLicenseSetFromFiles(ctx, scanner, resolver, licenseLocations.ToSlice()...)
+		licenseSet = getLicenseSetFromFiles(ctx, resolver, licenseLocations.ToSlice()...)
 
 	default:
 		// search for known license paths from RECORDS file
@@ -302,14 +298,14 @@ func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.R
 			locationSet.Add(locs...)
 		}
 
-		licenseSet = getLicenseSetFromFiles(ctx, scanner, resolver, locationSet.ToSlice()...)
+		licenseSet = getLicenseSetFromFiles(ctx, resolver, locationSet.ToSlice()...)
 	}
 	return licenseSet
 }
 
-func getLicenseSetFromValues(locations []file.Location, licenseValues ...string) pkg.LicenseSet {
+func getLicenseSetFromValues(ctx context.Context, locations []file.Location, licenseValues ...string) pkg.LicenseSet {
 	if len(locations) == 0 {
-		return pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenseValues...)...)
+		return pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseValues...)...)
 	}
 
 	licenseSet := pkg.NewLicenseSet()
@@ -318,31 +314,25 @@ func getLicenseSetFromValues(locations []file.Location, licenseValues ...string)
 			continue
 		}
 
-		licenseSet.Add(pkg.NewLicenseFromLocations(value, locations...))
+		licenseSet.Add(pkg.NewLicenseFromLocationsWithContext(ctx, value, locations...))
 	}
 	return licenseSet
 }
 
-func getLicenseSetFromFiles(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, locations ...file.Location) pkg.LicenseSet {
+func getLicenseSetFromFiles(ctx context.Context, resolver file.Resolver, locations ...file.Location) pkg.LicenseSet {
 	licenseSet := pkg.NewLicenseSet()
 	for _, loc := range locations {
-		licenseSet.Add(getLicenseSetFromFile(ctx, scanner, resolver, loc)...)
+		licenseSet.Add(getLicenseSetFromFile(ctx, resolver, loc)...)
 	}
 	return licenseSet
 }
 
-func getLicenseSetFromFile(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, location file.Location) []pkg.License {
+func getLicenseSetFromFile(ctx context.Context, resolver file.Resolver, location file.Location) []pkg.License {
 	metadataContents, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		log.WithFields("error", err, "path", location.Path()).Trace("unable to read file contents")
 		return nil
 	}
 	defer internal.CloseAndLogError(metadataContents, location.Path())
-	parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(location, metadataContents))
-	if err != nil {
-		log.WithFields("error", err, "path", location.Path()).Trace("unable to parse a license from the file")
-		return nil
-	}
-
-	return parsed
+	return pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, metadataContents))
 }

@@ -158,8 +158,8 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 
 func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
 	return cataloging.LicenseConfig{
-		IncludeUnkownLicenseContent: cfg.License.IncludeUnknownLicenseContent,
-		Coverage:                    cfg.License.LicenseCoverage,
+		IncludeContent: cfg.License.Content,
+		Coverage:       cfg.License.Coverage,
 	}
 }
 

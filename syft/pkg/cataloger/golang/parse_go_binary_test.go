@@ -15,11 +15,9 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -152,8 +150,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		Name:     "github.com/anchore/syft",
 		Language: pkg.Go,
 		Type:     pkg.GoModulePkg,
-		Version:  "(devel)",
-		PURL:     "pkg:golang/github.com/anchore/syft@%28devel%29",
+		Version:  "", // this was (devel) but we cleared it explicitly
+		PURL:     "pkg:golang/github.com/anchore/syft",
 		Locations: file.NewLocationSet(
 			file.NewLocationFromCoordinates(
 				file.Coordinates{
@@ -170,14 +168,11 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 	}
 
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	licenseScanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-
 	tests := []struct {
 		name          string
 		mod           *extendedBuildInfo
 		expected      []pkg.Package
+		cfg           *CatalogerConfig
 		binaryContent string
 	}{
 		{
@@ -282,8 +277,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "github.com/a/b/c",
-					Version:  "(devel)",
-					PURL:     "pkg:golang/github.com/a/b@%28devel%29#c",
+					Version:  "", // this was (devel) but we cleared it explicitly
+					PURL:     "pkg:golang/github.com/a/b#c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -854,6 +849,14 @@ func TestBuildGoPkgInfo(t *testing.T) {
 		},
 		{
 			name: "parse main mod and replace devel with pattern from binary contents",
+			cfg: func() *CatalogerConfig {
+				c := DefaultCatalogerConfig()
+				// off by default
+				assert.False(t, c.MainModuleVersion.FromContents)
+				// override to true for this test
+				c.MainModuleVersion.FromContents = true
+				return &c
+			}(),
 			mod: &extendedBuildInfo{
 				BuildInfo: &debug.BuildInfo{
 					GoVersion: goCompiledVersion,
@@ -934,8 +937,8 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				Name:     "github.com/anchore/syft",
 				Language: pkg.Go,
 				Type:     pkg.GoModulePkg,
-				Version:  "(devel)",
-				PURL:     "pkg:golang/github.com/anchore/syft@%28devel%29",
+				Version:  "", // this was (devel) but we cleared it explicitly
+				PURL:     "pkg:golang/github.com/anchore/syft",
 				Locations: file.NewLocationSet(
 					file.NewLocationFromCoordinates(
 						file.Coordinates{
@@ -1057,10 +1060,15 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 			)
 
-			c := newGoBinaryCataloger(DefaultCatalogerConfig())
+			if test.cfg == nil {
+				c := DefaultCatalogerConfig()
+				test.cfg = &c
+			}
+
+			c := newGoBinaryCataloger(*test.cfg)
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
 			require.NoError(t, err)
-			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), licenseScanner, fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.mod.arch, reader)
 			if mainPkg != nil {
 				pkgs = append(pkgs, *mainPkg)
 			}

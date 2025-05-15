@@ -1,13 +1,18 @@
 package pkg
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"net/url"
 	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
+	"golang.org/x/net/context"
 
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -16,7 +21,7 @@ import (
 
 var _ sort.Interface = (*Licenses)(nil)
 
-// License represents an SPDX Expression or license value extracted from a packages metadata
+// License represents an SPDX Expression or license value extracted from a package's metadata
 // We want to ignore URLs and Location since we merge these fields across equal licenses.
 // A License is a unique combination of value, expression and type, where
 // its sources are always considered merged and additions to the evidence
@@ -24,18 +29,17 @@ var _ sort.Interface = (*Licenses)(nil)
 // This is different from how we treat a package since we consider package paths
 // in order to distinguish if packages should be kept separate
 // this is different for licenses since we're only looking for evidence
-// of where a license was declared/concluded for a given package
-// If a license is given as it's full text in the metadata rather than it's value or SPDX expression
-
-// The Contents field is used to represent this data
-// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM)
+// of where a license was declared/concluded for a given package.
+// If a license is given as it's full text in the metadata rather than it's value or SPDX expression.
+// The Contents field is used to represent this data.
+// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM).
 // The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
 type License struct {
 	SPDXExpression string
 	Value          string
 	Type           license.Type
-	Contents       string
-	URLs           []string         `hash:"ignore"`
+	Contents       string           `hash:"ignore"` // we want to ignore the contents here so we can drop contents in the post-processing step
+	URLs           []string         `hash:"ignore"` // TODO: there is such thing as a url-only license, but we aren't hashing on this, which means overwriting could occur in the license set
 	Locations      file.LocationSet `hash:"ignore"`
 }
 
@@ -54,8 +58,8 @@ func (l Licenses) Less(i, j int) bool {
 					// returning true here reduces the number of swaps
 					// while keeping a consistent sort order of
 					// the order that they appear in the list initially
-					// If users in the future have preference to sorting based
-					// on the slice representation of either field we can update this code
+					// If users in the future have a preference to sorting based
+					// on the slice representation of either field, we can update this code
 					return true
 				}
 				return l[i].Contents < l[j].Contents
@@ -71,87 +75,50 @@ func (l Licenses) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-func NewLicense(value string) License {
-	return NewLicenseFromType(value, license.Declared)
+func NewLicensesFromReadCloserWithContext(ctx context.Context, closer file.LocationReadCloser) []License {
+	//Definition: The license that the auditor or scanning tool concludes applies, based on the actual contents of the files.
+	//Source: Derived from analyzing the source code, license headers, and full license texts in the files.
+	// Given we are scanning the contents of the file, we should use the Concluded License type.
+	return newLicenseBuilder().WithContents(closer).WithLocations(closer.Location).WithType(license.Concluded).Build(ctx).ToSlice()
 }
 
-func NewLicenseFromType(value string, t license.Type) License {
-	var (
-		spdxExpression string
-		fullText       string
-	)
-	// Check parsed value for newline character to see if it's the full license text
-	// License: <HERE IS THE FULL TEXT> <Expressions>
-	// DO we want to also submit file name when determining fulltext
-	if strings.Contains(strings.TrimSpace(value), "\n") {
-		fullText = value
-	} else {
-		var err error
-		spdxExpression, err = license.ParseExpression(value)
-		if err != nil {
-			log.WithFields("error", err, "expression", value).Trace("unable to parse license expression")
-		}
-	}
-
-	if fullText != "" {
-		return License{
-			Contents:  fullText,
-			Type:      t,
-			Locations: file.NewLocationSet(),
-		}
-	}
-
-	return License{
-		Value:          value,
-		SPDXExpression: spdxExpression,
-		Type:           t,
-		Locations:      file.NewLocationSet(),
-	}
+func NewLicenseWithContext(ctx context.Context, value string) License {
+	return NewLicenseFromTypeWithContext(ctx, value, license.Declared)
 }
 
-func NewLicensesFromValues(values ...string) (licenses []License) {
-	for _, v := range values {
-		licenses = append(licenses, NewLicense(v))
+func NewLicenseFromTypeWithContext(ctx context.Context, value string, t license.Type) License {
+	lics := newLicenseBuilder().WithValues(value).WithType(t).Build(ctx).ToSlice()
+	if len(lics) > 0 {
+		return lics[0]
 	}
-	return
+	// TODO: this is not ideal, but also not expected given the input of "value"
+	return License{}
 }
 
-func NewLicensesFromLocation(location file.Location, values ...string) (licenses []License) {
-	for _, v := range values {
-		if v == "" {
-			continue
-		}
-		licenses = append(licenses, NewLicenseFromLocations(v, location))
-	}
-	return licenses
+func NewLicensesFromValuesWithContext(ctx context.Context, values ...string) []License {
+	return newLicenseBuilder().WithValues(values...).Build(ctx).ToSlice()
 }
 
-func NewLicenseFromLocations(value string, locations ...file.Location) License {
-	l := NewLicense(value)
-	for _, loc := range locations {
-		l.Locations.Add(loc)
-	}
-	return l
+func NewLicensesFromLocationWithContext(ctx context.Context, location file.Location, values ...string) []License {
+	return newLicenseBuilder().WithValues(values...).WithLocations(location).Build(ctx).ToSlice()
 }
 
-func NewLicenseFromURLs(value string, urls ...string) License {
-	l := NewLicense(value)
-	s := strset.New()
-	for _, url := range urls {
-		if url != "" {
-			sanitizedURL, err := stripUnwantedCharacters(url)
-			if err != nil {
-				log.Tracef("unable to sanitize url=%q: %s", url, err)
-				continue
-			}
-			s.Add(sanitizedURL)
-		}
+func NewLicenseFromLocationsWithContext(ctx context.Context, value string, locations ...file.Location) License {
+	lics := newLicenseBuilder().WithValues(value).WithLocations(locations...).Build(ctx).ToSlice()
+	if len(lics) > 0 {
+		return lics[0]
 	}
+	// TODO: this is not ideal, but also not expected given the input of "value"
+	return License{}
+}
 
-	l.URLs = s.List()
-	sort.Strings(l.URLs)
-
-	return l
+func NewLicenseFromURLsWithContext(ctx context.Context, value string, urls ...string) License {
+	lics := newLicenseBuilder().WithValues(value).WithURLs(urls...).Build(ctx).ToSlice()
+	if len(lics) > 0 {
+		return lics[0]
+	}
+	// TODO: this is not ideal, but also not expected given the input of "value"
+	return License{}
 }
 
 func stripUnwantedCharacters(rawURL string) (string, error) {
@@ -164,25 +131,17 @@ func stripUnwantedCharacters(rawURL string) (string, error) {
 	return cleanedURL, nil
 }
 
-func NewLicenseFromFields(value, url string, location *file.Location) License {
-	l := NewLicense(value)
-	if location != nil {
-		l.Locations.Add(*location)
+func NewLicenseFromFieldsWithContext(ctx context.Context, value, url string, location *file.Location) License {
+	lics := newLicenseBuilder().WithValues(value).WithURLs(url).WithOptionalLocation(location).Build(ctx).ToSlice()
+	if len(lics) > 0 {
+		return lics[0]
 	}
-	if url != "" {
-		sanitizedURL, err := stripUnwantedCharacters(url)
-		if err != nil {
-			log.Tracef("unable to sanitize url=%q: %s", url, err)
-		} else {
-			l.URLs = append(l.URLs, sanitizedURL)
-		}
-	}
-
-	return l
+	// TODO: this is not ideal, but also not expected given the input of "value"
+	return License{}
 }
 
 func (s License) Empty() bool {
-	return s.Value == "" && s.SPDXExpression == "" && s.Contents == ""
+	return s.Value == "" && s.SPDXExpression == "" && s.Contents == "" && len(s.URLs) == 0
 }
 
 // Merge two licenses into a new license object. If the merge is not possible due to unmergeable fields
@@ -215,10 +174,216 @@ func (s License) Merge(l License) (*License, error) {
 		return &s, nil
 	}
 
-	// since the set instance has a reference type (map) we must make a new instance
+	// since the set instance has a reference type (map), we must make a new instance
 	locations := file.NewLocationSet(s.Locations.ToSlice()...)
 	locations.Add(l.Locations.ToSlice()...)
 	s.Locations = locations
 
 	return &s, nil
+}
+
+type licenseBuilder struct {
+	values    []string
+	contents  []io.ReadCloser
+	locations []file.Location
+	urls      []string
+	tp        license.Type
+}
+
+func newLicenseBuilder() *licenseBuilder {
+	return &licenseBuilder{
+		tp: license.Declared,
+	}
+}
+
+func (b *licenseBuilder) WithValues(expr ...string) *licenseBuilder {
+	for _, v := range expr {
+		if v == "" {
+			continue
+		}
+		b.values = append(b.values, v)
+	}
+	return b
+}
+
+func (b *licenseBuilder) WithOptionalLocation(location *file.Location) *licenseBuilder {
+	if location != nil {
+		b.locations = append(b.locations, *location)
+	}
+	return b
+}
+
+func (b *licenseBuilder) WithURLs(urls ...string) *licenseBuilder {
+	s := strset.New()
+	for _, u := range urls {
+		if u != "" {
+			sanitizedURL, err := stripUnwantedCharacters(u)
+			if err != nil {
+				log.Tracef("unable to sanitize url=%q: %s", u, err)
+				continue
+			}
+			s.Add(sanitizedURL)
+		}
+	}
+
+	b.urls = append(b.urls, s.List()...)
+	sort.Strings(b.urls)
+	return b
+}
+
+func (b *licenseBuilder) WithLocations(locations ...file.Location) *licenseBuilder {
+	for _, loc := range locations {
+		if loc.Path() != "" {
+			b.locations = append(b.locations, loc)
+		}
+	}
+	return b
+}
+
+func (b *licenseBuilder) WithContents(contents ...io.ReadCloser) *licenseBuilder {
+	for _, content := range contents {
+		if content != nil {
+			b.contents = append(b.contents, content)
+		}
+	}
+	return b
+}
+
+func (b *licenseBuilder) WithType(t license.Type) *licenseBuilder {
+	b.tp = t // last one wins, multiple is not valid
+	return b
+}
+
+func (b *licenseBuilder) Build(ctx context.Context) LicenseSet {
+	// for every value make a license with all locations
+	// or for every reader make a license with all locations
+	// if given a reader and a value, this is invalid
+
+	locations := file.NewLocationSet(b.locations...)
+
+	set := NewLicenseSet()
+	for _, v := range b.values {
+		if strings.Contains(v, "\n") {
+			var loc file.Location
+			if len(b.locations) > 0 {
+				loc = b.locations[0]
+			}
+			b.contents = append(b.contents, file.NewLocationReadCloser(loc, io.NopCloser(strings.NewReader(v))))
+			continue
+		}
+
+		// we want to check if the SPDX field should be set
+		var expression string
+		if ex, err := license.ParseExpression(v); err == nil {
+			expression = ex
+		}
+
+		set.Add(License{
+			SPDXExpression: expression,
+			Value:          strings.TrimSpace(v),
+			Type:           b.tp,
+			URLs:           b.urls,
+			Locations:      locations,
+		})
+	}
+
+	// we have some readers (with no values); let's try to turn into licenses if we can
+	for _, content := range b.contents {
+		set.Add(b.buildFromContents(ctx, content)...)
+	}
+
+	if set.Empty() && len(b.urls) > 0 {
+		// if we have no values or contents, but we do have URLs, let's make a license with the URLs
+		set.Add(License{
+			Type:      b.tp,
+			URLs:      b.urls,
+			Locations: locations,
+		})
+	}
+
+	return set
+}
+
+func (b *licenseBuilder) buildFromContents(ctx context.Context, contents io.ReadCloser) []License {
+	if !licenses.IsContextLicenseScannerSet(ctx) {
+		// we do not have a scanner; we don't want to create one; we sha256 the content and populate the value
+		internal, err := contentFromReader(contents)
+		if err != nil {
+			log.WithFields("error", err).Trace("could not read content")
+			return nil
+		}
+		return []License{b.licenseFromContentHash(internal)}
+	}
+
+	scanner, err := licenses.ContextLicenseScanner(ctx)
+	if err != nil {
+		log.WithFields("error", err).Trace("could not find license scanner")
+		internal, err := contentFromReader(contents)
+		if err != nil {
+			log.WithFields("error", err).Trace("could not read content")
+			return nil
+		}
+		return []License{b.licenseFromContentHash(internal)}
+	}
+
+	evidence, content, err := scanner.FindEvidence(ctx, contents)
+	if err != nil {
+		log.WithFields("error", err).Trace("scanner failed to scan contents")
+		return nil
+	}
+
+	if len(evidence) > 0 {
+		// we have some ID and offsets to apply to our content; let's make some detailed licenses
+		return b.licensesFromEvidenceAndContent(evidence, content)
+	}
+	// scanner couldn't find anything, but we still have the file contents; sha256 and send it back with value
+	return []License{b.licenseFromContentHash(string(content))}
+}
+
+func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evidence, content []byte) []License {
+	ls := make([]License, 0)
+	for _, e := range evidence {
+		// basic license
+		candidate := License{
+			Value:     e.ID,
+			Locations: file.NewLocationSet(b.locations...),
+			Type:      b.tp,
+		}
+		// get content offset
+		if e.Start >= 0 && e.End <= len(content) && e.Start <= e.End {
+			candidate.Contents = string(content[e.Start:e.End])
+		}
+		// check for SPDX Validity
+		if ex, err := license.ParseExpression(e.ID); err == nil {
+			candidate.SPDXExpression = ex
+		}
+
+		ls = append(ls, candidate)
+	}
+	return ls
+}
+
+func (b *licenseBuilder) licenseFromContentHash(content string) License {
+	hash := sha256HexFromString(content)
+	value := "LicenseRef-sha256:" + hash
+
+	return License{
+		Value:     value,
+		Contents:  content,
+		Type:      b.tp,
+		Locations: file.NewLocationSet(b.locations...),
+	}
+}
+
+func contentFromReader(r io.Reader) (string, error) {
+	bytes, err := io.ReadAll(r)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(bytes)), nil
+}
+
+func sha256HexFromString(s string) string {
+	hash := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(hash[:])
 }
