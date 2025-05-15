@@ -2844,7 +2844,7 @@
         "created": {
           "type": "string"
         },
-        "issuerkeyid": {
+        "issuer": {
           "type": "string"
         }
       },
@@ -2853,7 +2853,7 @@
         "algo",
         "hash",
         "created",
-        "issuerkeyid"
+        "issuer"
       ]
     },
     "RubyGemspec": {

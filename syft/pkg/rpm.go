@@ -46,7 +46,7 @@ type RpmSignature struct {
 	PublicKeyAlgorithm string `json:"algo"`
 	HashAlgorithm      string `json:"hash"`
 	Created            string `json:"created"`
-	IssuerKeyID        string `json:"issuerkeyid"`
+	IssuerKeyID        string `json:"issuer"`
 }
 
 func (s RpmSignature) String() string {
