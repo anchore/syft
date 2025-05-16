@@ -113,6 +113,21 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: Microsoft Corporation",
 		},
 		{
+			name: "from PE binary",
+			input: pkg.Package{
+				Metadata: pkg.PEBinary{
+					VersionResources: pkg.KeyValues{
+						{
+							Key:   "CompanyName",
+							Value: "Microsoft Corporation",
+						},
+					},
+				},
+			},
+			originator: "Organization: Microsoft Corporation",
+			supplier:   "Organization: Microsoft Corporation",
+		},
+		{
 			name: "from dpkg DB",
 			input: pkg.Package{
 				Metadata: pkg.DpkgDBEntry{

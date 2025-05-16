@@ -130,7 +130,7 @@ func Test_packageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.want, packageURL(test.metadata))
+			assert.Equal(t, test.want, elfPackageURL(test.metadata))
 		})
 	}
 }

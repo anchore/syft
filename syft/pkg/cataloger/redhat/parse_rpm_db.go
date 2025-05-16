@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	rpmdb "github.com/anchore/go-rpmdb/pkg"
-
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"

@@ -473,7 +473,7 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
-	ldpe, err := getLogicalDotnetPE(file.NewLocationReadCloser(loc, reader))
+	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, reader))
 	if err != nil {
 		return nil, unknown.New(loc, fmt.Errorf("unable to parse PE file: %w", err))
 	}
@@ -482,7 +482,7 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 		return nil, nil
 	}
 
-	if !ldpe.CLR.hasEvidenceOfCLR() {
+	if !ldpe.CLR.HasEvidenceOfCLR() {
 		// this is not a .NET binary
 		return nil, nil
 	}

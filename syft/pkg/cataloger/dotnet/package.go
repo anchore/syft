@@ -150,7 +150,7 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 	}
 }
 
-// newDotnetPortableExecutableEntry creates a portable executable entry from a logicalPE.
+// newDotnetPortableExecutableEntry creates a portable executable entry from a File.
 func newDotnetPortableExecutableEntry(pe logicalPE) pkg.DotnetPortableExecutableEntry {
 	return newDotnetPortableExecutableEntryFromMap(pe.VersionResources)
 }
