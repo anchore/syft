@@ -110,8 +110,8 @@ github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722 h1:2SqmFgE7h+Ql4
 github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722/go.mod h1:oFuE8YuTCM+spgMXhePGzk3asS94yO9biUfDzVTFqNw=
 github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb h1:iDMnx6LIjtjZ46C0akqveX83WFzhpTD3eqOthawb5vU=
 github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb/go.mod h1:DmTY2Mfcv38hsHbG78xMiTDdxFtkHpgYNVDPsF2TgHk=
-github.com/anchore/go-rpmdb v0.0.0-20250515153519-38be2efee8ed h1:ixtJ1s+L3+AvxlGn4Tm5VcV7RiMVLcUGmNOGXQ6U9Gg=
-github.com/anchore/go-rpmdb v0.0.0-20250515153519-38be2efee8ed/go.mod h1:0A7fN6+ED0l7YrO4GNEz6kgDmkKUwzK2bDl2v0E2Hog=
+github.com/anchore/go-rpmdb v0.0.0-20250516171929-f77691e1faec h1:SjjPMOXTzpuU1ZME4XeoHyek+dry3/C7I8gzaCo02eg=
+github.com/anchore/go-rpmdb v0.0.0-20250516171929-f77691e1faec/go.mod h1:eQVa6QFGzKy0qMcnW2pez0XBczvgwSjw9vA23qifEyU=
 github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 h1:aM1rlcoLz8y5B2r4tTLMiVTrMtpfY0O8EScKJxaSaEc=
 github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092/go.mod h1:rYqSE9HbjzpHTI74vwPvae4ZVYZd1lue2ta6xHPdblA=
 github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6 h1:Ha+LSCVuXYSYGi7wIkJK6G8g6jI3LH7y6LbyEVyp4Io=

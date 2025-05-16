@@ -19,6 +19,7 @@ require (
 	github.com/anchore/go-homedir v0.0.0-20250319154043-c29668562e4d
 	github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
+	github.com/anchore/go-rpmdb v0.0.0-20250516171929-f77691e1faec
 	github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
@@ -57,7 +58,6 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
-	github.com/knqyf263/go-rpmdb v0.1.1
 	github.com/magiconair/properties v1.8.10
 	github.com/mholt/archives v0.1.2
 	github.com/moby/sys/mountinfo v0.7.2
@@ -260,9 +260,7 @@ require (
 )
 
 retract (
+	v1.25.0 // published with a replace directive (confusing for API users)
 	v0.53.2
-	v0.53.1 // Published accidentally with incorrect license in depdencies
+	v0.53.1 // published accidentally with incorrect license in depdencies
 )
-
-// adds RSA Headers from RPMDB via https://github.com/knqyf263/go-rpmdb/pull/58 (in review)
-replace github.com/knqyf263/go-rpmdb => github.com/anchore/go-rpmdb v0.0.0-20250515153519-38be2efee8ed

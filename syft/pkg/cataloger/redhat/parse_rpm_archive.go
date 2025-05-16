@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
+	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/sassoftware/go-rpmutils"
 
 	"github.com/anchore/syft/internal/log"
