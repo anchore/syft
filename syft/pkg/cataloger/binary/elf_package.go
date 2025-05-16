@@ -15,7 +15,7 @@ func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, location
 		Name:      metadata.Name,
 		Version:   metadata.Version,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, metadata.License)),
-		PURL:      packageURL(metadata),
+		PURL:      elfPackageURL(metadata),
 		Type:      pkgType(metadata.Type),
 		Locations: locations,
 		Metadata:  metadata.ELFBinaryPackageNoteJSONPayload,
@@ -26,7 +26,7 @@ func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, location
 	return p
 }
 
-func packageURL(metadata elfBinaryPackageNotes) string {
+func elfPackageURL(metadata elfBinaryPackageNotes) string {
 	var qualifiers []packageurl.Qualifier
 
 	os, osVersion := osNameAndVersionFromMetadata(metadata)

@@ -1,4 +1,4 @@
-package dotnet
+package pe
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
-func Test_getLogicalDotnetPE(t *testing.T) {
+func Test_Read_DotNetDetection(t *testing.T) {
 	tests := []struct {
 		name    string
 		fixture string
@@ -126,7 +126,7 @@ func Test_getLogicalDotnetPE(t *testing.T) {
 
 			reader := fixtureFile(t, tt.fixture, tt.path)
 
-			got, err := getLogicalDotnetPE(reader)
+			got, err := Read(reader)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
@@ -136,7 +136,7 @@ func Test_getLogicalDotnetPE(t *testing.T) {
 				t.Errorf("unexpected version resources (-want +got): %s", d)
 			}
 
-			assert.Equal(t, tt.wantCLR, got.CLR.hasEvidenceOfCLR())
+			assert.Equal(t, tt.wantCLR, got.CLR.HasEvidenceOfCLR())
 		})
 	}
 }
