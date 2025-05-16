@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
@@ -508,7 +509,7 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, relationships []artifac
 }
 
 // fetchPkgs provides the packages available in a UnionReader.
-func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, []artifact.Relationship) {
+func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	imageFormats := []func(string, io.ReaderAt) (nativeImage, error){newElf, newMachO, newPE}
@@ -518,8 +519,9 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, 
 	readers, err := unionreader.GetReaders(reader)
 	if err != nil {
 		log.Debugf("failed to open the java native-image binary: %v", err)
-		return nil, nil
+		return nil, nil, nil
 	}
+	var unknowns error
 	for _, r := range readers {
 		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
@@ -532,13 +534,14 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, 
 			newPkgs, newRelationships, err := ni.fetchPkgs()
 			if err != nil {
 				log.Tracef("unable to extract SBOM from possible java native-image %s: %v", filename, err)
+				unknowns = unknown.Join(unknowns, fmt.Errorf("unable to extract SBOM from possible java native-image %s: %w", filename, err))
 				continue
 			}
 			pkgs = append(pkgs, newPkgs...)
 			relationships = append(relationships, newRelationships...)
 		}
 	}
-	return pkgs, relationships
+	return pkgs, relationships, unknowns
 }
 
 // Catalog attempts to find any native image executables reachable from a resolver.
@@ -549,17 +552,18 @@ func (c *nativeImageCataloger) Catalog(_ context.Context, resolver file.Resolver
 	if err != nil {
 		return pkgs, nil, fmt.Errorf("failed to find binaries by mime types: %w", err)
 	}
-
+	var errs error
 	for _, location := range fileMatches {
 		newPkgs, newRelationships, err := processLocation(location, resolver)
 		if err != nil {
-			return nil, nil, err
+			errs = unknown.Append(errs, location, err)
+			continue
 		}
 		pkgs = append(pkgs, newPkgs...)
 		relationships = append(relationships, newRelationships...)
 	}
 
-	return pkgs, relationships, nil
+	return pkgs, relationships, errs
 }
 
 func processLocation(location file.Location, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
@@ -574,6 +578,6 @@ func processLocation(location file.Location, resolver file.Resolver) ([]pkg.Pack
 	if err != nil {
 		return nil, nil, err
 	}
-	pkgs, relationships := fetchPkgs(reader, location.RealPath)
-	return pkgs, relationships, nil
+	pkgs, relationships, err := fetchPkgs(reader, location.RealPath)
+	return pkgs, relationships, err
 }
