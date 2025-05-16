@@ -534,7 +534,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, 
 			newPkgs, newRelationships, err := ni.fetchPkgs()
 			if err != nil {
 				log.Tracef("unable to extract SBOM from possible java native-image %s: %v", filename, err)
-				unknowns = unknown.Join(unknowns, fmt.Errorf("error - unable to extract SBOM from possible java native-image %s: %v", filename, err))
+				unknowns = unknown.Join(unknowns, fmt.Errorf("unable to extract SBOM from possible java native-image %s: %w", filename, err))
 				continue
 			}
 			pkgs = append(pkgs, newPkgs...)
