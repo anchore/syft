@@ -174,7 +174,7 @@ func TestApplyLicenseContentRules(t *testing.T) {
 			},
 		},
 		{
-			name: "IncludeLicenseContentDefault",
+			name: "LicenseContentIncludeAll",
 			inputLicenses: []pkg.License{
 				licenseWithSPDX,
 				licenseWithoutSPDX,
@@ -194,6 +194,22 @@ func TestApplyLicenseContentRules(t *testing.T) {
 			},
 		},
 		{
+			name: "default license config should be LicenseContentExcludeAll",
+			inputLicenses: []pkg.License{
+				licenseWithSPDX,
+				licenseWithoutSPDX,
+			},
+			cfg: cataloging.DefaultLicenseConfig(),
+			expectedLicenses: []pkg.License{
+				{
+					SPDXExpression: "MIT",
+				},
+				{
+					Value: "License-Not-A-SPDX-Expression",
+				},
+			},
+		},
+		{
 			name: "invalid license content cataloging config results in the default case",
 			inputLicenses: []pkg.License{
 				licenseWithSPDX,
@@ -208,7 +224,7 @@ func TestApplyLicenseContentRules(t *testing.T) {
 				},
 				{
 					Value:    "License-Not-A-SPDX-Expression",
-					Contents: "Non-SPDX license content", // content preserved
+					Contents: "", // content all removed
 				},
 			},
 		},

@@ -255,7 +255,7 @@ func TestFullText(t *testing.T) {
 			name:  "Full Text field is populated with the correct full text and contents are given a sha256 as value",
 			value: fullText,
 			want: License{
-				Value:    "LicenseRef-sha256:108067fa71229a2b98b9696af0ce21cd11d9639634c8bc94bda70ebedf291e5a",
+				Value:    "sha256:108067fa71229a2b98b9696af0ce21cd11d9639634c8bc94bda70ebedf291e5a",
 				Type:     license.Declared,
 				Contents: fullText,
 			},
