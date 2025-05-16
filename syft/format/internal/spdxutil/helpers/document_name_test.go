@@ -53,6 +53,14 @@ func Test_DocumentName(t *testing.T) {
 			},
 			expected: "some/name",
 		},
+		{
+			name: "unknown",
+			srcMetadata: source.Description{
+				Name:     "unknown",
+				Metadata: source.UnknownMetadata{Group: "org.anchore"},
+			},
+			expected: "unknown",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

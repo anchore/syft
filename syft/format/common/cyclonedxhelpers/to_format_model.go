@@ -305,6 +305,73 @@ func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
 	return nil
 }
 
+func toBomComponentData(metadata source.UnknownMetadata) ([]cyclonedx.OrganizationalContact,
+	[]cyclonedx.ExternalReference, []cyclonedx.LicenseChoice) {
+	licenses := make([]cyclonedx.LicenseChoice, 0)
+	if metadata.Licenses != nil {
+		for _, license := range *metadata.Licenses {
+			licenses = append(licenses, cyclonedx.LicenseChoice{
+				License: &cyclonedx.License{
+					ID: license.License.ID,
+				},
+			})
+		}
+	}
+	authors := make([]cyclonedx.OrganizationalContact, 0)
+	if metadata.Authors != nil {
+		for _, author := range *metadata.Authors {
+			authors = append(authors, cyclonedx.OrganizationalContact{
+				Name: author.Name,
+			})
+		}
+	}
+	exrefs := make([]cyclonedx.ExternalReference, 0)
+	if metadata.ExternalRef != nil {
+		for _, exref := range *metadata.ExternalRef {
+			hashes := make([]cyclonedx.Hash, 0)
+			for _, hash := range *exref.Hashes {
+				hashes = append(hashes, cyclonedx.Hash{
+					Algorithm: cyclonedx.HashAlgorithm(hash.Algorithm),
+					Value:     hash.Value,
+				})
+			}
+			exrefs = append(exrefs, cyclonedx.ExternalReference{
+				URL:    exref.URL,
+				Type:   cyclonedx.ExternalReferenceType(exref.Type),
+				Hashes: &hashes,
+			})
+		}
+	}
+	return authors, exrefs, licenses
+}
+
+func toBomUnknownComponent(name string, version string, metadata source.UnknownMetadata) *cyclonedx.Component {
+	if name == "" {
+		name = metadata.UserInput
+	}
+	if version == "" {
+		version = metadata.Version
+	}
+	bomRef, err := artifact.IDByHash(metadata.ID)
+	if err != nil {
+		log.Debugf("unable to get fingerprint of unknown source metadata=%s: %+v", metadata.ID, err)
+	}
+
+	authors, exrefs, licenses := toBomComponentData(metadata)
+	return &cyclonedx.Component{
+		BOMRef:             string(bomRef),
+		Type:               "unknown", // FIXME: there are no such type as UnknownComponent currently
+		Name:               name,
+		Version:            version,
+		Licenses:           (*cyclonedx.Licenses)(&licenses),
+		Group:              metadata.Group,
+		PackageURL:         metadata.PackageURL,
+		ExternalReferences: &exrefs,
+		Authors:            &authors,
+		Description:        metadata.Description,
+	}
+}
+
 func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Component {
 	name := srcMetadata.Name
 	version := srcMetadata.Version
@@ -356,6 +423,8 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
+	case source.UnknownMetadata:
+		return toBomUnknownComponent(name, version, metadata)
 	}
 
 	return nil
