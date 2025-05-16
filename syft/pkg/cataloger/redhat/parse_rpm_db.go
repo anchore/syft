@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
+	rpmdb "github.com/anchore/go-rpmdb/pkg"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
