@@ -958,7 +958,7 @@ func Test_otherLicenses(t *testing.T) {
 				{
 					LicenseIdentifier: "LicenseRef-3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
 					// Carries through the syft-json license value when we shasum large texts
-					LicenseName:   "LicenseRef-sha256:3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
+					LicenseName:   "sha256:3f17782eef51ae86f18fdd6832f5918e2b40f688b52c9adc07ba6ec1024ef408",
 					ExtractedText: strings.TrimSpace(bigText),
 				},
 			},

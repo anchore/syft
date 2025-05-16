@@ -149,7 +149,7 @@ func TestLicenseSet_Add(t *testing.T) {
 					Locations:      file.NewLocationSet(),
 				},
 				{
-					Value:    "LicenseRef-sha256:eebcea3ab1d1a28e671de90119ffcfb35fe86951e4af1b17af52b7a82fcf7d0a",
+					Value:    "sha256:eebcea3ab1d1a28e671de90119ffcfb35fe86951e4af1b17af52b7a82fcf7d0a",
 					Contents: readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
 					Type:     license.Declared,
 				},
