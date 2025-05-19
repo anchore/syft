@@ -5,15 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	_ "modernc.org/sqlite"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_DBCataloger(t *testing.T) {
@@ -184,7 +182,7 @@ func Test_DBCataloger(t *testing.T) {
 
 	pkgtest.NewCatalogTester().
 		WithImageResolver(t, "image-minimal").
-		IgnoreLocationLayer().                                               // this fixture can be rebuilt, thus the layer ID will change
+		IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.RpmDBEntry{}, "Files")). // this is rather long... ano not the point of the test
 		Expects(expectedPackages, expectedRelationships).
 		TestCataloger(t, NewDBCataloger())

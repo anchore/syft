@@ -1,8 +1,6 @@
 package main
 
 import (
-	_ "modernc.org/sqlite"
-
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/cli"
 	"github.com/anchore/syft/cmd/syft/internal"

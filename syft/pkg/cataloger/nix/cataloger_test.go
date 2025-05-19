@@ -3,16 +3,14 @@ package nix
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/scylladb/go-set/strset"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	_ "modernc.org/sqlite"
-
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/google/go-cmp/cmp"
+	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCataloger_Image(t *testing.T) {
