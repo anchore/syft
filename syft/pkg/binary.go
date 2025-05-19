@@ -46,3 +46,8 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	// Commit is the commit hash of the source repository for which the binary was built from
 	Commit string `json:"commit,omitempty"`
 }
+
+// PEBinary represents metadata captured from a Portable Executable formatted binary (dll, exe, etc.)
+type PEBinary struct {
+	VersionResources KeyValues
+}
