@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/static-debian12:debug@sha256:b2141e58dd62baf0ff941e48ee8fdc58ffe4296bbe05b400eff1122484586160 AS build
+FROM gcr.io/distroless/static-debian12:debug@latest AS build
 
 FROM scratch
 # needed for version check HTTPS request
