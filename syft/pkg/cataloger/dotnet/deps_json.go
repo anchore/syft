@@ -252,8 +252,8 @@ func getLogicalDepsJSON(deps depsJSON, lm *libmanJSON) logicalDepsJSON {
 		if !bundlingDetected && knownBundlers.Has(name) {
 			bundlingDetected = true
 		}
-		p.AnyChildClaimsDLLs = searchForDLLClaims(packageMap, p.dependencyNameVersions()...)
-		p.AnyChildHasDLLs = searchForDLLEvidence(packageMap, p.dependencyNameVersions()...)
+		p.AnyChildClaimsDLLs = searchForDLLClaims(packageMap, strset.New(), p.dependencyNameVersions()...)
+		p.AnyChildHasDLLs = searchForDLLEvidence(packageMap, strset.New(), p.dependencyNameVersions()...)
 		packages[p.NameVersion] = *p
 	}
 
@@ -286,31 +286,35 @@ func mergeSets(s1, s2 *strset.Set) *strset.Set {
 type visitorFunc func(p *logicalDepsJSONPackage) bool
 
 // searchForDLLEvidence recursively searches for executables found for any of the given nameVersions and children recursively.
-func searchForDLLEvidence(packageMap map[string]*logicalDepsJSONPackage, nameVersions ...string) bool {
+func searchForDLLEvidence(packageMap map[string]*logicalDepsJSONPackage, visited *strset.Set, nameVersions ...string) bool {
 	return traverseDependencies(packageMap, func(p *logicalDepsJSONPackage) bool {
 		return p.FoundDLLs(true)
-	}, nameVersions...)
+	}, visited, nameVersions...)
 }
 
 // searchForDLLClaims recursively searches for DLL claims in the deps.json for any of the given nameVersions and children recursively.
-func searchForDLLClaims(packageMap map[string]*logicalDepsJSONPackage, nameVersions ...string) bool {
+func searchForDLLClaims(packageMap map[string]*logicalDepsJSONPackage, visited *strset.Set, nameVersions ...string) bool {
 	return traverseDependencies(packageMap, func(p *logicalDepsJSONPackage) bool {
 		return p.ClaimsDLLs(true)
-	}, nameVersions...)
+	}, visited, nameVersions...)
 }
 
-func traverseDependencies(packageMap map[string]*logicalDepsJSONPackage, visitor visitorFunc, nameVersions ...string) bool {
+func traverseDependencies(packageMap map[string]*logicalDepsJSONPackage, visitor visitorFunc, visited *strset.Set, nameVersions ...string) bool {
 	if len(nameVersions) == 0 {
 		return false
 	}
 
 	for _, nameVersion := range nameVersions {
+		if visited.Has(nameVersion) {
+			continue
+		}
+		visited.Add(nameVersion)
 		if p, ok := packageMap[nameVersion]; ok {
 			if visitor(p) {
 				return true
 			}
 
-			if traverseDependencies(packageMap, visitor, p.dependencyNameVersions()...) {
+			if traverseDependencies(packageMap, visitor, visited, p.dependencyNameVersions()...) {
 				return true
 			}
 		}
