@@ -53,7 +53,7 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 		// fmt.Println(path)
 		// fmt.Println("Defs:", metadataDefinitions)
 		// fmt.Println("Used Types:", usedTypeNames)
-		// fmt.Println()
+		//fmt.Println()
 
 		names.Add(metadataDefinitions...)
 		usedNames.Add(usedTypeNames...)

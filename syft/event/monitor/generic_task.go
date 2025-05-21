@@ -6,6 +6,11 @@ import (
 	"github.com/wagoodman/go-progress"
 )
 
+const (
+	TopLevelCatalogingTaskID = "cataloging"
+	PackageCatalogingTaskID  = "package-cataloging"
+)
+
 type ShellProgress struct {
 	io.Reader
 	progress.Progressable
@@ -33,4 +38,9 @@ type GenericTask struct {
 	ID       string
 	ParentID string
 	Context  string
+}
+
+type TaskProgress struct {
+	*progress.AtomicStage
+	*progress.Manual
 }

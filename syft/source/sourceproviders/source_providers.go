@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
+	"github.com/anchore/syft/syft/source/snapsource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
@@ -14,6 +15,7 @@ const (
 	FileTag = stereoscope.FileTag
 	DirTag  = stereoscope.DirTag
 	PullTag = stereoscope.PullTag
+	SnapTag = "snap"
 )
 
 // All returns all the configured source providers known to syft
@@ -30,7 +32,10 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), DirTag)).
 
 		// --from docker, registry, etc.
-		Join(stereoscopeProviders.Select(PullTag)...)
+		Join(stereoscopeProviders.Select(PullTag)...).
+
+		// --from snap
+		Join(tagProvider(snapsource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), SnapTag))
 }
 
 func stereoscopeSourceProviders(userInput string, cfg *Config) collections.TaggedValueSet[source.Provider] {

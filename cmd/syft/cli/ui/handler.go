@@ -57,6 +57,7 @@ func New(cfg HandlerConfig) *Handler {
 		stereoscopeEvent.FetchImage:          simpleHandler(h.handleFetchImage),
 		syftEvent.FileIndexingStarted:        simpleHandler(h.handleFileIndexingStarted),
 		syftEvent.AttestationStarted:         simpleHandler(h.handleAttestationStarted),
+		syftEvent.PullSourceStarted:          simpleHandler(h.handlePullSourceStarted),
 		syftEvent.CatalogerTaskStarted:       h.handleCatalogerTaskStarted,
 	})
 

@@ -36,14 +36,29 @@ func Notify(message string) {
 	})
 }
 
-func StartCatalogerTask(info monitor.GenericTask, size int64, initialStage string) *monitor.CatalogerTaskProgress {
-	t := &monitor.CatalogerTaskProgress{
+func StartCatalogerTask(info monitor.GenericTask, size int64, initialStage string) *monitor.TaskProgress {
+	t := &monitor.TaskProgress{
 		AtomicStage: progress.NewAtomicStage(initialStage),
 		Manual:      progress.NewManual(size),
 	}
 
 	Publish(partybus.Event{
 		Type:   event.CatalogerTaskStarted,
+		Source: info,
+		Value:  progress.StagedProgressable(t),
+	})
+
+	return t
+}
+
+func StartPullSourceTask(info monitor.GenericTask, size int64, initialStage string) *monitor.TaskProgress {
+	t := &monitor.TaskProgress{
+		AtomicStage: progress.NewAtomicStage(initialStage),
+		Manual:      progress.NewManual(size),
+	}
+
+	Publish(partybus.Event{
+		Type:   event.PullSourceStarted,
 		Source: info,
 		Value:  progress.StagedProgressable(t),
 	})
