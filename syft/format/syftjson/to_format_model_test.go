@@ -127,36 +127,6 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "unknown",
-			src: source.Description{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id...",
-					Version:     "version..",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
-				},
-			},
-			expected: model.Source{
-				ID:      "test-id",
-				Type:    "unknown",
-				Name:    "some-name",
-				Version: "some-version",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id...",
-					Version:     "version..",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
-				},
-			},
-		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -222,28 +192,152 @@ func Test_toSourceModel(t *testing.T) {
 			},
 		},
 		{
-			name: "unknown - no name/version",
+			name: "application - no name/version",
 			src: source.Description{
 				ID: "test-id",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id..",
-					Version:     "version..",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 			expected: model.Source{
 				ID:   "test-id",
-				Type: "unknown",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id..",
-					Version:     "version..",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
+				Type: "application",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "library - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "library",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "os - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.OSMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "os",
+				Metadata: source.OSMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "framework - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.FrameworkMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "framework",
+				Metadata: source.FrameworkMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "platform - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.PlatformMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "platform",
+				Metadata: source.PlatformMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 		},

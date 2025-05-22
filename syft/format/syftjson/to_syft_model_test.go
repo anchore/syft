@@ -21,7 +21,8 @@ import (
 )
 
 func Test_toSyftSourceData(t *testing.T) {
-	tracker := sourcemetadata.NewCompletionTester(t)
+	tracker := sourcemetadata.NewCompletionTester(t, source.PlatformMetadata{},
+		source.OSMetadata{}, source.FrameworkMetadata{})
 
 	tests := []struct {
 		name     string
@@ -101,32 +102,36 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 		},
 		{
-			name: "unknown",
+			name: "unsupported- application",
 			src: model.Source{
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
 				Type:    "image",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id...",
-					Version:     "version..",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 			expected: &source.Description{
 				ID:      "the-id",
 				Name:    "some-name",
 				Version: "some-version",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id...",
-					Version:     "version..",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 		},
@@ -193,26 +198,30 @@ func Test_toSyftSourceData(t *testing.T) {
 			},
 		},
 		{
-			name: "unknown - no name/version",
+			name: "unsupported - library",
 			src: model.Source{
 				ID:   "the-id",
-				Type: "image",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id...",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
+				Type: "library",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 			expected: &source.Description{
 				ID: "the-id",
-				Metadata: source.UnknownMetadata{
-					UserInput:   "user-input",
-					ID:          "id...",
-					Group:       "group..",
-					Description: "desc..",
-					PackageURL:  "purl",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 		},

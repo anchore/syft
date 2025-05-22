@@ -23,7 +23,9 @@ import (
 )
 
 func Test_toFormatModel(t *testing.T) {
-	tracker := sourcemetadata.NewCompletionTester(t)
+	tracker := sourcemetadata.NewCompletionTester(t, source.PlatformMetadata{},
+		source.OSMetadata{}, source.FrameworkMetadata{}, source.ApplicationMetadata{},
+		source.LibraryMetadata{})
 
 	tests := []struct {
 		name     string
@@ -241,14 +243,16 @@ func Test_toFormatModel(t *testing.T) {
 				Source: source.Description{
 					Name:    "bcprov-jdk15on",
 					Version: "1.62",
-					Metadata: source.UnknownMetadata{
-						UserInput: "bcprov-jdk15on",
-						Version:   "1.62",
-						ID:        "pkg:maven/org.bouncycastle/bcprov-jdk15on@1.62?type=jar",
-						Description: "The Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms. " +
-							"This jar contains JCE provider and lightweight API for the Bouncy Castle Cryptography APIs " +
-							"for JDK 1.5 to JDK 1.8.",
-						Group: "org.bouncycastle",
+					Metadata: source.ApplicationMetadata{
+						UnknownMetadata: source.UnknownMetadata{
+							UserInput: "bcprov-jdk15on",
+							Version:   "1.62",
+							ID:        "pkg:maven/org.bouncycastle/bcprov-jdk15on@1.62?type=jar",
+							Description: "The Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms. " +
+								"This jar contains JCE provider and lightweight API for the Bouncy Castle Cryptography APIs " +
+								"for JDK 1.5 to JDK 1.8.",
+							Group: "org.bouncycastle",
+						},
 					},
 				},
 				Artifacts: sbom.Artifacts{

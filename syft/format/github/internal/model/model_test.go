@@ -83,7 +83,9 @@ func sbomFixture() sbom.SBOM {
 }
 
 func Test_toGithubModel(t *testing.T) {
-	tracker := sourcemetadata.NewCompletionTester(t, source.UnknownMetadata{})
+	tracker := sourcemetadata.NewCompletionTester(t, source.UnknownMetadata{},
+		source.ApplicationMetadata{}, source.LibraryMetadata{}, source.OSMetadata{},
+		source.FrameworkMetadata{}, source.PlatformMetadata{})
 
 	tests := []struct {
 		name     string

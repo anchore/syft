@@ -54,12 +54,64 @@ func Test_DocumentName(t *testing.T) {
 			expected: "some/name",
 		},
 		{
-			name: "unknown",
+			name: "application",
 			srcMetadata: source.Description{
-				Name:     "unknown",
-				Metadata: source.UnknownMetadata{Group: "org.anchore"},
+				Name: "application",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
 			},
-			expected: "unknown",
+			expected: "application",
+		},
+		{
+			name: "library",
+			srcMetadata: source.Description{
+				Name: "library",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+			expected: "library",
+		},
+		{
+			name: "framework",
+			srcMetadata: source.Description{
+				Name: "framework",
+				Metadata: source.FrameworkMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+			expected: "framework",
+		},
+		{
+			name: "os",
+			srcMetadata: source.Description{
+				Name: "os",
+				Metadata: source.OSMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+			expected: "os",
+		},
+		{
+			name: "platform",
+			srcMetadata: source.Description{
+				Name: "platform",
+				Metadata: source.PlatformMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+			expected: "platform",
 		},
 	}
 	for _, test := range tests {

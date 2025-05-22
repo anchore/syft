@@ -13,7 +13,9 @@ import (
 )
 
 func Test_documentNamespace(t *testing.T) {
-	tracker := sourcemetadata.NewCompletionTester(t, source.UnknownMetadata{})
+	tracker := sourcemetadata.NewCompletionTester(t, source.UnknownMetadata{}, source.LibraryMetadata{},
+		source.ApplicationMetadata{}, source.OSMetadata{}, source.FrameworkMetadata{},
+		source.PlatformMetadata{})
 
 	tests := []struct {
 		name      string

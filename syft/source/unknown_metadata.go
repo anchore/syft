@@ -35,3 +35,23 @@ type LicenseChoice struct {
 type License struct {
 	ID string `json:"id,omitempty" xml:"id,omitempty"`
 }
+
+type ApplicationMetadata struct {
+	UnknownMetadata
+}
+
+type LibraryMetadata struct {
+	UnknownMetadata
+}
+
+type FrameworkMetadata struct {
+	UnknownMetadata
+}
+
+type PlatformMetadata struct {
+	UnknownMetadata
+}
+
+type OSMetadata struct {
+	UnknownMetadata
+}

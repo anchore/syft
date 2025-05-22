@@ -329,7 +329,8 @@ func toBomComponentData(metadata source.UnknownMetadata) ([]cyclonedx.Organizati
 	return authors, exrefs, licenses
 }
 
-func toBomUnknownComponent(name string, version string, metadata source.UnknownMetadata) *cyclonedx.Component {
+func toBomUnknownComponent(name string, version string, metadata source.UnknownMetadata,
+	typ cyclonedx.ComponentType) *cyclonedx.Component {
 	if name == "" {
 		name = metadata.UserInput
 	}
@@ -344,7 +345,7 @@ func toBomUnknownComponent(name string, version string, metadata source.UnknownM
 	authors, exrefs, licenses := toBomComponentData(metadata)
 	return &cyclonedx.Component{
 		BOMRef:             string(bomRef),
-		Type:               "unknown", // FIXME: there are no such type as UnknownComponent currently
+		Type:               typ,
 		Name:               name,
 		Version:            version,
 		Licenses:           (*cyclonedx.Licenses)(&licenses),
@@ -407,8 +408,16 @@ func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Compone
 			Name:    name,
 			Version: version,
 		}
-	case source.UnknownMetadata:
-		return toBomUnknownComponent(name, version, metadata)
+	case source.ApplicationMetadata:
+		return toBomUnknownComponent(name, version, metadata.UnknownMetadata, cyclonedx.ComponentTypeApplication)
+	case source.LibraryMetadata:
+		return toBomUnknownComponent(name, version, metadata.UnknownMetadata, cyclonedx.ComponentTypeLibrary)
+	case source.OSMetadata:
+		return toBomUnknownComponent(name, version, metadata.UnknownMetadata, cyclonedx.ComponentTypeOS)
+	case source.FrameworkMetadata:
+		return toBomUnknownComponent(name, version, metadata.UnknownMetadata, cyclonedx.ComponentTypeFramework)
+	case source.PlatformMetadata:
+		return toBomUnknownComponent(name, version, metadata.UnknownMetadata, cyclonedx.ComponentTypePlatform)
 	}
 
 	return nil

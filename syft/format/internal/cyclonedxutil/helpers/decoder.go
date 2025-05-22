@@ -261,6 +261,21 @@ func extractDataStructures(c *cyclonedx.Component) ([]source.OrganizationalConta
 	return authors, exrefs, licenses
 }
 
+func buildUnknownMetadata(c *cyclonedx.Component) source.UnknownMetadata {
+	authors, exrefs, licenses := extractDataStructures(c)
+	return source.UnknownMetadata{
+		UserInput:   c.Name,
+		ID:          c.BOMRef,
+		Version:     c.Version,
+		Group:       c.Group,
+		Authors:     &authors,
+		Description: c.Description,
+		PackageURL:  c.PackageURL,
+		Licenses:    &licenses,
+		ExternalRef: &exrefs,
+	}
+}
+
 func extractComponents(meta *cyclonedx.Metadata) source.Description {
 	if meta == nil || meta.Component == nil {
 		return source.Description{}
@@ -294,21 +309,40 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ID:       "",
 			Metadata: source.FileMetadata{Path: c.Name},
 		}
+	case cyclonedx.ComponentTypeApplication:
+		return source.Description{
+			Metadata: source.ApplicationMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypeLibrary:
+		return source.Description{
+			Metadata: source.LibraryMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypeOS:
+		return source.Description{
+			Metadata: source.OSMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypePlatform:
+		return source.Description{
+			Metadata: source.PlatformMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypeFramework:
+		return source.Description{
+			Metadata: source.FrameworkMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
 	}
 
-	authors, exrefs, licenses := extractDataStructures(c)
 	return source.Description{
-		Metadata: source.UnknownMetadata{
-			UserInput:   c.Name,
-			ID:          c.BOMRef,
-			Version:     c.Version,
-			Group:       c.Group,
-			Authors:     &authors,
-			Description: c.Description,
-			PackageURL:  c.PackageURL,
-			Licenses:    &licenses,
-			ExternalRef: &exrefs,
-		},
+		Metadata: buildUnknownMetadata(c),
 	}
 }
 
