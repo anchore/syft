@@ -85,11 +85,11 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/zyedidia/generic v1.2.2-0.20230320175451-4410d2372cb1
 	go.uber.org/goleak v1.3.0
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 	golang.org/x/mod v0.24.0
 	golang.org/x/net v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.37.0
+	modernc.org/sqlite v1.37.1
 )
 
 require (
@@ -254,9 +254,9 @@ require (
 	google.golang.org/grpc v1.67.3 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	modernc.org/libc v1.62.1 // indirect
+	modernc.org/libc v1.65.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.9.1 // indirect
+	modernc.org/memory v1.11.0 // indirect
 )
 
 retract (
