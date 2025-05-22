@@ -16,7 +16,6 @@
    "licenses": [
     {
      "value": "MIT",
-     "fullText": "",
      "spdxExpression": "MIT",
      "type": "declared",
      "urls": [],

@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/CycloneDX/cyclonedx-go"
 
@@ -90,14 +91,18 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 		Locations: decodeLocations(values),
 		Licenses:  pkg.NewLicenseSet(decodeLicenses(c)...),
 		CPEs:      decodeCPEs(c),
-		PURL:      c.PackageURL,
 	}
 
+	// note: this may write in syft package type information
 	DecodeInto(p, values, "syft:package", CycloneDXFields)
 
 	metadataType := values["syft:package:metadataType"]
 
 	p.Metadata = decodePackageMetadata(values, c, metadataType)
+
+	// this will either use the purl from the component or generate a new one based off of any type information
+	// that was decoded above.
+	p.PURL = getPURL(c, p.Type)
 
 	if p.Type == "" {
 		p.Type = pkg.TypeFromPURL(p.PURL)
@@ -109,6 +114,41 @@ func decodeComponent(c *cyclonedx.Component) *pkg.Package {
 	p.SetID()
 
 	return p
+}
+
+func getPURL(c *cyclonedx.Component, ty pkg.Type) string {
+	if c.PackageURL != "" {
+		// if there is a purl that where the namespace does not match the group information, we may
+		// accidentally drop group. We should consider adding group as a top-level syft package field.
+		return c.PackageURL
+	}
+
+	if strings.HasPrefix(c.BOMRef, "pkg:") {
+		// the bomref is a purl, so try to use that as the purl
+		_, err := packageurl.FromString(c.BOMRef)
+		if err == nil {
+			return c.BOMRef
+		}
+	}
+
+	if ty == "" {
+		return ""
+	}
+
+	tyStr := ty.PackageURLType()
+	switch tyStr {
+	case "", packageurl.TypeGeneric:
+		return ""
+	}
+
+	purl := packageurl.PackageURL{
+		Type:      tyStr,
+		Namespace: c.Group,
+		Name:      c.Name,
+		Version:   c.Version,
+	}
+
+	return purl.ToString()
 }
 
 func setPackageName(p *pkg.Package, c *cyclonedx.Component) {

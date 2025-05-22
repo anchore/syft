@@ -27,6 +27,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
@@ -96,6 +97,10 @@ func (p *CatalogTester) WithContext(ctx context.Context) *CatalogTester {
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
 	t.Helper()
 
+	if path == "" {
+		return p
+	}
+
 	s, err := directorysource.NewFromPath(path)
 	require.NoError(t, err)
 
@@ -106,8 +111,24 @@ func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester 
 	return p
 }
 
+func (p *CatalogTester) FromFileSource(t *testing.T, path string) *CatalogTester {
+	t.Helper()
+
+	s, err := filesource.NewFromPath(path)
+	require.NoError(t, err)
+	resolver, err := s.FileResolver(source.AllLayersScope)
+	require.NoError(t, err)
+
+	p.resolver = resolver
+	return p
+}
+
 func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	t.Helper()
+
+	if path == "" {
+		return p
+	}
 
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
@@ -157,6 +178,11 @@ func (p *CatalogTester) WithResolver(r file.Resolver) *CatalogTester {
 
 func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *CatalogTester {
 	t.Helper()
+
+	if fixtureName == "" {
+		return p
+	}
+
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
 	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
@@ -325,6 +351,11 @@ func TestFileParser(t *testing.T, fixturePath string, parser generic.Parser, exp
 func TestCataloger(t *testing.T, fixtureDir string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
 	t.Helper()
 	NewCatalogTester().FromDirectory(t, fixtureDir).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
+}
+
+func TestCatalogerFromFileSource(t *testing.T, fixturePath string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
+	NewCatalogTester().FromFileSource(t, fixturePath).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
 }
 
 func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {

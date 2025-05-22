@@ -13,10 +13,10 @@ RUN python3.9 -m pip install click==8.0.3 beautifulsoup4==4.9.3 soupsieve==2.2.1
 RUN python3.9 -m pip install six==1.16.0 wcwidth==0.2.13 blessed==1.20.0 python-editor==1.0.4  # total dependencies for inquirer in project1 (which is linked)
 RUN python3.9 -m pip install requests==2.25.0 certifi==2020.12.5 chardet==3.0.4 idna==2.10 urllib3==1.26.18 # total dependencies for requests
 
+RUN python3.8 -m pip install readchar==4.2.1
 RUN python3.8 -m pip install click==8.0.2 beautifulsoup4==4.9.2 soupsieve==2.2.0 requests==2.25.0
 RUN python3.8 -m pip install runs==1.2.2 xmod==1.8.1 # partial dependencies for inquirer in project2 (which is a red herring)
 RUN python3.8 -m pip install requests==2.25.0 certifi==2020.12.5 chardet==3.0.4 idna==2.10 urllib3==1.26.18 # total dependencies for requests
-RUN python3.8 -m pip install readchar==4.2.0
 
 # create directories for the two projects
 RUN mkdir -p /app/project1 /app/project2

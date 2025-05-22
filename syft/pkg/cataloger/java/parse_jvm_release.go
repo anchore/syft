@@ -88,7 +88,10 @@ func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Envir
 	installDir := path.Dir(reader.Path())
 	files, hasJdk := findJvmFiles(resolver, installDir)
 
-	vendor, product := jvmPrimaryVendorProduct(ri.Implementor, reader.Path(), ri.ImageType, hasJdk)
+	// the reason we use the reference to get the real path is in cases where the file cataloger is involved
+	// (thus the real path is not available except for in the original file reference). This is important
+	// since the path is critical for distinguishing between different JVM vendors.
+	vendor, product := jvmPrimaryVendorProduct(ri.Implementor, string(reader.Reference().RealPath), ri.ImageType, hasJdk)
 
 	p := pkg.Package{
 		Name:      product,

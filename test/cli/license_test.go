@@ -3,7 +3,7 @@ package cli
 import "testing"
 
 func Test_Licenses(t *testing.T) {
-	testImage := getFixtureImage(t, "image-unknown-licenses")
+	testImage := getFixtureImage(t, "image-pkg-coverage")
 	tests := []struct {
 		name       string
 		args       []string

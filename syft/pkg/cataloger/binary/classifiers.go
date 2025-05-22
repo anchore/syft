@@ -1,22 +1,44 @@
 package binary
 
 import (
+	"fmt"
+
+	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
+// in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
+var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
+
 //nolint:funlen
-func DefaultClassifiers() []Classifier {
-	return []Classifier{
+func DefaultClassifiers() []binutils.Classifier {
+	m := binutils.ContextualEvidenceMatchers{CatalogerName: catalogerName}
+
+	var libpythonMatcher = m.FileNameTemplateVersionMatcher(
+		`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.so.*$`,
+		pythonVersionTemplate,
+	)
+
+	var rubyMatcher = m.FileContentsVersionMatcher(
+		// ruby 3.4.0dev (2024-09-15T01:06:11Z master 532af89e3b) [x86_64-linux]
+		// ruby 3.4.0preview1 (2024-05-16 master 9d69619623) [x86_64-linux]
+		// ruby 3.3.0rc1 (2023-12-11 master a49643340e) [x86_64-linux]
+		// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
+		// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
+		`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
+
+	return []binutils.Classifier{
 		{
 			Class:    "python-binary",
 			FileGlob: "**/python*",
-			EvidenceMatcher: evidenceMatchers(
+			EvidenceMatcher: binutils.EvidenceMatchers(
 				// try to find version information from libpython shared libraries
-				sharedLibraryLookup(
+				binutils.SharedLibraryLookup(
 					`^libpython[0-9]+(?:\.[0-9]+)+[a-z]?\.so.*$`,
 					libpythonMatcher),
 				// check for version information in the binary
-				fileNameTemplateVersionMatcher(
+				m.FileNameTemplateVersionMatcher(
 					`(?:.*/|^)python(?P<version>[0-9]+(?:\.[0-9]+)+)$`,
 					pythonVersionTemplate),
 			),
@@ -41,7 +63,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "pypy-binary-lib",
 			FileGlob: "**/libpypy*.so*",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\[PyPy (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "pypy",
 			PURL:    mustPURL("pkg:generic/pypy@version"),
@@ -49,7 +71,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "go-binary",
 			FileGlob: "**/go",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
@@ -58,7 +80,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "julia-binary",
 			FileGlob: "**/libjulia-internal.so",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
 			Package: "julia",
 			PURL:    mustPURL("pkg:generic/julia@version"),
@@ -67,7 +89,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "helm",
 			FileGlob: "**/helm",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
 			Package: "helm",
 			PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
@@ -76,13 +98,13 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
-			EvidenceMatcher: evidenceMatchers(
+			EvidenceMatcher: binutils.EvidenceMatchers(
 				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
-				FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+				m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
 				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
-				FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+				m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
 				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
-				FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -94,13 +116,13 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-openjdk",
 			FileGlob: "**/java",
-			EvidenceMatcher: matchExcluding(
-				evidenceMatchers(
-					FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.MatchExcluding(
+				binutils.EvidenceMatchers(
+					m.FileContentsVersionMatcher(
 						// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
 						// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
 						`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
-					FileContentsVersionMatcher(
+					m.FileContentsVersionMatcher(
 						// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]openjdk[NUL]java[NUL]
 						`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+openjdk\x00java`),
 				),
@@ -115,7 +137,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-ibm",
 			FileGlob: "**/java",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
 				`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
 			Package: "java/jre",
@@ -125,8 +147,8 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-oracle",
 			FileGlob: "**/java",
-			EvidenceMatcher: matchExcluding(
-				FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.MatchExcluding(
+				m.FileContentsVersionMatcher(
 					// [NUL]19.0.1+10-21[NUL]
 					`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
 				// don't match openjdk
@@ -139,7 +161,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-graalvm",
 			FileGlob: "**/java",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\x00(?P<version>[0-9]+[.0-9]+[.0-9]+\+[0-9]+-jvmci-[0-9]+[.0-9]+-b[0-9]+)\x00`),
 			Package: "java/graalvm",
 			PURL:    mustPURL("pkg:generic/java/graalvm@version"),
@@ -148,7 +170,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "java-binary-jdk",
 			FileGlob: "**/jdb",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
 			Package: "java/jdk",
 			PURL:    mustPURL("pkg:generic/java/jdk@version"),
@@ -157,13 +179,13 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "nodejs-binary",
 			FileGlob: "**/node",
-			EvidenceMatcher: evidenceMatchers(
+			EvidenceMatcher: binutils.EvidenceMatchers(
 				// [NUL]node v0.10.48[NUL]
 				// [NUL]v0.12.18[NUL]
 				// [NUL]v4.9.1[NUL]
 				// node.js/v22.9.0
-				FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5|6)\.[0-9]+\.[0-9]+)\x00`),
-				FileContentsVersionMatcher(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				m.FileContentsVersionMatcher(`(?m)\x00(node )?v(?P<version>(0|4|5|6)\.[0-9]+\.[0-9]+)\x00`),
+				m.FileContentsVersionMatcher(`(?m)node\.js\/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
 			Package: "node",
 			PURL:    mustPURL("pkg:generic/node@version"),
@@ -172,7 +194,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "go-binary-hint",
 			FileGlob: "**/VERSION*",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
@@ -181,7 +203,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "busybox-binary",
 			FileGlob: "**/busybox",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)BusyBox\s+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "busybox",
 			PURL:    mustPURL("pkg:generic/busybox@version"),
@@ -190,7 +212,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "util-linux-binary",
 			FileGlob: "**/getopt",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00util-linux\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
 			Package: "util-linux",
 			PURL:    mustPURL("pkg:generic/util-linux@version"),
@@ -199,10 +221,10 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
-			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(`(?m)version (?P<version>[0-9]+\.[0-9]+(\.|-dev|-rc)[0-9]+)(-[a-z0-9]{7})?, released 20`),
-				FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
-				FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
+			EvidenceMatcher: binutils.EvidenceMatchers(
+				m.FileContentsVersionMatcher(`(?m)version (?P<version>[0-9]+\.[0-9]+(\.|-dev|-rc)[0-9]+)(-[a-z0-9]{7})?, released 20`),
+				m.FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
+				m.FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
 			),
 			Package: "haproxy",
 			PURL:    mustPURL("pkg:generic/haproxy@version"),
@@ -211,44 +233,16 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "perl-binary",
 			FileGlob: "**/perl",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\/usr\/local\/lib\/perl\d\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "perl",
 			PURL:    mustPURL("pkg:generic/perl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
-			Class:    "php-cli-binary",
-			FileGlob: "**/php*",
-			EvidenceMatcher: fileNameTemplateVersionMatcher(
-				`(.*/|^)php[0-9]*$`,
-				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-			Package: "php-cli",
-			PURL:    mustPURL("pkg:generic/php-cli@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "php-fpm-binary",
-			FileGlob: "**/php-fpm*",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-			Package: "php-fpm",
-			PURL:    mustPURL("pkg:generic/php-fpm@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "php-apache-binary",
-			FileGlob: "**/libphp*.so",
-			EvidenceMatcher: FileContentsVersionMatcher(
-				`(?m)X-Powered-By: PHP\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)`),
-			Package: "libphp",
-			PURL:    mustPURL("pkg:generic/php@version"),
-			CPEs:    singleCPE("cpe:2.3:a:php:php:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
 			Class:    "php-composer-binary",
 			FileGlob: "**/composer*",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)'pretty_version'\s*=>\s*'(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|RC[0-9]+)?)'`),
 			Package: "composer",
 			PURL:    mustPURL("pkg:generic/composer@version"),
@@ -257,7 +251,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "httpd-binary",
 			FileGlob: "**/httpd",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)Apache\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "httpd",
 			PURL:    mustPURL("pkg:generic/httpd@version"),
@@ -266,7 +260,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "memcached-binary",
 			FileGlob: "**/memcached",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)memcached\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "memcached",
 			PURL:    mustPURL("pkg:generic/memcached@version"),
@@ -275,7 +269,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "traefik-binary",
 			FileGlob: "**/traefik",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]v1.7.34[NUL]
 				// [NUL]2.9.6[NUL]
 				// 3.0.4[NUL]
@@ -287,7 +281,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "arangodb-binary",
 			FileGlob: "**/arangosh",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s\[linux\]`),
 			Package: "arangodb",
 			PURL:    mustPURL("pkg:generic/arangodb@version"),
@@ -296,7 +290,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "postgresql-binary",
 			FileGlob: "**/postgres",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]PostgreSQL 15beta4
 				// [NUL]PostgreSQL 15.1
 				// [NUL]PostgreSQL 9.6.24
@@ -309,11 +303,11 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
-			EvidenceMatcher: evidenceMatchers(
+			EvidenceMatcher: binutils.EvidenceMatchers(
 				// shutdown[NUL]8.0.37[NUL][NUL][NUL][NUL][NUL]mysql_real_esc
-				FileContentsVersionMatcher(`\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)\x00+mysql`),
+				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)\x00+mysql`),
 				// /export/home/pb2/build/sb_0-26781090-1516292385.58/release/mysql-8.0.4-rc/mysys_ssl/my_default.cc
-				FileContentsVersionMatcher(`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
+				m.FileContentsVersionMatcher(`(?m).*/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			),
 			Package: "mysql",
 			PURL:    mustPURL("pkg:generic/mysql@version"),
@@ -322,7 +316,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m).*/percona-server-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "percona-server",
 			PURL:    mustPURL("pkg:generic/percona-server@version"),
@@ -334,7 +328,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m).*/Percona-XtraDB-Cluster-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "percona-xtradb-cluster",
 			PURL:    mustPURL("pkg:generic/percona-xtradb-cluster@version"),
@@ -347,7 +341,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "xtrabackup-binary",
 			FileGlob: "**/xtrabackup",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m).*/percona-xtrabackup-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)`),
 			Package: "percona-xtrabackup",
 			PURL:    mustPURL("pkg:generic/percona-xtrabackup@version"),
@@ -356,7 +350,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "mariadb-binary",
 			FileGlob: "**/{mariadb,mysql}",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// 10.6.15-MariaDB
 				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
 			Package: "mariadb",
@@ -366,7 +360,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "rust-standard-library-linux",
 			FileGlob: "**/libstd-????????????????.so",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// clang LLVM (rustc version 1.48.0 (7eac88abb 2020-11-16))
 				`(?m)(\x00)clang LLVM \(rustc version (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
 			Package: "rust",
@@ -376,7 +370,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "rust-standard-library-macos",
 			FileGlob: "**/libstd-????????????????.dylib",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// c 1.48.0 (7eac88abb 2020-11-16)
 				`(?m)c (?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)) \(\w+ \d{4}\-\d{2}\-\d{2}\)`),
 			Package: "rust",
@@ -386,9 +380,9 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "ruby-binary",
 			FileGlob: "**/ruby",
-			EvidenceMatcher: evidenceMatchers(
+			EvidenceMatcher: binutils.EvidenceMatchers(
 				rubyMatcher,
-				sharedLibraryLookup(
+				binutils.SharedLibraryLookup(
 					// try to find version information from libruby shared libraries
 					`^libruby\.so.*$`,
 					rubyMatcher),
@@ -400,12 +394,12 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "erlang-binary",
 			FileGlob: "**/erlexec",
-			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.EvidenceMatchers(
+				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
 					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
-				FileContentsVersionMatcher(
+				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
 					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
@@ -417,16 +411,16 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "erlang-alpine-binary",
 			FileGlob: "**/beam.smp",
-			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.EvidenceMatchers(
+				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
 					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
-				FileContentsVersionMatcher(
+				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
 					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
-				FileContentsVersionMatcher(
+				m.FileContentsVersionMatcher(
 					// [NUL][NUL]26.1.2[NUL][NUL][NUL][NUL][NUL][NUL][NUL]NUL[NUL][NUL]Erlang/OTP
 					`\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+Erlang/OTP`,
 				),
@@ -438,12 +432,12 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "erlang-library",
 			FileGlob: "**/liberts_internal.a",
-			EvidenceMatcher: evidenceMatchers(
-				FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.EvidenceMatchers(
+				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
 					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
-				FileContentsVersionMatcher(
+				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/local/src/otp-25.3.2.7/erts/
 					`(?m)/usr/local/src/otp-(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
 				),
@@ -455,7 +449,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "swipl-binary",
 			FileGlob: "**/swipl",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)swipl-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\/`,
 			),
 			Package: "swipl",
@@ -465,7 +459,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "dart-binary",
 			FileGlob: "**/dart",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// MathAtan[NUL]2.12.4 (stable)
 				// "%s"[NUL]3.0.0 (stable)
 				// Dart,GC"[NUL]3.5.2 (stable)
@@ -479,7 +473,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "haskell/ghc",
@@ -489,7 +483,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "haskell-cabal-binary",
 			FileGlob: "**/cabal",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
 			),
 			Package: "haskell/cabal",
@@ -499,7 +493,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "haskell-stack-binary",
 			FileGlob: "**/stack",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)Version\s*(?P<version>[0-9]+\.[0-9]+\.[0-9]+),\s*Git`,
 			),
 			Package: "haskell/stack",
@@ -509,7 +503,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "consul-binary",
 			FileGlob: "**/consul",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// NOTE: This is brittle and may not work for past or future versions
 				`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
 			),
@@ -520,7 +514,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "nginx-binary",
 			FileGlob: "**/nginx",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]nginx version: nginx/1.25.1 - fetches '1.25.1'
 				// [NUL]nginx version: openresty/1.21.4.1 - fetches '1.21.4' as this is the nginx version part
 				`(?m)(\x00|\?)nginx version: [^\/]+\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:\+\d+)?(?:-\d+)?)`,
@@ -535,7 +529,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "bash-binary",
 			FileGlob: "**/bash",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// @(#)Bash version 5.2.15(1) release GNU
 				// @(#)Bash version 5.2.0(1) alpha GNU
 				// @(#)Bash version 5.2.0(1) beta GNU
@@ -549,7 +543,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "openssl-binary",
 			FileGlob: "**/openssl",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]OpenSSL 3.1.4'
 				// [NUL]OpenSSL 1.1.1w'
 				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
@@ -561,7 +555,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "gcc-binary",
 			FileGlob: "**/gcc",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// GCC: \(GNU\)  12.3.0'
 				`GCC: \(GNU\) (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
 			),
@@ -572,7 +566,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "fluent-bit-binary",
 			FileGlob: "**/fluent-bit",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]3.0.2[NUL]%sFluent Bit
 				// [NUL]2.2.3[NUL]Fluent Bit
 				// [NUL]2.2.1[NUL][NUL][NUL]Fluent Bit
@@ -587,7 +581,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "wordpress-cli-binary",
 			FileGlob: "**/wp",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// wp-cli/wp-cli 2.9.0'
 				`(?m)wp-cli/wp-cli (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
 			),
@@ -598,7 +592,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "curl-binary",
 			FileGlob: "**/curl",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`curl/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
 			),
 			Package: "curl",
@@ -608,7 +602,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "lighttpd-binary",
 			FileGlob: "**/lighttpd",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00lighttpd/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "lighttpd",
@@ -618,7 +612,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "proftpd-binary",
 			FileGlob: "**/proftpd",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00ProFTPD Version (?P<version>[0-9]+\.[0-9]+\.[0-9]+[a-z]?)\x00`,
 			),
 			Package: "proftpd",
@@ -628,7 +622,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "zstd-binary",
 			FileGlob: "**/zstd",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "zstd",
@@ -638,7 +632,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "xz-binary",
 			FileGlob: "**/xz",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00xz \(XZ Utils\) (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "xz",
@@ -648,7 +642,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "gzip-binary",
 			FileGlob: "**/gzip",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00(?P<version>[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "gzip",
@@ -658,7 +652,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "sqlcipher-binary",
 			FileGlob: "**/sqlcipher",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`[^0-9]\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "sqlcipher",
@@ -668,7 +662,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "jq-binary",
 			FileGlob: "**/jq",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`\x00(?P<version>[0-9]{1,3}\.[0-9]{1,3}(\.[0-9]+)?)\x00`,
 			),
 			Package: "jq",
@@ -678,7 +672,7 @@ func DefaultClassifiers() []Classifier {
 		{
 			Class:    "chrome-binary",
 			FileGlob: "**/chrome",
-			EvidenceMatcher: FileContentsVersionMatcher(
+			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]127.0.6533.119[NUL]Default
 				`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\x00Default`,
 			),
@@ -689,18 +683,22 @@ func DefaultClassifiers() []Classifier {
 	}
 }
 
-// in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
-var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
+// singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the
+// cpe string cannot be parsed into valid CPE Attributes
+func singleCPE(cpeString string, source ...cpe.Source) []cpe.CPE {
+	src := cpe.GeneratedSource
+	if len(source) > 0 {
+		src = source[0]
+	}
+	return []cpe.CPE{
+		cpe.Must(cpeString, src),
+	}
+}
 
-var libpythonMatcher = fileNameTemplateVersionMatcher(
-	`(?:.*/|^)libpython(?P<version>[0-9]+(?:\.[0-9]+)+)[a-z]?\.so.*$`,
-	pythonVersionTemplate,
-)
-
-var rubyMatcher = FileContentsVersionMatcher(
-	// ruby 3.4.0dev (2024-09-15T01:06:11Z master 532af89e3b) [x86_64-linux]
-	// ruby 3.4.0preview1 (2024-05-16 master 9d69619623) [x86_64-linux]
-	// ruby 3.3.0rc1 (2023-12-11 master a49643340e) [x86_64-linux]
-	// ruby 3.2.1 (2023-02-08 revision 31819e82c8) [x86_64-linux]
-	// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
-	`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
+func mustPURL(purl string) packageurl.PackageURL {
+	p, err := packageurl.FromString(purl)
+	if err != nil {
+		panic(fmt.Sprintf("invalid PURL: %s", p))
+	}
+	return p
+}

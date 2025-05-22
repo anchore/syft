@@ -73,7 +73,7 @@ func ParseLicenses(raw []pkg.License) (concluded, declared []SPDXLicense, otherL
 	for _, l := range raw {
 		candidate := createSPDXLicense(l)
 
-		// isCustomLicense determines if the candidate falls under https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/#
+		// this determines if the candidate falls under https://spdx.github.io/spdx-spec/v2.3/other-licensing-information-detected/#
 		// of the SPDX spec, where:
 		// - we should not have a complex SPDX expression
 		// - if a single license, it should not be a known license (on the SPDX license list)

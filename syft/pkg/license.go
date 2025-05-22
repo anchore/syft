@@ -365,7 +365,7 @@ func (b *licenseBuilder) licensesFromEvidenceAndContent(evidence []licenses.Evid
 
 func (b *licenseBuilder) licenseFromContentHash(content string) License {
 	hash := sha256HexFromString(content)
-	value := "LicenseRef-sha256:" + hash
+	value := "sha256:" + hash
 
 	return License{
 		Value:     value,
