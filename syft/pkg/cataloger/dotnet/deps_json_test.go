@@ -149,6 +149,11 @@ func TestGetLogicalDepsJSON_MergeTargets(t *testing.T) {
 						"lib/netcoreapp3.1/Microsoft.CodeAnalysis.CSharp.dll": {},
 					},
 				},
+				"Microsoft.CodeAnalysis.Common/4.0.0": {
+					Dependencies: map[string]string{
+						"Microsoft.CodeAnalysis.CSharp": "4.0.0",
+					},
+				},
 			},
 		},
 		Libraries: map[string]depsLibrary{

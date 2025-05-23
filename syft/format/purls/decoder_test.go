@@ -165,13 +165,9 @@ func TestDecoder_Decode(t *testing.T) {
 					Type:     pkg.JavaPkg,
 					PURL:     "pkg:maven/org.apache/some-pkg@4.11.3",
 					Language: pkg.Java,
-					Metadata: pkg.JavaArchive{
-						PomProperties: &pkg.JavaPomProperties{
-							GroupID:    "org.apache",
-							ArtifactID: "some-pkg",
-							Version:    "4.11.3",
-						},
-					},
+					// we intentionally do not claim we found a pom properties file (don't derive this from the purl).
+					// but we need a metadata allocated since all Java packages have a this metadata type (a consistency point)
+					Metadata: pkg.JavaArchive{},
 				},
 			},
 		},
