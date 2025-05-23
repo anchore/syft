@@ -59,7 +59,7 @@ func TestTerraformCataloger(t *testing.T) {
 		Metadata: pkg.TerraformLockProviderEntry{
 			URL:         "registry.terraform.io/hashicorp/google",
 			Version:     "6.8.0",
-			Constraints: "6.8.0",
+			Constraints: "",
 			Hashes: []string{
 				"h1:GlCaVPk6eKMg2ZbRY7C5tUeHGNIABT+qFtMl8+XWZHM=",
 				"zh:1b78f4451f1617092eb6891c9c13eda79671060601c40947feea6794c732157a",
