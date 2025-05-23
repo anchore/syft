@@ -4,9 +4,11 @@ package spdxhelpers
 import (
 	"crypto/sha1"
 	"fmt"
+	"os"
 	"path"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,6 +82,13 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	// add the root document relationship
 	allRelationships = append(allRelationships, documentDescribesRelationship)
 
+	createdTime := time.Now()
+	if sourceDateEpoch := os.Getenv("SOURCE_DATE_EPOCH"); sourceDateEpoch != "" {
+		if ts, err := strconv.ParseInt(sourceDateEpoch, 10, 64); err == nil {
+			createdTime = time.Unix(ts, 0)
+		}
+	}
+
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
 		// Cardinality: mandatory, one
@@ -145,7 +154,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 
 			// 6.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
-			Created: time.Now().UTC().Format(time.RFC3339),
+			Created: createdTime.UTC().Format(time.RFC3339),
 
 			// 6.10: Creator Comment
 			// Cardinality: optional, one
