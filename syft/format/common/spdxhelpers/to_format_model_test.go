@@ -51,10 +51,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "alpine",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "alpine",
+				DocumentNamespace: "https://anchore.com/image/alpine-e1583207-ccd4-5f6d-ba34-0e87dde88ae3",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -121,11 +122,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "some/directory",
-
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "some/directory",
+				DocumentNamespace: "https://anchore.com/dir/some/directory-d7a2f7ba-a86d-572d-8f26-317848604a7e",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -191,10 +192,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "path/to/some.file",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "path/to/some.file",
+				DocumentNamespace: "https://anchore.com/file/path/to/some.file-0f8da613-9e52-561e-a1db-71cac105e808",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -252,12 +254,12 @@ func Test_toFormatModel(t *testing.T) {
 			test.in.Artifacts.Packages = pkg.NewCollection(pkgs...)
 
 			// convert
-			got := ToFormatModel(test.in, false)
+			got := ToFormatModel(test.in, true)
 
 			// check differences
 			if diff := cmp.Diff(test.expected, got,
 				cmpopts.IgnoreUnexported(spdx.Document{}, spdx.Package{}),
-				cmpopts.IgnoreFields(spdx.Document{}, "CreationInfo", "DocumentNamespace"),
+				cmpopts.IgnoreFields(spdx.Document{}, "CreationInfo"),
 				cmpopts.IgnoreFields(spdx.Package{}, "PackageDownloadLocation", "IsFilesAnalyzedTagPresent", "PackageSourceInfo", "PackageLicenseConcluded", "PackageLicenseDeclared", "PackageCopyrightText"),
 			); diff != "" {
 				t.Error(diff)
