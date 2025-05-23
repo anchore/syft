@@ -116,10 +116,10 @@ func findOwnershipByFilesRelationships(resolver file.Resolver, catalog *pkg.Coll
 			}
 
 			// find paths that result in a hit (includes resolving symlinks)
-			ownedPaths := allPaths(ownedFilePath, resolver)
+			resolvedPaths := resolvePaths(ownedFilePath, resolver)
 
-			for _, ownedPath := range ownedPaths {
-				if matchesAny(ownedPath, globsForbiddenFromBeingOwned) {
+			for _, resolvedPath := range resolvedPaths {
+				if matchesAny(resolvedPath, globsForbiddenFromBeingOwned) {
 					// we skip over known exceptions to file ownership, such as the RPM package owning
 					// the RPM DB path, otherwise the RPM package would "own" all RPMs, which is not intended
 					continue
@@ -129,19 +129,16 @@ func findOwnershipByFilesRelationships(resolver file.Resolver, catalog *pkg.Coll
 				// directly owns this real path. This is the specific fix for the issue where a
 				// symlink shouldn't allow a package to claim ownership when another package of
 				// the same type directly owns the real file.
-				if ownedPath != ownedFilePath { // This is a resolved symlink path
+				if resolvedPath != ownedFilePath { // This is a resolved symlink path
 					// Check if another package of the same type directly owns this path
-					if directOwners, pathExists := directOwnership[ownedPath]; pathExists {
-						pkgType := string(candidateOwnerPkg.Type)
-						if ownerIDs, sameTypeExists := directOwners[pkgType]; sameTypeExists && len(ownerIDs) > 0 {
-							// Skip this path - a package of the same type directly owns it
-							continue
-						}
+					if paths := directOwnership[candidateOwnerPkg.Type]; paths != nil && paths.Has(resolvedPath) {
+						// Skip this path - a package of the same type directly owns it
+						continue
 					}
 				}
 
 				// look for package(s) in the catalog that may be owned by this package and mark the relationship
-				for _, subPackage := range catalog.PackagesByPath(ownedPath) {
+				for _, subPackage := range catalog.PackagesByPath(resolvedPath) {
 					subID := subPackage.ID()
 					if subID == id {
 						continue
@@ -153,7 +150,7 @@ func findOwnershipByFilesRelationships(resolver file.Resolver, catalog *pkg.Coll
 					if _, exists := relationships[id][subID]; !exists {
 						relationships[id][subID] = strset.New()
 					}
-					relationships[id][subID].Add(ownedPath)
+					relationships[id][subID].Add(resolvedPath)
 				}
 			}
 		}
@@ -162,8 +159,8 @@ func findOwnershipByFilesRelationships(resolver file.Resolver, catalog *pkg.Coll
 	return relationships
 }
 
-func directOwnersByPath(catalog *pkg.Collection) map[string]map[string][]artifact.ID {
-	directOwnership := make(map[string]map[string][]artifact.ID)
+func directOwnersByPath(catalog *pkg.Collection) map[pkg.Type]*strset.Set {
+	directOwnership := map[pkg.Type]*strset.Set{}
 
 	// First, identify direct ownership of all files
 	for _, p := range catalog.Sorted() {
@@ -183,23 +180,19 @@ func directOwnersByPath(catalog *pkg.Collection) map[string]map[string][]artifac
 			}
 
 			// Register direct ownership
-			pkgType := string(p.Type)
-			pkgID := p.ID()
-
-			if _, exists := directOwnership[ownedFilePath]; !exists {
-				directOwnership[ownedFilePath] = make(map[string][]artifact.ID)
+			paths := directOwnership[p.Type]
+			if paths == nil {
+				paths = strset.New()
+				directOwnership[p.Type] = paths
 			}
-			if _, exists := directOwnership[ownedFilePath][pkgType]; !exists {
-				directOwnership[ownedFilePath][pkgType] = []artifact.ID{}
-			}
-			directOwnership[ownedFilePath][pkgType] = append(directOwnership[ownedFilePath][pkgType], pkgID)
+			paths.Add(ownedFilePath)
 		}
 	}
 
 	return directOwnership
 }
 
-func allPaths(ownedFilePath string, resolver file.Resolver) []string {
+func resolvePaths(ownedFilePath string, resolver file.Resolver) []string {
 	// though we have a string path, we need to resolve symlinks and other filesystem oddities since we cannot assume this is a real path
 	var locs []file.Location
 	var err error
