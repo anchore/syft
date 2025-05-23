@@ -158,6 +158,106 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			},
 			wantErr: require.Error,
 		},
+		{
+			name: "application source type",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "application",
+				"metadata": {
+					"propertyA":"bla bla bla",
+					"group":"org.anchore"
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "application",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+		},
+		{
+			name: "library source type",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "library",
+				"metadata": {
+					"propertyA":"bla bla bla",
+					"group":"org.anchore"
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "library",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+		},
+		{
+			name: "platform source type",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "platform",
+				"metadata": {
+					"propertyA":"bla bla bla",
+					"group":"org.anchore"
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "platform",
+				Metadata: source.PlatformMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+		},
+		{
+			name: "os source type",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "os",
+				"metadata": {
+					"propertyA":"bla bla bla",
+					"group":"org.anchore"
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "os",
+				Metadata: source.OSMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+		},
+		{
+			name: "framework source type",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "framework",
+				"metadata": {
+					"propertyA":"bla bla bla",
+					"group":"org.anchore"
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "framework",
+				Metadata: source.FrameworkMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						Group: "org.anchore",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range cases {

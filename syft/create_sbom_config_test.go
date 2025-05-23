@@ -503,7 +503,7 @@ func Test_findDefaultTag(t *testing.T) {
 		{
 			name: "unknown",
 			src: source.Description{
-				Metadata: struct{}{},
+				Metadata: source.UnknownMetadata{},
 			},
 			wantErr: require.Error,
 		},
