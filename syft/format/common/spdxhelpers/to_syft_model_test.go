@@ -587,7 +587,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 				},
 				Relationships: test.relationships,
 			}
-			doc := ToFormatModel(s, false)
+			doc := ToFormatModel(s, false, nil)
 			got, err := ToSyftModel(doc)
 			require.NoError(t, err)
 
