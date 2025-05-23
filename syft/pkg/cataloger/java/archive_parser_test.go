@@ -116,6 +116,7 @@ func TestParseJar(t *testing.T) {
 					),
 					Language: pkg.Java,
 					Type:     pkg.JenkinsPluginPkg,
+					Digests:  []file.Digest{{Algorithm: "sha1", Value: "107b7b52a3140fec020c6134bbbe61fb4a0d34d8"}},
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 						Manifest: &pkg.JavaManifest{
@@ -175,6 +176,7 @@ func TestParseJar(t *testing.T) {
 							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar")),
 						},
 					),
+					Digests: []file.Digest{{Algorithm: "sha1", Value: "1dd23263a461de4bede228d16c0461c7f87a5828"}},
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -249,6 +251,7 @@ func TestParseJar(t *testing.T) {
 							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar")),
 						},
 					),
+					Digests: []file.Digest{{Algorithm: "sha1", Value: "3f671893cce597473815fb9818e1ca0397b25d72"}},
 					Metadata: pkg.JavaArchive{
 						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 						Manifest: &pkg.JavaManifest{
@@ -396,11 +399,6 @@ func TestParseJar(t *testing.T) {
 				// we need to compare the other fields without parent attached
 				metadata := a.Metadata.(pkg.JavaArchive)
 				metadata.Parent = nil
-
-				// redact Digest which is computed differently between CI and local
-				if len(metadata.ArchiveDigests) > 0 {
-					metadata.ArchiveDigests = nil
-				}
 
 				// ignore select fields (only works for the main section)
 				for _, field := range test.ignoreExtras {
@@ -1220,8 +1218,6 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 								{Key: "Specification-Version", Value: "2.15.2"},
 							},
 						},
-						// not under test
-						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
 					},
 				},
 			},
@@ -1275,8 +1271,6 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 								{Key: "Specification-Version", Value: "2.15.2"},
 							},
 						},
-						// not under test
-						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "abd3e329270fc54a2acaceb45420fd5710ecefd5"}},
 					},
 				},
 			},
@@ -1335,8 +1329,6 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 								{Key: "Plugin-Developers", Value: "Stefan Wolf:wolfs:"},
 							},
 						},
-						// not under test
-						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
 					},
 				},
 			},
@@ -1355,7 +1347,7 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				FromFile(t, generateJavaMetadataJarFixture(t, tt.fixtureName, tt.fileExtension)).
 				Expects(tt.expectedPkgs, tt.expectedRelationships).
 				WithCompareOptions(
-					cmpopts.IgnoreFields(pkg.JavaArchive{}, "ArchiveDigests"),
+					cmpopts.IgnoreFields(pkg.Package{}, "Digests"),
 					cmp.Comparer(func(x, y pkg.KeyValue) bool {
 						if x.Key != y.Key {
 							return false
