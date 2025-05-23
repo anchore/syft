@@ -282,6 +282,13 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
+require (
+	github.com/diskfs/go-diskfs v1.6.0 // indirect
+	github.com/djherbis/times v1.6.0 // indirect
+	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
+	github.com/pkg/xattr v0.4.9 // indirect
+)
+
 retract (
 	v1.25.0 // published with a replace directive (confusing for API users)
 	v0.53.2

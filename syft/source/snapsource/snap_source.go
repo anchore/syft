@@ -3,10 +3,11 @@ package snapsource
 import (
 	"context"
 	"crypto"
-	"errors"
 	"fmt"
+	diskFile "github.com/diskfs/go-diskfs/backend/file"
+	"github.com/diskfs/go-diskfs/filesystem"
+	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -14,7 +15,6 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/afero"
-	"github.com/sylabs/squashfs"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
@@ -43,13 +43,15 @@ type Config struct {
 }
 
 type snapSource struct {
-	id           artifact.ID
-	config       Config
-	resolver     file.Resolver
-	mutex        *sync.Mutex
-	squashfsPath string
-	manifest     *snapManifest
-	closer       func() error
+	id               artifact.ID
+	config           Config
+	resolver         file.Resolver
+	mutex            *sync.Mutex
+	manifest         *snapManifest
+	fs               filesystem.FileSystem
+	squashfsPath     string
+	squashFileCloser func() error
+	closer           func() error
 }
 
 func New(cfg Config) (source.Source, error) {
@@ -60,41 +62,29 @@ func New(cfg Config) (source.Source, error) {
 	}
 
 	s := &snapSource{
+		id:           deriveID(cfg.Request, cfg.Alias.Name, cfg.Alias.Version),
 		config:       cfg,
 		mutex:        &sync.Mutex{},
 		squashfsPath: f.Path,
 		closer:       f.Cleanup,
 	}
 
-	s.id = s.deriveID(cfg.Request, s.config.Alias.Name, s.config.Alias.Version)
+	return s, s.extractManifest()
+}
 
+func (s *snapSource) extractManifest() error {
 	r, err := s.FileResolver(source.SquashedScope)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create snap file resolver: %w", err)
+		return fmt.Errorf("unable to create snap file resolver: %w", err)
 	}
 
 	manifest, err := parseManifest(r)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse snap manifest file: %w", err)
+		return fmt.Errorf("unable to parse snap manifest file: %w", err)
 	}
 
 	s.manifest = manifest
-
-	return s, nil
-}
-
-func isSquashFSFile(mimeType, path string) bool {
-	if mimeType == "application/vnd.squashfs" || mimeType == "application/x-squashfs" {
-		return true
-	}
-
-	ext := filepath.Ext(path)
-	return ext == ".snap" || ext == ".squashfs"
-}
-
-func (s snapSource) deriveID(path, name, version string) artifact.ID {
-	info := fmt.Sprintf("%s:%s@%s", digestOfFileContents(path), name, version)
-	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String())
+	return nil
 }
 
 func (s snapSource) ID() artifact.ID {
@@ -134,7 +124,18 @@ func (s snapSource) Describe() source.Description {
 }
 
 func (s *snapSource) Close() error {
+	if s.squashFileCloser != nil {
+		if err := s.squashFileCloser(); err != nil {
+			return fmt.Errorf("unable to close snap resolver: %w", err)
+		}
+		s.squashFileCloser = nil
+	}
 	s.resolver = nil
+	if s.fs != nil {
+		if err := s.fs.Close(); err != nil {
+			return fmt.Errorf("unable to close snap squashfs: %w", err)
+		}
+	}
 	if s.closer != nil {
 		if err := s.closer(); err != nil {
 			return fmt.Errorf("unable to close snap source: %w", err)
@@ -143,7 +144,7 @@ func (s *snapSource) Close() error {
 	return nil
 }
 
-func (s snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {
+func (s *snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -153,19 +154,38 @@ func (s snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	log.Debugf("parsing squashfs file: %s", s.squashfsPath)
 
-	var size int64
-	fileMeta, err := os.Stat(s.squashfsPath)
-	if err == nil {
-		size = fileMeta.Size()
+	f, err := os.Open(s.squashfsPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open squashfs file: %w", err)
 	}
+
+	s.squashFileCloser = func() error {
+		if err := f.Close(); err != nil {
+			return fmt.Errorf("unable to close squashfs file: %w", err)
+		}
+		return nil
+	}
+
+	fileMeta, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("unable to stat squashfs file: %w", err)
+	}
+
+	size := fileMeta.Size()
 
 	fileCatalog := image.NewFileCatalog()
 
 	// TODO: publish this on the bus
 	monitor := progress.NewManual(-1)
 
+	b := diskFile.New(f, true)
+	fs, err := squashfs.Read(b, fileMeta.Size(), 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open squashfs file: %w", err)
+	}
+
 	tree := filetree.New()
-	if err := stereoFile.WalkSquashFS(s.squashfsPath, squashfsVisitor(tree, fileCatalog, &size, monitor)); err != nil {
+	if err := intFile.WalkDir(fs, "/", squashfsVisitor(tree, fileCatalog, &size, monitor)); err != nil {
 		return nil, fmt.Errorf("failed to walk squashfs file=%q: %w", s.squashfsPath, err)
 	}
 
@@ -181,27 +201,30 @@ func (s snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		},
 	}
 
+	s.fs = fs
+
 	return s.resolver, nil
 }
 
-func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *int64, monitor *progress.Manual) stereoFile.SquashFSVisitor {
+func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *int64, monitor *progress.Manual) intFile.WalkDirFunc {
 	builder := filetree.NewBuilder(ft, fileCatalog.Index)
 
-	return func(fsys fs.FS, sqfsPath, path string) error {
-		ff, err := fsys.Open(path)
+	return func(fsys filesystem.FileSystem, path string, d os.FileInfo, err error) error {
+		var mimeType string
+		f, err := fsys.OpenFile(path, os.O_RDONLY)
 		if err != nil {
-			return err
-		}
-		defer ff.Close()
-
-		f, ok := ff.(*squashfs.File)
-		if !ok {
-			return errors.New("unexpected file type from squashfs")
+			log.WithFields("error", err, "path", path).Tracef("unable to open squash file path")
+		} else {
+			defer f.Close()
+			mimeType = stereoFile.MIMEType(f)
 		}
 
-		metadata, err := stereoFile.NewMetadataFromSquashFSFile(path, f)
-		if err != nil {
-			return err
+		metadata := stereoFile.Metadata{
+			FileInfo: d,
+			Path:     path,
+			//LinkDestination: "", // TODO: not supported
+			Type:     stereoFile.TypeFromMode(d.Mode()),
+			MIMEType: mimeType,
 		}
 
 		fileReference, err := builder.Add(metadata)
@@ -217,7 +240,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 			*(size) += metadata.Size()
 		}
 		fileCatalog.Add(*fileReference, metadata, nil, func() (io.ReadCloser, error) {
-			return newSquashfsFileReader(sqfsPath, path)
+			return fsys.OpenFile(path, os.O_RDONLY)
 		})
 
 		monitor.Increment()
@@ -225,43 +248,18 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 	}
 }
 
-// squashfsReader implements an io.ReadCloser that reads a file from within a SquashFS filesystem.
-type squashfsReader struct {
-	fs.File
-	backingFile *os.File
+func isSquashFSFile(mimeType, path string) bool {
+	if mimeType == "application/vnd.squashfs" || mimeType == "application/x-squashfs" {
+		return true
+	}
+
+	ext := filepath.Ext(path)
+	return ext == ".snap" || ext == ".squashfs"
 }
 
-// newSquashfsFileReader returns a io.ReadCloser that reads the file at path within the SquashFS
-// filesystem at sqfsPath.
-func newSquashfsFileReader(sqfsPath, path string) (io.ReadCloser, error) {
-	f, err := os.Open(sqfsPath)
-	if err != nil {
-		return nil, err
-	}
-
-	fsys, err := squashfs.NewReader(f)
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := fsys.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return &squashfsReader{
-		File:        r,
-		backingFile: f,
-	}, nil
-}
-
-// Close closes the SquashFS file as well as the backing filesystem.
-func (f *squashfsReader) Close() error {
-	if err := f.File.Close(); err != nil {
-		return err
-	}
-
-	return f.backingFile.Close()
+func deriveID(path, name, version string) artifact.ID {
+	info := fmt.Sprintf("%s:%s@%s", digestOfFileContents(path), name, version)
+	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String())
 }
 
 func digestOfFileContents(path string) string {

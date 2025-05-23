@@ -3,7 +3,9 @@ package unionreader
 import (
 	"bytes"
 	"fmt"
+	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"io"
+	"sync"
 
 	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"
@@ -48,12 +50,15 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 	// file.LocationReadCloser embeds a ReadCloser, which is likely
 	// to implement UnionReader. Check whether the embedded read closer
 	// implements UnionReader, and just return that if so.
-	r, ok := readerCloser.(file.LocationReadCloser)
-	if ok {
-		ur, ok := r.ReadCloser.(UnionReader)
-		if ok {
-			return ur, nil
-		}
+
+	if r, ok := readerCloser.(file.LocationReadCloser); ok {
+		return GetUnionReader(r.ReadCloser)
+	}
+
+	if r, ok := readerCloser.(*squashfs.File); ok {
+		// seeking is implemented, but not io.ReaderAt. Lets wrap it to prevent from degrading performance
+		// by copying all data.
+		return newReaderAtAdapter(r), nil
 	}
 
 	b, err := io.ReadAll(readerCloser)
@@ -74,4 +79,50 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 	}
 
 	return reader, nil
+}
+
+type readerAtAdapter struct {
+	io.ReadSeekCloser
+	mu *sync.Mutex
+}
+
+func newReaderAtAdapter(rs io.ReadSeekCloser) UnionReader {
+	return &readerAtAdapter{
+		ReadSeekCloser: rs,
+		mu:             &sync.Mutex{},
+	}
+}
+
+func (r *readerAtAdapter) ReadAt(p []byte, off int64) (n int, err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	currentPos, err := r.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return 0, err
+	}
+
+	_, err = r.Seek(off, io.SeekStart)
+	if err != nil {
+		return 0, err
+	}
+
+	n, err = r.Read(p)
+
+	// restore original position
+	// we do this even if Read failed to maintain ReaderAt semantics
+	if restoreErr := r.restorePosition(currentPos); restoreErr != nil {
+		// if we can't restore position and Read succeeded, return the restore error
+		// if Read already failed, keep the original error
+		if err == nil {
+			err = restoreErr
+		}
+	}
+
+	return n, err
+}
+
+func (r *readerAtAdapter) restorePosition(pos int64) error {
+	_, err := r.Seek(pos, io.SeekStart)
+	return err
 }

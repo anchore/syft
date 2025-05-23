@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto"
 	"fmt"
-	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/file"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,6 +13,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/wagoodman/go-progress"
+
+	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/file"
 )
 
 func TestSnapIdentity_String(t *testing.T) {
