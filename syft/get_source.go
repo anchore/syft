@@ -34,17 +34,8 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 				errs = append(errs, fmt.Errorf("%s: %w", p.Name(), err))
 			}
 		}
-		if src != nil {
-			// if we have a non-image type and platform is specified, it's an error
-			if cfg.SourceProviderConfig.Platform != nil {
-				meta := src.Describe().Metadata
-				switch meta.(type) {
-				case *source.ImageMetadata, source.ImageMetadata:
-				default:
-					return src, fmt.Errorf("platform specified with non-image source")
-				}
-			}
-			return src, nil
+		if err := validateSourcePlatform(src, cfg); err != nil {
+			return nil, err
 		}
 	}
 
@@ -52,6 +43,25 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 		errs = append(errs, fmt.Errorf("additionally, the following providers failed with %w: %s", os.ErrNotExist, strings.Join(fileNotFoundProviders, ", ")))
 	}
 	return nil, sourceError(userInput, errs...)
+}
+
+func validateSourcePlatform(src source.Source, cfg *GetSourceConfig) error {
+	if src == nil {
+		return nil
+	}
+	if cfg == nil || cfg.SourceProviderConfig == nil || cfg.SourceProviderConfig.Platform == nil {
+		return nil
+	}
+
+	meta := src.Describe().Metadata
+	switch meta.(type) {
+	case *source.ImageMetadata, source.ImageMetadata:
+		return nil
+	case *source.SnapMetadata, source.SnapMetadata:
+		return nil
+	default:
+		return fmt.Errorf("platform is not supported for this source type")
+	}
 }
 
 func sourceError(userInput string, errs ...error) error {

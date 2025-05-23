@@ -173,6 +173,11 @@ func Test_toGithubModel(t *testing.T) {
 			metadata: source.FileMetadata{Path: "./archive.tar.gz"},
 			testPath: "archive.tar.gz:/etc",
 		},
+		{
+			name:     "snap",
+			metadata: source.SnapMetadata{},
+			testPath: "name:/etc",
+		},
 	}
 
 	for _, test := range tests {
@@ -180,6 +185,7 @@ func Test_toGithubModel(t *testing.T) {
 			s := sbomFixture()
 
 			if test.metadata != nil {
+				s.Source.Name = "name"
 				s.Source.Metadata = test.metadata
 			}
 			actual := ToGithubModel(&s)

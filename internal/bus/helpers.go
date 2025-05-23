@@ -65,3 +65,18 @@ func StartPullSourceTask(info monitor.GenericTask, size int64, initialStage stri
 
 	return t
 }
+
+func StartIndexingFiles(path string) *monitor.TaskProgress {
+	t := &monitor.TaskProgress{
+		AtomicStage: progress.NewAtomicStage(""),
+		Manual:      progress.NewManual(-1),
+	}
+
+	Publish(partybus.Event{
+		Type:   event.FileIndexingStarted,
+		Source: path,
+		Value:  progress.StagedProgressable(t),
+	})
+
+	return t
+}

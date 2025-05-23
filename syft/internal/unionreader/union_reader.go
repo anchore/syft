@@ -3,9 +3,10 @@ package unionreader
 import (
 	"bytes"
 	"fmt"
-	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"io"
 	"sync"
+
+	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 
 	macho "github.com/anchore/go-macholibre"
 	"github.com/anchore/syft/internal/log"

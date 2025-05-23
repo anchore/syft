@@ -237,7 +237,7 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/sylabs/sif/v2 v2.21.1 // indirect
-	github.com/sylabs/squashfs v1.0.6
+	github.com/sylabs/squashfs v1.0.6 // indirect
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
@@ -282,12 +282,9 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-require (
-	github.com/diskfs/go-diskfs v1.6.0 // indirect
-	github.com/djherbis/times v1.6.0 // indirect
-	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
-	github.com/pkg/xattr v0.4.9 // indirect
-)
+require github.com/diskfs/go-diskfs v1.6.0
+
+require github.com/pkg/xattr v0.4.9 // indirect
 
 retract (
 	v1.25.0 // published with a replace directive (confusing for API users)

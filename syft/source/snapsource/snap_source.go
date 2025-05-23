@@ -4,26 +4,27 @@ import (
 	"context"
 	"crypto"
 	"fmt"
-	diskFile "github.com/diskfs/go-diskfs/backend/file"
-	"github.com/diskfs/go-diskfs/filesystem"
-	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"io"
 	"os"
 	"path/filepath"
 	"sync"
 
+	diskFile "github.com/diskfs/go-diskfs/backend/file"
+	"github.com/diskfs/go-diskfs/filesystem"
+	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/afero"
-	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/clio"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/event/monitor"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
@@ -48,6 +49,7 @@ type snapSource struct {
 	resolver         file.Resolver
 	mutex            *sync.Mutex
 	manifest         *snapManifest
+	digests          []file.Digest
 	fs               filesystem.FileSystem
 	squashfsPath     string
 	squashFileCloser func() error
@@ -65,6 +67,7 @@ func New(cfg Config) (source.Source, error) {
 		id:           deriveID(cfg.Request, cfg.Alias.Name, cfg.Alias.Version),
 		config:       cfg,
 		mutex:        &sync.Mutex{},
+		digests:      f.Digests,
 		squashfsPath: f.Path,
 		closer:       f.Cleanup,
 	}
@@ -119,6 +122,7 @@ func (s snapSource) Describe() source.Description {
 			Grade:         s.manifest.Grade,
 			Confinement:   s.manifest.Confinement,
 			Architectures: s.manifest.Architectures,
+			Digests:       s.digests,
 		},
 	}
 }
@@ -175,21 +179,24 @@ func (s *snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	fileCatalog := image.NewFileCatalog()
 
-	// TODO: publish this on the bus
-	monitor := progress.NewManual(-1)
+	prog := bus.StartIndexingFiles(filepath.Base(s.squashfsPath))
 
 	b := diskFile.New(f, true)
 	fs, err := squashfs.Read(b, fileMeta.Size(), 0, 0)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open squashfs file: %w", err)
+		err := fmt.Errorf("unable to open squashfs file: %w", err)
+		prog.SetError(err)
+		return nil, err
 	}
 
 	tree := filetree.New()
-	if err := intFile.WalkDir(fs, "/", squashfsVisitor(tree, fileCatalog, &size, monitor)); err != nil {
-		return nil, fmt.Errorf("failed to walk squashfs file=%q: %w", s.squashfsPath, err)
+	if err := intFile.WalkDiskDir(fs, "/", squashfsVisitor(tree, fileCatalog, &size, prog)); err != nil {
+		err := fmt.Errorf("failed to walk squashfs file=%q: %w", s.squashfsPath, err)
+		prog.SetError(err)
+		return nil, err
 	}
 
-	monitor.SetCompleted()
+	prog.SetCompleted()
 
 	s.resolver = &fileresolver.FiletreeResolver{
 		Chroot:        fileresolver.ChrootContext{},
@@ -206,25 +213,44 @@ func (s *snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
-func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *int64, monitor *progress.Manual) intFile.WalkDirFunc {
+type linker interface {
+	Readlink() (string, error)
+}
+
+func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *int64, prog *monitor.TaskProgress) intFile.WalkDiskDirFunc {
 	builder := filetree.NewBuilder(ft, fileCatalog.Index)
 
-	return func(fsys filesystem.FileSystem, path string, d os.FileInfo, err error) error {
+	return func(fsys filesystem.FileSystem, path string, d os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			log.WithFields("error", walkErr, "path", path).Trace("unable to walk squash file path")
+			return walkErr
+		}
+
+		prog.AtomicStage.Set(path)
+
 		var mimeType string
 		f, err := fsys.OpenFile(path, os.O_RDONLY)
 		if err != nil {
-			log.WithFields("error", err, "path", path).Tracef("unable to open squash file path")
+			log.WithFields("error", err, "path", path).Trace("unable to open squash file path")
 		} else {
 			defer f.Close()
 			mimeType = stereoFile.MIMEType(f)
 		}
 
+		ty := stereoFile.TypeFromMode(d.Mode())
+		var linkPath string
+		if ty == stereoFile.TypeSymLink {
+			if l, ok := f.(linker); ok {
+				linkPath, _ = l.Readlink()
+			}
+		}
+
 		metadata := stereoFile.Metadata{
-			FileInfo: d,
-			Path:     path,
-			//LinkDestination: "", // TODO: not supported
-			Type:     stereoFile.TypeFromMode(d.Mode()),
-			MIMEType: mimeType,
+			FileInfo:        d,
+			Path:            path,
+			LinkDestination: linkPath,
+			Type:            ty,
+			MIMEType:        mimeType,
 		}
 
 		fileReference, err := builder.Add(metadata)
@@ -243,7 +269,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 			return fsys.OpenFile(path, os.O_RDONLY)
 		})
 
-		monitor.Increment()
+		prog.Increment()
 		return nil
 	}
 }
