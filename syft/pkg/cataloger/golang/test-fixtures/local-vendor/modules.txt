@@ -1,0 +1,26 @@
+# github.com/google/go-cmp v0.6.0
+## explicit; go 1.21
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/cmpopts
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
+# github.com/davecgh/go-spew v1.1.1
+## explicit
+github.com/davecgh/go-spew/spew
+# github.com/sirupsen/logrus v1.9.3
+## explicit; go 1.13
+github.com/sirupsen/logrus
+# github.com/STARRY-S/zip v0.2.1
+## explicit; go 1.13
+# k8s.io/api v0.33.0
+## explicit; go 1.13
+# github.com/pelletier/go-toml/v2 v2.2.3
+## explicit; go 1.13
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.54.0
+## explicit; go 1.13
+# gopkg.in/warnings.v0 v0.1.2
+## explicit; go 1.13
+# go.opencensus.io v0.24.0
+## explicit; go 1.13

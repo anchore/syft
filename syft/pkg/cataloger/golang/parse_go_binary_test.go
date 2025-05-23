@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"debug/elf"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime/debug"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -1075,6 +1077,330 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			require.Len(t, pkgs, len(test.expected))
 			for i, p := range pkgs {
 				pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+			}
+		})
+	}
+}
+
+func TestTestGoPkgSymbols(t *testing.T) {
+	const (
+		goCompiledVersion = "1.18"
+		archDetails       = "amd64"
+	)
+	locationSet := file.NewLocationSet(
+		file.NewLocationFromCoordinates(
+			file.Coordinates{
+				RealPath:     "/a-path",
+				FileSystemID: "layer-id",
+			},
+		).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+	)
+
+	tests := []struct {
+		name          string
+		symbols       []elf.Symbol
+		mod           *extendedBuildInfo
+		expected      []pkg.Package
+		binaryContent string
+	}{
+		{
+			name: "a test binary",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Path:      "command-line-arguments.test",
+					Main:      debug.Module{},
+					Settings: []debug.BuildSetting{
+						{Key: "-buildmode", Value: "exe"},
+						{Key: "-compiler", Value: "gc"},
+						{Key: "CGO_ENABLED", Value: "1"},
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "darwin"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Deps: []*debug.Module{},
+				},
+				arch: archDetails,
+			},
+			symbols: []elf.Symbol{
+				{
+					Name:       "github.com/davecgh/go-spew.gobytes",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "github.com/google/go-cmp/cmp/internal/diff.typeAsserts",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "crypto/internal/fips140/hmac..typeAssert.0",
+					Info:       0x01,
+					HasVersion: false,
+				},
+				{
+					Name:       "$f32.6258d727",
+					Info:       0x01,
+					HasVersion: false,
+				},
+				{
+					Name:       "github.com/sirupsen/logrus.isTerminal",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "vendor/golang.org/x/net/http/httpproxy.cidrMatch.match",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "testing.mutexProfileFraction",
+					Info:       0x11,
+					HasVersion: false,
+				},
+				{
+					Name:       "mime.typeFiles",
+					Info:       0x11,
+					HasVersion: false,
+				},
+				{
+					Name:       "github.com/STARRY-S/zip.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "k8s.io/api.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "github.com/pelletier/go-toml/v2.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "gopkg.in/warnings%2ev0.List.Error",
+					Info:       0x12,
+					HasVersion: false,
+				},
+				{
+					Name:       "go%2eopencensus%2eio.func",
+					Info:       0x12,
+					HasVersion: false,
+				},
+			},
+			binaryContent: "",
+			expected: []pkg.Package{
+				{
+					Name:      "command-line-arguments.test",
+					Version:   "",
+					PURL:      "pkg:golang/command-line-arguments.test",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						BuildSettings: pkg.KeyValues{
+							{Key: "-buildmode", Value: "exe"},
+							{Key: "-compiler", Value: "gc"},
+							{Key: "CGO_ENABLED", Value: "1"},
+							{Key: "GOARCH", Value: "amd64"},
+							{Key: "GOOS", Value: "darwin"},
+							{Key: "GOAMD64", Value: "v1"},
+						},
+						Architecture: archDetails,
+						H1Digest:     "",
+						MainModule:   "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/STARRY-S/zip",
+					Version:   "v0.2.1",
+					PURL:      "pkg:golang/github.com/STARRY-S/zip@v0.2.1",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:pWBd4tuSGm3wtpoqRZZ2EAwOmcHK6XFf7bU9qcJXyFg=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/davecgh/go-spew",
+					Version:   "v1.1.1",
+					PURL:      "pkg:golang/github.com/davecgh/go-spew@v1.1.1",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/google/go-cmp",
+					Version:   "v0.6.0",
+					PURL:      "pkg:golang/github.com/google/go-cmp@v0.6.0",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/pelletier/go-toml/v2",
+					Version:   "v2.2.3",
+					PURL:      "pkg:golang/github.com/pelletier/go-toml@v2.2.3#v2",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "github.com/sirupsen/logrus",
+					Version:   "v1.9.3",
+					PURL:      "pkg:golang/github.com/sirupsen/logrus@v1.9.3",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "go.opencensus.io",
+					Version:   "v0.24.0",
+					PURL:      "pkg:golang/go.opencensus.io@v0.24.0",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+					Version:   "v0.54.0",
+					PURL:      "pkg:golang/go.opentelemetry.io/contrib/instrumentation@v0.54.0#net/http/otelhttp",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:TT4fX+nBOA/+LUkobKGW1ydGcn+G3vRw9+g5HwCphpk=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "gopkg.in/warnings.v0",
+					Version:   "v0.1.2",
+					PURL:      "pkg:golang/gopkg.in/warnings.v0@v0.1.2",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:wFXVbFY8DY5/xOe1ECiWdKCzZlxgshcYVNkBHstARME=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+				{
+					Name:      "k8s.io/api",
+					Version:   "v0.33.0",
+					PURL:      "pkg:golang/k8s.io/api@v0.33.0",
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Locations: locationSet,
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "h1:yTgZVn1XEe6opVpP1FylmNrIFWuDqe2H0V8CT5gxfIU=",
+						MainModule:        "command-line-arguments.test",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			for i := range test.expected {
+				p := &test.expected[i]
+				p.SetID()
+			}
+			location := file.NewLocationFromCoordinates(
+				file.Coordinates{
+					RealPath:     "/a-path",
+					FileSystemID: "layer-id",
+				},
+			)
+
+			wd, ferr := os.Getwd()
+			require.NoError(t, ferr)
+			var cs []*goBinaryCataloger
+			cs = append(cs, newGoBinaryCataloger(CatalogerConfig{
+				MainModuleVersion:           DefaultMainModuleVersionConfig(),
+				LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "mod-cache", "pkg", "mod"),
+				SearchLocalModCacheLicenses: true,
+			}))
+			cs = append(cs, newGoBinaryCataloger(CatalogerConfig{
+				MainModuleVersion:         DefaultMainModuleVersionConfig(),
+				LocalVendorDir:            filepath.Join(wd, "test-fixtures", "local-vendor"),
+				SearchLocalVendorLicenses: true,
+			}))
+
+			for _, c := range cs {
+				reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader(test.binaryContent)))
+				require.NoError(t, err)
+
+				mainPkg, pkgs := c.buildGoTestPkgInfo(context.Background(), fileresolver.Empty{}, location, test.mod, test.symbols, test.mod.arch, reader)
+				if mainPkg != nil {
+					pkgs = append(pkgs, *mainPkg)
+				}
+				require.Len(t, pkgs, len(test.expected))
+				sort.Slice(pkgs, func(i, j int) bool {
+					return pkgs[i].Name < pkgs[j].Name
+				})
+				for i, p := range pkgs {
+					restored_metadata := test.expected[i].Metadata
+					// we can't find h1-digest in vendor/, so a tiny adjustment appears
+					if c.licenseResolver.opts.SearchLocalVendorLicenses && i != 0 {
+						test.expected[i].Metadata = pkg.GolangBinaryBuildinfoEntry{
+							GoCompiledVersion: goCompiledVersion,
+							Architecture:      archDetails,
+							H1Digest:          "",
+							MainModule:        "command-line-arguments.test",
+						}
+					}
+					pkgtest.AssertPackagesEqual(t, test.expected[i], p)
+					test.expected[i].Metadata = restored_metadata
+				}
 			}
 		})
 	}
