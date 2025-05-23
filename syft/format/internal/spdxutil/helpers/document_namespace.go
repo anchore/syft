@@ -20,12 +20,7 @@ const (
 	InputSnap      = "snap"
 )
 
-func DocumentNameAndNamespace(src source.Description, desc sbom.Descriptor) (string, string) {
-	name := DocumentName(src)
-	return name, DocumentNamespace(name, src, desc)
-}
-
-func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor) string {
+func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor, uniqueID uuid.UUID) string {
 	name = cleanName(name)
 	input := "unknown-source-type"
 	switch src.Metadata.(type) {
@@ -41,7 +36,6 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 		input = InputSnap
 	}
 
-	uniqueID := uuid.Must(uuid.NewRandom())
 	identifier := path.Join(input, uniqueID.String())
 	if name != "." {
 		identifier = path.Join(input, fmt.Sprintf("%s-%s", name, uniqueID.String()))

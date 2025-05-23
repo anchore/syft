@@ -5,7 +5,8 @@ import (
 )
 
 type FormatSPDXJSON struct {
-	Pretty *bool `yaml:"pretty" json:"pretty" mapstructure:"pretty"`
+	Pretty            *bool `yaml:"pretty" json:"pretty" mapstructure:"pretty"`
+	DeterministicUUID *bool `yaml:"deterministic-uuid" json:"deterministic-uuid" mapstructure:"deterministic-uuid"`
 }
 
 func DefaultFormatSPDXJSON() FormatSPDXJSON {
@@ -17,6 +18,9 @@ func (o FormatSPDXJSON) config(v string) spdxjson.EncoderConfig {
 	c.Version = v
 	if o.Pretty != nil {
 		c.Pretty = *o.Pretty
+	}
+	if o.DeterministicUUID != nil {
+		c.DeterministicUUID = *o.DeterministicUUID
 	}
 	return c
 }

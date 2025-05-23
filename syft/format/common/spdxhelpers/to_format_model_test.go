@@ -406,7 +406,7 @@ func Test_toFormatModel(t *testing.T) {
 			test.in.Artifacts.Packages = pkg.NewCollection(pkgs...)
 
 			// convert
-			got := ToFormatModel(test.in)
+			got := ToFormatModel(test.in, false)
 
 			// check differences
 			if diff := cmp.Diff(test.expected, got,
@@ -1126,7 +1126,7 @@ func Test_otherLicenses(t *testing.T) {
 					Packages: pkg.NewCollection(test.packages...),
 				},
 			}
-			got := ToFormatModel(s)
+			got := ToFormatModel(s, false)
 			require.Equal(t, test.expected, got.OtherLicenses)
 		})
 	}
