@@ -51,10 +51,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "alpine",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "alpine",
+				DocumentNamespace: "https://anchore.com/image/alpine-d573751a-5604-5439-9da4-72b7145e5199",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -136,11 +137,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "some/directory",
-
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "some/directory",
+				DocumentNamespace: "https://anchore.com/dir/some/directory-ce13b821-ee09-557a-8148-d4092410457f",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -221,10 +222,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "path/to/some.file",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "path/to/some.file",
+				DocumentNamespace: "https://anchore.com/file/path/to/some.file-a7f2ecb8-114d-542c-aeb5-341d9a3153eb",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
