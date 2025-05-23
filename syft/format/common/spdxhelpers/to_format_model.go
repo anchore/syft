@@ -45,7 +45,7 @@ const (
 // spec from the given SBOM model.
 //
 //nolint:funlen
-func ToFormatModel(s sbom.SBOM, deterministicUUID bool) *spdx.Document {
+func ToFormatModel(s sbom.SBOM, deterministicUUID bool, createdTimeOverride *int64) *spdx.Document {
 	rels := relationship.NewIndex(s.Relationships...)
 	packages, otherLicenses := toPackages(rels, s.Artifacts.Packages, s)
 
@@ -110,6 +110,11 @@ func ToFormatModel(s sbom.SBOM, deterministicUUID bool) *spdx.Document {
 
 	name := helpers.DocumentName(s.Source)
 	namespace := helpers.DocumentNamespace(name, s.Source, s.Descriptor, uniqueID)
+
+	createdTime := time.Now()
+	if createdTimeOverride != nil {
+		createdTime = time.Unix(*createdTimeOverride, 0)
+	}
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
@@ -176,7 +181,7 @@ func ToFormatModel(s sbom.SBOM, deterministicUUID bool) *spdx.Document {
 
 			// 6.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
-			Created: time.Now().UTC().Format(time.RFC3339),
+			Created: createdTime.UTC().Format(time.RFC3339),
 
 			// 6.10: Creator Comment
 			// Cardinality: optional, one

@@ -23,8 +23,9 @@ func SupportedVersions() []string {
 
 type EncoderConfig struct {
 	Version           string
-	Pretty            bool // don't include spaces and newlines; same as jq -c
-	DeterministicUUID bool // use UUIDv5 for deterministic document namespace generation
+	Pretty            bool   // don't include spaces and newlines; same as jq -c
+	DeterministicUUID bool   // use UUIDv5 for deterministic document namespace generation
+	CreatedTime       *int64 // if nil, the current time is used
 }
 
 type encoder struct {
@@ -42,6 +43,7 @@ func DefaultEncoderConfig() EncoderConfig {
 		Version:           spdxutil.DefaultVersion,
 		Pretty:            false,
 		DeterministicUUID: false,
+		CreatedTime:       nil,
 	}
 }
 
@@ -58,7 +60,7 @@ func (e encoder) Version() string {
 }
 
 func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
-	latestDoc := spdxhelpers.ToFormatModel(s, e.cfg.DeterministicUUID)
+	latestDoc := spdxhelpers.ToFormatModel(s, e.cfg.DeterministicUUID, e.cfg.CreatedTime)
 	if latestDoc == nil {
 		return fmt.Errorf("unable to convert SBOM to SPDX document")
 	}
