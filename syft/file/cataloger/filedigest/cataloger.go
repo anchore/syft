@@ -112,7 +112,7 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 	return digests, nil
 }
 
-func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File digests",

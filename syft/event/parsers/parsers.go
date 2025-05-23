@@ -77,6 +77,26 @@ func ParseCatalogerTaskStarted(e partybus.Event) (progress.StagedProgressable, *
 	return mon, &source, nil
 }
 
+func ParsePullSourceStarted(e partybus.Event) (progress.StagedProgressable, *monitor.GenericTask, error) {
+	if err := checkEventType(e.Type, event.PullSourceStarted); err != nil {
+		return nil, nil, err
+	}
+
+	var mon progress.StagedProgressable
+
+	source, ok := e.Source.(monitor.GenericTask)
+	if !ok {
+		return nil, nil, newPayloadErr(e.Type, "Source", e.Source)
+	}
+
+	mon, ok = e.Value.(progress.StagedProgressable)
+	if !ok {
+		mon = nil
+	}
+
+	return mon, &source, nil
+}
+
 func ParseAttestationStartedEvent(e partybus.Event) (io.Reader, progress.Progressable, *monitor.GenericTask, error) {
 	if err := checkEventType(e.Type, event.AttestationStarted); err != nil {
 		return nil, nil, nil, err

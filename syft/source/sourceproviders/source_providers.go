@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
+	"github.com/anchore/syft/syft/source/snapsource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
@@ -14,6 +15,7 @@ const (
 	FileTag = stereoscope.FileTag
 	DirTag  = stereoscope.DirTag
 	PullTag = stereoscope.PullTag
+	SnapTag = "snap"
 )
 
 // All returns all the configured source providers known to syft
@@ -24,11 +26,18 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 	stereoscopeProviders := stereoscopeSourceProviders(userInput, cfg)
 
 	return collections.TaggedValueSet[source.Provider]{}.
+		// try all specific and local sources first...
 		// --from file, dir, oci-archive, etc.
 		Join(stereoscopeProviders.Select(FileTag, DirTag)...).
+
+		// --from snap (remote and local)
+		Join(tagProvider(snapsource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), SnapTag)).
+
+		// try unspecific-local sources after other local sources last...
 		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), FileTag)).
 		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), DirTag)).
 
+		// try remote sources after everything else...
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select(PullTag)...)
 }
