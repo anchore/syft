@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -105,6 +106,21 @@ func Test_toFormatModel(t *testing.T) {
 						Relationship: spdx.RelationshipDescribes,
 					},
 				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: "3.25",
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
+				},
 			},
 		},
 		{
@@ -167,6 +183,21 @@ func Test_toFormatModel(t *testing.T) {
 						},
 						Relationship: spdx.RelationshipDescribes,
 					},
+				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: "3.25",
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
 				},
 			},
 		},
@@ -237,6 +268,21 @@ func Test_toFormatModel(t *testing.T) {
 						},
 						Relationship: spdx.RelationshipDescribes,
 					},
+				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: "3.25",
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
 				},
 			},
 		},
@@ -406,12 +452,12 @@ func Test_toFormatModel(t *testing.T) {
 			test.in.Artifacts.Packages = pkg.NewCollection(pkgs...)
 
 			// convert
-			got := ToFormatModel(test.in, false)
+			ts := time.Unix(1748271019, 0)
+			got := ToFormatModel(test.in, true, &ts)
 
 			// check differences
 			if diff := cmp.Diff(test.expected, got,
 				cmpopts.IgnoreUnexported(spdx.Document{}, spdx.Package{}),
-				cmpopts.IgnoreFields(spdx.Document{}, "CreationInfo", "DocumentNamespace"),
 				cmpopts.IgnoreFields(spdx.Package{}, "PackageDownloadLocation", "IsFilesAnalyzedTagPresent", "PackageSourceInfo", "PackageLicenseConcluded", "PackageLicenseDeclared", "PackageCopyrightText"),
 			); diff != "" {
 				t.Error(diff)
@@ -1126,7 +1172,7 @@ func Test_otherLicenses(t *testing.T) {
 					Packages: pkg.NewCollection(test.packages...),
 				},
 			}
-			got := ToFormatModel(s, false)
+			got := ToFormatModel(s, false, nil)
 			require.Equal(t, test.expected, got.OtherLicenses)
 		})
 	}
