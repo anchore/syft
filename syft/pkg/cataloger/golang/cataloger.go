@@ -16,6 +16,7 @@ var versionCandidateGroups = regexp.MustCompile(`(?P<version>\d+(\.\d+)?(\.\d+)?
 const (
 	modFileCatalogerName = "go-module-file-cataloger"
 	binaryCatalogerName  = "go-module-binary-cataloger"
+	sourceCatalogerName  = "go-source-cataloger"
 )
 
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
@@ -32,4 +33,9 @@ func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
 			mimetype.ExecutableMIMETypeSet.List()...,
 		).
 		WithResolvingProcessors(stdlibProcessor)
+}
+
+func NewGoSourceCataloger(opts CatalogerConfig) pkg.Cataloger {
+	return generic.NewCataloger(sourceCatalogerName).
+		WithParserByGlobs(newGoSourceCataloger(opts).parseGoSourceEntry, "**/main.go")
 }

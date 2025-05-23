@@ -171,3 +171,24 @@ func Test_Binary_Cataloger_Stdlib_Cpe(t *testing.T) {
 		})
 	}
 }
+
+func Test_Source_Cataloger_EntryPoint_Detection(t *testing.T) {
+	tests := []struct {
+		name    string
+		fixture string
+	}{
+		{
+			name:    "wip for source entrypoint behavior",
+			fixture: "test-fixtures/go-source",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				Expects(nil, nil).
+				TestCataloger(t, NewGoSourceCataloger(CatalogerConfig{}))
+		})
+	}
+}
