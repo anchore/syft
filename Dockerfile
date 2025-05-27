@@ -1,13 +1,19 @@
 FROM gcr.io/distroless/static-debian12:latest AS build
 
-FROM scratch
-# needed for version check HTTPS request
+FROM alpine:latest AS security_provider
+RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
+
+FROM gcr.io/distroless/base-debian12
+
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-# create the /tmp dir, which is needed for image content cache
+COPY --from=security_provider /etc/passwd /etc/passwd
+
 WORKDIR /tmp
 
 COPY syft /
+
+USER nonroot
 
 ARG BUILD_DATE
 ARG BUILD_VERSION
