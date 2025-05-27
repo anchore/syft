@@ -10,7 +10,7 @@ import (
 )
 
 // NewDBCataloger returns a new cataloger object initialized for arch linux pacman database flat-file stores.
-func NewDBCataloger() pkg.Cataloger {
+func NewDBCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("alpm-db-cataloger").
 		WithParserByGlobs(parseAlpmDB, pkg.AlpmDBGlob).
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))

@@ -9,7 +9,7 @@ import (
 )
 
 // NewPackageCataloger returns a new cataloger object for Lua ROck.
-func NewPackageCataloger() pkg.Cataloger {
+func NewPackageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("lua-rock-cataloger").
 		WithParserByGlobs(parseRockspec, "**/*.rockspec")
 }

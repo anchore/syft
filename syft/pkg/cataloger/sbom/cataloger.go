@@ -20,7 +20,7 @@ import (
 const catalogerName = "sbom-cataloger"
 
 // NewCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
-func NewCataloger() pkg.Cataloger {
+func NewCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseSBOM,
 			"**/*.syft.json",

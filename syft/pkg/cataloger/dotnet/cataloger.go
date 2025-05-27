@@ -25,7 +25,7 @@ func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
 }
 
 // NewDotnetPackagesLockCataloger returns a cataloger based on packages.lock.json files.
-func NewDotnetPackagesLockCataloger() pkg.Cataloger {
+func NewDotnetPackagesLockCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("dotnet-packages-lock-cataloger").
 		WithParserByGlobs(parseDotnetPackagesLock, "**/packages.lock.json")
 }

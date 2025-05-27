@@ -54,6 +54,7 @@ type Cataloger struct {
 	processors        []processExecutor
 	requesters        []requester
 	upstreamCataloger string
+	Release           *linux.Release
 }
 
 func (c *Cataloger) WithParserByGlobs(parser Parser, globs ...string) *Cataloger {
@@ -127,6 +128,12 @@ func (c *Cataloger) WithResolvingProcessors(processors ...ResolvingProcessor) *C
 	return c
 }
 
+// WithRelease sets the Linux release information for the cataloger
+func (c *Cataloger) WithRelease(release *linux.Release) pkg.CatalogerWithRelease {
+	c.Release = release
+	return c
+}
+
 func makeRequests(parser Parser, locations []file.Location) []request {
 	var requests []request
 	for _, l := range locations {
@@ -157,10 +164,7 @@ func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.
 
 	lgr := log.Nested("cataloger", c.upstreamCataloger)
 
-	env := Environment{
-		// TODO: consider passing into the cataloger, this would affect the cataloger interface (and all implementations). This can be deferred until later.
-		LinuxRelease: linux.IdentifyRelease(resolver),
-	}
+	env := c.getEnvironment(resolver)
 
 	type result struct {
 		pkgs []pkg.Package
@@ -218,4 +222,15 @@ func (c *Cataloger) selectFiles(resolver file.Resolver) []request {
 		requests = append(requests, proc(resolver, Environment{})...)
 	}
 	return requests
+}
+
+func (c *Cataloger) getEnvironment(resolver file.Resolver) Environment {
+	if c.Release == nil {
+		return Environment{
+			LinuxRelease: linux.IdentifyRelease(resolver),
+		}
+	}
+	return Environment{
+		LinuxRelease: c.Release,
+	}
 }

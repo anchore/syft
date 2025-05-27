@@ -19,7 +19,7 @@ import (
 const catalogerName = "bitnami-cataloger"
 
 // NewCataloger returns a new SBOM cataloger object loaded from saved SBOM JSON.
-func NewCataloger() pkg.Cataloger {
+func NewCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseSBOM,
 			"/opt/bitnami/**/.spdx-*.spdx",

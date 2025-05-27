@@ -9,13 +9,13 @@ import (
 )
 
 // NewSwiftPackageManagerCataloger returns a new Swift package manager cataloger object.
-func NewSwiftPackageManagerCataloger() pkg.Cataloger {
+func NewSwiftPackageManagerCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("swift-package-manager-cataloger").
 		WithParserByGlobs(parsePackageResolved, "**/Package.resolved", "**/.package.resolved")
 }
 
 // NewCocoapodsCataloger returns a new Swift Cocoapods lock file cataloger object.
-func NewCocoapodsCataloger() pkg.Cataloger {
+func NewCocoapodsCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("cocoapods-cataloger").
 		WithParserByGlobs(parsePodfileLock, "**/Podfile.lock")
 }

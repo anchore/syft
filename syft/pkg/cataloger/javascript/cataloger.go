@@ -9,13 +9,13 @@ import (
 )
 
 // NewPackageCataloger returns a new cataloger object for NPM.
-func NewPackageCataloger() pkg.Cataloger {
+func NewPackageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("javascript-package-cataloger").
 		WithParserByGlobs(parsePackageJSON, "**/package.json")
 }
 
 // NewLockCataloger returns a new cataloger object for NPM (and NPM-adjacent, such as yarn) lock files.
-func NewLockCataloger(cfg CatalogerConfig) pkg.Cataloger {
+func NewLockCataloger(cfg CatalogerConfig) pkg.CatalogerWithRelease {
 	yarnLockAdapter := newGenericYarnLockAdapter(cfg)
 	packageLockAdapter := newGenericPackageLockAdapter(cfg)
 	return generic.NewCataloger("javascript-lock-cataloger").

@@ -26,7 +26,7 @@ func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Ca
 	}
 }
 
-func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) factory {
+func newSimplePackageTaskFactory[T pkg.Cataloger](catalogerFactory func() T, tags ...string) factory {
 	return func(cfg CatalogingFactoryConfig) Task {
 		return NewPackageTask(cfg, catalogerFactory(), tags...)
 	}

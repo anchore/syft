@@ -5,7 +5,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-func NewCataloger() pkg.Cataloger {
+func NewCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("homebrew-cataloger").
 		WithParserByGlobs(
 			parseHomebrewFormula,

@@ -10,7 +10,7 @@ import (
 )
 
 // NewDBCataloger returns a new cataloger object initialized for Alpine package DB flat-file stores.
-func NewDBCataloger() pkg.Cataloger {
+func NewDBCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("apk-db-cataloger").
 		WithParserByGlobs(parseApkDB, pkg.ApkDBGlob).
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))

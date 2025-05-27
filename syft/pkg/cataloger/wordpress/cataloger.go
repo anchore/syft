@@ -10,7 +10,7 @@ const (
 	wordpressPluginsGlob = "**/wp-content/plugins/*/*.php"
 )
 
-func NewWordpressPluginCataloger() pkg.Cataloger {
+func NewWordpressPluginCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseWordpressPluginFiles, wordpressPluginsGlob)
 }

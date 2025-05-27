@@ -9,12 +9,12 @@ import (
 )
 
 // NewRebarLockCataloger returns a new cataloger instance for Erlang rebar.lock files.
-func NewRebarLockCataloger() pkg.Cataloger {
+func NewRebarLockCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("erlang-rebar-lock-cataloger").
 		WithParserByGlobs(parseRebarLock, "**/rebar.lock")
 }
 
-func NewOTPCataloger() pkg.Cataloger {
+func NewOTPCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("erlang-otp-application-cataloger").
 		WithParserByGlobs(parseOTPApp, "**/*.app")
 }

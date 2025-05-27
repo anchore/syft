@@ -9,7 +9,7 @@ import (
 )
 
 // NewPackageCataloger returns a new R cataloger object based on detection of R package DESCRIPTION files.
-func NewPackageCataloger() pkg.Cataloger {
+func NewPackageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("r-package-cataloger").
 		WithParserByGlobs(parseDescriptionFile, "**/DESCRIPTION")
 }

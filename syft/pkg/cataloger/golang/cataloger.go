@@ -19,13 +19,13 @@ const (
 )
 
 // NewGoModuleFileCataloger returns a new cataloger object that searches within go.mod files.
-func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.Cataloger {
+func NewGoModuleFileCataloger(opts CatalogerConfig) pkg.CatalogerWithRelease {
 	return generic.NewCataloger(modFileCatalogerName).
 		WithParserByGlobs(newGoModCataloger(opts).parseGoModFile, "**/go.mod")
 }
 
 // NewGoModuleBinaryCataloger returns a new cataloger object that searches within binaries built by the go compiler.
-func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.Cataloger {
+func NewGoModuleBinaryCataloger(opts CatalogerConfig) pkg.CatalogerWithRelease {
 	return generic.NewCataloger(binaryCatalogerName).
 		WithParserByMimeTypes(
 			newGoBinaryCataloger(opts).parseGoBinary,

@@ -9,7 +9,7 @@ import (
 )
 
 // NewOpamPackageManagerCataloger returns a new cataloger object for OCaml opam.
-func NewOpamPackageManagerCataloger() pkg.Cataloger {
+func NewOpamPackageManagerCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("opam-cataloger").
 		WithParserByGlobs(parseOpamPackage, "*opam")
 }

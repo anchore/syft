@@ -12,19 +12,19 @@ import (
 // semantic meanings. The lock file represents what should be installed, whereas the installed file represents what is installed.
 
 // NewComposerInstalledCataloger returns a new cataloger for PHP installed.json files.
-func NewComposerInstalledCataloger() pkg.Cataloger {
+func NewComposerInstalledCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("php-composer-installed-cataloger").
 		WithParserByGlobs(parseInstalledJSON, "**/installed.json")
 }
 
 // NewComposerLockCataloger returns a new cataloger for PHP composer.lock files.
-func NewComposerLockCataloger() pkg.Cataloger {
+func NewComposerLockCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("php-composer-lock-cataloger").
 		WithParserByGlobs(parseComposerLock, "**/composer.lock")
 }
 
 // NewPearCataloger returns a new cataloger for PHP Pear metadata (including Pecl metadata).
-func NewPearCataloger() pkg.Cataloger {
+func NewPearCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("php-pear-serialized-cataloger").
 		WithParserByGlobs(parsePear, "**/php/.registry/**/*.reg")
 }
@@ -32,7 +32,7 @@ func NewPearCataloger() pkg.Cataloger {
 // NewPeclCataloger returns a new cataloger for PHP Pecl metadata. Note: this will also catalog Pear metadata so should
 // not be used in conjunction with the Pear Cataloger.
 // Deprecated: please use NewPearCataloger instead.
-func NewPeclCataloger() pkg.Cataloger {
+func NewPeclCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("php-pecl-serialized-cataloger").
 		WithParserByGlobs(parsePecl, "**/php/.registry/.channel.*/*.reg")
 }

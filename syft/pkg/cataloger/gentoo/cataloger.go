@@ -9,7 +9,7 @@ import (
 )
 
 // NewPortageCataloger returns a new cataloger object initialized for Gentoo Portage package manager files (a flat-file store).
-func NewPortageCataloger() pkg.Cataloger {
+func NewPortageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("portage-cataloger").
 		WithParserByGlobs(parsePortageContents, "**/var/db/pkg/*/*/CONTENTS")
 }

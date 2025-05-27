@@ -9,7 +9,7 @@ import (
 )
 
 // NewMixLockCataloger returns a cataloger object for Elixir mix.lock files.
-func NewMixLockCataloger() pkg.Cataloger {
+func NewMixLockCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("elixir-mix-lock-cataloger").
 		WithParserByGlobs(parseMixLock, "**/mix.lock")
 }

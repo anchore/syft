@@ -9,7 +9,7 @@ import (
 )
 
 // NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
-func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
+func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.CatalogerWithRelease {
 	gap := newGenericArchiveParserAdapter(cfg)
 
 	c := generic.NewCataloger("java-archive-cataloger").
@@ -39,13 +39,13 @@ func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 
 // NewGradleLockfileCataloger returns a cataloger capable of parsing dependencies from a gradle.lockfile file.
 // Note: Older versions of lockfiles aren't supported yet
-func NewGradleLockfileCataloger() pkg.Cataloger {
+func NewGradleLockfileCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
 		WithParserByGlobs(parseGradleLockfile, gradleLockfileGlob)
 }
 
 // NewJvmDistributionCataloger returns packages representing JDK/JRE installations (of multiple distribution types).
-func NewJvmDistributionCataloger() pkg.Cataloger {
+func NewJvmDistributionCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("java-jvm-cataloger").
 		WithParserByGlobs(parseJVMRelease, jvmReleaseGlob)
 }

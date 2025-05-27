@@ -21,7 +21,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 }
 
 // NewPackageCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
-func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
+func NewPackageCataloger(cfg CatalogerConfig) pkg.CatalogerWithRelease {
 	rqp := newRequirementsParser(cfg)
 	return generic.NewCataloger("python-package-cataloger").
 		WithParserByGlobs(rqp.parseRequirementsTxt, "**/*requirements*.txt").
@@ -31,7 +31,7 @@ func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 }
 
 // NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
-func NewInstalledPackageCataloger() pkg.Cataloger {
+func NewInstalledPackageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("python-installed-package-cataloger").
 		WithParserByGlobs(
 			parseWheelOrEgg,

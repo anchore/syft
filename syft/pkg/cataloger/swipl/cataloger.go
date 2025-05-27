@@ -9,7 +9,7 @@ import (
 )
 
 // NewSwiplPackCataloger returns a new SWI Prolog Pack package manager cataloger object.
-func NewSwiplPackCataloger() pkg.Cataloger {
+func NewSwiplPackCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("swipl-pack-cataloger").
 		WithParserByGlobs(parsePackPackage, "**/pack.pl")
 }

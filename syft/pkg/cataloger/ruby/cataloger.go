@@ -9,19 +9,19 @@ import (
 )
 
 // NewGemFileLockCataloger returns a new Bundler cataloger object tailored for parsing index-oriented files (e.g. Gemfile.lock).
-func NewGemFileLockCataloger() pkg.Cataloger {
+func NewGemFileLockCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("ruby-gemfile-cataloger").
 		WithParserByGlobs(parseGemFileLockEntries, "**/Gemfile.lock")
 }
 
 // NewInstalledGemSpecCataloger returns a new Bundler cataloger object tailored for detecting installations of gems (e.g. Gemspec).
-func NewInstalledGemSpecCataloger() pkg.Cataloger {
+func NewInstalledGemSpecCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("ruby-installed-gemspec-cataloger").
 		WithParserByGlobs(parseGemSpecEntries, "**/specifications/**/*.gemspec")
 }
 
 // NewGemSpecCataloger looks for gems without the additional requirement of the gem being installed.
-func NewGemSpecCataloger() pkg.Cataloger {
+func NewGemSpecCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("ruby-gemspec-cataloger").
 		WithParserByGlobs(parseGemSpecEntries, "**/*.gemspec")
 }

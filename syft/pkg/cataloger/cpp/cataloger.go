@@ -9,14 +9,14 @@ import (
 )
 
 // NewConanCataloger returns a new C/C++ conanfile.txt and conan.lock cataloger object.
-func NewConanCataloger() pkg.Cataloger {
+func NewConanCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("conan-cataloger").
 		WithParserByGlobs(parseConanfile, "**/conanfile.txt").
 		WithParserByGlobs(parseConanLock, "**/conan.lock")
 }
 
 // NewConanInfoCataloger returns a new C/C++ conaninfo.txt cataloger object.
-func NewConanInfoCataloger() pkg.Cataloger {
+func NewConanInfoCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("conan-info-cataloger").
 		WithParserByGlobs(parseConaninfo, "**/conaninfo.txt")
 }

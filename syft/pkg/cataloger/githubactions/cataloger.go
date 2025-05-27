@@ -9,14 +9,14 @@ import (
 )
 
 // NewActionUsageCataloger returns GitHub Actions used within workflows and composite actions.
-func NewActionUsageCataloger() pkg.Cataloger {
+func NewActionUsageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("github-actions-usage-cataloger").
 		WithParserByGlobs(parseWorkflowForActionUsage, "**/.github/workflows/*.yaml", "**/.github/workflows/*.yml").
 		WithParserByGlobs(parseCompositeActionForActionUsage, "**/.github/actions/*/action.yml", "**/.github/actions/*/action.yaml")
 }
 
 // NewWorkflowUsageCataloger returns shared workflows used within workflows.
-func NewWorkflowUsageCataloger() pkg.Cataloger {
+func NewWorkflowUsageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("github-action-workflow-usage-cataloger").
 		WithParserByGlobs(parseWorkflowForWorkflowUsage, "**/.github/workflows/*.yaml", "**/.github/workflows/*.yml")
 }

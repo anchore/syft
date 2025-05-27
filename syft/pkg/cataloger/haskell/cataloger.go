@@ -13,7 +13,7 @@ import (
 // This hints at splitting these into multiple catalogers, but for now we'll keep them together.
 
 // NewHackageCataloger returns a new Haskell cataloger object.
-func NewHackageCataloger() pkg.Cataloger {
+func NewHackageCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("haskell-cataloger").
 		WithParserByGlobs(parseStackYaml, "**/stack.yaml").
 		WithParserByGlobs(parseStackLock, "**/stack.yaml.lock").

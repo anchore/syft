@@ -10,7 +10,7 @@ import (
 )
 
 // NewDBCataloger returns a new Deb package cataloger capable of parsing DPKG status DB flat-file stores.
-func NewDBCataloger() pkg.Cataloger {
+func NewDBCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("dpkg-db-cataloger").
 		// note: these globs have been intentionally split up in order to improve search performance,
 		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
@@ -19,7 +19,7 @@ func NewDBCataloger() pkg.Cataloger {
 }
 
 // NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb archive files
-func NewArchiveCataloger() pkg.Cataloger {
+func NewArchiveCataloger() pkg.CatalogerWithRelease {
 	return generic.NewCataloger("deb-archive-cataloger").
 		WithParserByGlobs(parseDebArchive, "**/*.deb")
 }
