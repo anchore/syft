@@ -1,14 +1,28 @@
+# Stage 1: For CA certs
 FROM gcr.io/distroless/static-debian12:latest AS build
 
-FROM scratch
-# needed for version check HTTPS request
+# Stage 2: Final stage with secure non-root user
+FROM gcr.io/distroless/base-debian12
+
+# Set up certificates
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-# create the /tmp dir, which is needed for image content cache
-WORKDIR /tmp
+# ====== Define a safe non-root user manually (1000:1000) ======
+# UID 1000 is typically a safe, non-root value
+# Create minimal passwd/group files manually — no shell binaries needed
+RUN echo "nonroot:x:1000:1000:Syft NonRoot:/home/nonroot:/sbin/nologin" > /etc/passwd && \
+    echo "nonroot:x:1000:" > /etc/group && \
+    mkdir -p /home/nonroot && \
+    chown 1000:1000 /home/nonroot
 
+# ====== Add binary ======
 COPY syft /
+WORKDIR /home/nonroot
 
+# Drop privileges
+USER 1000:1000
+
+# Build metadata
 ARG BUILD_DATE
 ARG BUILD_VERSION
 ARG VCS_REF
