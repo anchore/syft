@@ -74,12 +74,12 @@ jobs:
           bootstrap-apt-packages: ""
 
       - name: Enable QEMU for multi-arch
-        uses: docker/setup-qemu-action@976512e99f06adc0ee8522552d4506bb9e4e2cbe   # v3 pinned
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: all
-
+      
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@0fb43db2cebcdcac6112ee20be2c60dfe4e86193 # v3 pinned
+        uses: docker/setup-buildx-action@v3
         with:
           builder: multiarch
 
