@@ -1,28 +1,18 @@
-# Stage 1: CA Certs
 FROM gcr.io/distroless/static-debian12:latest AS build
 
-# Stage 2: Create non-root user in Alpine (has /bin/sh)
 FROM alpine:latest AS security_provider
+RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
 
-RUN addgroup -S nonroot && \
-    adduser -S nonroot -G nonroot && \
-    mkdir -p /home/nonroot && \
-    chown -R nonroot:nonroot /home/nonroot
-
-# Stage 3: Final secure runtime image
-FROM gcr.io/distroless/base-debian12:latest
+FROM gcr.io/distroless/base-debian12
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-# Copy minimal user and group info into distroless container
 COPY --from=security_provider /etc/passwd /etc/passwd
-COPY --from=security_provider /etc/group /etc/group
-COPY --from=security_provider /home/nonroot /home/nonroot
 
-# Copy application binary
+WORKDIR /tmp
+
 COPY syft /
 
-WORKDIR /home/nonroot
 USER nonroot
 
 ARG BUILD_DATE
