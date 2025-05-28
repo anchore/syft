@@ -498,9 +498,9 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 	// spdx.github.io/spdx-spec/package-information/#710-package-checksum-field
 	case pkg.JavaArchive:
 		// if syft has generated the digest here then filesAnalyzed is true
-		if len(meta.ArchiveDigests) > 0 {
+		if len(p.Digests) > 0 {
 			filesAnalyzed = true
-			for _, digest := range meta.ArchiveDigests {
+			for _, digest := range p.Digests {
 				algo := strings.ToUpper(digest.Algorithm)
 				checksums = append(checksums, spdx.Checksum{
 					Algorithm: spdx.ChecksumAlgorithm(algo),

@@ -268,11 +268,11 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		Locations: file.NewLocationSet(
 			j.location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Type: j.fileInfo.pkgType(),
+		Type:    j.fileInfo.pkgType(),
+		Digests: digests,
 		Metadata: pkg.JavaArchive{
-			VirtualPath:    j.location.Path(),
-			Manifest:       manifest,
-			ArchiveDigests: digests,
+			VirtualPath: j.location.Path(),
+			Manifest:    manifest,
 		},
 	}, nil
 }
