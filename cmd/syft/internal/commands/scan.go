@@ -190,6 +190,10 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		return err
 	}
 
+	if src == nil {
+		return fmt.Errorf("unable to determine source for %q", userInput)
+	}
+
 	defer func() {
 		if src != nil {
 			if err := src.Close(); err != nil {

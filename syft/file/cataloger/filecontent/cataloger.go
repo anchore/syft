@@ -113,7 +113,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return buf.String(), nil
 }
 
-func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File contents",

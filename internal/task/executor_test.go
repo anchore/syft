@@ -17,7 +17,7 @@ func Test_TaskExecutor_PanicHandling(t *testing.T) {
 		panic("something bad happened")
 	})
 
-	err := RunTask(context.Background(), tsk, nil, nil, &monitor.CatalogerTaskProgress{
+	err := RunTask(context.Background(), tsk, nil, nil, &monitor.TaskProgress{
 		Manual: progress.NewManual(-1),
 	})
 
