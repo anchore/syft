@@ -230,13 +230,18 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 
 		prog.AtomicStage.Set(path)
 
+		var f filesystem.File
 		var mimeType string
-		f, err := fsys.OpenFile(path, os.O_RDONLY)
-		if err != nil {
-			log.WithFields("error", err, "path", path).Trace("unable to open squash file path")
-		} else {
-			defer f.Close()
-			mimeType = stereoFile.MIMEType(f)
+		var err error
+
+		if !d.IsDir() {
+			f, err = fsys.OpenFile(path, os.O_RDONLY)
+			if err != nil {
+				log.WithFields("error", err, "path", path).Trace("unable to open squash file path")
+			} else {
+				defer f.Close()
+				mimeType = stereoFile.MIMEType(f)
+			}
 		}
 
 		var ty stereoFile.Type
