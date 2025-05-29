@@ -19,7 +19,7 @@ type snapManifest struct {
 	Architectures []string `yaml:"architectures"`
 }
 
-const manifestLocation = "/snap/manifest.yaml"
+const manifestLocation = "/meta/snap.yaml"
 
 func parseManifest(resolver file.Resolver) (*snapManifest, error) {
 	locations, err := resolver.FilesByPath(manifestLocation)

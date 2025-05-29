@@ -48,7 +48,7 @@ type snapSource struct {
 	config           Config
 	resolver         file.Resolver
 	mutex            *sync.Mutex
-	manifest         *snapManifest
+	manifest         snapManifest
 	digests          []file.Digest
 	fs               filesystem.FileSystem
 	squashfsPath     string
@@ -86,7 +86,9 @@ func (s *snapSource) extractManifest() error {
 		return fmt.Errorf("unable to parse snap manifest file: %w", err)
 	}
 
-	s.manifest = manifest
+	if manifest != nil {
+		s.manifest = *manifest
+	}
 	return nil
 }
 
