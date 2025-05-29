@@ -25,11 +25,13 @@ func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) er
 		return fmt.Errorf("no entries in directory: %s", root)
 	}
 
-	err = walkDiskDir(fsys, root, infos[0], fn)
-
-	if err == fs.SkipDir || err == fs.SkipAll {
-		return nil
+	for _, info := range infos {
+		err = walkDiskDir(fsys, "/"+info.Name(), info, fn)
+		if err == fs.SkipDir || err == fs.SkipAll {
+			return nil
+		}
 	}
+
 	return err
 }
 

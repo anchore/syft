@@ -37,6 +37,9 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 		if err := validateSourcePlatform(src, cfg); err != nil {
 			return nil, err
 		}
+		if src != nil {
+			return src, nil
+		}
 	}
 
 	if len(fileNotFoundProviders) > 0 {

@@ -237,11 +237,18 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 			mimeType = stereoFile.MIMEType(f)
 		}
 
-		ty := stereoFile.TypeFromMode(d.Mode())
+		var ty stereoFile.Type
 		var linkPath string
-		if ty == stereoFile.TypeSymLink {
-			if l, ok := f.(linker); ok {
-				linkPath, _ = l.Readlink()
+		switch {
+		case d.IsDir():
+			// in some implementations, the mode does not indicate a directory, so we check the FileInfo type explicitly
+			ty = stereoFile.TypeDirectory
+		default:
+			ty = stereoFile.TypeFromMode(d.Mode())
+			if ty == stereoFile.TypeSymLink && f != nil {
+				if l, ok := f.(linker); ok {
+					linkPath, _ = l.Readlink()
+				}
 			}
 		}
 
@@ -265,7 +272,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 		if size != nil {
 			*(size) += metadata.Size()
 		}
-		fileCatalog.Add(*fileReference, metadata, nil, func() (io.ReadCloser, error) {
+		fileCatalog.AssociateOpener(*fileReference, func() (io.ReadCloser, error) {
 			return fsys.OpenFile(path, os.O_RDONLY)
 		})
 
