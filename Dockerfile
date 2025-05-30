@@ -1,6 +1,7 @@
 FROM gcr.io/distroless/static-debian12:latest AS build
 
-FROM alpine:latest AS security_provider
+ARG TARGETPLATFORM
+FROM --platform=$TARGETPLATFORM alpine:3.18 AS security_provider
 RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
 
 FROM gcr.io/distroless/base-debian12
