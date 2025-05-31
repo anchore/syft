@@ -49,5 +49,4 @@ func Test_markDuplicateRows(t *testing.T) {
 			t.Errorf("   diff: %+v", d)
 		}
 	}
-
 }
