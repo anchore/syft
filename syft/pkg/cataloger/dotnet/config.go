@@ -1,13 +1,16 @@
 package dotnet
 
 import (
+	"os"
+	"path"
+	"runtime"
 	"strings"
 
 	"github.com/anchore/syft/syft/credential"
 )
 
 const (
-	defaultProvider = "https://api.nuget.org/v3-flatcontainer/"
+	DefaultNuGetProvider = "https://api.nuget.org/v3-flatcontainer/"
 )
 
 type CatalogerConfig struct {
@@ -69,7 +72,7 @@ func (c CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
 func (c CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
 	c.SearchRemoteLicenses = input
 	if c.SearchRemoteLicenses && len(c.Providers) == 0 {
-		c.WithProviders(defaultProvider)
+		c.WithProviders(DefaultNuGetProvider)
 	}
 	return c
 }
@@ -98,11 +101,24 @@ func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) Ca
 	return c
 }
 
+func GetDefaultLocalNuGetCachePath() string {
+	if runtime.GOOS == "windows" {
+		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
+	} else {
+		return "~/.nuget/packages"
+	}
+}
+
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
 		DepPackagesMustHaveDLL:             false,
 		DepPackagesMustClaimDLL:            true,
 		PropagateDLLClaimsToParents:        true,
 		RelaxDLLClaimsWhenBundlingDetected: true,
+		SearchLocalLicenses:                true,
+		LocalCachePaths:                    []string{GetDefaultLocalNuGetCachePath()},
+		SearchRemoteLicenses:               false,
+		Providers:                          []string{DefaultNuGetProvider},
+		ProviderCredentials:                []credential.SimpleCredential{},
 	}
 }
