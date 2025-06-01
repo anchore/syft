@@ -9,6 +9,7 @@ import (
 func NewDotnetDepsBinaryCataloger(config CatalogerConfig) pkg.Cataloger {
 	return &depsBinaryCataloger{
 		config: config,
+		licenses: newNugetLicenseResolver(config),
 	}
 }
 
