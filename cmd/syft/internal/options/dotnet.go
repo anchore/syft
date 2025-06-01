@@ -74,9 +74,9 @@ func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.PropagateDLLClaimsToParents, `treat DLL claims or on-disk evidence for child packages as DLL claims or on-disk evidence for any parent package`)
 	descriptions.Add(&o.RelaxDLLClaimsWhenBundlingDetected, `show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)`)
 	descriptions.Add(&o.SearchLocalLicenses, `search for NuGet package licences in the local cache of the system running Syft, note that this is outside the container filesystem and probably outside the root of a local directory scan`)
-	descriptions.Add(&o.LocalCachePaths, `local cache folders (comma-separated) to use when retrieving NuGet packages locally, if unset this defaults to the NuGet cache folders known to the DotNet environment`)
+	descriptions.Add(&o.LocalCachePaths, `local cache folders (comma-separated) to use when retrieving NuGet packages locally; defaults to the standard NuGet cache folder`)
 	descriptions.Add(&o.SearchRemoteLicenses, `search for NuGet package licences by retrieving the package from a network proxy`)
-	descriptions.Add(&o.Providers, `remote NuGet package providers (comma-separated) to use when retrieving NuGet packages from the network, if unset this defaults to the NuGet-repositories known to the DotNet environment`)
+	descriptions.Add(&o.Providers, `remote NuGet package providers (comma-separated) to use when retrieving NuGet packages from the network; defaults to the nuget.org-repository`)
 	descriptions.Add(&o.ProviderCredentials, `remote NuGet package provider credentials to use when retrieving NuGet packages from the network.`)
 }
 
