@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultNuGetProvider = "https://api.nuget.org/v3-flatcontainer/"
+	defaultNuGetProvider = "https://api.nuget.org/v3-flatcontainer/"
 )
 
 type CatalogerConfig struct {
@@ -58,6 +58,9 @@ func (c CatalogerConfig) WithPropagateDLLClaimsToParents(propagate bool) Catalog
 
 func (c CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
 	c.SearchLocalLicenses = input
+	if c.SearchLocalLicenses && len(c.LocalCachePaths) == 0 {
+		c.WithLocalCachePaths(getDefaultLocalNuGetCachePath())
+	}
 	return c
 }
 
@@ -72,7 +75,7 @@ func (c CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
 func (c CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
 	c.SearchRemoteLicenses = input
 	if c.SearchRemoteLicenses && len(c.Providers) == 0 {
-		c.WithProviders(DefaultNuGetProvider)
+		c.WithProviders(defaultNuGetProvider)
 	}
 	return c
 }
@@ -101,7 +104,7 @@ func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) Ca
 	return c
 }
 
-func GetDefaultLocalNuGetCachePath() string {
+func getDefaultLocalNuGetCachePath() string {
 	if runtime.GOOS == "windows" {
 		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
 	}
@@ -115,9 +118,9 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		PropagateDLLClaimsToParents:        true,
 		RelaxDLLClaimsWhenBundlingDetected: true,
 		SearchLocalLicenses:                true,
-		LocalCachePaths:                    []string{GetDefaultLocalNuGetCachePath()},
+		LocalCachePaths:                    []string{getDefaultLocalNuGetCachePath()},
 		SearchRemoteLicenses:               false,
-		Providers:                          []string{DefaultNuGetProvider},
+		Providers:                          []string{defaultNuGetProvider},
 		ProviderCredentials:                []credential.SimpleCredential{},
 	}
 }
