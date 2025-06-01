@@ -104,9 +104,8 @@ func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) Ca
 func GetDefaultLocalNuGetCachePath() string {
 	if runtime.GOOS == "windows" {
 		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
-	} else {
-		return "~/.nuget/packages"
 	}
+	return "~/.nuget/packages"
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
