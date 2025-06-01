@@ -8,7 +8,7 @@ import (
 // NewDotnetDepsBinaryCataloger returns a cataloger based on PE and deps.json file contents.
 func NewDotnetDepsBinaryCataloger(config CatalogerConfig) pkg.Cataloger {
 	return &depsBinaryCataloger{
-		config: config,
+		config:   config,
 		licenses: newNugetLicenseResolver(config),
 	}
 }

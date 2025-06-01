@@ -38,11 +38,15 @@ type dotnetConfig struct {
 
 	RelaxDLLClaimsWhenBundlingDetected bool `mapstructure:"relax-dll-claims-when-bundling-detected" json:"relax-dll-claims-when-bundling-detected" yaml:"relax-dll-claims-when-bundling-detected"`
 
-	SearchLocalLicenses  *bool                     `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
-	LocalCachePaths      string                    `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
-	SearchRemoteLicenses *bool                     `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
-	Providers            string                    `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
-	ProviderCredentials  dotNetProviderCredentials `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
+	SearchLocalLicenses *bool `yaml:"search-local-licenses" json:"search-local-licenses" mapstructure:"search-local-licenses"`
+
+	LocalCachePaths string `yaml:"local-cache-paths" json:"local-cache-paths" mapstructure:"local-cache-paths"`
+
+	SearchRemoteLicenses *bool `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+
+	Providers string `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
+
+	ProviderCredentials dotNetProviderCredentials `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
 }
 
 var _ interface {
@@ -92,10 +96,10 @@ func defaultDotnetConfig() dotnetConfig {
 		DepPackagesMustClaimDLL:            def.DepPackagesMustClaimDLL,
 		PropagateDLLClaimsToParents:        def.PropagateDLLClaimsToParents,
 		RelaxDLLClaimsWhenBundlingDetected: def.RelaxDLLClaimsWhenBundlingDetected,
-		SearchLocalLicenses:  nil,
-		LocalCachePaths:      strings.Join(def.LocalCachePaths, ","),
-		SearchRemoteLicenses: nil,
-		Providers:            strings.Join(def.Providers, ","),
-		ProviderCredentials:  providerCredentials,
+		SearchLocalLicenses:                nil,
+		LocalCachePaths:                    strings.Join(def.LocalCachePaths, ","),
+		SearchRemoteLicenses:               nil,
+		Providers:                          strings.Join(def.Providers, ","),
+		ProviderCredentials:                providerCredentials,
 	}
 }
