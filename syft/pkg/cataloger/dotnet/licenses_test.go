@@ -148,7 +148,7 @@ func TestGetLicensesFromRemotePackage(t *testing.T) {
 	licenseParser := newNugetLicenseResolver(CatalogerConfig{})
 
 	t.Run(fixture, func(t *testing.T) {
-		result, _ := licenseParser.getLicensesFromRemotePackage(context.Background(), defaultProvider, "newtonsoft.json", "13.0.1")
+		result, _ := licenseParser.getLicensesFromRemotePackage(context.Background(), defaultNuGetProvider, "newtonsoft.json", "13.0.1")
 		assert.Equal(t, expected, result)
 	})
 }
