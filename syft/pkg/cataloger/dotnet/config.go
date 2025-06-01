@@ -53,49 +53,49 @@ func (c CatalogerConfig) WithPropagateDLLClaimsToParents(propagate bool) Catalog
 	return c
 }
 
-func (g CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
-	g.SearchLocalLicenses = input
-	return g
+func (c CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
+	c.SearchLocalLicenses = input
+	return c
 }
 
-func (g CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
+func (c CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
 	if input == "" {
-		return g
+		return c
 	}
-	g.LocalCachePaths = strings.Split(input, ",")
-	return g
+	c.LocalCachePaths = strings.Split(input, ",")
+	return c
 }
 
-func (g CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
-	g.SearchRemoteLicenses = input
-	if g.SearchRemoteLicenses && len(g.Providers) == 0 {
-		g.WithProviders(defaultProvider)
+func (c CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
+	c.SearchRemoteLicenses = input
+	if c.SearchRemoteLicenses && len(g.Providers) == 0 {
+		c.WithProviders(defaultProvider)
 	}
-	return g
+	return c
 }
 
-func (g CatalogerConfig) WithProviders(input string) CatalogerConfig {
+func (c CatalogerConfig) WithProviders(input string) CatalogerConfig {
 	if input == "" {
-		return g
+		return c
 	}
-	g.Providers = strings.Split(input, ",")
-	return g
+	c.Providers = strings.Split(input, ",")
+	return c
 }
 
-func (g CatalogerConfig) WithCredentials(input []credential.SimpleCredential) CatalogerConfig {
+func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) CatalogerConfig {
 	if len(input) == 0 {
-		return g
+		return c
 	}
 
-	g.ProviderCredentials = []credential.SimpleCredential{}
+	c.ProviderCredentials = []credential.SimpleCredential{}
 
 	for _, _credential := range input {
 		if _credential.Valid() {
-			g.ProviderCredentials = append(g.ProviderCredentials, _credential)
+			c.ProviderCredentials = append(c.ProviderCredentials, _credential)
 		}
 	}
 
-	return g
+	return c
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {

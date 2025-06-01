@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/anchore/syft/internal"
@@ -28,9 +27,6 @@ var (
 	httpClient = &http.Client{
 		Timeout: time.Second * 5,
 	}
-
-	defaultProvidersMutex sync.Mutex
-	defaultProviders      = ""
 )
 
 type nugetLicenseResolver struct {
@@ -523,29 +519,6 @@ func getNuGetCachesFromProjectAssets(assets []projectAssets) []string {
 	// Try to determine NuGet package folders from project assets
 	for _, assetDefinition := range assets {
 		for folder := range assetDefinition.PackageFolders {
-			found := false
-			for _, known := range paths {
-				if known == folder {
-					found = true
-					break
-				}
-			}
-			if !found {
-				paths = append(paths, folder)
-			}
-		}
-	}
-
-	return paths
-}
-
-func parseSDKLocalCachePathsOutput(outputLines []string) []string {
-	paths := []string{}
-
-	for _, line := range outputLines {
-		line = strings.TrimSpace(line)
-		if lineParts := strings.Split(line, ": "); len(lineParts) == 2 {
-			folder := lineParts[1]
 			found := false
 			for _, known := range paths {
 				if known == folder {
