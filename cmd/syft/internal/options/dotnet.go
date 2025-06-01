@@ -96,9 +96,9 @@ func defaultDotnetConfig() dotnetConfig {
 		DepPackagesMustClaimDLL:            def.DepPackagesMustClaimDLL,
 		PropagateDLLClaimsToParents:        def.PropagateDLLClaimsToParents,
 		RelaxDLLClaimsWhenBundlingDetected: def.RelaxDLLClaimsWhenBundlingDetected,
-		SearchLocalLicenses:                nil,
+		SearchLocalLicenses:                &def.SearchLocalLicenses,
 		LocalCachePaths:                    strings.Join(def.LocalCachePaths, ","),
-		SearchRemoteLicenses:               nil,
+		SearchRemoteLicenses:               &def.SearchRemoteLicenses,
 		Providers:                          strings.Join(def.Providers, ","),
 		ProviderCredentials:                providerCredentials,
 	}
