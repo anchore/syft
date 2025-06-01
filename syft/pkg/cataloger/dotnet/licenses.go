@@ -30,7 +30,7 @@ var (
 )
 
 type nugetLicenseResolver struct {
-	opts                     CatalogerConfig
+	cfg                      CatalogerConfig
 	localNuGetCacheResolvers []file.Resolver
 	lowerLicenseFileNames    *strset.Set
 	assetDefinitions         []projectAssets
@@ -38,7 +38,7 @@ type nugetLicenseResolver struct {
 
 func newNugetLicenseResolver(config CatalogerConfig) nugetLicenseResolver {
 	return nugetLicenseResolver{
-		opts:                     config,
+		cfg:                      config,
 		localNuGetCacheResolvers: nil,
 		lowerLicenseFileNames:    strset.New(lowercaseLicenseFiles()...),
 	}
@@ -75,7 +75,7 @@ func appendNewLicenses(licenses []pkg.License, potentiallyNew ...pkg.License) []
 func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, moduleVersion string) ([]pkg.License, error) {
 	var licenses []pkg.License
 
-	if c.opts.SearchLocalLicenses {
+	if c.cfg.SearchLocalLicenses {
 		if c.localNuGetCacheResolvers == nil {
 			// Try to determine NuGet package folder resolvers
 			c.localNuGetCacheResolvers = c.getLocalNugetFolderResolvers(c.assetDefinitions)
@@ -91,7 +91,7 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, modu
 		}
 	}
 
-	if c.opts.SearchRemoteLicenses {
+	if c.cfg.SearchRemoteLicenses {
 		if lics, err := c.findRemoteLicenses(ctx, moduleName, moduleVersion, c.assetDefinitions...); err == nil {
 			licenses = appendNewLicenses(licenses, lics...)
 		}
@@ -357,12 +357,12 @@ func (c *nugetLicenseResolver) getResponseForRemotePackage(providerURL, moduleNa
 	url := fmt.Sprintf("%s/%s/%s/%s.%s.nupkg", strings.TrimSuffix(providerURL, "/"), moduleName, moduleVersion, moduleName, moduleVersion)
 	response, err = httpClient.Get(url)
 	if err == nil {
-		if response.StatusCode == http.StatusUnauthorized && len(c.opts.ProviderCredentials) > 0 {
+		if response.StatusCode == http.StatusUnauthorized && len(c.cfg.ProviderCredentials) > 0 {
 			if response.Body != nil {
 				response.Body.Close()
 			}
 			// Let's try, using the given credentials
-			for _, credential := range c.opts.ProviderCredentials {
+			for _, credential := range c.cfg.ProviderCredentials {
 				req, _ := http.NewRequest("GET", url, nil)
 				req.SetBasicAuth(credential.Username, credential.Password)
 				response, err = httpClient.Do(req)
@@ -419,7 +419,7 @@ func findMatchingLibrariesInProjectAssets(moduleName, moduleVersion string, asse
 }
 
 func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleName, moduleVersion string, assets ...projectAssets) (out []pkg.License, err error) {
-	if len(c.opts.Providers) == 0 {
+	if len(c.cfg.Providers) == 0 {
 		return nil, errors.ErrUnsupported
 	}
 
@@ -432,7 +432,7 @@ func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleNam
 	}
 
 	foundPackage := false
-	for _, provider := range c.opts.Providers {
+	for _, provider := range c.cfg.Providers {
 		out, foundPackage = c.getLicensesFromRemotePackage(ctx, provider, moduleName, moduleVersion)
 		if foundPackage {
 			break
@@ -537,8 +537,8 @@ func getNuGetCachesFromProjectAssets(assets []projectAssets) []string {
 
 func (c *nugetLicenseResolver) getLocalNugetFolderResolvers(assetDefinitions []projectAssets) []file.Resolver {
 	nugetPackagePaths := []string{}
-	if len(c.opts.LocalCachePaths) > 0 {
-		nugetPackagePaths = append(nugetPackagePaths, c.opts.LocalCachePaths...)
+	if len(c.cfg.LocalCachePaths) > 0 {
+		nugetPackagePaths = append(nugetPackagePaths, c.cfg.LocalCachePaths...)
 	} else {
 		nugetPackagePaths = append(nugetPackagePaths, getNuGetCachesFromProjectAssets(assetDefinitions)...)
 	}

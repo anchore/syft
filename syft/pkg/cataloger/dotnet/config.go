@@ -68,7 +68,7 @@ func (c CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
 
 func (c CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
 	c.SearchRemoteLicenses = input
-	if c.SearchRemoteLicenses && len(g.Providers) == 0 {
+	if c.SearchRemoteLicenses && len(c.Providers) == 0 {
 		c.WithProviders(defaultProvider)
 	}
 	return c
