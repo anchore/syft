@@ -1,5 +1,15 @@
 package dotnet
 
+import (
+	"strings"
+
+	"github.com/anchore/syft/syft/credential"
+)
+
+const (
+	defaultProvider = "https://api.nuget.org/v3-flatcontainer/"
+)
+
 type CatalogerConfig struct {
 	// DepPackagesMustHaveDLL allows for deps.json packages to be included only if there is a DLL on disk for that package.
 	DepPackagesMustHaveDLL bool `mapstructure:"dep-packages-must-have-dll" json:"dep-packages-must-have-dll" yaml:"dep-packages-must-have-dll"`
@@ -14,6 +24,13 @@ type CatalogerConfig struct {
 	// RelaxDLLClaimsWhenBundlingDetected will look for indications of IL bundle tooling via deps.json package names
 	// and, if found (and this config option is enabled), will relax the DepPackagesMustClaimDLL value to `false` only in those cases.
 	RelaxDLLClaimsWhenBundlingDetected bool `mapstructure:"relax-dll-claims-when-bundling-detected" json:"relax-dll-claims-when-bundling-detected" yaml:"relax-dll-claims-when-bundling-detected"`
+
+	SearchLocalLicenses bool     `mapstructure:"search-local-licenses" json:"search-local-licenses" yaml:"search-local-licenses"`
+	LocalCachePaths     []string `mapstructure:"local-cache-paths" json:"local-cache-paths" yaml:"local-cache-paths"`
+
+	SearchRemoteLicenses bool                          `mapstructure:"search-remote-licenses" json:"search-remote-licenses" yaml:"search-remote-licenses"`
+	Providers            []string                      `mapstructure:"package-providers" json:"package-providers,omitempty" yaml:"package-providers,omitempty"`
+	ProviderCredentials  []credential.SimpleCredential `mapstructure:"package-provider-credentials" json:"package-provider-credentials,omitempty" yaml:"package-provider-credentials,omitempty"`
 }
 
 func (c CatalogerConfig) WithDepPackagesMustHaveDLL(requireDlls bool) CatalogerConfig {
@@ -34,6 +51,51 @@ func (c CatalogerConfig) WithRelaxDLLClaimsWhenBundlingDetected(relax bool) Cata
 func (c CatalogerConfig) WithPropagateDLLClaimsToParents(propagate bool) CatalogerConfig {
 	c.PropagateDLLClaimsToParents = propagate
 	return c
+}
+
+func (g CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
+	g.SearchLocalLicenses = input
+	return g
+}
+
+func (g CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
+	if input == "" {
+		return g
+	}
+	g.LocalCachePaths = strings.Split(input, ",")
+	return g
+}
+
+func (g CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
+	g.SearchRemoteLicenses = input
+	if g.SearchRemoteLicenses && len(g.Providers) == 0 {
+		g.WithProviders(defaultProvider)
+	}
+	return g
+}
+
+func (g CatalogerConfig) WithProviders(input string) CatalogerConfig {
+	if input == "" {
+		return g
+	}
+	g.Providers = strings.Split(input, ",")
+	return g
+}
+
+func (g CatalogerConfig) WithCredentials(input []credential.SimpleCredential) CatalogerConfig {
+	if len(input) == 0 {
+		return g
+	}
+
+	g.ProviderCredentials = []credential.SimpleCredential{}
+
+	for _, _credential := range input {
+		if _credential.Valid() {
+			g.ProviderCredentials = append(g.ProviderCredentials, _credential)
+		}
+	}
+
+	return g
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
