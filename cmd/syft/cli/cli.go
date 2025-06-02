@@ -48,7 +48,7 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 		commands.Cataloger(app),
 		commands.Attest(app),
 		commands.Convert(app),
-		clio.VersionCommand(id, syftSchemaVersion),
+		clio.VersionCommand(id, schemaVersion),
 		clio.ConfigCommand(app, nil),
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
@@ -61,6 +61,6 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 	return app, rootCmd
 }
 
-func syftSchemaVersion() (string, any) {
+func schemaVersion() (string, any) {
 	return "SchemaVersion", constants.JSONSchemaVersion
 }
