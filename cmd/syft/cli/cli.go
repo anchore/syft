@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/commands"
+	constants "github.com/anchore/syft/internal"
 )
 
 // Application constructs the `syft packages` command and aliases the root command to `syft packages`.
@@ -47,7 +48,7 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 		commands.Cataloger(app),
 		commands.Attest(app),
 		commands.Convert(app),
-		clio.VersionCommand(id),
+		clio.VersionCommand(id, schemaVersion),
 		clio.ConfigCommand(app, nil),
 		cranecmd.NewCmdAuthLogin(id.Name), // syft login uses the same command as crane
 	)
@@ -58,4 +59,8 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 	// In the future this functionality should be restored.
 
 	return app, rootCmd
+}
+
+func schemaVersion() (string, any) {
+	return "SchemaVersion", constants.JSONSchemaVersion
 }
