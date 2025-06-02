@@ -62,5 +62,5 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 }
 
 func syftSchemaVersion() (string, any) {
-	return "SyftSchemaVersion", constants.JSONSchemaVersion
+	return "SchemaVersion", constants.JSONSchemaVersion
 }
