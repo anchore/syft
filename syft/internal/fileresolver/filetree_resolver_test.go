@@ -1451,7 +1451,7 @@ func TestFileResolver_FilesByGlob(t *testing.T) {
 
 	resolver, err := NewFromFile(parentPath, filePath)
 	assert.NoError(t, err)
-	refs, err := resolver.FilesByGlob("*.txt")
+	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
 
 	assert.Len(t, refs, 1)
