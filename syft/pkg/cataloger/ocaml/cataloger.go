@@ -11,5 +11,5 @@ import (
 // NewOpamPackageManagerCataloger returns a new cataloger object for OCaml opam.
 func NewOpamPackageManagerCataloger() pkg.Cataloger {
 	return generic.NewCataloger("opam-cataloger").
-		WithParserByGlobs(parseOpamPackage, "*opam")
+		WithParserByGlobs(parseOpamPackage, "**/*opam")
 }
