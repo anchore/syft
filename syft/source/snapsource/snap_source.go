@@ -60,7 +60,7 @@ func New(cfg Config) (source.Source, error) {
 	client := intFile.NewGetter(cfg.ID, cleanhttp.DefaultClient())
 	f, err := getSnapFile(context.Background(), afero.NewOsFs(), client, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open snap manifest file: %w", err)
+		return nil, err
 	}
 
 	s := &snapSource{

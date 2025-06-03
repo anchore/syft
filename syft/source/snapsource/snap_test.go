@@ -578,6 +578,84 @@ func TestDownloadSnap(t *testing.T) {
 	}
 }
 
+func TestParseSnapRequest(t *testing.T) {
+	tests := []struct {
+		name            string
+		request         string
+		expectedName    string
+		expectedChannel string
+	}{
+		{
+			name:            "snap name only - uses default channel",
+			request:         "etcd",
+			expectedName:    "etcd",
+			expectedChannel: "stable",
+		},
+		{
+			name:            "snap with beta channel",
+			request:         "etcd@beta",
+			expectedName:    "etcd",
+			expectedChannel: "beta",
+		},
+		{
+			name:            "snap with edge channel",
+			request:         "etcd@edge",
+			expectedName:    "etcd",
+			expectedChannel: "edge",
+		},
+		{
+			name:            "snap with version track",
+			request:         "etcd@2.3/stable",
+			expectedName:    "etcd",
+			expectedChannel: "2.3/stable",
+		},
+		{
+			name:            "snap with complex channel path",
+			request:         "mysql@8.0/candidate",
+			expectedName:    "mysql",
+			expectedChannel: "8.0/candidate",
+		},
+		{
+			name:            "snap with multiple @ symbols - only first is delimiter",
+			request:         "app@beta@test",
+			expectedName:    "app",
+			expectedChannel: "beta@test",
+		},
+		{
+			name:            "empty snap name with channel",
+			request:         "@stable",
+			expectedName:    "",
+			expectedChannel: "stable",
+		},
+		{
+			name:            "snap name with empty channel - uses default",
+			request:         "etcd@",
+			expectedName:    "etcd",
+			expectedChannel: "stable",
+		},
+		{
+			name:            "hyphenated snap name",
+			request:         "hello-world@stable",
+			expectedName:    "hello-world",
+			expectedChannel: "stable",
+		},
+		{
+			name:            "snap name with numbers",
+			request:         "app123",
+			expectedName:    "app123",
+			expectedChannel: "stable",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			name, channel := parseSnapRequest(tt.request)
+			assert.Equal(t, tt.expectedName, name)
+			assert.Equal(t, tt.expectedChannel, channel)
+		})
+	}
+}
+
 type mockFileGetter struct {
 	mock.Mock
 	file.Getter

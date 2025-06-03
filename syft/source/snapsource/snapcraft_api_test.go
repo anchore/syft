@@ -10,93 +10,132 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseSnapRequest(t *testing.T) {
+func TestSnapcraftClient_CheckSnapExists(t *testing.T) {
 	tests := []struct {
-		name            string
-		request         string
-		expectedName    string
-		expectedChannel string
+		name           string
+		snapName       string
+		mockResponse   snapFindResponse
+		statusCode     int
+		expectedExists bool
+		expectedSnapID string
+		expectError    require.ErrorAssertionFunc
+		errorContains  string
 	}{
 		{
-			name:            "snap name only - uses default channel",
-			request:         "etcd",
-			expectedName:    "etcd",
-			expectedChannel: "stable",
+			name:       "snap exists",
+			snapName:   "jp-ledger",
+			statusCode: http.StatusOK,
+			mockResponse: snapFindResponse{
+				Results: []struct {
+					Name   string   `json:"name"`
+					SnapID string   `json:"snap-id"`
+					Snap   struct{} `json:"snap"`
+				}{
+					{
+						Name:   "jp-ledger",
+						SnapID: "jyDlMmifyQhSWGPM9fnKc1HSD7E6c47e",
+						Snap:   struct{}{},
+					},
+				},
+			},
+			expectedExists: true,
+			expectedSnapID: "jyDlMmifyQhSWGPM9fnKc1HSD7E6c47e",
+			expectError:    require.NoError,
 		},
 		{
-			name:            "snap with beta channel",
-			request:         "etcd@beta",
-			expectedName:    "etcd",
-			expectedChannel: "beta",
+			name:       "snap does not exist",
+			snapName:   "nonexistent-snap",
+			statusCode: http.StatusOK,
+			mockResponse: snapFindResponse{
+				Results: []struct {
+					Name   string   `json:"name"`
+					SnapID string   `json:"snap-id"`
+					Snap   struct{} `json:"snap"`
+				}{},
+			},
+			expectedExists: false,
+			expectedSnapID: "",
+			expectError:    require.NoError,
 		},
 		{
-			name:            "snap with edge channel",
-			request:         "etcd@edge",
-			expectedName:    "etcd",
-			expectedChannel: "edge",
+			name:       "multiple results - exact match found",
+			snapName:   "test-snap",
+			statusCode: http.StatusOK,
+			mockResponse: snapFindResponse{
+				Results: []struct {
+					Name   string   `json:"name"`
+					SnapID string   `json:"snap-id"`
+					Snap   struct{} `json:"snap"`
+				}{
+					{
+						Name:   "test-snap-extra",
+						SnapID: "wrong-id",
+						Snap:   struct{}{},
+					},
+					{
+						Name:   "test-snap",
+						SnapID: "correct-id",
+						Snap:   struct{}{},
+					},
+				},
+			},
+			expectedExists: true,
+			expectedSnapID: "correct-id",
+			expectError:    require.NoError,
 		},
 		{
-			name:            "snap with version track",
-			request:         "etcd@2.3/stable",
-			expectedName:    "etcd",
-			expectedChannel: "2.3/stable",
-		},
-		{
-			name:            "snap with complex channel path",
-			request:         "mysql@8.0/candidate",
-			expectedName:    "mysql",
-			expectedChannel: "8.0/candidate",
-		},
-		{
-			name:            "snap with multiple @ symbols - only first is delimiter",
-			request:         "app@beta@test",
-			expectedName:    "app",
-			expectedChannel: "beta@test",
-		},
-		{
-			name:            "empty snap name with channel",
-			request:         "@stable",
-			expectedName:    "",
-			expectedChannel: "stable",
-		},
-		{
-			name:            "snap name with empty channel - uses default",
-			request:         "etcd@",
-			expectedName:    "etcd",
-			expectedChannel: "stable",
-		},
-		{
-			name:            "hyphenated snap name",
-			request:         "hello-world@stable",
-			expectedName:    "hello-world",
-			expectedChannel: "stable",
-		},
-		{
-			name:            "snap name with numbers",
-			request:         "app123",
-			expectedName:    "app123",
-			expectedChannel: "stable",
+			name:          "find API returns 404",
+			snapName:      "test",
+			statusCode:    http.StatusNotFound,
+			expectError:   require.Error,
+			errorContains: "find API request failed with status code 404",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			name, channel := parseSnapRequest(tt.request)
-			assert.Equal(t, tt.expectedName, name)
-			assert.Equal(t, tt.expectedChannel, channel)
+			findServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
+				assert.Equal(t, tt.snapName, r.URL.Query().Get("name-startswith"))
+
+				w.WriteHeader(tt.statusCode)
+				if tt.statusCode == http.StatusOK {
+					responseBytes, err := json.Marshal(tt.mockResponse)
+					require.NoError(t, err)
+					w.Write(responseBytes)
+				}
+			}))
+			defer findServer.Close()
+
+			client := &snapcraftClient{
+				FindAPIURL: findServer.URL,
+				HTTPClient: &http.Client{},
+			}
+
+			exists, snapID, err := client.CheckSnapExists(tt.snapName)
+			tt.expectError(t, err)
+			if err != nil && tt.errorContains != "" {
+				assert.Contains(t, err.Error(), tt.errorContains)
+				return
+			}
+
+			assert.Equal(t, tt.expectedExists, exists)
+			assert.Equal(t, tt.expectedSnapID, snapID)
 		})
 	}
 }
 
-func TestGetSnapDownloadURL(t *testing.T) {
+func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 	tests := []struct {
-		name          string
-		snapID        snapIdentity
-		mockResponse  snapcraftInfo
-		statusCode    int
-		expectedURL   string
-		expectError   require.ErrorAssertionFunc
-		errorContains string
+		name           string
+		snapID         snapIdentity
+		infoResponse   snapcraftInfo
+		infoStatusCode int
+		findResponse   *snapFindResponse
+		findStatusCode int
+		expectedURL    string
+		expectError    require.ErrorAssertionFunc
+		errorContains  string
 	}{
 		{
 			name: "successful download URL retrieval",
@@ -105,8 +144,8 @@ func TestGetSnapDownloadURL(t *testing.T) {
 				Channel:      "stable",
 				Architecture: "amd64",
 			},
-			statusCode: http.StatusOK,
-			mockResponse: snapcraftInfo{
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
 				ChannelMap: []struct {
 					Channel struct {
 						Architecture string `json:"architecture"`
@@ -133,6 +172,51 @@ func TestGetSnapDownloadURL(t *testing.T) {
 				},
 			},
 			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+			expectError: require.NoError,
+		},
+		{
+			name: "region-locked snap - exists but unavailable",
+			snapID: snapIdentity{
+				Name:         "jp-ledger",
+				Channel:      "stable",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusNotFound,
+			findStatusCode: http.StatusOK,
+			findResponse: &snapFindResponse{
+				Results: []struct {
+					Name   string   `json:"name"`
+					SnapID string   `json:"snap-id"`
+					Snap   struct{} `json:"snap"`
+				}{
+					{
+						Name:   "jp-ledger",
+						SnapID: "jyDlMmifyQhSWGPM9fnKc1HSD7E6c47e",
+						Snap:   struct{}{},
+					},
+				},
+			},
+			expectError:   require.Error,
+			errorContains: "found snap 'jp-ledger' (id=jyDlMmifyQhSWGPM9fnKc1HSD7E6c47e) but it is unavailable for download",
+		},
+		{
+			name: "snap truly does not exist",
+			snapID: snapIdentity{
+				Name:         "nonexistent",
+				Channel:      "stable",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusNotFound,
+			findStatusCode: http.StatusOK,
+			findResponse: &snapFindResponse{
+				Results: []struct {
+					Name   string   `json:"name"`
+					SnapID string   `json:"snap-id"`
+					Snap   struct{} `json:"snap"`
+				}{},
+			},
+			expectError:   require.Error,
+			errorContains: "no snap found with name 'nonexistent'",
 		},
 		{
 			name: "multiple architectures - find correct one",
@@ -141,8 +225,8 @@ func TestGetSnapDownloadURL(t *testing.T) {
 				Channel:      "stable",
 				Architecture: "arm64",
 			},
-			statusCode: http.StatusOK,
-			mockResponse: snapcraftInfo{
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
 				ChannelMap: []struct {
 					Channel struct {
 						Architecture string `json:"architecture"`
@@ -183,56 +267,7 @@ func TestGetSnapDownloadURL(t *testing.T) {
 				},
 			},
 			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/mysql_arm64.snap",
-		},
-		{
-			name: "multiple channels - find correct one",
-			snapID: snapIdentity{
-				Name:         "etcd",
-				Channel:      "beta",
-				Architecture: "amd64",
-			},
-			statusCode: http.StatusOK,
-			mockResponse: snapcraftInfo{
-				ChannelMap: []struct {
-					Channel struct {
-						Architecture string `json:"architecture"`
-						Name         string `json:"name"`
-					} `json:"channel"`
-					Download struct {
-						URL string `json:"url"`
-					} `json:"download"`
-				}{
-					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
-							Architecture: "amd64",
-							Name:         "stable",
-						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
-							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_stable.snap",
-						},
-					},
-					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
-							Architecture: "amd64",
-							Name:         "beta",
-						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
-							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_beta.snap",
-						},
-					},
-				},
-			},
-			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_beta.snap",
+			expectError: require.NoError,
 		},
 		{
 			name: "snap not found - no matching architecture",
@@ -241,8 +276,8 @@ func TestGetSnapDownloadURL(t *testing.T) {
 				Channel:      "stable",
 				Architecture: "s390x",
 			},
-			statusCode: http.StatusOK,
-			mockResponse: snapcraftInfo{
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
 				ChannelMap: []struct {
 					Channel struct {
 						Architecture string `json:"architecture"`
@@ -270,54 +305,6 @@ func TestGetSnapDownloadURL(t *testing.T) {
 			},
 			expectError:   require.Error,
 			errorContains: "no matching snap found",
-		},
-		{
-			name: "snap not found - no matching channel",
-			snapID: snapIdentity{
-				Name:         "etcd",
-				Channel:      "candidate",
-				Architecture: "amd64",
-			},
-			statusCode: http.StatusOK,
-			mockResponse: snapcraftInfo{
-				ChannelMap: []struct {
-					Channel struct {
-						Architecture string `json:"architecture"`
-						Name         string `json:"name"`
-					} `json:"channel"`
-					Download struct {
-						URL string `json:"url"`
-					} `json:"download"`
-				}{
-					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
-							Architecture: "amd64",
-							Name:         "stable",
-						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
-							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
-						},
-					},
-				},
-			},
-			expectError:   require.Error,
-			errorContains: "no matching snap found",
-		},
-		{
-			name: "API returns 404",
-			snapID: snapIdentity{
-				Name:         "nonexistent",
-				Channel:      "stable",
-				Architecture: "amd64",
-			},
-			statusCode:    http.StatusNotFound,
-			expectError:   require.Error,
-			errorContains: "API request failed with status code 404",
 		},
 		{
 			name: "API returns 500",
@@ -326,31 +313,21 @@ func TestGetSnapDownloadURL(t *testing.T) {
 				Channel:      "stable",
 				Architecture: "amd64",
 			},
-			statusCode:    http.StatusInternalServerError,
-			expectError:   require.Error,
-			errorContains: "API request failed with status code 500",
+			infoStatusCode: http.StatusInternalServerError,
+			expectError:    require.Error,
+			errorContains:  "API request failed with status code 500",
 		},
 		{
-			name: "empty channel map",
+			name: "find API fails when checking 404",
 			snapID: snapIdentity{
-				Name:         "etcd",
+				Name:         "test-snap",
 				Channel:      "stable",
 				Architecture: "amd64",
 			},
-			statusCode: http.StatusOK,
-			mockResponse: snapcraftInfo{
-				ChannelMap: []struct {
-					Channel struct {
-						Architecture string `json:"architecture"`
-						Name         string `json:"name"`
-					} `json:"channel"`
-					Download struct {
-						URL string `json:"url"`
-					} `json:"download"`
-				}{}, // empty channel map
-			},
-			expectError:   require.Error,
-			errorContains: "no matching snap found",
+			infoStatusCode: http.StatusNotFound,
+			findStatusCode: http.StatusInternalServerError,
+			expectError:    require.Error,
+			errorContains:  "failed to check if snap exists",
 		},
 	}
 
@@ -359,24 +336,54 @@ func TestGetSnapDownloadURL(t *testing.T) {
 			if tt.expectError == nil {
 				tt.expectError = require.NoError
 			}
-			// create mock server...
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			// Create mock info server
+			infoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
 
 				expectedPath := "/" + tt.snapID.Name
 				assert.Equal(t, expectedPath, r.URL.Path)
 
-				w.WriteHeader(tt.statusCode)
+				w.WriteHeader(tt.infoStatusCode)
 
-				if tt.statusCode == http.StatusOK {
-					responseBytes, err := json.Marshal(tt.mockResponse)
+				if tt.infoStatusCode == http.StatusOK {
+					responseBytes, err := json.Marshal(tt.infoResponse)
 					require.NoError(t, err)
 					w.Write(responseBytes)
 				}
 			}))
-			defer server.Close()
+			defer infoServer.Close()
 
-			url, err := getSnapDownloadURL(server.URL+"/", tt.snapID)
+			var findServer *httptest.Server
+			if tt.findResponse != nil || tt.findStatusCode != 0 {
+				findServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
+					assert.Equal(t, tt.snapID.Name, r.URL.Query().Get("name-startswith"))
+
+					statusCode := tt.findStatusCode
+					if statusCode == 0 {
+						statusCode = http.StatusOK
+					}
+					w.WriteHeader(statusCode)
+
+					if tt.findResponse != nil && statusCode == http.StatusOK {
+						responseBytes, err := json.Marshal(tt.findResponse)
+						require.NoError(t, err)
+						w.Write(responseBytes)
+					}
+				}))
+				defer findServer.Close()
+			}
+
+			client := &snapcraftClient{
+				InfoAPIURL: infoServer.URL + "/",
+				HTTPClient: &http.Client{},
+			}
+			if findServer != nil {
+				client.FindAPIURL = findServer.URL
+			}
+
+			url, err := client.GetSnapDownloadURL(tt.snapID)
 			tt.expectError(t, err)
 			if err != nil {
 				if tt.errorContains != "" {
@@ -389,12 +396,17 @@ func TestGetSnapDownloadURL(t *testing.T) {
 	}
 }
 
-func TestGetSnapDownloadURL_InvalidJSON(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func TestSnapcraftClient_GetSnapDownloadURL_InvalidJSON(t *testing.T) {
+	infoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("invalid json"))
 	}))
-	defer server.Close()
+	defer infoServer.Close()
+
+	client := &snapcraftClient{
+		InfoAPIURL: infoServer.URL + "/",
+		HTTPClient: &http.Client{},
+	}
 
 	snapID := snapIdentity{
 		Name:         "etcd",
@@ -402,7 +414,15 @@ func TestGetSnapDownloadURL_InvalidJSON(t *testing.T) {
 		Architecture: "amd64",
 	}
 
-	_, err := getSnapDownloadURL(server.URL+"/", snapID)
+	_, err := client.GetSnapDownloadURL(snapID)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse JSON response")
+}
+
+func TestNewSnapcraftClient(t *testing.T) {
+	client := newSnapcraftClient()
+
+	assert.Equal(t, "https://api.snapcraft.io/v2/snaps/info/", client.InfoAPIURL)
+	assert.Equal(t, "https://api.snapcraft.io/v2/snaps/find", client.FindAPIURL)
+	assert.NotNil(t, client.HTTPClient)
 }

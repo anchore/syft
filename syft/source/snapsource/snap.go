@@ -69,7 +69,7 @@ func getSnapFile(ctx context.Context, fs afero.Fs, getter intFile.Getter, cfg Co
 
 	info, err := resolveRemoteSnap(cfg.Request, architecture)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve request: %w", err)
+		return nil, err
 	}
 
 	return newSnapFileFromRemote(ctx, fs, cfg, getter, info)
@@ -185,9 +185,11 @@ func resolveRemoteSnap(request, architecture string) (*remoteSnap, error) {
 		Architecture: architecture,
 	}
 
-	downloadURL, err := getSnapDownloadURL(snapAPIURL, id)
+	client := newSnapcraftClient()
+
+	downloadURL, err := client.GetSnapDownloadURL(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get download URL for snap %q: %w", snapName, err)
+		return nil, err
 	}
 
 	log.WithFields("url", downloadURL, "name", snapName, "channel", channel, "architecture", architecture).Debugf("snap resolved")
@@ -196,6 +198,26 @@ func resolveRemoteSnap(request, architecture string) (*remoteSnap, error) {
 		snapIdentity: id,
 		URL:          downloadURL,
 	}, nil
+}
+
+// parseSnapRequest parses a snap request into name and channel
+// Examples:
+// - "etcd" -> name="etcd", channel="stable" (default)
+// - "etcd@beta" -> name="etcd", channel="beta"
+// - "etcd@2.3/stable" -> name="etcd", channel="2.3/stable"
+func parseSnapRequest(request string) (name, channel string) {
+	parts := strings.SplitN(request, "@", 2)
+	name = parts[0]
+
+	if len(parts) == 2 {
+		channel = parts[1]
+	}
+
+	if channel == "" {
+		channel = defaultChannel
+	}
+
+	return name, channel
 }
 
 func downloadSnap(getter intFile.Getter, info *remoteSnap, dest string) error {
