@@ -41,14 +41,14 @@ require (
 	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
 	github.com/github/go-spdx/v2 v2.3.3
-	github.com/gkampitakis/go-snaps v0.5.11
+	github.com/gkampitakis/go-snaps v0.5.12
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.0
 	github.com/go-test/deep v1.1.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/gohugoio/hashstructure v0.5.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-containerregistry v0.20.4
+	github.com/google/go-containerregistry v0.20.5
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.5.4
@@ -159,13 +159,13 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
-	github.com/gkampitakis/ciinfo v0.3.1 // indirect
+	github.com/gkampitakis/ciinfo v0.3.2 // indirect
 	github.com/gkampitakis/go-diff v1.3.2 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-restruct/restruct v1.2.0-alpha // indirect
-	github.com/goccy/go-yaml v1.15.13
+	github.com/goccy/go-yaml v1.17.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
