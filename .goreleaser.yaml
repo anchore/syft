@@ -86,7 +86,7 @@ dockers:
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
     skip_push: true
-    skip_when_snapshot: false
+    skip_when_snapshot: true
 
   - image_templates:
       - anchore/syft:latest
@@ -102,8 +102,8 @@ dockers:
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
     skip_push: true
-    skip_when_snapshot: false
-
+    skip_when_snapshot: true
+    
 # docker_manifests section removed: no longer needed due to buildx handling multi-arch manifests automatically
 
 sboms:
