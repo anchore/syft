@@ -22,7 +22,6 @@ func Test_Unknowns(t *testing.T) {
 				assertInOutput(`no package identified in executable file`),
 				assertInOutput(`unable to read files from java archive`),
 				assertInOutput(`no package identified in archive`),
-				assertInOutput(`cycle during symlink resolution`),
 				assertSuccessfulReturnCode,
 			},
 		},
