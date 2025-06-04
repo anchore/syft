@@ -33,15 +33,20 @@ func newSnapcraftClient() *snapcraftClient {
 
 // snapcraftInfo represents the response from the snapcraft info API
 type snapcraftInfo struct {
-	ChannelMap []struct {
-		Channel struct {
-			Architecture string `json:"architecture"`
-			Name         string `json:"name"`
-		} `json:"channel"`
-		Download struct {
-			URL string `json:"url"`
-		} `json:"download"`
-	} `json:"channel-map"`
+	ChannelMap []snapChannelMapEntry `json:"channel-map"`
+}
+
+type snapChannelMapEntry struct {
+	Channel  snapChannel  `json:"channel"`
+	Download snapDownload `json:"download"`
+}
+type snapChannel struct {
+	Architecture string `json:"architecture"`
+	Name         string `json:"name"`
+}
+
+type snapDownload struct {
+	URL string `json:"url"`
 }
 
 // snapFindResponse represents the response from the snapcraft find API (search v2)

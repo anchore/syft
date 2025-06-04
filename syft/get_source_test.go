@@ -11,7 +11,6 @@ import (
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
-// Mock types for testing
 type mockSource struct {
 	source.Source
 	desc source.Description

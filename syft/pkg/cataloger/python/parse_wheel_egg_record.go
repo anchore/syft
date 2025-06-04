@@ -30,6 +30,8 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 				log.WithFields("error", parseErr).Debug("unable to read python record entry (skipping entry)")
 				continue
 			}
+
+			// probably an I/O error, so we log it and stop processing
 			log.WithFields("error", err).Debug("unable to read python record file")
 			break
 		}

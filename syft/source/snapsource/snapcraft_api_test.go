@@ -146,26 +146,13 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 			},
 			infoStatusCode: http.StatusOK,
 			infoResponse: snapcraftInfo{
-				ChannelMap: []struct {
-					Channel struct {
-						Architecture string `json:"architecture"`
-						Name         string `json:"name"`
-					} `json:"channel"`
-					Download struct {
-						URL string `json:"url"`
-					} `json:"download"`
-				}{
+				ChannelMap: []snapChannelMapEntry{
 					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
+						Channel: snapChannel{
 							Architecture: "amd64",
 							Name:         "stable",
 						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
+						Download: snapDownload{
 							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
 						},
 					},
@@ -227,40 +214,22 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 			},
 			infoStatusCode: http.StatusOK,
 			infoResponse: snapcraftInfo{
-				ChannelMap: []struct {
-					Channel struct {
-						Architecture string `json:"architecture"`
-						Name         string `json:"name"`
-					} `json:"channel"`
-					Download struct {
-						URL string `json:"url"`
-					} `json:"download"`
-				}{
+				ChannelMap: []snapChannelMapEntry{
 					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
+						Channel: snapChannel{
 							Architecture: "amd64",
 							Name:         "stable",
 						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
+						Download: snapDownload{
 							URL: "https://api.snapcraft.io/api/v1/snaps/download/mysql_amd64.snap",
 						},
 					},
 					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
+						Channel: snapChannel{
 							Architecture: "arm64",
 							Name:         "stable",
 						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
+						Download: snapDownload{
 							URL: "https://api.snapcraft.io/api/v1/snaps/download/mysql_arm64.snap",
 						},
 					},
@@ -278,26 +247,13 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 			},
 			infoStatusCode: http.StatusOK,
 			infoResponse: snapcraftInfo{
-				ChannelMap: []struct {
-					Channel struct {
-						Architecture string `json:"architecture"`
-						Name         string `json:"name"`
-					} `json:"channel"`
-					Download struct {
-						URL string `json:"url"`
-					} `json:"download"`
-				}{
+				ChannelMap: []snapChannelMapEntry{
 					{
-						Channel: struct {
-							Architecture string `json:"architecture"`
-							Name         string `json:"name"`
-						}{
+						Channel: snapChannel{
 							Architecture: "amd64",
 							Name:         "stable",
 						},
-						Download: struct {
-							URL string `json:"url"`
-						}{
+						Download: snapDownload{
 							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
 						},
 					},
@@ -337,7 +293,6 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 				tt.expectError = require.NoError
 			}
 
-			// Create mock info server
 			infoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
 
