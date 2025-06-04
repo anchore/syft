@@ -1,7 +1,7 @@
 package file
 
 import (
-	"fmt"
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -14,7 +14,6 @@ type WalkDiskDirFunc func(fsys filesystem.FileSystem, path string, d os.FileInfo
 // WalkDiskDir walks the file tree within the go-diskfs filesystem at root, calling fn for each file or directory in the tree, including root.
 // This is meant to mimic the behavior of fs.WalkDir in the standard library.
 func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) error {
-	// First, try to get info about the root path
 	infos, err := fsys.ReadDir(root)
 
 	if err != nil {
@@ -22,13 +21,20 @@ func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) er
 	}
 
 	if len(infos) == 0 {
-		return fmt.Errorf("no entries in directory: %s", root)
+		return nil
 	}
 
 	for _, info := range infos {
-		err = walkDiskDir(fsys, "/"+info.Name(), info, fn)
-		if err == fs.SkipDir || err == fs.SkipAll {
-			return nil
+		p := filepath.Join(root, info.Name())
+		err = walkDiskDir(fsys, p, info, fn)
+		if err != nil {
+			if errors.Is(err, fs.SkipDir) {
+				continue
+			}
+			if errors.Is(err, fs.SkipAll) {
+				return nil
+			}
+			return err
 		}
 	}
 
@@ -37,20 +43,16 @@ func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) er
 
 func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDirFn WalkDiskDirFunc) error {
 	if err := walkDirFn(fsys, name, d, nil); err != nil {
-		if err == fs.SkipDir && (d == nil || d.IsDir()) {
-			// successfully skipped directory.
+		if errors.Is(err, fs.SkipDir) && (d == nil || d.IsDir()) {
 			return nil
 		}
 		return err
 	}
 
-	// if d is nil, we need to determine if this is a directory by trying ReadDir
 	isDir := d != nil && d.IsDir()
 	if d == nil {
-		// try to read as directory to determine if it's a directory
 		_, err := fsys.ReadDir(name)
 		if err != nil {
-			// not a directory or error reading
 			return nil
 		}
 		isDir = true
@@ -64,7 +66,7 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 	if err != nil {
 		err = walkDirFn(fsys, name, d, err)
 		if err != nil {
-			if err == fs.SkipDir {
+			if errors.Is(err, fs.SkipDir) {
 				return nil
 			}
 			return err
@@ -74,10 +76,10 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 	for _, d1 := range dirs {
 		name1 := filepath.Join(name, d1.Name())
 		if err := walkDiskDir(fsys, name1, d1, walkDirFn); err != nil {
-			if err == fs.SkipDir {
+			if errors.Is(err, fs.SkipDir) {
 				break
 			}
-			if err == fs.SkipAll {
+			if errors.Is(err, fs.SkipAll) {
 				return err
 			}
 			return err
