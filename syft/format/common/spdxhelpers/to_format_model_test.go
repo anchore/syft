@@ -284,7 +284,7 @@ func Test_toFormatModel(t *testing.T) {
 						PackageSPDXIdentifier: "DocumentRoot-Snap-etcd",
 						PackageName:           "etcd",
 						PackageVersion:        "3.4.36",
-						PrimaryPackagePurpose: "ARCHIVE",
+						PrimaryPackagePurpose: "CONTAINER",
 						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
 						PackageSupplier: &spdx.Supplier{
 							Supplier: "NOASSERTION",

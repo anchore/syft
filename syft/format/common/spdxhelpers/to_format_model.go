@@ -30,7 +30,6 @@ import (
 const (
 	noAssertion = "NOASSERTION"
 
-	spdxPrimaryPurposeArchive   = "ARCHIVE"
 	spdxPrimaryPurposeContainer = "CONTAINER"
 	spdxPrimaryPurposeFile      = "FILE"
 	spdxPrimaryPurposeOther     = "OTHER"
@@ -233,7 +232,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 
 	case source.SnapMetadata:
 		prefix = prefixSnap
-		purpose = spdxPrimaryPurposeArchive
+		purpose = spdxPrimaryPurposeContainer
 
 		for _, d := range m.Digests {
 			checksums = append(checksums, spdx.Checksum{
