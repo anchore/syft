@@ -25,8 +25,8 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 			break
 		}
 		if err != nil {
-			log.Debugf("unable to read python record file: %w", err)
-			continue
+			log.WithFields("error", err).Debug("unable to read python record file")
+			break
 		}
 
 		if len(recordList) != 3 {
