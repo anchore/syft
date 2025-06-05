@@ -1,15 +1,6 @@
-FROM gcr.io/distroless/static-debian12:latest AS build
+FROM gcr.io/distroless/static-debian12:nonroot
 
-ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM alpine:3.18 AS security_provider
-RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
-
-FROM gcr.io/distroless/base-debian12
-
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-COPY --from=security_provider /etc/passwd /etc/passwd
-
+# create the /tmp dir, which is needed for image content cache
 WORKDIR /tmp
 
 COPY syft /
