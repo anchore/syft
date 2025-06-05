@@ -486,7 +486,6 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "dnsmasq", Vendor: "dnsmasq"},
 			candidateAddition{AdditionalVendors: []string{"thekelleys"}},
 		},
-		//
 		// Binary packages
 		{
 			pkg.BinaryPkg,
@@ -630,7 +629,18 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 			candidateKey{PkgName: "grpc"},
 			candidateRemovals{ProductsToRemove: []string{"grpc"}},
 		},
-		// PHP Packages
+		// Rust packages
+		{
+			pkg.RustPkg,
+			candidateKey{PkgName: "opentelemetry"},
+			candidateRemovals{ProductsToRemove: []string{"opentelemetry"}},
+		},
+		{
+			pkg.RustPkg,
+			candidateKey{PkgName: "redis"},
+			candidateRemovals{VendorsToRemove: []string{"redis"}},
+		},
+		// PHP packages
 		{
 			pkg.PhpPearPkg,
 			candidateKey{PkgName: "redis"},
