@@ -73,18 +73,11 @@ jobs:
         with:
           bootstrap-apt-packages: ""
 
-      - name: Enable QEMU for multi-arch
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          builder: multiarch
-
       - name: Build snapshot artifacts
         run: make snapshot
+
+      - name: Smoke test images
+        run: make snapshot-smoke-test
 
       # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
       # see https://github.com/actions/upload-artifact/issues/199 for more info
