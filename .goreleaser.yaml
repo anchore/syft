@@ -73,7 +73,7 @@ brews:
     license: "Apache License 2.0"
 
 dockers:
-  # production images
+  # production images...
   - image_templates:
       - anchore/syft:{{.Tag}}-amd64
       - ghcr.io/anchore/syft:{{.Tag}}-amd64
@@ -126,7 +126,7 @@ dockers:
       - "--build-arg=VCS_REF={{.FullCommit}}"
       - "--build-arg=VCS_URL={{.GitURL}}"
 
-  # debug images
+  # debug images...
   - image_templates:
       - anchore/syft:{{.Tag}}-debug-amd64
       - ghcr.io/anchore/syft:{{.Tag}}-debug-amd64
@@ -180,6 +180,7 @@ dockers:
       - "--build-arg=VCS_URL={{.GitURL}}"
 
 docker_manifests:
+  # anchore/syft manifests...
   - name_template: anchore/syft:latest
     image_templates:
       - anchore/syft:{{.Tag}}-amd64
@@ -208,6 +209,7 @@ docker_manifests:
       - anchore/syft:{{.Tag}}-debug-ppc64le
       - anchore/syft:{{.Tag}}-debug-s390x
 
+  # ghcr.io/anchore/syft manifests...
   - name_template: ghcr.io/anchore/syft:latest
     image_templates:
       - ghcr.io/anchore/syft:{{.Tag}}-amd64
@@ -235,7 +237,6 @@ docker_manifests:
       - ghcr.io/anchore/syft:{{.Tag}}-debug-arm64v8
       - ghcr.io/anchore/syft:{{.Tag}}-debug-ppc64le
       - ghcr.io/anchore/syft:{{.Tag}}-debug-s390x
-
 
 sboms:
   - artifacts: archive
