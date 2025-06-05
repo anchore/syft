@@ -31,7 +31,9 @@ vars:
   PROJECT_ROOT:
     sh: echo $PWD
 
-  SNAPSHOT_DIR: snapshot
+  # note: the snapshot dir must be a relative path starting with ./
+  # e.g. when installing snapshot debs from a local path, ./ forces the deb to be installed in the current working directory instead of referencing a package name
+  SNAPSHOT_DIR: ./snapshot
   SNAPSHOT_BIN: "{{ .PROJECT_ROOT }}/{{ .SNAPSHOT_DIR }}/{{ .OS }}-build_{{ .OS }}_{{ .ARCH }}/{{ .PROJECT }}"
   SNAPSHOT_CMD: "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --skip=publish --skip=sign"
   BUILD_CMD:    "{{ .TOOL_DIR }}/goreleaser build   --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --single-target"
