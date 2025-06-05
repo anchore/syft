@@ -279,14 +279,13 @@ func Test_toPackageChecksums(t *testing.T) {
 				Name:     "test",
 				Version:  "1.0.0",
 				Language: pkg.Java,
-				Metadata: pkg.JavaArchive{
-					ArchiveDigests: []file.Digest{
-						{
-							Algorithm: "sha1", // SPDX expects these to be uppercase
-							Value:     "1234",
-						},
+				Digests: []file.Digest{
+					{
+						Algorithm: "sha1", // SPDX expects these to be uppercase
+						Value:     "1234",
 					},
 				},
+				Metadata: pkg.JavaArchive{},
 			},
 			expected: []spdx.Checksum{
 				{
@@ -302,9 +301,7 @@ func Test_toPackageChecksums(t *testing.T) {
 				Name:     "test",
 				Version:  "1.0.0",
 				Language: pkg.Java,
-				Metadata: pkg.JavaArchive{
-					ArchiveDigests: []file.Digest{},
-				},
+				Digests:  []file.Digest{},
 			},
 			expected:      []spdx.Checksum{},
 			filesAnalyzed: false,

@@ -135,13 +135,13 @@ func TestSPDX22JSONRequredProperties(t *testing.T) {
 		Licenses:  pkg.LicenseSet{},
 		Language:  pkg.Java,
 		Metadata: pkg.JavaArchive{
-			ArchiveDigests: []file.Digest{
-				{
-					Algorithm: "sha256",
-					Value:     "a9b87321a9879c79d87987987a97c97b9789ce978dffea987",
-				},
-			},
 			Parent: nil,
+		},
+		Digests: []file.Digest{
+			{
+				Algorithm: "sha256",
+				Value:     "a9b87321a9879c79d87987987a97c97b9789ce978dffea987",
+			},
 		},
 	}
 	p1.SetID()

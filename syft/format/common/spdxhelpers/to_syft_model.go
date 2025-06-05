@@ -509,6 +509,7 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		PURL:     purlValue(info.purl),
 		Language: info.lang,
 		Metadata: extractMetadata(p, info),
+		Digests:  extractDigests(p),
 	}
 
 	internal.Backfill(sP)
@@ -555,7 +556,6 @@ func cleanSPDXID(id string) string {
 	return strings.TrimPrefix(id, spdxlicense.LicenseRefPrefix)
 }
 
-//nolint:funlen
 func extractMetadata(p *spdx.Package, info pkgInfo) any {
 	arch := info.qualifierValue(pkg.PURLQualifierArch)
 	upstreamValue := info.qualifierValue(pkg.PURLQualifierUpstream)
@@ -609,14 +609,6 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 			Architecture:  arch,
 			Maintainer:    originator,
 		}
-	case pkg.JavaPkg:
-		var digests []file.Digest
-		for _, value := range p.PackageChecksums {
-			digests = append(digests, file.Digest{Algorithm: fromChecksumAlgorithm(value.Algorithm), Value: value.Value})
-		}
-		return pkg.JavaArchive{
-			ArchiveDigests: digests,
-		}
 	case pkg.GoModulePkg:
 		var h1Digest string
 		for _, value := range p.PackageChecksums {
@@ -656,4 +648,14 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 		}
 	}
 	return cpes
+}
+
+func extractDigests(p *spdx.Package) (digests []file.Digest) {
+	for _, d := range p.PackageChecksums {
+		digests = append(digests, file.Digest{
+			Algorithm: fromChecksumAlgorithm(d.Algorithm),
+			Value:     d.Value,
+		})
+	}
+	return digests
 }
