@@ -115,14 +115,16 @@ func wheelEggDependencySpecifier(p pkg.Package) dependency.Specification {
 	}
 }
 
-// extractPackageName removes any extras or version constraints from a given Requires-Dist field value (and
+// extractPackageName removes any extras, version constraints or environment markers from a given Requires-Dist field value (and
 // semantically similar fields), leaving only the package name.
 func extractPackageName(s string) string {
 	// examples:
-	// html5lib ; extra == 'html5lib'   -->  html5lib
-	// soupsieve (>1.2)					-->  soupsieve
+	// requests [security,tests]		--> requests
+	// requests >= 2.8.1			--> requests
+	// requests (>= 2.8.1)			--> requests
+	// requests ; python_version < "2.7"	--> requests
 
-	return strings.TrimSpace(internal.SplitAny(s, "(;")[0])
+	return strings.TrimSpace(internal.SplitAny(s, "[(<!=>~;")[0])
 }
 func extractPackageNames(ss []string) []string {
 	var names []string
