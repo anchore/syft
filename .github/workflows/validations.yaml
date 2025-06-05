@@ -76,7 +76,7 @@ jobs:
       - name: Build snapshot artifacts
         run: make snapshot
 
-      - name: Smoke test images
+      - name: Smoke test snapshot build
         run: make snapshot-smoke-test
 
       # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
