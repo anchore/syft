@@ -44,7 +44,7 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 				redact.Set(state.RedactStore)
 
 				log.Set(state.Logger)
-				stereoscope.SetLogger(state.Logger)
+				stereoscope.SetLogger(state.Logger.Nested("from", "stereoscope"))
 				return nil
 			},
 		).

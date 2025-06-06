@@ -14,7 +14,7 @@ var _ file.Resolver = (*Directory)(nil)
 
 // Directory implements path and content access for the directory data source.
 type Directory struct {
-	filetreeResolver
+	FiletreeResolver
 	path    string
 	indexer *directoryIndexer
 }
@@ -39,10 +39,11 @@ func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathI
 
 	return &Directory{
 		path: cleanRoot,
-		filetreeResolver: filetreeResolver{
-			chroot: *chroot,
-			tree:   filetree.New(),
-			index:  filetree.NewIndex(),
+		FiletreeResolver: FiletreeResolver{
+			Chroot: *chroot,
+			Tree:   filetree.New(),
+			Index:  filetree.NewIndex(),
+			Opener: nativeOSFileOpener,
 		},
 		indexer: newDirectoryIndexer(cleanRoot, cleanBase, pathFilters...),
 	}, nil
@@ -57,9 +58,9 @@ func (r *Directory) buildIndex() error {
 		return err
 	}
 
-	r.tree = tree
-	r.index = index
-	r.searchContext = filetree.NewSearchContext(tree, index)
+	r.Tree = tree
+	r.Index = index
+	r.SearchContext = filetree.NewSearchContext(tree, index)
 
 	return nil
 }

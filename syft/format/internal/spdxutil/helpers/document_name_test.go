@@ -46,6 +46,15 @@ func Test_DocumentName(t *testing.T) {
 			expected: "some/path/to/place",
 		},
 		{
+			name: "snap",
+			srcMetadata: source.Description{
+				Name: "some/name",
+				// there is nothing in the snap metadata that indicates a name
+				Metadata: source.SnapMetadata{},
+			},
+			expected: "some/name",
+		},
+		{
 			name: "named",
 			srcMetadata: source.Description{
 				Name:     "some/name",

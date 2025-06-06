@@ -23,6 +23,10 @@ const (
 	// CatalogerTaskStarted is a partybus event that occurs when starting a task within a cataloger
 	CatalogerTaskStarted partybus.EventType = typePrefix + "-cataloger-task-started"
 
+	// PullSourceStarted is a partybus event that occurs when starting to pull a source (does not overlap with stereoscope image pull events,
+	// this covers any additional sources such as snap and git repos).
+	PullSourceStarted partybus.EventType = typePrefix + "-pull-source-started"
+
 	// Events exclusively for the CLI
 
 	// CLIAppUpdateAvailable is a partybus event that occurs when an application update is available

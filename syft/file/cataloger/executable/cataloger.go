@@ -106,7 +106,7 @@ func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file
 	return processExecutable(loc, uReader)
 }
 
-func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Executables",

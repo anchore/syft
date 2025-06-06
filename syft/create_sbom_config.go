@@ -464,6 +464,8 @@ func findDefaultTags(src source.Description) ([]string, error) {
 		return []string{pkgcataloging.ImageTag, filecataloging.FileTag}, nil
 	case source.FileMetadata, source.DirectoryMetadata:
 		return []string{pkgcataloging.DirectoryTag, filecataloging.FileTag}, nil
+	case source.SnapMetadata:
+		return []string{pkgcataloging.InstalledTag, filecataloging.FileTag}, nil
 	default:
 		return nil, fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
 	}

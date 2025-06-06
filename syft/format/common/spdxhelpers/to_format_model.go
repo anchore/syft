@@ -37,6 +37,7 @@ const (
 	prefixImage     = "Image"
 	prefixDirectory = "Directory"
 	prefixFile      = "File"
+	prefixSnap      = "Snap"
 	prefixUnknown   = "Unknown"
 )
 
@@ -228,6 +229,18 @@ func toRootPackage(s source.Description) *spdx.Package {
 				Value:     d.Value,
 			})
 		}
+
+	case source.SnapMetadata:
+		prefix = prefixSnap
+		purpose = spdxPrimaryPurposeContainer
+
+		for _, d := range m.Digests {
+			checksums = append(checksums, spdx.Checksum{
+				Algorithm: toChecksumAlgorithm(d.Algorithm),
+				Value:     d.Value,
+			})
+		}
+
 	default:
 		prefix = prefixUnknown
 		purpose = spdxPrimaryPurposeOther

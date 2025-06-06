@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
+	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/internal/windows"
 )
@@ -49,14 +50,14 @@ func (r *fileIndexer) build() (filetree.Reader, filetree.IndexReader, error) {
 
 // Index file at the given path
 // A file indexer simply indexes the file and its directory.
-func index(path string, indexer func(string, *progress.Stage) error) error {
+func index(path string, indexer func(string, *progress.AtomicStage) error) error {
 	// We want to index the file at the provided path and its parent directory.
 	// We need to probably check that we have file access
 	// We also need to determine what to do when the file itself is a symlink.
-	stager, prog := indexingProgress(path)
+	prog := bus.StartIndexingFiles(path)
 	defer prog.SetCompleted()
 
-	err := indexer(path, stager)
+	err := indexer(path, prog.AtomicStage)
 	if err != nil {
 		return fmt.Errorf("unable to index filesystem path=%q: %w", path, err)
 	}
@@ -70,7 +71,7 @@ func index(path string, indexer func(string, *progress.Stage) error) error {
 // permissions errors on the file at path or its parent directory will return an error.
 // Filter functions provided to the indexer are honoured, so if the path provided (or its parent
 // directory) is filtered by a filter function, an error is returned.
-func (r *fileIndexer) indexPath(path string, stager *progress.Stage) error {
+func (r *fileIndexer) indexPath(path string, stager *progress.AtomicStage) error {
 	log.WithFields("path", path).Trace("indexing file path")
 
 	absPath, err := filepath.Abs(path)
@@ -105,14 +106,14 @@ func (r *fileIndexer) indexPath(path string, stager *progress.Stage) error {
 		return fmt.Errorf("unable to stat parent of file=%q: %w", absSymlinkFreeParent, err)
 	}
 
-	stager.Current = absSymlinkFreeParent
+	stager.Set(absSymlinkFreeParent)
 	indexParentErr := r.filterAndIndex(absSymlinkFreeParent, parentFi)
 	if indexParentErr != nil {
 		return indexParentErr
 	}
 
 	// We have indexed the parent successfully, now attempt to index the file.
-	stager.Current = absSymlinkFreeFilePath
+	stager.Set(absSymlinkFreeFilePath)
 	indexFileErr := r.filterAndIndex(absSymlinkFreeFilePath, fi)
 	if indexFileErr != nil {
 		return indexFileErr

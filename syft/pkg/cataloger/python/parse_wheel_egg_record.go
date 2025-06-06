@@ -21,12 +21,19 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 
 	for {
 		recordList, err := r.Read()
-		if errors.Is(err, io.EOF) {
-			break
-		}
 		if err != nil {
-			log.Debugf("unable to read python record file: %w", err)
-			continue
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			var parseErr *csv.ParseError
+			if errors.As(err, &parseErr) {
+				log.WithFields("error", parseErr).Debug("unable to read python record entry (skipping entry)")
+				continue
+			}
+
+			// probably an I/O error, so we log it and stop processing
+			log.WithFields("error", err).Debug("unable to read python record file")
+			break
 		}
 
 		if len(recordList) != 3 {

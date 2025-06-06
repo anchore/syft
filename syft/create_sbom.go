@@ -144,14 +144,14 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 	return ctx
 }
 
-func monitorPackageCount(prog *monitor.CatalogerTaskProgress) func(s *sbom.SBOM) {
+func monitorPackageCount(prog *monitor.TaskProgress) func(s *sbom.SBOM) {
 	return func(s *sbom.SBOM) {
 		count := humanize.Comma(int64(s.Artifacts.Packages.PackageCount()))
 		prog.AtomicStage.Set(fmt.Sprintf("%s packages", count))
 	}
 }
 
-func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
+func monitorPackageCatalogingTask() *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Packages",
@@ -164,7 +164,7 @@ func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
 	return bus.StartCatalogerTask(info, -1, "")
 }
 
-func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.CatalogerTaskProgress {
+func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog contents",

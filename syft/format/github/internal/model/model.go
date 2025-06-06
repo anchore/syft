@@ -130,6 +130,11 @@ func toPath(s source.Description, p pkg.Package) string {
 				return fmt.Sprintf("%s/%s", path, packagePath)
 			}
 			return packagePath
+		case source.SnapMetadata:
+			if inputPath != "" {
+				return fmt.Sprintf("%s:/%s", inputPath, packagePath)
+			}
+			return packagePath
 		}
 	}
 	return inputPath
