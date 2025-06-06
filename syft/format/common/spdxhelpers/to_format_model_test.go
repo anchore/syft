@@ -51,10 +51,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "alpine",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "alpine",
+				DocumentNamespace: "https://anchore.com/image/alpine-d573751a-5604-5439-9da4-72b7145e5199",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -102,6 +103,21 @@ func Test_toFormatModel(t *testing.T) {
 						Relationship: spdx.RelationshipDescribes,
 					},
 				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: "3.25",
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
+				},
 			},
 		},
 		{
@@ -121,11 +137,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "some/directory",
-
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "some/directory",
+				DocumentNamespace: "https://anchore.com/dir/some/directory-ce13b821-ee09-557a-8148-d4092410457f",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -165,6 +181,21 @@ func Test_toFormatModel(t *testing.T) {
 						Relationship: spdx.RelationshipDescribes,
 					},
 				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: "3.25",
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
+				},
 			},
 		},
 		{
@@ -191,10 +222,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "path/to/some.file",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "path/to/some.file",
+				DocumentNamespace: "https://anchore.com/file/path/to/some.file-a7f2ecb8-114d-542c-aeb5-341d9a3153eb",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -235,6 +267,21 @@ func Test_toFormatModel(t *testing.T) {
 						Relationship: spdx.RelationshipDescribes,
 					},
 				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: "3.25",
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
+				},
 			},
 		},
 	}
@@ -252,12 +299,12 @@ func Test_toFormatModel(t *testing.T) {
 			test.in.Artifacts.Packages = pkg.NewCollection(pkgs...)
 
 			// convert
-			got := ToFormatModel(test.in)
+			ts := int64(1748271019)
+			got := ToFormatModel(test.in, true, &ts)
 
 			// check differences
 			if diff := cmp.Diff(test.expected, got,
 				cmpopts.IgnoreUnexported(spdx.Document{}, spdx.Package{}),
-				cmpopts.IgnoreFields(spdx.Document{}, "CreationInfo", "DocumentNamespace"),
 				cmpopts.IgnoreFields(spdx.Package{}, "PackageDownloadLocation", "IsFilesAnalyzedTagPresent", "PackageSourceInfo", "PackageLicenseConcluded", "PackageLicenseDeclared", "PackageCopyrightText"),
 			); diff != "" {
 				t.Error(diff)
@@ -972,7 +1019,7 @@ func Test_otherLicenses(t *testing.T) {
 					Packages: pkg.NewCollection(test.packages...),
 				},
 			}
-			got := ToFormatModel(s)
+			got := ToFormatModel(s, false, nil)
 			require.Equal(t, test.expected, got.OtherLicenses)
 		})
 	}

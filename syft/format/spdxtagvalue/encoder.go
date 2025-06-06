@@ -57,7 +57,7 @@ func (e encoder) Version() string {
 }
 
 func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
-	latestDoc := spdxhelpers.ToFormatModel(s)
+	latestDoc := spdxhelpers.ToFormatModel(s, false, nil)
 	if latestDoc == nil {
 		return fmt.Errorf("unable to convert SBOM to SPDX document")
 	}
