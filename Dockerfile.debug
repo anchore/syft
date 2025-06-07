@@ -1,9 +1,11 @@
-FROM gcr.io/distroless/static-debian12:debug
+FROM gcr.io/distroless/static-debian12:debug-nonroot
 
 # create the /tmp dir, which is needed for image content cache
 WORKDIR /tmp
 
 COPY syft /
+
+USER nonroot
 
 ARG BUILD_DATE
 ARG BUILD_VERSION
