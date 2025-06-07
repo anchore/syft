@@ -98,9 +98,9 @@ func TestExtractLicensesFromNuSpec(t *testing.T) {
 				{
 					Value:          "Apache-2.0",
 					SPDXExpression: "Apache-2.0",
-					Type:           "concluded",
+					Type:           "declared",
 					URLs:           []string{syftLicenseURL},
-					Locations:      file.NewLocationSet(file.NewLocation(syftLicenseURL)),
+					Locations:      file.LocationSet{},
 				},
 			},
 		},

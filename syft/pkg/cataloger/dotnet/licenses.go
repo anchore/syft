@@ -241,18 +241,39 @@ func newBytesReadCloser(data []byte) *bytesReadCloser {
 	}
 }
 
+func extractLicensesFromReader(ctx context.Context, reader io.Reader) []pkg.License {
+	out := []pkg.License{}
+
+	if reader != nil {
+		var scanner licenses.Scanner
+		var err error
+		if scanner, err = licenses.ContextLicenseScanner(ctx); err == nil {
+			if evidenceData, content, err := scanner.FindEvidence(ctx, reader); err == nil {
+				if len(evidenceData) > 0 {
+					for _, evidence := range evidenceData {
+						out = append(out, pkg.NewLicense(evidence.ID))
+					}
+				} else if len(content) > 0 {
+					pkg.NewLicenseWithContext(ctx, string(removeBOM(content)))
+				}
+			}
+		}
+	}
+
+	return out
+}
+
 func extractLicensesFromNuGetContentFile(ctx context.Context, filePath string, nugetArchive *zip.Reader) []pkg.License {
 	out := []pkg.License{}
 
 	if nugetArchive != nil {
 		if licenseFile, err := nugetArchive.Open(filePath); err == nil {
 			defer internal.CloseAndLogError(licenseFile, filePath)
-			licenseFileData, err := io.ReadAll(licenseFile)
 
-			if err == nil {
-				foundLicenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), newBytesReadCloser(removeBOM(licenseFileData))))
-
-				out = append(out, foundLicenses...)
+			temp := extractLicensesFromReader(ctx, licenseFile)
+			for _, license := range temp {
+				license.Locations.Add(file.NewLocation(filePath))
+				out = append(out, license)
 			}
 		}
 	}
@@ -264,16 +285,12 @@ func extractLicensesFromURLReference(ctx context.Context, url string) []pkg.Lice
 	out := []pkg.License{}
 
 	if response, err := httpClient.Get(url); err == nil && response.StatusCode == http.StatusOK {
-		licenseFileData, err := io.ReadAll(response.Body)
-		response.Body.Close()
+		defer response.Body.Close()
 
-		if err == nil {
-			foundLicenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.NewLocation(url), newBytesReadCloser(removeBOM(licenseFileData))))
-
-			for _, foundLicense := range foundLicenses {
-				foundLicense.URLs = append(foundLicense.URLs, url)
-				out = append(out, foundLicense)
-			}
+		temp := extractLicensesFromReader(ctx, response.Body)
+		for _, license := range temp {
+			license.URLs = append(license.URLs, url)
+			out = append(out, license)
 		}
 	}
 
@@ -475,14 +492,17 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 	// Try to determine NuGet package assets from temporary object files
 	// (usually located in the /obj folder)
 	var assetFiles []file.Location
-	if assetFiles, err = resolver.FilesByGlob("**/project.assets.json"); err == nil && len(assetFiles) > 0 {
+	if assetFiles, err = resolver.FilesByGlob("**/*.json"); err == nil && len(assetFiles) > 0 {
 		for _, assetFile := range assetFiles {
-			assetDefinition, err := extractProjectAssetsFromResolvedFile(resolver, assetFile)
-			if err != nil {
-				continue
-			}
+			_, fileName := filepath.Split(strings.ReplaceAll(assetFile.RealPath, "\\", "/"))
+			if strings.ToLower(fileName) == "project.assets.json" {
+				assetDefinition, err := extractProjectAssetsFromResolvedFile(resolver, assetFile)
+				if err != nil {
+					continue
+				}
 
-			assets = append(assets, *assetDefinition)
+				assets = append(assets, *assetDefinition)
+			}
 		}
 
 		if len(assets) == 0 {
