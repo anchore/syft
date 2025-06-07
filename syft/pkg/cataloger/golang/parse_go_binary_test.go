@@ -86,12 +86,12 @@ func Test_getGOARCHFromBin(t *testing.T) {
 			name:     "pe",
 			filepath: "test-fixtures/archs/binaries/hello-win-amd64",
 			// see: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
-			expected: strconv.Itoa(0x8664),
+			expected: strconv.Itoa(0x8664), // AMD64
 		},
 		{
-			name:     "elf-ppc64",
+			name:     "elf-ppc64le",
 			filepath: "test-fixtures/archs/binaries/hello-linux-ppc64le",
-			expected: "ppc64",
+			expected: "ppc64le",
 		},
 		{
 			name:     "mach-o-arm64",
