@@ -227,20 +227,6 @@ func removeBOM(input []byte) []byte {
 	return input
 }
 
-type bytesReadCloser struct {
-	bytes.Buffer
-}
-
-func (brc *bytesReadCloser) Close() error {
-	return nil
-}
-
-func newBytesReadCloser(data []byte) *bytesReadCloser {
-	return &bytesReadCloser{
-		Buffer: *bytes.NewBuffer(data),
-	}
-}
-
 func extractLicensesFromReader(ctx context.Context, reader io.Reader) []pkg.License {
 	out := []pkg.License{}
 
