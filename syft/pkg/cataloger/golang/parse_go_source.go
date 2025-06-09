@@ -3,6 +3,7 @@ package golang
 import (
 	"context"
 	"fmt"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"go/build"
 	"golang.org/x/mod/modfile"
 	"os"
@@ -21,33 +22,39 @@ import (
 )
 
 var (
-	licenseRegexp = regexp.MustCompile(`^(?i)((UN)?LICEN(S|C)E|COPYING|README|NOTICE).*$`)
+	licenseRegexp = regexp.MustCompile(`^(?i)((UN)?LICEN(S|C)E|COPYING|NOTICE).*$`)
 )
 
 type goSourceCataloger struct {
 	includeTests bool
-	importPaths  []string
-	ignorePaths  []string
+	// False is `givenImportPath` as the input to packages
+	// True is only start on packages with Name `main` for the givenImportPath
+	autoDetectEntry bool
+	importPaths     []string
+	ignorePaths     []string
+	// true, we continue searching a branch even if dep ignored; good for license search
+	// false, we cut the ignored path's branch off and skip all sub packages
+	includeIgnoreDeps bool
 }
 
 func newGoSourceCataloger(opts CatalogerConfig) *goSourceCataloger {
 	return &goSourceCataloger{}
 }
 
-// 3 modes
 // syft -o json dir:. => `./...` full application scan, multiple entrypoints
 // syft -o json dir:./cmd/syft/main.go => `./cmd/syft/...` user knows where to start the import from
-// some middle ground or entrypoint detection?
-func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+// entrypoint detection returns multiple mains for search
+// we can't use the file.Resolver passed in here since the modules/license paths are outside the scan target
+func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// try to get precise module entrypoint before running the goSource analysis
 	entrySearch := toImportSearchPattern(reader.Location.Path())
 	c.importPaths = append(c.importPaths, entrySearch)
 	cfg := goSourceConfig{
 		includeTests: c.includeTests,
 		importPaths:  c.importPaths,
-		ignoredPaths: c.ignorePaths,
+		ignorePaths:  c.ignorePaths,
 	}
-	return c.parseGoSource(ctx, cfg)
+	return c.parseGoSource(ctx, cfg, resolver)
 }
 
 func toImportSearchPattern(mainFilePath string) string {
@@ -71,33 +78,35 @@ func getModulePath(goModPath string) (*modfile.File, error) {
 
 type goSourceConfig struct {
 	includeTests bool
-	importPaths  []string
-	ignoredPaths []string
+	// False is `givenImportPath` as the input to packages
+	// True is only start on packages with Name `main` for the givenImportPath
+	autoDetectEntry bool
+	importPaths     []string
+	ignorePaths     []string
+	// true, we continue searching a branch even if dep ignored; good for license search
+	// false, we cut the ignored path's branch off and skip all sub packages
+	includeIgnoreDeps bool
 }
 
-func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfig) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfig, resolver file.Resolver) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// import paths can look like ./...
 	// this is different from something like ./github.com/anchore/syft/cmd/syft/...
-	// the distinction here is application vs single entrypoint/module graphs
-	// What are the config around discovering import paths? What are the correct defaults?
-	// application sense or individual module sense?
-	// TBD for more circumspect paths
-	// detecting entrypoints or not?! We look for all entrypoints
+	// the distinction here is cataloging an entire application vs a single entrypoint/module
+	// when given a scope like ./... the goSource cataloger will try to select entry points for the search
+	// see rootPkgs
 
 	// resolved name version and the h1 digest name:version:h1digest
 	// merge: locations are getting merged here
 	// merge nodes that are the same so we don't have separate graphs for things imported.
 	// It should be a merged graph for all the application being scanned.
-	// are these different project trees or not?
-	// anchore/syft go.mod => uuid@v1.0 => dependency X
-	//                     => dependency X
-	// anchore/syft/not-real go.mod => uuid@v1.0 => dependency X
 	rootPkgs, err := loadPackages(ctx, cfg)
 	if err != nil {
 		return pkgs, rels, err
 	}
 
 	vendoredSearch := collectVendoredModules(rootPkgs)
+	// we need imported pkgs so we can perform a license search
+	// syft packages are created from modules
 	allPkgs, allModules, err := visitPackages(cfg, rootPkgs, vendoredSearch)
 	if err != nil {
 		return pkgs, rels, err
@@ -105,26 +114,48 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 
 	// get licenses and build go source packages
 	// licenseScanner, _ := licenses.ContextLicenseScanner(ctx)
-	pkgs = make([]pkg.Package, 0)
-	for _, pkgInfo := range allPkgs {
-		candidates, err := findLicenseFileCandidates(pkgInfo.pkgDir, pkgInfo.moduleDir)
-		if err != nil {
-			// no license, but we still want to build the package info
+	syftPackages := make([]pkg.Package, 0)
+	// build directory resolver for module license resolution
+	for _, m := range allModules {
+		pkgInfos := allPkgs[m.Path]
+		moduleLicenses := pkg.NewLicenseSet()
+		for _, pkgInfo := range pkgInfos {
+			licenseResolver := fileresolver.NewFromUnindexedDirectory(pkgInfo.moduleDir)
+			locations, err := findLicenseFileLocations(pkgInfo.pkgDir, pkgInfo.moduleDir)
+			if err != nil {
+				continue
+			}
+			for _, location := range locations {
+				// TODO: is there a better way to do this resolution?
+				// We made the licenseResolver from the pkgInfo.moduleDir
+				location.RealPath = strings.TrimPrefix(location.RealPath, pkgInfo.moduleDir)
+				contents, err := licenseResolver.FileContentsByLocation(location)
+				if err != nil {
+					continue
+				}
+				moduleLicenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, contents))...)
+			}
 		}
-		// TODO: add back in goroutine code for licenses
-		fmt.Printf("found license file candidates: %+v\n", candidates)
-		module := allModules[pkgInfo.modulePath]
-		pkg := pkg.Package{
-			Name:     pkgInfo.pkgPath,
-			Version:  module.Version,
-			FoundBy:  sourceCatalogerName,
-			Language: pkg.Go,
-			Type:     pkg.GoModulePkg, // Review: Do we need a new type?
+
+		// Only create packages for modules - do NOT create individual syft packages for import paths
+		goModulePkg := pkg.Package{
+			Name:      m.Path,
+			Version:   m.Version,
+			FoundBy:   sourceCatalogerName,
+			Locations: file.NewLocationSet(),
+			Licenses:  moduleLicenses,
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg, // Review: Do we need a new type?
+			PURL:      packageURL(m.Path, m.Version),
+			// Review: What, if anything, can we put for metadata here?
+			// We could gather all the packages.Package info that make up the module
+			// and merge it all as module metadata:
+			// https://pkg.go.dev/golang.org/x/tools/go/packages#Package
 		}
-		pkgs = append(pkgs, pkg)
+		syftPackages = append(syftPackages, goModulePkg)
 	}
 
-	return pkgs, rels, nil
+	return syftPackages, rels, nil
 }
 
 func loadPackages(ctx context.Context, cfg goSourceConfig) ([]*packages.Package, error) {
@@ -137,22 +168,29 @@ func loadPackages(ctx context.Context, cfg goSourceConfig) ([]*packages.Package,
 		Mode:  packages.NeedImports | packages.NeedFiles | packages.NeedName | packages.NeedModule,
 		Tests: cfg.includeTests,
 	}
-	return packages.Load(pkgsCfg, cfg.importPaths...)
+	pkgs, err := packages.Load(pkgsCfg, cfg.importPaths...)
+	if err != nil {
+		return nil, err
+	}
+	filtered := pkgs[:0]
+	for _, pkg := range pkgs {
+		if pkg.Name != "main" {
+			continue
+		}
+		filtered = append(filtered, pkg)
+	}
+	return filtered, nil
 }
 
-func collectVendoredModules(pkgs []*packages.Package) []*Module {
-	var result []*Module
+func collectVendoredModules(pkgs []*packages.Package) []*packages.Module {
+	var result []*packages.Module
 	for _, pkg := range pkgs {
 		if pkg.Module == nil {
+			// we can't grab modules from a package that has no module information
 			continue
 		}
 
-		module := newModule(pkg.Module)
-		if module.Dir == "" {
-			continue
-		}
-
-		result = append(result, module)
+		result = append(result, pkg.Module)
 	}
 	return result
 }
@@ -171,23 +209,24 @@ type pkgInfo struct {
 func visitPackages(
 	cfg goSourceConfig,
 	rootPkgs []*packages.Package,
-	vendoredSearch []*Module,
-) (allPackages map[string]pkgInfo, allModules map[string]*Module, err error) {
-	// boolean result of (p *Package) bool determines whether
-	// the imports of package pkg are visited.
-	allModules = make(map[string]*Module)
-	allPackages = make(map[string]pkgInfo)
+	vendoredSearch []*packages.Module,
+) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, err error) {
+	// closure (p *Package) bool
+	// return bool determines whether the imports of package p are visited.
+	allModules = make(map[string]*packages.Module)
+	allPackages = make(map[string][]pkgInfo)
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
 		// skip for common causes
-		if shouldSkipVisit(p, cfg.includeTests, cfg.ignoredPaths) {
+		if shouldSkipVisit(p, cfg.includeTests, cfg.ignorePaths) {
 			return false
 		}
 
-		// different from above since we still do want to visit imports
+		// different from above; we still might want to visit imports
 		// ignoring a package shouldn't end walking the tree
-		for _, prefix := range cfg.ignoredPaths {
+		// since we need to get the full picture for license discovery
+		for _, prefix := range cfg.ignorePaths {
 			if strings.HasPrefix(p.PkgPath, prefix) {
-				return true
+				return cfg.includeIgnoreDeps
 			}
 		}
 
@@ -214,7 +253,7 @@ func visitPackages(
 				// * if it's not in a module, lib.module == nil
 				// * if it's in a module, lib.module.Dir != ""
 				// Only vendored modules will have lib.module != nil && lib.module.Path != "" && lib.module.Dir == ""
-				// So the if condition above is already very strict for vendored packages.
+				// So the condition above is already very strict for vendored packages.
 				for _, parentModule := range vendoredSearch {
 					if strings.HasPrefix(pkgDir, parentModule.Dir) {
 						module = parentModule
@@ -227,14 +266,15 @@ func visitPackages(
 				}
 			}
 		}
-
-		allPackages[p.PkgPath] = pkgInfo{
+		// p.PkgPath => pkgInfo && pkgIngo.modulePath => p.Module
+		allPackages[module.Path] = append(allPackages[module.Path], pkgInfo{
 			pkgPath:    p.PkgPath,
 			modulePath: module.Path,
 			pkgDir:     pkgDir,
 			moduleDir:  module.Dir,
-		}
-		allModules[module.Path] = module
+		})
+		// Review: is this a correct assumption?
+		allModules[p.Module.Path] = module
 
 		return true
 	}, nil)
@@ -306,7 +346,7 @@ type Library struct {
 	// It may not be the complete set of all packages in the library.
 	Packages []string
 	// Parent go module.
-	module *Module
+	module *packages.Module
 }
 
 // Name is the common prefix of the import paths for all of the packages in this library.
@@ -346,19 +386,8 @@ func commonAncestor(paths []string) string {
 	return min
 }
 
-// Module provides module information for a package.
-type Module struct {
-	// Differences from packages.Module:
-	// * Replace field is removed, it's only an implementation detail in this package.
-	//   If a module is replaced, we'll directly return the replaced module.
-	// * Version field +incompatible suffix is trimmed.
-	// * Main, ModuleError, Time, Indirect, GoMod, GoVersion fields are removed, because they are not used.
-	Path    string // module path
-	Version string // module version
-	Dir     string // directory holding files for this module, if any
-}
-
-func newModule(mod *packages.Module) *Module {
+// handle replace directives
+func newModule(mod *packages.Module) *packages.Module {
 	// Example of a module with replace directive: 	k8s.io/kubernetes => k8s.io/kubernetes v1.11.1
 	// {
 	//         "Path": "k8s.io/kubernetes",
@@ -384,16 +413,11 @@ func newModule(mod *packages.Module) *Module {
 
 	// The +incompatible suffix does not affect module version.
 	// ref: https://golang.org/ref/mod#incompatible-versions
-	// TODO: This should be semver compliant and is ok for package constructors
 	tmp.Version = strings.TrimSuffix(tmp.Version, "+incompatible")
-	return &Module{
-		Path:    tmp.Path,
-		Version: tmp.Version,
-		Dir:     tmp.Dir,
-	}
+	return &tmp
 }
 
-func findLicenseFileCandidates(dir string, rootDir string) ([]string, error) {
+func findLicenseFileLocations(dir string, rootDir string) ([]file.Location, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -411,8 +435,8 @@ func findLicenseFileCandidates(dir string, rootDir string) ([]string, error) {
 	return findAllUpwards(dir, licenseRegexp, rootDir)
 }
 
-func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, error) {
-	var foundPaths []string
+func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]file.Location, error) {
+	var foundLocations []file.Location
 
 	// Stop once we go out of the stopAt dir.
 	for strings.HasPrefix(dir, stopAt) {
@@ -428,7 +452,7 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, erro
 
 			if r.MatchString(f.Name()) {
 				path := filepath.Join(dir, f.Name())
-				foundPaths = append(foundPaths, path)
+				foundLocations = append(foundLocations, file.NewLocation(path))
 			}
 		}
 
@@ -440,5 +464,5 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, erro
 		dir = parent
 	}
 
-	return foundPaths, nil
+	return foundLocations, nil
 }

@@ -2,6 +2,8 @@ package golang
 
 import (
 	"context"
+	"github.com/anchore/syft/internal/licenses"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,10 +12,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// Known bugs:
-// no root module detection
 func Test_parseGoSource(t *testing.T) {
+	resolver := fileresolver.NewFromUnindexedDirectory(filepath.Join("test-fixtures", "go-source"))
+	// go binary cataloger tests should match up with the modules detect
 	ctx := context.Background()
+	scanner, _ := licenses.ContextLicenseScanner(ctx)
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
 	tests := []struct {
 		name         string
 		fixturePath  string
@@ -27,31 +31,48 @@ func Test_parseGoSource(t *testing.T) {
 				importPaths: []string{"./..."},
 			},
 			expectedPkgs: []string{
-				// "anchore.io/not/real",        // root module; ? what do we use as the version here?
-				"anchore.io/not/real/cmd",    // entrypoint main.go
-				"anchore.io/not/real/pk1",    // localdep 1
-				"anchore.io/not/real/pk2",    // localdep 2
-				"github.com/google/uuid",     // module import no transitive
+				"anchore.io/not/real",
+				"github.com/google/uuid",     // import bin1
 				"github.com/sirupsen/logrus", // module import with transitive
-				"golang.org/x/sys/unix",      // transitive 2
+				"golang.org/x/sys",           // transitive 2 from logrus
+				"go.uber.org/zap",            // direct import bin2
+				"go.uber.org/multierr",       // trans import zap
 			},
 		},
 		{
-			name:        "go-source with direct and transitive deps; ignored paths; application scope: './...'",
+			name:        "go-source with direct and transitive deps; ignored paths; application scope: './...'; do not include ignore deps",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
 			config: goSourceConfig{
-				includeTests: false,
-				importPaths:  []string{"./..."},
-				ignoredPaths: []string{"github.com/sirupsen/logrus"},
+				includeTests:      false,
+				includeIgnoreDeps: false,
+				importPaths:       []string{"./..."},
+				ignorePaths:       []string{"github.com/sirupsen/logrus"},
 			},
 			expectedPkgs: []string{
-				// "anchore.io/not/real",     // root module
-				"anchore.io/not/real/cmd", // entrypoint main.go
-				"anchore.io/not/real/pk1", // localdep 1
-				"anchore.io/not/real/pk2", // localdep 2
-				"github.com/google/uuid",  // module import no transitive
-				// "github.com/sirupsen/logrus", // module import with transitive
-				"golang.org/x/sys/unix", // transitive 2
+				"anchore.io/not/real",    // root module
+				"github.com/google/uuid", // import bin1
+				"go.uber.org/zap",        // direct import bin2
+				"go.uber.org/multierr",   // trans import zap
+				// "github.com/sirupsen/logrus", // module import with transitive sys
+				// "golang.org/x/sys",       // transitive 2 from logrus
+			},
+		},
+		{
+			name:        "go-source with direct and transitive deps; ignored paths; application scope: './...'; include ignore deps",
+			fixturePath: filepath.Join("test-fixtures", "go-source"),
+			config: goSourceConfig{
+				includeTests:      false,
+				includeIgnoreDeps: true,
+				importPaths:       []string{"./..."},
+				ignorePaths:       []string{"github.com/sirupsen/logrus"},
+			},
+			expectedPkgs: []string{
+				"anchore.io/not/real",    // root module
+				"github.com/google/uuid", // import bin1
+				"go.uber.org/zap",        // direct import bin2
+				"go.uber.org/multierr",   // trans import zap
+				// "github.com/sirupsen/logrus", // module import with transitive sys
+				"golang.org/x/sys", // transitive 2 from logrus; included based on config
 			},
 		},
 		{
@@ -62,35 +83,31 @@ func Test_parseGoSource(t *testing.T) {
 				importPaths:  []string{"./..."},
 			},
 			expectedPkgs: []string{
-				// "anchore.io/not/real",                   // root module
-				"anchore.io/not/real/cmd",               // entrypoint main.go
-				"anchore.io/not/real/pk1",               // localdep 1
-				"anchore.io/not/real/pk1.test",          // test
-				"github.com/pmezard/go-difflib/difflib", // test
-				"github.com/stretchr/testify/assert",
-				"github.com/davecgh/go-spew/spew", // test
-				"gopkg.in/yaml.v3",                // test
-				"anchore.io/not/real/pk2",         // localdep 2
-				"github.com/google/uuid",          // module import no transitive
-				"github.com/sirupsen/logrus",      // module import with transitive
-				"golang.org/x/sys/unix",           // transitive 2
+				"anchore.io/not/real",           // root module
+				"github.com/google/uuid",        // import bin1
+				"go.uber.org/zap",               // direct import bin2
+				"go.uber.org/multierr",          // trans import zap
+				"github.com/sirupsen/logrus",    // module import with transitive sys
+				"golang.org/x/sys",              // transitive 2 from logrus;
+				"github.com/pmezard/go-difflib", // test
+				"github.com/stretchr/testify",   // test
+				"github.com/davecgh/go-spew",    // test
 			},
 		},
 		{
-			name:        "go-source with direct and transitive deps; entrypoint scope: ./cmd/...",
+			name:        "go-source with direct and transitive deps; entrypoint scope: ./cmd/bin1/...",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
 			config: goSourceConfig{
 				includeTests: false,
-				importPaths:  []string{"./cmd/..."},
+				importPaths:  []string{"./cmd/bin1/..."},
 			},
 			expectedPkgs: []string{
-				// "anchore.io/not/real",        // root module
-				"anchore.io/not/real/cmd",    // entry point
-				"anchore.io/not/real/pk1",    // localdep 1
-				"anchore.io/not/real/pk2",    // localdep 2
-				"github.com/google/uuid",     // module import no transitive
+				"anchore.io/not/real",
+				"github.com/google/uuid",     // import bin1
 				"github.com/sirupsen/logrus", // module import with transitive
-				"golang.org/x/sys/unix",      // transitive 2
+				"golang.org/x/sys",           // transitive 2 from logrus
+				// "go.uber.org/zap",            // direct import bin2 <-- not in search path
+				// "go.uber.org/multierr",       // trans import zap
 			},
 		},
 	}
@@ -105,7 +122,7 @@ func Test_parseGoSource(t *testing.T) {
 				t.Fatalf("failed to change dir: %v", err)
 			}
 
-			pkgs, _, err := c.parseGoSource(ctx, tt.config)
+			pkgs, _, err := c.parseGoSource(ctx, tt.config, resolver)
 			if err != nil {
 				t.Fatalf("parseGoSource returned an error: %v", err)
 			}
