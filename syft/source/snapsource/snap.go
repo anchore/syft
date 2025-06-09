@@ -5,12 +5,12 @@ import (
 	"crypto"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/afero"
 
-	"github.com/anchore/go-homedir"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal/bus"
 	intFile "github.com/anchore/syft/internal/file"
@@ -81,7 +81,7 @@ func newSnapFileFromRemote(ctx context.Context, fs afero.Fs, cfg Config, getter 
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
-	snapFilePath := filepath.Join(t, filepath.Base(info.URL))
+	snapFilePath := path.Join(t, path.Base(info.URL))
 	err = downloadSnap(getter, info, snapFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download snap file: %w", err)
@@ -247,11 +247,6 @@ func downloadSnap(getter intFile.Getter, info *remoteSnap, dest string) error {
 
 // fileExists checks if a file exists and is not a directory
 func fileExists(fs afero.Fs, path string) bool {
-	expandedPath, err := homedir.Expand(path)
-	if err == nil {
-		path = expandedPath
-	}
-
 	info, err := fs.Stat(path)
 	if os.IsNotExist(err) {
 		return false

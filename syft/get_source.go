@@ -42,9 +42,14 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 		}
 	}
 
+	if len(errs) == 0 {
+		return nil, fmt.Errorf("no source providers were able to resolve the input %q", userInput)
+	}
+
 	if len(fileNotFoundProviders) > 0 {
 		errs = append(errs, fmt.Errorf("additionally, the following providers failed with %w: %s", os.ErrNotExist, strings.Join(fileNotFoundProviders, ", ")))
 	}
+
 	return nil, sourceError(userInput, errs...)
 }
 

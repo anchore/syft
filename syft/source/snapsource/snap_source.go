@@ -7,8 +7,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
+	"github.com/OneOfOne/xxhash"
 	diskFile "github.com/diskfs/go-diskfs/backend/file"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/squashfs"
@@ -17,6 +19,7 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/go-homedir"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
@@ -57,6 +60,12 @@ type snapSource struct {
 }
 
 func New(cfg Config) (source.Source, error) {
+	expandedPath, err := homedir.Expand(cfg.Request)
+	if err != nil {
+		return nil, fmt.Errorf("unable to expand path %q: %w", cfg.Request, err)
+	}
+	cfg.Request = filepath.Clean(expandedPath)
+
 	client := intFile.NewGetter(cfg.ID, cleanhttp.DefaultClient())
 	f, err := getSnapFile(context.Background(), afero.NewOsFs(), client, cfg)
 	if err != nil {
@@ -64,7 +73,7 @@ func New(cfg Config) (source.Source, error) {
 	}
 
 	s := &snapSource{
-		id:           deriveID(cfg.Request, cfg.Alias.Name, cfg.Alias.Version),
+		id:           deriveID(cfg.Request, cfg.Alias.Name, cfg.Alias.Version, f.Digests),
 		config:       cfg,
 		mutex:        &sync.Mutex{},
 		digests:      f.Digests,
@@ -297,20 +306,35 @@ func isSquashFSFile(mimeType, path string) bool {
 	return ext == ".snap" || ext == ".squashfs"
 }
 
-func deriveID(path, name, version string) artifact.ID {
-	info := fmt.Sprintf("%s:%s@%s", digestOfFileContents(path), name, version)
+func deriveID(path, name, version string, digests []file.Digest) artifact.ID {
+	var xxhDigest string
+	for _, d := range digests {
+		if strings.ToLower(strings.ReplaceAll(d.Algorithm, "-", "")) == "xxh64" {
+			xxhDigest = d.Value
+			break
+		}
+	}
+
+	if xxhDigest == "" {
+		xxhDigest = digestOfFileContents(path)
+	}
+
+	info := fmt.Sprintf("%s:%s@%s", xxhDigest, name, version)
 	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String())
 }
 
+// return the xxhash64 of the file contents, or the xxhash64 of the path if the file cannot be read
 func digestOfFileContents(path string) string {
-	file, err := os.Open(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return digest.SHA256.FromString(path).String()
+		return digestOfReader(strings.NewReader(path))
 	}
-	defer file.Close()
-	di, err := digest.SHA256.FromReader(file)
-	if err != nil {
-		return digest.SHA256.FromString(path).String()
-	}
-	return di.String()
+	defer f.Close()
+	return digestOfReader(f)
+}
+
+func digestOfReader(r io.Reader) string {
+	hasher := xxhash.New64()
+	_, _ = io.Copy(hasher, r)
+	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
