@@ -184,8 +184,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		}
 	}
 
-	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
-
+	src, cleanupFunc, err := getSource(ctx, &opts.Catalog, userInput, sources...)
 	if err != nil {
 		return err
 	}
@@ -194,6 +193,9 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		if src != nil {
 			if err := src.Close(); err != nil {
 				log.Tracef("unable to close source: %+v", err)
+			}
+			if err := cleanupFunc(); err != nil {
+				log.Tracef("unable to cleanup source: %+v", err)
 			}
 		}
 	}()
@@ -214,7 +216,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	return nil
 }
 
-func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, error) {
+func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, func() error, error) {
 	cfg := syft.DefaultGetSourceConfig().
 		WithRegistryOptions(opts.Registry.ToOptions()).
 		WithAlias(source.Alias{
@@ -234,7 +236,7 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	if opts.Platform != "" {
 		platform, err = image.NewPlatform(opts.Platform)
 		if err != nil {
-			return nil, fmt.Errorf("invalid platform: %w", err)
+			return nil, nil, fmt.Errorf("invalid platform: %w", err)
 		}
 		cfg = cfg.WithPlatform(platform)
 	}
@@ -242,17 +244,24 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	if opts.Source.File.Digests != nil {
 		hashers, err := file.Hashers(opts.Source.File.Digests...)
 		if err != nil {
-			return nil, fmt.Errorf("invalid hash algorithm: %w", err)
+			return nil, nil, fmt.Errorf("invalid hash algorithm: %w", err)
 		}
 		cfg = cfg.WithDigestAlgorithms(hashers...)
 	}
 
 	src, err := syft.GetSource(ctx, userInput, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not determine source: %w", err)
+		return nil, nil, fmt.Errorf("could not determine source: %w", err)
 	}
 
-	return src, nil
+	cleanupFunc := func() error {
+		if err := syft.CleanupSource(ctx, userInput, cfg); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return src, cleanupFunc, nil
 }
 
 func generateSBOM(ctx context.Context, id clio.Identification, src source.Source, opts *options.Catalog) (*sbom.SBOM, error) {
