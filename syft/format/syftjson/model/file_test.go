@@ -38,7 +38,7 @@ func Test_FileMetadataEntry_UnmarshalJSON(t *testing.T) {
 			jsonData: []byte(`{
 				"Mode": 644,
 				"Type": "RegularFile",
-                "LinkDestination": "/usr/bin/python3",
+				"LinkDestination": "/usr/bin/python3",
 				"UserID": 1000,
 				"GroupID": 1000,
 				"MIMEType": "text/plain",
