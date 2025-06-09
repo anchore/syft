@@ -87,19 +87,6 @@ tools:
     with:
       repo: wagoodman/go-bouncer
 
-  # used for showing benchmark testing
-  - name: benchstat
-    version:
-      want: latest
-      method: go-proxy
-      with:
-        module: golang.org/x/perf
-        allow-unresolved-version: true
-    method: go-install
-    with:
-      entrypoint: cmd/benchstat
-      module: golang.org/x/perf
-
   # used for running all local and CI tasks
   - name: task
     version:
