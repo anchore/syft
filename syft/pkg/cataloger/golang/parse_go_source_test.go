@@ -2,18 +2,17 @@ package golang
 
 import (
 	"context"
-	"github.com/anchore/syft/internal/licenses"
-	"github.com/anchore/syft/syft/internal/fileresolver"
 	"os"
 	"path/filepath"
 	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/anchore/syft/internal/licenses"
 )
 
-func Test_parseGoSource(t *testing.T) {
-	resolver := fileresolver.NewFromUnindexedDirectory(filepath.Join("test-fixtures", "go-source"))
+func Test_parseGoSource_package_resolution(t *testing.T) {
 	// go binary cataloger tests should match up with the modules detect
 	ctx := context.Background()
 	scanner, _ := licenses.ContextLicenseScanner(ctx)
@@ -76,7 +75,7 @@ func Test_parseGoSource(t *testing.T) {
 			},
 		},
 		{
-			name:        "go-source with direct and transitive deps; tests enabled; application scope: './...'",
+			name:        "go-source with direct, transitive and test deps; application scope: './...'",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
 			config: goSourceConfig{
 				includeTests: true,
@@ -106,8 +105,8 @@ func Test_parseGoSource(t *testing.T) {
 				"github.com/google/uuid",     // import bin1
 				"github.com/sirupsen/logrus", // module import with transitive
 				"golang.org/x/sys",           // transitive 2 from logrus
-				// "go.uber.org/zap",            // direct import bin2 <-- not in search path
-				// "go.uber.org/multierr",       // trans import zap
+				// "go.uber.org/zap",         // direct import bin2 <-- not in search path
+				// "go.uber.org/multierr",    // trans import zap
 			},
 		},
 	}
@@ -122,7 +121,7 @@ func Test_parseGoSource(t *testing.T) {
 				t.Fatalf("failed to change dir: %v", err)
 			}
 
-			pkgs, _, err := c.parseGoSource(ctx, tt.config, resolver)
+			pkgs, _, err := c.parseGoSource(ctx, tt.config)
 			if err != nil {
 				t.Fatalf("parseGoSource returned an error: %v", err)
 			}
@@ -145,3 +144,5 @@ func Test_parseGoSource(t *testing.T) {
 		})
 	}
 }
+
+func Test_parseGoSource_license_resolution(t *testing.T) {}

@@ -3,9 +3,7 @@ package golang
 import (
 	"context"
 	"fmt"
-	"github.com/anchore/syft/syft/internal/fileresolver"
 	"go/build"
-	"golang.org/x/mod/modfile"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -17,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -37,7 +36,8 @@ type goSourceCataloger struct {
 	includeIgnoreDeps bool
 }
 
-func newGoSourceCataloger(opts CatalogerConfig) *goSourceCataloger {
+// TODO: link opts to module resolvers for license search
+func newGoSourceCataloger(_ CatalogerConfig) *goSourceCataloger {
 	return &goSourceCataloger{}
 }
 
@@ -45,35 +45,23 @@ func newGoSourceCataloger(opts CatalogerConfig) *goSourceCataloger {
 // syft -o json dir:./cmd/syft/main.go => `./cmd/syft/...` user knows where to start the import from
 // entrypoint detection returns multiple mains for search
 // we can't use the file.Resolver passed in here since the modules/license paths are outside the scan target
-func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// try to get precise module entrypoint before running the goSource analysis
-	entrySearch := toImportSearchPattern(reader.Location.Path())
+	entrySearch := toImportSearchPattern(reader.Path())
 	c.importPaths = append(c.importPaths, entrySearch)
 	cfg := goSourceConfig{
-		includeTests: c.includeTests,
-		importPaths:  c.importPaths,
-		ignorePaths:  c.ignorePaths,
+		includeTests:      c.includeTests,
+		autoDetectEntry:   c.autoDetectEntry,
+		importPaths:       c.importPaths,
+		ignorePaths:       c.ignorePaths,
+		includeIgnoreDeps: c.includeIgnoreDeps,
 	}
-	return c.parseGoSource(ctx, cfg, resolver)
+	return c.parseGoSource(ctx, cfg)
 }
 
 func toImportSearchPattern(mainFilePath string) string {
 	dir := filepath.Dir(mainFilePath)
 	return "./" + filepath.ToSlash(dir) + "/..."
-}
-
-func getModulePath(goModPath string) (*modfile.File, error) {
-	data, err := os.ReadFile(goModPath)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := modfile.Parse(goModPath, data, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
 }
 
 type goSourceConfig struct {
@@ -88,7 +76,7 @@ type goSourceConfig struct {
 	includeIgnoreDeps bool
 }
 
-func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfig, resolver file.Resolver) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfig) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// import paths can look like ./...
 	// this is different from something like ./github.com/anchore/syft/cmd/syft/...
 	// the distinction here is cataloging an entire application vs a single entrypoint/module
@@ -105,12 +93,10 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 	}
 
 	vendoredSearch := collectVendoredModules(rootPkgs)
-	// we need imported pkgs so we can perform a license search
+
+	// we need allPkgs so we can perform a comprehensive license search
 	// syft packages are created from modules
-	allPkgs, allModules, err := visitPackages(cfg, rootPkgs, vendoredSearch)
-	if err != nil {
-		return pkgs, rels, err
-	}
+	allPkgs, allModules := visitPackages(cfg, rootPkgs, vendoredSearch)
 
 	// get licenses and build go source packages
 	// licenseScanner, _ := licenses.ContextLicenseScanner(ctx)
@@ -126,18 +112,18 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 				continue
 			}
 			for _, location := range locations {
-				// TODO: is there a better way to do this resolution?
-				// We made the licenseResolver from the pkgInfo.moduleDir
-				location.RealPath = strings.TrimPrefix(location.RealPath, pkgInfo.moduleDir)
+				//nolint:gocritic
 				contents, err := licenseResolver.FileContentsByLocation(location)
 				if err != nil {
 					continue
 				}
 				moduleLicenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, contents))...)
+				contents.Close()
 			}
 		}
 
-		// Only create packages for modules - do NOT create individual syft packages for import paths
+		// Only create packages for modules -
+		// do NOT create individual syft packages for import paths
 		goModulePkg := pkg.Package{
 			Name:      m.Path,
 			Version:   m.Version,
@@ -210,14 +196,14 @@ func visitPackages(
 	cfg goSourceConfig,
 	rootPkgs []*packages.Package,
 	vendoredSearch []*packages.Module,
-) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, err error) {
+) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module) {
 	// closure (p *Package) bool
 	// return bool determines whether the imports of package p are visited.
 	allModules = make(map[string]*packages.Module)
 	allPackages = make(map[string][]pkgInfo)
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
 		// skip for common causes
-		if shouldSkipVisit(p, cfg.includeTests, cfg.ignorePaths) {
+		if shouldSkipVisit(p, cfg.includeTests) {
 			return false
 		}
 
@@ -278,7 +264,7 @@ func visitPackages(
 
 		return true
 	}, nil)
-	return allPackages, allModules, nil
+	return allPackages, allModules
 }
 
 func resolvePkgDir(p *packages.Package) string {
@@ -294,7 +280,7 @@ func resolvePkgDir(p *packages.Package) string {
 	}
 }
 
-func shouldSkipVisit(p *packages.Package, includeTests bool, ignored []string) bool {
+func shouldSkipVisit(p *packages.Package, includeTests bool) bool {
 	// skip packages with errors
 	if len(p.Errors) > 0 {
 		return true
@@ -373,17 +359,17 @@ func commonAncestor(paths []string) string {
 		return paths[0]
 	}
 	sort.Strings(paths)
-	min, max := paths[0], paths[len(paths)-1]
+	small, large := paths[0], paths[len(paths)-1]
 	lastSlashIndex := 0
-	for i := 0; i < len(min) && i < len(max); i++ {
-		if min[i] != max[i] {
-			return min[:lastSlashIndex]
+	for i := 0; i < len(small) && i < len(large); i++ {
+		if small[i] != large[i] {
+			return small[:lastSlashIndex]
 		}
-		if min[i] == '/' {
+		if small[i] == '/' {
 			lastSlashIndex = i
 		}
 	}
-	return min
+	return small
 }
 
 // handle replace directives
@@ -452,6 +438,8 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]file.Locatio
 
 			if r.MatchString(f.Name()) {
 				path := filepath.Join(dir, f.Name())
+				// we build the resolver with the root as stopAt
+				path = strings.TrimPrefix(path, stopAt)
 				foundLocations = append(foundLocations, file.NewLocation(path))
 			}
 		}
