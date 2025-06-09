@@ -101,13 +101,9 @@ func Test_Backfill(t *testing.T) {
 				Language: pkg.Java,
 				Name:     "some-thing",
 				Version:  "1.2.3",
-				Metadata: pkg.JavaArchive{
-					PomProperties: &pkg.JavaPomProperties{
-						GroupID:    "org.apache",
-						ArtifactID: "some-thing",
-						Version:    "1.2.3",
-					},
-				},
+				// we intentionally don't claim we found a pom properties file with a groupID from the purl.
+				// but we do claim that we found java data with an empty type.
+				Metadata: pkg.JavaArchive{},
 			},
 		},
 	}

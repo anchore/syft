@@ -71,31 +71,14 @@ func Backfill(p *pkg.Package) {
 	}
 }
 
-func setJavaMetadataFromPurl(p *pkg.Package, purl packageurl.PackageURL) {
+func setJavaMetadataFromPurl(p *pkg.Package, _ packageurl.PackageURL) {
 	if p.Type != pkg.JavaPkg {
 		return
 	}
-	if purl.Namespace != "" {
-		if p.Metadata == nil {
-			p.Metadata = pkg.JavaArchive{}
-		}
-		meta, got := p.Metadata.(pkg.JavaArchive)
-		if got && meta.PomProperties == nil {
-			meta.PomProperties = &pkg.JavaPomProperties{}
-			p.Metadata = meta
-		}
-		if meta.PomProperties != nil {
-			// capture the group id from the purl if it is not already set
-			if meta.PomProperties.ArtifactID == "" {
-				meta.PomProperties.ArtifactID = purl.Name
-			}
-			if meta.PomProperties.GroupID == "" {
-				meta.PomProperties.GroupID = purl.Namespace
-			}
-			if meta.PomProperties.Version == "" {
-				meta.PomProperties.Version = purl.Version
-			}
-		}
+	if p.Metadata == nil {
+		// since we don't know if the purl elements directly came from pom properties or the manifest,
+		// we can only go as far as to set the type to JavaArchive, but not fill in the group id and artifact id
+		p.Metadata = pkg.JavaArchive{}
 	}
 }
 

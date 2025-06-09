@@ -79,6 +79,64 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 			},
 		},
 		{
+			name: "only-real-file-owner-gets-ownership-relationship-not-symlink-owner",
+			resolver: mockFR{
+				translate: map[string]string{
+					"/usr/bin/jenkins.war-symlink": "/usr/share/jenkins/jenkins.war", // symlink to the real file
+				},
+			},
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				// Package that owns the symlink
+				symlinkOwner := pkg.Package{
+					Type: pkg.ApkPkg,
+					Metadata: pkg.ApkDBEntry{
+						Package: "jenkins-symlink-pkg",
+						Files: []pkg.ApkFileRecord{
+							{Path: "/usr/bin/jenkins.war-symlink"}, // this symlinks to the real file
+						},
+					},
+				}
+				symlinkOwner.SetID()
+
+				// Package that owns the real file
+				realFileOwner := pkg.Package{
+					Type: pkg.ApkPkg,
+					Metadata: pkg.ApkDBEntry{
+						Package: "jenkins-real-pkg",
+						Files: []pkg.ApkFileRecord{
+							{Path: "/usr/share/jenkins/jenkins.war"}, // the real file
+						},
+					},
+				}
+				realFileOwner.SetID()
+
+				// A third package that is "located at" the real file path
+				// This simulates a package being discovered at the jenkins.war location
+				consumerPackage := pkg.Package{
+					Type: pkg.JavaPkg,
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/usr/share/jenkins/jenkins.war", "/usr/share/jenkins/jenkins.war"),
+					),
+				}
+				consumerPackage.SetID()
+
+				// Only the real file owner should have an ownership relationship with the consumer package
+				// The symlink owner should NOT have a relationship with the consumer
+				relationship := artifact.Relationship{
+					From: realFileOwner,
+					To:   consumerPackage,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+					Data: ownershipByFilesMetadata{
+						Files: []string{
+							"/usr/share/jenkins/jenkins.war",
+						},
+					},
+				}
+
+				return []pkg.Package{symlinkOwner, realFileOwner, consumerPackage}, []artifact.Relationship{relationship}
+			},
+		},
+		{
 			name: "misses-by-dead-symlink",
 			resolver: mockFR{
 				translate: map[string]string{

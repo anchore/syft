@@ -716,10 +716,15 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				"certifi @ 2020.12.5 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
 				"certifi @ 2020.12.5 (/usr/local/lib/python3.9/dist-packages) [dependency-of] urllib3 @ 1.26.18 (/usr/local/lib/python3.9/dist-packages)", // available when extra == "secure", but another dependency is primarily installing it
 				"chardet @ 3.0.4 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"distlib @ 0.3.9 (/usr/local/lib/python3.9/dist-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.9/dist-packages)",
+				"filelock @ 3.18.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.9/dist-packages)",
 				"idna @ 2.10 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"idna @ 2.10 (/usr/local/lib/python3.9/dist-packages) [dependency-of] urllib3 @ 1.26.18 (/usr/local/lib/python3.9/dist-packages)", // available when extra == "secure", but another dependency is primarily installing it
+				"platformdirs @ 4.3.8 (/usr/local/lib/python3.9/dist-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.9/dist-packages)",
 				"six @ 1.16.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages)",
 				"soupsieve @ 2.2.1 (/usr/local/lib/python3.9/dist-packages) [dependency-of] beautifulsoup4 @ 4.9.3 (/usr/local/lib/python3.9/dist-packages)",
 				"urllib3 @ 1.26.18 (/usr/local/lib/python3.9/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.9/dist-packages)",
+				"virtualenv @ 20.31.2 (/usr/local/lib/python3.9/dist-packages) [dependency-of] filelock @ 3.18.0 (/usr/local/lib/python3.9/dist-packages)", // available when extra == "testing", but we are installing it
 				"wcwidth @ 0.2.13 (/usr/local/lib/python3.9/dist-packages) [dependency-of] blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages)",
 
 				// purely python 3.8 dist-packages
@@ -736,9 +741,14 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				"certifi @ 2020.12.5 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
 				"certifi @ 2020.12.5 (/usr/local/lib/python3.8/dist-packages) [dependency-of] urllib3 @ 1.26.18 (/usr/local/lib/python3.8/dist-packages)", // available when extra == "secure", but another dependency is primarily installing it
 				"chardet @ 3.0.4 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"distlib @ 0.3.9 (/usr/local/lib/python3.8/dist-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.8/dist-packages)",
+				"filelock @ 3.16.1 (/usr/local/lib/python3.8/dist-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.8/dist-packages)",
 				"idna @ 2.10 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"idna @ 2.10 (/usr/local/lib/python3.8/dist-packages) [dependency-of] urllib3 @ 1.26.18 (/usr/local/lib/python3.8/dist-packages)", // available when extra == "secure", but another dependency is primarily installing it
+				"platformdirs @ 4.3.6 (/usr/local/lib/python3.8/dist-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.8/dist-packages)",
 				"soupsieve @ 2.2 (/usr/local/lib/python3.8/dist-packages) [dependency-of] beautifulsoup4 @ 4.9.2 (/usr/local/lib/python3.8/dist-packages)",
 				"urllib3 @ 1.26.18 (/usr/local/lib/python3.8/dist-packages) [dependency-of] requests @ 2.25.0 (/usr/local/lib/python3.8/dist-packages)",
+				"virtualenv @ 20.31.2 (/usr/local/lib/python3.8/dist-packages) [dependency-of] filelock @ 3.16.1 (/usr/local/lib/python3.8/dist-packages)", // available when extra == "testing", but we are installing it
 				"xmod @ 1.8.1 (/usr/local/lib/python3.8/dist-packages) [dependency-of] runs @ 1.2.2 (/usr/local/lib/python3.8/dist-packages)",
 
 				// project 1 virtual env
@@ -759,6 +769,7 @@ func Test_PackageCataloger_SitePackageRelationships(t *testing.T) {
 				"blessed @ 1.20.0 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",      // note: depends on global site package!
 				"python-editor @ 1.0.4 (/usr/local/lib/python3.9/dist-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)", // note: depends on global site package!
 				"readchar @ 4.2.1 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] inquirer @ 3.0.0 (/app/project1/venv/lib/python3.9/site-packages)",
+				"setuptools @ 44.0.0 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] virtualenv @ 20.31.2 (/usr/local/lib/python3.9/dist-packages)", // available when extra == "test", but we are installing it
 				"soupsieve @ 2.3 (/app/project1/venv/lib/python3.9/site-packages) [dependency-of] beautifulsoup4 @ 4.10.0 (/app/project1/venv/lib/python3.9/site-packages)",
 
 				// project 2 virtual env
