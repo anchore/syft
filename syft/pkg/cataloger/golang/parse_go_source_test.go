@@ -3,6 +3,7 @@ package golang
 import (
 	"context"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
@@ -15,9 +16,9 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 )
 
-// Todo: add github.com/spf13/viper for multi trans example
+// Todo: add github.com/spf13/viper for multi level trans example
 func Test_parseGoSource_packageResolution(t *testing.T) {
-	// go binary cataloger tests should match up with the modules detection
+	// go binary cataloger tests should match up with the module detection
 	// don't need license scanner setup for this test
 	ctx := context.Background()
 
@@ -101,9 +102,9 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				"go.uber.org/multierr",          // trans import zap
 				"github.com/sirupsen/logrus",    // module import with transitive sys
 				"golang.org/x/sys",              // transitive 2 from logrus;
-				"github.com/pmezard/go-difflib", // test
-				"github.com/stretchr/testify",   // test
-				"github.com/davecgh/go-spew",    // test
+				"github.com/pmezard/go-difflib", // tests included
+				"github.com/stretchr/testify",
+				"github.com/davecgh/go-spew",
 			},
 		},
 		{
@@ -215,17 +216,18 @@ func Test_parseGoSource_licenses(t *testing.T) {
 }
 
 func Test_parseGoSource_relationships(t *testing.T) {
+	// no licenses needed
 	ctx := context.Background()
 
-	// tmp module setup
-	// Create a non-temp mod cache dir with known permissions
-	modCache := filepath.Join(os.TempDir(), "gomodcache-test-"+strconv.Itoa(os.Getpid()))
-	err := os.MkdirAll(modCache, 0o755)
-	require.NoError(t, err)
-	t.Setenv("GOMODCACHE", modCache)
-	t.Cleanup(func() {
-		_ = os.RemoveAll(modCache) // swallow error; log if needed
-	})
+	//// tmp module setup
+	//// Create a non-temp mod cache dir with known permissions
+	//modCache := filepath.Join(os.TempDir(), "gomodcache-test-"+strconv.Itoa(os.Getpid()))
+	//err := os.MkdirAll(modCache, 0o755)
+	//require.NoError(t, err)
+	//t.Setenv("GOMODCACHE", modCache)
+	//t.Cleanup(func() {
+	//	_ = os.RemoveAll(modCache) // swallow error; log if needed
+	//})
 
 	fixturePath := filepath.Join("test-fixtures", "go-source")
 	c := newGoSourceCataloger(CatalogerConfig{})
@@ -238,12 +240,20 @@ func Test_parseGoSource_relationships(t *testing.T) {
 
 	// "anchore.io/not/real", => "github.com/google/uuid",     // import main
 	// "anchore.io/not/real", => "github.com/sirupsen/logrus", // import main
-	// "github.com/sirupsen/logrus" => "golang.org/x/sys",     // transitive from logrus
 	// "anchore.io/not/real", => "go.uber.org/zap",           //  import main
+	// "github.com/sirupsen/logrus" => "golang.org/x/sys",     // transitive from logrus
 	// "go.uber.org/zap", "go.uber.org/multierr".             //  transitive from zap
-	expectedRelationships := map[string][]string{}
+	expectedRelationships := map[string][]string{
+		"anchore.io/not/real": {
+			"github.com/google/uuid",
+			"github.com/sirupsen/logrus",
+			"go.uber.org/zap",
+		},
+		"github.com/sirupsen/logrus": {"golang.org/x/sys"},
+		"go.uber.org/zap":            {"go.uber.org/multierr"},
+	}
 	config := goSourceConfig{importPaths: []string{"./..."}}
-	pkgs, _, err := c.parseGoSource(ctx, config)
+	pkgs, relationships, err := c.parseGoSource(ctx, config)
 	if err != nil {
 		t.Fatalf("parseGoSource returned an error: %v", err)
 	}
@@ -252,8 +262,22 @@ func Test_parseGoSource_relationships(t *testing.T) {
 		t.Errorf("expected some modules, got 0")
 	}
 
-	actualRelationships := make(map[string]artifact.Relationship)
+	actualRelationships := convertRelationships(relationships)
+
 	if diff := cmp.Diff(expectedRelationships, actualRelationships); diff != "" {
 		t.Errorf("mismatch in licenses (-want +got):\n%s", diff)
 	}
+}
+
+func convertRelationships(relationships []artifact.Relationship) map[string][]string {
+	actualRelationships := make(map[string][]string)
+	for _, relationship := range relationships {
+		from := relationship.From.(pkg.Package).Name
+		to := relationship.To.(pkg.Package).Name
+		if actualRelationships[from] == nil {
+			actualRelationships[from] = make([]string, 0)
+		}
+		actualRelationships[from] = append(actualRelationships[from], to)
+	}
+	return actualRelationships
 }

@@ -96,12 +96,14 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 
 	// we need allPkgs so we can perform a comprehensive license search
 	// syft packages are created from modules
-	allPkgs, allModules := visitPackages(cfg, rootPkgs, vendoredSearch)
+	allPkgs, allModules, allDependencies := visitPackages(cfg, rootPkgs, vendoredSearch)
 
 	// get licenses and build go source packages
 	// licenseScanner, _ := licenses.ContextLicenseScanner(ctx)
 	syftPackages := make([]pkg.Package, 0)
-	// build directory resolver for module license resolution
+
+	// modulePath => package
+	moduleToPackage := make(map[string]artifact.Identifiable)
 	for _, m := range allModules {
 		pkgInfos := allPkgs[m.Path]
 		moduleLicenses := pkg.NewLicenseSet()
@@ -115,6 +117,7 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 			}
 			for _, location := range locations {
 				//nolint:gocritic
+				// we don't want to stack 'defer' here we can just aggressively close
 				contents, err := licenseResolver.FileContentsByLocation(location)
 				if err != nil {
 					continue
@@ -140,7 +143,33 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 			// and merge it all as module metadata:
 			// https://pkg.go.dev/golang.org/x/tools/go/packages#Package
 		}
+		goModulePkg.SetID()
+		moduleToPackage[m.Path] = goModulePkg
 		syftPackages = append(syftPackages, goModulePkg)
+	}
+
+	// build relationships now that packages have ID
+	rels = make([]artifact.Relationship, 0)
+	duplicates := make(map[string]struct{})
+	for _, pkg := range syftPackages {
+		moduleDependencies := allDependencies[pkg.Name]
+		for _, module := range moduleDependencies {
+			if module == pkg.Name {
+				// we don't need to create relationships for same module
+				continue
+			}
+			toPackage := moduleToPackage[module]
+			if _, ok := duplicates[string(pkg.ID())+string(toPackage.ID())]; ok {
+				continue
+			}
+			rels = append(rels, artifact.Relationship{
+				From: pkg,
+				To:   toPackage,
+				Type: artifact.DependencyOfRelationship,
+			})
+			duplicates[string(pkg.ID())+string(toPackage.ID())] = struct{}{}
+		}
+
 	}
 
 	return syftPackages, rels, nil
@@ -198,9 +227,15 @@ func visitPackages(
 	cfg goSourceConfig,
 	rootPkgs []*packages.Package,
 	vendoredSearch []*packages.Module,
-) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module) {
+) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, allDependencies map[string][]string) {
 	allModules = make(map[string]*packages.Module)
+	// note: these packages are specific to inside the module - they do not include transitive pkgInfo
+	// these are used for identifying licensing documents that might be separate from a modules
+	// top level license agreement
+	// for transitive imports see p.Imports array in packages.Visit
 	allPackages = make(map[string][]pkgInfo)
+	// allDependencies are module => module dependencies
+	allDependencies = make(map[string][]string)
 	// closure (p *Package) bool
 	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
@@ -254,6 +289,15 @@ func visitPackages(
 				}
 			}
 		}
+		for _, imp := range p.Imports {
+			if imp.Module != nil && imp.Module.Path != module.Path {
+				if allDependencies[module.Path] == nil {
+					allDependencies[module.Path] = []string{imp.Module.Path}
+				} else {
+					allDependencies[module.Path] = append(allDependencies[module.Path], imp.Module.Path)
+				}
+			}
+		}
 		// p.PkgPath => pkgInfo && pkgIngo.modulePath => p.Module
 		allPackages[module.Path] = append(allPackages[module.Path], pkgInfo{
 			pkgPath:    p.PkgPath,
@@ -266,7 +310,7 @@ func visitPackages(
 
 		return true
 	}, nil)
-	return allPackages, allModules
+	return allPackages, allModules, allDependencies
 }
 
 func resolvePkgDir(p *packages.Package) string {
