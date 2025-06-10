@@ -193,14 +193,14 @@ func Test_intOrStringFileType_UnmarshalJSON(t *testing.T) {
 			expected: "IrregularFile",
 		},
 		{
-			name:     "unknown int (defaults to TypeIrregular)",
+			name:     "unknown int",
 			jsonData: []byte(`99`),
-			expected: "IrregularFile",
+			expected: "Unknown",
 		},
 		{
-			name:     "negative int (defaults to TypeIrregular)",
+			name:     "negative int",
 			jsonData: []byte(`-1`),
-			expected: "IrregularFile",
+			expected: "Unknown",
 		},
 		{
 			name:     "null value",

@@ -91,34 +91,12 @@ func (lt *intOrStringFileType) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	var num int
+	var num stereoFile.Type
 	if err := json.Unmarshal(data, &num); err != nil {
 		return fmt.Errorf("file.Type must be either string or int, got: %s", string(data))
 	}
 
-	var fileType stereoFile.Type
-	switch num {
-	case 0:
-		fileType = stereoFile.TypeRegular
-	case 1:
-		fileType = stereoFile.TypeHardLink
-	case 2:
-		fileType = stereoFile.TypeSymLink
-	case 3:
-		fileType = stereoFile.TypeCharacterDevice
-	case 4:
-		fileType = stereoFile.TypeBlockDevice
-	case 5:
-		fileType = stereoFile.TypeDirectory
-	case 6:
-		fileType = stereoFile.TypeFIFO
-	case 7:
-		fileType = stereoFile.TypeSocket
-	default:
-		fileType = stereoFile.TypeIrregular
-	}
-
-	*lt = intOrStringFileType(fileType.String())
+	*lt = intOrStringFileType(num.String())
 	return nil
 }
 
