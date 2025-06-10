@@ -2,7 +2,10 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
+	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
 )
@@ -46,7 +49,7 @@ func (f *FileMetadataEntry) UnmarshalJSON(data []byte) error {
 	}
 
 	f.Mode = legacy.Mode
-	f.Type = legacy.Type
+	f.Type = string(legacy.Type)
 	f.LinkDestination = legacy.LinkDestination
 	f.UserID = legacy.UserID
 	f.GroupID = legacy.GroupID
@@ -57,13 +60,13 @@ func (f *FileMetadataEntry) UnmarshalJSON(data []byte) error {
 }
 
 type sbomImportLegacyFileMetadataEntry struct {
-	Mode            int    `json:"Mode"`
-	Type            string `json:"Type"`
-	LinkDestination string `json:"LinkDestination"`
-	UserID          int    `json:"UserID"`
-	GroupID         int    `json:"GroupID"`
-	MIMEType        string `json:"MIMEType"`
-	Size            int64  `json:"Size"`
+	Mode            int                 `json:"Mode"`
+	Type            intOrStringFileType `json:"Type"`
+	LinkDestination string              `json:"LinkDestination"`
+	UserID          int                 `json:"UserID"`
+	GroupID         int                 `json:"GroupID"`
+	MIMEType        string              `json:"MIMEType"`
+	Size            int64               `json:"Size"`
 }
 
 type FileLicense struct {
@@ -77,4 +80,51 @@ type FileLicenseEvidence struct {
 	Confidence int `json:"confidence"`
 	Offset     int `json:"offset"`
 	Extent     int `json:"extent"`
+}
+
+type intOrStringFileType string
+
+func (lt *intOrStringFileType) UnmarshalJSON(data []byte) error {
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		*lt = intOrStringFileType(str)
+		return nil
+	}
+
+	var num int
+	if err := json.Unmarshal(data, &num); err != nil {
+		return fmt.Errorf("file.Type must be either string or int, got: %s", string(data))
+	}
+
+	var fileType stereoFile.Type
+	switch num {
+	case 0:
+		fileType = stereoFile.TypeRegular
+	case 1:
+		fileType = stereoFile.TypeHardLink
+	case 2:
+		fileType = stereoFile.TypeSymLink
+	case 3:
+		fileType = stereoFile.TypeCharacterDevice
+	case 4:
+		fileType = stereoFile.TypeBlockDevice
+	case 5:
+		fileType = stereoFile.TypeDirectory
+	case 6:
+		fileType = stereoFile.TypeFIFO
+	case 7:
+		fileType = stereoFile.TypeSocket
+	default:
+		fileType = stereoFile.TypeIrregular
+	}
+
+	*lt = intOrStringFileType(fileType.String())
+	return nil
+}
+
+func convertFileModeToBase8(rawMode int) int {
+	octalStr := fmt.Sprintf("%o", rawMode)
+	// we don't need to check that this is a valid octal string since the input is always an integer
+	result, _ := strconv.Atoi(octalStr)
+	return result
 }
