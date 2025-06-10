@@ -17,12 +17,8 @@ type Document struct {
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {
-	type Alias Document
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(d),
-	}
+	type Alias *Document
+	aux := Alias(d)
 
 	if err := json.Unmarshal(data, aux); err != nil {
 		return fmt.Errorf("could not unmarshal syft JSON document: %w", err)
