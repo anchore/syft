@@ -2,9 +2,12 @@ package golang
 
 import (
 	"context"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,11 +15,21 @@ import (
 	"github.com/anchore/syft/internal/licenses"
 )
 
-func Test_parseGoSource_package_resolution(t *testing.T) {
-	// go binary cataloger tests should match up with the modules detect
+// Todo: add github.com/spf13/viper for multi trans example
+func Test_parseGoSource_packageResolution(t *testing.T) {
+	// go binary cataloger tests should match up with the modules detection
+	// don't need license scanner setup for this test
 	ctx := context.Background()
-	scanner, _ := licenses.ContextLicenseScanner(ctx)
-	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
+
+	// tmp module setup
+	// Create a non-temp mod cache dir with known permissions
+	modCache := filepath.Join(os.TempDir(), "gomodcache-test-"+strconv.Itoa(os.Getpid()))
+	err := os.MkdirAll(modCache, 0o755)
+	require.NoError(t, err)
+	t.Setenv("GOMODCACHE", modCache)
+	t.Cleanup(func() {
+		_ = os.RemoveAll(modCache) // swallow error; log if needed
+	})
 	tests := []struct {
 		name         string
 		fixturePath  string
@@ -145,4 +158,102 @@ func Test_parseGoSource_package_resolution(t *testing.T) {
 	}
 }
 
-func Test_parseGoSource_license_resolution(t *testing.T) {}
+func Test_parseGoSource_licenses(t *testing.T) {
+	// license scanner setup
+	ctx := context.Background()
+	scanner, _ := licenses.ContextLicenseScanner(ctx)
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
+
+	// tmp module setup
+	// Create a non-temp mod cache dir with known permissions
+	modCache := filepath.Join(os.TempDir(), "gomodcache-test-"+strconv.Itoa(os.Getpid()))
+	err := os.MkdirAll(modCache, 0o755)
+	require.NoError(t, err)
+	t.Setenv("GOMODCACHE", modCache)
+	t.Cleanup(func() {
+		_ = os.RemoveAll(modCache) // swallow error; log if needed
+	})
+
+	expectedLicenses := map[string][]string{
+		"github.com/google/uuid":     {"BSD-3-Clause"},
+		"github.com/sirupsen/logrus": {"MIT"},
+		"go.uber.org/multierr":       {"MIT"},
+		"go.uber.org/zap":            {"MIT"},
+		"golang.org/x/sys":           {"BSD-3-Clause"},
+	}
+
+	fixturePath := filepath.Join("test-fixtures", "go-source")
+	c := newGoSourceCataloger(CatalogerConfig{})
+	oldWd, _ := os.Getwd()
+	defer os.Chdir(oldWd)
+
+	if err := os.Chdir(fixturePath); err != nil {
+		t.Fatalf("failed to change dir: %v", err)
+	}
+	config := goSourceConfig{importPaths: []string{"./..."}}
+	pkgs, _, err := c.parseGoSource(ctx, config)
+	if err != nil {
+		t.Fatalf("parseGoSource returned an error: %v", err)
+	}
+
+	if len(pkgs) == 0 {
+		t.Errorf("expected some modules, got 0")
+	}
+
+	actualLicenses := make(map[string][]string)
+	for _, pkg := range pkgs {
+		for _, l := range pkg.Licenses.ToSlice() {
+			if actualLicenses[pkg.Name] == nil {
+				actualLicenses[pkg.Name] = make([]string, 0)
+			}
+			actualLicenses[pkg.Name] = append(actualLicenses[pkg.Name], l.Value)
+		}
+	}
+	if diff := cmp.Diff(expectedLicenses, actualLicenses); diff != "" {
+		t.Errorf("mismatch in licenses (-want +got):\n%s", diff)
+	}
+}
+
+func Test_parseGoSource_relationships(t *testing.T) {
+	ctx := context.Background()
+
+	// tmp module setup
+	// Create a non-temp mod cache dir with known permissions
+	modCache := filepath.Join(os.TempDir(), "gomodcache-test-"+strconv.Itoa(os.Getpid()))
+	err := os.MkdirAll(modCache, 0o755)
+	require.NoError(t, err)
+	t.Setenv("GOMODCACHE", modCache)
+	t.Cleanup(func() {
+		_ = os.RemoveAll(modCache) // swallow error; log if needed
+	})
+
+	fixturePath := filepath.Join("test-fixtures", "go-source")
+	c := newGoSourceCataloger(CatalogerConfig{})
+	oldWd, _ := os.Getwd()
+	defer os.Chdir(oldWd)
+
+	if err := os.Chdir(fixturePath); err != nil {
+		t.Fatalf("failed to change dir: %v", err)
+	}
+
+	// "anchore.io/not/real", => "github.com/google/uuid",     // import main
+	// "anchore.io/not/real", => "github.com/sirupsen/logrus", // import main
+	// "github.com/sirupsen/logrus" => "golang.org/x/sys",     // transitive from logrus
+	// "anchore.io/not/real", => "go.uber.org/zap",           //  import main
+	// "go.uber.org/zap", "go.uber.org/multierr".             //  transitive from zap
+	expectedRelationships := map[string][]string{}
+	config := goSourceConfig{importPaths: []string{"./..."}}
+	pkgs, _, err := c.parseGoSource(ctx, config)
+	if err != nil {
+		t.Fatalf("parseGoSource returned an error: %v", err)
+	}
+
+	if len(pkgs) == 0 {
+		t.Errorf("expected some modules, got 0")
+	}
+
+	actualRelationships := make(map[string]artifact.Relationship)
+	if diff := cmp.Diff(expectedRelationships, actualRelationships); diff != "" {
+		t.Errorf("mismatch in licenses (-want +got):\n%s", diff)
+	}
+}

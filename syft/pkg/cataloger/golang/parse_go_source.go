@@ -105,7 +105,9 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 	for _, m := range allModules {
 		pkgInfos := allPkgs[m.Path]
 		moduleLicenses := pkg.NewLicenseSet()
+		moduleLocations := file.NewLocationSet()
 		for _, pkgInfo := range pkgInfos {
+			moduleLocations.Add(file.NewLocation(pkgInfo.pkgPath))
 			licenseResolver := fileresolver.NewFromUnindexedDirectory(pkgInfo.moduleDir)
 			locations, err := findLicenseFileLocations(pkgInfo.pkgDir, pkgInfo.moduleDir)
 			if err != nil {
@@ -128,7 +130,7 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 			Name:      m.Path,
 			Version:   m.Version,
 			FoundBy:   sourceCatalogerName,
-			Locations: file.NewLocationSet(),
+			Locations: moduleLocations,
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg, // Review: Do we need a new type?
@@ -197,10 +199,10 @@ func visitPackages(
 	rootPkgs []*packages.Package,
 	vendoredSearch []*packages.Module,
 ) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module) {
-	// closure (p *Package) bool
-	// return bool determines whether the imports of package p are visited.
 	allModules = make(map[string]*packages.Module)
 	allPackages = make(map[string][]pkgInfo)
+	// closure (p *Package) bool
+	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
 		// skip for common causes
 		if shouldSkipVisit(p, cfg.includeTests) {
