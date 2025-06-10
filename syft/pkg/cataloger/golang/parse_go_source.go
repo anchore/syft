@@ -77,58 +77,41 @@ type goSourceConfig struct {
 }
 
 func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfig) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
-	// import paths can look like ./...
-	// this is different from something like ./github.com/anchore/syft/cmd/syft/...
+	// cfg.importPaths can look like ./...
+	// ./... is different from something like ./github.com/anchore/syft/cmd/syft/...
 	// the distinction here is cataloging an entire application vs a single entrypoint/module
-	// when given a scope like ./... the goSource cataloger will try to select entry points for the search
-	// see rootPkgs
+	// when given a scope like ./... the goSource cataloger will try to select the entry points for the search
 
-	// resolved name version and the h1 digest name:version:h1digest
-	// merge: locations are getting merged here
-	// merge nodes that are the same so we don't have separate graphs for things imported.
-	// It should be a merged graph for all the application being scanned.
+	// TODO: can we get the resolved name version and the h1 digest name:version:h1digest for all modules
 	rootPkgs, err := loadPackages(ctx, cfg)
 	if err != nil {
 		return pkgs, rels, err
 	}
-
 	vendoredSearch := collectVendoredModules(rootPkgs)
 
 	// we need allPkgs so we can perform a comprehensive license search
-	// syft packages are created from modules
+	// syft packages are created from allModules
+	// allDependencies is a data helper that allows us to view pruned module => module imports;
+	// it has already pruned local imports and only focuses on module dependencies
 	allPkgs, allModules, allDependencies := visitPackages(cfg, rootPkgs, vendoredSearch)
 
-	// get licenses and build go source packages
-	// licenseScanner, _ := licenses.ContextLicenseScanner(ctx)
-	syftPackages := make([]pkg.Package, 0)
+	pkgs, moduleToPkg := c.catalogModules(ctx, allPkgs, allModules)
+	rels = buildModuleRelationships(pkgs, allDependencies, moduleToPkg)
+	return pkgs, rels, nil
+}
 
-	// modulePath => package
+func (c *goSourceCataloger) catalogModules(
+	ctx context.Context,
+	allPkgs map[string][]pkgInfo,
+	allModules map[string]*packages.Module,
+) ([]pkg.Package, map[string]artifact.Identifiable) {
+	syftPackages := make([]pkg.Package, 0)
 	moduleToPackage := make(map[string]artifact.Identifiable)
+
 	for _, m := range allModules {
 		pkgInfos := allPkgs[m.Path]
-		moduleLicenses := pkg.NewLicenseSet()
-		moduleLocations := file.NewLocationSet()
-		for _, pkgInfo := range pkgInfos {
-			moduleLocations.Add(file.NewLocation(pkgInfo.pkgPath))
-			licenseResolver := fileresolver.NewFromUnindexedDirectory(pkgInfo.moduleDir)
-			locations, err := findLicenseFileLocations(pkgInfo.pkgDir, pkgInfo.moduleDir)
-			if err != nil {
-				continue
-			}
-			for _, location := range locations {
-				//nolint:gocritic
-				// we don't want to stack 'defer' here we can just aggressively close
-				contents, err := licenseResolver.FileContentsByLocation(location)
-				if err != nil {
-					continue
-				}
-				moduleLicenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, contents))...)
-				contents.Close()
-			}
-		}
+		moduleLicenses, moduleLocations := resolveModuleLicenses(ctx, pkgInfos)
 
-		// Only create packages for modules -
-		// do NOT create individual syft packages for import paths
 		goModulePkg := pkg.Package{
 			Name:      m.Path,
 			Version:   m.Version,
@@ -136,43 +119,78 @@ func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfi
 			Locations: moduleLocations,
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
-			Type:      pkg.GoModulePkg, // Review: Do we need a new type?
+			Type:      pkg.GoModulePkg,
 			PURL:      packageURL(m.Path, m.Version),
-			// Review: What, if anything, can we put for metadata here?
-			// We could gather all the packages.Package info that make up the module
-			// and merge it all as module metadata:
-			// https://pkg.go.dev/golang.org/x/tools/go/packages#Package
 		}
 		goModulePkg.SetID()
+
 		moduleToPackage[m.Path] = goModulePkg
 		syftPackages = append(syftPackages, goModulePkg)
 	}
 
-	// build relationships now that packages have ID
-	rels = make([]artifact.Relationship, 0)
-	duplicates := make(map[string]struct{})
-	for _, pkg := range syftPackages {
-		moduleDependencies := allDependencies[pkg.Name]
-		for _, module := range moduleDependencies {
-			if module == pkg.Name {
-				// we don't need to create relationships for same module
-				continue
-			}
-			toPackage := moduleToPackage[module]
-			if _, ok := duplicates[string(pkg.ID())+string(toPackage.ID())]; ok {
-				continue
-			}
-			rels = append(rels, artifact.Relationship{
-				From: pkg,
-				To:   toPackage,
-				Type: artifact.DependencyOfRelationship,
-			})
-			duplicates[string(pkg.ID())+string(toPackage.ID())] = struct{}{}
+	return syftPackages, moduleToPackage
+}
+
+func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo) (pkg.LicenseSet, file.LocationSet) {
+	licenses := pkg.NewLicenseSet()
+	locations := file.NewLocationSet()
+
+	for _, info := range pkgInfos {
+		locations.Add(file.NewLocation(info.pkgPath))
+		resolver := fileresolver.NewFromUnindexedDirectory(info.moduleDir)
+
+		locs, err := findLicenseFileLocations(info.pkgDir, info.moduleDir)
+		if err != nil {
+			continue
 		}
 
+		for _, loc := range locs {
+			//nolint:gocritic
+			contents, err := resolver.FileContentsByLocation(loc)
+			if err != nil {
+				continue
+			}
+			licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(loc, contents))...)
+			_ = contents.Close()
+		}
 	}
 
-	return syftPackages, rels, nil
+	return licenses, locations
+}
+
+func buildModuleRelationships(
+	syftPkgs []pkg.Package,
+	dependencies map[string][]string,
+	moduleToPkg map[string]artifact.Identifiable,
+) []artifact.Relationship {
+	rels := make([]artifact.Relationship, 0)
+	seen := make(map[string]struct{})
+
+	for _, fromPkg := range syftPkgs {
+		for _, dep := range dependencies[fromPkg.Name] {
+			if dep == fromPkg.Name {
+				continue
+			}
+			toPkg, ok := moduleToPkg[dep]
+			if !ok {
+				continue
+			}
+
+			key := string(fromPkg.ID()) + string(toPkg.ID())
+			if _, exists := seen[key]; exists {
+				continue
+			}
+
+			rels = append(rels, artifact.Relationship{
+				From: fromPkg,
+				To:   toPkg,
+				Type: artifact.DependencyOfRelationship,
+			})
+			seen[key] = struct{}{}
+		}
+	}
+
+	return rels
 }
 
 func loadPackages(ctx context.Context, cfg goSourceConfig) ([]*packages.Package, error) {
@@ -223,16 +241,16 @@ type pkgInfo struct {
 	moduleDir string
 }
 
+//nolint:gocognit
 func visitPackages(
 	cfg goSourceConfig,
 	rootPkgs []*packages.Package,
 	vendoredSearch []*packages.Module,
 ) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, allDependencies map[string][]string) {
 	allModules = make(map[string]*packages.Module)
-	// note: these packages are specific to inside the module - they do not include transitive pkgInfo
-	// these are used for identifying licensing documents that might be separate from a modules
-	// top level license agreement
-	// for transitive imports see p.Imports array in packages.Visit
+	// note: allPackages are specific to inside the module - they do not include transitive pkgInfo
+	// allPackages is used for identifying licensing documents for modules that could contain multiple licenses
+	// allDependencies cover transitive module imports; see p.Imports array in packages.Visit
 	allPackages = make(map[string][]pkgInfo)
 	// allDependencies are module => module dependencies
 	allDependencies = make(map[string][]string)
@@ -255,7 +273,6 @@ func visitPackages(
 
 		pkgDir := resolvePkgDir(p)
 		if pkgDir == "" {
-			// package is empty nothing to do
 			return true
 		}
 
@@ -289,6 +306,8 @@ func visitPackages(
 				}
 			}
 		}
+
+		// extract module dependencies
 		for _, imp := range p.Imports {
 			if imp.Module != nil && imp.Module.Path != module.Path {
 				if allDependencies[module.Path] == nil {
@@ -298,14 +317,12 @@ func visitPackages(
 				}
 			}
 		}
-		// p.PkgPath => pkgInfo && pkgIngo.modulePath => p.Module
 		allPackages[module.Path] = append(allPackages[module.Path], pkgInfo{
 			pkgPath:    p.PkgPath,
 			modulePath: module.Path,
 			pkgDir:     pkgDir,
 			moduleDir:  module.Dir,
 		})
-		// Review: is this a correct assumption?
 		allModules[p.Module.Path] = module
 
 		return true

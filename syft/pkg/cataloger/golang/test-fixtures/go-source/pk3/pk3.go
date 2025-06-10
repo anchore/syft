@@ -3,6 +3,7 @@ package pk3
 import (
 	"time"
 
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -15,4 +16,5 @@ func Zap() {
 		"backoff", time.Second,
 	)
 	sugar.Infof("failed to fetch URL: %s", "http://example.com")
+	viper.SetDefault("ContentDir", "content")
 }
