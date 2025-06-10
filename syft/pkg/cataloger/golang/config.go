@@ -27,6 +27,15 @@ type CatalogerConfig struct {
 	Proxies                     []string                `yaml:"proxies,omitempty" json:"proxies,omitempty" mapstructure:"proxies"`
 	NoProxy                     []string                `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
 	MainModuleVersion           MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
+	GoSourceConfig              GoSourceConfig          `yaml:"go-source-config" json:"go-source-config" mapstructure:"go-source-config"`
+}
+
+type GoSourceConfig struct {
+	IncludeTests      bool     `yaml:"include-tests" json:"include-tests" mapstructure:"include-tests"`
+	AutoDetectEntry   bool     `yaml:"auto-detect" json:"auto-detect" mapstructure:"auto-detect"`
+	ImportPaths       []string `yaml:"import-paths" json:"import-paths" mapstructure:"import-paths"`
+	IgnorePaths       []string `yaml:"ignore-paths" json:"ignore-paths" mapstructure:"ignore-paths"`
+	IncludeIgnoreDeps bool     `yaml:"include-ignore" json:"include-ignore" mapstructure:"include-ignore"`
 }
 
 type MainModuleVersionConfig struct {

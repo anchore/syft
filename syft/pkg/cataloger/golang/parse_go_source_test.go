@@ -2,6 +2,7 @@ package golang
 
 import (
 	"context"
+	"github.com/anchore/syft/syft/file"
 	"os"
 	"path/filepath"
 	"sort"
@@ -33,14 +34,16 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 	tests := []struct {
 		name         string
 		fixturePath  string
-		config       goSourceConfig
+		config       CatalogerConfig
 		expectedPkgs []string
 	}{
 		{
 			name:        "go-source with direct, transitive, and deps of transitive; application scope: './...'",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config: goSourceConfig{
-				importPaths: []string{"./..."},
+			config: CatalogerConfig{
+				GoSourceConfig: GoSourceConfig{
+					ImportPaths: []string{"./..."},
+				},
 			},
 			expectedPkgs: []string{
 				"anchore.io/not/real",
@@ -66,11 +69,13 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 		{
 			name:        "go-source with direct and transitive deps; ignored paths; application scope: './...'; do not include ignore deps",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config: goSourceConfig{
-				includeTests:      false,
-				includeIgnoreDeps: false,
-				importPaths:       []string{"./..."},
-				ignorePaths:       []string{"github.com/spf13/viper"},
+			config: CatalogerConfig{
+				GoSourceConfig: GoSourceConfig{
+					IncludeTests:      false,
+					IncludeIgnoreDeps: false,
+					ImportPaths:       []string{"./..."},
+					IgnorePaths:       []string{"github.com/spf13/viper"},
+				},
 			},
 			expectedPkgs: []string{
 				"anchore.io/not/real",        // root module
@@ -96,13 +101,15 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 		{
 			name:        "go-source with direct and transitive deps; ignored paths; application scope: './...'; include ignore deps",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config: goSourceConfig{
-				includeTests:      false,
-				includeIgnoreDeps: true,
-				importPaths:       []string{"./..."},
-				ignorePaths: []string{
-					"github.com/sirupsen/logrus",
-					"github.com/spf13/viper",
+			config: CatalogerConfig{
+				GoSourceConfig: GoSourceConfig{
+					IncludeTests:      false,
+					IncludeIgnoreDeps: true,
+					ImportPaths:       []string{"./..."},
+					IgnorePaths: []string{
+						"github.com/sirupsen/logrus",
+						"github.com/spf13/viper",
+					},
 				},
 			},
 			expectedPkgs: []string{
@@ -129,10 +136,12 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 		{
 			name:        "go-source with direct, transitive and test deps; application scope: './...'",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config: goSourceConfig{
-				includeTests: true,
-				importPaths:  []string{"./..."},
-				ignorePaths:  []string{"github.com/spf13/viper"}, // ignore viper for smaller expectations
+			config: CatalogerConfig{
+				GoSourceConfig: GoSourceConfig{
+					IncludeTests: true,
+					ImportPaths:  []string{"./..."},
+					IgnorePaths:  []string{"github.com/spf13/viper"}, // ignore viper for smaller expectations
+				},
 			},
 			expectedPkgs: []string{
 				"anchore.io/not/real",           // root module
@@ -150,9 +159,11 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 		{
 			name:        "go-source with direct and transitive deps; entrypoint scope: ./cmd/bin1/...",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config: goSourceConfig{
-				includeTests: false,
-				importPaths:  []string{"./cmd/bin1/..."},
+			config: CatalogerConfig{
+				GoSourceConfig: GoSourceConfig{
+					IncludeTests: false,
+					ImportPaths:  []string{"./cmd/bin1/..."},
+				},
 			},
 			expectedPkgs: []string{
 				"anchore.io/not/real",
@@ -168,7 +179,7 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := newGoSourceCataloger(CatalogerConfig{})
+			c := newGoSourceCataloger(tt.config)
 			oldWd, _ := os.Getwd()
 			defer os.Chdir(oldWd)
 
@@ -176,7 +187,7 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				t.Fatalf("failed to change dir: %v", err)
 			}
 
-			pkgs, _, err := c.parseGoSource(ctx, tt.config)
+			pkgs, _, err := c.parseGoSourceEntry(ctx, nil, nil, file.LocationReadCloser{})
 			if err != nil {
 				t.Fatalf("parseGoSource returned an error: %v", err)
 			}
@@ -237,15 +248,15 @@ func Test_parseGoSource_licenses(t *testing.T) {
 	}
 
 	fixturePath := filepath.Join("test-fixtures", "go-source")
-	c := newGoSourceCataloger(CatalogerConfig{})
+	config := CatalogerConfig{GoSourceConfig: GoSourceConfig{ImportPaths: []string{"./..."}}}
+	c := newGoSourceCataloger(config)
 	oldWd, _ := os.Getwd()
 	defer os.Chdir(oldWd)
 
 	if err := os.Chdir(fixturePath); err != nil {
 		t.Fatalf("failed to change dir: %v", err)
 	}
-	config := goSourceConfig{importPaths: []string{"./..."}}
-	pkgs, _, err := c.parseGoSource(ctx, config)
+	pkgs, _, err := c.parseGoSourceEntry(ctx, nil, nil, file.LocationReadCloser{})
 	if err != nil {
 		t.Fatalf("parseGoSource returned an error: %v", err)
 	}
@@ -283,13 +294,15 @@ func Test_parseGoSource_relationships(t *testing.T) {
 	tests := []struct {
 		name                  string
 		fixturePath           string
-		config                goSourceConfig
+		config                CatalogerConfig
 		expectedRelationships map[string][]string
 	}{
 		{
 			name:        "basic go-source relationships",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config:      goSourceConfig{importPaths: []string{"./..."}},
+			config: CatalogerConfig{
+				GoSourceConfig: GoSourceConfig{ImportPaths: []string{"./..."}},
+			},
 			expectedRelationships: map[string][]string{
 				"anchore.io/not/real": {
 					"github.com/google/uuid",
@@ -314,7 +327,9 @@ func Test_parseGoSource_relationships(t *testing.T) {
 		{
 			name:        "relationships pruned for single entrypoint",
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
-			config:      goSourceConfig{importPaths: []string{"./cmd/bin1/..."}},
+			config: CatalogerConfig{GoSourceConfig: GoSourceConfig{
+				ImportPaths: []string{"./cmd/bin1/..."}},
+			},
 			expectedRelationships: map[string][]string{
 				"anchore.io/not/real": {
 					"github.com/google/uuid",
@@ -332,7 +347,7 @@ func Test_parseGoSource_relationships(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			c := newGoSourceCataloger(CatalogerConfig{})
+			c := newGoSourceCataloger(tt.config)
 			oldWd, _ := os.Getwd()
 			defer os.Chdir(oldWd)
 
@@ -340,7 +355,7 @@ func Test_parseGoSource_relationships(t *testing.T) {
 				t.Fatalf("failed to change dir: %v", err)
 			}
 
-			pkgs, relationships, err := c.parseGoSource(ctx, tt.config)
+			pkgs, relationships, err := c.parseGoSourceEntry(ctx, nil, nil, file.LocationReadCloser{})
 			if err != nil {
 				t.Fatalf("parseGoSource returned an error: %v", err)
 			}

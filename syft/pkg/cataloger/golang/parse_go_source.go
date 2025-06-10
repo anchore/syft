@@ -36,66 +36,39 @@ type goSourceCataloger struct {
 	includeIgnoreDeps bool
 }
 
-// TODO: link opts to module resolvers for license search
-func newGoSourceCataloger(_ CatalogerConfig) *goSourceCataloger {
-	return &goSourceCataloger{}
+func newGoSourceCataloger(cfg CatalogerConfig) *goSourceCataloger {
+	return &goSourceCataloger{
+		includeTests:      cfg.GoSourceConfig.IncludeTests,
+		autoDetectEntry:   cfg.GoSourceConfig.AutoDetectEntry,
+		importPaths:       cfg.GoSourceConfig.ImportPaths,
+		ignorePaths:       cfg.GoSourceConfig.IgnorePaths,
+		includeIgnoreDeps: cfg.GoSourceConfig.IncludeIgnoreDeps,
+	}
 }
 
 // syft -o json dir:. => `./...` full application scan, multiple entrypoints
 // syft -o json dir:./cmd/syft/main.go => `./cmd/syft/...` user knows where to start the import from
-// entrypoint detection returns multiple mains for search
-// we can't use the file.Resolver passed in here since the modules/license paths are outside the scan target
-func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
-	// try to get precise module entrypoint before running the goSource analysis
-	entrySearch := toImportSearchPattern(reader.Path())
-	c.importPaths = append(c.importPaths, entrySearch)
-	cfg := goSourceConfig{
-		includeTests:      c.includeTests,
-		autoDetectEntry:   c.autoDetectEntry,
-		importPaths:       c.importPaths,
-		ignorePaths:       c.ignorePaths,
-		includeIgnoreDeps: c.includeIgnoreDeps,
-	}
-	return c.parseGoSource(ctx, cfg)
-}
-
-func toImportSearchPattern(mainFilePath string) string {
-	dir := filepath.Dir(mainFilePath)
-	return "./" + filepath.ToSlash(dir) + "/..."
-}
-
-type goSourceConfig struct {
-	includeTests bool
-	// False is `givenImportPath` as the input to packages
-	// True is only start on packages with Name `main` for the givenImportPath
-	autoDetectEntry bool
-	importPaths     []string
-	ignorePaths     []string
-	// true, we continue searching a branch even if dep ignored; good for license search
-	// false, we cut the ignored path's branch off and skip all sub packages
-	includeIgnoreDeps bool
-}
-
-func (c *goSourceCataloger) parseGoSource(ctx context.Context, cfg goSourceConfig) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+// entrypoint detection can return multiple mains for search
+// we can't use the file.Resolver passed in here since the modules/license paths are sometimes outside the scan target
+// TODO: can we get the resolved name version and the h1 digest name:version:h1digest for all modules
+func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, _ file.Resolver, _ *generic.Environment, _ file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// cfg.importPaths can look like ./...
 	// ./... is different from something like ./github.com/anchore/syft/cmd/syft/...
 	// the distinction here is cataloging an entire application vs a single entrypoint/module
 	// when given a scope like ./... the goSource cataloger will try to select the entry points for the search
-
-	// TODO: can we get the resolved name version and the h1 digest name:version:h1digest for all modules
-	rootPkgs, err := loadPackages(ctx, cfg)
+	rootPkgs, err := c.loadPackages(ctx)
 	if err != nil {
 		return pkgs, rels, err
 	}
 	vendoredSearch := collectVendoredModules(rootPkgs)
 
-	// we need allPkgs so we can perform a comprehensive license search
-	// syft packages are created from allModules
-	// allDependencies is a data helper that allows us to view pruned module => module imports;
-	// it has already pruned local imports and only focuses on module dependencies
-	allPkgs, allModules, allDependencies := visitPackages(cfg, rootPkgs, vendoredSearch)
+	// - we need allModulePkgImports so we can perform a comprehensive license search;
+	// - syft packages are created from allModules
+	// - allDependencies is a data helper that allows us to view pruned module => module imports;
+	// note: allDependencies has already pruned local imports and only focuses on module => module dependencies
+	allModulePkgImports, allModules, allDependencies := c.visitPackages(rootPkgs, vendoredSearch)
 
-	pkgs, moduleToPkg := c.catalogModules(ctx, allPkgs, allModules)
+	pkgs, moduleToPkg := c.catalogModules(ctx, allModulePkgImports, allModules)
 	rels = buildModuleRelationships(pkgs, allDependencies, moduleToPkg)
 	return pkgs, rels, nil
 }
@@ -193,7 +166,7 @@ func buildModuleRelationships(
 	return rels
 }
 
-func loadPackages(ctx context.Context, cfg goSourceConfig) ([]*packages.Package, error) {
+func (c *goSourceCataloger) loadPackages(ctx context.Context) ([]*packages.Package, error) {
 	pkgsCfg := &packages.Config{
 		Context: ctx,
 		// packages.NeedImports: needed for module imports
@@ -201,9 +174,9 @@ func loadPackages(ctx context.Context, cfg goSourceConfig) ([]*packages.Package,
 		// packages.NeedName: needed to add the name and package path for package assembly
 		// packages.NeedModule: need the module added in case entrypoint is not sibling location
 		Mode:  packages.NeedImports | packages.NeedFiles | packages.NeedName | packages.NeedModule,
-		Tests: cfg.includeTests,
+		Tests: c.includeTests,
 	}
-	pkgs, err := packages.Load(pkgsCfg, cfg.importPaths...)
+	pkgs, err := packages.Load(pkgsCfg, c.importPaths...)
 	if err != nil {
 		return nil, err
 	}
@@ -242,8 +215,7 @@ type pkgInfo struct {
 }
 
 //nolint:gocognit
-func visitPackages(
-	cfg goSourceConfig,
+func (c *goSourceCataloger) visitPackages(
 	rootPkgs []*packages.Package,
 	vendoredSearch []*packages.Module,
 ) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, allDependencies map[string][]string) {
@@ -258,16 +230,16 @@ func visitPackages(
 	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
 		// skip for common causes
-		if shouldSkipVisit(p, cfg.includeTests) {
+		if shouldSkipVisit(p, c.includeTests) {
 			return false
 		}
 
 		// different from above; we still might want to visit imports
 		// ignoring a package shouldn't end walking the tree
 		// since we need to get the full picture for license discovery
-		for _, prefix := range cfg.ignorePaths {
+		for _, prefix := range c.ignorePaths {
 			if strings.HasPrefix(p.PkgPath, prefix) {
-				return cfg.includeIgnoreDeps
+				return c.includeIgnoreDeps
 			}
 		}
 
