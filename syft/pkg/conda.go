@@ -18,7 +18,7 @@ type CondaLink struct {
 	Type   int    `json:"type"`
 }
 
-type CondaPackage struct {
+type CondaMetaPackage struct {
 	Name                string          `json:"name"`
 	Version             string          `json:"version"`
 	Build               string          `json:"build"`
