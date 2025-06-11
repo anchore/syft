@@ -28,7 +28,7 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 	if d.Schema.Version == "1.0.0" && d.Descriptor.Name == "anchorectl" {
 		// convert all file modes from decimal to octal
 		for i := range d.Files {
-			d.Files[i].Metadata.Mode = convertFileModeToBase8(d.Files[i].Metadata.Mode)
+			d.Files[i].Metadata.Mode = convertBase10ToBase8(d.Files[i].Metadata.Mode)
 		}
 	}
 
