@@ -2,6 +2,7 @@ package conda
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -19,24 +20,22 @@ func Test_CondaCataloger(t *testing.T) {
 	}{
 		{
 			name:    "regular python package",
-			fixture: "test-fixtures/conda-metas/jupyterlab",
+			fixture: "test-fixtures/conda-meta-jupyterlab",
 			expectedPackages: []pkg.Package{
 				{
 					Name:    "jupyterlab",
 					Version: "4.4.3",
-					FoundBy: "conda-conda-meta-cataloger",
+					FoundBy: "conda-meta-cataloger",
 					PURL:    "pkg:generic/jupyterlab@4.4.3", // TODO CONDAPKG: We do not have conda-specific grype support yet, so we use generic.
 					Locations: file.NewLocationSet(
-						file.NewLocation("jupyterlab-4.4.3-pyhd8ed1ab_0.json"),
+						file.NewLocation("conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json"),
 					),
 					Language: pkg.UnknownLanguage,
 					Type:     pkg.CondaPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD-3-Clause", file.NewLocation("jupyterlab-4.4.3-pyhd8ed1ab_0.json")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD-3-Clause", file.NewLocation("conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json")),
 					),
-					Metadata: // Example instantiation of pkg.CondaPackage for jupyterlab-4.4.3-pyhd8ed1ab_0
-
-					pkg.CondaPackage{
+					Metadata: pkg.CondaMetaPackage{
 						Name:                "jupyterlab",
 						Version:             "4.4.3",
 						Build:               "pyhd8ed1ab_0",
@@ -74,10 +73,29 @@ func Test_CondaCataloger(t *testing.T) {
 						Files: []string{
 							"lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/kernels-settings.json",
 							"lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/notification.json",
-							"lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/package.json.orig",
-							"lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/palette.json",
-							"lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/print.json",
-							// ... (truncated for brevity, add more as needed)
+						},
+						PathsData: &pkg.CondaPathsData{
+							PathsVersion: 1,
+							Paths: []pkg.CondaPathData{
+								{
+									Path:           "lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/kernels-settings.json",
+									PathType:       "hardlink",
+									SHA256:         "081a7e126deffbcd596863f3349a19416fbbe1fd570ab392270315f7cf5a8c27",
+									SHA256InPrefix: "081a7e126deffbcd596863f3349a19416fbbe1fd570ab392270315f7cf5a8c27",
+									SizeInBytes:    935,
+								},
+								{
+									Path:           "lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/notification.json",
+									PathType:       "hardlink",
+									SHA256:         "f9f42636592f62cdd03e3d5552b020811e3f8be6fc47c03d5a92396941b8d5d8",
+									SHA256InPrefix: "f9f42636592f62cdd03e3d5552b020811e3f8be6fc47c03d5a92396941b8d5d8",
+									SizeInBytes:    1565,
+								},
+							},
+						},
+						Link: &pkg.CondaLink{
+							Source: "/Users/simeon/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
+							Type:   1,
 						},
 					},
 				},
@@ -85,12 +103,13 @@ func Test_CondaCataloger(t *testing.T) {
 		},
 	}
 
+	fmt.Println("Hello from the test!")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			(pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
-				TestCataloger(t, NewCondaCataloger()))
+				TestCataloger(t, NewCondaMetaCataloger()))
 		})
 	}
 }
