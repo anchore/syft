@@ -684,9 +684,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ffmpeg-binary",
 			FileGlob: "**/ffmpeg",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// Pattern found in the binary: "%s version 7.1.1"
-				// When executed outputs: "ffmpeg version 7.1.1"
-				`(?m)%s version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				// Pattern found in the binary: "%s version 7.1.1" or "%s version 6.0"
+				// When executed outputs: "ffmpeg version 7.1.1" or "ffmpeg version 6.0"
+				`(?m)%s version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`,
 			),
 			Package: "ffmpeg",
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
