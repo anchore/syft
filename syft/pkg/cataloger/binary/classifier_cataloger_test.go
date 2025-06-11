@@ -1359,6 +1359,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ffmpeg-binary"),
 			},
 		},
+		{
+			logicalFixture: "ffmpeg/6.1.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ffmpeg",
+				Version:   "6.1.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ffmpeg@6.1.1",
+				Locations: locations("ffmpeg"),
+				Metadata:  metadata("ffmpeg-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
