@@ -1348,6 +1348,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("chrome-binary"),
 			},
 		},
+		{
+			logicalFixture: "ffmpeg/7.1.1/darwin-arm64",
+			expected: pkg.Package{
+				Name:      "ffmpeg",
+				Version:   "7.1.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ffmpeg@7.1.1",
+				Locations: locations("ffmpeg"),
+				Metadata:  metadata("ffmpeg-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {

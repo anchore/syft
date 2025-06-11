@@ -680,6 +680,18 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/chrome@version"),
 			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
 		},
+		{
+			Class:    "ffmpeg-binary",
+			FileGlob: "**/ffmpeg",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// Pattern found in the binary: "%s version 7.1.1"
+				// When executed outputs: "ffmpeg version 7.1.1"
+				`(?m)%s version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "ffmpeg",
+			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
+			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 }
 
