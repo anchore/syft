@@ -36,8 +36,9 @@ func Test_FileMetadataEntry_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "unmarshal legacy sbom import format",
+			name: "unmarshal legacy image add internal document format",
 			jsonData: []byte(`{
+             "FileInfo": {},
              "Mode": 644,
              "Type": "RegularFile",
              "LinkDestination": "/usr/bin/python3",
@@ -47,7 +48,7 @@ func Test_FileMetadataEntry_UnmarshalJSON(t *testing.T) {
              "Size": 10174
           }`),
 			expected: FileMetadataEntry{
-				Mode:            644,
+				Mode:            420, // important! we convert this to base 10 so that all documents are consistent
 				Type:            "RegularFile",
 				LinkDestination: "/usr/bin/python3",
 				UserID:          1000,
@@ -57,8 +58,9 @@ func Test_FileMetadataEntry_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "unmarshal legacy sbom import format - integer type",
+			name: "unmarshal legacy sbom import format",
 			jsonData: []byte(`{
+             "FileInfo": {},
              "Mode": 644,
              "Type": 0,
              "LinkDestination": "/usr/bin/python3",
@@ -93,6 +95,7 @@ func Test_FileMetadataEntry_UnmarshalJSON(t *testing.T) {
 		{
 			name: "unmarshal minimal legacy format",
 			jsonData: []byte(`{
+             "FileInfo": {},
              "Mode": 0,
              "Type": "RegularFile",
              "UserID": 0,
@@ -120,10 +123,11 @@ func Test_FileMetadataEntry_UnmarshalJSON(t *testing.T) {
 
 func Test_intOrStringFileType_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		name     string
-		jsonData []byte
-		expected string
-		wantErr  require.ErrorAssertionFunc
+		name           string
+		jsonData       []byte
+		expected       string
+		expectedWasInt bool
+		wantErr        require.ErrorAssertionFunc
 	}{
 		// string inputs - should pass through unchanged
 		{
@@ -148,59 +152,70 @@ func Test_intOrStringFileType_UnmarshalJSON(t *testing.T) {
 		},
 		// integer inputs - should convert to string representation
 		{
-			name:     "int 0 (TypeRegular)",
-			jsonData: []byte(`0`),
-			expected: "RegularFile",
+			name:           "int 0 (TypeRegular)",
+			jsonData:       []byte(`0`),
+			expected:       "RegularFile",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 1 (TypeHardLink)",
-			jsonData: []byte(`1`),
-			expected: "HardLink",
+			name:           "int 1 (TypeHardLink)",
+			jsonData:       []byte(`1`),
+			expected:       "HardLink",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 2 (TypeSymLink)",
-			jsonData: []byte(`2`),
-			expected: "SymbolicLink",
+			name:           "int 2 (TypeSymLink)",
+			jsonData:       []byte(`2`),
+			expected:       "SymbolicLink",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 3 (TypeCharacterDevice)",
-			jsonData: []byte(`3`),
-			expected: "CharacterDevice",
+			name:           "int 3 (TypeCharacterDevice)",
+			jsonData:       []byte(`3`),
+			expected:       "CharacterDevice",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 4 (TypeBlockDevice)",
-			jsonData: []byte(`4`),
-			expected: "BlockDevice",
+			name:           "int 4 (TypeBlockDevice)",
+			jsonData:       []byte(`4`),
+			expected:       "BlockDevice",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 5 (TypeDirectory)",
-			jsonData: []byte(`5`),
-			expected: "Directory",
+			name:           "int 5 (TypeDirectory)",
+			jsonData:       []byte(`5`),
+			expected:       "Directory",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 6 (TypeFIFO)",
-			jsonData: []byte(`6`),
-			expected: "FIFONode",
+			name:           "int 6 (TypeFIFO)",
+			jsonData:       []byte(`6`),
+			expected:       "FIFONode",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 7 (TypeSocket)",
-			jsonData: []byte(`7`),
-			expected: "Socket",
+			name:           "int 7 (TypeSocket)",
+			jsonData:       []byte(`7`),
+			expected:       "Socket",
+			expectedWasInt: true,
 		},
 		{
-			name:     "int 8 (TypeIrregular)",
-			jsonData: []byte(`8`),
-			expected: "IrregularFile",
+			name:           "int 8 (TypeIrregular)",
+			jsonData:       []byte(`8`),
+			expected:       "IrregularFile",
+			expectedWasInt: true,
 		},
 		{
-			name:     "unknown int",
-			jsonData: []byte(`99`),
-			expected: "Unknown",
+			name:           "unknown int",
+			jsonData:       []byte(`99`),
+			expected:       "Unknown",
+			expectedWasInt: true,
 		},
 		{
-			name:     "negative int",
-			jsonData: []byte(`-1`),
-			expected: "Unknown",
+			name:           "negative int",
+			jsonData:       []byte(`-1`),
+			expected:       "Unknown",
+			expectedWasInt: true,
 		},
 		{
 			name:     "null value",
@@ -244,12 +259,13 @@ func Test_intOrStringFileType_UnmarshalJSON(t *testing.T) {
 			if err != nil {
 				return
 			}
-			assert.Equal(t, test.expected, string(ft))
+			assert.Equal(t, test.expected, ft.Value)
+			assert.Equal(t, test.expectedWasInt, ft.WasInt)
 		})
 	}
 }
 
-func Test_convertFileModeToBase8(t *testing.T) {
+func Test_convertBase10ToBase8(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    int
@@ -269,7 +285,34 @@ func Test_convertFileModeToBase8(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := convertFileModeToBase8(tt.input)
+			actual := convertBase10ToBase8(tt.input)
+
+			require.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func Test_convertBase8ToBase10(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    int
+		expected int
+	}{
+		{
+			name:     "no permissions",
+			input:    0,
+			expected: 0,
+		},
+		{
+			name:     "symlink + rwxrwxrwx",
+			input:    1000000777,
+			expected: 134218239,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := convertBase8ToBase10(tt.input)
 
 			require.Equal(t, tt.expected, actual)
 		})
