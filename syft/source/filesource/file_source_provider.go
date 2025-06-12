@@ -56,3 +56,8 @@ func (p fileSourceProvider) Provide(_ context.Context) (source.Source, error) {
 		},
 	)
 }
+
+func (p fileSourceProvider) Cleanup(_ context.Context) error {
+	// nothing to do here
+	return nil
+}
