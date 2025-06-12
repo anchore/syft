@@ -25,13 +25,12 @@ func parseCondaMeta(ctx context.Context, resolver file.Resolver, _ *generic.Envi
 	dec := json.NewDecoder(reader)
 	var meta pkg.CondaMetaPackage
 	if err := dec.Decode(&meta); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse conda-meta package file: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse conda-meta package file at %s: %w", reader.Location, err)
 	}
 
 	p := pkg.Package{
 		Name:      meta.Name,
 		Version:   meta.Version,
-		PURL:      fmt.Sprintf("pkg:generic/%s@%s", meta.Name, meta.Version),
 		Locations: file.NewLocationSet(reader.Location),
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocationsWithContext(ctx, meta.License, reader.Location),
@@ -40,12 +39,9 @@ func parseCondaMeta(ctx context.Context, resolver file.Resolver, _ *generic.Envi
 		Type:     pkg.CondaPkg,
 		Metadata: meta,
 	}
-
 	p.SetID()
 
-	pkgs := []pkg.Package{
+	return []pkg.Package{
 		p,
-	}
-
-	return pkgs, nil, nil
+	}, nil, nil
 }
