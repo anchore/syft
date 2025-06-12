@@ -49,7 +49,7 @@ func Test_CondaCataloger(t *testing.T) {
 						Timestamp:           1748273017680,
 						Filename:            "jupyterlab-4.4.3-pyhd8ed1ab_0.conda",
 						URL:                 "https://conda.anaconda.org/conda-forge/noarch/jupyterlab-4.4.3-pyhd8ed1ab_0.conda",
-						ExtractedPackageDir: "/Users/simeon/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
+						ExtractedPackageDir: "/Users/example-user/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
 						Depends: []string{
 							"async-lru >=1.0.0",
 							"httpx >=0.25.0",
@@ -92,7 +92,7 @@ func Test_CondaCataloger(t *testing.T) {
 							},
 						},
 						Link: &pkg.CondaLink{
-							Source: "/Users/simeon/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
+							Source: "/Users/example-user/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
 							Type:   1,
 						},
 					},
@@ -125,7 +125,7 @@ func Test_CondaCataloger(t *testing.T) {
 						Timestamp:           1648307332172,
 						Filename:            "zlib-1.2.11-h90dfc92_1014.tar.bz2",
 						URL:                 "https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.2.11-h90dfc92_1014.tar.bz2",
-						ExtractedPackageDir: "/Users/simeon/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+						ExtractedPackageDir: "/Users/example-user/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
 						Depends: []string{
 							"libzlib 1.2.11 h90dfc92_1014",
 						},
@@ -177,7 +177,7 @@ func Test_CondaCataloger(t *testing.T) {
 							},
 						},
 						Link: &pkg.CondaLink{
-							Source: "/Users/simeon/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+							Source: "/Users/example-user/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
 							Type:   1,
 						},
 					},

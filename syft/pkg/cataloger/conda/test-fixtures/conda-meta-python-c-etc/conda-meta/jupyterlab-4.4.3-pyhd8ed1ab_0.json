@@ -32,7 +32,7 @@
   "fn": "jupyterlab-4.4.3-pyhd8ed1ab_0.conda",
   "url": "https://conda.anaconda.org/conda-forge/noarch/jupyterlab-4.4.3-pyhd8ed1ab_0.conda",
   "channel": "https://conda.anaconda.org/conda-forge/",
-  "extracted_package_dir": "/Users/simeon/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
+  "extracted_package_dir": "/Users/example-user/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
   "files": [
     "lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/kernels-settings.json",
     "lib/python3.13/site-packages/jupyterlab/schemas/@jupyterlab/apputils-extension/notification.json"
@@ -57,7 +57,7 @@
     ]
   },
   "link": {
-    "source": "/Users/simeon/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
+    "source": "/Users/example-user/Library/Caches/rattler/cache/pkgs/jupyterlab-4.4.3-pyhd8ed1ab_0",
     "type": 1
   }
 }

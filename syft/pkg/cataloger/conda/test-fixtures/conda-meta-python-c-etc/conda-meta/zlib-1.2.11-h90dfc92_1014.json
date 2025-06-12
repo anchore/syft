@@ -18,7 +18,7 @@
   "fn": "zlib-1.2.11-h90dfc92_1014.tar.bz2",
   "url": "https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.2.11-h90dfc92_1014.tar.bz2",
   "channel": "https://conda.anaconda.org/conda-forge/",
-  "extracted_package_dir": "/Users/simeon/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+  "extracted_package_dir": "/Users/example-user/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
   "files": [
     "include/zconf.h",
     "include/zlib.h",
@@ -69,7 +69,7 @@
     ]
   },
   "link": {
-    "source": "/Users/simeon/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+    "source": "/Users/example-user/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
     "type": 1
   }
 }
