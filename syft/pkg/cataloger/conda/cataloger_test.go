@@ -2,7 +2,6 @@ package conda
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -19,14 +18,13 @@ func Test_CondaCataloger(t *testing.T) {
 		expectedPackages []pkg.Package
 	}{
 		{
-			name:    "regular python package",
-			fixture: "test-fixtures/conda-meta-jupyterlab",
+			name:    "multiple packages in conda meta (python, c binaries, ...)",
+			fixture: "test-fixtures/conda-meta-python-c-etc",
 			expectedPackages: []pkg.Package{
 				{
 					Name:    "jupyterlab",
 					Version: "4.4.3",
 					FoundBy: "conda-meta-cataloger",
-					PURL:    "pkg:generic/jupyterlab@4.4.3", // TODO CONDAPKG: We do not have conda-specific grype support yet, so we use generic.
 					Locations: file.NewLocationSet(
 						file.NewLocation("conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json"),
 					),
@@ -99,11 +97,105 @@ func Test_CondaCataloger(t *testing.T) {
 						},
 					},
 				},
+				{
+					Name:    "zlib",
+					Version: "1.2.11",
+					FoundBy: "conda-meta-cataloger",
+					Locations: file.NewLocationSet(
+						file.NewLocation("conda-meta/zlib-1.2.11-h90dfc92_1014.json"),
+					),
+					Language: pkg.UnknownLanguage,
+					Type:     pkg.CondaPkg,
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib", file.NewLocation("conda-meta/zlib-1.2.11-h90dfc92_1014.json")),
+					),
+					Metadata: pkg.CondaMetaPackage{
+						Name:                "zlib",
+						Version:             "1.2.11",
+						Build:               "h90dfc92_1014",
+						BuildNumber:         1014,
+						Channel:             "https://conda.anaconda.org/conda-forge/",
+						Subdir:              "osx-arm64",
+						Noarch:              "",
+						License:             "Zlib",
+						LicenseFamily:       "Other",
+						MD5:                 "348a30b1350c9d91a4dbf05f5e46e0bb",
+						SHA256:              "a70c028fd3b9af1d7ea3d7099d810f3d2588096237bb472db331a51a36f931c0",
+						Size:                86757,
+						Timestamp:           1648307332172,
+						Filename:            "zlib-1.2.11-h90dfc92_1014.tar.bz2",
+						URL:                 "https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.2.11-h90dfc92_1014.tar.bz2",
+						ExtractedPackageDir: "/Users/simeon/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+						Depends: []string{
+							"libzlib 1.2.11 h90dfc92_1014",
+						},
+						Files: []string{
+							"include/zconf.h",
+							"include/zlib.h",
+							"lib/pkgconfig/zlib.pc",
+							"lib/libz.a",
+							"lib/libz.dylib",
+						},
+						PathsData: &pkg.CondaPathsData{
+							PathsVersion: 1,
+							Paths: []pkg.CondaPathData{
+								{
+									Path:           "include/zconf.h",
+									PathType:       "hardlink",
+									SHA256:         "77304005ceb5f0d03ad4c37eb8386a10866e4ceeb204f7c3b6599834c7319541",
+									SHA256InPrefix: "77304005ceb5f0d03ad4c37eb8386a10866e4ceeb204f7c3b6599834c7319541",
+									SizeInBytes:    16262,
+								},
+								{
+									Path:           "include/zlib.h",
+									PathType:       "hardlink",
+									SHA256:         "4ddc82b4af931ab55f44d977bde81bfbc4151b5dcdccc03142831a301b5ec3c8",
+									SHA256InPrefix: "4ddc82b4af931ab55f44d977bde81bfbc4151b5dcdccc03142831a301b5ec3c8",
+									SizeInBytes:    96239,
+								},
+								{
+									Path:           "lib/pkgconfig/zlib.pc",
+									PathType:       "hardlink",
+									SHA256:         "357773df3c44a5ebd77fdadd0869b5b06394bbf556c2d6c9736dd53e9df3b2c2",
+									SHA256InPrefix: "5b4eb6062f97875eaadb3b6c7cf8cfeff3808798ecbf2bfc095f18dcecc509bf",
+									SizeInBytes:    285,
+								},
+								{
+									Path:           "lib/libz.a",
+									PathType:       "hardlink",
+									SHA256:         "40c056a5d8155d9b3f42adfe35f7fc6e5fa15cc6588ffad0f09fe67517feada0",
+									SHA256InPrefix: "40c056a5d8155d9b3f42adfe35f7fc6e5fa15cc6588ffad0f09fe67517feada0",
+									SizeInBytes:    107128,
+								},
+								{
+									Path:           "lib/libz.dylib",
+									PathType:       "softlink",
+									SHA256:         "67ed489e2f378880f72fb1c0d1cc916e184b9632eccf2b5c1b34ddf01ed1701c",
+									SHA256InPrefix: "09e47dbc60aa970e153913fe84551ad7f5aa51c21907591340a0cc999adab859",
+									SizeInBytes:    122478,
+								},
+							},
+						},
+						Link: &pkg.CondaLink{
+							Source: "/Users/simeon/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+							Type:   1,
+						},
+					},
+				},
 			},
+		},
+		{
+			name:             "badly formatted conda meta json file",
+			fixture:          "test-fixtures/conda-meta-bad-json",
+			expectedPackages: nil,
+		},
+		{
+			name:             "nonexistent conda meta folder",
+			fixture:          "test-fixtures/conda-meta-nonexistent",
+			expectedPackages: nil,
 		},
 	}
 
-	fmt.Println("Hello from the test!")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			(pkgtest.NewCatalogTester().
