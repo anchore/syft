@@ -8,6 +8,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -66,22 +68,39 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	columns = append(columns, "") // add a column for duplicate annotations
 	rows = markDuplicateRows(rows)
 
-	table := tablewriter.NewWriter(writer)
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithHeader(columns),
+		tablewriter.WithHeaderAutoFormat(tw.On),
+		tablewriter.WithHeaderAutoWrap(tw.WrapNone),
+		tablewriter.WithHeaderAlignment(tw.AlignLeft),
+		tablewriter.WithRowAutoFormat(tw.Off),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+		tablewriter.WithRowAlignment(tw.AlignLeft),
+		tablewriter.WithTrimSpace(tw.On),
+		tablewriter.WithAutoHide(tw.On),
+		tablewriter.WithRenderer(renderer.NewBlueprint()),
+		tablewriter.WithBehavior(tw.Behavior{
+			TrimSpace: tw.On,
+			AutoHide:  tw.On,
+		}),
+		tablewriter.WithRendition(tw.Rendition{
+			Symbols: tw.NewSymbols(tw.StyleNone),
+			Borders: tw.Border{
+				Left:   tw.Off,
+				Top:    tw.Off,
+				Right:  tw.Off,
+				Bottom: tw.Off,
+			},
+			Settings: tw.Settings{
+				Separators: tw.Separators{
+					BetweenRows:    tw.Off,
+					BetweenColumns: tw.Off,
+				},
+			},
+		}),
+	)
 
-	table.SetHeader(columns)
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetTablePadding("  ")
-	table.SetNoWhiteSpace(true)
-
-	table.AppendBulk(rows)
+	table.Bulk(rows)
 	table.Render()
 
 	return nil
