@@ -25,7 +25,9 @@ import (
 )
 
 func Test_toFormatModel(t *testing.T) {
-	tracker := sourcemetadata.NewCompletionTester(t)
+	tracker := sourcemetadata.NewCompletionTester(t, source.PlatformMetadata{},
+		source.OSMetadata{}, source.FrameworkMetadata{}, source.ApplicationMetadata{},
+		source.LibraryMetadata{})
 
 	tests := []struct {
 		name     string
@@ -231,6 +233,79 @@ func Test_toFormatModel(t *testing.T) {
 						},
 						RefB: spdx.DocElementID{
 							ElementRefID: "DocumentRoot-File-path-to-some.file",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+		{
+			name: "application",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "bcprov-jdk15on",
+					Version: "1.62",
+					Metadata: source.ApplicationMetadata{
+						UnknownMetadata: source.UnknownMetadata{
+							UserInput: "bcprov-jdk15on",
+							Version:   "1.62",
+							ID:        "pkg:maven/org.bouncycastle/bcprov-jdk15on@1.62?type=jar",
+							Description: "The Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms. " +
+								"This jar contains JCE provider and lightweight API for the Bouncy Castle Cryptography APIs " +
+								"for JDK 1.5 to JDK 1.8.",
+							Group: "org.bouncycastle",
+						},
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "plexus-cipher",
+						Version: "1.7",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "bcprov-jdk15on",
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-plexus-cipher-plexus-cipher",
+						PackageName:           "plexus-cipher",
+						PackageVersion:        "1.7",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
+					},
+					{
+						PackageSPDXIdentifier:     "DocumentRoot-Unknown-bcprov-jdk15on",
+						PackageName:               "bcprov-jdk15on",
+						PackageVersion:            "1.62",
+						PrimaryPackagePurpose:     "OTHER",
+						PackageChecksums:          nil,
+						PackageExternalReferences: nil,
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Unknown-bcprov-jdk15on",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-plexus-cipher-plexus-cipher",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Unknown-bcprov-jdk15on",
 						},
 						Relationship: spdx.RelationshipDescribes,
 					},

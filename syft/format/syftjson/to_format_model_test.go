@@ -191,6 +191,156 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "application - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "application",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "library - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "library",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "os - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.OSMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "os",
+				Metadata: source.OSMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "framework - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.FrameworkMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "framework",
+				Metadata: source.FrameworkMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
+		{
+			name: "platform - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.PlatformMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "platform",
+				Metadata: source.PlatformMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id..",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
