@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
@@ -83,13 +82,14 @@ func (c *goSourceCataloger) catalogModules(
 
 	for _, m := range allModules {
 		pkgInfos := allPkgs[m.Path]
-		moduleLicenses, moduleLocations := resolveModuleLicenses(ctx, pkgInfos)
-
+		moduleLicenses := resolveModuleLicenses(ctx, pkgInfos)
+		// we do out of source lookups for module parsing
+		// locations are NOT included in the SBOM because of this
 		goModulePkg := pkg.Package{
 			Name:      m.Path,
 			Version:   m.Version,
 			FoundBy:   sourceCatalogerName,
-			Locations: moduleLocations,
+			Locations: file.NewLocationSet(),
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
@@ -104,31 +104,26 @@ func (c *goSourceCataloger) catalogModules(
 	return syftPackages, moduleToPackage
 }
 
-func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo) (pkg.LicenseSet, file.LocationSet) {
+func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo) pkg.LicenseSet {
 	licenses := pkg.NewLicenseSet()
-	locations := file.NewLocationSet()
 
 	for _, info := range pkgInfos {
-		locations.Add(file.NewLocation(info.pkgPath))
-		resolver := fileresolver.NewFromUnindexedDirectory(info.moduleDir)
-
-		locs, err := findLicenseFileLocations(info.pkgDir, info.moduleDir)
+		licenseFiles, err := findLicenseFileLocations(info.pkgDir, info.moduleDir)
 		if err != nil {
 			continue
 		}
 
-		for _, loc := range locs {
-			//nolint:gocritic
-			contents, err := resolver.FileContentsByLocation(loc)
+		for _, f := range licenseFiles {
+			contents, err := os.Open(f)
 			if err != nil {
 				continue
 			}
-			licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(loc, contents))...)
+			licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.Location{}, contents))...)
 			_ = contents.Close()
 		}
 	}
 
-	return licenses, locations
+	return licenses
 }
 
 func buildModuleRelationships(
@@ -438,7 +433,7 @@ func newModule(mod *packages.Module) *packages.Module {
 	return &tmp
 }
 
-func findLicenseFileLocations(dir string, rootDir string) ([]file.Location, error) {
+func findLicenseFileLocations(dir string, rootDir string) ([]string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -456,10 +451,9 @@ func findLicenseFileLocations(dir string, rootDir string) ([]file.Location, erro
 	return findAllUpwards(dir, licenseRegexp, rootDir)
 }
 
-func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]file.Location, error) {
-	var foundLocations []file.Location
-
+func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, error) {
 	// Stop once we go out of the stopAt dir.
+	licenseCandidates := make([]string, 0)
 	for strings.HasPrefix(dir, stopAt) {
 		dirContents, err := os.ReadDir(dir)
 		if err != nil {
@@ -473,9 +467,7 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]file.Locatio
 
 			if r.MatchString(f.Name()) {
 				path := filepath.Join(dir, f.Name())
-				// we build the resolver with the root as stopAt
-				path = strings.TrimPrefix(path, stopAt)
-				foundLocations = append(foundLocations, file.NewLocation(path))
+				licenseCandidates = append(licenseCandidates, path)
 			}
 		}
 
@@ -487,5 +479,5 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]file.Locatio
 		dir = parent
 	}
 
-	return foundLocations, nil
+	return licenseCandidates, nil
 }
