@@ -112,7 +112,7 @@ func (t Type) PackageURLType() string {
 	case ConanPkg:
 		return packageurl.TypeConan
 	case CondaPkg:
-		return packageurl.TypeGeneric // TODO CONDAPKG: conda does not have a specific purl type, so we use generic
+		return packageurl.TypeGeneric
 	case DartPubPkg:
 		return packageurl.TypePub
 	case DebPkg:
