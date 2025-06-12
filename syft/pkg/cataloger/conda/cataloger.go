@@ -14,14 +14,13 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// NewCondaMetaCataloger returns a new cataloger object for Conda environments.
+// NewCondaMetaCataloger returns a new cataloger object for Conda environments by parsing the package metadata files in conda-meta.
 func NewCondaMetaCataloger() pkg.Cataloger {
 	return generic.NewCataloger("conda-meta-cataloger").
-		WithParserByGlobs(parseCondaMeta, "**/conda-meta/*.json")
+		WithParserByGlobs(parseCondaMetaJSON, "**/conda-meta/*.json")
 }
 
-// parseCondaMeta is a stub parser for conda-meta JSON files.
-func parseCondaMeta(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseCondaMetaJSON(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	dec := json.NewDecoder(reader)
 	var meta pkg.CondaMetaPackage
 	if err := dec.Decode(&meta); err != nil {
