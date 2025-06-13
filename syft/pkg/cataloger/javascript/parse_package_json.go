@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 
@@ -25,6 +26,7 @@ type packageJSON struct {
 	Version      string            `json:"version"`
 	Latest       []string          `json:"latest"`
 	Author       author            `json:"author"`
+	Authors      authors           `json:"authors"`
 	License      json.RawMessage   `json:"license"`
 	Licenses     json.RawMessage   `json:"licenses"`
 	Name         string            `json:"name"`
@@ -41,6 +43,8 @@ type author struct {
 	URL   string `json:"url" mapstructure:"url"`
 }
 
+type authors []author
+
 type repository struct {
 	Type string `json:"type" mapstructure:"type"`
 	URL  string `json:"url" mapstructure:"url"`
@@ -48,7 +52,7 @@ type repository struct {
 
 // match example: "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
-var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
+var authorPattern = regexp.MustCompile(`^\s*(?P<n>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
 func parsePackageJSON(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -86,6 +90,8 @@ func (a *author) UnmarshalJSON(b []byte) error {
 		if err := mapstructure.Decode(fields, &auth); err != nil {
 			return fmt.Errorf("unable to decode package.json author: %w", err)
 		}
+		// Make sure name is properly set (the "n" in the regex captures the name)
+		auth.Name = strings.TrimSpace(fields["n"])
 	} else {
 		// it's a map that may contain fields of various data types (not just strings)
 		var fields map[string]interface{}
@@ -209,4 +215,57 @@ func pathContainsNodeModulesDirectory(p string) bool {
 		}
 	}
 	return false
+}
+
+func (a *authors) UnmarshalJSON(b []byte) error {
+	// Try to unmarshal as an array of strings
+	var authorStrings []string
+	if err := json.Unmarshal(b, &authorStrings); err == nil {
+		// Successfully parsed as an array of strings
+		auths := make([]author, len(authorStrings))
+		for i, authorStr := range authorStrings {
+			// Parse each string into author fields
+			fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
+			var auth author
+			if err := mapstructure.Decode(fields, &auth); err != nil {
+				return fmt.Errorf("unable to decode package.json author: %w", err)
+			}
+			// The "n" in the regex captures the name
+			auth.Name = strings.TrimSpace(fields["n"])
+			auths[i] = auth
+		}
+		*a = auths
+		return nil
+	}
+
+	// Try to unmarshal as an array of objects
+	var authorObjs []map[string]interface{}
+	if err := json.Unmarshal(b, &authorObjs); err == nil {
+		// Successfully parsed as an array of objects
+		auths := make([]author, len(authorObjs))
+		for i, fields := range authorObjs {
+			var auth author
+			if err := mapstructure.Decode(fields, &auth); err != nil {
+				return fmt.Errorf("unable to decode package.json author object: %w", err)
+			}
+			auths[i] = auth
+		}
+		*a = auths
+		return nil
+	}
+
+	// If we get here, it means neither format matched
+	return fmt.Errorf("unable to parse package.json authors field")
+}
+
+func (a authors) AuthorsString() string {
+	if len(a) == 0 {
+		return ""
+	}
+
+	authorStrings := make([]string, len(a))
+	for i, auth := range a {
+		authorStrings[i] = auth.AuthorString()
+	}
+	return strings.Join(authorStrings, ", ")
 }
