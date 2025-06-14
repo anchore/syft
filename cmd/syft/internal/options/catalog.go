@@ -174,7 +174,12 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
 			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
-			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
+			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected).
+			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.Dotnet.SearchLocalLicenses)).
+			WithLocalCachePaths(cfg.Dotnet.LocalCachePaths).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.Dotnet.SearchRemoteLicenses)).
+			WithProviders(cfg.Dotnet.Providers).
+			WithCredentials(cfg.Dotnet.ProviderCredentials.ToProviderCredentials()),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
