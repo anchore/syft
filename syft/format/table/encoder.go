@@ -8,6 +8,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -66,22 +68,34 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	columns = append(columns, "") // add a column for duplicate annotations
 	rows = markDuplicateRows(rows)
 
-	table := tablewriter.NewWriter(writer)
+	table := tablewriter.NewTable(writer,
+		tablewriter.WithRenderer(renderer.NewBlueprint(tw.Rendition{
+			Borders: tw.BorderNone,
+			Symbols: tw.NewSymbols(tw.StyleNone),
+			Settings: tw.Settings{
+				Separators: tw.Separators{BetweenRows: tw.On},
+				Lines:      tw.Lines{ShowFooterLine: tw.Off, ShowHeaderLine: tw.Off},
+			},
+		})),
+		tablewriter.WithConfig(
+			tablewriter.Config{
+				Header: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						AutoWrap: tw.WrapNormal,
+					},
+				},
+				Row: tw.CellConfig{
+					Formatting: tw.CellFormatting{
+						AutoWrap:  tw.WrapNone,
+						Alignment: tw.AlignLeft,
+					},
+					//ColMaxWidths: tw.CellWidth{Global: 32},
+				},
+			},
+		))
 
-	table.SetHeader(columns)
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetTablePadding("  ")
-	table.SetNoWhiteSpace(true)
-
-	table.AppendBulk(rows)
+	table.Header(columns)
+	table.Bulk(rows)
 	table.Render()
 
 	return nil
