@@ -84,7 +84,7 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, modu
 		// if we're running against a directory on the filesystem, it may not include the
 		// user's homedir, so we defer to using the localModCacheResolvers
 		for _, resolver := range c.localNuGetCacheResolvers {
-			if lics, err := c.findLocalLicenses(ctx, resolver, moduleSearchGlob(moduleName, moduleVersion)); err == nil {
+			if lics, err := c.findLocalLicenses(ctx, resolver, moduleName, moduleVersion); err == nil {
 				licenses = appendNewLicenses(licenses, lics...)
 				return licenses, nil
 			}
@@ -103,14 +103,22 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, modu
 	return licenses, nil
 }
 
-func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, resolver file.Resolver, globMatch string) ([]pkg.License, error) {
+func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, resolver file.Resolver, moduleName, moduleVersion string) ([]pkg.License, error) {
 	if resolver == nil {
 		return nil, nil
 	}
 
-	locations, err := resolver.FilesByGlob(globMatch)
+	locations, err := c.getModuleFileLocations(moduleName, moduleVersion, false)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(locations) == 0 {
+		// Just in case the casing does not match...
+		locations, err = c.getModuleFileLocations(moduleName, moduleVersion, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var out []pkg.License
@@ -128,6 +136,80 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, resolver f
 	}
 
 	return out, err
+}
+
+func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (string, error) {
+	modulePath := ""
+	walkSubdirectoriesFunc := func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			// No need to try matching a file
+			return nil
+		}
+
+		if len(modulePath) > 0 {
+			// We have already found our match
+			return filepath.SkipDir
+		}
+
+		// Check for  a name match
+		if invariant {
+			if strings.EqualFold(d.Name(), subfilderName) {
+				modulePath = filepath.Join(path, d.Name())
+			}
+		} else {
+			if d.Name() == subfilderName {
+				modulePath = filepath.Join(path, d.Name())
+			}
+		}
+
+		if len(modulePath) > 0 {
+			return filepath.SkipDir
+		}
+		return nil
+	}
+	filepath.WalkDir(rootPath, walkSubdirectoriesFunc)
+
+	if len(modulePath) > 0 {
+		return modulePath, nil
+	}
+	return "", fmt.Errorf("no module match was found")
+}
+
+func enumerateFiles(rootPath string) []file.Location {
+	locations := []file.Location{}
+
+	walkFilesFunc := func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			// No need to handle a directory
+			return nil
+		}
+
+		locations = append(locations, file.NewLocation(filepath.Join(path, d.Name())))
+
+		return nil
+	}
+	filepath.WalkDir(rootPath, walkFilesFunc)
+
+	return locations
+}
+
+func (c *nugetLicenseResolver) getModuleFileLocations(moduleName, moduleVersion string, invariant bool) ([]file.Location, error) {
+	var err error
+	locations := []file.Location{}
+
+	if len(c.cfg.LocalCachePaths) > 0 {
+		for _, localCachePath := range c.cfg.LocalCachePaths {
+			modulePath := ""
+			if modulePath, err = findExpectedSubfolderPath(localCachePath, moduleName, invariant); err == nil && len(modulePath) > 0 {
+				if modulePath, err = findExpectedSubfolderPath(localCachePath, moduleVersion, invariant); err == nil && len(modulePath) > 0 {
+					// Found the correct module version folder
+					locations = append(locations, enumerateFiles(modulePath)...)
+				}
+			}
+		}
+	}
+
+	return locations, err
 }
 
 func extractLicensesFromResolvedFile(ctx context.Context, resolver file.Resolver, l file.Location) (out []pkg.License, err error) {
@@ -457,6 +539,7 @@ func moduleDir(moduleName, moduleVersion string) string {
 
 func moduleSearchGlob(moduleName, moduleVersion string) string {
 	return fmt.Sprintf("**/%s/*", moduleDir(moduleName, moduleVersion))
+	//return fmt.Sprintf("%s/*", moduleDir(moduleName, moduleVersion))
 }
 
 type projectLibrary struct {
