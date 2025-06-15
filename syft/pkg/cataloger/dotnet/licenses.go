@@ -85,8 +85,10 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, modu
 		// user's homedir, so we defer to using the localModCacheResolvers
 		for _, resolver := range c.localNuGetCacheResolvers {
 			if lics, err := c.findLocalLicenses(ctx, resolver, moduleName, moduleVersion); err == nil {
-				licenses = appendNewLicenses(licenses, lics...)
-				return licenses, nil
+				if len(lics) > 0 {
+					licenses = appendNewLicenses(licenses, lics...)
+					return licenses, nil
+				}
 			}
 		}
 	}
