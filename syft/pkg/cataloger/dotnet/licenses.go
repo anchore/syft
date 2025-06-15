@@ -141,40 +141,45 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, resolver f
 }
 
 func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (string, error) {
-	modulePath := ""
-	walkSubdirectoriesFunc := func(path string, d fs.DirEntry, _ error) error {
-		if !d.IsDir() {
-			// No need to try matching a file
+	if len(rootPath) > 0 {
+		modulePath := ""
+		walkSubdirectoriesFunc := func(path string, d fs.DirEntry, _ error) error {
+			if d == nil {
+				return nil
+			}
+			if !d.IsDir() {
+				// No need to try matching a file
+				return nil
+			}
+
+			if len(modulePath) > 0 {
+				// We have already found our match
+				return filepath.SkipDir
+			}
+
+			// Check for  a name match
+			if invariant {
+				if strings.EqualFold(d.Name(), subfilderName) {
+					modulePath = filepath.Join(path, d.Name())
+				}
+			} else {
+				if d.Name() == subfilderName {
+					modulePath = filepath.Join(path, d.Name())
+				}
+			}
+
+			if len(modulePath) > 0 {
+				return filepath.SkipDir
+			}
 			return nil
 		}
-
-		if len(modulePath) > 0 {
-			// We have already found our match
-			return filepath.SkipDir
-		}
-
-		// Check for  a name match
-		if invariant {
-			if strings.EqualFold(d.Name(), subfilderName) {
-				modulePath = filepath.Join(path, d.Name())
-			}
-		} else {
-			if d.Name() == subfilderName {
-				modulePath = filepath.Join(path, d.Name())
-			}
+		if err := filepath.WalkDir(rootPath, walkSubdirectoriesFunc); err != nil {
+			return "", err
 		}
 
 		if len(modulePath) > 0 {
-			return filepath.SkipDir
+			return modulePath, nil
 		}
-		return nil
-	}
-	if err := filepath.WalkDir(rootPath, walkSubdirectoriesFunc); err != nil {
-		return "", err
-	}
-
-	if len(modulePath) > 0 {
-		return modulePath, nil
 	}
 	return "", fmt.Errorf("no module match was found")
 }
@@ -182,18 +187,23 @@ func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (
 func enumerateFiles(rootPath string) []file.Location {
 	locations := []file.Location{}
 
-	walkFilesFunc := func(path string, d fs.DirEntry, _ error) error {
-		if d.IsDir() {
-			// No need to handle a directory
+	if len(rootPath) > 0 {
+		walkFilesFunc := func(path string, d fs.DirEntry, _ error) error {
+			if d == nil {
+				return nil
+			}
+			if d.IsDir() {
+				// No need to handle a directory
+				return nil
+			}
+
+			locations = append(locations, file.NewLocation(filepath.Join(path, d.Name())))
+
 			return nil
 		}
-
-		locations = append(locations, file.NewLocation(filepath.Join(path, d.Name())))
-
-		return nil
-	}
-	if err := filepath.WalkDir(rootPath, walkFilesFunc); err != nil {
-		return []file.Location{}
+		if err := filepath.WalkDir(rootPath, walkFilesFunc); err != nil {
+			return []file.Location{}
+		}
 	}
 
 	return locations
