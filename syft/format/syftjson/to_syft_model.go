@@ -144,13 +144,12 @@ func toSyftFiles(files []model.File) sbom.Artifacts {
 }
 
 func safeFileModeConvert(val int) (fs.FileMode, error) {
-	if val < math.MinInt32 || val > math.MaxInt32 {
-		// Value is out of the range that int32 can represent
+	mode, err := strconv.ParseInt(strconv.Itoa(val), 8, 64)
+	if mode < 0 || mode > math.MaxUint32 {
+		// value is out of the range that int32 can represent
 		return 0, fmt.Errorf("value %d is out of the range that int32 can represent", val)
 	}
 
-	// Safe to convert to os.FileMode
-	mode, err := strconv.ParseInt(strconv.Itoa(val), 8, 64)
 	if err != nil {
 		return 0, err
 	}

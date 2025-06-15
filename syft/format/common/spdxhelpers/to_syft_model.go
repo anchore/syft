@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/common"
 
@@ -45,7 +46,7 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		},
 	}
 
-	collectSyftPackages(s, spdxIDMap, doc.Packages)
+	collectSyftPackages(s, spdxIDMap, doc)
 
 	collectSyftFiles(s, spdxIDMap, doc)
 
@@ -279,8 +280,12 @@ func findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 	return nil
 }
 
-func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, packages []*spdx.Package) {
-	for _, p := range packages {
+func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+	skipIDs := packageIDsToSkip(doc)
+	for _, p := range doc.Packages {
+		if p == nil || skipIDs.Has(string(p.PackageSPDXIdentifier)) {
+			continue
+		}
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
 		s.Artifacts.Packages.Add(syftPkg)
@@ -656,4 +661,16 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 		}
 	}
 	return cpes
+}
+
+// packageIDsToSkip returns a set of packageIDs that should not be imported
+func packageIDsToSkip(doc *spdx.Document) *strset.Set {
+	skipIDs := strset.New()
+	for i := 0; i < len(doc.Relationships); i++ {
+		r := doc.Relationships[i]
+		if r != nil && r.Relationship == spdx.RelationshipGeneratedFrom {
+			skipIDs.Add(string(r.RefB.ElementRefID))
+		}
+	}
+	return skipIDs
 }
