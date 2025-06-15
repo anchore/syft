@@ -142,7 +142,7 @@ func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, resolver f
 
 func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (string, error) {
 	modulePath := ""
-	walkSubdirectoriesFunc := func(path string, d fs.DirEntry, err error) error {
+	walkSubdirectoriesFunc := func(path string, d fs.DirEntry, _ error) error {
 		if !d.IsDir() {
 			// No need to try matching a file
 			return nil
@@ -169,7 +169,9 @@ func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (
 		}
 		return nil
 	}
-	filepath.WalkDir(rootPath, walkSubdirectoriesFunc)
+	if err := filepath.WalkDir(rootPath, walkSubdirectoriesFunc); err != nil {
+		return "", err
+	}
 
 	if len(modulePath) > 0 {
 		return modulePath, nil
@@ -180,7 +182,7 @@ func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (
 func enumerateFiles(rootPath string) []file.Location {
 	locations := []file.Location{}
 
-	walkFilesFunc := func(path string, d fs.DirEntry, err error) error {
+	walkFilesFunc := func(path string, d fs.DirEntry, _ error) error {
 		if d.IsDir() {
 			// No need to handle a directory
 			return nil
@@ -190,7 +192,9 @@ func enumerateFiles(rootPath string) []file.Location {
 
 		return nil
 	}
-	filepath.WalkDir(rootPath, walkFilesFunc)
+	if err := filepath.WalkDir(rootPath, walkFilesFunc); err != nil {
+		return []file.Location{}
+	}
 
 	return locations
 }
@@ -537,11 +541,6 @@ func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleNam
 
 func moduleDir(moduleName, moduleVersion string) string {
 	return strings.ToLower(fmt.Sprintf("%s/%s", moduleName, moduleVersion))
-}
-
-func moduleSearchGlob(moduleName, moduleVersion string) string {
-	return fmt.Sprintf("**/%s/*", moduleDir(moduleName, moduleVersion))
-	//return fmt.Sprintf("%s/*", moduleDir(moduleName, moduleVersion))
 }
 
 type projectLibrary struct {
