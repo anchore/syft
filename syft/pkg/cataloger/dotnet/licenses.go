@@ -539,10 +539,6 @@ func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleNam
 	return nil, errors.New("package could not be found")
 }
 
-func moduleDir(moduleName, moduleVersion string) string {
-	return strings.ToLower(fmt.Sprintf("%s/%s", moduleName, moduleVersion))
-}
-
 type projectLibrary struct {
 	SHA256 string   `json:"sha256"`
 	Type   string   `json:"type"`
