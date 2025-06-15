@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -34,6 +35,7 @@ type nugetLicenseResolver struct {
 	localNuGetCacheResolvers []file.Resolver
 	lowerLicenseFileNames    *strset.Set
 	assetDefinitions         []projectAssets
+	licenseCache             cache.Resolver[[]pkg.License]
 }
 
 func newNugetLicenseResolver(config CatalogerConfig) nugetLicenseResolver {
@@ -41,6 +43,7 @@ func newNugetLicenseResolver(config CatalogerConfig) nugetLicenseResolver {
 		cfg:                      config,
 		localNuGetCacheResolvers: nil,
 		lowerLicenseFileNames:    strset.New(lowercaseLicenseFiles()...),
+		licenseCache:             cache.GetResolverCachingErrors[[]pkg.License]("dotnet", "v2"),
 	}
 }
 
@@ -106,38 +109,43 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, modu
 }
 
 func (c *nugetLicenseResolver) findLocalLicenses(ctx context.Context, resolver file.Resolver, moduleName, moduleVersion string) ([]pkg.License, error) {
-	if resolver == nil {
-		return nil, nil
-	}
+	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]pkg.License, error) {
+		if resolver == nil {
+			return nil, fmt.Errorf("unable to resolve files")
+		}
 
-	locations, err := c.getModuleFileLocations(moduleName, moduleVersion, false)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(locations) == 0 {
-		// Just in case the casing does not match...
-		locations, err = c.getModuleFileLocations(moduleName, moduleVersion, true)
+		locations, err := c.getModuleFileLocations(moduleName, moduleVersion, false)
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	var out []pkg.License
-	for _, l := range locations {
-		fileName := filepath.Base(l.RealPath)
-		if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
-			parsed, err := extractLicensesFromResolvedFile(ctx, resolver, l)
-
+		if len(locations) == 0 {
+			// Just in case the casing does not match...
+			locations, err = c.getModuleFileLocations(moduleName, moduleVersion, true)
 			if err != nil {
-				continue
+				return nil, err
 			}
-
-			out = append(out, parsed...)
 		}
-	}
 
-	return out, err
+		var out []pkg.License
+		for _, l := range locations {
+			fileName := filepath.Base(l.RealPath)
+			if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
+				parsed, err := extractLicensesFromResolvedFile(ctx, resolver, l)
+
+				if err != nil {
+					continue
+				}
+
+				out = append(out, parsed...)
+			}
+		}
+
+		if len(out) > 0 {
+			return out, nil
+		}
+		return nil, errors.New("no license could be found")
+	})
 }
 
 func findExpectedSubfolderPath(rootPath, subfilderName string, invariant bool) (string, error) {
@@ -520,33 +528,35 @@ func findMatchingLibrariesInProjectAssets(moduleName, moduleVersion string, asse
 }
 
 func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleName, moduleVersion string, assets ...projectAssets) (out []pkg.License, err error) {
-	if len(c.cfg.Providers) == 0 {
-		return nil, errors.ErrUnsupported
-	}
-
-	if matchingLibrary, err := findMatchingLibrariesInProjectAssets(moduleName, moduleVersion, assets); err == nil {
-		// Search for matched library rather than using a
-		if pathParts := strings.Split(matchingLibrary.Path, "/"); len(pathParts) == 2 {
-			moduleName = pathParts[0]
-			moduleVersion = pathParts[1]
+	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]pkg.License, error) {
+		if len(c.cfg.Providers) == 0 {
+			return nil, errors.ErrUnsupported
 		}
-	}
 
-	foundPackage := false
-	for _, provider := range c.cfg.Providers {
-		out, foundPackage = c.getLicensesFromRemotePackage(ctx, provider, moduleName, moduleVersion)
+		if matchingLibrary, err := findMatchingLibrariesInProjectAssets(moduleName, moduleVersion, assets); err == nil {
+			// Search for matched library rather than using a
+			if pathParts := strings.Split(matchingLibrary.Path, "/"); len(pathParts) == 2 {
+				moduleName = pathParts[0]
+				moduleVersion = pathParts[1]
+			}
+		}
+
+		foundPackage := false
+		for _, provider := range c.cfg.Providers {
+			out, foundPackage = c.getLicensesFromRemotePackage(ctx, provider, moduleName, moduleVersion)
+			if foundPackage {
+				break
+			}
+		}
+
+		if len(out) > 0 {
+			return out, nil
+		}
 		if foundPackage {
-			break
+			return nil, errors.New("no license could be found")
 		}
-	}
-
-	if len(out) > 0 {
-		return out, nil
-	}
-	if foundPackage {
-		return nil, errors.New("no license could be found")
-	}
-	return nil, errors.New("package could not be found")
+		return nil, errors.New("package could not be found")
+	})
 }
 
 type projectLibrary struct {
