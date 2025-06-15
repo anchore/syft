@@ -249,27 +249,6 @@ tasks:
       - cmd: .github/scripts/labeler_test.py
 
 
-  ## Benchmark test targets #################################
-
-  benchmark:
-    deps: [tmpdir]
-    generates:
-      - "{{ .TMP_DIR }}/benchmark-main.txt"
-    cmds:
-      - "go test -p 1 -run=^Benchmark -bench=. -count=7 -benchmem ./... | tee {{ .TMP_DIR }}/benchmark-{{ .VERSION }}.txt"
-      - |
-        bash -c "(test -s {{ .TMP_DIR }}/benchmark-main.txt && \
-        {{ .TOOL_DIR }}/benchstat {{ .TMP_DIR }}/benchmark-main.txt {{ .TMP_DIR }}/benchmark-{{ .VERSION }}.txt || \
-        {{ .TOOL_DIR }}/benchstat {{ .TMP_DIR }}/benchmark-{{ .VERSION }}.txt) \
-        | tee {{ .TMP_DIR }}/benchstat.txt"
-
-  show-benchstat:
-    deps: [benchmark, tmpdir]
-    cmds:
-      - cmd: "cat {{ .TMP_DIR }}/benchstat.txt"
-        silent: true
-
-
   ## Test-fixture-related targets #################################
 
   fingerprints:

@@ -492,6 +492,12 @@ func Test_safeFileModeConvert(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "valid perm with symlink type",
+			val:     1000000777,                // symlink + rwxrwxrwx
+			want:    os.FileMode(0o1000000777), // 134218239
+			wantErr: false,
+		},
+		{
 			name:    "outside int32 high",
 			val:     int(math.MaxInt32) + 1,
 			want:    0,

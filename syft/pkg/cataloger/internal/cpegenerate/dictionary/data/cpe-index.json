@@ -3848,6 +3848,9 @@
       "localhost-now": [
         "cpe:2.3:a:localhost-now_project:localhost-now:*:*:*:*:*:node.js:*:*"
       ],
+      "lockfile-lint-api": [
+        "cpe:2.3:a:lirantal:lockfile-lint-api:*:*:*:*:*:node.js:*:*"
+      ],
       "locutus": [
         "cpe:2.3:a:locutus:locutus:*:*:*:*:*:node.js:*:*"
       ],
@@ -7072,6 +7075,9 @@
       "versionize": [
         "cpe:2.3:a:versionize_project:versionize:*:*:*:*:*:rust:*:*"
       ],
+      "wasmi": [
+        "cpe:2.3:a:wasmi-labs:wasmi:*:*:*:*:*:rust:*:*"
+      ],
       "wasmtime": [
         "cpe:2.3:a:bytecodealliance:wasmtime:*:*:*:*:*:rust:*:*"
       ],
@@ -9256,6 +9262,9 @@
       "clickdesk-live-support-chat-plugin": [
         "cpe:2.3:a:clickdesk:clickdesk:*:*:*:*:*:wordpress:*:*"
       ],
+      "clickwhale": [
+        "cpe:2.3:a:flowdee:clickwhale:*:*:*:*:*:wordpress:*:*"
+      ],
       "clictracker": [
         "cpe:2.3:a:wp_clictracker_project:wp_clictracker:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11326,6 +11335,9 @@
       "featured-image-from-url": [
         "cpe:2.3:a:fifu:featured_image_from_url:*:*:*:*:*:wordpress:*:*"
       ],
+      "featured-image-plus": [
+        "cpe:2.3:a:krasenslavov:featured_image_plus:*:*:*:*:*:wordpress:*:*"
+      ],
       "feed-changer": [
         "cpe:2.3:a:wp-master:feed_changer_\\\u0026_remover:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11346,6 +11358,9 @@
       ],
       "feedzy-rss-feeds": [
         "cpe:2.3:a:themeisle:rss_aggregator_by_feedzy:*:*:*:*:*:wordpress:*:*"
+      ],
+      "fetch-jft": [
+        "cpe:2.3:a:pjaudiomv:fetch_jft:*:*:*:*:*:wordpress:*:*"
       ],
       "fg-drupal-to-wp": [
         "cpe:2.3:a:fredericgilles:fg_drupal:*:*:*:*:*:wordpress:*:*"
@@ -12126,7 +12141,8 @@
         "cpe:2.3:a:groundhogg:groundhogg:*:*:*:*:*:wordpress:*:*"
       ],
       "gs-logo-slider": [
-        "cpe:2.3:a:gsplugins:gs_logo_slider:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:gsplugins:gs_logo_slider:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:gsplugins:logo_slider:*:*:*:*:*:wordpress:*:*"
       ],
       "gs-portfolio": [
         "cpe:2.3:a:gsplugins:gs_filterable_portfolio:*:*:*:*:*:wordpress:*:*"
@@ -12876,6 +12892,9 @@
       "jetpack": [
         "cpe:2.3:a:automattic:jetpack:*:*:*:*:*:wordpress:*:*"
       ],
+      "jetpack-boost": [
+        "cpe:2.3:a:automattic:jetpack_boost:*:*:*:*:*:wordpress:*:*"
+      ],
       "jetwidgets-for-elementor": [
         "cpe:2.3:a:crocoblock:jetwidgets_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13016,6 +13035,9 @@
       ],
       "kb-support": [
         "cpe:2.3:a:logon:kb_support:*:*:*:*:*:wordpress:*:*"
+      ],
+      "kbucket": [
+        "cpe:2.3:a:optimalaccess:kbucket:*:*:*:*:*:wordpress:*:*"
       ],
       "keep-backup-daily": [
         "cpe:2.3:a:androidbubbles:keep_backup_daily:*:*:*:*:*:wordpress:*:*"
@@ -14550,6 +14572,9 @@
       "openpgp-form-encryption": [
         "cpe:2.3:a:arnesonium:openpgp_form_encryption:*:*:*:*:*:wordpress:*:*"
       ],
+      "opensheetmusicdisplay": [
+        "cpe:2.3:a:opensheetmusicdisplay:opensheetmusicdisplay:*:*:*:*:*:wordpress:*:*"
+      ],
       "ops-robots-txt": [
         "cpe:2.3:a:ops-robots-txt_project:ops-robots-txt:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15165,8 +15190,7 @@
         "cpe:2.3:a:i13websolution:post_sliders_\\\u0026_post_grids:*:*:*:*:*:wordpress:*:*"
       ],
       "post-smtp": [
-        "cpe:2.3:a:wpexperts:post_smtp:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:wpexperts:post_smtp_mailer:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:wpexperts:post_smtp:*:*:*:*:*:wordpress:*:*"
       ],
       "post-snippets": [
         "cpe:2.3:a:postsnippets:post_snippets:*:*:*:*:*:wordpress:*:*"
@@ -15548,6 +15572,9 @@
       ],
       "quickswish": [
         "cpe:2.3:a:hasthemes:quickswish:*:*:*:*:*:wordpress:*:*"
+      ],
+      "quillforms": [
+        "cpe:2.3:a:mdmag:quill_forms:*:*:*:*:*:wordpress:*:*"
       ],
       "quiz-expert": [
         "cpe:2.3:a:wepupil:quiz_expert_-_easy_quiz_maker\\,_exam_and_test_manager:*:*:*:*:*:wordpress:*:*"
@@ -16382,7 +16409,8 @@
       ],
       "shortcodes-ultimate": [
         "cpe:2.3:a:getshortcodes:shortcodes_ultimate:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:getshortcodes:shortcodes_ultimate:*:*:*:*:-:wordpress:*:*"
+        "cpe:2.3:a:getshortcodes:shortcodes_ultimate:*:*:*:*:-:wordpress:*:*",
+        "cpe:2.3:a:getshortcodes:shortcodes_ultimate:*:*:*:*:pro:wordpress:*:*"
       ],
       "shortcut-macros": [
         "cpe:2.3:a:shortcut_macros_project:shortcut_macros:*:*:*:*:*:wordpress:*:*"
@@ -17373,6 +17401,9 @@
       ],
       "support-chat": [
         "cpe:2.3:a:ninjateam:click_to_chat:*:*:*:*:*:wordpress:*:*"
+      ],
+      "support-svg": [
+        "cpe:2.3:a:sayedulsayem:support_svg:*:*:*:*:*:wordpress:*:*"
       ],
       "supportcandy": [
         "cpe:2.3:a:supportcandy:supportcandy:*:*:*:*:*:wordpress:*:*"
@@ -18931,6 +18962,9 @@
       "woocommerce-amazon-affiliates-light-version": [
         "cpe:2.3:a:wzone_project:wzone:*:*:*:*:lite:wordpress:*:*"
       ],
+      "woocommerce-and-wp-emember-integration": [
+        "cpe:2.3:a:tipsandtricks-hq:wp_emember:*:*:*:*:*:wordpress:*:*"
+      ],
       "woocommerce-catalog-enquiry": [
         "cpe:2.3:a:multivendorx:product_catalog_mode_for_woocommerce:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wc-marketplace:wc_catalog_enquiry:*:*:*:*:*:wordpress:*:*"
@@ -19213,6 +19247,9 @@
       ],
       "wp-ban": [
         "cpe:2.3:a:wp-ban_project:wp-ban:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-base-booking-of-appointments-services-and-events": [
+        "cpe:2.3:a:wp-base:wp_base_booking_of_appointments\\,_services_and_events:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-best-quiz": [
         "cpe:2.3:a:subina:wp_best_quiz:*:*:*:*:*:wordpress:*:*"
@@ -20359,7 +20396,7 @@
         "cpe:2.3:a:wp-t-wap_project:wp-t-wap:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-table-builder": [
-        "cpe:2.3:a:wptablebuilder:wp_table_builder:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:dotcamp:wp_table_builder:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-table-reloaded": [
         "cpe:2.3:a:wp-table_reloaded_project:wp-table_reloaded:*:*:*:*:*:wordpress:*:*"

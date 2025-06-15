@@ -24,7 +24,7 @@ require (
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115
-	github.com/anchore/stereoscope v0.1.5-0.20250604132324-344e29f37f05
+	github.com/anchore/stereoscope v0.1.5
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
@@ -42,7 +42,7 @@ require (
 	github.com/github/go-spdx/v2 v2.3.3
 	github.com/gkampitakis/go-snaps v0.5.13
 	github.com/go-git/go-billy/v5 v5.6.2
-	github.com/go-git/go-git/v5 v5.16.1
+	github.com/go-git/go-git/v5 v5.16.2
 	github.com/go-test/deep v1.1.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/gohugoio/hashstructure v0.5.0
@@ -89,7 +89,7 @@ require (
 	golang.org/x/mod v0.25.0
 	golang.org/x/net v0.41.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.37.1
+	modernc.org/sqlite v1.38.0
 )
 
 require (
@@ -254,7 +254,7 @@ require (
 	google.golang.org/grpc v1.67.3 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	modernc.org/libc v1.65.7 // indirect
+	modernc.org/libc v1.65.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )

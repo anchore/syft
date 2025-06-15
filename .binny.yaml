@@ -58,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v2.9.0
+      want: v2.10.2
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -87,23 +87,10 @@ tools:
     with:
       repo: wagoodman/go-bouncer
 
-  # used for showing benchmark testing
-  - name: benchstat
-    version:
-      want: latest
-      method: go-proxy
-      with:
-        module: golang.org/x/perf
-        allow-unresolved-version: true
-    method: go-install
-    with:
-      entrypoint: cmd/benchstat
-      module: golang.org/x/perf
-
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.43.3
+      want: v3.44.0
     method: github-release
     with:
       repo: go-task/task
@@ -111,7 +98,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.74.0
+      want: v2.74.1
     method: github-release
     with:
       repo: cli/cli
