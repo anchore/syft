@@ -168,6 +168,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
 		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 	}
+	cfg.Dotnet.AddDefaultLocalNuGetCachePathIfEmpty()
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Dotnet: dotnet.DefaultCatalogerConfig().
@@ -320,6 +321,7 @@ func Flatten(commaSeparatedEntries []string) []string {
 var publicisedEnrichmentOptions = []string{
 	"all",
 	task.Golang,
+	task.Dotnet,
 	task.Java,
 	task.JavaScript,
 }

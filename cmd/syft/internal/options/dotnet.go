@@ -2,6 +2,8 @@ package options
 
 import (
 	"os"
+	"path"
+	"runtime"
 	"strings"
 
 	"github.com/anchore/clio"
@@ -78,6 +80,23 @@ func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchRemoteLicenses, `search for NuGet package licences by retrieving the package from a network proxy`)
 	descriptions.Add(&o.Providers, `remote NuGet package providers (comma-separated) to use when retrieving NuGet packages from the network; defaults to the nuget.org-repository`)
 	descriptions.Add(&o.ProviderCredentials, `remote NuGet package provider credentials to use when retrieving NuGet packages from the network.`)
+}
+
+func (o *dotnetConfig) AddDefaultLocalNuGetCachePathIfEmpty() {
+	if len(o.LocalCachePaths) == 0 {
+		o.LocalCachePaths = getDefaultLocalNuGetCachePath()
+	}
+}
+
+func getDefaultLocalNuGetCachePath() string {
+	environmentPackagesPath := os.Getenv("NUGET_PACKAGES")
+	if len(environmentPackagesPath) > 0 {
+		return environmentPackagesPath
+	}
+	if runtime.GOOS == "windows" {
+		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
+	}
+	return "~/.nuget/packages"
 }
 
 func defaultDotnetConfig() dotnetConfig {

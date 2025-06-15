@@ -1,9 +1,6 @@
 package dotnet
 
 import (
-	"os"
-	"path"
-	"runtime"
 	"strings"
 
 	"github.com/anchore/syft/syft/credential"
@@ -58,9 +55,6 @@ func (c CatalogerConfig) WithPropagateDLLClaimsToParents(propagate bool) Catalog
 
 func (c CatalogerConfig) WithSearchLocalLicenses(input bool) CatalogerConfig {
 	c.SearchLocalLicenses = input
-	if c.SearchLocalLicenses && len(c.LocalCachePaths) == 0 {
-		c.WithLocalCachePaths(getDefaultLocalNuGetCachePath())
-	}
 	return c
 }
 
@@ -104,13 +98,6 @@ func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) Ca
 	return c
 }
 
-func getDefaultLocalNuGetCachePath() string {
-	if runtime.GOOS == "windows" {
-		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
-	}
-	return "~/.nuget/packages"
-}
-
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
 		DepPackagesMustHaveDLL:             false,
@@ -118,7 +105,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		PropagateDLLClaimsToParents:        true,
 		RelaxDLLClaimsWhenBundlingDetected: true,
 		SearchLocalLicenses:                true,
-		LocalCachePaths:                    []string{getDefaultLocalNuGetCachePath()},
+		LocalCachePaths:                    []string{},
 		SearchRemoteLicenses:               false,
 		Providers:                          []string{defaultNuGetProvider},
 		ProviderCredentials:                []credential.SimpleCredential{},
