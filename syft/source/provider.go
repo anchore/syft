@@ -8,5 +8,4 @@ import (
 type Provider interface {
 	Name() string
 	Provide(ctx context.Context) (Source, error)
-	Cleanup(ctx context.Context) error
 }

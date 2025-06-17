@@ -252,7 +252,7 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 		return nil, fmt.Errorf("attest requires use of an OCI registry directly, one or more of the specified sources is unsupported: %v", opts.From)
 	}
 
-	src, _, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
+	src, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
 
 	if err != nil {
 		return nil, err
