@@ -20,6 +20,7 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 	if err != nil {
 		return nil, err
 	}
+
 	var errs []error
 	var fileNotFoundProviders []string
 
