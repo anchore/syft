@@ -184,9 +184,11 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	}
 
 	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
+
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		if src != nil {
 			if err := src.Close(); err != nil {
@@ -194,6 +196,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 			}
 		}
 	}()
+
 	s, err := generateSBOM(ctx, id, src, &opts.Catalog)
 	if err != nil {
 		return err
@@ -247,13 +250,6 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	if err != nil {
 		return nil, fmt.Errorf("could not determine source: %w", err)
 	}
-
-	// cleanupFunc := func() error {
-	// 	if err := syft.CleanupSource(ctx, userInput, cfg); err != nil {
-	// 		return err
-	// 	}
-	// 	return nil
-	// }
 
 	return src, nil
 }
