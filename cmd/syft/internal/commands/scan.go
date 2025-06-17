@@ -173,6 +173,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	if err != nil {
 		return err
 	}
+
 	sources := opts.From
 	if len(sources) == 0 {
 		// extract a scheme if it matches any provider tag; this is a holdover for compatibility, using the --from flag is recommended
