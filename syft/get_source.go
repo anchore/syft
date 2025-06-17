@@ -20,7 +20,6 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 	if err != nil {
 		return nil, err
 	}
-
 	var errs []error
 	var fileNotFoundProviders []string
 
@@ -52,6 +51,24 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 		errs = append(errs, fmt.Errorf("additionally, the following providers failed with %w: %s", os.ErrNotExist, strings.Join(fileNotFoundProviders, ", ")))
 	}
 	return nil, sourceError(userInput, errs...)
+}
+
+func CleanupSource(ctx context.Context, userInput string, cfg *GetSourceConfig) error {
+	var errs []error
+	providers, err := cfg.getProviders(userInput)
+	if err != nil {
+		return err
+	}
+
+	for _, p := range providers {
+		if err := p.Cleanup(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", p.Name(), err))
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("errors occurred while cleaning up source providers: %v", errs)
+	}
+	return nil
 }
 
 func sourceError(userInput string, errs ...error) error {

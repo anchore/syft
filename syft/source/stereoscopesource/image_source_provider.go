@@ -43,6 +43,13 @@ func (l stereoscopeImageSourceProvider) Provide(ctx context.Context) (source.Sou
 	return New(img, cfg), nil
 }
 
+func (l stereoscopeImageSourceProvider) Cleanup(ctx context.Context) error {
+	if l.stereoscopeProvider.Cleanup != nil {
+		return l.stereoscopeProvider.Cleanup(ctx)
+	}
+	return nil
+}
+
 func Providers(cfg ProviderConfig) []collections.TaggedValue[source.Provider] {
 	stereoscopeProviders := collections.TaggedValueSet[source.Provider]{}
 	providers := stereoscope.ImageProviders(cfg.StereoscopeImageProviderConfig)
