@@ -62,7 +62,7 @@ require (
 	github.com/mholt/archives v0.1.2
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
-	github.com/olekukonko/tablewriter v0.0.5
+	github.com/olekukonko/tablewriter v1.0.7
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
@@ -259,7 +259,12 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-require github.com/containerd/errdefs/pkg v0.3.0 // indirect
+require (
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
+	github.com/fatih/color v1.17.0 // indirect
+	github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6 // indirect
+	github.com/olekukonko/ll v0.0.8 // indirect
+)
 
 retract (
 	v1.25.0 // published with a replace directive (confusing for API users)
