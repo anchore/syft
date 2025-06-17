@@ -21,7 +21,8 @@ import (
 )
 
 func Test_toSyftSourceData(t *testing.T) {
-	tracker := sourcemetadata.NewCompletionTester(t)
+	tracker := sourcemetadata.NewCompletionTester(t, source.PlatformMetadata{},
+		source.OSMetadata{}, source.FrameworkMetadata{})
 
 	tests := []struct {
 		name     string
@@ -100,6 +101,40 @@ func Test_toSyftSourceData(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "unsupported- application",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "image",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.ApplicationMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Version:     "version..",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -159,6 +194,34 @@ func Test_toSyftSourceData(t *testing.T) {
 					ID:             "id...",
 					ManifestDigest: "digest...",
 					MediaType:      "type...",
+				},
+			},
+		},
+		{
+			name: "unsupported - library",
+			src: model.Source{
+				ID:   "the-id",
+				Type: "library",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.LibraryMetadata{
+					UnknownMetadata: source.UnknownMetadata{
+						UserInput:   "user-input",
+						ID:          "id...",
+						Group:       "group..",
+						Description: "desc..",
+						PackageURL:  "purl",
+					},
 				},
 			},
 		},

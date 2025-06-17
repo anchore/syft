@@ -204,6 +204,67 @@ func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]int
 		}
 	}
 }
+func extractDataStructures(c *cyclonedx.Component) ([]source.OrganizationalContact,
+	[]source.ExternalReference, []source.LicenseChoice) {
+	authors := make([]source.OrganizationalContact, 0)
+	if c.Authors != nil {
+		for _, author := range *c.Authors {
+			authors = append(authors,
+				source.OrganizationalContact{
+					Name: author.Name,
+				})
+		}
+	}
+	exrefs := make([]source.ExternalReference, 0)
+	if c.ExternalReferences != nil {
+		for _, exref := range *c.ExternalReferences {
+			hashes := make([]source.Hash, 0)
+			if exref.Hashes != nil {
+				for _, hash := range *exref.Hashes {
+					hashes = append(hashes,
+						source.Hash{
+							Algorithm: string(hash.Algorithm),
+							Value:     hash.Value,
+						})
+				}
+			}
+			exrefs = append(exrefs,
+				source.ExternalReference{
+					URL:    exref.URL,
+					Hashes: &hashes,
+					Type:   string(exref.Type),
+				})
+		}
+	}
+	licenses := make([]source.LicenseChoice, 0)
+	if c.Licenses != nil {
+		for _, license := range *c.Licenses {
+			licenseInfo := source.License{
+				ID: license.License.ID,
+			}
+			licenses = append(licenses,
+				source.LicenseChoice{
+					License: &licenseInfo,
+				})
+		}
+	}
+	return authors, exrefs, licenses
+}
+
+func buildUnknownMetadata(c *cyclonedx.Component) source.UnknownMetadata {
+	authors, exrefs, licenses := extractDataStructures(c)
+	return source.UnknownMetadata{
+		UserInput:   c.Name,
+		ID:          c.BOMRef,
+		Version:     c.Version,
+		Group:       c.Group,
+		Authors:     &authors,
+		Description: c.Description,
+		PackageURL:  c.PackageURL,
+		Licenses:    &licenses,
+		ExternalRef: &exrefs,
+	}
+}
 
 func extractComponents(meta *cyclonedx.Metadata) source.Description {
 	if meta == nil || meta.Component == nil {
@@ -238,8 +299,41 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ID:       "",
 			Metadata: source.FileMetadata{Path: c.Name},
 		}
+	case cyclonedx.ComponentTypeApplication:
+		return source.Description{
+			Metadata: source.ApplicationMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypeLibrary:
+		return source.Description{
+			Metadata: source.LibraryMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypeOS:
+		return source.Description{
+			Metadata: source.OSMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypePlatform:
+		return source.Description{
+			Metadata: source.PlatformMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
+	case cyclonedx.ComponentTypeFramework:
+		return source.Description{
+			Metadata: source.FrameworkMetadata{
+				UnknownMetadata: buildUnknownMetadata(c),
+			},
+		}
 	}
-	return source.Description{}
+
+	return source.Description{
+		Metadata: buildUnknownMetadata(c),
+	}
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used
