@@ -52,7 +52,7 @@ type repository struct {
 
 // match example: "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"
 // ---> name: "Isaac Z. Schlueter" email: "i@izs.me" url: "http://blog.izs.me"
-var authorPattern = regexp.MustCompile(`^\s*(?P<n>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
+var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)?(\s\((?P<url>.*)\))?\s*$`)
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
 func parsePackageJSON(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -90,8 +90,6 @@ func (a *author) UnmarshalJSON(b []byte) error {
 		if err := mapstructure.Decode(fields, &auth); err != nil {
 			return fmt.Errorf("unable to decode package.json author: %w", err)
 		}
-		// Make sure name is properly set (the "n" in the regex captures the name)
-		auth.Name = strings.TrimSpace(fields["n"])
 	} else {
 		// it's a map that may contain fields of various data types (not just strings)
 		var fields map[string]interface{}
@@ -230,8 +228,7 @@ func (a *authors) UnmarshalJSON(b []byte) error {
 			if err := mapstructure.Decode(fields, &auth); err != nil {
 				return fmt.Errorf("unable to decode package.json author: %w", err)
 			}
-			// The "n" in the regex captures the name
-			auth.Name = strings.TrimSpace(fields["n"])
+			auth.Name = strings.TrimSpace(fields["name"])
 			auths[i] = auth
 		}
 		*a = auths
