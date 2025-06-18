@@ -92,7 +92,7 @@ func DefaultPackageTaskFactories() Factories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return golang.NewGoSourceCataloger(cfg.PackagesConfig.Golang)
 			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Go, Golang, "gomod",
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Go, Golang, "gosource",
 		),
 		newSimplePackageTaskFactory(java.NewGradleLockfileCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Java, "gradle"),
 		newPackageTaskFactory(

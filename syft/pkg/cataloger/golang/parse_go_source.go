@@ -50,7 +50,7 @@ func newGoSourceCataloger(cfg CatalogerConfig) *goSourceCataloger {
 // entrypoint detection can return multiple mains for search
 // we can't use the file.Resolver passed in here since the modules/license paths are sometimes outside the scan target
 // TODO: can we get the resolved name version and the h1 digest name:version:h1digest for all modules
-func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, _ file.Resolver, _ *generic.Environment, _ file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, r file.Resolver, _ *generic.Environment, _ file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// cfg.importPaths can look like ./...
 	// ./... is different from something like ./github.com/anchore/syft/cmd/syft/...
 	// the distinction here is cataloging an entire application vs a single entrypoint/module
@@ -92,7 +92,7 @@ func (c *goSourceCataloger) catalogModules(
 			Locations: file.NewLocationSet(),
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
-			Type:      pkg.GoModulePkg,
+			Type:      pkg.GoSourcePkg,
 			PURL:      packageURL(m.Path, m.Version),
 		}
 		goModulePkg.SetID()

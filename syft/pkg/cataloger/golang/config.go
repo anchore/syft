@@ -38,6 +38,11 @@ type GoSourceConfig struct {
 	IncludeIgnoreDeps bool     `yaml:"include-ignore" json:"include-ignore" mapstructure:"include-ignore"`
 }
 
+func (sc GoSourceConfig) WithImportPaths(paths ...string) GoSourceConfig {
+	
+	sc.ImportPaths = append(sc.ImportPaths, paths...)
+}
+
 type MainModuleVersionConfig struct {
 	FromLDFlags       bool `yaml:"from-ld-flags" json:"from-ld-flags" mapstructure:"from-ld-flags"`
 	FromContents      bool `yaml:"from-contents" json:"from-contents" mapstructure:"from-contents"`
