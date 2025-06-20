@@ -198,7 +198,7 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		}
 	}()
 
-	s, err := generateSBOM(ctx, id, src, &opts.Catalog)
+	s, err := generateStreamingSBOM(ctx, id, src, &opts.Catalog, writer)
 	if err != nil {
 		return err
 	}
@@ -207,11 +207,26 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 		return fmt.Errorf("no SBOM produced for %q", userInput)
 	}
 
-	if err := writer.Write(*s); err != nil {
-		return fmt.Errorf("failed to write SBOM: %w", err)
+	return nil
+}
+
+func generateStreamingSBOM(ctx context.Context, id clio.Identification, src source.Source, opts *options.Catalog, writer sbom.Writer) (*sbom.SBOM, error) {
+	// Create a collector to capture the full SBOM for backward compatibility
+	collector := sbom.NewCollector()
+
+	// Create a multi-writer that writes to both the collector and the output writer
+	multiWriter := sbom.NewMultiWriter(collector, sbom.NewStreamingWriterAdapter(writer))
+
+	// Generate the SBOM using streaming approach
+	err := syft.CreateSBOMStreaming(ctx, src, multiWriter, opts.ToSBOMConfig(id))
+	if err != nil {
+		expErrs := filterExpressionErrors(err)
+		notifyExpressionErrors(expErrs)
+		return nil, err
 	}
 
-	return nil
+	// Return the collected SBOM for backward compatibility
+	return collector.SBOM(), nil
 }
 
 func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, error) {

@@ -142,9 +142,9 @@ func writeSBOMToFormattedFile(s *sbom.SBOM, sbomFile io.Writer, opts *attestOpti
 	}
 
 	encoders := format.NewEncoderCollection(encs...)
-	encoder := encoders.GetByString(opts.Outputs[0])
+	encoder := encoders.GetByString(opts.Output.Outputs[0])
 	if encoder == nil {
-		return fmt.Errorf("unable to find encoder for %q", opts.Outputs[0])
+		return fmt.Errorf("unable to find encoder for %q", opts.Output.Outputs[0])
 	}
 
 	if err = encoder.Encode(sbomFile, *s); err != nil {
@@ -204,7 +204,7 @@ func createAttestation(sbomFilepath string, opts *attestOptions, userInput strin
 }
 
 func attestCommand(sbomFilepath string, opts *attestOptions, userInput string) (*exec.Cmd, error) {
-	outputNames := opts.OutputNameSet()
+	outputNames := opts.Output.OutputNameSet()
 	var outputName string
 	switch outputNames.Size() {
 	case 0:
