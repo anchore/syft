@@ -4116,6 +4116,9 @@
         "cpe:2.3:a:mysql_project:mysql:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:mysqljs:mysql:*:*:*:*:*:node.js:*:*"
       ],
+      "mysql2": [
+        "cpe:2.3:a:sidorares:mysql2:*:*:*:*:*:node.js:*:*"
+      ],
       "mysqljs": [
         "cpe:2.3:a:mysqljs_project:mysqljs:*:*:*:*:*:node.js:*:*"
       ],
@@ -8152,6 +8155,9 @@
       ],
       "auto-post-thumbnail": [
         "cpe:2.3:a:cm-wp:auto_featured_image:*:*:*:*:*:wordpress:*:*"
+      ],
+      "auto-prune-posts": [
+        "cpe:2.3:a:klarned:auto_prune_posts:*:*:*:*:*:wordpress:*:*"
       ],
       "auto-refresh-single-page": [
         "cpe:2.3:a:rymera:auto_refresh_single_page:*:*:*:*:*:wordpress:*:*"
@@ -13418,6 +13424,9 @@
       "loco-translate": [
         "cpe:2.3:a:loco_translate_project:loco_translate:*:*:*:*:*:wordpress:*:*"
       ],
+      "logdash-activity-log": [
+        "cpe:2.3:a:deryckoe:logdash_activity_log:*:*:*:*:*:wordpress:*:*"
+      ],
       "loggedin": [
         "cpe:2.3:a:duckdev:loggedin:*:*:*:*:*:wordpress:*:*"
       ],
@@ -14797,6 +14806,9 @@
       ],
       "payment-forms-for-paystack": [
         "cpe:2.3:a:paystack:payment_forms_for_paystack:*:*:*:*:*:wordpress:*:*"
+      ],
+      "payment-gateway-for-telcell": [
+        "cpe:2.3:a:hkdigital:payment_gateway_for_telcell:*:*:*:*:*:wordpress:*:*"
       ],
       "payment-gateway-stripe-and-woocommerce-integration": [
         "cpe:2.3:a:webtoffee:stripe_payment_plugin_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -21442,6 +21454,9 @@
       ],
       "shapely": [
         "cpe:2.3:a:colorlib:shapely:*:*:*:*:*:wordpress:*:*"
+      ],
+      "simplecharm": [
+        "cpe:2.3:a:kmfoysal06:simplecharm:*:*:*:*:*:wordpress:*:*"
       ],
       "sinatra": [
         "cpe:2.3:a:sinatrateam:sinatra:*:*:*:*:*:wordpress:*:*"
