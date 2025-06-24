@@ -56,6 +56,12 @@ func (l directorySourceProvider) Provide(_ context.Context) (source.Source, erro
 	)
 }
 
+// Cleanup is a no-op for directory sources
+func (l directorySourceProvider) Cleanup(_ context.Context) error {
+	// nothing to do here
+	return nil
+}
+
 // FIXME why is the base always being set instead of left as empty string?
 func basePath(base, location string) string {
 	if base == "" {
