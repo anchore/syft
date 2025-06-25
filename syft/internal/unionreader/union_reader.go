@@ -110,17 +110,17 @@ func (r *readerAtAdapter) ReadAt(p []byte, off int64) (n int, err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	currentPos, err := r.Seek(0, io.SeekCurrent) // save current pos
+	currentPos, err := r.ReadSeekCloser.Seek(0, io.SeekCurrent) // save current pos
 	if err != nil {
 		return 0, err
 	}
 
-	_, err = r.Seek(off, io.SeekStart) // seek to absolute position `off`
+	_, err = r.ReadSeekCloser.Seek(off, io.SeekStart) // seek to absolute position `off`
 	if err != nil {
 		return 0, err
 	}
 
-	n, err = r.Read(p) // read from that absolute position
+	n, err = r.ReadSeekCloser.Read(p) // read from that absolute position
 
 	// restore the position for the stateful read/seek operations
 	if restoreErr := r.restorePosition(currentPos); restoreErr != nil {
