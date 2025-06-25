@@ -76,6 +76,9 @@ jobs:
       - name: Build snapshot artifacts
         run: make snapshot
 
+      - name: Smoke test snapshot build
+        run: make snapshot-smoke-test
+
       # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
       # see https://github.com/actions/upload-artifact/issues/199 for more info
       - name: Upload snapshot artifacts
@@ -195,7 +198,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.2
+        uses: sigstore/cosign-installer@v3.9.0
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 

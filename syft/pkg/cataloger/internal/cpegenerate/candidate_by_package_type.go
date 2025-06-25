@@ -632,12 +632,32 @@ var defaultCandidateRemovals = buildCandidateRemovalLookup(
 		// Rust packages
 		{
 			pkg.RustPkg,
+			candidateKey{PkgName: "hyper"},
+			// Avoid matching CVE-2024-23741
+			candidateRemovals{VendorsToRemove: []string{"vercel"}},
+		},
+		{
+			pkg.RustPkg,
 			candidateKey{PkgName: "opentelemetry"},
+			// Avoid matching CVE-2023-45142
 			candidateRemovals{ProductsToRemove: []string{"opentelemetry"}},
 		},
 		{
 			pkg.RustPkg,
+			candidateKey{PkgName: "prometheus"},
+			// Avoid matching CVE-2019-3826
+			candidateRemovals{VendorsToRemove: []string{"prometheus"}},
+		},
+		{
+			pkg.RustPkg,
+			candidateKey{PkgName: "phf"},
+			// Avoid matching CVE-2000-1186
+			candidateRemovals{VendorsToRemove: []string{"phf"}},
+		},
+		{
+			pkg.RustPkg,
 			candidateKey{PkgName: "redis"},
+			// Avoid matching CVE-2022-24735
 			candidateRemovals{VendorsToRemove: []string{"redis"}},
 		},
 		// PHP packages
