@@ -181,7 +181,7 @@ func TestGetSnapFile_Local(t *testing.T) {
 				tt.setup()
 			}
 
-			result, err := getSnapFile(ctx, fs, nil, tt.cfg)
+			result, err := getRemoteSnapFile(ctx, fs, nil, tt.cfg)
 
 			if tt.expectError {
 				assert.Error(t, err)

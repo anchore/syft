@@ -51,17 +51,11 @@ func (s snapIdentity) String() string {
 	return strings.Join(parts, "")
 }
 
-func getSnapFile(ctx context.Context, fs afero.Fs, getter intFile.Getter, cfg Config) (*snapFile, error) {
+func getRemoteSnapFile(ctx context.Context, fs afero.Fs, getter intFile.Getter, cfg Config) (*snapFile, error) {
 	if cfg.Request == "" {
 		return nil, fmt.Errorf("invalid request: %q", cfg.Request)
 	}
-
-	if fileExists(fs, cfg.Request) {
-		log.WithFields("path", cfg.Request).Debug("snap is a local file")
-
-		return newSnapFromFile(ctx, fs, cfg)
-	}
-
+	
 	var architecture string
 	if cfg.Platform != nil {
 		architecture = cfg.Platform.Architecture

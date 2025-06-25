@@ -59,7 +59,28 @@ type snapSource struct {
 	closer           func() error
 }
 
-func New(cfg Config) (source.Source, error) {
+func NewFromLocal(cfg Config) (source.Source, error) {
+	expandedPath, err := homedir.Expand(cfg.Request)
+	if err != nil {
+		return nil, fmt.Errorf("unable to expand path %q: %w", cfg.Request, err)
+	}
+	cfg.Request = filepath.Clean(expandedPath)
+
+	fs := afero.NewOsFs()
+	if !fileExists(fs, cfg.Request) {
+		return nil, fmt.Errorf("snap file %q does not exist", cfg.Request)
+	}
+	log.WithFields("path", cfg.Request).Debug("snap is a local file")
+
+	f, err := newSnapFromFile(context.Background(), fs, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return newFromPath(cfg, f)
+}
+
+func NewFromRemote(cfg Config) (source.Source, error) {
 	expandedPath, err := homedir.Expand(cfg.Request)
 	if err != nil {
 		return nil, fmt.Errorf("unable to expand path %q: %w", cfg.Request, err)
@@ -67,11 +88,15 @@ func New(cfg Config) (source.Source, error) {
 	cfg.Request = filepath.Clean(expandedPath)
 
 	client := intFile.NewGetter(cfg.ID, cleanhttp.DefaultClient())
-	f, err := getSnapFile(context.Background(), afero.NewOsFs(), client, cfg)
+	f, err := getRemoteSnapFile(context.Background(), afero.NewOsFs(), client, cfg)
 	if err != nil {
 		return nil, err
 	}
 
+	return newFromPath(cfg, f)
+}
+
+func newFromPath(cfg Config, f *snapFile) (source.Source, error) {
 	s := &snapSource{
 		id:           deriveID(cfg.Request, cfg.Alias.Name, cfg.Alias.Version, f.Digests),
 		config:       cfg,
