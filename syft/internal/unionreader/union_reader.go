@@ -94,27 +94,36 @@ func newReaderAtAdapter(rs io.ReadSeekCloser) UnionReader {
 	}
 }
 
+func (r *readerAtAdapter) Read(p []byte) (n int, err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.ReadSeekCloser.Read(p)
+}
+
+func (r *readerAtAdapter) Seek(offset int64, whence int) (int64, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.ReadSeekCloser.Seek(offset, whence)
+}
+
 func (r *readerAtAdapter) ReadAt(p []byte, off int64) (n int, err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	currentPos, err := r.Seek(0, io.SeekCurrent)
+	currentPos, err := r.Seek(0, io.SeekCurrent) // save current pos
 	if err != nil {
 		return 0, err
 	}
 
-	_, err = r.Seek(off, io.SeekStart)
+	_, err = r.Seek(off, io.SeekStart) // seek to absolute position `off`
 	if err != nil {
 		return 0, err
 	}
 
-	n, err = r.Read(p)
+	n, err = r.Read(p) // read from that absolute position
 
-	// restore original position
-	// we do this even if Read failed to maintain ReaderAt semantics
+	// restore the position for the stateful read/seek operations
 	if restoreErr := r.restorePosition(currentPos); restoreErr != nil {
-		// if we can't restore position and Read succeeded, return the restore error
-		// if Read already failed, keep the original error
 		if err == nil {
 			err = restoreErr
 		}
@@ -124,6 +133,6 @@ func (r *readerAtAdapter) ReadAt(p []byte, off int64) (n int, err error) {
 }
 
 func (r *readerAtAdapter) restorePosition(pos int64) error {
-	_, err := r.Seek(pos, io.SeekStart)
+	_, err := r.ReadSeekCloser.Seek(pos, io.SeekStart)
 	return err
 }
