@@ -12,7 +12,7 @@ var _ file.Resolver = (*File)(nil)
 
 // File implements path and content access for the file data source.
 type File struct {
-	filetreeResolver
+	FiletreeResolver
 	path    string
 	indexer *fileIndexer
 }
@@ -29,10 +29,11 @@ func NewFromFile(parent, path string, pathFilters ...PathIndexVisitor) (*File, e
 
 	file := &File{
 		path: path,
-		filetreeResolver: filetreeResolver{
-			chroot: *chroot,
-			tree:   filetree.New(),
-			index:  filetree.NewIndex(),
+		FiletreeResolver: FiletreeResolver{
+			Chroot: *chroot,
+			Tree:   filetree.New(),
+			Index:  filetree.NewIndex(),
+			Opener: nativeOSFileOpener,
 		},
 		indexer: newFileIndexer(path, cleanBase, pathFilters...),
 	}
@@ -49,9 +50,9 @@ func (r *File) buildIndex() error {
 		return err
 	}
 
-	r.tree = tree
-	r.index = index
-	r.searchContext = filetree.NewSearchContext(tree, index)
+	r.Tree = tree
+	r.Index = index
+	r.SearchContext = filetree.NewSearchContext(tree, index)
 
 	return nil
 }

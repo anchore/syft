@@ -76,7 +76,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	return results, errs
 }
 
-func catalogingProgress(locations int64) *monitor.CatalogerTaskProgress {
+func catalogingProgress(locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File metadata",
