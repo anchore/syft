@@ -55,7 +55,7 @@ func getRemoteSnapFile(ctx context.Context, fs afero.Fs, getter intFile.Getter, 
 	if cfg.Request == "" {
 		return nil, fmt.Errorf("invalid request: %q", cfg.Request)
 	}
-	
+
 	var architecture string
 	if cfg.Platform != nil {
 		architecture = cfg.Platform.Architecture
