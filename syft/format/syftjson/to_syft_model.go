@@ -40,7 +40,7 @@ func toSyftModel(doc model.Document) *sbom.SBOM {
 			FileLicenses:      fileArtifacts.FileLicenses,
 			Executables:       fileArtifacts.Executables,
 			Unknowns:          fileArtifacts.Unknowns,
-			LinuxDistribution: toSyftLinuxRelease(doc.Distro),
+			LinuxDistribution: toInternalLinuxRelease(doc.Distro),
 		},
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
@@ -195,7 +195,7 @@ func toSyftFileType(ty string) stereoscopeFile.Type {
 	}
 }
 
-func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
+func toInternalLinuxRelease(d model.LinuxRelease) *linux.Release {
 	if cmp.Equal(d, model.LinuxRelease{}) {
 		return nil
 	}
@@ -218,6 +218,7 @@ func toSyftLinuxRelease(d model.LinuxRelease) *linux.Release {
 		PrivacyPolicyURL: d.PrivacyPolicyURL,
 		CPEName:          d.CPEName,
 		SupportEnd:       d.SupportEnd,
+		ExtendedSupport:  d.ExtendedSupport,
 	}
 }
 

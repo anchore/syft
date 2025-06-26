@@ -53,6 +53,7 @@
       <description>debian</description>
       <swid tagId="debian" name="debian" version="1.2.3"></swid>
       <properties>
+        <property name="syft:distro:extendedSupport">false</property>
         <property name="syft:distro:id">debian</property>
         <property name="syft:distro:idLike:0">like!</property>
         <property name="syft:distro:prettyName">debian</property>
