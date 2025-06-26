@@ -4,6 +4,7 @@
 package file
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -55,7 +56,7 @@ func TestUnzipToDir(t *testing.T) {
 	expectedPaths := len(expectedZipArchiveEntries)
 	observedPaths := 0
 
-	err = UnzipToDir(archiveFilePath, unzipDestinationDir)
+	err = UnzipToDir(context.Background(), archiveFilePath, unzipDestinationDir)
 	if err != nil {
 		t.Fatalf("unable to unzip archive: %+v", err)
 	}
@@ -145,7 +146,7 @@ func TestContentsFromZip(t *testing.T) {
 				paths = append(paths, p)
 			}
 
-			actual, err := ContentsFromZip(archivePath, paths...)
+			actual, err := ContentsFromZip(context.Background(), archivePath, paths...)
 			if err != nil {
 				t.Fatalf("unable to extract from unzip archive: %+v", err)
 			}

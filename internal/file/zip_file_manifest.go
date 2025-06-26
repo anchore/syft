@@ -1,35 +1,39 @@
 package file
 
 import (
+	"context"
 	"os"
 	"sort"
 	"strings"
 
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/syft/internal/log"
+	"github.com/mholt/archives"
+	"github.com/scylladb/go-set/strset"
 )
 
 // ZipFileManifest is a collection of paths and their file metadata.
 type ZipFileManifest map[string]os.FileInfo
 
 // NewZipFileManifest creates and returns a new ZipFileManifest populated with path and metadata from the given zip archive path.
-func NewZipFileManifest(archivePath string) (ZipFileManifest, error) {
-	zipReader, err := OpenZip(archivePath)
+func NewZipFileManifest(ctx context.Context, archivePath string) (ZipFileManifest, error) {
+	zipReader, err := os.Open(archivePath)
 	manifest := make(ZipFileManifest)
 	if err != nil {
 		log.Debugf("unable to open zip archive (%s): %v", archivePath, err)
 		return manifest, err
 	}
 	defer func() {
-		err = zipReader.Close()
-		if err != nil {
+		if err = zipReader.Close(); err != nil {
 			log.Debugf("unable to close zip archive (%s): %+v", archivePath, err)
 		}
 	}()
 
-	for _, file := range zipReader.File {
-		manifest.Add(file.Name, file.FileInfo())
+	err = archives.Zip{}.Extract(ctx, zipReader, func(ctx context.Context, file archives.FileInfo) error {
+		manifest.Add(file.NameInArchive, file.FileInfo)
+		return nil
+	})
+	if err != nil {
+		return manifest, err
 	}
 	return manifest, nil
 }

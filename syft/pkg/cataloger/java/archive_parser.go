@@ -110,7 +110,7 @@ func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, d
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}
 
-	fileManifest, err := intFile.NewZipFileManifest(archivePath)
+	fileManifest, err := intFile.NewZipFileManifest(ctx, archivePath)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
@@ -228,7 +228,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	}
 
 	// fetch the manifest file
-	contents, err := intFile.ContentsFromZip(j.archivePath, manifestMatches...)
+	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, manifestMatches...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.location, err)
 	}
@@ -387,8 +387,8 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	var pomProperties pkg.JavaPomProperties
 
 	// Find the pom.properties/pom.xml if the names seem like a plausible match
-	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
-	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	properties, _ := pomPropertiesByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
+	projects, _ := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
 	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
 	artifactsMap := make(map[string]bool)
@@ -453,13 +453,13 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 	var pkgs []pkg.Package
 
 	// pom.properties
-	properties, err := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
+	properties, err := pomPropertiesByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	if err != nil {
 		return nil, err
 	}
 
 	// pom.xml
-	projects, err := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	projects, err := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +505,7 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 		}
 
 		if len(licenseMatches) > 0 {
-			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+			contents, err := intFile.ContentsFromZip(ctx, j.archivePath, licenseMatches...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
 			}
@@ -533,7 +533,7 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, pare
 // associating each discovered package to the given parent package.
 func discoverPkgsFromZip(ctx context.Context, location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
@@ -597,8 +597,8 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	return nestedPkgs, nestedRelationships, nil
 }
 
-func pomPropertiesByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
-	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
+func pomPropertiesByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
+	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(ctx, archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -626,8 +626,8 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
-	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
+func pomProjectByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
+	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(ctx, archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}

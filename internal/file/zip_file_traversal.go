@@ -1,14 +1,15 @@
 package file
 
 import (
-	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/mholt/archives"
 )
 
 const (
@@ -39,38 +40,34 @@ func newZipTraverseRequest(paths ...string) zipTraversalRequest {
 }
 
 // TraverseFilesInZip enumerates all paths stored within a zip archive using the visitor pattern.
-func TraverseFilesInZip(archivePath string, visitor func(*zip.File) error, paths ...string) error {
+func TraverseFilesInZip(ctx context.Context, archivePath string, visitor archives.FileHandler, paths ...string) error {
 	request := newZipTraverseRequest(paths...)
 
-	zipReader, err := OpenZip(archivePath)
+	zipReader, err := os.Open(archivePath)
 	if err != nil {
 		return fmt.Errorf("unable to open zip archive (%s): %w", archivePath, err)
 	}
 	defer func() {
-		err = zipReader.Close()
-		if err != nil {
+		if err := zipReader.Close(); err != nil {
 			log.Errorf("unable to close zip archive (%s): %+v", archivePath, err)
 		}
 	}()
 
-	for _, file := range zipReader.File {
+	return archives.Zip{}.Extract(ctx, zipReader, func(ctx context.Context, file archives.FileInfo) error {
 		// if no paths are given then assume that all files should be traversed
 		if len(paths) > 0 {
-			if _, ok := request[file.Name]; !ok {
+			if _, ok := request[file.NameInArchive]; !ok {
 				// this file path is not of interest
-				continue
+				return nil
 			}
 		}
 
-		if err = visitor(file); err != nil {
-			return err
-		}
-	}
-	return nil
+		return visitor(ctx, file)
+	})
 }
 
 // ExtractFromZipToUniqueTempFile extracts select paths for the given archive to a temporary directory, returning file openers for each file extracted.
-func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (map[string]Opener, error) {
+func ExtractFromZipToUniqueTempFile(ctx context.Context, archivePath, dir string, paths ...string) (map[string]Opener, error) {
 	results := make(map[string]Opener)
 
 	// don't allow for full traversal, only select traversal from given paths
@@ -78,9 +75,8 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 		return results, nil
 	}
 
-	visitor := func(file *zip.File) error {
-		tempfilePrefix := filepath.Base(filepath.Clean(file.Name)) + "-"
-
+	visitor := func(ctx context.Context, file archives.FileInfo) error {
+		tempfilePrefix := filepath.Base(filepath.Clean(file.NameInArchive)) + "-"
 		tempFile, err := os.CreateTemp(dir, tempfilePrefix)
 		if err != nil {
 			return fmt.Errorf("unable to create temp file: %w", err)
@@ -92,33 +88,32 @@ func ExtractFromZipToUniqueTempFile(archivePath, dir string, paths ...string) (m
 
 		zippedFile, err := file.Open()
 		if err != nil {
-			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
+			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.NameInArchive, archivePath, err)
 		}
 		defer func() {
-			err := zippedFile.Close()
-			if err != nil {
-				log.Errorf("unable to close source file=%q from zip=%q: %+v", file.Name, archivePath, err)
+			if err := zippedFile.Close(); err != nil {
+				log.Errorf("unable to close source file=%q from zip=%q: %+v", file.NameInArchive, archivePath, err)
 			}
 		}()
 
-		if file.FileInfo().IsDir() {
-			return fmt.Errorf("unable to extract directories, only files: %s", file.Name)
+		if file.IsDir() {
+			return fmt.Errorf("unable to extract directories, only files: %s", file.NameInArchive)
 		}
 
 		if err := safeCopy(tempFile, zippedFile); err != nil {
-			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name, archivePath, err)
+			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.NameInArchive, archivePath, err)
 		}
 
-		results[file.Name] = Opener{path: tempFile.Name()}
+		results[file.NameInArchive] = Opener{path: tempFile.Name()}
 
 		return nil
 	}
 
-	return results, TraverseFilesInZip(archivePath, visitor, paths...)
+	return results, TraverseFilesInZip(ctx, archivePath, visitor, paths...)
 }
 
 // ContentsFromZip extracts select paths for the given archive and returns a set of string contents for each path.
-func ContentsFromZip(archivePath string, paths ...string) (map[string]string, error) {
+func ContentsFromZip(ctx context.Context, archivePath string, paths ...string) (map[string]string, error) {
 	results := make(map[string]string)
 
 	// don't allow for full traversal, only select traversal from given paths
@@ -126,37 +121,38 @@ func ContentsFromZip(archivePath string, paths ...string) (map[string]string, er
 		return results, nil
 	}
 
-	visitor := func(file *zip.File) error {
+	visitor := func(ctx context.Context, file archives.FileInfo) error {
 		zippedFile, err := file.Open()
 		if err != nil {
-			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
+			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.NameInArchive, archivePath, err)
 		}
+		defer func() {
+			if err := zippedFile.Close(); err != nil {
+				log.Errorf("unable to close source file=%q from zip=%q: %+v", file.NameInArchive, archivePath, err)
+			}
+		}()
 
-		if file.FileInfo().IsDir() {
-			return fmt.Errorf("unable to extract directories, only files: %s", file.Name)
+		if file.IsDir() {
+			return fmt.Errorf("unable to extract directories, only files: %s", file.NameInArchive)
 		}
 
 		var buffer bytes.Buffer
 		if err := safeCopy(&buffer, zippedFile); err != nil {
-			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.Name, archivePath, err)
+			return fmt.Errorf("unable to copy source=%q for zip=%q: %w", file.NameInArchive, archivePath, err)
 		}
 
-		results[file.Name] = buffer.String()
+		results[file.NameInArchive] = buffer.String()
 
-		err = zippedFile.Close()
-		if err != nil {
-			return fmt.Errorf("unable to close source file=%q from zip=%q: %w", file.Name, archivePath, err)
-		}
 		return nil
 	}
 
-	return results, TraverseFilesInZip(archivePath, visitor, paths...)
+	return results, TraverseFilesInZip(ctx, archivePath, visitor, paths...)
 }
 
 // UnzipToDir extracts a zip archive to a target directory.
-func UnzipToDir(archivePath, targetDir string) error {
-	visitor := func(file *zip.File) error {
-		joinedPath, err := safeJoin(targetDir, file.Name)
+func UnzipToDir(ctx context.Context, archivePath, targetDir string) error {
+	visitor := func(ctx context.Context, file archives.FileInfo) error {
+		joinedPath, err := safeJoin(targetDir, file.NameInArchive)
 		if err != nil {
 			return err
 		}
@@ -164,7 +160,7 @@ func UnzipToDir(archivePath, targetDir string) error {
 		return extractSingleFile(file, joinedPath, archivePath)
 	}
 
-	return TraverseFilesInZip(archivePath, visitor)
+	return TraverseFilesInZip(ctx, archivePath, visitor)
 }
 
 // safeJoin ensures that any destinations do not resolve to a path above the prefix path.
@@ -181,13 +177,18 @@ func safeJoin(prefix string, dest ...string) (string, error) {
 	return joinResult, nil
 }
 
-func extractSingleFile(file *zip.File, expandedFilePath, archivePath string) error {
+func extractSingleFile(file archives.FileInfo, expandedFilePath, archivePath string) error {
 	zippedFile, err := file.Open()
 	if err != nil {
-		return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.Name, archivePath, err)
+		return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.NameInArchive, archivePath, err)
 	}
+	defer func() {
+		if err := zippedFile.Close(); err != nil {
+			log.Errorf("unable to close source file=%q from zip=%q: %+v", file.NameInArchive, archivePath, err)
+		}
+	}()
 
-	if file.FileInfo().IsDir() {
+	if file.IsDir() {
 		err = os.MkdirAll(expandedFilePath, file.Mode())
 		if err != nil {
 			return fmt.Errorf("unable to create dir=%q from zip=%q: %w", expandedFilePath, archivePath, err)
@@ -202,20 +203,16 @@ func extractSingleFile(file *zip.File, expandedFilePath, archivePath string) err
 		if err != nil {
 			return fmt.Errorf("unable to create dest file=%q from zip=%q: %w", expandedFilePath, archivePath, err)
 		}
+		defer func() {
+			if err := outputFile.Close(); err != nil {
+				log.Errorf("unable to close dest file=%q from zip=%q: %+v", outputFile.Name(), archivePath, err)
+			}
+		}()
 
 		if err := safeCopy(outputFile, zippedFile); err != nil {
-			return fmt.Errorf("unable to copy source=%q to dest=%q for zip=%q: %w", file.Name, outputFile.Name(), archivePath, err)
-		}
-
-		err = outputFile.Close()
-		if err != nil {
-			return fmt.Errorf("unable to close dest file=%q from zip=%q: %w", outputFile.Name(), archivePath, err)
+			return fmt.Errorf("unable to copy source=%q to dest=%q for zip=%q: %w", file.NameInArchive, outputFile.Name(), archivePath, err)
 		}
 	}
 
-	err = zippedFile.Close()
-	if err != nil {
-		return fmt.Errorf("unable to close source file=%q from zip=%q: %w", file.Name, archivePath, err)
-	}
 	return nil
 }
