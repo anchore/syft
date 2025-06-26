@@ -16,7 +16,10 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+)
+
+const (
+	goModGlob = "**/go.mod"
 )
 
 var (
@@ -24,33 +27,71 @@ var (
 )
 
 type goSourceCataloger struct {
-	includeTests bool
-	// False is `givenImportPath` as the input to packages
-	// True is only start on packages with Name `main` for the givenImportPath
-	autoDetectEntry bool
-	importPaths     []string
-	ignorePaths     []string
-	// true, we continue searching a branch even if dep ignored; good for license search
-	// false, we cut the ignored path's branch off and skip all sub packages
-	includeIgnoreDeps bool
+	config GoSourceConfig
+}
+
+type ResolverResolutionPath interface {
+	ResolverResolutionPath() string
+}
+
+func (c goSourceCataloger) Name() string { return sourceCatalogerName }
+
+func (c goSourceCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	upperMost, err := findSearchPath(resolver)
+	if err != nil {
+		return nil, nil, err
+	}
+	c.config.ImportPaths = append(c.config.ImportPaths, "./...")
+	c.config.Dir = upperMost
+	return c.parseGoSourceEntry(ctx)
+}
+
+func findSearchPath(resolver file.Resolver) (importPath string, err error) {
+	locs, err := resolver.FilesByGlob(goModGlob)
+	if err != nil {
+		return importPath, fmt.Errorf("unable to find go.mod files: %w", err)
+	}
+	var upperMost file.Location
+	minDepth := -1
+	for _, loc := range locs {
+		path := loc.RealPath
+		dir := filepath.Dir(filepath.Clean(path))
+		depth := len(strings.Split(dir, string(filepath.Separator)))
+		if minDepth == -1 || depth < minDepth {
+			minDepth = depth
+			upperMost = loc
+		}
+	}
+
+	// solving for golang package searchPath
+	// we use the resolver here since it already solves for config.source.base-path
+	// example: user input of  dir:./some/things/go.mod
+	// ./go.mod <-- resolver would return when searching for go.mod
+	// so we want ./some/things/... as the search path
+	// we need to square where the resolver is finding the go.mod with where syft is running
+	// we could also be given
+	// a/b/c/go.mod
+	// with base config given a/b
+	// c/go.mod  comes back from the resolver
+	// ./c/... we want this as the search path
+	absPath := upperMost.Reference().RealPath
+	if err != nil {
+		return importPath, fmt.Errorf("unable to find go.mod file metadata: %w", err)
+	}
+	return filepath.Dir(string(absPath)), nil
 }
 
 func newGoSourceCataloger(cfg CatalogerConfig) *goSourceCataloger {
 	return &goSourceCataloger{
-		includeTests:      cfg.GoSourceConfig.IncludeTests,
-		autoDetectEntry:   cfg.GoSourceConfig.AutoDetectEntry,
-		importPaths:       cfg.GoSourceConfig.ImportPaths,
-		ignorePaths:       cfg.GoSourceConfig.IgnorePaths,
-		includeIgnoreDeps: cfg.GoSourceConfig.IncludeIgnoreDeps,
+		config: cfg.GoSourceConfig,
 	}
 }
 
 // syft -o json dir:. => `./...` full application scan, multiple entrypoints
 // syft -o json dir:./cmd/syft/main.go => `./cmd/syft/...` user knows where to start the import from
-// entrypoint detection can return multiple mains for search
+// cataloger can return multiple mains for search
 // we can't use the file.Resolver passed in here since the modules/license paths are sometimes outside the scan target
-// TODO: can we get the resolved name version and the h1 digest name:version:h1digest for all modules
-func (c *goSourceCataloger) parseGoSourceEntry(ctx context.Context, r file.Resolver, _ *generic.Environment, _ file.LocationReadCloser) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
+func (c goSourceCataloger) parseGoSourceEntry(ctx context.Context) (pkgs []pkg.Package, rels []artifact.Relationship, err error) {
 	// cfg.importPaths can look like ./...
 	// ./... is different from something like ./github.com/anchore/syft/cmd/syft/...
 	// the distinction here is cataloging an entire application vs a single entrypoint/module
@@ -169,9 +210,10 @@ func (c *goSourceCataloger) loadPackages(ctx context.Context) ([]*packages.Packa
 		// packages.NeedName: needed to add the name and package path for package assembly
 		// packages.NeedModule: need the module added in case entrypoint is not sibling location
 		Mode:  packages.NeedImports | packages.NeedFiles | packages.NeedName | packages.NeedModule,
-		Tests: c.includeTests,
+		Dir:   c.config.Dir,
+		Tests: c.config.IncludeTests,
 	}
-	pkgs, err := packages.Load(pkgsCfg, c.importPaths...)
+	pkgs, err := packages.Load(pkgsCfg, c.config.ImportPaths...)
 	if err != nil {
 		return nil, err
 	}
@@ -225,16 +267,16 @@ func (c *goSourceCataloger) visitPackages(
 	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
 		// skip for common causes
-		if shouldSkipVisit(p, c.includeTests) {
+		if shouldSkipVisit(p, c.config.IncludeTests) {
 			return false
 		}
 
 		// different from above; we still might want to visit imports
 		// ignoring a package shouldn't end walking the tree
 		// since we need to get the full picture for license discovery
-		for _, prefix := range c.ignorePaths {
+		for _, prefix := range c.config.IgnorePaths {
 			if strings.HasPrefix(p.PkgPath, prefix) {
-				return c.includeIgnoreDeps
+				return c.config.IncludeIgnoredDeps
 			}
 		}
 

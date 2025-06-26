@@ -178,8 +178,12 @@ func Test_Source_Cataloger_EntryPoint_Detection(t *testing.T) {
 		fixture string
 	}{
 		{
-			name:    "wip for source entrypoint behavior",
+			name:    "Go source cataloger should detect the topmost gomod and use its search path",
 			fixture: "test-fixtures/go-source",
+		},
+		{
+			name:    "Go source cataloger should detect the topmost gomod and use its search path for nested paths",
+			fixture: "test-fixtures/-source",
 		},
 	}
 

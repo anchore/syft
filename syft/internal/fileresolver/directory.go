@@ -19,6 +19,10 @@ type Directory struct {
 	indexer *directoryIndexer
 }
 
+func (r Directory) ResolverResolutionPath() string {
+	return r.path
+}
+
 func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
 	r, err := newFromDirectoryWithoutIndex(root, base, pathFilters...)
 	if err != nil {

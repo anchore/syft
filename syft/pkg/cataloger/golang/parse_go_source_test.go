@@ -2,7 +2,6 @@ package golang
 
 import (
 	"context"
-	"github.com/anchore/syft/syft/file"
 	"os"
 	"path/filepath"
 	"sort"
@@ -71,10 +70,10 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
 			config: CatalogerConfig{
 				GoSourceConfig: GoSourceConfig{
-					IncludeTests:      false,
-					IncludeIgnoreDeps: false,
-					ImportPaths:       []string{"./..."},
-					IgnorePaths:       []string{"github.com/spf13/viper"},
+					IncludeTests:       false,
+					IncludeIgnoredDeps: false,
+					ImportPaths:        []string{"./..."},
+					IgnorePaths:        []string{"github.com/spf13/viper"},
 				},
 			},
 			expectedPkgs: []string{
@@ -103,9 +102,9 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 			fixturePath: filepath.Join("test-fixtures", "go-source"),
 			config: CatalogerConfig{
 				GoSourceConfig: GoSourceConfig{
-					IncludeTests:      false,
-					IncludeIgnoreDeps: true,
-					ImportPaths:       []string{"./..."},
+					IncludeTests:       false,
+					IncludeIgnoredDeps: true,
+					ImportPaths:        []string{"./..."},
 					IgnorePaths: []string{
 						"github.com/sirupsen/logrus",
 						"github.com/spf13/viper",
@@ -187,7 +186,7 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				t.Fatalf("failed to change dir: %v", err)
 			}
 
-			pkgs, _, err := c.parseGoSourceEntry(ctx, nil, nil, file.LocationReadCloser{})
+			pkgs, _, err := c.parseGoSourceEntry(ctx)
 			if err != nil {
 				t.Fatalf("parseGoSource returned an error: %v", err)
 			}
@@ -256,7 +255,7 @@ func Test_parseGoSource_licenses(t *testing.T) {
 	if err := os.Chdir(fixturePath); err != nil {
 		t.Fatalf("failed to change dir: %v", err)
 	}
-	pkgs, _, err := c.parseGoSourceEntry(ctx, nil, nil, file.LocationReadCloser{})
+	pkgs, _, err := c.parseGoSourceEntry(ctx)
 	if err != nil {
 		t.Fatalf("parseGoSource returned an error: %v", err)
 	}
@@ -355,7 +354,7 @@ func Test_parseGoSource_relationships(t *testing.T) {
 				t.Fatalf("failed to change dir: %v", err)
 			}
 
-			pkgs, relationships, err := c.parseGoSourceEntry(ctx, nil, nil, file.LocationReadCloser{})
+			pkgs, relationships, err := c.parseGoSourceEntry(ctx)
 			if err != nil {
 				t.Fatalf("parseGoSource returned an error: %v", err)
 			}

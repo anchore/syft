@@ -79,15 +79,6 @@ func syftVersion() string {
 	return ""
 }
 
-func (c *CreateSBOMConfig) WithSource(ctx context.Context, src source.Source) *CreateSBOMConfig {
-	switch data := src.Describe().Metadata.(type) {
-	case source.DirectoryMetadata:
-		c.Packages.Golang.GoSourceConfig()
-	default:
-		fmt.Println("Unknown type")
-	}
-}
-
 // WithTool allows for setting the specific name, version, and any additional configuration that is not captured
 // in the syft default API configuration. This could cover inputs for catalogers that were user-provided, thus,
 // is not visible to the syft API, but would be useful to see in the SBOM output.

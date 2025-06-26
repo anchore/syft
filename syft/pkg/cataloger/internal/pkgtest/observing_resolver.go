@@ -31,7 +31,6 @@ func NewObservingResolver(resolver file.Resolver) *ObservingResolver {
 }
 
 // testing helpers...
-
 func (r *ObservingResolver) ObservedPathQuery(input string) bool {
 	for _, vs := range r.pathQueries {
 		for _, v := range vs {
