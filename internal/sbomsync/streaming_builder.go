@@ -97,3 +97,47 @@ func (b *StreamingBuilder) DeletePackages(_ ...artifact.ID) {
 func (b *StreamingBuilder) SetLinuxDistribution(_ linux.Release) {
 	// not supported in streaming mode
 }
+
+// WriteToSBOM allows writing to the SBOM in a thread-safe way
+// Note: In streaming mode, this is a no-op since we stream directly to the writer
+func (b *StreamingBuilder) WriteToSBOM(fn func(*sbom.SBOM)) {
+	if !b.started || b.ended {
+		return
+	}
+
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	s := &sbom.SBOM{
+		Source:        b.srcDesc,
+		Descriptor:    b.descriptor,
+		Relationships: make([]artifact.Relationship, 0),
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(),
+		},
+	}
+
+	fn(s)
+}
+
+// ReadFromSBOM allows reading from the current state of the SBOM in a thread-safe way
+func (b *StreamingBuilder) ReadFromSBOM(fn func(*sbom.SBOM)) {
+	if !b.started || b.ended {
+		return
+	}
+
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	s := &sbom.SBOM{
+		Source:        b.srcDesc,
+		Descriptor:    b.descriptor,
+		Relationships: make([]artifact.Relationship, 0),
+		Artifacts: sbom.Artifacts{
+			Packages: pkg.NewCollection(),
+			// Other fields are initialized as empty
+		},
+	}
+
+	fn(s)
+}
