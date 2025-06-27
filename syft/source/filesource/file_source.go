@@ -240,15 +240,16 @@ func digestOfFileContents(path string) string {
 }
 
 func unarchiveToTmp(path string, unarchiver archives.Extractor) (string, func() error, error) {
+	var cleanupFn = func() error { return nil }
 	archive, err := os.Open(path)
 	if err != nil {
-		return "", func() error { return nil }, fmt.Errorf("unable to open archive: %w", err)
+		return "", cleanupFn, fmt.Errorf("unable to open archive: %v", err)
 	}
 	defer archive.Close()
 
 	tempDir, err := os.MkdirTemp("", "syft-archive-contents-")
 	if err != nil {
-		return "", func() error { return nil }, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
+		return "", cleanupFn, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
 	}
 
 	visitor := func(_ context.Context, file archives.FileInfo) error {
