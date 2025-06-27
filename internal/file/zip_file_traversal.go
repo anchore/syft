@@ -75,7 +75,7 @@ func ExtractFromZipToUniqueTempFile(ctx context.Context, archivePath, dir string
 		return results, nil
 	}
 
-	visitor := func(ctx context.Context, file archives.FileInfo) error {
+	visitor := func(_ context.Context, file archives.FileInfo) error {
 		tempfilePrefix := filepath.Base(filepath.Clean(file.NameInArchive)) + "-"
 		tempFile, err := os.CreateTemp(dir, tempfilePrefix)
 		if err != nil {
@@ -121,7 +121,7 @@ func ContentsFromZip(ctx context.Context, archivePath string, paths ...string) (
 		return results, nil
 	}
 
-	visitor := func(ctx context.Context, file archives.FileInfo) error {
+	visitor := func(_ context.Context, file archives.FileInfo) error {
 		zippedFile, err := file.Open()
 		if err != nil {
 			return fmt.Errorf("unable to read file=%q from zip=%q: %w", file.NameInArchive, archivePath, err)
@@ -151,7 +151,7 @@ func ContentsFromZip(ctx context.Context, archivePath string, paths ...string) (
 
 // UnzipToDir extracts a zip archive to a target directory.
 func UnzipToDir(ctx context.Context, archivePath, targetDir string) error {
-	visitor := func(ctx context.Context, file archives.FileInfo) error {
+	visitor := func(_ context.Context, file archives.FileInfo) error {
 		joinedPath, err := safeJoin(targetDir, file.NameInArchive)
 		if err != nil {
 			return err

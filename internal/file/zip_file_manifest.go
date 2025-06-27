@@ -28,7 +28,7 @@ func NewZipFileManifest(ctx context.Context, archivePath string) (ZipFileManifes
 		}
 	}()
 
-	err = archives.Zip{}.Extract(ctx, zipReader, func(ctx context.Context, file archives.FileInfo) error {
+	err = archives.Zip{}.Extract(ctx, zipReader, func(_ context.Context, file archives.FileInfo) error {
 		manifest.Add(file.NameInArchive, file.FileInfo)
 		return nil
 	})

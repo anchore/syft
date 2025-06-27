@@ -45,7 +45,7 @@ func ExtractGlobsFromTarToUniqueTempFile(ctx context.Context, archivePath, dir s
 		return results, nil
 	}
 
-	visitor := func(ctx context.Context, file archives.FileInfo) error {
+	visitor := func(_ context.Context, file archives.FileInfo) error {
 		// ignore directories
 		if file.IsDir() {
 			return nil
