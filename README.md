@@ -37,9 +37,11 @@ Syft development is sponsored by [Anchore](https://anchore.com/), and is release
 Syft binaries are provided for Linux, macOS and Windows.
 
 ### Recommended
-> ```bash 
+```bash 
 > curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 > ```
+
+> **Note for Windows users:** The `sh` command requires a Unix-like shell environment, such as Git Bash or Windows Subsystem for Linux (WSL).
 
 Install script options:
 -	`-b`: Specify a custom installation directory (defaults to `./bin`)
