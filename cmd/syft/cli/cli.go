@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/commands"
-	constants "github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal"
 )
 
 // Application constructs the `syft packages` command and aliases the root command to `syft packages`.
@@ -62,5 +62,5 @@ func create(id clio.Identification, out io.Writer) (clio.Application, *cobra.Com
 }
 
 func schemaVersion() (string, any) {
-	return "SchemaVersion", constants.JSONSchemaVersion
+	return "SchemaVersion", internal.JSONSchemaVersion
 }
