@@ -109,8 +109,7 @@ func (m *UI) Teardown(force bool) error {
 		})
 	}
 
-	// TODO: allow for writing out the full log output to the screen (only a partial log is shown currently)
-	// this needs coordination to know what the last frame event is to change the state accordingly (which isn't possible now)
+	// Design Note: Currently, only a partial log is shown. Displaying the full log output requires coordination with the last frame event to change the state accordingly, which is not currently implemented.
 	return writeEvents(m.out, m.err, m.quiet, m.finalizeEvents...)
 }
 
