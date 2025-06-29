@@ -173,12 +173,12 @@ loop:
 			})
 		}
 
-		d.chroot = r.chroot
+		d.Chroot = r.Chroot
 		d.realPath = currentArchivePath.realPath
 		d.accessPath = currentArchivePath.accessPath
 		d.archiveRealPath = archiveDestinationPath
 
-		r.archives = append(r.archives, &d.filetreeResolver)
+		r.archives = append(r.archives, &d.FiletreeResolver)
 	}
 
 	return nil
