@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -19,15 +20,37 @@ type filetreeResolver struct {
 	tree          filetree.Reader
 	index         filetree.IndexReader
 	searchContext filetree.Searcher
+
+	realPath   string
+	accessPath string
+	tempDir    string
+	archives   []*filetreeResolver
 }
 
 func (r *filetreeResolver) requestPath(userPath string) (string, error) {
-	return r.chroot.ToNativePath(userPath)
+	requestPath, err := r.chroot.ToNativePath(userPath)
+	if err != nil {
+		return "", err
+	}
+
+	if r.accessPath != "" && r.tempDir != "" {
+		return strings.Replace(requestPath, r.accessPath, r.tempDir, 1), nil
+	}
+
+	return requestPath, nil
 }
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
 func (r filetreeResolver) responsePath(path string) string {
+	if r.tempDir != "" && strings.HasPrefix(path, r.tempDir) {
+		path = r.realPath
+	}
 	return r.chroot.ToChrootPath(path)
+}
+
+func (r filetreeResolver) responseAccessPath(path string) string {
+	responsePath := strings.Replace(path, r.tempDir, r.accessPath, 1)
+	return r.chroot.ToChrootPath(responsePath)
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -36,7 +59,18 @@ func (r *filetreeResolver) HasPath(userPath string) bool {
 	if err != nil {
 		return false
 	}
-	return r.tree.HasPath(stereoscopeFile.Path(requestPath))
+
+	if r.tree.HasPath(stereoscopeFile.Path(requestPath)) {
+		return true
+	}
+
+	for _, archive := range r.archives {
+		if archive.HasPath(userPath) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // FilesByPath returns all file.References that match the given paths from the file index.
@@ -80,18 +114,31 @@ func (r filetreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 			references = append(references,
 				file.NewVirtualLocationFromDirectory(
 					r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
-					r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
+					r.responseAccessPath(userStrPath),    // the path used to access this file, relative to the resolver root
 					*ref.Reference,
 				),
 			)
 		}
 	}
 
+	for _, archive := range r.archives {
+		locations, err := archive.FilesByPath(userPaths...)
+		if err != nil {
+			return nil, err
+		}
+		references = append(references, locations...)
+	}
+
 	return references, nil
 }
 
 func (r filetreeResolver) requestGlob(pattern string) (string, error) {
-	return r.chroot.ToNativeGlob(pattern)
+	nativeGlob, err := r.chroot.ToNativeGlob(pattern)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Replace(nativeGlob, r.accessPath, r.tempDir, 1), nil
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
@@ -123,12 +170,26 @@ func (r filetreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 			}
 
 			loc := file.NewVirtualLocationFromDirectory(
-				r.responsePath(string(refVia.RealPath)),    // the actual path relative to the resolver root
-				r.responsePath(string(refVia.RequestPath)), // the path used to access this file, relative to the resolver root
+				r.responsePath(string(refVia.RealPath)),          // the actual path relative to the resolver root
+				r.responseAccessPath(string(refVia.RequestPath)), // the path used to access this file, relative to the resolver root
 				*refVia.Reference,
 			)
 			uniqueFileIDs.Add(*refVia.Reference)
 			uniqueLocations = append(uniqueLocations, loc)
+		}
+	}
+
+	for _, archive := range r.archives {
+		archiveUniqueLocations, err := archive.FilesByGlob(patterns...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, archiveUniqueLocation := range archiveUniqueLocations {
+			if uniqueFileIDs.Contains(archiveUniqueLocation.Reference()) {
+				continue
+			}
+			uniqueLocations = append(uniqueLocations, archiveUniqueLocation)
 		}
 	}
 
@@ -158,6 +219,14 @@ func (r filetreeResolver) FileContentsByLocation(location file.Location) (io.Rea
 
 	entry, err := r.index.Get(location.Reference())
 	if err != nil {
+		for _, archive := range r.archives {
+			entry, err = archive.index.Get(location.Reference())
+			if err == nil {
+				break
+			}
+		}
+	}
+	if err != nil {
 		return nil, err
 	}
 
@@ -184,8 +253,19 @@ func (r *filetreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 			select {
 			case <-ctx.Done():
 				return
-			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref):
+			case results <- file.NewVirtualLocationFromDirectory(r.responsePath(string(ref.RealPath)), r.responseAccessPath(string(ref.RealPath)), ref):
 				continue
+			}
+		}
+
+		for _, archive := range r.archives {
+			for location := range archive.AllLocations(ctx) {
+				select {
+				case <-ctx.Done():
+					return
+				case results <- location:
+					continue
+				}
 			}
 		}
 	}()
@@ -194,11 +274,18 @@ func (r *filetreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 
 func (r *filetreeResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	entry, err := r.index.Get(location.Reference())
-	if err != nil {
-		return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
+	if err == nil {
+		return entry.Metadata, nil
 	}
 
-	return entry.Metadata, nil
+	for _, archive := range r.archives {
+		entry, err = archive.index.Get(location.Reference())
+		if err == nil {
+			return entry.Metadata, nil
+		}
+	}
+
+	return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 }
 
 func (r *filetreeResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
@@ -218,11 +305,25 @@ func (r *filetreeResolver) FilesByMIMEType(types ...string) ([]file.Location, er
 		}
 		location := file.NewVirtualLocationFromDirectory(
 			r.responsePath(string(refVia.RealPath)),
-			r.responsePath(string(refVia.RequestPath)),
+			r.responseAccessPath(string(refVia.RequestPath)),
 			*refVia.Reference,
 		)
 		uniqueFileIDs.Add(*refVia.Reference)
 		uniqueLocations = append(uniqueLocations, location)
+	}
+
+	for _, archive := range r.archives {
+		archiveUniqueLocations, err := archive.FilesByMIMEType(types...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, archiveUniqueLocation := range archiveUniqueLocations {
+			if uniqueFileIDs.Contains(archiveUniqueLocation.Reference()) {
+				continue
+			}
+			uniqueLocations = append(uniqueLocations, archiveUniqueLocation)
+		}
 	}
 
 	return uniqueLocations, nil

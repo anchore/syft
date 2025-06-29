@@ -21,10 +21,11 @@ import (
 var _ source.Source = (*directorySource)(nil)
 
 type Config struct {
-	Path    string
-	Base    string
-	Exclude source.ExcludeConfig
-	Alias   source.Alias
+	Path                          string
+	Base                          string
+	Exclude                       source.ExcludeConfig
+	Alias                         source.Alias
+	MaxArchiveRecursiveIndexDepth int
 }
 
 type directorySource struct {
@@ -32,6 +33,7 @@ type directorySource struct {
 	config   Config
 	resolver *fileresolver.Directory
 	mutex    *sync.Mutex
+	closer   func() error
 }
 
 func NewFromPath(path string) (source.Source, error) {
@@ -145,11 +147,12 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		// this should be the only file resolver that might have overlap with where files are cached
 		exclusionFunctions = append(exclusionFunctions, excludeCachePathVisitors()...)
 
-		res, err := fileresolver.NewFromDirectory(s.config.Path, s.config.Base, exclusionFunctions...)
+		res, cleanupFn, err := fileresolver.NewFromDirectory(s.config.Path, s.config.Base, s.config.MaxArchiveRecursiveIndexDepth, exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
 
+		s.closer = cleanupFn
 		s.resolver = res
 	}
 
@@ -159,8 +162,11 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 func (s *directorySource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	if s.closer == nil {
+		return nil
+	}
 	s.resolver = nil
-	return nil
+	return s.closer()
 }
 
 func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
