@@ -15,20 +15,33 @@ import (
 	"github.com/anchore/syft/syft/internal/windows"
 )
 
-type filetreeResolver struct {
-	chroot        ChrootContext
-	tree          filetree.Reader
-	index         filetree.IndexReader
-	searchContext filetree.Searcher
+// TODO: consider making a constructor for this
+type FiletreeResolver struct {
+	Chroot        ChrootContext
+	Tree          filetree.Reader
+	Index         filetree.IndexReader
+	SearchContext filetree.Searcher
+	Opener        func(stereoscopeFile.Reference) (io.ReadCloser, error)
 
 	realPath        string
 	accessPath      string
 	archiveRealPath string
-	archives        []*filetreeResolver
+	archives        []*FiletreeResolver
 }
 
-func (r *filetreeResolver) requestPath(userPath string) (string, error) {
-	requestPath, err := r.chroot.ToNativePath(userPath)
+func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
+	// RealPath is posix so for windows file resolver we need to translate
+	// to its true on disk path.
+	filePath := string(ref.RealPath)
+	if windows.HostRunningOnWindows() {
+		filePath = windows.FromPosix(filePath)
+	}
+
+	return stereoscopeFile.NewLazyReadCloser(filePath), nil
+}
+
+func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
+	requestPath, err := r.Chroot.ToNativePath(userPath)
 	if err != nil {
 		return "", err
 	}
@@ -41,30 +54,30 @@ func (r *filetreeResolver) requestPath(userPath string) (string, error) {
 }
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
-func (r filetreeResolver) responsePath(path string) string {
+func (r FiletreeResolver) responsePath(path string) string {
 	if r.archiveRealPath != "" && strings.HasPrefix(path, r.archiveRealPath) {
 		path = r.realPath
 	}
 
-	return r.chroot.ToChrootPath(path)
+	return r.Chroot.ToChrootPath(path)
 }
 
-func (r filetreeResolver) responseAccessPath(path string) string {
+func (r FiletreeResolver) responseAccessPath(path string) string {
 	if r.accessPath != "" && r.archiveRealPath != "" {
 		path = strings.Replace(path, r.archiveRealPath, r.accessPath, 1)
 	}
 
-	return r.chroot.ToChrootPath(path)
+	return r.Chroot.ToChrootPath(path)
 }
 
 // HasPath indicates if the given path exists in the underlying source.
-func (r *filetreeResolver) HasPath(userPath string) bool {
+func (r *FiletreeResolver) HasPath(userPath string) bool {
 	requestPath, err := r.requestPath(userPath)
 	if err != nil {
 		return false
 	}
 
-	if r.tree.HasPath(stereoscopeFile.Path(requestPath)) {
+	if r.Tree.HasPath(stereoscopeFile.Path(requestPath)) {
 		return true
 	}
 
@@ -78,7 +91,7 @@ func (r *filetreeResolver) HasPath(userPath string) bool {
 }
 
 // FilesByPath returns all file.References that match the given paths from the file index.
-func (r filetreeResolver) FilesByPath(userPaths ...string) ([]file.Location, error) {
+func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, error) {
 	var references = make([]file.Location, 0)
 
 	for _, userPath := range userPaths {
@@ -89,7 +102,7 @@ func (r filetreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 		}
 
 		// we should be resolving symlinks and preserving this information as a AccessPath to the real file
-		ref, err := r.searchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
+		ref, err := r.SearchContext.SearchByPath(userStrPath, filetree.FollowBasenameLinks)
 		if err != nil {
 			log.Tracef("unable to evaluate symlink for path=%q : %+v", userPath, err)
 			continue
@@ -99,7 +112,7 @@ func (r filetreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 			continue
 		}
 
-		entry, err := r.index.Get(*ref.Reference)
+		entry, err := r.Index.Get(*ref.Reference)
 		if err != nil {
 			log.Warnf("unable to get file by path=%q : %+v", userPath, err)
 			continue
@@ -136,8 +149,8 @@ func (r filetreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 	return references, nil
 }
 
-func (r filetreeResolver) requestGlob(pattern string) (string, error) {
-	nativeGlob, err := r.chroot.ToNativeGlob(pattern)
+func (r FiletreeResolver) requestGlob(pattern string) (string, error) {
+	nativeGlob, err := r.Chroot.ToNativeGlob(pattern)
 	if err != nil {
 		return "", err
 	}
@@ -150,7 +163,7 @@ func (r filetreeResolver) requestGlob(pattern string) (string, error) {
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
-func (r filetreeResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
+func (r FiletreeResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]file.Location, 0)
 
@@ -159,7 +172,7 @@ func (r filetreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 		if err != nil {
 			return nil, err
 		}
-		refVias, err := r.searchContext.SearchByGlob(requestGlob, filetree.FollowBasenameLinks)
+		refVias, err := r.SearchContext.SearchByGlob(requestGlob, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +180,7 @@ func (r filetreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 			if !refVia.HasReference() || uniqueFileIDs.Contains(*refVia.Reference) {
 				continue
 			}
-			entry, err := r.index.Get(*refVia.Reference)
+			entry, err := r.Index.Get(*refVia.Reference)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get file metadata for reference %s: %w", refVia.RealPath, err)
 			}
@@ -206,7 +219,7 @@ func (r filetreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
-func (r *filetreeResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
+func (r *FiletreeResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
 	paths, err := r.FilesByPath(path)
 	if err != nil {
 		return nil
@@ -220,15 +233,15 @@ func (r *filetreeResolver) RelativeFileByPath(_ file.Location, path string) *fil
 
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (r filetreeResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+func (r FiletreeResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	if location.RealPath == "" {
 		return nil, errors.New("empty path given")
 	}
 
-	entry, err := r.index.Get(location.Reference())
+	entry, err := r.Index.Get(location.Reference())
 	if err != nil {
 		for _, archive := range r.archives {
-			entry, err = archive.index.Get(location.Reference())
+			entry, err = archive.Index.Get(location.Reference())
 			if err == nil {
 				break
 			}
@@ -243,21 +256,14 @@ func (r filetreeResolver) FileContentsByLocation(location file.Location) (io.Rea
 		return nil, fmt.Errorf("cannot read contents of non-file %q", location.Reference().RealPath)
 	}
 
-	// RealPath is posix so for windows file resolver we need to translate
-	// to its true on disk path.
-	filePath := string(location.Reference().RealPath)
-	if windows.HostRunningOnWindows() {
-		filePath = windows.FromPosix(filePath)
-	}
-
-	return stereoscopeFile.NewLazyReadCloser(filePath), nil
+	return r.Opener(location.Reference())
 }
 
-func (r *filetreeResolver) AllLocations(ctx context.Context) <-chan file.Location {
+func (r *FiletreeResolver) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
 		defer close(results)
-		for _, ref := range r.tree.AllFiles(stereoscopeFile.AllTypes()...) {
+		for _, ref := range r.Tree.AllFiles(stereoscopeFile.AllTypes()...) {
 			select {
 			case <-ctx.Done():
 				return
@@ -280,14 +286,14 @@ func (r *filetreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 	return results
 }
 
-func (r *filetreeResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
-	entry, err := r.index.Get(location.Reference())
+func (r *FiletreeResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
+	entry, err := r.Index.Get(location.Reference())
 	if err == nil {
 		return entry.Metadata, nil
 	}
 
 	for _, archive := range r.archives {
-		entry, err = archive.index.Get(location.Reference())
+		entry, err = archive.Index.Get(location.Reference())
 		if err == nil {
 			return entry.Metadata, nil
 		}
@@ -296,11 +302,11 @@ func (r *filetreeResolver) FileMetadataByLocation(location file.Location) (file.
 	return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 }
 
-func (r *filetreeResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
+func (r *FiletreeResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
 	uniqueLocations := make([]file.Location, 0)
 
-	refVias, err := r.searchContext.SearchByMIMEType(types...)
+	refVias, err := r.SearchContext.SearchByMIMEType(types...)
 	if err != nil {
 		return nil, err
 	}

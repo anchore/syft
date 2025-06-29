@@ -13,6 +13,17 @@ func HasAnyOfPrefixes(input string, prefixes ...string) bool {
 	return false
 }
 
+// HasAnyOfSuffixes returns an indication if the given string has any of the given suffixes.
+func HasAnyOfSuffixes(input string, suffixes ...string) bool {
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(input, suffix) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func TruncateMiddleEllipsis(input string, maxLen int) string {
 	if len(input) <= maxLen {
 		return input

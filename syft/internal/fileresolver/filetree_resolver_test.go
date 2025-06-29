@@ -1039,7 +1039,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 		require.NoError(t, cleanupFn())
 	})
 
-	exists, existingPath, err := resolver.tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := resolver.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1357,7 +1357,7 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
-		entry, err := resolver.index.Get(loc.Reference())
+		entry, err := resolver.Index.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir() {
 			dirLoc = &loc
@@ -1595,7 +1595,7 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	r, err := NewFromFile(parentPath, filePath)
 	require.NoError(t, err)
 
-	exists, existingPath, err := r.tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1649,7 +1649,7 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
-		entry, err := resolver.index.Get(loc.Reference())
+		entry, err := resolver.Index.Get(loc.Reference())
 		require.NoError(t, err)
 		if dirLoc == nil && entry.Metadata.IsDir() {
 			dirLoc = &loc
