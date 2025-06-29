@@ -9,14 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/wagoodman/go-partybus"
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/internal/windows"
 )
 
@@ -64,14 +62,14 @@ func (r *directoryIndexer) build() (filetree.Reader, filetree.IndexReader, error
 	return r.tree, r.index, indexAllRoots(r.path, r.indexTree)
 }
 
-func indexAllRoots(root string, indexer func(string, *progress.Stage) ([]string, error)) error {
+func indexAllRoots(root string, indexer func(string, *progress.AtomicStage) ([]string, error)) error {
 	// why account for multiple roots? To cover cases when there is a symlink that references above the root path,
 	// in which case we need to additionally index where the link resolves to. it's for this reason why the filetree
 	// must be relative to the root of the filesystem (and not just relative to the given path).
 	pathsToIndex := []string{root}
 	fullPathsMap := map[string]struct{}{}
 
-	stager, prog := indexingProgress(root)
+	prog := bus.StartIndexingFiles(root)
 	defer prog.SetCompleted()
 loop:
 	for {
@@ -85,7 +83,7 @@ loop:
 			currentPath, pathsToIndex = pathsToIndex[0], pathsToIndex[1:]
 		}
 
-		additionalRoots, err := indexer(currentPath, stager)
+		additionalRoots, err := indexer(currentPath, prog.AtomicStage)
 		if err != nil {
 			return fmt.Errorf("unable to index filesystem path=%q: %w", currentPath, err)
 		}
@@ -101,7 +99,7 @@ loop:
 	return nil
 }
 
-func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]string, error) {
+func (r *directoryIndexer) indexTree(root string, stager *progress.AtomicStage) ([]string, error) {
 	log.WithFields("path", root).Trace("indexing filetree")
 
 	var roots []string
@@ -144,7 +142,7 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.Stage) ([]str
 
 	err = filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
-			stager.Current = path
+			stager.Set(path)
 
 			newRoot, err := r.indexPath(path, info, err)
 
@@ -179,7 +177,7 @@ func isRealPath(root string) (bool, error) {
 	return rootParent == realRootParent, nil
 }
 
-func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]string, error) {
+func (r *directoryIndexer) indexBranch(root string, stager *progress.AtomicStage) ([]string, error) {
 	rootRealPath, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		var pathErr *os.PathError
@@ -213,7 +211,7 @@ func (r *directoryIndexer) indexBranch(root string, stager *progress.Stage) ([]s
 			targetPath = p
 		}
 
-		stager.Current = targetPath
+		stager.Set(targetPath)
 
 		lstat, err := os.Lstat(targetPath)
 		newRoot, err := r.indexPath(targetPath, lstat, err)
@@ -491,23 +489,4 @@ func requireFileInfo(_, _ string, info os.FileInfo, _ error) error {
 		return ErrSkipPath
 	}
 	return nil
-}
-
-func indexingProgress(path string) (*progress.Stage, *progress.Manual) {
-	stage := &progress.Stage{}
-	prog := progress.NewManual(-1)
-
-	bus.Publish(partybus.Event{
-		Type:   event.FileIndexingStarted,
-		Source: path,
-		Value: struct {
-			progress.Stager
-			progress.Progressable
-		}{
-			Stager:       progress.Stager(stage),
-			Progressable: prog,
-		},
-	})
-
-	return stage, prog
 }

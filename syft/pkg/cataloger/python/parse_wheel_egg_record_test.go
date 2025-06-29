@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -46,7 +48,8 @@ func TestParseWheelEggRecord(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual := parseWheelOrEggRecord(fixture)
+			actual, err := parseWheelOrEggRecord(file.NewLocationReadCloser(file.NewLocation(test.Fixture), fixture))
+			require.NoError(t, err, "failed to parse: %+v", err)
 
 			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)

@@ -1,0 +1,8 @@
+
+[TestHandler_handlePullSourceStarted/snap_download_in_progress - 1]
+ ⠋ Downloading snap file...        ━━━━━━━━━━━━━━━━━━━━                example-app_1.0_amd64.snap 
+---
+
+[TestHandler_handlePullSourceStarted/snap_download_complete - 1]
+ ✔ Snap downloaded successfully                                        example-app_1.0_amd64.snap 
+---

@@ -25,7 +25,7 @@ type indexerMock struct {
 	additionalRoots map[string][]string
 }
 
-func (m *indexerMock) indexer(s string, _ *progress.Stage) ([]string, error) {
+func (m *indexerMock) indexer(s string, _ *progress.AtomicStage) ([]string, error) {
 	m.observedRoots = append(m.observedRoots, s)
 	return m.additionalRoots[s], nil
 }
