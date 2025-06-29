@@ -1664,6 +1664,7 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 }
 
 func TestFileResolver_AllLocations(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	// Verify both the parent and the file itself are indexed
 	filePath := "./test-fixtures/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
@@ -1685,11 +1686,10 @@ func TestFileResolver_AllLocations(t *testing.T) {
 	sort.Strings(pathsList)
 
 	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
-
-	goleak.VerifyNone(t)
 }
 
 func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	filePath := "./test-fixtures/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
@@ -1703,6 +1703,4 @@ func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 		break
 	}
 	cancel()
-
-	goleak.VerifyNone(t)
 }

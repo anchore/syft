@@ -21,10 +21,10 @@ type filetreeResolver struct {
 	index         filetree.IndexReader
 	searchContext filetree.Searcher
 
-	realPath   string
-	accessPath string
-	tempDir    string
-	archives   []*filetreeResolver
+	realPath        string
+	accessPath      string
+	archiveRealPath string
+	archives        []*filetreeResolver
 }
 
 func (r *filetreeResolver) requestPath(userPath string) (string, error) {
@@ -33,8 +33,8 @@ func (r *filetreeResolver) requestPath(userPath string) (string, error) {
 		return "", err
 	}
 
-	if r.accessPath != "" && r.tempDir != "" {
-		return strings.Replace(requestPath, r.accessPath, r.tempDir, 1), nil
+	if r.accessPath != "" && r.archiveRealPath != "" {
+		return strings.Replace(requestPath, r.accessPath, r.archiveRealPath, 1), nil
 	}
 
 	return requestPath, nil
@@ -42,15 +42,19 @@ func (r *filetreeResolver) requestPath(userPath string) (string, error) {
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
 func (r filetreeResolver) responsePath(path string) string {
-	if r.tempDir != "" && strings.HasPrefix(path, r.tempDir) {
+	if r.archiveRealPath != "" && strings.HasPrefix(path, r.archiveRealPath) {
 		path = r.realPath
 	}
+
 	return r.chroot.ToChrootPath(path)
 }
 
 func (r filetreeResolver) responseAccessPath(path string) string {
-	responsePath := strings.Replace(path, r.tempDir, r.accessPath, 1)
-	return r.chroot.ToChrootPath(responsePath)
+	if r.accessPath != "" && r.archiveRealPath != "" {
+		path = strings.Replace(path, r.archiveRealPath, r.accessPath, 1)
+	}
+
+	return r.chroot.ToChrootPath(path)
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -138,7 +142,11 @@ func (r filetreeResolver) requestGlob(pattern string) (string, error) {
 		return "", err
 	}
 
-	return strings.Replace(nativeGlob, r.accessPath, r.tempDir, 1), nil
+	if r.accessPath != "" && r.archiveRealPath != "" {
+		return strings.Replace(nativeGlob, r.accessPath, r.archiveRealPath, 1), nil
+	}
+
+	return nativeGlob, nil
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.

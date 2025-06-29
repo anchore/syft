@@ -16,8 +16,8 @@ import (
 type archiveAccessPath struct {
 	realPath        string
 	accessPath      string
-	archiveDepth    int
 	archiveRealPath string
+	archiveDepth    int
 }
 
 const (
@@ -100,7 +100,11 @@ func (r *Directory) buildIndex() error {
 func (r *Directory) buildArchiveIndex(archiveTempDir string, archives []string, maxArchiveIndexDepth int) error {
 	archivesToIndex := make([]archiveAccessPath, len(archives))
 	for i, archive := range archives {
-		archivesToIndex[i] = archiveAccessPath{realPath: archive, accessPath: archive, archiveRealPath: archive}
+		archivesToIndex[i] = archiveAccessPath{
+			realPath:        archive,
+			accessPath:      archive,
+			archiveRealPath: archive,
+		}
 	}
 
 loop:
@@ -119,59 +123,59 @@ loop:
 			continue
 		}
 
-		archivePath, err := os.MkdirTemp(archiveTempDir, archiveContentTempPathPattern)
+		envelopedUnarchiver, err := archiver.ByExtension(currentArchivePath.archiveRealPath)
+		if err != nil {
+			return fmt.Errorf("could not determine archive envelope type: %w", err)
+		}
+
+		unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver)
+		if !ok {
+			return fmt.Errorf("unarchiver %T is not an archiver", envelopedUnarchiver)
+		}
+
+		archiveDestinationTempDir, err := os.MkdirTemp(archiveTempDir, archiveContentTempPathPattern)
 		if err != nil {
 			return fmt.Errorf("unable to create tempdir for archive processing: %w", err)
 		}
 
-		archiveRealPath, err := filepath.EvalSymlinks(archivePath)
+		archiveDestinationPath, err := filepath.EvalSymlinks(archiveDestinationTempDir)
 		if err != nil {
 			var pathErr *os.PathError
 			if errors.As(err, &pathErr) {
 				// we can't index the path, but we shouldn't consider this to be fatal
 				// TODO: known-unknowns
-				log.WithFields("archivePath", archivePath, "error", err).Trace("unable to evaluate symlink while indexing branch")
-				return nil
+				log.WithFields("archivePath", archiveDestinationTempDir, "error", err).Trace("unable to evaluate symlink while indexing branch")
+				continue
 			}
 			return err
 		}
 
-		envelopedUnarchiver, err := archiver.ByExtension(currentArchivePath.archiveRealPath)
-		if err != nil {
-			return err
+		if err = unarchiver.Unarchive(currentArchivePath.archiveRealPath, archiveDestinationPath); err != nil {
+			return fmt.Errorf("unable to unarchive nested file: %w", err)
 		}
 
-		unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver)
-		if !ok {
-			return ErrSkipPath
-		}
-
-		if err = unarchiver.Unarchive(currentArchivePath.archiveRealPath, archiveRealPath); err != nil {
-			return err
-		}
-
-		d, err := newFromDirectoryWithoutIndex(archiveRealPath, "")
+		d, err := newFromDirectoryWithoutIndex(archiveDestinationPath, "")
 		if err != nil {
 			return err
 		}
 
 		if err = d.buildIndex(); err != nil {
-			return err
+			return fmt.Errorf("unable to build index of archive: %w", err)
 		}
 
 		for _, archive := range d.indexer.archivePaths {
 			archivesToIndex = append(archivesToIndex, archiveAccessPath{
 				realPath:        currentArchivePath.realPath,
-				accessPath:      strings.Replace(archive, archiveRealPath, currentArchivePath.accessPath, 1),
-				archiveDepth:    currentArchivePath.archiveDepth + 1,
+				accessPath:      strings.Replace(archive, archiveDestinationPath, currentArchivePath.accessPath, 1),
 				archiveRealPath: archive,
+				archiveDepth:    currentArchivePath.archiveDepth + 1,
 			})
 		}
 
 		d.chroot = r.chroot
 		d.realPath = currentArchivePath.realPath
 		d.accessPath = currentArchivePath.accessPath
-		d.tempDir = archiveRealPath
+		d.archiveRealPath = archiveDestinationPath
 
 		r.archives = append(r.archives, &d.filetreeResolver)
 	}
