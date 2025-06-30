@@ -377,10 +377,10 @@ func convertRelationships(relationships []artifact.Relationship) map[string][]st
 	for _, relationship := range relationships {
 		from := relationship.From.(pkg.Package).Name
 		to := relationship.To.(pkg.Package).Name
-		if actualRelationships[from] == nil {
-			actualRelationships[from] = make([]string, 0)
+		if actualRelationships[to] == nil {
+			actualRelationships[to] = make([]string, 0)
 		}
-		actualRelationships[from] = append(actualRelationships[from], to)
+		actualRelationships[to] = append(actualRelationships[to], from)
 	}
 	for _, rels := range actualRelationships {
 		sort.Strings(rels)

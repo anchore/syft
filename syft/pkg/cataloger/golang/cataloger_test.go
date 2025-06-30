@@ -174,16 +174,86 @@ func Test_Binary_Cataloger_Stdlib_Cpe(t *testing.T) {
 
 func Test_Source_Cataloger_EntryPoint_Detection(t *testing.T) {
 	tests := []struct {
-		name    string
-		fixture string
+		name         string
+		fixture      string
+		expectedPkgs []string
+		expectedRels []string
 	}{
 		{
 			name:    "Go source cataloger should detect the topmost gomod and use its search path",
 			fixture: "test-fixtures/go-source",
+			expectedPkgs: []string{
+				"anchore.io/not/real @  ()",
+				"github.com/fsnotify/fsnotify @ v1.8.0 ()",
+				"github.com/go-viper/mapstructure/v2 @ v2.2.1 ()",
+				"github.com/google/uuid @ v1.6.0 ()",
+				"github.com/pelletier/go-toml/v2 @ v2.2.3 ()",
+				"github.com/sagikazarmark/locafero @ v0.7.0 ()",
+				"github.com/sirupsen/logrus @ v1.9.3 ()",
+				"github.com/sourcegraph/conc @ v0.3.0 ()",
+				"github.com/spf13/afero @ v1.12.0 ()",
+				"github.com/spf13/cast @ v1.7.1 ()",
+				"github.com/spf13/pflag @ v1.0.6 ()",
+				"github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/subosito/gotenv @ v1.6.0 ()",
+				"go.uber.org/multierr @ v1.10.0 ()",
+				"go.uber.org/zap @ v1.27.0 ()",
+				"golang.org/x/sys @ v0.33.0 ()",
+				"golang.org/x/text @ v0.21.0 ()",
+				"gopkg.in/yaml.v3 @ v3.0.1 ()",
+			},
+			expectedRels: []string{
+				"github.com/fsnotify/fsnotify @ v1.8.0 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/go-viper/mapstructure/v2 @ v2.2.1 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/google/uuid @ v1.6.0 () [dependency-of] anchore.io/not/real @  ()",
+				"github.com/pelletier/go-toml/v2 @ v2.2.3 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/sagikazarmark/locafero @ v0.7.0 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/sirupsen/logrus @ v1.9.3 () [dependency-of] anchore.io/not/real @  ()",
+				"github.com/sourcegraph/conc @ v0.3.0 () [dependency-of] github.com/sagikazarmark/locafero @ v0.7.0 ()",
+				"github.com/spf13/afero @ v1.12.0 () [dependency-of] github.com/sagikazarmark/locafero @ v0.7.0 ()",
+				"github.com/spf13/afero @ v1.12.0 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/spf13/cast @ v1.7.1 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/spf13/pflag @ v1.0.6 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"github.com/spf13/viper @ v1.20.1 () [dependency-of] anchore.io/not/real @  ()",
+				"github.com/subosito/gotenv @ v1.6.0 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+				"go.uber.org/multierr @ v1.10.0 () [dependency-of] go.uber.org/zap @ v1.27.0 ()",
+				"go.uber.org/zap @ v1.27.0 () [dependency-of] anchore.io/not/real @  ()",
+				"golang.org/x/sys @ v0.33.0 () [dependency-of] github.com/fsnotify/fsnotify @ v1.8.0 ()",
+				"golang.org/x/sys @ v0.33.0 () [dependency-of] github.com/sirupsen/logrus @ v1.9.3 ()",
+				"golang.org/x/text @ v0.21.0 () [dependency-of] github.com/spf13/afero @ v1.12.0 ()",
+				"golang.org/x/text @ v0.21.0 () [dependency-of] github.com/subosito/gotenv @ v1.6.0 ()",
+				"gopkg.in/yaml.v3 @ v3.0.1 () [dependency-of] github.com/spf13/viper @ v1.20.1 ()",
+			},
 		},
 		{
-			name:    "Go source cataloger should detect the topmost gomod and use its search path for nested paths",
-			fixture: "test-fixtures/-source",
+			name:    "go source cataloger returns the same as binary given the same source",
+			fixture: "test-fixtures/image-small",
+			expectedPkgs: []string{
+				"anchore.io/not/real @  ()",
+				"github.com/andybalholm/brotli @ v1.1.1 ()",
+				"github.com/dsnet/compress @ v0.0.2-0.20210315054119-f66993602bf5 ()",
+				"github.com/golang/snappy @ v0.0.4 ()",
+				"github.com/klauspost/compress @ v1.17.11 ()",
+				"github.com/klauspost/pgzip @ v1.2.6 ()",
+				"github.com/nwaples/rardecode @ v1.1.3 ()",
+				"github.com/pierrec/lz4/v4 @ v4.1.21 ()",
+				"github.com/ulikunitz/xz @ v0.5.12 ()",
+				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 ()",
+				"github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+			},
+			expectedRels: []string{
+				"github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 () [dependency-of] anchore.io/not/real @  ()",
+				"github.com/andybalholm/brotli @ v1.1.1 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/dsnet/compress @ v0.0.2-0.20210315054119-f66993602bf5 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/golang/snappy @ v0.0.4 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/klauspost/compress @ v1.17.11 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/klauspost/compress @ v1.17.11 () [dependency-of] github.com/klauspost/pgzip @ v1.2.6 ()",
+				"github.com/klauspost/pgzip @ v1.2.6 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/nwaples/rardecode @ v1.1.3 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/pierrec/lz4/v4 @ v4.1.21 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/ulikunitz/xz @ v0.5.12 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 () [dependency-of] github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 ()",
+			},
 		},
 	}
 
@@ -191,7 +261,8 @@ func Test_Source_Cataloger_EntryPoint_Detection(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				Expects(nil, nil).
+				ExpectsPackageStrings(test.expectedPkgs).
+				ExpectsRelationshipStrings(test.expectedRels).
 				TestCataloger(t, NewGoSourceCataloger(CatalogerConfig{}))
 		})
 	}

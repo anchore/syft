@@ -100,13 +100,13 @@ func (c goSourceCataloger) parseGoSourceEntry(ctx context.Context) (pkgs []pkg.P
 	if err != nil {
 		return pkgs, rels, err
 	}
-	vendoredSearch := collectVendoredModules(rootPkgs)
+	rootModules := filterNoModules(rootPkgs)
 
 	// - we need allModulePkgImports so we can perform a comprehensive license search;
 	// - syft packages are created from allModules
-	// - allDependencies is a data helper that allows us to view pruned module => module imports;
+	// - allDependencies is a convenience that allows us to view pruned module => module imports;
 	// note: allDependencies has already pruned local imports and only focuses on module => module dependencies
-	allModulePkgImports, allModules, allDependencies := c.visitPackages(rootPkgs, vendoredSearch)
+	allModulePkgImports, allModules, allDependencies := c.visitPackages(rootPkgs, rootModules)
 
 	pkgs, moduleToPkg := c.catalogModules(ctx, allModulePkgImports, allModules)
 	rels = buildModuleRelationships(pkgs, allDependencies, moduleToPkg)
@@ -191,8 +191,8 @@ func buildModuleRelationships(
 			}
 
 			rels = append(rels, artifact.Relationship{
-				From: fromPkg,
-				To:   toPkg,
+				From: toPkg,   // dep
+				To:   fromPkg, // parent
 				Type: artifact.DependencyOfRelationship,
 			})
 			seen[key] = struct{}{}
@@ -205,7 +205,7 @@ func buildModuleRelationships(
 func (c *goSourceCataloger) loadPackages(ctx context.Context) ([]*packages.Package, error) {
 	pkgsCfg := &packages.Config{
 		Context: ctx,
-		// packages.NeedImports: needed for module imports
+		// packages.NeedImports: needed to read module imports and build pkg import graph
 		// packages.NeedFiles: needed to try and get the LICENSE file for the package
 		// packages.NeedName: needed to add the name and package path for package assembly
 		// packages.NeedModule: need the module added in case entrypoint is not sibling location
@@ -227,7 +227,7 @@ func (c *goSourceCataloger) loadPackages(ctx context.Context) ([]*packages.Packa
 	return filtered, nil
 }
 
-func collectVendoredModules(pkgs []*packages.Package) []*packages.Module {
+func filterNoModules(pkgs []*packages.Package) []*packages.Module {
 	var result []*packages.Module
 	for _, pkg := range pkgs {
 		if pkg.Module == nil {
