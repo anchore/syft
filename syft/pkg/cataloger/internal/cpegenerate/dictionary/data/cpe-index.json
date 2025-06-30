@@ -7751,7 +7751,7 @@
         "cpe:2.3:a:vsourz:all_in_one_redirection:*:*:*:*:*:wordpress:*:*"
       ],
       "all-in-one-schemaorg-rich-snippets": [
-        "cpe:2.3:a:brainstormforce:schema:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:brainstormforce:schema:*:*:*:*:-:wordpress:*:*"
       ],
       "all-in-one-seo-pack": [
         "cpe:2.3:a:aioseo:all_in_one_seo:*:*:*:*:*:wordpress:*:*",
@@ -11977,6 +11977,9 @@
       "global-content-blocks": [
         "cpe:2.3:a:global_content_blocks_project:global_content_blocks:*:*:*:*:*:wordpress:*:*"
       ],
+      "global-gallery": [
+        "cpe:2.3:a:lcweb:global_gallery:*:*:*:*:*:wordpress:*:*"
+      ],
       "glossary-by-codeat": [
         "cpe:2.3:a:codeat:glossary:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13146,6 +13149,9 @@
       ],
       "labtools": [
         "cpe:2.3:a:creativityjuice:labtools:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ladipage": [
+        "cpe:2.3:a:ladipage:ladipage:*:*:*:*:*:wordpress:*:*"
       ],
       "lana-downloads-manager": [
         "cpe:2.3:a:lana:lana_downloads_manager:*:*:*:*:*:wordpress:*:*"
@@ -17780,6 +17786,9 @@
       "thirstyaffiliates": [
         "cpe:2.3:a:caseproof:thirstyaffiliates_affiliate_link_manager:*:*:*:*:*:wordpress:*:*"
       ],
+      "threepress": [
+        "cpe:2.3:a:kerryoco:threepress:*:*:*:*:*:wordpress:*:*"
+      ],
       "thumbs-rating": [
         "cpe:2.3:a:quicoto:thumbs_rating:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17912,6 +17921,9 @@
       ],
       "transbank-webpay-plus-rest": [
         "cpe:2.3:a:transbank:transbank_webpay_rest:*:*:*:*:*:wordpress:*:*"
+      ],
+      "transfinanz": [
+        "cpe:2.3:a:kwmsources:transfinanz:*:*:*:*:*:wordpress:*:*"
       ],
       "transients-manager": [
         "cpe:2.3:a:wpbeginner:transients_manager:*:*:*:*:*:wordpress:*:*"
@@ -18954,6 +18966,9 @@
       ],
       "woo-shipping-dpd-baltic": [
         "cpe:2.3:a:dpdgroup:woocommerce_shipping:*:*:*:*:*:wordpress:*:*"
+      ],
+      "woo-smart-quick-view": [
+        "cpe:2.3:a:wpclever:wpc_smart_quick_view_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "woo-smart-wishlist": [
         "cpe:2.3:a:wpclever:wpc_smart_wishlist_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -20793,6 +20808,9 @@
       ],
       "wppizza": [
         "cpe:2.3:a:wp-pizza:wppizza:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wprequal": [
+        "cpe:2.3:a:kevinbrent:wprequal:*:*:*:*:*:wordpress:*:*"
       ],
       "wps-child-theme-generator": [
         "cpe:2.3:a:wpserveur:wps_child_theme_generator:*:*:*:*:*:wordpress:*:*"
