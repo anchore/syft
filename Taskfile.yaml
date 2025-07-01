@@ -78,6 +78,7 @@ tasks:
       - task: integration
       - task: validate-cyclonedx-schema
       - task: test-utils
+      - task: snapshot
       - task: cli
       - task: check-docker-cache
 
