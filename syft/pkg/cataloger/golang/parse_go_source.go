@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -393,51 +392,6 @@ func isStdLib(pkg *packages.Package) bool {
 // isTestBinary returns true iff pkg is a test binary.
 func isTestBinary(pkg *packages.Package) bool {
 	return strings.HasSuffix(pkg.PkgPath, ".test")
-}
-
-type library struct {
-	// Packages contain import paths for Go packages in this library.
-	// It may not be the complete set of all packages in the library.
-	Packages []string
-	// Parent go module.
-	module *packages.Module
-}
-
-// Name is the common prefix of the import paths for all of the packages in this library.
-func (l *library) Name() string {
-	return commonAncestor(l.Packages)
-}
-
-func (l *library) String() string {
-	return l.Name()
-}
-
-func (l *library) Version() string {
-	if l.module != nil {
-		return l.module.Version
-	}
-	return ""
-}
-
-func commonAncestor(paths []string) string {
-	if len(paths) == 0 {
-		return ""
-	}
-	if len(paths) == 1 {
-		return paths[0]
-	}
-	sort.Strings(paths)
-	small, large := paths[0], paths[len(paths)-1]
-	lastSlashIndex := 0
-	for i := 0; i < len(small) && i < len(large); i++ {
-		if small[i] != large[i] {
-			return small[:lastSlashIndex]
-		}
-		if small[i] == '/' {
-			lastSlashIndex = i
-		}
-	}
-	return small
 }
 
 // handle replace directives
