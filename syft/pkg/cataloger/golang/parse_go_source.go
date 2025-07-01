@@ -30,10 +30,6 @@ type goSourceCataloger struct {
 	config GoSourceConfig
 }
 
-type ResolverResolutionPath interface {
-	ResolverResolutionPath() string
-}
-
 func (c goSourceCataloger) Name() string { return sourceCatalogerName }
 
 func (c goSourceCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
@@ -399,7 +395,7 @@ func isTestBinary(pkg *packages.Package) bool {
 	return strings.HasSuffix(pkg.PkgPath, ".test")
 }
 
-type Library struct {
+type library struct {
 	// Packages contain import paths for Go packages in this library.
 	// It may not be the complete set of all packages in the library.
 	Packages []string
@@ -408,15 +404,15 @@ type Library struct {
 }
 
 // Name is the common prefix of the import paths for all of the packages in this library.
-func (l *Library) Name() string {
+func (l *library) Name() string {
 	return commonAncestor(l.Packages)
 }
 
-func (l *Library) String() string {
+func (l *library) String() string {
 	return l.Name()
 }
 
-func (l *Library) Version() string {
+func (l *library) Version() string {
 	if l.module != nil {
 		return l.module.Version
 	}
