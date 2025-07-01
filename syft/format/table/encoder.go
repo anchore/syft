@@ -68,7 +68,40 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	columns = append(columns, "") // add a column for duplicate annotations
 	rows = markDuplicateRows(rows)
 
-	table := tablewriter.NewTable(writer,
+	table := newTableWriter(writer, columns)
+
+	if err := table.Bulk(rows); err != nil {
+		return fmt.Errorf("failed to add table rows: %w", err)
+	}
+
+	return table.Render()
+}
+
+func newTableWriter(writer io.Writer, columns []string) *tablewriter.Table {
+	// Here’s a simplified diagram of a table with a header, rows, and footer:
+	//
+	// [Borders.Top]
+	// | Header1 | Header2 |  (Line below header: Lines.ShowTop)
+	// [Separators.BetweenRows]
+	// | Row1    | Row1    |
+	// [Separators.BetweenRows]
+	// | Row2    | Row2    |
+	// [Lines.ShowBottom]
+	// | Footer1 | Footer2 |
+	// [Borders.Bottom]
+	//
+	// So for example:
+	// ┌──────┬─────┐  <- Borders.Top
+	// │ NAME │ AGE │
+	// ├──────┼─────┤  <- Lines.ShowTop
+	// │ Alice│ 25  │
+	// ├──────┼─────┤  <- Separators.BetweenRows
+	// │ Bob  │ 30  │
+	// ├──────┼─────┤  <- Lines.ShowBottom
+	// │ Total│ 2   │
+	// └──────┴─────┘  <- Borders.Bottom
+
+	return tablewriter.NewTable(writer,
 		tablewriter.WithHeader(columns),
 		tablewriter.WithHeaderAutoFormat(tw.On),
 		tablewriter.WithHeaderAutoWrap(tw.WrapNone),
@@ -79,31 +112,46 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		tablewriter.WithTrimSpace(tw.On),
 		tablewriter.WithAutoHide(tw.On),
 		tablewriter.WithRenderer(renderer.NewBlueprint()),
-		tablewriter.WithBehavior(tw.Behavior{
-			TrimSpace: tw.On,
-			AutoHide:  tw.On,
-		}),
-		tablewriter.WithRendition(tw.Rendition{
-			Symbols: tw.NewSymbols(tw.StyleNone),
-			Borders: tw.Border{
-				Left:   tw.Off,
-				Top:    tw.Off,
-				Right:  tw.Off,
-				Bottom: tw.Off,
+		tablewriter.WithBehavior(
+			tw.Behavior{
+				TrimSpace: tw.On,
+				AutoHide:  tw.On,
 			},
-			Settings: tw.Settings{
-				Separators: tw.Separators{
-					BetweenRows:    tw.Off,
-					BetweenColumns: tw.Off,
+		),
+		tablewriter.WithPadding(
+			tw.Padding{
+				Left:   "",
+				Right:  "  ",
+				Top:    "",
+				Bottom: "",
+			},
+		),
+		tablewriter.WithRendition(
+			tw.Rendition{
+				Symbols: tw.NewSymbols(tw.StyleNone),
+				Borders: tw.Border{
+					Left:   tw.Off,
+					Top:    tw.Off,
+					Right:  tw.Off,
+					Bottom: tw.Off,
+				},
+				Settings: tw.Settings{
+					Separators: tw.Separators{
+						ShowHeader:     tw.Off,
+						ShowFooter:     tw.Off,
+						BetweenRows:    tw.Off,
+						BetweenColumns: tw.Off,
+					},
+					Lines: tw.Lines{
+						ShowTop:        tw.Off,
+						ShowBottom:     tw.Off,
+						ShowHeaderLine: tw.Off,
+						ShowFooterLine: tw.Off,
+					},
 				},
 			},
-		}),
+		),
 	)
-
-	table.Bulk(rows)
-	table.Render()
-
-	return nil
 }
 
 func markDuplicateRows(items [][]string) [][]string {
