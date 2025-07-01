@@ -47,7 +47,7 @@ func NewFromDirectory(root, base string, maxArchiveRecursiveIndexDepth int, path
 		return nil, cleanupFn, fmt.Errorf("unable to build index: %w", err)
 	}
 
-	if maxArchiveRecursiveIndexDepth != 0 {
+	if maxArchiveRecursiveIndexDepth != 0 && len(directory.indexer.archivePaths) > 0 {
 		archiveTempDir, err := os.MkdirTemp("", archiveTempPathPattern)
 		if err != nil {
 			return nil, cleanupFn, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
@@ -102,8 +102,8 @@ func (r *Directory) buildArchiveIndex(archiveTempDir string, archives []string, 
 	archivesToIndex := make([]archiveAccessPath, len(archives))
 	for i, archive := range archives {
 		archivesToIndex[i] = archiveAccessPath{
-			realPath:        archive,
-			accessPath:      archive,
+			realPath:        r.Chroot.ToChrootPath(archive),
+			accessPath:      r.Chroot.ToChrootPath(archive),
 			archiveRealPath: archive,
 		}
 	}
@@ -173,7 +173,6 @@ loop:
 			})
 		}
 
-		d.Chroot = r.Chroot
 		d.realPath = currentArchivePath.realPath
 		d.accessPath = currentArchivePath.accessPath
 		d.archiveRealPath = archiveDestinationPath

@@ -55,10 +55,6 @@ func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
 func (r FiletreeResolver) responsePath(path string) string {
-	if r.archiveRealPath != "" && strings.HasPrefix(path, r.archiveRealPath) {
-		path = r.realPath
-	}
-
 	return r.Chroot.ToChrootPath(path)
 }
 
