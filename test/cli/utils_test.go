@@ -83,19 +83,15 @@ func pullDockerImage(t testing.TB, image string) {
 func runCycloneDXInDocker(t testing.TB, env map[string]string, image string, f *os.File, args ...string) (*exec.Cmd, string, string) {
 	t.Helper()
 
-	// Base Docker args
-	allArgs := []string{
-		"run",
-		"-t",
-		"-v", fmt.Sprintf("%s:/sbom", f.Name()),
+	allArgs := []string{"run", "-t"}
+
+	if runtime.GOARCH == "arm64" {
+		t.Logf("Detected %s/%s — adding --platform=linux/amd64 for emulation", runtime.GOOS, runtime.GOARCH)
+		allArgs = append(allArgs, "--platform=linux/amd64")
 	}
 
-	if runtime.GOOS == "linux" && runtime.GOARCH == "arm64" {
-		t.Log("Detected linux/arm64 — adding --platform=linux/amd64 for qemu emulation")
-		allArgs = append([]string{"--platform=linux/amd64"}, allArgs...)
-	}
+	allArgs = append(allArgs, "-v", fmt.Sprintf("%s:/sbom", f.Name()))
 
-	// Append the image and CycloneDX args
 	allArgs = append(allArgs, image)
 	allArgs = append(allArgs, args...)
 
