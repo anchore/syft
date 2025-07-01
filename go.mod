@@ -62,7 +62,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/magiconair/properties v1.8.10
-	github.com/mholt/archives v0.1.2
+	github.com/mholt/archives v0.1.3
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
 	github.com/olekukonko/tablewriter v0.0.5
@@ -285,7 +285,10 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-require github.com/containerd/errdefs/pkg v0.3.0 // indirect
+require (
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
+	github.com/mikelolasagasti/xz v1.0.1 // indirect
+)
 
 retract (
 	v1.25.0 // published with a replace directive (confusing for API users)

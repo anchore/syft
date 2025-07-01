@@ -81,18 +81,23 @@ func pullDockerImage(t testing.TB, image string) {
 
 // docker run -v $(pwd)/sbom:/sbom cyclonedx/cyclonedx-cli:latest validate --input-format json --input-version v1_4 --input-file /sbom
 func runCycloneDXInDocker(t testing.TB, env map[string]string, image string, f *os.File, args ...string) (*exec.Cmd, string, string) {
-	allArgs := append(
-		[]string{
-			"run",
-			"-t",
-			"-v",
-			fmt.Sprintf("%s:/sbom", f.Name()),
-			image,
-		},
-		args...,
-	)
+	t.Helper()
+
+	allArgs := []string{"run", "-t"}
+
+	if runtime.GOARCH == "arm64" {
+		t.Logf("Detected %s/%s — adding --platform=linux/amd64 for emulation", runtime.GOOS, runtime.GOARCH)
+		allArgs = append(allArgs, "--platform=linux/amd64")
+	}
+
+	allArgs = append(allArgs, "-v", fmt.Sprintf("%s:/sbom", f.Name()))
+
+	allArgs = append(allArgs, image)
+	allArgs = append(allArgs, args...)
+
 	cmd := exec.Command("docker", allArgs...)
 	stdout, stderr, _ := runCommand(cmd, env)
+
 	return cmd, stdout, stderr
 }
 
@@ -286,6 +291,10 @@ func getSyftBinaryLocationByOS(t testing.TB, goOS string) string {
 	archPath := runtime.GOARCH
 	if runtime.GOARCH == "amd64" {
 		archPath = fmt.Sprintf("%s_v1", archPath)
+	}
+
+	if runtime.GOARCH == "arm64" {
+		archPath = fmt.Sprintf("%s_v8.0", archPath)
 	}
 	// note: there is a subtle - vs _ difference between these versions
 	switch goOS {
