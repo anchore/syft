@@ -33,7 +33,7 @@ func TestPackageDeduplication(t *testing.T) {
 				"curl-minimal-7.76.1-31.el9":         3, // curl upgrade layer + all above layers
 				"wget-1.21.1-8.el9_4":                4, // wget + all above layers
 				"vsftpd-3.0.5-6.el9":                 2, // vsftpd + all above layers
-				"httpd-2.4.62-1.el9_5.2":             1, // last layer
+				"httpd-2.4.62-4.el9":                 1, // last layer
 			},
 		},
 		{
@@ -51,7 +51,7 @@ func TestPackageDeduplication(t *testing.T) {
 				"curl-minimal-7.76.1-31.el9": 1, // upgrade
 				"wget-1.21.1-8.el9_4":        1,
 				"vsftpd-3.0.5-6.el9":         1,
-				"httpd-2.4.62-1.el9_5.2":     1,
+				"httpd-2.4.62-4.el9":         1,
 			},
 		},
 	}

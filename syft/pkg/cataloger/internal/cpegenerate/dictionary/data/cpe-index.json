@@ -4116,6 +4116,9 @@
         "cpe:2.3:a:mysql_project:mysql:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:mysqljs:mysql:*:*:*:*:*:node.js:*:*"
       ],
+      "mysql2": [
+        "cpe:2.3:a:sidorares:mysql2:*:*:*:*:*:node.js:*:*"
+      ],
       "mysqljs": [
         "cpe:2.3:a:mysqljs_project:mysqljs:*:*:*:*:*:node.js:*:*"
       ],
@@ -7748,7 +7751,7 @@
         "cpe:2.3:a:vsourz:all_in_one_redirection:*:*:*:*:*:wordpress:*:*"
       ],
       "all-in-one-schemaorg-rich-snippets": [
-        "cpe:2.3:a:brainstormforce:schema:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:brainstormforce:schema:*:*:*:*:-:wordpress:*:*"
       ],
       "all-in-one-seo-pack": [
         "cpe:2.3:a:aioseo:all_in_one_seo:*:*:*:*:*:wordpress:*:*",
@@ -8152,6 +8155,9 @@
       ],
       "auto-post-thumbnail": [
         "cpe:2.3:a:cm-wp:auto_featured_image:*:*:*:*:*:wordpress:*:*"
+      ],
+      "auto-prune-posts": [
+        "cpe:2.3:a:klarned:auto_prune_posts:*:*:*:*:*:wordpress:*:*"
       ],
       "auto-refresh-single-page": [
         "cpe:2.3:a:rymera:auto_refresh_single_page:*:*:*:*:*:wordpress:*:*"
@@ -8654,6 +8660,9 @@
       "bookshelf": [
         "cpe:2.3:a:bookshelf_project:bookshelf:*:*:*:*:*:wordpress:*:*"
       ],
+      "bookster": [
+        "cpe:2.3:a:wpbookster:bookster:*:*:*:*:*:wordpress:*:*"
+      ],
       "boostify-header-footer-builder": [
         "cpe:2.3:a:woostify:boostify_header_footer_builder_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
@@ -9022,6 +9031,9 @@
       ],
       "cars-seller-auto-classifieds-script": [
         "cpe:2.3:a:cars-seller-auto-classifieds-script_project:cars-seller-auto-classifieds-script:*:*:*:*:*:wordpress:*:*"
+      ],
+      "cart-tracking-for-woocommerce": [
+        "cpe:2.3:a:wpdever:cart_tracking_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "cart66-lite": [
         "cpe:2.3:a:reality66:cart66_lite:*:*:*:*:*:wordpress:*:*"
@@ -10122,6 +10134,9 @@
       ],
       "cww-companion": [
         "cpe:2.3:a:codeworkweb:cww_companion:*:*:*:*:*:wordpress:*:*"
+      ],
+      "cyan-backup": [
+        "cpe:2.3:a:toolstack:cyan_backup:*:*:*:*:*:wordpress:*:*"
       ],
       "cybersoldier": [
         "cpe:2.3:a:webbigt:cybersoldier:*:*:*:*:*:wordpress:*:*"
@@ -11450,6 +11465,9 @@
       "flat-preloader": [
         "cpe:2.3:a:flat_preloader_project:flat_preloader:*:*:*:*:*:wordpress:*:*"
       ],
+      "flatpm-wp": [
+        "cpe:2.3:a:mehanoid:flatpm:*:*:*:*:*:wordpress:*:*"
+      ],
       "flexi": [
         "cpe:2.3:a:odude:flexi:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11728,6 +11746,9 @@
       "funnel-builder": [
         "cpe:2.3:a:funnelkit:funnel_builder:*:*:*:*:*:wordpress:*:*"
       ],
+      "funnel-builder-pro": [
+        "cpe:2.3:a:funnelkit:funnel_builder:*:*:*:*:*:wordpress:*:*"
+      ],
       "funnelforms-free": [
         "cpe:2.3:a:funnelforms:funnelforms_free:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11836,6 +11857,9 @@
       ],
       "gdpr-data-request-form": [
         "cpe:2.3:a:whodunit:gdpr_data_request_form:*:*:*:*:*:wordpress:*:*"
+      ],
+      "gdpr-framework": [
+        "cpe:2.3:a:data443:gdpr_framework:*:*:*:*:*:wordpress:*:*"
       ],
       "gecka-terms-thumbnails": [
         "cpe:2.3:a:gecka:terms_thumbnails:*:*:*:*:*:wordpress:*:*"
@@ -11952,6 +11976,9 @@
       ],
       "global-content-blocks": [
         "cpe:2.3:a:global_content_blocks_project:global_content_blocks:*:*:*:*:*:wordpress:*:*"
+      ],
+      "global-gallery": [
+        "cpe:2.3:a:lcweb:global_gallery:*:*:*:*:*:wordpress:*:*"
       ],
       "glossary-by-codeat": [
         "cpe:2.3:a:codeat:glossary:*:*:*:*:*:wordpress:*:*"
@@ -12126,7 +12153,7 @@
         "cpe:2.3:a:greeklish-permalink_project:greeklish-permalink:*:*:*:*:*:wordpress:*:*"
       ],
       "greenshift-animation-and-page-builder-blocks": [
-        "cpe:2.3:a:greenshiftwp:greenshift_-_animation_and_page_builder_blocks:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:wpsoul:greenshift:*:*:*:*:*:wordpress:*:*"
       ],
       "greenwallet-gateway": [
         "cpe:2.3:a:envision\\\u0026company:woocommerce_green_wallet_gateway:*:*:*:*:*:wordpress:*:*"
@@ -13123,6 +13150,9 @@
       "labtools": [
         "cpe:2.3:a:creativityjuice:labtools:*:*:*:*:*:wordpress:*:*"
       ],
+      "ladipage": [
+        "cpe:2.3:a:ladipage:ladipage:*:*:*:*:*:wordpress:*:*"
+      ],
       "lana-downloads-manager": [
         "cpe:2.3:a:lana:lana_downloads_manager:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13226,7 +13256,8 @@
         "cpe:2.3:a:wplearnmanager:wp_learn_manager:*:*:*:*:*:wordpress:*:*"
       ],
       "learning-management-system": [
-        "cpe:2.3:a:masteriyo:masteriyo:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:themegrill:masteriyo:*:*:*:*:free:wordpress:*:*",
+        "cpe:2.3:a:themegrill:masteriyo:*:*:*:*:pro:wordpress:*:*"
       ],
       "learnpress": [
         "cpe:2.3:a:thimpress:learnpress:*:*:*:*:*:wordpress:*:*",
@@ -13399,6 +13430,9 @@
       "loco-translate": [
         "cpe:2.3:a:loco_translate_project:loco_translate:*:*:*:*:*:wordpress:*:*"
       ],
+      "logdash-activity-log": [
+        "cpe:2.3:a:deryckoe:logdash_activity_log:*:*:*:*:*:wordpress:*:*"
+      ],
       "loggedin": [
         "cpe:2.3:a:duckdev:loggedin:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13476,6 +13510,9 @@
       ],
       "luckywp-table-of-contents": [
         "cpe:2.3:a:theluckywp:luckywp_table_of_contents:*:*:*:*:*:wordpress:*:*"
+      ],
+      "lupsonline-link-netwerk": [
+        "cpe:2.3:a:lupsonline:seo_flow:*:*:*:*:*:wordpress:*:*"
       ],
       "lws-affiliation": [
         "cpe:2.3:a:lws:affiliation:*:*:*:*:*:wordpress:*:*"
@@ -13716,6 +13753,9 @@
       "maz-loader": [
         "cpe:2.3:a:feataholic:maz_loader:*:*:*:*:*:wordpress:*:*"
       ],
+      "mb-custom-post-type": [
+        "cpe:2.3:a:deluxeblogtips:mb_custom_post_types_\\\u0026_custom_taxonomies:*:*:*:*:*:wordpress:*:*"
+      ],
       "mdc-youtube-downloader": [
         "cpe:2.3:a:mdc_youtube_downloader_project:mdc_youtube_downloader:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13772,9 +13812,7 @@
         "cpe:2.3:a:mediavine:create:*:*:*:*:*:wordpress:*:*"
       ],
       "meeting-scheduler-by-vcita": [
-        "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar_for_wordpress:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar_for_wordpress_by_vcita:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:vcita:online_booking_\\\u0026_scheduling_calendar:*:*:*:*:*:wordpress:*:*"
       ],
       "mega-addons-for-visual-composer": [
         "cpe:2.3:a:topdigitaltrends:mega_addons_for_wpbakery_page_builder:*:*:*:*:*:wordpress:*:*"
@@ -13823,6 +13861,9 @@
       ],
       "membership-simplified-for-oap-members-only": [
         "cpe:2.3:a:membership_simplified_project:membership_simplified:*:*:*:*:*:wordpress:*:*"
+      ],
+      "memberspace": [
+        "cpe:2.3:a:memberspace:memberspace:*:*:*:*:*:wordpress:*:*"
       ],
       "memphis-documents-library": [
         "cpe:2.3:a:memphis_documents_library_project:memphis_documents_library:*:*:*:*:*:wordpress:*:*"
@@ -13949,6 +13990,9 @@
       ],
       "mobile-browser-color-select": [
         "cpe:2.3:a:script:mobile_browser_color_select:*:*:*:*:*:wordpress:*:*"
+      ],
+      "mobile-contact-bar": [
+        "cpe:2.3:a:annabansaghi:mobile_contact_bar:*:*:*:*:*:wordpress:*:*"
       ],
       "mobile-events-manager": [
         "cpe:2.3:a:mobile_events_manager_project:mobile_events_manager:*:*:*:*:*:wordpress:*:*",
@@ -14769,6 +14813,9 @@
       "payment-forms-for-paystack": [
         "cpe:2.3:a:paystack:payment_forms_for_paystack:*:*:*:*:*:wordpress:*:*"
       ],
+      "payment-gateway-for-telcell": [
+        "cpe:2.3:a:hkdigital:payment_gateway_for_telcell:*:*:*:*:*:wordpress:*:*"
+      ],
       "payment-gateway-stripe-and-woocommerce-integration": [
         "cpe:2.3:a:webtoffee:stripe_payment_plugin_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15185,6 +15232,9 @@
       "post-pay-counter": [
         "cpe:2.3:a:post_pay_counter_project:post_pay_counter:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:thecrowned:post_pay_counter:*:*:*:*:*:wordpress:*:*"
+      ],
+      "post-slider-and-carousel": [
+        "cpe:2.3:a:infornweb:post_slider_and_post_carousel:*:*:*:*:free:wordpress:*:*"
       ],
       "post-slider-carousel": [
         "cpe:2.3:a:i13websolution:post_sliders_\\\u0026_post_grids:*:*:*:*:*:wordpress:*:*"
@@ -16132,7 +16182,8 @@
         "cpe:2.3:a:scoutnet:kalender:*:*:*:*:*:wordpress:*:*"
       ],
       "scratch-win-giveaways-for-website-facebook": [
-        "cpe:2.3:a:akashmalik:scratch_\\\u0026_win:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:akashmalik:scratch_\\\u0026_win:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:appsmav:scratch_\\\u0026_win:*:*:*:*:*:wordpress:*:*"
       ],
       "scribble-maps": [
         "cpe:2.3:a:scribblemaps:scribble_maps:*:*:*:*:*:wordpress:*:*"
@@ -16563,6 +16614,9 @@
       ],
       "simple-form": [
         "cpe:2.3:a:devsabbirahmed:simple_form:*:*:*:*:*:wordpress:*:*"
+      ],
+      "simple-gallery-with-filter": [
+        "cpe:2.3:a:come2theweb:simple_gallery_with_filter:*:*:*:*:*:wordpress:*:*"
       ],
       "simple-history": [
         "cpe:2.3:a:simple_history_project:simple_history:*:*:*:*:*:wordpress:*:*"
@@ -17732,6 +17786,9 @@
       "thirstyaffiliates": [
         "cpe:2.3:a:caseproof:thirstyaffiliates_affiliate_link_manager:*:*:*:*:*:wordpress:*:*"
       ],
+      "threepress": [
+        "cpe:2.3:a:kerryoco:threepress:*:*:*:*:*:wordpress:*:*"
+      ],
       "thumbs-rating": [
         "cpe:2.3:a:quicoto:thumbs_rating:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17864,6 +17921,9 @@
       ],
       "transbank-webpay-plus-rest": [
         "cpe:2.3:a:transbank:transbank_webpay_rest:*:*:*:*:*:wordpress:*:*"
+      ],
+      "transfinanz": [
+        "cpe:2.3:a:kwmsources:transfinanz:*:*:*:*:*:wordpress:*:*"
       ],
       "transients-manager": [
         "cpe:2.3:a:wpbeginner:transients_manager:*:*:*:*:*:wordpress:*:*"
@@ -18040,6 +18100,9 @@
       "ultimate-classified-listings": [
         "cpe:2.3:a:webcodingplace:ultimate_classified_listings:*:*:*:*:*:wordpress:*:*"
       ],
+      "ultimate-coming-soon": [
+        "cpe:2.3:a:rstheme:ultimate_coming_soon_\\\u0026_maintenance:*:*:*:*:*:wordpress:*:*"
+      ],
       "ultimate-dashboard": [
         "cpe:2.3:a:davidvongries:ultimate_dashboard:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18205,6 +18268,9 @@
       ],
       "user-activity-log": [
         "cpe:2.3:a:solwininfotech:user_activity_log:*:*:*:*:*:wordpress:*:*"
+      ],
+      "user-activity-tracking-and-log": [
+        "cpe:2.3:a:mooveagency:user_activity_tracking_and_log:*:*:*:*:*:wordpress:*:*"
       ],
       "user-avatar-reloaded": [
         "cpe:2.3:a:wpexperts:user_avatar-reloaded:*:*:*:*:*:wordpress:*:*"
@@ -18483,6 +18549,9 @@
       "wc-affiliate": [
         "cpe:2.3:a:codexpert:wc_affiliate:*:*:*:*:*:wordpress:*:*"
       ],
+      "wc-checkout-getnet": [
+        "cpe:2.3:a:coffee-code:plugin_oficial:*:*:*:*:*:wordpress:*:*"
+      ],
       "wc-dynamic-pricing-and-discounts": [
         "cpe:2.3:a:rightpress:woocommerce_dynamic_pricing_\\\u0026_discounts:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18682,6 +18751,9 @@
       ],
       "whizzy": [
         "cpe:2.3:a:upqode:whizzy:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wholesale-market": [
+        "cpe:2.3:a:cedcommerce:wholesale_market:*:*:*:*:*:wordpress:*:*"
       ],
       "wholesale-pricing-woocommerce": [
         "cpe:2.3:a:wpfactory:quantity_dynamic_pricing_\\\u0026_bulk_discounts_for_woocommerce:*:*:*:*:free:wordpress:*:*"
@@ -18894,6 +18966,9 @@
       ],
       "woo-shipping-dpd-baltic": [
         "cpe:2.3:a:dpdgroup:woocommerce_shipping:*:*:*:*:*:wordpress:*:*"
+      ],
+      "woo-smart-quick-view": [
+        "cpe:2.3:a:wpclever:wpc_smart_quick_view_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "woo-smart-wishlist": [
         "cpe:2.3:a:wpclever:wpc_smart_wishlist_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -19150,7 +19225,8 @@
         "cpe:2.3:a:wordpress_popular_posts_project:wordpress_popular_posts:*:*:*:*:*:wordpress:*:*"
       ],
       "wordpress-popup": [
-        "cpe:2.3:a:incsub:hustle:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:incsub:hustle:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:wpmudev:hustle:*:*:*:*:*:wordpress:*:*"
       ],
       "wordpress-seo": [
         "cpe:2.3:a:yoast:wordpress_seo:*:*:*:*:*:wordpress:*:*",
@@ -20733,6 +20809,9 @@
       "wppizza": [
         "cpe:2.3:a:wp-pizza:wppizza:*:*:*:*:*:wordpress:*:*"
       ],
+      "wprequal": [
+        "cpe:2.3:a:kevinbrent:wprequal:*:*:*:*:*:wordpress:*:*"
+      ],
       "wps-child-theme-generator": [
         "cpe:2.3:a:wpserveur:wps_child_theme_generator:*:*:*:*:*:wordpress:*:*"
       ],
@@ -21393,6 +21472,9 @@
       ],
       "shapely": [
         "cpe:2.3:a:colorlib:shapely:*:*:*:*:*:wordpress:*:*"
+      ],
+      "simplecharm": [
+        "cpe:2.3:a:kmfoysal06:simplecharm:*:*:*:*:*:wordpress:*:*"
       ],
       "sinatra": [
         "cpe:2.3:a:sinatrateam:sinatra:*:*:*:*:*:wordpress:*:*"

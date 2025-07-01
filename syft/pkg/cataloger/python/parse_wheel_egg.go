@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"path"
 	"path/filepath"
@@ -16,6 +15,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -26,17 +26,15 @@ import (
 // fields are governed by the PyPA core metadata specification (https://packaging.python.org/en/latest/specifications/core-metadata/).
 func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pd, sources, err := assembleEggOrWheelMetadata(resolver, reader.Location)
-	if err != nil {
-		return nil, nil, err
-	}
+
 	if pd == nil {
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
 	// This can happen for Python 2.7 where it is reported from an egg-info, but Python is
 	// the actual runtime, it isn't a "package". The special-casing here allows to skip it
 	if pd.Name == "Python" {
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
 	pkgs := []pkg.Package{
@@ -47,11 +45,11 @@ func parseWheelOrEgg(ctx context.Context, resolver file.Resolver, _ *generic.Env
 		),
 	}
 
-	return pkgs, nil, nil
+	return pkgs, nil, err
 }
 
 // fetchInstalledFiles finds a corresponding installed-files.txt file for the given python package metadata file and returns the set of file records contained.
-func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
+func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location, sitePackagesRootPath string) (files []pkg.PythonFileRecord, sources []file.Location, retErr error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the installed-files.txt path to the same layer (or the next adjacent lower layer).
@@ -72,8 +70,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 		// parse the installed-files contents
 		installedFiles, err := parseInstalledFiles(installedFilesContents, metadataLocation.RealPath, sitePackagesRootPath)
 		if err != nil {
-			log.WithFields("error", err, "path", metadataLocation.RealPath).Trace("unable to parse installed-files.txt for python package")
-			return files, sources, nil
+			retErr = unknown.Newf(*installedFilesRef, "unable to parse installed-files.txt for python package: %w", retErr)
 		}
 
 		files = append(files, installedFiles...)
@@ -82,7 +79,7 @@ func fetchInstalledFiles(resolver file.Resolver, metadataLocation file.Location,
 }
 
 // fetchRecordFiles finds a corresponding RECORD file for the given python package metadata file and returns the set of file records contained.
-func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (files []pkg.PythonFileRecord, sources []file.Location, err error) {
+func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (files []pkg.PythonFileRecord, sources []file.Location, retErr error) {
 	// we've been given a file reference to a specific wheel METADATA file. note: this may be for a directory
 	// or for an image... for an image the METADATA file may be present within multiple layers, so it is important
 	// to reconcile the RECORD path to the same layer (or the next adjacent lower layer).
@@ -101,11 +98,12 @@ func fetchRecordFiles(resolver file.Resolver, metadataLocation file.Location) (f
 		defer internal.CloseAndLogError(recordContents, recordPath)
 
 		// parse the record contents
-		records := parseWheelOrEggRecord(recordContents)
+		var records []pkg.PythonFileRecord
+		records, retErr = parseWheelOrEggRecord(file.NewLocationReadCloser(*recordRef, recordContents))
 
 		files = append(files, records...)
 	}
-	return files, sources, nil
+	return files, sources, retErr
 }
 
 // fetchTopLevelPackages finds a corresponding top_level.txt file for the given python package metadata file and returns the set of package names contained.
@@ -133,7 +131,7 @@ func fetchTopLevelPackages(resolver file.Resolver, metadataLocation file.Locatio
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("could not read python package top_level.txt: %w", err)
+		return nil, nil, err
 	}
 
 	return pkgs, sources, nil
@@ -216,14 +214,15 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	}
 
 	// attach any python files found for the given wheel/egg installation
+	var errs error
 	r, s, err := fetchRecordFiles(resolver, metadataLocation)
 	if err != nil {
-		return nil, nil, err
+		errs = unknown.Joinf(errs, "could not read python package RECORD file: %w", err)
 	}
 	if len(r) == 0 {
 		r, s, err = fetchInstalledFiles(resolver, metadataLocation, pd.SitePackagesRootPath)
 		if err != nil {
-			return nil, nil, err
+			errs = unknown.Joinf(errs, "could not read python package installed-files.txt: %w", err)
 		}
 	}
 
@@ -233,7 +232,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	// attach any top-level package names found for the given wheel/egg installation
 	p, s, err := fetchTopLevelPackages(resolver, metadataLocation)
 	if err != nil {
-		return nil, nil, err
+		errs = unknown.Joinf(errs, "could not read python package top_level.txt: %w", err)
 	}
 	sources = append(sources, s...)
 	pd.TopLevelPackages = p
@@ -241,12 +240,12 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 	// attach any direct-url package data found for the given wheel/egg installation
 	d, s, err := fetchDirectURLData(resolver, metadataLocation)
 	if err != nil {
-		return nil, nil, err
+		errs = unknown.Joinf(errs, "could not read python package direct_url.json: %w", err)
 	}
 
 	sources = append(sources, s...)
 	pd.DirectURLOrigin = d
-	return &pd, sources, nil
+	return &pd, sources, errs
 }
 
 func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg.LicenseSet {
