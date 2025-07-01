@@ -75,8 +75,8 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, cfg EncoderSnapshotTestCon
 func requireEqual(t *testing.T, expected string, actual string) {
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		// uncomment to debug
-		//t.Logf("expected:\n%s", expected)
-		//t.Logf("actual:\n%s", actual)
+		// t.Logf("expected:\n%s", expected)
+		// t.Logf("actual:\n%s", actual)
 		t.Fatalf("mismatched output: %s", diff)
 	}
 }
