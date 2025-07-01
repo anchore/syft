@@ -65,7 +65,7 @@ require (
 	github.com/mholt/archives v0.1.3
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
-	github.com/olekukonko/tablewriter v0.0.5
+	github.com/olekukonko/tablewriter v1.0.7
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22
@@ -137,6 +137,7 @@ require (
 	github.com/containerd/containerd/api v1.8.0 // indirect
 	github.com/containerd/continuity v0.4.4 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
+	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
@@ -155,6 +156,7 @@ require (
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
+	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/fgprof v0.9.5 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
@@ -195,6 +197,7 @@ require (
 	github.com/mattn/go-localereader v0.0.2-0.20220822084749-2491eb6c1c75 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/mikelolasagasti/xz v1.0.1 // indirect
 	github.com/minio/minlz v1.0.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -213,6 +216,8 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/nwaples/rardecode/v2 v2.1.0 // indirect
+	github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6 // indirect
+	github.com/olekukonko/ll v0.0.8 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
@@ -283,11 +288,6 @@ require (
 	modernc.org/libc v1.65.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-)
-
-require (
-	github.com/containerd/errdefs/pkg v0.3.0 // indirect
-	github.com/mikelolasagasti/xz v1.0.1 // indirect
 )
 
 retract (
