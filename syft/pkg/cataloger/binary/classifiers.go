@@ -619,7 +619,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		},
 	}
 
-	return append(classifiers, DefaultJavaClassifiers()...)
+	return append(classifiers, defaultJavaClassifiers()...)
 }
 
 // singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the

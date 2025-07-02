@@ -6,7 +6,7 @@ import (
 )
 
 //nolint:funlen
-func DefaultJavaClassifiers() []binutils.Classifier {
+func defaultJavaClassifiers() []binutils.Classifier {
 	m := binutils.ContextualEvidenceMatchers{CatalogerName: catalogerName}
 
 	return []binutils.Classifier{
