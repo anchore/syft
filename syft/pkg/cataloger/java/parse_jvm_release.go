@@ -91,7 +91,7 @@ func parseJVMRelease(_ context.Context, resolver file.Resolver, _ *generic.Envir
 	// the reason we use the reference to get the real path is in cases where the file cataloger is involved
 	// (thus the real path is not available except for in the original file reference). This is important
 	// since the path is critical for distinguishing between different JVM vendors.
-	vendor, product := jvmPrimaryVendorProduct(ri.Implementor, string(reader.Reference().RealPath), ri.ImageType, hasJdk)
+	vendor, product := jvmPrimaryVendorProduct(ri, string(reader.Reference().RealPath), hasJdk)
 
 	p := pkg.Package{
 		Name:      product,
@@ -163,11 +163,11 @@ func jvmPurl(ri pkg.JavaVMRelease, version, vendor, product string) string {
 	return pURL.ToString()
 }
 
-func jvmPrimaryVendorProduct(implementor, path, imageType string, hasJdk bool) (string, string) {
-	implementor = strings.ReplaceAll(strings.ToLower(implementor), " ", "")
+func jvmPrimaryVendorProduct(ri *pkg.JavaVMRelease, path string, hasJdk bool) (string, string) {
+	implementor := strings.ReplaceAll(strings.ToLower(ri.Implementor), " ", "")
 
 	pickProduct := func() string {
-		if hasJdk || jvmProjectByType(imageType) == jdk {
+		if hasJdk || jvmProjectByType(ri.ImageType) == jdk {
 			return jdk
 		}
 		return jre
@@ -180,7 +180,13 @@ func jvmPrimaryVendorProduct(implementor, path, imageType string, hasJdk bool) (
 	case strings.Contains(implementor, "sun"):
 		return "sun", pickProduct()
 
-	case strings.Contains(implementor, "oracle") || strings.Contains(path, "oracle"):
+	case strings.Contains(implementor, "ibm") || strings.Contains(path, "/ibm"):
+		if hasJdk {
+			return "ibm", "java_sdk"
+		}
+		return "ibm", "java"
+
+	case strings.Contains(implementor, "oracle") || strings.Contains(path, "oracle") || strings.Contains(ri.BuildType, "commercial"):
 		return oracleVendor, pickProduct()
 	}
 	return oracleVendor, openJdkProduct
