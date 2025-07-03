@@ -25,6 +25,23 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 	}
 
 	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, licenseCandidates...)
+	// Handle both author and authors fields
+	var authorInfo string
+	if u.Author.Name != "" || u.Author.Email != "" || u.Author.URL != "" {
+		// Single author field exists, use it
+		authorInfo = u.Author.AuthorString()
+	}
+
+	// If authors field exists, append it
+	if len(u.Authors) > 0 {
+		authorsStr := u.Authors.AuthorsString()
+		if authorInfo != "" {
+			authorInfo = authorInfo + ", " + authorsStr
+		} else {
+			authorInfo = authorsStr
+		}
+	}
+
 	p := pkg.Package{
 		Name:      u.Name,
 		Version:   u.Version,
@@ -37,7 +54,7 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 			Name:        u.Name,
 			Version:     u.Version,
 			Description: u.Description,
-			Author:      u.Author.AuthorString(),
+			Author:      authorInfo,
 			Homepage:    u.Homepage,
 			URL:         u.Repository.URL,
 			Private:     u.Private,
