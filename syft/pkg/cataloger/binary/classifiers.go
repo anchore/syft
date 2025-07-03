@@ -28,11 +28,11 @@ func DefaultClassifiers() []binutils.Classifier {
 		// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
 		`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
 
-	return []binutils.Classifier{
+	classifiers := []binutils.Classifier{
 		{
 			Class:    "python-binary",
 			FileGlob: "**/python*",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				// try to find version information from libpython shared libraries
 				binutils.SharedLibraryLookup(
 					`^libpython[0-9]+(?:\.[0-9]+)+[a-z]?\.so.*$`,
@@ -98,7 +98,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
 				m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
 				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
@@ -114,72 +114,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
-			Class:    "java-binary-openjdk",
-			FileGlob: "**/java",
-			EvidenceMatcher: binutils.MatchExcluding(
-				binutils.EvidenceMatchers(
-					m.FileContentsVersionMatcher(
-						// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
-						// [NUL]openjdk[NUL]java[NUL]1.8[NUL]1.8.0_352-b08[NUL]
-						`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
-					m.FileContentsVersionMatcher(
-						// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]openjdk[NUL]java[NUL]
-						`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+openjdk\x00java`),
-				),
-				// don't match graalvm
-				"-jvmci-",
-			),
-			Package: "java/jre",
-			PURL:    mustPURL("pkg:generic/java/jre@version"),
-			// TODO the updates might need to be part of the CPE Attributes, like: 1.8.0:update152
-			CPEs: singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "java-binary-ibm",
-			FileGlob: "**/java",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// [NUL]java[NUL]1.8[NUL][NUL][NUL][NUL]1.8.0-foreman_2022_09_22_15_30-b00[NUL]
-				`(?m)\x00java\x00(?P<release>[0-9]+[.0-9]+)\x00{4}(?P<version>[0-9]+[-._a-zA-Z0-9]+)\x00`),
-			Package: "java/jre",
-			PURL:    mustPURL("pkg:generic/java/jre@version"),
-			CPEs:    singleCPE("cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "java-binary-oracle",
-			FileGlob: "**/java",
-			EvidenceMatcher: binutils.MatchExcluding(
-				m.FileContentsVersionMatcher(
-					// [NUL]19.0.1+10-21[NUL]
-					`(?m)\x00(?P<version>[0-9]+[.0-9]+[+][-0-9]+)\x00`),
-				// don't match openjdk
-				`\x00openjdk\x00`,
-			),
-			Package: "java/jre",
-			PURL:    mustPURL("pkg:generic/java/jre@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "java-binary-graalvm",
-			FileGlob: "**/java",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00(?P<version>[0-9]+[.0-9]+[.0-9]+\+[0-9]+-jvmci-[0-9]+[.0-9]+-b[0-9]+)\x00`),
-			Package: "java/graalvm",
-			PURL:    mustPURL("pkg:generic/java/graalvm@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:graalvm:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "java-binary-jdk",
-			FileGlob: "**/jdb",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?([-._a-zA-Z0-9]+)?)\x00`),
-			Package: "java/jdk",
-			PURL:    mustPURL("pkg:generic/java/jdk@version"),
-			CPEs:    singleCPE("cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
 			Class:    "nodejs-binary",
 			FileGlob: "**/node",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				// [NUL]node v0.10.48[NUL]
 				// [NUL]v0.12.18[NUL]
 				// [NUL]v4.9.1[NUL]
@@ -221,7 +158,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "haproxy-binary",
 			FileGlob: "**/haproxy",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(`(?m)version (?P<version>[0-9]+\.[0-9]+(\.|-dev|-rc)[0-9]+)(-[a-z0-9]{7})?, released 20`),
 				m.FileContentsVersionMatcher(`(?m)HA-Proxy version (?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)`),
 				m.FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+\.[0-9]+(\.|-dev)[0-9]+)-[0-9a-zA-Z]{7}.+HAProxy version`),
@@ -303,7 +240,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "mysql-binary",
 			FileGlob: "**/mysql",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				// shutdown[NUL]8.0.37[NUL][NUL][NUL][NUL][NUL]mysql_real_esc
 				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)\x00+mysql`),
 				// /export/home/pb2/build/sb_0-26781090-1516292385.58/release/mysql-8.0.4-rc/mysys_ssl/my_default.cc
@@ -380,7 +317,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "ruby-binary",
 			FileGlob: "**/ruby",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				rubyMatcher,
 				binutils.SharedLibraryLookup(
 					// try to find version information from libruby shared libraries
@@ -394,7 +331,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "erlang-binary",
 			FileGlob: "**/erlexec",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
 					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
@@ -411,7 +348,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "erlang-alpine-binary",
 			FileGlob: "**/beam.smp",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
 					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
@@ -432,7 +369,7 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "erlang-library",
 			FileGlob: "**/liberts_internal.a",
-			EvidenceMatcher: binutils.EvidenceMatchers(
+			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
 					// <artificial>[NUL]/usr/src/otp_src_25.3.2.6/erts/
 					`(?m)/src/otp_src_(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)/erts/`,
@@ -681,6 +618,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
 		},
 	}
+
+	return append(classifiers, defaultJavaClassifiers()...)
 }
 
 // singleCPE returns a []cpe.CPE with Source: Generated based on the cpe string or panics if the

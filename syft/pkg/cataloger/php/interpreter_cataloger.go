@@ -219,7 +219,7 @@ func (p interpreterCataloger) getClassifier(realPath string) (string, *binutils.
 
 	return name, &binutils.Classifier{
 		Class:           fmt.Sprintf("php-ext-%s-binary", name),
-		EvidenceMatcher: binutils.FileContentsVersionMatcher(match, p.name),
+		EvidenceMatcher: binutils.FileContentsVersionMatcher(p.name, match),
 		Package:         name,
 		PURL: packageurl.PackageURL{
 			Type: packageurl.TypeGeneric,

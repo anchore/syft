@@ -11,7 +11,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
@@ -36,16 +36,16 @@ func TestParseNativeImage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
 			f, err := os.Open("test-fixtures/java-builds/packages/" + test.fixture)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			readerCloser := io.NopCloser(f)
 			reader, err := unionreader.GetUnionReader(readerCloser)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			parsed := false
 			readers, err := unionreader.GetReaders(reader)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			for _, r := range readers {
 				ni, err := test.newFn(test.fixture, r)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				_, _, err = ni.fetchPkgs()
 				if err == nil {
 					t.Fatalf("should have failed to extract SBOM.")
@@ -228,11 +228,11 @@ func buildPackageMap(packages []pkg.Package) map[string]pkg.Package {
 }
 
 func verifyPackageFields(t *testing.T, expected, actual pkg.Package) {
-	assert.Equal(t, expected.Name, actual.Name)
-	assert.Equal(t, expected.Version, actual.Version)
-	assert.Equal(t, expected.FoundBy, actual.FoundBy)
-	assert.Equal(t, expected.PURL, actual.PURL)
-	assert.ElementsMatch(t, expected.CPEs, actual.CPEs)
+	require.Equal(t, expected.Name, actual.Name)
+	require.Equal(t, expected.Version, actual.Version)
+	require.Equal(t, expected.FoundBy, actual.FoundBy)
+	require.Equal(t, expected.PURL, actual.PURL)
+	require.ElementsMatch(t, expected.CPEs, actual.CPEs)
 }
 
 func verifyRelationships(t *testing.T, expected, actual []artifact.Relationship) {
@@ -260,8 +260,8 @@ func buildRelationshipMap(relationships []artifact.Relationship) map[string][]ar
 }
 
 func verifyRelationshipFields(t *testing.T, expected, actual []artifact.Relationship) {
-	assert.Equal(t, len(expected), len(actual))
+	require.Equal(t, len(expected), len(actual))
 	for i := range expected {
-		assert.Equal(t, expected[i].Type, actual[i].Type)
+		require.Equal(t, expected[i].Type, actual[i].Type)
 	}
 }

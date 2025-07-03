@@ -27,7 +27,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`, "cataloger-name"),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -38,7 +38,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`, "cataloger-name"),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 				},
@@ -53,7 +53,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)my-verison:(?P<version>[0-9.]+)`, "cataloger-name"),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
@@ -70,7 +70,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version-parts.txt",
-				EvidenceMatcher: FileContentsVersionMatcher(`(?m)\x00(?P<major>[0-9.]+)\x00(?P<minor>[0-9.]+)\x00(?P<patch>[0-9.]+)\x00`, "cataloger-name"),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)\x00(?P<major>[0-9.]+)\x00(?P<minor>[0-9.]+)\x00(?P<patch>[0-9.]+)\x00`),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -113,7 +113,7 @@ func TestClassifier_MarshalJSON(t *testing.T) {
 			classifier: Classifier{
 				Class:           "class",
 				FileGlob:        "glob",
-				EvidenceMatcher: FileContentsVersionMatcher(".thing", "cataloger-name"),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", ".thing"),
 				Package:         "pkg",
 				PURL: packageurl.PackageURL{
 					Type:       "type",
@@ -168,7 +168,7 @@ func TestFileContentsVersionMatcher(t *testing.T) {
 			mockGetContent := func(context MatcherContext) (unionreader.UnionReader, error) {
 				return unionreader.GetUnionReader(io.NopCloser(bytes.NewBufferString(tt.data)))
 			}
-			fn := FileContentsVersionMatcher(tt.pattern, "cataloger-name")
+			fn := FileContentsVersionMatcher("cataloger-name", tt.pattern)
 			p, err := fn(Classifier{}, MatcherContext{
 				GetReader: mockGetContent,
 			})
