@@ -35,8 +35,8 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 		Join(tagProvider(snapsource.NewLocalSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), SnapTag)).
 
 		// 2. try unspecific, local sources after other local sources last...
-		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), FileTag)).
-		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), DirTag)).
+		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias, cfg.MaxArchiveRecursiveIndexDepth), FileTag)).
+		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath, cfg.MaxArchiveRecursiveIndexDepth), DirTag)).
 
 		// 3. try remote sources after everything else...
 

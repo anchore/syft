@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -21,6 +22,11 @@ type FiletreeResolver struct {
 	Index         filetree.IndexReader
 	SearchContext filetree.Searcher
 	Opener        func(stereoscopeFile.Reference) (io.ReadCloser, error)
+
+	realPath        string
+	accessPath      string
+	archiveRealPath string
+	archives        []*FiletreeResolver
 }
 
 func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
@@ -35,11 +41,28 @@ func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
 }
 
 func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
-	return r.Chroot.ToNativePath(userPath)
+	requestPath, err := r.Chroot.ToNativePath(userPath)
+	if err != nil {
+		return "", err
+	}
+
+	if r.accessPath != "" && r.archiveRealPath != "" {
+		return strings.Replace(requestPath, r.accessPath, r.archiveRealPath, 1), nil
+	}
+
+	return requestPath, nil
 }
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
 func (r FiletreeResolver) responsePath(path string) string {
+	return r.Chroot.ToChrootPath(path)
+}
+
+func (r FiletreeResolver) responseAccessPath(path string) string {
+	if r.accessPath != "" && r.archiveRealPath != "" {
+		path = strings.Replace(path, r.archiveRealPath, r.accessPath, 1)
+	}
+
 	return r.Chroot.ToChrootPath(path)
 }
 
@@ -49,7 +72,18 @@ func (r *FiletreeResolver) HasPath(userPath string) bool {
 	if err != nil {
 		return false
 	}
-	return r.Tree.HasPath(stereoscopeFile.Path(requestPath))
+
+	if r.Tree.HasPath(stereoscopeFile.Path(requestPath)) {
+		return true
+	}
+
+	for _, archive := range r.archives {
+		if archive.HasPath(userPath) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // FilesByPath returns all file.References that match the given paths from the file index.
@@ -93,18 +127,35 @@ func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 			references = append(references,
 				file.NewVirtualLocationFromDirectory(
 					r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
-					r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
+					r.responseAccessPath(userStrPath),    // the path used to access this file, relative to the resolver root
 					*ref.Reference,
 				),
 			)
 		}
 	}
 
+	for _, archive := range r.archives {
+		locations, err := archive.FilesByPath(userPaths...)
+		if err != nil {
+			return nil, err
+		}
+		references = append(references, locations...)
+	}
+
 	return references, nil
 }
 
 func (r FiletreeResolver) requestGlob(pattern string) (string, error) {
-	return r.Chroot.ToNativeGlob(pattern)
+	nativeGlob, err := r.Chroot.ToNativeGlob(pattern)
+	if err != nil {
+		return "", err
+	}
+
+	if r.accessPath != "" && r.archiveRealPath != "" {
+		return strings.Replace(nativeGlob, r.accessPath, r.archiveRealPath, 1), nil
+	}
+
+	return nativeGlob, nil
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.
@@ -136,12 +187,26 @@ func (r FiletreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 			}
 
 			loc := file.NewVirtualLocationFromDirectory(
-				r.responsePath(string(refVia.RealPath)),    // the actual path relative to the resolver root
-				r.responsePath(string(refVia.RequestPath)), // the path used to access this file, relative to the resolver root
+				r.responsePath(string(refVia.RealPath)),          // the actual path relative to the resolver root
+				r.responseAccessPath(string(refVia.RequestPath)), // the path used to access this file, relative to the resolver root
 				*refVia.Reference,
 			)
 			uniqueFileIDs.Add(*refVia.Reference)
 			uniqueLocations = append(uniqueLocations, loc)
+		}
+	}
+
+	for _, archive := range r.archives {
+		archiveUniqueLocations, err := archive.FilesByGlob(patterns...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, archiveUniqueLocation := range archiveUniqueLocations {
+			if uniqueFileIDs.Contains(archiveUniqueLocation.Reference()) {
+				continue
+			}
+			uniqueLocations = append(uniqueLocations, archiveUniqueLocation)
 		}
 	}
 
@@ -171,6 +236,14 @@ func (r FiletreeResolver) FileContentsByLocation(location file.Location) (io.Rea
 
 	entry, err := r.Index.Get(location.Reference())
 	if err != nil {
+		for _, archive := range r.archives {
+			entry, err = archive.Index.Get(location.Reference())
+			if err == nil {
+				break
+			}
+		}
+	}
+	if err != nil {
 		return nil, err
 	}
 
@@ -190,8 +263,19 @@ func (r *FiletreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 			select {
 			case <-ctx.Done():
 				return
-			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref):
+			case results <- file.NewVirtualLocationFromDirectory(r.responsePath(string(ref.RealPath)), r.responseAccessPath(string(ref.RealPath)), ref):
 				continue
+			}
+		}
+
+		for _, archive := range r.archives {
+			for location := range archive.AllLocations(ctx) {
+				select {
+				case <-ctx.Done():
+					return
+				case results <- location:
+					continue
+				}
 			}
 		}
 	}()
@@ -200,11 +284,18 @@ func (r *FiletreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 
 func (r *FiletreeResolver) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	entry, err := r.Index.Get(location.Reference())
-	if err != nil {
-		return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
+	if err == nil {
+		return entry.Metadata, nil
 	}
 
-	return entry.Metadata, nil
+	for _, archive := range r.archives {
+		entry, err = archive.Index.Get(location.Reference())
+		if err == nil {
+			return entry.Metadata, nil
+		}
+	}
+
+	return file.Metadata{}, fmt.Errorf("location: %+v : %w", location, os.ErrNotExist)
 }
 
 func (r *FiletreeResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
@@ -224,11 +315,25 @@ func (r *FiletreeResolver) FilesByMIMEType(types ...string) ([]file.Location, er
 		}
 		location := file.NewVirtualLocationFromDirectory(
 			r.responsePath(string(refVia.RealPath)),
-			r.responsePath(string(refVia.RequestPath)),
+			r.responseAccessPath(string(refVia.RequestPath)),
 			*refVia.Reference,
 		)
 		uniqueFileIDs.Add(*refVia.Reference)
 		uniqueLocations = append(uniqueLocations, location)
+	}
+
+	for _, archive := range r.archives {
+		archiveUniqueLocations, err := archive.FilesByMIMEType(types...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, archiveUniqueLocation := range archiveUniqueLocations {
+			if uniqueFileIDs.Contains(archiveUniqueLocation.Reference()) {
+				continue
+			}
+			uniqueLocations = append(uniqueLocations, archiveUniqueLocation)
+		}
 	}
 
 	return uniqueLocations, nil
