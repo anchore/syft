@@ -481,6 +481,10 @@ func Test_toOsComponent(t *testing.T) {
 				},
 				Properties: &[]cyclonedx.Property{
 					{
+						Name:  "syft:distro:extendedSupport",
+						Value: "false",
+					},
+					{
 						Name:  "syft:distro:id",
 						Value: "myLinux",
 					},

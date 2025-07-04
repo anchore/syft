@@ -41,7 +41,7 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s, coordinateSorter),
 		Source:                toSourceModel(s.Source),
-		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
+		Distro:                toLinuxRelease(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
@@ -50,7 +50,7 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 	}
 }
 
-func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
+func toLinuxRelease(d *linux.Release) model.LinuxRelease {
 	if d == nil {
 		return model.LinuxRelease{}
 	}
@@ -73,6 +73,7 @@ func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
 		PrivacyPolicyURL: d.PrivacyPolicyURL,
 		CPEName:          d.CPEName,
 		SupportEnd:       d.SupportEnd,
+		ExtendedSupport:  d.ExtendedSupport,
 	}
 }
 
