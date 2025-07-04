@@ -41,7 +41,7 @@ func (gzp genericZipWrappedJavaArchiveParser) parseZipWrappedJavaArchive(ctx con
 	// functions support zips with shell scripts prepended to the file. Specifically, the helpers use the central
 	// header at the end of the file to determine where the beginning of the zip payload is (unlike the standard lib
 	// or archiver).
-	fileManifest, err := intFile.NewZipFileManifest(archivePath)
+	fileManifest, err := intFile.NewZipFileManifest(ctx, archivePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
