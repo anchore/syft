@@ -2,6 +2,6 @@ package task
 
 import "github.com/anchore/syft/internal/os"
 
-func NewFeatureDetectionTask() Task {
-	return NewTask("feature-detection", os.DetectFeatures)
+func NewOSFeatureDetectionTask() Task {
+	return NewTask("os-feature-detection", os.DetectFeatures)
 }
