@@ -16,6 +16,7 @@ type golangConfig struct {
 	Proxy                       string                        `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoProxy                     string                        `json:"no-proxy" yaml:"no-proxy" mapstructure:"no-proxy"`
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
+	GoSource                    golangSourceConfig            `json:"go-source" yaml:"go-source" mapstructure:"go-source"`
 }
 
 var _ interface {
@@ -49,6 +50,14 @@ type golangMainModuleVersionConfig struct {
 	FromBuildSettings bool `json:"from-build-settings" yaml:"from-build-settings" mapstructure:"from-build-settings"`
 }
 
+type golangSourceConfig struct {
+	IncludeTests       bool     `json:"include-tests" yaml:"include-tests" mapstructure:"include-tests"`
+	Directory          string   `json:"directory" yaml:"directory" mapstructure:"directory"`
+	ImportPaths        []string `json:"import-paths" yaml:"import-paths" mapstructure:"import-paths"`
+	IgnorePaths        []string `json:"ignore-paths" yaml:"ignore-paths" mapstructure:"ignore-paths"`
+	IncludeIgnoredDeps bool     `json:"include-ignored-deps" yaml:"include-ignored-deps" mapstructure:"include-ignored-deps"`
+}
+
 func defaultGolangConfig() golangConfig {
 	def := golang.DefaultCatalogerConfig()
 	return golangConfig{
@@ -63,6 +72,13 @@ func defaultGolangConfig() golangConfig {
 			FromLDFlags:       def.MainModuleVersion.FromLDFlags,
 			FromContents:      def.MainModuleVersion.FromContents,
 			FromBuildSettings: def.MainModuleVersion.FromBuildSettings,
+		},
+		GoSource: golangSourceConfig{
+			IncludeTests:       def.GoSourceConfig.IncludeTests,
+			Directory:          def.GoSourceConfig.Dir,
+			ImportPaths:        def.GoSourceConfig.ImportPaths,
+			IgnorePaths:        def.GoSourceConfig.IgnorePaths,
+			IncludeIgnoredDeps: def.GoSourceConfig.IncludeIgnoredDeps,
 		},
 	}
 }
