@@ -35,7 +35,5 @@ func TestDirectoryScanCompletesWithinTimeout(t *testing.T) {
 	for _, traitFn := range assertions {
 		traitFn(t, stdout, stderr, cmd.ProcessState.ExitCode())
 	}
-
 	logOutputOnFailure(t, cmd, stdout, stderr)
-
 }

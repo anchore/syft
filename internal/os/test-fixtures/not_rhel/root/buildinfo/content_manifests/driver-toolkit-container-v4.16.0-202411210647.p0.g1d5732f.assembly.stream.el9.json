@@ -1,0 +1,14 @@
+{
+  "image_contents": [],
+  "metadata": {
+    "icm_spec": "https://raw.githubusercontent.com/containerbuildsystem/atomic-reactor/f4abcfdaf8247a6b074f94fa84f3846f82d781c6/atomic_reactor/schemas/content_manifest.json",
+    "icm_version": 1,
+    "image_layer_index": 3
+  },
+  "content_sets": [
+    "rhel-9-for-x86_64-appstream-eus-rpms__9_DOT_4",
+    "rhel-9-for-x86_64-baseos-eus-rpms__9_DOT_4",
+    "rhel-9-for-x86_64-rt-rpms__9_DOT_4",
+    "rhocp-4.16-for-rhel-9-x86_64-rpms"
+  ]
+}

@@ -191,6 +191,7 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	scopeTasks := c.scopeTasks()
 	relationshipsTasks := c.relationshipTasks(src)
 	unknownTasks := c.unknownsTasks()
+	osFeatureDetectionTasks := c.osFeatureDetectionTasks()
 
 	pkgTasks, fileTasks, selectionEvidence, err := c.selectTasks(src)
 	if err != nil {
@@ -218,6 +219,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// all unknowns tasks should happen after all scanning is complete
 	if len(unknownTasks) > 0 {
 		taskGroups = append(taskGroups, unknownTasks)
+	}
+
+	// osFeatureDetectionTasks should happen after package scanning is complete
+	if len(osFeatureDetectionTasks) > 0 {
+		taskGroups = append(taskGroups, osFeatureDetectionTasks)
 	}
 
 	// identifying the environment (i.e. the linux release) must be done first as this is required for package cataloging
@@ -438,6 +444,17 @@ func (c *CreateSBOMConfig) unknownsTasks() []task.Task {
 	var tasks []task.Task
 
 	if t := task.NewUnknownsLabelerTask(c.Unknowns); t != nil {
+		tasks = append(tasks, t)
+	}
+
+	return tasks
+}
+
+// osFeatureDetectionTasks returns a set of tasks that perform post-processing feature detection and update the SBOM accordingly
+func (c *CreateSBOMConfig) osFeatureDetectionTasks() []task.Task {
+	var tasks []task.Task
+
+	if t := task.NewOSFeatureDetectionTask(); t != nil {
 		tasks = append(tasks, t)
 	}
 
