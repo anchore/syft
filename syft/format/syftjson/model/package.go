@@ -204,5 +204,6 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		}
 	}
 	p.Metadata = reflect.ValueOf(val).Elem().Interface()
+	p.MetadataType = ty
 	return nil
 }
