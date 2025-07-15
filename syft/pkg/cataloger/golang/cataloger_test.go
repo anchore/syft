@@ -53,7 +53,7 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 			// see the dockerfile for details
 			fixture: "image-not-a-module",
 			expectedPkgs: []string{
-				"command-line-arguments @ (devel) (/run-me)", // this is the difference!
+				"command-line-arguments @  (/run-me)", // this is the difference!
 				"github.com/andybalholm/brotli @ v1.1.1 (/run-me)",
 				"github.com/dsnet/compress @ v0.0.2-0.20210315054119-f66993602bf5 (/run-me)",
 				"github.com/golang/snappy @ v0.0.4 (/run-me)",
@@ -67,17 +67,17 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 				"stdlib @ go1.23.2 (/run-me)",
 			},
 			expectedRels: []string{
-				"github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/andybalholm/brotli @ v1.1.1 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/dsnet/compress @ v0.0.2-0.20210315054119-f66993602bf5 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/golang/snappy @ v0.0.4 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/klauspost/compress @ v1.17.11 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/klauspost/pgzip @ v1.2.6 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/nwaples/rardecode @ v1.1.3 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/pierrec/lz4/v4 @ v4.1.21 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/ulikunitz/xz @ v0.5.12 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
-				"stdlib @ go1.23.2 (/run-me) [dependency-of] command-line-arguments @ (devel) (/run-me)",
+				"github.com/anchore/archiver/v3 @ v3.5.3-0.20241210171143-5b1d8d1c7c51 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/andybalholm/brotli @ v1.1.1 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/dsnet/compress @ v0.0.2-0.20210315054119-f66993602bf5 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/golang/snappy @ v0.0.4 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/klauspost/compress @ v1.17.11 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/klauspost/pgzip @ v1.2.6 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/nwaples/rardecode @ v1.1.3 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/pierrec/lz4/v4 @ v4.1.21 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/ulikunitz/xz @ v0.5.12 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"github.com/xi2/xz @ v0.0.0-20171230120015-48954b6210f8 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
+				"stdlib @ go1.23.2 (/run-me) [dependency-of] command-line-arguments @  (/run-me)",
 			},
 		},
 	}

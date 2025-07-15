@@ -23,6 +23,15 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 		wantErr  require.ErrorAssertionFunc
 	}{
 		{
+			name: "empty",
+			input: []byte(`{
+				"id": "",
+				"type": "",
+				"metadata": null
+			}`),
+			expected: &Source{},
+		},
+		{
 			name: "directory",
 			input: []byte(`{
 				"id": "foobar",
@@ -133,6 +142,51 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 						},
 					},
 					MIMEType: "text/plain",
+				},
+			},
+		},
+		{
+			name: "snap",
+			input: []byte(`{
+  "id": "foobar",
+  "name": "etcd",
+  "version": "3.4.36",
+  "type": "snap",
+  "metadata": {
+    "summary": "Distributed reliable key-value store",
+    "base": "core18",
+    "grade": "stable",
+    "confinement": "strict",
+    "architectures": [
+      "amd64"
+    ],
+    "digests": [
+      {
+        "algorithm": "sha256",
+        "value": "6700d789d2c38b0f7513058ddcea8f9a275e2206b4621a772eb065e12069956e"
+      }
+    ]
+  }
+}`),
+			expected: &Source{
+				ID:      "foobar",
+				Name:    "etcd",
+				Version: "3.4.36",
+				Type:    "snap",
+				Metadata: source.SnapMetadata{
+					Summary:     "Distributed reliable key-value store",
+					Base:        "core18",
+					Grade:       "stable",
+					Confinement: "strict",
+					Architectures: []string{
+						"amd64",
+					},
+					Digests: []file.Digest{
+						{
+							Algorithm: "sha256",
+							Value:     "6700d789d2c38b0f7513058ddcea8f9a275e2206b4621a772eb065e12069956e",
+						},
+					},
 				},
 			},
 		},

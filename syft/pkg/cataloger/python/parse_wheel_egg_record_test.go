@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -15,7 +17,7 @@ func TestParseWheelEggRecord(t *testing.T) {
 		ExpectedMetadata []pkg.PythonFileRecord
 	}{
 		{
-			Fixture: "test-fixtures/egg-info/RECORD",
+			Fixture: "test-fixtures/site-packages/nested/egg-name/egg-info/RECORD",
 			ExpectedMetadata: []pkg.PythonFileRecord{
 				{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
 				{Path: "requests/__init__.py", Digest: &pkg.PythonFileDigest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
@@ -26,10 +28,11 @@ func TestParseWheelEggRecord(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/dist-info/RECORD",
+			Fixture: "test-fixtures/site-packages/nested/dist-name/dist-info/RECORD",
 			ExpectedMetadata: []pkg.PythonFileRecord{
 				{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
 				{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
+				{Path: "Pygments-2.6.1.dist-info/LICENSE.txt", Digest: &pkg.PythonFileDigest{Algorithm: "sha256", Value: "utiUvpzxqFPVpvuPnWG2_Oku6BGuay2I8-NIrqCvqUY"}, Size: "8449"},
 				{Path: "Pygments-2.6.1.dist-info/RECORD"},
 				{Path: "pygments/__pycache__/__init__.cpython-38.pyc"},
 				{Path: "pygments/util.py", Digest: &pkg.PythonFileDigest{"sha256", "586xXHiJGGZxqk5PMBu3vBhE68DLuAe5MBARWrSPGxA"}, Size: "10778"},
@@ -45,7 +48,8 @@ func TestParseWheelEggRecord(t *testing.T) {
 				t.Fatalf("failed to open fixture: %+v", err)
 			}
 
-			actual := parseWheelOrEggRecord(fixture)
+			actual, err := parseWheelOrEggRecord(file.NewLocationReadCloser(file.NewLocation(test.Fixture), fixture))
+			require.NoError(t, err, "failed to parse: %+v", err)
 
 			for _, d := range deep.Equal(actual, test.ExpectedMetadata) {
 				t.Errorf("diff: %+v", d)

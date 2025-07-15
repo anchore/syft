@@ -1,6 +1,7 @@
 package ruby
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
@@ -10,7 +11,7 @@ import (
 
 func TestParseGemspec(t *testing.T) {
 	fixture := "test-fixtures/bundler.gemspec"
-
+	ctx := context.TODO()
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	var expectedPkg = pkg.Package{
@@ -20,7 +21,7 @@ func TestParseGemspec(t *testing.T) {
 		Locations: locations,
 		Type:      pkg.GemPkg,
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", file.NewLocation(fixture)),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 		),
 		Language: pkg.Ruby,
 		Metadata: pkg.RubyGemspec{

@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -40,12 +41,12 @@ func newLinuxKernelPackage(metadata pkg.LinuxKernel, archiveLocation file.Locati
 	return p
 }
 
-func newLinuxKernelModulePackage(metadata pkg.LinuxKernelModule, kmLocation file.Location) pkg.Package {
+func newLinuxKernelModulePackage(ctx context.Context, metadata pkg.LinuxKernelModule, kmLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,
 		Locations: file.NewLocationSet(kmLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(kmLocation, metadata.License)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, kmLocation, metadata.License)...),
 		PURL:      packageURL(metadata.Name, metadata.Version),
 		Type:      pkg.LinuxKernelModulePkg,
 		Metadata:  metadata,

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
@@ -18,6 +19,7 @@ type expectedIndexes struct {
 }
 
 func TestCatalogMergePackageLicenses(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name         string
 		pkgs         []Package
@@ -29,13 +31,13 @@ func TestCatalogMergePackageLicenses(t *testing.T) {
 				{
 					id: "equal",
 					Licenses: NewLicenseSet(
-						NewLicensesFromValues("foo", "baq", "quz")...,
+						NewLicensesFromValuesWithContext(ctx, "foo", "baq", "quz")...,
 					),
 				},
 				{
 					id: "equal",
 					Licenses: NewLicenseSet(
-						NewLicensesFromValues("bar", "baz", "foo", "qux")...,
+						NewLicensesFromValuesWithContext(ctx, "bar", "baz", "foo", "qux")...,
 					),
 				},
 			},
@@ -43,7 +45,7 @@ func TestCatalogMergePackageLicenses(t *testing.T) {
 				{
 					id: "equal",
 					Licenses: NewLicenseSet(
-						NewLicensesFromValues("foo", "baq", "quz", "qux", "bar", "baz")...,
+						NewLicensesFromValuesWithContext(ctx, "foo", "baq", "quz", "qux", "bar", "baz")...,
 					),
 				},
 			},
@@ -183,6 +185,24 @@ func TestCatalogDeleteRemovesPackages(t *testing.T) {
 					"/another/path2": strset.New("pkg:deb/debian/2"),
 				},
 			},
+		},
+		{
+			name: "delete idsBy key entries when all deleted",
+			pkgs: []Package{
+				{
+					id:      artifact.ID("pkg:deb/debian/1"),
+					Name:    "debian",
+					Version: "1",
+					Type:    DebPkg,
+					Locations: file.NewLocationSet(
+						file.NewVirtualLocation("/c/path", "/another/path1"),
+					),
+				},
+			},
+			deleteIDs: []artifact.ID{
+				artifact.ID("pkg:deb/debian/1"),
+			},
+			expectedIndexes: expectedIndexes{},
 		},
 	}
 

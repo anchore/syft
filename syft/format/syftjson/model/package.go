@@ -58,7 +58,7 @@ func newModelLicensesFromValues(licenses []string) (ml []License) {
 	for _, v := range licenses {
 		expression, err := license.ParseExpression(v)
 		if err != nil {
-			log.Trace("could not find valid spdx expression for %s: %w", v, err)
+			log.Tracef("could not find valid spdx expression for %s: %w", v, err)
 		}
 		ml = append(ml, License{
 			Value:          v,
@@ -204,5 +204,6 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		}
 	}
 	p.Metadata = reflect.ValueOf(val).Elem().Interface()
+	p.MetadataType = ty
 	return nil
 }

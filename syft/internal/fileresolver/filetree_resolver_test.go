@@ -811,7 +811,7 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// 4: within target/
 	// 1: target/link --> relative path to "place" // NOTE: this is filtered out since it not unique relative to outside_root/link_target/place
 	// 1: outside_root/link_target/place
-	assert.Len(t, locations, 5)
+	assert.Len(t, locations, 6)
 
 	// ensure that symlink indexing outside of root worked
 	testLocation := "test-fixtures/system_paths/outside_root/link_target/place"
@@ -971,7 +971,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	r, err := NewFromDirectory(".", "")
 	require.NoError(t, err)
 
-	exists, existingPath, err := r.tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1271,7 +1271,7 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
-		entry, err := resolver.index.Get(loc.Reference())
+		entry, err := resolver.Index.Get(loc.Reference())
 		require.NoError(t, err)
 		if entry.Metadata.IsDir() {
 			dirLoc = &loc
@@ -1451,7 +1451,7 @@ func TestFileResolver_FilesByGlob(t *testing.T) {
 
 	resolver, err := NewFromFile(parentPath, filePath)
 	assert.NoError(t, err)
-	refs, err := resolver.FilesByGlob("*.txt")
+	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
 
 	assert.Len(t, refs, 1)
@@ -1500,7 +1500,7 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	r, err := NewFromFile(parentPath, filePath)
 	require.NoError(t, err)
 
-	exists, existingPath, err := r.tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1542,8 +1542,6 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 }
 
 func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
-	defer goleak.VerifyNone(t)
-
 	filePath := "./test-fixtures/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
@@ -1555,11 +1553,10 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
-		entry, err := resolver.index.Get(loc.Reference())
+		entry, err := resolver.Index.Get(loc.Reference())
 		require.NoError(t, err)
-		if entry.Metadata.IsDir() {
+		if dirLoc == nil && entry.Metadata.IsDir() {
 			dirLoc = &loc
-			break
 		}
 	}
 
@@ -1568,6 +1565,8 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 	reader, err := resolver.FileContentsByLocation(*dirLoc)
 	require.Error(t, err)
 	require.Nil(t, reader)
+
+	goleak.VerifyNone(t)
 }
 
 func TestFileResolver_AllLocations(t *testing.T) {
@@ -1592,10 +1591,11 @@ func TestFileResolver_AllLocations(t *testing.T) {
 	sort.Strings(pathsList)
 
 	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
+
+	goleak.VerifyNone(t)
 }
 
 func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
-	defer goleak.VerifyNone(t)
 	filePath := "./test-fixtures/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
@@ -1609,4 +1609,6 @@ func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 		break
 	}
 	cancel()
+
+	goleak.VerifyNone(t)
 }

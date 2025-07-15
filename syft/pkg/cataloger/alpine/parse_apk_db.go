@@ -36,7 +36,7 @@ type parsedData struct {
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen
-func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	scanner := bufio.NewScanner(reader)
 
 	var errs error
@@ -123,7 +123,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
 	if r == nil {
 		// find the repositories file from the relative directory of the DB file
-		releases := findReleases(resolver, reader.Location.RealPath)
+		releases := findReleases(resolver, reader.RealPath)
 
 		if len(releases) > 0 {
 			r = &releases[0]
@@ -132,7 +132,7 @@ func parseApkDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 
 	pkgs := make([]pkg.Package, 0, len(apks))
 	for _, apk := range apks {
-		pkgs = append(pkgs, newPackage(apk, r, reader.Location))
+		pkgs = append(pkgs, newPackage(ctx, apk, r, reader.Location))
 	}
 
 	return pkgs, nil, errs
@@ -173,7 +173,7 @@ func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Rele
 
 	reposB, err := io.ReadAll(reader)
 	if err != nil {
-		log.Tracef("unable to read APK repositories file %q: %+v", reader.Location.RealPath, err)
+		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
 		return nil
 	}
 

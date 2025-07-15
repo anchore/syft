@@ -2,12 +2,13 @@ package redhat
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
-	rpmdb "github.com/knqyf263/go-rpmdb/pkg"
-
+	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -20,7 +21,7 @@ import (
 // parseRpmDB parses an "Packages" RPM DB and returns the Packages listed within it.
 //
 //nolint:funlen
-func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	f, err := os.CreateTemp("", "rpmdb")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
@@ -69,6 +70,14 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		files, err := extractRpmFileRecords(resolver, *entry)
 		errs = unknown.Join(errs, err)
 
+		// there is a period of time when RPM DB entries contain both PGP and RSA signatures that are the same.
+		// This appears to be a holdover, where nowadays only the RSA Header is used.
+		sigs, err := parseSignatures(strings.TrimSpace(entry.PGP), strings.TrimSpace(entry.RSAHeader))
+		if err != nil {
+			log.WithFields("error", err, "location", reader.RealPath, "pkg", fmt.Sprintf("%s@%s", entry.Name, entry.Version)).Trace("unable to parse signatures for package %s", entry.Name)
+			sigs = nil
+		}
+
 		metadata := pkg.RpmDBEntry{
 			Name:            entry.Name,
 			Version:         entry.Version,
@@ -76,6 +85,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 			Arch:            entry.Arch,
 			Release:         entry.Release,
 			SourceRpm:       entry.SourceRpm,
+			Signatures:      sigs,
 			Vendor:          entry.Vendor,
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
@@ -85,6 +95,7 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 		}
 
 		p := newDBPackage(
+			ctx,
 			reader.Location,
 			metadata,
 			distro,
@@ -107,6 +118,70 @@ func parseRpmDB(_ context.Context, resolver file.Resolver, env *generic.Environm
 	}
 
 	return allPkgs, nil, errs
+}
+
+func parseSignatures(sigs ...string) ([]pkg.RpmSignature, error) {
+	var parsedSigs []pkg.RpmSignature
+	var errs error
+	for _, sig := range sigs {
+		if sig == "" {
+			continue
+		}
+		parts := strings.Split(sig, ",")
+		if len(parts) != 3 {
+			errs = errors.Join(fmt.Errorf("invalid signature format: %s", sig))
+			continue
+		}
+
+		methodParts := strings.SplitN(strings.TrimSpace(parts[0]), "/", 2)
+		if len(methodParts) != 2 {
+			errs = errors.Join(fmt.Errorf("invalid signature method format: %s", parts[0]))
+			continue
+		}
+
+		pka := strings.TrimSpace(methodParts[0])
+		hash := strings.TrimSpace(methodParts[1])
+
+		if pka == "" || hash == "" {
+			errs = errors.Join(fmt.Errorf("invalid signature method values: public-key=%q hash=%q", pka, hash))
+			continue
+		}
+
+		created := strings.TrimSpace(parts[1])
+		if created == "" {
+			errs = errors.Join(fmt.Errorf("invalid signature created value: %q", parts[1]))
+			continue
+		}
+
+		issuerFields := strings.Split(strings.TrimSpace(parts[2]), " ")
+		var issuer string
+		switch len(issuerFields) {
+		case 0:
+			errs = errors.Join(fmt.Errorf("no signature issuer value: %q", parts[2]))
+		case 1:
+			issuer = issuerFields[0]
+		default:
+			issuer = issuerFields[len(issuerFields)-1]
+			if issuer == "" {
+				errs = errors.Join(fmt.Errorf("invalid signature issuer value: %q", parts[2]))
+				continue
+			}
+		}
+
+		if len(issuer) < 5 {
+			errs = errors.Join(fmt.Errorf("invalid signature issuer length: %q", parts[2]))
+			continue
+		}
+
+		parsedSig := pkg.RpmSignature{
+			PublicKeyAlgorithm: pka,
+			HashAlgorithm:      hash,
+			Created:            created,
+			IssuerKeyID:        issuer,
+		}
+		parsedSigs = append(parsedSigs, parsedSig)
+	}
+	return parsedSigs, errs
 }
 
 // The RPM naming scheme is [name]-[version]-[release]-[arch], where version is implicitly expands to [epoch]:[version].

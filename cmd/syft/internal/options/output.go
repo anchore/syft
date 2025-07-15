@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
 	"github.com/anchore/syft/syft/format/cyclonedxxml"
 	"github.com/anchore/syft/syft/format/github"
+	"github.com/anchore/syft/syft/format/purls"
 	"github.com/anchore/syft/syft/format/spdxjson"
 	"github.com/anchore/syft/syft/format/spdxtagvalue"
 	"github.com/anchore/syft/syft/format/syftjson"
@@ -89,7 +90,7 @@ func (o Output) SBOMWriter() (sbom.Writer, error) {
 
 	usesTemplateOutput := names.Has(string(template.ID))
 
-	if usesTemplateOutput && o.Format.Template.Path == "" {
+	if usesTemplateOutput && o.Template.Path == "" {
 		return nil, fmt.Errorf(`must specify path to template file when using "template" output format`)
 	}
 
@@ -127,6 +128,7 @@ func supportedIDs() []sbom.FormatID {
 		table.ID,
 		text.ID,
 		template.ID,
+		purls.ID,
 
 		// encoders that support multiple versions
 		cyclonedxxml.ID,

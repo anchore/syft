@@ -100,7 +100,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	if err != nil {
 		// this is expected in many cases, there will be no network access and the maven resolver is unable to
 		// look up information, so we can continue with what little information we have
-		log.Trace("unable to resolve parent due to: %v", err)
+		log.Tracef("unable to resolve parent due to: %v", err)
 	}
 
 	var javaPomParent *pkg.JavaPomParent
@@ -117,7 +117,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	if err != nil {
 		log.Tracef("error resolving licenses: %v", err)
 	}
-	licenses := toPkgLicenses(&location, pomLicenses)
+	licenses := toPkgLicenses(ctx, &location, pomLicenses)
 
 	m := pkg.JavaArchive{
 		PomProject: &pkg.JavaPomProject{
@@ -240,7 +240,7 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 	var pomProject *pkg.JavaPomProject
 	if dependencyPom != nil {
 		depLicenses, _ := r.ResolveLicenses(ctx, dependencyPom)
-		licenses = append(licenses, toPkgLicenses(nil, depLicenses)...)
+		licenses = append(licenses, toPkgLicenses(ctx, nil, depLicenses)...)
 		pomProject = &pkg.JavaPomProject{
 			Parent:      pomParent(ctx, r, dependencyPom),
 			GroupID:     id.GroupID,

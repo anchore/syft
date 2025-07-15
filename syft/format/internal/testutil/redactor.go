@@ -28,6 +28,7 @@ func (r RedactorFn) Redact(b []byte) []byte {
 
 type PatternReplacement struct {
 	Search  *regexp.Regexp
+	Groups  []string
 	Replace string
 }
 
@@ -39,7 +40,67 @@ func NewPatternReplacement(r *regexp.Regexp) PatternReplacement {
 }
 
 func (p PatternReplacement) Redact(b []byte) []byte {
-	return p.Search.ReplaceAll(b, []byte(p.Replace))
+	if len(p.Groups) == 0 {
+		return p.Search.ReplaceAll(b, []byte(p.Replace))
+	}
+
+	return p.redactNamedGroups(b)
+}
+
+func (p PatternReplacement) redactNamedGroups(b []byte) []byte {
+	groupsToReplace := make(map[string]bool)
+	for _, g := range p.Groups {
+		groupsToReplace[g] = true
+	}
+
+	subexpNames := p.Search.SubexpNames()
+
+	return p.Search.ReplaceAllFunc(b, func(match []byte) []byte {
+		indexes := p.Search.FindSubmatchIndex(match)
+		if indexes == nil {
+			return match
+		}
+
+		result := make([]byte, len(match))
+		copy(result, match)
+
+		// keep track of the offset as we replace groups
+		offset := 0
+
+		// process each named group
+		for i, name := range subexpNames {
+			// skip the full match (i==0) and groups we don't want to replace
+			if i == 0 || !groupsToReplace[name] {
+				continue
+			}
+
+			// get the start and end positions of this group
+			startPos := indexes[2*i]
+			endPos := indexes[2*i+1]
+
+			// skip if the group didn't match
+			if startPos < 0 || endPos < 0 {
+				continue
+			}
+
+			// adjust positions based on previous replacements
+			startPos += offset
+			endPos += offset
+
+			// replace the group with our replacement text
+			beforeGroup := result[:startPos]
+			afterGroup := result[endPos:]
+
+			// calculate the new offset
+			oldLen := endPos - startPos
+			newLen := len(p.Replace)
+			offset += (newLen - oldLen)
+
+			result = append(beforeGroup, append([]byte(p.Replace), afterGroup...)...) //nolint:gocritic
+		}
+
+		return result
+	})
 }
 
 // Replace by value //////////////////////////////
@@ -82,6 +143,13 @@ func (r *Redactions) WithPatternRedactors(values map[string]string) *Redactions 
 				Replace: v,
 			},
 		)
+	}
+	return r
+}
+
+func (r *Redactions) WithPatternRedactorSpec(values ...PatternReplacement) *Redactions {
+	for _, v := range values {
+		r.redactors = append(r.redactors, v)
 	}
 	return r
 }

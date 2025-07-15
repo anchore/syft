@@ -152,7 +152,7 @@ func Test_encodeComponentProperties(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := EncodeComponent(test.input)
+			c := EncodeComponent(test.input, file.LocationSorter(nil))
 			if test.expected == nil {
 				if c.Properties != nil {
 					t.Fatalf("expected no properties, got: %+v", *c.Properties)
@@ -212,7 +212,7 @@ func Test_encodeCompomentType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.pkg.ID()
-			p := EncodeComponent(tt.pkg)
+			p := EncodeComponent(tt.pkg, file.LocationSorter(nil))
 			assert.Equal(t, tt.want, p)
 		})
 	}
@@ -275,6 +275,7 @@ func Test_decodeComponent(t *testing.T) {
 		component    cyclonedx.Component
 		wantLanguage pkg.Language
 		wantMetadata any
+		wantPURL     string
 	}{
 		{
 			name: "derive language from pURL if missing",
@@ -286,6 +287,18 @@ func Test_decodeComponent(t *testing.T) {
 				BOMRef:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
 			},
 			wantLanguage: pkg.Java,
+			wantPURL:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+		},
+		{
+			name: "derive language from bomref if missing",
+			component: cyclonedx.Component{
+				Name:    "ch.qos.logback/logback-classic",
+				Version: "1.2.3",
+				Type:    "library",
+				BOMRef:  "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
+			},
+			wantLanguage: pkg.Java,
+			wantPURL:     "pkg:maven/ch.qos.logback/logback-classic@1.2.3",
 		},
 		{
 			name: "handle RpmdbMetadata type without properties",
@@ -303,6 +316,7 @@ func Test_decodeComponent(t *testing.T) {
 				},
 			},
 			wantMetadata: pkg.RpmDBEntry{},
+			wantPURL:     "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
 		},
 		{
 			name: "handle RpmdbMetadata type with properties",
@@ -326,6 +340,24 @@ func Test_decodeComponent(t *testing.T) {
 			wantMetadata: pkg.RpmDBEntry{
 				Release: "some-release",
 			},
+			wantPURL: "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
+		},
+		{
+			name: "generate a purl from package type",
+			component: cyclonedx.Component{
+				Name:    "log4j",
+				Group:   "org.apache.logging.log4j",
+				Version: "2.0.4",
+				Type:    "library",
+				BOMRef:  "log4j",
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:package:type",
+						Value: "java-archive",
+					},
+				},
+			},
+			wantPURL: "pkg:maven/org.apache.logging.log4j/log4j@2.0.4",
 		},
 	}
 
@@ -338,9 +370,122 @@ func Test_decodeComponent(t *testing.T) {
 			if tt.wantMetadata != nil {
 				assert.Truef(t, reflect.DeepEqual(tt.wantMetadata, p.Metadata), "metadata should match: %+v != %+v", tt.wantMetadata, p.Metadata)
 			}
-			if tt.wantMetadata == nil && tt.wantLanguage == "" {
+
+			if tt.wantPURL != "" {
+				assert.Equal(t, tt.wantPURL, p.PURL, "purl should match")
+			}
+
+			if tt.wantMetadata == nil && tt.wantLanguage == "" && tt.wantPURL == "" {
 				t.Fatal("this is a useless test, please remove it")
 			}
+		})
+	}
+}
+
+func TestGetPURL(t *testing.T) {
+	tests := []struct {
+		name      string
+		component *cyclonedx.Component
+		pkgType   pkg.Type
+		expected  string
+	}{
+		{
+			name: "component with PackageURL",
+			component: &cyclonedx.Component{
+				PackageURL: "pkg:npm/lodash@4.17.21",
+				Name:       "lodash",
+				Version:    "4.17.20", // different version to verify PackageURL is used
+				Group:      "npm",
+			},
+			pkgType:  pkg.NpmPkg,
+			expected: "pkg:npm/lodash@4.17.21",
+		},
+		{
+			name: "component with BOMRef as valid PURL",
+			component: &cyclonedx.Component{
+				BOMRef:  "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+				Name:    "commons-lang3",
+				Version: "3.11.0", // different version to verify BOMRef is used
+				Group:   "org.apache.commons",
+			},
+			pkgType:  pkg.JavaPkg,
+			expected: "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+		},
+		{
+			name: "component with BOMRef not a valid PURL",
+			component: &cyclonedx.Component{
+				BOMRef:  "not-a-purl-ref",
+				Name:    "commons-lang3",
+				Version: "3.12.0",
+				Group:   "org.apache.commons",
+			},
+			pkgType:  pkg.JavaPkg,
+			expected: "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+		},
+		{
+			name: "component with unknown package type",
+			component: &cyclonedx.Component{
+				Name:    "some-component",
+				Version: "1.0.0",
+				Group:   "org.example",
+			},
+			pkgType:  pkg.UnknownPkg,
+			expected: "",
+		},
+		{
+			name: "component with empty package type",
+			component: &cyclonedx.Component{
+				Name:    "some-component",
+				Version: "1.0.0",
+				Group:   "org.example",
+			},
+			pkgType:  "",
+			expected: "",
+		},
+		{
+			name: "component with generic package type",
+			component: &cyclonedx.Component{
+				Name:    "some-component",
+				Version: "1.0.0",
+				Group:   "org.example",
+			},
+			pkgType:  pkg.LinuxKernelModulePkg,
+			expected: "",
+		},
+		{
+			name: "component with valid package type",
+			component: &cyclonedx.Component{
+				Name:    "react",
+				Version: "18.2.0",
+				Group:   "facebook",
+			},
+			pkgType:  pkg.NpmPkg,
+			expected: "pkg:npm/facebook/react@18.2.0",
+		},
+		{
+			name: "component with no group",
+			component: &cyclonedx.Component{
+				Name:    "express",
+				Version: "4.18.2",
+			},
+			pkgType:  pkg.NpmPkg,
+			expected: "pkg:npm/express@4.18.2",
+		},
+		{
+			name: "component with no version",
+			component: &cyclonedx.Component{
+				Name:  "express",
+				Group: "npm",
+			},
+			pkgType:  pkg.NpmPkg,
+			expected: "pkg:npm/npm/express",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := getPURL(tt.component, tt.pkgType)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }

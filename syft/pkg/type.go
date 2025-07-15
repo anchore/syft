@@ -36,7 +36,8 @@ const (
 	NpmPkg                  Type = "npm"
 	OpamPkg                 Type = "opam"
 	PhpComposerPkg          Type = "php-composer"
-	PhpPeclPkg              Type = "php-pecl"
+	PhpPeclPkg              Type = "php-pecl" // Deprecated: will be removed in syft v2.0
+	PhpPearPkg              Type = "php-pear"
 	PortagePkg              Type = "portage"
 	PythonPkg               Type = "python"
 	Rpkg                    Type = "R-package"
@@ -47,6 +48,7 @@ const (
 	SwiplPackPkg            Type = "swiplpack"
 	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
+	HomebrewPkg             Type = "homebrew"
 )
 
 // AllPkgs represents all supported package types
@@ -78,6 +80,7 @@ var AllPkgs = []Type{
 	OpamPkg,
 	PhpComposerPkg,
 	PhpPeclPkg,
+	PhpPearPkg,
 	PortagePkg,
 	PythonPkg,
 	Rpkg,
@@ -88,6 +91,7 @@ var AllPkgs = []Type{
 	SwiplPackPkg,
 	TerraformPkg,
 	WordpressPluginPkg,
+	HomebrewPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -132,8 +136,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGeneric
 	case PhpComposerPkg:
 		return packageurl.TypeComposer
-	case PhpPeclPkg:
-		return "pecl"
+	case PhpPearPkg, PhpPeclPkg:
+		return "pear"
 	case PythonPkg:
 		return packageurl.TypePyPi
 	case PortagePkg:
@@ -160,6 +164,8 @@ func (t Type) PackageURLType() string {
 		return "terraform"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
+	case HomebrewPkg:
+		return "homebrew"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -192,8 +198,8 @@ func TypeByName(name string) Type {
 		return DebPkg
 	case packageurl.TypeComposer:
 		return PhpComposerPkg
-	case "pecl":
-		return PhpPeclPkg
+	case "pear", "pecl":
+		return PhpPearPkg
 	case packageurl.TypeGolang:
 		return GoModulePkg
 	case packageurl.TypeGem:
@@ -244,6 +250,8 @@ func TypeByName(name string) Type {
 		return TerraformPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
+	case "homebrew":
+		return HomebrewPkg
 	default:
 		return UnknownPkg
 	}

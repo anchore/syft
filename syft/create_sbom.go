@@ -96,14 +96,20 @@ func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, 
 	ctx = setContextExecutors(ctx, cfg)
 
 	// configure license scanner
-	return setContextLicenseScanner(ctx, cfg)
+	// skip injecting a license scanner if one already set on context
+	if licenses.IsContextLicenseScannerSet(ctx) {
+		return ctx, nil
+	}
+
+	return SetContextLicenseScanner(ctx, cfg.Licenses)
 }
 
-func setContextLicenseScanner(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
+// SetContextLicenseScanner creates and sets a license scanner
+// on the provided context using the provided license config.
+func SetContextLicenseScanner(ctx context.Context, cfg cataloging.LicenseConfig) (context.Context, error) {
 	// inject a single license scanner and content config for all package cataloging tasks into context
 	licenseScanner, err := licenses.NewDefaultScanner(
-		licenses.WithIncludeLicenseContent(cfg.Licenses.IncludeUnkownLicenseContent),
-		licenses.WithCoverage(cfg.Licenses.Coverage),
+		licenses.WithCoverage(cfg.Coverage),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not build licenseScanner for cataloging: %w", err)
@@ -138,14 +144,14 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 	return ctx
 }
 
-func monitorPackageCount(prog *monitor.CatalogerTaskProgress) func(s *sbom.SBOM) {
+func monitorPackageCount(prog *monitor.TaskProgress) func(s *sbom.SBOM) {
 	return func(s *sbom.SBOM) {
 		count := humanize.Comma(int64(s.Artifacts.Packages.PackageCount()))
 		prog.AtomicStage.Set(fmt.Sprintf("%s packages", count))
 	}
 }
 
-func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
+func monitorPackageCatalogingTask() *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Packages",
@@ -158,7 +164,7 @@ func monitorPackageCatalogingTask() *monitor.CatalogerTaskProgress {
 	return bus.StartCatalogerTask(info, -1, "")
 }
 
-func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.CatalogerTaskProgress {
+func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog contents",

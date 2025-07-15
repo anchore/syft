@@ -1,0 +1,28 @@
+name: "Validations"
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+
+  call-workflow-1-in-local-repo:
+    uses: octo-org/this-repo/.github/workflows/workflow-1.yml@172239021f7ba04fe7327647b213799853a9eb89  #v1.0.0
+
+  Static-Analysis:
+    name: "Static analysis"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - name: Run static analysis
+        run: make static-analysis

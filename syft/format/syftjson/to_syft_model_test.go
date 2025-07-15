@@ -100,6 +100,36 @@ func Test_toSyftSourceData(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "snap",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "snap",
+				Metadata: source.SnapMetadata{
+					Summary:       "something!",
+					Base:          "base!",
+					Grade:         "grade!",
+					Confinement:   "confined!",
+					Architectures: []string{"arch!"},
+					Digests:       []file.Digest{{Algorithm: "sha256", Value: "some-digest!"}},
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.SnapMetadata{
+					Summary:       "something!",
+					Base:          "base!",
+					Grade:         "grade!",
+					Confinement:   "confined!",
+					Architectures: []string{"arch!"},
+					Digests:       []file.Digest{{Algorithm: "sha256", Value: "some-digest!"}},
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -489,6 +519,12 @@ func Test_safeFileModeConvert(t *testing.T) {
 			name:    "valid perm",
 			val:     777,
 			want:    os.FileMode(511), // 777 in octal equals 511 in decimal
+			wantErr: false,
+		},
+		{
+			name:    "valid perm with symlink type",
+			val:     1000000777,                // symlink + rwxrwxrwx
+			want:    os.FileMode(0o1000000777), // 134218239
 			wantErr: false,
 		},
 		{

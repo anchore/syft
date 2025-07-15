@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_ELF_Package_Cataloger(t *testing.T) {
+func Test_ELFPackageCataloger(t *testing.T) {
 
 	cases := []struct {
 		name     string

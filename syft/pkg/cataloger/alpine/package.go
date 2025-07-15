@@ -1,6 +1,7 @@
 package alpine
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -10,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newPackage(d parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
+func newPackage(ctx context.Context, d parsedData, release *linux.Release, dbLocation file.Location) pkg.Package {
 	// check if license is a valid spdx expression before splitting
 	licenseStrings := []string{d.License}
 	_, err := license.ParseExpression(d.License)
@@ -23,7 +24,7 @@ func newPackage(d parsedData, release *linux.Release, dbLocation file.Location) 
 		Name:      d.Package,
 		Version:   d.Version,
 		Locations: file.NewLocationSet(dbLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocation(dbLocation, licenseStrings...)...),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, licenseStrings...)...),
 		PURL:      packageURL(d.ApkDBEntry, release),
 		Type:      pkg.ApkPkg,
 		Metadata:  d.ApkDBEntry,

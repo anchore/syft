@@ -150,7 +150,7 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 	}
 }
 
-// newDotnetPortableExecutableEntry creates a portable executable entry from a logicalPE.
+// newDotnetPortableExecutableEntry creates a portable executable entry from a File.
 func newDotnetPortableExecutableEntry(pe logicalPE) pkg.DotnetPortableExecutableEntry {
 	return newDotnetPortableExecutableEntryFromMap(pe.VersionResources)
 }
@@ -196,9 +196,8 @@ func extractNameAndVersion(nameVersion string) (name, version string) {
 	return
 }
 
-func createNameAndVersion(name, version string) (nameVersion string) {
-	nameVersion = fmt.Sprintf("%s/%s", name, version)
-	return
+func createNameAndVersion(name, version string) string {
+	return fmt.Sprintf("%s/%s", name, version)
 }
 
 func packageURL(m pkg.DotnetDepsEntry) string {

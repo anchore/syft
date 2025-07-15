@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- A PackageReference to Microsoft.AspNetCore.App is not necessary when targeting .NET Core 3.0 or higher. If Microsoft.NET.Sdk.Web is used, the shared framework will be referenced automatically (or override with FrameworkReference) -->
+    <!--  <PackageReference Include="Microsoft.AspNetCore.App" /> -->
+    <PackageReference Include="Microsoft.Web.LibraryManager.Build" Version="2.1.175" />
+  </ItemGroup>
+
+</Project>

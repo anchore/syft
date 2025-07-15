@@ -522,16 +522,26 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 	paths := strset.New()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	visibleSet := strset.New()
+	hiddenSet := strset.New()
 	for loc := range resolver.AllLocations(ctx) {
 		paths.Add(loc.RealPath)
+		switch loc.Annotations[file.VisibleAnnotationKey] {
+		case file.VisibleAnnotation:
+			visibleSet.Add(loc.RealPath)
+		case file.HiddenAnnotation:
+			hiddenSet.Add(loc.RealPath)
+		case "":
+			t.Errorf("expected visibility annotation for location: %+v", loc)
+		}
 	}
-	expected := []string{
+	visible := []string{
 		"/Dockerfile",
-		"/file-1.txt",
-		"/file-3.txt",
+		"/file-3.txt", // this is a deadlink pointing to /file-1.txt (which has been deleted)
 		"/target",
 		"/target/file-2.txt",
-
+	}
+	hidden := []string{
 		"/.wh.bin",
 		"/.wh.file-1.txt",
 		"/.wh.lib",
@@ -619,6 +629,7 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		"/bin/usleep",
 		"/bin/watch",
 		"/bin/zcat",
+		"/file-1.txt",
 		"/lib",
 		"/lib/apk",
 		"/lib/apk/db",
@@ -641,15 +652,41 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 		"/lib/sysctl.d/00-alpine.conf",
 	}
 
-	// depending on how the image is built (either from linux or mac), sys and proc might accidentally be added to the image.
-	// this isn't important for the test, so we remove them.
-	paths.Remove("/proc", "/sys", "/dev", "/etc")
+	var expected []string
+	expected = append(expected, visible...)
+	expected = append(expected, hidden...)
+	sort.Strings(expected)
 
-	// Remove cache created by Mac Rosetta when emulating different arches
-	paths.Remove("/.cache/rosetta", "/.cache")
+	cleanPaths := func(s *strset.Set) {
+		// depending on how the image is built (either from linux or mac), sys and proc might accidentally be added to the image.
+		// this isn't important for the test, so we remove them.
+		s.Remove("/proc", "/sys", "/dev", "/etc")
+
+		// Remove cache created by Mac Rosetta when emulating different arches
+		s.Remove("/.cache/rosetta", "/.cache")
+	}
+
+	cleanPaths(paths)
+	cleanPaths(visibleSet)
+	cleanPaths(hiddenSet)
 
 	pathsList := paths.List()
 	sort.Strings(pathsList)
+	visibleSetList := visibleSet.List()
+	sort.Strings(visibleSetList)
+	hiddenSetList := hiddenSet.List()
+	sort.Strings(hiddenSetList)
 
-	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
+	if d := cmp.Diff(expected, pathsList); d != "" {
+		t.Errorf("unexpected paths (-want +got):\n%s", d)
+	}
+
+	if d := cmp.Diff(visible, visibleSetList); d != "" {
+		t.Errorf("unexpected visible paths (-want +got):\n%s", d)
+	}
+
+	if d := cmp.Diff(hidden, hiddenSetList); d != "" {
+		t.Errorf("unexpected hidden paths (-want +got):\n%s", d)
+	}
+
 }

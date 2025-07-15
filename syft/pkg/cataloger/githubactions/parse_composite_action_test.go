@@ -20,6 +20,7 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 			Type:      pkg.GithubActionPkg,
 			Locations: fixtureLocationSet,
 			PURL:      "pkg:github/actions/setup-go@v4",
+			Metadata:  pkg.GitHubActionsUseStatement{Value: "actions/setup-go@v4"},
 		},
 		{
 			Name:      "actions/cache",
@@ -27,6 +28,7 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 			Type:      pkg.GithubActionPkg,
 			Locations: fixtureLocationSet,
 			PURL:      "pkg:github/actions/cache@v3",
+			Metadata:  pkg.GitHubActionsUseStatement{Value: "actions/cache@v3"},
 		},
 	}
 

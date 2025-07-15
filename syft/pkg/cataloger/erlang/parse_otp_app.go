@@ -35,7 +35,7 @@ func parseOTPApp(_ context.Context, _ file.Resolver, _ *generic.Environment, rea
 
 			p := newPackageFromOTP(
 				name, version,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			)
 
 			packages = append(packages, p)

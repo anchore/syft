@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 type depsJSON struct {
@@ -26,7 +28,52 @@ type depsTarget struct {
 	Dependencies map[string]string            `json:"dependencies"`
 	Runtime      map[string]map[string]string `json:"runtime"`
 	Resources    map[string]map[string]string `json:"resources"`
+	Compile      map[string]map[string]string `json:"compile"`
 	Native       map[string]map[string]string `json:"native"`
+}
+
+func (t depsTarget) nativePaths() *strset.Set {
+	results := strset.New()
+	for path := range t.Native {
+		results.Add(path)
+	}
+	return results
+}
+
+func (t depsTarget) compilePaths() map[string]string {
+	result := make(map[string]string)
+	for path := range t.Compile {
+		trimmedPath := trimLibPrefix(path)
+		if _, exists := result[trimmedPath]; exists {
+			continue
+		}
+		result[trimmedPath] = path
+	}
+	return result
+}
+
+func (t depsTarget) resourcePaths() map[string]string {
+	result := make(map[string]string)
+	for path := range t.Resources {
+		trimmedPath := trimLibPrefix(path)
+		if _, exists := result[trimmedPath]; exists {
+			continue
+		}
+		result[trimmedPath] = path
+	}
+	return result
+}
+
+func (t depsTarget) runtimePaths() map[string]string {
+	result := make(map[string]string)
+	for path := range t.Runtime {
+		trimmedPath := trimLibPrefix(path)
+		if _, exists := result[trimmedPath]; exists {
+			continue
+		}
+		result[trimmedPath] = path
+	}
+	return result
 }
 
 type depsLibrary struct {
@@ -40,8 +87,14 @@ type depsLibrary struct {
 // Note: this is not a real construct of the deps.json, just a useful reorganization of the data for downstream processing.
 type logicalDepsJSONPackage struct {
 	NameVersion string
-	Targets     *depsTarget
+	Targets     []depsTarget
 	Library     *depsLibrary
+
+	// AnyChildClaimsDLLs is a flag that indicates if any of the children of this package claim a DLL associated with them in the deps.json.
+	AnyChildClaimsDLLs bool
+
+	// AnyChildHasDLLs is a flag that indicates if any of the children of this package have a DLL associated with them (found on disk).
+	AnyChildHasDLLs bool
 
 	// RuntimePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
 	// to the target path as described in the deps.json target entry under "runtime".
@@ -51,7 +104,11 @@ type logicalDepsJSONPackage struct {
 	// to the target path as described in the deps.json target entry under "resource".
 	ResourcePathsByRelativeDLLPath map[string]string
 
-	// NativePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// CompilePathsByRelativeDLLPath is a map of the relative path to the DLL relative to the deps.json file
+	// to the target path as described in the deps.json target entry under "compile".
+	CompilePathsByRelativeDLLPath map[string]string
+
+	// NativePaths is a map of the relative path to the DLL relative to the deps.json file
 	// to the target path as described in the deps.json target entry under "native". These should not have
 	// any runtime references to trim from the front of the path.
 	NativePaths *strset.Set
@@ -62,12 +119,45 @@ type logicalDepsJSONPackage struct {
 	Executables []logicalPE
 }
 
+func (l *logicalDepsJSONPackage) dependencyNameVersions() []string {
+	if l.Targets == nil {
+		return nil
+	}
+	results := strset.New()
+	for _, t := range l.Targets {
+		for name, version := range t.Dependencies {
+			results.Add(createNameAndVersion(name, version))
+		}
+	}
+	r := results.List()
+	sort.Strings(r)
+	return r
+}
+
+// ClaimsDLLs indicates if this package has any DLLs associated with it (directly or indirectly with a dependency).
+func (l *logicalDepsJSONPackage) ClaimsDLLs(includeChildren bool) bool {
+	selfClaim := len(l.RuntimePathsByRelativeDLLPath) > 0 || len(l.ResourcePathsByRelativeDLLPath) > 0 || len(l.CompilePathsByRelativeDLLPath) > 0 || len(l.NativePaths.List()) > 0
+	if !includeChildren {
+		return selfClaim
+	}
+	return selfClaim || l.AnyChildClaimsDLLs
+}
+
+func (l *logicalDepsJSONPackage) FoundDLLs(includeChildren bool) bool {
+	selfClaim := len(l.Executables) > 0
+	if !includeChildren {
+		return selfClaim
+	}
+	return selfClaim || l.AnyChildHasDLLs
+}
+
 type logicalDepsJSON struct {
 	Location              file.Location
 	RuntimeTarget         runtimeTarget
 	PackagesByNameVersion map[string]logicalDepsJSONPackage
 	PackageNameVersions   *strset.Set
 	BundlingDetected      bool
+	LibmanPackages        []pkg.Package
 }
 
 func (l logicalDepsJSON) RootPackage() (logicalDepsJSONPackage, bool) {
@@ -117,7 +207,7 @@ var knownBundlers = strset.New(
 	"Fody",                       // IL weaving framework
 )
 
-func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
+func getLogicalDepsJSON(deps depsJSON, lm *libmanJSON) logicalDepsJSON {
 	packageMap := make(map[string]*logicalDepsJSONPackage)
 	nameVersions := strset.New()
 
@@ -125,6 +215,14 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		for libName, target := range targets {
 			_, exists := packageMap[libName]
 			if exists {
+				// merge this with existing targets (multiple targets can exist for the same library)
+				p := packageMap[libName]
+				p.Targets = append(p.Targets, target)
+				p.RuntimePathsByRelativeDLLPath = mergeMaps(p.RuntimePathsByRelativeDLLPath, target.runtimePaths())
+				p.ResourcePathsByRelativeDLLPath = mergeMaps(p.ResourcePathsByRelativeDLLPath, target.resourcePaths())
+				p.CompilePathsByRelativeDLLPath = mergeMaps(p.CompilePathsByRelativeDLLPath, target.compilePaths())
+				p.NativePaths = mergeSets(p.NativePaths, target.nativePaths())
+
 				continue
 			}
 
@@ -133,31 +231,15 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 			if ok {
 				lib = &l
 			}
-			runtimePaths := make(map[string]string)
-			for path := range target.Runtime {
-				runtimePaths[trimLibPrefix(path)] = path
-			}
-			resourcePaths := make(map[string]string)
-			for path := range target.Resources {
-				trimmedPath := trimLibPrefix(path)
-				if _, exists := resourcePaths[trimmedPath]; exists {
-					continue
-				}
-				resourcePaths[trimmedPath] = path
-			}
-
-			nativePaths := strset.New()
-			for path := range target.Native {
-				nativePaths.Add(path)
-			}
 
 			p := &logicalDepsJSONPackage{
 				NameVersion:                    libName,
 				Library:                        lib,
-				Targets:                        &target,
-				RuntimePathsByRelativeDLLPath:  runtimePaths,
-				ResourcePathsByRelativeDLLPath: resourcePaths,
-				NativePaths:                    nativePaths,
+				Targets:                        []depsTarget{target},
+				RuntimePathsByRelativeDLLPath:  target.runtimePaths(),
+				ResourcePathsByRelativeDLLPath: target.resourcePaths(),
+				CompilePathsByRelativeDLLPath:  target.compilePaths(),
+				NativePaths:                    target.nativePaths(),
 			}
 			packageMap[libName] = p
 			nameVersions.Add(libName)
@@ -170,6 +252,8 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		if !bundlingDetected && knownBundlers.Has(name) {
 			bundlingDetected = true
 		}
+		p.AnyChildClaimsDLLs = searchForDLLClaims(packageMap, strset.New(), p.dependencyNameVersions()...)
+		p.AnyChildHasDLLs = searchForDLLEvidence(packageMap, strset.New(), p.dependencyNameVersions()...)
 		packages[p.NameVersion] = *p
 	}
 
@@ -179,7 +263,64 @@ func getLogicalDepsJSON(deps depsJSON) logicalDepsJSON {
 		PackagesByNameVersion: packages,
 		PackageNameVersions:   nameVersions,
 		BundlingDetected:      bundlingDetected,
+		LibmanPackages:        lm.packages(),
 	}
+}
+
+func mergeMaps(m1, m2 map[string]string) map[string]string {
+	if m1 == nil {
+		m1 = make(map[string]string)
+	}
+	for k, v := range m2 {
+		if _, exists := m1[k]; !exists {
+			m1[k] = v
+		}
+	}
+	return m1
+}
+
+func mergeSets(s1, s2 *strset.Set) *strset.Set {
+	return strset.Union(s1, s2)
+}
+
+type visitorFunc func(p *logicalDepsJSONPackage) bool
+
+// searchForDLLEvidence recursively searches for executables found for any of the given nameVersions and children recursively.
+func searchForDLLEvidence(packageMap map[string]*logicalDepsJSONPackage, visited *strset.Set, nameVersions ...string) bool {
+	return traverseDependencies(packageMap, func(p *logicalDepsJSONPackage) bool {
+		return p.FoundDLLs(true)
+	}, visited, nameVersions...)
+}
+
+// searchForDLLClaims recursively searches for DLL claims in the deps.json for any of the given nameVersions and children recursively.
+func searchForDLLClaims(packageMap map[string]*logicalDepsJSONPackage, visited *strset.Set, nameVersions ...string) bool {
+	return traverseDependencies(packageMap, func(p *logicalDepsJSONPackage) bool {
+		return p.ClaimsDLLs(true)
+	}, visited, nameVersions...)
+}
+
+func traverseDependencies(packageMap map[string]*logicalDepsJSONPackage, visitor visitorFunc, visited *strset.Set, nameVersions ...string) bool {
+	if len(nameVersions) == 0 {
+		return false
+	}
+
+	for _, nameVersion := range nameVersions {
+		if visited.Has(nameVersion) {
+			continue
+		}
+		visited.Add(nameVersion)
+		if p, ok := packageMap[nameVersion]; ok {
+			if visitor(p) {
+				return true
+			}
+
+			if traverseDependencies(packageMap, visitor, visited, p.dependencyNameVersions()...) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 var libPathPattern = regexp.MustCompile(`^(?:runtimes/[^/]+/)?lib/net[^/]+/(?P<targetPath>.+)`)

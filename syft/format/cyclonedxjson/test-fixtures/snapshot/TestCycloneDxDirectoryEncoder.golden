@@ -17,14 +17,14 @@
       ]
     },
     "component": {
-      "bom-ref":"redacted",
+      "bom-ref": "redacted",
       "type": "file",
       "name": "some/path"
     }
   },
   "components": [
     {
-      "bom-ref":"redacted",
+      "bom-ref": "f04d218ff5ff50db",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "bom-ref":"redacted",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
@@ -91,7 +91,7 @@
       ]
     },
     {
-      "bom-ref":"redacted",
+      "bom-ref": "os:debian@1.2.3",
       "type": "operating-system",
       "name": "debian",
       "version": "1.2.3",
@@ -102,6 +102,10 @@
         "version": "1.2.3"
       },
       "properties": [
+        {
+          "name": "syft:distro:extendedSupport",
+          "value": "false"
+        },
         {
           "name": "syft:distro:id",
           "value": "debian"

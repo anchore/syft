@@ -1,6 +1,7 @@
 package alpine
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,14 +15,14 @@ import (
 
 func TestApkDBCataloger(t *testing.T) {
 	dbLocation := file.NewLocation("lib/apk/db/installed")
-
+	ctx := context.TODO()
 	bashPkg := pkg.Package{
 		Name:    "bash",
 		Version: "5.2.21-r0",
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-3.0-or-later", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-3.0-or-later", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
@@ -50,7 +51,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-2.0-only", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2.0-only", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
@@ -79,7 +80,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("MIT", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{
@@ -106,7 +107,7 @@ func TestApkDBCataloger(t *testing.T) {
 		Type:    pkg.ApkPkg,
 		FoundBy: "apk-db-cataloger",
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL-2.0-or-later", dbLocation),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPL-2.0-or-later", dbLocation),
 		),
 		Locations: file.NewLocationSet(dbLocation),
 		Metadata: pkg.ApkDBEntry{

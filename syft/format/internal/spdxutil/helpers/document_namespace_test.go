@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func Test_documentNamespace(t *testing.T) {
+func Test_DocumentNamespace(t *testing.T) {
 	tracker := sourcemetadata.NewCompletionTester(t)
 
 	tests := []struct {
@@ -52,6 +52,14 @@ func Test_documentNamespace(t *testing.T) {
 				},
 			},
 			expected: "https://anchore.com/syft/file/my-name-",
+		},
+		{
+			name:      "snap",
+			inputName: "my-name",
+			src: source.Description{
+				Metadata: source.SnapMetadata{},
+			},
+			expected: "https://anchore.com/syft/snap/my-name-",
 		},
 	}
 	for _, test := range tests {

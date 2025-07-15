@@ -22,38 +22,40 @@ func TestParseWheelEggMetadata(t *testing.T) {
 		ExpectedMetadata parsedData
 	}{
 		{
-			Fixture: "test-fixtures/egg-info/PKG-INFO",
+			Fixture: "test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO",
 			ExpectedMetadata: parsedData{
-				"Apache 2.0",
-				"",
-				"",
-				file.NewLocation("test-fixtures/egg-info/PKG-INFO"),
-				pkg.PythonPackage{
+				DistInfoLocation:  file.NewLocation("test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO"),
+				Licenses:          "Apache 2.0",
+				LicenseFile:       "",
+				LicenseExpression: "",
+				LicenseFilePath:   "test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO",
+				PythonPackage: pkg.PythonPackage{
 					Name:                 "requests",
 					Version:              "2.22.0",
 					Platform:             "UNKNOWN",
 					Author:               "Kenneth Reitz",
 					AuthorEmail:          "me@kennethreitz.org",
-					SitePackagesRootPath: "test-fixtures",
+					SitePackagesRootPath: "test-fixtures/site-packages/nested/egg-name",
 					RequiresPython:       ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
 					ProvidesExtra:        []string{"security", "socks"},
 				},
 			},
 		},
 		{
-			Fixture: "test-fixtures/dist-info/METADATA",
+			Fixture: "test-fixtures/site-packages/nested/dist-name/dist-info/METADATA",
 			ExpectedMetadata: parsedData{
-				"BSD License",
-				"",
-				"",
-				file.NewLocation("test-fixtures/dist-info/METADATA"),
-				pkg.PythonPackage{
+				DistInfoLocation:  file.NewLocation("test-fixtures/site-packages/nested/dist-name/dist-info/METADATA"),
+				Licenses:          "BSD License",
+				LicenseFile:       "",
+				LicenseExpression: "",
+				LicenseFilePath:   "test-fixtures/site-packages/nested/dist-name/dist-info/METADATA",
+				PythonPackage: pkg.PythonPackage{
 					Name:                 "Pygments",
 					Version:              "2.6.1",
 					Platform:             "any",
 					Author:               "Georg Brandl",
 					AuthorEmail:          "georg@python.org",
-					SitePackagesRootPath: "test-fixtures",
+					SitePackagesRootPath: "test-fixtures/site-packages/nested/dist-name",
 					RequiresPython:       ">=3.5",
 					RequiresDist:         []string{"soupsieve (>1.2)", "html5lib ; extra == 'html5lib'", "lxml ; extra == 'lxml'"},
 					ProvidesExtra:        []string{"html5lib", "lxml"},
@@ -149,16 +151,17 @@ func TestParseWheelEggMetadataInvalid(t *testing.T) {
 		ExpectedMetadata parsedData
 	}{
 		{
-			Fixture: "test-fixtures/egg-info/PKG-INFO-INVALID",
+			Fixture: "test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO-INVALID",
 			ExpectedMetadata: parsedData{
-				"",
-				"",
-				"",
-				file.Location{},
-				pkg.PythonPackage{
+				DistInfoLocation:  file.NewLocation("test-fixtures/site-packages/nested/egg-name/egg-info/PKG-INFO-INVALID"),
+				Licenses:          "",
+				LicenseExpression: "",
+				LicenseFile:       "",
+				LicenseFilePath:   "",
+				PythonPackage: pkg.PythonPackage{
 					Name:                 "mxnet",
 					Version:              "1.8.0",
-					SitePackagesRootPath: "test-fixtures",
+					SitePackagesRootPath: "test-fixtures/site-packages/nested/egg-name",
 				},
 			},
 		},

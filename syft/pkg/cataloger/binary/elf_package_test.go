@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -129,12 +130,13 @@ func Test_packageURL(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.want, packageURL(test.metadata))
+			assert.Equal(t, test.want, elfPackageURL(test.metadata))
 		})
 	}
 }
 
 func Test_newELFPackage(t *testing.T) {
+	ctx := context.TODO()
 	tests := []struct {
 		name     string
 		metadata elfBinaryPackageNotes
@@ -168,7 +170,7 @@ func Test_newELFPackage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := newELFPackage(test.metadata, file.NewLocationSet())
+			actual := newELFPackage(ctx, test.metadata, file.NewLocationSet())
 			if diff := cmp.Diff(test.expected, actual, cmpopts.IgnoreFields(pkg.Package{}, "id"), cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationSet{}, pkg.LicenseSet{})); diff != "" {
 				t.Errorf("newELFPackage() mismatch (-want +got):\n%s", diff)
 			}

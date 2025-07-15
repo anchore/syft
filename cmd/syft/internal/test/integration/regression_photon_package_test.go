@@ -3,18 +3,18 @@ package integration
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
 
 func TestPhotonPackageRegression(t *testing.T) { // Regression: https://github.com/anchore/syft/pull/1997
 	sbom, _ := catalogFixtureImage(t, "image-photon-all-layers", source.AllLayersScope)
-	var packages []pkg.Package
-	for p := range sbom.Artifacts.Packages.Enumerate() {
-		packages = append(packages, p)
+	var count int
+	for range sbom.Artifacts.Packages.Enumerate(pkg.RpmPkg) {
+		count++
 	}
 
-	if len(packages) < 1 {
-		t.Errorf("failed to find packages for photon distro; wanted > 0 got 0")
-	}
+	assert.Greater(t, count, 0, "expected to find RPM packages in the SBOM (but did not)")
 }

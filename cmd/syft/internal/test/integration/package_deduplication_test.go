@@ -19,7 +19,7 @@ func TestPackageDeduplication(t *testing.T) {
 	}{
 		{
 			scope:        source.AllLayersScope,
-			packageCount: 178, // without deduplication this would be ~600
+			packageCount: 175, // without deduplication this would be ~600
 			instanceCount: map[string]int{
 				"basesystem":   1,
 				"wget":         1,
@@ -30,15 +30,15 @@ func TestPackageDeduplication(t *testing.T) {
 			locationCount: map[string]int{
 				"basesystem-11-13.el9":               5, // in all layers
 				"curl-minimal-7.76.1-26.el9_3.2.0.1": 2, // base + wget layer
-				"curl-minimal-7.76.1-29.el9_4.1":     3, // curl upgrade layer + all above layers
+				"curl-minimal-7.76.1-31.el9":         3, // curl upgrade layer + all above layers
 				"wget-1.21.1-8.el9_4":                4, // wget + all above layers
-				"vsftpd-3.0.5-5.el9":                 2, // vsftpd + all above layers
-				"httpd-2.4.57-11.el9_4.1":            1, // last layer
+				"vsftpd-3.0.5-6.el9":                 2, // vsftpd + all above layers
+				"httpd-2.4.62-4.el9":                 1, // last layer
 			},
 		},
 		{
 			scope:        source.SquashedScope,
-			packageCount: 172,
+			packageCount: 169,
 			instanceCount: map[string]int{
 				"basesystem":   1,
 				"wget":         1,
@@ -47,11 +47,11 @@ func TestPackageDeduplication(t *testing.T) {
 				"httpd":        1, // rpm, binary is now excluded by overlap
 			},
 			locationCount: map[string]int{
-				"basesystem-11-13.el9":           1,
-				"curl-minimal-7.76.1-29.el9_4.1": 1, // upgrade
-				"wget-1.21.1-8.el9_4":            1,
-				"vsftpd-3.0.5-5.el9":             1,
-				"httpd-2.4.57-11.el9_4.1":        1,
+				"basesystem-11-13.el9":       1,
+				"curl-minimal-7.76.1-31.el9": 1, // upgrade
+				"wget-1.21.1-8.el9_4":        1,
+				"vsftpd-3.0.5-6.el9":         1,
+				"httpd-2.4.62-4.el9":         1,
 			},
 		},
 	}

@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
 	"github.com/anchore/syft/syft/source"
 )
@@ -48,6 +49,7 @@ type Catalog struct {
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
+	Nix         nixConfig         `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
 
 	// configuration for the source (the subject being analyzed)
@@ -75,6 +77,7 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		Nix:           defaultNixConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -155,8 +158,8 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 
 func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
 	return cataloging.LicenseConfig{
-		IncludeUnkownLicenseContent: cfg.License.IncludeUnknownLicenseContent,
-		Coverage:                    cfg.License.LicenseCoverage,
+		IncludeContent: cfg.License.Content,
+		Coverage:       cfg.License.Coverage,
 	}
 }
 
@@ -170,6 +173,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
+			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
 			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
@@ -192,6 +196,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},
+		Nix: nix.DefaultConfig().
+			WithCaptureOwnedFiles(cfg.Nix.CaptureOwnedFiles),
 		Python: python.CatalogerConfig{
 			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
 		},
@@ -272,12 +278,12 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
 	}
 
-	cfg.From = flatten(cfg.From)
+	cfg.From = Flatten(cfg.From)
 
-	cfg.Catalogers = flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = flatten(cfg.SelectCatalogers)
-	cfg.Enrich = flatten(cfg.Enrich)
+	cfg.Catalogers = Flatten(cfg.Catalogers)
+	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
+	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
+	cfg.Enrich = Flatten(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -295,7 +301,7 @@ func (cfg *Catalog) PostLoad() error {
 	return nil
 }
 
-func flatten(commaSeparatedEntries []string) []string {
+func Flatten(commaSeparatedEntries []string) []string {
 	var out []string
 	for _, v := range commaSeparatedEntries {
 		for _, s := range strings.Split(v, ",") {

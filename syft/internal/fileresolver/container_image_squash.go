@@ -58,7 +58,7 @@ func (r *ContainerImageSquash) FilesByPath(paths ...string) ([]file.Location, er
 				return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", ref.RealPath, err)
 			}
 			// don't consider directories
-			if metadata.Metadata.IsDir() {
+			if metadata.IsDir() {
 				continue
 			}
 		}
@@ -106,7 +106,7 @@ func (r *ContainerImageSquash) FilesByGlob(patterns ...string) ([]file.Location,
 					return nil, fmt.Errorf("unable to get file metadata for path=%q: %w", result.RequestPath, err)
 				}
 				// don't consider directories
-				if metadata.Metadata.IsDir() {
+				if metadata.IsDir() {
 					continue
 				}
 			}
@@ -151,7 +151,7 @@ func (r *ContainerImageSquash) FileContentsByLocation(location file.Location) (i
 		return nil, fmt.Errorf("unable to get metadata for path=%q from file catalog: %w", location.RealPath, err)
 	}
 
-	switch entry.Metadata.Type {
+	switch entry.Type {
 	case stereoscopeFile.TypeSymLink, stereoscopeFile.TypeHardLink:
 		// the location we are searching may be a symlink, we should always work with the resolved file
 		locations, err := r.FilesByPath(location.RealPath)

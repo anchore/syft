@@ -1,14 +1,11 @@
 package python
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
-	"github.com/anchore/syft/internal/licenses"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -90,38 +87,6 @@ func newPackageForPackage(m parsedData, licenses pkg.LicenseSet, sources ...file
 	p.SetID()
 
 	return p
-}
-
-func findLicenses(ctx context.Context, scanner licenses.Scanner, resolver file.Resolver, m parsedData) pkg.LicenseSet {
-	var licenseSet pkg.LicenseSet
-
-	switch {
-	case m.LicenseExpression != "":
-		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.LicenseExpression)...)
-	case m.Licenses != "":
-		licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromLocation(m.LicenseLocation, m.Licenses)...)
-	case m.LicenseLocation.Path() != "":
-		// If we have a license file then resolve and parse it
-		found, err := resolver.FilesByPath(m.LicenseLocation.Path())
-		if err != nil {
-			log.WithFields("error", err, "path", m.LicenseLocation.Path()).Trace("unable to resolve python license")
-		}
-		if len(found) > 0 {
-			metadataContents, err := resolver.FileContentsByLocation(found[0])
-			if err == nil {
-				parsed, err := scanner.PkgSearch(ctx, file.NewLocationReadCloser(m.LicenseLocation, metadataContents))
-				if err != nil {
-					log.WithFields("error", err, "path", m.LicenseLocation.Path()).Trace("unable to parse a license from the file")
-				}
-				if len(parsed) > 0 {
-					licenseSet = pkg.NewLicenseSet(parsed...)
-				}
-			} else {
-				log.WithFields("error", err, "path", m.LicenseLocation.Path()).Trace("unable to read file contents")
-			}
-		}
-	}
-	return licenseSet
 }
 
 func packageURL(name, version string, m *pkg.PythonPackage) string {

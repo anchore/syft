@@ -99,13 +99,14 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 	testutil.Chdir(t, "..") // run with source/test-fixtures
 
 	testCases := []struct {
-		desc       string
-		input      string
-		expString  string
-		inputPaths []string
-		expRefs    int
-		layer2     bool
-		contents   string
+		desc               string
+		input              string
+		expString          string
+		inputPaths         []string
+		expRefs            int
+		layer2             bool
+		contents           string
+		skipExtractArchive bool
 	}{
 		{
 			desc:       "path detected",
@@ -121,14 +122,25 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 			layer2:     true,
 			contents:   "Another .vimrc file",
 		},
+		{
+			desc:               "skip extract archive",
+			input:              "test-fixtures/path-detected",
+			inputPaths:         []string{"/.vimrc"},
+			expRefs:            0,
+			layer2:             false,
+			skipExtractArchive: true,
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			archivePath := setupArchiveTest(t, test.input, test.layer2)
 
-			src, err := New(Config{
-				Path: archivePath,
-			})
+			cfg := Config{
+				Path:               archivePath,
+				SkipExtractArchive: test.skipExtractArchive,
+			}
+
+			src, err := New(cfg)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				require.NoError(t, src.Close())

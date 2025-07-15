@@ -1,6 +1,7 @@
 package r
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -10,13 +11,14 @@ import (
 )
 
 func TestRPackageCataloger(t *testing.T) {
+	ctx := context.Background()
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "base",
 			Version:   "4.3.0",
 			FoundBy:   "r-package-cataloger",
 			Locations: file.NewLocationSet(file.NewLocation("base/DESCRIPTION")),
-			Licenses:  pkg.NewLicenseSet([]pkg.License{pkg.NewLicense("Part of R 4.3.0")}...),
+			Licenses:  pkg.NewLicenseSet([]pkg.License{pkg.NewLicenseWithContext(ctx, "Part of R 4.3.0")}...),
 			Language:  pkg.R,
 			Type:      pkg.Rpkg,
 			PURL:      "pkg:cran/base@4.3.0",
@@ -34,7 +36,7 @@ func TestRPackageCataloger(t *testing.T) {
 			Version:   "1.5.0.9000",
 			FoundBy:   "r-package-cataloger",
 			Locations: file.NewLocationSet(file.NewLocation("stringr/DESCRIPTION")),
-			Licenses:  pkg.NewLicenseSet([]pkg.License{pkg.NewLicense("MIT")}...),
+			Licenses:  pkg.NewLicenseSet([]pkg.License{pkg.NewLicenseWithContext(ctx, "MIT")}...),
 			Language:  pkg.R,
 			Type:      pkg.Rpkg,
 			PURL:      "pkg:cran/stringr@1.5.0.9000",

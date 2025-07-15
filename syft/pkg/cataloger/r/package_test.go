@@ -1,12 +1,14 @@
 package r
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg"
 )
 
 func Test_NewPackageLicenses(t *testing.T) {
+	ctx := context.TODO()
 	testCases := []struct {
 		name string
 		pd   parseData
@@ -20,7 +22,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "MIT",
 			},
 			[]pkg.License{
-				pkg.NewLicense("MIT"),
+				pkg.NewLicenseWithContext(ctx, "MIT"),
 			},
 		},
 		{
@@ -31,7 +33,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "LGPL (== 2.0)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("LGPL2.0"),
+				pkg.NewLicenseWithContext(ctx, "LGPL2.0"),
 			},
 		},
 		{
@@ -42,7 +44,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "LGPL (>= 2.0, < 3)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("LGPL2.0+"),
+				pkg.NewLicenseWithContext(ctx, "LGPL2.0+"),
 			},
 		},
 		{
@@ -53,7 +55,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "GPL-2 + file LICENSE",
 			},
 			[]pkg.License{
-				pkg.NewLicense("GPL-2"),
+				pkg.NewLicenseWithContext(ctx, "GPL-2"),
 			},
 		},
 		{
@@ -64,7 +66,7 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "Mozilla Public License",
 			},
 			[]pkg.License{
-				pkg.NewLicense("Mozilla Public License"),
+				pkg.NewLicenseWithContext(ctx, "Mozilla Public License"),
 			},
 		},
 		{
@@ -75,15 +77,15 @@ func Test_NewPackageLicenses(t *testing.T) {
 				License: "GPL-2 | file LICENSE | LGPL (>= 2.0)",
 			},
 			[]pkg.License{
-				pkg.NewLicense("GPL-2"),
-				pkg.NewLicense("LGPL2.0+"),
+				pkg.NewLicenseWithContext(ctx, "GPL-2"),
+				pkg.NewLicenseWithContext(ctx, "LGPL2.0+"),
 			},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseLicenseData(tt.pd.License)
+			got := parseLicenseData(ctx, tt.pd.License)
 			if len(got) != len(tt.want) {
 				t.Errorf("unexpected number of licenses: got=%d, want=%d", len(got), len(tt.want))
 			}

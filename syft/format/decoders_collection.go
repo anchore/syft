@@ -34,6 +34,10 @@ func (c *DecoderCollection) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, stri
 
 	var bestID sbom.FormatID
 	for _, d := range c.decoders {
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil, "", "", fmt.Errorf("unable to seek to start of SBOM: %w", err)
+		}
 		id, version := d.Identify(reader)
 		if id == "" || version == "" {
 			if id != "" {
@@ -42,6 +46,10 @@ func (c *DecoderCollection) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, stri
 			continue
 		}
 
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil, "", "", fmt.Errorf("unable to seek to start of SBOM: %w", err)
+		}
 		return d.Decode(reader)
 	}
 
@@ -65,6 +73,10 @@ func (c *DecoderCollection) Identify(r io.Reader) (sbom.FormatID, string) {
 	}
 
 	for _, d := range c.decoders {
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			log.Debugf("unable to seek to start of SBOM: %v", err)
+		}
 		id, version := d.Identify(reader)
 		if id != "" && version != "" {
 			return id, version

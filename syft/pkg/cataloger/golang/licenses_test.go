@@ -14,17 +14,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_LicenseSearch(t *testing.T) {
+	ctx := pkgtest.Context()
+
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
 	loc3 := file.NewLocation("github.com/someorg/strangelicense@v1.2.3/LiCeNsE.tXt")
@@ -71,13 +72,6 @@ func Test_LicenseSearch(t *testing.T) {
 
 	localVendorDir := filepath.Join(wd, "test-fixtures", "licenses-vendor")
 
-	sc := &licenses.ScannerConfig{
-		CoverageThreshold: 75,
-		Scanner:           licensecheck.Scan,
-	}
-	licenseScanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-
 	tests := []struct {
 		name     string
 		version  string
@@ -95,6 +89,7 @@ func Test_LicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
+				Contents:       mustContentsFromLocation(t, loc1),
 				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc1.RealPath},
 				Locations:      file.NewLocationSet(),
 			}},
@@ -110,6 +105,7 @@ func Test_LicenseSearch(t *testing.T) {
 				Value:          "MIT",
 				SPDXExpression: "MIT",
 				Type:           license.Concluded,
+				Contents:       mustContentsFromLocation(t, loc2, 23, 1105),
 				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc2.RealPath},
 				Locations:      file.NewLocationSet(),
 			}},
@@ -125,6 +121,7 @@ func Test_LicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
+				Contents:       mustContentsFromLocation(t, loc3),
 				URLs:           []string{"file://$GOPATH/pkg/mod/" + loc3.RealPath},
 				Locations:      file.NewLocationSet(),
 			}},
@@ -139,6 +136,7 @@ func Test_LicenseSearch(t *testing.T) {
 			expected: []pkg.License{{
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
+				Contents:       mustContentsFromLocation(t, loc1),
 				Type:           license.Concluded,
 				URLs:           []string{server.URL + "/github.com/someorg/somename/@v/v0.3.2.zip#" + loc1.RealPath},
 				Locations:      file.NewLocationSet(),
@@ -154,6 +152,7 @@ func Test_LicenseSearch(t *testing.T) {
 			expected: []pkg.License{{
 				Value:          "MIT",
 				SPDXExpression: "MIT",
+				Contents:       mustContentsFromLocation(t, loc2, 23, 1105), // offset for correct scanner contents
 				Type:           license.Concluded,
 				URLs:           []string{server.URL + "/github.com/CapORG/CapProject/@v/v4.111.5.zip#" + loc2.RealPath},
 				Locations:      file.NewLocationSet(),
@@ -171,6 +170,7 @@ func Test_LicenseSearch(t *testing.T) {
 			expected: []pkg.License{{
 				Value:          "MIT",
 				SPDXExpression: "MIT",
+				Contents:       mustContentsFromLocation(t, loc2, 23, 1105), // offset for correct scanner contents
 				Type:           license.Concluded,
 				URLs:           []string{server.URL + "/github.com/CapORG/CapProject/@v/v4.111.5.zip#" + loc2.RealPath},
 				Locations:      file.NewLocationSet(),
@@ -187,6 +187,7 @@ func Test_LicenseSearch(t *testing.T) {
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
 				Type:           license.Concluded,
+				Contents:       mustContentsFromLocation(t, loc1),
 				URLs:           []string{"file://$GO_VENDOR/github.com/someorg/somename/LICENSE"},
 				Locations:      file.NewLocationSet(),
 			}},
@@ -201,6 +202,7 @@ func Test_LicenseSearch(t *testing.T) {
 			expected: []pkg.License{{
 				Value:          "MIT",
 				SPDXExpression: "MIT",
+				Contents:       mustContentsFromLocation(t, loc2, 23, 1105), // offset for correct scanner contents
 				Type:           license.Concluded,
 				URLs:           []string{"file://$GO_VENDOR/github.com/!cap!o!r!g/!cap!project/LICENSE.txt"},
 				Locations:      file.NewLocationSet(),
@@ -216,6 +218,7 @@ func Test_LicenseSearch(t *testing.T) {
 			expected: []pkg.License{{
 				Value:          "Apache-2.0",
 				SPDXExpression: "Apache-2.0",
+				Contents:       mustContentsFromLocation(t, loc1),
 				Type:           license.Concluded,
 				URLs:           []string{"file://$GO_VENDOR/github.com/someorg/strangelicense/LiCeNsE.tXt"},
 				Locations:      file.NewLocationSet(),
@@ -226,7 +229,7 @@ func Test_LicenseSearch(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := newGoLicenseResolver("", test.config)
-			lics := l.getLicenses(context.Background(), licenseScanner, fileresolver.Empty{}, test.name, test.version)
+			lics := l.getLicenses(ctx, fileresolver.Empty{}, test.name, test.version)
 			require.EqualValues(t, test.expected, lics)
 		})
 	}
@@ -301,10 +304,7 @@ func Test_findVersionPath(t *testing.T) {
 
 func Test_walkDirErrors(t *testing.T) {
 	resolver := newGoLicenseResolver("", CatalogerConfig{})
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	scanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
-	_, err = resolver.findLicensesInFS(context.Background(), scanner, "somewhere", badFS{})
+	_, err := resolver.findLicensesInFS(context.Background(), "somewhere", badFS{})
 	require.Error(t, err)
 }
 
@@ -321,10 +321,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
-
-	sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
-	licenseScanner, err := licenses.NewScanner(sc)
-	require.NoError(t, err)
+	ctx := pkgtest.Context()
 	tests := []struct {
 		name    string
 		dir     string
@@ -358,35 +355,29 @@ func Test_noLocalGoModDir(t *testing.T) {
 				SearchLocalModCacheLicenses: true,
 				LocalModCacheDir:            test.dir,
 			})
-			_, err := resolver.getLicensesFromLocal(context.Background(), licenseScanner, "mod", "ver")
+			_, err := resolver.getLicensesFromLocal(ctx, "mod", "ver")
 			test.wantErr(t, err)
 		})
 	}
 }
 
-func TestLicenseConversion(t *testing.T) {
-	inputLicenses := []pkg.License{
-		{
-			Value:          "Apache-2.0",
-			SPDXExpression: "Apache-2.0",
-			Type:           "concluded",
-			URLs:           nil,
-			Locations:      file.NewLocationSet(file.NewLocation("LICENSE")),
-			Contents:       "",
-		},
-		{
-			Value:          "UNKNOWN",
-			SPDXExpression: "UNKNOWN_4d1cffe420916f2b706300ab63fcafaf35226a0ad3725cb9f95b26036cefae32",
-			Type:           "declared",
-			URLs:           nil,
-			Locations:      file.NewLocationSet(file.NewLocation("LICENSE2")),
-			Contents:       "NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement",
-		},
+func mustContentsFromLocation(t *testing.T, loc file.Location, offset ...int) string {
+	t.Helper()
+
+	contentsPath := "test-fixtures/licenses/pkg/mod/" + loc.RealPath
+	contents, err := os.ReadFile(contentsPath)
+	require.NoErrorf(t, err, "could not open contents for fixture at %s", contentsPath)
+
+	if len(offset) == 0 {
+		return string(contents)
 	}
 
-	goLicenses := toGoLicenses(inputLicenses)
+	require.Equal(t, 2, len(offset), "invalid offset provided, expected two integers: start and end")
 
-	result := toPkgLicenses(goLicenses)
+	start, end := offset[0], offset[1]
+	require.GreaterOrEqual(t, start, 0, "offset start must be >= 0")
+	require.LessOrEqual(t, end, len(contents), "offset end must be <= content length")
+	require.LessOrEqual(t, start, end, "offset start must be <= end")
 
-	require.Equal(t, inputLicenses, result)
+	return string(contents[start:end])
 }

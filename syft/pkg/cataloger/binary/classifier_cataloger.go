@@ -13,12 +13,13 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
 const catalogerName = "binary-classifier-cataloger"
 
 type ClassifierCatalogerConfig struct {
-	Classifiers []Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
+	Classifiers []binutils.Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
 }
 
 func DefaultClassifierCatalogerConfig() ClassifierCatalogerConfig {
@@ -48,7 +49,7 @@ func (cfg ClassifierCatalogerConfig) MarshalJSON() ([]byte, error) {
 // related runtimes like Python, Go, Java, or Node. Some exceptions can be made for widely-used binaries such
 // as busybox.
 type cataloger struct {
-	classifiers []Classifier
+	classifiers []binutils.Classifier
 }
 
 // Name returns a string that uniquely describes the cataloger
@@ -101,7 +102,7 @@ func mergePackages(target *pkg.Package, extra *pkg.Package) {
 	target.Metadata = meta
 }
 
-func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, err error) {
+func catalog(resolver file.Resolver, cls binutils.Classifier) (packages []pkg.Package, err error) {
 	var errs error
 	locations, err := resolver.FilesByGlob(cls.FileGlob)
 	if err != nil {
@@ -109,7 +110,7 @@ func catalog(resolver file.Resolver, cls Classifier) (packages []pkg.Package, er
 		return nil, err
 	}
 	for _, location := range locations {
-		pkgs, err := cls.EvidenceMatcher(cls, matcherContext{resolver: resolver, location: location})
+		pkgs, err := cls.EvidenceMatcher(cls, binutils.MatcherContext{Resolver: resolver, Location: location})
 		if err != nil {
 			errs = unknown.Append(errs, location, err)
 			continue

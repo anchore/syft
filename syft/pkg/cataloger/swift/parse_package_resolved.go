@@ -94,7 +94,7 @@ func parsePackageResolved(_ context.Context, _ file.Resolver, _ *generic.Environ
 				pkgPin.Version,
 				pkgPin.Location,
 				pkgPin.Revision,
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

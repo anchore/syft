@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetNuke.Core" Version="9.9.1"/>
+
+    <!-- jQuery wraps the javascript library, so no DLLs -->
+    <PackageReference Include="jQuery" Version="3.4.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.2.0" />
+
+    <!-- ChakraCore is an open source Javascript engine with a C API -->
+    <PackageReference Include="Microsoft.ChakraCore" Version="1.11.24">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- Nuget.CommandLine is a command line tool for managing NuGet packages -->
+    <PackageReference Include="Nuget.CommandLine" Version="6.3.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- Umbraco.Cms has dependencies with software, but itself has no DLLs -->
+    <PackageReference Include="Umbraco.Cms" Version="11.3.0" />
+
+    <!-- For code analysis/style checking, only needed during development -->
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435" PrivateAssets="All" />
+
+    <!-- For unit testing, only needed during development -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" Condition="'$(Configuration)' == 'Debug'" PrivateAssets="All" />
+
+  </ItemGroup>
+
+  <!-- create directories if they don't exist -->
+  <Target Name="CreateWwwroot" BeforeTargets="PrepareForPublish">
+    <MakeDir Directories="$(PublishDir)wwwroot\lib\jquery" />
+  </Target>
+
+  <!-- explicitly copy jQuery files during publish phase -->
+  <Target Name="CopyJQueryToPublishOutput" AfterTargets="CreateWwwroot" BeforeTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <!-- find jQuery files in the packages folder -->
+      <JQueryFiles Include="$(NuGetPackageRoot)\jquery\3.4.1\Content\Scripts\*.js" />
+
+      <!-- add these to the publish output -->
+      <ResolvedFileToPublish Include="@(JQueryFiles)">
+        <RelativePath>wwwroot\lib\jquery\%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -12,101 +12,112 @@ import (
 )
 
 func TestParsePubspecLock(t *testing.T) {
-	fixture := "test-fixtures/pubspec.lock"
-	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
-	expected := []pkg.Package{
+	tests := []struct {
+		name                  string
+		fixture               string
+		expectedPackages      []pkg.Package
+		expectedRelationships []artifact.Relationship
+	}{
 		{
-			Name:      "ale",
-			Version:   "3.3.0",
-			PURL:      "pkg:pub/ale@3.3.0?hosted_url=pub.hosted.org",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:      "ale",
-				Version:   "3.3.0",
-				HostedURL: "pub.hosted.org",
+			name:    "standard pubspec.lock",
+			fixture: "test-fixtures/pubspec_locks/pubspec.lock",
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "ale",
+					Version:   "3.3.0",
+					PURL:      "pkg:pub/ale@3.3.0?hosted_url=pub.hosted.org",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:      "ale",
+						Version:   "3.3.0",
+						HostedURL: "pub.hosted.org",
+					},
+				},
+				{
+					Name:      "analyzer",
+					Version:   "0.40.7",
+					PURL:      "pkg:pub/analyzer@0.40.7",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "analyzer",
+						Version: "0.40.7",
+					},
+				},
+				{
+					Name:      "ansicolor",
+					Version:   "1.1.1",
+					PURL:      "pkg:pub/ansicolor@1.1.1",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "ansicolor",
+						Version: "1.1.1",
+					},
+				},
+				{
+					Name:      "archive",
+					Version:   "2.0.13",
+					PURL:      "pkg:pub/archive@2.0.13",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "archive",
+						Version: "2.0.13",
+					},
+				},
+				{
+					Name:      "args",
+					Version:   "1.6.0",
+					PURL:      "pkg:pub/args@1.6.0",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "args",
+						Version: "1.6.0",
+					},
+				},
+				{
+					Name:      "flutter",
+					Version:   "3.24.5",
+					PURL:      "pkg:pub/flutter@3.24.5",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "flutter",
+						Version: "3.24.5",
+					},
+				},
+				{
+					Name:      "key_binder",
+					Version:   "1.11.20",
+					PURL:      "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com%3AWorkiva%2Fkey_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Language:  pkg.Dart,
+					Type:      pkg.DartPubPkg,
+					Metadata: pkg.DartPubspecLockEntry{
+						Name:    "key_binder",
+						Version: "1.11.20",
+						VcsURL:  "git@github.com:Workiva/key_binder.git@3f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
+					},
+				},
 			},
-		},
-		{
-			Name:      "analyzer",
-			Version:   "0.40.7",
-			PURL:      "pkg:pub/analyzer@0.40.7",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "analyzer",
-				Version: "0.40.7",
-			},
-		},
-		{
-			Name:      "ansicolor",
-			Version:   "1.1.1",
-			PURL:      "pkg:pub/ansicolor@1.1.1",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "ansicolor",
-				Version: "1.1.1",
-			},
-		},
-		{
-			Name:      "archive",
-			Version:   "2.0.13",
-			PURL:      "pkg:pub/archive@2.0.13",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "archive",
-				Version: "2.0.13",
-			},
-		},
-		{
-			Name:      "args",
-			Version:   "1.6.0",
-			PURL:      "pkg:pub/args@1.6.0",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "args",
-				Version: "1.6.0",
-			},
-		},
-		{
-			Name:      "flutter",
-			Version:   "3.24.5",
-			PURL:      "pkg:pub/flutter@3.24.5",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "flutter",
-				Version: "3.24.5",
-			},
-		},
-		{
-			Name:      "key_binder",
-			Version:   "1.11.20",
-			PURL:      "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com%3AWorkiva%2Fkey_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
-			Locations: fixtureLocationSet,
-			Language:  pkg.Dart,
-			Type:      pkg.DartPubPkg,
-			Metadata: pkg.DartPubspecLockEntry{
-				Name:    "key_binder",
-				Version: "1.11.20",
-				VcsURL:  "git@github.com:Workiva/key_binder.git@3f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
-			},
+			expectedRelationships: nil,
 		},
 	}
 
-	// TODO: relationships are not under test
-	var expectedRelationships []artifact.Relationship
-
-	pkgtest.TestFileParser(t, fixture, parsePubspecLock, expected, expectedRelationships)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.TestFileParser(t, test.fixture, parsePubspecLock, test.expectedPackages, test.expectedRelationships)
+		})
+	}
 }
 
 func Test_corruptPubspecLock(t *testing.T) {
@@ -235,9 +246,11 @@ func Test_sdkVersionParser_valid(t *testing.T) {
 	}
 
 	for constraint, expected := range patterns {
-		version, err = parseMinimumSdkVersion(constraint)
-		assert.NoError(t, err)
-		assert.Equalf(t, expected, version, "constraint '%s", constraint)
+		t.Run(constraint, func(t *testing.T) {
+			version, err = parseMinimumSdkVersion(constraint)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, version)
+		})
 	}
 }
 

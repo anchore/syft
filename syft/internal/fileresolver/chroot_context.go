@@ -169,7 +169,11 @@ func (r ChrootContext) ToNativeGlob(chrootPath string) (string, error) {
 		return "", err
 	}
 
-	parts[0] = strings.TrimRight(responsePath, "/") + "/"
+	hasSlash := strings.HasSuffix(parts[0], "/")
+	parts[0] = responsePath
+	if hasSlash {
+		parts[0] = strings.TrimRight(parts[0], "/") + "/"
+	}
 
 	return strings.Join(parts, "*"), nil
 }

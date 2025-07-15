@@ -114,12 +114,12 @@ func TestOutOfDateParser(t *testing.T) {
 		name:            "warning when document version is unparseable",
 		documentVersion: "some-nonsense",
 		parserVersion:   "3.1.0",
-		want:            fmt.Errorf("error comparing document schema version with parser schema version: %w", errors.New("Invalid Semantic Version")),
+		want:            fmt.Errorf("error comparing document schema version with parser schema version: %w", errors.New("invalid semantic version")),
 	}, {
 		name:            "warning when parser version is unparseable",
 		documentVersion: "7.1.0",
 		parserVersion:   "some-nonsense",
-		want:            fmt.Errorf("error comparing document schema version with parser schema version: %w", errors.New("Invalid Semantic Version")),
+		want:            fmt.Errorf("error comparing document schema version with parser schema version: %w", errors.New("invalid semantic version")),
 	}}
 
 	for _, tt := range tests {

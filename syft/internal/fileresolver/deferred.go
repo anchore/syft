@@ -43,7 +43,7 @@ func (d *Deferred) FileContentsByLocation(location file.Location) (io.ReadCloser
 func (d *Deferred) HasPath(s string) bool {
 	r, err := d.getResolver()
 	if err != nil {
-		log.Debug("unable to get resolver: %v", err)
+		log.Debugf("unable to get resolver: %v", err)
 		return false
 	}
 	return r.HasPath(s)
@@ -84,7 +84,7 @@ func (d *Deferred) RelativeFileByPath(location file.Location, path string) *file
 func (d *Deferred) AllLocations(ctx context.Context) <-chan file.Location {
 	r, err := d.getResolver()
 	if err != nil {
-		log.Debug("unable to get resolver: %v", err)
+		log.Debugf("unable to get resolver: %v", err)
 		return nil
 	}
 	return r.AllLocations(ctx)

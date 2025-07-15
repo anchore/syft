@@ -16,7 +16,7 @@
     </component>
   </metadata>
   <components>
-    <component bom-ref="redacted" type="library">
+    <component bom-ref="f04d218ff5ff50db" type="library">
       <name>package-1</name>
       <version>1.0.1</version>
       <licenses>
@@ -34,7 +34,7 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component bom-ref="redacted" type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>
@@ -47,12 +47,13 @@
         <property name="syft:metadata:installedSize">0</property>
       </properties>
     </component>
-    <component bom-ref="redacted" type="operating-system">
+    <component bom-ref="os:debian@1.2.3" type="operating-system">
       <name>debian</name>
       <version>1.2.3</version>
       <description>debian</description>
       <swid tagId="debian" name="debian" version="1.2.3"></swid>
       <properties>
+        <property name="syft:distro:extendedSupport">false</property>
         <property name="syft:distro:id">debian</property>
         <property name="syft:distro:idLike:0">like!</property>
         <property name="syft:distro:prettyName">debian</property>

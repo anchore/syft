@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -80,6 +81,7 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]file.Location,
 }
 
 func TestParseRpmDB(t *testing.T) {
+	ctx := context.TODO()
 	packagesLocation := file.NewLocation("test-fixtures/Packages")
 	tests := []struct {
 		fixture     string
@@ -98,7 +100,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
@@ -128,7 +130,7 @@ func TestParseRpmDB(t *testing.T) {
 					Locations: file.NewLocationSet(packagesLocation),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocations("MIT", packagesLocation),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", packagesLocation),
 					),
 					Metadata: pkg.RpmDBEntry{
 						Name:            "dive",
@@ -219,6 +221,132 @@ func Test_corruptRpmDbEntry(t *testing.T) {
 		FromFile(t, "test-fixtures/glob-paths/usr/lib/sysimage/rpm/Packages.db").
 		WithError().
 		TestParser(t, parseRpmDB)
+}
+
+func TestParseSignatures(t *testing.T) {
+	tests := []struct {
+		name          string
+		sigs          []string
+		expected      []pkg.RpmSignature
+		expectedError require.ErrorAssertionFunc
+	}{
+		{
+			name: "valid signature",
+			sigs: []string{"RSA/SHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d"},
+			expected: []pkg.RpmSignature{
+				{
+					PublicKeyAlgorithm: "RSA",
+					HashAlgorithm:      "SHA256",
+					Created:            "Mon May 16 12:32:55 2022",
+					IssuerKeyID:        "702d426d350d275d",
+				},
+			},
+		},
+		{
+			name: "multiple valid signatures",
+			sigs: []string{
+				"RSA/SHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d",
+				"DSA/SHA1, Tue Jun 14 09:45:12 2023, Key ID 123abc456def789",
+			},
+			expected: []pkg.RpmSignature{
+				{
+					PublicKeyAlgorithm: "RSA",
+					HashAlgorithm:      "SHA256",
+					Created:            "Mon May 16 12:32:55 2022",
+					IssuerKeyID:        "702d426d350d275d",
+				},
+				{
+					PublicKeyAlgorithm: "DSA",
+					HashAlgorithm:      "SHA1",
+					Created:            "Tue Jun 14 09:45:12 2023",
+					IssuerKeyID:        "123abc456def789",
+				},
+			},
+		},
+		{
+			name:     "no signatures",
+			sigs:     []string{},
+			expected: nil,
+		},
+		{
+			name:     "empty signatures",
+			sigs:     []string{"", "", ""},
+			expected: nil,
+		},
+		{
+			name:          "invalid parts count",
+			sigs:          []string{"RSA/SHA256, Mon May 16 12:32:55 2022"},
+			expected:      nil,
+			expectedError: require.Error,
+		},
+		{
+			name:          "invalid method format",
+			sigs:          []string{"RSASHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d"},
+			expected:      nil,
+			expectedError: require.Error,
+		},
+		{
+			name:          "empty method values",
+			sigs:          []string{"/, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d"},
+			expected:      nil,
+			expectedError: require.Error,
+		},
+		{
+			name:          "empty created value",
+			sigs:          []string{"RSA/SHA256, , Key ID 702d426d350d275d"},
+			expected:      nil,
+			expectedError: require.Error,
+		},
+		{
+			name:          "empty issuer value",
+			sigs:          []string{"RSA/SHA256, Mon May 16 12:32:55 2022, Key ID "},
+			expected:      nil,
+			expectedError: require.Error,
+		},
+		{
+			name: "issuer without prefix",
+			sigs: []string{"RSA/SHA256, Mon May 16 12:32:55 2022, 702d426d350d275d"},
+			expected: []pkg.RpmSignature{
+				{
+					PublicKeyAlgorithm: "RSA",
+					HashAlgorithm:      "SHA256",
+					Created:            "Mon May 16 12:32:55 2022",
+					IssuerKeyID:        "702d426d350d275d",
+				},
+			},
+		},
+		{
+			name: "mixed valid and invalid signatures",
+			sigs: []string{
+				"RSA/SHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d",
+				"DSASHA1, Tue Jun 14 09:45:12 2023, Key ID 123abc456def789",
+			},
+			expected: []pkg.RpmSignature{
+				{
+					PublicKeyAlgorithm: "RSA",
+					HashAlgorithm:      "SHA256",
+					Created:            "Mon May 16 12:32:55 2022",
+					IssuerKeyID:        "702d426d350d275d",
+				},
+			},
+			expectedError: require.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedError == nil {
+				tt.expectedError = require.NoError
+			}
+			got, err := parseSignatures(tt.sigs...)
+			tt.expectedError(t, err)
+			if err != nil {
+				return
+			}
+
+			require.Equal(t, tt.expected, got)
+		})
+	}
 }
 
 func intRef(i int) *int {

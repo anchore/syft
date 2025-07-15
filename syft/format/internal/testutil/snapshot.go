@@ -68,15 +68,15 @@ func AssertEncoderAgainstGoldenSnapshot(t *testing.T, cfg EncoderSnapshotTestCon
 	if cfg.IsJSON {
 		require.JSONEq(t, string(expected), string(actual))
 	} else {
-		requireEqual(t, expected, actual)
+		requireEqual(t, string(expected), string(actual))
 	}
 }
 
-func requireEqual(t *testing.T, expected any, actual any) {
+func requireEqual(t *testing.T, expected string, actual string) {
 	if diff := cmp.Diff(expected, actual); diff != "" {
 		// uncomment to debug
-		// t.Logf("expected: %s", expected)
-		// t.Logf("actual: %s", actual)
+		// t.Logf("expected:\n%s", expected)
+		// t.Logf("actual:\n%s", actual)
 		t.Fatalf("mismatched output: %s", diff)
 	}
 }

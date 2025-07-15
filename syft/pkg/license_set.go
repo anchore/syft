@@ -50,28 +50,52 @@ func (s *LicenseSet) Add(licenses ...License) {
 		s.set = make(map[artifact.ID]License)
 	}
 	for _, l := range licenses {
-		// we only want to add licenses that have a value
+		// we only want to add licenses that are not empty
+		if l.Empty() {
+			continue
+		}
 		// note, this check should be moved to the license constructor in the future
-		if l.Value != "" {
-			if id, merged, err := s.addToExisting(l); err == nil && !merged {
-				// doesn't exist, add it
-				s.set[id] = l
-			} else if err != nil {
-				log.Trace("license set failed to add license %#v: %+v", l, err)
-			}
+		if id, merged, err := s.addToExisting(l); err == nil && !merged {
+			// doesn't exist, add it
+			s.set[id] = l
+		} else if err != nil {
+			log.WithFields("error", err, "license", l).Trace("failed to add license to license set")
 		}
 	}
 }
 
-func (s LicenseSet) ToSlice() []License {
+func (s LicenseSet) ToSlice(sorters ...func(a, b License) int) []License {
+	licenses := s.ToUnorderedSlice()
+
+	var sorted bool
+	for _, sorter := range sorters {
+		if sorter == nil {
+			continue
+		}
+		sort.Slice(licenses, func(i, j int) bool {
+			return sorter(licenses[i], licenses[j]) < 0
+		})
+		sorted = true
+		break
+	}
+
+	if !sorted {
+		sort.Sort(Licenses(licenses))
+	}
+
+	return licenses
+}
+
+func (s LicenseSet) ToUnorderedSlice() []License {
 	if s.set == nil {
 		return nil
 	}
-	var licenses []License
+	licenses := make([]License, len(s.set))
+	idx := 0
 	for _, v := range s.set {
-		licenses = append(licenses, v)
+		licenses[idx] = v
+		idx++
 	}
-	sort.Sort(Licenses(licenses))
 	return licenses
 }
 

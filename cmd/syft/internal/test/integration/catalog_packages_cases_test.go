@@ -502,8 +502,15 @@ var commonTestCases = []testCase{
 		},
 	},
 	{
-		name:        "find php pecl package",
-		pkgType:     pkg.PhpPeclPkg,
+		name:    "find homebrew",
+		pkgType: pkg.HomebrewPkg,
+		pkgInfo: map[string]string{
+			"afflib": "1.2.3",
+		},
+	},
+	{
+		name:        "find php pear/pecl package",
+		pkgType:     pkg.PhpPearPkg,
 		pkgLanguage: pkg.PHP,
 		pkgInfo: map[string]string{
 			"memcached": "3.2.0",

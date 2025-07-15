@@ -7,15 +7,18 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/licensecheck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/internal/cmptest"
+	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -24,7 +27,13 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
+	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
+)
+
+var (
+	once           sync.Once
+	licenseScanner *licenses.Scanner
 )
 
 type CatalogTester struct {
@@ -44,10 +53,26 @@ type CatalogTester struct {
 	licenseComparer                cmptest.LicenseComparer
 	packageStringer                func(pkg.Package) string
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
+	context                        context.Context
+}
+
+func Context() context.Context {
+	once.Do(func() {
+		// most of the time in testing is initializing the scanner. Let's do that just once
+		sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
+		scanner, err := licenses.NewScanner(sc)
+		if err != nil {
+			panic("unable to setup licences scanner for testing")
+		}
+		licenseScanner = &scanner
+	})
+
+	return licenses.SetContextLicenseScanner(context.Background(), *licenseScanner)
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
+		context:          Context(),
 		locationComparer: cmptest.DefaultLocationComparer,
 		licenseComparer:  cmptest.DefaultLicenseComparer,
 		packageStringer:  stringPackage,
@@ -64,8 +89,17 @@ func NewCatalogTester() *CatalogTester {
 	}
 }
 
+func (p *CatalogTester) WithContext(ctx context.Context) *CatalogTester {
+	p.context = ctx
+	return p
+}
+
 func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester {
 	t.Helper()
+
+	if path == "" {
+		return p
+	}
 
 	s, err := directorysource.NewFromPath(path)
 	require.NoError(t, err)
@@ -77,8 +111,24 @@ func (p *CatalogTester) FromDirectory(t *testing.T, path string) *CatalogTester 
 	return p
 }
 
+func (p *CatalogTester) FromFileSource(t *testing.T, path string) *CatalogTester {
+	t.Helper()
+
+	s, err := filesource.NewFromPath(path)
+	require.NoError(t, err)
+	resolver, err := s.FileResolver(source.AllLayersScope)
+	require.NoError(t, err)
+
+	p.resolver = resolver
+	return p
+}
+
 func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	t.Helper()
+
+	if path == "" {
+		return p
+	}
 
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
@@ -128,6 +178,11 @@ func (p *CatalogTester) WithResolver(r file.Resolver) *CatalogTester {
 
 func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *CatalogTester {
 	t.Helper()
+
+	if fixtureName == "" {
+		return p
+	}
+
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
 	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
@@ -202,7 +257,7 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
-	pkgs, relationships, err := parser(context.Background(), p.resolver, p.env, p.reader)
+	pkgs, relationships, err := parser(p.context, p.resolver, p.env, p.reader)
 	// only test for errors if explicitly requested
 	if p.wantErr != nil {
 		p.wantErr(t, err)
@@ -215,7 +270,7 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 
 	resolver := NewObservingResolver(p.resolver)
 
-	pkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
+	pkgs, relationships, err := cataloger.Catalog(p.context, resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
 	for _, path := range p.expectedPathResponses {
@@ -296,6 +351,11 @@ func TestFileParser(t *testing.T, fixturePath string, parser generic.Parser, exp
 func TestCataloger(t *testing.T, fixtureDir string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
 	t.Helper()
 	NewCatalogTester().FromDirectory(t, fixtureDir).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
+}
+
+func TestCatalogerFromFileSource(t *testing.T, fixturePath string, cataloger pkg.Cataloger, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {
+	t.Helper()
+	NewCatalogTester().FromFileSource(t, fixturePath).Expects(expectedPkgs, expectedRelationships).TestCataloger(t, cataloger)
 }
 
 func TestFileParserWithEnv(t *testing.T, fixturePath string, parser generic.Parser, env *generic.Environment, expectedPkgs []pkg.Package, expectedRelationships []artifact.Relationship) {

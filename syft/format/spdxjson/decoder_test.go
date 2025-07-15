@@ -2,6 +2,7 @@ package spdxjson
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -91,6 +92,8 @@ func TestDecoder_Decode(t *testing.T) {
 			reader, err := os.Open(filepath.Join("test-fixtures", "spdx", test.name))
 			require.NoError(t, err)
 
+			reset := func() { _, err = reader.Seek(0, io.SeekStart); require.NoError(t, err) }
+
 			dec := NewFormatDecoder()
 
 			formatID, formatVersion := dec.Identify(reader)
@@ -98,6 +101,7 @@ func TestDecoder_Decode(t *testing.T) {
 				assert.Equal(t, test.id, formatID)
 				assert.Equal(t, test.version, formatVersion)
 
+				reset()
 				_, decodeID, decodeVersion, err := dec.Decode(reader)
 				require.Error(t, err)
 				assert.Equal(t, test.id, decodeID)
@@ -108,6 +112,7 @@ func TestDecoder_Decode(t *testing.T) {
 			assert.Equal(t, test.id, formatID)
 			assert.Equal(t, test.version, formatVersion)
 
+			reset()
 			s, decodeID, decodeVersion, err := dec.Decode(reader)
 
 			require.NoError(t, err)

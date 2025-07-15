@@ -59,7 +59,7 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 				newPackageForIndex(
 					name,
 					version,
-					reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
 		}

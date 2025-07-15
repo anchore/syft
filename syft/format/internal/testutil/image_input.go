@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -98,7 +99,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	// TODO: this helper function is coupled to the image-simple fixture, which seems like a bad idea
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)
 	_, ref2, _ := img.SquashedTree().File("/somefile-2.txt", filetree.FollowBasenameLinks)
-
+	ctx := context.TODO()
 	// populate catalog with test data
 	if ref1 != nil {
 		catalog.Add(pkg.Package{
@@ -111,7 +112,7 @@ func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 			FoundBy:  "the-cataloger-1",
 			Language: pkg.Python,
 			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicense("MIT"),
+				pkg.NewLicenseWithContext(ctx, "MIT"),
 			),
 			Metadata: pkg.PythonPackage{
 				Name:    "package-1",

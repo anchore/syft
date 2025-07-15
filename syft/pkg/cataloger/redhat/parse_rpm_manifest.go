@@ -16,7 +16,7 @@ import (
 )
 
 // Parses an RPM manifest file, as used in Mariner distroless containers, and returns the Packages listed
-func parseRpmManifest(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRpmManifest(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	r := bufio.NewReader(reader)
 	allPkgs := make([]pkg.Package, 0)
 
@@ -44,7 +44,7 @@ func parseRpmManifest(_ context.Context, _ file.Resolver, _ *generic.Environment
 			continue
 		}
 
-		p := newDBPackage(reader.Location, *metadata, nil, nil)
+		p := newDBPackage(ctx, reader.Location, *metadata, nil, nil)
 
 		if !pkg.IsValid(&p) {
 			continue

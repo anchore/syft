@@ -9,33 +9,49 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, licenses []pkg.License, locations ...file.Location) pkg.Package {
+func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBinaryBuildinfoEntry, licenses []pkg.License, locations ...file.Location) pkg.Package {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}
 
+	version := dep.Version
+	if version == devel {
+		// this is a special case for the "devel" version, which is used when the module is built from source
+		// and there is no vcs tag info available. In this case, we remove the placeholder to indicate
+		// we don't know the version.
+		version = ""
+	}
+
 	p := pkg.Package{
 		Name:      dep.Path,
-		Version:   dep.Version,
+		Version:   version,
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(dep.Path, dep.Version),
+		PURL:      packageURL(dep.Path, version),
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Locations: file.NewLocationSet(locations...),
-		Metadata: pkg.GolangBinaryBuildinfoEntry{
-			GoCompiledVersion: goVersion,
-			H1Digest:          dep.Sum,
-			Architecture:      architecture,
-			BuildSettings:     buildSettings,
-			MainModule:        mainModule,
-			GoCryptoSettings:  cryptoSettings,
-			GoExperiments:     experiments,
-		},
+		Metadata:  m,
 	}
 
 	p.SetID()
 
 	return p
+}
+
+func newBinaryMetadata(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string) pkg.GolangBinaryBuildinfoEntry {
+	if dep.Replace != nil {
+		dep = dep.Replace
+	}
+
+	return pkg.GolangBinaryBuildinfoEntry{
+		GoCompiledVersion: goVersion,
+		H1Digest:          dep.Sum,
+		Architecture:      architecture,
+		BuildSettings:     buildSettings,
+		MainModule:        mainModule,
+		GoCryptoSettings:  cryptoSettings,
+		GoExperiments:     experiments,
+	}
 }
 
 func packageURL(moduleName, moduleVersion string) string {

@@ -421,3 +421,39 @@ func Test_decodeDependencies(t *testing.T) {
 		})
 	}
 }
+
+func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
+
+	packageWithId := cyclonedx.Component{
+		BOMRef:     "pkg:maven/org.springframework.boot/spring-boot-starter-test?package-id=646a5a71a4abeee0",
+		Type:       cyclonedx.ComponentTypeLibrary,
+		Name:       "spring-boot-starter-test",
+		Version:    "",
+		PackageURL: "pkg:maven/org.springframework.boot/spring-boot-starter-test",
+	}
+
+	packageWithoutId := cyclonedx.Component{
+		BOMRef:     "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
+		Type:       cyclonedx.ComponentTypeLibrary,
+		Name:       "spring-boot-starter-webflux",
+		Version:    "",
+		PackageURL: "pkg:maven/org.springframework.boot/spring-boot-starter-webflux",
+	}
+
+	bom := cyclonedx.BOM{Metadata: nil,
+		Components: &[]cyclonedx.Component{
+			packageWithId,
+			packageWithoutId,
+		}}
+
+	s, err := ToSyftModel(&bom)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, s.Artifacts.Packages.Package("pkg:maven/org.springframework.boot/spring-boot-starter-test?package-id=646a5a71a4abeee0"))
+
+	pkgsWithoutID := s.Artifacts.Packages.PackagesByName(packageWithoutId.Name)
+
+	assert.Len(t, pkgsWithoutID, 1)
+	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
+
+}

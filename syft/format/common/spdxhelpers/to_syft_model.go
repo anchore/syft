@@ -1,6 +1,7 @@
 package spdxhelpers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
 	"github.com/spdx/tools-golang/spdx"
 	"github.com/spdx/tools-golang/spdx/v2/common"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
@@ -43,7 +46,7 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		},
 	}
 
-	collectSyftPackages(s, spdxIDMap, doc.Packages)
+	collectSyftPackages(s, spdxIDMap, doc)
 
 	collectSyftFiles(s, spdxIDMap, doc)
 
@@ -277,8 +280,12 @@ func findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 	return nil
 }
 
-func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, packages []*spdx.Package) {
-	for _, p := range packages {
+func collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+	skipIDs := packageIDsToSkip(doc)
+	for _, p := range doc.Packages {
+		if p == nil || skipIDs.Has(string(p.PackageSPDXIdentifier)) {
+			continue
+		}
 		syftPkg := toSyftPackage(p)
 		spdxIDMap[string(p.PackageSPDXIdentifier)] = syftPkg
 		s.Artifacts.Packages.Add(syftPkg)
@@ -361,6 +368,7 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 		from, fromOk := a.(pkg.Package)
 		toPackage, toPackageOk := b.(pkg.Package)
 		toLocation, toLocationOk := b.(file.Location)
+		//nolint:staticcheck
 		if !fromOk || !(toPackageOk || toLocationOk) {
 			log.Debugf("unable to find valid relationship mapping from SPDX, ignoring: (from: %+v) (to: %+v)", a, b)
 			continue
@@ -508,7 +516,14 @@ func toSyftPackage(p *spdx.Package) pkg.Package {
 		Metadata: extractMetadata(p, info),
 	}
 
-	sP.SetID()
+	internal.Backfill(sP)
+
+	if p.PackageSPDXIdentifier != "" {
+		// always prefer the IDs from the SBOM over derived IDs
+		sP.OverrideID(artifact.ID(p.PackageSPDXIdentifier))
+	} else {
+		sP.SetID()
+	}
 
 	return *sP
 }
@@ -526,14 +541,14 @@ func parseSPDXLicenses(p *spdx.Package) []pkg.License {
 
 	// concluded
 	if p.PackageLicenseConcluded != helpers.NOASSERTION && p.PackageLicenseConcluded != helpers.NONE && p.PackageLicenseConcluded != "" {
-		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseConcluded))
+		l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseConcluded))
 		l.Type = license.Concluded
 		licenses = append(licenses, l)
 	}
 
 	// declared
 	if p.PackageLicenseDeclared != helpers.NOASSERTION && p.PackageLicenseDeclared != helpers.NONE && p.PackageLicenseDeclared != "" {
-		l := pkg.NewLicense(cleanSPDXID(p.PackageLicenseDeclared))
+		l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseDeclared))
 		l.Type = license.Declared
 		licenses = append(licenses, l)
 	}
@@ -646,4 +661,16 @@ func extractCPEs(p *spdx.Package) (cpes []cpe.CPE) {
 		}
 	}
 	return cpes
+}
+
+// packageIDsToSkip returns a set of packageIDs that should not be imported
+func packageIDsToSkip(doc *spdx.Document) *strset.Set {
+	skipIDs := strset.New()
+	for i := 0; i < len(doc.Relationships); i++ {
+		r := doc.Relationships[i]
+		if r != nil && r.Relationship == spdx.RelationshipGeneratedFrom {
+			skipIDs.Add(string(r.RefB.ElementRefID))
+		}
+	}
+	return skipIDs
 }

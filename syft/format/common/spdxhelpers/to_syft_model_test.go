@@ -664,7 +664,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Packages: []*spdx.Package{
 			{
 				PackageName:           "some-package",
-				PackageSPDXIdentifier: "1",
+				PackageSPDXIdentifier: "1", // important!
 				PackageVersion:        "1.0.5",
 				Files: []*spdx.File{
 					{
@@ -689,7 +689,7 @@ func Test_directPackageFiles(t *testing.T) {
 		Name:    "some-package",
 		Version: "1.0.5",
 	}
-	p.SetID()
+	p.OverrideID("1") // the same as the spdxID on the package element
 	f := file.Location{
 		LocationData: file.LocationData{
 			Coordinates: file.Coordinates{
@@ -729,4 +729,67 @@ func Test_directPackageFiles(t *testing.T) {
 	}
 
 	require.Equal(t, s, got)
+}
+
+func Test_useSPDXIdentifierOverDerivedSyftArtifactID(t *testing.T) {
+	doc := &spdx.Document{
+		SPDXVersion: "SPDX-2.3",
+		Packages: []*spdx.Package{
+			{
+				PackageName:           "some-package",
+				PackageSPDXIdentifier: "1", // important!
+				PackageVersion:        "1.0.5",
+				Files: []*spdx.File{
+					{
+						FileName:           "some-file",
+						FileSPDXIdentifier: "2",
+						Checksums: []spdx.Checksum{
+							{
+								Algorithm: "SHA1",
+								Value:     "a8d733c64f9123",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	s, err := ToSyftModel(doc)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
+}
+
+func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
+	doc := &spdx.Document{
+		SPDXVersion: "SPDX-2.3",
+		Packages: []*spdx.Package{
+			{
+				PackageName:           "package-1",
+				PackageSPDXIdentifier: "1",
+				PackageVersion:        "1.0.5",
+			},
+			{
+				PackageName:           "package-1-src",
+				PackageSPDXIdentifier: "1-src",
+				PackageVersion:        "1.0.5-src",
+			},
+		},
+		Relationships: []*spdx.Relationship{
+			{
+				Relationship: spdx.RelationshipGeneratedFrom,
+				RefA: common.DocElementID{ // package 1
+					ElementRefID: spdx.ElementID("1"),
+				},
+				RefB: common.DocElementID{ // generated from package 1-src
+					ElementRefID: spdx.ElementID("1-src"),
+				},
+			},
+		},
+	}
+	s, err := ToSyftModel(doc)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
+	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
 }

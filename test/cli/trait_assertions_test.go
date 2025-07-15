@@ -169,7 +169,7 @@ func assertUnknownLicenseContent(required bool) traitAssertion {
 
 		for _, pkg := range data.Artifacts {
 			for _, lic := range pkg.Licenses {
-				if strings.Contains(lic.SPDXExpression, "UNKNOWN") && required {
+				if strings.Contains(lic.Value, "sha256") && required {
 					assert.NotZero(tb, len(lic.Contents))
 				} else {
 					assert.Empty(tb, lic.Contents)

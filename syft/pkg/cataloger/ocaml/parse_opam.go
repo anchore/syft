@@ -16,7 +16,7 @@ import (
 )
 
 //nolint:funlen
-func parseOpamPackage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseOpamPackage(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	opamVersionRe := regexp.MustCompile(`(?m)opam-version:\s*"[0-9]+\.[0-9]+"`)
@@ -39,7 +39,7 @@ func parseOpamPackage(_ context.Context, _ file.Resolver, _ *generic.Environment
 	// If name is inferred from file name/path
 	var name, version string
 	var licenses []string
-	loc := reader.Location.LocationData.AccessPath
+	loc := reader.AccessPath
 	dir, file := path.Split(loc)
 
 	if file == "opam" {
@@ -94,8 +94,9 @@ func parseOpamPackage(_ context.Context, _ file.Resolver, _ *generic.Environment
 	pkgs = append(
 		pkgs,
 		newOpamPackage(
+			ctx,
 			entry,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 	)
 

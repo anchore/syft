@@ -90,16 +90,32 @@ func TestCycloneDxImageEncoder(t *testing.T) {
 func redactor(values ...string) testutil.Redactor {
 	return testutil.NewRedactions().
 		WithValuesRedacted(values...).
+		WithPatternRedactorSpec(
+			testutil.PatternReplacement{
+				// only the source component bom-ref (not package or other component bom-refs)
+				Search:  regexp.MustCompile(`<component bom-ref="(?P<redact>[^"]*)" type="file">`),
+				Groups:  []string{"redact"}, // use the regex to anchor the search, but only replace bytes within the capture group
+				Replace: "redacted",
+			},
+		).
+		WithPatternRedactorSpec(
+			testutil.PatternReplacement{
+				// only the source component bom-ref (not package or other component bom-refs)
+				Search:  regexp.MustCompile(`<component bom-ref="(?P<redact>[^"]*)" type="container">`),
+				Groups:  []string{"redact"}, // use the regex to anchor the search, but only replace bytes within the capture group
+				Replace: "redacted",
+			},
+		).
 		WithPatternRedactors(
 			map[string]string{
 				// dates
 				`([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])[Tt]([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?(([Zz])|([+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))`: `redacted`,
 
-				// image hashes and BOM refs
+				// image hashes
 				`sha256:[A-Za-z0-9]{64}`: `sha256:redacted`,
 
-				// serial numbers and BOM refs
-				`(serialNumber|bom-ref)="[^"]+"`: `$1="redacted"`,
+				// serial numbers
+				`(serialNumber)="[^"]+"`: `$1="redacted"`,
 			},
 		)
 }

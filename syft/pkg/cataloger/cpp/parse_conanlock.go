@@ -47,14 +47,14 @@ func parseConanLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// in a second iteration
 	var indexToPkgMap = map[string]pkg.Package{}
 
-	v1Pkgs := handleConanLockV2(cl, reader, indexToPkgMap)
+	v2Pkgs := handleConanLockV2(cl, reader, indexToPkgMap)
 
 	// we do not want to store the index list requires in the conan metadata, because it is not useful to have it in
 	// the SBOM. Instead, we will store it in a map and then use it to build the relationships
 	// maps pkg.ID to a list of indices
 	var parsedPkgRequires = map[artifact.ID][]string{}
 
-	v2Pkgs := handleConanLockV1(cl, reader, parsedPkgRequires, indexToPkgMap)
+	v1Pkgs := handleConanLockV1(cl, reader, parsedPkgRequires, indexToPkgMap)
 
 	var relationships []artifact.Relationship
 	var pkgs []pkg.Package
@@ -91,7 +91,7 @@ func handleConanLockV1(cl conanLock, reader file.LocationReadCloser, parsedPkgRe
 
 		p := newConanlockPackage(
 			metadata,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
 		if p != nil {
@@ -115,7 +115,7 @@ func handleConanLockV2(cl conanLock, reader file.LocationReadCloser, indexToPkgM
 
 		p := newConanReferencePackage(
 			reference,
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
 		if p != nil {

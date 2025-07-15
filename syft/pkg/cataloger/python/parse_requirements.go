@@ -153,7 +153,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 					URL:               parseURL(req.URL),
 					Markers:           req.Markers,
 				},
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}

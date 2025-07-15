@@ -78,6 +78,9 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	var runtimePkgs []*pkg.Package
 	for i := range pkgs {
 		p := &pkgs[i]
+		if p.Type != pkg.DotnetPkg {
+			continue
+		}
 		if isRuntime(p.Name) {
 			existingRuntimeVersions.Add(p.Version)
 			runtimePkgs = append(runtimePkgs, p)
@@ -111,7 +114,7 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 		runtimePkgs = append(runtimePkgs, &rtp)
 	}
 
-	// create a relationship from every runtime package to every root package
+	// create a relationship from every runtime package to every root package...
 	for _, root := range roots {
 		for _, runtimePkg := range runtimePkgs {
 			relationships = append(relationships, artifact.Relationship{
@@ -122,7 +125,8 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 		}
 	}
 
-	return pkgs, relationships, unknowns
+	// in the process of creating root-to-runtime relationships, we may have created duplicate relationships. Use the relationship index to deduplicate.
+	return pkgs, relationship.NewIndex(relationships...).All(), unknowns
 }
 
 var runtimeDLLPathPattern = regexp.MustCompile(`/Microsoft\.NETCore\.App/(?P<version>\d+\.\d+\.\d+)/[^/]+\.dll`)
@@ -145,7 +149,12 @@ func isRuntimePackageLocation(loc file.Location) (string, bool) {
 func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDepsJSON, []logicalPE, []logicalDepsJSON) {
 	// sort deps.json paths from longest to shortest. This is so we are processing the most specific match first.
 	sort.Slice(depJsons, func(i, j int) bool {
-		return len(depJsons[i].Location.RealPath) > len(depJsons[j].Location.RealPath)
+		return depJsons[i].Location.RealPath > depJsons[j].Location.RealPath
+	})
+
+	// we should be processing PE files in a stable order
+	sort.Slice(peFiles, func(i, j int) bool {
+		return peFiles[i].Location.RealPath > peFiles[j].Location.RealPath
 	})
 
 	peFilesByPath := make(map[file.Coordinates][]logicalPE)
@@ -197,6 +206,14 @@ func attachAssociatedExecutables(dep *logicalDepsJSON, pe logicalPE) bool {
 		}
 
 		if targetPath, ok := p.ResourcePathsByRelativeDLLPath[relativeDllPath]; ok {
+			pe.TargetPath = targetPath
+			p.Executables = append(p.Executables, pe)
+			dep.PackagesByNameVersion[key] = p // update the map with the modified package
+			found = true
+			continue
+		}
+
+		if targetPath, ok := p.CompilePathsByRelativeDLLPath[relativeDllPath]; ok {
 			pe.TargetPath = targetPath
 			p.Executables = append(p.Executables, pe)
 			dep.PackagesByNameVersion[key] = p // update the map with the modified package
@@ -259,15 +276,14 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			continue
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
-		if config.DepPackagesMustHaveDLL && len(lp.Executables) == 0 {
+		if config.DepPackagesMustHaveDLL && !lp.FoundDLLs(config.PropagateDLLClaimsToParents) {
 			// could not find a paired DLL and the user required this...
 			skippedDepPkgs[nameVersion] = lp
 			continue
 		}
 
-		claimsDLLs := len(lp.RuntimePathsByRelativeDLLPath) > 0 || len(lp.ResourcePathsByRelativeDLLPath) > 0
-
-		if config.DepPackagesMustClaimDLL && !claimsDLLs {
+		// check to see if we should skip this package because it does not claim a DLL (or has not dependency that claims a DLL)
+		if config.DepPackagesMustClaimDLL && !lp.ClaimsDLLs(config.PropagateDLLClaimsToParents) {
 			if config.RelaxDLLClaimsWhenBundlingDetected && !doc.BundlingDetected || !config.RelaxDLLClaimsWhenBundlingDetected {
 				// could not find a runtime or resource path and the user required this...
 				// and there is no evidence of a bundler in the dependencies (e.g. ILRepack)
@@ -282,8 +298,22 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			pkgMap[nameVersion] = *dotnetPkg
 		}
 	}
+	rels := relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
 
-	return rootPkg, pkgs, relationshipsFromLogicalDepsJSON(doc, pkgMap, skippedDepPkgs)
+	// ensure that any libman packages are associated with the all root packages
+	for _, libmanPkg := range doc.LibmanPackages {
+		pkgs = append(pkgs, libmanPkg)
+		if rootPkg == nil {
+			continue
+		}
+		rels = append(rels, artifact.Relationship{
+			From: libmanPkg,
+			To:   *rootPkg,
+			Type: artifact.DependencyOfRelationship,
+		})
+	}
+
+	return rootPkg, pkgs, rels
 }
 
 // relationshipsFromLogicalDepsJSON creates relationships from a logicalDepsJSON document for only the given syft packages.
@@ -296,8 +326,7 @@ func relationshipsFromLogicalDepsJSON(doc logicalDepsJSON, pkgMap map[string]pkg
 		if lp.Targets == nil {
 			continue
 		}
-		for depName, depVersion := range lp.Targets.Dependencies {
-			depNameVersion := createNameAndVersion(depName, depVersion)
+		for _, depNameVersion := range lp.dependencyNameVersions() {
 			thisPkg, ok := pkgMap[lp.NameVersion]
 			if !ok {
 				continue
@@ -346,8 +375,7 @@ func findNearestDependencyPackages(skippedDep logicalDepsJSONPackage, pkgMap map
 
 	processed.Add(skippedDep.NameVersion)
 
-	for depName, depVersion := range skippedDep.Targets.Dependencies {
-		depNameVersion := createNameAndVersion(depName, depVersion)
+	for _, depNameVersion := range skippedDep.dependencyNameVersions() {
 		depPkg, ok := pkgMap[depNameVersion]
 		if !ok {
 			skippedDepPkg, ok := skipped[depNameVersion]
@@ -381,7 +409,13 @@ func findDepsJSON(resolver file.Resolver) ([]logicalDepsJSON, error, error) {
 			continue
 		}
 
-		depsJSONs = append(depsJSONs, getLogicalDepsJSON(*dj))
+		libman, err := findLibmanJSON(resolver, loc)
+		if err != nil {
+			unknownErr = unknown.Append(unknownErr, loc, err)
+			libman = nil
+		}
+
+		depsJSONs = append(depsJSONs, getLogicalDepsJSON(*dj, libman))
 	}
 
 	return depsJSONs, unknownErr, nil
@@ -439,7 +473,7 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
-	ldpe, err := getLogicalDotnetPE(file.NewLocationReadCloser(loc, reader))
+	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, reader))
 	if err != nil {
 		return nil, unknown.New(loc, fmt.Errorf("unable to parse PE file: %w", err))
 	}
@@ -448,7 +482,7 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 		return nil, nil
 	}
 
-	if !ldpe.CLR.hasEvidenceOfCLR() {
+	if !ldpe.CLR.HasEvidenceOfCLR() {
 		// this is not a .NET binary
 		return nil, nil
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
@@ -86,11 +87,13 @@ func runCatalogerList(opts *catalogerListOptions) error {
 }
 
 func catalogerListReport(opts *catalogerListOptions, allTaskGroups [][]task.Task) (string, error) {
+	defaultCatalogers := options.Flatten(opts.DefaultCatalogers)
+	selectCatalogers := options.Flatten(opts.SelectCatalogers)
 	selectedTaskGroups, selectionEvidence, err := task.SelectInGroups(
 		allTaskGroups,
 		cataloging.NewSelectionRequest().
-			WithDefaults(opts.DefaultCatalogers...).
-			WithExpression(opts.SelectCatalogers...),
+			WithDefaults(defaultCatalogers...).
+			WithExpression(selectCatalogers...),
 	)
 	if err != nil {
 		return "", fmt.Errorf("unable to select catalogers: %w", err)
@@ -99,7 +102,7 @@ func catalogerListReport(opts *catalogerListOptions, allTaskGroups [][]task.Task
 
 	switch opts.Output {
 	case "json":
-		report, err = renderCatalogerListJSON(flattenTaskGroups(selectedTaskGroups), selectionEvidence, opts.DefaultCatalogers, opts.SelectCatalogers)
+		report, err = renderCatalogerListJSON(flattenTaskGroups(selectedTaskGroups), selectionEvidence, defaultCatalogers, selectCatalogers)
 	case "table", "":
 		if opts.ShowHidden {
 			report = renderCatalogerListTables(allTaskGroups, selectionEvidence)

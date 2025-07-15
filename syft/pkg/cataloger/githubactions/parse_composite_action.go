@@ -43,7 +43,7 @@ func parseCompositeActionForActionUsage(_ context.Context, _ file.Resolver, _ *g
 			continue
 		}
 
-		p, err := newPackageFromUsageStatement(step.Uses, reader.Location)
+		p, err := newPackageFromUsageStatement(step.Uses, step.UsesComment, reader.Location)
 		if err != nil {
 			errs = unknown.Append(errs, reader, err)
 		}

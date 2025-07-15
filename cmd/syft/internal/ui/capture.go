@@ -36,11 +36,7 @@ func capture(target **os.File, writer io.Writer, bufSize int) func() {
 		}()
 
 		buf := make([]byte, bufSize)
-		for {
-			if original == nil {
-				break
-			}
-
+		for original != nil {
 			n, err := r.Read(buf)
 			if n > 0 {
 				_, _ = writer.Write(buf[0:n])

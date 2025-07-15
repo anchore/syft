@@ -26,7 +26,7 @@ tools:
   # used for linting
   - name: golangci-lint
     version:
-      want: v1.64.8
+      want: v2.2.2
     method: github-release
     with:
       repo: golangci/golangci-lint
@@ -34,7 +34,7 @@ tools:
   # used for showing the changelog at release
   - name: glow
     version:
-      want: v2.1.0
+      want: v2.1.1
     method: github-release
     with:
       repo: charmbracelet/glow
@@ -42,7 +42,7 @@ tools:
   # used for signing the checksums file at release
   - name: cosign
     version:
-      want: v2.4.3
+      want: v2.5.2
     method: github-release
     with:
       repo: sigstore/cosign
@@ -58,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v2.8.1
+      want: v2.11.0
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -87,23 +87,10 @@ tools:
     with:
       repo: wagoodman/go-bouncer
 
-  # used for showing benchmark testing
-  - name: benchstat
-    version:
-      want: latest
-      method: go-proxy
-      with:
-        module: golang.org/x/perf
-        allow-unresolved-version: true
-    method: go-install
-    with:
-      entrypoint: cmd/benchstat
-      module: golang.org/x/perf
-
   # used for running all local and CI tasks
   - name: task
     version:
-      want: v3.42.1
+      want: v3.44.0
     method: github-release
     with:
       repo: go-task/task
@@ -111,7 +98,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.69.0
+      want: v2.75.1
     method: github-release
     with:
       repo: cli/cli
@@ -119,7 +106,7 @@ tools:
   # used to upload test fixture cache
   - name: oras
     version:
-      want: v1.2.2
+      want: v1.2.3
     method: github-release
     with:
       repo: oras-project/oras
@@ -127,7 +114,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.45.1
+      want: v4.46.1
     method: github-release
     with:
       repo: mikefarah/yq

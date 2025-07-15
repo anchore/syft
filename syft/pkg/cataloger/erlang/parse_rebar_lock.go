@@ -56,7 +56,7 @@ func parseRebarLock(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 				Name:    name,
 				Version: version,
 			},
-			reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 
 		pkgMap[name] = &p

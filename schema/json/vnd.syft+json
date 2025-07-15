@@ -1,4 +1,4 @@
-(registered 2021-11-05, last updated 2021-11-05)
+(registered 2021-11-05, last updated 2025-13-05)
 
 Media type name: application
 Media subtype name: vnd.syft+json
@@ -60,11 +60,11 @@ General Comments:
 
 Person to contact for further information:
 
-1. Name: Dan Luhring
-2. Email: dan.luhring@anchore.com
+1. Name: Dan Nurmi
+2. Email: opensource@anchore.com
 
 Intended usage: Common
 The Syft SBOM format is an open-source software bill of materials specification. It is intended to be exchanged between different parties of the software supply chain.
 
 
-Author/Change controller: Dan Luhring, on behalf of Anchore
+Author/Change controller: Dan Nurmi, on behalf of Anchore

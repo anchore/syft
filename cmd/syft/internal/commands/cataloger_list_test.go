@@ -184,15 +184,52 @@ Default selections: 1
   • 'image'
 Selection expressions: 6
   • 'b' (intersect)
-  • '-directory' (remove)
   • '-c' (remove)
+  • '-directory' (remove)
   • '-file' (remove)
-  • '+task3' (add)
   • '+file-task1' (add)
+  • '+task3' (add)
 ┌────────────────┬──────────────────┐
 │ FILE CATALOGER │ TAGS             │
 ├────────────────┼──────────────────┤
 │ file-task1     │ file, ft, ft-1-b │
+└────────────────┴──────────────────┘
+┌───────────────────┬────────────────────┐
+│ PACKAGE CATALOGER │ TAGS               │
+├───────────────────┼────────────────────┤
+│ task1             │ 1, a, b, image     │
+│ task3             │ 3, c, d, directory │
+└───────────────────┴────────────────────┘
+`,
+		},
+		{
+			name: "with comma separated expressions, table",
+			options: func() *catalogerListOptions {
+				c := defaultCatalogerListOptions()
+				c.Output = "table"
+				c.DefaultCatalogers = []string{
+					"image,task3,file-task1",
+				}
+				c.SelectCatalogers = []string{
+					"-task2,c,b",
+				}
+				return c
+			}(),
+			want: `
+Default selections: 4
+  • 'file-task1'
+  • 'image'
+  • 'task3'
+  • 'file'
+Selection expressions: 3
+  • 'b' (intersect)
+  • 'c' (intersect)
+  • '-task2' (remove)
+┌────────────────┬──────────────────┐
+│ FILE CATALOGER │ TAGS             │
+├────────────────┼──────────────────┤
+│ file-task1     │ file, ft, ft-1-b │
+│ file-task2     │ file, ft, ft-2-b │
 └────────────────┴──────────────────┘
 ┌───────────────────┬────────────────────┐
 │ PACKAGE CATALOGER │ TAGS               │
@@ -219,7 +256,7 @@ Selection expressions: 6
 				return c
 			}(),
 			want: `
-{"default":["image"],"selection":["-directory","+task3","-c","b"],"catalogers":[{"name":"file-task1","tags":["file"]},{"name":"file-task2","tags":["file"]},{"name":"task1","tags":["b","image"]},{"name":"task3","tags":["task3"]}]}
+{"default":["image"],"selection":["+task3","-c","-directory","b"],"catalogers":[{"name":"file-task1","tags":["file"]},{"name":"file-task2","tags":["file"]},{"name":"task1","tags":["b","image"]},{"name":"task3","tags":["task3"]}]}
 `,
 		},
 	}

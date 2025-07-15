@@ -558,6 +558,16 @@ func TestToNativeGlob(t *testing.T) {
 			expectedResult: "/cwd/relative/path/**/file*.txt",
 			expectedError:  nil,
 		},
+		{
+			name: "ending with glob",
+			chrootContext: ChrootContext{
+				root:              "/root",
+				cwdRelativeToRoot: "/cwd",
+			},
+			chrootPath:     "/var/lib/dpkg/info/name.*",
+			expectedResult: "/root/var/lib/dpkg/info/name.*",
+			expectedError:  nil,
+		},
 	}
 
 	for _, tt := range tests {

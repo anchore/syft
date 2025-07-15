@@ -188,8 +188,10 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 
 	// generate package and file tasks based on the configuration
 	environmentTasks := c.environmentTasks()
+	scopeTasks := c.scopeTasks()
 	relationshipsTasks := c.relationshipTasks(src)
 	unknownTasks := c.unknownsTasks()
+	osFeatureDetectionTasks := c.osFeatureDetectionTasks()
 
 	pkgTasks, fileTasks, selectionEvidence, err := c.selectTasks(src)
 	if err != nil {
@@ -204,6 +206,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
 	}
 
+	// all scope work must be done after all nodes (files and packages) have been cataloged and before the relationship
+	if len(scopeTasks) > 0 {
+		taskGroups = append(taskGroups, scopeTasks)
+	}
+
 	// all relationship work must be done after all nodes (files and packages) have been cataloged
 	if len(relationshipsTasks) > 0 {
 		taskGroups = append(taskGroups, relationshipsTasks)
@@ -212,6 +219,11 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 	// all unknowns tasks should happen after all scanning is complete
 	if len(unknownTasks) > 0 {
 		taskGroups = append(taskGroups, unknownTasks)
+	}
+
+	// osFeatureDetectionTasks should happen after package scanning is complete
+	if len(osFeatureDetectionTasks) > 0 {
+		taskGroups = append(taskGroups, osFeatureDetectionTasks)
 	}
 
 	// identifying the environment (i.e. the linux release) must be done first as this is required for package cataloging
@@ -249,6 +261,7 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 		RelationshipsConfig:  c.Relationships,
 		DataGenerationConfig: c.DataGeneration,
 		PackagesConfig:       c.Packages,
+		LicenseConfig:        c.Licenses,
 		ComplianceConfig:     c.Compliance,
 		FilesConfig:          c.Files,
 	}
@@ -391,6 +404,17 @@ func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([
 	return persistentPackageTasks, selectablePackageTasks, nil
 }
 
+// scopeTasks returns the set of tasks that should be run to generate additional scope information
+func (c *CreateSBOMConfig) scopeTasks() []task.Task {
+	var tsks []task.Task
+	if c.Search.Scope == source.DeepSquashedScope {
+		if t := task.NewDeepSquashedScopeCleanupTask(); t != nil {
+			tsks = append(tsks, t)
+		}
+	}
+	return tsks
+}
+
 // relationshipTasks returns the set of tasks that should be run to generate additional relationships as well as
 // prune existing relationships.
 func (c *CreateSBOMConfig) relationshipTasks(src source.Description) []task.Task {
@@ -426,6 +450,17 @@ func (c *CreateSBOMConfig) unknownsTasks() []task.Task {
 	return tasks
 }
 
+// osFeatureDetectionTasks returns a set of tasks that perform post-processing feature detection and update the SBOM accordingly
+func (c *CreateSBOMConfig) osFeatureDetectionTasks() []task.Task {
+	var tasks []task.Task
+
+	if t := task.NewOSFeatureDetectionTask(); t != nil {
+		tasks = append(tasks, t)
+	}
+
+	return tasks
+}
+
 func (c *CreateSBOMConfig) validate() error {
 	if c.Relationships.ExcludeBinaryPackagesWithFileOwnershipOverlap {
 		if !c.Relationships.PackageFileOwnershipOverlap {
@@ -446,6 +481,8 @@ func findDefaultTags(src source.Description) ([]string, error) {
 		return []string{pkgcataloging.ImageTag, filecataloging.FileTag}, nil
 	case source.FileMetadata, source.DirectoryMetadata:
 		return []string{pkgcataloging.DirectoryTag, filecataloging.FileTag}, nil
+	case source.SnapMetadata:
+		return []string{pkgcataloging.InstalledTag, filecataloging.FileTag}, nil
 	default:
 		return nil, fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
 	}

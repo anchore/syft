@@ -18,7 +18,7 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 		Name:      name,
 		Version:   raw.Version,
 		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(metadata),
+		PURL:      packageURLFromPubspecLock(metadata),
 		Language:  pkg.Dart,
 		Type:      pkg.DartPubPkg,
 		Metadata:  metadata,
@@ -29,7 +29,39 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 	return p
 }
 
-func packageURL(m pkg.DartPubspecLockEntry) string {
+func newPubspecPackage(raw pubspecPackage, locations ...file.Location) pkg.Package {
+	var env *pkg.DartPubspecEnvironment
+	if raw.Environment.SDK != "" || raw.Environment.Flutter != "" {
+		// this is required only after pubspec v2, but might have been optional before this
+		env = &pkg.DartPubspecEnvironment{
+			SDK:     raw.Environment.SDK,
+			Flutter: raw.Environment.Flutter,
+		}
+	}
+	p := pkg.Package{
+		Name:      raw.Name,
+		Version:   raw.Version,
+		Locations: file.NewLocationSet(locations...),
+		PURL:      packageURLFromPubspec(raw.Name, raw.Version),
+		Language:  pkg.Dart,
+		Type:      pkg.DartPubPkg,
+		Metadata: pkg.DartPubspec{
+			Homepage:          raw.Homepage,
+			Repository:        raw.Repository,
+			Documentation:     raw.Documentation,
+			PublishTo:         raw.PublishTo,
+			Environment:       env,
+			Platforms:         raw.Platforms,
+			IgnoredAdvisories: raw.IgnoredAdvisories,
+		},
+	}
+
+	p.SetID()
+
+	return p
+}
+
+func packageURLFromPubspecLock(m pkg.DartPubspecLockEntry) string {
 	var qualifiers packageurl.Qualifiers
 
 	if m.HostedURL != "" {
@@ -49,6 +81,19 @@ func packageURL(m pkg.DartPubspecLockEntry) string {
 		"",
 		m.Name,
 		m.Version,
+		qualifiers,
+		"",
+	).ToString()
+}
+
+func packageURLFromPubspec(name, version string) string {
+	var qualifiers packageurl.Qualifiers
+
+	return packageurl.NewPackageURL(
+		packageurl.TypePub,
+		"",
+		name,
+		version,
 		qualifiers,
 		"",
 	).ToString()

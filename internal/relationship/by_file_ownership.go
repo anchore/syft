@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -32,11 +33,11 @@ type ownershipByFilesMetadata struct {
 	Files []string `json:"files"`
 }
 
-func ByFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
+func ByFileOwnershipOverlapWorker(resolver file.Resolver, accessor sbomsync.Accessor) {
 	var relationships []artifact.Relationship
 
 	accessor.ReadFromSBOM(func(s *sbom.SBOM) {
-		relationships = byFileOwnershipOverlap(s.Artifacts.Packages)
+		relationships = byFileOwnershipOverlap(resolver, s.Artifacts.Packages)
 	})
 
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
@@ -46,8 +47,8 @@ func ByFileOwnershipOverlapWorker(accessor sbomsync.Accessor) {
 
 // byFileOwnershipOverlap creates a package-to-package relationship based on discovering which packages have
 // evidence locations that overlap with ownership claim from another package's package manager metadata.
-func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
-	var relationships = findOwnershipByFilesRelationships(catalog)
+func byFileOwnershipOverlap(resolver file.Resolver, catalog *pkg.Collection) []artifact.Relationship {
+	var relationships = findOwnershipByFilesRelationships(resolver, catalog)
 
 	var edges []artifact.Relationship
 	for parentID, children := range relationships {
@@ -84,13 +85,19 @@ func byFileOwnershipOverlap(catalog *pkg.Collection) []artifact.Relationship {
 
 // findOwnershipByFilesRelationships find overlaps in file ownership with a file that defines another package. Specifically, a .Location.Path of
 // a package is found to be owned by another (from the owner's .Metadata.Files[]).
-func findOwnershipByFilesRelationships(catalog *pkg.Collection) map[artifact.ID]map[artifact.ID]*strset.Set {
+func findOwnershipByFilesRelationships(resolver file.Resolver, catalog *pkg.Collection) map[artifact.ID]map[artifact.ID]*strset.Set { //nolint:gocognit
 	var relationships = make(map[artifact.ID]map[artifact.ID]*strset.Set)
 
 	if catalog == nil {
 		return relationships
 	}
 
+	// Build a map of real paths to packages that directly own them. We'll use this
+	// to check if a file is already owned by the same type of package when we're
+	// determining ownership via symlink.
+	directOwnership := directOwnersByPath(catalog)
+
+	// Now establish relationships, considering symlinks
 	for _, candidateOwnerPkg := range catalog.Sorted() {
 		id := candidateOwnerPkg.ID()
 		if candidateOwnerPkg.Metadata == nil {
@@ -102,32 +109,106 @@ func findOwnershipByFilesRelationships(catalog *pkg.Collection) map[artifact.ID]
 		if !ok {
 			continue
 		}
+
 		for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
-			if matchesAny(ownedFilePath, globsForbiddenFromBeingOwned) {
-				// we skip over known exceptions to file ownership, such as the RPM package owning
-				// the RPM DB path, otherwise the RPM package would "own" all RPMs, which is not intended
+			if ownedFilePath == "" {
 				continue
 			}
 
-			// look for package(s) in the catalog that may be owned by this package and mark the relationship
-			for _, subPackage := range catalog.PackagesByPath(ownedFilePath) {
-				subID := subPackage.ID()
-				if subID == id {
+			// find paths that result in a hit (includes resolving symlinks)
+			resolvedPaths := resolvePaths(ownedFilePath, resolver)
+
+			for _, resolvedPath := range resolvedPaths {
+				if matchesAny(resolvedPath, globsForbiddenFromBeingOwned) {
+					// we skip over known exceptions to file ownership, such as the RPM package owning
+					// the RPM DB path, otherwise the RPM package would "own" all RPMs, which is not intended
 					continue
 				}
-				if _, exists := relationships[id]; !exists {
-					relationships[id] = make(map[artifact.ID]*strset.Set)
+
+				// Skip claiming ownership via symlink if another package of the same type
+				// directly owns this real path. This is the specific fix for the issue where a
+				// symlink shouldn't allow a package to claim ownership when another package of
+				// the same type directly owns the real file.
+				if resolvedPath != ownedFilePath { // This is a resolved symlink path
+					// Check if another package of the same type directly owns this path
+					if paths := directOwnership[candidateOwnerPkg.Type]; paths != nil && paths.Has(resolvedPath) {
+						// Skip this path - a package of the same type directly owns it
+						continue
+					}
 				}
 
-				if _, exists := relationships[id][subID]; !exists {
-					relationships[id][subID] = strset.New()
+				// look for package(s) in the catalog that may be owned by this package and mark the relationship
+				for _, subPackage := range catalog.PackagesByPath(resolvedPath) {
+					subID := subPackage.ID()
+					if subID == id {
+						continue
+					}
+					if _, exists := relationships[id]; !exists {
+						relationships[id] = make(map[artifact.ID]*strset.Set)
+					}
+
+					if _, exists := relationships[id][subID]; !exists {
+						relationships[id][subID] = strset.New()
+					}
+					relationships[id][subID].Add(resolvedPath)
 				}
-				relationships[id][subID].Add(ownedFilePath)
 			}
 		}
 	}
 
 	return relationships
+}
+
+func directOwnersByPath(catalog *pkg.Collection) map[pkg.Type]*strset.Set {
+	directOwnership := map[pkg.Type]*strset.Set{}
+
+	// First, identify direct ownership of all files
+	for _, p := range catalog.Sorted() {
+		if p.Metadata == nil {
+			continue
+		}
+
+		// check to see if this is a file owner
+		pkgFileOwner, ok := p.Metadata.(pkg.FileOwner)
+		if !ok {
+			continue
+		}
+
+		for _, ownedFilePath := range pkgFileOwner.OwnedFiles() {
+			if ownedFilePath == "" {
+				continue
+			}
+
+			// Register direct ownership
+			paths := directOwnership[p.Type]
+			if paths == nil {
+				paths = strset.New()
+				directOwnership[p.Type] = paths
+			}
+			paths.Add(ownedFilePath)
+		}
+	}
+
+	return directOwnership
+}
+
+func resolvePaths(ownedFilePath string, resolver file.Resolver) []string {
+	// though we have a string path, we need to resolve symlinks and other filesystem oddities since we cannot assume this is a real path
+	var locs []file.Location
+	var err error
+	if resolver != nil {
+		locs, err = resolver.FilesByPath(ownedFilePath)
+		if err != nil {
+			log.WithFields("error", err, "path", ownedFilePath).Trace("unable to find path for owned file")
+			locs = nil
+		}
+	}
+
+	ownedFilePaths := strset.New(ownedFilePath)
+	for _, loc := range locs {
+		ownedFilePaths.Add(loc.RealPath)
+	}
+	return ownedFilePaths.List()
 }
 
 func matchesAny(s string, globs []string) bool {

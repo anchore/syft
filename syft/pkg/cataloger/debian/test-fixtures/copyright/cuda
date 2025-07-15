@@ -1,0 +1,145 @@
+End User License Agreement
+--------------------------
+
+NVIDIA Software License Agreement and CUDA Supplement to
+Software License Agreement.
+
+The CUDA Toolkit End User License Agreement applies to the
+NVIDIA CUDA Toolkit, the NVIDIA CUDA Samples, the NVIDIA
+Display Driver, NVIDIA Nsight tools (Visual Studio Edition),
+and the associated documentation on CUDA APIs, programming
+model and development tools. If you do not agree with the
+terms and conditions of the license agreement, then do not
+download or use the software.
+
+Last updated: January 12, 2024.
+
+
+Preface
+-------
+
+The Software License Agreement in Chapter 1 and the Supplement
+in Chapter 2 contain license terms and conditions that govern
+the use of NVIDIA toolkit. By accepting this agreement, you
+agree to comply with all the terms and conditions applicable
+to the product(s) included herein.
+
+
+NVIDIA Driver
+
+
+Description
+
+This package contains the operating system driver and
+fundamental system software components for NVIDIA GPUs.
+
+
+NVIDIA CUDA Toolkit
+
+
+Description
+
+The NVIDIA CUDA Toolkit provides command-line and graphical
+tools for building, debugging and optimizing the performance
+of applications accelerated by NVIDIA GPUs, runtime and math
+libraries, and documentation including programming guides,
+user manuals, and API references.
+
+
+Default Install Location of CUDA Toolkit
+
+Windows platform:
+
+%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v#.#
+
+Linux platform:
+
+/usr/local/cuda-#.#
+
+Mac platform:
+
+/Developer/NVIDIA/CUDA-#.#
+
+
+NVIDIA CUDA Samples
+
+
+Description
+
+CUDA Samples are now located in
+https://github.com/nvidia/cuda-samples, which includes
+instructions for obtaining, building, and running the samples.
+They are no longer included in the CUDA toolkit.
+
+
+NVIDIA Nsight Visual Studio Edition (Windows only)
+
+
+Description
+
+NVIDIA Nsight Development Platform, Visual Studio Edition is a
+development environment integrated into Microsoft Visual
+Studio that provides tools for debugging, profiling, analyzing
+and optimizing your GPU computing and graphics applications.
+
+
+Default Install Location of Nsight Visual Studio Edition
+
+Windows platform:
+
+%ProgramFiles(x86)%\NVIDIA Corporation\Nsight Visual Studio Edition #.#
+
+
+1. License Agreement for NVIDIA Software Development Kits
+---------------------------------------------------------
+
+
+Important Notice—Read before downloading, installing,
+copying or using the licensed software:
+-------------------------------------------------------
+
+This license agreement, including exhibits attached
+("Agreement”) is a legal agreement between you and NVIDIA
+Corporation ("NVIDIA") and governs your use of a NVIDIA
+software development kit (“SDK”).
+
+Each SDK has its own set of software and materials, but here
+is a description of the types of items that may be included in
+a SDK: source code, header files, APIs, data sets and assets
+(examples include images, textures, models, scenes, videos,
+native API input/output files), binary software, sample code,
+libraries, utility programs, programming code and
+documentation.
+
+This Agreement can be accepted only by an adult of legal age
+of majority in the country in which the SDK is used.
+
+If you are entering into this Agreement on behalf of a company
+or other legal entity, you represent that you have the legal
+authority to bind the entity to this Agreement, in which case
+“you” will mean the entity you represent.
+
+If you don’t have the required age or authority to accept
+this Agreement, or if you don’t accept all the terms and
+conditions of this Agreement, do not download, install or use
+the SDK.
+
+You agree to use the SDK only for purposes that are permitted
+by (a) this Agreement, and (b) any applicable law, regulation
+or generally accepted practices or guidelines in the relevant
+jurisdictions.
+
+
+1.1. License
+
+
+1.1.1. License Grant
+
+Subject to the terms of this Agreement, NVIDIA hereby grants
+you a non-exclusive, non-transferable license, without the
+right to sublicense (except as expressly provided in this
+Agreement) to:
+
+  1. Install and use the SDK,
+
+  2. Modify and create derivativ

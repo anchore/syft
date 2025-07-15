@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -11,6 +12,7 @@ import (
 )
 
 func Test_KernelCataloger(t *testing.T) {
+	ctx := context.TODO()
 	kernelPkg := pkg.Package{
 		Name:    "linux-kernel",
 		Version: "6.0.7-301.fc37.x86_64",
@@ -49,7 +51,7 @@ func Test_KernelCataloger(t *testing.T) {
 			),
 		),
 		Licenses: pkg.NewLicenseSet(
-			pkg.NewLicenseFromLocations("GPL v2",
+			pkg.NewLicenseFromLocationsWithContext(ctx, "GPL v2",
 				file.NewVirtualLocation(
 					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",
 					"/lib/modules/6.0.7-301.fc37.x86_64/kernel/drivers/tty/ttynull.ko",

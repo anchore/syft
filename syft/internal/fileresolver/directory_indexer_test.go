@@ -1,10 +1,12 @@
 package fileresolver
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -23,7 +25,7 @@ type indexerMock struct {
 	additionalRoots map[string][]string
 }
 
-func (m *indexerMock) indexer(s string, _ *progress.Stage) ([]string, error) {
+func (m *indexerMock) indexer(s string, _ *progress.AtomicStage) ([]string, error) {
 	m.observedRoots = append(m.observedRoots, s)
 	return m.additionalRoots[s], nil
 }
@@ -223,6 +225,55 @@ func TestDirectoryIndexer_index(t *testing.T) {
 	}
 }
 
+func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
+	// note: this test is testing the effects from NewFromDirectory, indexTree, and addPathToIndex
+	_, filename, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	dir := filepath.Dir(filename)
+
+	tests := []struct {
+		name          string
+		path          string
+		relative_base string
+	}{
+		{
+			name:          "the parent directory has symlink target",
+			path:          "test-fixtures/system_paths/target/symlinks-to-dev",
+			relative_base: "test-fixtures/system_paths/target/symlinks-to-dev",
+		},
+		{
+			name:          "the ancestor directory has symlink target",
+			path:          "test-fixtures/system_paths/target/symlinks-to-hierarchical-dev",
+			relative_base: "test-fixtures/system_paths/target/symlinks-to-hierarchical-dev/module_1/module_1_1",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			indexer := newDirectoryIndexer("test-fixtures/system_paths/target",
+				fmt.Sprintf("%v/%v", dir, test.relative_base))
+			tree, index, err := indexer.build()
+			require.NoError(t, err)
+			info, err := os.Stat(test.path)
+			assert.NoError(t, err)
+
+			// note: the index uses absolute paths, so assertions MUST keep this in mind
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
+			p := file.Path(path.Join(cwd, test.path))
+			assert.Equal(t, true, tree.HasPath(p))
+			exists, ref, err := tree.File(p)
+			assert.Equal(t, true, exists)
+			if assert.NoError(t, err) {
+				return
+			}
+
+			entry, err := index.Get(*ref.Reference)
+			require.NoError(t, err)
+			assert.Equal(t, info.Mode(), entry.Mode)
+		})
+	}
+}
 func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
 	// test-fixtures/bad-symlinks
 	// ├── root
