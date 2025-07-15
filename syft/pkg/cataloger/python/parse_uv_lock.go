@@ -19,52 +19,52 @@ import (
 
 // We use this to check for the version before we try to parse.
 // The TOML library handily ignores everything that isn't mentioend in the struct.
-type UvLockFileVersion struct {
+type uvLockFileVersion struct {
 	Version  int `toml:"version"`
 	Revision int `toml:"revision"`
 }
 
-type UvLockFile struct {
-	Version        int       `toml:"version"`
-	Revision       int       `toml:"revision"`
-	RequiresPython string    `toml:"requires-python"`
-	Packages       []Package `toml:"package"`
+type uvLockFile struct {
+	Version        int         `toml:"version"`
+	Revision       int         `toml:"revision"`
+	RequiresPython string      `toml:"requires-python"`
+	Packages       []uvPackage `toml:"package"`
 }
 
-type Package struct {
-	Name                 string                  `toml:"name"`
-	Version              string                  `toml:"version"`
-	Source               map[string]string       `toml:"source"` // Possible key values for Source are: registry, git, direct, path, directory, editable, virtual
-	Dependencies         Dependencies            `toml:"dependencies"`
-	DevDependencies      map[string]Dependencies `toml:"dev-dependencies"`
-	OptionalDependencies map[string]Dependencies `toml:"optional-dependencies"`
-	Sdist                Distribution            `toml:"sdist"`
-	Wheels               []Distribution          `toml:"wheels"`
-	Metadata             Metadata                `toml:"metadata"`
+type uvPackage struct {
+	Name                 string                    `toml:"name"`
+	Version              string                    `toml:"version"`
+	Source               map[string]string         `toml:"source"` // Possible key values for Source are: registry, git, direct, path, directory, editable, virtual
+	Dependencies         uvDependencies            `toml:"dependencies"`
+	DevDependencies      map[string]uvDependencies `toml:"dev-dependencies"`
+	OptionalDependencies map[string]uvDependencies `toml:"optional-dependencies"`
+	Sdist                uvDistribution            `toml:"sdist"`
+	Wheels               []uvDistribution          `toml:"wheels"`
+	Metadata             uvMetadata                `toml:"metadata"`
 }
 
-type Dependencies []struct {
+type uvDependencies []struct {
 	Name    string   `toml:"name"`
 	Extras  []string `toml:"extra"`
 	Markers string   `toml:"marker"`
 }
 
-type Distribution struct {
+type uvDistribution struct {
 	URL  string `toml:"url"`
 	Hash string `toml:"hash"`
 	Size int    `toml:"size"`
 }
 
-type RequiresDist []struct {
+type uvRequiresDist []struct {
 	Name      string   `toml:"name"`
 	Markers   string   `toml:"marker"`
 	Extras    []string `toml:"extras"`
 	Specifier string   `toml:"specifier"`
 }
 
-type Metadata struct {
-	RequiresDist   RequiresDist `toml:"requires-dist"`
-	ProvidesExtras []string     `toml:"provides-extras"`
+type uvMetadata struct {
+	RequiresDist   uvRequiresDist `toml:"requires-dist"`
+	ProvidesExtras []string       `toml:"provides-extras"`
 }
 
 // parseUvLock is a parser function for uv.lock contents, returning all the pakcages discovered
@@ -77,7 +77,7 @@ func parseUvLock(_ context.Context, _ file.Resolver, _ *generic.Environment, rea
 	return pkgs, dependency.Resolve(uvLockDependencySpecifier, pkgs), err
 }
 
-func extractUvIndex(p Package) string {
+func extractUvIndex(p uvPackage) string {
 	// This is a map, but there should only be one key, value pair
 	var rvalue string
 	for _, value := range p.Source {
@@ -87,7 +87,7 @@ func extractUvIndex(p Package) string {
 	return rvalue
 }
 
-func extractUvDependencies(p Package, pkgVerMap map[string]string) []pkg.PythonUvLockDependencyEntry {
+func extractUvDependencies(p uvPackage, pkgVerMap map[string]string) []pkg.PythonUvLockDependencyEntry {
 	var deps []pkg.PythonUvLockDependencyEntry
 	for _, d := range p.Dependencies {
 		deps = append(deps, pkg.PythonUvLockDependencyEntry{
@@ -103,7 +103,7 @@ func extractUvDependencies(p Package, pkgVerMap map[string]string) []pkg.PythonU
 	return deps
 }
 
-func extractUvExtras(p Package) []pkg.PythonUvLockExtraEntry {
+func extractUvExtras(p uvPackage) []pkg.PythonUvLockExtraEntry {
 	var extras []pkg.PythonUvLockExtraEntry
 	for name, depsStruct := range p.OptionalDependencies {
 		var extraDeps []string
@@ -118,7 +118,7 @@ func extractUvExtras(p Package) []pkg.PythonUvLockExtraEntry {
 	return extras
 }
 
-func newPythonUvLockEntry(p Package, pkgVerMap map[string]string) pkg.PythonUvLockEntry {
+func newPythonUvLockEntry(p uvPackage, pkgVerMap map[string]string) pkg.PythonUvLockEntry {
 	return pkg.PythonUvLockEntry{
 		Index:        extractUvIndex(p),
 		Dependencies: extractUvDependencies(p, pkgVerMap),
@@ -127,8 +127,8 @@ func newPythonUvLockEntry(p Package, pkgVerMap map[string]string) pkg.PythonUvLo
 }
 
 func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
-	var parsedLockFileVersion UvLockFileVersion
-	var parsedLockFile UvLockFile
+	var parsedLockFileVersion uvLockFileVersion
+	var parsedLockFile uvLockFile
 
 	_, err := toml.NewDecoder(reader).Decode(&parsedLockFileVersion)
 	if err != nil {
