@@ -10,81 +10,119 @@ import (
 )
 
 func TestParseUvLock(t *testing.T) {
-	fixture := "test-fixtures/poetry/dev-deps/poetry.lock"
+	fixture := "test-fixtures/uv/simple-deps/uv.lock"
+
 	locations := file.NewLocationSet(file.NewLocation(fixture))
-	expectedPkgs := []pkg.Package{
-		{
-			Name:      "added-value",
-			Version:   "0.14.2",
-			PURL:      "pkg:pypi/added-value@0.14.2",
-			Locations: locations,
-			Language:  pkg.Python,
-			Type:      pkg.PythonPkg,
-			Metadata: pkg.PythonPoetryLockEntry{
-				Index: "https://test.pypi.org/simple",
-				Dependencies: []pkg.PythonPoetryLockDependencyEntry{
-					{Name: "docutils", Version: "*"},
-					{Name: "msal", Version: ">=0.4.1,<2.0.0"},
-					{Name: "natsort", Version: "*"},
-					{Name: "packaging", Version: "*"},
-					{Name: "portalocker", Version: ">=1.0,<3", Markers: `platform_system != "Windows"`},
-					{Name: "portalocker", Version: ">=1.6,<3", Markers: `platform_system == "Windows"`},
-					{Name: "six", Version: "*"},
-					{Name: "sphinx", Version: "*"},
-				},
-				Extras: []pkg.PythonPoetryLockExtraEntry{
-					{
-						Name:         "deploy",
-						Dependencies: []string{"bumpversion", "twine", "wheel"},
-					},
-					{
-						Name:         "docs",
-						Dependencies: []string{"sphinx", "sphinx-rtd-theme"},
-					},
-					{
-						Name:         "test",
-						Dependencies: []string{"pytest", "pytest-cov", "coveralls", "beautifulsoup4", "hypothesis"},
-					},
-				},
+
+	certifi := pkg.Package{
+		Name:      "certifi",
+		Version:   "2025.1.31",
+		Locations: locations,
+		PURL:      "pkg:pypi/certifi@2025.1.31",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  pkg.PythonUvLockEntry{Index: "https://pypi.org/simple"},
+	}
+
+	charsetNormalizer := pkg.Package{
+		Name:      "charset-normalizer",
+		Version:   "3.4.1",
+		Locations: locations,
+		PURL:      "pkg:pypi/charset-normalizer@3.4.1",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  pkg.PythonUvLockEntry{Index: "https://pypi.org/simple"},
+	}
+
+	idna := pkg.Package{
+		Name:      "idna",
+		Version:   "3.10",
+		Locations: locations,
+		PURL:      "pkg:pypi/idna@3.10",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  pkg.PythonUvLockEntry{Index: "https://pypi.org/simple"},
+	}
+
+	requests := pkg.Package{
+		Name:      "requests",
+		Version:   "2.32.3",
+		Locations: locations,
+		PURL:      "pkg:pypi/requests@2.32.3",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata: pkg.PythonUvLockEntry{
+			Index: "https://pypi.org/simple",
+			Dependencies: []pkg.PythonUvLockDependencyEntry{
+				{Name: "certifi"},
+				{Name: "charset-normalizer"},
+				{Name: "idna"},
+				{Name: "urllib3"},
 			},
-		},
-		{
-			Name:      "alabaster",
-			Version:   "0.7.12",
-			PURL:      "pkg:pypi/alabaster@0.7.12",
-			Locations: locations,
-			Language:  pkg.Python,
-			Type:      pkg.PythonPkg,
-			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://pypi.org/simple"},
-		},
-		{
-			Name:      "appnope",
-			Version:   "0.1.0",
-			PURL:      "pkg:pypi/appnope@0.1.0",
-			Locations: locations,
-			Language:  pkg.Python,
-			Type:      pkg.PythonPkg,
-			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://pypi.org/simple"},
-		},
-		{
-			Name:      "asciitree",
-			Version:   "0.3.3",
-			PURL:      "pkg:pypi/asciitree@0.3.3",
-			Locations: locations,
-			Language:  pkg.Python,
-			Type:      pkg.PythonPkg,
-			Metadata:  pkg.PythonPoetryLockEntry{Index: "https://pypi.org/simple"},
 		},
 	}
 
-	var expectedRelationships []artifact.Relationship
+	testpkg := pkg.Package{
+		Name:      "testpkg",
+		Version:   "0.1.0",
+		Locations: locations,
+		PURL:      "pkg:pypi/testpkg@0.1.0",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata: pkg.PythonUvLockEntry{
+			Index: ".", // virtual
+			Dependencies: []pkg.PythonUvLockDependencyEntry{
+				{Name: "requests"},
+			},
+		},
+	}
 
-	pkgtest.TestFileParser(t, fixture, parsePoetryLock, expectedPkgs, expectedRelationships)
-}
+	urllib3 := pkg.Package{
+		Name:      "urllib3",
+		Version:   "2.3.0",
+		Locations: locations,
+		PURL:      "pkg:pypi/urllib3@2.3.0",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  pkg.PythonUvLockEntry{Index: "https://pypi.org/simple"},
+	}
 
-func Test_corruptUvLock(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/poetry.lock").
-		WithError().
-		TestParser(t, parsePoetryLock)
+	expectedPkgs := []pkg.Package{
+		certifi,
+		charsetNormalizer,
+		idna,
+		requests,
+		testpkg,
+		urllib3,
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: certifi,
+			To:   requests,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: charsetNormalizer,
+			To:   requests,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: idna,
+			To:   requests,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: requests,
+			To:   testpkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: urllib3,
+			To:   requests,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	pkgtest.TestFileParser(t, fixture, parseUvLock, expectedPkgs, expectedRelationships)
 }

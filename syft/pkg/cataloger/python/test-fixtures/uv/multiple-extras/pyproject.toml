@@ -1,3 +1,4 @@
+# fixture is not under test, just used to produde the uv.lock
 [project]
 name = "testpkg"
 version = "0.1.0"

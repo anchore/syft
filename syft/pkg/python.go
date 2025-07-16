@@ -95,7 +95,6 @@ type PythonRequirementsEntry struct {
 
 type PythonUvLockDependencyEntry struct {
 	Name     string   `json:"name"`
-	Version  string   `json:"version"`
 	Optional bool     `json:"optional"`
 	Markers  string   `json:"markers,omitempty"`
 	Extras   []string `json:"extras,omitempty"`

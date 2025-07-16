@@ -1,8 +1,10 @@
 package python
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 
@@ -87,14 +89,13 @@ func extractUvIndex(p uvPackage) string {
 	return rvalue
 }
 
-func extractUvDependencies(p uvPackage, pkgVerMap map[string]string) []pkg.PythonUvLockDependencyEntry {
+func extractUvDependencies(p uvPackage) []pkg.PythonUvLockDependencyEntry {
 	var deps []pkg.PythonUvLockDependencyEntry
 	for _, d := range p.Dependencies {
 		deps = append(deps, pkg.PythonUvLockDependencyEntry{
 			Name:    d.Name,
 			Extras:  d.Extras,
 			Markers: d.Markers,
-			Version: pkgVerMap[d.Name],
 		})
 	}
 	sort.Slice(deps, func(i, j int) bool {
@@ -118,19 +119,24 @@ func extractUvExtras(p uvPackage) []pkg.PythonUvLockExtraEntry {
 	return extras
 }
 
-func newPythonUvLockEntry(p uvPackage, pkgVerMap map[string]string) pkg.PythonUvLockEntry {
+func newPythonUvLockEntry(p uvPackage) pkg.PythonUvLockEntry {
 	return pkg.PythonUvLockEntry{
 		Index:        extractUvIndex(p),
-		Dependencies: extractUvDependencies(p, pkgVerMap),
+		Dependencies: extractUvDependencies(p),
 		Extras:       extractUvExtras(p),
 	}
 }
 
 func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	var parsedLockFileVersion uvLockFileVersion
-	var parsedLockFile uvLockFile
 
-	_, err := toml.NewDecoder(reader).Decode(&parsedLockFileVersion)
+	// we cannot use the reader twice, so we read the contents first --uv.lock files tend to be small enough
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, unknown.New(reader.Location, fmt.Errorf("failed to read uv lock file: %w", err))
+	}
+
+	_, err = toml.NewDecoder(bytes.NewReader(contents)).Decode(&parsedLockFileVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read uv lock version: %w", err)
 	}
@@ -139,10 +145,11 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	// lock file versions should they arise, but this gets us
 	// started down this road for now.
 	if parsedLockFileVersion.Version > 1 {
-		return nil, fmt.Errorf("could not parse uv lock file version %d", parsedLockFile.Version)
+		return nil, fmt.Errorf("could not parse uv lock file version %d", parsedLockFileVersion.Version)
 	}
 
-	_, err = toml.NewDecoder(reader).Decode(&parsedLockFile)
+	var parsedLockFile uvLockFile
+	_, err = toml.NewDecoder(bytes.NewReader(contents)).Decode(&parsedLockFile)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse uv lock packages: %w", err)
@@ -162,8 +169,8 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 			newPackageForIndexWithMetadata(
 				p.Name,
 				p.Version,
-				newPythonUvLockEntry(p, pkgVerMap),
-				reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+				newPythonUvLockEntry(p),
+				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 			),
 		)
 	}
@@ -179,7 +186,7 @@ func isDependencyForUvExtra(dep pkg.PythonUvLockDependencyEntry) bool {
 // data structures. Keeping it separate for now since it's always possible for data
 // structures to change down the line.
 // It *is* possible we may be able to merge the Uv and Poetry data structures
-func uvLockDependencySpecifier(p pkg.Package) dependency.Specification {
+func uvLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolint:dupl // this is very similar to the poetry lock dependency specifier, but should remain separate
 	meta, ok := p.Metadata.(pkg.PythonUvLockEntry)
 	if !ok {
 		log.Tracef("cataloger failed to extract UV lock metadata for package %+v", p.Name)
