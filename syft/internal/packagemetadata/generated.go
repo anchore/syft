@@ -52,6 +52,7 @@ func AllTypes() []any {
 		pkg.PythonPipfileLockEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.PythonRequirementsEntry{},
+		pkg.PythonUvLockEntry{},
 		pkg.RDescription{},
 		pkg.RpmArchive{},
 		pkg.RpmDBEntry{},
