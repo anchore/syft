@@ -55,8 +55,11 @@ runs:
     - name: Install apt packages
       if: inputs.bootstrap-apt-packages != ''
       shell: bash
+      env:
+        APT_PACKAGES: ${{ inputs.bootstrap-apt-packages }}
       run: |
-        DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y ${{ inputs.bootstrap-apt-packages }}
+        IFS=' ' read -ra packages <<< "$APT_PACKAGES"
+        DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${packages[@]}"
 
     - name: Restore ORAS cache from github actions
       if: inputs.download-test-fixture-cache == 'true'
