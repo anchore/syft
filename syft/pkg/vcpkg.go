@@ -47,7 +47,7 @@ type VcpkgManifest struct {
 	Maintainers []string        `json:"maintainers,omitempty"`
 	Name        string          `json:"name,omitempty"`
 	Overrides   []VcpkgOverride `json:"overrides,omitempty"`
-	PortVersion int             `json:"port-version,omitempty"`
+	PortVersion float64             `json:"port-version,omitempty"`
 	Supports    string          `json:"supports,omitempty"`
 	// at most one of these version fields will be present and represent different versioning strategies
 	// see https://learn.microsoft.com/en-us/vcpkg/users/versioning#version-schemes for more details
@@ -87,7 +87,7 @@ type VcpkgFeatureObject struct {
 type VcpkgOverride struct {
 	Name        string `json:"name"`
 	Version     string `json:"version"`
-	PortVersion int    `json:"port-version,omitempty"`
+	PortVersion float64    `json:"port-version,omitempty"`
 }
 
 func (v VcpkgManifest) GetFullVersion() string {
@@ -124,24 +124,24 @@ func getPopulatedVersionName(version, versionSemver, versionDate, versionString 
 	}
 }
 
-func getFullVersionName(version, versionSemver, versionDate, versionString string, portVersion int) string {
+func getFullVersionName(version, versionSemver, versionDate, versionString string, portVersion float64) string {
 	if version != "" && portVersion != 0 {
-		vElems := []string{version, "#", strconv.Itoa(portVersion)}
+		vElems := []string{version, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
 	} else if version != "" {
 		return version
 	} else if versionSemver != "" && portVersion != 0 {
-		vElems := []string{versionSemver, "#", strconv.Itoa(portVersion)}
+		vElems := []string{versionSemver, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
 	} else if versionSemver != "" {
 		return versionSemver
 	} else if versionDate != "" && portVersion != 0 {
-		vElems := []string{versionDate, "#", strconv.Itoa(portVersion)}
+		vElems := []string{versionDate, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
 	} else if versionDate != "" {
 		return versionDate
 	} else if versionString != "" && portVersion != 0 {
-		vElems := []string{versionString, "#", strconv.Itoa(portVersion)}
+		vElems := []string{versionString, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
 	} else if versionString != "" {
 		return versionString
@@ -153,12 +153,16 @@ func getFullVersionName(version, versionSemver, versionDate, versionString strin
 // used to get specific dependency from git history
 type VcpkgGitVersionObject struct {
 	// Sha1 value used to retrieve specific git tree object from Github. https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28
-	GitTree     string `json:"git-tree"`
-	Version     string `json:"version,omitempty"`
+	GitTree       string `json:"git-tree"`
+	Version       string `json:"version,omitempty"`
 	VersionSemver string `json:"version-semver,omitempty"`
 	VersionDate   string `json:"version-date,omitempty"`
 	VersionString string `json:"version-string,omitempty"`
-	PortVersion int    `json:"port-version"`
+	PortVersion   float64   `json:"port-version"`
+}
+
+type VcpkgGitVersions struct {
+	Versions []VcpkgGitVersionObject `json:"versions"`
 }
 
 // Filesystem VersionObject 
@@ -168,7 +172,7 @@ type VcpkgFsVersionObject struct {
 	VersionSemver string `json:"version-semver,omitempty"`
 	VersionDate   string `json:"version-date,omitempty"`
 	VersionString string `json:"version-string,omitempty"`
-	PortVersion int    `json:"port-version"`
+	PortVersion float64    `json:"port-version"`
 }
 
 type VcpkgFsVersions struct {
@@ -210,5 +214,5 @@ type VcpkgLockRecord struct {
 
 type VcpkgBaselineVersionObject struct {
 	Baseline string `json:"baseline"`
-	PortVersion int `json:"port-version"`
+	PortVersion float64 `json:"port-version"`
 }
