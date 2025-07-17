@@ -70,7 +70,7 @@ func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(ctx con
 }
 
 func discoverPkgsFromTar(ctx context.Context, location file.Location, archivePath, contentPath string, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
-	openers, err := intFile.ExtractGlobsFromTarToUniqueTempFile(archivePath, contentPath, archiveFormatGlobs...)
+	openers, err := intFile.ExtractGlobsFromTarToUniqueTempFile(ctx, archivePath, contentPath, archiveFormatGlobs...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from tar: %w", err)
 	}
