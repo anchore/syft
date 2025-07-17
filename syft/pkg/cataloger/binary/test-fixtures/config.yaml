@@ -194,6 +194,25 @@ from-images:
         platform: linux/amd64
     paths:
       - /opt/ibm/java/jre/bin/java
+      - /opt/ibm/java/jre/lib/amd64/jli/libjli.so
+
+  - name: java-ibm-8-jre
+    version: 1.8.0_451
+    images:
+      - ref: ibmjava:8-jre@sha256:3588cd1cc9b8646fe03b3b15210e69b1b520f1321f8518b69c0e7013d702fd23
+        platform: linux/amd64
+    paths:
+      - /opt/ibm/java/jre/bin/java
+      - /opt/ibm/java/jre/lib/amd64/jli/libjli.so
+
+  - name: java-ibm-8-sdk-alpine
+    version: 1.8.0_321
+    images:
+      - ref: ibmjava:8-sdk-alpine@sha256:4f8ad2029e78f7b91721745a77fc6011a7c0e09b9edeffb6b20b6ec34a6e63cd
+        platform: linux/amd64
+    paths:
+      - /opt/ibm/java/bin/jdb
+      - /opt/ibm/java/lib/amd64/jli/libjli.so
 
   - version: 10.6.15
     images:
@@ -319,6 +338,23 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/node
+
+  - name: java-jdk-oracle
+    version: 1.8.0_451-b10
+    images:
+      - ref: container-registry.oracle.com/java/jdk:8u451-oraclelinux8@sha256:f9c980e52853bd0a8815ad908c9a4025ed68cb52f31f3b8cd0cd442ee367bfd1
+        platform: linux/amd64
+    paths:
+      - /usr/java/jdk-8/bin/java
+      - /usr/java/jdk-8/bin/jdb
+
+  - name: java-jre-oracle-sdk
+    version: 1.8.0_451-b10
+    images:
+      - ref: container-registry.oracle.com/java/serverjre:1.8.0_451@sha256:fe78fe3efd292dceb5685882ce1b13eb78492f383ccfd52a1b88a4f755b9d996
+        platform: linux/amd64
+    paths:
+      - /usr/java/jdk-8/bin/java
 
   - name: java-jre-openjdk
     version: 1.8.0_352-b08

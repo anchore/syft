@@ -307,6 +307,7 @@ func TestJvmPrimaryVendorProduct(t *testing.T) {
 	tests := []struct {
 		name            string
 		implementor     string
+		buildType       string
 		path            string
 		imageType       string
 		hasJdk          bool
@@ -341,6 +342,25 @@ func TestJvmPrimaryVendorProduct(t *testing.T) {
 			expectedProduct: "jre",
 		},
 		{
+			name:            "Oracle commercial build type with JRE",
+			implementor:     "",
+			buildType:       "commercial",
+			path:            "/usr/lib/jvm/jdk8/release",
+			imageType:       "JRE",
+			hasJdk:          false,
+			expectedVendor:  "oracle",
+			expectedProduct: "jre",
+		},
+		{
+			name:            "Oracle commercial build type with JDK",
+			implementor:     "",
+			buildType:       "commercial",
+			path:            "/usr/lib/jvm/jdk8/release",
+			hasJdk:          true,
+			expectedVendor:  "oracle",
+			expectedProduct: "jdk",
+		},
+		{
 			name:            "Oracle vendor with JDK in path",
 			implementor:     "",
 			path:            "/usr/lib/jvm/jdk-1.8-oracle-x64/release",
@@ -367,11 +387,29 @@ func TestJvmPrimaryVendorProduct(t *testing.T) {
 			expectedVendor:  "oracle", // corretto upstream is oracle openjdk
 			expectedProduct: "openjdk",
 		},
+		{
+			name:            "IBM JRE",
+			path:            "/opt/ibm/java/release",
+			expectedVendor:  "ibm",
+			expectedProduct: "java",
+		},
+		{
+			name:            "IBM JDK",
+			path:            "/opt/ibm/java/release",
+			hasJdk:          true,
+			expectedVendor:  "ibm",
+			expectedProduct: "java_sdk",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			vendor, product := jvmPrimaryVendorProduct(tt.implementor, tt.path, tt.imageType, tt.hasJdk)
+			ri := pkg.JavaVMRelease{
+				Implementor: tt.implementor,
+				BuildType:   tt.buildType,
+				ImageType:   tt.imageType,
+			}
+			vendor, product := jvmPrimaryVendorProduct(&ri, tt.path, tt.hasJdk)
 			assert.Equal(t, tt.expectedVendor, vendor)
 			assert.Equal(t, tt.expectedProduct, product)
 		})
