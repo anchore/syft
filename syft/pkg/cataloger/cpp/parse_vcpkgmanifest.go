@@ -78,7 +78,7 @@ func parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.
 			conf,
 		)
 		for _, dep := range pMan.Dependencies {
-			cMans, fetchErr := r.FindManifestsInRemoteRepository(ctx, dep, true, &pMan)
+			cMans, fetchErr := r.FindManifests(ctx, dep, true, &pMan)
 			if fetchErr != nil {
 				return nil, nil, fmt.Errorf("failed to fetch vcpkg.json file: %w", fetchErr)
 			}
