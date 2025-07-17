@@ -141,7 +141,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Linux kernel modules (ko)
 - Nix (outputs in /nix/store)
 - PHP (composer, PECL, Pear)
-- Python (wheel, egg, poetry, requirements.txt, uv.lock)
+- Python (wheel, egg, poetry, requirements.txt, uv)
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock, auditable binary)
