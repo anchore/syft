@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
 
@@ -25,6 +26,7 @@ type packageJSON struct {
 	Version      string            `json:"version"`
 	Latest       []string          `json:"latest"`
 	Author       author            `json:"author"`
+	Authors      authors           `json:"authors"`
 	License      json.RawMessage   `json:"license"`
 	Licenses     json.RawMessage   `json:"licenses"`
 	Name         string            `json:"name"`
@@ -40,6 +42,8 @@ type author struct {
 	Email string `json:"email" mapstructure:"email"`
 	URL   string `json:"url" mapstructure:"url"`
 }
+
+type authors []author
 
 type repository struct {
 	Type string `json:"type" mapstructure:"type"`
@@ -209,4 +213,56 @@ func pathContainsNodeModulesDirectory(p string) bool {
 		}
 	}
 	return false
+}
+
+func (a *authors) UnmarshalJSON(b []byte) error {
+	// Try to unmarshal as an array of strings
+	var authorStrings []string
+	if err := json.Unmarshal(b, &authorStrings); err == nil {
+		// Successfully parsed as an array of strings
+		auths := make([]author, len(authorStrings))
+		for i, authorStr := range authorStrings {
+			// Parse each string into author fields
+			fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
+			var auth author
+			if err := mapstructure.Decode(fields, &auth); err != nil {
+				return fmt.Errorf("unable to decode package.json author: %w", err)
+			}
+			auth.Name = strings.TrimSpace(fields["name"])
+			auths[i] = auth
+		}
+		*a = auths
+		return nil
+	}
+
+	// Try to unmarshal as an array of objects
+	var authorObjs []map[string]interface{}
+	if err := json.Unmarshal(b, &authorObjs); err == nil {
+		// Successfully parsed as an array of objects
+		auths := make([]author, len(authorObjs))
+		for i, fields := range authorObjs {
+			var auth author
+			if err := mapstructure.Decode(fields, &auth); err != nil {
+				return fmt.Errorf("unable to decode package.json author object: %w", err)
+			}
+			auths[i] = auth
+		}
+		*a = auths
+		return nil
+	}
+
+	// If we get here, it means neither format matched
+	return fmt.Errorf("unable to parse package.json authors field")
+}
+
+func (a authors) AuthorsString() string {
+	if len(a) == 0 {
+		return ""
+	}
+
+	authorStrings := make([]string, len(a))
+	for i, auth := range a {
+		authorStrings[i] = auth.AuthorString()
+	}
+	return strings.Join(authorStrings, ", ")
 }
