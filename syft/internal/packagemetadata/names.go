@@ -104,6 +104,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.PythonPipfileLockEntry{}, "python-pipfile-lock-entry", "PythonPipfileLockMetadata"),
 	jsonNames(pkg.PythonPoetryLockEntry{}, "python-poetry-lock-entry", "PythonPoetryLockMetadata"),
 	jsonNames(pkg.PythonRequirementsEntry{}, "python-pip-requirements-entry", "PythonRequirementsMetadata"),
+	jsonNames(pkg.PythonUvLockEntry{}, "python-uv-lock-entry"),
 	jsonNames(pkg.ErlangRebarLockEntry{}, "erlang-rebar-lock-entry", "RebarLockMetadataType"),
 	jsonNames(pkg.RDescription{}, "r-description", "RDescriptionFileMetadataType"),
 	jsonNames(pkg.RpmDBEntry{}, "rpm-db-entry", "RpmMetadata", "RpmdbMetadata"),
