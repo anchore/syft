@@ -32,42 +32,47 @@ type ID struct {
 // Resolver is a short-lived utility to resolve maven poms from multiple sources, including:
 // the scanned filesystem, local maven cache directories, remote maven repositories, and the syft cache
 type Resolver struct {
+	allowGitClone		 bool
 	cfg                  pkg.VcpkgConfig
-	cache                cache.Cache
 	resolved             map[ID]*pkg.VcpkgManifest
 }
 
 // NewResolver constructs a new Resolver with the given vcpkg configuration.
-func NewResolver(cfg pkg.VcpkgConfig) *Resolver {
+func NewResolver(cfg pkg.VcpkgConfig, allowGitClone bool) *Resolver {
 	return &Resolver{
+		allowGitClone:		  allowGitClone,
 		cfg:                  cfg,
 		resolved:             map[ID]*pkg.VcpkgManifest{},
 	}
 }
 
-func getBuiltinRepo(repo string) (*git.Repository, error) {
+func getBuiltinRepo(repo string, allowGitClone bool) (*git.Repository, error) {
 	path := os.Getenv("VCPKG_ROOT")
 	if path == "" {
 		cachePath, err := getCachePath(vcpkgRepo)
 		if err != nil {
 			return nil, err
 		}
-		return getRepo(repo, cachePath)
+		return getRepo(repo, cachePath, allowGitClone)
 	}
-	return getRepo(repo, path)
+	return getRepo(repo, path, allowGitClone)
 }
 
-func getRepo(repo, path string) (*git.Repository, error) {
+func getRepo(repo, path string, allowGitClone bool) (*git.Repository, error) {
 	// needed in case it's a private custom git registry
 	// sshPath := os.Getenv("HOME") + "/.ssh/gitlab"
 	// publicKeys, err := ssh.NewPublicKeysFromFile("git", sshPath, "")
 	r, err := git.PlainOpen(path)
 	if err != nil {
-		r, err = git.PlainClone(path, false, &git.CloneOptions{
-			URL: repo,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("could not clone repo: %v", repo)
+		if allowGitClone {
+			r, err = git.PlainClone(path, false, &git.CloneOptions{
+				URL: repo,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("Could not clone repo %v.", repo)
+			}
+		} else {
+			return nil, fmt.Errorf(`Cannot find a local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled in the configuration`, path, repo)
 		}
 	}
 	return r, nil
@@ -119,13 +124,13 @@ func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, p
 		}
 		var gitRepo *git.Repository
 		if reg.Repository == vcpkgRepo {
-			gitRepo, err = getBuiltinRepo(vcpkgRepo)
+			gitRepo, err = getBuiltinRepo(vcpkgRepo, r.allowGitClone)
 		} else {
 			cachePath, err := getCachePath(reg.Repository)
 			if err != nil {
 				return nil, err
 			}
-			gitRepo, err = getRepo(reg.Repository, cachePath)
+			gitRepo, err = getRepo(reg.Repository, cachePath, r.allowGitClone)
 		}
 		vcpkg, err = r.findManifestWithGit(gitRepo, reg.Baseline, name, version)
 		if err != nil {
@@ -134,7 +139,7 @@ func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, p
 		id := ID{reg.Repository, reg.Baseline, name, version}
 		r.resolved[id] = &vcpkg
 	case pkg.Builtin:
-		gitRepo, err := getBuiltinRepo(vcpkgRepo)
+		gitRepo, err := getBuiltinRepo(vcpkgRepo, r.allowGitClone)
 		vcpkg, err = r.findManifestWithGit(gitRepo, reg.Baseline, name, version)
 		if err != nil {
 			return nil, err 
@@ -254,9 +259,7 @@ func isDefaultFeature(name string, defaultFeatures []any) bool {
 	return false
 }
 
-// Clones the repo to find the vcpkg.json file for a dependency. Works for all custom git registries, no matter the vendor
 func (r *Resolver) findManifestWithGit(repo *git.Repository, head, name, ver string) (pkg.VcpkgManifest, error) {
-	// need to cache this, otherwise it will do a git clone per dependency which can be expensive
 	headObj, err := repo.CommitObject(plumbing.NewHash(head))
 	if err != nil {
 		return pkg.VcpkgManifest{}, err
@@ -389,283 +392,3 @@ func getFsManifest(path, name, ver string) (pkg.VcpkgManifest, error) {
 	return pkg.VcpkgManifest{}, fmt.Errorf("failed to find vcpkg.json file for dependency name: %v", name)
 }
 
-// uses Github API to find the vcpkg.json file for dependency. Good for the default registry since https://github.com/microsoft/vcpkg is a large repo 
-// going to remove this because the api rate limit is 60 per hour which I hit quickly scanning large projects
-// func (res *Resolver) findManifestWithGhApi(ctx context.Context, baseline, name, ver string) (pkg.VcpkgManifest, error) {
-// 	rawRepo := strings.Replace(res.cfg.DefaultRegistry.Repository, "github.com", "raw.githubusercontent.com", 1)
-// 	var resultVcpkg pkg.VcpkgManifest
-// 	var err error
-// 	if ver != "" {
-// 		gitTree, err := res.resolveGitTreeSha(ctx, rawRepo, baseline, name, ver)
-// 		if err != nil {
-// 			return pkg.VcpkgManifest{}, fmt.Errorf("could not find versions json file. head->%v name->%v version->%v. %w", baseline, name, ver, err)
-// 		}
-// 		blobObjURL, err := res.resolveGitObjectSha(ctx, gitTree)
-// 		if err != nil {
-// 			return pkg.VcpkgManifest{}, fmt.Errorf("could not find blob URL for port. head->%v name->%v version->%v. %w", baseline, name, ver, err)
-// 		}
-// 		resultVcpkg, err = res.resolveBlobToManifest(ctx, blobObjURL)
-// 		if err != nil {
-// 			return resultVcpkg, err
-// 		}
-// 	} else {
-// 		requestURL := rawRepo + "/" + baseline + "/ports/" + name + "/vcpkg.json"
-// 		resultVcpkg, err = res.resolveManifest(ctx, requestURL)
-// 		if err != nil {
-// 			return resultVcpkg, err
-// 		}
-// 	}
-// 	return resultVcpkg, nil
-// }
-
-// simply looks up the raw vcpkg.json file at requestURL
-// func (res *Resolver) resolveManifest(ctx context.Context, requestURL string) (pkg.VcpkgManifest, error) {
-// 	cacheKey := strings.TrimPrefix(strings.TrimPrefix(requestURL, "http://"), "https://")
-// 	reader, err := res.cacheResolveReader(cacheKey, func() (io.ReadCloser, error) {
-// 		return getReqToCloser(requestURL, ctx, res.remoteRequestTimeout)
-// 	})
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to resolve vcpkg.json %v, %w", requestURL, err)
-// 	}
-// 	manBytes, err := io.ReadAll(reader) 
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("could not read bytes for vcpkg.json. %w", err)
-// 	}
-// 	var resultVcpkg pkg.VcpkgManifest
-// 	err = json.Unmarshal(manBytes, &resultVcpkg)
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("could not convert vcpkg.json into VcpkgManifest struct. %w", err)
-// 	}
-//
-// 	return resultVcpkg, nil
-// }
-
-// Look up blob object and decode the contents. See https://docs.github.com/en/rest/git/blobs?apiVersion=2022-11-28
-// func (res *Resolver) resolveBlobToManifest(ctx context.Context, blobObjURL string) (pkg.VcpkgManifest, error) {
-// 	cacheKey := strings.TrimPrefix(strings.TrimPrefix(blobObjURL, "http://"), "https://")
-// 	reader, err := res.cacheResolveReader(cacheKey, func() (io.ReadCloser, error) {
-// 		return getReqToCloser(blobObjURL, ctx, res.remoteRequestTimeout)
-// 	})
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to resolve vcpkg.json blob %v, %w", blobObjURL, err)
-// 	}
-// 	manBytes, err := io.ReadAll(reader) 
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("could not read bytes for vcpkg.json blob. %w", err)
-// 	}
-// 	var blobObj pkg.VcpkgBlobObject
-// 	err = json.Unmarshal(manBytes, &blobObj)
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("could not convert vcpkg.json into VcpkgBlobObject struct. %w", err)
-// 	}
-// 	encodedCont := strings.ReplaceAll(blobObj.Content, "\n", "")
-// 	decodedCont, err := base64.StdEncoding.DecodeString(encodedCont)
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to decode base64 content to byte array. %w", err)
-// 	}
-// 	var blobVcpkg pkg.VcpkgManifest
-// 	err = json.Unmarshal([]byte(decodedCont), &blobVcpkg)
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to unmarshal byte array to VcpkgManifest struct. %w", err)
-// 	}
-//
-// 	return blobVcpkg, nil
-// }
-
-
-// find blob object sha via api call to github.  
-// https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28 
-// func (res *Resolver) resolveGitObjectSha(ctx context.Context, gitTree string) (string, error) {
-// 	apiRepo := strings.Replace(res.cfg.DefaultRegistry.Repository, "github.com", "api.github.com/repos", 1)
-// 	apiTreeReqURL := apiRepo + "/git/trees/" + gitTree
-// 	cacheKey := strings.TrimPrefix(strings.TrimPrefix(apiTreeReqURL, "http://"), "https://")
-// 	reader, err := res.cacheResolveReader(cacheKey, func() (io.ReadCloser, error) {
-// 		return getReqToCloser(apiTreeReqURL, ctx, res.remoteRequestTimeout)
-// 	})
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to resolve vcpkg.json %v, %w", apiTreeReqURL, err)
-// 	}
-// 	atrBytes, err := io.ReadAll(reader) 
-// 	if err != nil {
-// 		return "", fmt.Errorf("could not read bytes for vcpkg.json. %w", err)
-// 	}
-// 	var treeObj pkg.VcpkgTreeObject
-// 	err = json.Unmarshal(atrBytes, &treeObj)
-// 	if err != nil {
-// 		return "", fmt.Errorf("could not convert vcpkg.json into VcpkgManifest struct. %w", err)
-// 	}
-// 	var blobObjUrl string
-// 	for _, t := range treeObj.Tree {
-// 		if t.Path == "vcpkg.json" {
-// 			blobObjUrl = t.Url
-// 		}
-// 	}
-// 	if blobObjUrl == "" {
-// 		return "", fmt.Errorf("could not find vcpkg.json blob at tree url. %v", apiTreeReqURL)
-// 	}
-// 	return blobObjUrl, nil 
-// }
-
-
-// find versions file from registry for port 
-// func (res *Resolver) resolveGitTreeSha(ctx context.Context, rawRepo, head, name, ver string) (string, error) {
-// 	verReqURL := rawRepo + "/" + head + "/versions/" + name[0:1] + "-/" + name + ".json"
-// 	cacheKey := strings.TrimPrefix(strings.TrimPrefix(verReqURL, "http://"), "https://")
-// 	reader, err := res.cacheResolveReader(cacheKey, func() (io.ReadCloser, error) {
-// 		return getReqToCloser(verReqURL, ctx, res.remoteRequestTimeout)
-// 	})
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to resolve vcpkg.json %v, %w", verReqURL, err)
-// 	}
-// 	if reader, ok := reader.(io.Closer); ok {
-// 		defer internal.CloseAndLogError(reader, verReqURL)
-// 	}
-// 	verBytes, err := io.ReadAll(reader) 
-// 	if err != nil {
-// 		return "", fmt.Errorf("could not read bytes for vcpkg.json. %w", err)
-// 	}
-// 	var versions map[string][]pkg.VcpkgGitVersionObject
-// 	err = json.Unmarshal(verBytes, &versions)
-// 	if err != nil {
-// 		return "", fmt.Errorf("could not convert vcpkg.json into VcpkgGitVersionObject struct. %w", err)
-// 	}
-//
-// 	// get tree object sha for the port version
-// 	var gitTree string
-// 	for _, v := range versions["versions"] {
-// 		if ver == v.GetFullVersion() {
-// 			gitTree = v.GitTree
-// 			break
-// 		}
-// 	}	
-// 	if gitTree == "" {
-// 		return "", fmt.Errorf("could not identify a git tree sha for vcpkg.json from url %v. version %v", verReqURL, ver)
-// 	}
-// 	return gitTree, nil
-// }
-
-
-
-// func getReqToCloser(requestURL string, ctx context.Context, to time.Duration) (io.ReadCloser, error) {
-// 	if requestURL == "" {
-// 		return nil, fmt.Errorf("vcpkg request URL cannot be blank")
-// 	}
-// 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("unable to create request for vcpkg: %w", err)
-// 	}
-//
-// 	req = req.WithContext(ctx)
-//
-// 	client := http.Client{
-// 		Timeout: to,
-// 	}
-//
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("unable to get manifest from vcpkg registry %v: %w", requestURL, err)
-// 	}
-// 	if resp.StatusCode == http.StatusNotFound {
-// 		return nil, fmt.Errorf("manifest not found in vcpkg registry at: %v", requestURL)
-// 	}
-// 	return resp.Body, err
-// }
-
-// func (res *Resolver) findManifestForGitReg(repoStr, head, name, ver string) (pkg.VcpkgManifest, error) {
-//
-// 	roots := cache.GetManager().RootDirs()
-// 	_ = roots[0]
-// 	repo, err := git.PlainClone(vcpkgCacheKey + "/" + res.cfg.DefaultRegistry.Repository, false, &git.CloneOptions{
-// 		URL: repoStr,
-// 	})
-// 	// reader, err := res.cacheResolveReader(getCacheKeyNameForGitRepo(repoStr, head, name, ver), func() (io.ReadCloser, error) {
-// 	// 	if err != nil {
-// 	// 		return nil, fmt.Errorf("failed to clone vcpkg repo. %w", err) 
-// 	// 	}
-// 	// 	return res.findManifestWithGit(repo, head, name, ver)
-// 	// })
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to get reader from git clone cache call. %w", err) 
-// 	}
-// 	commit, err := repo.CommitObject(plumbing.NewHash(head))
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to get reader from git clone cache call. %w", err) 
-// 	}
-// 	_ = commit.Message
-// 	return pkg.VcpkgManifest{}, nil
-// 	// return readerToManifest(reader)
-// }
-
-// func (res *Resolver) findManifestForBuiltinReg(head, name, ver string, repo *git.Repository) (pkg.VcpkgManifest, error) {
-// 	_, err := git.Open(memory.NewStorage(), osfs.New(os.Getenv("VCPKG_ROOT")))
-// 	// reader, err := res.cacheResolveReader(getCacheKeyNameForGitRepo(repoStr, head, name, ver), func() (io.ReadCloser, error) {
-// 	// 	if err != nil {
-// 	// 		return nil, fmt.Errorf("failed to clone vcpkg repo. %w", err) 
-// 	// 	}
-// 	// 	return res.findManifestWithGit(repo, head, name, ver)
-// 	// })
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to get reader from git clone cache call. %w", err) 
-// 	}
-// 	return pkg.VcpkgManifest{}, nil
-// 	// return readerToManifest(reader)
-// }
-
-// func readerToManifest(reader io.Reader) (pkg.VcpkgManifest, error) {
-// 	manBytes, err := io.ReadAll(reader)
-// 	repo, err := git.Init(memory.NewStorage(), nil)
-// 	repo.Storer.NewEncodedObject()
-// 	if err != nil {
-// 		return pkg.VcpkgManifest{}, fmt.Errorf("failed to get bytes from vcpkg manifest reader. %w", err) 
-// 	}
-// 	var man pkg.VcpkgManifest
-// 	err = json.Unmarshal(manBytes, &man)
-// 	return man, err
-// }
-
-// func getCacheKeyNameForGitRepo(repoStr, head, name, ver string) string {
-// 	// helps make the cache path more readable
-// 	smplRepo := strings.ReplaceAll(
-// 		strings.TrimPrefix(
-// 			strings.TrimPrefix(
-// 				strings.TrimPrefix(
-// 					strings.TrimSuffix(repoStr, ".git"),
-// 					"git@",
-// 				),
-// 				"http://",
-// 			),
-// 			"https://",
-// 		), 
-// 		":", 
-// 		"/",
-// 	)
-// 	return smplRepo + "_" + head 
-// }
-
-
-
-// Copy of cache resolver in java cataloger.
-// cacheResolveReader attempts to get a reader from cache, otherwise caches the contents of the resolve() function.
-// this function is guaranteed to return an unread reader for the correct contents.
-// NOTE: this could be promoted to the internal cache package as a specialized version of the cache.Resolver
-// if there are more users of this functionality
-// func (res *Resolver) cacheResolveReader(key string, resolve func() (io.ReadCloser, error)) (io.Reader, error) {
-// 	reader, err := res.cache.Read(key)
-// 	if err == nil && reader != nil {
-// 		return reader, err
-// 	}
-//
-// 	contentReader, err := resolve()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer internal.CloseAndLogError(contentReader, key)
-//
-// 	// store the contents to return a new reader with the same content
-// 	contents, err := io.ReadAll(contentReader)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	err = res.cache.Write(key, bytes.NewBuffer(contents))
-// 	return bytes.NewBuffer(contents), err
-// }

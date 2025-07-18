@@ -207,7 +207,11 @@ type VcpkgTreeNode struct {
 }
 
 // represents whats found in vcpkg-lock.json. json keys are unknown until build 
-type VcpkgLockRecord struct {
+type VcpkgLock struct {
+	Records []VcpkgLockEntry
+}
+
+type VcpkgLockEntry struct {
 	Repo string
 	Head string
 }
