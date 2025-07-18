@@ -15,7 +15,15 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var _ generic.Parser = parseVcpkgmanifest
+type vcpkgCataloger struct {
+	allowGitClone bool
+}
+
+func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
+	return &vcpkgCataloger{
+		allowGitClone: allowGitClone,
+	}
+}
 
 const defaultRepo = "https://github.com/microsoft/vcpkg"
 
@@ -25,22 +33,26 @@ var defaultRegistry = pkg.VcpkgRegistry{
 	Kind: pkg.Git,
 	Repository: defaultRepo,
 }
-var defaultLock = pkg.VcpkgLockRecord{
+var defaultLock = pkg.VcpkgLockEntry{
 	Repo: defaultRepo, 
 	// supposed to be the latest commit sha of the repo at build time. If no vcpkg-lock.json file is found, default to master. 
 	Head: "master",
 }
 
-func parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	lockRecords := findLockFileRecords(resolver)
+// parser is for vcpkg in "Manifest" mode. This is opposed to "Classic" mode which or is more akin to a system package manager. (https://learn.microsoft.com/en-us/vcpkg/concepts/classic-mode)
+func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	lockFile, err := findLockFile(resolver)
+	if err != nil {
+		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-lock.json file: %w", err)
+	}
 	conf, err := findVcpkgConfig(resolver)
 	if err != nil {
 		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-configuration.json file: %w", err)
 	}
 
-	// use as the source of truth for the Baseline commit hash to use
-	for _, lockRec := range lockRecords {
-		if lockRec.Repo == conf.DefaultRegistry.Repository {
+	// lock file preferred for determining what Baseline commit hash. (baseline could be a branch name which can change)
+	for _, lockRec := range lockFile.Records {
+		if conf.DefaultRegistry.Repository == lockRec.Repo {
 			conf.DefaultRegistry.Baseline = lockRec.Head
 		}
 		for ind, reg := range conf.Registries {
@@ -50,7 +62,7 @@ func parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.
 		}
 	}
 
-	// find full manifests for all dependencies
+	// recursively find all dependencies pulled in by vcpkg.json/manifest file 
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for {
@@ -65,7 +77,8 @@ func parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.
 		pkgs = append(
 			pkgs,
 			pPkg)
-		
+
+		// builtin by default is the git repo https://github.com/microsoft/vcpkg pointed to by VCPKG_ROOT env variable.
 		if pMan.BuiltinBaseline != "" {
 			conf.DefaultRegistry.Baseline = pMan.BuiltinBaseline
 			for ind, reg := range conf.Registries {
@@ -76,6 +89,7 @@ func parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.
 		}
 		r := vcpkg.NewResolver(
 			conf,
+			vc.allowGitClone,
 		)
 		for _, dep := range pMan.Dependencies {
 			cMans, fetchErr := r.FindManifests(ctx, dep, true, &pMan)
@@ -103,11 +117,11 @@ func parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.
 			}
 		}
 	}
-
 	pkg.Sort(pkgs)
 	return pkgs, relationships, nil
 }
 
+// needed to know what vcpkg registries to use for what packages when looking for manifest files 
 func findVcpkgConfig(resolver file.Resolver) (pkg.VcpkgConfig, error) {
 	loc, err := resolver.FilesByGlob("**/vcpkg-configuration.json")
 	if err != nil {
@@ -138,15 +152,18 @@ func findVcpkgConfig(resolver file.Resolver) (pkg.VcpkgConfig, error) {
 	}
 }
 
-func findLockFileRecords(resolver file.Resolver) []pkg.VcpkgLockRecord {
+// Gives the git commit hash(es) for the repo(s) listed in the vcpkg-configuration.json file
+func findLockFile(resolver file.Resolver) (pkg.VcpkgLock, error) {
 	loc, err := resolver.FilesByGlob("**/vcpkg-lock.json")
 	if err != nil || len(loc) == 0 {
-		// may want to throw an error here if a vcpkg-lock.json file is not present
-		return []pkg.VcpkgLockRecord{defaultLock}
+		// if no lock file is found, the defaultRegistry will get used 
+		return pkg.VcpkgLock{}, nil
 	}
 	lockContents, err := resolver.FileContentsByLocation(loc[0])
 	if err != nil || lockContents == nil {
-		return []pkg.VcpkgLockRecord{defaultLock}
+		return pkg.VcpkgLock{
+			Records: []pkg.VcpkgLockEntry{defaultLock},
+		}, err
 	}
 	defer internal.CloseAndLogError(lockContents, loc[0].RealPath)
 	lockBytes, err := io.ReadAll(lockContents)
@@ -154,14 +171,14 @@ func findLockFileRecords(resolver file.Resolver) []pkg.VcpkgLockRecord {
 	var lockFile any
 	json.Unmarshal(lockBytes, &lockFile)
 
-	var lockRecords []pkg.VcpkgLockRecord
+	var lockRecords []pkg.VcpkgLockEntry
 	for k, v := range lockFile.(map[string]any) {
 		switch t := v.(type) {
 		case map[string]any:
 			for _, v2 := range t {
 				switch t2 := v2.(type) {
 				case string:
-					lockRecords = append(lockRecords, pkg.VcpkgLockRecord{
+					lockRecords = append(lockRecords, pkg.VcpkgLockEntry{
 						Repo: k,
 						Head: t2,
 					})
@@ -169,5 +186,7 @@ func findLockFileRecords(resolver file.Resolver) []pkg.VcpkgLockRecord {
 			}
 		}
 	}
-	return lockRecords 
+	return pkg.VcpkgLock{
+		Records: lockRecords,
+	}, nil 
 }
