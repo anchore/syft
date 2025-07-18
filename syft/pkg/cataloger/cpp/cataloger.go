@@ -22,6 +22,6 @@ func NewConanInfoCataloger() pkg.Cataloger {
 }
 
 // NewVcpkgManifestCataloger return a new C/C++ vcpkg.json cataloger object.
-func NewVcpkgManifestCataloger() pkg.Cataloger {
-	return generic.NewCataloger("vcpkg-manifest-cataloger").WithParserByGlobs(parseVcpkgmanifest, "**/vcpkg.json")
+func NewVcpkgManifestCataloger(opts CatalogerConfig) pkg.Cataloger {
+	return generic.NewCataloger("vcpkg-manifest-cataloger").WithParserByGlobs(newVcpkgCataloger(opts.VcpkgAllowGitClone).parseVcpkgmanifest, "**/vcpkg.json")
 }
