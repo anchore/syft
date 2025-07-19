@@ -122,7 +122,27 @@ func packageURLFromConanRef(ref *conanRef) string {
 	).ToString()
 }
 
-func newVcpkgPackage(ctx context.Context, v pkg.VcpkgManifest, l file.Location, triplet string) pkg.Package {
+func packageURLFromVcpkgManifestAndTriplet(manifest *pkg.VcpkgManifest, triplet string) string {
+	qualifiers := packageurl.Qualifiers{}
+	if triplet != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "triplet",
+			Value: triplet,
+		})
+	}
+	return packageurl.NewPackageURL(
+		// https://github.com/package-url/purl-spec/pull/245 lengthy discussion worth mentioning
+		"vcpkg",
+		"",
+		manifest.Name,
+		manifest.GetFullVersion(),
+		qualifiers,
+		"",
+	).ToString()
+
+}
+
+func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location, triplet string) pkg.Package {
 	ver := v.GetFullVersion()
 
 	p := pkg.Package{
@@ -130,14 +150,13 @@ func newVcpkgPackage(ctx context.Context, v pkg.VcpkgManifest, l file.Location, 
 		Version:   ver,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
 		Locations: file.NewLocationSet(l),
-		// https://github.com/package-url/purl-spec/pull/245 lengthy discussion worth mentioning
-		// PURL: ,
+		PURL: packageURLFromVcpkgManifestAndTriplet(v, triplet),
 		Language: pkg.CPP,
 		Type:     pkg.VcpkgPkg,
 		Metadata: struct {
 			Manifest pkg.VcpkgManifest
 			Triplet string
-		}{v, triplet},
+		}{*v, triplet},
 	}
 
 	p.SetID()

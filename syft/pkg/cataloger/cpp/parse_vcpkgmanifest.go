@@ -78,7 +78,7 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, pMan := range manifests {
-		pPkg := newVcpkgPackage(ctx, pMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation), identifyTripletForDep(resolver, pMan.Name)) 
+		pPkg := newVcpkgPackage(ctx, &pMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation), identifyTripletForDep(resolver, pMan.Name)) 
 		pkgs = append(
 			pkgs,
 			pPkg)
@@ -103,9 +103,9 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 			}
 			for _, c := range cMans {
 				if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayMans) {
-					cPkg := newVcpkgPackage(ctx, *c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation), identifyTripletForDep(resolver, c.Child.Name))
+					cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation), identifyTripletForDep(resolver, c.Child.Name))
 					if c.Parent != nil {
-						pPkg := newVcpkgPackage(ctx, *c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation), identifyTripletForDep(resolver, c.Parent.Name))
+						pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation), identifyTripletForDep(resolver, c.Parent.Name))
 						rship := artifact.Relationship{
 							From: pPkg,
 							To: cPkg,
