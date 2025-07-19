@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	Binary      binary.ClassifierCatalogerConfig  `yaml:"binary" json:"binary" mapstructure:"binary"`
-	Cpp			cpp.CatalogerConfig               `yaml:"cpp", json:"cpp" mapstructure:"cpp"`
+	Cpp			cpp.CatalogerConfig               `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
 	Dotnet      dotnet.CatalogerConfig            `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
