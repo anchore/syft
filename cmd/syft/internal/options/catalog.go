@@ -173,7 +173,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
-		Cpp: cpp.DefaultCatalogerConfig().WithVcpkgAllowGitClone(*cfg.Cpp.VcpkgAllowGitClone),
+		Cpp: cpp.DefaultCatalogerConfig().WithVcpkgAllowGitClone(cfg.Cpp.VcpkgAllowGitClone),
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).

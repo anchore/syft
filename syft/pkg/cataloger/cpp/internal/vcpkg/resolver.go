@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/cache"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -29,8 +30,8 @@ type ID struct {
 	version string
 }
 
-// Resolver is a short-lived utility to resolve maven poms from multiple sources, including:
-// the scanned filesystem, local maven cache directories, remote maven repositories, and the syft cache
+// Resolver is a short-lived utility to resolve vcpkg manifests from multiple sources, including:
+// the filesystem, local maven cache directories, remote maven repositories, and the syft cache
 type Resolver struct {
 	allowGitClone		 bool
 	cfg                  pkg.VcpkgConfig
@@ -46,48 +47,7 @@ func NewResolver(cfg pkg.VcpkgConfig, allowGitClone bool) *Resolver {
 	}
 }
 
-func getBuiltinRepo(repo string, allowGitClone bool) (*git.Repository, error) {
-	path := os.Getenv("VCPKG_ROOT")
-	if path == "" {
-		cachePath, err := getCachePath(vcpkgRepo)
-		if err != nil {
-			return nil, err
-		}
-		return getRepo(repo, cachePath, allowGitClone)
-	}
-	return getRepo(repo, path, allowGitClone)
-}
-
-func getRepo(repo, path string, allowGitClone bool) (*git.Repository, error) {
-	// needed in case it's a private custom git registry
-	// sshPath := os.Getenv("HOME") + "/.ssh/gitlab"
-	// publicKeys, err := ssh.NewPublicKeysFromFile("git", sshPath, "")
-	r, err := git.PlainOpen(path)
-	if err != nil {
-		if allowGitClone {
-			r, err = git.PlainClone(path, false, &git.CloneOptions{
-				URL: repo,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("Could not clone repo %v.", repo)
-			}
-		} else {
-			return nil, fmt.Errorf(`Cannot find a local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled in the configuration`, path, repo)
-		}
-	}
-	return r, nil
-}
-
-func getCachePath(repo string) (string, error) {
-	trimmedRepo := strings.TrimPrefix(strings.TrimPrefix(repo, "http://"), "https://")
-	roots := cache.GetManager().RootDirs()
-	if len(roots) == 0 {
-		return "", fmt.Errorf("could not determine cache root")
-	}
-	return roots[0] + "/" + vcpkgCacheKey + "/" + trimmedRepo, nil
-}
-
-// Get all of the manifest/vcpkg.json files from github 
+// Get all of the manifest/vcpkg.json files for a vcpkg dependency 
 func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, parent *pkg.VcpkgManifest) ([]ManifestNode, error) {
 	var name string
 	var version string
@@ -111,57 +71,23 @@ func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, p
 			features = d["features"].([]any)
 		}
 	}
-
 	reg := r.depRegistry(name)
-
-	manNodes := []ManifestNode{}
-	var vcpkg pkg.VcpkgManifest 
-	var err error
+	vcpkg, err := r.findManifestFromReg(reg, name, version)
+	// need to add dependency to map, even if it doesn't find its manifest, to avoid infinite loops caused by circular depenencies
 	switch reg.Kind {
 	case pkg.Git:
-		if reg.Repository == "" {	
-			return nil, fmt.Errorf("No repo found for vcpkg git registry")
-		}
-		var gitRepo *git.Repository
-		if reg.Repository == vcpkgRepo {
-			gitRepo, err = getBuiltinRepo(vcpkgRepo, r.allowGitClone)
-		} else {
-			cachePath, err := getCachePath(reg.Repository)
-			if err != nil {
-				return nil, err
-			}
-			gitRepo, err = getRepo(reg.Repository, cachePath, r.allowGitClone)
-		}
-		vcpkg, err = r.findManifestWithGit(gitRepo, reg.Baseline, name, version)
-		if err != nil {
-			return nil, err 
-		}
 		id := ID{reg.Repository, reg.Baseline, name, version}
-		r.resolved[id] = &vcpkg
+		r.resolved[id] = vcpkg
 	case pkg.Builtin:
-		gitRepo, err := getBuiltinRepo(vcpkgRepo, r.allowGitClone)
-		vcpkg, err = r.findManifestWithGit(gitRepo, reg.Baseline, name, version)
-		if err != nil {
-			return nil, err 
-		}
-		id := ID{vcpkgRepo, reg.Baseline, name, version}
-		r.resolved[id] = &vcpkg
+		vcpkgRoot := os.Getenv("VCPKG_ROOT")
+		id := ID{vcpkgRoot, reg.Baseline, name, version}
+		r.resolved[id] = vcpkg
 	case pkg.FileSystem:
-		if reg.Path == "" {
-			return nil, fmt.Errorf("No path found for vcpkg filesystem registry. %w", err)
-		}
-		baseline := reg.Baseline 
-		if baseline == "" {
-			baseline = "default"
-		}
-		vcpkg, err = r.findManifestForFilesystemReg(reg.Path, baseline, name, version)
-		if err != nil {
-			return nil, err 
-		}
 		id := ID{reg.Path, reg.Baseline, name, version}
-		r.resolved[id] = &vcpkg
-	default:
-		return nil, fmt.Errorf("vcpkg registry has no kind which is required. %w", err)
+		r.resolved[id] = vcpkg
+	}
+	if err != nil {
+		return nil, err
 	}
 	// some features pull in additional dependencies
 	for _, feature := range features {
@@ -180,15 +106,16 @@ func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, p
 			}
 		}
 	}
+	manNodes := []ManifestNode{}
 	manNode := ManifestNode{
 		Parent: parent,
-		Child: &vcpkg,
+		Child: vcpkg,
 	}
 	manNodes = append(manNodes, manNode)
 	if len(vcpkg.Dependencies) != 0 {
 		for _, dep := range vcpkg.Dependencies {
 			if !r.depResolved(dep) {
-				childManNodes, err := r.FindManifests(ctx, dep, df, &vcpkg)
+				childManNodes, err := r.FindManifests(ctx, dep, df, vcpkg)
 				if err != nil {
 					return nil, fmt.Errorf("could not find vcpkg.json file for dependency. %w", err)
 				}
@@ -199,9 +126,69 @@ func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, p
 	return manNodes, nil
 }
 
+func getBuiltinRepo(repo string, allowGitClone bool) (*git.Repository, error) {
+	path := os.Getenv("VCPKG_ROOT")
+	if path == "" {
+		cachePath, err := getSyftVcpkgCachePath(vcpkgRepo)
+		if err != nil {
+			return nil, err
+		}
+		return getRepo(repo, cachePath, allowGitClone)
+	}
+	return getRepo(repo, path, allowGitClone)
+}
+
+func getRepo(repo, path string, allowGitClone bool) (*git.Repository, error) {
+	r, err := git.PlainOpen(path)
+	if err != nil || r == nil {
+		vcpkgCachePath, err := getVcpkgGitCachePath()
+		if err != nil {
+			return nil, fmt.Errorf("Could not get vcpkg cache path. %w", err)
+		}
+		vr, err := git.PlainOpen(vcpkgCachePath)
+		if err != nil || vr == nil {
+			if allowGitClone {
+				r, err = git.PlainClone(path, false, &git.CloneOptions{
+					URL: repo,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("Could not clone repo %v.", repo)
+				}
+			} else {
+				log.Errorf(`Could not find local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled`, path, repo)
+				return nil, fmt.Errorf(`Could not find local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled`, path, repo)
+			}
+		} else {
+			return vr, err
+		}
+	}
+	return r, nil
+}
+
+// determine location in syft cache to store repo if it needs to be cloned
+func getSyftVcpkgCachePath(repo string) (string, error) {
+	trimmedRepo := strings.TrimPrefix(strings.TrimPrefix(repo, "http://"), "https://")
+	roots := cache.GetManager().RootDirs()
+	if len(roots) == 0 {
+		return "", fmt.Errorf("could not determine cache root")
+	}
+	return roots[0] + "/" + vcpkgCacheKey + "/" + trimmedRepo, nil
+}
+
+// get path of vcpkg cache
+func getVcpkgGitCachePath() (string, error) {
+	roots := cache.GetManager().RootDirs()
+	if len(roots) == 0 {
+		return "", fmt.Errorf("could not determine cache root")
+	}
+	// not sure if this is an exceptible way of getting the vcpkg cache directory
+	return roots[0] + "/../vcpkg/registries/git", nil
+}
+
+
+// determines which registry to use by the name of the dependency
 func (r *Resolver) depRegistry(name string) pkg.VcpkgRegistry {
 	var reg pkg.VcpkgRegistry
-	// determines which registry to use
 	for _, res := range r.cfg.Registries {
 		for _, p := range res.Packages {
 			if p == name {
@@ -216,6 +203,7 @@ func (r *Resolver) depRegistry(name string) pkg.VcpkgRegistry {
 	return reg
 }
 
+// checks if dependency has been retrieved already this run 
 func (r *Resolver) depResolved(dep any) bool {
 	var name string
 	var version string
@@ -259,7 +247,67 @@ func isDefaultFeature(name string, defaultFeatures []any) bool {
 	return false
 }
 
-func (r *Resolver) findManifestWithGit(repo *git.Repository, head, name, ver string) (pkg.VcpkgManifest, error) {
+func (r *Resolver) findManifestFromReg(reg pkg.VcpkgRegistry, name, version string) (*pkg.VcpkgManifest, error) {
+	switch reg.Kind {
+	case pkg.Git:
+		if reg.Repository == "" {	
+			return nil, fmt.Errorf("No repo found for vcpkg git registry")
+		}
+		if strings.TrimSuffix(reg.Repository, ".git") == vcpkgRepo {
+			gitRepo, err := getBuiltinRepo(vcpkgRepo, r.allowGitClone)
+			if err != nil {
+				return nil, err
+			}
+			vcpkg, err := r.getManifestFromGitRepo(gitRepo, reg.Baseline, name, version)
+			if err != nil {
+				return nil, err 
+			}
+			return &vcpkg, err
+		} else {
+			cachePath, err := getSyftVcpkgCachePath(reg.Repository)
+			if err != nil {
+				return nil, err
+			}
+			gitRepo, err := getRepo(reg.Repository, cachePath, r.allowGitClone)
+			if err != nil {
+				return nil, err
+			}
+			vcpkg, err := r.getManifestFromGitRepo(gitRepo, reg.Baseline, name, version)
+			if err != nil {
+				return nil, err 
+			}
+			return &vcpkg, err
+		}
+	case pkg.Builtin:
+		gitRepo, err := getBuiltinRepo(vcpkgRepo, r.allowGitClone)
+		if err != nil {
+			return nil, err
+		}
+		vcpkg, err := r.getManifestFromGitRepo(gitRepo, reg.Baseline, name, version)
+		if err != nil {
+			return nil, err 
+		}
+		return &vcpkg, err
+	case pkg.FileSystem:
+		if reg.Path == "" {
+			return nil, fmt.Errorf("No path found for vcpkg filesystem registry.")
+		}
+		baseline := reg.Baseline 
+		if baseline == "" {
+			baseline = "default"
+		}
+		vcpkg, err := r.getManifestFromFilesystem(reg.Path, baseline, name, version)
+		if err != nil {
+			return nil, err 
+		}
+		return &vcpkg, err
+	default:
+		return nil, fmt.Errorf("vcpkg registry has no kind which is required.")
+	}
+}
+
+// locates and gets the manifest file via the go-git 
+func (r *Resolver) getManifestFromGitRepo(repo *git.Repository, head, name, ver string) (pkg.VcpkgManifest, error) {
 	headObj, err := repo.CommitObject(plumbing.NewHash(head))
 	if err != nil {
 		return pkg.VcpkgManifest{}, err
@@ -321,7 +369,8 @@ func (r *Resolver) findManifestWithGit(repo *git.Repository, head, name, ver str
 	}	
 }
 
-func (r *Resolver) findManifestForFilesystemReg(path, baseline, name, ver string) (pkg.VcpkgManifest, error) {
+// locates and gets the manifest file via the filesystem path 
+func (r *Resolver) getManifestFromFilesystem(path, baseline, name, ver string) (pkg.VcpkgManifest, error) {
 	if path == "" {
 		return pkg.VcpkgManifest{}, fmt.Errorf("no/empty path specified for vcpkg filesystem registry") 
 	}
@@ -368,6 +417,7 @@ func (r *Resolver) findManifestForFilesystemReg(path, baseline, name, ver string
 	return getFsManifest(path, name, finalVer)
 }
 
+// retrieves manifest file from the filesystem
 func getFsManifest(path, name, ver string) (pkg.VcpkgManifest, error) {
 	versionBytes, err := os.ReadFile(path + "/versions/" + name[0:1] + "-/" + name + ".json")
 	var verFileCont pkg.VcpkgFsVersions
