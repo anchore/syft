@@ -106,6 +106,7 @@ func (r *Resolver) FindManifests(ctx context.Context, dependency any, df bool, p
 			}
 		}
 	}
+	
 	manNodes := []ManifestNode{}
 	manNode := ManifestNode{
 		Parent: parent,
