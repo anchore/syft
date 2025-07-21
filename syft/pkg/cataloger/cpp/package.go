@@ -122,41 +122,36 @@ func packageURLFromConanRef(ref *conanRef) string {
 	).ToString()
 }
 
-func packageURLFromVcpkgManifestAndTriplet(manifest *pkg.VcpkgManifest, triplet string) string {
+func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
 	qualifiers := packageurl.Qualifiers{}
-	if triplet != "" {
+	//  
+	if v.Triplet != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
 			Key:   "triplet",
-			Value: triplet,
+			Value: v.Triplet,
 		})
 	}
 	return packageurl.NewPackageURL(
-		// https://github.com/package-url/purl-spec/pull/245 lengthy discussion worth mentioning
+		// Vcpkg is not a part of the PURL spec, PR for it hasn't moved. https://github.com/package-url/purl-spec/pull/245 
 		"vcpkg",
 		"",
-		manifest.Name,
-		manifest.GetFullVersion(),
+		v.Name,
+		v.FullVersion,
 		qualifiers,
 		"",
 	).ToString()
-
 }
 
-func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location, triplet string) pkg.Package {
-	ver := v.GetFullVersion()
-
+func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      v.Name,
-		Version:   ver,
+		Version:   v.FullVersion,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
 		Locations: file.NewLocationSet(l),
-		PURL: packageURLFromVcpkgManifestAndTriplet(v, triplet),
+		PURL: packageURLFromVcpkgManifest(v),
 		Language: pkg.CPP,
 		Type:     pkg.VcpkgPkg,
-		Metadata: struct {
-			Manifest pkg.VcpkgManifest
-			Triplet string
-		}{*v, triplet},
+		Metadata: v,
 	}
 
 	p.SetID()

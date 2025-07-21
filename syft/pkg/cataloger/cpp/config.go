@@ -1,7 +1,7 @@
 package cpp
 
 type CatalogerConfig struct {
-	VcpkgAllowGitClone bool
+	VcpkgAllowGitClone bool `yaml:"vcpkg-allow-git-clone" json:"vcpkg-allow-git-clone" mapstructure:"vcpkg-allow-git-clone"`
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
