@@ -193,6 +193,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.VcpkgPkg,
+			},
+			expected: []string{
+				"from vcpkg manifest",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.PortagePkg,
 			},
 			expected: []string{
