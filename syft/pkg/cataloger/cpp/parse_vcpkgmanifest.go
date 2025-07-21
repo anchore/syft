@@ -62,37 +62,37 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 		}
 	}
 
-	var origMan vcpkg.Vcpkg
+	var toplevelVcpkg vcpkg.Vcpkg
 	dec := json.NewDecoder(reader)
-	err = dec.Decode(&origMan)
+	err = dec.Decode(&toplevelVcpkg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse vcpkg.json file: %w", err)
 	}
-	var manifests []vcpkg.Vcpkg
-	manifests = append(manifests, origMan)
-	overlayMans, err := findOverlayManifests(resolver, conf.OverlayPorts)
+	var vcpkgs []vcpkg.Vcpkg
+	vcpkgs = append(vcpkgs, toplevelVcpkg)
+	overlayVcpkgs, err := findOverlayManifests(resolver, conf.OverlayPorts)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Could not get overlay port manifests: %w", err)
 	}
-	manifests = append(manifests, overlayMans...)
+	vcpkgs = append(vcpkgs, overlayVcpkgs...)
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
-	for _, pMan := range manifests {
-		triplet := identifyTripletForDep(resolver, pMan.Name)
-		parentMan := pMan.BuildManifest(nil, triplet)
+	for _, parentVcpkg := range vcpkgs {
+		triplet := identifyTripletForDep(resolver, parentVcpkg.Name)
+		parentMan := parentVcpkg.BuildManifest(nil, triplet)
 		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)) 
 		pkgs = append(
 			pkgs,
 			pPkg)
 
 		// builtin by default is the git repo https://github.com/microsoft/vcpkg pointed to by VCPKG_ROOT env variable.
-		if pMan.BuiltinBaseline != "" {
+		if parentVcpkg.BuiltinBaseline != "" {
 			if conf.DefaultRegistry != nil {
-				conf.DefaultRegistry.Baseline = pMan.BuiltinBaseline
+				conf.DefaultRegistry.Baseline = parentVcpkg.BuiltinBaseline
 			}
 			for ind, reg := range conf.Registries {
 				if reg.Kind == pkg.Builtin {
-					conf.Registries[ind].Baseline = pMan.BuiltinBaseline 
+					conf.Registries[ind].Baseline = parentVcpkg.BuiltinBaseline 
 				}
 			}
 		}
@@ -100,13 +100,13 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 			conf,
 			vc.allowGitClone,
 		)
-		for _, dep := range pMan.Dependencies {
-			cMans, fetchErr := r.FindManifests(ctx, dep, true, triplet, parentMan)
+		for _, dep := range parentVcpkg.Dependencies {
+			cMans, fetchErr := r.FindManifests(dep, true, triplet, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
 				return nil, nil, fmt.Errorf("failed to fetch vcpkg.json file: %w", fetchErr)
 			}
 			for _, c := range cMans {
-				if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayMans) {
+				if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayVcpkgs) {
 					c.Child.Triplet = identifyTripletForDep(resolver, c.Child.Name)
 					cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 					if c.Parent != nil {
