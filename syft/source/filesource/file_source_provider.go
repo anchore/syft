@@ -11,20 +11,22 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias) source.Provider {
+func NewSourceProvider(path string, exclude source.ExcludeConfig, digestAlgorithms []crypto.Hash, alias source.Alias, maxArchiveRecursiveIndexDepth int) source.Provider {
 	return &fileSourceProvider{
-		path:             path,
-		exclude:          exclude,
-		digestAlgorithms: digestAlgorithms,
-		alias:            alias,
+		path:                          path,
+		exclude:                       exclude,
+		digestAlgorithms:              digestAlgorithms,
+		alias:                         alias,
+		maxArchiveRecursiveIndexDepth: maxArchiveRecursiveIndexDepth,
 	}
 }
 
 type fileSourceProvider struct {
-	path             string
-	exclude          source.ExcludeConfig
-	digestAlgorithms []crypto.Hash
-	alias            source.Alias
+	path                          string
+	exclude                       source.ExcludeConfig
+	digestAlgorithms              []crypto.Hash
+	alias                         source.Alias
+	maxArchiveRecursiveIndexDepth int
 }
 
 func (p fileSourceProvider) Name() string {
@@ -49,10 +51,11 @@ func (p fileSourceProvider) Provide(_ context.Context) (source.Source, error) {
 
 	return New(
 		Config{
-			Path:             location,
-			Exclude:          p.exclude,
-			DigestAlgorithms: p.digestAlgorithms,
-			Alias:            p.alias,
+			Path:                          location,
+			Exclude:                       p.exclude,
+			DigestAlgorithms:              p.digestAlgorithms,
+			Alias:                         p.alias,
+			MaxArchiveRecursiveIndexDepth: p.maxArchiveRecursiveIndexDepth,
 		},
 	)
 }
