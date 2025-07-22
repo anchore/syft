@@ -8,6 +8,9 @@ import (
 )
 
 const windowsGoOS = "windows"
+const windowsUNCPathPrefix = "\\\\"
+const windowsDrivePathTerminator = ":\\"
+const windowsUNCPathTerminator = "\\"
 
 func HostRunningOnWindows() bool {
 	return runtime.GOOS == windowsGoOS
@@ -31,11 +34,22 @@ func ToPosix(windowsPath string) (posixPath string) {
 func FromPosix(posixPath string) (windowsPath string) {
 	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
 	pathFields := strings.Split(posixPath, "/")
-	volumeName := strings.ToUpper(pathFields[1]) + `:\\`
+	rootPath := strings.ToUpper(pathFields[1])
+	volumeName := AppendRootTerminator(rootPath)
 
 	// translate non-escaped forward slashes into backslashes
 	remainingTranslatedPath := strings.Join(pathFields[2:], "\\")
 
 	// combine volume name and backslash components
 	return filepath.Clean(volumeName + remainingTranslatedPath)
+}
+
+func AppendRootTerminator(rootPath string) string {
+	// UNC paths start with \\ => \\localhost\
+	// Windows drive paths start with a letter and a colon => C:\
+	// See https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths
+	if strings.HasPrefix(rootPath, windowsUNCPathPrefix) {
+		return rootPath + windowsUNCPathTerminator
+	}
+	return rootPath + windowsDrivePathTerminator
 }
