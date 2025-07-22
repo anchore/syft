@@ -8,10 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
@@ -71,7 +74,8 @@ func (cfg Classifier) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// EvidenceMatcher is a function called to catalog Packages that match some sort of evidence
+// EvidenceMatcher is a function called to identify based on some sort of evidence in the filesystem contents.
+// A non-nil return value indicates a successful match, regardless of packages being returned.
 type EvidenceMatcher func(classifier Classifier, context MatcherContext) ([]pkg.Package, error)
 
 type MatcherContext struct {
@@ -80,18 +84,38 @@ type MatcherContext struct {
 	GetReader func(resolver MatcherContext) (unionreader.UnionReader, error)
 }
 
-func EvidenceMatchers(matchers ...EvidenceMatcher) EvidenceMatcher {
+// MatchAny returns a combined evidence matcher that returns results from the first
+// matcher that returns results
+func MatchAny(matchers ...EvidenceMatcher) EvidenceMatcher {
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
 		for _, matcher := range matchers {
 			match, err := matcher(classifier, context)
 			if err != nil {
 				return nil, err
 			}
+			// only return when results
 			if match != nil {
 				return match, nil
 			}
 		}
 		return nil, nil
+	}
+}
+
+// MatchAll executes all matchers until one returns nil results, only returning the final results
+func MatchAll(matchers ...EvidenceMatcher) EvidenceMatcher {
+	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
+		var out []pkg.Package
+		for _, matcher := range matchers {
+			match, err := matcher(classifier, context)
+			if match == nil || err != nil {
+				return nil, err
+			}
+			if len(match) > 0 {
+				out = match
+			}
+		}
+		return out, nil
 	}
 }
 
@@ -103,8 +127,8 @@ func (c ContextualEvidenceMatchers) FileNameTemplateVersionMatcher(fileNamePatte
 	return FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, c.CatalogerName)
 }
 
-func (c ContextualEvidenceMatchers) FileContentsVersionMatcher(pattern string) EvidenceMatcher {
-	return FileContentsVersionMatcher(pattern, c.CatalogerName)
+func (c ContextualEvidenceMatchers) FileContentsVersionMatcher(patterns ...string) EvidenceMatcher {
+	return FileContentsVersionMatcher(c.CatalogerName, patterns...)
 }
 
 func FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, catalogerName string) EvidenceMatcher {
@@ -156,17 +180,36 @@ func FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, catalogerN
 	}
 }
 
-func FileContentsVersionMatcher(pattern, catalogerName string) EvidenceMatcher {
-	pat := regexp.MustCompile(pattern)
+// FileContentsVersionMatcher will match all provided patterns, extracting named capture groups from each pattern, overwriting earlier results
+func FileContentsVersionMatcher(catalogerName string, patterns ...string) EvidenceMatcher {
+	if len(patterns) == 0 {
+		panic("must specify at least one pattern")
+	}
+	var pats []*regexp.Regexp
+	for _, pattern := range patterns {
+		pats = append(pats, regexp.MustCompile(pattern))
+	}
 	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
-		contents, err := getReader(context)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
-		}
+		var matchMetadata map[string]string
 
-		matchMetadata, err := internal.MatchNamedCaptureGroupsFromReader(pat, contents)
-		if err != nil {
-			return nil, fmt.Errorf("unable to match version: %w", err)
+		for _, pat := range pats {
+			contents, err := getReader(context)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get read contents for file: %w", err)
+			}
+
+			match, err := internal.MatchNamedCaptureGroupsFromReader(pat, contents)
+			if err != nil {
+				return nil, fmt.Errorf("unable to match version: %w", err)
+			}
+			if match == nil {
+				return nil, nil
+			}
+			if matchMetadata == nil {
+				matchMetadata = match
+			} else {
+				maps.Copy(matchMetadata, match)
+			}
 		}
 
 		// Convert {major: 1, minor: 2, patch: 3} to "1.2.3"
@@ -187,33 +230,14 @@ func FileContentsVersionMatcher(pattern, catalogerName string) EvidenceMatcher {
 
 		p := NewClassifierPackage(classifier, context.Location, matchMetadata, catalogerName)
 		if p == nil {
+			if matchMetadata != nil {
+				// if we had a successful metadata match, but no packages, return a successful match result
+				return []pkg.Package{}, nil
+			}
 			return nil, nil
 		}
 
 		return []pkg.Package{*p}, nil
-	}
-}
-
-// MatchExcluding tests the provided regular expressions against the file, and if matched, DOES NOT return
-// anything that the matcher would otherwise return
-func MatchExcluding(matcher EvidenceMatcher, contentPatternsToExclude ...string) EvidenceMatcher {
-	var nonMatchPatterns []*regexp.Regexp
-	for _, p := range contentPatternsToExclude {
-		nonMatchPatterns = append(nonMatchPatterns, regexp.MustCompile(p))
-	}
-	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
-		contents, err := getReader(context)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get read contents for file: %w", err)
-		}
-		matches, err := internal.MatchAnyFromReader(contents, nonMatchPatterns...)
-		if err != nil {
-			return nil, fmt.Errorf("unable to match content: %w", err)
-		}
-		if matches {
-			return nil, nil
-		}
-		return matcher(classifier, context)
 	}
 }
 
@@ -234,15 +258,18 @@ func SharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher Evide
 				return nil, err
 			}
 			for _, libraryLocation := range locations {
+				// create a new resolver without the cached context lookup -- this is decidedly a different file
 				newResolver := MatcherContext{
-					Resolver:  context.Resolver,
-					Location:  libraryLocation,
-					GetReader: context.GetReader,
+					Resolver: context.Resolver,
+					Location: libraryLocation,
 				}
-				newResolver.Location = libraryLocation
 				pkgs, err := sharedLibraryMatcher(classifier, newResolver)
 				if err != nil {
 					return nil, err
+				}
+				// not a successful match
+				if pkgs == nil {
+					continue
 				}
 				for _, p := range pkgs {
 					// set the source binary as the first location
@@ -260,9 +287,25 @@ func SharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher Evide
 					}
 					packages = append(packages, p)
 				}
+				// return non-nil package results as a successful match indication if the evidence matcher returned a successful match indication
+				if packages == nil {
+					packages = pkgs
+				}
 			}
 		}
 		return packages, nil
+	}
+}
+
+func MatchPath(path string) EvidenceMatcher {
+	if !doublestar.ValidatePattern(path) {
+		panic("invalid pattern")
+	}
+	return func(_ Classifier, context MatcherContext) ([]pkg.Package, error) {
+		if doublestar.MatchUnvalidated(path, context.Location.RealPath) {
+			return []pkg.Package{}, nil // return non-nil
+		}
+		return nil, nil
 	}
 }
 
