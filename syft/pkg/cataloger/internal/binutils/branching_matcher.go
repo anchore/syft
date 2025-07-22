@@ -1,7 +1,6 @@
 package binutils
 
 import (
-	"bytes"
 	"io"
 
 	"github.com/anchore/syft/internal"
@@ -20,7 +19,6 @@ func BranchingEvidenceMatcher(classifiers ...Classifier) EvidenceMatcher {
 			return nil, err
 		}
 		defer internal.CloseAndLogError(rdr, context.Location.RealPath)
-		contents, err := io.ReadAll(rdr)
 		if err != nil {
 			return nil, err
 		}
@@ -29,7 +27,11 @@ func BranchingEvidenceMatcher(classifiers ...Classifier) EvidenceMatcher {
 				Resolver: context.Resolver,
 				Location: context.Location,
 				GetReader: func(_ MatcherContext) (unionreader.UnionReader, error) {
-					return unionreader.GetUnionReader(byteReadCloser{bytes.NewReader(contents)})
+					_, err := rdr.Seek(0, io.SeekStart)
+					if err != nil {
+						return nil, err
+					}
+					return rdr, nil
 				},
 			})
 			if len(pkgs) > 0 || err != nil {
@@ -38,12 +40,4 @@ func BranchingEvidenceMatcher(classifiers ...Classifier) EvidenceMatcher {
 		}
 		return nil, nil
 	}
-}
-
-type byteReadCloser struct {
-	*bytes.Reader
-}
-
-func (b byteReadCloser) Close() error {
-	return nil
 }
