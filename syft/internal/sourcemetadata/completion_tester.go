@@ -12,6 +12,7 @@ type CompletionTester struct {
 }
 
 func NewCompletionTester(t testing.TB, ignore ...any) *CompletionTester {
+	t.Helper()
 	tester := &CompletionTester{
 		valid:  AllTypes(),
 		ignore: ignore,

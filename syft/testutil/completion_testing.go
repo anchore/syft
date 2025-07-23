@@ -16,12 +16,14 @@ type SourceMetadataCompletionTester struct {
 }
 
 func NewPackageMetadataCompletionTester(t testing.TB, ignore ...any) *PackageMetadataCompletionTester {
+	t.Helper()
 	return &PackageMetadataCompletionTester{
 		CompletionTester: packagemetadata.NewCompletionTester(t, ignore...),
 	}
 }
 
 func NewSourceMetadataCompletionTester(t testing.TB, ignore ...any) *SourceMetadataCompletionTester {
+	t.Helper()
 	return &SourceMetadataCompletionTester{
 		CompletionTester: sourcemetadata.NewCompletionTester(t, ignore...),
 	}
