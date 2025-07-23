@@ -1,10 +1,12 @@
 package cpp
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -27,12 +29,6 @@ func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
 
 const defaultRepo = "https://github.com/microsoft/vcpkg"
 
-// this is the default registry for vcpkg. it is the default "builtin" registry if a builtin one isn't specified 
-var defaultRegistry = pkg.VcpkgRegistryEntry{
-	Baseline: "master",
-	Kind: pkg.Git,
-	Repository: defaultRepo,
-}
 var defaultLock = vcpkg.VcpkgLockEntry{
 	Repo: defaultRepo, 
 	// supposed to be the latest commit sha of the repo at build time. If no vcpkg-lock.json file is found, default to master. 
@@ -41,6 +37,10 @@ var defaultLock = vcpkg.VcpkgLockEntry{
 
 // parser is for vcpkg in "Manifest" mode. This is opposed to "Classic" mode which or is more akin to a system package manager. (https://learn.microsoft.com/en-us/vcpkg/concepts/classic-mode)
 func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	currentPath, err := os.Getwd()
+	if err != nil {
+		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-lock.json file: %w", err)
+	}
 	lockFile, err := findLockFile(resolver)
 	if err != nil {
 		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-lock.json file: %w", err)
@@ -68,6 +68,7 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse vcpkg.json file: %w", err)
 	}
+
 	var vcpkgs []vcpkg.Vcpkg
 	vcpkgs = append(vcpkgs, toplevelVcpkg)
 	overlayVcpkgs, err := findOverlayManifests(resolver, conf.OverlayPorts)
@@ -78,40 +79,32 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, parentVcpkg := range vcpkgs {
-		triplet := identifyTripletForDep(resolver, parentVcpkg.Name)
+		triplet := identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, parentVcpkg.Name)
 		parentMan := parentVcpkg.BuildManifest(nil, triplet)
 		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)) 
 		pkgs = append(
 			pkgs,
 			pPkg)
 
-		// builtin by default is the git repo https://github.com/microsoft/vcpkg pointed to by VCPKG_ROOT env variable.
-		if parentVcpkg.BuiltinBaseline != "" {
-			if conf.DefaultRegistry != nil {
-				conf.DefaultRegistry.Baseline = parentVcpkg.BuiltinBaseline
-			}
-			for ind, reg := range conf.Registries {
-				if reg.Kind == pkg.Builtin {
-					conf.Registries[ind].Baseline = parentVcpkg.BuiltinBaseline 
-				}
-			}
-		}
+		
 		r := vcpkg.NewResolver(
 			conf,
 			vc.allowGitClone,
 		)
 		for _, dep := range parentVcpkg.Dependencies {
-			cMans, fetchErr := r.FindManifests(dep, true, triplet, toplevelVcpkg.Overrides, parentMan)
+			cMans, fetchErr := r.FindManifests(dep, true, triplet, currentPath, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
 				return nil, nil, fmt.Errorf("failed to fetch vcpkg.json file: %w", fetchErr)
 			}
 			for _, c := range cMans {
 				if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayVcpkgs) {
-					c.Child.Triplet = identifyTripletForDep(resolver, c.Child.Name)
+					c.Child.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Child.Name)
 					cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 					if c.Parent != nil {
-						c.Parent.Triplet = identifyTripletForDep(resolver, c.Parent.Name)
+						c.Parent.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Parent.Name)
 						pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+						pPkg.FoundBy = "vcpkg-manifest-cataloger"
+						cPkg.FoundBy = "vcpkg-manifest-cataloger"
 						rship := artifact.Relationship{
 							From: pPkg,
 							To: cPkg,
@@ -170,14 +163,38 @@ func hasBeenOverlayed(pkgName string, overlayMans []vcpkg.Vcpkg) bool {
 }
 
 // capture target triplet of the build to be added to metadata. https://learn.microsoft.com/en-us/vcpkg/concepts/triplets
-func identifyTripletForDep(resolver file.Resolver, name string) string {
-	locs, err := resolver.FilesByGlob("**/build/vcpkg_installed/*/share/" + name + "/copyright")
-	if err != nil {
-		return ""
-	}
-	if len(locs) != 0 {
-		path := locs[0].Path()
-		return strings.TrimPrefix(strings.TrimSuffix(path, "/share/" + name + "/copyright"), "/build/vcpkg_installed/")
+func identifyTripletForVcpkg(resolver file.Resolver, toplevel, name string) string {
+	var locs []file.Location
+	var err error
+	if toplevel == name {
+		locs, err = resolver.FilesByGlob("**/build/CMakeCache.txt")
+		if err != nil {
+			return ""
+		}
+		if len(locs) != 0 {
+			reader, err := resolver.FileContentsByLocation(locs[0])
+			if err != nil {
+				return ""
+			}
+			defer internal.CloseAndLogError(reader, locs[0].RealPath)
+			scanner := bufio.NewScanner(reader)
+			targetTripPrefix := "VCPKG_TARGET_TRIPLET:STRING="
+			for scanner.Scan() {
+				line := scanner.Text()
+				if after, ok := strings.CutPrefix(line, targetTripPrefix); ok  {
+					return after
+				}
+			}
+		}
+	} else {
+		locs, err = resolver.FilesByGlob("**/build/vcpkg_installed/*/share/" + name + "/copyright")
+		if err != nil {
+			return ""
+		}
+		if len(locs) != 0 {
+			path := locs[0].Path()
+			return strings.TrimPrefix(strings.TrimSuffix(path, "/share/" + name + "/copyright"), "build/vcpkg_installed/")
+		}
 	}
 	return ""
 }
@@ -201,14 +218,9 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.VcpkgConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		if vcpkgConf.DefaultRegistry == nil {
-			vcpkgConf.DefaultRegistry = &defaultRegistry
-		}
 		return &vcpkgConf, err
 	} else {
-		return &vcpkg.VcpkgConfig{
-			DefaultRegistry: &defaultRegistry,
-		}, nil 
+		return &vcpkg.VcpkgConfig{}, nil 
 	}
 }
 

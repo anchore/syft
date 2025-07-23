@@ -1,0 +1,20 @@
+{
+    "default": {
+        "vcpkg-sample-library": {
+            "baseline": "1.0.2",
+            "port-version": 0
+        },
+        "vcpkg-cmake": {
+            "baseline": "2024-04-23",
+            "port-version": 0
+        },
+        "vcpkg-cmake-config": {
+            "baseline": "2024-05-23",
+            "port-version": 0
+        },
+        "fmt": {
+            "baseline": "11.0.2",
+            "port-version": 1
+        }
+    }
+}

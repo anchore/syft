@@ -122,6 +122,22 @@ func packageURLFromConanRef(ref *conanRef) string {
 	).ToString()
 }
 
+func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location) pkg.Package {
+	p := pkg.Package{
+		Name:      v.Name,
+		Version:   v.FullVersion,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
+		Locations: file.NewLocationSet(l),
+		PURL: packageURLFromVcpkgManifest(v),
+		Language: pkg.CPP,
+		Type:     pkg.VcpkgPkg,
+		Metadata: v,
+	}
+
+	p.SetID()
+	return p
+}
+
 func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
 	qualifiers := packageurl.Qualifiers{}
 	//  
@@ -140,20 +156,4 @@ func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
 		qualifiers,
 		"",
 	).ToString()
-}
-
-func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location) pkg.Package {
-	p := pkg.Package{
-		Name:      v.Name,
-		Version:   v.FullVersion,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
-		Locations: file.NewLocationSet(l),
-		PURL: packageURLFromVcpkgManifest(v),
-		Language: pkg.CPP,
-		Type:     pkg.VcpkgPkg,
-		Metadata: v,
-	}
-
-	p.SetID()
-	return p
 }
