@@ -1,0 +1,10 @@
+{
+  "builtin-baseline": "a063a58f16816bbcec9c20cc9ff6d2855e654377",
+  "name": "hello",
+  "version": "0.1.0",
+  "dependencies": [
+      {
+          "name": "fmt"
+      }
+  ]
+}

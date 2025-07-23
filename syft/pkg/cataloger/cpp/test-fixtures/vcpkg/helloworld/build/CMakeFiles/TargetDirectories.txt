@@ -1,0 +1,3 @@
+/home/gabriel/vcpkg-playground/helloworld/build/CMakeFiles/HelloWorld.dir
+/home/gabriel/vcpkg-playground/helloworld/build/CMakeFiles/edit_cache.dir
+/home/gabriel/vcpkg-playground/helloworld/build/CMakeFiles/rebuild_cache.dir

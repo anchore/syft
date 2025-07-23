@@ -1,8 +1,10 @@
-# Conan test data
+# C++ test data
 
-This folder contains the test data for the Conan package manager.
+This folder contains the test data for the Conan and Vcpkg package managers.
 
-## conan.lock
+## Conan test data
+
+### conan.lock
 
 The conan lock file is created in the following way.
 
@@ -15,3 +17,7 @@ This is necessary to verify that the dependency tree is properly parsed.
 3. Manually delete the package id and prev from tinyxml2 entry to test conan lock parsing if they are missing:  
    `sed -i 's|\"package_id\": \"6557f18ca99c0b6a233f43db00e30efaa525e27e\",||g' conan.lock`    
    `sed -i 's|\"prev\": \"548bb273d2980991baa519453d68e5cd\",||g' conan.lock`
+
+## Vcpkg test data
+
+
