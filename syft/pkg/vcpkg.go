@@ -5,15 +5,14 @@ type VcpkgRegistryKind string
 const (
 	FileSystem VcpkgRegistryKind = "filesystem"
 	Git        VcpkgRegistryKind = "git"
-	// just a locally cloned Git repository
 	Builtin    VcpkgRegistryKind = "builtin"
 )
 
-// used for metadata. Includes summary of found information relevant to just that vcpkg
+// used for metadata. Includes summary of data found in manifest (vcpkg.json file) relevant to just that vcpkg
 type VcpkgManifest struct {
 	Description []string             `json:"description,omitempty"`
 	Documentation   string                  `json:"documentation,omitempty"`
-	// true version used. computed by info in manifest + top-level  
+	// true version used. computed by info in manifest + top-level
 	FullVersion string `json:"full-version"`
 	License string `json:"license,omitempty"` 
 	Maintainers []string        `json:"maintainers,omitempty"`
@@ -34,7 +33,4 @@ type VcpkgRegistryEntry struct {
 	Reference  string            `json:"reference,omitempty"`
 	Repository string            `json:"repository,omitempty"`
 }
-
-
-
 

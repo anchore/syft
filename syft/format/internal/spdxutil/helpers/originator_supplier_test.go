@@ -59,6 +59,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.GGUFFileHeader{},
 		pkg.DenoLockEntry{},
 		pkg.DenoRemoteLockEntry{},
+		pkg.VcpkgManifest{},
 	)
 	tests := []struct {
 		name       string
