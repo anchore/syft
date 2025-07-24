@@ -30,8 +30,8 @@ func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
 const defaultRepo = "https://github.com/microsoft/vcpkg"
 
 var defaultLock = vcpkg.VcpkgLockEntry{
-	Repo: defaultRepo, 
-	// supposed to be the latest commit sha of the repo at build time. If no vcpkg-lock.json file is found, default to master. 
+	Repo: defaultRepo,
+	// supposed to be the latest commit sha of the repo at build time. If no vcpkg-lock.json file is found, default to master.
 	Head: "master",
 }
 
@@ -81,12 +81,11 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 	for _, parentVcpkg := range vcpkgs {
 		triplet := identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, parentVcpkg.Name)
 		parentMan := parentVcpkg.BuildManifest(nil, triplet)
-		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)) 
+		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		pkgs = append(
 			pkgs,
 			pPkg)
 
-		
 		r := vcpkg.NewResolver(
 			conf,
 			vc.allowGitClone,
@@ -107,7 +106,7 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 						cPkg.FoundBy = "vcpkg-manifest-cataloger"
 						rship := artifact.Relationship{
 							From: pPkg,
-							To: cPkg,
+							To:   cPkg,
 							Type: artifact.DependencyOfRelationship,
 						}
 						relationships = append(
@@ -181,7 +180,7 @@ func identifyTripletForVcpkg(resolver file.Resolver, toplevel, name string) stri
 			targetTripPrefix := "VCPKG_TARGET_TRIPLET:STRING="
 			for scanner.Scan() {
 				line := scanner.Text()
-				if after, ok := strings.CutPrefix(line, targetTripPrefix); ok  {
+				if after, ok := strings.CutPrefix(line, targetTripPrefix); ok {
 					return after
 				}
 			}
@@ -193,13 +192,13 @@ func identifyTripletForVcpkg(resolver file.Resolver, toplevel, name string) stri
 		}
 		if len(locs) != 0 {
 			path := locs[0].Path()
-			return strings.TrimPrefix(strings.TrimSuffix(path, "/share/" + name + "/copyright"), "build/vcpkg_installed/")
+			return strings.TrimPrefix(strings.TrimSuffix(path, "/share/"+name+"/copyright"), "build/vcpkg_installed/")
 		}
 	}
 	return ""
 }
 
-// needed to know what vcpkg registries to use for what packages when looking for manifest files 
+// needed to know what vcpkg registries to use for what packages when looking for manifest files
 func findVcpkgConfig(resolver file.Resolver) (*vcpkg.VcpkgConfig, error) {
 	locs, err := resolver.FilesByGlob("**/vcpkg-configuration.json")
 	if err != nil {
@@ -220,7 +219,7 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.VcpkgConfig, error) {
 		}
 		return &vcpkgConf, err
 	} else {
-		return &vcpkg.VcpkgConfig{}, nil 
+		return &vcpkg.VcpkgConfig{}, nil
 	}
 }
 
@@ -259,6 +258,5 @@ func findLockFile(resolver file.Resolver) (*vcpkg.VcpkgLock, error) {
 	}
 	return &vcpkg.VcpkgLock{
 		Records: lockRecords,
-	}, nil 
+	}, nil
 }
-

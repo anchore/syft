@@ -5,12 +5,12 @@ import (
 )
 
 type cppConfig struct {
-	VcpkgAllowGitClone                 bool  `yaml:"vcpkg-allow-git-clone" json:"vcpkg-allow-git-clone" mapstructure:"vcpkg-allow-git-clone"`
+	VcpkgAllowGitClone bool `yaml:"vcpkg-allow-git-clone" json:"vcpkg-allow-git-clone" mapstructure:"vcpkg-allow-git-clone"`
 }
 
 func defaultCppConfig() cppConfig {
 	return cppConfig{
-		VcpkgAllowGitClone: false, // git clone requires network connection, which needs to be optin 
+		VcpkgAllowGitClone: false, // git clone requires network connection, which needs to be optin
 	}
 }
 
