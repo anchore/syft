@@ -45,7 +45,7 @@ type Catalog struct {
 	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
-	Cpp			cppConfig		  `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
+	Cpp         cppConfig         `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
 	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
@@ -80,7 +80,7 @@ func DefaultCatalog() Catalog {
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Nix:           defaultNixConfig(),
-		Cpp:		   defaultCppConfig(),
+		Cpp:           defaultCppConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -173,7 +173,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
-		Cpp: cpp.DefaultCatalogerConfig().WithVcpkgAllowGitClone(cfg.Cpp.VcpkgAllowGitClone),
+		Cpp:    cpp.DefaultCatalogerConfig().WithVcpkgAllowGitClone(cfg.Cpp.VcpkgAllowGitClone),
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).

@@ -56,5 +56,3 @@ func TestCatalogerConanInfo_Globs(t *testing.T) {
 		})
 	}
 }
-
-	
