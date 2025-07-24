@@ -50,6 +50,7 @@ func AppendRootTerminator(rootPath string) string {
 	// UNC paths start with \\ => \\localhost\
 	// Windows drive paths start with a letter and a colon => C:\
 	// See https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths
+	// This function should not be used on file paths since it is meant for root directory paths!
 	if strings.HasSuffix(rootPath, windowsDrivePathTerminator) {
 		return rootPath
 	}

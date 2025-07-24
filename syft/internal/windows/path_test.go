@@ -21,6 +21,11 @@ func TestAppendRootTerminator(t *testing.T) {
 			expect: "\\\\localhost\\C$\\\\",
 		},
 		{
+			name:   "DriveUNCDirectoryPath",
+			path:   "\\\\localhost\\C$\\Program Files\\Microsoft Visual Studio 10.0\\Common7\\IDE\\PrivateAssemblies\\",
+			expect: "\\\\localhost\\C$\\Program Files\\Microsoft Visual Studio 10.0\\Common7\\IDE\\PrivateAssemblies\\\\",
+		},
+		{
 			name:   "DriveC",
 			path:   "C",
 			expect: "C:\\",
