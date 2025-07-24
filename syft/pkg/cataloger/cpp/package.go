@@ -128,10 +128,10 @@ func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location)
 		Version:   v.FullVersion,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
 		Locations: file.NewLocationSet(l),
-		PURL: packageURLFromVcpkgManifest(v),
-		Language: pkg.CPP,
-		Type:     pkg.VcpkgPkg,
-		Metadata: v,
+		PURL:      packageURLFromVcpkgManifest(v),
+		Language:  pkg.CPP,
+		Type:      pkg.VcpkgPkg,
+		Metadata:  v,
 	}
 
 	p.SetID()
@@ -140,7 +140,7 @@ func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location)
 
 func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
 	qualifiers := packageurl.Qualifiers{}
-	//  
+	//
 	if v.Triplet != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
 			Key:   "triplet",
@@ -148,7 +148,7 @@ func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
 		})
 	}
 	return packageurl.NewPackageURL(
-		// Vcpkg is not a part of the PURL spec, PR for it hasn't moved. https://github.com/package-url/purl-spec/pull/245 
+		// Vcpkg is not a part of the PURL spec, PR for it hasn't moved. https://github.com/package-url/purl-spec/pull/245
 		"vcpkg",
 		"",
 		v.Name,
