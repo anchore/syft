@@ -124,8 +124,8 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 
 - Alpine (apk)
 - Bitnami packages
-- C (conan)
-- C++ (conan)
+- C (conan, vcpkg)
+- C++ (conan, vcpkg)
 - Dart (pubs)
 - Debian (dpkg)
 - Dotnet (deps.json)

@@ -1,0 +1,8 @@
+x64-linux/
+x64-linux/share/
+x64-linux/share/vcpkg-cmake-config/
+x64-linux/share/vcpkg-cmake-config/copyright
+x64-linux/share/vcpkg-cmake-config/vcpkg-port-config.cmake
+x64-linux/share/vcpkg-cmake-config/vcpkg.spdx.json
+x64-linux/share/vcpkg-cmake-config/vcpkg_abi_info.txt
+x64-linux/share/vcpkg-cmake-config/vcpkg_cmake_config_fixup.cmake
