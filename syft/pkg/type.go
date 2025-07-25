@@ -16,6 +16,7 @@ const (
 	BitnamiPkg              Type = "bitnami"
 	CocoapodsPkg            Type = "pod"
 	ConanPkg                Type = "conan"
+	CondaPkg                Type = "conda"
 	DartPubPkg              Type = "dart-pub"
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
@@ -59,6 +60,7 @@ var AllPkgs = []Type{
 	BitnamiPkg,
 	CocoapodsPkg,
 	ConanPkg,
+	CondaPkg,
 	DartPubPkg,
 	DebPkg,
 	DotnetPkg,
@@ -109,6 +111,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeCocoapods
 	case ConanPkg:
 		return packageurl.TypeConan
+	case CondaPkg:
+		return packageurl.TypeGeneric
 	case DartPubPkg:
 		return packageurl.TypePub
 	case DebPkg:
@@ -206,6 +210,8 @@ func TypeByName(name string) Type {
 		return GemPkg
 	case "cargo", "crate":
 		return RustPkg
+	case "conda":
+		return CondaPkg
 	case packageurl.TypePub:
 		return DartPubPkg
 	case "dotnet": // here to support legacy use cases
