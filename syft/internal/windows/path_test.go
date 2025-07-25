@@ -40,6 +40,11 @@ func TestAppendRootTerminator(t *testing.T) {
 			path:   "C:\\",
 			expect: "C:\\",
 		},
+		{
+			name:   "DriveCDefaultLegacyBehavior",
+			path:   "C:\\Program Files\\Microsoft Visual Studio 10.0\\Common7\\IDE\\PrivateAssemblies\\",
+			expect: "C:\\Program Files\\Microsoft Visual Studio 10.0\\Common7\\IDE\\PrivateAssemblies\\:\\",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
