@@ -13,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 
 	"github.com/anchore/syft/internal/cache"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -75,7 +74,7 @@ type vcpkgOverrideEntry struct {
 }
 
 // represents contents of "vcpkg-configuration.json" file
-type VcpkgConfig struct {
+type Config struct {
 	DefaultRegistry *pkg.VcpkgRegistryEntry  `json:"default-registry"`
 	OverlayPorts    []string                 `json:"overlay-ports,omitempty"`
 	OverlayTriplets []string                 `json:"overlay-triplets,omitempty"`
@@ -99,15 +98,15 @@ type vcpkgGitVersions struct {
 }
 
 // vcpkgDependencyEntry represents a single entry in the dependencies section of the "vcpkg.json" source
-type vcpkgDependencyEntry struct {
-	DefaultFeatures bool                      `json:"default-features,omitempty"`
-	Features        []vcpkgFeatureObjectEntry `json:"features,omitempty"`
-	Host            bool                      `json:"host,omitempty"`
-	Name            string                    `json:"name"`
-	// A "Platform Expression" that limits the platforms where the feature is required. Optional
-	Platform   string `json:"platform,omitempty"`
-	VersionGte string `json:"version>=,omitempty"`
-}
+// type vcpkgDependencyEntry struct {
+// 	DefaultFeatures bool                      `json:"default-features,omitempty"`
+// 	Features        []vcpkgFeatureObjectEntry `json:"features,omitempty"`
+// 	Host            bool                      `json:"host,omitempty"`
+// 	Name            string                    `json:"name"`
+// 	 A "Platform Expression" that limits the platforms where the feature is required. Optional
+// 	Platform   string `json:"platform,omitempty"`
+// 	VersionGte string `json:"version>=,omitempty"`
+// }
 
 type vcpkgFeatureObjectEntry struct {
 	Name     string `json:"name"`
@@ -130,7 +129,7 @@ type vcpkgFsVersions struct {
 }
 
 // helpful to define relationships between Vcpkgs
-type manifestNode struct {
+type ManifestNode struct {
 	Parent *pkg.VcpkgManifest
 	Child  *pkg.VcpkgManifest
 }
@@ -165,51 +164,53 @@ func (v *vcpkgOverrideEntry) GetFullVersion() string {
 }
 
 func getPopulatedVersionName(version, versionSemver, versionDate, versionString string) string {
-	if version != "" {
+	switch {
+	case version != "":
 		return version
-	} else if versionSemver != "" {
+	case versionSemver != "":
 		return versionSemver
-	} else if versionDate != "" {
+	case versionDate != "":
 		return versionDate
-	} else if versionString != "" {
+	case versionString != "":
 		return versionString
-	} else {
+	default:
 		return ""
 	}
 }
 
 func getFullVersionName(version, versionSemver, versionDate, versionString string, portVersion float64) string {
-	if version != "" && portVersion != 0 {
+	switch {
+	case version != "" && portVersion != 0:
 		vElems := []string{version, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
-	} else if version != "" {
+	case version != "":
 		return version
-	} else if versionSemver != "" && portVersion != 0 {
+	case versionSemver != "" && portVersion != 0:
 		vElems := []string{versionSemver, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
-	} else if versionSemver != "" {
+	case versionSemver != "":
 		return versionSemver
-	} else if versionDate != "" && portVersion != 0 {
+	case versionDate != "" && portVersion != 0:
 		vElems := []string{versionDate, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
-	} else if versionDate != "" {
+	case versionDate != "":
 		return versionDate
-	} else if versionString != "" && portVersion != 0 {
+	case versionString != "" && portVersion != 0:
 		vElems := []string{versionString, "#", strconv.Itoa(int(portVersion))}
 		return strings.Join(vElems, "")
-	} else if versionString != "" {
+	case versionString != "":
 		return versionString
-	} else {
+	default:
 		return ""
 	}
 }
 
 // represents whats found in vcpkg-lock.json. json keys are unknown until build
-type VcpkgLock struct {
-	Records []VcpkgLockEntry
+type Lock struct {
+	Records []LockEntry
 }
 
-type VcpkgLockEntry struct {
+type LockEntry struct {
 	Repo string
 	Head string
 }
@@ -228,12 +229,12 @@ type ID struct {
 // the filesystem, local maven cache directories, remote maven repositories, and the syft cache
 type Resolver struct {
 	allowGitClone bool
-	cfg           *VcpkgConfig
+	cfg           *Config
 	resolved      map[ID]*pkg.VcpkgManifest
 }
 
 // NewResolver constructs a new Resolver with the given vcpkg configuration.
-func NewResolver(cfg *VcpkgConfig, allowGitClone bool) *Resolver {
+func NewResolver(cfg *Config, allowGitClone bool) *Resolver {
 	return &Resolver{
 		allowGitClone: allowGitClone,
 		cfg:           cfg,
@@ -242,7 +243,7 @@ func NewResolver(cfg *VcpkgConfig, allowGitClone bool) *Resolver {
 }
 
 // Get all of the manifest/vcpkg.json files for a vcpkg dependency
-func (r *Resolver) FindManifests(dependency any, df bool, triplet, currentPath, builtinBaseline string, overrides []vcpkgOverrideEntry, parent *pkg.VcpkgManifest) ([]manifestNode, error) {
+func (r *Resolver) FindManifests(dependency any, df bool, triplet, currentPath, builtinBaseline string, overrides []vcpkgOverrideEntry, parent *pkg.VcpkgManifest) ([]ManifestNode, error) {
 	var name string
 	var fullVersion string
 	defaultFeatures := df
@@ -265,7 +266,7 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, currentPath, 
 			features = d["features"].([]any)
 		}
 	}
-	// for when top-level manifest has this dependency version overriden
+	// for when top-level manifest has this dependency version overridden
 	if over, ok := depVerOverriden(name, overrides); ok {
 		fullVersion = over.Version
 	}
@@ -287,27 +288,11 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, currentPath, 
 		id := ID{reg.Path, reg.Baseline, name, fullVersion}
 		r.resolved[id] = vcpkg.BuildManifest(reg, triplet)
 	}
-	// some features pull in additional dependencies
-	for _, feature := range features {
-		switch fo := feature.(type) {
-		case string:
-			for name, f := range vcpkg.Features {
-				if fo == name || (defaultFeatures && isDefaultFeature(name, vcpkg.DefaultFeatures)) {
-					vcpkg.Dependencies = append(vcpkg.Dependencies, f.Dependencies...)
-				}
-			}
-		case vcpkgFeatureObjectEntry:
-			for name, f := range vcpkg.Features {
-				if fo.Name == name || (defaultFeatures && isDefaultFeature(name, vcpkg.DefaultFeatures)) {
-					vcpkg.Dependencies = append(vcpkg.Dependencies, f.Dependencies...)
-				}
-			}
-		}
-	}
+	vcpkg.appendFtrDepsToDeps(defaultFeatures, features)
 
 	childManifest := vcpkg.BuildManifest(reg, triplet)
-	manNodes := []manifestNode{}
-	manNodes = append(manNodes, manifestNode{
+	manNodes := []ManifestNode{}
+	manNodes = append(manNodes, ManifestNode{
 		Parent: parent,
 		Child:  childManifest,
 	})
@@ -316,7 +301,7 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, currentPath, 
 			resolvedManifest, ok := r.depResolved(dep, builtinBaseline)
 			if ok {
 				// this is to catch duplicates
-				manNodes = append(manNodes, manifestNode{
+				manNodes = append(manNodes, ManifestNode{
 					// child is parent in this case
 					Parent: childManifest,
 					Child:  resolvedManifest,
@@ -331,6 +316,25 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, currentPath, 
 		}
 	}
 	return manNodes, nil
+}
+
+func (v *Vcpkg) appendFtrDepsToDeps(df bool, features []any) {
+	for _, feature := range features {
+		switch fo := feature.(type) {
+		case string:
+			for name, f := range v.Features {
+				if fo == name || (df && isDefaultFeature(name, v.DefaultFeatures)) {
+					v.Dependencies = append(v.Dependencies, f.Dependencies...)
+				}
+			}
+		case vcpkgFeatureObjectEntry:
+			for name, f := range v.Features {
+				if fo.Name == name || (df && isDefaultFeature(name, v.DefaultFeatures)) {
+					v.Dependencies = append(v.Dependencies, f.Dependencies...)
+				}
+			}
+		}
+	}
 }
 
 func depVerOverriden(name string, overrides []vcpkgOverrideEntry) (*vcpkgOverrideEntry, bool) {
@@ -350,7 +354,7 @@ func getRepo(repo, path string, allowGitClone bool) (*git.Repository, string, er
 	if err != nil || r == nil {
 		vcpkgCachePath, err := getVcpkgGitCachePath()
 		if err != nil {
-			return nil, vcpkgCachePath, fmt.Errorf("Could not get vcpkg cache path. %w", err)
+			return nil, vcpkgCachePath, fmt.Errorf("could not get vcpkg cache path. %w", err)
 		}
 		vr, err := git.PlainOpen(vcpkgCachePath)
 		if err != nil || vr == nil {
@@ -359,11 +363,10 @@ func getRepo(repo, path string, allowGitClone bool) (*git.Repository, string, er
 					URL: repo,
 				})
 				if err != nil {
-					return nil, path, fmt.Errorf("Could not clone repo %v.", repo)
+					return nil, path, fmt.Errorf("could not clone repo %v", repo)
 				}
 			} else {
-				log.Errorf(`Could not find local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled`, path, repo)
-				return nil, vcpkgCachePath, fmt.Errorf(`Could not find local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled`, path, repo)
+				return nil, vcpkgCachePath, fmt.Errorf(`could not find local repo at %v. To clone repo %v, vcpkg-allow-git-clone must be enabled`, path, repo)
 			}
 		} else {
 			return vr, vcpkgCachePath, err
@@ -431,11 +434,12 @@ func (r *Resolver) depResolved(dep any, builtinBaseline string) (*pkg.VcpkgManif
 	}
 	reg := r.depRegistry(name, builtinBaseline)
 	var location string
-	if reg.Repository != "" {
+	switch {
+	case reg.Repository != "":
 		location = reg.Repository
-	} else if reg.Path != "" {
+	case reg.Path != "":
 		location = reg.Path
-	} else {
+	default:
 		location = vcpkgRepo
 	}
 	resolved, ok := r.resolved[ID{location, reg.Baseline, name, version}]
@@ -460,12 +464,14 @@ func isDefaultFeature(name string, defaultFeatures []any) bool {
 
 func (r *Resolver) findManifestFromReg(reg *pkg.VcpkgRegistryEntry, currentPath, name, fullVersion string) (*Vcpkg, error) {
 	if reg == nil {
-		return nil, fmt.Errorf("no vcpkg registry found which is required.")
+		return nil, fmt.Errorf("no vcpkg registry found which is required")
 	}
 	switch reg.Kind {
 	case pkg.Git:
+		var vcpkg *Vcpkg
+		var err error
 		if reg.Repository == "" {
-			return nil, fmt.Errorf("No repo found for vcpkg git registry")
+			return nil, fmt.Errorf("no repo found for vcpkg git registry")
 		}
 		if strings.TrimSuffix(reg.Repository, ".git") == vcpkgRepo {
 			path := os.Getenv("VCPKG_ROOT")
@@ -473,11 +479,10 @@ func (r *Resolver) findManifestFromReg(reg *pkg.VcpkgRegistryEntry, currentPath,
 			if err != nil {
 				return nil, err
 			}
-			vcpkg, err := r.getManifestFromGitRepo(gitRepo, currentPath, path, reg.Baseline, name, fullVersion)
+			vcpkg, err = r.getManifestFromGitRepo(gitRepo, currentPath, path, reg.Baseline, name, fullVersion)
 			if err != nil {
 				return nil, err
 			}
-			return vcpkg, err
 		} else {
 			cachePath, err := getSyftVcpkgCachePath(reg.Repository)
 			if err != nil {
@@ -487,12 +492,12 @@ func (r *Resolver) findManifestFromReg(reg *pkg.VcpkgRegistryEntry, currentPath,
 			if err != nil {
 				return nil, err
 			}
-			vcpkg, err := r.getManifestFromGitRepo(gitRepo, currentPath, cachePath, reg.Baseline, name, fullVersion)
+			vcpkg, err = r.getManifestFromGitRepo(gitRepo, currentPath, cachePath, reg.Baseline, name, fullVersion)
 			if err != nil {
 				return nil, err
 			}
-			return vcpkg, err
 		}
+		return vcpkg, err
 	case pkg.Builtin:
 		path := os.Getenv("VCPKG_ROOT")
 		gitRepo, path, err := getRepo(vcpkgRepo, path, r.allowGitClone)
@@ -506,7 +511,7 @@ func (r *Resolver) findManifestFromReg(reg *pkg.VcpkgRegistryEntry, currentPath,
 		return vcpkg, err
 	case pkg.FileSystem:
 		if reg.Path == "" {
-			return nil, fmt.Errorf("No path found for vcpkg filesystem registry.")
+			return nil, fmt.Errorf("no path found for vcpkg filesystem registry")
 		}
 		baseline := reg.Baseline
 		if baseline == "" {
@@ -518,7 +523,7 @@ func (r *Resolver) findManifestFromReg(reg *pkg.VcpkgRegistryEntry, currentPath,
 		}
 		return vcpkg, err
 	default:
-		return nil, fmt.Errorf("vcpkg registry has no kind which is required.")
+		return nil, fmt.Errorf("vcpkg registry has no kind which is required")
 	}
 }
 
@@ -536,6 +541,7 @@ func (r *Resolver) getManifestFromGitRepo(repo *git.Repository, currentPath, rep
 	if err != nil {
 		return nil, err
 	}
+	var resultMan Vcpkg
 	if fullVersion != "" {
 		verPath := "versions/" + name[0:1] + "-/" + name + ".json"
 		verFile, err := findFileInTree(currentPath, wt.Filesystem.Root(), repoPath, verPath, tree)
@@ -571,9 +577,10 @@ func (r *Resolver) getManifestFromGitRepo(repo *git.Repository, currentPath, rep
 		if err != nil {
 			return nil, fmt.Errorf("failed to get contents of vcpkg.json file from git tree. %w", err)
 		}
-		var resultMan Vcpkg
-		json.Unmarshal([]byte(manContents), &resultMan)
-		return &resultMan, err
+		err = json.Unmarshal([]byte(manContents), &resultMan)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		portPath := "ports/" + name + "/vcpkg.json"
 		manFile, err := findFileInTree(currentPath, wt.Filesystem.Root(), repoPath, portPath, tree)
@@ -584,10 +591,12 @@ func (r *Resolver) getManifestFromGitRepo(repo *git.Repository, currentPath, rep
 		if err != nil {
 			return nil, fmt.Errorf("failed to get contents of vcpkg.json file from ports directory in git tree. %w", err)
 		}
-		var resultMan Vcpkg
-		json.Unmarshal([]byte(manContents), &resultMan)
-		return &resultMan, err
+		err = json.Unmarshal([]byte(manContents), &resultMan)
+		if err != nil {
+			return nil, err
+		}
 	}
+	return &resultMan, err
 }
 
 func findFileInTree(currentPath, rootPath, repoPath, filePath string, tree *object.Tree) (*object.File, error) {
@@ -639,7 +648,7 @@ func (r *Resolver) getManifestFromFilesystem(path, baseline, name, fullVersion s
 			}
 		}
 		if baselineVer.Baseline == "" {
-			return nil, fmt.Errorf("Could not find a baseline version for dependency with name %v", name)
+			return nil, fmt.Errorf("could not find a baseline version for dependency with name %v", name)
 		}
 		if baselineVer.PortVersion > 0 {
 			finalVer = baselineVer.Baseline + "#" + strconv.Itoa(int(baselineVer.PortVersion))
@@ -655,6 +664,9 @@ func (r *Resolver) getManifestFromFilesystem(path, baseline, name, fullVersion s
 // retrieves manifest file from the filesystem
 func getFsManifest(path, name, ver string) (*Vcpkg, error) {
 	versionBytes, err := os.ReadFile(path + "/versions/" + name[0:1] + "-/" + name + ".json")
+	if err != nil {
+		return nil, err
+	}
 	var verFileCont vcpkgFsVersions
 	err = json.Unmarshal(versionBytes, &verFileCont)
 	if err != nil {
@@ -668,9 +680,11 @@ func getFsManifest(path, name, ver string) (*Vcpkg, error) {
 			if err != nil {
 				return nil, err
 			}
-
 			var vcpkgManRes Vcpkg
 			err = json.Unmarshal(manBytes, &vcpkgManRes)
+			if err != nil {
+				return nil, err
+			}
 			return &vcpkgManRes, nil
 		}
 	}
@@ -695,5 +709,18 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 		Supports:      v.Supports,
 		Registry:      reg,
 		Triplet:       triplet,
+	}
+}
+
+func (c *Config) SetRegBaseline(lock *Lock) {
+	for _, lockRec := range lock.Records {
+		if c.DefaultRegistry != nil && c.DefaultRegistry.Repository == lockRec.Repo {
+			c.DefaultRegistry.Baseline = lockRec.Head
+		}
+		for ind, reg := range c.Registries {
+			if lockRec.Repo == reg.Repository {
+				c.Registries[ind].Baseline = lockRec.Head
+			}
+		}
 	}
 }
