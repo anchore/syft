@@ -92,7 +92,7 @@ require (
 	golang.org/x/mod v0.26.0
 	golang.org/x/net v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.38.1
+	modernc.org/sqlite v1.38.2
 )
 
 require (
