@@ -29,14 +29,14 @@ func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
 
 const defaultRepo = "https://github.com/microsoft/vcpkg"
 
-var defaultLock = vcpkg.VcpkgLockEntry{
+var defaultLock = vcpkg.LockEntry{
 	Repo: defaultRepo,
 	// supposed to be the latest commit sha of the repo at build time. If no vcpkg-lock.json file is found, default to master.
 	Head: "master",
 }
 
 // parser is for vcpkg in "Manifest" mode. This is opposed to "Classic" mode which or is more akin to a system package manager. (https://learn.microsoft.com/en-us/vcpkg/concepts/classic-mode)
-func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	currentPath, err := os.Getwd()
 	if err != nil {
 		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-lock.json file: %w", err)
@@ -51,16 +51,7 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 	}
 
 	// lock file preferred for determining what Baseline commit hash. (baseline could be a branch name which can change)
-	for _, lockRec := range lockFile.Records {
-		if conf.DefaultRegistry != nil && conf.DefaultRegistry.Repository == lockRec.Repo {
-			conf.DefaultRegistry.Baseline = lockRec.Head
-		}
-		for ind, reg := range conf.Registries {
-			if lockRec.Repo == reg.Repository {
-				conf.Registries[ind].Baseline = lockRec.Head
-			}
-		}
-	}
+	conf.SetRegBaseline(lockFile)
 
 	var toplevelVcpkg vcpkg.Vcpkg
 	dec := json.NewDecoder(reader)
@@ -73,7 +64,7 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 	vcpkgs = append(vcpkgs, toplevelVcpkg)
 	overlayVcpkgs, err := findOverlayManifests(resolver, conf.OverlayPorts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Could not get overlay port manifests: %w", err)
+		return nil, nil, fmt.Errorf("could not get overlay port manifests: %w", err)
 	}
 	vcpkgs = append(vcpkgs, overlayVcpkgs...)
 	var pkgs []pkg.Package
@@ -88,40 +79,47 @@ func (vc *vcpkgCataloger) parseVcpkgmanifest(ctx context.Context, resolver file.
 
 		r := vcpkg.NewResolver(
 			conf,
-			vc.allowGitClone,
+			v.allowGitClone,
 		)
 		for _, dep := range parentVcpkg.Dependencies {
 			cMans, fetchErr := r.FindManifests(dep, true, triplet, currentPath, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
 				return nil, nil, fmt.Errorf("failed to fetch vcpkg.json file: %w", fetchErr)
 			}
-			for _, c := range cMans {
-				if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayVcpkgs) {
-					c.Child.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Child.Name)
-					cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-					if c.Parent != nil {
-						c.Parent.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Parent.Name)
-						pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-						pPkg.FoundBy = "vcpkg-manifest-cataloger"
-						cPkg.FoundBy = "vcpkg-manifest-cataloger"
-						rship := artifact.Relationship{
-							From: pPkg,
-							To:   cPkg,
-							Type: artifact.DependencyOfRelationship,
-						}
-						relationships = append(
-							relationships,
-							rship)
-					}
-					pkgs = append(
-						pkgs,
-						cPkg)
-				}
-			}
+			pkgs, relationships = appendPkgsAndRelationships(ctx, toplevelVcpkg, cMans, overlayVcpkgs, resolver, reader, relationships, pkgs)
 		}
 	}
 	pkg.Sort(pkgs)
 	return pkgs, relationships, nil
+}
+
+func appendPkgsAndRelationships(ctx context.Context, toplevelVcpkg vcpkg.Vcpkg, cMans []vcpkg.ManifestNode, overlayVcpkgs []vcpkg.Vcpkg, resolver file.Resolver, reader file.LocationReadCloser, relationships []artifact.Relationship, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+	p := pkgs
+	r := relationships
+	for _, c := range cMans {
+		if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayVcpkgs) {
+			c.Child.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Child.Name)
+			cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+			if c.Parent != nil {
+				c.Parent.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Parent.Name)
+				pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+				pPkg.FoundBy = "vcpkg-manifest-cataloger"
+				cPkg.FoundBy = "vcpkg-manifest-cataloger"
+				rship := artifact.Relationship{
+					From: pPkg,
+					To:   cPkg,
+					Type: artifact.DependencyOfRelationship,
+				}
+				r = append(
+					r,
+					rship)
+			}
+			p = append(
+				p,
+				cPkg)
+		}
+	}
+	return p, r
 }
 
 // These are to be used in place of dependencies with the same name
@@ -134,21 +132,32 @@ func findOverlayManifests(resolver file.Resolver, overlayPorts []string) ([]vcpk
 			return nil, err
 		}
 		for _, loc := range locs {
-			manCont, err := resolver.FileContentsByLocation(loc)
+			man, err := findManAtLoc(loc, resolver)
 			if err != nil {
 				return nil, err
 			}
-			defer internal.CloseAndLogError(manCont, locs[0].RealPath)
-			manBytes, err := io.ReadAll(manCont)
-			var man vcpkg.Vcpkg
-			err = json.Unmarshal(manBytes, &man)
-			if err != nil {
-				return nil, err
-			}
-			manifests = append(manifests, man)
+			manifests = append(manifests, *man)
 		}
 	}
 	return manifests, nil
+}
+
+func findManAtLoc(loc file.Location, resolver file.Resolver) (*vcpkg.Vcpkg, error) {
+	manCont, err := resolver.FileContentsByLocation(loc)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(manCont, loc.RealPath)
+	manBytes, err := io.ReadAll(manCont)
+	if err != nil {
+		return nil, err
+	}
+	var man vcpkg.Vcpkg
+	err = json.Unmarshal(manBytes, &man)
+	if err != nil {
+		return nil, err
+	}
+	return &man, nil
 }
 
 // check to see if a package is not going to get pulled in because it's apart of the overlay-ports in vcpkg-configuration.json file
@@ -199,7 +208,7 @@ func identifyTripletForVcpkg(resolver file.Resolver, toplevel, name string) stri
 }
 
 // needed to know what vcpkg registries to use for what packages when looking for manifest files
-func findVcpkgConfig(resolver file.Resolver) (*vcpkg.VcpkgConfig, error) {
+func findVcpkgConfig(resolver file.Resolver) (*vcpkg.Config, error) {
 	locs, err := resolver.FilesByGlob("**/vcpkg-configuration.json")
 	if err != nil {
 		return nil, err
@@ -211,24 +220,25 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.VcpkgConfig, error) {
 		}
 		defer internal.CloseAndLogError(cfgCont, locs[0].RealPath)
 		cfgBytes, err := io.ReadAll(cfgCont)
-
-		var vcpkgConf vcpkg.VcpkgConfig
+		if err != nil {
+			return nil, err
+		}
+		var vcpkgConf vcpkg.Config
 		err = json.Unmarshal(cfgBytes, &vcpkgConf)
 		if err != nil {
 			return nil, err
 		}
 		return &vcpkgConf, err
-	} else {
-		return &vcpkg.VcpkgConfig{}, nil
 	}
+	return &vcpkg.Config{}, nil
 }
 
 // Gives the git commit hash(es) for the repo(s) listed in the vcpkg-configuration.json file
-func findLockFile(resolver file.Resolver) (*vcpkg.VcpkgLock, error) {
+func findLockFile(resolver file.Resolver) (*vcpkg.Lock, error) {
 	locs, err := resolver.FilesByGlob("**/vcpkg-lock.json")
 	if err != nil || len(locs) == 0 {
-		return &vcpkg.VcpkgLock{
-			Records: []vcpkg.VcpkgLockEntry{defaultLock},
+		return &vcpkg.Lock{
+			Records: []vcpkg.LockEntry{defaultLock},
 		}, nil
 	}
 	lockContents, err := resolver.FileContentsByLocation(locs[0])
@@ -237,18 +247,21 @@ func findLockFile(resolver file.Resolver) (*vcpkg.VcpkgLock, error) {
 	}
 	defer internal.CloseAndLogError(lockContents, locs[0].RealPath)
 	lockBytes, err := io.ReadAll(lockContents)
-
+	if err != nil {
+		return nil, err
+	}
 	var lockFile any
-	json.Unmarshal(lockBytes, &lockFile)
+	err = json.Unmarshal(lockBytes, &lockFile)
+	if err != nil {
+		return nil, err
+	}
 
-	var lockRecords []vcpkg.VcpkgLockEntry
+	var lockRecords []vcpkg.LockEntry
 	for k, v := range lockFile.(map[string]any) {
-		switch t := v.(type) {
-		case map[string]any:
+		if t, ok := v.(map[string]any); ok {
 			for _, v2 := range t {
-				switch t2 := v2.(type) {
-				case string:
-					lockRecords = append(lockRecords, vcpkg.VcpkgLockEntry{
+				if t2, ok := v2.(string); ok {
+					lockRecords = append(lockRecords, vcpkg.LockEntry{
 						Repo: k,
 						Head: t2,
 					})
@@ -256,7 +269,7 @@ func findLockFile(resolver file.Resolver) (*vcpkg.VcpkgLock, error) {
 			}
 		}
 	}
-	return &vcpkg.VcpkgLock{
+	return &vcpkg.Lock{
 		Records: lockRecords,
 	}, nil
 }
