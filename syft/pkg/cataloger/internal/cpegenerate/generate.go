@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -239,6 +240,9 @@ func candidateVendors(p pkg.Package) []string {
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
 
+	// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+	addBinaryPackageDigitVariations(vendors, p)
+
 	// add more candidates based on the package info for each vendor candidate
 	for _, vendor := range vendors.uniqueValues() {
 		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
@@ -302,6 +306,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)
+
+	// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+	addBinaryPackageDigitVariations(products, p)
 
 	// add known candidate additions
 	products.addValue(findAdditionalProducts(defaultCandidateAdditions, p.Type, p.Name)...)
@@ -401,6 +408,35 @@ func addDelimiterVariations(fields fieldCandidateSet) {
 			hyphenCandidate := candidate
 			hyphenCandidate.value = newValue
 			fields.add(hyphenCandidate)
+		}
+	}
+}
+
+// removeTrailingDigits removes all trailing digits from a string
+func removeTrailingDigits(s string) string {
+	re := regexp.MustCompile(`\d+$`)
+	return re.ReplaceAllString(s, "")
+}
+
+// addBinaryPackageDigitVariations adds variations with trailing digits removed for binary packages.
+// For binary package types only, when the name ends with a digit, add a new variation with all
+// suffix-digits removed (e.g. Qt5 -> Qt). This helps generate additional CPE permutations for
+// better vulnerability matching.
+func addBinaryPackageDigitVariations(fields fieldCandidateSet, p pkg.Package) {
+	if p.Type != pkg.BinaryPkg {
+		return
+	}
+
+	candidatesForVariations := fields.copy()
+
+	for _, candidate := range candidatesForVariations.values() {
+		// Check if the candidate ends with a digit
+		if len(candidate) > 0 && candidate[len(candidate)-1] >= '0' && candidate[len(candidate)-1] <= '9' {
+			// Create variation with all suffix digits removed
+			withoutDigits := removeTrailingDigits(candidate)
+			if withoutDigits != "" && withoutDigits != candidate {
+				fields.addValue(withoutDigits)
+			}
 		}
 	}
 }
