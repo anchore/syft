@@ -49,7 +49,7 @@ func TestParseVcpkgManifest(t *testing.T) {
 				License:     "MIT",
 				Name:        "fmt",
 				Registry: &pkg.VcpkgRegistryEntry{
-					Baseline:   "a063a58f16816bbcec9c20cc9ff6d2855e654377",
+					Baseline:   "f9d089b97f993348898b8e89a43865c594b4580a",
 					Kind:       pkg.Git,
 					Repository: "https://github.com/microsoft/vcpkg",
 				},
@@ -71,7 +71,7 @@ func TestParseVcpkgManifest(t *testing.T) {
 				License:       "MIT",
 				Name:          "vcpkg-cmake-config",
 				Registry: &pkg.VcpkgRegistryEntry{
-					Baseline:   "a063a58f16816bbcec9c20cc9ff6d2855e654377",
+					Baseline:   "f9d089b97f993348898b8e89a43865c594b4580a",
 					Kind:       pkg.Git,
 					Repository: "https://github.com/microsoft/vcpkg",
 				},
@@ -93,7 +93,7 @@ func TestParseVcpkgManifest(t *testing.T) {
 				License:       "MIT",
 				Name:          "vcpkg-cmake",
 				Registry: &pkg.VcpkgRegistryEntry{
-					Baseline:   "a063a58f16816bbcec9c20cc9ff6d2855e654377",
+					Baseline:   "f9d089b97f993348898b8e89a43865c594b4580a",
 					Kind:       pkg.Git,
 					Repository: "https://github.com/microsoft/vcpkg",
 				},
