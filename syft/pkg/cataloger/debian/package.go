@@ -133,6 +133,7 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	if len(licenseStrs) == 0 {
 		sr, sl := fetchCopyrightContents(resolver, dbLocation, metadata)
 		if sr != nil && sl != nil {
+			defer internal.CloseAndLogError(sr, sl.AccessPath)
 			p.Licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(*sl, sr))...)
 		}
 	}
@@ -292,11 +293,10 @@ func fetchCopyrightContents(resolver file.Resolver, dbLocation file.Location, m 
 		return nil, nil
 	}
 
-	reader, err := resolver.FileContentsByLocation(*location)
+	reader, err := resolver.FileContentsByLocation(*location) //nolint:gocritic // since we're returning the reader, it's up to the caller to close it
 	if err != nil {
 		log.Tracef("failed to fetch deb copyright contents (package=%s): %s", m.Package, err)
 	}
-	defer internal.CloseAndLogError(reader, location.RealPath)
 
 	l := location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)
 
