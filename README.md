@@ -38,7 +38,7 @@ Syft binaries are provided for Linux, macOS and Windows.
 
 ### Recommended
 > ```bash
-> curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+> curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
 > ```
 
 Install script options:
