@@ -110,6 +110,7 @@ func Test_CondaCataloger(t *testing.T) {
 						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib", file.NewLocation("conda-meta/zlib-1.2.11-h90dfc92_1014.json")),
 					),
 					Metadata: pkg.CondaMetaPackage{
+						Arch:                "arm64",
 						Name:                "zlib",
 						Version:             "1.2.11",
 						Build:               "h90dfc92_1014",

@@ -19,6 +19,7 @@ type CondaLink struct {
 }
 
 type CondaMetaPackage struct {
+	Arch                string          `json:"arch,omitempty"`
 	Name                string          `json:"name"`
 	Version             string          `json:"version"`
 	Build               string          `json:"build"`
