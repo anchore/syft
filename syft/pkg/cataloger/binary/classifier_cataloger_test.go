@@ -1195,6 +1195,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "openssl/1.1.1zb/linux-arm64",
+			expected: pkg.Package{
+				Name:      "openssl",
+				Version:   "1.1.1zb",
+				Type:      "binary",
+				PURL:      "pkg:generic/openssl@1.1.1zb",
+				Locations: locations("openssl"),
+				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
 			logicalFixture: "gcc/12.3.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "gcc",
