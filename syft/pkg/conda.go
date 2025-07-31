@@ -1,5 +1,11 @@
 package pkg
 
+import (
+	"sort"
+
+	"github.com/scylladb/go-set/strset"
+)
+
 type CondaPathData struct {
 	Path           string `json:"_path"`
 	PathType       string `json:"path_type"`
@@ -40,4 +46,16 @@ type CondaMetaPackage struct {
 	Files               []string        `json:"files,omitempty"`
 	PathsData           *CondaPathsData `json:"paths_data,omitempty"`
 	Link                *CondaLink      `json:"link,omitempty"`
+}
+
+func (m CondaMetaPackage) OwnedFiles() (result []string) {
+	s := strset.New()
+	for _, f := range m.Files {
+		if f != "" {
+			s.Add(f)
+		}
+	}
+	result = s.List()
+	sort.Strings(result)
+	return result
 }

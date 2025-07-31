@@ -2,11 +2,13 @@ package conda
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
+	"github.com/go-test/deep"
 )
 
 func Test_CondaCataloger(t *testing.T) {
@@ -203,6 +205,41 @@ func Test_CondaCataloger(t *testing.T) {
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
 				TestCataloger(t, NewCondaMetaCataloger()))
+		})
+	}
+}
+
+func TestCondaMetaPackageMetadata_FileOwner(t *testing.T) {
+	tests := []struct {
+		metadata pkg.CondaMetaPackage
+		expected []string
+	}{
+		{
+			metadata: pkg.CondaMetaPackage{
+				Files: []string{
+					"include/zconf.h",
+					"include/zlib.h",
+					"lib/pkgconfig/zlib.pc",
+					"lib/libz.a",
+					"lib/libz.dylib",
+				},
+			},
+			expected: []string{
+				"include/zconf.h",
+				"include/zlib.h",
+				"lib/libz.a",
+				"lib/libz.dylib",
+				"lib/pkgconfig/zlib.pc",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(strings.Join(test.expected, ","), func(t *testing.T) {
+			actual := test.metadata.OwnedFiles()
+			for _, d := range deep.Equal(test.expected, actual) {
+				t.Errorf("diff: %+v", d)
+			}
 		})
 	}
 }
