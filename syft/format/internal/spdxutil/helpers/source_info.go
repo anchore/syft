@@ -80,6 +80,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from Homebrew formula"
 	case pkg.TerraformPkg:
 		answer = "acquired package info from Terraform dependency lock file"
+	case pkg.VcpkgPkg:
+		answer = "acquired package info from vcpkg manifest file"
 	default:
 		answer = "acquired package info from the following paths"
 	}
