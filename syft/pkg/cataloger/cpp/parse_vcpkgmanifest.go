@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -29,29 +28,12 @@ func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
 
 const defaultRepo = "https://github.com/microsoft/vcpkg"
 
-var defaultLock = vcpkg.LockEntry{
-	Repo: defaultRepo,
-	// supposed to be the latest commit sha of the repo at build time. If no vcpkg-lock.json file is found, default to master.
-	Head: "master",
-}
-
 // parser is for vcpkg in "Manifest" mode. This is opposed to "Classic" mode which or is more akin to a system package manager. (https://learn.microsoft.com/en-us/vcpkg/concepts/classic-mode)
 func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	currentPath, err := os.Getwd()
-	if err != nil {
-		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-lock.json file: %w", err)
-	}
-	lockFile, err := findLockFile(resolver)
-	if err != nil {
-		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-lock.json file: %w", err)
-	}
 	conf, err := findVcpkgConfig(resolver)
 	if err != nil {
 		return nil, nil, fmt.Errorf("something went wrong parsing vcpkg-configuration.json file: %w", err)
 	}
-
-	// lock file preferred for determining what Baseline commit hash. (baseline could be a branch name which can change)
-	conf.SetRegBaseline(lockFile)
 
 	var toplevelVcpkg vcpkg.Vcpkg
 	dec := json.NewDecoder(reader)
@@ -82,7 +64,7 @@ func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.R
 			v.allowGitClone,
 		)
 		for _, dep := range parentVcpkg.Dependencies {
-			cMans, fetchErr := r.FindManifests(dep, true, triplet, currentPath, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
+			cMans, fetchErr := r.FindManifests(dep, true, triplet, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
 				return nil, nil, fmt.Errorf("failed to fetch vcpkg.json file: %w", fetchErr)
 			}
@@ -233,43 +215,3 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.Config, error) {
 	return &vcpkg.Config{}, nil
 }
 
-// Gives the git commit hash(es) for the repo(s) listed in the vcpkg-configuration.json file
-func findLockFile(resolver file.Resolver) (*vcpkg.Lock, error) {
-	locs, err := resolver.FilesByGlob("**/vcpkg-lock.json")
-	if err != nil || len(locs) == 0 {
-		return &vcpkg.Lock{
-			Records: []vcpkg.LockEntry{defaultLock},
-		}, nil
-	}
-	lockContents, err := resolver.FileContentsByLocation(locs[0])
-	if err != nil || lockContents == nil {
-		return nil, err
-	}
-	defer internal.CloseAndLogError(lockContents, locs[0].RealPath)
-	lockBytes, err := io.ReadAll(lockContents)
-	if err != nil {
-		return nil, err
-	}
-	var lockFile any
-	err = json.Unmarshal(lockBytes, &lockFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var lockRecords []vcpkg.LockEntry
-	for k, v := range lockFile.(map[string]any) {
-		if t, ok := v.(map[string]any); ok {
-			for _, v2 := range t {
-				if t2, ok := v2.(string); ok {
-					lockRecords = append(lockRecords, vcpkg.LockEntry{
-						Repo: k,
-						Head: t2,
-					})
-				}
-			}
-		}
-	}
-	return &vcpkg.Lock{
-		Records: lockRecords,
-	}, nil
-}
