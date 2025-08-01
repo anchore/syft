@@ -20,4 +20,5 @@ This is necessary to verify that the dependency tree is properly parsed.
 
 ## Vcpkg test data
 
-
+vcpkg/helloworld contains a vcpkg project that contains only the files necessary to retrieve all of the manifests for dependencies listed 
+in the vcpkg.json file. These manifests exist in a remote vcpkg git registry located at https://github.com/anchore/vcpkg-test-fixture

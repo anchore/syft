@@ -1,10 +1,10 @@
 {
-  "builtin-baseline": "f9d089b97f993348898b8e89a43865c594b4580a",
   "name": "hello",
   "version": "0.1.0",
   "dependencies": [
       {
           "name": "fmt"
-      }
+      },
+      "vcpkg-sample-library"
   ]
 }
