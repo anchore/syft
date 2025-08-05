@@ -28,11 +28,11 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	if cfg == nil {
 		cfg = DefaultCreateSBOMConfig()
 	}
+
+	srcMetadata := src.Describe()
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
-
-	srcMetadata := src.Describe()
 
 	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata)
 	if err != nil {
