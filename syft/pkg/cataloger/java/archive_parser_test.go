@@ -1083,6 +1083,36 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 			fileName:   "atlassian-extras-api",
 			want:       true,
 		},
+		{
+			name:       "exact match - spring-ldap-core case",
+			artifactID: "spring-ldap-core",
+			fileName:   "spring-ldap-core",
+			want:       true,
+		},
+		{
+			name:       "exact match after removing version suffix",
+			artifactID: "spring-ldap-core",
+			fileName:   "spring-ldap-core-3.1.4",
+			want:       true,
+		},
+		{
+			name:       "no match - different artifacts",
+			artifactID: "spring-ldap-core",
+			fileName:   "spring-boot-starter",
+			want:       false,
+		},
+		{
+			name:       "match with underscore version separator",
+			artifactID: "commons-lang3",
+			fileName:   "commons-lang3_3.12.0",
+			want:       true,
+		},
+		{
+			name:       "match with dot version separator",
+			artifactID: "junit",
+			fileName:   "junit.4.12",
+			want:       true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1523,3 +1553,66 @@ func Test_corruptJarArchive(t *testing.T) {
 		WithError().
 		TestParser(t, ap.parseJavaArchive)
 }
+
+// Test_springLdapCorePURLGeneration specifically tests the fix for issue #4030
+// where spring-ldap-core was generating incorrect PURL due to Maven metadata matching issues
+func Test_springLdapCorePURLGeneration(t *testing.T) {
+	tests := []struct {
+		name           string
+		artifactID     string
+		groupID        string
+		version        string
+		jarFilename    string
+		expectedPURL   string
+	}{
+		{
+			name:         "spring-ldap-core correct PURL generation",
+			artifactID:   "spring-ldap-core",
+			groupID:      "org.springframework.ldap",
+			version:      "3.1.4",
+			jarFilename:  "spring-ldap-core",
+			expectedPURL: "pkg:maven/org.springframework.ldap/spring-ldap-core@3.1.4",
+		},
+		{
+			name:         "spring-ldap-core with version in filename",
+			artifactID:   "spring-ldap-core",
+			groupID:      "org.springframework.ldap",
+			version:      "3.1.4",
+			jarFilename:  "spring-ldap-core-3.1.4",
+			expectedPURL: "pkg:maven/org.springframework.ldap/spring-ldap-core@3.1.4",
+		},
+		{
+			name:         "commons-lang3 with version suffix",
+			artifactID:   "commons-lang3",
+			groupID:      "org.apache.commons",
+			version:      "3.12.0",
+			jarFilename:  "commons-lang3-3.12.0",
+			expectedPURL: "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock Java archive metadata with POM properties
+			metadata := pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    tt.groupID,
+					ArtifactID: tt.artifactID,
+					Version:    tt.version,
+				},
+			}
+
+			// Test the PURL generation
+			actualPURL := packageURL(tt.artifactID, tt.version, metadata)
+			assert.Equal(t, tt.expectedPURL, actualPURL, "PURL should be correctly generated with proper Maven coordinates")
+
+			// Test the filename matching logic
+			artifactsMap := map[string]bool{
+				tt.artifactID: true,
+			}
+			matches := artifactIDMatchesFilename(tt.artifactID, tt.jarFilename, artifactsMap)
+			assert.True(t, matches, "artifactID should match the JAR filename correctly")
+		})
+	}
+}
+

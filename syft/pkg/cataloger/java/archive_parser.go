@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -433,12 +434,51 @@ func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[str
 	if artifactID == "" || fileName == "" {
 		return false
 	}
-	// Ensure true is returned when filename matches the artifact ID, prevent random retrieval by checking prefix and suffix
+
+	// First, try exact match
+	if artifactID == fileName {
+		return true
+	}
+
+	// If there's an exact match in the artifacts map, use that
 	if _, exists := artifactsMap[fileName]; exists {
 		return artifactID == fileName
 	}
-	// Use fallback check with suffix and prefix if no POM properties file matches the exact artifact name
+
+	// Enhanced matching logic: try to match artifactID with filename more intelligently
+	// This handles cases where the filename might have version suffixes or other variations
+
+	// Remove common version patterns from both for comparison
+	cleanArtifactID := removeVersionSuffix(artifactID)
+	cleanFileName := removeVersionSuffix(fileName)
+
+	// Try exact match after cleaning
+	if cleanArtifactID == cleanFileName {
+		return true
+	}
+
+	// Try matching with the original logic as fallback
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
+}
+
+// removeVersionSuffix removes common version patterns from artifact names to improve matching
+func removeVersionSuffix(name string) string {
+	// Remove patterns like: -1.2.3, _1.2.3, .1.2.3
+	versionPatterns := []string{
+		`-\d+(\.\d+)*.*$`,
+		`_\d+(\.\d+)*.*$`,
+		`\.\d+(\.\d+)*.*$`,
+	}
+
+	for _, pattern := range versionPatterns {
+		if matched, _ := regexp.MatchString(pattern, name); matched {
+			re := regexp.MustCompile(pattern)
+			name = re.ReplaceAllString(name, "")
+			break
+		}
+	}
+
+	return name
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
