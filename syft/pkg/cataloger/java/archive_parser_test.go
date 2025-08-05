@@ -1082,6 +1082,36 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 			artifactID: "atlassian-extras-api-something",
 			fileName:   "atlassian-extras-api",
 			want:       true,
+			},
+		{
+			name:       "exact match - spring-ldap-core case",
+			artifactID: "spring-ldap-core",
+			fileName:   "spring-ldap-core",
+			want:       true,
+		},
+		{
+			name:       "exact match after removing version suffix",
+			artifactID: "spring-ldap-core",
+			fileName:   "spring-ldap-core-3.1.4",
+			want:       true,
+		},
+		{
+			name:       "no match - different artifacts",
+			artifactID: "spring-ldap-core",
+			fileName:   "spring-boot-starter",
+			want:       false,
+		},
+		{
+			name:       "match with underscore version separator",
+			artifactID: "commons-lang3",
+			fileName:   "commons-lang3_3.12.0",
+			want:       true,
+		},
+		{
+			name:       "match with dot version separator",
+			artifactID: "junit",
+			fileName:   "junit.4.12",
+			want:       true,
 		},
 	}
 	for _, tt := range tests {
@@ -1091,7 +1121,7 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 	}
 }
 
-func Test_parseJavaArchive_regressions(t *testing.T) {
+func TestParseJavaArchive_regressions(t *testing.T) {
 	ctx := context.TODO()
 	apiAll := pkg.Package{
 		Name:      "api-all",
@@ -1522,4 +1552,157 @@ func Test_corruptJarArchive(t *testing.T) {
 		FromFile(t, "test-fixtures/corrupt/example.jar").
 		WithError().
 		TestParser(t, ap.parseJavaArchive)
+}
+
+// Test_springLdapCorePURLGeneration specifically tests the fix for issue #4030
+// where spring-ldap-core was generating incorrect PURL due to Maven metadata matching issues
+func Test_springLdapCorePURLGeneration(t *testing.T) {
+	tests := []struct {
+		name           string
+		artifactID     string
+		groupID        string
+		version        string
+		jarFilename    string
+		expectedPURL   string
+	}{
+		{
+			name:         "spring-ldap-core correct PURL generation",
+			artifactID:   "spring-ldap-core",
+			groupID:      "org.springframework.ldap",
+			version:      "3.1.4",
+			jarFilename:  "spring-ldap-core",
+			expectedPURL: "pkg:maven/org.springframework.ldap/spring-ldap-core@3.1.4",
+		},
+		{
+			name:         "spring-ldap-core with version in filename",
+			artifactID:   "spring-ldap-core",
+			groupID:      "org.springframework.ldap",
+			version:      "3.1.4",
+			jarFilename:  "spring-ldap-core-3.1.4",
+			expectedPURL: "pkg:maven/org.springframework.ldap/spring-ldap-core@3.1.4",
+		},
+		{
+			name:         "commons-lang3 with version suffix",
+			artifactID:   "commons-lang3",
+			groupID:      "org.apache.commons",
+			version:      "3.12.0",
+			jarFilename:  "commons-lang3-3.12.0",
+			expectedPURL: "pkg:maven/org.apache.commons/commons-lang3@3.12.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create mock Java archive metadata with POM properties
+			metadata := pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    tt.groupID,
+					ArtifactID: tt.artifactID,
+					Version:    tt.version,
+				},
+			}
+
+			// Test the PURL generation
+			actualPURL := packageURL(tt.artifactID, tt.version, metadata)
+			assert.Equal(t, tt.expectedPURL, actualPURL, "PURL should be correctly generated with proper Maven coordinates")
+
+			// Test the filename matching logic
+			artifactsMap := map[string]bool{
+				tt.artifactID: true,
+			}
+			matches := artifactIDMatchesFilename(tt.artifactID, tt.jarFilename, artifactsMap)
+			assert.True(t, matches, "artifactID should match the JAR filename correctly")
+		})
+	}
+}
+
+func TestRemoveVersionSuffix(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "removes dash version suffix",
+			input:    "spring-core-5.3.21",
+			expected: "spring-core",
+		},
+		{
+			name:     "removes underscore version suffix",
+			input:    "commons-lang_2.6.0",
+			expected: "commons-lang",
+		},
+		{
+			name:     "removes dot version suffix",
+			input:    "example.1.2.3",
+			expected: "example",
+		},
+		{
+			name:     "kafka jar with scala version - preserves scala version part",
+			input:    "kafka_2.10-0.10.2.0",
+			expected: "kafka_2.10",
+		},
+		{
+			name:     "kafka jar with different scala version",
+			input:    "kafka_2.12-2.8.0",
+			expected: "kafka_2.12",
+		},
+		{
+			name:     "akka jar with scala version",
+			input:    "akka-actor_2.13-2.6.15",
+			expected: "akka-actor_2.13",
+		},
+		{
+			name:     "does not remove non-version patterns",
+			input:    "spring-2something",
+			expected: "spring-2something",
+		},
+		{
+			name:     "does not remove single numbers without dots",
+			input:    "library-2",
+			expected: "library-2",
+		},
+		{
+			name:     "removes version with qualifier",
+			input:    "spring-boot-2.5.4-SNAPSHOT",
+			expected: "spring-boot",
+		},
+		{
+			name:     "removes version with multiple qualifiers",
+			input:    "hibernate-core-5.4.32.Final",
+			expected: "hibernate-core",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "no version suffix",
+			input:    "commons-lang",
+			expected: "commons-lang",
+		},
+		{
+			name:     "complex version with multiple dots and qualifiers",
+			input:    "jackson-databind-2.12.3.1-test",
+			expected: "jackson-databind",
+		},
+		{
+			name:     "version with alpha/beta qualifiers",
+			input:    "netty-all-4.1.65.Final-beta1",
+			expected: "netty-all",
+		},
+		{
+			name:     "preserves package names that look like versions but aren't at the end",
+			input:    "v2.3-something-else",
+			expected: "v2.3-something-else",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := removeVersionSuffix(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -433,12 +434,50 @@ func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[str
 	if artifactID == "" || fileName == "" {
 		return false
 	}
-	// Ensure true is returned when filename matches the artifact ID, prevent random retrieval by checking prefix and suffix
+
+	// First, try exact match
+	if artifactID == fileName {
+		return true
+	}
+
+	// If there's an exact match in the artifacts map, use that
 	if _, exists := artifactsMap[fileName]; exists {
 		return artifactID == fileName
 	}
-	// Use fallback check with suffix and prefix if no POM properties file matches the exact artifact name
+
+	// Enhanced matching logic: try to match artifactID with filename more intelligently
+	// This handles cases where the filename might have version suffixes or other variations
+
+	// Remove common version patterns from both for comparison
+	cleanArtifactID := removeVersionSuffix(artifactID)
+	cleanFileName := removeVersionSuffix(fileName)
+
+	// Try exact match after cleaning
+	if cleanArtifactID == cleanFileName {
+		return true
+	}
+
+	// Try matching with the original logic as fallback
 	return strings.HasPrefix(artifactID, fileName) || strings.HasSuffix(fileName, artifactID)
+}
+
+// removeVersionSuffix removes common version patterns from artifact names to improve matching
+func removeVersionSuffix(name string) string {
+	// Handle special case for Scala libraries (like Kafka) where _X.Y is part of the artifact name
+	// Pattern: name_scalaVersion-actualVersion (e.g., kafka_2.10-0.10.2.0)
+	scalaLibPattern := `^(.+_\d+\.\d+)-\d+\.\d+(\.\d+)*(-[a-zA-Z0-9_.-]+)?$`
+	if matched, _ := regexp.MatchString(scalaLibPattern, name); matched {
+		re := regexp.MustCompile(scalaLibPattern)
+		return re.ReplaceAllString(name, "$1")
+	}
+
+	// Standard version patterns: -1.2.3, _1.2.3, .1.2.3
+	// Require at least 2 version parts (X.Y) to avoid matching single numbers
+	// Handle qualifiers like -SNAPSHOT, .Final, .Final-beta1, etc.
+	versionPattern := `[-_.]\d+\.\d+(\.\d+)*(\.[A-Za-z][a-zA-Z0-9_.-]*)?(-[a-zA-Z0-9_.-]+)?$`
+
+	re := regexp.MustCompile(versionPattern)
+	return re.ReplaceAllString(name, "")
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
