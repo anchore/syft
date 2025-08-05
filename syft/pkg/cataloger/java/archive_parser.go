@@ -463,22 +463,21 @@ func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[str
 
 // removeVersionSuffix removes common version patterns from artifact names to improve matching
 func removeVersionSuffix(name string) string {
-	// Remove patterns like: -1.2.3, _1.2.3, .1.2.3
-	versionPatterns := []string{
-		`-\d+(\.\d+)*.*$`,
-		`_\d+(\.\d+)*.*$`,
-		`\.\d+(\.\d+)*.*$`,
+	// Handle special case for Scala libraries (like Kafka) where _X.Y is part of the artifact name
+	// Pattern: name_scalaVersion-actualVersion (e.g., kafka_2.10-0.10.2.0)
+	scalaLibPattern := `^(.+_\d+\.\d+)-\d+\.\d+(\.\d+)*(-[a-zA-Z0-9_.-]+)?$`
+	if matched, _ := regexp.MatchString(scalaLibPattern, name); matched {
+		re := regexp.MustCompile(scalaLibPattern)
+		return re.ReplaceAllString(name, "$1")
 	}
 
-	for _, pattern := range versionPatterns {
-		if matched, _ := regexp.MatchString(pattern, name); matched {
-			re := regexp.MustCompile(pattern)
-			name = re.ReplaceAllString(name, "")
-			break
-		}
-	}
+	// Standard version patterns: -1.2.3, _1.2.3, .1.2.3
+	// Require at least 2 version parts (X.Y) to avoid matching single numbers
+	// Handle qualifiers like -SNAPSHOT, .Final, .Final-beta1, etc.
+	versionPattern := `[-_.]\d+\.\d+(\.\d+)*(\.[A-Za-z][a-zA-Z0-9_.-]*)?(-[a-zA-Z0-9_.-]+)?$`
 
-	return name
+	re := regexp.MustCompile(versionPattern)
+	return re.ReplaceAllString(name, "")
 }
 
 // discoverPkgsFromAllMavenFiles parses Maven POM properties/xml for a given
