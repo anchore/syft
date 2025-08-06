@@ -1382,6 +1382,10 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 			fixture:  "multiple-matching-2.11.5",
 			expected: maven.NewID("org.multiple", "multiple-matching-1", "2.11.5"),
 		},
+		{
+			fixture:  "org.multiple-thename",
+			expected: maven.NewID("org.multiple", "thename", "10.11.12"),
+		},
 	}
 
 	for _, test := range tests {
