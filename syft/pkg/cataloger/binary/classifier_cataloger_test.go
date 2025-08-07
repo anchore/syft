@@ -1010,7 +1010,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			logicalFixture: "vault/1.20.2/linux-amd64",
 			expected: pkg.Package{
-				Name:      "vault",
+				Name:      "github.com/hashicorp/vault",
 				Version:   "1.20.2",
 				Type:      "golang",
 				PURL:      "pkg:golang/github.com/hashicorp/vault@1.20.2",
@@ -1021,7 +1021,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			logicalFixture: "vault/1.19.4/linux-arm64",
 			expected: pkg.Package{
-				Name:      "vault",
+				Name:      "github.com/hashicorp/vault",
 				Version:   "1.19.4",
 				Type:      "golang",
 				PURL:      "pkg:golang/github.com/hashicorp/vault@1.19.4",
