@@ -75,6 +75,12 @@ func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Pac
 	newPackages:
 		for i := range newPkgs {
 			newPkg := &newPkgs[i]
+			purlType := pkg.TypeFromPURL(newPkg.PURL)
+			// for certain results, such as hashicorp vault we are returning a golang PURL, so we can use Golang package type,
+			// despite not having the known metadata, this should result in downstream grype matching to use the golang matcher
+			if purlType != pkg.UnknownPkg {
+				newPkg.Type = purlType
+			}
 			for j := range packages {
 				p := &packages[j]
 				// consolidate identical packages found in different locations or by different classifiers
@@ -92,6 +98,9 @@ func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Pac
 
 // mergePackages merges information from the extra package into the target package
 func mergePackages(target *pkg.Package, extra *pkg.Package) {
+	if extra.Type != pkg.BinaryPkg && target.Type == pkg.BinaryPkg {
+		target.Type = extra.Type
+	}
 	// add the locations
 	target.Locations.Add(extra.Locations.ToSlice()...)
 	// update the metadata to indicate which classifiers were used
