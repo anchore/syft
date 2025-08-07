@@ -1086,7 +1086,7 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, artifactIDMatchesFilename(tt.artifactID, tt.fileName, nil))
+			assert.Equal(t, tt.want, artifactIDMatchesFilename(tt.artifactID, tt.fileName, strset.New()))
 		})
 	}
 }
@@ -1381,6 +1381,10 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 		{
 			fixture:  "multiple-matching-2.11.5",
 			expected: maven.NewID("org.multiple", "multiple-matching-1", "2.11.5"),
+		},
+		{
+			fixture:  "org.multiple-thename",
+			expected: maven.NewID("org.multiple", "thename", "10.11.12"),
 		},
 	}
 
