@@ -623,8 +623,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// revoke1.18.0
 				`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-			Package: "hashicorp-vault",
-			PURL:    mustPURL("pkg:generic/hashicorp-vault@version"),
+			Package: "vault",
+			PURL:    mustPURL("pkg:golang/github.com/hashicorp/vault@version"),
 			CPEs:    singleCPE("cpe:2.3:a:hashicorp:vault:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
