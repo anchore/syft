@@ -1,15 +1,18 @@
 package java
 
 import (
+	"cmp"
 	"context"
 	"crypto"
 	"fmt"
 	"io"
+	"iter"
 	"os"
 	"path"
 	"slices"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
 	"golang.org/x/exp/maps"
 
 	"github.com/anchore/syft/internal"
@@ -391,20 +394,32 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
 	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
-	artifactsMap := make(map[string]bool)
+	artifactsMap := strset.New()
 	for _, propertiesObj := range properties {
-		artifactsMap[propertiesObj.ArtifactID] = true
+		artifactsMap.Add(propertiesObj.ArtifactID)
 	}
 
-	parentPaths := maps.Keys(properties)
-	slices.Sort(parentPaths)
-	for _, parentPath := range parentPaths {
-		propertiesObj := properties[parentPath]
+	for parentPath, propertiesObj := range sortedIter(properties) {
+		// the logic for selecting the best name is as follows:
+		// if we find an artifact id AND group id which are both contained in the filename
+		// OR if we have an artifact id that exactly matches the filename, prefer this
+		// OTHERWISE track the first matching pom properties with a pom.xml
+		// FINALLY return the first matching pom properties
 		if artifactIDMatchesFilename(propertiesObj.ArtifactID, j.fileInfo.name, artifactsMap) {
-			pomProperties = propertiesObj
+			if pomProperties.ArtifactID == "" { // keep the first match, or overwrite if we find more specific entries
+				pomProperties = propertiesObj
+			}
 			if proj, exists := projects[parentPath]; exists {
-				parsedPom = proj
-				break
+				if parsedPom == nil { // keep the first matching artifact if we don't find an exact match or groupid + artfiact id match
+					pomProperties = propertiesObj // set this, as it may not be the first entry found
+					parsedPom = proj
+				}
+				// if artifact ID is the entire filename or BOTH artifactID and groupID are contained in the artifact, prefer this match
+				if strings.Contains(j.fileInfo.name, propertiesObj.GroupID) || j.fileInfo.name == propertiesObj.ArtifactID {
+					pomProperties = propertiesObj // this is an exact match, use it
+					parsedPom = proj
+					break
+				}
 			}
 		}
 	}
@@ -429,12 +444,13 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	return group, name, version, parsedPom
 }
 
-func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[string]bool) bool {
+// artifactIDMatchesFilename returns true if one starts with the other
+func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap *strset.Set) bool {
 	if artifactID == "" || fileName == "" {
 		return false
 	}
 	// Ensure true is returned when filename matches the artifact ID, prevent random retrieval by checking prefix and suffix
-	if _, exists := artifactsMap[fileName]; exists {
+	if artifactsMap.Has(fileName) {
 		return artifactID == fileName
 	}
 	// Use fallback check with suffix and prefix if no POM properties file matches the exact artifact name
@@ -464,7 +480,7 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 		return nil, err
 	}
 
-	for parentPath, propertiesObj := range properties {
+	for parentPath, propertiesObj := range sortedIter(properties) {
 		var parsedPom *parsedPomProject
 		if proj, exists := projects[parentPath]; exists {
 			parsedPom = proj
@@ -546,7 +562,7 @@ func discoverPkgsFromOpeners(ctx context.Context, location file.Location, opener
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
-	for pathWithinArchive, archiveOpener := range openers {
+	for pathWithinArchive, archiveOpener := range sortedIter(openers) {
 		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg, parentPkg)
 		if err != nil {
 			log.WithFields("location", location.Path(), "error", err).Debug("unable to discover java packages from opener")
@@ -604,7 +620,7 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	}
 
 	propertiesByParentPath := make(map[string]pkg.JavaPomProperties)
-	for filePath, fileContents := range contentsOfMavenPropertiesFiles {
+	for filePath, fileContents := range sortedIter(contentsOfMavenPropertiesFiles) {
 		pomProperties, err := parsePomProperties(filePath, strings.NewReader(fileContents))
 		if err != nil {
 			log.WithFields("contents-path", filePath, "location", location.Path(), "error", err).Debug("failed to parse pom.properties")
@@ -633,7 +649,7 @@ func pomProjectByParentPath(archivePath string, location file.Location, extractP
 	}
 
 	projectByParentPath := make(map[string]*parsedPomProject)
-	for filePath, fileContents := range contentsOfMavenProjectFiles {
+	for filePath, fileContents := range sortedIter(contentsOfMavenProjectFiles) {
 		// TODO: when we support locations of paths within archives we should start passing the specific pom.xml location object instead of the top jar
 		pom, err := maven.ParsePomXML(strings.NewReader(fileContents))
 		if err != nil {
@@ -782,5 +798,17 @@ func updateParentPackage(p pkg.Package, parentPkg *pkg.Package) {
 	if ok && parentMetadata.PomProperties == nil {
 		parentMetadata.PomProperties = &pomPropertiesCopy
 		parentPkg.Metadata = parentMetadata
+	}
+}
+
+func sortedIter[K cmp.Ordered, V any](values map[K]V) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		keys := maps.Keys(values)
+		slices.Sort(keys)
+		for _, key := range keys {
+			if !yield(key, values[key]) {
+				return
+			}
+		}
 	}
 }
