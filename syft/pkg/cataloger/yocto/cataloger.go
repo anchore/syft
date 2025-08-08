@@ -1,17 +1,46 @@
 /*
-Package yocto provides a concrete Cataloger implementation for Yocto/OpenEmbedded build systems.
+Package yocto provides a comprehensive Cataloger implementation for Yocto/OpenEmbedded build systems.
 
-This cataloger analyzes Yocto build artifacts and cache files to extract package information.
-It supports parsing both license.manifest files and BitBake cache files (bb_cache.dat).
+This cataloger analyzes multiple Yocto build artifacts to extract complete SBOM information, following
+the Yocto Project structure documentation: https://docs.yoctoproject.org/ref-manual/structure.html
 
-For BitBake cache parsing, the cataloger:
-1. Attempts to use actual BitBake libraries when available for full compatibility
-2. Falls back to basic parsing when BitBake libraries are not accessible
-3. Supports configuration via environment variables or config options:
-  - BITBAKE_HOME: Path to BitBake installation directory
-  - BITBAKE_LIB: Path to BitBake library directory
-  - Config.BitBakeHome: Configuration option for BitBake home directory
-  - Config.BitBakeLib: Configuration option for BitBake library directory
+The cataloger parses the following data sources for comprehensive SBOM coverage:
+
+1. BitBake Cache Files (bb_cache.dat):
+  - Recipe information with dependencies, licenses, and metadata
+  - Attempts to use actual BitBake libraries when available for full compatibility
+  - Falls back to basic parsing when BitBake libraries are not accessible
+
+2. License Manifest Files (license.manifest):
+  - Package license information from build artifacts
+
+3. Build History Data (buildhistory/packages/):
+  - Detailed package metadata including build times, sizes, and dependencies
+  - Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-buildhistory
+
+4. License Files (tmp/deploy/licenses/):
+  - Comprehensive license information for each package
+  - Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+
+5. Source Information (downloads/):
+  - Source provenance data for supply chain security
+  - Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-downloads
+
+6. Image Manifests (tmp/deploy/images/):
+  - System-level SBOM data showing installed packages in built images
+  - Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+
+Build Directory Detection:
+The cataloger uses enhanced detection based on Yocto Project structure, requiring:
+- At least 1 essential indicator (conf/bblayers.conf or conf/local.conf)
+- At least 1 additional indicator (tmp/cache, tmp/deploy, downloads, sstate-cache, etc.)
+
+Configuration Options:
+- BITBAKE_HOME: Path to BitBake installation directory
+- BITBAKE_LIB: Path to BitBake library directory
+- Config.BitBakeHome: Configuration option for BitBake home directory
+- Config.BitBakeLib: Configuration option for BitBake library directory
+- Config.BuildDir: Specific build directory to analyze
 
 The cataloger automatically detects BitBake installations in common locations including:
 - workspace/bitbake/lib (relative to build directory)
@@ -116,51 +145,115 @@ func (c cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.P
 		relationships = append(relationships, cacheRels...)
 	}
 
+	// Parse build history for additional package metadata
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-buildhistory
+	historyPkgs, historyRels, err := c.parseBuildHistory(resolver, buildDir)
+	if err == nil {
+		packages = append(packages, historyPkgs...)
+		relationships = append(relationships, historyRels...)
+	} else {
+		log.WithFields("cataloger", catalogerName).Debugf("build history parsing failed: %v", err)
+	}
+
+	// Parse comprehensive license files
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+	licensePkgs, licenseRels, err := c.parseLicenseFiles(resolver, buildDir)
+	if err == nil {
+		packages = append(packages, licensePkgs...)
+		relationships = append(relationships, licenseRels...)
+	} else {
+		log.WithFields("cataloger", catalogerName).Debugf("license files parsing failed: %v", err)
+	}
+
+	// Parse source information for provenance
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-downloads
+	sourcePkgs, sourceRels, err := c.parseSourceInfo(resolver, buildDir)
+	if err == nil {
+		packages = append(packages, sourcePkgs...)
+		relationships = append(relationships, sourceRels...)
+	} else {
+		log.WithFields("cataloger", catalogerName).Debugf("source info parsing failed: %v", err)
+	}
+
+	// Parse image manifests for system-level SBOM
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+	imagePkgs, imageRels, err := c.parseImageManifests(resolver, buildDir)
+	if err == nil {
+		packages = append(packages, imagePkgs...)
+		relationships = append(relationships, imageRels...)
+	} else {
+		log.WithFields("cataloger", catalogerName).Debugf("image manifests parsing failed: %v", err)
+	}
+
+	log.WithFields("cataloger", catalogerName).Infof("completed Yocto cataloging: found %d packages total", len(packages))
 	return packages, relationships, nil
 }
 
 // detectYoctoBuildDir checks if the given path contains Yocto build artifacts
-// TODO: Need to improve this to be more robust and handle more cases.
+// Based on Yocto Project structure documentation: https://docs.yoctoproject.org/ref-manual/structure.html#the-build-directory-build
 func (c cataloger) detectYoctoBuildDir(resolver file.Resolver) string {
 	log.WithFields("cataloger", catalogerName).Debug("starting Yocto build directory detection")
 	
-	// Look for typical Yocto build directory structure
-	yoctoIndicators := []string{
-		"conf/bblayers.conf",
-		"conf/local.conf",
-		"tmp/cache",
-		"tmp/deploy",
+	// Essential indicators from Yocto documentation - these must be present in a valid build directory
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-conf-local-conf
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-conf-bblayers-conf
+	essentialIndicators := []string{
+		"conf/bblayers.conf", // Layer configuration - defines which metadata layers are included
+		"conf/local.conf",    // Local build configuration - contains build-specific settings
 	}
 	
-	log.WithFields("cataloger", catalogerName).Debugf("looking for Yocto indicators: %v", yoctoIndicators)
+	// Additional indicators from Yocto build directory structure
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-downloads
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-sstate-cache
+	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+	additionalIndicators := []string{
+		"tmp/cache",             // BitBake cache directory
+		"tmp/deploy",            // Deployment directory for images and packages
+		"downloads",             // Source downloads directory
+		"sstate-cache",          // Shared state cache directory
+		"tmp/work",              // Recipe work directories
+		"tmp/deploy/licenses",   // License deployment directory
+	}
+	
+	log.WithFields("cataloger", catalogerName).Debugf("looking for essential indicators: %v, additional indicators: %v", essentialIndicators, additionalIndicators)
 
 	// Check if build directory is specified in config
 	if c.config.BuildDir != "" {
 		log.WithFields("cataloger", catalogerName).Debugf("checking configured build directory: %s", c.config.BuildDir)
-		foundIndicators := 0
-		for _, indicator := range yoctoIndicators {
+		foundEssential := 0
+		foundAdditional := 0
+		
+		// Check essential indicators first
+		for _, indicator := range essentialIndicators {
 			testPath := filepath.Join(c.config.BuildDir, indicator)
-			log.WithFields("cataloger", catalogerName).Tracef("checking for indicator: %s", testPath)
+			log.WithFields("cataloger", catalogerName).Tracef("checking for essential indicator: %s", testPath)
 			if locations, err := resolver.FilesByPath(testPath); err == nil && len(locations) > 0 {
 				var foundPaths []string
 				for _, loc := range locations {
 					foundPaths = append(foundPaths, loc.RealPath)
 				}
-				log.WithFields("cataloger", catalogerName).Debugf("found indicator in configured build dir: %s (locations: %v)", testPath, foundPaths)
-				foundIndicators++
-			} else {
-				if err != nil {
-					log.WithFields("cataloger", catalogerName).Tracef("indicator not found: %s (error: %v)", testPath, err)
-				} else {
-					log.WithFields("cataloger", catalogerName).Tracef("indicator not found: %s (no matching locations)", testPath)
-				}
+				log.WithFields("cataloger", catalogerName).Debugf("found essential indicator in configured build dir: %s (locations: %v)", testPath, foundPaths)
+				foundEssential++
 			}
 		}
-		if foundIndicators > 0 {
-			log.WithFields("cataloger", catalogerName).Infof("using configured build directory %s (found %d/%d indicators)", c.config.BuildDir, foundIndicators, len(yoctoIndicators))
+		
+		// Check additional indicators
+		for _, indicator := range additionalIndicators {
+			testPath := filepath.Join(c.config.BuildDir, indicator)
+			log.WithFields("cataloger", catalogerName).Tracef("checking for additional indicator: %s", testPath)
+			if resolver.HasPath(testPath) {
+				foundAdditional++
+			}
+		}
+		
+		// Require at least 1 essential indicator and 1 additional indicator for robust detection
+		if foundEssential >= 1 && foundAdditional >= 1 {
+			log.WithFields("cataloger", catalogerName).Infof("using configured build directory %s (found %d/%d essential, %d/%d additional indicators)", 
+				c.config.BuildDir, foundEssential, len(essentialIndicators), foundAdditional, len(additionalIndicators))
 			return c.config.BuildDir
 		} else {
-			log.WithFields("cataloger", catalogerName).Warnf("configured build directory %s does not contain any Yocto indicators", c.config.BuildDir)
+			log.WithFields("cataloger", catalogerName).Warnf("configured build directory %s does not meet detection criteria (essential: %d/%d, additional: %d/%d)", 
+				c.config.BuildDir, foundEssential, len(essentialIndicators), foundAdditional, len(additionalIndicators))
 		}
 	}
 
@@ -176,38 +269,45 @@ func (c cataloger) detectYoctoBuildDir(resolver file.Resolver) string {
 
 	for _, buildDir := range commonBuildDirs {
 		log.WithFields("cataloger", catalogerName).Debugf("checking build directory candidate: %s", buildDir)
-		hasIndicators := 0
-		var foundIndicators []string
-		var missingIndicators []string
+		foundEssential := 0
+		foundAdditional := 0
+		var foundEssentialList []string
+		var foundAdditionalList []string
 		
-		for _, indicator := range yoctoIndicators {
+		// Check essential indicators
+		for _, indicator := range essentialIndicators {
 			testPath := filepath.Join(buildDir, indicator)
-			log.WithFields("cataloger", catalogerName).Tracef("checking for indicator: %s", testPath)
+			log.WithFields("cataloger", catalogerName).Tracef("checking for essential indicator: %s", testPath)
 			if locations, err := resolver.FilesByPath(testPath); err == nil && len(locations) > 0 {
-				hasIndicators++
-				foundIndicators = append(foundIndicators, indicator)
+				foundEssential++
+				foundEssentialList = append(foundEssentialList, indicator)
 				var foundPaths []string
 				for _, loc := range locations {
 					foundPaths = append(foundPaths, loc.RealPath)
 				}
-				log.WithFields("cataloger", catalogerName).Tracef("found indicator: %s (locations: %v)", testPath, foundPaths)
-			} else {
-				missingIndicators = append(missingIndicators, indicator)
-				if err != nil {
-					log.WithFields("cataloger", catalogerName).Tracef("indicator not found: %s (error: %v)", testPath, err)
-				} else {
-					log.WithFields("cataloger", catalogerName).Tracef("indicator not found: %s (no matching locations)", testPath)
-				}
+				log.WithFields("cataloger", catalogerName).Tracef("found essential indicator: %s (locations: %v)", testPath, foundPaths)
 			}
 		}
 		
-		log.WithFields("cataloger", catalogerName).Debugf("build dir %s: found %d/%d indicators - found: %v, missing: %v", 
-			buildDir, hasIndicators, len(yoctoIndicators), foundIndicators, missingIndicators)
+		// Check additional indicators
+		for _, indicator := range additionalIndicators {
+			testPath := filepath.Join(buildDir, indicator)
+			log.WithFields("cataloger", catalogerName).Tracef("checking for additional indicator: %s", testPath)
+			if resolver.HasPath(testPath) {
+				foundAdditional++
+				foundAdditionalList = append(foundAdditionalList, indicator)
+			}
+		}
 		
-		// If we find at least 2 indicators, consider it a Yocto build dir
-		if hasIndicators >= 2 {
-			log.WithFields("cataloger", catalogerName).Infof("detected Yocto build directory: %s (found %d/%d indicators: %v)", 
-				buildDir, hasIndicators, len(yoctoIndicators), foundIndicators)
+		log.WithFields("cataloger", catalogerName).Debugf("build dir %s: essential %d/%d (%v), additional %d/%d (%v)", 
+			buildDir, foundEssential, len(essentialIndicators), foundEssentialList, 
+			foundAdditional, len(additionalIndicators), foundAdditionalList)
+		
+		// Require at least 1 essential indicator and 1 additional indicator for robust detection
+		if foundEssential >= 1 && foundAdditional >= 1 {
+			log.WithFields("cataloger", catalogerName).Infof("detected Yocto build directory: %s (essential: %d/%d %v, additional: %d/%d %v)", 
+				buildDir, foundEssential, len(essentialIndicators), foundEssentialList,
+				foundAdditional, len(additionalIndicators), foundAdditionalList)
 			return buildDir
 		}
 	}
@@ -367,6 +467,460 @@ func (c cataloger) parseBitbakeCache(resolver file.Resolver, buildDir string) ([
 
 	log.WithFields("cataloger", catalogerName).Debugf("converted %d cache recipes to packages", len(packages))
 	return packages, relationships, nil
+}
+
+// parseBuildHistory parses build history information for additional package metadata
+// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-buildhistory
+func (c cataloger) parseBuildHistory(resolver file.Resolver, buildDir string) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+
+	log.WithFields("cataloger", catalogerName).Debug("parsing build history for additional package metadata")
+
+	// Look for buildhistory directory - contains detailed build information
+	buildHistoryPattern := filepath.Join(buildDir, "buildhistory/packages/*/")
+	log.WithFields("cataloger", catalogerName).Tracef("searching for build history with pattern: %s", buildHistoryPattern)
+	
+	buildHistoryDirs, err := resolver.FilesByGlob(buildHistoryPattern)
+	if err != nil || len(buildHistoryDirs) == 0 {
+		log.WithFields("cataloger", catalogerName).Debug("no build history directories found")
+		return packages, relationships, nil
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("found %d build history directories", len(buildHistoryDirs))
+
+	// Parse build history files for each architecture
+	for _, historyDir := range buildHistoryDirs {
+		archPackages, archRels, err := c.parseBuildHistoryDir(resolver, historyDir.RealPath)
+		if err != nil {
+			log.WithFields("cataloger", catalogerName).Warnf("failed to parse build history dir %s: %v", historyDir.RealPath, err)
+			continue
+		}
+		packages = append(packages, archPackages...)
+		relationships = append(relationships, archRels...)
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("parsed build history, found %d additional packages", len(packages))
+	return packages, relationships, nil
+}
+
+// parseBuildHistoryDir parses a specific build history directory for an architecture
+func (c cataloger) parseBuildHistoryDir(resolver file.Resolver, historyDirPath string) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+
+	// Look for package files in build history (e.g., latest, latest_srcrev files)
+	packagePattern := filepath.Join(historyDirPath, "*/latest")
+	packageFiles, err := resolver.FilesByGlob(packagePattern)
+	if err != nil {
+		return packages, relationships, err
+	}
+
+	for _, packageFile := range packageFiles {
+		pkg, rels, err := c.parseBuildHistoryPackageFile(resolver, packageFile)
+		if err != nil {
+			log.WithFields("cataloger", catalogerName).Warnf("failed to parse build history package file %s: %v", packageFile.RealPath, err)
+			continue
+		}
+		if pkg != nil {
+			packages = append(packages, *pkg)
+			relationships = append(relationships, rels...)
+		}
+	}
+
+	return packages, relationships, nil
+}
+
+// parseBuildHistoryPackageFile parses a specific build history package file
+func (c cataloger) parseBuildHistoryPackageFile(resolver file.Resolver, packageFile file.Location) (*pkg.Package, []artifact.Relationship, error) {
+	var relationships []artifact.Relationship
+
+	content, err := resolver.FileContentsByLocation(packageFile)
+	if err != nil {
+		return nil, relationships, fmt.Errorf("failed to read build history file: %w", err)
+	}
+	defer content.Close()
+
+	contentBytes, err := io.ReadAll(content)
+	if err != nil {
+		return nil, relationships, fmt.Errorf("failed to read content: %w", err)
+	}
+
+	lines := strings.Split(string(contentBytes), "\n")
+	
+	var name, version, license, size, buildTime string
+	var dependencies []string
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "PN = ") {
+			name = strings.Trim(strings.TrimPrefix(line, "PN = "), "\"")
+		} else if strings.HasPrefix(line, "PV = ") {
+			version = strings.Trim(strings.TrimPrefix(line, "PV = "), "\"")
+		} else if strings.HasPrefix(line, "LICENSE = ") {
+			license = strings.Trim(strings.TrimPrefix(line, "LICENSE = "), "\"")
+		} else if strings.HasPrefix(line, "PKGSIZE = ") {
+			size = strings.Trim(strings.TrimPrefix(line, "PKGSIZE = "), "\"")
+		} else if strings.HasPrefix(line, "BUILDTIME = ") {
+			buildTime = strings.Trim(strings.TrimPrefix(line, "BUILDTIME = "), "\"")
+		} else if strings.HasPrefix(line, "RDEPENDS = ") {
+			depStr := strings.Trim(strings.TrimPrefix(line, "RDEPENDS = "), "\"")
+			if depStr != "" {
+				dependencies = strings.Fields(depStr)
+			}
+		}
+	}
+
+	if name == "" || version == "" {
+		return nil, relationships, nil // Skip incomplete entries
+	}
+
+	// Create package with build history metadata
+	metadata := pkg.YoctoMetadata{
+		Name:         name,
+		Version:      version,
+		License:      license,
+		Dependencies: dependencies,
+	}
+
+	// Add build history specific metadata if available
+	if size != "" || buildTime != "" {
+		// Note: We might need to extend YoctoMetadata to include size and build time
+		// For now, we'll include them in a custom way
+		log.WithFields("cataloger", catalogerName).Tracef("build history for %s: size=%s, buildTime=%s", name, size, buildTime)
+	}
+
+	yoctoPackage := &pkg.Package{
+		Name:      name,
+		Version:   version,
+		Type:      pkg.YoctoPkg,
+		Language:  pkg.UnknownLanguage,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(license)),
+		Locations: file.NewLocationSet(file.NewLocation(packageFile.RealPath)),
+		PURL:      generateYoctoPURL(name, version),
+		Metadata:  metadata,
+	}
+
+	return yoctoPackage, relationships, nil
+}
+
+// parseLicenseFiles parses comprehensive license information from deployment directory
+// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+func (c cataloger) parseLicenseFiles(resolver file.Resolver, buildDir string) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+
+	log.WithFields("cataloger", catalogerName).Debug("parsing license files for comprehensive license information")
+
+	// Look for license files in tmp/deploy/licenses
+	licensePattern := filepath.Join(buildDir, "tmp/deploy/licenses/*/*")
+	log.WithFields("cataloger", catalogerName).Tracef("searching for license files with pattern: %s", licensePattern)
+	
+	licenseFiles, err := resolver.FilesByGlob(licensePattern)
+	if err != nil || len(licenseFiles) == 0 {
+		log.WithFields("cataloger", catalogerName).Debug("no license files found in deploy directory")
+		return packages, relationships, nil
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("found %d license files", len(licenseFiles))
+
+	// Group license files by package
+	packageLicenses := make(map[string][]file.Location)
+	for _, licenseFile := range licenseFiles {
+		// Extract package name from path (e.g., tmp/deploy/licenses/package-name/LICENSE)
+		pathParts := strings.Split(licenseFile.RealPath, "/")
+		if len(pathParts) >= 2 {
+			packageName := pathParts[len(pathParts)-2]
+			packageLicenses[packageName] = append(packageLicenses[packageName], licenseFile)
+		}
+	}
+
+	// Create packages with comprehensive license information
+	for packageName, licenses := range packageLicenses {
+		pkg, rels, err := c.createPackageFromLicenseFiles(resolver, packageName, licenses)
+		if err != nil {
+			log.WithFields("cataloger", catalogerName).Warnf("failed to create package from license files for %s: %v", packageName, err)
+			continue
+		}
+		if pkg != nil {
+			packages = append(packages, *pkg)
+			relationships = append(relationships, rels...)
+		}
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("parsed license files, found %d packages with license information", len(packages))
+	return packages, relationships, nil
+}
+
+// createPackageFromLicenseFiles creates a package from license file information
+func (c cataloger) createPackageFromLicenseFiles(resolver file.Resolver, packageName string, licenseFiles []file.Location) (*pkg.Package, []artifact.Relationship, error) {
+	var relationships []artifact.Relationship
+	var licenses []string
+	var licenseLocations []file.Location
+
+	// Read all license files for this package
+	for _, licenseFile := range licenseFiles {
+		content, err := resolver.FileContentsByLocation(licenseFile)
+		if err != nil {
+			log.WithFields("cataloger", catalogerName).Warnf("failed to read license file %s: %v", licenseFile.RealPath, err)
+			continue
+		}
+		
+		_, err = io.ReadAll(content)
+		content.Close()
+		if err != nil {
+			log.WithFields("cataloger", catalogerName).Warnf("failed to read license content %s: %v", licenseFile.RealPath, err)
+			continue
+		}
+
+		// Extract license from filename or content
+		filename := filepath.Base(licenseFile.RealPath)
+		if filename != "generic_" && filename != "recipeinfo" {
+			licenses = append(licenses, filename)
+		}
+		
+		licenseLocations = append(licenseLocations, licenseFile)
+	}
+
+	if len(licenses) == 0 {
+		return nil, relationships, nil
+	}
+
+	// Create package with license information
+	metadata := pkg.YoctoMetadata{
+		Name:    packageName,
+		License: strings.Join(licenses, " & "),
+	}
+
+	locationSet := file.NewLocationSet()
+	for _, loc := range licenseLocations {
+		locationSet.Add(file.NewLocation(loc.RealPath))
+	}
+
+	yoctoPackage := &pkg.Package{
+		Name:      packageName,
+		Version:   "unknown", // License files don't typically contain version info
+		Type:      pkg.YoctoPkg,
+		Language:  pkg.UnknownLanguage,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(strings.Join(licenses, " & "))),
+		Locations: locationSet,
+		PURL:      generateYoctoPURL(packageName, "unknown"),
+		Metadata:  metadata,
+	}
+
+	return yoctoPackage, relationships, nil
+}
+
+// parseSourceInfo parses source provenance information from downloads directory
+// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-downloads
+func (c cataloger) parseSourceInfo(resolver file.Resolver, buildDir string) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+
+	log.WithFields("cataloger", catalogerName).Debug("parsing source information for provenance data")
+
+	// Look for downloaded source files
+	downloadsPattern := filepath.Join(buildDir, "downloads/*")
+	log.WithFields("cataloger", catalogerName).Tracef("searching for downloads with pattern: %s", downloadsPattern)
+	
+	downloadFiles, err := resolver.FilesByGlob(downloadsPattern)
+	if err != nil || len(downloadFiles) == 0 {
+		log.WithFields("cataloger", catalogerName).Debug("no download files found")
+		return packages, relationships, nil
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("found %d download files", len(downloadFiles))
+
+	// Parse source files for provenance information
+	for _, downloadFile := range downloadFiles {
+		pkg, rels, err := c.parseSourceFile(resolver, downloadFile)
+		if err != nil {
+			log.WithFields("cataloger", catalogerName).Warnf("failed to parse source file %s: %v", downloadFile.RealPath, err)
+			continue
+		}
+		if pkg != nil {
+			packages = append(packages, *pkg)
+			relationships = append(relationships, rels...)
+		}
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("parsed source info, found %d packages with source information", len(packages))
+	return packages, relationships, nil
+}
+
+// parseSourceFile extracts source information from a downloaded file
+func (c cataloger) parseSourceFile(resolver file.Resolver, sourceFile file.Location) (*pkg.Package, []artifact.Relationship, error) {
+	var relationships []artifact.Relationship
+
+	filename := filepath.Base(sourceFile.RealPath)
+	
+	// Skip certain file types that aren't useful for SBOM
+	if strings.HasSuffix(filename, ".done") || strings.HasSuffix(filename, ".lock") {
+		return nil, relationships, nil
+	}
+
+	// Extract package name and version from filename patterns
+	// Common patterns: package-version.tar.gz, package_version.tar.bz2, etc.
+	var name, version string
+	
+	// Remove common extensions
+	cleanName := filename
+	for _, ext := range []string{".tar.gz", ".tar.bz2", ".tar.xz", ".zip", ".tar", ".tgz"} {
+		if strings.HasSuffix(cleanName, ext) {
+			cleanName = strings.TrimSuffix(cleanName, ext)
+			break
+		}
+	}
+
+	// Try to extract name and version
+	if matches := strings.Split(cleanName, "-"); len(matches) >= 2 {
+		name = matches[0]
+		version = strings.Join(matches[1:], "-")
+	} else if matches := strings.Split(cleanName, "_"); len(matches) >= 2 {
+		name = matches[0]
+		version = strings.Join(matches[1:], "_")
+	} else {
+		name = cleanName
+		version = "unknown"
+	}
+
+	if name == "" {
+		return nil, relationships, nil
+	}
+
+	// Create package with source information
+	metadata := pkg.YoctoMetadata{
+		Name:    name,
+		Version: version,
+	}
+
+	yoctoPackage := &pkg.Package{
+		Name:      name,
+		Version:   version,
+		Type:      pkg.YoctoPkg,
+		Language:  pkg.UnknownLanguage,
+		Locations: file.NewLocationSet(file.NewLocation(sourceFile.RealPath)),
+		PURL:      generateYoctoPURL(name, version),
+		Metadata:  metadata,
+	}
+
+	return yoctoPackage, relationships, nil
+}
+
+// parseImageManifests parses image-level SBOM information from deployed images
+// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
+func (c cataloger) parseImageManifests(resolver file.Resolver, buildDir string) ([]pkg.Package, []artifact.Relationship, error) {
+	var packages []pkg.Package
+	var relationships []artifact.Relationship
+
+	log.WithFields("cataloger", catalogerName).Debug("parsing image manifests for system-level SBOM data")
+
+	// Look for image manifest files in tmp/deploy/images
+	imagePattern := filepath.Join(buildDir, "tmp/deploy/images/*/*")
+	log.WithFields("cataloger", catalogerName).Tracef("searching for image files with pattern: %s", imagePattern)
+	
+	imageFiles, err := resolver.FilesByGlob(imagePattern)
+	if err != nil || len(imageFiles) == 0 {
+		log.WithFields("cataloger", catalogerName).Debug("no image files found")
+		return packages, relationships, nil
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("found %d image files", len(imageFiles))
+
+	// Look for specific manifest files
+	manifestPatterns := []string{
+		"*.manifest",
+		"*.rootfs.manifest",
+		"*.testdata.json",
+	}
+
+	for _, pattern := range manifestPatterns {
+		manifestPattern := filepath.Join(buildDir, "tmp/deploy/images/*/*", pattern)
+		manifestFiles, err := resolver.FilesByGlob(manifestPattern)
+		if err != nil {
+			continue
+		}
+
+		for _, manifestFile := range manifestFiles {
+			pkg, rels, err := c.parseImageManifestFile(resolver, manifestFile)
+			if err != nil {
+				log.WithFields("cataloger", catalogerName).Warnf("failed to parse image manifest %s: %v", manifestFile.RealPath, err)
+				continue
+			}
+			if pkg != nil {
+				packages = append(packages, *pkg)
+				relationships = append(relationships, rels...)
+			}
+		}
+	}
+
+	log.WithFields("cataloger", catalogerName).Debugf("parsed image manifests, found %d image packages", len(packages))
+	return packages, relationships, nil
+}
+
+// parseImageManifestFile parses a specific image manifest file
+func (c cataloger) parseImageManifestFile(resolver file.Resolver, manifestFile file.Location) (*pkg.Package, []artifact.Relationship, error) {
+	var relationships []artifact.Relationship
+
+	content, err := resolver.FileContentsByLocation(manifestFile)
+	if err != nil {
+		return nil, relationships, fmt.Errorf("failed to read manifest file: %w", err)
+	}
+	defer content.Close()
+
+	contentBytes, err := io.ReadAll(content)
+	if err != nil {
+		return nil, relationships, fmt.Errorf("failed to read content: %w", err)
+	}
+
+	// Extract image name from path
+	pathParts := strings.Split(manifestFile.RealPath, "/")
+	var imageName, machine string
+	if len(pathParts) >= 3 {
+		machine = pathParts[len(pathParts)-2]
+		filename := pathParts[len(pathParts)-1]
+		imageName = strings.TrimSuffix(filename, filepath.Ext(filename))
+	}
+
+	if imageName == "" {
+		return nil, relationships, nil
+	}
+
+	lines := strings.Split(string(contentBytes), "\n")
+	var installedPackages []string
+	
+	// Parse manifest format (typically package version arch)
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		
+		fields := strings.Fields(line)
+		if len(fields) >= 1 {
+			installedPackages = append(installedPackages, fields[0])
+		}
+	}
+
+	// Create image package
+	metadata := pkg.YoctoMetadata{
+		Name:         imageName,
+		Version:      "latest",
+		Dependencies: installedPackages,
+		Layer:        machine,
+	}
+
+	yoctoPackage := &pkg.Package{
+		Name:      imageName,
+		Version:   "latest",
+		Type:      pkg.YoctoPkg,
+		Language:  pkg.UnknownLanguage,
+		Locations: file.NewLocationSet(file.NewLocation(manifestFile.RealPath)),
+		PURL:      generateYoctoPURL(imageName, "latest"),
+		Metadata:  metadata,
+	}
+
+	return yoctoPackage, relationships, nil
 }
 
 // parseCacheWithPython uses a Python helper script to parse the pickle-format cache file
