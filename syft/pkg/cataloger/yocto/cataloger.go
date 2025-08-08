@@ -32,8 +32,7 @@ The cataloger parses the following data sources for comprehensive SBOM coverage:
 
 Build Directory Detection:
 The cataloger uses enhanced detection based on Yocto Project structure, requiring:
-- At least 1 essential indicator (conf/bblayers.conf or conf/local.conf)
-- At least 1 additional indicator (tmp/cache, tmp/deploy, downloads, sstate-cache, etc.)
+- At least 2 indicators from: conf/bblayers.conf, conf/local.conf, tmp/cache, tmp/deploy, downloads, sstate-cache, tmp/work, tmp/deploy/licenses
 
 Configuration Options:
 - BITBAKE_HOME: Path to BitBake installation directory
@@ -194,19 +193,15 @@ func (c cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.P
 func (c cataloger) detectYoctoBuildDir(resolver file.Resolver) string {
 	log.WithFields("cataloger", catalogerName).Debug("starting Yocto build directory detection")
 	
-	// Essential indicators from Yocto documentation - these must be present in a valid build directory
+	// Yocto build directory indicators from documentation
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-conf-local-conf
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-conf-bblayers-conf
-	essentialIndicators := []string{
-		"conf/bblayers.conf", // Layer configuration - defines which metadata layers are included
-		"conf/local.conf",    // Local build configuration - contains build-specific settings
-	}
-	
-	// Additional indicators from Yocto build directory structure
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-downloads
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-sstate-cache
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
-	additionalIndicators := []string{
+	indicators := []string{
+		"conf/bblayers.conf",    // Layer configuration - defines which metadata layers are included
+		"conf/local.conf",       // Local build configuration - contains build-specific settings
 		"tmp/cache",             // BitBake cache directory
 		"tmp/deploy",            // Deployment directory for images and packages
 		"downloads",             // Source downloads directory
@@ -215,45 +210,33 @@ func (c cataloger) detectYoctoBuildDir(resolver file.Resolver) string {
 		"tmp/deploy/licenses",   // License deployment directory
 	}
 	
-	log.WithFields("cataloger", catalogerName).Debugf("looking for essential indicators: %v, additional indicators: %v", essentialIndicators, additionalIndicators)
+	log.WithFields("cataloger", catalogerName).Debugf("looking for indicators: %v", indicators)
 
 	// Check if build directory is specified in config
 	if c.config.BuildDir != "" {
 		log.WithFields("cataloger", catalogerName).Debugf("checking configured build directory: %s", c.config.BuildDir)
-		foundEssential := 0
-		foundAdditional := 0
+		foundIndicators := 0
+		var foundList []string
 		
-		// Check essential indicators first
-		for _, indicator := range essentialIndicators {
+		// Check all indicators
+		for _, indicator := range indicators {
 			testPath := filepath.Join(c.config.BuildDir, indicator)
-			log.WithFields("cataloger", catalogerName).Tracef("checking for essential indicator: %s", testPath)
-			if locations, err := resolver.FilesByPath(testPath); err == nil && len(locations) > 0 {
-				var foundPaths []string
-				for _, loc := range locations {
-					foundPaths = append(foundPaths, loc.RealPath)
-				}
-				log.WithFields("cataloger", catalogerName).Debugf("found essential indicator in configured build dir: %s (locations: %v)", testPath, foundPaths)
-				foundEssential++
-			}
-		}
-		
-		// Check additional indicators
-		for _, indicator := range additionalIndicators {
-			testPath := filepath.Join(c.config.BuildDir, indicator)
-			log.WithFields("cataloger", catalogerName).Tracef("checking for additional indicator: %s", testPath)
+			log.WithFields("cataloger", catalogerName).Tracef("checking for indicator: %s", testPath)
 			if resolver.HasPath(testPath) {
-				foundAdditional++
+				log.WithFields("cataloger", catalogerName).Debugf("found indicator in configured build dir: %s", testPath)
+				foundIndicators++
+				foundList = append(foundList, indicator)
 			}
 		}
 		
-		// Require at least 1 essential indicator and 1 additional indicator for robust detection
-		if foundEssential >= 1 && foundAdditional >= 1 {
-			log.WithFields("cataloger", catalogerName).Infof("using configured build directory %s (found %d/%d essential, %d/%d additional indicators)", 
-				c.config.BuildDir, foundEssential, len(essentialIndicators), foundAdditional, len(additionalIndicators))
+		// Require at least 2 indicators for robust detection
+		if foundIndicators >= 2 {
+			log.WithFields("cataloger", catalogerName).Infof("using configured build directory %s (found %d/%d indicators: %v)", 
+				c.config.BuildDir, foundIndicators, len(indicators), foundList)
 			return c.config.BuildDir
 		} else {
-			log.WithFields("cataloger", catalogerName).Warnf("configured build directory %s does not meet detection criteria (essential: %d/%d, additional: %d/%d)", 
-				c.config.BuildDir, foundEssential, len(essentialIndicators), foundAdditional, len(additionalIndicators))
+			log.WithFields("cataloger", catalogerName).Warnf("configured build directory %s does not meet detection criteria (found %d/%d indicators: %v)", 
+				c.config.BuildDir, foundIndicators, len(indicators), foundList)
 		}
 	}
 
@@ -269,45 +252,27 @@ func (c cataloger) detectYoctoBuildDir(resolver file.Resolver) string {
 
 	for _, buildDir := range commonBuildDirs {
 		log.WithFields("cataloger", catalogerName).Debugf("checking build directory candidate: %s", buildDir)
-		foundEssential := 0
-		foundAdditional := 0
-		var foundEssentialList []string
-		var foundAdditionalList []string
+		foundIndicators := 0
+		var foundList []string
 		
-		// Check essential indicators
-		for _, indicator := range essentialIndicators {
+		// Check all indicators
+		for _, indicator := range indicators {
 			testPath := filepath.Join(buildDir, indicator)
-			log.WithFields("cataloger", catalogerName).Tracef("checking for essential indicator: %s", testPath)
-			if locations, err := resolver.FilesByPath(testPath); err == nil && len(locations) > 0 {
-				foundEssential++
-				foundEssentialList = append(foundEssentialList, indicator)
-				var foundPaths []string
-				for _, loc := range locations {
-					foundPaths = append(foundPaths, loc.RealPath)
-				}
-				log.WithFields("cataloger", catalogerName).Tracef("found essential indicator: %s (locations: %v)", testPath, foundPaths)
-			}
-		}
-		
-		// Check additional indicators
-		for _, indicator := range additionalIndicators {
-			testPath := filepath.Join(buildDir, indicator)
-			log.WithFields("cataloger", catalogerName).Tracef("checking for additional indicator: %s", testPath)
+			log.WithFields("cataloger", catalogerName).Tracef("checking for indicator: %s", testPath)
 			if resolver.HasPath(testPath) {
-				foundAdditional++
-				foundAdditionalList = append(foundAdditionalList, indicator)
+				foundIndicators++
+				foundList = append(foundList, indicator)
+				log.WithFields("cataloger", catalogerName).Tracef("found indicator: %s", testPath)
 			}
 		}
 		
-		log.WithFields("cataloger", catalogerName).Debugf("build dir %s: essential %d/%d (%v), additional %d/%d (%v)", 
-			buildDir, foundEssential, len(essentialIndicators), foundEssentialList, 
-			foundAdditional, len(additionalIndicators), foundAdditionalList)
+		log.WithFields("cataloger", catalogerName).Debugf("build dir %s: found %d/%d indicators (%v)", 
+			buildDir, foundIndicators, len(indicators), foundList)
 		
-		// Require at least 1 essential indicator and 1 additional indicator for robust detection
-		if foundEssential >= 1 && foundAdditional >= 1 {
-			log.WithFields("cataloger", catalogerName).Infof("detected Yocto build directory: %s (essential: %d/%d %v, additional: %d/%d %v)", 
-				buildDir, foundEssential, len(essentialIndicators), foundEssentialList,
-				foundAdditional, len(additionalIndicators), foundAdditionalList)
+		// Require at least 2 indicators for robust detection
+		if foundIndicators >= 2 {
+			log.WithFields("cataloger", catalogerName).Infof("detected Yocto build directory: %s (found %d/%d indicators: %v)", 
+				buildDir, foundIndicators, len(indicators), foundList)
 			return buildDir
 		}
 	}
