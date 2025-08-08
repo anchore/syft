@@ -26,6 +26,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
 	maventest "github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven/test"
+	"github.com/anchore/syft/syft/internal"
 )
 
 func TestSearchMavenForLicenses(t *testing.T) {
@@ -1607,9 +1608,8 @@ func Test_springLdapCorePURLGeneration(t *testing.T) {
 			assert.Equal(t, tt.expectedPURL, actualPURL, "PURL should be correctly generated with proper Maven coordinates")
 
 			// Test the filename matching logic
-			artifactsMap := map[string]bool{
-				tt.artifactID: true,
-			}
+			artifactsMap := internal.NewSet[string]()
+			artifactsMap.Add(tt.artifactID)
 			matches := artifactIDMatchesFilename(tt.artifactID, tt.jarFilename, artifactsMap)
 			assert.True(t, matches, "artifactID should match the JAR filename correctly")
 		})

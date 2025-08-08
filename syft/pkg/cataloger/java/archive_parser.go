@@ -391,10 +391,10 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
-	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
-	artifactsMap := make(map[string]bool)
+	// map of all the artifacts in the pom properties, in order to check exact match with the filename
+	artifactsMap := internal.NewSet[string]()
 	for _, propertiesObj := range properties {
-		artifactsMap[propertiesObj.ArtifactID] = true
+		artifactsMap.Add(propertiesObj.ArtifactID)
 	}
 
 	parentPaths := maps.Keys(properties)
@@ -430,7 +430,7 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	return group, name, version, parsedPom
 }
 
-func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[string]bool) bool {
+func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap internal.Set[string]) bool {
 	if artifactID == "" || fileName == "" {
 		return false
 	}
@@ -441,7 +441,7 @@ func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap map[str
 	}
 
 	// If there's an exact match in the artifacts map, use that
-	if _, exists := artifactsMap[fileName]; exists {
+	if artifactsMap.Contains(fileName) {
 		return artifactID == fileName
 	}
 
