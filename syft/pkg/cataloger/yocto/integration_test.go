@@ -1,6 +1,7 @@
 package yocto
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
@@ -14,15 +15,26 @@ import (
 
 // TestYoctoIntegrationWithTestData tests the cataloger against local test data
 func TestYoctoIntegrationWithTestData(t *testing.T) {
-	// Use local test data files
+	// Use local test data files including build directory structure
 	testDataPaths := []string{
 		"testdata/license.manifest",
 		"testdata/bb_cache.dat", 
 		"testdata/bitbake_layers_output.txt",
+		"testdata/conf/bblayers.conf",
+		"testdata/conf/local.conf",
+		"testdata/tmp/cache",
+		"testdata/tmp/deploy",
+		"testdata/tmp/cache/bb_cache.dat",
+		"testdata/tmp/deploy/license.manifest",
 	}
 
-	// Verify test data exists
-	for _, path := range testDataPaths {
+	// Verify core test data exists
+	coreFiles := []string{
+		"testdata/license.manifest",
+		"testdata/conf/bblayers.conf",
+		"testdata/conf/local.conf",
+	}
+	for _, path := range coreFiles {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			t.Skipf("Test data file not found: %s", path)
 			return
@@ -39,7 +51,7 @@ func TestYoctoIntegrationWithTestData(t *testing.T) {
 		c.config.BuildDir = "testdata"
 	}
 	
-	packages, relationships, err := yoctoCataloger.Catalog(nil, resolver)
+	packages, relationships, err := yoctoCataloger.Catalog(context.TODO(), resolver)
 	
 	// Log the results for debugging
 	t.Logf("Found %d packages and %d relationships", len(packages), len(relationships))
@@ -125,8 +137,12 @@ func TestCacheParsingWithPython(t *testing.T) {
 
 	cataloger := &cataloger{config: DefaultConfig()}
 	
+	// Create a mock resolver for the cache file
+	resolver := file.NewMockResolverForPaths(cacheFile)
+	cacheLocation := file.NewLocation(cacheFile)
+	
 	// Test the Python parsing directly
-	recipes, err := cataloger.parseCacheWithPython(cacheFile, "testdata")
+	recipes, err := cataloger.parseCacheWithPython(resolver, cacheLocation, "testdata")
 	
 	if err != nil {
 		t.Logf("Cache parsing failed (expected if Python not available): %v", err)
@@ -229,15 +245,17 @@ func TestCreatePackagesFromReference(t *testing.T) {
 // TestCacheScriptGeneration tests that our Python script generation works
 func TestCacheScriptGeneration(t *testing.T) {
 	cataloger := &cataloger{config: DefaultConfig()}
-	script := cataloger.createCacheParserScript()
+	script := cataloger.createBitBakeCacheParserScript()
 	
 	// Validate script contains required components
 	requiredElements := []string{
 		"#!/usr/bin/env python3",
 		"import pickle",
 		"import json",
-		"def parse_cache_file",
+		"def parse_cache_file_with_bitbake",
+		"def parse_cache_file_basic",
 		"def extract_layer_from_path",
+		"def safe_getattr",
 		"unpickler = pickle.Unpickler(f)",
 		"getattr(value, 'pn'",
 		"getattr(value, 'pv'",

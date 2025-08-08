@@ -373,7 +373,6 @@ func (c cataloger) parseBitbakeCache(resolver file.Resolver, buildDir string) ([
 // The script properly integrates with BitBake environment and dependencies
 func (c cataloger) parseCacheWithPython(resolver file.Resolver, cacheLocation file.Location, buildDir string) ([]CacheRecipeInfo, error) {
 	log.WithFields("cataloger", catalogerName).Tracef("parseCacheWithPython: starting Python cache parser", "cacheFile", cacheLocation.RealPath)
-	log.WithFields("cataloger", catalogerName).Tracef("parseCacheWithPython: starting Python cache parser", "cacheFile", cacheLocation.RealPath)
 
 	// Get cache file contents from resolver
 	log.WithFields("cataloger", catalogerName).Tracef("reading cache file contents: %s", cacheLocation.RealPath)

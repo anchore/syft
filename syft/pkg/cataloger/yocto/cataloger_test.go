@@ -63,7 +63,11 @@ func TestParseCacheWithPython(t *testing.T) {
 				return
 			}
 
-			recipes, err := cataloger.parseCacheWithPython(tt.cacheFile, tt.buildDir)
+			// Create a mock resolver for the cache file
+			resolver := file.NewMockResolverForPaths(tt.cacheFile)
+			cacheLocation := file.NewLocation(tt.cacheFile)
+			
+			recipes, err := cataloger.parseCacheWithPython(resolver, cacheLocation, tt.buildDir)
 			
 			if tt.expectError {
 				assert.Error(t, err)
@@ -119,14 +123,15 @@ func TestCreatePackageFromCacheRecipe(t *testing.T) {
 
 func TestCacheParserScript(t *testing.T) {
 	cataloger := &cataloger{config: DefaultConfig()}
-	script := cataloger.createCacheParserScript()
+	script := cataloger.createBitBakeCacheParserScript()
 	
 	// Validate script structure
 	assert.Contains(t, script, "#!/usr/bin/env python3")
 	assert.Contains(t, script, "import pickle")
-	assert.Contains(t, script, "def parse_cache_file")
+	assert.Contains(t, script, "def parse_cache_file_with_bitbake")
+	assert.Contains(t, script, "def parse_cache_file_basic")
 	assert.Contains(t, script, "def extract_layer_from_path")
-	assert.Contains(t, script, "DummyBBModule")
+	assert.Contains(t, script, "def safe_getattr")
 }
 
 func TestExtractLayerFromPath(t *testing.T) {
@@ -210,15 +215,26 @@ func TestParseBitbakeCache(t *testing.T) {
 }
 
 func TestYoctoCatalogerIntegration(t *testing.T) {
-	// Use local test data files instead of workspace
+	// Use local test data files including build directory structure
 	testDataPaths := []string{
 		"testdata/license.manifest",
 		"testdata/bb_cache.dat",
 		"testdata/bitbake_layers_output.txt",
+		"testdata/conf/bblayers.conf",
+		"testdata/conf/local.conf",
+		"testdata/tmp/cache",
+		"testdata/tmp/deploy",
+		"testdata/tmp/cache/bb_cache.dat",
+		"testdata/tmp/deploy/license.manifest",
 	}
 
-	// Verify test data exists
-	for _, path := range testDataPaths {
+	// Verify core test data exists
+	coreFiles := []string{
+		"testdata/license.manifest",
+		"testdata/conf/bblayers.conf",
+		"testdata/conf/local.conf",
+	}
+	for _, path := range coreFiles {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			t.Skipf("Test data file not found: %s", path)
 			return
