@@ -430,17 +430,12 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	return group, name, version, parsedPom
 }
 
+// artifactIDMatchesFilename returns true if one starts with the other
 func artifactIDMatchesFilename(artifactID, fileName string, artifactsMap internal.Set[string]) bool {
 	if artifactID == "" || fileName == "" {
 		return false
 	}
-
-	// First, try exact match
-	if artifactID == fileName {
-		return true
-	}
-
-	// If there's an exact match in the artifacts map, use that
+	// Ensure true is returned when filename matches the artifact ID, prevent random retrieval by checking prefix and suffix
 	if artifactsMap.Contains(fileName) {
 		return artifactID == fileName
 	}
