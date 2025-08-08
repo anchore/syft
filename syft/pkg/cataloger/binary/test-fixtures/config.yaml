@@ -724,6 +724,20 @@ from-images:
     paths:
       - /bin/consul
 
+  - version: 1.20.2
+    images:
+      - ref: hashicorp/vault@sha256:5cd2003247e0a574a66c66aee1916b1e9e7f99640298f2e61271a8842d2d2a19
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
+  - version: 1.19.4
+    images:
+      - ref: hashicorp/vault@sha256:b5f675b0bf681568cd7354c697fe4ce953024312d6d23ee7216deda60c192bad
+        platform: linux/arm64
+    paths:
+      - /bin/vault
+
   - version: 3.0.2
     images:
       - ref: fluent/fluent-bit:3.0.2-amd64@sha256:7e6fe8efd51dda0739e355f58bf5e3b1623cbf2d4a23c06c7a365d9553e2d242
