@@ -1,0 +1,155 @@
+PACKAGE NAME: base-files
+PACKAGE VERSION: 3.0.14
+RECIPE NAME: base-files
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: base-passwd
+PACKAGE VERSION: 3.5.52
+RECIPE NAME: base-passwd
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: busybox
+PACKAGE VERSION: 1.35.0
+RECIPE NAME: busybox
+LICENSE: GPL-2.0-only & bzip2-1.0.4
+
+PACKAGE NAME: busybox-hwclock
+PACKAGE VERSION: 1.35.0
+RECIPE NAME: busybox
+LICENSE: GPL-2.0-only & bzip2-1.0.4
+
+PACKAGE NAME: busybox-syslog
+PACKAGE VERSION: 1.35.0
+RECIPE NAME: busybox
+LICENSE: GPL-2.0-only & bzip2-1.0.4
+
+PACKAGE NAME: busybox-udhcpc
+PACKAGE VERSION: 1.35.0
+RECIPE NAME: busybox
+LICENSE: GPL-2.0-only & bzip2-1.0.4
+
+PACKAGE NAME: eudev
+PACKAGE VERSION: 3.2.10
+RECIPE NAME: eudev
+LICENSE: GPL-2.0-or-later & LGPL-2.1-or-later
+
+PACKAGE NAME: glibc
+PACKAGE VERSION: 2.35
+RECIPE NAME: glibc
+LICENSE: GPL-2.0-only & LGPL-2.1-only
+
+PACKAGE NAME: init-ifupdown
+PACKAGE VERSION: 1.0
+RECIPE NAME: init-ifupdown
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: init-system-helpers-service
+PACKAGE VERSION: 1.62
+RECIPE NAME: init-system-helpers
+LICENSE: BSD-3-Clause & GPL-2.0-only
+
+PACKAGE NAME: initscripts
+PACKAGE VERSION: 1.0
+RECIPE NAME: initscripts
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: initscripts-functions
+PACKAGE VERSION: 1.0
+RECIPE NAME: initscripts
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: kernel-base
+PACKAGE VERSION: 5.15.186+gitAUTOINC+5932fcfa69_48702d462c
+RECIPE NAME: linux-yocto
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: kernel-image
+PACKAGE VERSION: 5.15.186+gitAUTOINC+5932fcfa69_48702d462c
+RECIPE NAME: linux-yocto
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: kernel-image-bzimage
+PACKAGE VERSION: 5.15.186+gitAUTOINC+5932fcfa69_48702d462c
+RECIPE NAME: linux-yocto
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: kernel-module-uvesafb-5.15.186-yocto-standard
+PACKAGE VERSION: 5.15.186+gitAUTOINC+5932fcfa69_48702d462c
+RECIPE NAME: linux-yocto
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: ldconfig
+PACKAGE VERSION: 2.35
+RECIPE NAME: glibc
+LICENSE: GPL-2.0-only & LGPL-2.1-only
+
+PACKAGE NAME: libkmod
+PACKAGE VERSION: 29
+RECIPE NAME: kmod
+LICENSE: LGPL-2.1-or-later
+
+PACKAGE NAME: liblzma
+PACKAGE VERSION: 5.2.6
+RECIPE NAME: xz
+LICENSE: PD
+
+PACKAGE NAME: modutils-initscripts
+PACKAGE VERSION: 1.0
+RECIPE NAME: modutils-initscripts
+LICENSE: MIT
+
+PACKAGE NAME: netbase
+PACKAGE VERSION: 6.3
+RECIPE NAME: netbase
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: packagegroup-core-boot
+PACKAGE VERSION: 1.0
+RECIPE NAME: packagegroup-core-boot
+LICENSE: MIT
+
+PACKAGE NAME: run-postinsts
+PACKAGE VERSION: 1.0
+RECIPE NAME: run-postinsts
+LICENSE: MIT
+
+PACKAGE NAME: sysvinit
+PACKAGE VERSION: 3.01
+RECIPE NAME: sysvinit
+LICENSE: GPL-2.0-or-later
+
+PACKAGE NAME: sysvinit-inittab
+PACKAGE VERSION: 2.88dsf
+RECIPE NAME: sysvinit-inittab
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: sysvinit-pidof
+PACKAGE VERSION: 3.01
+RECIPE NAME: sysvinit
+LICENSE: GPL-2.0-or-later
+
+PACKAGE NAME: update-alternatives-opkg
+PACKAGE VERSION: 0.5.0
+RECIPE NAME: opkg-utils
+LICENSE: GPL-2.0-or-later
+
+PACKAGE NAME: update-rc.d
+PACKAGE VERSION: 0.8
+RECIPE NAME: update-rc.d
+LICENSE: GPL-2.0-or-later
+
+PACKAGE NAME: util-linux-libblkid
+PACKAGE VERSION: 2.37.4
+RECIPE NAME: util-linux
+LICENSE: LGPL-2.1-or-later
+
+PACKAGE NAME: v86d
+PACKAGE VERSION: 0.1.10
+RECIPE NAME: v86d
+LICENSE: GPL-2.0-only
+
+PACKAGE NAME: zlib
+PACKAGE VERSION: 1.2.11
+RECIPE NAME: zlib
+LICENSE: Zlib
+

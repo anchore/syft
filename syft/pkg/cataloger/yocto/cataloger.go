@@ -220,9 +220,7 @@ func (c cataloger) detectYoctoBuildDir(resolver file.Resolver) string {
 func (c cataloger) findLicenseManifest(resolver file.Resolver, buildDir string) string {
 	// Common locations for license.manifest
 	manifestPaths := []string{
-		"license.manifest", // Check root first
-		filepath.Join(buildDir, "license.manifest"),
-		filepath.Join(buildDir, "tmp/deploy/licenses/*/license.manifest"),
+		filepath.Join(buildDir, "**/license.manifest"),
 	}
 
 	for _, manifestPath := range manifestPaths {
@@ -333,58 +331,89 @@ func (c cataloger) parseBitbakeCache(resolver file.Resolver, buildDir string) ([
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
-	log.WithFields("name", catalogerName).Trace("parseBitbakeCache: starting cache parsing, buildDir: ", buildDir)
+	log.WithFields("cataloger", catalogerName).Trace("parseBitbakeCache: starting cache parsing", "buildDir", buildDir)
 
-	// Look for bb_cache.dat files with cache version hash
-	cachePattern := filepath.Join(buildDir, "tmp/cache/*/*/*/*/bb_cache.dat*")
+	// Look for bb_cache.dat files anywhere in the build directory
+	cachePattern := filepath.Join(buildDir, "**/bb_cache.dat")
+	log.WithFields("cataloger", catalogerName).Tracef("searching for cache files with pattern: %s", cachePattern)
 	cacheLocations, err := resolver.FilesByGlob(cachePattern)
 	if err != nil || len(cacheLocations) == 0 {
-		// Try alternative pattern
-		cachePattern = filepath.Join(buildDir, "tmp/cache/bb_cache.dat*")
-		cacheLocations, err = resolver.FilesByGlob(cachePattern)
-		if err != nil || len(cacheLocations) == 0 {
-			// Try looking for bb_cache.dat directly in testdata or build dir
-			cachePattern = filepath.Join(buildDir, "bb_cache.dat")
-			cacheLocations, err = resolver.FilesByPath(cachePattern)
-			if err != nil || len(cacheLocations) == 0 {
-				return packages, relationships, nil
-			}
-		}
+		log.WithFields("cataloger", catalogerName).Debug("no bitbake cache files found, skipping cache parsing")
+		return packages, relationships, nil
 	}
 
 	// Use the first cache file found
-	cacheFile := cacheLocations[0].RealPath
+	cacheLocation := cacheLocations[0]
+	log.WithFields("cataloger", catalogerName).Debugf("found bitbake cache file candidates: AccessPath=%s, RealPath=%s (from %d total)", cacheLocation.AccessPath, cacheLocation.RealPath, len(cacheLocations))
+	
+	// BitBake cache files often have hash suffixes, use the found file directly
+	log.WithFields("cataloger", catalogerName).Debugf("using cache file: %s", cacheLocation.RealPath)
 
 	// Parse the cache using Python helper
-	recipes, err := c.parseCacheWithPython(cacheFile, buildDir)
+	log.WithFields("cataloger", catalogerName).Trace("parsing cache file with Python helper")
+	recipes, err := c.parseCacheWithPython(resolver, cacheLocation, buildDir)
 	if err != nil {
+		log.WithFields("cataloger", catalogerName).Errorf("failed to parse cache file %s: %v", cacheLocation.RealPath, err)
 		return packages, relationships, fmt.Errorf("failed to parse cache: %w", err)
 	}
 
+	log.WithFields("cataloger", catalogerName).Debugf("successfully parsed cache, found %d recipes", len(recipes))
+
 	// Convert cache recipes to packages
 	for _, recipe := range recipes {
-		pkg := c.createPackageFromCacheRecipe(recipe, cacheFile)
+		pkg := c.createPackageFromCacheRecipe(recipe, cacheLocation.RealPath)
 		packages = append(packages, pkg)
 	}
 
+	log.WithFields("cataloger", catalogerName).Debugf("converted %d cache recipes to packages", len(packages))
 	return packages, relationships, nil
 }
 
 // parseCacheWithPython uses a Python helper script to parse the pickle-format cache file
 // The script properly integrates with BitBake environment and dependencies
-func (c cataloger) parseCacheWithPython(cacheFile, buildDir string) ([]CacheRecipeInfo, error) {
-	// Check if cache file exists
-	if _, err := os.Stat(cacheFile); os.IsNotExist(err) {
-		return nil, fmt.Errorf("cache file does not exist: %s", cacheFile)
+func (c cataloger) parseCacheWithPython(resolver file.Resolver, cacheLocation file.Location, buildDir string) ([]CacheRecipeInfo, error) {
+	log.WithFields("cataloger", catalogerName).Tracef("parseCacheWithPython: starting Python cache parser", "cacheFile", cacheLocation.RealPath)
+	log.WithFields("cataloger", catalogerName).Tracef("parseCacheWithPython: starting Python cache parser", "cacheFile", cacheLocation.RealPath)
+
+	// Get cache file contents from resolver
+	log.WithFields("cataloger", catalogerName).Tracef("reading cache file contents: %s", cacheLocation.RealPath)
+	cacheReader, err := resolver.FileContentsByLocation(cacheLocation)
+	if err != nil {
+		log.WithFields("cataloger", catalogerName).Errorf("failed to read cache file: %v", err)
+		return nil, fmt.Errorf("failed to read cache file: %w", err)
 	}
+	defer cacheReader.Close()
+
+	// Create temporary cache file for Python script
+	log.WithFields("cataloger", catalogerName).Trace("creating temporary cache file")
+	tmpCacheFile, err := os.CreateTemp("", "yocto_cache_*.dat")
+	if err != nil {
+		log.WithFields("cataloger", catalogerName).Errorf("failed to create temporary cache file: %v", err)
+		return nil, fmt.Errorf("failed to create temp cache file: %w", err)
+	}
+	defer os.Remove(tmpCacheFile.Name())
+	log.WithFields("cataloger", catalogerName).Tracef("created temporary cache file: %s", tmpCacheFile.Name())
+
+	// Copy cache contents to temporary file
+	if _, err := tmpCacheFile.ReadFrom(cacheReader); err != nil {
+		tmpCacheFile.Close()
+		return nil, fmt.Errorf("failed to copy cache contents: %w", err)
+	}
+	tmpCacheFile.Close()
+	
+	cacheFile := tmpCacheFile.Name()
+	log.WithFields("cataloger", catalogerName).Tracef("using temporary cache file: %s", cacheFile)
 
 	// Create temporary Python script that uses actual BitBake libraries
+	log.WithFields("cataloger", catalogerName).Trace("creating temporary Python cache parser script")
 	pythonScript := c.createBitBakeCacheParserScript()
 	tmpFile, err := os.CreateTemp("", "yocto_cache_parser_*.py")
 	if err != nil {
+		log.WithFields("cataloger", catalogerName).Errorf("failed to create temporary script: %v", err)
 		return nil, fmt.Errorf("failed to create temp script: %w", err)
 	}
 	defer os.Remove(tmpFile.Name())
+	log.WithFields("cataloger", catalogerName).Tracef("created temporary script: %s", tmpFile.Name())
 
 	if _, err := tmpFile.WriteString(pythonScript); err != nil {
 		tmpFile.Close()
@@ -393,9 +422,11 @@ func (c cataloger) parseCacheWithPython(cacheFile, buildDir string) ([]CacheReci
 	tmpFile.Close()
 
 	// Set up environment for BitBake execution
+	log.WithFields("cataloger", catalogerName).Trace("setting up BitBake execution environment")
 	cmd := exec.Command("python3", tmpFile.Name(), cacheFile, buildDir)
 	
 	// Add BitBake to Python path - look for bitbake in workspace or common locations
+	log.WithFields("cataloger", catalogerName).Trace("searching for BitBake library paths")
 	bitbakePaths := []string{}
 	
 	// Check for config-specified BitBake paths first
@@ -425,8 +456,10 @@ func (c cataloger) parseCacheWithPython(cacheFile, buildDir string) ([]CacheReci
 	}...)
 	
 	var pythonPath string
+	var foundPaths []string
 	for _, path := range bitbakePaths {
 		if _, err := os.Stat(filepath.Join(path, "bb")); err == nil {
+			foundPaths = append(foundPaths, path)
 			if pythonPath == "" {
 				pythonPath = path
 			} else {
@@ -436,6 +469,8 @@ func (c cataloger) parseCacheWithPython(cacheFile, buildDir string) ([]CacheReci
 	}
 	
 	if pythonPath != "" {
+		log.WithFields("cataloger", catalogerName).Debugf("found BitBake libraries at: %v", foundPaths)
+		log.WithFields("cataloger", catalogerName).Tracef("setting PYTHONPATH: %s", pythonPath)
 		env := os.Environ()
 		env = append(env, "PYTHONPATH="+pythonPath)
 		// Add additional BitBake environment variables that might be needed
@@ -444,10 +479,14 @@ func (c cataloger) parseCacheWithPython(cacheFile, buildDir string) ([]CacheReci
 			env = append(env, "BB_SKIP_NETTESTS="+bbSkipNetTests)
 		}
 		cmd.Env = env
+	} else {
+		log.WithFields("cataloger", catalogerName).Warn("no BitBake libraries found in any search paths, cache parsing may fail")
 	}
 
+	log.WithFields("cataloger", catalogerName).Trace("executing Python cache parser with python3")
 	output, err := cmd.Output()
 	if err != nil {
+		log.WithFields("cataloger", catalogerName).Tracef("python3 execution failed: %v, trying python", err)
 		// Try python if python3 is not available
 		cmd = exec.Command("python", tmpFile.Name(), cacheFile, buildDir)
 		if pythonPath != "" {
@@ -460,18 +499,24 @@ func (c cataloger) parseCacheWithPython(cacheFile, buildDir string) ([]CacheReci
 			}
 			cmd.Env = env
 		}
+		log.WithFields("cataloger", catalogerName).Trace("executing Python cache parser with python")
 		output, err = cmd.Output()
 		if err != nil {
+			log.WithFields("cataloger", catalogerName).Errorf("both python3 and python execution failed: %v", err)
 			return nil, fmt.Errorf("failed to execute cache parser (tried both python3 and python): %w", err)
 		}
 	}
 
 	// Parse JSON output
+	log.WithFields("cataloger", catalogerName).Tracef("parsing JSON output from Python cache parser (%d bytes)", len(output))
 	var recipes []CacheRecipeInfo
 	if err := json.Unmarshal(output, &recipes); err != nil {
+		log.WithFields("cataloger", catalogerName).Errorf("failed to parse JSON output: %v", err)
+		log.WithFields("cataloger", catalogerName).Tracef("JSON output was: %s", string(output))
 		return nil, fmt.Errorf("failed to parse cache output: %w", err)
 	}
 
+	log.WithFields("cataloger", catalogerName).Debugf("successfully parsed cache, extracted %d recipe(s)", len(recipes))
 	return recipes, nil
 }
 
@@ -681,171 +726,7 @@ if __name__ == '__main__':
 `
 }
 
-// createCacheParserScript generates a Python script to parse BitBake cache files (legacy)
-func (c cataloger) createCacheParserScript() string {
-	return `#!/usr/bin/env python3
-import sys
-import os
-import pickle
-import json
-import re
 
-def extract_layer_from_path(file_path, build_dir):
-    """Extract layer name from recipe file path"""
-    if not file_path:
-        return ""
-    
-    # Remove build directory prefix if present
-    if file_path.startswith(build_dir):
-        file_path = file_path[len(build_dir):].lstrip('/')
-    
-    # Look for meta-* patterns or common layer names
-    parts = file_path.split('/')
-    for part in parts:
-        if part.startswith('meta-') or part in ['meta', 'oe-core', 'openembedded-core']:
-            return part
-    
-    # If no meta- layer found, use first directory
-    if parts:
-        return parts[0]
-    
-    return ""
-
-# Create dummy classes to handle missing BitBake dependencies
-class DummyRecipeInfo:
-    def __init__(self):
-        self.pn = ""
-        self.pv = ""
-        self.pe = ""
-        self.pr = ""
-        self.license = ""
-        self.provides = []
-        self.depends = []
-        self.rdepends_pkg = {}
-        self.packages = []
-
-# Register dummy classes for pickle to handle bb module dependencies
-class DummyBBModule:
-    class parse:
-        @staticmethod
-        def cached_mtime(*args):
-            return 0
-            
-        @staticmethod
-        def vars_from_file(*args):
-            return ["unknown", {}]
-    
-    class utils:
-        @staticmethod
-        def explode_deps(deps):
-            if isinstance(deps, str):
-                return deps.split()
-            return deps if deps else []
-        
-        @staticmethod
-        def to_boolean(val):
-            return bool(val)
-
-    class data:
-        class DataSmart:
-            def getVar(self, var, expand=True):
-                return ""
-            
-            def getVarFlag(self, var, flag):
-                return None
-
-# Add dummy bb module to sys.modules to handle imports
-sys.modules['bb'] = DummyBBModule()
-sys.modules['bb.parse'] = DummyBBModule.parse
-sys.modules['bb.utils'] = DummyBBModule.utils
-sys.modules['bb.data'] = DummyBBModule.data
-
-def parse_cache_file(cache_file, build_dir):
-    """Parse BitBake cache file and extract recipe information"""
-    recipes = []
-    
-    try:
-        with open(cache_file, 'rb') as f:
-            unpickler = pickle.Unpickler(f)
-            
-            # Read cache version and bitbake version
-            try:
-                cache_ver = unpickler.load()
-                bitbake_ver = unpickler.load()
-                print(f"Cache version: {cache_ver}, BitBake version: {bitbake_ver}", file=sys.stderr)
-            except Exception as e:
-                print(f"Error reading version: {e}", file=sys.stderr)
-                return recipes
-            
-            # Read recipe data
-            entry_count = 0
-            success_count = 0
-            while True and entry_count < 1000:  # Limit to prevent infinite loops
-                try:
-                    key = unpickler.load()
-                    value = unpickler.load()
-                    entry_count += 1
-                    
-                    if not isinstance(key, str):
-                        continue
-                    
-                    # Extract recipe information from object
-                    try:
-                        recipe_info = {
-                            'filename': key,
-                            'pn': getattr(value, 'pn', ''),
-                            'pv': getattr(value, 'pv', ''),
-                            'pe': getattr(value, 'pe', ''),
-                            'pr': getattr(value, 'pr', ''),
-                            'license': getattr(value, 'license', ''),
-                            'provides': getattr(value, 'provides', []),
-                            'depends': getattr(value, 'depends', []),
-                            'rdepends': getattr(value, 'rdepends_pkg', {}),
-                            'packages': getattr(value, 'packages', []),
-                            'layer': extract_layer_from_path(key, build_dir),
-                            'recipe': os.path.basename(key) if key else ''
-                        }
-                        
-                        # Only add if we have valid package name and version
-                        if recipe_info['pn'] and recipe_info['pv']:
-                            recipes.append(recipe_info)
-                            success_count += 1
-                            
-                    except Exception as e:
-                        # Skip entries that can't be processed
-                        print(f"Error processing entry {entry_count}: {e}", file=sys.stderr)
-                        continue
-                        
-                except EOFError:
-                    print(f"Reached end of file after {entry_count} entries", file=sys.stderr)
-                    break
-                except Exception as e:
-                    print(f"Error reading entry {entry_count}: {e}", file=sys.stderr)
-                    # Continue processing
-                    continue
-                    
-            print(f"Successfully processed {success_count} out of {entry_count} entries", file=sys.stderr)
-                    
-    except Exception as e:
-        print(f"Error opening cache file: {e}", file=sys.stderr)
-    
-    return recipes
-
-def main():
-    if len(sys.argv) != 3:
-        print("Usage: script.py <cache_file> <build_dir>", file=sys.stderr)
-        sys.exit(1)
-    
-    cache_file = sys.argv[1]
-    build_dir = sys.argv[2]
-    
-    recipes = parse_cache_file(cache_file, build_dir)
-    print(json.dumps(recipes, indent=2))
-
-if __name__ == '__main__':
-    main()
-`
-}
 
 // createPackageFromCacheRecipe converts a CacheRecipeInfo to a pkg.Package
 func (c cataloger) createPackageFromCacheRecipe(recipe CacheRecipeInfo, cacheFile string) pkg.Package {
