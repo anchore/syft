@@ -1287,7 +1287,7 @@ func (c cataloger) createPackageFromCacheRecipe(recipe CacheRecipeInfo, cacheFil
 		Type:      pkg.YoctoPkg,
 		Language:  pkg.UnknownLanguage,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicense(recipe.License)),
-		Locations: file.NewLocationSet(file.NewLocation(cacheFile)),
+		Locations: file.NewLocationSet(file.NewLocation(recipe.FileName)),
 		PURL:      generateYoctoPURL(recipe.PackageName, version),
 		Metadata:  metadata,
 	}
