@@ -449,6 +449,16 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "hashicorp-vault-binary",
+			FileGlob: "**/vault",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// revoke1.18.0
+				`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "github.com/hashicorp/vault",
+			PURL:    mustPURL("pkg:golang/github.com/hashicorp/vault@version"),
+			CPEs:    singleCPE("cpe:2.3:a:hashicorp:vault:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "nginx-binary",
 			FileGlob: "**/nginx",
 			EvidenceMatcher: m.FileContentsVersionMatcher(

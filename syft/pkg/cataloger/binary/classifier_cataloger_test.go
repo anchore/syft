@@ -1008,6 +1008,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "vault/1.20.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.20.2",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.20.2",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.19.4/linux-arm64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.19.4",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.19.4",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
 			logicalFixture: "erlang/25.3.2.6/linux-amd64",
 			expected: pkg.Package{
 				Name:      "erlang",
