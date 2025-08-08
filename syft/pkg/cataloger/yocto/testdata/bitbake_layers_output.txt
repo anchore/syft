@@ -1,0 +1,1767 @@
+NOTE: Starting bitbake server...
+Loading cache...done.
+Loaded 1644 entries from dependency cache.
+=== Available recipes: ===
+acl:
+  meta                 2.3.1
+acpica:
+  meta                 20211217
+acpid:
+  meta                 2.0.33
+adwaita-icon-theme:
+  meta                 41.0
+alsa-lib:
+  meta                 1.2.6.1
+alsa-plugins:
+  meta                 1.2.6
+alsa-state:
+  meta                 0.2.0
+alsa-tools:
+  meta                 1.2.5
+alsa-topology-conf:
+  meta                 1.2.5.1
+alsa-ucm-conf:
+  meta                 1.2.6.3
+alsa-utils:
+  meta                 1.2.6
+alsa-utils-scripts:
+  meta                 1.2.6
+apmd:
+  meta                 3.2.2-15
+apr:
+  meta                 1.7.5
+apr-util:
+  meta                 1.6.3
+apt:
+  meta                 2.4.5
+argp-standalone:
+  meta                 1.3 (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+asciidoc:
+  meta                 10.1.4
+aspell:
+  meta                 0.60.8
+at:
+  meta                 3.2.5
+at-spi2-atk:
+  meta                 2.38.0
+at-spi2-core:
+  meta                 2.42.0
+atk:
+  meta                 2.38.0
+attr:
+  meta                 2.5.1
+autoconf:
+  meta                 2.71
+autoconf-archive:
+  meta                 2022.02.11
+automake:
+  meta                 1.16.5
+avahi:
+  meta                 0.8
+babeltrace:
+  meta                 1.5.11
+babeltrace2:
+  meta                 2.0.5
+base-files:
+  meta                 3.0.14
+base-passwd:
+  meta                 3.5.52
+bash:
+  meta                 5.1.16
+bash-completion:
+  meta                 2.11
+bc:
+  meta                 1.07.1
+bind:
+  meta                 9.18.33
+binutils:
+  meta                 2.38
+binutils-cross-canadian-x86-64:
+  meta                 2.38
+binutils-cross-testsuite:
+  meta                 2.38
+binutils-cross-x86_64:
+  meta                 2.38
+binutils-crosssdk-aarch64-pokysdk-linux:
+  meta                 2.38
+bison:
+  meta                 3.8.2
+blktool:
+  meta                 4-7.1
+blktrace:
+  meta                 1.3.0+gitAUTOINC+366d30b9cd
+bluez5:
+  meta                 5.65
+bmap-tools:
+  meta                 3.6+gitAUTOINC+c0673962a8
+boost:
+  meta                 1.78.0
+boost-build-native:
+  meta                 4.4.1
+bootchart2:
+  meta                 0.14.9
+bsd-headers:
+  meta                 unknown (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+btrfs-tools:
+  meta                 5.16.2
+build-appliance-image:
+  meta                 15.0.0
+build-sysroots:
+  meta                 1.0
+builder:
+  meta                 0.1
+buildtools-docs-tarball:
+  meta                 1.0
+buildtools-extended-tarball:
+  meta                 1.0
+buildtools-tarball:
+  meta                 1.0
+busybox:
+  meta                 1.35.0
+busybox-inittab:
+  meta                 1.35.0
+bzip2:
+  meta                 1.0.8
+ca-certificates:
+  meta                 20211016
+cairo:
+  meta                 1.16.0
+cantarell-fonts:
+  meta                 0.303.1
+cargo:
+  meta                 1.59.0
+cargo-cross-canadian-x86-64:
+  meta                 1.59.0
+ccache:
+  meta                 4.6
+cdrtools-native:
+  meta                 3.01
+chrpath:
+  meta                 0.16
+cmake:
+  meta                 3.22.3
+cmake-native:
+  meta                 3.22.3
+connman:
+  meta                 1.41
+connman-conf:
+  meta                 1.0
+connman-gnome:
+  meta                 0.7
+consolekit:
+  meta                 0.4.6
+core-image-base:
+  meta                 1.0
+core-image-full-cmdline:
+  meta                 1.0
+core-image-kernel-dev:
+  meta                 1.0
+core-image-minimal:
+  meta                 1.0
+core-image-minimal-dev:
+  meta                 1.0
+core-image-minimal-initramfs:
+  meta                 1.0
+core-image-minimal-mtdutils:
+  meta                 1.0
+core-image-ptest-all:
+  meta                 1.0
+core-image-ptest-fast:
+  meta                 1.0
+core-image-rt:
+  meta                 unknown (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-rt to enable it)
+core-image-rt-sdk:
+  meta                 unknown (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-rt to enable it)
+core-image-sato:
+  meta                 1.0
+core-image-sato-dev:
+  meta                 1.0
+core-image-sato-sdk:
+  meta                 1.0
+core-image-testcontroller:
+  meta                 1.0
+core-image-testcontroller-initramfs:
+  meta                 1.0
+core-image-tiny-initramfs:
+  meta                 1.0
+core-image-weston:
+  meta                 1.0
+core-image-weston-sdk:
+  meta                 1.0
+core-image-x11:
+  meta                 1.0
+coreutils:
+  meta                 9.0
+cpio:
+  meta                 2.14
+cracklib:
+  meta                 2.9.8
+createrepo-c:
+  meta                 0.19.0
+cronie:
+  meta                 1.6.1
+cross-localedef-native:
+  meta                 2.35
+cryptodev-linux:
+  meta                 1.12
+cryptodev-module:
+  meta                 1.12
+cryptodev-tests:
+  meta                 1.12
+cups:
+  meta                 2.4.2
+curl:
+  meta                 7.82.0
+cve-update-db-native:
+  meta                 unknown (skipped: Skip recipe when cve-check class is not loaded.)
+cve-update-nvd2-native:
+  meta                 unknown (skipped: Skip recipe when cve-check class is not loaded.)
+cwautomacros:
+  meta                 20110201
+db:
+  meta                 1:5.3.28
+dbus:
+  meta                 1.14.8
+dbus-glib:
+  meta                 0.112
+dbus-wait:
+  meta                 0.1+gitAUTOINC+6cc6077a36
+debianutils:
+  meta                 5.7
+dejagnu:
+  meta                 1.6.3
+depmodwrapper-cross:
+  meta                 1.0
+desktop-file-utils:
+  meta                 0.26
+dhcpcd:
+  meta                 9.4.1
+diffoscope:
+  meta                 208
+diffstat:
+  meta                 1.64
+diffutils:
+  meta                 3.10
+distcc:
+  meta                 3.4
+distcc-config:
+  meta                 1.0
+dmidecode:
+  meta                 3.3
+dnf:
+  meta                 4.11.1
+docbook-xml-dtd4:
+  meta                 4.5
+docbook-xsl-stylesheets:
+  meta                 1.79.1
+dos2unix:
+  meta                 7.4.2
+dosfstools:
+  meta                 4.2
+dpkg:
+  meta                 1.21.4
+dropbear:
+  meta                 2020.81
+dtc:
+  meta                 1.6.1
+dwarfsrcfiles:
+  meta                 1.0
+e2fsprogs:
+  meta                 1.46.5
+ed:
+  meta                 1.18
+efibootmgr:
+  meta                 17
+efivar:
+  meta                 38
+elfutils:
+  meta                 0.186
+ell:
+  meta                 0.50
+enchant2:
+  meta                 2.3.2
+encodings:
+  meta                 1:1.0.6
+epiphany:
+  meta                 42.4
+erofs-utils:
+  meta                 1.4
+ethtool:
+  meta                 5.16
+eudev:
+  meta                 3.2.10
+expat:
+  meta                 2.5.0
+expect:
+  meta                 5.45.4
+ffmpeg:
+  meta                 5.0.3 (skipped: because it has a restricted license 'commercial'. Which is not listed in LICENSE_FLAGS_ACCEPTED)
+file:
+  meta                 5.41
+findutils:
+  meta                 4.9.0
+flac:
+  meta                 1.3.4
+flex:
+  meta                 2.6.4
+font-alias:
+  meta                 1:1.0.4
+font-util:
+  meta                 1.3.3
+fontconfig:
+  meta                 2.13.1
+formfactor:
+  meta                 0.0
+freetype:
+  meta                 2.11.1
+fribidi:
+  meta                 1.0.13
+fts:
+  meta                 1.2.7 (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+gawk:
+  meta                 5.1.1
+gcc:
+  meta                 11.5.0
+gcc-cross-canadian-x86-64:
+  meta                 11.5.0
+gcc-cross-x86_64:
+  meta                 11.5.0
+gcc-crosssdk-aarch64-pokysdk-linux:
+  meta                 11.5.0
+gcc-runtime:
+  meta                 11.5.0
+gcc-sanitizers:
+  meta                 11.5.0
+gcc-source-11.5.0:
+  meta                 11.5.0
+gcompat:
+  meta                 git (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+gconf:
+  meta                 3.2.6
+gcr:
+  meta                 3.40.0
+gdb:
+  meta                 11.2
+gdb-cross-canadian-x86-64:
+  meta                 11.2
+gdb-cross-x86_64:
+  meta                 11.2
+gdbm:
+  meta                 1.23
+gdk-pixbuf:
+  meta                 2.42.10
+gettext:
+  meta                 0.21
+gettext-minimal-native:
+  meta                 0.21
+ghostscript:
+  meta                 9.55.0
+gi-docgen:
+  meta                 2022.1
+git:
+  meta                 2.35.7
+glew:
+  meta                 2.2.0
+glib-2.0:
+  meta                 1:2.72.3
+glib-networking:
+  meta                 2.72.2
+glibc:
+  meta                 2.35
+glibc-locale:
+  meta                 2.35
+glibc-mtrace:
+  meta                 2.35
+glibc-scripts:
+  meta                 2.35
+glibc-tests:
+  meta                 2.35
+glibc-testsuite:
+  meta                 2.35
+glide:
+  meta                 0.13.3
+glslang:
+  meta                 1:1.3.204.1
+gma500-gfx-check:
+  meta-yocto-bsp       1.0 (skipped: incompatible with machine qemux86-64 (not in COMPATIBLE_MACHINE))
+gmp:
+  meta                 6.2.1
+gnome-desktop-testing:
+  meta                 2021.1
+gnu-config:
+  meta                 20211108+gitAUTOINC+191bcb948f
+gnu-efi:
+  meta                 3.0.14
+gnupg:
+  meta                 2.3.7
+gnutls:
+  meta                 3.7.4
+go:
+  meta                 1.17.13
+go-binary-native:
+  meta                 1.17.13
+go-cross-canadian-x86-64:
+  meta                 1.17.13
+go-cross-core2-64:
+  meta                 1.17.13
+go-crosssdk-aarch64-pokysdk-linux:
+  meta                 1.17.13
+go-helloworld:
+  meta                 0.1
+go-native:
+  meta                 1.17.13
+go-runtime:
+  meta                 1.17.13
+gobject-introspection:
+  meta                 1.72.0
+gperf:
+  meta                 3.1
+gpgme:
+  meta                 1.17.1
+gptfdisk:
+  meta                 1.0.8
+grep:
+  meta                 3.7
+groff:
+  meta                 1.22.4
+grub:
+  meta                 2.06
+grub-bootconf:
+  meta                 1.00
+grub-efi:
+  meta                 2.06
+gsettings-desktop-schemas:
+  meta                 42.0
+gst-devtools:
+  meta                 1.20.7
+gst-examples:
+  meta                 1.18.6
+gstreamer1.0:
+  meta                 1.20.7
+gstreamer1.0-libav:
+  meta                 1.20.7 (skipped: because it has a restricted license 'commercial'. Which is not listed in LICENSE_FLAGS_ACCEPTED)
+gstreamer1.0-meta-base:
+  meta                 1.0
+gstreamer1.0-omx:
+  meta                 1.20.7 (skipped: because it has a restricted license 'commercial'. Which is not listed in LICENSE_FLAGS_ACCEPTED)
+gstreamer1.0-plugins-bad:
+  meta                 1.20.7
+gstreamer1.0-plugins-base:
+  meta                 1.20.7
+gstreamer1.0-plugins-good:
+  meta                 1.20.7
+gstreamer1.0-plugins-ugly:
+  meta                 1.20.7 (skipped: because it has a restricted license 'commercial'. Which is not listed in LICENSE_FLAGS_ACCEPTED)
+gstreamer1.0-python:
+  meta                 1.20.7
+gstreamer1.0-rtsp-server:
+  meta                 1.20.7
+gstreamer1.0-vaapi:
+  meta                 1.20.7
+gtk+3:
+  meta                 3.24.34
+gtk-doc:
+  meta                 1.33.2
+gzip:
+  meta                 1.12
+harfbuzz:
+  meta                 4.0.1
+hdparm:
+  meta                 9.63
+help2man:
+  meta                 1.49.1
+hicolor-icon-theme:
+  meta                 0.17
+hwlatdetect:
+  meta                 1:2.3
+i2c-tools:
+  meta                 4.3
+icecc-create-env:
+  meta                 0.1
+icu:
+  meta                 70.1
+ifupdown:
+  meta                 0.8.39
+igt-gpu-tools:
+  meta                 1.26
+inetutils:
+  meta                 2.2
+init-ifupdown:
+  meta                 1.0
+init-system-helpers:
+  meta                 1.62
+initramfs-boot:
+  meta                 1.0
+initramfs-framework:
+  meta                 1.0
+initramfs-live-boot:
+  meta                 1.0
+initramfs-live-boot-tiny:
+  meta                 1.0
+initramfs-live-install:
+  meta                 1.0
+initramfs-live-install-efi:
+  meta                 1.0
+initramfs-live-install-efi-testfs:
+  meta                 1.0
+initramfs-live-install-testfs:
+  meta                 1.0
+initramfs-module-install:
+  meta                 1.0
+initramfs-module-install-efi:
+  meta                 1.0
+initramfs-module-setup-live:
+  meta                 1.0
+initscripts:
+  meta                 1.0
+intltool:
+  meta                 0.51.0
+iproute2:
+  meta                 5.17.0
+iptables:
+  meta                 1.8.7
+iputils:
+  meta                 20211215
+iso-codes:
+  meta                 4.15.0
+itstool:
+  meta                 2.0.7
+iw:
+  meta                 5.16
+jquery:
+  meta                 3.6.0
+json-c:
+  meta                 0.15
+json-glib:
+  meta                 1.6.6
+kbd:
+  meta                 2.4.0
+kea:
+  meta                 2.0.2
+kern-tools-native:
+  meta                 0.3+gitAUTOINC+2d01f24bc7
+kernel-devsrc:
+  meta                 1.0
+kexec-tools:
+  meta                 2.0.23
+keymaps:
+  meta                 1.0
+kmod:
+  meta                 29
+kmscube:
+  meta                 git
+l3afpad:
+  meta                 0.8.18.1.11+gitAUTOINC+3cdccdc950
+lame:
+  meta                 3.100
+ldconfig-native:
+  meta                 2.12.1
+less:
+  meta                 600
+liba52:
+  meta                 0.7.4
+libacpi:
+  meta                 0.2
+libaio:
+  meta                 0.3.112
+libarchive:
+  meta                 3.6.2
+libassuan:
+  meta                 2.5.6
+libatomic-ops:
+  meta                 7.6.14
+libbsd:
+  meta                 0.11.5
+libcap:
+  meta                 2.66
+libcap-ng:
+  meta                 0.8.2
+libcap-ng-python:
+  meta                 0.8.2
+libcgroup:
+  meta                 2.0.2
+libcheck:
+  meta                 0.15.2
+libcomps:
+  meta                 0.1.18
+libconvert-asn1-perl:
+  meta                 0.33
+libcroco:
+  meta                 0.6.13
+libdaemon:
+  meta                 0.14
+libdazzle:
+  meta                 3.44.0
+libdmx:
+  meta                 1:1.1.4
+libdnf:
+  meta                 0.66.0
+libdrm:
+  meta                 2.4.110
+libedit:
+  meta                 20210910-3.1
+libepoxy:
+  meta                 1.5.10
+liberation-fonts:
+  meta                 1:2.1.5
+liberror-perl:
+  meta                 0.17029
+libevdev:
+  meta                 1.12.1
+libevent:
+  meta                 2.1.12
+libexif:
+  meta                 0.6.24
+libfakekey:
+  meta                 0.3+gitAUTOINC+7ad885912e
+libffi:
+  meta                 3.4.4
+libfm:
+  meta                 1.3.2
+libfm-extra:
+  meta                 1.3.2
+libfontenc:
+  meta                 1:1.1.4
+libgcc:
+  meta                 11.5.0
+libgcc-initial:
+  meta                 11.5.0
+libgcrypt:
+  meta                 1.9.4
+libgfortran:
+  meta                 11.5 (skipped: libgfortran needs fortran support to be enabled in the compiler)
+libgit2:
+  meta                 1.4.5
+libgloss:
+  meta                 4.2.0 (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+libglu:
+  meta                 2:9.0.2
+libgpg-error:
+  meta                 1.44
+libgudev:
+  meta                 237
+libhandy:
+  meta                 1.5.0
+libical:
+  meta                 3.0.16
+libice:
+  meta                 1:1.0.10
+libidn2:
+  meta                 2.3.2
+libinput:
+  meta                 1.19.4
+libjitterentropy:
+  meta                 3.4.0
+libjpeg-turbo:
+  meta                 1:2.1.5.1
+libksba:
+  meta                 1.6.4
+libmatchbox:
+  meta                 1.12
+libmd:
+  meta                 1.0.4
+libmicrohttpd:
+  meta                 0.9.76
+libmnl:
+  meta                 1.0.4
+libmodule-build-perl:
+  meta                 0.4231
+libmodulemd:
+  meta                 2.14.0
+libmpc:
+  meta                 1.2.1
+libnewt:
+  meta                 0.52.23
+libnl:
+  meta                 1:3.5.0
+libnotify:
+  meta                 0.7.9
+libnsl2:
+  meta                 2.0.0
+libnss-mdns:
+  meta                 0.15.1
+libnss-nis:
+  meta                 3.2
+libogg:
+  meta                 1.3.5
+libomxil:
+  meta                 0.9.3
+libpam:
+  meta                 1.5.2 (skipped: missing required distro feature 'pam' (not in DISTRO_FEATURES))
+libpcap:
+  meta                 1.10.1
+libpciaccess:
+  meta                 0.16
+libpcre:
+  meta                 8.45
+libpcre2:
+  meta                 10.40
+libpipeline:
+  meta                 1.5.5
+libpng:
+  meta                 1.6.39
+libproxy:
+  meta                 0.4.17
+libpsl:
+  meta                 0.21.1
+libpthread-stubs:
+  meta                 0.4
+libptytty:
+  meta                 2.0
+librepo:
+  meta                 1.14.3
+librsvg:
+  meta                 2.52.10
+libsamplerate0:
+  meta                 0.2.2
+libsdl2:
+  meta                 2.0.20
+libseccomp:
+  meta                 2.5.3
+libsecret:
+  meta                 0.20.5
+libsm:
+  meta                 1:1.2.3
+libsndfile1:
+  meta                 1.0.31
+libsolv:
+  meta                 0.7.22
+libsoup:
+  meta                 3.0.7
+libsoup-2.4:
+  meta                 2.74.2
+libssh2:
+  meta                 1.10.0
+libssp-nonshared:
+  meta                 unknown (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+libstd-rs:
+  meta                 1.59.0
+libtasn1:
+  meta                 4.20.0
+libtest-needs-perl:
+  meta                 0.002009
+libtheora:
+  meta                 1.1.1
+libtimedate-perl:
+  meta                 2.30
+libtirpc:
+  meta                 1.3.2
+libtool:
+  meta                 2.4.7
+libtool-cross:
+  meta                 2.4.7
+libtool-native:
+  meta                 2.4.7
+libubootenv:
+  meta                 0.3.2
+libucontext:
+  meta                 1.2 (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+libunistring:
+  meta                 1.0
+libunwind:
+  meta                 1.6.2
+liburcu:
+  meta                 0.13.2
+liburi-perl:
+  meta                 5.08
+libusb1:
+  meta                 1.0.26
+libuv:
+  meta                 1.44.2
+libva:
+  meta                 2.14.0
+libva-initial:
+  meta                 2.14.0
+libva-utils:
+  meta                 2.14.0
+libvorbis:
+  meta                 1.3.7
+libwebp:
+  meta                 1.2.4
+libwpe:
+  meta                 1.12.3
+libx11:
+  meta                 1:1.7.3.1
+libx11-compose-data:
+  meta                 1.6.8 (skipped: libx11-compose-data is incompatible with x11 distro feature, use libx11 instead.)
+libxau:
+  meta                 1:1.0.9
+libxcb:
+  meta                 1.14
+libxcomposite:
+  meta                 1:0.4.5
+libxcrypt:
+  meta                 4.4.33
+libxcrypt-compat:
+  meta                 4.4.33
+libxcursor:
+  meta                 1:1.2.0
+libxcvt:
+  meta                 0.1.1
+libxdamage:
+  meta                 1:1.1.5
+libxdmcp:
+  meta                 1:1.1.3
+libxext:
+  meta                 1:1.3.4
+libxfixes:
+  meta                 1:6.0.0
+libxfont:
+  meta                 1:1.5.4
+libxfont2:
+  meta                 2.0.5
+libxft:
+  meta                 1:2.3.4
+libxi:
+  meta                 1:1.8
+libxinerama:
+  meta                 1:1.1.4
+libxkbcommon:
+  meta                 1.4.1
+libxkbfile:
+  meta                 1:1.1.0
+libxml-namespacesupport-perl:
+  meta                 1.12
+libxml-parser-perl:
+  meta                 2.46
+libxml-perl:
+  meta                 0.08
+libxml-sax-base-perl:
+  meta                 1.09
+libxml-sax-perl:
+  meta                 1.02
+libxml-simple-perl:
+  meta                 2.25
+libxml2:
+  meta                 2.9.14
+libxmu:
+  meta                 1:1.1.3
+libxpm:
+  meta                 1:3.5.17
+libxrandr:
+  meta                 1:1.5.2
+libxrender:
+  meta                 1:0.9.10
+libxres:
+  meta                 1:1.2.1
+libxscrnsaver:
+  meta                 1:1.2.3
+libxshmfence:
+  meta                 1.3
+libxslt:
+  meta                 1.1.35
+libxt:
+  meta                 1:1.2.1
+libxtst:
+  meta                 1:1.2.3
+libxv:
+  meta                 1.0.11
+libxvmc:
+  meta                 1:1.0.12
+libxxf86vm:
+  meta                 1:1.1.4
+libyaml:
+  meta                 0.2.5
+lighttpd:
+  meta                 1.4.67
+linux-dummy:
+  meta                 unknown (skipped: PREFERRED_PROVIDER_virtual/kernel set to linux-yocto, not linux-dummy)
+linux-firmware:
+  meta                 1:20240909
+linux-libc-headers:
+  meta                 5.16
+linux-yocto:
+  meta                 5.15.186+gitAUTOINC+5932fcfa69_48702d462c
+  meta                 5.10.234+gitAUTOINC+876ae2ac4c_0ef80b0842
+linux-yocto-dev:
+  meta                 unknown (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-dev to enable it)
+linux-yocto-rt:
+  meta                 5.10 (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-rt to enable it)
+  meta                 5.15 (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-rt to enable it)
+linux-yocto-tiny:
+  meta                 5.10 (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-tiny to enable it)
+  meta                 5.15 (skipped: Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-tiny to enable it)
+llvm:
+  meta                 13.0.1
+log4cplus:
+  meta                 2.0.8
+logrotate:
+  meta                 3.20.1
+lrzsz:
+  meta                 0.12.20
+lsb-release:
+  meta                 1.4
+lsof:
+  meta                 4.94.0
+ltp:
+  meta                 20220121
+lttng-modules:
+  meta                 2.13.14
+lttng-tools:
+  meta                 2.13.9
+lttng-ust:
+  meta                 2:2.13.6
+lua:
+  meta                 5.4.4
+lz4:
+  meta                 1:1.9.4
+lzip:
+  meta                 1.23
+lzo:
+  meta                 2.10
+lzop:
+  meta                 1.04
+m4:
+  meta                 1.4.19
+m4-native:
+  meta                 1.4.19
+make:
+  meta                 4.3
+make-mod-scripts:
+  meta                 1.0
+makedepend:
+  meta                 1:1.0.6
+makedevs:
+  meta                 1.0.1
+man-db:
+  meta                 2.10.2
+man-pages:
+  meta                 5.13
+matchbox-config-gtk:
+  meta                 0.2
+matchbox-desktop:
+  meta                 2.2
+matchbox-keyboard:
+  meta                 0.1.1
+matchbox-panel-2:
+  meta                 2.11
+matchbox-session:
+  meta                 0.1
+matchbox-session-sato:
+  meta                 0.1
+matchbox-terminal:
+  meta                 0.2
+matchbox-theme-sato:
+  meta                 0.2
+matchbox-wm:
+  meta                 1.2.2
+mc:
+  meta                 4.8.27
+mdadm:
+  meta                 4.2
+menu-cache:
+  meta                 1.1.0
+mesa:
+  meta                 2:22.0.3
+mesa-demos:
+  meta                 8.4.0
+mesa-gl:
+  meta                 22.0.3 (skipped: PREFERRED_PROVIDER_virtual/libgl set to mesa, not mesa-gl)
+meson:
+  meta                 0.61.3
+meta-environment-extsdk-qemux86-64:
+  meta                 1.0
+meta-environment-qemux86-64:
+  meta                 1.0
+meta-extsdk-toolchain:
+  meta                 1.0
+meta-go-toolchain:
+  meta                 1.0
+meta-ide-support:
+  meta                 1.0
+meta-toolchain:
+  meta                 1.0
+meta-world-pkgdata:
+  meta                 1.0
+mingetty:
+  meta                 1.08
+mini-x-session:
+  meta                 0.1
+minicom:
+  meta                 2.8
+mkfontscale:
+  meta                 1.2.2
+mmc-utils:
+  meta                 0.1+gitAUTOINC+b7e4d5a6ae
+mobile-broadband-provider-info:
+  meta                 1:20230416
+modutils-initscripts:
+  meta                 1.0
+mpeg2dec:
+  meta                 0.5.1 (skipped: because it has a restricted license 'commercial'. Which is not listed in LICENSE_FLAGS_ACCEPTED)
+mpfr:
+  meta                 4.1.1
+mpg123:
+  meta                 1.29.3
+msmtp:
+  meta                 1.8.20
+mtd-utils:
+  meta                 2.1.5
+mtdev:
+  meta                 1.1.6
+mtools:
+  meta                 4.0.38
+musl:
+  meta                 git (skipped: PREFERRED_PROVIDER_virtual/libc set to glibc, not musl)
+musl-obstack:
+  meta                 unknown (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+musl-utils:
+  meta                 unknown (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+nasm:
+  meta                 2.15.05
+nativesdk-buildtools-perl-dummy:
+  meta                 1.0
+nativesdk-icecc-toolchain:
+  meta                 0.1
+nativesdk-libtool:
+  meta                 2.4.7
+nativesdk-packagegroup-sdk-host:
+  meta                 1.0
+nativesdk-qemu-helper:
+  meta                 1.0
+nativesdk-sdk-provides-dummy:
+  meta                 1.0
+ncurses:
+  meta                 6.3+20220423
+neard:
+  meta                 0.16
+net-tools:
+  meta                 2.10
+netbase:
+  meta                 1:6.3
+nettle:
+  meta                 3.7.3
+newlib:
+  meta                 4.2.0 (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+nfs-export-root:
+  meta                 1.0
+nfs-utils:
+  meta                 2.6.1
+nghttp2:
+  meta                 1.47.0
+ninja:
+  meta                 1.10.2
+npth:
+  meta                 1.6
+nss-myhostname:
+  meta                 0.3
+numactl:
+  meta                 2.0.16
+ofono:
+  meta                 1.34
+opensbi:
+  meta                 1.0 (skipped: incompatible with host x86_64-poky-linux (not in COMPATIBLE_HOST))
+openssh:
+  meta                 8.9p1
+openssl:
+  meta                 3.0.17
+opkg:
+  meta                 1:0.5.0
+opkg-arch-config:
+  meta                 1.0
+opkg-keyrings:
+  meta                 1.0
+opkg-utils:
+  meta                 0.5.0
+orc:
+  meta                 0.4.40
+os-release:
+  meta                 1.0
+ovmf:
+  meta                 edk2-stable202202
+ovmf-shell-image:
+  meta                 1.0
+p11-kit:
+  meta                 0.24.1
+package-index:
+  meta                 1.0
+packagegroup-base:
+  meta                 1.0
+packagegroup-core-base-utils:
+  meta                 1.0
+packagegroup-core-boot:
+  meta                 1.0
+packagegroup-core-buildessential:
+  meta                 1.0
+packagegroup-core-eclipse-debug:
+  meta                 1.0
+packagegroup-core-full-cmdline:
+  meta                 1.0
+packagegroup-core-nfs:
+  meta                 1.0
+packagegroup-core-sdk:
+  meta                 1.0
+packagegroup-core-ssh-dropbear:
+  meta                 1.0
+packagegroup-core-ssh-openssh:
+  meta                 1.0
+packagegroup-core-standalone-sdk-target:
+  meta                 1.0
+packagegroup-core-tools-debug:
+  meta                 1.0
+packagegroup-core-tools-profile:
+  meta                 1.0
+packagegroup-core-tools-testapps:
+  meta                 1.0
+packagegroup-core-weston:
+  meta                 1.0
+packagegroup-core-x11:
+  meta                 1.0
+packagegroup-core-x11-base:
+  meta                 1.0
+packagegroup-core-x11-sato:
+  meta                 1.0
+packagegroup-core-x11-xserver:
+  meta                 1.0
+packagegroup-cross-canadian-qemux86-64:
+  meta                 1.0
+packagegroup-go-cross-canadian-qemux86-64:
+  meta                 1.0
+packagegroup-go-sdk-target:
+  meta                 1.0
+packagegroup-rust-cross-canadian-qemux86-64:
+  meta                 1.0
+packagegroup-self-hosted:
+  meta                 1.0
+pango:
+  meta                 1.50.4
+parted:
+  meta                 3.4
+patch:
+  meta                 2.7.6
+patchelf:
+  meta                 0.14.5
+pbzip2:
+  meta                 1.1.13
+pciutils:
+  meta                 3.7.0
+pcmanfm:
+  meta                 1.3.2
+perf:
+  meta                 1.0
+perl:
+  meta                 5.34.3
+perlcross:
+  meta                 1.5.2
+piglit:
+  meta                 1.0+gitrAUTOINC+2f80c7cc9c
+pigz:
+  meta                 2.7
+pinentry:
+  meta                 1.2.0
+pixman:
+  meta                 1:0.40.0
+pkgconf:
+  meta                 1.8.0
+pkgconfig:
+  meta                 0.29.2+gitAUTOINC+d97db4fae4
+pm-utils:
+  meta                 1.4.1
+pointercal-xinput:
+  meta                 0.0
+pong-clock:
+  meta                 1.0
+popt:
+  meta                 1.18
+powertop:
+  meta                 2.14
+ppp:
+  meta                 2.4.9
+ppp-dialin:
+  meta                 0.1
+procps:
+  meta                 3.3.17
+pseudo:
+  meta                 1.9.0+gitAUTOINC+28dcefb809
+psmisc:
+  meta                 23.4
+psplash:
+  meta                 0.1+gitAUTOINC+44afb7506d
+ptest-runner:
+  meta                 2.4.2+gitAUTOINC+bcb82804da
+pulseaudio:
+  meta                 15.0
+pulseaudio-client-conf-sato:
+  meta                 1
+puzzles:
+  meta                 2:0.0+gitAUTOINC+c43a34fbfe
+python3:
+  meta                 3.10.18
+python3-alabaster:
+  meta                 0.7.12
+python3-asn1crypto:
+  meta                 1.5.1
+python3-async:
+  meta                 0.6.2
+python3-atomicwrites:
+  meta                 1.4.0
+python3-attrs:
+  meta                 21.4.0
+python3-babel:
+  meta                 2.9.1
+python3-bcrypt:
+  meta                 3.2.0
+python3-certifi:
+  meta                 2021.10.8
+python3-cffi:
+  meta                 1.15.0
+python3-chardet:
+  meta                 4.0.0
+python3-cryptography:
+  meta                 36.0.2
+python3-cryptography-vectors:
+  meta                 36.0.2
+python3-cython:
+  meta                 0.29.28
+python3-dbus:
+  meta                 1.2.18
+python3-dbusmock:
+  meta                 0.27.3
+python3-docutils:
+  meta                 0.18.1
+python3-dtschema:
+  meta                 2022.1
+python3-dtschema-wrapper:
+  meta                 2021.10
+python3-extras:
+  meta                 1.0.0
+python3-flit-core:
+  meta                 3.7.1
+python3-git:
+  meta                 3.1.37
+python3-gitdb:
+  meta                 4.0.9
+python3-hypothesis:
+  meta                 6.39.5
+python3-idna:
+  meta                 3.3
+python3-imagesize:
+  meta                 1.3.0
+python3-importlib-metadata:
+  meta                 4.11.3
+python3-iniconfig:
+  meta                 1.1.1
+python3-iniparse:
+  meta                 0.5
+python3-installer:
+  meta                 0.5.1
+python3-iso8601:
+  meta                 1.0.2
+python3-jinja2:
+  meta                 3.1.4
+python3-jsonpointer:
+  meta                 2.2
+python3-jsonschema:
+  meta                 4.4.0
+python3-libarchive-c:
+  meta                 4.0
+python3-magic:
+  meta                 0.4.25
+python3-mako:
+  meta                 1.1.6
+python3-markdown:
+  meta                 3.3.6
+python3-markupsafe:
+  meta                 2.1.1
+python3-more-itertools:
+  meta                 8.12.0
+python3-ndg-httpsclient:
+  meta                 0.5.1
+python3-numpy:
+  meta                 1.22.3
+python3-packaging:
+  meta                 21.3
+python3-pathlib2:
+  meta                 2.3.7
+python3-pbr:
+  meta                 5.8.1
+python3-pip:
+  meta                 22.0.3
+python3-pluggy:
+  meta                 1.0.0
+python3-ply:
+  meta                 3.11
+python3-poetry-core:
+  meta                 1.0.8
+python3-pretend:
+  meta                 1.0.9
+python3-psutil:
+  meta                 5.9.0
+python3-py:
+  meta                 1.11.0
+python3-pyasn1:
+  meta                 0.4.8
+python3-pycairo:
+  meta                 1.21.0
+python3-pycparser:
+  meta                 2.21
+python3-pycryptodome:
+  meta                 3.14.1
+python3-pycryptodomex:
+  meta                 3.14.1
+python3-pyelftools:
+  meta                 0.28
+python3-pygments:
+  meta                 2.11.2
+python3-pygobject:
+  meta                 3.42.0
+python3-pyopenssl:
+  meta                 22.0.0
+python3-pyparsing:
+  meta                 3.0.7
+python3-pyrsistent:
+  meta                 0.18.1
+python3-pysocks:
+  meta                 1.7.1
+python3-pytest:
+  meta                 7.1.1
+python3-pytest-runner:
+  meta                 6.0.0
+python3-pytest-subtests:
+  meta                 0.7.0
+python3-pytz:
+  meta                 2022.1
+python3-pyyaml:
+  meta                 6.0
+python3-requests:
+  meta                 2.27.1
+python3-rfc3339-validator:
+  meta                 0.1.4
+python3-rfc3986-validator:
+  meta                 0.1.1
+python3-rfc3987:
+  meta                 1.3.8
+python3-ruamel-yaml:
+  meta                 0.17.21
+python3-scons:
+  meta                 4.3.0
+python3-semantic-version:
+  meta                 2.9.0
+python3-setuptools:
+  meta                 59.5.0
+python3-setuptools-rust-native:
+  meta                 1.1.2
+python3-setuptools-scm:
+  meta                 6.4.2
+python3-six:
+  meta                 1.16.0
+python3-smartypants:
+  meta                 2.0.0
+python3-smmap:
+  meta                 5.0.0
+python3-snowballstemmer:
+  meta                 2.2.0
+python3-sortedcontainers:
+  meta                 2.4.0
+python3-sphinx:
+  meta                 4.4.0
+python3-sphinx-rtd-theme:
+  meta                 0.5.0
+python3-sphinxcontrib-applehelp:
+  meta                 1.0.2
+python3-sphinxcontrib-devhelp:
+  meta                 1.0.2
+python3-sphinxcontrib-htmlhelp:
+  meta                 2.0.0
+python3-sphinxcontrib-jsmath:
+  meta                 1.0.1
+python3-sphinxcontrib-qthelp:
+  meta                 1.0.3
+python3-sphinxcontrib-serializinghtml:
+  meta                 1.1.5
+python3-strict-rfc3339:
+  meta                 0.7
+python3-subunit:
+  meta                 1.4.0
+python3-testtools:
+  meta                 2.5.0
+python3-toml:
+  meta                 0.10.2
+python3-tomli:
+  meta                 2.0.1
+python3-typing-extensions:
+  meta                 3.10.0.0
+python3-typogrify:
+  meta                 2.0.7
+python3-urllib3:
+  meta                 1.26.18
+python3-vcversioner:
+  meta                 2.16.0.0
+python3-wcwidth:
+  meta                 0.2.5
+python3-webcolors:
+  meta                 1.11.1
+python3-wheel:
+  meta                 0.37.1
+python3-zipp:
+  meta                 3.7.0
+qemu:
+  meta                 6.2.0
+qemu-helper-native:
+  meta                 1.0
+qemu-native:
+  meta                 6.2.0
+qemu-system-native:
+  meta                 6.2.0
+qemuwrapper-cross:
+  meta                 1.0
+quilt:
+  meta                 0.67
+quilt-native:
+  meta                 0.67
+quota:
+  meta                 4.06
+re2c:
+  meta                 3.0
+readline:
+  meta                 8.1.2
+repo:
+  meta                 2.22
+resolvconf:
+  meta                 1.91
+rgb:
+  meta                 1:1.0.6
+rng-tools:
+  meta                 6.15
+rpcbind:
+  meta                 1.2.6
+rpcsvc-proto:
+  meta                 1.4.3
+rpm:
+  meta                 1:4.17.1
+rsync:
+  meta                 3.2.7
+rt-tests:
+  meta                 1:2.3
+ruby:
+  meta                 3.1.3
+run-postinsts:
+  meta                 1.0
+rust:
+  meta                 1.59.0 (skipped: Rust recipe doesn't work for target builds at this time. Fixes welcome.)
+rust-cross-canadian-x86-64:
+  meta                 1.59.0
+rust-cross-core2-64-glibc:
+  meta                 1.59.0
+rust-crosssdk-aarch64-glibc:
+  meta                 1.59.0
+rust-hello-world:
+  meta                 git
+rust-llvm:
+  meta                 1.59.0
+rust-tools-cross-canadian-x86-64:
+  meta                 1.59.0
+rxvt-unicode:
+  meta                 9.30
+sato-screenshot:
+  meta                 0.3
+sbc:
+  meta                 1.5
+screen:
+  meta                 4.9.0
+seatd:
+  meta                 0.6.4
+sed:
+  meta                 4.8
+serf:
+  meta                 1.3.10
+setserial:
+  meta                 2.17
+settings-daemon:
+  meta                 0.0.2
+shaderc:
+  meta                 2022.1
+shadow:
+  meta                 4.11.1
+shadow-securetty:
+  meta                 4.6
+shadow-sysroot:
+  meta                 4.6
+shared-mime-info:
+  meta                 2.1
+shutdown-desktop:
+  meta                 1.0
+signing-keys:
+  meta                 1.0
+slang:
+  meta                 2.3.2
+socat:
+  meta                 1.7.4.4
+speex:
+  meta                 1.2.0
+speexdsp:
+  meta                 1.2.0
+spirv-headers:
+  meta                 1:1.3.204.1
+spirv-tools:
+  meta                 1:1.3.204.1
+sqlite3:
+  meta                 3:3.38.5
+squashfs-tools:
+  meta                 4.5
+ssh-pregen-hostkeys:
+  meta                 1.0
+startup-notification:
+  meta                 0.12
+strace:
+  meta                 5.16
+stress-ng:
+  meta                 0.13.12
+subversion:
+  meta                 1.14.2
+sudo:
+  meta                 1.9.17p1
+swig:
+  meta                 4.0.2
+sysfsutils:
+  meta                 2.1.0
+sysklogd:
+  meta                 2.3.0
+syslinux:
+  meta                 6.04-pre2
+sysstat:
+  meta                 12.4.5
+systemd:
+  meta                 250.14 (skipped: missing required distro feature 'systemd' (not in DISTRO_FEATURES))
+systemd-boot:
+  meta                 250.14
+systemd-bootchart:
+  meta                 234 (skipped: missing required distro feature 'systemd' (not in DISTRO_FEATURES))
+systemd-bootconf:
+  meta                 1.00
+systemd-compat-units:
+  meta                 unknown (skipped: missing required distro feature 'systemd' (not in DISTRO_FEATURES))
+systemd-conf:
+  meta                 1:1.0
+systemd-machine-units:
+  meta                 1.0
+systemd-serialgetty:
+  meta                 unknown (skipped: missing required distro feature 'systemd' (not in DISTRO_FEATURES))
+systemd-systemctl-native:
+  meta                 1.0
+systemtap:
+  meta                 4.6
+systemtap-native:
+  meta                 4.6
+systemtap-uprobes:
+  meta                 4.6
+sysvinit:
+  meta                 3.01
+sysvinit-inittab:
+  meta                 2.88dsf
+taglib:
+  meta                 1.12
+tar:
+  meta                 1.35
+target-sdk-provides-dummy:
+  meta                 1.0
+tcf-agent:
+  meta                 1.7.0+gitAUTOINC+2735e3d6b7
+tcl:
+  meta                 8.6.11
+tcp-wrappers:
+  meta                 7.6
+testexport-tarball:
+  meta                 1.0
+texinfo:
+  meta                 6.8
+texinfo-dummy-native:
+  meta                 1.0
+tiff:
+  meta                 4.3.0
+time:
+  meta                 1.9
+tiny-init:
+  meta-poky            1.0
+ttf-bitstream-vera:
+  meta                 1.10
+tzcode-native:
+  meta                 2025b
+tzdata:
+  meta                 2025b
+u-boot:
+  meta                 1:2022.01
+u-boot-tools:
+  meta                 1:2022.01
+udev-extraconf:
+  meta                 1.1
+unfs3:
+  meta                 0.9.22+AUTOINC+c12a5c69a8
+unifdef:
+  meta                 2.12
+uninative-tarball:
+  meta                 1.0
+unzip:
+  meta                 1:6.0
+update-rc.d:
+  meta                 0.8
+usbinit:
+  meta                 1.0
+usbutils:
+  meta                 014
+util-linux:
+  meta                 2.37.4
+util-linux-libuuid:
+  meta                 2.37.4
+util-macros:
+  meta                 1:1.19.3
+v86d:
+  meta                 0.1.10
+vala:
+  meta                 0.56.3
+valgrind:
+  meta                 3.18.1
+vim:
+  meta                 9.1.1198
+vim-tiny:
+  meta                 9.1.1198
+virglrenderer:
+  meta                 0.9.1
+volatile-binds:
+  meta                 unknown (skipped: missing required distro feature 'systemd' (not in DISTRO_FEATURES))
+vte:
+  meta                 0.66.2
+vulkan-headers:
+  meta                 1.3.204.1
+vulkan-loader:
+  meta                 1.3.204.1
+vulkan-samples:
+  meta                 git
+vulkan-tools:
+  meta                 1.3.204.1
+waffle:
+  meta                 1.7.2
+watchdog:
+  meta                 5.16
+watchdog-config:
+  meta                 1.0
+wayland:
+  meta                 1.20.0
+wayland-protocols:
+  meta                 1.25
+wayland-utils:
+  meta                 1.0.0
+webkitgtk:
+  meta                 2.36.8
+weston:
+  meta                 10.0.2
+weston-init:
+  meta                 1.0
+wget:
+  meta                 1.21.4
+which:
+  meta                 2.21
+wic-tools:
+  meta                 1.0
+wireless-regdb:
+  meta                 2024.10.07
+wpa-supplicant:
+  meta                 2.10
+wpebackend-fdo:
+  meta                 1.14.2
+x11perf:
+  meta                 1:1.6.1
+x264:
+  meta                 git (skipped: because it has a restricted license 'commercial'. Which is not listed in LICENSE_FLAGS_ACCEPTED)
+xauth:
+  meta                 1:1.1.1
+xcb-proto:
+  meta                 1.14.1
+xcb-util:
+  meta                 0.4.0
+xcb-util-image:
+  meta                 0.4.0
+xcb-util-keysyms:
+  meta                 0.4.0
+xcb-util-renderutil:
+  meta                 0.3.9
+xcb-util-wm:
+  meta                 0.4.1
+xcursor-transparent-theme:
+  meta                 0.1.1+gitAUTOINC+23c8af5ba4
+xdg-utils:
+  meta                 1.1.3
+xdpyinfo:
+  meta                 1:1.3.4
+xev:
+  meta                 1:1.2.5
+xeyes:
+  meta                 1:1.2.0
+xf86-input-evdev:
+  meta                 2:2.10.6
+xf86-input-keyboard:
+  meta                 2:1.9.0
+xf86-input-libinput:
+  meta                 2:1.2.1
+xf86-input-mouse:
+  meta                 2:1.9.3
+xf86-input-synaptics:
+  meta                 2:1.9.2
+xf86-input-vmmouse:
+  meta                 2:13.1.0
+xf86-video-cirrus:
+  meta                 2:1.5.3
+xf86-video-fbdev:
+  meta                 2:0.5.0
+xf86-video-intel:
+  meta                 2:2.99.917+gitAUTOINC+31486f40f8
+xf86-video-vesa:
+  meta                 2:2.5.0
+xf86-video-vmware:
+  meta                 2:13.3.0
+xhost:
+  meta                 1:1.0.8
+xinetd:
+  meta                 2.3.15.4
+xinit:
+  meta                 1:1.4.1
+xinput:
+  meta                 1.6.3
+xinput-calibrator:
+  meta                 0.7.5+gitAUTOINC+18ec53f1ca
+xkbcomp:
+  meta                 1.4.5
+xkeyboard-config:
+  meta                 2.35.1
+xmlto:
+  meta                 0.0.28
+xmodmap:
+  meta                 1:1.0.11
+xorg-minimal-fonts:
+  meta                 1:1.0
+xorgproto:
+  meta                 2021.5
+xprop:
+  meta                 1:1.2.5
+xrandr:
+  meta                 1:1.5.1
+xrestop:
+  meta                 0.4
+xserver-nodm-init:
+  meta                 3.0
+xserver-xf86-config:
+  meta                 0.1
+xserver-xorg:
+  meta                 2:21.1.8
+xset:
+  meta                 1:1.2.4
+xtrans:
+  meta                 1:1.4.0
+xuser-account:
+  meta                 0.1
+xvinfo:
+  meta                 1:1.1.4
+xwayland:
+  meta                 22.1.8
+xwininfo:
+  meta                 0:1.1.5
+xxhash:
+  meta                 0.8.1
+xz:
+  meta                 5.2.6
+zip:
+  meta                 3.0
+zlib:
+  meta                 1.2.11
+zstd:
+  meta                 1.5.2
