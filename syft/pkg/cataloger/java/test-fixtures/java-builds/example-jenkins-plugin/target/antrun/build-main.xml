@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <mkdir dir="/Users/pavelfurman/git/syft/syft/pkg/cataloger/java/test-fixtures/java-builds/example-jenkins-plugin/target/tmp" />
+  </target>
+</project>

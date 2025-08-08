@@ -1,0 +1,20 @@
+Manifest-Version: 1.0
+Group-Id: io.jenkins.plugins
+Short-Name: example-jenkins-plugin
+Long-Name: Example Jenkins Plugin
+Plugin-Version: 1.0-SNAPSHOT (private-08/08/2025 13:47-pavelfurman)
+Hudson-Version: 2.204
+Jenkins-Version: 2.204
+Plugin-Dependencies: structs:1.20
+Plugin-Developers: 
+Plugin-License-Name: MIT License
+Plugin-License-Url: https://opensource.org/licenses/MIT
+Plugin-ScmUrl: https://github.com/jenkinsci/plugin-pom/example-jenkins-p
+ lugin
+Libraries: /Users/pavelfurman/git/syft/syft/pkg/cataloger/java/test-fixt
+ ures/java-builds/example-jenkins-plugin/src/main/resources,/Users/pavel
+ furman/git/syft/syft/pkg/cataloger/java/test-fixtures/java-builds/examp
+ le-jenkins-plugin/target/classes
+Resource-Path: /Users/pavelfurman/git/syft/syft/pkg/cataloger/java/test-
+ fixtures/java-builds/example-jenkins-plugin/src/main/webapp
+

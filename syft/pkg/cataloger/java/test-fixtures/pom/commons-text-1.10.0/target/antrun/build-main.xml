@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <copy todir="/Users/pavelfurman/git/syft/syft/pkg/cataloger/java/test-fixtures/pom/commons-text-1.10.0/target/apidocs/META-INF">
+      <fileset dir="/Users/pavelfurman/git/syft/syft/pkg/cataloger/java/test-fixtures/pom/commons-text-1.10.0">
+        <include name="LICENSE.txt" />
+        <include name="NOTICE.txt" />
+        <include name="LICENSE" />
+        <include name="NOTICE" />
+      </fileset>
+    </copy>
+  </target>
+</project>

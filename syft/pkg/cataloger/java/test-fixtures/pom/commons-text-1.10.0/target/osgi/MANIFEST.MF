@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 21
+Bundle-Description: Apache Commons Text is a library focused on algorith
+ ms working on strings.
+Bundle-DocURL: https://commons.apache.org/proper/commons-text
+Bundle-License: https://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: Apache Commons Text
+Bundle-SymbolicName: org.apache.commons.commons-text
+Bundle-Vendor: The Apache Software Foundation
+Bundle-Version: 1.10.0
+Created-By: Apache Maven Bundle Plugin 5.1.8
+Tool: Bnd-6.3.1.202206071316

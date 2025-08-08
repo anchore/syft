@@ -92,3 +92,31 @@ type PythonRequirementsEntry struct {
 	URL               string   `json:"url,omitempty" mapstructure:"URL"`
 	Markers           string   `json:"markers,omitempty" mapstructure:"Markers"`
 }
+
+// PythonUvLockEntry represents a single package entry within a uv.lock file.
+type PythonUvLockEntry struct {
+	Name         string                         `json:"name"`
+	Version      string                         `json:"version"`
+	Source       *PythonUvLockEntrySource       `json:"source,omitempty"`
+	Dependencies []PythonUvLockEntryDependency  `json:"dependencies,omitempty"`
+	Wheels       []PythonUvLockEntryWheel       `json:"wheels,omitempty"`
+}
+
+type PythonUvLockEntrySource struct {
+	Registry string `json:"registry,omitempty"`
+	Git      string `json:"git,omitempty"`
+	Rev      string `json:"rev,omitempty"`
+	Path     string `json:"path,omitempty"`
+	URL      string `json:"url,omitempty"`
+}
+
+type PythonUvLockEntryDependency struct {
+	Name    string `json:"name"`
+	Version string `json:"version,omitempty"`
+	Marker  string `json:"marker,omitempty"`
+}
+
+type PythonUvLockEntryWheel struct {
+	URL  string `json:"url"`
+	Hash string `json:"hash"`
+}

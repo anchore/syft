@@ -290,6 +290,8 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
+replace github.com/anchore/syft => github.com/kodemsec/syft v0.0.0
+
 retract (
 	v1.25.0 // published with a replace directive (confusing for API users)
 	v0.53.2

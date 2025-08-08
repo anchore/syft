@@ -1,0 +1,75 @@
+// ------------------------------------------------------------------
+// Transitive dependencies of this project determined from the
+// maven pom organized by organization.
+// ------------------------------------------------------------------
+
+Apache Directory API All
+
+
+From: 'Apache MINA Project' (https://mina.apache.org/)
+  - Apache MINA Core (https://mina.apache.org/mina-core/) org.apache.mina:mina-core:bundle:2.1.3
+    License: Apache 2.0 License  (https://www.apache.org/licenses/LICENSE-2.0)
+
+From: 'QOS.ch' (http://www.qos.ch)
+  - SLF4J API Module (http://www.slf4j.org) org.slf4j:slf4j-api:jar:1.7.26
+    License: MIT License  (http://www.opensource.org/licenses/mit-license.php)
+
+From: 'The Apache Software Foundation' (http://www.apache.org/)
+  - Apache ServiceMix :: Bundles :: antlr (http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.antlr/) org.apache.servicemix.bundles:org.apache.servicemix.bundles.antlr:bundle:2.7.7_5
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache ServiceMix :: Bundles :: dom4j (http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.dom4j/) org.apache.servicemix.bundles:org.apache.servicemix.bundles.dom4j:bundle:2.1.1_1
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache ServiceMix :: Bundles :: xpp3 (http://servicemix.apache.org/bundles-pom/org.apache.servicemix.bundles.xpp3/) org.apache.servicemix.bundles:org.apache.servicemix.bundles.xpp3:bundle:1.1.4c_7
+    License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
+
+From: 'The Apache Software Foundation' (https://www.apache.org/)
+  - Apache Commons Codec (https://commons.apache.org/proper/commons-codec/) commons-codec:commons-codec:jar:1.13
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Commons Collections (https://commons.apache.org/proper/commons-collections/) org.apache.commons:commons-collections4:jar:4.4
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Commons Lang (http://commons.apache.org/proper/commons-lang/) org.apache.commons:commons-lang3:jar:3.9
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Commons Pool (https://commons.apache.org/proper/commons-pool/) org.apache.commons:commons-pool2:jar:2.7.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory API ASN.1 API (http://directory.apache.org/api-parent/api-asn1-parent/api-asn1-api/) org.apache.directory.api:api-asn1-api:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory API ASN.1 BER (http://directory.apache.org/api-parent/api-asn1-parent/api-asn1-ber/) org.apache.directory.api:api-asn1-ber:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API DSML Engine (http://directory.apache.org/api-parent/api-dsml-parent/api-dsml-engine/) org.apache.directory.api:api-dsml-engine:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API DSML Parser (http://directory.apache.org/api-parent/api-dsml-parent/api-dsml-parser/) org.apache.directory.api:api-dsml-parser:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API I18n (http://directory.apache.org/api-parent/api-i18n/) org.apache.directory.api:api-i18n:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Client API (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-client-parent/api-ldap-client-api/) org.apache.directory.api:api-ldap-client-api:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Codec Core (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-codec-parent/api-ldap-codec-core/) org.apache.directory.api:api-ldap-codec-core:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Codec Standalone (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-codec-parent/api-ldap-codec-standalone/) org.apache.directory.api:api-ldap-codec-standalone:jar:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Extras ACI (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-extras-parent/api-ldap-extras-aci/) org.apache.directory.api:api-ldap-extras-aci:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Extras Codec (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-extras-parent/api-ldap-extras-codec/) org.apache.directory.api:api-ldap-extras-codec:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Extras Codec API (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-extras-parent/api-ldap-extras-codec-api/) org.apache.directory.api:api-ldap-extras-codec-api:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Extras Stored Procedures (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-extras-parent/api-ldap-extras-sp/) org.apache.directory.api:api-ldap-extras-sp:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Extras Trigger (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-extras-parent/api-ldap-extras-trigger/) org.apache.directory.api:api-ldap-extras-trigger:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Extras Util (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-extras-parent/api-ldap-extras-util/) org.apache.directory.api:api-ldap-extras-util:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Model (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-model/) org.apache.directory.api:api-ldap-model:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Network MINA (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-net-parent/api-ldap-net-mina/) org.apache.directory.api:api-ldap-net-mina:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Schema Converter (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-schema-parent/api-ldap-schema-converter/) org.apache.directory.api:api-ldap-schema-converter:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Schema Data (http://directory.apache.org/api-parent/api-ldap-parent/api-ldap-schema-parent/api-ldap-schema-data/) org.apache.directory.api:api-ldap-schema-data:jar:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+  - Apache Directory LDAP API Utilities (http://directory.apache.org/api-parent/api-util/) org.apache.directory.api:api-util:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+
+

@@ -1,0 +1,15 @@
+// ------------------------------------------------------------------
+// Transitive dependencies of this project determined from the
+// maven pom organized by organization.
+// ------------------------------------------------------------------
+
+Apache Directory API ASN.1 API
+
+
+From: 'The Apache Software Foundation' (https://www.apache.org/)
+  - Apache Directory LDAP API I18n (http://directory.apache.org/api-parent/api-i18n/) org.apache.directory.api:api-i18n:bundle:2.0.0
+    License: Apache License, Version 2.0  (https://www.apache.org/licenses/LICENSE-2.0.txt)
+
+
+
+

@@ -49,6 +49,7 @@ const (
 	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	YoctoPkg                Type = "yocto"
 )
 
 // AllPkgs represents all supported package types
@@ -92,6 +93,7 @@ var AllPkgs = []Type{
 	TerraformPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	YoctoPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -166,6 +168,8 @@ func (t Type) PackageURLType() string {
 		return "wordpress-plugin"
 	case HomebrewPkg:
 		return "homebrew"
+	case YoctoPkg:
+		return "openembedded"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -252,6 +256,8 @@ func TypeByName(name string) Type {
 		return WordpressPluginPkg
 	case "homebrew":
 		return HomebrewPkg
+	case "openembedded", "yocto":
+		return YoctoPkg
 	default:
 		return UnknownPkg
 	}

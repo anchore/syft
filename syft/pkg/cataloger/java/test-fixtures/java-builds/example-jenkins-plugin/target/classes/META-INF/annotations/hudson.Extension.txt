@@ -1,0 +1,2 @@
+# informational; use java -jar sezpoz.jar to see authoritative contents
+io.jenkins.plugins.sample.HelloWorldBuilder$DescriptorImpl

@@ -1,0 +1,17 @@
+workflow-api
+workflow-basic-steps
+workflow-cps
+workflow-durable-task-step
+workflow-job
+workflow-scm-step
+workflow-step-api
+workflow-support
+apache-httpcomponents-client-4-api
+display-url-api
+durable-task
+mailer
+scm-api
+script-security
+structs
+ace-editor
+jquery-detached

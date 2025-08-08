@@ -1,0 +1,463 @@
+<rdf:RDF
+    xmlns:spdx="http://spdx.org/rdf/terms#"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#"
+    xmlns:doap="http://usefulinc.com/ns/doap#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+  <spdx:SpdxDocument rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-DOCUMENT">
+    <spdx:relationship>
+      <spdx:Relationship>
+        <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_describes"/>
+        <spdx:relatedSpdxElement>
+          <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-1">
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-3">
+                    <spdx:licenseConcluded>
+                      <spdx:noassertion rdf:about="http://spdx.org/rdf/terms#noassertion"/>
+                    </spdx:licenseConcluded>
+                    <spdx:licenseDeclared>
+                      <spdx:License rdf:about="http://spdx.org/licenses/EPL-2.0">
+                        <rdfs:seeAlso>https://www.eclipse.org/legal/epl-v20.html</rdfs:seeAlso>
+                        <rdfs:seeAlso>https://www.eclipse.org/legal/epl-2.0</rdfs:seeAlso>
+                        <rdfs:seeAlso>https://www.opensource.org/licenses/EPL-2.0</rdfs:seeAlso>
+                        <spdx:licenseId>EPL-2.0</spdx:licenseId>
+                        <spdx:isOsiApproved>true</spdx:isOsiApproved>
+                        <spdx:licenseText>Eclipse Public License - v 2.0 THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE (“AGREEMENT”). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT. 1. DEFINITIONS “Contribution” means: a) in the case of the initial Contributor, the initial content Distributed under this Agreement, and b) in the case of each subsequent Contributor: i) changes to the Program, and ii) additions to the Program; where such changes and/or additions to the Program originate from and are Distributed by that particular Contributor. A Contribution “originates” from a Contributor if it was added to the Program by such Contributor itself or anyone acting on such Contributor's behalf. Contributions do not include changes or additions to the Program that are not Modified Works. “Contributor” means any person or entity that Distributes the Program. “Licensed Patents” mean patent claims licensable by a Contributor which are necessarily infringed by the use or sale of its Contribution alone or when combined with the Program. “Program” means the Contributions Distributed in accordance with this Agreement. “Recipient” means anyone who receives the Program under this Agreement or any Secondary License (as applicable), including Contributors. “Derivative Works” shall mean any work, whether in Source Code or other form, that is based on (or derived from) the Program and for which the editorial revisions, annotations, elaborations, or other modifications represent, as a whole, an original work of authorship. “Modified Works” shall mean any work in Source Code or other form that results from an addition to, deletion from, or modification of the contents of the Program, including, for purposes of clarity any new file in Source Code form that contains any contents of the Program. Modified Works shall not include works that contain only declarations, interfaces, types, classes, structures, or files of the Program solely in each case in order to link to, bind by name, or subclass the Program or Modified Works thereof. “Distribute” means the acts of a) distributing or b) making available in any manner that enables the transfer of a copy. “Source Code” means the form of a Program preferred for making modifications, including but not limited to software source code, documentation source, and configuration files. “Secondary License” means either the GNU General Public License, Version 2.0, or any later versions of that license, including any exceptions or additional permissions as identified by the initial Contributor. 2. GRANT OF RIGHTS a) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, Distribute and sublicense the Contribution of such Contributor, if any, and such Derivative Works. b) Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free patent license under Licensed Patents to make, use, sell, offer to sell, import and otherwise transfer the Contribution of such Contributor, if any, in Source Code or other form. This patent license shall apply to the combination of the Contribution and the Program if, at the time the Contribution is added by the Contributor, such addition of the Contribution causes such combination to be covered by the Licensed Patents. The patent license shall not apply to any other combinations which include the Contribution. No hardware per se is licensed hereunder. c) Recipient understands that although each Contributor grants the licenses to its Contributions set forth herein, no assurances are provided by any Contributor that the Program does not infringe the patent or other intellectual property rights of any other entity. Each Contributor disclaims any liability to Recipient for claims brought by any other entity based on infringement of intellectual property rights or otherwise. As a condition to exercising the rights and licenses granted hereunder, each Recipient hereby assumes sole responsibility to secure any other intellectual property rights needed, if any. For example, if a third party patent license is required to allow Recipient to Distribute the Program, it is Recipient's responsibility to acquire that license before distributing the Program. d) Each Contributor represents that to its knowledge it has sufficient copyright rights in its Contribution, if any, to grant the copyright license set forth in this Agreement. e) Notwithstanding the terms of any Secondary License, no Contributor makes additional grants to any Recipient (other than those set forth in this Agreement) as a result of such Recipient's receipt of the Program under the terms of a Secondary License (if permitted under the terms of Section 3). 3. REQUIREMENTS 3.1 If a Contributor Distributes the Program in any form, then: a) the Program must also be made available as Source Code, in accordance with section 3.2, and the Contributor must accompany the Program with a statement that the Source Code for the Program is available under this Agreement, and informs Recipients how to obtain it in a reasonable manner on or through a medium customarily used for software exchange; and b) the Contributor may Distribute the Program under a license different than this Agreement, provided that such license: i) effectively disclaims on behalf of all other Contributors all warranties and conditions, express and implied, including warranties or conditions of title and non-infringement, and implied warranties or conditions of merchantability and fitness for a particular purpose; ii) effectively excludes on behalf of all other Contributors all liability for damages, including direct, indirect, special, incidental and consequential damages, such as lost profits; iii) does not attempt to limit or alter the recipients' rights in the Source Code under section 3.2; and iv) requires any subsequent distribution of the Program by any party to be under a license that satisfies the requirements of this section 3. 3.2 When the Program is Distributed as Source Code: a) it must be made available under this Agreement, or if the Program (i) is combined with other material in a separate file or files made available under a Secondary License, and (ii) the initial Contributor attached to the Source Code the notice described in Exhibit A of this Agreement, then the Program may be made available under the terms of such Secondary Licenses, and b) a copy of this Agreement must be included with each copy of the Program. 3.3 Contributors may not remove or alter any copyright, patent, trademark, attribution notices, disclaimers of warranty, or limitations of liability (‘notices’) contained within the Program from any copy of the Program which they Distribute, provided that Contributors may add their own appropriate notices. 4. COMMERCIAL DISTRIBUTION Commercial distributors of software may accept certain responsibilities with respect to end users, business partners and the like. While this license is intended to facilitate the commercial use of the Program, the Contributor who includes the Program in a commercial product offering should do so in a manner which does not create potential liability for other Contributors. Therefore, if a Contributor includes the Program in a commercial product offering, such Contributor (“Commercial Contributor”) hereby agrees to defend and indemnify every other Contributor (“Indemnified Contributor”) against any losses, damages and costs (collectively “Losses”) arising from claims, lawsuits and other legal actions brought by a third party against the Indemnified Contributor to the extent caused by the acts or omissions of such Commercial Contributor in connection with its distribution of the Program in a commercial product offering. The obligations in this section do not apply to any claims or Losses relating to any actual or alleged intellectual property infringement. In order to qualify, an Indemnified Contributor must: a) promptly notify the Commercial Contributor in writing of such claim, and b) allow the Commercial Contributor to control, and cooperate with the Commercial Contributor in, the defense and any related settlement negotiations. The Indemnified Contributor may participate in any such claim at its own expense. For example, a Contributor might include the Program in a commercial product offering, Product X. That Contributor is then a Commercial Contributor. If that Commercial Contributor then makes performance claims, or offers warranties related to Product X, those performance claims and warranties are such Commercial Contributor's responsibility alone. Under this section, the Commercial Contributor would have to defend claims against the other Contributors related to those performance claims and warranties, and if a court requires any other Contributor to pay any damages as a result, the Commercial Contributor must pay those damages. 5. NO WARRANTY EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE PROGRAM IS PROVIDED ON AN “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the appropriateness of using and distributing the Program and assumes all risks associated with its exercise of rights under this Agreement, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and unavailability or interruption of operations. 6. DISCLAIMER OF LIABILITY EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. 7. GENERAL If any provision of this Agreement is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this Agreement, and without further action by the parties hereto, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable. If Recipient institutes patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Program itself (excluding combinations of the Program with other software or hardware) infringes such Recipient's patent(s), then such Recipient's rights granted under Section 2(b) shall terminate as of the date such litigation is filed. All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive. Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be Distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to Distribute the Program (including its Contributions) under the new version. Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved. Nothing in this Agreement is intended to be enforceable by any entity that is not a Contributor or Recipient. No third-party beneficiary rights are created under this Agreement. Exhibit A – Form of Secondary Licenses Notice “This Source Code may also be made available under the following Secondary Licenses when the conditions for such availability set forth in the Eclipse Public License, v. 2.0 are satisfied: {name license(s), version(s), and exceptions or additional permissions here}.” Simply including a copy of this Agreement, including this Exhibit A is not sufficient to license the Source Code under Secondary Licenses. If it is not possible or desirable to put the notice in a particular file, then You may include the notice in a location (such as a LICENSE file in a relevant directory) where a recipient would be likely to look for such a notice. You may add additional accurate notices of copyright ownership.</spdx:licenseText>
+                        <spdx:name>Eclipse Public License 2.0</spdx:name>
+                        <rdfs:seeAlso>https://projects.eclipse.org/license/epl-2.0</rdfs:seeAlso>
+                        <rdfs:comment>Secondary Licenses declared via Exhibit A should be represented using the disjunctive OR operator (See: SPDX spec, section on SPDX License Expressions and https://www.eclipse.org/legal/epl-2.0/faq.php for more info).
+
+</rdfs:comment>         <spdx:standardLicenseTemplate>&lt;&lt;beginOptional&gt;&gt;Eclipse Public License - v 2.0
+
+&lt;&lt;endOptional&gt;&gt;
+THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+
+   &lt;&lt;var;name="bullet";original="1.";match=".{0,20}"&gt;&gt; DEFINITIONS
+   "Contribution" means:
+
+      &lt;&lt;var;name="bullet";original="a)";match=".{0,20}"&gt;&gt; in the case of the initial Contributor, the initial content Distributed under this Agreement, and
+      &lt;&lt;var;name="bullet";original="b)";match=".{0,20}"&gt;&gt; in the case of each subsequent Contributor:
+         &lt;&lt;var;name="bullet";original="i)";match=".{0,20}"&gt;&gt; changes to the Program, and
+         &lt;&lt;var;name="bullet";original="ii)";match=".{0,20}"&gt;&gt; additions to the Program;
+      where such changes and/or additions to the Program originate from and are Distributed by that particular Contributor. A Contribution "originates" from a Contributor if it was added to the Program by such Contributor itself or anyone acting on such Contributor's behalf. Contributions do not include changes or additions to the Program that are not Modified Works.
+
+   "Contributor" means any person or entity that Distributes the Program.
+
+   "Licensed Patents" mean patent claims licensable by a Contributor which are necessarily infringed by the use or sale of its Contribution alone or when combined with the Program.
+
+   "Program" means the Contributions Distributed in accordance with this Agreement.
+
+   "Recipient" means anyone who receives the Program under this Agreement or any Secondary License (as applicable), including Contributors.
+
+   "Derivative Works" shall mean any work, whether in Source Code or other form, that is based on (or derived from) the Program and for which the editorial revisions, annotations, elaborations, or other modifications represent, as a whole, an original work of authorship.
+
+   "Modified Works" shall mean any work in Source Code or other form that results from an addition to, deletion from, or modification of the contents of the Program, including, for purposes of clarity any new file in Source Code form that contains any contents of the Program. Modified Works shall not include works that contain only declarations, interfaces, types, classes, structures, or files of the Program solely in each case in order to link to, bind by name, or subclass the Program or Modified Works thereof.
+
+   "Distribute" means the acts of a) distributing or b) making available in any manner that enables the transfer of a copy.
+
+   "Source Code" means the form of a Program preferred for making modifications, including but not limited to software source code, documentation source, and configuration files.
+
+   "Secondary License" means either the GNU General Public License, Version 2.0, or any later versions of that license, including any exceptions or additional permissions as identified by the initial Contributor.
+
+   &lt;&lt;var;name="bullet";original="2.";match=".{0,20}"&gt;&gt; GRANT OF RIGHTS
+      &lt;&lt;var;name="bullet";original="a)";match=".{0,20}"&gt;&gt; Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, Distribute and sublicense the Contribution of such Contributor, if any, and such Derivative Works.
+      &lt;&lt;var;name="bullet";original="b)";match=".{0,20}"&gt;&gt; Subject to the terms of this Agreement, each Contributor hereby grants Recipient a non-exclusive, worldwide, royalty-free patent license under Licensed Patents to make, use, sell, offer to sell, import and otherwise transfer the Contribution of such Contributor, if any, in Source Code or other form. This patent license shall apply to the combination of the Contribution and the Program if, at the time the Contribution is added by the Contributor, such addition of the Contribution causes such combination to be covered by the Licensed Patents. The patent license shall not apply to any other combinations which include the Contribution. No hardware per se is licensed hereunder.
+      &lt;&lt;var;name="bullet";original="c)";match=".{0,20}"&gt;&gt; Recipient understands that although each Contributor grants the licenses to its Contributions set forth herein, no assurances are provided by any Contributor that the Program does not infringe the patent or other intellectual property rights of any other entity. Each Contributor disclaims any liability to Recipient for claims brought by any other entity based on infringement of intellectual property rights or otherwise. As a condition to exercising the rights and licenses granted hereunder, each Recipient hereby assumes sole responsibility to secure any other intellectual property rights needed, if any. For example, if a third party patent license is required to allow Recipient to Distribute the Program, it is Recipient's responsibility to acquire that license before distributing the Program.
+      &lt;&lt;var;name="bullet";original="d)";match=".{0,20}"&gt;&gt; Each Contributor represents that to its knowledge it has sufficient copyright rights in its Contribution, if any, to grant the copyright license set forth in this Agreement.
+      &lt;&lt;var;name="bullet";original="e)";match=".{0,20}"&gt;&gt; Notwithstanding the terms of any Secondary License, no Contributor makes additional grants to any Recipient (other than those set forth in this Agreement) as a result of such Recipient's receipt of the Program under the terms of a Secondary License (if permitted under the terms of Section 3).
+   &lt;&lt;var;name="bullet";original="3.";match=".{0,20}"&gt;&gt; REQUIREMENTS
+      &lt;&lt;var;name="bullet";original="3.1";match=".{0,20}"&gt;&gt; If a Contributor Distributes the Program in any form, then:
+         &lt;&lt;var;name="bullet";original="a)";match=".{0,20}"&gt;&gt; the Program must also be made available as Source Code, in accordance with section 3.2, and the Contributor must accompany the Program with a statement that the Source Code for the Program is available under this Agreement, and informs Recipients how to obtain it in a reasonable manner on or through a medium customarily used for software exchange; and
+         &lt;&lt;var;name="bullet";original="b)";match=".{0,20}"&gt;&gt; the Contributor may Distribute the Program under a license different than this Agreement, provided that such license:
+            &lt;&lt;var;name="bullet";original="i)";match=".{0,20}"&gt;&gt; effectively disclaims on behalf of all other Contributors all warranties and conditions, express and implied, including warranties or conditions of title and non-infringement, and implied warranties or conditions of merchantability and fitness for a particular purpose;
+            &lt;&lt;var;name="bullet";original="ii)";match=".{0,20}"&gt;&gt; effectively excludes on behalf of all other Contributors all liability for damages, including direct, indirect, special, incidental and consequential damages, such as lost profits;
+            &lt;&lt;var;name="bullet";original="iii)";match=".{0,20}"&gt;&gt; does not attempt to limit or alter the recipients' rights in the Source Code under section 3.2; and
+            &lt;&lt;var;name="bullet";original="iv)";match=".{0,20}"&gt;&gt; requires any subsequent distribution of the Program by any party to be under a license that satisfies the requirements of this section 3.
+      &lt;&lt;var;name="bullet";original="3.2";match=".{0,20}"&gt;&gt; When the Program is Distributed as Source Code:
+         &lt;&lt;var;name="bullet";original="a)";match=".{0,20}"&gt;&gt; it must be made available under this Agreement, or if the Program (i) is combined with other material in a separate file or files made available under a Secondary License, and (ii) the initial Contributor attached to the Source Code the notice described in Exhibit A of this Agreement, then the Program may be made available under the terms of such Secondary Licenses, and
+         &lt;&lt;var;name="bullet";original="b)";match=".{0,20}"&gt;&gt; a copy of this Agreement must be included with each copy of the Program.
+      &lt;&lt;var;name="bullet";original="3.3";match=".{0,20}"&gt;&gt; Contributors may not remove or alter any copyright, patent, trademark, attribution notices, disclaimers of warranty, or limitations of liability ("notices") contained within the Program from any copy of the Program which they Distribute, provided that Contributors may add their own appropriate notices.
+   &lt;&lt;var;name="bullet";original="4.";match=".{0,20}"&gt;&gt; COMMERCIAL DISTRIBUTION
+   Commercial distributors of software may accept certain responsibilities with respect to end users, business partners and the like. While this license is intended to facilitate the commercial use of the Program, the Contributor who includes the Program in a commercial product offering should do so in a manner which does not create potential liability for other Contributors. Therefore, if a Contributor includes the Program in a commercial product offering, such Contributor ("Commercial Contributor") hereby agrees to defend and indemnify every other Contributor ("Indemnified Contributor") against any losses, damages and costs (collectively "Losses") arising from claims, lawsuits and other legal actions brought by a third party against the Indemnified Contributor to the extent caused by the acts or omissions of such Commercial Contributor in connection with its distribution of the Program in a commercial product offering. The obligations in this section do not apply to any claims or Losses relating to any actual or alleged intellectual property infringement. In order to qualify, an Indemnified Contributor must: a) promptly notify the Commercial Contributor in writing of such claim, and b) allow the Commercial Contributor to control, and cooperate with the Commercial Contributor in, the defense and any related settlement negotiations. The Indemnified Contributor may participate in any such claim at its own expense.
+
+   For example, a Contributor might include the Program in a commercial product offering, Product X. That Contributor is then a Commercial Contributor. If that Commercial Contributor then makes performance claims, or offers warranties related to Product X, those performance claims and warranties are such Commercial Contributor's responsibility alone. Under this section, the Commercial Contributor would have to defend claims against the other Contributors related to those performance claims and warranties, and if a court requires any other Contributor to pay any damages as a result, the Commercial Contributor must pay those damages.
+
+   &lt;&lt;var;name="bullet";original="5.";match=".{0,20}"&gt;&gt; NO WARRANTY
+   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is solely responsible for determining the appropriateness of using and distributing the Program and assumes all risks associated with its exercise of rights under this Agreement, including but not limited to the risks and costs of program errors, compliance with applicable laws, damage to or loss of data, programs or equipment, and unavailability or interruption of operations.
+
+   &lt;&lt;var;name="bullet";original="6.";match=".{0,20}"&gt;&gt; DISCLAIMER OF LIABILITY
+   EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, AND TO THE EXTENT PERMITTED BY APPLICABLE LAW, NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+   &lt;&lt;var;name="bullet";original="7.";match=".{0,20}"&gt;&gt; GENERAL
+   If any provision of this Agreement is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this Agreement, and without further action by the parties hereto, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
+
+   If Recipient institutes patent litigation against any entity (including a cross-claim or counterclaim in a lawsuit) alleging that the Program itself (excluding combinations of the Program with other software or hardware) infringes such Recipient's patent(s), then such Recipient's rights granted under Section 2(b) shall terminate as of the date such litigation is filed.
+
+   All Recipient's rights under this Agreement shall terminate if it fails to comply with any of the material terms or conditions of this Agreement and does not cure such failure in a reasonable period of time after becoming aware of such noncompliance. If all Recipient's rights under this Agreement terminate, Recipient agrees to cease use and distribution of the Program as soon as reasonably practicable. However, Recipient's obligations under this Agreement and any licenses granted by Recipient relating to the Program shall continue and survive.
+
+   Everyone is permitted to copy and distribute copies of this Agreement, but in order to avoid inconsistency the Agreement is copyrighted and may only be modified in the following manner. The Agreement Steward reserves the right to publish new versions (including revisions) of this Agreement from time to time. No one other than the Agreement Steward has the right to modify this Agreement. The Eclipse Foundation is the initial Agreement Steward. The Eclipse Foundation may assign the responsibility to serve as the Agreement Steward to a suitable separate entity. Each new version of the Agreement will be given a distinguishing version number. The Program (including Contributions) may always be Distributed subject to the version of the Agreement under which it was received. In addition, after a new version of the Agreement is published, Contributor may elect to Distribute the Program (including its Contributions) under the new version.
+
+   Except as expressly stated in Sections 2(a) and 2(b) above, Recipient receives no rights or licenses to the intellectual property of any Contributor under this Agreement, whether expressly, by implication, estoppel or otherwise. All rights in the Program not expressly granted under this Agreement are reserved. Nothing in this Agreement is intended to be enforceable by any entity that is not a Contributor or Recipient. No third-party beneficiary rights are created under this Agreement.
+
+   Exhibit A - Form of Secondary Licenses Notice
+   "This Source Code may also be made available under the following Secondary Licenses when the conditions for such availability set forth in the Eclipse Public License, v. 2.0 are satisfied: {name license(s), version(s), and exceptions or additional permissions here}."
+
+   Simply including a copy of this Agreement, including this Exhibit A is not sufficient to license the Source Code under Secondary Licenses.
+
+   If it is not possible or desirable to put the notice in a particular file, then You may include the notice in a location (such as a LICENSE file in a relevant directory) where a recipient would be likely to look for such a notice.
+
+   You may add additional accurate notices of copyright ownership.
+   
+   </spdx:standardLicenseTemplate>
+                        <spdx:isFsfLibre>true</spdx:isFsfLibre>
+                      </spdx:License>
+                    </spdx:licenseDeclared>
+                    <spdx:versionInfo>5.9.1</spdx:versionInfo>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <doap:homepage>https://junit.org/junit5/</doap:homepage>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:description>Module "junit-jupiter" of JUnit 5.</spdx:description>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:name>JUnit Jupiter (Aggregator)</spdx:name>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:summary>Module "junit-jupiter" of JUnit 5.</spdx:summary>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:versionInfo>1.10.0</spdx:versionInfo>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-7">
+                    <spdx:licenseDeclared>
+                      <spdx:ConjunctiveLicenseSet>
+                        <spdx:member>
+                          <spdx:License rdf:about="http://spdx.org/licenses/MIT">
+                            <spdx:standardLicenseTemplate>&lt;&lt;beginOptional&gt;&gt;MIT License
+
+&lt;&lt;endOptional&gt;&gt; &lt;&lt;var;name="copyright";original="Copyright (c) &lt;year&gt; &lt;copyright holders&gt;  ";match=".{0,5000}"&gt;&gt;
+Permission is hereby granted, free of charge, to any person obtaining a copy of &lt;&lt;var;name="files";original="this software and associated documentation files";match="this\s+software\s+and\s+associated\s+documentation\s+files|this\s+source\s+file"&gt;&gt; (the " &lt;&lt;var;name="Software1";original="Software";match="Software|Materials"&gt;&gt; "), to deal in the &lt;&lt;var;name="Software2";original="Software";match="Software|Materials"&gt;&gt; without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the &lt;&lt;var;name="Software3";original="Software";match="Software|Materials"&gt;&gt; , and to permit persons to whom the &lt;&lt;var;name="Software4";original="Software";match="Software|Materials"&gt;&gt; is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice&lt;&lt;beginOptional&gt;&gt; (including the next paragraph)&lt;&lt;endOptional&gt;&gt; shall be included in all copies or substantial portions of the &lt;&lt;var;name="Software5";original="Software";match="Software|Materials"&gt;&gt; .
+
+THE &lt;&lt;var;name="Software-verb";original="SOFTWARE IS";match="SOFTWARE IS|MATERIALS ARE"&gt;&gt; PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL &lt;&lt;var;name="copyrightHolder";original="THE AUTHORS OR COPYRIGHT HOLDERS";match=".+"&gt;&gt; BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE &lt;&lt;var;name="Software7";original="SOFTWARE";match="SOFTWARE|MATERIALS"&gt;&gt; OR THE USE OR OTHER DEALINGS IN THE &lt;&lt;var;name="Software8";original="SOFTWARE";match="SOFTWARE|MATERIALS"&gt;&gt; .
+
+</spdx:standardLicenseTemplate>
+                            <spdx:isFsfLibre>true</spdx:isFsfLibre>
+                            <spdx:isOsiApproved>true</spdx:isOsiApproved>
+                            <spdx:licenseText>MIT License Copyright (c) Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</spdx:licenseText>
+                            <rdfs:seeAlso>https://opensource.org/license/mit/</rdfs:seeAlso>
+                            <rdfs:seeAlso>http://opensource.org/licenses/MIT</rdfs:seeAlso>
+                            <spdx:name>MIT License</spdx:name>
+                            <spdx:licenseId>MIT</spdx:licenseId>
+                          </spdx:License>
+                        </spdx:member>
+                        <spdx:member>
+                          <spdx:License rdf:about="http://spdx.org/licenses/UPL-1.0">
+                            <spdx:standardLicenseTemplate>&lt;&lt;var;name="copyright";original="Copyright (c) [year] [copyright holders]  ";match=".{0,5000}"&gt;&gt;&lt;&lt;beginOptional&gt;&gt; The Universal Permissive License (UPL), Version 1.0
+
+&lt;&lt;endOptional&gt;&gt;
+Subject to the condition set forth below, permission is hereby granted to any person obtaining a copy of this software, associated documentation and/or data (collectively the "Software"), free of charge and under any and all copyright rights in the Software, and any and all patent rights owned or freely licensable by each licensor hereunder covering either (i) the unmodified Software as contributed to or provided by such licensor, or (ii) the Larger Works (as defined below), to deal in both
+
+   &lt;&lt;var;name="bullet";original="(a)";match=".{0,20}"&gt;&gt; the Software, and
+   &lt;&lt;var;name="bullet";original="(b)";match=".{0,20}"&gt;&gt; any piece of software and/or hardware listed in the lrgrwrks.txt file if one is included with the Software (each a "Larger Work" to which the Software is contributed by such licensors),
+without restriction, including without limitation the rights to copy, create derivative works of, display, perform, and distribute the Software and make, use, sell, offer for sale, import, export, have made, and have sold the Software and the Larger Work(s), and to sublicense the foregoing rights on either these or other terms.
+
+This license is subject to the following condition:
+
+The above copyright notice and either this complete permission notice or at a minimum a reference to the UPL must be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+</spdx:standardLicenseTemplate>
+                            <spdx:isOsiApproved>true</spdx:isOsiApproved>
+                            <spdx:licenseText>Copyright (c) [year] [copyright holders] The Universal Permissive License (UPL), Version 1.0 Subject to the condition set forth below, permission is hereby granted to any person obtaining a copy of this software, associated documentation and/or data (collectively the "Software"), free of charge and under any and all copyright rights in the Software, and any and all patent rights owned or freely licensable by each licensor hereunder covering either (i) the unmodified Software as contributed to or provided by such licensor, or (ii) the Larger Works (as defined below), to deal in both (a) the Software, and (b) any piece of software and/or hardware listed in the lrgrwrks.txt file if one is included with the Software (each a “Larger Work” to which the Software is contributed by such licensors), without restriction, including without limitation the rights to copy, create derivative works of, display, perform, and distribute the Software and make, use, sell, offer for sale, import, export, have made, and have sold the Software and the Larger Work(s), and to sublicense the foregoing rights on either these or other terms. This license is subject to the following condition: The above copyright notice and either this complete permission notice or at a minimum a reference to the UPL must be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</spdx:licenseText>
+                            <rdfs:seeAlso>https://opensource.org/licenses/UPL</rdfs:seeAlso>
+                            <spdx:name>Universal Permissive License v1.0</spdx:name>
+                            <spdx:licenseId>UPL-1.0</spdx:licenseId>
+                            <spdx:isFsfLibre>true</spdx:isFsfLibre>
+                          </spdx:License>
+                        </spdx:member>
+                      </spdx:ConjunctiveLicenseSet>
+                    </spdx:licenseDeclared>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:name>Graaljs</spdx:name>
+                    <spdx:versionInfo>22.0.0.2</spdx:versionInfo>
+                    <doap:homepage>http://www.graalvm.org/</doap:homepage>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:summary>Graal JavaScript engine</spdx:summary>
+                    <spdx:description>Graal JavaScript engine</spdx:description>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-4">
+                    <spdx:name>AssertJ fluent assertions</spdx:name>
+                    <spdx:description>Rich and fluent assertions for testing for Java</spdx:description>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:summary>Rich and fluent assertions for testing for Java</spdx:summary>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <doap:homepage>${project.parent.url}#${project.artifactId}</doap:homepage>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:versionInfo>3.23.1</spdx:versionInfo>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:name>Apache Commons Text</spdx:name>
+            <spdx:originator>Organization:The Apache Software Foundation</spdx:originator>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-10">
+                    <spdx:summary>The jmh is a Java harness for building, running, and analysing
+        nano/micro/macro benchmarks written in Java and other languages
+        targeting the JVM.</spdx:summary>
+                    <spdx:name>JMH Core</spdx:name>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:description>The jmh is a Java harness for building, running, and analysing
+        nano/micro/macro benchmarks written in Java and other languages
+        targeting the JVM.</spdx:description>
+                    <spdx:originator>Organization:Oracle</spdx:originator>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-8">
+                    <spdx:name>Graaljs Scriptengine</spdx:name>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:versionInfo>22.0.0.2</spdx:versionInfo>
+                    <spdx:summary>Graal JavaScript ScriptEngine</spdx:summary>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/licenses/UPL-1.0"/>
+                    <doap:homepage>http://www.graalvm.org/</doap:homepage>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:description>Graal JavaScript ScriptEngine</spdx:description>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:filesAnalyzed>true</spdx:filesAnalyzed>
+            <spdx:description>Apache Commons Text is a library focused on algorithms working on strings.</spdx:description>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-6">
+                    <spdx:summary>Mockito preconfigured inline mock maker (intermediate and to be superseeded by automatic usage in a future version)</spdx:summary>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:versionInfo>4.8.0</spdx:versionInfo>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <doap:homepage>https://github.com/mockito/mockito</doap:homepage>
+                    <spdx:description>Mockito preconfigured inline mock maker (intermediate and to be superseeded by automatic usage in a future version)</spdx:description>
+                    <spdx:name>mockito-inline</spdx:name>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:packageVerificationCode>
+              <spdx:PackageVerificationCode>
+                <spdx:packageVerificationCodeValue>da39a3ee5e6b4b0d3255bfef95601890afd80709</spdx:packageVerificationCodeValue>
+              </spdx:PackageVerificationCode>
+            </spdx:packageVerificationCode>
+            <doap:homepage>https://commons.apache.org/proper/commons-text</doap:homepage>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-9">
+                    <spdx:summary>Simple API for instantiating random numbers generators.</spdx:summary>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:versionInfo>1.4</spdx:versionInfo>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:description>Simple API for instantiating random numbers generators.</spdx:description>
+                    <spdx:name>Apache Commons RNG Simple</spdx:name>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:copyrightText rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+            <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+            <spdx:supplier>Organization: The Apache Software Foundation</spdx:supplier>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-11">
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:name>JMH Generators: Annotation Processors</spdx:name>
+                    <spdx:summary>JMH benchmark generator, based on annotation processors.</spdx:summary>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:description>JMH benchmark generator, based on annotation processors.</spdx:description>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:checksum>
+              <spdx:Checksum>
+                <spdx:checksumValue>ac37469fe2d3339d0663683be08bec40a4bef32d</spdx:checksumValue>
+                <spdx:algorithm rdf:resource="http://spdx.org/rdf/terms#checksumAlgorithm_sha1"/>
+              </spdx:Checksum>
+            </spdx:checksum>
+            <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_testcaseOf"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-5">
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:versionInfo>2.11.0</spdx:versionInfo>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:name>Apache Commons IO</spdx:name>
+                    <doap:homepage>https://commons.apache.org/proper/commons-io/</doap:homepage>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <spdx:summary>The Apache Commons IO library contains utility classes, stream implementations, file filters,
+file comparators, endian transformation classes, and much more.</spdx:summary>
+                    <spdx:description>The Apache Commons IO library contains utility classes, stream implementations, file filters,
+file comparators, endian transformation classes, and much more.</spdx:description>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:relationship>
+              <spdx:Relationship>
+                <spdx:relationshipType rdf:resource="http://spdx.org/rdf/terms#relationshipType_dynamicLink"/>
+                <spdx:relatedSpdxElement>
+                  <spdx:Package rdf:about="http://spdx.org/spdxpackages/Apache%20Commons%20Text-1.10.0#SPDXRef-2">
+                    <spdx:name>Apache Commons Lang</spdx:name>
+                    <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:copyrightText>UNSPECIFIED</spdx:copyrightText>
+                    <spdx:downloadLocation rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseDeclared rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:licenseInfoFromFiles rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+                    <spdx:description>Apache Commons Lang, a package of Java utility classes for the
+  classes that are in java.lang's hierarchy, or are considered to be so
+  standard as to justify existence in java.lang.</spdx:description>
+                    <spdx:versionInfo>3.12.0</spdx:versionInfo>
+                    <spdx:filesAnalyzed>false</spdx:filesAnalyzed>
+                    <doap:homepage>https://commons.apache.org/proper/commons-lang/</doap:homepage>
+                    <spdx:summary>Apache Commons Lang, a package of Java utility classes for the
+  classes that are in java.lang's hierarchy, or are considered to be so
+  standard as to justify existence in java.lang.</spdx:summary>
+                  </spdx:Package>
+                </spdx:relatedSpdxElement>
+                <rdfs:comment>Relationship based on Maven POM file dependency information</rdfs:comment>
+              </spdx:Relationship>
+            </spdx:relationship>
+            <spdx:summary>Apache Commons Text is a library focused on algorithms working on strings.</spdx:summary>
+            <spdx:licenseConcluded rdf:resource="http://spdx.org/rdf/terms#noassertion"/>
+            <spdx:packageFileName>commons-text.jar</spdx:packageFileName>
+          </spdx:Package>
+        </spdx:relatedSpdxElement>
+        <rdfs:comment></rdfs:comment>
+      </spdx:Relationship>
+    </spdx:relationship>
+    <spdx:name>Apache Commons Text</spdx:name>
+    <spdx:dataLicense>
+      <spdx:License rdf:about="http://spdx.org/licenses/CC0-1.0">
+        <spdx:standardLicenseTemplate>&lt;&lt;beginOptional&gt;&gt;&lt;&lt;beginOptional&gt;&gt;Creative Commons&lt;&lt;beginOptional&gt;&gt; Legal Code&lt;&lt;endOptional&gt;&gt;
+
+&lt;&lt;endOptional&gt;&gt;
+CC0 1.0 Universal
+
+&lt;&lt;endOptional&gt;&gt;&lt;&lt;beginOptional&gt;&gt; CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE LEGAL SERVICES. DISTRIBUTION OF THIS DOCUMENT DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS INFORMATION ON AN "AS-IS" BASIS. CREATIVE COMMONS MAKES NO WARRANTIES REGARDING THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED HEREUNDER, AND DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED HEREUNDER.
+
+&lt;&lt;endOptional&gt;&gt;
+Statement of Purpose
+
+The laws of most jurisdictions throughout the world automatically confer exclusive Copyright and Related Rights (defined below) upon the creator and subsequent owner(s) (each and all, an "owner") of an original work of authorship and/or a database (each, a "Work").
+
+Certain owners wish to permanently relinquish those rights to a Work for the purpose of contributing to a commons of creative, cultural and scientific works ("Commons") that the public can reliably and without fear of later claims of infringement build upon, modify, incorporate in other works, reuse and redistribute as freely as possible in any form whatsoever and for any purposes, including without limitation commercial purposes. These owners may contribute to the Commons to promote the ideal of a free culture and the further production of creative, cultural and scientific works, or to gain reputation or greater distribution for their Work in part through the use and efforts of others.
+
+For these and/or other purposes and motivations, and without any expectation of additional consideration or compensation, the person associating CC0 with a Work (the "Affirmer"), to the extent that he or she is an owner of Copyright and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and publicly distribute the Work under its terms, with knowledge of his or her Copyright and Related Rights in the Work and the meaning and intended legal effect of CC0 on those rights.
+
+   &lt;&lt;var;name="bullet";original="1.";match=".{0,20}"&gt;&gt; Copyright and Related Rights. A Work made available under CC0 may be protected by copyright and related or neighboring rights ("Copyright and Related Rights"). Copyright and Related Rights include, but are not limited to, the following:
+      &lt;&lt;var;name="bullet";original="i.";match=".{0,20}"&gt;&gt; the right to reproduce, adapt, distribute, perform, display, communicate, and translate a Work;
+      &lt;&lt;var;name="bullet";original="ii.";match=".{0,20}"&gt;&gt; moral rights retained by the original author(s) and/or performer(s);
+      &lt;&lt;var;name="bullet";original="iii.";match=".{0,20}"&gt;&gt; publicity and privacy rights pertaining to a person's image or likeness depicted in a Work;
+      &lt;&lt;var;name="bullet";original="iv.";match=".{0,20}"&gt;&gt; rights protecting against unfair competition in regards to a Work, subject to the limitations in paragraph 4(a), below;
+      &lt;&lt;var;name="bullet";original="v.";match=".{0,20}"&gt;&gt; rights protecting the extraction, dissemination, use and reuse of data in a Work;
+      &lt;&lt;var;name="bullet";original="vi.";match=".{0,20}"&gt;&gt; database rights (such as those arising under Directive 96/9/EC of the European Parliament and of the Council of 11 March 1996 on the legal protection of databases, and under any national implementation thereof, including any amended or successor version of such directive); and
+      &lt;&lt;var;name="bullet";original="vii.";match=".{0,20}"&gt;&gt; other similar, equivalent or corresponding rights throughout the world based on applicable law or treaty, and any national implementations thereof.
+   &lt;&lt;var;name="bullet";original="2.";match=".{0,20}"&gt;&gt; Waiver. To the greatest extent permitted by, but not in contravention of, applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and unconditionally waives, abandons, and surrenders all of Affirmer's Copyright and Related Rights and associated claims and causes of action, whether now known or unknown (including existing as well as future claims and causes of action), in the Work (i) in all territories worldwide, (ii) for the maximum duration provided by applicable law or treaty (including future time extensions), (iii) in any current or future medium and for any number of copies, and (iv) for any purpose whatsoever, including without limitation commercial, advertising or promotional purposes (the "Waiver"). Affirmer makes the Waiver for the benefit of each member of the public at large and to the detriment of Affirmer's heirs and successors, fully intending that such Waiver shall not be subject to revocation, rescission, cancellation, termination, or any other legal or equitable action to disrupt the quiet enjoyment of the Work by the public as contemplated by Affirmer's express Statement of Purpose.
+   &lt;&lt;var;name="bullet";original="3.";match=".{0,20}"&gt;&gt; Public License Fallback. Should any part of the Waiver for any reason be judged legally invalid or ineffective under applicable law, then the Waiver shall be preserved to the maximum extent permitted taking into account Affirmer's express Statement of Purpose. In addition, to the extent the Waiver is so judged Affirmer hereby grants to each affected person a royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional license to exercise Affirmer's Copyright and Related Rights in the Work (i) in all territories worldwide, (ii) for the maximum duration provided by applicable law or treaty (including future time extensions), (iii) in any current or future medium and for any number of copies, and (iv) for any purpose whatsoever, including without limitation commercial, advertising or promotional purposes (the "License"). The License shall be deemed effective as of the date CC0 was applied by Affirmer to the Work. Should any part of the License for any reason be judged legally invalid or ineffective under applicable law, such partial invalidity or ineffectiveness shall not invalidate the remainder of the License, and in such case Affirmer hereby affirms that he or she will not (i) exercise any of his or her remaining Copyright and Related Rights in the Work or (ii) assert any associated claims and causes of action with respect to the Work, in either case contrary to Affirmer's express Statement of Purpose.
+   &lt;&lt;var;name="bullet";original="4.";match=".{0,20}"&gt;&gt; Limitations and Disclaimers.
+      &lt;&lt;var;name="bullet";original="a.";match=".{0,20}"&gt;&gt; No trademark or patent rights held by Affirmer are waived, abandoned, surrendered, licensed or otherwise affected by this document.
+      &lt;&lt;var;name="bullet";original="b.";match=".{0,20}"&gt;&gt; Affirmer offers the Work as-is and makes no representations or warranties of any kind concerning the Work, express, implied, statutory or otherwise, including without limitation warranties of title, merchantability, fitness for a particular purpose, non infringement, or the absence of latent or other defects, accuracy, or the present or absence of errors, whether or not discoverable, all to the greatest extent permissible under applicable law.
+      &lt;&lt;var;name="bullet";original="c.";match=".{0,20}"&gt;&gt; Affirmer disclaims responsibility for clearing rights of other persons that may apply to the Work or any use thereof, including without limitation any person's Copyright and Related Rights in the Work. Further, Affirmer disclaims responsibility for obtaining any necessary consents, permissions or other rights required for any use of the Work.
+      &lt;&lt;var;name="bullet";original="d.";match=".{0,20}"&gt;&gt; Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.&lt;&lt;beginOptional&gt;&gt; &lt;&lt;var;name="upstreamLink";original="";match="For more information, please see &lt;http://creativecommons.org/publicdomain/zero/1.0/&gt;"&gt;&gt;&lt;&lt;endOptional&gt;&gt;</spdx:standardLicenseTemplate>
+        <spdx:licenseText>Creative Commons Legal Code CC0 1.0 Universal CREATIVE COMMONS CORPORATION IS NOT A LAW FIRM AND DOES NOT PROVIDE LEGAL SERVICES. DISTRIBUTION OF THIS DOCUMENT DOES NOT CREATE AN ATTORNEY-CLIENT RELATIONSHIP. CREATIVE COMMONS PROVIDES THIS INFORMATION ON AN "AS-IS" BASIS. CREATIVE COMMONS MAKES NO WARRANTIES REGARDING THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED HEREUNDER, AND DISCLAIMS LIABILITY FOR DAMAGES RESULTING FROM THE USE OF THIS DOCUMENT OR THE INFORMATION OR WORKS PROVIDED HEREUNDER. Statement of Purpose The laws of most jurisdictions throughout the world automatically confer exclusive Copyright and Related Rights (defined below) upon the creator and subsequent owner(s) (each and all, an "owner") of an original work of authorship and/or a database (each, a "Work"). Certain owners wish to permanently relinquish those rights to a Work for the purpose of contributing to a commons of creative, cultural and scientific works ("Commons") that the public can reliably and without fear of later claims of infringement build upon, modify, incorporate in other works, reuse and redistribute as freely as possible in any form whatsoever and for any purposes, including without limitation commercial purposes. These owners may contribute to the Commons to promote the ideal of a free culture and the further production of creative, cultural and scientific works, or to gain reputation or greater distribution for their Work in part through the use and efforts of others. For these and/or other purposes and motivations, and without any expectation of additional consideration or compensation, the person associating CC0 with a Work (the "Affirmer"), to the extent that he or she is an owner of Copyright and Related Rights in the Work, voluntarily elects to apply CC0 to the Work and publicly distribute the Work under its terms, with knowledge of his or her Copyright and Related Rights in the Work and the meaning and intended legal effect of CC0 on those rights. 1. Copyright and Related Rights. A Work made available under CC0 may be protected by copyright and related or neighboring rights ("Copyright and Related Rights"). Copyright and Related Rights include, but are not limited to, the following: i. the right to reproduce, adapt, distribute, perform, display, communicate, and translate a Work; ii. moral rights retained by the original author(s) and/or performer(s); iii. publicity and privacy rights pertaining to a person's image or likeness depicted in a Work; iv. rights protecting against unfair competition in regards to a Work, subject to the limitations in paragraph 4(a), below; v. rights protecting the extraction, dissemination, use and reuse of data in a Work; vi. database rights (such as those arising under Directive 96/9/EC of the European Parliament and of the Council of 11 March 1996 on the legal protection of databases, and under any national implementation thereof, including any amended or successor version of such directive); and vii. other similar, equivalent or corresponding rights throughout the world based on applicable law or treaty, and any national implementations thereof. 2. Waiver. To the greatest extent permitted by, but not in contravention of, applicable law, Affirmer hereby overtly, fully, permanently, irrevocably and unconditionally waives, abandons, and surrenders all of Affirmer's Copyright and Related Rights and associated claims and causes of action, whether now known or unknown (including existing as well as future claims and causes of action), in the Work (i) in all territories worldwide, (ii) for the maximum duration provided by applicable law or treaty (including future time extensions), (iii) in any current or future medium and for any number of copies, and (iv) for any purpose whatsoever, including without limitation commercial, advertising or promotional purposes (the "Waiver"). Affirmer makes the Waiver for the benefit of each member of the public at large and to the detriment of Affirmer's heirs and successors, fully intending that such Waiver shall not be subject to revocation, rescission, cancellation, termination, or any other legal or equitable action to disrupt the quiet enjoyment of the Work by the public as contemplated by Affirmer's express Statement of Purpose. 3. Public License Fallback. Should any part of the Waiver for any reason be judged legally invalid or ineffective under applicable law, then the Waiver shall be preserved to the maximum extent permitted taking into account Affirmer's express Statement of Purpose. In addition, to the extent the Waiver is so judged Affirmer hereby grants to each affected person a royalty-free, non transferable, non sublicensable, non exclusive, irrevocable and unconditional license to exercise Affirmer's Copyright and Related Rights in the Work (i) in all territories worldwide, (ii) for the maximum duration provided by applicable law or treaty (including future time extensions), (iii) in any current or future medium and for any number of copies, and (iv) for any purpose whatsoever, including without limitation commercial, advertising or promotional purposes (the "License"). The License shall be deemed effective as of the date CC0 was applied by Affirmer to the Work. Should any part of the License for any reason be judged legally invalid or ineffective under applicable law, such partial invalidity or ineffectiveness shall not invalidate the remainder of the License, and in such case Affirmer hereby affirms that he or she will not (i) exercise any of his or her remaining Copyright and Related Rights in the Work or (ii) assert any associated claims and causes of action with respect to the Work, in either case contrary to Affirmer's express Statement of Purpose. 4. Limitations and Disclaimers. a. No trademark or patent rights held by Affirmer are waived, abandoned, surrendered, licensed or otherwise affected by this document. b. Affirmer offers the Work as-is and makes no representations or warranties of any kind concerning the Work, express, implied, statutory or otherwise, including without limitation warranties of title, merchantability, fitness for a particular purpose, non infringement, or the absence of latent or other defects, accuracy, or the present or absence of errors, whether or not discoverable, all to the greatest extent permissible under applicable law. c. Affirmer disclaims responsibility for clearing rights of other persons that may apply to the Work or any use thereof, including without limitation any person's Copyright and Related Rights in the Work. Further, Affirmer disclaims responsibility for obtaining any necessary consents, permissions or other rights required for any use of the Work. d. Affirmer understands and acknowledges that Creative Commons is not a party to this document and has no duty or obligation with respect to this CC0 or use of the Work.</spdx:licenseText>
+        <rdfs:seeAlso>https://creativecommons.org/publicdomain/zero/1.0/legalcode</rdfs:seeAlso>
+        <spdx:name>Creative Commons Zero v1.0 Universal</spdx:name>
+        <spdx:licenseId>CC0-1.0</spdx:licenseId>
+        <spdx:isFsfLibre>true</spdx:isFsfLibre>
+      </spdx:License>
+    </spdx:dataLicense>
+    <spdx:specVersion>SPDX-2.2</spdx:specVersion>
+    <spdx:creationInfo>
+      <spdx:CreationInfo>
+        <spdx:licenseListVersion>3.5</spdx:licenseListVersion>
+        <spdx:created>2025-08-08T13:49:08Z</spdx:created>
+        <spdx:creator>Tool: spdx-maven-plugin</spdx:creator>
+      </spdx:CreationInfo>
+    </spdx:creationInfo>
+  </spdx:SpdxDocument>
+  <spdx:PackageVerificationCode>
+    <spdx:packageVerificationCodeValue>cf23df2207d99a74fbe169e3eba035e633b65d94</spdx:packageVerificationCodeValue>
+  </spdx:PackageVerificationCode>
+  <spdx:CreationInfo>
+    <spdx:licenseListVersion>3.27.0</spdx:licenseListVersion>
+    <spdx:created>2025-08-08T13:49:05Z</spdx:created>
+  </spdx:CreationInfo>
+</rdf:RDF>
