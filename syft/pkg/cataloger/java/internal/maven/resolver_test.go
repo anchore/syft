@@ -273,8 +273,12 @@ func Test_mavenResolverRemote(t *testing.T) {
 }
 
 func Test_relativePathParent(t *testing.T) {
-	resolver, err := fileresolver.NewFromDirectory("test-fixtures/local", "")
+	resolver, cleanupFn, err := fileresolver.NewFromDirectory("test-fixtures/local", "", 0)
 	require.NoError(t, err)
+	require.NotNil(t, resolver)
+	t.Cleanup(func() {
+		require.NoError(t, cleanupFn())
+	})
 
 	ctx := context.Background()
 
