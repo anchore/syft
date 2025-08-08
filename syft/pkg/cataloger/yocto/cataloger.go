@@ -144,45 +144,49 @@ func (c cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.P
 		relationships = append(relationships, cacheRels...)
 	}
 
+	// TODO: Parsing additional files seems to be redundant as everything is already parsed from license.mnifest and bitbake cache.
+	// TODO: Need to research if there are any other files that are needed to be parsed.
+
 	// Parse build history for additional package metadata
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-buildhistory
-	historyPkgs, historyRels, err := c.parseBuildHistory(resolver, buildDir)
-	if err == nil {
-		packages = append(packages, historyPkgs...)
-		relationships = append(relationships, historyRels...)
-	} else {
-		log.WithFields("cataloger", catalogerName).Debugf("build history parsing failed: %v", err)
-	}
+	// historyPkgs, historyRels, err := c.parseBuildHistory(resolver, buildDir)
+	// if err == nil {
+	// 	packages = append(packages, historyPkgs...)
+	// 	relationships = append(relationships, historyRels...)
+	// } else {
+	// 	log.WithFields("cataloger", catalogerName).Debugf("build history parsing failed: %v", err)
+	// }
 
 	// Parse comprehensive license files
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
-	licensePkgs, licenseRels, err := c.parseLicenseFiles(resolver, buildDir)
-	if err == nil {
-		packages = append(packages, licensePkgs...)
-		relationships = append(relationships, licenseRels...)
-	} else {
-		log.WithFields("cataloger", catalogerName).Debugf("license files parsing failed: %v", err)
-	}
+	// licensePkgs, licenseRels, err := c.parseLicenseFiles(resolver, buildDir)
+	// if err == nil {
+	// 	packages = append(packages, licensePkgs...)
+	// 	relationships = append(relationships, licenseRels...)
+	// } else {
+	// 	log.WithFields("cataloger", catalogerName).Debugf("license files parsing failed: %v", err)
+	// }
 
 	// Parse source information for provenance
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-downloads
-	sourcePkgs, sourceRels, err := c.parseSourceInfo(resolver, buildDir)
-	if err == nil {
-		packages = append(packages, sourcePkgs...)
-		relationships = append(relationships, sourceRels...)
-	} else {
-		log.WithFields("cataloger", catalogerName).Debugf("source info parsing failed: %v", err)
-	}
+	// sourcePkgs, sourceRels, err := c.parseSourceInfo(resolver, buildDir)
+	// if err == nil {
+	// 	packages = append(packages, sourcePkgs...)
+	// 	relationships = append(relationships, sourceRels...)
+	// } else {
+	// 	log.WithFields("cataloger", catalogerName).Debugf("source info parsing failed: %v", err)
+	// }
 
 	// Parse image manifests for system-level SBOM
 	// Reference: https://docs.yoctoproject.org/ref-manual/structure.html#build-tmp
-	imagePkgs, imageRels, err := c.parseImageManifests(resolver, buildDir)
-	if err == nil {
-		packages = append(packages, imagePkgs...)
-		relationships = append(relationships, imageRels...)
-	} else {
-		log.WithFields("cataloger", catalogerName).Debugf("image manifests parsing failed: %v", err)
-	}
+	// TODO: Nothing has been found here yet. Research
+	// imagePkgs, imageRels, err := c.parseImageManifests(resolver, buildDir)
+	// if err == nil {
+	// 	packages = append(packages, imagePkgs...)
+	// 	relationships = append(relationships, imageRels...)
+	// } else {
+	// 	log.WithFields("cataloger", catalogerName).Debugf("image manifests parsing failed: %v", err)
+	// }
 
 	log.WithFields("cataloger", catalogerName).Infof("completed Yocto cataloging: found %d packages total", len(packages))
 	return packages, relationships, nil
