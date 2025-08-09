@@ -1,6 +1,7 @@
 package cpp
 
 import (
+	"context"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -92,7 +93,7 @@ func newConanPackage(refStr string, metadata any, locations ...file.Location) *p
 		Name:      ref.Name,
 		Version:   ref.Version,
 		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(ref),
+		PURL:      packageURLFromConanRef(ref),
 		Language:  pkg.CPP,
 		Type:      pkg.ConanPkg,
 		Metadata:  metadata,
@@ -103,7 +104,7 @@ func newConanPackage(refStr string, metadata any, locations ...file.Location) *p
 	return &p
 }
 
-func packageURL(ref *conanRef) string {
+func packageURLFromConanRef(ref *conanRef) string {
 	qualifiers := packageurl.Qualifiers{}
 	if ref.Channel != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
@@ -116,6 +117,42 @@ func packageURL(ref *conanRef) string {
 		ref.User,
 		ref.Name,
 		ref.Version,
+		qualifiers,
+		"",
+	).ToString()
+}
+
+func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location) pkg.Package {
+	p := pkg.Package{
+		Name:      v.Name,
+		Version:   v.FullVersion,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
+		Locations: file.NewLocationSet(l),
+		PURL:      packageURLFromVcpkgManifest(v),
+		Language:  pkg.CPP,
+		Type:      pkg.VcpkgPkg,
+		Metadata:  v,
+	}
+
+	p.SetID()
+	return p
+}
+
+func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
+	qualifiers := packageurl.Qualifiers{}
+	//
+	if v.Triplet != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "triplet",
+			Value: v.Triplet,
+		})
+	}
+	return packageurl.NewPackageURL(
+		// Vcpkg is not a part of the PURL spec, PR for it hasn't moved. https://github.com/package-url/purl-spec/pull/245
+		"vcpkg",
+		"",
+		v.Name,
+		v.FullVersion,
 		qualifiers,
 		"",
 	).ToString()

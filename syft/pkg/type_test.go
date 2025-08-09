@@ -151,6 +151,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(TerraformPkg))
 	expectedTypes.Remove(string(GraalVMNativeImagePkg))
 	expectedTypes.Remove(string(PhpPeclPkg)) // we should always consider this a pear package
+	expectedTypes.Remove(string(VcpkgPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {
