@@ -122,7 +122,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 	}
 
 	// now that we have accounted for the go.mod packages, let's finish cataloging our source packages
-	syftSourcePackages, moduleToPkg := c.catalogModules(ctx, allSourcePackages, allSourceModules)
+	syftSourcePackages, moduleToPkg := c.catalogModules(ctx, allSourcePackages, allSourceModules, reader, digests)
 	syftRelationships := buildModuleRelationships(syftSourcePackages, allSourceDependencies, moduleToPkg)
 
 	// combine!
@@ -191,10 +191,7 @@ func (c *goModCataloger) loadPackages(modDir string) (allPackages map[string][]p
 	}
 
 	// Load all packages in the module
-	rootPkgs, err := packages.Load(cfg, "all")
-	if err != nil {
-	}
-
+	rootPkgs, _ := packages.Load(cfg, "all")
 	// Check for any errors in loading
 	for _, p := range rootPkgs {
 		if len(p.Errors) > 0 {
@@ -216,11 +213,22 @@ func (c *goModCataloger) catalogModules(
 	ctx context.Context,
 	allPkgs map[string][]pkgInfo,
 	allModules map[string]*packages.Module,
+	reader file.LocationReadCloser,
+	digests map[string]string,
 ) ([]pkg.Package, map[string]artifact.Identifiable) {
 	syftPackages := make([]pkg.Package, 0)
 	moduleToPackage := make(map[string]artifact.Identifiable)
 
 	for _, m := range allModules {
+		if isRelativeImportOrMain(m.Path) {
+			// relativeImport modules are already accounted for by their full module paths at other portions of syft's cataloging
+			// example: something like ../../ found as a module for go.mod b, which is sub to go.mod a is accounted for
+			// in another call to the goModCataloger when go.mod a is parsed
+			// local modules that use a "main" heuristic, no module naming (sometimes common pre go module support)
+			// are also not built as syft packages
+			continue
+		}
+
 		pkgInfos := allPkgs[m.Path]
 		moduleLicenses := resolveModuleLicenses(ctx, pkgInfos)
 		// we do out of source lookups for module parsing
@@ -228,11 +236,14 @@ func (c *goModCataloger) catalogModules(
 		goModulePkg := pkg.Package{
 			Name:      m.Path,
 			Version:   m.Version,
-			Locations: file.NewLocationSet(),
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
 			Type:      pkg.GoSourcePkg,
 			PURL:      packageURL(m.Path, m.Version),
+			Metadata: pkg.GolangModuleEntry{
+				H1Digest: digests[fmt.Sprintf("%s %s", m.Path, m.Version)],
+			},
 		}
 		goModulePkg.SetID()
 
@@ -311,7 +322,6 @@ type pkgInfo struct {
 	moduleDir string
 }
 
-//nolint:gocognit
 func (c *goModCataloger) visitPackages(
 	rootPkgs []*packages.Package,
 ) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, allDependencies map[string][]string) {
@@ -333,7 +343,7 @@ func (c *goModCataloger) visitPackages(
 		// different from above; we still might want to visit imports
 		// ignoring a package shouldn't end walking the tree
 		// since we need to get the full picture for license discovery
-		//for _, prefix := range c.config.IgnorePaths {
+		// for _, prefix := range c.config.IgnorePaths {
 		//	if strings.HasPrefix(p.PkgPath, prefix) {
 		//		return c.config.IncludeIgnoredDeps
 		//	}
@@ -342,10 +352,6 @@ func (c *goModCataloger) visitPackages(
 		pkgDir := resolvePkgDir(p)
 		if pkgDir == "" {
 			return true
-		}
-
-		if len(p.OtherFiles) > 0 {
-			log.Warnf("%q contains non-Go code that can't be inspected for further dependencies:\n%s", p.PkgPath, strings.Join(p.OtherFiles, "\n"))
 		}
 
 		module := newModule(p.Module)
@@ -518,4 +524,12 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, erro
 	}
 
 	return licenseCandidates, nil
+}
+
+func isRelativeImportOrMain(p string) bool {
+	if p == "main" {
+		return true
+	}
+	// true for ".", "..", "./...", "../..."
+	return build.IsLocalImport(p)
 }
