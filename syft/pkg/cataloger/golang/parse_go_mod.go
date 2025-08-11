@@ -41,8 +41,8 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 //
 //nolint:funlen
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// Get the directory containing the go.mod file
 	// Use RealPath for the actual filesystem path
+	// note: this is OUTSIDE the source analysis and will NOT be used in the location list
 	modDir := filepath.Dir(string(reader.Location.Reference().RealPath))
 
 	// Parse go.sum file for digests
@@ -51,11 +51,10 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
-	// Try to use Go toolchain if available for source analysis
 	log.Debugf("attempting to load packages using Go toolchain for %s", reader.RealPath)
-	allSourcePackages, allSourceModules, allSourceDependencies := c.loadPackages(modDir)
+	syftSourcePackages, sourceModules, sourceDependencies := c.loadPackages(modDir)
 
-	// Read go.mod contents to fill in missing packages
+	// combine source analysis with go.mod
 	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
@@ -66,11 +65,10 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		return nil, nil, fmt.Errorf("failed to parse go module: %w", err)
 	}
 
-	// Parse go.mod to fill in any missing packages from the Go toolchain results
+	// Parse go.mod to fill in any missing packages from source results
 	goModPackages := make(map[string]pkg.Package)
 	for _, m := range f.Require {
-		// Only add if not already found by Go toolchain
-		if _, exists := allSourceModules[m.Mod.Path]; !exists {
+		if _, exists := sourceModules[m.Mod.Path]; !exists {
 			lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
 			goModPackages[m.Mod.Path] = pkg.Package{
 				Name:      m.Mod.Path,
@@ -87,13 +85,13 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		}
 	}
 
-	// remove any old packages and replace with new ones...
+	// make sure replace directive is respected
 	for _, m := range f.Replace {
 		lics := c.licenseResolver.getLicenses(ctx, resolver, m.New.Path, m.New.Version)
 
 		// the old path and new path may be the same, in which case this is a noop,
-		// but if they're different, we need to remove the old package.
-		// note that we may change the path, but we should always reference the new version (since the old version
+		// but if they're different we need to remove the old package.
+		// note that we may change the path but we should always reference the new version (since the old version
 		// cannot be trusted as a correct value).
 		var finalPath string
 		if !strings.HasPrefix(m.New.Path, ".") && !strings.HasPrefix(m.New.Path, "/") {
@@ -121,13 +119,12 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		delete(goModPackages, m.Mod.Path)
 	}
 
-	// now that we have accounted for the go.mod packages, let's finish cataloging our source packages
-	syftSourcePackages, moduleToPkg := c.catalogModules(ctx, allSourcePackages, allSourceModules, reader, digests)
-	syftRelationships := buildModuleRelationships(syftSourcePackages, allSourceDependencies, moduleToPkg)
+	// let's finish cataloging our source packages
+	catalogedPkgs, sourceModuleToPkg := c.catalogModules(ctx, syftSourcePackages, sourceModules, reader, digests)
+	relationships := buildModuleRelationships(catalogedPkgs, sourceDependencies, sourceModuleToPkg)
 
-	// combine!
 	pkgsSlice := make([]pkg.Package, 0)
-	for _, p := range syftSourcePackages {
+	for _, p := range catalogedPkgs {
 		p.SetID()
 		pkgsSlice = append(pkgsSlice, p)
 	}
@@ -141,7 +138,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		return pkgsSlice[i].Name < pkgsSlice[j].Name
 	})
 
-	return pkgsSlice, syftRelationships, nil
+	return pkgsSlice, relationships, nil
 }
 
 func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map[string]string, error) {
@@ -182,16 +179,20 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	return out, nil
 }
 
-// loadPackages uses golang.org/x/tools/go/packages to get dependency information
-func (c *goModCataloger) loadPackages(modDir string) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, allDependencies map[string][]string) {
+// loadPackages uses golang.org/x/tools/go/packages to get dependency information.
+func (c *goModCataloger) loadPackages(modDir string) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
 	cfg := &packages.Config{
 		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps,
 		Dir:   modDir,
 		Tests: true,
 	}
 
-	// Load all packages in the module
-	rootPkgs, _ := packages.Load(cfg, "all")
+	// Load all packages for the given mod file
+	rootPkgs, err := packages.Load(cfg, "all")
+	if err != nil {
+		log.Debugf("error loading packages: %v", err)
+	}
+
 	// Check for any errors in loading
 	for _, p := range rootPkgs {
 		if len(p.Errors) > 0 {
@@ -202,24 +203,25 @@ func (c *goModCataloger) loadPackages(modDir string) (allPackages map[string][]p
 		}
 	}
 
-	// - we need allModulePkgImports so we can perform a comprehensive license search;
-	// - syft packages are created from allModules
-	// - allDependencies is a convenience that allows us to view pruned module => module imports;
-	// note: allDependencies has already pruned local imports and only focuses on module => module dependencies
+	// - we need modulePkgImports so we can perform a comprehensive license search;
+	// - syft packages are created from modules
+	// - dependencies are a convenience that allows us to view pruned module => module imports;
+	// note: dependencies have already pruned local imports and only focuses on module => module dependencies
 	return c.visitPackages(rootPkgs)
 }
 
+// catalogModules creates syft packages from Go modules found by the toolchain.
 func (c *goModCataloger) catalogModules(
 	ctx context.Context,
-	allPkgs map[string][]pkgInfo,
-	allModules map[string]*packages.Module,
+	pkgs map[string][]pkgInfo,
+	modules map[string]*packages.Module,
 	reader file.LocationReadCloser,
 	digests map[string]string,
 ) ([]pkg.Package, map[string]artifact.Identifiable) {
 	syftPackages := make([]pkg.Package, 0)
 	moduleToPackage := make(map[string]artifact.Identifiable)
 
-	for _, m := range allModules {
+	for _, m := range modules {
 		if isRelativeImportOrMain(m.Path) {
 			// relativeImport modules are already accounted for by their full module paths at other portions of syft's cataloging
 			// example: something like ../../ found as a module for go.mod b, which is sub to go.mod a is accounted for
@@ -229,7 +231,7 @@ func (c *goModCataloger) catalogModules(
 			continue
 		}
 
-		pkgInfos := allPkgs[m.Path]
+		pkgInfos := pkgs[m.Path]
 		moduleLicenses := resolveModuleLicenses(ctx, pkgInfos)
 		// we do out of source lookups for module parsing
 		// locations are NOT included in the SBOM because of this
@@ -254,6 +256,7 @@ func (c *goModCataloger) catalogModules(
 	return syftPackages, moduleToPackage
 }
 
+// resolveModuleLicenses finds and parses license files for Go modules.
 func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo) pkg.LicenseSet {
 	licenses := pkg.NewLicenseSet()
 
@@ -276,6 +279,7 @@ func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo) pkg.LicenseS
 	return licenses
 }
 
+// buildModuleRelationships creates artifact relationships between Go modules.
 func buildModuleRelationships(
 	syftPkgs []pkg.Package,
 	dependencies map[string][]string,
@@ -322,21 +326,22 @@ type pkgInfo struct {
 	moduleDir string
 }
 
+// visitPackages processes Go module import graphs to get all modules
 func (c *goModCataloger) visitPackages(
 	rootPkgs []*packages.Package,
-) (allPackages map[string][]pkgInfo, allModules map[string]*packages.Module, allDependencies map[string][]string) {
-	allModules = make(map[string]*packages.Module)
-	// note: allPackages are specific to inside the module - they do not include transitive pkgInfo
-	// allPackages is used for identifying licensing documents for modules that could contain multiple licenses
-	// allDependencies cover transitive module imports; see p.Imports array in packages.Visit
-	allPackages = make(map[string][]pkgInfo)
-	// allDependencies are module => module dependencies
-	allDependencies = make(map[string][]string)
+) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
+	modules = make(map[string]*packages.Module)
+	// note: packages are specific to inside the module - they do not include transitive pkgInfo
+	// packages is used for identifying licensing documents for modules that could contain multiple licenses
+	// dependencies cover transitive module imports; see p.Imports array in packages.Visit
+	pkgs = make(map[string][]pkgInfo)
+	// dependencies are module => module dependencies
+	dependencies = make(map[string][]string)
 	// closure (p *Package) bool
 	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
 		// skip for common causes
-		if shouldSkipVisit(p, true) {
+		if shouldSkipVisit(p) {
 			return false
 		}
 
@@ -366,24 +371,24 @@ func (c *goModCataloger) visitPackages(
 		// extract module dependencies
 		for _, imp := range p.Imports {
 			if imp.Module != nil && imp.Module.Path != module.Path {
-				if allDependencies[module.Path] == nil {
-					allDependencies[module.Path] = []string{imp.Module.Path}
+				if dependencies[module.Path] == nil {
+					dependencies[module.Path] = []string{imp.Module.Path}
 				} else {
-					allDependencies[module.Path] = append(allDependencies[module.Path], imp.Module.Path)
+					dependencies[module.Path] = append(dependencies[module.Path], imp.Module.Path)
 				}
 			}
 		}
-		allPackages[module.Path] = append(allPackages[module.Path], pkgInfo{
+		pkgs[module.Path] = append(pkgs[module.Path], pkgInfo{
 			pkgPath:    p.PkgPath,
 			modulePath: module.Path,
 			pkgDir:     pkgDir,
 			moduleDir:  module.Dir,
 		})
-		allModules[p.Module.Path] = module
+		modules[p.Module.Path] = module
 
 		return true
 	}, nil)
-	return allPackages, allModules, allDependencies
+	return pkgs, modules, dependencies
 }
 
 func resolvePkgDir(p *packages.Package) string {
@@ -399,7 +404,7 @@ func resolvePkgDir(p *packages.Package) string {
 	}
 }
 
-func shouldSkipVisit(p *packages.Package, includeTests bool) bool {
+func shouldSkipVisit(p *packages.Package) bool {
 	// skip packages with errors
 	if len(p.Errors) > 0 {
 		return true
@@ -413,11 +418,6 @@ func shouldSkipVisit(p *packages.Package, includeTests bool) bool {
 
 	// skip stdlib
 	if isStdLib(p) {
-		return true
-	}
-
-	// skip tests given user input
-	if !includeTests && isTestBinary(p) {
 		return true
 	}
 
@@ -439,11 +439,6 @@ func isStdLib(pkg *packages.Package) bool {
 		prefix += sep
 	}
 	return strings.HasPrefix(pkg.GoFiles[0], prefix)
-}
-
-// isTestBinary returns true iff pkg is a test binary.
-func isTestBinary(pkg *packages.Package) bool {
-	return strings.HasSuffix(pkg.PkgPath, ".test")
 }
 
 // handle replace directives
