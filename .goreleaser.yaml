@@ -48,12 +48,13 @@ builds:
 
 archives:
   - id: linux-archives
-    builds: [linux-build]
+    ids: [linux-build]
   - id: darwin-archives
-    builds: [darwin-build]
+    ids: [darwin-build]
   - id: windows-archives
-    format: zip
-    builds: [windows-build]
+    formats:
+      - zip
+    ids: [windows-build]
 
 nfpms:
   - license: "Apache 2.0"
