@@ -15,13 +15,13 @@ func TestParseGoMod(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			fixture: "test-fixtures/one-package",
+			fixture: "test-fixtures/go-mod-fixtures/one-package/go.mod",
 			expected: []pkg.Package{
 				{
 					Name:      "github.com/bmatcuk/doublestar",
 					Version:   "v1.3.1",
 					PURL:      "pkg:golang/github.com/bmatcuk/doublestar@v1.3.1",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/one-package")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/one-package/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -29,28 +29,28 @@ func TestParseGoMod(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/relative-replace",
+			fixture: "test-fixtures/go-mod-fixtures/relative-replace/go.mod",
 			expected: []pkg.Package{
 				{
 					Name:      "github.com/aws/aws-sdk-go-v2",
 					Version:   "",
 					PURL:      "pkg:golang/github.com/aws/aws-sdk-go-v2",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/relative-replace")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/relative-replace/go.mod")),
 					Metadata:  pkg.GolangModuleEntry{},
 				},
 			},
 		},
 		{
 
-			fixture: "test-fixtures/many-packages",
+			fixture: "test-fixtures/go-mod-fixtures/many-packages/go.mod",
 			expected: []pkg.Package{
 				{
 					Name:      "github.com/anchore/archiver/v3",
 					Version:   "v3.5.2",
 					PURL:      "pkg:golang/github.com/anchore/archiver@v3.5.2#v3",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -59,7 +59,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:      "github.com/anchore/go-testutils",
 					Version:   "v0.0.0-20200624184116-66aa578126db",
 					PURL:      "pkg:golang/github.com/anchore/go-testutils@v0.0.0-20200624184116-66aa578126db",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -68,7 +68,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:      "github.com/anchore/go-version",
 					Version:   "v1.2.2-0.20200701162849-18adb9c92b9b",
 					PURL:      "pkg:golang/github.com/anchore/go-version@v1.2.2-0.20200701162849-18adb9c92b9b",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -77,7 +77,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:      "github.com/anchore/stereoscope",
 					Version:   "v0.0.0-20200706164556-7cf39d7f4639",
 					PURL:      "pkg:golang/github.com/anchore/stereoscope@v0.0.0-20200706164556-7cf39d7f4639",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -86,7 +86,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:      "github.com/bmatcuk/doublestar",
 					Version:   "v8.8.8",
 					PURL:      "pkg:golang/github.com/bmatcuk/doublestar@v8.8.8",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},
@@ -95,7 +95,7 @@ func TestParseGoMod(t *testing.T) {
 					Name:      "github.com/go-test/deep",
 					Version:   "v1.0.6",
 					PURL:      "pkg:golang/github.com/go-test/deep@v1.0.6",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/many-packages")),
+					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
 					Metadata:  pkg.GolangModuleEntry{},

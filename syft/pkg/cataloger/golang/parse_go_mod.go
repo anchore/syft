@@ -4,23 +4,21 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"go/build"
-	"io"
-	"os"
-	"path/filepath"
-	"regexp"
-	"sort"
-	"strings"
-
-	"golang.org/x/mod/modfile"
-	"golang.org/x/tools/go/packages"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"go/build"
+	"golang.org/x/mod/modfile"
+	"golang.org/x/tools/go/packages"
+	"io"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
 )
 
 var (
@@ -138,6 +136,10 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		return pkgsSlice[i].Name < pkgsSlice[j].Name
 	})
 
+	// Return nil for relationships if none were found
+	if len(relationships) == 0 {
+		return pkgsSlice, nil, nil
+	}
 	return pkgsSlice, relationships, nil
 }
 
