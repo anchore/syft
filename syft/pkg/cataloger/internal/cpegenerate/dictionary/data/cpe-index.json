@@ -13148,6 +13148,9 @@
       "js_composer": [
         "cpe:2.3:a:wpbakery:page_builder:*:*:*:*:*:wordpress:*:*"
       ],
+      "jsfiddle-shortcode": [
+        "cpe:2.3:a:wvega:jsfiddle_shortcode:*:*:*:*:*:wordpress:*:*"
+      ],
       "jsmol2wp": [
         "cpe:2.3:a:jsmol2wp_project:jsmol2wp:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13654,8 +13657,40 @@
       "lokalyze-call-now": [
         "cpe:2.3:a:lokalyze:call_me_now:*:*:*:*:*:wordpress:*:*"
       ],
+      "ltl-freight-quotes-abf-freight-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:abf:wordpress:*:*",
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:abf_freight:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-globaltranz-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:globaltranz:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:ups:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-odfl-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:odfl:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-purolator-freight-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:purolator:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-saia-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:saia:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-sefl-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:sefl:wordpress:*:*",
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:southeastern_freight_lines:wordpress:*:*"
+      ],
       "ltl-freight-quotes-unishippers-edition": [
         "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:unishippers:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-ups-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:tforce:wordpress:*:*",
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:ups:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-worldwide-express-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:worldwide_express:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:worldwide_express:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-xpo-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:xpo:wordpress:*:*"
       ],
       "lucas-string-replace": [
         "cpe:2.3:a:lucasstad:lucas_string_replace:*:*:*:*:*:wordpress:*:*"
@@ -16612,6 +16647,9 @@
       "shiny-buttons": [
         "cpe:2.3:a:wpeden:shiny_buttons:*:*:*:*:*:wordpress:*:*"
       ],
+      "shipengine-shipping-quotes": [
+        "cpe:2.3:a:eniture:shipengine_shipping_quotes:*:*:*:*:*:wordpress:*:*"
+      ],
       "shopello": [
         "cpe:2.3:a:shopello_api_project:shopello_api:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17177,12 +17215,27 @@
       "slideshow-se": [
         "cpe:2.3:a:slideshow_se_project:slideshow_se:*:*:*:*:*:wordpress:*:*"
       ],
+      "small-package-quotes-fedex-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:fedex:wordpress:*:*"
+      ],
+      "small-package-quotes-purolator-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:purolator:wordpress:*:*"
+      ],
       "small-package-quotes-unishippers-edition": [
         "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:unishippers:wordpress:*:*",
         "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:unishippers:wordpress:*:*"
       ],
       "small-package-quotes-ups-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:ups:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:usps:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:wee:wordpress:*:*",
         "cpe:2.3:a:enituretechnology:small_package_quotes:*:*:*:*:ups:wordpress:*:*"
+      ],
+      "small-package-quotes-usps-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:usps:wordpress:*:*"
+      ],
+      "small-package-quotes-wwe-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:wee:wordpress:*:*"
       ],
       "smart-app-banner": [
         "cpe:2.3:a:wandlesoftware:smart_app_banner:*:*:*:*:*:wordpress:*:*"
