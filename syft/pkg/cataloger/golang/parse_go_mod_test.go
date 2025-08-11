@@ -232,6 +232,13 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 				"gopkg.in/yaml.v3 @ v3.0.1 (go.mod)",
 				"github.com/fsnotify/fsnotify @ v1.8.0 (go.mod)",
 				"github.com/pelletier/go-toml/v2 @ v2.2.3 (go.mod)",
+				"github.com/frankban/quicktest @ v1.14.6 (go.mod)",
+				"github.com/google/go-cmp @ v0.6.0 (go.mod)",
+				"github.com/kr/pretty @ v0.3.1 (go.mod)",
+				"github.com/kr/text @ v0.2.0 (go.mod)",
+				"github.com/rogpeppe/go-internal @ v1.9.0 (go.mod)",
+				"go.uber.org/goleak @ v1.3.0 (go.mod)",
+				"gopkg.in/check.v1 @ v1.0.0-20190902080502-41f04d3bba15 (go.mod)",
 			},
 		},
 	}
@@ -268,6 +275,13 @@ func Test_parseGoSource_licenses(t *testing.T) {
 		"github.com/davecgh/go-spew":          {"ISC"},
 		"github.com/pmezard/go-difflib":       {"BSD-3-Clause"},
 		"github.com/stretchr/testify":         {"MIT"},
+		"github.com/frankban/quicktest":       {"MIT"},
+		"github.com/google/go-cmp":            {"BSD-3-Clause"},
+		"github.com/kr/text":                  {"MIT"},
+		"github.com/kr/pretty":                {"MIT"},
+		"github.com/rogpeppe/go-internal":     {"BSD-3-Clause"},
+		"go.uber.org/goleak":                  {"MIT"},
+		"gopkg.in/check.v1":                   {"BSD-2-Clause"},
 	}
 
 	// license scanner setup
