@@ -184,7 +184,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 // loadPackages uses golang.org/x/tools/go/packages to get dependency information.
 func (c *goModCataloger) loadPackages(modDir string) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
 	cfg := &packages.Config{
-		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps,
+		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
 		Dir:   modDir,
 		Tests: true,
 	}
