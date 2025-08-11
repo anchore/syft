@@ -2,17 +2,18 @@ package golang
 
 import (
 	"context"
-	stereofile "github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/internal/licenses"
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
+	stereofile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal/licenses"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"

@@ -4,21 +4,23 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"go/build"
-	"golang.org/x/mod/modfile"
-	"golang.org/x/tools/go/packages"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+
+	"golang.org/x/mod/modfile"
+	"golang.org/x/tools/go/packages"
+
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
 var (
