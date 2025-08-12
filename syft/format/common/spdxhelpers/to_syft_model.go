@@ -150,7 +150,7 @@ func containerSource(p *spdx.Package) source.Description {
 	if p.PackageSupplier != nil {
 		// we also don't want NOASSERTION transferred to the syft format
 		// NOASSERTION == ""
-		if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+		if p.PackageSupplier.Supplier != helpers.NOASSERTION && p.PackageSupplier.SupplierType == helpers.SUPPLIERORG {
 			supplier = p.PackageSupplier.Supplier
 		}
 	}

@@ -261,7 +261,7 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 		"base directory for scanning, no links will be followed above this directory, and all paths will be reported relative to this directory")
 
 	flags.StringVarP(&cfg.Source.Supplier, "source-supplier", "",
-		"a supplier may also be known as a manufacturer, vendor, developer, integrator, maintainer, or provider of the software")
+		"a supplier may also be known as a manufacturer, organization, vendor, developer, integrator, maintainer, or provider of the software")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
