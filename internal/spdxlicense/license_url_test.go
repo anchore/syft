@@ -9,63 +9,54 @@ func TestLicenseByURL(t *testing.T) {
 		name      string
 		url       string
 		wantID    string
-		wantName  string
 		wantFound bool
 	}{
 		{
 			name:      "MIT license URL (https)",
 			url:       "https://opensource.org/license/mit/",
 			wantID:    "MIT",
-			wantName:  "MIT License",
 			wantFound: true,
 		},
 		{
 			name:      "MIT license URL (http)",
 			url:       "http://opensource.org/licenses/MIT",
 			wantID:    "MIT",
-			wantName:  "MIT License",
 			wantFound: true,
 		},
 		{
 			name:      "Apache 2.0 license URL",
 			url:       "https://www.apache.org/licenses/LICENSE-2.0",
 			wantID:    "Apache-2.0",
-			wantName:  "Apache License 2.0",
 			wantFound: true,
 		},
 		{
 			name:      "GPL 3.0 or later URL",
 			url:       "https://www.gnu.org/licenses/gpl-3.0-standalone.html",
 			wantID:    "GPL-3.0-or-later",
-			wantName:  "GNU General Public License v3.0 or later",
 			wantFound: true,
 		},
 		{
 			name:      "BSD 3-Clause URL",
 			url:       "https://opensource.org/licenses/BSD-3-Clause",
 			wantID:    "BSD-3-Clause",
-			wantName:  "BSD 3-Clause \"New\" or \"Revised\" License",
 			wantFound: true,
 		},
 		{
 			name:      "URL with trailing whitespace",
 			url:       "  http://opensource.org/licenses/MIT  ",
 			wantID:    "MIT",
-			wantName:  "MIT License",
 			wantFound: true,
 		},
 		{
 			name:      "Unknown URL",
 			url:       "https://example.com/unknown-license",
 			wantID:    "",
-			wantName:  "",
 			wantFound: false,
 		},
 		{
 			name:      "Empty URL",
 			url:       "",
 			wantID:    "",
-			wantName:  "",
 			wantFound: false,
 		},
 	}
@@ -79,9 +70,6 @@ func TestLicenseByURL(t *testing.T) {
 			if found {
 				if info.ID != tt.wantID {
 					t.Errorf("LicenseByURL() ID = %v, want %v", info.ID, tt.wantID)
-				}
-				if info.Name != tt.wantName {
-					t.Errorf("LicenseByURL() Name = %v, want %v", info.Name, tt.wantName)
 				}
 			}
 		})
@@ -104,6 +92,6 @@ func TestLicenseByURL_DeprecatedLicenses(t *testing.T) {
 		}
 		// The ID should be the replacement (GPL-2.0-only or GPL-2.0-or-later)
 		// depending on the URL
-		t.Logf("Deprecated license URL mapped to: ID=%s, Name=%s", info.ID, info.Name)
+		t.Logf("Deprecated license URL mapped to: ID=%s", info.ID)
 	}
 }

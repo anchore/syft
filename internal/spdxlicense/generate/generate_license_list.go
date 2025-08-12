@@ -35,10 +35,9 @@ var licenseIDs = map[string]string{
 // urlToLicense maps license URLs from the seeAlso field to license IDs and names
 var urlToLicense = map[string]struct {
 	ID   string
-	Name string
 }{
 {{- range $url, $info := .URLToLicense }}
-	{{ printf "%q" $url }}: {ID: {{ printf "%q" $info.ID }}, Name: {{ printf "%q" $info.Name }}},
+	{{ printf "%q" $url }}: {ID: {{ printf "%q" $info.ID }}},
 {{- end }}
 }
 `))
@@ -86,8 +85,7 @@ func run() error {
 		Version      string
 		LicenseIDs   map[string]string
 		URLToLicense map[string]struct {
-			ID   string
-			Name string
+			ID string
 		}
 	}{
 		Timestamp:    time.Now(),
@@ -175,12 +173,10 @@ func cleanLicenseID(id string) string {
 
 // buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs and names
 func buildURLToLicenseMap(result LicenseList) map[string]struct {
-	ID   string
-	Name string
+	ID string
 } {
 	urlMap := make(map[string]struct {
-		ID   string
-		Name string
+		ID string
 	})
 
 	for _, l := range result.Licenses {
@@ -192,11 +188,9 @@ func buildURLToLicenseMap(result LicenseList) map[string]struct {
 				// Map deprecated license URLs to the replacement license
 				for _, url := range l.SeeAlso {
 					urlMap[url] = struct {
-						ID   string
-						Name string
+						ID string
 					}{
-						ID:   replacement.ID,
-						Name: replacement.Name,
+						ID: replacement.ID,
 					}
 				}
 			}
@@ -206,11 +200,9 @@ func buildURLToLicenseMap(result LicenseList) map[string]struct {
 		// Add URLs from non-deprecated licenses
 		for _, url := range l.SeeAlso {
 			urlMap[url] = struct {
-				ID   string
-				Name string
+				ID string
 			}{
-				ID:   l.ID,
-				Name: l.Name,
+				ID: l.ID,
 			}
 		}
 	}
