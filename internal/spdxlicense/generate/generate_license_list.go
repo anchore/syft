@@ -32,12 +32,10 @@ var licenseIDs = map[string]string{
 {{- end }}
 }
 
-// urlToLicense maps license URLs from the seeAlso field to license IDs and names
-var urlToLicense = map[string]struct {
-	ID   string
-}{
-{{- range $url, $info := .URLToLicense }}
-	{{ printf "%q" $url }}: {ID: {{ printf "%q" $info.ID }}},
+// urlToLicense maps license URLs from the seeAlso field to license IDs
+var urlToLicense = map[string]string{
+{{- range $url, $id := .URLToLicense }}
+	{{ printf "%q" $url }}: {{ printf "%q" $id }},
 {{- end }}
 }
 `))
@@ -84,9 +82,7 @@ func run() error {
 		URL          string
 		Version      string
 		LicenseIDs   map[string]string
-		URLToLicense map[string]struct {
-			ID string
-		}
+		URLToLicense map[string]string
 	}{
 		Timestamp:    time.Now(),
 		URL:          url,
@@ -171,13 +167,9 @@ func cleanLicenseID(id string) string {
 	return strings.ReplaceAll(cleanID, "-", "")
 }
 
-// buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs and names
-func buildURLToLicenseMap(result LicenseList) map[string]struct {
-	ID string
-} {
-	urlMap := make(map[string]struct {
-		ID string
-	})
+// buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs
+func buildURLToLicenseMap(result LicenseList) map[string]string {
+	urlMap := make(map[string]string)
 
 	for _, l := range result.Licenses {
 		// Skip deprecated licenses
@@ -187,11 +179,7 @@ func buildURLToLicenseMap(result LicenseList) map[string]struct {
 			if replacement != nil {
 				// Map deprecated license URLs to the replacement license
 				for _, url := range l.SeeAlso {
-					urlMap[url] = struct {
-						ID string
-					}{
-						ID: replacement.ID,
-					}
+					urlMap[url] = replacement.ID
 				}
 			}
 			continue
@@ -199,11 +187,7 @@ func buildURLToLicenseMap(result LicenseList) map[string]struct {
 
 		// Add URLs from non-deprecated licenses
 		for _, url := range l.SeeAlso {
-			urlMap[url] = struct {
-				ID string
-			}{
-				ID: l.ID,
-			}
+			urlMap[url] = l.ID
 		}
 	}
 

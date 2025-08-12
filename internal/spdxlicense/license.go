@@ -45,9 +45,9 @@ type LicenseInfo struct {
 // The URL should match one of the URLs in the seeAlso field of an SPDX license
 func LicenseByURL(url string) (LicenseInfo, bool) {
 	url = strings.TrimSpace(url)
-	if info, exists := urlToLicense[url]; exists {
+	if id, exists := urlToLicense[url]; exists {
 		return LicenseInfo{
-			ID: info.ID,
+			ID: id,
 		}, true
 	}
 	return LicenseInfo{}, false
