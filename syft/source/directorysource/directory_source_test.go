@@ -475,12 +475,13 @@ func Test_DirectorySource_ID(t *testing.T) {
 			wantErr: require.Error,
 		},
 		{
-			name: "to dir with name and version",
+			name: "to dir with name and version and supplier",
 			cfg: Config{
 				Path: "./test-fixtures",
 				Alias: source.Alias{
-					Name:    "name-me-that!",
-					Version: "version-me-this!",
+					Name:     "name-me-that!",
+					Version:  "version-me-this!",
+					Supplier: "some-supplier",
 				},
 			},
 			want: artifact.ID("51a5f2a1536cf4b5220d4247814b07eec5862ab0547050f90e9ae216548ded7e"),
@@ -490,8 +491,9 @@ func Test_DirectorySource_ID(t *testing.T) {
 			cfg: Config{
 				Path: "./test-fixtures/image-simple",
 				Alias: source.Alias{
-					Name:    "name-me-that!",
-					Version: "version-me-this!",
+					Name:     "name-me-that!",
+					Version:  "version-me-this!",
+					Supplier: "some-supplier",
 				},
 			},
 			// note: this must match the previous value because the alias should trump the path info
