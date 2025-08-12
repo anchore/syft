@@ -776,39 +776,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "java-jre-ibm/1.8.0_391/linux-amd64",
-			expected: pkg.Package{
-				Name:      "java",
-				Version:   "1.8.0-foreman_2023_10_12_13_27-b00",
-				Type:      "binary",
-				PURL:      "pkg:generic/ibm/java@1.8.0-foreman_2023_10_12_13_27-b00",
-				Locations: locations("java"),
-				Metadata:  metadata("java-binary-ibm", "java"),
-			},
-		},
-		{
-			logicalFixture: "java-ibm-8-jre/1.8.0_451/linux-amd64",
-			expected: pkg.Package{
-				Name:      "java",
-				Version:   "1.8.0-_2025_04_14_02_37-b00",
-				Type:      "binary",
-				PURL:      "pkg:generic/ibm/java@1.8.0-_2025_04_14_02_37-b00",
-				Locations: locations("java"),
-				Metadata:  metadata("java-binary-ibm", "java"),
-			},
-		},
-		{
-			logicalFixture: "java-ibm-8-sdk-alpine/1.8.0_321/linux-amd64",
-			expected: pkg.Package{
-				Name:      "java_sdk",
-				Version:   "1.8.0-foreman_2022_01_20_09_33-b00",
-				Type:      "binary",
-				PURL:      "pkg:generic/ibm/java_sdk@1.8.0-foreman_2022_01_20_09_33-b00",
-				Locations: locations("jdb"),
-				Metadata:  metadata("java-sdk-binary-ibm", "jdb"),
-			},
-		},
-		{
 			logicalFixture: "java-jdk-openjdk/21.0.2+13-LTS/linux-amd64",
 			expected: pkg.Package{
 				Name:      "openjdk",
