@@ -16,6 +16,8 @@ import (
 type sourceConfig struct {
 	Name     string      `json:"name" yaml:"name" mapstructure:"name"`
 	Version  string      `json:"version" yaml:"version" mapstructure:"version"`
+	Supplier string      `json:"supplier" yaml:"supplier" mapstructure:"supplier"`
+	Source   string      `json:"source" yaml:"source" mapstructure:"source"`
 	BasePath string      `yaml:"base-path" json:"base-path" mapstructure:"base-path"` // specify base path for all file paths
 	File     fileSource  `json:"file" yaml:"file" mapstructure:"file"`
 	Image    imageSource `json:"image" yaml:"image" mapstructure:"image"`
@@ -32,6 +34,7 @@ var _ interface {
 var _ clio.PostLoader = (*imageSource)(nil)
 
 func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.Supplier, `optional field for syft user to configure the supplier of the root software component being analyzed`)
 	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
 	descriptions.Add(&o.Image.DefaultPullSource, `allows users to specify which image source should be used to generate the sbom
 valid values are: registry, docker, podman`)
