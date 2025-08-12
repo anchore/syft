@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/wagoodman/go-progress"
-
+	"github.com/anchore/archiver/v3"
 	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/internal/windows"
+	"github.com/wagoodman/go-progress"
 )
 
 type PathIndexVisitor func(string, string, os.FileInfo, error) error
@@ -27,6 +27,7 @@ type directoryIndexer struct {
 	errPaths          map[string]error
 	tree              filetree.ReadWriter
 	index             filetree.Index
+	archivePaths      []string
 }
 
 func newDirectoryIndexer(path, base string, visitors ...PathIndexVisitor) *directoryIndexer {
@@ -144,6 +145,10 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.AtomicStage) 
 		func(path string, info os.FileInfo, err error) error {
 			stager.Set(path)
 
+			if isArchive(path, info) {
+				r.archivePaths = append(r.archivePaths, path)
+			}
+
 			newRoot, err := r.indexPath(path, info, err)
 
 			if err != nil {
@@ -162,6 +167,17 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.AtomicStage) 
 	}
 
 	return roots, nil
+}
+
+// isArchive returns true if the path appears to be an archive
+func isArchive(path string, info os.FileInfo) bool {
+	if info == nil || !info.Mode().IsRegular() {
+		return false
+	}
+
+	envelopedUnarchiver, err := archiver.ByExtension(path)
+	_, ok := envelopedUnarchiver.(archiver.Unarchiver)
+	return err == nil && ok
 }
 
 func isRealPath(root string) (bool, error) {
