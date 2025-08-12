@@ -36,8 +36,9 @@ func Test_toFormatModel(t *testing.T) {
 			name: "container",
 			in: sbom.SBOM{
 				Source: source.Description{
-					Name:    "alpine",
-					Version: "sha256:d34db33f",
+					Name:     "alpine",
+					Version:  "sha256:d34db33f",
+					Supplier: "Alpine Linux",
 					Metadata: source.ImageMetadata{
 						UserInput:      "alpine:latest",
 						ManifestDigest: "sha256:d34db33f",
@@ -61,7 +62,8 @@ func Test_toFormatModel(t *testing.T) {
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
 						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
+							Supplier:     "Alpine Linux",
+							SupplierType: "Organization",
 						},
 					},
 					{
@@ -78,7 +80,8 @@ func Test_toFormatModel(t *testing.T) {
 							},
 						},
 						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
+							Supplier:     "Alpine Linux",
+							SupplierType: "Organization",
 						},
 					},
 				},
