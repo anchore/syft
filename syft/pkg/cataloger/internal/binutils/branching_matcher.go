@@ -31,7 +31,7 @@ func BranchingEvidenceMatcher(classifiers ...Classifier) EvidenceMatcher {
 					if err != nil {
 						return nil, err
 					}
-					return rdr, nil
+					return &nonClosingUnionReader{rdr}, nil
 				},
 			})
 			if len(pkgs) > 0 || err != nil {
@@ -40,4 +40,12 @@ func BranchingEvidenceMatcher(classifiers ...Classifier) EvidenceMatcher {
 		}
 		return nil, nil
 	}
+}
+
+type nonClosingUnionReader struct {
+	unionreader.UnionReader
+}
+
+func (c *nonClosingUnionReader) Close() error {
+	return nil
 }
