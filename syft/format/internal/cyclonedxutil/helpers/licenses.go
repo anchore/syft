@@ -62,6 +62,9 @@ func decodeLicenses(c *cyclonedx.Component) []pkg.License {
 			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), l.License.ID, l.License.URL))
 		case l.License != nil && l.License.Name != "":
 			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), l.License.Name, l.License.URL))
+		case l.License != nil && l.License.URL != "":
+			// Try to enrich license from URL when ID and Name are empty
+			licenses = append(licenses, pkg.NewLicenseFromURLsWithContext(context.TODO(), "", l.License.URL))
 		case l.Expression != "":
 			licenses = append(licenses, pkg.NewLicenseWithContext(context.TODO(), l.Expression))
 		default:

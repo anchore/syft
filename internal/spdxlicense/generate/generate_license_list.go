@@ -31,6 +31,16 @@ var licenseIDs = map[string]string{
 	{{ printf "%q" $k }}: {{ printf "%q" $v }},
 {{- end }}
 }
+
+// urlToLicense maps license URLs from the seeAlso field to license IDs and names
+var urlToLicense = map[string]struct {
+	ID   string
+	Name string
+}{
+{{- range $url, $info := .URLToLicense }}
+	{{ printf "%q" $url }}: {ID: {{ printf "%q" $info.ID }}, Name: {{ printf "%q" $info.Name }}},
+{{- end }}
+}
 `))
 
 var versionMatch = regexp.MustCompile(`([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
@@ -68,17 +78,23 @@ func run() error {
 	}()
 
 	licenseIDs := processSPDXLicense(result)
+	urlToLicense := buildURLToLicenseMap(result)
 
 	err = tmp.Execute(f, struct {
-		Timestamp  time.Time
-		URL        string
-		Version    string
-		LicenseIDs map[string]string
+		Timestamp    time.Time
+		URL          string
+		Version      string
+		LicenseIDs   map[string]string
+		URLToLicense map[string]struct {
+			ID   string
+			Name string
+		}
 	}{
-		Timestamp:  time.Now(),
-		URL:        url,
-		Version:    result.Version,
-		LicenseIDs: licenseIDs,
+		Timestamp:    time.Now(),
+		URL:          url,
+		Version:      result.Version,
+		LicenseIDs:   licenseIDs,
+		URLToLicense: urlToLicense,
 	})
 
 	if err != nil {
@@ -155,4 +171,49 @@ func processSPDXLicense(result LicenseList) map[string]string {
 func cleanLicenseID(id string) string {
 	cleanID := strings.ToLower(id)
 	return strings.ReplaceAll(cleanID, "-", "")
+}
+
+// buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs and names
+func buildURLToLicenseMap(result LicenseList) map[string]struct {
+	ID   string
+	Name string
+} {
+	urlMap := make(map[string]struct {
+		ID   string
+		Name string
+	})
+
+	for _, l := range result.Licenses {
+		// Skip deprecated licenses
+		if l.Deprecated {
+			// Find replacement license if available
+			replacement := result.findReplacementLicense(l)
+			if replacement != nil {
+				// Map deprecated license URLs to the replacement license
+				for _, url := range l.SeeAlso {
+					urlMap[url] = struct {
+						ID   string
+						Name string
+					}{
+						ID:   replacement.ID,
+						Name: replacement.Name,
+					}
+				}
+			}
+			continue
+		}
+
+		// Add URLs from non-deprecated licenses
+		for _, url := range l.SeeAlso {
+			urlMap[url] = struct {
+				ID   string
+				Name string
+			}{
+				ID:   l.ID,
+				Name: l.Name,
+			}
+		}
+	}
+
+	return urlMap
 }
