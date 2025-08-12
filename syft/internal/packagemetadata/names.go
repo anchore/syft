@@ -119,6 +119,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
+	jsonNames(pkg.VcpkgManifest{}, "vcpkg-manifest"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {
