@@ -168,6 +168,8 @@ func processLicenseURLs(l pkg.License, spdxID string, populate *cyclonedx.Licens
 		if spdxID == "" {
 			// CycloneDX requires either an id or name to be present for a license
 			// If l.Value is empty, use the URL as the name to ensure schema compliance
+			// at this point we've already tried to enrich the license we just don't want the format
+			// conversion to be lossy here
 			name := l.Value
 			if name == "" {
 				name = url
