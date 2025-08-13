@@ -17,6 +17,7 @@ import (
 
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/sourcemetadata"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
@@ -108,7 +109,7 @@ func Test_toFormatModel(t *testing.T) {
 					},
 				},
 				CreationInfo: &spdx.CreationInfo{
-					LicenseListVersion: "3.25",
+					LicenseListVersion: trimPatchVersion(spdxlicense.Version),
 					Creators: []spdx.Creator{
 						{
 							Creator:     "Anchore, Inc",
@@ -186,7 +187,7 @@ func Test_toFormatModel(t *testing.T) {
 					},
 				},
 				CreationInfo: &spdx.CreationInfo{
-					LicenseListVersion: "3.25",
+					LicenseListVersion: trimPatchVersion(spdxlicense.Version),
 					Creators: []spdx.Creator{
 						{
 							Creator:     "Anchore, Inc",
@@ -272,7 +273,7 @@ func Test_toFormatModel(t *testing.T) {
 					},
 				},
 				CreationInfo: &spdx.CreationInfo{
-					LicenseListVersion: "3.25",
+					LicenseListVersion: trimPatchVersion(spdxlicense.Version),
 					Creators: []spdx.Creator{
 						{
 							Creator:     "Anchore, Inc",
@@ -364,7 +365,7 @@ func Test_toFormatModel(t *testing.T) {
 					},
 				},
 				CreationInfo: &spdx.CreationInfo{
-					LicenseListVersion: "3.25",
+					LicenseListVersion: trimPatchVersion(spdxlicense.Version),
 					Creators: []spdx.Creator{
 						{
 							Creator:     "Anchore, Inc",
