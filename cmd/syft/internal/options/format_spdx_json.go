@@ -1,6 +1,7 @@
 package options
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/anchore/syft/syft/format/spdxjson"
@@ -14,6 +15,15 @@ type FormatSPDXJSON struct {
 
 func DefaultFormatSPDXJSON() FormatSPDXJSON {
 	return FormatSPDXJSON{}
+}
+
+func (o FormatSPDXJSON) Validate() error {
+	if o.CreatedTime != nil {
+		if *o.CreatedTime < 0 {
+			return fmt.Errorf("created-time must be a non-negative Unix timestamp")
+		}
+	}
+	return nil
 }
 
 func (o FormatSPDXJSON) config(v string) spdxjson.EncoderConfig {
