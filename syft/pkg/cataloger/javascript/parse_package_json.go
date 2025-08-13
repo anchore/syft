@@ -25,8 +25,10 @@ var _ generic.Parser = parsePackageJSON
 type packageJSON struct {
 	Version      string            `json:"version"`
 	Latest       []string          `json:"latest"`
-	Author       author            `json:"author"`
-	Authors      authors           `json:"authors"`
+	Author       person            `json:"author"`
+	Authors      people            `json:"authors"`
+	Contributors people            `json:"contributors"`
+	Maintainers  people            `json:"maintainers"`
 	License      json.RawMessage   `json:"license"`
 	Licenses     json.RawMessage   `json:"licenses"`
 	Name         string            `json:"name"`
@@ -37,13 +39,13 @@ type packageJSON struct {
 	Private      bool              `json:"private"`
 }
 
-type author struct {
+type person struct {
 	Name  string `json:"name" mapstructure:"name"`
 	Email string `json:"email" mapstructure:"email"`
 	URL   string `json:"url" mapstructure:"url"`
 }
 
-type authors []author
+type people []person
 
 type repository struct {
 	Type string `json:"type" mapstructure:"type"`
@@ -80,9 +82,9 @@ func parsePackageJSON(ctx context.Context, _ file.Resolver, _ *generic.Environme
 	return pkgs, nil, nil
 }
 
-func (a *author) UnmarshalJSON(b []byte) error {
+func (p *person) UnmarshalJSON(b []byte) error {
 	var authorStr string
-	var auth author
+	var auth person
 
 	if err := json.Unmarshal(b, &authorStr); err == nil {
 		// successfully parsed as a string, now parse that string into fields
@@ -101,18 +103,18 @@ func (a *author) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	*a = auth
+	*p = auth
 
 	return nil
 }
 
-func (a *author) AuthorString() string {
-	result := a.Name
-	if a.Email != "" {
-		result += fmt.Sprintf(" <%s>", a.Email)
+func (p *person) AuthorString() string {
+	result := p.Name
+	if p.Email != "" {
+		result += fmt.Sprintf(" <%s>", p.Email)
 	}
-	if a.URL != "" {
-		result += fmt.Sprintf(" (%s)", a.URL)
+	if p.URL != "" {
+		result += fmt.Sprintf(" (%s)", p.URL)
 	}
 	return result
 }
@@ -215,23 +217,26 @@ func pathContainsNodeModulesDirectory(p string) bool {
 	return false
 }
 
-func (a *authors) UnmarshalJSON(b []byte) error {
+func (p *people) UnmarshalJSON(b []byte) error {
 	// Try to unmarshal as an array of strings
 	var authorStrings []string
 	if err := json.Unmarshal(b, &authorStrings); err == nil {
 		// Successfully parsed as an array of strings
-		auths := make([]author, len(authorStrings))
+		auths := make([]person, len(authorStrings))
 		for i, authorStr := range authorStrings {
 			// Parse each string into author fields
 			fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
-			var auth author
+			var auth person
 			if err := mapstructure.Decode(fields, &auth); err != nil {
 				return fmt.Errorf("unable to decode package.json author: %w", err)
 			}
-			auth.Name = strings.TrimSpace(fields["name"])
+			// Trim whitespace from name if it was parsed
+			if auth.Name != "" {
+				auth.Name = strings.TrimSpace(auth.Name)
+			}
 			auths[i] = auth
 		}
-		*a = auths
+		*p = auths
 		return nil
 	}
 
@@ -239,29 +244,29 @@ func (a *authors) UnmarshalJSON(b []byte) error {
 	var authorObjs []map[string]interface{}
 	if err := json.Unmarshal(b, &authorObjs); err == nil {
 		// Successfully parsed as an array of objects
-		auths := make([]author, len(authorObjs))
+		auths := make([]person, len(authorObjs))
 		for i, fields := range authorObjs {
-			var auth author
+			var auth person
 			if err := mapstructure.Decode(fields, &auth); err != nil {
 				return fmt.Errorf("unable to decode package.json author object: %w", err)
 			}
 			auths[i] = auth
 		}
-		*a = auths
+		*p = auths
 		return nil
 	}
 
 	// If we get here, it means neither format matched
-	return fmt.Errorf("unable to parse package.json authors field")
+	return fmt.Errorf("unable to parse package.json authors field: expected array of strings or array of objects")
 }
 
-func (a authors) AuthorsString() string {
-	if len(a) == 0 {
+func (p people) String() string {
+	if len(p) == 0 {
 		return ""
 	}
 
-	authorStrings := make([]string, len(a))
-	for i, auth := range a {
+	authorStrings := make([]string, len(p))
+	for i, auth := range p {
 		authorStrings[i] = auth.AuthorString()
 	}
 	return strings.Join(authorStrings, ", ")
