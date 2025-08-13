@@ -61,6 +61,9 @@
       "github.com/gofiber/template/django/v3": [
         "cpe:2.3:a:gofiber:django:*:*:*:*:*:go:*:*"
       ],
+      "github.com/google/nftables": [
+        "cpe:2.3:a:google:nftables:*:*:*:*:*:go:*:*"
+      ],
       "github.com/gookit/goutil": [
         "cpe:2.3:a:go_util_project:go_util:*:*:*:*:*:go:*:*"
       ],
@@ -161,6 +164,9 @@
       ]
     },
     "jenkins_plugins": {
+      "ApicaLoadtest": [
+        "cpe:2.3:a:jenkins:apica_loadtest:*:*:*:*:*:jenkins:*:*"
+      ],
       "DotCi": [
         "cpe:2.3:a:jenkins:dotci:*:*:*:*:*:jenkins:*:*"
       ],
@@ -1339,6 +1345,9 @@
       "nomad": [
         "cpe:2.3:a:jenkins:nomad:*:*:*:*:*:jenkins:*:*"
       ],
+      "nouvola-divecloud": [
+        "cpe:2.3:a:jenkins:nouvola_divecloud:*:*:*:*:*:jenkins:*:*"
+      ],
       "nuget": [
         "cpe:2.3:a:jenkins:nuget:*:*:*:*:*:jenkins:*:*"
       ],
@@ -1919,6 +1928,9 @@
       "usemango-runner": [
         "cpe:2.3:a:jenkins:usemango_runner:*:*:*:*:*:jenkins:*:*"
       ],
+      "vaddy-plugin": [
+        "cpe:2.3:a:jenkins:vaddy:*:*:*:*:*:jenkins:*:*"
+      ],
       "valgrind": [
         "cpe:2.3:a:jenkins:valgrind:*:*:*:*:*:jenkins:*:*"
       ],
@@ -2347,6 +2359,9 @@
       ],
       "@zxcvbn-ts/core": [
         "cpe:2.3:a:zxcvbn-ts_project:zxcvbn-ts:*:*:*:*:*:node.js:*:*"
+      ],
+      "ContentTools": [
+        "cpe:2.3:a:getme:contenttools:*:*:*:*:*:node.js:*:*"
       ],
       "Proto": [
         "cpe:2.3:a:proto_project:proto:*:*:*:*:*:node.js:*:*"
@@ -5552,6 +5567,9 @@
       "mustache/mustache": [
         "cpe:2.3:a:mustache_project:mustache:*:*:*:*:*:php:*:*"
       ],
+      "nitsan/ns-backup": [
+        "cpe:2.3:a:nitsantech:ns-backup:*:*:*:*:*:typo3:*:*"
+      ],
       "phpfastcache/phpfastcache": [
         "cpe:2.3:a:phpfastcache:phpfastcache:*:*:*:*:*:*:*:*"
       ],
@@ -8292,6 +8310,9 @@
       "awsm-team": [
         "cpe:2.3:a:awsm:awsm_team:*:*:*:*:free:wordpress:*:*"
       ],
+      "axle-demo-importer": [
+        "cpe:2.3:a:axlethemes:axle_demo_importer:*:*:*:*:*:wordpress:*:*"
+      ],
       "ays-chatgpt-assistant": [
         "cpe:2.3:a:ays-pro:chatgpt_assistant:*:*:*:*:free:wordpress:*:*"
       ],
@@ -8775,6 +8796,9 @@
         "cpe:2.3:a:brizy:brizy:*:*:*:*:-:wordpress:*:*",
         "cpe:2.3:a:brizy:brizy:*:*:*:*:free:wordpress:*:*",
         "cpe:2.3:a:brizy:brizy:*:*:*:*:pro:wordpress:*:*"
+      ],
+      "broadstreet": [
+        "cpe:2.3:a:broadstreetads:broadstreet:*:*:*:*:*:wordpress:*:*"
       ],
       "broken-link-checker": [
         "cpe:2.3:a:managewp:broken_link_checker:*:*:*:*:*:wordpress:*:*"
@@ -10535,6 +10559,9 @@
       "drawblog": [
         "cpe:2.3:a:drawblog_project:drawblog:*:*:*:*:*:wordpress:*:*"
       ],
+      "drive-folder-embeder": [
+        "cpe:2.3:a:azumbro:drive_folder_embedder:*:*:*:*:*:wordpress:*:*"
+      ],
       "droit-dark-mode": [
         "cpe:2.3:a:droitthemes:droit_dark_mode:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11042,6 +11069,7 @@
         "cpe:2.3:a:inisev:enhanced_text_widget:*:*:*:*:*:wordpress:*:*"
       ],
       "enhanced-tooltipglossary": [
+        "cpe:2.3:a:cminds:cm_tooltip_glossary:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:cminds:tooltip_glossary:*:*:*:*:*:wordpress:*:*"
       ],
       "enqueue-anything": [
@@ -11803,6 +11831,9 @@
       "frontier-post": [
         "cpe:2.3:a:wpfrontier:frontier_post:*:*:*:*:*:wordpress:*:*"
       ],
+      "fs-product-inquiry": [
+        "cpe:2.3:a:fudugo:fs_product_inquiry:*:*:*:*:*:wordpress:*:*"
+      ],
       "fs-shopping-cart": [
         "cpe:2.3:a:firestormplugins:fs-shopping-cart:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11832,6 +11863,9 @@
       ],
       "furikake": [
         "cpe:2.3:a:furikake_project:furikake:*:*:*:*:*:wordpress:*:*"
+      ],
+      "fusedesk": [
+        "cpe:2.3:a:jeremyshapiro:fusedesk:*:*:*:*:*:wordpress:*:*"
       ],
       "fusion-builder": [
         "cpe:2.3:a:theme-fusion:avada:*:*:*:*:*:wordpress:*:*"
@@ -12061,6 +12095,9 @@
       "glossary-by-codeat": [
         "cpe:2.3:a:codeat:glossary:*:*:*:*:*:wordpress:*:*"
       ],
+      "glossy": [
+        "cpe:2.3:a:croberts:glossy:*:*:*:*:*:wordpress:*:*"
+      ],
       "gm-woocommerce-quote-popup": [
         "cpe:2.3:a:gravitymaster:product_enquiry_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
@@ -12285,6 +12322,9 @@
       "gtbabel": [
         "cpe:2.3:a:gtbabel:gtbabel:*:*:*:*:*:wordpress:*:*"
       ],
+      "gtg-advanced-blocks": [
+        "cpe:2.3:a:gutengeek:free_gutenberg_blocks:*:*:*:*:*:wordpress:*:*"
+      ],
       "gtm-server-side": [
         "cpe:2.3:a:stape:gtm_server_side:*:*:*:*:*:wordpress:*:*"
       ],
@@ -12458,6 +12498,9 @@
       ],
       "homepage-product-organizer-for-woocommerce": [
         "cpe:2.3:a:homepage_product_organizer_for_woocommerce_project:homepage_product_organizer_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+      ],
+      "homerunner-smartcheckout": [
+        "cpe:2.3:a:coolrunner:homerunner:*:*:*:*:*:wordpress:*:*"
       ],
       "honeypot": [
         "cpe:2.3:a:dineshkarki:wp_armour:*:*:*:*:*:wordpress:*:*"
@@ -12783,6 +12826,9 @@
       "indeed-job-importer": [
         "cpe:2.3:a:indeed-job-importer_project:indeed-job-importer:*:*:*:*:*:*:*:*"
       ],
+      "index-wp-mysql-for-speed": [
+        "cpe:2.3:a:plumislandmedia:index_wp_mysql_for_speed:*:*:*:*:*:wordpress:*:*"
+      ],
       "indieblocks": [
         "cpe:2.3:a:janboddez:indieblocks:*:*:*:*:*:wordpress:*:*"
       ],
@@ -13098,6 +13144,12 @@
       "js-support-ticket": [
         "cpe:2.3:a:joomsky:js_help_desk:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wiselyhub:js_help_desk:*:*:*:*:*:wordpress:*:*"
+      ],
+      "js_composer": [
+        "cpe:2.3:a:wpbakery:page_builder:*:*:*:*:*:wordpress:*:*"
+      ],
+      "jsfiddle-shortcode": [
+        "cpe:2.3:a:wvega:jsfiddle_shortcode:*:*:*:*:*:wordpress:*:*"
       ],
       "jsmol2wp": [
         "cpe:2.3:a:jsmol2wp_project:jsmol2wp:*:*:*:*:*:wordpress:*:*"
@@ -13605,8 +13657,40 @@
       "lokalyze-call-now": [
         "cpe:2.3:a:lokalyze:call_me_now:*:*:*:*:*:wordpress:*:*"
       ],
+      "ltl-freight-quotes-abf-freight-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:abf:wordpress:*:*",
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:abf_freight:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-globaltranz-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:globaltranz:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:ups:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-odfl-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:odfl:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-purolator-freight-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:purolator:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-saia-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:saia:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-sefl-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:sefl:wordpress:*:*",
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:southeastern_freight_lines:wordpress:*:*"
+      ],
       "ltl-freight-quotes-unishippers-edition": [
         "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:unishippers:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-ups-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:tforce:wordpress:*:*",
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:ups:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-worldwide-express-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:worldwide_express:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:worldwide_express:wordpress:*:*"
+      ],
+      "ltl-freight-quotes-xpo-edition": [
+        "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:xpo:wordpress:*:*"
       ],
       "lucas-string-replace": [
         "cpe:2.3:a:lucasstad:lucas_string_replace:*:*:*:*:*:wordpress:*:*"
@@ -13942,7 +14026,8 @@
         "cpe:2.3:a:mekshq:meks_flexible_shortcodes:*:*:*:*:*:wordpress:*:*"
       ],
       "meks-smart-author-widget": [
-        "cpe:2.3:a:mekshq:meks_smart_author_widget:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:mekshq:meks_smart_author_widget:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:mekshq:smart_author_widget:*:*:*:*:*:wordpress:*:*"
       ],
       "meks-smart-social-widget": [
         "cpe:2.3:a:mekshq:meks_smart_social_widget:*:*:*:*:*:wordpress:*:*"
@@ -14569,6 +14654,9 @@
       "note-press": [
         "cpe:2.3:a:datainterlock:note_press:*:*:*:*:*:wordpress:*:*"
       ],
+      "notice-faq": [
+        "cpe:2.3:a:notice:notice_faq:*:*:*:*:*:wordpress:*:*"
+      ],
       "notices": [
         "cpe:2.3:a:notices_project:notices:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15159,6 +15247,9 @@
       "plausible-analytics": [
         "cpe:2.3:a:plausible:plausible_analytics:*:*:*:*:*:wordpress:*:*"
       ],
+      "play-ht": [
+        "cpe:2.3:a:hammadh:play.ht:*:*:*:*:*:wordpress:*:*"
+      ],
       "player": [
         "cpe:2.3:a:web-dorado:spidervplayer:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:web-dorado:web-dorado_spider_video_player:*:*:*:*:*:wordpress:*:*"
@@ -15420,6 +15511,9 @@
       ],
       "posts-reminder": [
         "cpe:2.3:a:lucasgarcia:posts_reminder:*:*:*:*:*:wordpress:*:*"
+      ],
+      "posts-table-filterable": [
+        "cpe:2.3:a:pluginus:tableon_-_wordpress_posts_table_filterable:*:*:*:*:*:wordpress:*:*"
       ],
       "posttabs": [
         "cpe:2.3:a:posttabs_project:posttabs:*:*:*:*:*:wordpress:*:*"
@@ -15816,6 +15910,9 @@
       "randomtext": [
         "cpe:2.3:a:random_text_project:random_text:*:*:*:*:*:wordpress:*:*"
       ],
+      "rapid-cache": [
+        "cpe:2.3:a:megaoptim:rapid_cache:*:*:*:*:*:wordpress:*:*"
+      ],
       "rara-one-click-demo-import": [
         "cpe:2.3:a:rarathemes:rara_one_click_demo_import:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15901,6 +15998,9 @@
       ],
       "recall-products": [
         "cpe:2.3:a:recall-products_project:recall-products:*:*:*:*:*:wordpress:*:*"
+      ],
+      "recaptcha-jetpack": [
+        "cpe:2.3:a:bozdoz:recaptcha_jetpack:*:*:*:*:*:wordpress:*:*"
       ],
       "recent-backups": [
         "cpe:2.3:a:recent-backups_project:recent-backups:*:*:*:*:*:wordpress:*:*"
@@ -16547,6 +16647,9 @@
       "shiny-buttons": [
         "cpe:2.3:a:wpeden:shiny_buttons:*:*:*:*:*:wordpress:*:*"
       ],
+      "shipengine-shipping-quotes": [
+        "cpe:2.3:a:eniture:shipengine_shipping_quotes:*:*:*:*:*:wordpress:*:*"
+      ],
       "shopello": [
         "cpe:2.3:a:shopello_api_project:shopello_api:*:*:*:*:*:wordpress:*:*"
       ],
@@ -17112,12 +17215,27 @@
       "slideshow-se": [
         "cpe:2.3:a:slideshow_se_project:slideshow_se:*:*:*:*:*:wordpress:*:*"
       ],
+      "small-package-quotes-fedex-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:fedex:wordpress:*:*"
+      ],
+      "small-package-quotes-purolator-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:purolator:wordpress:*:*"
+      ],
       "small-package-quotes-unishippers-edition": [
         "cpe:2.3:a:eniture:ltl_freight_quotes:*:*:*:*:unishippers:wordpress:*:*",
         "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:unishippers:wordpress:*:*"
       ],
       "small-package-quotes-ups-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:ups:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:usps:wordpress:*:*",
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:wee:wordpress:*:*",
         "cpe:2.3:a:enituretechnology:small_package_quotes:*:*:*:*:ups:wordpress:*:*"
+      ],
+      "small-package-quotes-usps-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:usps:wordpress:*:*"
+      ],
+      "small-package-quotes-wwe-edition": [
+        "cpe:2.3:a:eniture:small_package_quotes:*:*:*:*:wee:wordpress:*:*"
       ],
       "smart-app-banner": [
         "cpe:2.3:a:wandlesoftware:smart_app_banner:*:*:*:*:*:wordpress:*:*"
@@ -18049,6 +18167,9 @@
       ],
       "tourfic": [
         "cpe:2.3:a:themefic:tourfic:*:*:*:*:*:wordpress:*:*"
+      ],
+      "tourmaster": [
+        "cpe:2.3:a:goodlayers:tour_master:*:*:*:*:*:wordpress:*:*"
       ],
       "tournamatch": [
         "cpe:2.3:a:tournamatch:tournamatch:*:*:*:*:*:wordpress:*:*"
@@ -19488,6 +19609,9 @@
       "wp-backgrounds-lite": [
         "cpe:2.3:a:inoplugs:wp-backgrounds_lite:*:*:*:*:*:wordpress:*:*"
       ],
+      "wp-backitup": [
+        "cpe:2.3:a:wpbackitup:backup_and_restore_wordpress:*:*:*:*:*:wordpress:*:*"
+      ],
       "wp-baidu-submit": [
         "cpe:2.3:a:wp_baidu_submit_project:wp_baidu_submit:*:*:*:*:*:wordpress:*:*"
       ],
@@ -19780,6 +19904,9 @@
       ],
       "wp-easy-contact": [
         "cpe:2.3:a:emarketdesign:wp_easy_contact:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-easy-gallery": [
+        "cpe:2.3:a:plugingarden:wp_easy_gallery:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-easy-pay": [
         "cpe:2.3:a:wpeasypay:wp_easypay:*:*:*:*:*:wordpress:*:*"
@@ -20179,6 +20306,9 @@
       ],
       "wp-marketing-automations": [
         "cpe:2.3:a:funnelkit:funnelkit_automations:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-masonry-infinite-scroll": [
+        "cpe:2.3:a:wporbit:wp_masonry_\\\u0026_infinite_scroll:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-media-cleaner": [
         "cpe:2.3:a:wp_media_cleaner_project:wp_media_cleaner:*:*:*:*:*:wordpress:*:*"
@@ -20755,6 +20885,9 @@
       ],
       "wp-users-exporter": [
         "cpe:2.3:a:wp-users-exporter_project:wp-users-exporter:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-users-masquerade": [
+        "cpe:2.3:a:lagunaisw:wp_users_masquerade:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-vertical-image-slider": [
         "cpe:2.3:a:i13websolution:wordpress_vertical_image_slider:*:*:*:*:*:wordpress:*:*"
@@ -21630,6 +21763,9 @@
       ],
       "posterity": [
         "cpe:2.3:a:sktthemes:posterity:*:*:*:*:*:wordpress:*:*"
+      ],
+      "pressmart": [
+        "cpe:2.3:a:presslayouts:pressmart:*:*:*:*:*:wordpress:*:*"
       ],
       "regina-lite": [
         "cpe:2.3:a:machothemes:regina_lite:*:*:*:*:*:wordpress:*:*"

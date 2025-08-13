@@ -12,6 +12,7 @@ OPENSAML_CORE = opensaml-core-3.4.6
 API_ALL_SOURCES = api-all-2.0.0-sources
 SPRING_INSTRUMENTATION = spring-instrumentation-4.3.0-1.0
 MULTIPLE_MATCHING = multiple-matching-2.11.5
+ORG_MULTIPLE_THENAME = org.multiple-thename
 
 
 .DEFAULT_GOAL := fixtures
@@ -48,7 +49,11 @@ $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar:
 	mkdir -p $(CACHE_DIR)
 	cd $(MULTIPLE_MATCHING) && zip -r $(CACHE_PATH)/$(MULTIPLE_MATCHING).jar .
 
-# Jenkins plugins typically do not have the version included in the archive name, 
+$(CACHE_DIR)/$(ORG_MULTIPLE_THENAME).jar:
+	mkdir -p $(CACHE_DIR)
+	cd $(ORG_MULTIPLE_THENAME) && zip -r $(CACHE_PATH)/$(ORG_MULTIPLE_THENAME).jar .
+
+# Jenkins plugins typically do not have the version included in the archive name,
 # so it is important to not include it in the generated test fixture
 $(CACHE_DIR)/gradle.hpi:
 	mkdir -p $(CACHE_DIR)

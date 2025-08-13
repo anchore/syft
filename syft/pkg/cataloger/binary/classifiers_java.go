@@ -123,6 +123,23 @@ func defaultJavaClassifiers() []binutils.Classifier {
 					CPEs:    singleCPE("cpe:2.3:a:oracle:graalvm_for_jdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 				},
 				{
+					Class: "jdb-binary-openjdk-zulu",
+					EvidenceMatcher: binutils.MatchAll(
+						binutils.MatchPath("**/*zulu*/**"),
+						binutils.MatchAny(
+							m.FileContentsVersionMatcher(
+								// [NUL]jdb[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
+								`(?m)(java|jdb)\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
+							m.FileContentsVersionMatcher(
+								// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]jdb[NUL]
+								`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+(java|jdb)`),
+						),
+					),
+					Package: "zulu",
+					PURL:    mustPURL("pkg:generic/azul/zulu@version"),
+					CPEs:    singleCPE("cpe:2.3:a:azul:zulu:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				},
+				{
 					Class: "java-jdb-binary-openjdk",
 					EvidenceMatcher: binutils.MatchAll(
 						m.FileContentsVersionMatcher(
@@ -136,23 +153,6 @@ func defaultJavaClassifiers() []binutils.Classifier {
 					Package: "openjdk",
 					PURL:    mustPURL("pkg:generic/oracle/openjdk@version"),
 					CPEs:    singleCPE("cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-				},
-				{
-					Class: "jdb-binary-openjdk-zulu",
-					EvidenceMatcher: binutils.MatchAll(
-						binutils.MatchPath("**/*zulu*/**"),
-						binutils.MatchAny(
-							m.FileContentsVersionMatcher(
-								// [NUL]openjdk[NUL]java[NUL]0.0[NUL]11.0.17+8-LTS[NUL]
-								`(?m)\x00openjdk\x00java\x00(?P<release>[0-9]+[.0-9]*)\x00(?P<version>[0-9]+[^\x00]+)\x00`),
-							m.FileContentsVersionMatcher(
-								// arm64 versions: [NUL]0.0[NUL][NUL][NUL][NUL][NUL]11.0.22+7[NUL][NUL][NUL][NUL][NUL][NUL][NUL]openjdk[NUL]java[NUL]
-								`(?m)\x00(?P<release>[0-9]+[.0-9]*)\x00+(?P<version>[0-9]+[^\x00]+)\x00+openjdk\x00java`),
-						),
-					),
-					Package: "zulu",
-					PURL:    mustPURL("pkg:generic/azul/zulu@version"),
-					CPEs:    singleCPE("cpe:2.3:a:azul:zulu:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 				},
 				{
 					Class: "java-sdk-binary-ibm",

@@ -98,7 +98,6 @@ func findLibmanJSON(resolver file.Resolver, depsJSON file.Location) (*libmanJSON
 	if err != nil {
 		return nil, err
 	}
-	internal.CloseAndLogError(reader, loc.RealPath)
 
 	lj, err := newLibmanJSON(file.NewLocationReadCloser(*loc, reader))
 	if err != nil {

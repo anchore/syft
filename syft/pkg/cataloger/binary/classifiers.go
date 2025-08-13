@@ -449,6 +449,16 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "hashicorp-vault-binary",
+			FileGlob: "**/vault",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// revoke1.18.0
+				`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "github.com/hashicorp/vault",
+			PURL:    mustPURL("pkg:golang/github.com/hashicorp/vault@version"),
+			CPEs:    singleCPE("cpe:2.3:a:hashicorp:vault:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "nginx-binary",
 			FileGlob: "**/nginx",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
@@ -483,7 +493,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// [NUL]OpenSSL 3.1.4'
 				// [NUL]OpenSSL 1.1.1w'
-				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
 			),
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
