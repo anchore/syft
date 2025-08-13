@@ -16,29 +16,29 @@ func TestFormatSPDXJSON_buildConfig(t *testing.T) {
 
 func TestFormatSPDXJSON_Validate(t *testing.T) {
 	tests := []struct {
-		name      string
+		name        string
 		createdTime *int64
-		wantErr   bool
+		wantErr     bool
 	}{
 		{
-			name:      "nil timestamp is valid",
+			name:        "nil timestamp is valid",
 			createdTime: nil,
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
-			name:      "positive timestamp is valid",
+			name:        "positive timestamp is valid",
 			createdTime: ptr(int64(1234567890)),
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
-			name:      "zero timestamp is valid",
+			name:        "zero timestamp is valid",
 			createdTime: ptr(int64(0)),
-			wantErr:   false,
+			wantErr:     false,
 		},
 		{
-			name:      "negative timestamp is invalid",
+			name:        "negative timestamp is invalid",
 			createdTime: ptr(int64(-1)),
-			wantErr:   true,
+			wantErr:     true,
 		},
 	}
 
@@ -54,4 +54,3 @@ func TestFormatSPDXJSON_Validate(t *testing.T) {
 		})
 	}
 }
-
