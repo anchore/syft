@@ -1,0 +1,15 @@
+{
+  "version": "6.14.6",
+  "name": "npm",
+  "description": "a package manager for JavaScript",
+  "homepage": "https://docs.npmjs.com/",
+  "contributors": [
+    "Alice Contributor <alice@example.com>",
+    "Bob Helper <bob@example.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/npm/cli"
+  },
+  "license": "Artistic-2.0"
+}
