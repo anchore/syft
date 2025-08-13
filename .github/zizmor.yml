@@ -1,0 +1,11 @@
+rules:
+  unpinned-uses:
+    ignore:
+      # Allow unpinned uses of trusted internal anchore/workflows actions
+      - update-anchore-dependencies.yml
+
+  dangerous-triggers:
+    ignore:
+      # Safe use of pull_request_target - only runs trusted scripts from base repo,
+      # never checks out PR code, needs secrets for labeling PRs from forks
+      - detect-schema-changes.yaml

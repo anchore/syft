@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification {
+func poetryLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolint:dupl // this is very similar to the uv lock dependency specifier, but should remain separate
 	meta, ok := p.Metadata.(pkg.PythonPoetryLockEntry)
 	if !ok {
 		log.Tracef("cataloger failed to extract poetry lock metadata for package %+v", p.Name)

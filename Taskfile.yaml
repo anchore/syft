@@ -78,6 +78,7 @@ tasks:
       - task: integration
       - task: validate-cyclonedx-schema
       - task: test-utils
+      - task: snapshot
       - task: cli
       - task: check-docker-cache
 
@@ -90,7 +91,7 @@ tasks:
       - "{{ .TOOL_DIR }}/binny"
     status:
       - "test -f {{ .TOOL_DIR }}/binny"
-    cmd: "curl -sSfL https://raw.githubusercontent.com/anchore/binny/main/install.sh | sh -s -- -b .tool"
+    cmd: "curl -sSfL https://get.anchore.io/binny | sh -s -- -b .tool"
     silent: true
 
   tools:
@@ -264,12 +265,12 @@ tasks:
         YELLOW='\033[0;33m'
         RESET='\033[0m'
 
-        echo -e "${YELLOW}creating fingerprint files for non-docker fixtures...${RESET}"        
+        echo -e "${YELLOW}creating fingerprint files for non-docker fixtures...${RESET}"
         for dir in $(find . -type d -name 'test-fixtures'); do
           if [ -f "$dir/Makefile" ]; then
             # for debugging...
             #echo -e "${YELLOW}• calculating fingerprints in $dir... ${RESET}"
-            
+
             (make -C "$dir" fingerprint)
           fi
         done
@@ -298,18 +299,18 @@ tasks:
         BOLD='\033[1m'
         PURPLE='\033[0;35m'
         RESET='\033[0m'
-        
+
         # if DOWNLOAD_TEST_FIXTURE_CACHE is set to 'false', then skip the cache download and always build
         if [ "$DOWNLOAD_TEST_FIXTURE_CACHE" = "false" ]; then
             echo -e "${BOLD}${PURPLE}skipping cache download, rebuilding cache...${RESET}"
             {{ .TASK }} build-fixtures
             exit 0
         fi
-        
+
         LATEST_FINGERPRINT=$(docker manifest inspect {{ .CACHE_IMAGE }} | {{ .YQ }} -r '.annotations.fingerprint')
 
         echo "latest cache:      $LATEST_FINGERPRINT"
-        
+
         if [ -f {{ .LAST_CACHE_PULL_FILE }} ]; then
           LAST_PULL_FINGERPRINT=$(cat {{ .LAST_CACHE_PULL_FILE }} | {{ .YQ }} -r '.digest')
         else
@@ -317,41 +318,41 @@ tasks:
           {{ .TASK }} download-test-fixture-cache
           exit 0
         fi
-        
+
         {{ .TASK }} fingerprints
 
-        WANT_FINGERPRINT=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')        
+        WANT_FINGERPRINT=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')
 
         echo "desired cache:     $WANT_FINGERPRINT"
         echo "last pulled cache: $LAST_PULL_FINGERPRINT"
-  
+
         # if we already have the latest cache, skip the refresh
         if [ "$LAST_PULL_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
             echo -e "${BOLD}${PURPLE}already have the latest cache (skipping cache download)${RESET}"
             exit 0
         fi
-  
+
         # at this point we only refresh the cache if we want the same cache that is currently available.
         # we don't by default refresh the cache if the cache if it is simply different from what we have,
         # because we may be working on a code change that doesn't require a cache refresh (but could trigger one,
         # which would be annoying to deal with in a development workflow).
-  
+
         if [ "$LATEST_FINGERPRINT" = "$WANT_FINGERPRINT" ]; then
           echo -e "${BOLD}${PURPLE}found newer cache! downloading cache...${RESET}"
           {{ .TASK }} download-test-fixture-cache
         else
           echo -e "${BOLD}${PURPLE}found different cache, but isn't clear if it's newer (skipping cache download and manually building)${RESET}"
-        
+
           {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .LAST_CACHE_PULL_FILE }} > .tmp/last_cache_lines
           {{ .YQ }} eval '.paths[] | "\(.digest) \(.path)"' {{ .CACHE_PATHS_FILE }} > .tmp/cache_lines
           diff .tmp/last_cache_lines .tmp/cache_lines || true
-        
+
           echo -e "${BOLD}${PURPLE}diff with more context...${RESET}"
-        
+
           diff -U10000 {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }} || true
-        
+
           echo -e "${BOLD}${PURPLE}detected changes to input material, manually building fixtures...${RESET}"
-        
+
           {{ .TASK }} build-fixtures
         fi
 
@@ -364,7 +365,7 @@ tasks:
         BOLD='\033[1m'
         YELLOW='\033[0;33m'
         RESET='\033[0m'
-        
+
         # Use a for loop with command substitution to avoid subshell issues
         for dir in $(find . -type d -name 'test-fixtures'); do
           if [ -f "$dir/Makefile" ]; then
@@ -402,15 +403,15 @@ tasks:
       set -eu
       oras_command="{{ .ORAS }} push {{ .CACHE_IMAGE }}"
 
-      paths=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.paths[].path')      
+      paths=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.paths[].path')
       for path in $paths; do
         oras_command+=" $path"
       done
       oras_command+=" {{ .CACHE_PATHS_FILE }}"
-      
+
       oras_command+=" --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .PROJECT }}"
       oras_command+=" --annotation fingerprint=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')"
-    
+
       echo "Executing: $oras_command"
       eval $oras_command
 
@@ -603,16 +604,6 @@ tasks:
         silent: true
       - "{{ .RELEASE_CMD }}"
 
-  ci-release-version-file:
-    # desc: "[CI only] Update the version file"
-    deps: [tools]
-    cmds:
-      - task: ci-check
-      - ".github/scripts/update-version-file.sh {{ .RELEASE_VERSION }}"
-    requires:
-      vars:
-        - RELEASE_VERSION
-
 
   ## Cleanup targets #################################
 
@@ -640,7 +631,7 @@ tasks:
         BOLD='\033[1m'
         YELLOW='\033[0;33m'
         RESET='\033[0m'
-        
+
         # Use a for loop with command substitution to avoid subshell issues
         for dir in $(find . -type d -name 'test-fixtures'); do
         if [ -f "$dir/Makefile" ]; then

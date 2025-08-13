@@ -123,6 +123,7 @@ func (s fileSource) ID() artifact.ID {
 func (s fileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
+	supplier := ""
 	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
@@ -132,11 +133,16 @@ func (s fileSource) Describe() source.Description {
 		if a.Version != "" {
 			version = a.Version
 		}
+
+		if a.Supplier != "" {
+			supplier = a.Supplier
+		}
 	}
 	return source.Description{
-		ID:      string(s.id),
-		Name:    name,
-		Version: version,
+		ID:       string(s.id),
+		Name:     name,
+		Version:  version,
+		Supplier: supplier,
 		Metadata: source.FileMetadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,

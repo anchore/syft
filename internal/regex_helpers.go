@@ -41,11 +41,11 @@ func MatchNamedCaptureGroups(regEx *regexp.Regexp, content string) map[string]st
 // 1.5x the reader chunk size (1MB * 1.5).
 func MatchNamedCaptureGroupsFromReader(re *regexp.Regexp, r io.Reader) (map[string]string, error) {
 	results := make(map[string]string)
-	_, err := processReaderInChunks(r, readerChunkSize, matchNamedCaptureGroupsHandler(re, results))
+	matches, err := processReaderInChunks(r, readerChunkSize, matchNamedCaptureGroupsHandler(re, results))
 	if err != nil {
 		return nil, err
 	}
-	if len(results) == 0 {
+	if !matches {
 		return nil, nil
 	}
 	return results, nil
