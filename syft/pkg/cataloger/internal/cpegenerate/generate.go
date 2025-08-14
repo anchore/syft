@@ -418,10 +418,7 @@ func removeTrailingDigits(s string) string {
 	return re.ReplaceAllString(s, "")
 }
 
-// addBinaryPackageDigitVariations adds variations with trailing digits removed for binary packages.
-// For binary package types only, when the name ends with a digit, add a new variation with all
-// suffix-digits removed (e.g. Qt5 -> Qt). This helps generate additional CPE permutations for
-// better vulnerability matching.
+// addBinaryPackageDigitVariations adds variations with trailing digits removed for binary packages.For binary package types only, when the name ends with a digit, add a new variation with all suffix-digits removed (e.g. Qt5 -> Qt). This helps generate additional CPE permutations for better vulnerability matching.
 func addBinaryPackageDigitVariations(fields fieldCandidateSet, p pkg.Package) {
 	if p.Type != pkg.BinaryPkg {
 		return
