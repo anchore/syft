@@ -51,7 +51,6 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
-	log.Debugf("attempting to load packages using Go toolchain for %s", reader.RealPath)
 	syftSourcePackages, sourceModules, sourceDependencies := c.loadPackages(modDir)
 
 	// combine source analysis with go.mod
@@ -185,6 +184,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 
 // loadPackages uses golang.org/x/tools/go/packages to get dependency information.
 func (c *goModCataloger) loadPackages(modDir string) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
+	// TODO: add commmend for each Mode
 	cfg := &packages.Config{
 		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
 		Dir:   modDir,
@@ -245,7 +245,7 @@ func (c *goModCataloger) catalogModules(
 			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
-			Type:      pkg.GoSourcePkg,
+			Type:      pkg.GoModulePkg,
 			PURL:      packageURL(m.Path, m.Version),
 			Metadata: pkg.GolangModuleEntry{
 				H1Digest: digests[fmt.Sprintf("%s %s", m.Path, m.Version)],

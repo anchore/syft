@@ -24,7 +24,6 @@ const (
 	GithubActionPkg         Type = "github-action"
 	GithubActionWorkflowPkg Type = "github-action-workflow"
 	GoModulePkg             Type = "go-module"
-	GoSourcePkg             Type = "go-source"
 	GraalVMNativeImagePkg   Type = "graalvm-native-image"
 	HackagePkg              Type = "hackage"
 	HexPkg                  Type = "hex"
