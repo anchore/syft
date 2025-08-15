@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"go/build"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/spf13/afero"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 
@@ -267,7 +267,7 @@ func (c *goModCataloger) catalogModules(
 		}
 
 		pkgInfos := pkgs[m.Path]
-		moduleLicenses := resolveModuleLicenses(ctx, pkgInfos)
+		moduleLicenses := resolveModuleLicensesWithFS(ctx, pkgInfos, afero.NewOsFs())
 		// we do out of source lookups for module parsing
 		// locations are NOT included in the SBOM because of this
 		goModulePkg := pkg.Package{
@@ -291,18 +291,18 @@ func (c *goModCataloger) catalogModules(
 	return syftPackages, moduleToPackage
 }
 
-// resolveModuleLicenses finds and parses license files for Go modules.
-func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo) pkg.LicenseSet {
+// resolveModuleLicensesWithFS finds and parses license files for Go modules using the provided filesystem.
+func resolveModuleLicensesWithFS(ctx context.Context, pkgInfos []pkgInfo, fs afero.Fs) pkg.LicenseSet {
 	licenses := pkg.NewLicenseSet()
 
 	for _, info := range pkgInfos {
-		licenseFiles, err := findLicenseFileLocations(info.pkgDir, info.moduleDir)
+		licenseFiles, err := findLicenseFileLocationsWithFS(info.pkgDir, info.moduleDir, fs)
 		if err != nil {
 			continue
 		}
 
 		for _, f := range licenseFiles {
-			contents, err := os.Open(f)
+			contents, err := fs.Open(f)
 			if err != nil {
 				continue
 			}
@@ -403,6 +403,16 @@ func (c *goModCataloger) visitPackages(
 
 		module := newModule(p.Module)
 		if module.Dir == "" {
+			// We continue processing even when module.Dir is empty because we still want to:
+			// 1. Extract module dependencies from p.Imports for dependency graph construction
+			// 2. Create syft packages with available metadata (name, version, etc.)
+			// 3. Build relationships between modules even without complete filesystem info
+			// Not having the DIR here just means that we're not going to process the licenses
+
+			// Common causes for module.Dir being empty:
+			// - Vendored dependencies where Go toolchain loses some module metadata
+			// - Replace directives pointing to non-existent or inaccessible paths
+			//
 			// A known cause is that the module is vendored, so some information is lost.
 			isVendored := strings.Contains(pkgDir, "/vendor/")
 			if !isVendored {
@@ -506,7 +516,7 @@ func newModule(mod *packages.Module) *packages.Module {
 	return &tmp
 }
 
-func findLicenseFileLocations(dir string, rootDir string) ([]string, error) {
+func findLicenseFileLocationsWithFS(dir string, rootDir string, fs afero.Fs) ([]string, error) {
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return nil, err
@@ -521,14 +531,46 @@ func findLicenseFileLocations(dir string, rootDir string) ([]string, error) {
 		return nil, fmt.Errorf("licenses.Find: rootDir %s should contain dir %s", rootDir, dir)
 	}
 
-	return findAllUpwards(dir, licenseRegexp, rootDir)
+	return findAllLicenseCandidatesUpwardsWithFS(dir, licenseRegexp, rootDir, fs)
 }
 
-func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, error) {
+/*
+findAllLicenseCandidatesUpwards performs a bubble-up search per package because:
+1. pkgInfos represents a sparse vertical distribution of packages within modules
+2. we get more pkgInfos for free when the build configuration is updated
+3. Bubble-up gives us module boundary enforcement and prevents license pollution that could occur on walk down
+
+When we should consider Walk-down (Tip-to-stem):
+- Reduced filesystem calls: Single traversal vs multiple per-package
+- Path deduplication: Avoids re-scanning common parent directories
+- Better for wide module structures: Efficient when many packages share parent paths
+- We need to consider the case here where nested modules are visited by accident and licenses
+are erroneously associated to a 'parent module' bubble up currently prevents this
+*/
+func findAllLicenseCandidatesUpwardsWithFS(dir string, r *regexp.Regexp, stopAt string, fs afero.Fs) ([]string, error) {
 	// Stop once we go out of the stopAt dir.
 	licenseCandidates := make([]string, 0)
+	visited := make(map[string]bool) // Track visited directories to prevent infinite loops
+
 	for strings.HasPrefix(dir, stopAt) {
-		dirContents, err := os.ReadDir(dir)
+		// Resolve any symlinks to get the actual path
+		// Note: For in-memory filesystems, EvalSymlinks may not work as expected,
+		// but this provides a fallback for real filesystems
+		resolvedDir := dir
+		if _, ok := fs.(*afero.OsFs); ok {
+			if resolved, err := filepath.EvalSymlinks(dir); err == nil {
+				resolvedDir = resolved
+			}
+		}
+
+		// Check if we've already visited this resolved directory (symlink loop detection)
+		if visited[resolvedDir] {
+			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: detected directory loop at %s (resolved: %s)", dir, resolvedDir)
+			break
+		}
+		visited[resolvedDir] = true
+
+		dirContents, err := afero.ReadDir(fs, dir)
 		if err != nil {
 			return nil, err
 		}
@@ -549,6 +591,14 @@ func findAllUpwards(dir string, r *regexp.Regexp, stopAt string) ([]string, erro
 			// Can't go any higher up the directory tree.
 			break
 		}
+
+		// Additional safety check: ensure parent is actually a parent directory
+		// This helps catch cases where symlinks might cause path manipulation issues
+		if len(parent) >= len(dir) {
+			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: parent path is not shorter than current path, stopping at %s", dir)
+			break
+		}
+
 		dir = parent
 	}
 
