@@ -525,17 +525,19 @@ func Test_convertToAndFromFormat(t *testing.T) {
 					UserInput:      "some-image:some-tag",
 					ManifestDigest: "sha256:ab8b83234bc28f28d8e",
 				},
-				Name:    "some-image",
-				Version: "some-tag",
+				Name:     "some-image",
+				Version:  "some-tag",
+				Supplier: "some-supplier",
 			},
 			packages:      packages,
 			relationships: relationships,
 		},
 		{
-			name: ". directory source",
+			name: ". directory source with supplier",
 			source: source.Description{
-				ID:   "DocumentRoot-Directory-.",
-				Name: ".",
+				ID:       "DocumentRoot-Directory-.",
+				Name:     ".",
+				Supplier: "some-supplier",
 				Metadata: source.DirectoryMetadata{
 					Path: ".",
 				},
@@ -544,7 +546,7 @@ func Test_convertToAndFromFormat(t *testing.T) {
 			relationships: relationships,
 		},
 		{
-			name: "directory source",
+			name: "directory source without supplier",
 			source: source.Description{
 				ID:   "DocumentRoot-Directory-my-app",
 				Name: "my-app",

@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified"
            targetNamespace="http://cyclonedx.org/schema/spdx"
-           version="1.0-3.24.0">
+           version="1.0-3.26.0">
 
     <xs:simpleType name="licenseId">
         <xs:restriction base="xs:string">
@@ -162,6 +162,11 @@
                     <xs:documentation>Any OSI License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="any-OSI-perl-modules">
+                <xs:annotation>
+                    <xs:documentation>Any OSI License - Perl Modules</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="Apache-1.0">
                 <xs:annotation>
                     <xs:documentation>Apache License 1.0</xs:documentation>
@@ -305,6 +310,11 @@
             <xs:enumeration value="Boehm-GC">
                 <xs:annotation>
                     <xs:documentation>Boehm-Demers-Weiser GC License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Boehm-GC-without-fee">
+                <xs:annotation>
+                    <xs:documentation>Boehm-Demers-Weiser GC License (without fee)</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Borceux">
@@ -812,6 +822,16 @@
                     <xs:documentation>Creative Commons Public Domain Dedication and Certification</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="CC-PDM-1.0">
+                <xs:annotation>
+                    <xs:documentation>Creative    Commons Public Domain Mark 1.0 Universal</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="CC-SA-1.0">
+                <xs:annotation>
+                    <xs:documentation>Creative Commons Share Alike 1.0 Generic</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="CC0-1.0">
                 <xs:annotation>
                     <xs:documentation>Creative Commons Zero v1.0 Universal</xs:documentation>
@@ -1062,6 +1082,21 @@
                     <xs:documentation>DOC License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="DocBook-Schema">
+                <xs:annotation>
+                    <xs:documentation>DocBook Schema License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="DocBook-Stylesheet">
+                <xs:annotation>
+                    <xs:documentation>DocBook Stylesheet License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="DocBook-XML">
+                <xs:annotation>
+                    <xs:documentation>DocBook XML License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="Dotseqn">
                 <xs:annotation>
                     <xs:documentation>Dotseqn License</xs:documentation>
@@ -1265,6 +1300,11 @@
             <xs:enumeration value="GD">
                 <xs:annotation>
                     <xs:documentation>GD License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="generic-xts">
+                <xs:annotation>
+                    <xs:documentation>Generic XTS License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="GFDL-1.1">
@@ -1527,6 +1567,11 @@
                     <xs:documentation>hdparm License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="HIDAPI">
+                <xs:annotation>
+                    <xs:documentation>HIDAPI License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="Hippocratic-2.1">
                 <xs:annotation>
                     <xs:documentation>Hippocratic License 2.1</xs:documentation>
@@ -1615,6 +1660,11 @@
             <xs:enumeration value="HPND-MIT-disclaimer">
                 <xs:annotation>
                     <xs:documentation>Historical Permission Notice and Disclaimer with MIT disclaimer</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="HPND-Netrek">
+                <xs:annotation>
+                    <xs:documentation>Historical Permission Notice and Disclaimer - Netrek variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="HPND-Pbmplus">
@@ -1710,6 +1760,11 @@
             <xs:enumeration value="Inner-Net-2.0">
                 <xs:annotation>
                     <xs:documentation>Inner Net License v2.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="InnoSetup">
+                <xs:annotation>
+                    <xs:documentation>Inno Setup License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Intel">
@@ -2052,6 +2107,11 @@
                     <xs:documentation>Minpack License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="MIPS">
+                <xs:annotation>
+                    <xs:documentation>MIPS License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="MirOS">
                 <xs:annotation>
                     <xs:documentation>The MirOS Licence</xs:documentation>
@@ -2070,6 +2130,11 @@
             <xs:enumeration value="MIT-advertising">
                 <xs:annotation>
                     <xs:documentation>Enlightenment License (e16)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="MIT-Click">
+                <xs:annotation>
+                    <xs:documentation>MIT Click License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="MIT-CMU">
@@ -2772,6 +2837,11 @@
                     <xs:documentation>Ruby License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="Ruby-pty">
+                <xs:annotation>
+                    <xs:documentation>Ruby pty extension license</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="SAX-PD">
                 <xs:annotation>
                     <xs:documentation>Sax Public Domain Notice</xs:documentation>
@@ -2805,6 +2875,11 @@
             <xs:enumeration value="Sendmail-8.23">
                 <xs:annotation>
                     <xs:documentation>Sendmail License 8.23</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Sendmail-Open-Source-1.1">
+                <xs:annotation>
+                    <xs:documentation>Sendmail Open Source License v1.1</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="SGI-B-1.0">
@@ -2865,6 +2940,11 @@
             <xs:enumeration value="Sleepycat">
                 <xs:annotation>
                     <xs:documentation>Sleepycat License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="SMAIL-GPL">
+                <xs:annotation>
+                    <xs:documentation>SMAIL General Public License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="SMLNJ">
@@ -3007,6 +3087,11 @@
                     <xs:documentation>Transitive Grace Period Public Licence 1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="ThirdEye">
+                <xs:annotation>
+                    <xs:documentation>ThirdEye License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="threeparttable">
                 <xs:annotation>
                     <xs:documentation>threeparttable License</xs:documentation>
@@ -3037,6 +3122,11 @@
                     <xs:documentation>THOR Public License 1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="TrustedQSL">
+                <xs:annotation>
+                    <xs:documentation>TrustedQSL License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="TTWL">
                 <xs:annotation>
                     <xs:documentation>Text-Tabs+Wrap License</xs:documentation>
@@ -3055,6 +3145,11 @@
             <xs:enumeration value="TU-Berlin-2.0">
                 <xs:annotation>
                     <xs:documentation>Technische Universitaet Berlin License 2.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Ubuntu-font-1.0">
+                <xs:annotation>
+                    <xs:documentation>Ubuntu Font Licence v1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="UCAR">
@@ -3172,6 +3267,11 @@
                     <xs:documentation>Do What The F*ck You Want To Public License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="wwl">
+                <xs:annotation>
+                    <xs:documentation>WWL License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="wxWindows">
                 <xs:annotation>
                     <xs:documentation>wxWindows Library License</xs:documentation>
@@ -3185,6 +3285,11 @@
             <xs:enumeration value="X11-distribute-modifications-variant">
                 <xs:annotation>
                     <xs:documentation>X11 License Distribution Modification Variant</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="X11-swapped">
+                <xs:annotation>
+                    <xs:documentation>X11 swapped final paragraphs</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Xdebug-1.03">
@@ -3358,6 +3463,11 @@
                     <xs:documentation>Bootloader Distribution Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="CGAL-linking-exception">
+                <xs:annotation>
+                    <xs:documentation>CGAL Linking Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="Classpath-exception-2.0">
                 <xs:annotation>
                     <xs:documentation>Classpath exception 2.0</xs:documentation>
@@ -3381,6 +3491,11 @@
             <xs:enumeration value="eCos-exception-2.0">
                 <xs:annotation>
                     <xs:documentation>eCos exception 2.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="erlang-otp-linking-exception">
+                <xs:annotation>
+                    <xs:documentation>Erlang/OTP Linking Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Fawkes-Runtime-exception">
@@ -3425,7 +3540,7 @@
             </xs:enumeration>
             <xs:enumeration value="Gmsh-exception">
                 <xs:annotation>
-                    <xs:documentation>Gmsh exception&gt;</xs:documentation>
+                    <xs:documentation>Gmsh exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="GNAT-exception">
@@ -3446,6 +3561,11 @@
             <xs:enumeration value="gnu-javamail-exception">
                 <xs:annotation>
                     <xs:documentation>GNU JavaMail exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="GPL-3.0-389-ds-base-exception">
+                <xs:annotation>
+                    <xs:documentation>GPL-3.0 389 DS Base Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="GPL-3.0-interface-exception">
@@ -3478,9 +3598,19 @@
                     <xs:documentation>GStreamer Exception (2008)</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="harbour-exception">
+                <xs:annotation>
+                    <xs:documentation>harbour exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="i2p-gpl-java-exception">
                 <xs:annotation>
                     <xs:documentation>i2p GPL+Java Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Independent-modules-exception">
+                <xs:annotation>
+                    <xs:documentation>Independent Module Linking exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="KiCad-libraries-exception">
@@ -3526,6 +3656,11 @@
             <xs:enumeration value="mif-exception">
                 <xs:annotation>
                     <xs:documentation>Macros and Inline Functions Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="mxml-exception">
+                <xs:annotation>
+                    <xs:documentation>mxml Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Nokia-Qt-exception-1.1">
@@ -3581,6 +3716,11 @@
             <xs:enumeration value="Qwt-exception-1.0">
                 <xs:annotation>
                     <xs:documentation>Qwt exception 1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="romic-exception">
+                <xs:annotation>
+                    <xs:documentation>Romic Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="RRDtool-FLOSS-exception-2.0">

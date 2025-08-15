@@ -389,7 +389,69 @@ func Test_toBomDescriptor(t *testing.T) {
 						Name:  "syft:image:labels:key1",
 						Value: "value1",
 					},
-				}},
+				},
+			},
+		},
+		{
+			name: "with optional supplier is on the root component and bom metadata",
+			args: args{
+				name:    "test-image",
+				version: "1.0.0",
+				srcMetadata: source.Description{
+					Name:     "test-image",
+					Version:  "1.0.0",
+					Supplier: "optional-supplier",
+					Metadata: source.ImageMetadata{},
+				},
+			},
+			want: &cyclonedx.Metadata{
+				Timestamp:  "",
+				Lifecycles: nil,
+				Tools: &cyclonedx.ToolsChoice{
+					Components: &[]cyclonedx.Component{
+						{
+							Type:    cyclonedx.ComponentTypeApplication,
+							Author:  "anchore",
+							Name:    "test-image",
+							Version: "1.0.0",
+						},
+					},
+				},
+				Authors: nil,
+				Component: &cyclonedx.Component{
+					BOMRef:   "",
+					MIMEType: "",
+					Type:     "container",
+					Supplier: &cyclonedx.OrganizationalEntity{
+						Name: "optional-supplier",
+					},
+					Author:             "",
+					Publisher:          "",
+					Group:              "",
+					Name:               "test-image",
+					Version:            "1.0.0",
+					Description:        "",
+					Scope:              "",
+					Hashes:             nil,
+					Licenses:           nil,
+					Copyright:          "",
+					CPE:                "",
+					PackageURL:         "",
+					SWID:               nil,
+					Modified:           nil,
+					Pedigree:           nil,
+					ExternalReferences: nil,
+					Properties:         nil,
+					Components:         nil,
+					Evidence:           nil,
+					ReleaseNotes:       nil,
+				},
+				Manufacture: nil,
+				Supplier: &cyclonedx.OrganizationalEntity{
+					Name: "optional-supplier",
+				},
+				Licenses: nil,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -480,6 +542,10 @@ func Test_toOsComponent(t *testing.T) {
 					Version: "myVersion",
 				},
 				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:distro:extendedSupport",
+						Value: "false",
+					},
 					{
 						Name:  "syft:distro:id",
 						Value: "myLinux",

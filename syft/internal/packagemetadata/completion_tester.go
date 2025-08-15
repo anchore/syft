@@ -12,6 +12,7 @@ type CompletionTester struct {
 }
 
 func NewCompletionTester(t testing.TB, ignore ...any) *CompletionTester {
+	t.Helper()
 	tester := &CompletionTester{
 		valid:  AllTypes(),
 		ignore: ignore,
@@ -21,6 +22,14 @@ func NewCompletionTester(t testing.TB, ignore ...any) *CompletionTester {
 		tester.validate(t)
 	})
 	return tester
+}
+
+func (tr *CompletionTester) Ignore(is ...any) {
+	tr.ignore = append(tr.ignore, keepNonNil(is...)...)
+}
+
+func (tr *CompletionTester) Expect(is ...any) {
+	tr.valid = append(tr.valid, keepNonNil(is...)...)
 }
 
 func (tr *CompletionTester) Tested(t testing.TB, m any) {
@@ -33,6 +42,13 @@ func (tr *CompletionTester) Tested(t testing.TB, m any) {
 		t.Fatal("no valid metadata types to test against")
 	}
 	ty := reflect.TypeOf(m)
+
+	for _, v := range tr.ignore {
+		if reflect.TypeOf(v) == ty {
+			return
+		}
+	}
+
 	for _, v := range tr.valid {
 		if reflect.TypeOf(v) == ty {
 			tr.saw = append(tr.saw, m)
@@ -66,4 +82,14 @@ validations:
 			t.Errorf("metadata type %s is not covered by a test", ty.Name())
 		}
 	}
+}
+
+func keepNonNil(is ...any) []any {
+	var result []any
+	for _, i := range is {
+		if i != nil {
+			result = append(result, i)
+		}
+	}
+	return result
 }

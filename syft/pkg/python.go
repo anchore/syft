@@ -92,3 +92,21 @@ type PythonRequirementsEntry struct {
 	URL               string   `json:"url,omitempty" mapstructure:"URL"`
 	Markers           string   `json:"markers,omitempty" mapstructure:"Markers"`
 }
+
+type PythonUvLockDependencyEntry struct {
+	Name     string   `json:"name"`
+	Optional bool     `json:"optional"`
+	Markers  string   `json:"markers,omitempty"`
+	Extras   []string `json:"extras,omitempty"`
+}
+
+type PythonUvLockExtraEntry struct {
+	Name         string   `json:"name"`
+	Dependencies []string `json:"dependencies"`
+}
+
+type PythonUvLockEntry struct {
+	Index        string                        `mapstructure:"index" json:"index"`
+	Dependencies []PythonUvLockDependencyEntry `json:"dependencies"`
+	Extras       []PythonUvLockExtraEntry      `json:"extras,omitempty"`
+}

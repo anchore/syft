@@ -16,6 +16,8 @@ import (
 type sourceConfig struct {
 	Name     string      `json:"name" yaml:"name" mapstructure:"name"`
 	Version  string      `json:"version" yaml:"version" mapstructure:"version"`
+	Supplier string      `json:"supplier" yaml:"supplier" mapstructure:"supplier"`
+	Source   string      `json:"source" yaml:"source" mapstructure:"source"`
 	BasePath string      `yaml:"base-path" json:"base-path" mapstructure:"base-path"` // specify base path for all file paths
 	File     fileSource  `json:"file" yaml:"file" mapstructure:"file"`
 	Image    imageSource `json:"image" yaml:"image" mapstructure:"image"`

@@ -10,6 +10,7 @@ import (
 
 const NONE = "NONE"
 const NOASSERTION = "NOASSERTION"
+const SUPPLIERORG = "Organization"
 
 func DownloadLocation(p pkg.Package) string {
 	// 3.7: Package Download Location

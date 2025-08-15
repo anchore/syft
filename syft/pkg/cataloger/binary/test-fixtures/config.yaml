@@ -187,14 +187,6 @@ from-images:
     paths:
       - /usr/local/apache2/bin/httpd
 
-  - name: java-jre-ibm
-    version: 1.8.0_391
-    images:
-      - ref: ibmjava:8@sha256:05ef6b0f754aa3a8cebcec36260a70c234a217b21240a998604f33459037bc08
-        platform: linux/amd64
-    paths:
-      - /opt/ibm/java/jre/bin/java
-
   - version: 10.6.15
     images:
       - ref: mariadb:10.6.15@sha256:92d499d9e02e92dc55c8160ef4004aa07f2e835197b18864ed214ca441e0dcfc
@@ -319,6 +311,23 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/node
+
+  - name: java-jdk-oracle
+    version: 1.8.0_451-b10
+    images:
+      - ref: container-registry.oracle.com/java/jdk:8u451-oraclelinux8@sha256:f9c980e52853bd0a8815ad908c9a4025ed68cb52f31f3b8cd0cd442ee367bfd1
+        platform: linux/amd64
+    paths:
+      - /usr/java/jdk-8/bin/java
+      - /usr/java/jdk-8/bin/jdb
+
+  - name: java-jre-oracle-sdk
+    version: 1.8.0_451-b10
+    images:
+      - ref: container-registry.oracle.com/java/serverjre:1.8.0_451@sha256:fe78fe3efd292dceb5685882ce1b13eb78492f383ccfd52a1b88a4f755b9d996
+        platform: linux/amd64
+    paths:
+      - /usr/java/jdk-8/bin/java
 
   - name: java-jre-openjdk
     version: 1.8.0_352-b08
@@ -687,6 +696,20 @@ from-images:
         platform: linux/amd64
     paths:
       - /bin/consul
+
+  - version: 1.20.2
+    images:
+      - ref: hashicorp/vault@sha256:5cd2003247e0a574a66c66aee1916b1e9e7f99640298f2e61271a8842d2d2a19
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
+  - version: 1.19.4
+    images:
+      - ref: hashicorp/vault@sha256:b5f675b0bf681568cd7354c697fe4ce953024312d6d23ee7216deda60c192bad
+        platform: linux/arm64
+    paths:
+      - /bin/vault
 
   - version: 3.0.2
     images:

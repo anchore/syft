@@ -26,7 +26,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 		{
 			name: "cataloging task in progress",
 			eventFn: func(t *testing.T) partybus.Event {
-				value := &monitor.CatalogerTaskProgress{
+				value := &monitor.TaskProgress{
 					AtomicStage: progress.NewAtomicStage("some stage"),
 					Manual:      progress.NewManual(100),
 				}
@@ -48,7 +48,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 		{
 			name: "cataloging sub task in progress",
 			eventFn: func(t *testing.T) partybus.Event {
-				value := &monitor.CatalogerTaskProgress{
+				value := &monitor.TaskProgress{
 					AtomicStage: progress.NewAtomicStage("some stage"),
 					Manual:      progress.NewManual(100),
 				}
@@ -71,7 +71,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 		{
 			name: "cataloging sub task complete",
 			eventFn: func(t *testing.T) partybus.Event {
-				value := &monitor.CatalogerTaskProgress{
+				value := &monitor.TaskProgress{
 					AtomicStage: progress.NewAtomicStage("some stage"),
 					Manual:      progress.NewManual(100),
 				}
@@ -94,7 +94,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 		{
 			name: "cataloging sub task complete -- hide stage",
 			eventFn: func(t *testing.T) partybus.Event {
-				value := &monitor.CatalogerTaskProgress{
+				value := &monitor.TaskProgress{
 					AtomicStage: progress.NewAtomicStage("some stage"),
 					Manual:      progress.NewManual(100),
 				}
@@ -117,7 +117,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 		{
 			name: "cataloging sub task complete with removal",
 			eventFn: func(t *testing.T) partybus.Event {
-				value := &monitor.CatalogerTaskProgress{
+				value := &monitor.TaskProgress{
 					AtomicStage: progress.NewAtomicStage("some stage"),
 					Manual:      progress.NewManual(100),
 				}
@@ -162,7 +162,7 @@ func TestHandler_handleCatalogerTaskStarted(t *testing.T) {
 			}
 
 			// note: this line / event is not under test, only needed to show a sub status
-			kickoffEvent := &monitor.CatalogerTaskProgress{
+			kickoffEvent := &monitor.TaskProgress{
 				AtomicStage: progress.NewAtomicStage(""),
 				Manual:      progress.NewManual(-1),
 			}

@@ -15,7 +15,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func RunTask(ctx context.Context, tsk Task, resolver file.Resolver, s sbomsync.Builder, prog *monitor.CatalogerTaskProgress) error {
+func RunTask(ctx context.Context, tsk Task, resolver file.Resolver, s sbomsync.Builder, prog *monitor.TaskProgress) error {
 	err := runTaskSafely(ctx, tsk, resolver, s)
 	unknowns, remainingErrors := unknown.ExtractCoordinateErrors(err)
 	if len(unknowns) > 0 {

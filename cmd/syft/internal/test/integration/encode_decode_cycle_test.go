@@ -78,7 +78,10 @@ func TestEncodeDecodeEncodeCycleComparison(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			for _, image := range images {
 				originalSBOM, _ := catalogFixtureImage(t, image, source.SquashedScope)
-
+				// we need a way to inject supplier into this test
+				// supplier is not available as part of the SBOM Config API since the flag
+				// is used in conjunction with the SourceConfig which is injected into generateSBOM during scan
+				originalSBOM.Source.Supplier = "anchore"
 				f := encoders.GetByString(test.name)
 				require.NotNil(t, f)
 

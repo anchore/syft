@@ -1,0 +1,1 @@
+FROM anchore/test_images:syft_bin-cf22714@sha256:c27b02c6322180fd8a7a3097d2b430bfdf9ea52ecf136edf258458e82f2c6f21

@@ -25,6 +25,39 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 	}
 
 	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, licenseCandidates...)
+	// Handle author, authors, contributors, and maintainers fields
+	var authorParts []string
+
+	// Add a single author field if it exists
+	if u.Author.Name != "" || u.Author.Email != "" || u.Author.URL != "" {
+		if authStr := u.Author.AuthorString(); authStr != "" {
+			authorParts = append(authorParts, authStr)
+		}
+	}
+
+	// Add authors field if it exists
+	if len(u.Authors) > 0 {
+		if authorsStr := u.Authors.String(); authorsStr != "" {
+			authorParts = append(authorParts, authorsStr)
+		}
+	}
+
+	// Add contributors field if it exists
+	if len(u.Contributors) > 0 {
+		if contributorsStr := u.Contributors.String(); contributorsStr != "" {
+			authorParts = append(authorParts, contributorsStr)
+		}
+	}
+
+	// Add maintainers field if it exists
+	if len(u.Maintainers) > 0 {
+		if maintainersStr := u.Maintainers.String(); maintainersStr != "" {
+			authorParts = append(authorParts, maintainersStr)
+		}
+	}
+
+	authorInfo := strings.Join(authorParts, ", ")
+
 	p := pkg.Package{
 		Name:      u.Name,
 		Version:   u.Version,
@@ -37,7 +70,7 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 			Name:        u.Name,
 			Version:     u.Version,
 			Description: u.Description,
-			Author:      u.Author.AuthorString(),
+			Author:      authorInfo,
 			Homepage:    u.Homepage,
 			URL:         u.Repository.URL,
 			Private:     u.Private,

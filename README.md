@@ -37,8 +37,8 @@ Syft development is sponsored by [Anchore](https://anchore.com/), and is release
 Syft binaries are provided for Linux, macOS and Windows.
 
 ### Recommended
-> ```bash 
-> curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+> ```bash
+> curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
 > ```
 
 Install script options:
@@ -141,7 +141,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Linux kernel modules (ko)
 - Nix (outputs in /nix/store)
 - PHP (composer, PECL, Pear)
-- Python (wheel, egg, poetry, requirements.txt)
+- Python (wheel, egg, poetry, requirements.txt, uv)
 - Red Hat (rpm)
 - Ruby (gem)
 - Rust (cargo.lock, auditable binary)
@@ -157,7 +157,7 @@ Our [wiki](https://github.com/anchore/syft/wiki) contains further details on the
 * [File Selection](https://github.com/anchore/syft/wiki/file-selection)
 * [Excluding file paths](https://github.com/anchore/syft/wiki/excluding-file-paths)
 * [Output formats](https://github.com/anchore/syft/wiki/output-formats)
-* [Package Cataloger Selection](https://github.com/anchore/syft/wiki/package-cataloger-selection) 
+* [Package Cataloger Selection](https://github.com/anchore/syft/wiki/package-cataloger-selection)
   * [Concepts](https://github.com/anchore/syft/wiki/package-cataloger-selection#concepts)
   * [Examples](https://github.com/anchore/syft/wiki/package-cataloger-selection#examples)
 * [Using templates](https://github.com/anchore/syft/wiki/using-templates)
@@ -177,8 +177,8 @@ Check out our [contributing](/CONTRIBUTING.md) guide and [developer](/DEVELOPING
 
 ## Syft Team Meetings
 
-The Syft Team hold regular community meetings online. All are welcome to join to bring topics for discussion. 
-- Check the [calendar](https://calendar.google.com/calendar/u/0/r?cid=Y182OTM4dGt0MjRtajI0NnNzOThiaGtnM29qNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t) for the next meeting date. 
+The Syft Team hold regular community meetings online. All are welcome to join to bring topics for discussion.
+- Check the [calendar](https://calendar.google.com/calendar/u/0/r?cid=Y182OTM4dGt0MjRtajI0NnNzOThiaGtnM29qNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t) for the next meeting date.
 - Add items to the [agenda](https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing) (join [this group](https://groups.google.com/g/anchore-oss-community) for write access to the [agenda](https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing))
 - See you there!
 
