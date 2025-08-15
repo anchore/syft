@@ -17,6 +17,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -51,7 +52,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
-	syftSourcePackages, sourceModules, sourceDependencies := c.loadPackages(modDir)
+	syftSourcePackages, sourceModules, sourceDependencies, unknownErr := c.loadPackages(modDir, reader.Location)
 
 	// combine source analysis with go.mod
 	contents, err := io.ReadAll(reader)
@@ -139,9 +140,9 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 
 	// Return nil for relationships if none were found
 	if len(relationships) == 0 {
-		return pkgsSlice, nil, nil
+		return pkgsSlice, nil, unknownErr
 	}
-	return pkgsSlice, relationships, nil
+	return pkgsSlice, relationships, unknownErr
 }
 
 func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map[string]string, error) {
@@ -183,7 +184,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 }
 
 // loadPackages uses golang.org/x/tools/go/packages to get dependency information.
-func (c *goModCataloger) loadPackages(modDir string) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
+func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string, unknownErr error) {
 	cfg := &packages.Config{
 		// Mode flags control what information is loaded for each package.
 		// Performance impact increases significantly with each additional flag:
@@ -241,7 +242,7 @@ func (c *goModCataloger) loadPackages(modDir string) (pkgs map[string][]pkgInfo,
 	// - syft packages are created from modules
 	// - dependencies are a convenience that allows us to view pruned module => module imports;
 	// note: dependencies have already pruned local imports and only focuses on module => module dependencies
-	return c.visitPackages(rootPkgs)
+	return c.visitPackages(rootPkgs, loc)
 }
 
 // catalogModules creates syft packages from Go modules found by the toolchain.
@@ -363,7 +364,8 @@ type pkgInfo struct {
 // visitPackages processes Go module import graphs to get all modules
 func (c *goModCataloger) visitPackages(
 	rootPkgs []*packages.Package,
-) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
+	loc file.Location,
+) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string, unknownErr error) {
 	modules = make(map[string]*packages.Module)
 	// note: packages are specific to inside the module - they do not include transitive pkgInfo
 	// packages is used for identifying licensing documents for modules that could contain multiple licenses
@@ -374,6 +376,13 @@ func (c *goModCataloger) visitPackages(
 	// closure (p *Package) bool
 	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
+		if len(p.Errors) > 0 {
+			for _, err := range p.Errors {
+				unknownErr = unknown.Append(unknownErr, loc, err)
+			}
+			return false
+		}
+
 		// skip for common causes
 		if shouldSkipVisit(p) {
 			return false
@@ -387,7 +396,6 @@ func (c *goModCataloger) visitPackages(
 		//		return c.config.IncludeIgnoredDeps
 		//	}
 		//}
-
 		pkgDir := resolvePkgDir(p)
 		if pkgDir == "" {
 			return true
@@ -398,7 +406,7 @@ func (c *goModCataloger) visitPackages(
 			// A known cause is that the module is vendored, so some information is lost.
 			isVendored := strings.Contains(pkgDir, "/vendor/")
 			if !isVendored {
-				log.Warnf("module %s does not have dir and it's not vendored", module.Path)
+				log.Debugf("module %s does not have dir and it's not vendored", module.Path)
 			}
 		}
 
@@ -422,7 +430,7 @@ func (c *goModCataloger) visitPackages(
 
 		return true
 	}, nil)
-	return pkgs, modules, dependencies
+	return pkgs, modules, dependencies, unknownErr
 }
 
 func resolvePkgDir(p *packages.Package) string {
@@ -439,11 +447,6 @@ func resolvePkgDir(p *packages.Package) string {
 }
 
 func shouldSkipVisit(p *packages.Package) bool {
-	// skip packages with errors
-	if len(p.Errors) > 0 {
-		return true
-	}
-
 	// skip packages that don't have module info
 	if p.Module == nil {
 		// log.Warnf("Package %s does not have module info. Non go modules projects are no longer supported.", p.PkgPath)
@@ -500,9 +503,6 @@ func newModule(mod *packages.Module) *packages.Module {
 		tmp = *tmp.Replace
 	}
 
-	// The +incompatible suffix does not affect module version.
-	// ref: https://golang.org/ref/mod#incompatible-versions
-	tmp.Version = strings.TrimSuffix(tmp.Version, "+incompatible")
 	return &tmp
 }
 
