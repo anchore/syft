@@ -82,6 +82,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.GitHubActionsUseStatement{}, "github-actions-use-statement"),
 	jsonNames(pkg.GolangBinaryBuildinfoEntry{}, "go-module-buildinfo-entry", "GolangBinMetadata", "GolangMetadata"),
 	jsonNames(pkg.GolangModuleEntry{}, "go-module-entry", "GolangModMetadata"),
+	jsonNames(pkg.GolangSourceEntry{}, "go-source-entry"),
 	jsonNames(pkg.HackageStackYamlLockEntry{}, "haskell-hackage-stack-lock-entry", "HackageMetadataType"),
 	jsonNamesWithoutLookup(pkg.HackageStackYamlEntry{}, "haskell-hackage-stack-entry", "HackageMetadataType"), // the legacy value is split into two types, where the other is preferred
 	jsonNames(pkg.JavaArchive{}, "java-archive", "JavaMetadata"),

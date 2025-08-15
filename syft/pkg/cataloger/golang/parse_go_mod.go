@@ -4,18 +4,28 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"go/build"
 	"io"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/spf13/afero"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/tools/go/packages"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+)
+
+var (
+	licenseRegexp = regexp.MustCompile(`^(?i)((UN)?LICEN(S|C)E|COPYING|NOTICE).*$`)
 )
 
 type goModCataloger struct {
@@ -29,58 +39,84 @@ func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 }
 
 // parseGoModFile takes a go.mod and lists all packages discovered.
-//
-//nolint:funlen
 func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	packages := make(map[string]pkg.Package)
-
-	contents, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read go module: %w", err)
-	}
-
-	f, err := modfile.Parse(reader.RealPath, contents, nil)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse go module: %w", err)
-	}
+	modDir := filepath.Dir(string(reader.Location.Reference().RealPath))
 
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
-	for _, m := range f.Require {
-		lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
-		packages[m.Mod.Path] = pkg.Package{
-			Name:      m.Mod.Path,
-			Version:   m.Mod.Version,
-			Licenses:  pkg.NewLicenseSet(lics...),
-			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:      packageURL(m.Mod.Path, m.Mod.Version),
-			Language:  pkg.Go,
-			Type:      pkg.GoModulePkg,
-			Metadata: pkg.GolangModuleEntry{
-				H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
-			},
+	syftSourcePackages, sourceModules, sourceDependencies, unknownErr := c.loadPackages(modDir, reader.Location)
+
+	modFile, err := c.parseModFileContents(reader)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	goModPackages := c.createGoModPackages(ctx, resolver, modFile, sourceModules, reader, digests)
+	c.applyReplaceDirectives(ctx, resolver, modFile, goModPackages, reader, digests)
+	c.applyExcludeDirectives(modFile, goModPackages)
+
+	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, syftSourcePackages, sourceModules, reader, digests)
+	relationships := buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
+
+	return c.assembleResults(catalogedModules, goModPackages, relationships, unknownErr)
+}
+
+func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*modfile.File, error) {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read go module: %w", err)
+	}
+
+	f, err := modfile.Parse(reader.RealPath, contents, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse go module: %w", err)
+	}
+
+	return f, nil
+}
+
+// note this handles the deduplication from source by checking if the mod path exists in the sourceModules map
+func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.Resolver, modFile *modfile.File, sourceModules map[string]*packages.Module, reader file.LocationReadCloser, digests map[string]string) map[string]pkg.Package {
+	goModPackages := make(map[string]pkg.Package)
+
+	for _, m := range modFile.Require {
+		if _, exists := sourceModules[m.Mod.Path]; !exists {
+			lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
+			goModPackages[m.Mod.Path] = pkg.Package{
+				Name:      m.Mod.Path,
+				Version:   m.Mod.Version,
+				Licenses:  pkg.NewLicenseSet(lics...),
+				Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+				PURL:      packageURL(m.Mod.Path, m.Mod.Version),
+				Language:  pkg.Go,
+				Type:      pkg.GoModulePkg,
+				Metadata: pkg.GolangModuleEntry{
+					H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
+				},
+			}
 		}
 	}
 
-	// remove any old packages and replace with new ones...
-	for _, m := range f.Replace {
+	return goModPackages
+}
+
+// applyReplaceDirectives processes replace directives from go.mod
+func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver file.Resolver, modFile *modfile.File, goModPackages map[string]pkg.Package, reader file.LocationReadCloser, digests map[string]string) {
+	for _, m := range modFile.Replace {
 		lics := c.licenseResolver.getLicenses(ctx, resolver, m.New.Path, m.New.Version)
 
-		// the old path and new path may be the same, in which case this is a noop,
-		// but if they're different we need to remove the old package.
-		// note that we may change the path but we should always reference the new version (since the old version
-		// cannot be trusted as a correct value).
 		var finalPath string
 		if !strings.HasPrefix(m.New.Path, ".") && !strings.HasPrefix(m.New.Path, "/") {
 			finalPath = m.New.Path
-			delete(packages, m.Old.Path)
+			delete(goModPackages, m.Old.Path)
 		} else {
 			finalPath = m.Old.Path
 		}
-		packages[finalPath] = pkg.Package{
+
+		goModPackages[finalPath] = pkg.Package{
 			Name:      finalPath,
 			Version:   m.New.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
@@ -93,25 +129,35 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 			},
 		}
 	}
+}
 
-	// remove any packages from the exclude fields
-	for _, m := range f.Exclude {
-		delete(packages, m.Mod.Path)
+func (c *goModCataloger) applyExcludeDirectives(modFile *modfile.File, goModPackages map[string]pkg.Package) {
+	for _, m := range modFile.Exclude {
+		delete(goModPackages, m.Mod.Path)
+	}
+}
+
+func (c *goModCataloger) assembleResults(catalogedPkgs []pkg.Package, goModPackages map[string]pkg.Package, relationships []artifact.Relationship, unknownErr error) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgsSlice := make([]pkg.Package, 0)
+
+	for _, p := range catalogedPkgs {
+		p.SetID()
+		pkgsSlice = append(pkgsSlice, p)
 	}
 
-	pkgsSlice := make([]pkg.Package, len(packages))
-	idx := 0
-	for _, p := range packages {
+	for _, p := range goModPackages {
 		p.SetID()
-		pkgsSlice[idx] = p
-		idx++
+		pkgsSlice = append(pkgsSlice, p)
 	}
 
 	sort.SliceStable(pkgsSlice, func(i, j int) bool {
 		return pkgsSlice[i].Name < pkgsSlice[j].Name
 	})
 
-	return pkgsSlice, nil, nil
+	if len(relationships) == 0 {
+		return pkgsSlice, nil, unknownErr
+	}
+	return pkgsSlice, relationships, unknownErr
 }
 
 func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map[string]string, error) {
@@ -150,4 +196,443 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	}
 
 	return out, nil
+}
+
+// loadPackages uses golang.org/x/tools/go/packages to get dependency information.
+func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string, unknownErr error) {
+	cfg := &packages.Config{
+		// Mode flags control what information is loaded for each package.
+		// Performance impact increases significantly with each additional flag:
+		//
+		// packages.NeedModule - Required for module metadata (path, version, replace directives).
+		//   Essential for SBOM generation. Minimal performance impact.
+		//
+		// packages.NeedName - Required for package names & package Path. Minimal performance impact.
+		//   Needed to identify packages and filter out standard library packages.
+		//
+		// packages.NeedFiles - Loads source file paths for each package.
+		//   Moderate performance impact as it requires filesystem traversal.
+		//   Required for license discovery.
+		//
+		// packages.NeedDeps - Loads the dependency graph between packages.
+		//   High performance impact as it builds the complete import graph.
+		//   Critical for generating accurate dependency relationships in SBOM.
+		//
+		// packages.NeedImports - Loads import information for each package.
+		//   High performance impact, especially with large codebases.
+		//   Required for building module-to-module dependency mappings.
+		//
+		// Adding flags like NeedTypes, NeedSyntax, or NeedTypesInfo would dramatically
+		// increase memory usage and processing time (10x+ slower) but are not needed
+		// for SBOM generation as we only require dependency and module metadata.
+		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
+		Dir:   modDir,
+		Tests: true,
+	}
+
+	// From Go documentation: "all" expands to all packages in the main module
+	// and their dependencies, including dependencies needed by tests.
+	//
+	// The special pattern "all" specifies all the active modules,
+	// first the main module and then dependencies sorted by module path.
+	// A pattern containing "..." specifies the active modules whose module paths match the pattern.
+	// On implementation we could not find a test case that differentiated between all and ...
+	// There may be a case where ... is non inclusive so we default to all for the inclusive guarantee
+	rootPkgs, err := packages.Load(cfg, "all")
+	if err != nil {
+		log.Debugf("error loading packages: %v", err)
+	}
+
+	// Check for any errors in loading
+	for _, p := range rootPkgs {
+		if len(p.Errors) > 0 {
+			// Log errors but continue processing
+			for _, e := range p.Errors {
+				log.Debugf("package load error for %s: %v", p.PkgPath, e)
+			}
+		}
+	}
+
+	// note: dependencies have already pruned local imports and only focuses on module => module dependencies
+	return c.visitPackages(rootPkgs, loc)
+}
+
+// create syft packages from Go modules found by the go toolchain
+func (c *goModCataloger) catalogModules(
+	ctx context.Context,
+	pkgs map[string][]pkgInfo,
+	modules map[string]*packages.Module,
+	reader file.LocationReadCloser,
+	digests map[string]string,
+) ([]pkg.Package, map[string]artifact.Identifiable) {
+	syftPackages := make([]pkg.Package, 0)
+	moduleToPackage := make(map[string]artifact.Identifiable)
+
+	for _, m := range modules {
+		if isRelativeImportOrMain(m.Path) {
+			// relativeImport modules are already accounted for by their full module paths at other portions of syft's cataloging
+			// example: something like ../../ found as a module for go.mod b, which is sub to go.mod a is accounted for
+			// in another call to the goModCataloger when go.mod a is parsed
+			// local modules that use a "main" heuristic, no module naming (sometimes common pre go module support)
+			// are also not built as syft packages
+			continue
+		}
+
+		pkgInfos := pkgs[m.Path]
+		moduleLicenses := resolveModuleLicensesWithFS(ctx, pkgInfos, afero.NewOsFs())
+		// we do out of source lookups for module parsing
+		// locations are NOT included in the SBOM because of this
+		goModulePkg := pkg.Package{
+			Name:      m.Path,
+			Version:   m.Version,
+			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			Licenses:  moduleLicenses,
+			Language:  pkg.Go,
+			Type:      pkg.GoModulePkg,
+			PURL:      packageURL(m.Path, m.Version),
+			Metadata:  createSourceMetadata(digests[fmt.Sprintf("%s %s", m.Path, m.Version)]),
+		}
+		goModulePkg.SetID()
+
+		moduleToPackage[m.Path] = goModulePkg
+		syftPackages = append(syftPackages, goModulePkg)
+	}
+
+	return syftPackages, moduleToPackage
+}
+
+// createSourceMetadata creates metadata for packages found through source analysis using build.Default
+func createSourceMetadata(h1Digest string) pkg.GolangSourceEntry {
+	return pkg.GolangSourceEntry{
+		H1Digest:   h1Digest,
+		GOROOT:     build.Default.GOROOT,
+		GOPATH:     build.Default.GOPATH,
+		GOOS:       build.Default.GOOS,
+		GOARCH:     build.Default.GOARCH,
+		Compiler:   build.Default.Compiler,
+		BuildTags:  strings.Join(build.Default.BuildTags, ","),
+		CgoEnabled: build.Default.CgoEnabled,
+	}
+}
+
+// resolveModuleLicensesWithFS finds and parses license files for Go modules using the provided filesystem.
+func resolveModuleLicensesWithFS(ctx context.Context, pkgInfos []pkgInfo, fs afero.Fs) pkg.LicenseSet {
+	licenses := pkg.NewLicenseSet()
+
+	for _, info := range pkgInfos {
+		licenseFiles, err := findLicenseFileLocationsWithFS(info.pkgDir, info.moduleDir, fs)
+		if err != nil {
+			continue
+		}
+
+		for _, f := range licenseFiles {
+			contents, err := fs.Open(f)
+			if err != nil {
+				continue
+			}
+			licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.Location{}, contents))...)
+			_ = contents.Close()
+		}
+	}
+
+	return licenses
+}
+
+// buildModuleRelationships creates artifact relationships between Go modules.
+func buildModuleRelationships(
+	syftPkgs []pkg.Package,
+	dependencies map[string][]string,
+	moduleToPkg map[string]artifact.Identifiable,
+) []artifact.Relationship {
+	rels := make([]artifact.Relationship, 0)
+	seen := make(map[string]struct{})
+
+	for _, fromPkg := range syftPkgs {
+		for _, dep := range dependencies[fromPkg.Name] {
+			if dep == fromPkg.Name {
+				continue
+			}
+			toPkg, ok := moduleToPkg[dep]
+			if !ok {
+				continue
+			}
+
+			key := string(fromPkg.ID()) + string(toPkg.ID())
+			if _, exists := seen[key]; exists {
+				continue
+			}
+
+			rels = append(rels, artifact.Relationship{
+				From: toPkg,   // dep
+				To:   fromPkg, // parent
+				Type: artifact.DependencyOfRelationship,
+			})
+			seen[key] = struct{}{}
+		}
+	}
+
+	return rels
+}
+
+type pkgInfo struct {
+	// pkgPath is the import path of the package.
+	pkgPath string
+	// modulePath is the module path of the package.
+	modulePath string
+	// pkgDir is the directory containing the package's source code.
+	pkgDir string
+	// moduleDir is the directory containing the module's source code.
+	moduleDir string
+}
+
+// visitPackages processes Go module import graphs to get all modules
+func (c *goModCataloger) visitPackages(
+	rootPkgs []*packages.Package,
+	loc file.Location,
+) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string, unknownErr error) {
+	modules = make(map[string]*packages.Module)
+	// note: packages are specific to inside the module - they do not include transitive pkgInfo
+	// packages is used for identifying licensing documents for modules that could contain multiple licenses
+	// dependencies cover transitive module imports; see p.Imports array in packages.Visit
+	pkgs = make(map[string][]pkgInfo)
+	// dependencies are module => module dependencies
+	dependencies = make(map[string][]string)
+	// closure (p *Package) bool
+	// return bool determines whether the imports of package p are visited.
+	packages.Visit(rootPkgs, func(p *packages.Package) bool {
+		if len(p.Errors) > 0 {
+			for _, err := range p.Errors {
+				unknownErr = unknown.Append(unknownErr, loc, err)
+			}
+			return false
+		}
+
+		// skip for common causes
+		if shouldSkipVisit(p) {
+			return false
+		}
+
+		// different from above; we still might want to visit imports
+		// ignoring a package shouldn't end walking the tree
+		// since we need to get the full picture for license discovery
+		// for _, prefix := range c.config.IgnorePaths {
+		//	if strings.HasPrefix(p.PkgPath, prefix) {
+		//		return c.config.IncludeIgnoredDeps
+		//	}
+		//}
+		pkgDir := resolvePkgDir(p)
+		if pkgDir == "" {
+			return true
+		}
+
+		module := newModule(p.Module)
+		if module.Dir == "" {
+			// We continue processing even when module.Dir is empty because we still want to:
+			// 1. Extract module dependencies from p.Imports for dependency graph construction
+			// 2. Create syft packages with available metadata (name, version, etc.)
+			// 3. Build relationships between modules even without complete filesystem info
+			// Not having the DIR here just means that we're not going to process the licenses
+
+			// Common causes for module.Dir being empty:
+			// - Vendored dependencies where Go toolchain loses some module metadata
+			// - Replace directives pointing to non-existent or inaccessible paths
+			//
+			// A known cause is that the module is vendored, so some information is lost.
+			isVendored := strings.Contains(pkgDir, "/vendor/")
+			if !isVendored {
+				log.Debugf("module %s does not have dir and it's not vendored", module.Path)
+			}
+		}
+
+		// extract module dependencies
+		for _, imp := range p.Imports {
+			if imp.Module != nil && imp.Module.Path != module.Path {
+				if dependencies[module.Path] == nil {
+					dependencies[module.Path] = []string{imp.Module.Path}
+				} else {
+					dependencies[module.Path] = append(dependencies[module.Path], imp.Module.Path)
+				}
+			}
+		}
+		pkgs[module.Path] = append(pkgs[module.Path], pkgInfo{
+			pkgPath:    p.PkgPath,
+			modulePath: module.Path,
+			pkgDir:     pkgDir,
+			moduleDir:  module.Dir,
+		})
+		modules[p.Module.Path] = module
+
+		return true
+	}, nil)
+	return pkgs, modules, dependencies, unknownErr
+}
+
+func resolvePkgDir(p *packages.Package) string {
+	switch {
+	case len(p.GoFiles) > 0:
+		return filepath.Dir(p.GoFiles[0])
+	case len(p.CompiledGoFiles) > 0:
+		return filepath.Dir(p.CompiledGoFiles[0])
+	case len(p.OtherFiles) > 0:
+		return filepath.Dir(p.OtherFiles[0])
+	default:
+		return ""
+	}
+}
+
+func shouldSkipVisit(p *packages.Package) bool {
+	// skip packages that don't have module info
+	if p.Module == nil {
+		// log.Warnf("Package %s does not have module info. Non go modules projects are no longer supported.", p.PkgPath)
+		return true
+	}
+
+	// skip stdlib
+	if isStdLib(p) {
+		return true
+	}
+
+	return false
+}
+
+// isStdLib returns true if this package is part of the Go standard library.
+func isStdLib(pkg *packages.Package) bool {
+	if pkg.Name == "unsafe" {
+		// Special case unsafe stdlib, because it does not contain go files.
+		return true
+	}
+	if len(pkg.GoFiles) == 0 {
+		return false
+	}
+	prefix := build.Default.GOROOT
+	sep := string(filepath.Separator)
+	if !strings.HasSuffix(prefix, sep) {
+		prefix += sep
+	}
+	return strings.HasPrefix(pkg.GoFiles[0], prefix)
+}
+
+// handle replace directives
+func newModule(mod *packages.Module) *packages.Module {
+	// Example of a module with replace directive: 	k8s.io/kubernetes => k8s.io/kubernetes v1.11.1
+	// {
+	//         "Path": "k8s.io/kubernetes",
+	//         "Version": "v0.17.9",
+	//         "Replace": {
+	//                 "Path": "k8s.io/kubernetes",
+	//                 "Version": "v1.11.1",
+	//                 "Time": "2018-07-17T04:20:29Z",
+	//                 "Dir": "/home/gongyuan_kubeflow_org/go/pkg/mod/k8s.io/kubernetes@v1.11.1",
+	//                 "GoMod": "/home/gongyuan_kubeflow_org/go/pkg/mod/cache/download/k8s.io/kubernetes/@v/v1.11.1.mod"
+	//         },
+	//         "Dir": "/home/gongyuan_kubeflow_org/go/pkg/mod/k8s.io/kubernetes@v1.11.1",
+	//         "GoMod": "/home/gongyuan_kubeflow_org/go/pkg/mod/cache/download/k8s.io/kubernetes/@v/v1.11.1.mod"
+	// }
+	// handle replace directives
+	// Note, we specifically want to replace version field.
+	// Haven't confirmed, but we may also need to override the
+	// entire struct when using replace directive with local folders.
+	tmp := *mod
+	if tmp.Replace != nil {
+		tmp = *tmp.Replace
+	}
+
+	return &tmp
+}
+
+func findLicenseFileLocationsWithFS(dir string, rootDir string, fs afero.Fs) ([]string, error) {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	rootDir, err = filepath.Abs(rootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if !strings.HasPrefix(dir, rootDir) {
+		return nil, fmt.Errorf("licenses.Find: rootDir %s should contain dir %s", rootDir, dir)
+	}
+
+	return findAllLicenseCandidatesUpwardsWithFS(dir, licenseRegexp, rootDir, fs)
+}
+
+/*
+findAllLicenseCandidatesUpwards performs a bubble-up search per package because:
+1. pkgInfos represents a sparse vertical distribution of packages within modules
+2. we get more pkgInfos for free when the build configuration is updated
+3. Bubble-up gives us module boundary enforcement and prevents license pollution that could occur on walk down
+
+When we should consider Walk-down (Tip-to-stem):
+- Reduced filesystem calls: Single traversal vs multiple per-package
+- Path deduplication: Avoids re-scanning common parent directories
+- Better for wide module structures: Efficient when many packages share parent paths
+- We need to consider the case here where nested modules are visited by accident and licenses
+are erroneously associated to a 'parent module' bubble up currently prevents this
+*/
+func findAllLicenseCandidatesUpwardsWithFS(dir string, r *regexp.Regexp, stopAt string, fs afero.Fs) ([]string, error) {
+	// Stop once we go out of the stopAt dir.
+	licenseCandidates := make([]string, 0)
+	visited := make(map[string]bool) // Track visited directories to prevent infinite loops
+
+	for strings.HasPrefix(dir, stopAt) {
+		// Resolve any symlinks to get the actual path
+		// Note: For in-memory filesystems, EvalSymlinks may not work as expected,
+		// but this provides a fallback for real filesystems
+		resolvedDir := dir
+		if _, ok := fs.(*afero.OsFs); ok {
+			if resolved, err := filepath.EvalSymlinks(dir); err == nil {
+				resolvedDir = resolved
+			}
+		}
+
+		// Check if we've already visited this resolved directory (symlink loop detection)
+		if visited[resolvedDir] {
+			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: detected directory loop at %s (resolved: %s)", dir, resolvedDir)
+			break
+		}
+		visited[resolvedDir] = true
+
+		dirContents, err := afero.ReadDir(fs, dir)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, f := range dirContents {
+			if f.IsDir() {
+				continue
+			}
+
+			if r.MatchString(f.Name()) {
+				path := filepath.Join(dir, f.Name())
+				licenseCandidates = append(licenseCandidates, path)
+			}
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Can't go any higher up the directory tree.
+			break
+		}
+
+		// Additional safety check: ensure parent is actually a parent directory
+		// This helps catch cases where symlinks might cause path manipulation issues
+		if len(parent) >= len(dir) {
+			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: parent path is not shorter than current path, stopping at %s", dir)
+			break
+		}
+
+		dir = parent
+	}
+
+	return licenseCandidates, nil
+}
+
+func isRelativeImportOrMain(p string) bool {
+	if p == "main" {
+		return true
+	}
+	// true for ".", "..", "./...", "../..."
+	return build.IsLocalImport(p)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	stereofile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/internal/licenses"
@@ -130,11 +132,14 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 		return p
 	}
 
+	absPath, err := filepath.Abs(path)
+	require.NoError(t, err)
+
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
 
 	p.reader = file.LocationReadCloser{
-		Location:   file.NewLocation(fixture.Name()),
+		Location:   file.NewVirtualLocationFromDirectory(fixture.Name(), fixture.Name(), *stereofile.NewFileReference(stereofile.Path(absPath))),
 		ReadCloser: fixture,
 	}
 	return p
