@@ -184,14 +184,44 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 
 // loadPackages uses golang.org/x/tools/go/packages to get dependency information.
 func (c *goModCataloger) loadPackages(modDir string) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string) {
-	// TODO: add commmend for each Mode
 	cfg := &packages.Config{
+		// Mode flags control what information is loaded for each package.
+		// Performance impact increases significantly with each additional flag:
+		//
+		// packages.NeedModule - Required for module metadata (path, version, replace directives).
+		//   Essential for SBOM generation. Minimal performance impact.
+		//
+		// packages.NeedName - Required for package names & package Path. Minimal performance impact.
+		//   Needed to identify packages and filter out standard library packages.
+		//
+		// packages.NeedFiles - Loads source file paths for each package.
+		//   Moderate performance impact as it requires filesystem traversal.
+		//   Required for license discovery.
+		//
+		// packages.NeedDeps - Loads the dependency graph between packages.
+		//   High performance impact as it builds the complete import graph.
+		//   Critical for generating accurate dependency relationships in SBOM.
+		//
+		// packages.NeedImports - Loads import information for each package.
+		//   High performance impact, especially with large codebases.
+		//   Required for building module-to-module dependency mappings.
+		//
+		// Adding flags like NeedTypes, NeedSyntax, or NeedTypesInfo would dramatically
+		// increase memory usage and processing time (10x+ slower) but are not needed
+		// for SBOM generation as we only require dependency and module metadata.
 		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
 		Dir:   modDir,
 		Tests: true,
 	}
 
-	// Load all packages for the given mod file
+	// From Go documentation: "all" expands to all packages in the main module
+	// and their dependencies, including dependencies needed by tests.
+	//
+	// The special pattern "all" specifies all the active modules,
+	// first the main module and then dependencies sorted by module path.
+	// A pattern containing "..." specifies the active modules whose module paths match the pattern.
+	// On implementation we could not find a test case that differentiated between all and ...
+	// There may be a case where ... is non inclusive so we default to all for the inclusive guarantee
 	rootPkgs, err := packages.Load(cfg, "all")
 	if err != nil {
 		log.Debugf("error loading packages: %v", err)
