@@ -2,6 +2,6 @@
     "default-registry": {
         "kind": "git",
         "baseline": "6cb46da31ee44bc5d5da93d781e6d21f3a586add",
-        "repository": "https://github.com/gabetrau/vcpkg-test-fixture"
+        "repository": "https://github.com/anchore/vcpkg-test-fixture"
     }
 }

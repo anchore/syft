@@ -26,8 +26,6 @@ func newVcpkgCataloger(allowGitClone bool) *vcpkgCataloger {
 	}
 }
 
-const defaultRepo = "https://github.com/microsoft/vcpkg"
-
 // parser is for vcpkg in "Manifest" mode. This is opposed to "Classic" mode which or is more akin to a system package manager. (https://learn.microsoft.com/en-us/vcpkg/concepts/classic-mode)
 func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	conf, err := findVcpkgConfig(resolver)
@@ -214,4 +212,3 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.Config, error) {
 	}
 	return &vcpkg.Config{}, nil
 }
-

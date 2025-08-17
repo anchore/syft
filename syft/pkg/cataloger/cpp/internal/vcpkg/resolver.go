@@ -8,23 +8,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-git/go-git/v5/storage"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage"
 	"github.com/go-git/go-git/v5/storage/memory"
 
 	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const defaultRepo = "https://github.com/microsoft/vcpkg"
-
 // this is the default registry for vcpkg. it is the default "builtin" registry if a builtin one isn't specified
 var defaultRegistry = pkg.VcpkgRegistryEntry{
 	Baseline:   "master",
 	Kind:       pkg.Git,
-	Repository: defaultRepo,
+	Repository: "https://github.com/microsoft/vcpkg",
 }
 
 // represents contents of "vcpkg.json" file. (a.k.a the manifest file)
@@ -219,7 +217,7 @@ type ID struct {
 // Resolver is a short-lived utility to resolve vcpkg manifests from multiple sources, including:
 // the filesystem, local maven cache directories, remote maven repositories, and the syft cache
 type Resolver struct {
-	gitRepos	  map[string]storage.Storer
+	gitRepos      map[string]storage.Storer
 	allowGitClone bool
 	cfg           *Config
 	resolved      map[ID]*pkg.VcpkgManifest
@@ -228,7 +226,7 @@ type Resolver struct {
 // NewResolver constructs a new Resolver with the given vcpkg configuration.
 func NewResolver(cfg *Config, allowGitClone bool) *Resolver {
 	return &Resolver{
-		gitRepos: map[string]storage.Storer{},
+		gitRepos:      map[string]storage.Storer{},
 		allowGitClone: allowGitClone,
 		cfg:           cfg,
 		resolved:      map[ID]*pkg.VcpkgManifest{},
@@ -342,16 +340,14 @@ func depVerOverriden(name string, overrides []vcpkgOverrideEntry) (*vcpkgOverrid
 func (r *Resolver) resolveRepo(repoStr string) (*git.Repository, error) {
 	if r.gitRepos[repoStr] != nil {
 		return git.Open(r.gitRepos[repoStr], nil)
-	} else {
-		if r.allowGitClone {
-			repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
-				URL: repoStr,
-			})
-			r.gitRepos[repoStr] = repo.Storer
-			return repo, err
-		}
-	} 
-	return nil, fmt.Errorf("Could not resolve %s. enable vcpkg-allow-git-clone flag to allow cloning of remote git repos", repoStr) 
+	} else if r.allowGitClone {
+		repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+			URL: repoStr,
+		})
+		r.gitRepos[repoStr] = repo.Storer
+		return repo, err
+	}
+	return nil, fmt.Errorf("could not resolve %s. enable vcpkg-allow-git-clone flag to allow cloning of remote git repos", repoStr)
 }
 
 func (r *Resolver) getRepo(repoStr string, path *string) (*git.Repository, error) {
@@ -361,7 +357,7 @@ func (r *Resolver) getRepo(repoStr string, path *string) (*git.Repository, error
 		repo, err := git.PlainOpen(vcpkgCachePath)
 		if err == nil {
 			r.gitRepos[repoStr] = repo.Storer
-			return repo, err 
+			return repo, err
 		}
 	}
 	if r.gitRepos[repoStr] == nil && path != nil {
@@ -378,7 +374,7 @@ func (r *Resolver) getRepo(repoStr string, path *string) (*git.Repository, error
 func getVcpkgGitCachePath() string {
 	roots := cache.GetManager().RootDirs()
 	if len(roots) == 0 {
-		return "" 
+		return ""
 	}
 	// not sure if this is an exceptible way of getting the vcpkg cache directory
 	return roots[0] + "/../vcpkg/registries/git"
@@ -683,4 +679,3 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 		Triplet:       triplet,
 	}
 }
-
