@@ -17,7 +17,7 @@ func TestParseVcpkgManifest(t *testing.T) {
 	fixtureLocationSet := file.NewLocationSet(fileLocs...)
 	ctx := pkgtest.Context()
 
-	fmtPkg :=  pkg.Package{
+	fmtPkg := pkg.Package{
 		Name:      "fmt",
 		Version:   "11.0.2#1",
 		PURL:      "pkg:vcpkg/fmt@11.0.2%231?triplet=x64-linux",
@@ -109,9 +109,9 @@ func TestParseVcpkgManifest(t *testing.T) {
 		Type:      pkg.VcpkgPkg,
 		Metadata: &pkg.VcpkgManifest{
 			Description: []string{"A sample C++ library designed to serve as a foundational example for a tutorial on packaging libraries with vcpkg."},
-			FullVersion:   "1.0.2",
-			License:       "MIT",
-			Name:          "vcpkg-sample-library",
+			FullVersion: "1.0.2",
+			License:     "MIT",
+			Name:        "vcpkg-sample-library",
 			Registry: &pkg.VcpkgRegistryEntry{
 				Baseline:   "6cb46da31ee44bc5d5da93d781e6d21f3a586add",
 				Kind:       pkg.Git,
