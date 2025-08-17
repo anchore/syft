@@ -456,7 +456,7 @@ func Test_toBomDescriptor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			subject := toBomDescriptor(tt.args.name, tt.args.version, tt.args.srcMetadata)
+			subject := toBomDescriptor(tt.args.name, tt.args.version, tt.args.srcMetadata, nil)
 
 			require.NotEmpty(t, subject.Component.BOMRef)
 			subject.Timestamp = "" // not under test
@@ -513,7 +513,7 @@ func Test_toBomProperties(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			props := toBomProperties(test.srcMetadata)
+			props := toBomProperties(test.srcMetadata, nil)
 			require.Equal(t, test.props, props)
 		})
 	}
