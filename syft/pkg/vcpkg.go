@@ -12,12 +12,13 @@ const (
 type VcpkgManifest struct {
 	Description   []string `json:"description,omitempty"`
 	Documentation string   `json:"documentation,omitempty"`
-	// true version used. computed by info in manifest + top-level
-	FullVersion string   `json:"full-version"`
-	License     string   `json:"license,omitempty"`
-	Maintainers []string `json:"maintainers,omitempty"`
-	Name        string   `json:"name"`
-	Supports    string   `json:"supports,omitempty"`
+	FullVersion   string   `json:"full-version"`
+	Version       string   `json:"version"`
+	PortVersion   int      `json:"port-version"`
+	License       string   `json:"license,omitempty"`
+	Maintainers   []string `json:"maintainers,omitempty"`
+	Name          string   `json:"name"`
+	Supports      string   `json:"supports,omitempty"`
 	// to show where it came from
 	Registry *VcpkgRegistryEntry `json:"registry,omitempty"`
 	// found by looking at build folder to find target. ex. "x64-linux"

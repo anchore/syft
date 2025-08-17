@@ -2,6 +2,8 @@ package cpp
 
 import (
 	"context"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -147,12 +149,33 @@ func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
 			Value: v.Triplet,
 		})
 	}
+	if v.PortVersion != 0 {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "port_revision",
+			Value: strconv.Itoa(v.PortVersion),
+		})
+	}
+	if v.Registry != nil && v.Registry.Repository != "" {
+		unescRepoURL, err := url.PathUnescape(v.Registry.Repository)
+		if err == nil {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "repository_url",
+				Value: unescRepoURL,
+			})
+		}
+	}
+	if v.Registry != nil && v.Registry.Baseline != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "repository_revision",
+			Value: v.Registry.Baseline,
+		})
+	}
 	return packageurl.NewPackageURL(
-		// Vcpkg is not a part of the PURL spec, PR for it hasn't moved. https://github.com/package-url/purl-spec/pull/245
+		// https://github.com/package-url/purl-spec/pull/245
 		"vcpkg",
 		"",
 		v.Name,
-		v.FullVersion,
+		v.Version,
 		qualifiers,
 		"",
 	).ToString()

@@ -140,64 +140,57 @@ type vcpkgBaselineVersionObjectEntry struct {
 }
 
 func (v *Vcpkg) GetFullVersion() string {
-	return getFullVersionName(v.Version, v.VersionSemver, v.VersionDate, v.VersionString, v.PortVersion)
+	popVer := getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+	if v.PortVersion != 0 {
+		return popVer + "#" + strconv.Itoa(int(v.PortVersion))
+	}
+	return popVer
 }
 
 func (v *vcpkgGitVersionObjectEntry) GetFullVersion() string {
-	return getFullVersionName(v.Version, v.VersionSemver, v.VersionDate, v.VersionString, v.PortVersion)
+	popVer := getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+	if v.PortVersion != 0 {
+		return popVer + "#" + strconv.Itoa(int(v.PortVersion))
+	}
+	return popVer
 }
 
 func (v *vcpkgFsVersionObjectEntry) GetFullVersion() string {
-	return getFullVersionName(v.Version, v.VersionSemver, v.VersionDate, v.VersionString, v.PortVersion)
-}
-
-func (v *vcpkgGitVersionObjectEntry) GetPopulatedVersion() string {
-	return getPopulatedVersionName(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
-}
-
-func (v *vcpkgFsVersionObjectEntry) GetPopulatedVersion() string {
-	return getPopulatedVersionName(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+	popVer := getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+	if v.PortVersion != 0 {
+		return popVer + "#" + strconv.Itoa(int(v.PortVersion))
+	}
+	return popVer
 }
 
 func (v *vcpkgOverrideEntry) GetFullVersion() string {
-	return getFullVersionName(v.Version, v.VersionSemver, v.VersionDate, v.VersionString, v.PortVersion)
-}
-
-func getPopulatedVersionName(version, versionSemver, versionDate, versionString string) string {
-	switch {
-	case version != "":
-		return version
-	case versionSemver != "":
-		return versionSemver
-	case versionDate != "":
-		return versionDate
-	case versionString != "":
-		return versionString
-	default:
-		return ""
+	popVer := getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+	if v.PortVersion != 0 {
+		return popVer + "#" + strconv.Itoa(int(v.PortVersion))
 	}
+	return popVer
 }
 
-func getFullVersionName(version, versionSemver, versionDate, versionString string, portVersion float64) string {
+func (v *vcpkgGitVersionObjectEntry) GetPopulatedVersion() string {
+	return getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+}
+
+func (v *vcpkgFsVersionObjectEntry) GetPopulatedVersion() string {
+	return getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+}
+
+func (v *Vcpkg) GetPopulatedVersion() string {
+	return getPopulatedVersion(v.Version, v.VersionSemver, v.VersionDate, v.VersionString)
+}
+
+func getPopulatedVersion(version, versionSemver, versionDate, versionString string) string {
 	switch {
-	case version != "" && portVersion != 0:
-		vElems := []string{version, "#", strconv.Itoa(int(portVersion))}
-		return strings.Join(vElems, "")
 	case version != "":
 		return version
-	case versionSemver != "" && portVersion != 0:
-		vElems := []string{versionSemver, "#", strconv.Itoa(int(portVersion))}
-		return strings.Join(vElems, "")
 	case versionSemver != "":
 		return versionSemver
-	case versionDate != "" && portVersion != 0:
-		vElems := []string{versionDate, "#", strconv.Itoa(int(portVersion))}
-		return strings.Join(vElems, "")
 	case versionDate != "":
 		return versionDate
-	case versionString != "" && portVersion != 0:
-		vElems := []string{versionString, "#", strconv.Itoa(int(portVersion))}
-		return strings.Join(vElems, "")
 	case versionString != "":
 		return versionString
 	default:
@@ -671,6 +664,8 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 		Description:   desc,
 		Documentation: v.Documentation,
 		FullVersion:   v.GetFullVersion(),
+		Version:       v.GetPopulatedVersion(),
+		PortVersion:   int(v.PortVersion),
 		License:       v.License,
 		Maintainers:   v.Maintainers,
 		Name:          v.Name,
