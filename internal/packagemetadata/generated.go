@@ -71,7 +71,6 @@ func AllTypes() []any {
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
 		pkg.TerraformLockProviderEntry{},
-		pkg.VcpkgManifest{},
 		pkg.WordpressPluginEntry{},
 		pkg.YarnLockEntry{},
 	}
