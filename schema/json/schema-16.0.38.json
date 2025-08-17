@@ -551,7 +551,8 @@
         "source",
         "distro",
         "descriptor",
-        "schema"
+        "schema",
+        "tags"
       ]
     },
     "DotnetDepsEntry": {
