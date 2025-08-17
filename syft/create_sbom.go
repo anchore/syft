@@ -63,6 +63,7 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		Artifacts: sbom.Artifacts{
 			Packages: pkg.NewCollection(),
 		},
+		Tags: cfg.Tags,
 	}
 
 	// setup everything we need in context: license scanner, executors, etc.

@@ -40,7 +40,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	// https://github.com/CycloneDX/specification/blob/master/schema/bom-1.3-strict.schema.json#L36
 	// "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 	cdxBOM.SerialNumber = uuid.New().URN()
-	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
+	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source, s.Tags)
 
 	coordinates, locationSorter := getCoordinates(s)
 
@@ -207,7 +207,7 @@ func formatCPE(cpeString string) string {
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata source.Description) *cyclonedx.Metadata {
+func toBomDescriptor(name, version string, srcMetadata source.Description, tags map[string]string) *cyclonedx.Metadata {
 	return &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tools: &cyclonedx.ToolsChoice{
@@ -221,7 +221,7 @@ func toBomDescriptor(name, version string, srcMetadata source.Description) *cycl
 			},
 		},
 		Supplier:   toBomSupplier(srcMetadata),
-		Properties: toBomProperties(srcMetadata),
+		Properties: toBomProperties(srcMetadata, tags),
 		Component:  toBomDescriptorComponent(srcMetadata),
 	}
 }
@@ -301,19 +301,41 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 	return result
 }
 
-func toBomProperties(srcMetadata source.Description) *[]cyclonedx.Property {
+func toBomProperties(srcMetadata source.Description, tags map[string]string) *[]cyclonedx.Property {
+	var allProps []cyclonedx.Property
+
+	// Add image labels if available
 	metadata, ok := srcMetadata.Metadata.(source.ImageMetadata)
 	if ok {
 		props := helpers.EncodeProperties(metadata.Labels, "syft:image:labels")
-		// return nil if props is nil to avoid creating a pointer to a nil slice,
-		// which results in a null JSON value that does not comply with the CycloneDX schema.
-		// https://github.com/anchore/grype/issues/1759
-		if props == nil {
-			return nil
+		if props != nil {
+			allProps = append(allProps, props...)
 		}
-		return &props
 	}
-	return nil
+
+	// Add SBOM tags with guaranteed alphabetical order
+	if len(tags) > 0 {
+		// Get sorted keys for reproducible output
+		keys := make([]string, 0, len(tags))
+		for k := range tags {
+			keys = append(keys, k)
+		}
+		slices.Sort(keys)
+
+		for _, key := range keys {
+			allProps = append(allProps, cyclonedx.Property{
+				Name:  "syft:sbom:tag:" + key,
+				Value: tags[key],
+			})
+		}
+	}
+
+	// Return nil if no properties to avoid null JSON value
+	if len(allProps) == 0 {
+		return nil
+	}
+
+	return &allProps
 }
 
 func toBomDescriptorComponent(srcMetadata source.Description) *cyclonedx.Component {

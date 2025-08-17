@@ -43,6 +43,9 @@ type Catalog struct {
 	Compliance        complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
 	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
+	// custom SBOM properties
+	SBOMProperties []string `yaml:"sbom-properties" json:"sbom-properties" mapstructure:"sbom-properties"`
+
 	// ecosystem-specific cataloger configuration
 	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
@@ -100,11 +103,23 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
+		WithTags(cfg.ParseSBOMProperties()).
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).
 				WithExpression(cfg.SelectCatalogers...),
 		)
+}
+
+// ParseSBOMProperties parses the --sbom-property flags into a map
+func (cfg Catalog) ParseSBOMProperties() map[string]string {
+	result := make(map[string]string)
+	for _, prop := range cfg.SBOMProperties {
+		if parts := strings.SplitN(prop, "=", 2); len(parts) == 2 {
+			result[parts[0]] = parts[1]
+		}
+	}
+	return result
 }
 
 func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
@@ -263,6 +278,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.Supplier, "source-supplier", "",
 		"the organization that supplied the component, which often may be the manufacturer, distributor, or repackager")
+
+	flags.StringArrayVarP(&cfg.SBOMProperties, "sbom-property", "",
+		"add custom property to SBOM in key=value format (can be specified multiple times)")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
@@ -288,6 +306,7 @@ func (cfg *Catalog) PostLoad() error {
 	cfg.DefaultCatalogers = FlattenAndSort(cfg.DefaultCatalogers)
 	cfg.SelectCatalogers = FlattenAndSort(cfg.SelectCatalogers)
 	cfg.Enrich = FlattenAndSort(cfg.Enrich)
+	cfg.SBOMProperties = Flatten(cfg.SBOMProperties)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)

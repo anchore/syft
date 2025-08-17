@@ -818,6 +818,14 @@
         },
         "schema": {
           "$ref": "#/$defs/Schema"
+        },
+        "tags": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         }
       },
       "type": "object",

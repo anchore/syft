@@ -1083,3 +1083,57 @@ func Test_sortFiles(t *testing.T) {
 		})
 	}
 }
+
+func Test_toTags(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			name:     "nil input returns empty map",
+			input:    nil,
+			expected: map[string]string{},
+		},
+		{
+			name:     "empty input returns empty map",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			name: "populated input returns copy",
+			input: map[string]string{
+				"environment": "production",
+				"team":        "security",
+				"version":     "1.0.0",
+			},
+			expected: map[string]string{
+				"environment": "production",
+				"team":        "security",
+				"version":     "1.0.0",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := toTags(tt.input)
+
+			// Check equality
+			assert.Equal(t, tt.expected, result)
+
+			// Ensure it's not the same pointer (copy behavior)
+			if tt.input != nil && len(tt.input) > 0 {
+				// Modify original to verify it's a copy
+				originalValue := tt.input["environment"]
+				tt.input["environment"] = "modified"
+				assert.NotEqual(t, "modified", result["environment"], "toTags should return a copy, modifications to original should not affect result")
+				// Restore original value
+				tt.input["environment"] = originalValue
+			}
+
+			// Ensure result is never nil
+			assert.NotNil(t, result, "toTags should never return nil")
+		})
+	}
+}

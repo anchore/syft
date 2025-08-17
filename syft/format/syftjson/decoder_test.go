@@ -279,6 +279,7 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 			Name:    "syft",
 			Version: "this-version",
 		},
+		Tags: make(map[string]string),
 	}
 
 	buf := &bytes.Buffer{}

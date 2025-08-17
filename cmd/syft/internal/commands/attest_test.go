@@ -74,7 +74,8 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
   "name": "syft-test",
   "version": "non-version"
  },
- "schema": {}
+ "schema": {},
+ "tags": {}
 }`,
 			wantErr: false,
 		},
@@ -90,7 +91,7 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
 			}
 
 			// redact the schema block
-			re := regexp.MustCompile(`(?s)"schema":\W*\{.*?},?`)
+			re := regexp.MustCompile(`(?s)"schema":\W*\{.*?}`)
 			subject := re.ReplaceAllString(sbomFile.String(), `"schema":{}`)
 
 			assert.JSONEq(t, tt.wantSbomFile, subject)
