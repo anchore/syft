@@ -415,6 +415,46 @@ func Test_parseGoSource_relationships(t *testing.T) {
 	}
 }
 
+func Test_parseGoSource_metadata(t *testing.T) {
+	// license scanner setup
+	ctx := context.Background()
+	scanner, _ := licenses.ContextLicenseScanner(ctx)
+	ctx = licenses.SetContextLicenseScanner(ctx, scanner)
+
+	fixturePath := filepath.Join("test-fixtures", "go-source", "go.mod")
+	absPath, err := filepath.Abs(fixturePath)
+	require.NoError(t, err)
+
+	fixture, err := os.Open(fixturePath)
+	require.NoError(t, err)
+
+	reader := file.LocationReadCloser{
+		Location:   file.NewVirtualLocationFromDirectory(fixture.Name(), fixture.Name(), *stereofile.NewFileReference(stereofile.Path(absPath))),
+		ReadCloser: fixture,
+	}
+	c := newGoModCataloger(CatalogerConfig{})
+
+	pkgs, _, err := c.parseGoModFile(ctx, fileresolver.Empty{}, nil, reader)
+	require.NoError(t, err)
+	require.NotEmpty(t, pkgs, "expected some modules, got 0")
+
+	// Count packages with GolangSourceEntry metadata
+	sourcePackageCount := 0
+	for _, p := range pkgs {
+		if metadata, ok := p.Metadata.(pkg.GolangSourceEntry); ok {
+			sourcePackageCount++
+			// Validate that GolangSourceEntry metadata is present but don't assert on specific field values
+			// since these might vary across development machines
+			require.IsType(t, pkg.GolangSourceEntry{}, metadata, "expected GolangSourceEntry metadata for package %s", p.Name)
+			// Verify that the metadata struct is populated (non-zero values indicate go source method was used)
+			require.NotEmpty(t, metadata, "GolangSourceEntry metadata should not be empty for package %s", p.Name)
+		}
+	}
+
+	// Verify that we found at least some packages with GolangSourceEntry metadata
+	require.Greater(t, sourcePackageCount, 0, "expected at least one package with GolangSourceEntry metadata")
+}
+
 func convertRelationships(relationships []artifact.Relationship) map[string][]string {
 	actualRelationships := make(map[string][]string)
 	for _, relationship := range relationships {
