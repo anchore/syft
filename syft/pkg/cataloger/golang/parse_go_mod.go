@@ -443,7 +443,7 @@ func (c *goModCataloger) visitPackages(
 			// A known cause is that the module is vendored, so some information is lost.
 			isVendored := strings.Contains(pkgDir, "/vendor/")
 			if !isVendored {
-				log.Warnf("module %s does not have dir and it's not vendored", module.Path)
+				log.Debugf("module %s does not have dir and it's not vendored", module.Path)
 			}
 		}
 
