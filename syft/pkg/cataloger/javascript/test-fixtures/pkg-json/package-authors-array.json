@@ -1,0 +1,15 @@
+{
+  "version": "6.14.6",
+  "name": "npm",
+  "description": "a package manager for JavaScript",
+  "homepage": "https://docs.npmjs.com/",
+  "authors": [
+    "Harry Potter <hp@hogwards.com> (http://youknowwho.com/)",
+    "John Smith <j.smith@something.com> (http://awebsite.com/)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/npm/cli"
+  },
+  "license": "Artistic-2.0"
+}

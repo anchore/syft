@@ -35,3 +35,20 @@ func cleanLicenseID(id string) string {
 	id = strings.ToLower(id)
 	return strings.ReplaceAll(id, "-", "")
 }
+
+// LicenseInfo contains license ID and name
+type LicenseInfo struct {
+	ID string
+}
+
+// LicenseByURL returns the license ID and name for a given URL from the SPDX license list
+// The URL should match one of the URLs in the seeAlso field of an SPDX license
+func LicenseByURL(url string) (LicenseInfo, bool) {
+	url = strings.TrimSpace(url)
+	if id, exists := urlToLicense[url]; exists {
+		return LicenseInfo{
+			ID: id,
+		}, true
+	}
+	return LicenseInfo{}, false
+}

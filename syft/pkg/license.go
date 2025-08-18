@@ -14,6 +14,7 @@ import (
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -132,6 +133,13 @@ func stripUnwantedCharacters(rawURL string) (string, error) {
 }
 
 func NewLicenseFromFieldsWithContext(ctx context.Context, value, url string, location *file.Location) License {
+	// If value is empty but URL is provided, try to enrich from SPDX database
+	if value == "" && url != "" {
+		if info, found := spdxlicense.LicenseByURL(url); found {
+			value = info.ID
+		}
+	}
+
 	lics := newLicenseBuilder().WithValues(value).WithURLs(url).WithOptionalLocation(location).Build(ctx).ToSlice()
 	if len(lics) > 0 {
 		return lics[0]
@@ -294,11 +302,22 @@ func (b *licenseBuilder) Build(ctx context.Context) LicenseSet {
 
 	if set.Empty() && len(b.urls) > 0 {
 		// if we have no values or contents, but we do have URLs, let's make a license with the URLs
-		set.Add(License{
+		// try to enrich the license by looking up the URL in the SPDX database
+		license := License{
 			Type:      b.tp,
 			URLs:      b.urls,
 			Locations: locations,
-		})
+		}
+
+		// attempt to fill in missing license information from the first URL
+		if len(b.urls) > 0 {
+			if info, found := spdxlicense.LicenseByURL(b.urls[0]); found {
+				license.Value = info.ID
+				license.SPDXExpression = info.ID
+			}
+		}
+
+		set.Add(license)
 	}
 
 	return set
