@@ -249,12 +249,13 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 			// Log errors but continue processing
 			for _, e := range p.Errors {
 				log.Debugf("package load error for %s: %v", p.PkgPath, e)
+				unknownErr = unknown.Append(unknownErr, loc, err)
 			}
 		}
 	}
 
 	// note: dependencies have already pruned local imports and only focuses on module => module dependencies
-	return c.visitPackages(rootPkgs, loc)
+	return c.visitPackages(rootPkgs, loc, unknownErr)
 }
 
 // create syft packages from Go modules found by the go toolchain
@@ -389,6 +390,7 @@ type pkgInfo struct {
 func (c *goModCataloger) visitPackages(
 	rootPkgs []*packages.Package,
 	loc file.Location,
+	uke error,
 ) (pkgs map[string][]pkgInfo, modules map[string]*packages.Module, dependencies map[string][]string, unknownErr error) {
 	modules = make(map[string]*packages.Module)
 	// note: packages are specific to inside the module - they do not include transitive pkgInfo
@@ -397,6 +399,8 @@ func (c *goModCataloger) visitPackages(
 	pkgs = make(map[string][]pkgInfo)
 	// dependencies are module => module dependencies
 	dependencies = make(map[string][]string)
+	// persist unknown errs from previous parts of the catalog
+	unknownErr = uke
 	// closure (p *Package) bool
 	// return bool determines whether the imports of package p are visited.
 	packages.Visit(rootPkgs, func(p *packages.Package) bool {
@@ -436,11 +440,10 @@ func (c *goModCataloger) visitPackages(
 			// Common causes for module.Dir being empty:
 			// - Vendored dependencies where Go toolchain loses some module metadata
 			// - Replace directives pointing to non-existent or inaccessible paths
-			//
 			// A known cause is that the module is vendored, so some information is lost.
 			isVendored := strings.Contains(pkgDir, "/vendor/")
 			if !isVendored {
-				log.Debugf("module %s does not have dir and it's not vendored", module.Path)
+				log.Warnf("module %s does not have dir and it's not vendored", module.Path)
 			}
 		}
 
@@ -564,12 +567,12 @@ findAllLicenseCandidatesUpwards performs a bubble-up search per package because:
 2. we get more pkgInfos for free when the build configuration is updated
 3. Bubble-up gives us module boundary enforcement and prevents license pollution that could occur on walk down
 
-When we should consider Walk-down (Tip-to-stem):
+When we should consider tip to stem:
 - Reduced filesystem calls: Single traversal vs multiple per-package
 - Path deduplication: Avoids re-scanning common parent directories
 - Better for wide module structures: Efficient when many packages share parent paths
 - We need to consider the case here where nested modules are visited by accident and licenses
-are erroneously associated to a 'parent module' bubble up currently prevents this
+are erroneously associated to a 'parent module'; bubble up currently prevents this
 */
 func findAllLicenseCandidatesUpwardsWithFS(dir string, r *regexp.Regexp, stopAt string, fs afero.Fs) ([]string, error) {
 	// Stop once we go out of the stopAt dir.
