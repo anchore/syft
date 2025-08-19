@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -694,87 +695,118 @@ func packageIDsToSkip(doc *spdx.Document) *strset.Set {
 	return skipIDs
 }
 
-// populatePackageLocationsFromRelationships analyzes SPDX relationships to extract
-// location information and populate the Locations field for packages.
 func populatePackageLocationsFromRelationships(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
-	// Iterate through all relationships in the SPDX document
 	for _, r := range doc.Relationships {
-		if r == nil {
+		if !isValidRelationshipForLocationPopulation(r, doc) {
 			continue
 		}
 
-		// Skip relationships to external documents
-		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
-			log.Debugf("ignoring relationship to external document for location population: %+v", r)
+		fromPkg, toLocation, ok := extractPackageToLocationMapping(r, spdxIDMap)
+		if !ok {
 			continue
 		}
 
-		// Get the source and target objects from the relationship
-		fromID := string(r.RefA.ElementRefID)
-		toID := string(r.RefB.ElementRefID)
-
-		fromObj := spdxIDMap[fromID]
-		toObj := spdxIDMap[toID]
-
-		// Check if we have a package -> file relationship
-		fromPkg, fromIsPkg := fromObj.(pkg.Package)
-		toLocation, toIsLocation := toObj.(file.Location)
-
-		if !fromIsPkg || !toIsLocation {
+		if !isLocationEvidenceRelationship(r, toLocation) {
 			continue
 		}
 
-		// Determine if this relationship indicates location evidence
-		var isLocationEvidence bool
+		addLocationToPackage(s, fromPkg, toLocation)
+	}
+}
 
-		switch helpers.RelationshipType(r.Relationship) {
-		case helpers.OtherRelationship:
-			// Check for Syft-generated "evident-by" comment
-			if strings.Contains(r.RelationshipComment, "evident-by:") {
-				isLocationEvidence = true
-			}
-		case helpers.ContainsRelationship:
-			// Standard SPDX CONTAINS relationship from package to file
-			isLocationEvidence = true
-		}
+func isValidRelationshipForLocationPopulation(r *spdx.Relationship, doc *spdx.Document) bool {
+	if r == nil {
+		return false
+	}
+	if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
+		log.Debugf("ignoring relationship to external document for location population: %+v", r)
+		return false
+	}
+	return true
+}
 
-		if !isLocationEvidence {
-			continue
-		}
+func extractPackageToLocationMapping(r *spdx.Relationship, spdxIDMap map[string]any) (pkg.Package, file.Location, bool) {
+	fromObj := spdxIDMap[string(r.RefA.ElementRefID)]
+	toObj := spdxIDMap[string(r.RefB.ElementRefID)]
 
-		// Find the package in the collection and add the location
-		existingPkg := s.Artifacts.Packages.Package(fromPkg.ID())
-		if existingPkg == nil {
-			log.Debugf("unable to find package %s in collection when populating locations", fromPkg.ID())
-			continue
-		}
+	fromPkg, fromOk := fromObj.(pkg.Package)
+	toLocation, toOk := toObj.(file.Location)
+	return fromPkg, toLocation, fromOk && toOk
+}
 
-		// Create a new location set with the additional location
-		newLocations := existingPkg.Locations.ToSlice()
-		locationExists := false
+func isLocationEvidenceRelationship(r *spdx.Relationship, toLocation file.Location) bool {
+	switch helpers.RelationshipType(r.Relationship) {
+	case helpers.OtherRelationship:
+		return strings.Contains(r.RelationshipComment, "evident-by:")
+	case helpers.ContainsRelationship:
+		// Only treat specific file types as package discovery evidence
+		return isPackageDiscoveryEvidence(toLocation.RealPath)
+	}
+	return false
+}
 
-		// Check if location already exists to avoid duplicates
-		for _, existing := range newLocations {
-			if existing.RealPath == toLocation.RealPath &&
-				existing.FileSystemID == toLocation.FileSystemID {
-				locationExists = true
-				break
-			}
-		}
+// isPackageDiscoveryEvidence determines if a file represents evidence of where
+// a package was discovered (e.g., package manager metadata files) rather than
+// just a file owned by the package (e.g., license files, binaries).
+func isPackageDiscoveryEvidence(filePath string) bool {
+	if filePath == "" {
+		return true // Default to true for empty paths
+	}
 
-		if !locationExists {
-			newLocations = append(newLocations, toLocation)
+	fileName := filepath.Base(filePath)
+	upperFileName := strings.ToUpper(fileName)
 
-			// Update the package with the new locations
-			updatedPkg := *existingPkg
-			updatedPkg.Locations = file.NewLocationSet(newLocations...)
+	// License and documentation directories - should be excluded
+	directoryPatterns := []string{
+		"/share/licenses/", "share/licenses/", "/usr/share/licenses/", "usr/share/licenses/",
+		"/share/doc/", "share/doc/", "/usr/share/doc/", "usr/share/doc/",
+		"/share/man/", "share/man/", "/usr/share/man/", "usr/share/man/",
+	}
 
-			// Remove the old package and add the updated one
-			s.Artifacts.Packages.Delete(existingPkg.ID())
-			s.Artifacts.Packages.Add(updatedPkg)
-
-			log.Debugf("added location %s to package %s from SPDX relationship",
-				toLocation.RealPath, fromPkg.Name)
+	for _, pattern := range directoryPatterns {
+		if strings.Contains(filePath, pattern) {
+			return false
 		}
 	}
+
+	// Common license/documentation file name patterns - should be excluded
+	fileNamePatterns := []string{
+		"COPYING", "LICENSE", "LICENCE", "COPYRIGHT",
+		"README", "CHANGELOG", "HISTORY", "NEWS",
+	}
+
+	for _, pattern := range fileNamePatterns {
+		upperPattern := strings.ToUpper(pattern)
+		if upperFileName == upperPattern ||
+			strings.HasPrefix(upperFileName, upperPattern+".") {
+			return false
+		}
+	}
+
+	// For all other files, assume they could be package discovery evidence
+	// This maintains backward compatibility while filtering out obvious non-evidence files
+	return true
+}
+
+func addLocationToPackage(s *sbom.SBOM, fromPkg pkg.Package, toLocation file.Location) {
+	existingPkg := s.Artifacts.Packages.Package(fromPkg.ID())
+	if existingPkg == nil {
+		log.Debugf("unable to find package %s in collection when populating locations", fromPkg.ID())
+		return
+	}
+
+	locations := existingPkg.Locations.ToSlice()
+	for _, existing := range locations {
+		if existing.RealPath == toLocation.RealPath && existing.FileSystemID == toLocation.FileSystemID {
+			return
+		}
+	}
+
+	locations = append(locations, toLocation)
+	updatedPkg := *existingPkg
+	updatedPkg.Locations = file.NewLocationSet(locations...)
+	s.Artifacts.Packages.Delete(existingPkg.ID())
+	s.Artifacts.Packages.Add(updatedPkg)
+
+	log.Debugf("added location %s to package %s from SPDX relationship", toLocation.RealPath, fromPkg.Name)
 }

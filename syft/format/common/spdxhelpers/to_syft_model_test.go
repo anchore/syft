@@ -999,7 +999,6 @@ func Test_populatePackageLocationsFromRelationships(t *testing.T) {
 }
 
 func Test_populatePackageLocationsFromRelationships_duplicateLocations(t *testing.T) {
-	// Test that duplicate locations are not added
 	doc := &spdx.Document{
 		SPDXVersion:    "SPDX-2.3",
 		SPDXIdentifier: "DOCUMENT",
@@ -1008,15 +1007,13 @@ func Test_populatePackageLocationsFromRelationships_duplicateLocations(t *testin
 				PackageName:           "dup-test-package",
 				PackageSPDXIdentifier: "package-dup",
 				PackageVersion:        "1.0.0",
-				Files: []*spdx.File{
-					{
-						FileName:           "/same/file.txt",
-						FileSPDXIdentifier: "file-dup-1",
-					},
-				},
 			},
 		},
 		Files: []*spdx.File{
+			{
+				FileName:           "/same/file.txt",
+				FileSPDXIdentifier: "file-dup-1",
+			},
 			{
 				FileName:           "/same/file.txt",
 				FileSPDXIdentifier: "file-dup-2",
@@ -1055,4 +1052,237 @@ func Test_populatePackageLocationsFromRelationships_duplicateLocations(t *testin
 	locations := pkg.Locations.ToSlice()
 	assert.Len(t, locations, 1)
 	assert.Equal(t, "/same/file.txt", locations[0].RealPath)
+}
+
+func Test_licenseFileFiltering(t *testing.T) {
+	tests := []struct {
+		name             string
+		files            []struct{ id, path string }
+		expectedIncluded []string // files that should be included as package locations
+		expectedExcluded []string // files that should be excluded from package locations
+	}{
+		{
+			name: "license files are excluded from package locations",
+			files: []struct{ id, path string }{
+				{"file-license-1", "usr/share/licenses/ncurses-base/COPYING"},
+				{"file-license-2", "/usr/share/licenses/glibc/LICENSE"},
+				{"file-license-3", "/share/licenses/openssl/COPYRIGHT"},
+				{"file-binary-1", "/usr/bin/ncurses-app"},
+				{"file-config-1", "/etc/ncurses.conf"},
+			},
+			expectedIncluded: []string{"/usr/bin/ncurses-app", "/etc/ncurses.conf"},
+			expectedExcluded: []string{
+				"usr/share/licenses/ncurses-base/COPYING",
+				"/usr/share/licenses/glibc/LICENSE",
+				"/share/licenses/openssl/COPYRIGHT",
+			},
+		},
+		{
+			name: "documentation files are excluded from package locations",
+			files: []struct{ id, path string }{
+				{"file-doc-1", "/usr/share/doc/package/README"},
+				{"file-doc-2", "/share/doc/package/CHANGELOG"},
+				{"file-doc-3", "/usr/share/man/man1/package.1"},
+				{"file-lib-1", "/usr/lib/package/libpackage.so"},
+				{"file-bin-1", "/usr/bin/package"},
+			},
+			expectedIncluded: []string{"/usr/lib/package/libpackage.so", "/usr/bin/package"},
+			expectedExcluded: []string{
+				"/usr/share/doc/package/README",
+				"/share/doc/package/CHANGELOG",
+				"/usr/share/man/man1/package.1",
+			},
+		},
+		{
+			name: "common license filename patterns are excluded",
+			files: []struct{ id, path string }{
+				{"file-license-1", "/some/path/COPYING"},
+				{"file-license-2", "/another/path/LICENSE.txt"},
+				{"file-license-3", "/third/path/LICENCE"},
+				{"file-license-4", "/fourth/path/COPYRIGHT"},
+				{"file-readme-1", "/some/path/README.md"},
+				{"file-changelog-1", "/some/path/CHANGELOG"},
+				{"file-legitimate-1", "/usr/bin/app"},
+				{"file-legitimate-2", "/etc/config.json"},
+			},
+			expectedIncluded: []string{"/usr/bin/app", "/etc/config.json"},
+			expectedExcluded: []string{
+				"/some/path/COPYING",
+				"/another/path/LICENSE.txt",
+				"/third/path/LICENCE",
+				"/fourth/path/COPYRIGHT",
+				"/some/path/README.md",
+				"/some/path/CHANGELOG",
+			},
+		},
+		{
+			name: "case insensitive matching for license filenames",
+			files: []struct{ id, path string }{
+				{"file-license-1", "/path/copying"},
+				{"file-license-2", "/path/license"},
+				{"file-license-3", "/path/readme"},
+				{"file-legitimate-1", "/usr/bin/copying-tool"},    // should be included
+				{"file-legitimate-2", "/usr/lib/licensed-lib.so"}, // should be included
+			},
+			expectedIncluded: []string{"/usr/bin/copying-tool", "/usr/lib/licensed-lib.so"},
+			expectedExcluded: []string{"/path/copying", "/path/license", "/path/readme"},
+		},
+		{
+			name: "mixed file types with comprehensive coverage",
+			files: []struct{ id, path string }{
+				// License files - should be excluded
+				{"file-license-1", "usr/share/licenses/pkg/COPYING"},
+				{"file-license-2", "/usr/share/licenses/pkg/LICENSE"},
+				// Documentation - should be excluded
+				{"file-doc-1", "/usr/share/doc/pkg/README"},
+				{"file-doc-2", "/share/man/man1/pkg.1"},
+				// Legitimate package files - should be included
+				{"file-bin-1", "/usr/bin/pkg"},
+				{"file-lib-1", "/usr/lib/pkg/libpkg.so"},
+				{"file-config-1", "/etc/pkg/config.conf"},
+				{"file-data-1", "/var/lib/pkg/data.db"},
+			},
+			expectedIncluded: []string{
+				"/usr/bin/pkg",
+				"/usr/lib/pkg/libpkg.so",
+				"/etc/pkg/config.conf",
+				"/var/lib/pkg/data.db",
+			},
+			expectedExcluded: []string{
+				"usr/share/licenses/pkg/COPYING",
+				"/usr/share/licenses/pkg/LICENSE",
+				"/usr/share/doc/pkg/README",
+				"/share/man/man1/pkg.1",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Build SPDX document with the test files
+			var spdxFiles []*spdx.File
+			var relationships []*spdx.Relationship
+
+			for _, f := range tt.files {
+				spdxFiles = append(spdxFiles, &spdx.File{
+					FileName:           f.path,
+					FileSPDXIdentifier: common.ElementID(f.id),
+				})
+
+				// Create CONTAINS relationship from package to file
+				relationships = append(relationships, &spdx.Relationship{
+					RefA: common.DocElementID{
+						ElementRefID: common.ElementID("test-package"),
+					},
+					RefB: common.DocElementID{
+						ElementRefID: common.ElementID(f.id),
+					},
+					Relationship: spdx.RelationshipContains,
+				})
+			}
+
+			doc := &spdx.Document{
+				SPDXVersion:    "SPDX-2.3",
+				SPDXIdentifier: "DOCUMENT",
+				Packages: []*spdx.Package{
+					{
+						PackageName:           "test-package",
+						PackageSPDXIdentifier: common.ElementID("test-package"),
+						PackageVersion:        "1.0.0",
+					},
+				},
+				Files:         spdxFiles,
+				Relationships: relationships,
+			}
+
+			// Convert to Syft model
+			result, err := ToSyftModel(doc)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			// Get the test package
+			pkg := result.Artifacts.Packages.Package(artifact.ID("test-package"))
+			require.NotNil(t, pkg, "test package should exist")
+
+			// Extract actual location paths
+			actualPaths := make([]string, 0)
+			for _, loc := range pkg.Locations.ToSlice() {
+				actualPaths = append(actualPaths, loc.RealPath)
+			}
+
+			// Verify that expected files are included
+			for _, expectedPath := range tt.expectedIncluded {
+				assert.Contains(t, actualPaths, expectedPath,
+					"Expected file %s to be included in package locations", expectedPath)
+			}
+
+			// Verify that excluded files are NOT included
+			for _, excludedPath := range tt.expectedExcluded {
+				assert.NotContains(t, actualPaths, excludedPath,
+					"Expected file %s to be excluded from package locations", excludedPath)
+			}
+
+			// Verify the total count is correct
+			assert.Len(t, actualPaths, len(tt.expectedIncluded),
+				"Package should have exactly %d locations, got %d: %v",
+				len(tt.expectedIncluded), len(actualPaths), actualPaths)
+		})
+	}
+}
+
+func Test_isPackageDiscoveryEvidence(t *testing.T) {
+	tests := []struct {
+		name     string
+		filePath string
+		expected bool
+	}{
+		// License file paths - should be excluded (false)
+		{"license file in usr/share/licenses", "usr/share/licenses/pkg/COPYING", false},
+		{"license file in share/licenses", "share/licenses/pkg/LICENSE", false},
+		{"nested license file", "usr/share/licenses/subpkg/COPYRIGHT", false},
+
+		// Documentation paths - should be excluded (false)
+		{"doc file in usr/share/doc", "usr/share/doc/pkg/README", false},
+		{"doc file in share/doc", "share/doc/pkg/INSTALL", false},
+		{"man page", "usr/share/man/man1/pkg.1", false},
+		{"man page in share/man", "share/man/man8/pkg.8", false},
+
+		// License filenames - should be excluded (false)
+		{"COPYING file", "some/path/COPYING", false},
+		{"LICENSE file", "another/path/LICENSE", false},
+		{"LICENCE file", "third/path/LICENCE", false},
+		{"COPYRIGHT file", "fourth/path/COPYRIGHT", false},
+		{"README file", "some/path/README", false},
+		{"CHANGELOG file", "some/path/CHANGELOG", false},
+		{"HISTORY file", "some/path/HISTORY", false},
+		{"NEWS file", "some/path/NEWS", false},
+
+		// Case insensitive matching
+		{"lowercase copying", "path/copying", false},
+		{"lowercase license", "path/license", false},
+		{"lowercase readme", "path/readme", false},
+
+		// Legitimate package files - should be included (true)
+		{"binary executable", "usr/bin/pkg", true},
+		{"library file", "usr/lib/pkg/libpkg.so", true},
+		{"config file", "etc/pkg/config.conf", true},
+		{"data file", "var/lib/pkg/data.db", true},
+		{"script file", "usr/share/pkg/scripts/install.sh", true},
+
+		// Edge cases - files with license-like names but in valid contexts
+		{"file with copying in name", "usr/bin/copying-tool", true},
+		{"file with license in name", "usr/lib/licensed-lib.so", true},
+		{"file with readme in name", "usr/bin/readme-viewer", true},
+
+		// Empty or unusual paths
+		{"empty path", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isPackageDiscoveryEvidence(tt.filePath)
+			assert.Equal(t, tt.expected, result,
+				"isPackageDiscoveryEvidence(%s) should return %v", tt.filePath, tt.expected)
+		})
+	}
 }
