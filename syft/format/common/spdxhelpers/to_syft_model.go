@@ -50,6 +50,9 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 
 	collectSyftFiles(s, spdxIDMap, doc)
 
+	// NEW: Populate package locations from relationships
+	populatePackageLocationsFromRelationships(s, spdxIDMap, doc)
+
 	s.Relationships = toSyftRelationships(spdxIDMap, doc)
 
 	return s, nil
@@ -690,4 +693,91 @@ func packageIDsToSkip(doc *spdx.Document) *strset.Set {
 		}
 	}
 	return skipIDs
+}
+
+// populatePackageLocationsFromRelationships analyzes SPDX relationships to extract
+// location information and populate the Locations field for packages. This handles
+// both Syft-generated SBOMs (with "evident-by" comments) and standard SPDX SBOMs
+// (with CONTAINS relationships).
+func populatePackageLocationsFromRelationships(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+	// Iterate through all relationships in the SPDX document
+	for _, r := range doc.Relationships {
+		if r == nil {
+			continue
+		}
+
+		// Skip relationships to external documents
+		if r.RefA.DocumentRefID != "" && requireAndTrimPrefix(r.RefA.DocumentRefID, "DocumentRef-") != string(doc.SPDXIdentifier) {
+			log.Debugf("ignoring relationship to external document for location population: %+v", r)
+			continue
+		}
+
+		// Get the source and target objects from the relationship
+		fromID := string(r.RefA.ElementRefID)
+		toID := string(r.RefB.ElementRefID)
+
+		fromObj := spdxIDMap[fromID]
+		toObj := spdxIDMap[toID]
+
+		// Check if we have a package -> file relationship
+		fromPkg, fromIsPkg := fromObj.(pkg.Package)
+		toLocation, toIsLocation := toObj.(file.Location)
+
+		if !fromIsPkg || !toIsLocation {
+			continue
+		}
+
+		// Determine if this relationship indicates location evidence
+		var isLocationEvidence bool
+
+		switch helpers.RelationshipType(r.Relationship) {
+		case helpers.OtherRelationship:
+			// Check for Syft-generated "evident-by" comment
+			if strings.Contains(r.RelationshipComment, "evident-by: indicates the package's existence is evident by the given file") {
+				isLocationEvidence = true
+			}
+		case helpers.ContainsRelationship:
+			// Standard SPDX CONTAINS relationship from package to file
+			isLocationEvidence = true
+		}
+
+		if !isLocationEvidence {
+			continue
+		}
+
+		// Find the package in the collection and add the location
+		existingPkg := s.Artifacts.Packages.Package(fromPkg.ID())
+		if existingPkg == nil {
+			log.Debugf("unable to find package %s in collection when populating locations", fromPkg.ID())
+			continue
+		}
+
+		// Create a new location set with the additional location
+		newLocations := existingPkg.Locations.ToSlice()
+		locationExists := false
+
+		// Check if location already exists to avoid duplicates
+		for _, existing := range newLocations {
+			if existing.RealPath == toLocation.RealPath &&
+				existing.FileSystemID == toLocation.FileSystemID {
+				locationExists = true
+				break
+			}
+		}
+
+		if !locationExists {
+			newLocations = append(newLocations, toLocation)
+
+			// Update the package with the new locations
+			updatedPkg := *existingPkg
+			updatedPkg.Locations = file.NewLocationSet(newLocations...)
+
+			// Remove the old package and add the updated one
+			s.Artifacts.Packages.Delete(existingPkg.ID())
+			s.Artifacts.Packages.Add(updatedPkg)
+
+			log.Debugf("added location %s to package %s from SPDX relationship",
+				toLocation.RealPath, fromPkg.Name)
+		}
+	}
 }

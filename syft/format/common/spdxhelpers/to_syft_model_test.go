@@ -795,3 +795,264 @@ func Test_skipsPackagesWithGeneratedFromRelationship(t *testing.T) {
 	assert.NotNil(t, s.Artifacts.Packages.Package("1"))
 	assert.Nil(t, s.Artifacts.Packages.Package("1-src"))
 }
+
+func Test_populatePackageLocationsFromRelationships(t *testing.T) {
+	tests := []struct {
+		name            string
+		doc             *spdx.Document
+		expectedPkgLocs map[string][]string // package ID -> expected location paths
+	}{
+		{
+			name: "syft-generated SBOM with evident-by relationships",
+			doc: &spdx.Document{
+				SPDXVersion:    "SPDX-2.3",
+				SPDXIdentifier: "DOCUMENT",
+				Packages: []*spdx.Package{
+					{
+						PackageName:           "test-package",
+						PackageSPDXIdentifier: "package-1",
+						PackageVersion:        "1.0.0",
+					},
+				},
+				Files: []*spdx.File{
+					{
+						FileName:           "/app/package.json",
+						FileSPDXIdentifier: "file-1",
+					},
+					{
+						FileName:           "/app/manifest.txt",
+						FileSPDXIdentifier: "file-2",
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: common.DocElementID{
+							ElementRefID: "package-1",
+						},
+						RefB: common.DocElementID{
+							ElementRefID: "file-1",
+						},
+						Relationship:        spdx.RelationshipOther,
+						RelationshipComment: "evident-by: indicates the package's existence is evident by the given file",
+					},
+					{
+						RefA: common.DocElementID{
+							ElementRefID: "package-1",
+						},
+						RefB: common.DocElementID{
+							ElementRefID: "file-2",
+						},
+						Relationship:        spdx.RelationshipOther,
+						RelationshipComment: "evident-by: indicates the package's existence is evident by the given file",
+					},
+				},
+			},
+			expectedPkgLocs: map[string][]string{
+				"package-1": {"/app/package.json", "/app/manifest.txt"},
+			},
+		},
+		{
+			name: "standard SPDX SBOM with CONTAINS relationships",
+			doc: &spdx.Document{
+				SPDXVersion:    "SPDX-2.3",
+				SPDXIdentifier: "DOCUMENT",
+				Packages: []*spdx.Package{
+					{
+						PackageName:           "standard-package",
+						PackageSPDXIdentifier: "package-2",
+						PackageVersion:        "2.0.0",
+					},
+				},
+				Files: []*spdx.File{
+					{
+						FileName:           "/usr/bin/app",
+						FileSPDXIdentifier: "file-3",
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: common.DocElementID{
+							ElementRefID: "package-2",
+						},
+						RefB: common.DocElementID{
+							ElementRefID: "file-3",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+				},
+			},
+			expectedPkgLocs: map[string][]string{
+				"package-2": {"/usr/bin/app"},
+			},
+		},
+		{
+			name: "mixed relationships - only location evidence should be processed",
+			doc: &spdx.Document{
+				SPDXVersion:    "SPDX-2.3",
+				SPDXIdentifier: "DOCUMENT",
+				Packages: []*spdx.Package{
+					{
+						PackageName:           "mixed-package",
+						PackageSPDXIdentifier: "package-3",
+						PackageVersion:        "3.0.0",
+					},
+				},
+				Files: []*spdx.File{
+					{
+						FileName:           "/opt/config.conf",
+						FileSPDXIdentifier: "file-4",
+					},
+					{
+						FileName:           "/opt/readme.txt",
+						FileSPDXIdentifier: "file-5",
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: common.DocElementID{
+							ElementRefID: "package-3",
+						},
+						RefB: common.DocElementID{
+							ElementRefID: "file-4",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: common.DocElementID{
+							ElementRefID: "package-3",
+						},
+						RefB: common.DocElementID{
+							ElementRefID: "file-5",
+						},
+						Relationship:        spdx.RelationshipOther,
+						RelationshipComment: "some other relationship comment",
+					},
+				},
+			},
+			expectedPkgLocs: map[string][]string{
+				"package-3": {"/opt/config.conf"}, // only the CONTAINS relationship should add location
+			},
+		},
+		{
+			name: "no location relationships",
+			doc: &spdx.Document{
+				SPDXVersion:    "SPDX-2.3",
+				SPDXIdentifier: "DOCUMENT",
+				Packages: []*spdx.Package{
+					{
+						PackageName:           "no-loc-package",
+						PackageSPDXIdentifier: "package-4",
+						PackageVersion:        "4.0.0",
+					},
+				},
+				Files: []*spdx.File{
+					{
+						FileName:           "/var/log/app.log",
+						FileSPDXIdentifier: "file-6",
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: common.DocElementID{
+							ElementRefID: "package-4",
+						},
+						RefB: common.DocElementID{
+							ElementRefID: "file-6",
+						},
+						Relationship:        spdx.RelationshipOther,
+						RelationshipComment: "unrelated comment",
+					},
+				},
+			},
+			expectedPkgLocs: map[string][]string{
+				"package-4": {}, // no locations should be added
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Convert the SPDX document to Syft model
+			result, err := ToSyftModel(tt.doc)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			// Check that packages have the expected locations
+			for pkgID, expectedPaths := range tt.expectedPkgLocs {
+				pkg := result.Artifacts.Packages.Package(artifact.ID(pkgID))
+				require.NotNil(t, pkg, "package %s should exist", pkgID)
+
+				actualPaths := make([]string, 0)
+				for _, loc := range pkg.Locations.ToSlice() {
+					actualPaths = append(actualPaths, loc.RealPath)
+				}
+
+				if len(expectedPaths) == 0 {
+					assert.Empty(t, actualPaths, "package %s should have no locations", pkgID)
+				} else {
+					assert.ElementsMatch(t, expectedPaths, actualPaths,
+						"package %s should have expected locations", pkgID)
+				}
+			}
+		})
+	}
+}
+
+func Test_populatePackageLocationsFromRelationships_duplicateLocations(t *testing.T) {
+	// Test that duplicate locations are not added
+	doc := &spdx.Document{
+		SPDXVersion:    "SPDX-2.3",
+		SPDXIdentifier: "DOCUMENT",
+		Packages: []*spdx.Package{
+			{
+				PackageName:           "dup-test-package",
+				PackageSPDXIdentifier: "package-dup",
+				PackageVersion:        "1.0.0",
+				Files: []*spdx.File{
+					{
+						FileName:           "/same/file.txt",
+						FileSPDXIdentifier: "file-dup-1",
+					},
+				},
+			},
+		},
+		Files: []*spdx.File{
+			{
+				FileName:           "/same/file.txt",
+				FileSPDXIdentifier: "file-dup-2",
+			},
+		},
+		Relationships: []*spdx.Relationship{
+			{
+				RefA: common.DocElementID{
+					ElementRefID: "package-dup",
+				},
+				RefB: common.DocElementID{
+					ElementRefID: "file-dup-1",
+				},
+				Relationship: spdx.RelationshipContains,
+			},
+			{
+				RefA: common.DocElementID{
+					ElementRefID: "package-dup",
+				},
+				RefB: common.DocElementID{
+					ElementRefID: "file-dup-2",
+				},
+				Relationship: spdx.RelationshipContains,
+			},
+		},
+	}
+
+	result, err := ToSyftModel(doc)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	pkg := result.Artifacts.Packages.Package(artifact.ID("package-dup"))
+	require.NotNil(t, pkg)
+
+	// Should only have one location despite two relationships pointing to the same file path
+	locations := pkg.Locations.ToSlice()
+	assert.Len(t, locations, 1)
+	assert.Equal(t, "/same/file.txt", locations[0].RealPath)
+}
