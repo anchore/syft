@@ -36,6 +36,9 @@ type CreateSBOMConfig struct {
 	ToolVersion       string
 	ToolConfiguration interface{}
 
+	// custom tags that will be added to the SBOM
+	Tags map[string]string
+
 	packageTaskFactories       task.Factories
 	packageCatalogerReferences []pkgcataloging.CatalogerReference
 }
@@ -86,6 +89,12 @@ func (c *CreateSBOMConfig) WithTool(name, version string, cfg ...any) *CreateSBO
 	c.ToolName = name
 	c.ToolVersion = version
 	c.ToolConfiguration = cfg
+	return c
+}
+
+// WithTags allows for setting custom tags that will be added to the SBOM
+func (c *CreateSBOMConfig) WithTags(tags map[string]string) *CreateSBOMConfig {
+	c.Tags = tags
 	return c
 }
 

@@ -125,5 +125,6 @@
   "configuration": {
    "config-key": "config-value"
   }
- }
+ },
+ "tags": {}
 }

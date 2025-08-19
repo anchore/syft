@@ -123,7 +123,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 
 		// 6.11: Document Comment
 		// Cardinality: optional, one
-		DocumentComment: "",
+		DocumentComment: toDocumentComment(s.Tags),
 
 		CreationInfo: &spdx.CreationInfo{
 			// 6.7: License List Version
@@ -157,6 +157,28 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		Relationships: allRelationships,
 		OtherLicenses: convertOtherLicense(otherLicenses),
 	}
+}
+
+// toDocumentComment creates a formatted comment with SBOM tags for the SPDX document
+func toDocumentComment(tags map[string]string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+
+	// Get sorted keys for reproducible output
+	keys := make([]string, 0, len(tags))
+	for k := range tags {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	var parts []string
+	parts = append(parts, "SBOM Properties:")
+	for _, key := range keys {
+		parts = append(parts, fmt.Sprintf("  %s: %s", key, tags[key]))
+	}
+
+	return strings.Join(parts, "\n")
 }
 
 func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (out []*spdx.Relationship) {
