@@ -12,10 +12,16 @@ import (
 )
 
 // Source object represents the thing that was cataloged
+// Note: syft currently makes no claims or runs any logic to determine the Supplier field below
+
+// Instead, the Supplier can be determined by the user of syft and passed as a config or flag to help fulfill
+// the NTIA minimum elements. For mor information see the NTIA framing document below
+// https://www.ntia.gov/files/ntia/publications/framingsbom_20191112.pdf
 type Source struct {
 	ID       string      `json:"id"`
 	Name     string      `json:"name"`
 	Version  string      `json:"version"`
+	Supplier string      `json:"supplier,omitempty"`
 	Type     string      `json:"type"`
 	Metadata interface{} `json:"metadata"`
 }
@@ -25,6 +31,7 @@ type sourceUnpacker struct {
 	ID       string          `json:"id,omitempty"`
 	Name     string          `json:"name"`
 	Version  string          `json:"version"`
+	Supplier string          `json:"supplier,omitempty"`
 	Type     string          `json:"type"`
 	Metadata json.RawMessage `json:"metadata"`
 	Target   json.RawMessage `json:"target"` // pre-v9 schema support
@@ -40,6 +47,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 
 	s.Name = unpacker.Name
 	s.Version = unpacker.Version
+	s.Supplier = unpacker.Supplier
 	s.Type = unpacker.Type
 	s.ID = unpacker.ID
 

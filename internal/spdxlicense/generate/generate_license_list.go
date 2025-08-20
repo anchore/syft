@@ -31,6 +31,13 @@ var licenseIDs = map[string]string{
 	{{ printf "%q" $k }}: {{ printf "%q" $v }},
 {{- end }}
 }
+
+// urlToLicense maps license URLs from the seeAlso field to license IDs
+var urlToLicense = map[string]string{
+{{- range $url, $id := .URLToLicense }}
+	{{ printf "%q" $url }}: {{ printf "%q" $id }},
+{{- end }}
+}
 `))
 
 var versionMatch = regexp.MustCompile(`([0-9]+)\.?([0-9]+)?\.?([0-9]+)?\.?`)
@@ -68,17 +75,20 @@ func run() error {
 	}()
 
 	licenseIDs := processSPDXLicense(result)
+	urlToLicense := buildURLToLicenseMap(result)
 
 	err = tmp.Execute(f, struct {
-		Timestamp  time.Time
-		URL        string
-		Version    string
-		LicenseIDs map[string]string
+		Timestamp    time.Time
+		URL          string
+		Version      string
+		LicenseIDs   map[string]string
+		URLToLicense map[string]string
 	}{
-		Timestamp:  time.Now(),
-		URL:        url,
-		Version:    result.Version,
-		LicenseIDs: licenseIDs,
+		Timestamp:    time.Now(),
+		URL:          url,
+		Version:      result.Version,
+		LicenseIDs:   licenseIDs,
+		URLToLicense: urlToLicense,
 	})
 
 	if err != nil {
@@ -155,4 +165,31 @@ func processSPDXLicense(result LicenseList) map[string]string {
 func cleanLicenseID(id string) string {
 	cleanID := strings.ToLower(id)
 	return strings.ReplaceAll(cleanID, "-", "")
+}
+
+// buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs
+func buildURLToLicenseMap(result LicenseList) map[string]string {
+	urlMap := make(map[string]string)
+
+	for _, l := range result.Licenses {
+		// Skip deprecated licenses
+		if l.Deprecated {
+			// Find replacement license if available
+			replacement := result.findReplacementLicense(l)
+			if replacement != nil {
+				// Map deprecated license URLs to the replacement license
+				for _, url := range l.SeeAlso {
+					urlMap[url] = replacement.ID
+				}
+			}
+			continue
+		}
+
+		// Add URLs from non-deprecated licenses
+		for _, url := range l.SeeAlso {
+			urlMap[url] = l.ID
+		}
+	}
+
+	return urlMap
 }

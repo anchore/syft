@@ -71,6 +71,21 @@ func TestPackagesCmdFlags(t *testing.T) {
 				assertSuccessfulReturnCode,
 			},
 		},
+		{
+			name: "source flags override bom metadata",
+			args: []string{
+				"scan",
+				"--source-name", "custom-name",
+				"--source-version", "custom-version",
+				"--source-supplier", "custom-supplier",
+				"-o", "json", coverageImage},
+			assertions: []traitAssertion{
+				assertInOutput("custom-name"),
+				assertInOutput("custom-version"),
+				assertInOutput("custom-supplier"),
+				assertSuccessfulReturnCode,
+			},
+		},
 		// I haven't been able to reproduce locally yet, but in CI this has proven to be unstable:
 		// For the same commit:
 		//   pass: https://github.com/anchore/syft/runs/4611344142?check_suite_focus=true
