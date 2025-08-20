@@ -394,6 +394,146 @@
         "checksum"
       ]
     },
+    "CondaLink": {
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "source",
+        "type"
+      ]
+    },
+    "CondaMetadataEntry": {
+      "properties": {
+        "arch": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "build": {
+          "type": "string"
+        },
+        "build_number": {
+          "type": "integer"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "subdir": {
+          "type": "string"
+        },
+        "noarch": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "license_family": {
+          "type": "string"
+        },
+        "md5": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "timestamp": {
+          "type": "integer"
+        },
+        "fn": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "extracted_package_dir": {
+          "type": "string"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "paths_data": {
+          "$ref": "#/$defs/CondaPathsData"
+        },
+        "link": {
+          "$ref": "#/$defs/CondaLink"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "build",
+        "build_number"
+      ]
+    },
+    "CondaPathData": {
+      "properties": {
+        "_path": {
+          "type": "string"
+        },
+        "path_type": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "sha256_in_prefix": {
+          "type": "string"
+        },
+        "size_in_bytes": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "_path",
+        "path_type",
+        "sha256",
+        "sha256_in_prefix",
+        "size_in_bytes"
+      ]
+    },
+    "CondaPathsData": {
+      "properties": {
+        "paths_version": {
+          "type": "integer"
+        },
+        "paths": {
+          "items": {
+            "$ref": "#/$defs/CondaPathData"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "paths_version",
+        "paths"
+      ]
+    },
     "Coordinates": {
       "properties": {
         "path": {
@@ -1924,6 +2064,9 @@
             },
             {
               "$ref": "#/$defs/CocoaPodfileLockEntry"
+            },
+            {
+              "$ref": "#/$defs/CondaMetadataEntry"
             },
             {
               "$ref": "#/$defs/DartPubspec"
