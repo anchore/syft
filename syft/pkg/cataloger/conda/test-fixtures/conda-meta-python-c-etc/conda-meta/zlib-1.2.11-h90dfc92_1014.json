@@ -1,0 +1,75 @@
+{
+  "arch": "arm64",
+  "build": "h90dfc92_1014",
+  "build_number": 1014,
+  "depends": [
+    "libzlib 1.2.11 h90dfc92_1014"
+  ],
+  "license": "Zlib",
+  "license_family": "Other",
+  "md5": "348a30b1350c9d91a4dbf05f5e46e0bb",
+  "name": "zlib",
+  "platform": "osx",
+  "sha256": "a70c028fd3b9af1d7ea3d7099d810f3d2588096237bb472db331a51a36f931c0",
+  "size": 86757,
+  "subdir": "osx-arm64",
+  "timestamp": 1648307332172,
+  "version": "1.2.11",
+  "fn": "zlib-1.2.11-h90dfc92_1014.tar.bz2",
+  "url": "https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.2.11-h90dfc92_1014.tar.bz2",
+  "channel": "https://conda.anaconda.org/conda-forge/",
+  "extracted_package_dir": "/Users/example-user/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+  "files": [
+    "include/zconf.h",
+    "include/zlib.h",
+    "lib/pkgconfig/zlib.pc",
+    "lib/libz.a",
+    "lib/libz.dylib"
+  ],
+  "paths_data": {
+    "paths_version": 1,
+    "paths": [
+      {
+        "_path": "include/zconf.h",
+        "path_type": "hardlink",
+        "sha256": "77304005ceb5f0d03ad4c37eb8386a10866e4ceeb204f7c3b6599834c7319541",
+        "sha256_in_prefix": "77304005ceb5f0d03ad4c37eb8386a10866e4ceeb204f7c3b6599834c7319541",
+        "size_in_bytes": 16262
+      },
+      {
+        "_path": "include/zlib.h",
+        "path_type": "hardlink",
+        "sha256": "4ddc82b4af931ab55f44d977bde81bfbc4151b5dcdccc03142831a301b5ec3c8",
+        "sha256_in_prefix": "4ddc82b4af931ab55f44d977bde81bfbc4151b5dcdccc03142831a301b5ec3c8",
+        "size_in_bytes": 96239
+      },
+      {
+        "_path": "lib/pkgconfig/zlib.pc",
+        "path_type": "hardlink",
+        "sha256": "357773df3c44a5ebd77fdadd0869b5b06394bbf556c2d6c9736dd53e9df3b2c2",
+        "sha256_in_prefix": "5b4eb6062f97875eaadb3b6c7cf8cfeff3808798ecbf2bfc095f18dcecc509bf",
+        "size_in_bytes": 285,
+        "file_mode": "text",
+        "prefix_placeholder": "/Users/runner/miniforge3/conda-bld/zlib-split_1648307175973/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehol"
+      },
+      {
+        "_path": "lib/libz.a",
+        "path_type": "hardlink",
+        "sha256": "40c056a5d8155d9b3f42adfe35f7fc6e5fa15cc6588ffad0f09fe67517feada0",
+        "sha256_in_prefix": "40c056a5d8155d9b3f42adfe35f7fc6e5fa15cc6588ffad0f09fe67517feada0",
+        "size_in_bytes": 107128
+      },
+      {
+        "_path": "lib/libz.dylib",
+        "path_type": "softlink",
+        "sha256": "67ed489e2f378880f72fb1c0d1cc916e184b9632eccf2b5c1b34ddf01ed1701c",
+        "sha256_in_prefix": "09e47dbc60aa970e153913fe84551ad7f5aa51c21907591340a0cc999adab859",
+        "size_in_bytes": 122478
+      }
+    ]
+  },
+  "link": {
+    "source": "/Users/example-user/Library/Caches/rattler/cache/pkgs/zlib-1.2.11-h90dfc92_1014",
+    "type": 1
+  }
+}

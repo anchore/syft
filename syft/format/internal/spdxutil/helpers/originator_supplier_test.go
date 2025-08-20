@@ -18,6 +18,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ConanV2LockEntry{}, // the field Username might be the username of either the package originator or the supplier (unclear currently)
 		pkg.ConanfileEntry{},
 		pkg.ConaninfoEntry{},
+		pkg.CondaMetaPackage{},
 		pkg.DartPubspecLockEntry{},
 		pkg.DartPubspec{},
 		pkg.DotnetDepsEntry{},
