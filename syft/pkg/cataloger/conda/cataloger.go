@@ -24,7 +24,7 @@ func parseCondaMetaJSON(ctx context.Context, _ file.Resolver, _ *generic.Environ
 	dec := json.NewDecoder(reader)
 	var meta pkg.CondaMetaPackage
 	if err := dec.Decode(&meta); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse conda-meta package file at %s: %w", reader.Location, err)
+		return nil, nil, fmt.Errorf("failed to parse conda-meta package file at %s: %w", reader.RealPath, err)
 	}
 
 	p := pkg.Package{

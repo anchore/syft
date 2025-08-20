@@ -5,10 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-test/deep"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
-	"github.com/go-test/deep"
 )
 
 func Test_CondaCataloger(t *testing.T) {
@@ -18,10 +20,12 @@ func Test_CondaCataloger(t *testing.T) {
 		name             string
 		fixture          string
 		expectedPackages []pkg.Package
+		wantErr          require.ErrorAssertionFunc
 	}{
 		{
 			name:    "multiple packages in conda meta (python, c binaries, ...)",
 			fixture: "test-fixtures/conda-meta-python-c-etc",
+			wantErr: require.NoError,
 			expectedPackages: []pkg.Package{
 				{
 					Name:    "jupyterlab",
@@ -191,20 +195,21 @@ func Test_CondaCataloger(t *testing.T) {
 			name:             "badly formatted conda meta json file",
 			fixture:          "test-fixtures/conda-meta-bad-json",
 			expectedPackages: nil,
-		},
-		{
-			name:             "nonexistent conda meta folder",
-			fixture:          "test-fixtures/conda-meta-nonexistent",
-			expectedPackages: nil,
+			wantErr: func(t require.TestingT, err error, msgAndArgs ...interface{}) {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to parse conda-meta package file at conda-meta/package-1.2.3-pyhd8ed1ab_0.json")
+				require.Contains(t, err.Error(), "invalid character")
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			(pkgtest.NewCatalogTester().
+			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
-				TestCataloger(t, NewCondaMetaCataloger()))
+				WithErrorAssertion(test.wantErr).
+				TestCataloger(t, NewCondaMetaCataloger())
 		})
 	}
 }

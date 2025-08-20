@@ -3190,6 +3190,9 @@
         "version": {
           "type": "string"
         },
+        "supplier": {
+          "type": "string"
+        },
         "type": {
           "type": "string"
         },
