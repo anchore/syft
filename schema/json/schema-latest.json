@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.6/document",
+  "$id": "anchore.io/schema/syft/json/16.1.7/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -2864,6 +2864,9 @@
               "$ref": "#/$defs/TerraformLockProviderEntry"
             },
             {
+              "$ref": "#/$defs/VcpkgManifest"
+            },
+            {
               "$ref": "#/$defs/WordpressPluginEntry"
             }
           ]
@@ -4320,6 +4323,89 @@
         "hashes"
       ],
       "description": "TerraformLockProviderEntry represents a single provider entry in a Terraform dependency lock file (.terraform.lock.hcl)."
+    },
+    "VcpkgManifest": {
+      "properties": {
+        "description": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "documentation": {
+          "type": "string"
+        },
+        "full-version": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "port-version": {
+          "type": "integer"
+        },
+        "license": {
+          "type": "string"
+        },
+        "maintainers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "supports": {
+          "type": "string"
+        },
+        "registry": {
+          "$ref": "#/$defs/VcpkgRegistryEntry",
+          "description": "to show where it came from"
+        },
+        "triplet": {
+          "type": "string",
+          "description": "found by looking at build folder to find target. ex. \"x64-linux\""
+        }
+      },
+      "type": "object",
+      "required": [
+        "full-version",
+        "version",
+        "port-version",
+        "name"
+      ],
+      "description": "used for metadata."
+    },
+    "VcpkgRegistryEntry": {
+      "properties": {
+        "baseline": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "packages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "description": "Matches definition of Vcpkg \"Registry\"."
     },
     "WordpressPluginEntry": {
       "properties": {
