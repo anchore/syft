@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/format/syftjson"
 )

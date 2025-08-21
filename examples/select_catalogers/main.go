@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
