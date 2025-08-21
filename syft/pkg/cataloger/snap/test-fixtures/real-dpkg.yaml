@@ -1,0 +1,14 @@
+package-repositories:
+- type: apt
+  ppa: ucdev/ubuntu/base-ppa
+packages:
+- adduser=3.118ubuntu2
+- apparmor=2.13.3-7ubuntu5.3
+- apt=2.0.10
+- bash=5.0-6ubuntu1.2
+- coreutils=8.30-3ubuntu2
+- dpkg=1.19.7ubuntu3.2
+- gcc-10-base:amd64=10.5.0-1ubuntu1~20.04
+- libc6:amd64=2.31-0ubuntu9.16
+- systemd=245.4-4ubuntu3.23
+- ubuntu-keyring=2020.02.11.4
