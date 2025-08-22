@@ -53,6 +53,7 @@ func (p resolvingProcessorWrapper) process(ctx context.Context, resolver file.Re
 type Cataloger struct {
 	processors        []processExecutor
 	requesters        []requester
+	checks            []func() error
 	upstreamCataloger string
 }
 
@@ -127,6 +128,11 @@ func (c *Cataloger) WithResolvingProcessors(processors ...ResolvingProcessor) *C
 	return c
 }
 
+func (c *Cataloger) WithChecks(checks ...func() error) *Cataloger {
+	c.checks = append(c.checks, checks...)
+	return c
+}
+
 func makeRequests(parser Parser, locations []file.Location) []request {
 	var requests []request
 	for _, l := range locations {
@@ -152,6 +158,12 @@ func (c *Cataloger) Name() string {
 
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 func (c *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	for _, check := range c.checks {
+		if err := check(); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	var packages []pkg.Package
 	var relationships []artifact.Relationship
 
