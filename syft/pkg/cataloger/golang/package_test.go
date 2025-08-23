@@ -58,17 +58,17 @@ func Test_packageURL(t *testing.T) {
 
 func Test_newGoBinaryPackage_relativeReplace(t *testing.T) {
 	tests := []struct {
-		name        string
-		dep         *debug.Module
+		name         string
+		dep          *debug.Module
 		expectedName string
 	}{
 		{
 			name: "relative replace with ../",
 			dep: &debug.Module{
-				Path: "github.com/aws/aws-sdk-go-v2",
+				Path:    "github.com/aws/aws-sdk-go-v2",
 				Version: "(devel)",
 				Replace: &debug.Module{
-					Path: "../../",
+					Path:    "../../",
 					Version: "(devel)",
 				},
 			},
@@ -77,10 +77,10 @@ func Test_newGoBinaryPackage_relativeReplace(t *testing.T) {
 		{
 			name: "relative replace with ./",
 			dep: &debug.Module{
-				Path: "github.com/example/module",
+				Path:    "github.com/example/module",
 				Version: "v1.0.0",
 				Replace: &debug.Module{
-					Path: "./local",
+					Path:    "./local",
 					Version: "v0.0.0",
 				},
 			},
@@ -89,10 +89,10 @@ func Test_newGoBinaryPackage_relativeReplace(t *testing.T) {
 		{
 			name: "absolute replace",
 			dep: &debug.Module{
-				Path: "github.com/old/module",
+				Path:    "github.com/old/module",
 				Version: "v1.0.0",
 				Replace: &debug.Module{
-					Path: "github.com/new/module",
+					Path:    "github.com/new/module",
 					Version: "v2.0.0",
 				},
 			},
@@ -101,7 +101,7 @@ func Test_newGoBinaryPackage_relativeReplace(t *testing.T) {
 		{
 			name: "no replace",
 			dep: &debug.Module{
-				Path: "github.com/normal/module",
+				Path:    "github.com/normal/module",
 				Version: "v1.0.0",
 			},
 			expectedName: "github.com/normal/module", // should use original path
@@ -112,7 +112,7 @@ func Test_newGoBinaryPackage_relativeReplace(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cataloger := &goBinaryCataloger{}
 			result := cataloger.newGoBinaryPackage(test.dep, pkg.GolangBinaryBuildinfoEntry{}, nil)
-			
+
 			assert.Equal(t, test.expectedName, result.Name)
 			assert.Equal(t, pkg.Go, result.Language)
 			assert.Equal(t, pkg.GoModulePkg, result.Type)
