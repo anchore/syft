@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 	_ "modernc.org/sqlite" // required for rpmdb and other features
 
 	"github.com/anchore/syft/syft"
