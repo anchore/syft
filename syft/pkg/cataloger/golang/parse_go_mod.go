@@ -47,21 +47,24 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
+	// source analysis using go toolchain if available
 	syftSourcePackages, sourceModules, sourceDependencies, unknownErr := c.loadPackages(modDir, reader.Location)
+	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, syftSourcePackages, sourceModules, reader, digests)
+	relationships := buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
 
+	// base case go.mod file parsing
 	modFile, err := c.parseModFileContents(reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// only use mod packages NOT found in source analysis
 	goModPackages := c.createGoModPackages(ctx, resolver, modFile, sourceModules, reader, digests)
 	c.applyReplaceDirectives(ctx, resolver, modFile, goModPackages, reader, digests)
 	c.applyExcludeDirectives(modFile, goModPackages)
 
-	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, syftSourcePackages, sourceModules, reader, digests)
-	relationships := buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
-
-	return c.assembleResults(catalogedModules, goModPackages, relationships, unknownErr)
+	finalPkgs := c.assembleResults(catalogedModules, goModPackages)
+	return finalPkgs, relationships, unknownErr
 }
 
 func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*modfile.File, error) {
@@ -85,7 +88,7 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 	for _, m := range modFile.Require {
 		if _, exists := sourceModules[m.Mod.Path]; !exists {
 			lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
-			goModPackages[m.Mod.Path] = pkg.Package{
+			goModPkg := pkg.Package{
 				Name:      m.Mod.Path,
 				Version:   m.Mod.Version,
 				Licenses:  pkg.NewLicenseSet(lics...),
@@ -97,6 +100,8 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 					H1Digest: digests[fmt.Sprintf("%s %s", m.Mod.Path, m.Mod.Version)],
 				},
 			}
+			goModPkg.SetID()
+			goModPackages[m.Mod.Path] = goModPkg
 		}
 	}
 
@@ -115,8 +120,7 @@ func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver fi
 		} else {
 			finalPath = m.Old.Path
 		}
-
-		goModPackages[finalPath] = pkg.Package{
+		goModPkg := pkg.Package{
 			Name:      finalPath,
 			Version:   m.New.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
@@ -128,6 +132,8 @@ func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver fi
 				H1Digest: digests[fmt.Sprintf("%s %s", finalPath, m.New.Version)],
 			},
 		}
+		goModPkg.SetID()
+		goModPackages[finalPath] = goModPkg
 	}
 }
 
@@ -137,16 +143,12 @@ func (c *goModCataloger) applyExcludeDirectives(modFile *modfile.File, goModPack
 	}
 }
 
-func (c *goModCataloger) assembleResults(catalogedPkgs []pkg.Package, goModPackages map[string]pkg.Package, relationships []artifact.Relationship, unknownErr error) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goModCataloger) assembleResults(catalogedPkgs []pkg.Package, goModPackages map[string]pkg.Package) []pkg.Package {
 	pkgsSlice := make([]pkg.Package, 0)
 
-	for _, p := range catalogedPkgs {
-		p.SetID()
-		pkgsSlice = append(pkgsSlice, p)
-	}
+	pkgsSlice = append(pkgsSlice, catalogedPkgs...)
 
 	for _, p := range goModPackages {
-		p.SetID()
 		pkgsSlice = append(pkgsSlice, p)
 	}
 
@@ -154,10 +156,7 @@ func (c *goModCataloger) assembleResults(catalogedPkgs []pkg.Package, goModPacka
 		return pkgsSlice[i].Name < pkgsSlice[j].Name
 	})
 
-	if len(relationships) == 0 {
-		return pkgsSlice, nil, unknownErr
-	}
-	return pkgsSlice, relationships, unknownErr
+	return pkgsSlice
 }
 
 func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map[string]string, error) {
@@ -345,7 +344,7 @@ func buildModuleRelationships(
 	dependencies map[string][]string,
 	moduleToPkg map[string]artifact.Identifiable,
 ) []artifact.Relationship {
-	rels := make([]artifact.Relationship, 0)
+	var rels []artifact.Relationship
 	seen := make(map[string]struct{})
 
 	for _, fromPkg := range syftPkgs {
@@ -561,6 +560,62 @@ func findLicenseFileLocationsWithFS(dir string, rootDir string, fs afero.Fs) ([]
 	return findAllLicenseCandidatesUpwardsWithFS(dir, licenseRegexp, rootDir, fs)
 }
 
+// resolveSymlink attempts to resolve a symlink and check for loops
+func resolveSymlink(dir string, fs afero.Fs, visited map[string]bool) (string, bool) {
+	linkReader, ok := fs.(afero.LinkReader)
+	if !ok {
+		return "", false
+	}
+
+	target, err := linkReader.ReadlinkIfPossible(dir)
+	if err != nil {
+		log.Debugf("findAllLicenseCandidatesUpwardsWithFS: error reading symlink %s: %v", dir, err)
+		return "", false
+	}
+
+	if target == "" {
+		return "", false
+	}
+
+	// Successfully read a symlink
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(dir), target)
+	}
+	resolvedDir := filepath.Clean(target)
+
+	// Check if we've visited the resolved path (symlink loop)
+	if visited[resolvedDir] {
+		log.Debugf("findAllLicenseCandidatesUpwardsWithFS: detected symlink loop at %s -> %s", dir, resolvedDir)
+		return "", true // loop detected
+	}
+
+	visited[resolvedDir] = true
+	return resolvedDir, false
+}
+
+// findLicensesInDir searches for license files in a single directory
+func findLicensesInDir(dir string, r *regexp.Regexp, fs afero.Fs) ([]string, error) {
+	var licenses []string
+
+	dirContents, err := afero.ReadDir(fs, dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range dirContents {
+		if f.IsDir() {
+			continue
+		}
+
+		if r.MatchString(f.Name()) {
+			path := filepath.Join(dir, f.Name())
+			licenses = append(licenses, path)
+		}
+	}
+
+	return licenses, nil
+}
+
 /*
 findAllLicenseCandidatesUpwards performs a bubble-up search per package because:
 1. pkgInfos represents a sparse vertical distribution of packages within modules
@@ -580,39 +635,29 @@ func findAllLicenseCandidatesUpwardsWithFS(dir string, r *regexp.Regexp, stopAt 
 	visited := make(map[string]bool) // Track visited directories to prevent infinite loops
 
 	for strings.HasPrefix(dir, stopAt) {
-		// Resolve any symlinks to get the actual path
-		// Note: For in-memory filesystems, EvalSymlinks may not work as expected,
-		// but this provides a fallback for real filesystems
-		resolvedDir := dir
-		if _, ok := fs.(*afero.OsFs); ok {
-			if resolved, err := filepath.EvalSymlinks(dir); err == nil {
-				resolvedDir = resolved
-			}
-		}
-
-		// Check if we've already visited this resolved directory (symlink loop detection)
-		if visited[resolvedDir] {
-			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: detected directory loop at %s (resolved: %s)", dir, resolvedDir)
+		// Check if we've already visited this actual directory path (not resolved)
+		// This prevents breaking early when a symlink points to a parent we'll visit later
+		if visited[dir] {
+			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: already visited directory %s", dir)
 			break
 		}
-		visited[resolvedDir] = true
+		visited[dir] = true
 
-		dirContents, err := afero.ReadDir(fs, dir)
+		// Check for symlink loops
+		if _, loopDetected := resolveSymlink(dir, fs, visited); loopDetected {
+			// Continue to parent directory instead of breaking entirely
+			dir = filepath.Dir(dir)
+			continue
+		}
+
+		// Find licenses in current directory
+		licenses, err := findLicensesInDir(dir, r, fs)
 		if err != nil {
 			return nil, err
 		}
+		licenseCandidates = append(licenseCandidates, licenses...)
 
-		for _, f := range dirContents {
-			if f.IsDir() {
-				continue
-			}
-
-			if r.MatchString(f.Name()) {
-				path := filepath.Join(dir, f.Name())
-				licenseCandidates = append(licenseCandidates, path)
-			}
-		}
-
+		// Move to parent directory
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			// Can't go any higher up the directory tree.
