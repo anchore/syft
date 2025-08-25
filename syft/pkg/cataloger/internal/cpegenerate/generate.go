@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -229,6 +230,11 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForWordpressPlugin(p))
 	}
 
+	if p.Type == pkg.BinaryPkg && endsWithNumber(p.Name) {
+		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+		addBinaryPackageDigitVariations(vendors)
+	}
+
 	// We should no longer be generating vendor candidates with these values ["" and "*"]
 	// (since CPEs will match any other value)
 	vendors.removeByValue("")
@@ -239,9 +245,6 @@ func candidateVendors(p pkg.Package) []string {
 
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
-
-	// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
-	addBinaryPackageDigitVariations(vendors, p)
 
 	// add more candidates based on the package info for each vendor candidate
 	for _, vendor := range vendors.uniqueValues() {
@@ -290,6 +293,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 		if prod != "" {
 			products.addValue(prod)
 		}
+	case p.Type == pkg.BinaryPkg && endsWithNumber(p.Name):
+		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+		addBinaryPackageDigitVariations(products)
 	}
 
 	switch p.Metadata.(type) {
@@ -306,9 +312,6 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(products)
-
-	// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
-	addBinaryPackageDigitVariations(products, p)
 
 	// add known candidate additions
 	products.addValue(findAdditionalProducts(defaultCandidateAdditions, p.Type, p.Name)...)
@@ -419,13 +422,8 @@ func removeTrailingDigits(s string) string {
 }
 
 // addBinaryPackageDigitVariations adds variations with trailing digits removed for binary packages.For binary package types only, when the name ends with a digit, add a new variation with all suffix-digits removed (e.g. Qt5 -> Qt). This helps generate additional CPE permutations for better vulnerability matching.
-func addBinaryPackageDigitVariations(fields fieldCandidateSet, p pkg.Package) {
-	if p.Type != pkg.BinaryPkg {
-		return
-	}
-
+func addBinaryPackageDigitVariations(fields fieldCandidateSet) {
 	candidatesForVariations := fields.copy()
-
 	for _, candidate := range candidatesForVariations.values() {
 		// Check if the candidate ends with a digit
 		if len(candidate) > 0 && candidate[len(candidate)-1] >= '0' && candidate[len(candidate)-1] <= '9' {
@@ -436,4 +434,13 @@ func addBinaryPackageDigitVariations(fields fieldCandidateSet, p pkg.Package) {
 			}
 		}
 	}
+}
+
+func endsWithNumber(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	r := []rune(s)
+	last := r[len(r)-1]
+	return unicode.IsDigit(last)
 }

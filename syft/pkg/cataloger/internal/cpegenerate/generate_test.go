@@ -1165,32 +1165,23 @@ func TestAddBinaryPackageDigitVariations(t *testing.T) {
 			expectedAbsent:  []string{},
 		},
 		{
-			name:            "binary package with trailing digits",
+			name:            "package with trailing digits",
 			packageType:     pkg.BinaryPkg,
 			inputCandidates: []string{"Qt5", "libfoo123", "bar42", "baz"},
 			expectedPresent: []string{"Qt5", "Qt", "libfoo123", "libfoo", "bar42", "bar", "baz"},
 			expectedAbsent:  []string{},
 		},
 		{
-			name:            "binary package with multiple trailing digits",
-			packageType:     pkg.BinaryPkg,
+			name:            "multiple trailing digits",
 			inputCandidates: []string{"Qt872", "package999"},
 			expectedPresent: []string{"Qt872", "Qt", "package999", "package"},
 			expectedAbsent:  []string{},
 		},
 		{
-			name:            "binary package without trailing digits",
-			packageType:     pkg.BinaryPkg,
+			name:            "package without trailing digits",
 			inputCandidates: []string{"QtCore", "libfoo", "bar"},
 			expectedPresent: []string{"QtCore", "libfoo", "bar"},
 			expectedAbsent:  []string{"QtCor", "libfo", "ba"},
-		},
-		{
-			name:            "non-binary package with trailing digits",
-			packageType:     pkg.DebPkg,
-			inputCandidates: []string{"Qt5", "libfoo123", "Qt872"},
-			expectedPresent: []string{"Qt5", "libfoo123", "Qt872"},
-			expectedAbsent:  []string{"Qt", "libfoo"},
 		},
 		{
 			name:            "empty candidate set",
@@ -1204,9 +1195,7 @@ func TestAddBinaryPackageDigitVariations(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			fields := newFieldCandidateSet(test.inputCandidates...)
-			p := pkg.Package{Type: test.packageType}
-
-			addBinaryPackageDigitVariations(fields, p)
+			addBinaryPackageDigitVariations(fields)
 
 			values := fields.uniqueValues()
 
