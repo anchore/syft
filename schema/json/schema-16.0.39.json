@@ -1241,19 +1241,10 @@
         "h1Digest": {
           "type": "string"
         },
-        "goroot": {
+        "os": {
           "type": "string"
         },
-        "gopath": {
-          "type": "string"
-        },
-        "goos": {
-          "type": "string"
-        },
-        "goarch": {
-          "type": "string"
-        },
-        "compiler": {
+        "architecture": {
           "type": "string"
         },
         "buildTags": {

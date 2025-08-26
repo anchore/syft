@@ -433,14 +433,11 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 // createSourceMetadata creates metadata for packages found through source analysis using build.Default
 func createSourceMetadata(h1Digest string) pkg.GolangSourceEntry {
 	return pkg.GolangSourceEntry{
-		H1Digest:   h1Digest,
-		GOROOT:     build.Default.GOROOT,
-		GOPATH:     build.Default.GOPATH,
-		GOOS:       build.Default.GOOS,
-		GOARCH:     build.Default.GOARCH,
-		Compiler:   build.Default.Compiler,
-		BuildTags:  strings.Join(build.Default.BuildTags, ","),
-		CgoEnabled: build.Default.CgoEnabled,
+		H1Digest:        h1Digest,
+		OperatingSystem: build.Default.GOOS,
+		Architecture:    build.Default.GOARCH,
+		BuildTags:       strings.Join(build.Default.BuildTags, ","),
+		CgoEnabled:      build.Default.CgoEnabled,
 	}
 }
 
@@ -460,7 +457,6 @@ func resolvePkgDir(p *packages.Package) string {
 func shouldSkipVisit(p *packages.Package) bool {
 	// skip packages that don't have module info
 	if p.Module == nil {
-		// log.Warnf("Package %s does not have module info. Non go modules projects are no longer supported.", p.PkgPath)
 		return true
 	}
 
