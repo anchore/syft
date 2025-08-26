@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -17,9 +18,21 @@ import (
 
 // csprojProject represents the root element of a .csproj file
 type csprojProject struct {
-	XMLName    xml.Name          `xml:"Project"`
-	Sdk        string            `xml:"Sdk,attr"`
-	ItemGroups []csprojItemGroup `xml:"ItemGroup"`
+	XMLName        xml.Name              `xml:"Project"`
+	Sdk            string                `xml:"Sdk,attr"`
+	PropertyGroups []csprojPropertyGroup `xml:"PropertyGroup"`
+	ItemGroups     []csprojItemGroup     `xml:"ItemGroup"`
+}
+
+// csprojPropertyGroup represents a PropertyGroup element containing MSBuild properties
+type csprojPropertyGroup struct {
+	Properties []csprojProperty `xml:",any"`
+}
+
+// csprojProperty represents any property within a PropertyGroup
+type csprojProperty struct {
+	XMLName xml.Name
+	Value   string `xml:",chardata"`
 }
 
 // csprojItemGroup represents an ItemGroup element containing references
@@ -54,6 +67,9 @@ func parseDotnetCsproj(_ context.Context, _ file.Resolver, _ *generic.Environmen
 		return nil, nil, fmt.Errorf("unable to parse .csproj XML: %w", err)
 	}
 
+	// Build property map from PropertyGroups
+	properties := buildPropertyMap(project.PropertyGroups)
+
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
@@ -64,6 +80,10 @@ func parseDotnetCsproj(_ context.Context, _ file.Resolver, _ *generic.Environmen
 			if shouldSkipPackageReference(pkgRef) {
 				continue
 			}
+
+			// Resolve any MSBuild property variables in the version
+			resolvedVersion := resolveProperties(pkgRef.Version, properties)
+			pkgRef.Version = resolvedVersion
 
 			p := buildPackageFromReference(pkgRef, reader.Location)
 			if p != nil {
@@ -99,15 +119,15 @@ func shouldSkipPackageReference(ref csprojPackageReference) bool {
 	// Skip packages that are commonly build-time only
 	lowerName := strings.ToLower(ref.Include)
 	buildTimePackages := map[string]bool{
-		"microsoft.net.test.sdk":      true,
-		"stylecop.analyzers":          true,
-		"microsoft.codeanalysis":      true,
-		"coverlet.collector":          true,
-		"xunit.runner.visualstudio":   true,
-		"nunit":                       true,
-		"nunit3testadapter":           true,
-		"mstest.testadapter":          true,
-		"mstest.testframework":        true,
+		"microsoft.net.test.sdk":    true,
+		"stylecop.analyzers":        true,
+		"microsoft.codeanalysis":    true,
+		"coverlet.collector":        true,
+		"xunit.runner.visualstudio": true,
+		"nunit":                     true,
+		"nunit3testadapter":         true,
+		"mstest.testadapter":        true,
+		"mstest.testframework":      true,
 	}
 
 	for buildPkg := range buildTimePackages {
@@ -117,6 +137,48 @@ func shouldSkipPackageReference(ref csprojPackageReference) bool {
 	}
 
 	return false
+}
+
+// buildPropertyMap creates a map of MSBuild properties from PropertyGroups
+func buildPropertyMap(propertyGroups []csprojPropertyGroup) map[string]string {
+	properties := make(map[string]string)
+
+	for _, group := range propertyGroups {
+		for _, prop := range group.Properties {
+			propertyName := prop.XMLName.Local
+			propertyValue := strings.TrimSpace(prop.Value)
+			if propertyName != "" && propertyValue != "" {
+				properties[propertyName] = propertyValue
+			}
+		}
+	}
+
+	return properties
+}
+
+// resolveProperties resolves MSBuild property variables like $(PropertyName) in a string
+func resolveProperties(input string, properties map[string]string) string {
+	if input == "" {
+		return input
+	}
+
+	// Pattern matches $(PropertyName)
+	propertyPattern := `\$\(([^)]+)\)`
+	re := regexp.MustCompile(propertyPattern)
+
+	result := re.ReplaceAllStringFunc(input, func(match string) string {
+		// Extract property name from $(PropertyName)
+		propertyName := match[2 : len(match)-1] // Remove $( and )
+
+		if value, exists := properties[propertyName]; exists {
+			return value
+		}
+
+		// Return original if property not found (preserve for debugging)
+		return match
+	})
+
+	return result
 }
 
 // buildPackageFromReference creates a Package from a PackageReference element
@@ -131,6 +193,11 @@ func buildPackageFromReference(ref csprojPackageReference, location file.Locatio
 	// For now, we'll skip packages without explicit versions since we can't determine them
 	// from the .csproj alone (would need props/targets files or lock files)
 	if version == "" {
+		return nil
+	}
+
+	// Skip packages with unresolved MSBuild properties (contains $(...))
+	if strings.Contains(version, "$(") {
 		return nil
 	}
 

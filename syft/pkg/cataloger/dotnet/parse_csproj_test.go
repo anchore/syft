@@ -2,6 +2,7 @@ package dotnet
 
 import (
 	"context"
+	"encoding/xml"
 	"io"
 	"strings"
 	"testing"
@@ -206,6 +207,89 @@ func TestParseDotnetCsproj(t *testing.T) {
 			},
 		},
 		{
+			name: "property variable resolution",
+			input: `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <SteeltoeVersion>3.2.0</SteeltoeVersion>
+    <TestVersion>1.0.0</TestVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Steeltoe.Common" Version="$(SteeltoeVersion)" />
+    <PackageReference Include="Test.Package" Version="$(TestVersion)" />
+    <PackageReference Include="Regular.Package" Version="2.0.0" />
+  </ItemGroup>
+</Project>`,
+			expected: []pkg.Package{
+				{
+					Name:     "Steeltoe.Common",
+					Version:  "3.2.0",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Steeltoe.Common@3.2.0",
+				},
+				{
+					Name:     "Test.Package",
+					Version:  "1.0.0",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Test.Package@1.0.0",
+				},
+				{
+					Name:     "Regular.Package",
+					Version:  "2.0.0",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Regular.Package@2.0.0",
+				},
+			},
+		},
+		{
+			name: "wildcard versions preserved",
+			input: `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <SteeltoeVersion>3.2.*</SteeltoeVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Steeltoe.Common" Version="$(SteeltoeVersion)" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.*" />
+  </ItemGroup>
+</Project>`,
+			expected: []pkg.Package{
+				{
+					Name:     "Steeltoe.Common",
+					Version:  "3.2.*",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Steeltoe.Common@3.2.%2A",
+				},
+				{
+					Name:     "Swashbuckle.AspNetCore",
+					Version:  "6.2.*",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Swashbuckle.AspNetCore@6.2.%2A",
+				},
+			},
+		},
+		{
+			name: "unresolved property preserved",
+			input: `<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Some.Package" Version="$(UndefinedProperty)" />
+    <PackageReference Include="Regular.Package" Version="2.0.0" />
+  </ItemGroup>
+</Project>`,
+			expected: []pkg.Package{
+				{
+					Name:     "Regular.Package",
+					Version:  "2.0.0",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Regular.Package@2.0.0",
+				},
+			},
+		},
+		{
 			name:          "malformed XML",
 			input:         `<Project><ItemGroup><PackageReference Include="Test"`,
 			expected:      nil,
@@ -321,8 +405,8 @@ func TestShouldSkipPackageReference(t *testing.T) {
 		{
 			name: "includeAssets runtime only",
 			ref: csprojPackageReference{
-				Include: "Some.Package",
-				Version: "1.0.0",
+				Include:       "Some.Package",
+				Version:       "1.0.0",
 				IncludeAssets: "runtime",
 			},
 			expected: false,
@@ -330,8 +414,8 @@ func TestShouldSkipPackageReference(t *testing.T) {
 		{
 			name: "mixed condition with release",
 			ref: csprojPackageReference{
-				Include: "Some.Package",
-				Version: "1.0.0",
+				Include:   "Some.Package",
+				Version:   "1.0.0",
 				Condition: "'$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release'",
 			},
 			expected: false,
@@ -440,6 +524,135 @@ func TestBuildPackageFromReference(t *testing.T) {
 			require.True(t, ok)
 			assert.Equal(t, test.expected.Name, metadata.Name)
 			assert.Equal(t, test.expected.Version, metadata.Version)
+		})
+	}
+}
+
+func TestBuildPropertyMap(t *testing.T) {
+	tests := []struct {
+		name           string
+		propertyGroups []csprojPropertyGroup
+		expected       map[string]string
+	}{
+		{
+			name:           "empty property groups",
+			propertyGroups: []csprojPropertyGroup{},
+			expected:       map[string]string{},
+		},
+		{
+			name: "single property group",
+			propertyGroups: []csprojPropertyGroup{
+				{
+					Properties: []csprojProperty{
+						{XMLName: xml.Name{Local: "SteeltoeVersion"}, Value: "3.2.0"},
+						{XMLName: xml.Name{Local: "TestVersion"}, Value: "1.0.0"},
+					},
+				},
+			},
+			expected: map[string]string{
+				"SteeltoeVersion": "3.2.0",
+				"TestVersion":     "1.0.0",
+			},
+		},
+		{
+			name: "multiple property groups",
+			propertyGroups: []csprojPropertyGroup{
+				{
+					Properties: []csprojProperty{
+						{XMLName: xml.Name{Local: "SteeltoeVersion"}, Value: "3.2.0"},
+					},
+				},
+				{
+					Properties: []csprojProperty{
+						{XMLName: xml.Name{Local: "TestVersion"}, Value: "1.0.0"},
+						{XMLName: xml.Name{Local: "TargetFramework"}, Value: "net6.0"},
+					},
+				},
+			},
+			expected: map[string]string{
+				"SteeltoeVersion": "3.2.0",
+				"TestVersion":     "1.0.0",
+				"TargetFramework": "net6.0",
+			},
+		},
+		{
+			name: "properties with whitespace",
+			propertyGroups: []csprojPropertyGroup{
+				{
+					Properties: []csprojProperty{
+						{XMLName: xml.Name{Local: "Version"}, Value: "  3.2.0  "},
+						{XMLName: xml.Name{Local: "EmptyValue"}, Value: "   "},
+					},
+				},
+			},
+			expected: map[string]string{
+				"Version": "3.2.0",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := buildPropertyMap(test.propertyGroups)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestResolveProperties(t *testing.T) {
+	properties := map[string]string{
+		"SteeltoeVersion": "3.2.*",
+		"TestVersion":     "1.0.0",
+		"MajorVersion":    "2",
+		"MinorVersion":    "1",
+	}
+
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no properties to resolve",
+			input:    "1.2.3",
+			expected: "1.2.3",
+		},
+		{
+			name:     "single property resolution",
+			input:    "$(SteeltoeVersion)",
+			expected: "3.2.*",
+		},
+		{
+			name:     "multiple property resolution",
+			input:    "$(MajorVersion).$(MinorVersion).0",
+			expected: "2.1.0",
+		},
+		{
+			name:     "mixed resolved and unresolved",
+			input:    "$(SteeltoeVersion)-$(UnknownProperty)",
+			expected: "3.2.*-$(UnknownProperty)",
+		},
+		{
+			name:     "empty input",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "unresolved property preserved",
+			input:    "$(UnknownProperty)",
+			expected: "$(UnknownProperty)",
+		},
+		{
+			name:     "complex pattern",
+			input:    "prefix-$(TestVersion)-suffix",
+			expected: "prefix-1.0.0-suffix",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := resolveProperties(test.input, properties)
+			assert.Equal(t, test.expected, result)
 		})
 	}
 }
