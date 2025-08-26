@@ -1,0 +1,160 @@
+package dotnet
+
+import (
+	"context"
+	"encoding/xml"
+	"fmt"
+	"io"
+	"path/filepath"
+	"strings"
+
+	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+)
+
+// csprojProject represents the root element of a .csproj file
+type csprojProject struct {
+	XMLName    xml.Name          `xml:"Project"`
+	Sdk        string            `xml:"Sdk,attr"`
+	ItemGroups []csprojItemGroup `xml:"ItemGroup"`
+}
+
+// csprojItemGroup represents an ItemGroup element containing references
+type csprojItemGroup struct {
+	PackageReferences []csprojPackageReference `xml:"PackageReference"`
+	ProjectReferences []csprojProjectReference `xml:"ProjectReference"`
+}
+
+// csprojPackageReference represents a PackageReference element
+type csprojPackageReference struct {
+	Include       string `xml:"Include,attr"`
+	Version       string `xml:"Version,attr"`
+	PrivateAssets string `xml:"PrivateAssets,attr"`
+	IncludeAssets string `xml:"IncludeAssets,attr"`
+	Condition     string `xml:"Condition,attr"`
+}
+
+// csprojProjectReference represents a ProjectReference element
+type csprojProjectReference struct {
+	Include   string `xml:"Include,attr"`
+	Condition string `xml:"Condition,attr"`
+}
+
+func parseDotnetCsproj(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to read .csproj file: %w", err)
+	}
+
+	var project csprojProject
+	if err := xml.Unmarshal(contents, &project); err != nil {
+		return nil, nil, fmt.Errorf("unable to parse .csproj XML: %w", err)
+	}
+
+	var pkgs []pkg.Package
+	var relationships []artifact.Relationship
+
+	// Process PackageReference elements
+	for _, itemGroup := range project.ItemGroups {
+		for _, pkgRef := range itemGroup.PackageReferences {
+			// Skip packages that are build-time only or analyzers
+			if shouldSkipPackageReference(pkgRef) {
+				continue
+			}
+
+			p := buildPackageFromReference(pkgRef, reader.Location)
+			if p != nil {
+				pkgs = append(pkgs, *p)
+			}
+		}
+
+		// Process ProjectReference elements (if we want to include them as relationships)
+		for _, projRef := range itemGroup.ProjectReferences {
+			// ProjectReferences represent internal project dependencies
+			// We could create relationships here, but for now we skip them
+			// since they represent source-to-source dependencies within the same solution
+			_ = projRef
+		}
+	}
+
+	return pkgs, relationships, nil
+}
+
+// shouldSkipPackageReference determines if a package reference should be skipped
+func shouldSkipPackageReference(ref csprojPackageReference) bool {
+	// Skip packages that are private assets only (build-time dependencies)
+	if ref.PrivateAssets == "all" || ref.PrivateAssets == "All" {
+		return true
+	}
+
+	// Skip conditional references that are likely build/development only
+	condition := strings.ToLower(ref.Condition)
+	if strings.Contains(condition, "debug") && !strings.Contains(condition, "release") {
+		return true
+	}
+
+	// Skip packages that are commonly build-time only
+	lowerName := strings.ToLower(ref.Include)
+	buildTimePackages := []string{
+		"microsoft.net.test.sdk",
+		"stylecop.analyzers",
+		"microsoft.codeanalysis",
+		"coverlet.collector",
+		"xunit.runner.visualstudio",
+	}
+
+	for _, buildPkg := range buildTimePackages {
+		if strings.Contains(lowerName, buildPkg) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// buildPackageFromReference creates a Package from a PackageReference element
+func buildPackageFromReference(ref csprojPackageReference, location file.Location) *pkg.Package {
+	name := strings.TrimSpace(ref.Include)
+	if name == "" {
+		return nil
+	}
+
+	version := strings.TrimSpace(ref.Version)
+	// If version is empty, this might be a framework reference or implicit version
+	// For now, we'll skip packages without explicit versions since we can't determine them
+	// from the .csproj alone (would need props/targets files or lock files)
+	if version == "" {
+		return nil
+	}
+
+	// Generate PURL following the established pattern for .NET packages
+	purl := packageurl.NewPackageURL(
+		packageurl.TypeNuget,
+		"",
+		name,
+		version,
+		nil,
+		"",
+	)
+
+	p := &pkg.Package{
+		Name:      name,
+		Version:   version,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		PURL:      purl.ToString(),
+		Locations: file.NewLocationSet(location),
+		Metadata: pkg.DotnetDepsEntry{
+			Name:     name,
+			Version:  version,
+			Path:     filepath.Dir(location.RealPath),
+			Sha512:   "",
+			HashPath: "",
+		},
+	}
+
+	return p
+}
