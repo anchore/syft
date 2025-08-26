@@ -348,6 +348,12 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			expectedLegacyName: "GolangModMetadata",
 		},
 		{
+			name:               "GolangSourceMetadata",
+			metadata:           pkg.GolangSourceEntry{},
+			expectedJSONName:   "go-source-entry",
+			expectedLegacyName: "go-source-entry",
+		},
+		{
 			name:               "HackageStackYamlLockMetadata",
 			metadata:           pkg.HackageStackYamlLockEntry{},
 			expectedJSONName:   "haskell-hackage-stack-lock-entry",

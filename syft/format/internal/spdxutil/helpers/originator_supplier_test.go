@@ -28,6 +28,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ErlangRebarLockEntry{},
 		pkg.GolangBinaryBuildinfoEntry{},
 		pkg.GolangModuleEntry{},
+		pkg.GolangSourceEntry{},
 		pkg.HomebrewFormula{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
