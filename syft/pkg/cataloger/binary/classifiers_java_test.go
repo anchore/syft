@@ -1,12 +1,18 @@
 package binary
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_JavaBinaryImage(t *testing.T) {
+	// no match for platform in manifest on Apple Silicon
+	if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+		t.Skip("Java binary images not supported on Apple Silicon (darwin/arm64)")
+	}
+
 	tests := []struct {
 		image    string
 		expected []string
