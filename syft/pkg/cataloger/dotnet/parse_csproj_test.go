@@ -87,6 +87,33 @@ func TestParseDotnetCsproj(t *testing.T) {
 			},
 		},
 		{
+			name: "complex IncludeAssets and PrivateAssets handling",
+			input: `<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.ChakraCore" Version="1.11.24" IncludeAssets="runtime; build; native" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
+  </ItemGroup>
+</Project>`,
+			expected: []pkg.Package{
+				{
+					Name:     "Newtonsoft.Json",
+					Version:  "13.0.3",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Newtonsoft.Json@13.0.3",
+				},
+				{
+					Name:     "Microsoft.ChakraCore",
+					Version:  "1.11.24",
+					Language: pkg.Dotnet,
+					Type:     pkg.DotnetPkg,
+					PURL:     "pkg:nuget/Microsoft.ChakraCore@1.11.24",
+				},
+			},
+		},
+		{
 			name: "skip build-time packages",
 			input: `<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
@@ -288,6 +315,40 @@ func TestShouldSkipPackageReference(t *testing.T) {
 			ref: csprojPackageReference{
 				Include: "Microsoft.CodeAnalysis.Analyzers",
 				Version: "3.3.4",
+			},
+			expected: true,
+		},
+		{
+			name: "includeAssets runtime only",
+			ref: csprojPackageReference{
+				Include: "Some.Package",
+				Version: "1.0.0",
+				IncludeAssets: "runtime",
+			},
+			expected: false,
+		},
+		{
+			name: "mixed condition with release",
+			ref: csprojPackageReference{
+				Include: "Some.Package",
+				Version: "1.0.0",
+				Condition: "'$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release'",
+			},
+			expected: false,
+		},
+		{
+			name: "nunit test package",
+			ref: csprojPackageReference{
+				Include: "NUnit",
+				Version: "3.13.3",
+			},
+			expected: true,
+		},
+		{
+			name: "mstest framework",
+			ref: csprojPackageReference{
+				Include: "MSTest.TestFramework",
+				Version: "3.1.1",
 			},
 			expected: true,
 		},

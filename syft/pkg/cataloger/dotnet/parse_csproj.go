@@ -98,15 +98,19 @@ func shouldSkipPackageReference(ref csprojPackageReference) bool {
 
 	// Skip packages that are commonly build-time only
 	lowerName := strings.ToLower(ref.Include)
-	buildTimePackages := []string{
-		"microsoft.net.test.sdk",
-		"stylecop.analyzers",
-		"microsoft.codeanalysis",
-		"coverlet.collector",
-		"xunit.runner.visualstudio",
+	buildTimePackages := map[string]bool{
+		"microsoft.net.test.sdk":      true,
+		"stylecop.analyzers":          true,
+		"microsoft.codeanalysis":      true,
+		"coverlet.collector":          true,
+		"xunit.runner.visualstudio":   true,
+		"nunit":                       true,
+		"nunit3testadapter":           true,
+		"mstest.testadapter":          true,
+		"mstest.testframework":        true,
 	}
 
-	for _, buildPkg := range buildTimePackages {
+	for buildPkg := range buildTimePackages {
 		if strings.Contains(lowerName, buildPkg) {
 			return true
 		}
