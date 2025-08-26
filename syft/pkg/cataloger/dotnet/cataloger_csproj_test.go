@@ -10,7 +10,7 @@ import (
 
 func TestDotnetCsprojCataloger(t *testing.T) {
 	fixture := "test-fixtures/weatherforecast-steeltoe"
-	
+
 	expectedLocation := file.NewLocation("Sample.csproj")
 	fixtureLocationSet := file.NewLocationSet(expectedLocation)
 
@@ -79,10 +79,10 @@ func TestDotnetCsprojCataloger_GlopsMatch(t *testing.T) {
 			PURL:      "pkg:nuget/Steeltoe.Common.Hosting@3.2.%2A",
 			Locations: file.NewLocationSet(file.NewLocation("Sample.csproj")),
 			Metadata: pkg.DotnetDepsEntry{
-				Name:    "Steeltoe.Common.Hosting",
-				Version: "3.2.*",
-				Path:    ".",
-				Sha512:  "",
+				Name:     "Steeltoe.Common.Hosting",
+				Version:  "3.2.*",
+				Path:     ".",
+				Sha512:   "",
 				HashPath: "",
 			},
 		},
@@ -95,10 +95,10 @@ func TestDotnetCsprojCataloger_GlopsMatch(t *testing.T) {
 			PURL:      "pkg:nuget/Steeltoe.Management.EndpointCore@3.2.%2A",
 			Locations: file.NewLocationSet(file.NewLocation("Sample.csproj")),
 			Metadata: pkg.DotnetDepsEntry{
-				Name:    "Steeltoe.Management.EndpointCore",
-				Version: "3.2.*",
-				Path:    ".",
-				Sha512:  "",
+				Name:     "Steeltoe.Management.EndpointCore",
+				Version:  "3.2.*",
+				Path:     ".",
+				Sha512:   "",
 				HashPath: "",
 			},
 		},
@@ -111,10 +111,10 @@ func TestDotnetCsprojCataloger_GlopsMatch(t *testing.T) {
 			PURL:      "pkg:nuget/Swashbuckle.AspNetCore@6.2.%2A",
 			Locations: file.NewLocationSet(file.NewLocation("Sample.csproj")),
 			Metadata: pkg.DotnetDepsEntry{
-				Name:    "Swashbuckle.AspNetCore",
-				Version: "6.2.*",
-				Path:    ".",
-				Sha512:  "",
+				Name:     "Swashbuckle.AspNetCore",
+				Version:  "6.2.*",
+				Path:     ".",
+				Sha512:   "",
 				HashPath: "",
 			},
 		},
