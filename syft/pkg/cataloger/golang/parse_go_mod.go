@@ -560,39 +560,6 @@ func findLicenseFileLocationsWithFS(dir string, rootDir string, fs afero.Fs) ([]
 	return findAllLicenseCandidatesUpwardsWithFS(dir, licenseRegexp, rootDir, fs)
 }
 
-// resolveSymlink attempts to resolve a symlink and check for loops
-func resolveSymlink(dir string, fs afero.Fs, visited map[string]bool) (string, bool) {
-	linkReader, ok := fs.(afero.LinkReader)
-	if !ok {
-		return "", false
-	}
-
-	target, err := linkReader.ReadlinkIfPossible(dir)
-	if err != nil {
-		log.Debugf("findAllLicenseCandidatesUpwardsWithFS: error reading symlink %s: %v", dir, err)
-		return "", false
-	}
-
-	if target == "" {
-		return "", false
-	}
-
-	// Successfully read a symlink
-	if !filepath.IsAbs(target) {
-		target = filepath.Join(filepath.Dir(dir), target)
-	}
-	resolvedDir := filepath.Clean(target)
-
-	// Check if we've visited the resolved path (symlink loop)
-	if visited[resolvedDir] {
-		log.Debugf("findAllLicenseCandidatesUpwardsWithFS: detected symlink loop at %s -> %s", dir, resolvedDir)
-		return "", true // loop detected
-	}
-
-	visited[resolvedDir] = true
-	return resolvedDir, false
-}
-
 // findLicensesInDir searches for license files in a single directory
 func findLicensesInDir(dir string, r *regexp.Regexp, fs afero.Fs) ([]string, error) {
 	var licenses []string
@@ -638,17 +605,9 @@ func findAllLicenseCandidatesUpwardsWithFS(dir string, r *regexp.Regexp, stopAt 
 		// Check if we've already visited this actual directory path (not resolved)
 		// This prevents breaking early when a symlink points to a parent we'll visit later
 		if visited[dir] {
-			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: already visited directory %s", dir)
 			break
 		}
 		visited[dir] = true
-
-		// Check for symlink loops
-		if _, loopDetected := resolveSymlink(dir, fs, visited); loopDetected {
-			// Continue to parent directory instead of breaking entirely
-			dir = filepath.Dir(dir)
-			continue
-		}
 
 		// Find licenses in current directory
 		licenses, err := findLicensesInDir(dir, r, fs)
@@ -661,13 +620,6 @@ func findAllLicenseCandidatesUpwardsWithFS(dir string, r *regexp.Regexp, stopAt 
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			// Can't go any higher up the directory tree.
-			break
-		}
-
-		// Additional safety check: ensure parent is actually a parent directory
-		// This helps catch cases where symlinks might cause path manipulation issues
-		if len(parent) >= len(dir) {
-			log.Debugf("findAllLicenseCandidatesUpwardsWithFS: parent path is not shorter than current path, stopping at %s", dir)
 			break
 		}
 

@@ -246,8 +246,7 @@ func TestFindAllLicenseCandidatesUpwardsSymLinks(t *testing.T) {
 			name: "circular symlink loop detection",
 			setupFS: func(fs *mockSymlinkFS) {
 				// Setup circular loop: /project/a -> /project/b -> /project/a
-				fs.MkdirAll("/project/a", 0755)
-				fs.MkdirAll("/project/b", 0755)
+				fs.MkdirAll("/project", 0755)
 				fs.CreateSymlink("/project/b", "/project/a")
 				fs.CreateSymlink("/project/a", "/project/b")
 				afero.WriteFile(fs, "/project/LICENSE", []byte("MIT"), 0644)
@@ -283,9 +282,6 @@ func TestFindAllLicenseCandidatesUpwardsSymLinks(t *testing.T) {
 			setupFS: func(fs *mockSymlinkFS) {
 				// Chain: /project/a -> /project/b -> /project/c -> /project/a
 				fs.MkdirAll("/project/start", 0755)
-				fs.MkdirAll("/project/a", 0755)
-				fs.MkdirAll("/project/b", 0755)
-				fs.MkdirAll("/project/c", 0755)
 				fs.CreateSymlink("/project/a", "/project/start/link")
 				fs.CreateSymlink("/project/b", "/project/a/link")
 				fs.CreateSymlink("/project/c", "/project/b/link")
