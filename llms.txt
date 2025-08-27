@@ -1,0 +1,59 @@
+# Syft - Software Bill of Materials (SBOM) Generator
+
+Syft is a CLI tool and Go library for generating Software Bill of Materials (SBOMs) from container images and filesystems. It's developed by Anchore and is designed to provide detailed visibility into software packages and dependencies for vulnerability detection and supply chain security.
+
+## Project Overview
+
+**Repository**: https://github.com/anchore/syft  
+**License**: Apache-2.0  
+**Language**: Go (1.24.1)  
+**Maintainer**: Anchore  
+
+## Key Features
+
+- Generates SBOMs for container images, filesystems, archives, and more
+- Supports multiple output formats (CycloneDX, SPDX, Syft JSON, etc.)
+- Works with OCI, Docker and Singularity image formats
+- Linux distribution identification
+- Integrates with Grype vulnerability scanner
+- Supports SBOM attestations using in-toto specification
+- Convert between SBOM formats
+
+## Supported Ecosystems
+
+Syft can catalog packages from 25+ ecosystems including:
+- Alpine (apk), Debian (dpkg), Red Hat (rpm)
+- Go (go.mod, binaries), Java (jar/war/ear), JavaScript (npm/yarn)
+- Python (wheel/egg/poetry/requirements.txt), Rust (cargo.lock)
+- .NET (deps.json), PHP (composer), Ruby (gem)
+- Swift, Dart, Elixir, Erlang, Haskell, R, and many more
+
+## Project Structure
+
+- `cmd/syft/` - CLI application entry point and commands
+- `syft/` - Core library code
+  - `pkg/` - Package cataloging logic for different ecosystems
+  - `file/` - File system interaction and cataloging
+  - `format/` - SBOM format encoders/decoders
+  - `source/` - Source detection and handling
+- `internal/` - Internal utilities and helpers
+- `schema/` - JSON schemas for Syft output formats
+- `test/` - Integration and CLI tests
+
+## Getting Started
+
+Install syft:
+```bash
+curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
+```
+
+Generate an SBOM:
+```bash
+syft <image-or-directory>
+```
+
+## Development
+
+Built with Go 1.24.1, uses standard Go tooling with Make and Taskfile for build automation. Comprehensive test suite with both unit and integration tests.
+
+The project follows semantic versioning and has an active community with regular team meetings and contribution guidelines.
