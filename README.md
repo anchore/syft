@@ -134,7 +134,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, nar, native-image)
+- Java (jar, ear, war, par, sar, nar, native-image, rar)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
 - Linux kernel archives (vmlinz)
