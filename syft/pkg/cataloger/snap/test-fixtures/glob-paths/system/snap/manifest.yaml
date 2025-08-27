@@ -1,0 +1,4 @@
+name: test-snap
+version: 1.0
+primed-stage-packages:
+- test-package=1.0.0

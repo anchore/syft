@@ -1,0 +1,17 @@
+snapcraft-version: 8.2.1.post5+git07b4ee15
+snapcraft-started-at: '2024-04-29T06:47:56.067540Z'
+snapcraft-os-release-id: ubuntu
+snapcraft-os-release-version-id: '24.04'
+name: pc
+version: 24-0.1
+summary: PC gadget for generic devices
+description: |
+  This gadget enables generic pc devices to work with Ubuntu Core
+base: core24
+grade: stable
+confinement: strict
+architectures:
+- amd64
+primed-stage-packages:
+- grub-efi-amd64-signed=1.202+2.12-1ubuntu7
+- shim-signed=1.56+15.7-0ubuntu1

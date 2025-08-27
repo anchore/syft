@@ -32,6 +32,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/ruby"
 	"github.com/anchore/syft/syft/pkg/cataloger/rust"
 	sbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/sbom"
+	"github.com/anchore/syft/syft/pkg/cataloger/snap"
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
 	"github.com/anchore/syft/syft/pkg/cataloger/swipl"
 	"github.com/anchore/syft/syft/pkg/cataloger/terraform"
@@ -173,6 +174,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(terraform.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "terraform"),
 		newSimplePackageTaskFactory(homebrew.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "homebrew"),
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
+		newSimplePackageTaskFactory(snap.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "snap"),
 
 		// deprecated catalogers ////////////////////////////////////////
 		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)
