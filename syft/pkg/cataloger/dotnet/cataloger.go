@@ -29,3 +29,9 @@ func NewDotnetPackagesLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dotnet-packages-lock-cataloger").
 		WithParserByGlobs(parseDotnetPackagesLock, "**/packages.lock.json")
 }
+
+// NewDotnetCsprojCataloger returns a cataloger based on .csproj files.
+func NewDotnetCsprojCataloger() pkg.Cataloger {
+	return generic.NewCataloger("dotnet-csproj-cataloger").
+		WithParserByGlobs(parseDotnetCsproj, "**/*.csproj")
+}
