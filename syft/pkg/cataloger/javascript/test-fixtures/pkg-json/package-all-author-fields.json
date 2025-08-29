@@ -8,7 +8,11 @@
     "Second Author <second@example.com>"
   ],
   "contributors": [
-    "Contrib One <contrib1@example.com>"
+    {
+      "name": "Contrib One",
+      "email": "contrib1@example.com"
+    },
+    "Contrib Two <contrib2@example.com>"
   ],
   "maintainers": [
     {

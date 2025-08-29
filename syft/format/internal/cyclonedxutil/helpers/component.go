@@ -53,7 +53,8 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 		PackageURL:         p.PURL,
 		Licenses:           encodeLicenses(p),
 		CPE:                encodeSingleCPE(p),
-		Author:             encodeAuthor(p),
+		Author:             encodeAuthor(p), // Deprecated: Use authors instead.
+		Authors:            EncodeAuthors(p),
 		Publisher:          encodePublisher(p),
 		Description:        encodeDescription(p),
 		ExternalReferences: encodeExternalReferences(p),
@@ -218,6 +219,7 @@ func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeN
 
 		// Map all explicit metadata properties
 		decodeAuthor(c.Author, metaPtr)
+		decodeAuthors(c.Authors, metaPtr)
 		decodeGroup(c.Group, metaPtr)
 		decodePublisher(c.Publisher, metaPtr)
 		decodeDescription(c.Description, metaPtr)

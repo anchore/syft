@@ -5,6 +5,7 @@ type NpmPackage struct {
 	Name        string `mapstructure:"name" json:"name"`
 	Version     string `mapstructure:"version" json:"version"`
 	Author      string `mapstructure:"author" json:"author"`
+	Authors     string `mapstructure:"authors" json:"authors"`
 	Homepage    string `mapstructure:"homepage" json:"homepage"`
 	Description string `mapstructure:"description" json:"description"`
 	URL         string `mapstructure:"url" json:"url"`

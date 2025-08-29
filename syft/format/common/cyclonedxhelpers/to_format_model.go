@@ -53,7 +53,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
 
 	artifacts := s.Artifacts
-
 	for _, coordinate := range coordinates {
 		var metadata *file.Metadata
 		// File Info
