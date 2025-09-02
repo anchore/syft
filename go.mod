@@ -79,7 +79,7 @@ require (
 	github.com/spdx/gordf v0.0.0-20201111095634-7098f93598fb
 	github.com/spdx/tools-golang v0.5.5
 	github.com/spf13/afero v1.14.0
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.0
 	github.com/stretchr/testify v1.11.0
 	github.com/vbatts/go-mtree v0.5.4
 	github.com/vifraa/gopom v1.0.0
@@ -238,7 +238,7 @@ require (
 	github.com/sorairolake/lzip-go v0.3.5 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/pflag v1.0.7 // indirect
+	github.com/spf13/pflag v1.0.8 // indirect
 	github.com/spf13/viper v1.20.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
