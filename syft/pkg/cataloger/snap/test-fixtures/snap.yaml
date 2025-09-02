@@ -1,0 +1,7 @@
+name: test-snap
+version: 1.0.0
+summary: A test snap
+description: This is a test snap for testing purposes
+base: core20
+type: app
+architecture: amd64
