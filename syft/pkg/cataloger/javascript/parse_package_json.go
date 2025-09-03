@@ -219,40 +219,28 @@ func pathContainsNodeModulesDirectory(p string) bool {
 
 func (p *people) UnmarshalJSON(b []byte) error {
 	// Try to unmarshal as an array of strings
-	var authorStrings []string
-	if err := json.Unmarshal(b, &authorStrings); err == nil {
-		// Successfully parsed as an array of strings
-		auths := make([]person, len(authorStrings))
-		for i, authorStr := range authorStrings {
-			// Parse each string into author fields
-			fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
+	// This approach can handle an array containing mixed types (strings and objects).
+	var rawMessages []json.RawMessage
+	if err := json.Unmarshal(b, &rawMessages); err == nil {
+		auths := make(people, 0, len(rawMessages))
+		for _, raw := range rawMessages {
 			var auth person
-			if err := mapstructure.Decode(fields, &auth); err != nil {
-				return fmt.Errorf("unable to decode package.json author: %w", err)
+			// The person.UnmarshalJSON method already knows how to handle
+			// both a string and an object, so we can reuse it here for each element.
+			if err := auth.UnmarshalJSON(raw); err != nil {
+				return fmt.Errorf("failed to parse an entry in authors array: %w", err)
 			}
-			// Trim whitespace from name if it was parsed
-			if auth.Name != "" {
-				auth.Name = strings.TrimSpace(auth.Name)
-			}
-			auths[i] = auth
+			auths = append(auths, auth)
 		}
 		*p = auths
 		return nil
 	}
 
-	// Try to unmarshal as an array of objects
-	var authorObjs []map[string]interface{}
-	if err := json.Unmarshal(b, &authorObjs); err == nil {
-		// Successfully parsed as an array of objects
-		auths := make([]person, len(authorObjs))
-		for i, fields := range authorObjs {
-			var auth person
-			if err := mapstructure.Decode(fields, &auth); err != nil {
-				return fmt.Errorf("unable to decode package.json author object: %w", err)
-			}
-			auths[i] = auth
-		}
-		*p = auths
+	// If it's not an array, it might be a single author entry (string or object).
+	// This handles cases like "author": "name <email>" which might be passed to this unmarshaler.
+	var singlePerson person
+	if err := singlePerson.UnmarshalJSON(b); err == nil {
+		*p = people{singlePerson}
 		return nil
 	}
 
