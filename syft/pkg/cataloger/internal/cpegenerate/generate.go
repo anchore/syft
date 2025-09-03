@@ -6,9 +6,11 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -228,6 +230,11 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForWordpressPlugin(p))
 	}
 
+	if p.Type == pkg.BinaryPkg && endsWithNumber(p.Name) {
+		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+		addBinaryPackageDigitVariations(vendors)
+	}
+
 	// We should no longer be generating vendor candidates with these values ["" and "*"]
 	// (since CPEs will match any other value)
 	vendors.removeByValue("")
@@ -286,6 +293,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 		if prod != "" {
 			products.addValue(prod)
 		}
+	case p.Type == pkg.BinaryPkg && endsWithNumber(p.Name):
+		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+		addBinaryPackageDigitVariations(products)
 	}
 
 	switch p.Metadata.(type) {
@@ -403,4 +413,34 @@ func addDelimiterVariations(fields fieldCandidateSet) {
 			fields.add(hyphenCandidate)
 		}
 	}
+}
+
+// removeTrailingDigits removes all trailing digits from a string
+func removeTrailingDigits(s string) string {
+	re := regexp.MustCompile(`\d+$`)
+	return re.ReplaceAllString(s, "")
+}
+
+// addBinaryPackageDigitVariations adds variations with trailing digits removed for binary packages.For binary package types only, when the name ends with a digit, add a new variation with all suffix-digits removed (e.g. Qt5 -> Qt). This helps generate additional CPE permutations for better vulnerability matching.
+func addBinaryPackageDigitVariations(fields fieldCandidateSet) {
+	candidatesForVariations := fields.copy()
+	for _, candidate := range candidatesForVariations.values() {
+		// Check if the candidate ends with a digit
+		if len(candidate) > 0 && candidate[len(candidate)-1] >= '0' && candidate[len(candidate)-1] <= '9' {
+			// Create variation with all suffix digits removed
+			withoutDigits := removeTrailingDigits(candidate)
+			if withoutDigits != "" && withoutDigits != candidate {
+				fields.addValue(withoutDigits)
+			}
+		}
+	}
+}
+
+func endsWithNumber(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	r := []rune(s)
+	last := r[len(r)-1]
+	return unicode.IsDigit(last)
 }
