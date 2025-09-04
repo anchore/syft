@@ -29,6 +29,9 @@ func TestGlobMatch(t *testing.T) {
 		{"a*a*a*a*b", strings.Repeat("a", 100), false},
 		{"*x", "xxx", true},
 		{"/home/place/**", "/home/place/a/thing", true},
+		{"/org/test/**/*.class", "/org/test/system/files/Hello.class", true},
+		{"**/*.class", "/org/test/system/files/Hello.class", true},
+		{"**/*.class", "Hello.class", false},
 	}
 
 	for _, test := range tests {

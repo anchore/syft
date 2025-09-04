@@ -22,6 +22,7 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
+				"byte-buddy",
 			},
 		},
 	}
