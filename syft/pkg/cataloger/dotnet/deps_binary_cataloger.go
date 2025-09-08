@@ -11,6 +11,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -28,14 +29,15 @@ const (
 // from both sources are raised up, but with one merge operation applied; If a deps.json package reference can be
 // correlated with a PE file, the PE file is attached to the package as supporting evidence.
 type depsBinaryCataloger struct {
-	config CatalogerConfig
+	config   CatalogerConfig
+	licenses nugetLicenseResolver
 }
 
 func (c depsBinaryCataloger) Name() string {
 	return "dotnet-deps-binary-cataloger"
 }
 
-func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) { //nolint:funlen
+func (c depsBinaryCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) { //nolint:funlen
 	depJSONDocs, unknowns, err := findDepsJSON(resolver)
 	if err != nil {
 		return nil, nil, err
@@ -122,6 +124,17 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 				To:   *root,
 				Type: artifact.DependencyOfRelationship,
 			})
+		}
+	}
+
+	if c.licenses.assetDefinitions, err = getProjectAssets(resolver); err != nil {
+		log.Warnf("unable to retrieve project assets: %v", err)
+	}
+
+	// Try to resolve *.nupkg License(s)
+	for i := range pkgs {
+		if licenses, err := c.licenses.getLicenses(ctx, pkgs[i].Name, pkgs[i].Version); err == nil && len(licenses) > 0 {
+			pkgs[i].Licenses = pkg.NewLicenseSet(licenses...)
 		}
 	}
 
