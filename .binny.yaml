@@ -106,7 +106,7 @@ tools:
   # used to upload test fixture cache
   - name: oras
     version:
-      want: v1.2.3
+      want: v1.3.0
     method: github-release
     with:
       repo: oras-project/oras
