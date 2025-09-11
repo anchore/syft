@@ -15,6 +15,7 @@ type ArchiveCatalogerConfig struct {
 	MavenBaseURL                   string `yaml:"maven-base-url" json:"maven-base-url" mapstructure:"maven-base-url"`
 	MaxParentRecursiveDepth        int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
 	ResolveTransitiveDependencies  bool   `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+	DetectContainedPackages        bool   `yaml:"detect-contained-packages" json:"detect-contained-packages"  mapstructure:"detect-contained-packages"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -27,6 +28,7 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		MavenBaseURL:                  strings.Join(mavenCfg.Repositories, ","),
 		MaxParentRecursiveDepth:       mavenCfg.MaxParentRecursiveDepth,
 		ResolveTransitiveDependencies: false,
+		DetectContainedPackages:       false,
 	}
 }
 
@@ -60,6 +62,11 @@ func (j ArchiveCatalogerConfig) WithResolveTransitiveDependencies(resolveTransit
 func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSearchConfig, maxDepth int) ArchiveCatalogerConfig {
 	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithDetectContainedPackages(detectContainedPackages bool) ArchiveCatalogerConfig {
+	j.DetectContainedPackages = detectContainedPackages
 	return j
 }
 
