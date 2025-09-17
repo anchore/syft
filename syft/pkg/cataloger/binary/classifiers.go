@@ -639,6 +639,30 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
 			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "ffmpeg-library",
+			FileGlob: "**/libav*",
+			EvidenceMatcher: binutils.MatchAny(
+				// Primary pattern: FFmpeg version found in most libraries
+				m.FileContentsVersionMatcher(`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`),
+				// Fallback: library-specific version patterns for libavcodec and libavformat
+				m.FileContentsVersionMatcher(`(?m)Lavc(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				m.FileContentsVersionMatcher(`(?m)Lavf(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			),
+			Package: "ffmpeg",
+			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
+			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "ffmpeg-library",
+			FileGlob: "**/libswresample*",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// FFmpeg version pattern for libswresample
+				`(?m)FFmpeg version (?P<version>[0-9]+\.[0-9]+(\.[0-9]+)?)`),
+			Package: "ffmpeg",
+			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
+			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

@@ -1394,6 +1394,65 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		},
 	}
 
+	imageFixtureTests := []struct {
+		name         string
+		fixtureImage string
+		expected     []pkg.Package
+	}{
+		{
+			name:         "python-opencv with ffmpeg libraries",
+			fixtureImage: "image-python-opencv-ffmpeg-libs",
+			expected: []pkg.Package{
+				{
+					Name:    "ffmpeg",
+					Type:    "binary",
+					PURL:    "pkg:generic/ffmpeg@5.1.6",
+					Version: "5.1.6",
+					Metadata: pkg.BinarySignature{
+						Matches: []pkg.ClassifierMatch{
+							match("ffmpeg-library", "libavcodec"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range imageFixtureTests {
+		t.Run(test.name, func(t *testing.T) {
+			if testing.Short() {
+				t.Skip("skipping integration test in short mode")
+			}
+
+			// Build the test image
+			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
+
+			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+				Reference: test.fixtureImage,
+			})
+
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			actual, _, err := c.Catalog(context.Background(), resolver)
+			require.NoError(t, err)
+
+			// Filter to only ffmpeg packages
+			var ffmpegPackages []pkg.Package
+			for _, p := range actual {
+				if p.Name == "ffmpeg" {
+					ffmpegPackages = append(ffmpegPackages, p)
+				}
+			}
+
+			require.NotEmpty(t, ffmpegPackages, "should find at least one ffmpeg package")
+			assert.Equal(t, test.expected[0].Name, ffmpegPackages[0].Name)
+			assert.Equal(t, test.expected[0].Version, ffmpegPackages[0].Version)
+			assert.Equal(t, test.expected[0].Type, ffmpegPackages[0].Type)
+		})
+	}
+
 	for _, test := range tests {
 		t.Run(test.logicalFixture, func(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
