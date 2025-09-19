@@ -25,38 +25,7 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 	}
 
 	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, licenseCandidates...)
-	// Handle author, authors, contributors, and maintainers fields
-	var authorParts []string
-
-	// Add a single author field if it exists
-	if u.Author.Name != "" || u.Author.Email != "" || u.Author.URL != "" {
-		if authStr := u.Author.AuthorString(); authStr != "" {
-			authorParts = append(authorParts, authStr)
-		}
-	}
-
-	// Add authors field if it exists
-	if len(u.Authors) > 0 {
-		if authorsStr := u.Authors.String(); authorsStr != "" {
-			authorParts = append(authorParts, authorsStr)
-		}
-	}
-
-	// Add contributors field if it exists
-	if len(u.Contributors) > 0 {
-		if contributorsStr := u.Contributors.String(); contributorsStr != "" {
-			authorParts = append(authorParts, contributorsStr)
-		}
-	}
-
-	// Add maintainers field if it exists
-	if len(u.Maintainers) > 0 {
-		if maintainersStr := u.Maintainers.String(); maintainersStr != "" {
-			authorParts = append(authorParts, maintainersStr)
-		}
-	}
-
-	authorInfo := strings.Join(authorParts, ", ")
+	authorInfo, authors := extractAuthors(u)
 
 	p := pkg.Package{
 		Name:      u.Name,
@@ -71,6 +40,7 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 			Version:     u.Version,
 			Description: u.Description,
 			Author:      authorInfo,
+			Authors:     authors,
 			Homepage:    u.Homepage,
 			URL:         u.Repository.URL,
 			Private:     u.Private,
@@ -349,4 +319,55 @@ func packageURL(name, version string) string {
 		nil,
 		"",
 	).ToString()
+}
+
+func extractAuthors(u packageJSON) (string, string) {
+	// authorsObjs temporarily holds all author information from the various author-related fields
+	// in a package.json file (author, authors, contributors, maintainers).
+	var authorsObjs people
+	// Handle author, authors, contributors, and maintainers fields
+	var authorParts []string
+
+	// Add a single author field if it exists
+	if u.Author.Name != "" || u.Author.Email != "" {
+		if authStr := u.Author.AuthorString(); authStr != "" {
+			authorParts = append(authorParts, authStr)
+		}
+		authorsObjs = append(authorsObjs, person{
+			Name:  u.Author.Name,
+			Email: u.Author.Email,
+		})
+	}
+	// Helper function to process people slices
+	processPeople := func(peopleSlice people) {
+		if len(peopleSlice) > 0 {
+			if str := peopleSlice.String(); str != "" {
+				authorParts = append(authorParts, str)
+			}
+			for _, p := range peopleSlice {
+				authorsObjs = append(authorsObjs, person{
+					Name:  strings.TrimSpace(p.Name),
+					Email: p.Email,
+				})
+			}
+		}
+	}
+	// Process authors, contributors, and maintainers
+	processPeople(u.Authors)
+	processPeople(u.Contributors)
+	processPeople(u.Maintainers)
+
+	authorInfo := strings.Join(authorParts, ", ")
+
+	var authors string
+	if len(authorsObjs) > 0 {
+		b, err := json.Marshal(authorsObjs)
+		if err != nil {
+			log.Debugf("failed to marshal authors: %v", err)
+		} else {
+			authors = string(b)
+		}
+	}
+
+	return authorInfo, authors
 }
