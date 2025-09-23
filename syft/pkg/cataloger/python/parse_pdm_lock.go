@@ -24,12 +24,12 @@ type pdmLock struct {
 }
 
 type pdmLockPackage struct {
-	Name           string                 `toml:"name"`
-	Version        string                 `toml:"version"`
-	RequiresPython string                 `toml:"requires_python"`
-	Summary        string                 `toml:"summary"`
-	Dependencies   []string               `toml:"dependencies"`
-	Files          []pdmLockPackageFile   `toml:"files"`
+	Name           string               `toml:"name"`
+	Version        string               `toml:"version"`
+	RequiresPython string               `toml:"requires_python"`
+	Summary        string               `toml:"summary"`
+	Dependencies   []string             `toml:"dependencies"`
+	Files          []pdmLockPackageFile `toml:"files"`
 }
 
 type pdmLockPackageFile struct {
@@ -58,7 +58,7 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		}
 
 		// Use default PyPI index for now
-		index := "https://pypi.org/simple"
+		const index = "https://pypi.org/simple"
 
 		pkgs = append(pkgs, newPackageForIndexWithMetadata(
 			p.Name,
@@ -74,5 +74,5 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 
 	pkg.Sort(pkgs)
 
-	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, []artifact.Relationship{}, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
