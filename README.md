@@ -133,6 +133,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Elixir (mix)
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
+- GitHub (workflows, actions)
 - Haskell (cabal, stack)
 - Java (jar, ear, war, par, sar, nar, native-image)
 - JavaScript (npm, yarn)
