@@ -1,6 +1,9 @@
 package cpp
 
 import (
+	"context"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -92,7 +95,7 @@ func newConanPackage(refStr string, metadata any, locations ...file.Location) *p
 		Name:      ref.Name,
 		Version:   ref.Version,
 		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(ref),
+		PURL:      packageURLFromConanRef(ref),
 		Language:  pkg.CPP,
 		Type:      pkg.ConanPkg,
 		Metadata:  metadata,
@@ -103,7 +106,7 @@ func newConanPackage(refStr string, metadata any, locations ...file.Location) *p
 	return &p
 }
 
-func packageURL(ref *conanRef) string {
+func packageURLFromConanRef(ref *conanRef) string {
 	qualifiers := packageurl.Qualifiers{}
 	if ref.Channel != "" {
 		qualifiers = append(qualifiers, packageurl.Qualifier{
@@ -116,6 +119,63 @@ func packageURL(ref *conanRef) string {
 		ref.User,
 		ref.Name,
 		ref.Version,
+		qualifiers,
+		"",
+	).ToString()
+}
+
+func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location) pkg.Package {
+	p := pkg.Package{
+		Name:      v.Name,
+		Version:   v.FullVersion,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
+		Locations: file.NewLocationSet(l),
+		PURL:      packageURLFromVcpkgManifest(v),
+		Language:  pkg.CPP,
+		Type:      pkg.VcpkgPkg,
+		Metadata:  v,
+	}
+
+	p.SetID()
+	return p
+}
+
+func packageURLFromVcpkgManifest(v *pkg.VcpkgManifest) string {
+	qualifiers := packageurl.Qualifiers{}
+	//
+	if v.Triplet != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "triplet",
+			Value: v.Triplet,
+		})
+	}
+	if v.PortVersion != 0 {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "port_revision",
+			Value: strconv.Itoa(v.PortVersion),
+		})
+	}
+	if v.Registry != nil && v.Registry.Repository != "" {
+		unescRepoURL, err := url.PathUnescape(v.Registry.Repository)
+		if err == nil {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "repository_url",
+				Value: unescRepoURL,
+			})
+		}
+	}
+	if v.Registry != nil && v.Registry.Baseline != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "repository_revision",
+			Value: v.Registry.Baseline,
+		})
+	}
+	return packageurl.NewPackageURL(
+		// https://github.com/package-url/purl-spec/pull/245
+		"vcpkg",
+		"",
+		v.Name,
+		v.Version,
 		qualifiers,
 		"",
 	).ToString()
