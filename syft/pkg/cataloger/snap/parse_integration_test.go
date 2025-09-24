@@ -41,7 +41,7 @@ func TestParseSystemManifest(t *testing.T) {
 			Name:      "grub-efi-amd64-signed",
 			Version:   "1.202+2.12-1ubuntu7",
 			Type:      pkg.DebPkg,
-			PURL:      "pkg:deb/ubuntu/grub-efi-amd64-signed@1.202%2B2.12-1ubuntu7", // URL encoded
+			PURL:      "pkg:deb/ubuntu/grub-efi-amd64-signed@1.202%2B2.12-1ubuntu7?arch=amd64", // URL encoded
 			Locations: locations,
 			Metadata: SnapMetadata{
 				SnapType:     SnapTypeApp, // Default type when gadget not detected from name
@@ -55,7 +55,7 @@ func TestParseSystemManifest(t *testing.T) {
 			Name:      "shim-signed",
 			Version:   "1.56+15.7-0ubuntu1",
 			Type:      pkg.DebPkg,
-			PURL:      "pkg:deb/ubuntu/shim-signed@1.56%2B15.7-0ubuntu1", // URL encoded
+			PURL:      "pkg:deb/ubuntu/shim-signed@1.56%2B15.7-0ubuntu1?arch=amd64", // URL encoded
 			Locations: locations,
 			Metadata: SnapMetadata{
 				SnapType:     SnapTypeApp, // Default type when gadget not detected from name

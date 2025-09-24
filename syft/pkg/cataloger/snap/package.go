@@ -81,7 +81,7 @@ func newDebianPackageFromSnap(name, version string, snapMetadata SnapMetadata, l
 		Version:   version,
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.DebPkg,
-		PURL:      debianPackageURL(name, version),
+		PURL:      debianPackageURL(name, version, snapMetadata.Architecture),
 		Metadata:  snapMetadata,
 	}
 
@@ -90,13 +90,22 @@ func newDebianPackageFromSnap(name, version string, snapMetadata SnapMetadata, l
 }
 
 // debianPackageURL creates a PURL for Debian packages found in snaps
-func debianPackageURL(name, version string) string {
+func debianPackageURL(name, version, architecture string) string {
+	var qualifiers packageurl.Qualifiers
+
+	if architecture != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{
+			Key:   "arch",
+			Value: architecture,
+		})
+	}
+
 	return packageurl.NewPackageURL(
 		packageurl.TypeDebian,
 		"ubuntu", // Assume Ubuntu since most snaps are built on Ubuntu
 		name,
 		version,
-		nil,
+		qualifiers,
 		"",
 	).ToString()
 }

@@ -37,7 +37,7 @@ func TestParseBaseDpkgYaml(t *testing.T) {
 			Name:      "gcc-10-base",
 			Version:   "10.5.0-1ubuntu1~20.04",
 			Type:      pkg.DebPkg,
-			PURL:      "pkg:deb/ubuntu/gcc-10-base@10.5.0-1ubuntu1~20.04",
+			PURL:      "pkg:deb/ubuntu/gcc-10-base@10.5.0-1ubuntu1~20.04?arch=amd64",
 			Locations: locations,
 			Metadata: SnapMetadata{
 				SnapType:     SnapTypeBase,
