@@ -508,7 +508,7 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, relationships []artifac
 }
 
 // fetchPkgs provides the packages available in a UnionReader.
-func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, []artifact.Relationship) {
+func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	imageFormats := []func(string, io.ReaderAt) (nativeImage, error){newElf, newMachO, newPE}
@@ -520,6 +520,7 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, 
 		log.Debugf("failed to open the java native-image binary: %v", err)
 		return nil, nil
 	}
+	filename := location.RealPath
 	for _, r := range readers {
 		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
@@ -533,6 +534,10 @@ func fetchPkgs(reader unionreader.UnionReader, filename string) ([]pkg.Package, 
 			if err != nil {
 				log.Tracef("unable to extract SBOM from possible java native-image %s: %v", filename, err)
 				continue
+			}
+			// Associate extracted packages with the native image location
+			for i := range newPkgs {
+				newPkgs[i].Locations.Add(location)
 			}
 			pkgs = append(pkgs, newPkgs...)
 			relationships = append(relationships, newRelationships...)
@@ -574,6 +579,6 @@ func processLocation(location file.Location, resolver file.Resolver) ([]pkg.Pack
 	if err != nil {
 		return nil, nil, err
 	}
-	pkgs, relationships := fetchPkgs(reader, location.RealPath)
+	pkgs, relationships := fetchPkgs(reader, location)
 	return pkgs, relationships, nil
 }

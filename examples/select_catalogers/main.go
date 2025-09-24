@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"os"
 
+	_ "modernc.org/sqlite" // required for rpmdb and other features
+
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"

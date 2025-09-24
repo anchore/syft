@@ -7402,6 +7402,9 @@
       "activedemand": [
         "cpe:2.3:a:jumpdemand:activedemand:*:*:*:*:*:wordpress:*:*"
       ],
+      "activity-link-preview-for-buddypress": [
+        "cpe:2.3:a:wbcomdesigns:activity_link_preview_for_buddypress:*:*:*:*:*:wordpress:*:*"
+      ],
       "activity-reactions-for-buddypress": [
         "cpe:2.3:a:areteit:activity_reactions_for_buddypress:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8324,6 +8327,9 @@
         "cpe:2.3:a:ays-pro:popup_box:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:ays-pro:popup_box:*:*:*:*:pro:wordpress:*:*"
       ],
+      "azan": [
+        "cpe:2.3:a:wp-master:azan:*:*:*:*:*:wordpress:*:*"
+      ],
       "azindex": [
         "cpe:2.3:a:azindex_project:azindex:*:*:*:*:*:wordpress:*:*"
       ],
@@ -8420,6 +8426,9 @@
       "bb-bootstrap-cards": [
         "cpe:2.3:a:brainstormforce:cards_for_beaver_builder:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:ultimateaddons:cards_for_beaver_builder:*:*:*:*:*:wordpress:*:*"
+      ],
+      "bb-plugin": [
+        "cpe:2.3:a:fastlinemedia:beaver_builder:*:*:*:*:lite:wordpress:*:*"
       ],
       "bbp-core": [
         "cpe:2.3:a:spider-themes:bbp_core:*:*:*:*:*:wordpress:*:*"
@@ -10937,11 +10946,13 @@
         "cpe:2.3:a:elementor:elementor_page_builder:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:elementor:elementor_page_builder:*:*:*:*:pro:wordpress:*:*",
         "cpe:2.3:a:elementor:page_builder:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:elementor:website_builder:*:*:*:*:free:wordpress:*:*"
+        "cpe:2.3:a:elementor:website_builder:*:*:*:*:free:wordpress:*:*",
+        "cpe:2.3:a:elementor:website_builder:*:*:*:*:pro:wordpress:*:*"
       ],
       "elementor-pro": [
         "cpe:2.3:a:elementor:elementor_page_builder:*:*:*:*:pro:wordpress:*:*",
-        "cpe:2.3:a:elementor:elementor_pro:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:elementor:elementor_pro:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:elementor:website_builder:*:*:*:*:pro:wordpress:*:*"
       ],
       "elementskit": [
         "cpe:2.3:a:wpmet:elementskit:*:*:*:*:pro:wordpress:*:*"
@@ -17113,7 +17124,8 @@
         "cpe:2.3:a:sitepact:contact_form_7_extension_for_klaviyo:*:*:*:*:*:wordpress:*:*"
       ],
       "sitepress-multilingual-cms": [
-        "cpe:2.3:a:onthegosystems:sitepress-multilingual-cms:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:onthegosystems:sitepress-multilingual-cms:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:wpml:wpml:*:*:*:*:*:wordpress:*:*"
       ],
       "sitesupercharger": [
         "cpe:2.3:a:marketingheroes:sitesupercharger:*:*:*:*:*:wordpress:*:*"
@@ -19472,6 +19484,9 @@
       ],
       "wordlift": [
         "cpe:2.3:a:wordlift:wordlift:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wordpress-23-related-posts-plugin": [
+        "cpe:2.3:a:sovrn:wordpress_related_posts:*:*:*:*:*:wordpress:*:*"
       ],
       "wordpress-access-control": [
         "cpe:2.3:a:brandonwamboldt:wordpress_access_control:*:*:*:*:*:wordpress:*:*"

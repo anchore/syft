@@ -130,6 +130,11 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:opam/ocaml-base-compiler@5.2.0",
 			expected: OpamPkg,
 		},
+		{
+			name:     "conda",
+			purl:     "pkg:generic/conda@1.2.3",
+			expected: CondaPkg,
+		},
 	}
 
 	var pkgTypes = strset.New()

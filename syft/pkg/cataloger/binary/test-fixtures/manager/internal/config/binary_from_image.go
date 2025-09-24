@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/OneOfOne/xxhash"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 type BinaryFromImage struct {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
