@@ -48,7 +48,7 @@ func TestParsePdmLock(t *testing.T) {
 		},
 	}
 
-	var expectedRelationships []artifact.Relationship
+	expectedRelationships := []artifact.Relationship{}
 
 	pkgtest.TestFileParser(t, fixture, parsePdmLock, expectedPkgs, expectedRelationships)
 }
