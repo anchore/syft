@@ -42,7 +42,7 @@ builds:
     dir: ./cmd/syft
     binary: syft
     goos: [windows]
-    goarch: [amd64]
+    goarch: [amd64, arm64]
     mod_timestamp: *build-timestamp
     ldflags: *build-ldflags
 
