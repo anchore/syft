@@ -29,7 +29,7 @@ func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 		WithParserByGlobs(parsePipfileLock, "**/Pipfile.lock").
 		WithParserByGlobs(parseSetup, "**/setup.py").
 		WithParserByGlobs(parseUvLock, "**/uv.lock").
-		WithParserByGlobs(parsePipfileLock, "**/pdm.lock").
+		WithParserByGlobs(parsePdmLock, "**/pdm.lock").
 }
 
 // NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
