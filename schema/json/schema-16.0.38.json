@@ -1,51 +1,30 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "anchore.io/schema/syft/json/16.0.38/document",
+  "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
       "properties": {
-        "architecture": {
-          "type": "string"
-        },
-        "backup": {
-          "items": {
-            "$ref": "#/$defs/AlpmFileRecord"
-          },
-          "type": "array"
-        },
         "basepackage": {
           "type": "string"
-        },
-        "depends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "description": {
-          "type": "string"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/AlpmFileRecord"
-          },
-          "type": "array"
         },
         "package": {
           "type": "string"
         },
-        "packager": {
+        "version": {
           "type": "string"
         },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "description": {
+          "type": "string"
         },
-        "reason": {
-          "type": "integer"
+        "architecture": {
+          "type": "string"
         },
         "size": {
           "type": "integer"
+        },
+        "packager": {
+          "type": "string"
         },
         "url": {
           "type": "string"
@@ -53,10 +32,35 @@
         "validation": {
           "type": "string"
         },
-        "version": {
-          "type": "string"
+        "reason": {
+          "type": "integer"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array"
+        },
+        "backup": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
+      "type": "object",
       "required": [
         "basepackage",
         "package",
@@ -70,31 +74,11 @@
         "reason",
         "files",
         "backup"
-      ],
-      "type": "object"
+      ]
     },
     "AlpmFileRecord": {
       "properties": {
-        "digest": {
-          "items": {
-            "$ref": "#/$defs/Digest"
-          },
-          "type": "array"
-        },
-        "gid": {
-          "type": "string"
-        },
-        "link": {
-          "type": "string"
-        },
         "path": {
-          "type": "string"
-        },
-        "size": {
-          "type": "string"
-        },
-        "time": {
-          "format": "date-time",
           "type": "string"
         },
         "type": {
@@ -102,38 +86,63 @@
         },
         "uid": {
           "type": "string"
+        },
+        "gid": {
+          "type": "string"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "size": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array"
         }
       },
       "type": "object"
     },
     "ApkDbEntry": {
       "properties": {
-        "architecture": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/ApkFileRecord"
-          },
-          "type": "array"
-        },
-        "gitCommitOfApkPort": {
-          "type": "string"
-        },
-        "installedSize": {
-          "type": "integer"
-        },
-        "maintainer": {
+        "package": {
           "type": "string"
         },
         "originPackage": {
           "type": "string"
         },
-        "package": {
+        "maintainer": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "pullDependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "provides": {
           "items": {
@@ -144,22 +153,17 @@
         "pullChecksum": {
           "type": "string"
         },
-        "pullDependencies": {
+        "gitCommitOfApkPort": {
+          "type": "string"
+        },
+        "files": {
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/ApkFileRecord"
           },
           "type": "array"
-        },
-        "size": {
-          "type": "integer"
-        },
-        "url": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
+      "type": "object",
       "required": [
         "package",
         "originPackage",
@@ -175,29 +179,30 @@
         "pullChecksum",
         "gitCommitOfApkPort",
         "files"
-      ],
-      "type": "object"
+      ]
     },
     "ApkFileRecord": {
       "properties": {
-        "digest": {
-          "$ref": "#/$defs/Digest"
-        },
-        "ownerGid": {
+        "path": {
           "type": "string"
         },
         "ownerUid": {
           "type": "string"
         },
-        "path": {
+        "ownerGid": {
           "type": "string"
         },
         "permissions": {
           "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
         }
       },
-      "required": ["path"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path"
+      ]
     },
     "BinarySignature": {
       "properties": {
@@ -208,27 +213,20 @@
           "type": "array"
         }
       },
-      "required": ["matches"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "matches"
+      ]
     },
     "BitnamiSbomEntry": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "arch": {
           "type": "string"
         },
         "distro": {
-          "type": "string"
-        },
-        "files": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "path": {
           "type": "string"
         },
         "revision": {
@@ -236,10 +234,27 @@
         },
         "version": {
           "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "arch", "distro", "revision", "version", "path", "files"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "arch",
+        "distro",
+        "revision",
+        "version",
+        "path",
+        "files"
+      ]
     },
     "CConanFileEntry": {
       "properties": {
@@ -247,51 +262,34 @@
           "type": "string"
         }
       },
-      "required": ["ref"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "ref"
+      ]
     },
     "CConanInfoEntry": {
       "properties": {
-        "package_id": {
+        "ref": {
           "type": "string"
         },
-        "ref": {
+        "package_id": {
           "type": "string"
         }
       },
-      "required": ["ref"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "ref"
+      ]
     },
     "CConanLockEntry": {
       "properties": {
-        "build_requires": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "context": {
+        "ref": {
           "type": "string"
-        },
-        "options": {
-          "$ref": "#/$defs/KeyValues"
         },
         "package_id": {
           "type": "string"
         },
-        "path": {
-          "type": "string"
-        },
         "prev": {
-          "type": "string"
-        },
-        "py_requires": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "ref": {
           "type": "string"
         },
         "requires": {
@@ -299,37 +297,62 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "build_requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "py_requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "options": {
+          "$ref": "#/$defs/KeyValues"
+        },
+        "path": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
         }
       },
-      "required": ["ref"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "ref"
+      ]
     },
     "CConanLockV2Entry": {
       "properties": {
-        "channel": {
+        "ref": {
           "type": "string"
         },
         "packageID": {
           "type": "string"
         },
-        "packageRevision": {
+        "username": {
+          "type": "string"
+        },
+        "channel": {
           "type": "string"
         },
         "recipeRevision": {
           "type": "string"
         },
-        "ref": {
+        "packageRevision": {
           "type": "string"
         },
         "timestamp": {
           "type": "string"
-        },
-        "username": {
-          "type": "string"
         }
       },
-      "required": ["ref"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "ref"
+      ]
     },
     "CPE": {
       "properties": {
@@ -340,8 +363,10 @@
           "type": "string"
         }
       },
-      "required": ["cpe"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "cpe"
+      ]
     },
     "ClassifierMatch": {
       "properties": {
@@ -352,8 +377,11 @@
           "$ref": "#/$defs/Location"
         }
       },
-      "required": ["classifier", "location"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "classifier",
+        "location"
+      ]
     },
     "CocoaPodfileLockEntry": {
       "properties": {
@@ -361,8 +389,10 @@
           "type": "string"
         }
       },
-      "required": ["checksum"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "checksum"
+      ]
     },
     "CondaLink": {
       "properties": {
@@ -373,12 +403,21 @@
           "type": "integer"
         }
       },
-      "required": ["source", "type"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "source",
+        "type"
+      ]
     },
     "CondaMetadataEntry": {
       "properties": {
         "arch": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "build": {
@@ -390,22 +429,10 @@
         "channel": {
           "type": "string"
         },
-        "depends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "extracted_package_dir": {
+        "subdir": {
           "type": "string"
         },
-        "files": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "fn": {
+        "noarch": {
           "type": "string"
         },
         "license": {
@@ -414,20 +441,8 @@
         "license_family": {
           "type": "string"
         },
-        "link": {
-          "$ref": "#/$defs/CondaLink"
-        },
         "md5": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "noarch": {
-          "type": "string"
-        },
-        "paths_data": {
-          "$ref": "#/$defs/CondaPathsData"
         },
         "sha256": {
           "type": "string"
@@ -435,21 +450,44 @@
         "size": {
           "type": "integer"
         },
-        "subdir": {
-          "type": "string"
-        },
         "timestamp": {
           "type": "integer"
+        },
+        "fn": {
+          "type": "string"
         },
         "url": {
           "type": "string"
         },
-        "version": {
+        "extracted_package_dir": {
           "type": "string"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "paths_data": {
+          "$ref": "#/$defs/CondaPathsData"
+        },
+        "link": {
+          "$ref": "#/$defs/CondaLink"
         }
       },
-      "required": ["name", "version", "build", "build_number"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "build",
+        "build_number"
+      ]
     },
     "CondaPathData": {
       "properties": {
@@ -469,52 +507,63 @@
           "type": "integer"
         }
       },
-      "required": ["_path", "path_type", "sha256", "sha256_in_prefix", "size_in_bytes"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "_path",
+        "path_type",
+        "sha256",
+        "sha256_in_prefix",
+        "size_in_bytes"
+      ]
     },
     "CondaPathsData": {
       "properties": {
+        "paths_version": {
+          "type": "integer"
+        },
         "paths": {
           "items": {
             "$ref": "#/$defs/CondaPathData"
           },
           "type": "array"
-        },
-        "paths_version": {
-          "type": "integer"
         }
       },
-      "required": ["paths_version", "paths"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "paths_version",
+        "paths"
+      ]
     },
     "Coordinates": {
       "properties": {
-        "layerID": {
+        "path": {
           "type": "string"
         },
-        "path": {
+        "layerID": {
           "type": "string"
         }
       },
-      "required": ["path"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path"
+      ]
     },
     "DartPubspec": {
       "properties": {
+        "homepage": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        },
         "documentation": {
+          "type": "string"
+        },
+        "publish_to": {
           "type": "string"
         },
         "environment": {
           "$ref": "#/$defs/DartPubspecEnvironment"
-        },
-        "homepage": {
-          "type": "string"
-        },
-        "ignored_advisories": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         },
         "platforms": {
           "items": {
@@ -522,21 +571,21 @@
           },
           "type": "array"
         },
-        "publish_to": {
-          "type": "string"
-        },
-        "repository": {
-          "type": "string"
+        "ignored_advisories": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"
     },
     "DartPubspecEnvironment": {
       "properties": {
-        "flutter": {
+        "sdk": {
           "type": "string"
         },
-        "sdk": {
+        "flutter": {
           "type": "string"
         }
       },
@@ -544,34 +593,40 @@
     },
     "DartPubspecLockEntry": {
       "properties": {
-        "hosted_url": {
+        "name": {
           "type": "string"
         },
-        "name": {
+        "version": {
+          "type": "string"
+        },
+        "hosted_url": {
           "type": "string"
         },
         "vcs_url": {
           "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
     },
     "Descriptor": {
       "properties": {
-        "configuration": true,
         "name": {
           "type": "string"
         },
         "version": {
           "type": "string"
-        }
+        },
+        "configuration": true
       },
-      "required": ["name", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
     },
     "Digest": {
       "properties": {
@@ -582,28 +637,25 @@
           "type": "string"
         }
       },
-      "required": ["algorithm", "value"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ]
     },
     "Document": {
       "properties": {
-        "artifactRelationships": {
-          "items": {
-            "$ref": "#/$defs/Relationship"
-          },
-          "type": "array"
-        },
         "artifacts": {
           "items": {
             "$ref": "#/$defs/Package"
           },
           "type": "array"
         },
-        "descriptor": {
-          "$ref": "#/$defs/Descriptor"
-        },
-        "distro": {
-          "$ref": "#/$defs/LinuxRelease"
+        "artifactRelationships": {
+          "items": {
+            "$ref": "#/$defs/Relationship"
+          },
+          "type": "array"
         },
         "files": {
           "items": {
@@ -611,30 +663,35 @@
           },
           "type": "array"
         },
-        "schema": {
-          "$ref": "#/$defs/Schema"
-        },
         "source": {
           "$ref": "#/$defs/Source"
+        },
+        "distro": {
+          "$ref": "#/$defs/LinuxRelease"
+        },
+        "descriptor": {
+          "$ref": "#/$defs/Descriptor"
+        },
+        "schema": {
+          "$ref": "#/$defs/Schema"
         }
       },
-      "required": ["artifacts", "artifactRelationships", "source", "distro", "descriptor", "schema"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "artifacts",
+        "artifactRelationships",
+        "source",
+        "distro",
+        "descriptor",
+        "schema"
+      ]
     },
     "DotnetDepsEntry": {
       "properties": {
-        "executables": {
-          "patternProperties": {
-            ".*": {
-              "$ref": "#/$defs/DotnetPortableExecutableEntry"
-            }
-          },
-          "type": "object"
-        },
-        "hashPath": {
+        "name": {
           "type": "string"
         },
-        "name": {
+        "version": {
           "type": "string"
         },
         "path": {
@@ -643,46 +700,65 @@
         "sha512": {
           "type": "string"
         },
-        "version": {
+        "hashPath": {
           "type": "string"
+        },
+        "executables": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/DotnetPortableExecutableEntry"
+            }
+          },
+          "type": "object"
         }
       },
-      "required": ["name", "version", "path", "sha512", "hashPath"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "path",
+        "sha512",
+        "hashPath"
+      ]
     },
     "DotnetPackagesLockEntry": {
       "properties": {
-        "contentHash": {
+        "name": {
           "type": "string"
         },
-        "name": {
+        "version": {
+          "type": "string"
+        },
+        "contentHash": {
           "type": "string"
         },
         "type": {
           "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version", "contentHash", "type"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "contentHash",
+        "type"
+      ]
     },
     "DotnetPortableExecutableEntry": {
       "properties": {
         "assemblyVersion": {
           "type": "string"
         },
-        "comments": {
+        "legalCopyright": {
           "type": "string"
         },
-        "companyName": {
+        "comments": {
           "type": "string"
         },
         "internalName": {
           "type": "string"
         },
-        "legalCopyright": {
+        "companyName": {
           "type": "string"
         },
         "productName": {
@@ -692,15 +768,51 @@
           "type": "string"
         }
       },
-      "required": ["assemblyVersion", "legalCopyright", "companyName", "productName", "productVersion"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "assemblyVersion",
+        "legalCopyright",
+        "companyName",
+        "productName",
+        "productVersion"
+      ]
     },
     "DpkgArchiveEntry": {
       "properties": {
+        "package": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
         "architecture": {
           "type": "string"
         },
+        "maintainer": {
+          "type": "string"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preDepends": {
           "items": {
             "type": "string"
           },
@@ -711,38 +823,9 @@
             "$ref": "#/$defs/DpkgFileRecord"
           },
           "type": "array"
-        },
-        "installedSize": {
-          "type": "integer"
-        },
-        "maintainer": {
-          "type": "string"
-        },
-        "package": {
-          "type": "string"
-        },
-        "preDepends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "source": {
-          "type": "string"
-        },
-        "sourceVersion": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
+      "type": "object",
       "required": [
         "package",
         "source",
@@ -752,15 +835,44 @@
         "maintainer",
         "installedSize",
         "files"
-      ],
-      "type": "object"
+      ]
     },
     "DpkgDbEntry": {
       "properties": {
+        "package": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
         "architecture": {
           "type": "string"
         },
+        "maintainer": {
+          "type": "string"
+        },
+        "installedSize": {
+          "type": "integer"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preDepends": {
           "items": {
             "type": "string"
           },
@@ -771,38 +883,9 @@
             "$ref": "#/$defs/DpkgFileRecord"
           },
           "type": "array"
-        },
-        "installedSize": {
-          "type": "integer"
-        },
-        "maintainer": {
-          "type": "string"
-        },
-        "package": {
-          "type": "string"
-        },
-        "preDepends": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "source": {
-          "type": "string"
-        },
-        "sourceVersion": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
+      "type": "object",
       "required": [
         "package",
         "source",
@@ -812,84 +895,92 @@
         "maintainer",
         "installedSize",
         "files"
-      ],
-      "type": "object"
+      ]
     },
     "DpkgFileRecord": {
       "properties": {
+        "path": {
+          "type": "string"
+        },
         "digest": {
           "$ref": "#/$defs/Digest"
         },
         "isConfigFile": {
           "type": "boolean"
-        },
-        "path": {
-          "type": "string"
         }
       },
-      "required": ["path", "isConfigFile"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path",
+        "isConfigFile"
+      ]
     },
     "ELFSecurityFeatures": {
       "properties": {
-        "cfi": {
-          "type": "boolean"
-        },
-        "dso": {
-          "type": "boolean"
-        },
-        "fortify": {
-          "type": "boolean"
-        },
-        "nx": {
-          "type": "boolean"
-        },
-        "pie": {
-          "type": "boolean"
-        },
-        "relRO": {
-          "type": "string"
-        },
-        "safeStack": {
+        "symbolTableStripped": {
           "type": "boolean"
         },
         "stackCanary": {
           "type": "boolean"
         },
-        "symbolTableStripped": {
+        "nx": {
+          "type": "boolean"
+        },
+        "relRO": {
+          "type": "string"
+        },
+        "pie": {
+          "type": "boolean"
+        },
+        "dso": {
+          "type": "boolean"
+        },
+        "safeStack": {
+          "type": "boolean"
+        },
+        "cfi": {
+          "type": "boolean"
+        },
+        "fortify": {
           "type": "boolean"
         }
       },
-      "required": ["symbolTableStripped", "nx", "relRO", "pie", "dso"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "symbolTableStripped",
+        "nx",
+        "relRO",
+        "pie",
+        "dso"
+      ]
     },
     "ElfBinaryPackageNoteJsonPayload": {
       "properties": {
+        "type": {
+          "type": "string"
+        },
         "architecture": {
-          "type": "string"
-        },
-        "commit": {
-          "type": "string"
-        },
-        "os": {
           "type": "string"
         },
         "osCPE": {
           "type": "string"
         },
-        "osVersion": {
+        "os": {
           "type": "string"
         },
-        "sourceRepo": {
+        "osVersion": {
           "type": "string"
         },
         "system": {
           "type": "string"
         },
-        "type": {
+        "vendor": {
           "type": "string"
         },
-        "vendor": {
+        "sourceRepo": {
+          "type": "string"
+        },
+        "commit": {
           "type": "string"
         }
       },
@@ -900,49 +991,56 @@
         "name": {
           "type": "string"
         },
+        "version": {
+          "type": "string"
+        },
         "pkgHash": {
           "type": "string"
         },
         "pkgHashExt": {
           "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version", "pkgHash", "pkgHashExt"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "pkgHash",
+        "pkgHashExt"
+      ]
     },
     "ErlangRebarLockEntry": {
       "properties": {
         "name": {
           "type": "string"
         },
+        "version": {
+          "type": "string"
+        },
         "pkgHash": {
           "type": "string"
         },
         "pkgHashExt": {
           "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version", "pkgHash", "pkgHashExt"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "pkgHash",
+        "pkgHashExt"
+      ]
     },
     "Executable": {
       "properties": {
-        "elfSecurityFeatures": {
-          "$ref": "#/$defs/ELFSecurityFeatures"
-        },
         "format": {
           "type": "string"
         },
-        "hasEntrypoint": {
+        "hasExports": {
           "type": "boolean"
         },
-        "hasExports": {
+        "hasEntrypoint": {
           "type": "boolean"
         },
         "importedLibraries": {
@@ -950,13 +1048,30 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "elfSecurityFeatures": {
+          "$ref": "#/$defs/ELFSecurityFeatures"
         }
       },
-      "required": ["format", "hasExports", "hasEntrypoint", "importedLibraries"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "format",
+        "hasExports",
+        "hasEntrypoint",
+        "importedLibraries"
+      ]
     },
     "File": {
       "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Coordinates"
+        },
+        "metadata": {
+          "$ref": "#/$defs/FileMetadataEntry"
+        },
         "contents": {
           "type": "string"
         },
@@ -966,23 +1081,14 @@
           },
           "type": "array"
         },
-        "executable": {
-          "$ref": "#/$defs/Executable"
-        },
-        "id": {
-          "type": "string"
-        },
         "licenses": {
           "items": {
             "$ref": "#/$defs/FileLicense"
           },
           "type": "array"
         },
-        "location": {
-          "$ref": "#/$defs/Coordinates"
-        },
-        "metadata": {
-          "$ref": "#/$defs/FileMetadataEntry"
+        "executable": {
+          "$ref": "#/$defs/Executable"
         },
         "unknowns": {
           "items": {
@@ -991,13 +1097,16 @@
           "type": "array"
         }
       },
-      "required": ["id", "location"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "id",
+        "location"
+      ]
     },
     "FileLicense": {
       "properties": {
-        "evidence": {
-          "$ref": "#/$defs/FileLicenseEvidence"
+        "value": {
+          "type": "string"
         },
         "spdxExpression": {
           "type": "string"
@@ -1005,76 +1114,99 @@
         "type": {
           "type": "string"
         },
-        "value": {
-          "type": "string"
+        "evidence": {
+          "$ref": "#/$defs/FileLicenseEvidence"
         }
       },
-      "required": ["value", "spdxExpression", "type"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type"
+      ]
     },
     "FileLicenseEvidence": {
       "properties": {
         "confidence": {
           "type": "integer"
         },
-        "extent": {
+        "offset": {
           "type": "integer"
         },
-        "offset": {
+        "extent": {
           "type": "integer"
         }
       },
-      "required": ["confidence", "offset", "extent"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "confidence",
+        "offset",
+        "extent"
+      ]
     },
     "FileMetadataEntry": {
       "properties": {
-        "groupID": {
-          "type": "integer"
-        },
-        "linkDestination": {
-          "type": "string"
-        },
-        "mimeType": {
-          "type": "string"
-        },
         "mode": {
-          "type": "integer"
-        },
-        "size": {
           "type": "integer"
         },
         "type": {
           "type": "string"
         },
+        "linkDestination": {
+          "type": "string"
+        },
         "userID": {
+          "type": "integer"
+        },
+        "groupID": {
+          "type": "integer"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "size": {
           "type": "integer"
         }
       },
-      "required": ["mode", "type", "userID", "groupID", "mimeType", "size"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "mode",
+        "type",
+        "userID",
+        "groupID",
+        "mimeType",
+        "size"
+      ]
     },
     "GithubActionsUseStatement": {
       "properties": {
-        "comment": {
+        "value": {
           "type": "string"
         },
-        "value": {
+        "comment": {
           "type": "string"
         }
       },
-      "required": ["value"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "value"
+      ]
     },
     "GoModuleBuildinfoEntry": {
       "properties": {
-        "architecture": {
-          "type": "string"
-        },
         "goBuildSettings": {
           "$ref": "#/$defs/KeyValues"
         },
         "goCompiledVersion": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "h1Digest": {
+          "type": "string"
+        },
+        "mainModule": {
           "type": "string"
         },
         "goCryptoSettings": {
@@ -1088,16 +1220,13 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "h1Digest": {
-          "type": "string"
-        },
-        "mainModule": {
-          "type": "string"
         }
       },
-      "required": ["goCompiledVersion", "architecture"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "goCompiledVersion",
+        "architecture"
+      ]
     },
     "GoModuleEntry": {
       "properties": {
@@ -1128,13 +1257,13 @@
     },
     "HomebrewFormula": {
       "properties": {
-        "description": {
+        "tap": {
           "type": "string"
         },
         "homepage": {
           "type": "string"
         },
-        "tap": {
+        "description": {
           "type": "string"
         }
       },
@@ -1148,42 +1277,47 @@
     },
     "JavaArchive": {
       "properties": {
+        "virtualPath": {
+          "type": "string"
+        },
+        "manifest": {
+          "$ref": "#/$defs/JavaManifest"
+        },
+        "pomProperties": {
+          "$ref": "#/$defs/JavaPomProperties"
+        },
+        "pomProject": {
+          "$ref": "#/$defs/JavaPomProject"
+        },
         "digest": {
           "items": {
             "$ref": "#/$defs/Digest"
           },
           "type": "array"
-        },
-        "manifest": {
-          "$ref": "#/$defs/JavaManifest"
-        },
-        "pomProject": {
-          "$ref": "#/$defs/JavaPomProject"
-        },
-        "pomProperties": {
-          "$ref": "#/$defs/JavaPomProperties"
-        },
-        "virtualPath": {
-          "type": "string"
         }
       },
-      "required": ["virtualPath"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "virtualPath"
+      ]
     },
     "JavaJvmInstallation": {
       "properties": {
+        "release": {
+          "$ref": "#/$defs/JavaVMRelease"
+        },
         "files": {
           "items": {
             "type": "string"
           },
           "type": "array"
-        },
-        "release": {
-          "$ref": "#/$defs/JavaVMRelease"
         }
       },
-      "required": ["release", "files"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "release",
+        "files"
+      ]
     },
     "JavaManifest": {
       "properties": {
@@ -1201,52 +1335,77 @@
     },
     "JavaPomParent": {
       "properties": {
-        "artifactId": {
+        "groupId": {
           "type": "string"
         },
-        "groupId": {
+        "artifactId": {
           "type": "string"
         },
         "version": {
           "type": "string"
         }
       },
-      "required": ["groupId", "artifactId", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "groupId",
+        "artifactId",
+        "version"
+      ]
     },
     "JavaPomProject": {
       "properties": {
-        "artifactId": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "groupId": {
-          "type": "string"
-        },
-        "name": {
+        "path": {
           "type": "string"
         },
         "parent": {
           "$ref": "#/$defs/JavaPomParent"
         },
-        "path": {
+        "groupId": {
           "type": "string"
         },
-        "url": {
+        "artifactId": {
           "type": "string"
         },
         "version": {
           "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
         }
       },
-      "required": ["path", "groupId", "artifactId", "version", "name"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path",
+        "groupId",
+        "artifactId",
+        "version",
+        "name"
+      ]
     },
     "JavaPomProperties": {
       "properties": {
+        "path": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
         "artifactId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "scope": {
           "type": "string"
         },
         "extraFields": {
@@ -1256,46 +1415,19 @@
             }
           },
           "type": "object"
-        },
-        "groupId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["path", "name", "groupId", "artifactId", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path",
+        "name",
+        "groupId",
+        "artifactId",
+        "version"
+      ]
     },
     "JavaVMRelease": {
       "properties": {
-        "buildInfo": {
-          "type": "string"
-        },
-        "buildSource": {
-          "type": "string"
-        },
-        "buildSourceRepo": {
-          "type": "string"
-        },
-        "buildType": {
-          "type": "string"
-        },
-        "fullVersion": {
-          "type": "string"
-        },
-        "imageType": {
-          "type": "string"
-        },
         "implementor": {
           "type": "string"
         },
@@ -1309,12 +1441,6 @@
           "type": "string"
         },
         "javaVersionDate": {
-          "type": "string"
-        },
-        "jvmVariant": {
-          "type": "string"
-        },
-        "jvmVersion": {
           "type": "string"
         },
         "libc": {
@@ -1335,13 +1461,37 @@
         "osVersion": {
           "type": "string"
         },
-        "semanticVersion": {
-          "type": "string"
-        },
         "source": {
           "type": "string"
         },
+        "buildSource": {
+          "type": "string"
+        },
+        "buildSourceRepo": {
+          "type": "string"
+        },
         "sourceRepo": {
+          "type": "string"
+        },
+        "fullVersion": {
+          "type": "string"
+        },
+        "semanticVersion": {
+          "type": "string"
+        },
+        "buildInfo": {
+          "type": "string"
+        },
+        "jvmVariant": {
+          "type": "string"
+        },
+        "jvmVersion": {
+          "type": "string"
+        },
+        "imageType": {
+          "type": "string"
+        },
+        "buildType": {
           "type": "string"
         }
       },
@@ -1349,54 +1499,68 @@
     },
     "JavascriptNpmPackage": {
       "properties": {
-        "author": {
+        "name": {
           "type": "string"
         },
-        "description": {
+        "version": {
+          "type": "string"
+        },
+        "author": {
           "type": "string"
         },
         "homepage": {
           "type": "string"
         },
-        "name": {
+        "description": {
           "type": "string"
-        },
-        "private": {
-          "type": "boolean"
         },
         "url": {
           "type": "string"
         },
-        "version": {
-          "type": "string"
+        "private": {
+          "type": "boolean"
         }
       },
-      "required": ["name", "version", "author", "homepage", "description", "url", "private"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "homepage",
+        "description",
+        "url",
+        "private"
+      ]
     },
     "JavascriptNpmPackageLockEntry": {
       "properties": {
-        "integrity": {
+        "resolved": {
           "type": "string"
         },
-        "resolved": {
+        "integrity": {
           "type": "string"
         }
       },
-      "required": ["resolved", "integrity"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "resolved",
+        "integrity"
+      ]
     },
     "JavascriptYarnLockEntry": {
       "properties": {
-        "integrity": {
+        "resolved": {
           "type": "string"
         },
-        "resolved": {
+        "integrity": {
           "type": "string"
         }
       },
-      "required": ["resolved", "integrity"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "resolved",
+        "integrity"
+      ]
     },
     "KeyValue": {
       "properties": {
@@ -1407,8 +1571,11 @@
           "type": "string"
         }
       },
-      "required": ["key", "value"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ]
     },
     "KeyValues": {
       "items": {
@@ -1418,14 +1585,8 @@
     },
     "License": {
       "properties": {
-        "contents": {
+        "value": {
           "type": "string"
-        },
-        "locations": {
-          "items": {
-            "$ref": "#/$defs/Location"
-          },
-          "type": "array"
         },
         "spdxExpression": {
           "type": "string"
@@ -1439,35 +1600,47 @@
           },
           "type": "array"
         },
-        "value": {
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "type": "array"
+        },
+        "contents": {
           "type": "string"
         }
       },
-      "required": ["value", "spdxExpression", "type", "urls", "locations"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type",
+        "urls",
+        "locations"
+      ]
     },
     "LinuxKernelArchive": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "architecture": {
           "type": "string"
         },
-        "author": {
-          "type": "string"
-        },
-        "buildTime": {
+        "version": {
           "type": "string"
         },
         "extendedVersion": {
           "type": "string"
         },
+        "buildTime": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
         "format": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "rootDevice": {
-          "type": "integer"
         },
         "rwRootFS": {
           "type": "boolean"
@@ -1475,31 +1648,47 @@
         "swapDevice": {
           "type": "integer"
         },
-        "version": {
-          "type": "string"
+        "rootDevice": {
+          "type": "integer"
         },
         "videoMode": {
           "type": "string"
         }
       },
-      "required": ["name", "architecture", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "architecture",
+        "version"
+      ]
     },
     "LinuxKernelModule": {
       "properties": {
-        "author": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "sourceVersion": {
+          "type": "string"
+        },
+        "path": {
           "type": "string"
         },
         "description": {
           "type": "string"
         },
-        "kernelVersion": {
+        "author": {
           "type": "string"
         },
         "license": {
           "type": "string"
         },
-        "name": {
+        "kernelVersion": {
+          "type": "string"
+        },
+        "versionMagic": {
           "type": "string"
         },
         "parameters": {
@@ -1509,28 +1698,16 @@
             }
           },
           "type": "object"
-        },
-        "path": {
-          "type": "string"
-        },
-        "sourceVersion": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "versionMagic": {
-          "type": "string"
         }
       },
       "type": "object"
     },
     "LinuxKernelModuleParameter": {
       "properties": {
-        "description": {
+        "type": {
           "type": "string"
         },
-        "type": {
+        "description": {
           "type": "string"
         }
       },
@@ -1538,19 +1715,10 @@
     },
     "LinuxRelease": {
       "properties": {
-        "bugReportURL": {
+        "prettyName": {
           "type": "string"
         },
-        "buildID": {
-          "type": "string"
-        },
-        "cpeName": {
-          "type": "string"
-        },
-        "extendedSupport": {
-          "type": "boolean"
-        },
-        "homeURL": {
+        "name": {
           "type": "string"
         },
         "id": {
@@ -1559,25 +1727,22 @@
         "idLike": {
           "$ref": "#/$defs/IDLikes"
         },
+        "version": {
+          "type": "string"
+        },
+        "versionID": {
+          "type": "string"
+        },
+        "versionCodename": {
+          "type": "string"
+        },
+        "buildID": {
+          "type": "string"
+        },
         "imageID": {
           "type": "string"
         },
         "imageVersion": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "prettyName": {
-          "type": "string"
-        },
-        "privacyPolicyURL": {
-          "type": "string"
-        },
-        "supportEnd": {
-          "type": "string"
-        },
-        "supportURL": {
           "type": "string"
         },
         "variant": {
@@ -1586,20 +1751,38 @@
         "variantID": {
           "type": "string"
         },
-        "version": {
+        "homeURL": {
           "type": "string"
         },
-        "versionCodename": {
+        "supportURL": {
           "type": "string"
         },
-        "versionID": {
+        "bugReportURL": {
           "type": "string"
+        },
+        "privacyPolicyURL": {
+          "type": "string"
+        },
+        "cpeName": {
+          "type": "string"
+        },
+        "supportEnd": {
+          "type": "string"
+        },
+        "extendedSupport": {
+          "type": "boolean"
         }
       },
       "type": "object"
     },
     "Location": {
       "properties": {
+        "path": {
+          "type": "string"
+        },
+        "layerID": {
+          "type": "string"
+        },
         "accessPath": {
           "type": "string"
         },
@@ -1610,19 +1793,34 @@
             }
           },
           "type": "object"
-        },
-        "layerID": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
         }
       },
-      "required": ["path", "accessPath"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path",
+        "accessPath"
+      ]
     },
     "LuarocksPackage": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
         "dependencies": {
           "patternProperties": {
             ".*": {
@@ -1630,43 +1828,42 @@
             }
           },
           "type": "object"
-        },
-        "description": {
-          "type": "string"
-        },
-        "homepage": {
-          "type": "string"
-        },
-        "license": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version", "license", "homepage", "description", "url", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "license",
+        "homepage",
+        "description",
+        "url",
+        "dependencies"
+      ]
     },
     "MicrosoftKbPatch": {
       "properties": {
-        "kb": {
+        "product_id": {
           "type": "string"
         },
-        "product_id": {
+        "kb": {
           "type": "string"
         }
       },
-      "required": ["product_id", "kb"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "product_id",
+        "kb"
+      ]
     },
     "NixDerivation": {
       "properties": {
+        "path": {
+          "type": "string"
+        },
+        "system": {
+          "type": "string"
+        },
         "inputDerivations": {
           "items": {
             "$ref": "#/$defs/NixDerivationReference"
@@ -1678,32 +1875,35 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "path": {
-          "type": "string"
-        },
-        "system": {
-          "type": "string"
         }
       },
       "type": "object"
     },
     "NixDerivationReference": {
       "properties": {
+        "path": {
+          "type": "string"
+        },
         "outputs": {
           "items": {
             "type": "string"
           },
           "type": "array"
-        },
-        "path": {
-          "type": "string"
         }
       },
       "type": "object"
     },
     "NixStoreEntry": {
       "properties": {
+        "path": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "outputHash": {
+          "type": "string"
+        },
         "derivation": {
           "$ref": "#/$defs/NixDerivation"
         },
@@ -1712,29 +1912,31 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "output": {
-          "type": "string"
-        },
-        "outputHash": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
         }
       },
-      "required": ["outputHash"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "outputHash"
+      ]
     },
     "OpamPackage": {
       "properties": {
-        "checksum": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "licenses": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "dependencies": {
+        "url": {
+          "type": "string"
+        },
+        "checksum": {
           "items": {
             "type": "string"
           },
@@ -1743,47 +1945,61 @@
         "homepage": {
           "type": "string"
         },
-        "licenses": {
+        "dependencies": {
           "items": {
             "type": "string"
           },
           "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "licenses",
+        "url",
+        "checksum",
+        "homepage",
+        "dependencies"
+      ]
+    },
+    "Package": {
+      "properties": {
+        "id": {
+          "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "url": {
-          "type": "string"
-        },
         "version": {
           "type": "string"
-        }
-      },
-      "required": ["name", "version", "licenses", "url", "checksum", "homepage", "dependencies"],
-      "type": "object"
-    },
-    "Package": {
-      "properties": {
-        "cpes": {
-          "$ref": "#/$defs/cpes"
+        },
+        "type": {
+          "type": "string"
         },
         "foundBy": {
           "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "language": {
-          "type": "string"
-        },
-        "licenses": {
-          "$ref": "#/$defs/licenses"
         },
         "locations": {
           "items": {
             "$ref": "#/$defs/Location"
           },
           "type": "array"
+        },
+        "licenses": {
+          "$ref": "#/$defs/licenses"
+        },
+        "language": {
+          "type": "string"
+        },
+        "cpes": {
+          "$ref": "#/$defs/cpes"
+        },
+        "purl": {
+          "type": "string"
+        },
+        "metadataType": {
+          "type": "string"
         },
         "metadata": {
           "anyOf": [
@@ -1965,25 +2181,21 @@
               "$ref": "#/$defs/WordpressPluginEntry"
             }
           ]
-        },
-        "metadataType": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "purl": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["id", "name", "version", "type", "foundBy", "locations", "licenses", "language", "cpes", "purl"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "foundBy",
+        "locations",
+        "licenses",
+        "language",
+        "cpes",
+        "purl"
+      ]
     },
     "PeBinary": {
       "properties": {
@@ -1991,84 +2203,65 @@
           "$ref": "#/$defs/KeyValues"
         }
       },
-      "required": ["VersionResources"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "VersionResources"
+      ]
     },
     "PhpComposerAuthors": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "email": {
           "type": "string"
         },
         "homepage": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
         }
       },
-      "required": ["name"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name"
+      ]
     },
     "PhpComposerExternalReference": {
       "properties": {
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
         "reference": {
           "type": "string"
         },
         "shasum": {
           "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
         }
       },
-      "required": ["type", "url", "reference"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "type",
+        "url",
+        "reference"
+      ]
     },
     "PhpComposerInstalledEntry": {
       "properties": {
-        "authors": {
-          "items": {
-            "$ref": "#/$defs/PhpComposerAuthors"
-          },
-          "type": "array"
-        },
-        "bin": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "description": {
+        "name": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
         },
         "dist": {
           "$ref": "#/$defs/PhpComposerExternalReference"
         },
-        "homepage": {
-          "type": "string"
-        },
-        "keywords": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "license": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "notification-url": {
-          "type": "string"
-        },
-        "provide": {
+        "require": {
           "patternProperties": {
             ".*": {
               "type": "string"
@@ -2076,7 +2269,7 @@
           },
           "type": "object"
         },
-        "require": {
+        "provide": {
           "patternProperties": {
             ".*": {
               "type": "string"
@@ -2092,9 +2285,6 @@
           },
           "type": "object"
         },
-        "source": {
-          "$ref": "#/$defs/PhpComposerExternalReference"
-        },
         "suggest": {
           "patternProperties": {
             ".*": {
@@ -2103,61 +2293,69 @@
           },
           "type": "object"
         },
-        "time": {
-          "type": "string"
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "type": {
           "type": "string"
         },
-        "version": {
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
           "type": "string"
         }
       },
-      "required": ["name", "version", "source", "dist"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ]
     },
     "PhpComposerLockEntry": {
       "properties": {
-        "authors": {
-          "items": {
-            "$ref": "#/$defs/PhpComposerAuthors"
-          },
-          "type": "array"
-        },
-        "bin": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "description": {
+        "name": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference"
         },
         "dist": {
           "$ref": "#/$defs/PhpComposerExternalReference"
         },
-        "homepage": {
-          "type": "string"
-        },
-        "keywords": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "license": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "notification-url": {
-          "type": "string"
-        },
-        "provide": {
+        "require": {
           "patternProperties": {
             ".*": {
               "type": "string"
@@ -2165,7 +2363,7 @@
           },
           "type": "object"
         },
-        "require": {
+        "provide": {
           "patternProperties": {
             ".*": {
               "type": "string"
@@ -2181,9 +2379,6 @@
           },
           "type": "object"
         },
-        "source": {
-          "$ref": "#/$defs/PhpComposerExternalReference"
-        },
         "suggest": {
           "patternProperties": {
             ".*": {
@@ -2192,22 +2387,63 @@
           },
           "type": "object"
         },
-        "time": {
-          "type": "string"
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "type": {
           "type": "string"
         },
-        "version": {
+        "notification-url": {
+          "type": "string"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "time": {
           "type": "string"
         }
       },
-      "required": ["name", "version", "source", "dist"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ]
     },
     "PhpPearEntry": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "channel": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "license": {
@@ -2215,20 +2451,23 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
     },
     "PhpPeclEntry": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "channel": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "license": {
@@ -2236,61 +2475,65 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
     },
     "PortageDbEntry": {
       "properties": {
-        "files": {
-          "items": {
-            "$ref": "#/$defs/PortageFileRecord"
-          },
-          "type": "array"
-        },
         "installedSize": {
           "type": "integer"
         },
         "licenses": {
           "type": "string"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/PortageFileRecord"
+          },
+          "type": "array"
         }
       },
-      "required": ["installedSize", "files"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "installedSize",
+        "files"
+      ]
     },
     "PortageFileRecord": {
       "properties": {
-        "digest": {
-          "$ref": "#/$defs/Digest"
-        },
         "path": {
           "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest"
         }
       },
-      "required": ["path"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path"
+      ]
     },
     "PythonDirectURLOriginInfo": {
       "properties": {
-        "commitId": {
+        "url": {
           "type": "string"
         },
-        "url": {
+        "commitId": {
           "type": "string"
         },
         "vcs": {
           "type": "string"
         }
       },
-      "required": ["url"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "url"
+      ]
     },
     "PythonFileDigest": {
       "properties": {
@@ -2301,61 +2544,51 @@
           "type": "string"
         }
       },
-      "required": ["algorithm", "value"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ]
     },
     "PythonFileRecord": {
       "properties": {
-        "digest": {
-          "$ref": "#/$defs/PythonFileDigest"
-        },
         "path": {
           "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/PythonFileDigest"
         },
         "size": {
           "type": "string"
         }
       },
-      "required": ["path"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path"
+      ]
     },
     "PythonPackage": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
         "author": {
           "type": "string"
         },
         "authorEmail": {
           "type": "string"
         },
-        "directUrlOrigin": {
-          "$ref": "#/$defs/PythonDirectURLOriginInfo"
+        "platform": {
+          "type": "string"
         },
         "files": {
           "items": {
             "$ref": "#/$defs/PythonFileRecord"
           },
           "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "platform": {
-          "type": "string"
-        },
-        "providesExtra": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "requiresDist": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "requiresPython": {
-          "type": "string"
         },
         "sitePackagesRootPath": {
           "type": "string"
@@ -2366,36 +2599,61 @@
           },
           "type": "array"
         },
-        "version": {
+        "directUrlOrigin": {
+          "$ref": "#/$defs/PythonDirectURLOriginInfo"
+        },
+        "requiresPython": {
           "type": "string"
+        },
+        "requiresDist": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "providesExtra": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "version", "author", "authorEmail", "platform", "sitePackagesRootPath"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "platform",
+        "sitePackagesRootPath"
+      ]
     },
     "PythonPipRequirementsEntry": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "extras": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "markers": {
-          "type": "string"
-        },
-        "name": {
+        "versionConstraint": {
           "type": "string"
         },
         "url": {
           "type": "string"
         },
-        "versionConstraint": {
+        "markers": {
           "type": "string"
         }
       },
-      "required": ["name", "versionConstraint"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "versionConstraint"
+      ]
     },
     "PythonPipfileLockEntry": {
       "properties": {
@@ -2409,35 +2667,45 @@
           "type": "string"
         }
       },
-      "required": ["hashes", "index"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "hashes",
+        "index"
+      ]
     },
     "PythonPoetryLockDependencyEntry": {
       "properties": {
-        "extras": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "markers": {
+        "name": {
           "type": "string"
         },
-        "name": {
+        "version": {
           "type": "string"
         },
         "optional": {
           "type": "boolean"
         },
-        "version": {
+        "markers": {
           "type": "string"
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "version", "optional"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "optional"
+      ]
     },
     "PythonPoetryLockEntry": {
       "properties": {
+        "index": {
+          "type": "string"
+        },
         "dependencies": {
           "items": {
             "$ref": "#/$defs/PythonPoetryLockDependencyEntry"
@@ -2449,52 +2717,61 @@
             "$ref": "#/$defs/PythonPoetryLockExtraEntry"
           },
           "type": "array"
-        },
-        "index": {
-          "type": "string"
         }
       },
-      "required": ["index", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "index",
+        "dependencies"
+      ]
     },
     "PythonPoetryLockExtraEntry": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "dependencies": {
           "items": {
             "type": "string"
           },
           "type": "array"
-        },
-        "name": {
-          "type": "string"
         }
       },
-      "required": ["name", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "dependencies"
+      ]
     },
     "PythonUvLockDependencyEntry": {
       "properties": {
-        "extras": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "markers": {
-          "type": "string"
-        },
         "name": {
           "type": "string"
         },
         "optional": {
           "type": "boolean"
+        },
+        "markers": {
+          "type": "string"
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "optional"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "optional"
+      ]
     },
     "PythonUvLockEntry": {
       "properties": {
+        "index": {
+          "type": "string"
+        },
         "dependencies": {
           "items": {
             "$ref": "#/$defs/PythonUvLockDependencyEntry"
@@ -2506,45 +2783,60 @@
             "$ref": "#/$defs/PythonUvLockExtraEntry"
           },
           "type": "array"
-        },
-        "index": {
-          "type": "string"
         }
       },
-      "required": ["index", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "index",
+        "dependencies"
+      ]
     },
     "PythonUvLockExtraEntry": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "dependencies": {
           "items": {
             "type": "string"
           },
           "type": "array"
-        },
-        "name": {
-          "type": "string"
         }
       },
-      "required": ["name", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "dependencies"
+      ]
     },
     "RDescription": {
       "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
         "author": {
           "type": "string"
         },
-        "built": {
+        "maintainer": {
           "type": "string"
         },
-        "depends": {
+        "url": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "description": {
+        "repository": {
           "type": "string"
+        },
+        "built": {
+          "type": "string"
+        },
+        "needsCompilation": {
+          "type": "boolean"
         },
         "imports": {
           "items": {
@@ -2552,25 +2844,13 @@
           },
           "type": "array"
         },
-        "maintainer": {
-          "type": "string"
-        },
-        "needsCompilation": {
-          "type": "boolean"
-        },
-        "repository": {
-          "type": "string"
-        },
-        "suggests": {
+        "depends": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "title": {
-          "type": "string"
-        },
-        "url": {
+        "suggests": {
           "items": {
             "type": "string"
           },
@@ -2581,23 +2861,30 @@
     },
     "Relationship": {
       "properties": {
-        "child": {
+        "parent": {
           "type": "string"
         },
-        "metadata": true,
-        "parent": {
+        "child": {
           "type": "string"
         },
         "type": {
           "type": "string"
-        }
+        },
+        "metadata": true
       },
-      "required": ["parent", "child", "type"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "parent",
+        "child",
+        "type"
+      ]
     },
     "RpmArchive": {
       "properties": {
-        "architecture": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "epoch": {
@@ -2610,32 +2897,14 @@
             }
           ]
         },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/RpmFileRecord"
-          },
-          "type": "array"
-        },
-        "modularityLabel": {
+        "architecture": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         },
         "release": {
           "type": "string"
         },
-        "requires": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "sourceRpm": {
+          "type": "string"
         },
         "signatures": {
           "items": {
@@ -2646,22 +2915,50 @@
         "size": {
           "type": "integer"
         },
-        "sourceRpm": {
-          "type": "string"
-        },
         "vendor": {
           "type": "string"
         },
-        "version": {
+        "modularityLabel": {
           "type": "string"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "version", "epoch", "architecture", "release", "sourceRpm", "size", "vendor", "files"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "files"
+      ]
     },
     "RpmDbEntry": {
       "properties": {
-        "architecture": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "epoch": {
@@ -2674,32 +2971,14 @@
             }
           ]
         },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/RpmFileRecord"
-          },
-          "type": "array"
-        },
-        "modularityLabel": {
+        "architecture": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "provides": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         },
         "release": {
           "type": "string"
         },
-        "requires": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+        "sourceRpm": {
+          "type": "string"
         },
         "signatures": {
           "items": {
@@ -2710,73 +2989,117 @@
         "size": {
           "type": "integer"
         },
-        "sourceRpm": {
-          "type": "string"
-        },
         "vendor": {
           "type": "string"
         },
-        "version": {
+        "modularityLabel": {
           "type": "string"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "version", "epoch", "architecture", "release", "sourceRpm", "size", "vendor", "files"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "files"
+      ]
     },
     "RpmFileRecord": {
       "properties": {
-        "digest": {
-          "$ref": "#/$defs/Digest"
-        },
-        "flags": {
-          "type": "string"
-        },
-        "groupName": {
+        "path": {
           "type": "string"
         },
         "mode": {
           "type": "integer"
         },
-        "path": {
-          "type": "string"
-        },
         "size": {
           "type": "integer"
         },
+        "digest": {
+          "$ref": "#/$defs/Digest"
+        },
         "userName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "flags": {
           "type": "string"
         }
       },
-      "required": ["path", "mode", "size", "digest", "userName", "groupName", "flags"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "path",
+        "mode",
+        "size",
+        "digest",
+        "userName",
+        "groupName",
+        "flags"
+      ]
     },
     "RpmSignature": {
       "properties": {
         "algo": {
           "type": "string"
         },
-        "created": {
+        "hash": {
           "type": "string"
         },
-        "hash": {
+        "created": {
           "type": "string"
         },
         "issuer": {
           "type": "string"
         }
       },
-      "required": ["algo", "hash", "created", "issuer"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "algo",
+        "hash",
+        "created",
+        "issuer"
+      ]
     },
     "RubyGemspec": {
       "properties": {
-        "authors": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "files": {
           "items": {
             "type": "string"
           },
           "type": "array"
         },
-        "files": {
+        "authors": {
           "items": {
             "type": "string"
           },
@@ -2784,34 +3107,44 @@
         },
         "homepage": {
           "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ]
     },
     "RustCargoAuditEntry": {
       "properties": {
         "name": {
           "type": "string"
         },
+        "version": {
+          "type": "string"
+        },
         "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source"
+      ]
+    },
+    "RustCargoLockEntry": {
+      "properties": {
+        "name": {
           "type": "string"
         },
         "version": {
           "type": "string"
-        }
-      },
-      "required": ["name", "version", "source"],
-      "type": "object"
-    },
-    "RustCargoLockEntry": {
-      "properties": {
+        },
+        "source": {
+          "type": "string"
+        },
         "checksum": {
           "type": "string"
         },
@@ -2820,39 +3153,41 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "name": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["name", "version", "source", "checksum", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "checksum",
+        "dependencies"
+      ]
     },
     "Schema": {
       "properties": {
-        "url": {
+        "version": {
           "type": "string"
         },
-        "version": {
+        "url": {
           "type": "string"
         }
       },
-      "required": ["version", "url"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "version",
+        "url"
+      ]
     },
     "Source": {
       "properties": {
         "id": {
           "type": "string"
         },
-        "metadata": true,
         "name": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "supplier": {
@@ -2861,12 +3196,16 @@
         "type": {
           "type": "string"
         },
-        "version": {
-          "type": "string"
-        }
+        "metadata": true
       },
-      "required": ["id", "name", "version", "type", "metadata"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "metadata"
+      ]
     },
     "SwiftPackageManagerLockEntry": {
       "properties": {
@@ -2874,27 +3213,23 @@
           "type": "string"
         }
       },
-      "required": ["revision"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "revision"
+      ]
     },
     "SwiplpackPackage": {
       "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
         "author": {
           "type": "string"
         },
         "authorEmail": {
-          "type": "string"
-        },
-        "dependencies": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "homepage": {
-          "type": "string"
-        },
-        "name": {
           "type": "string"
         },
         "packager": {
@@ -2903,16 +3238,37 @@
         "packagerEmail": {
           "type": "string"
         },
-        "version": {
+        "homepage": {
           "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
-      "required": ["name", "version", "author", "authorEmail", "packager", "packagerEmail", "homepage", "dependencies"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "packager",
+        "packagerEmail",
+        "homepage",
+        "dependencies"
+      ]
     },
     "TerraformLockProviderEntry": {
       "properties": {
+        "url": {
+          "type": "string"
+        },
         "constraints": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "hashes": {
@@ -2920,31 +3276,32 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "url": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       },
-      "required": ["url", "constraints", "version", "hashes"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "url",
+        "constraints",
+        "version",
+        "hashes"
+      ]
     },
     "WordpressPluginEntry": {
       "properties": {
+        "pluginInstallDirectory": {
+          "type": "string"
+        },
         "author": {
           "type": "string"
         },
         "authorUri": {
           "type": "string"
-        },
-        "pluginInstallDirectory": {
-          "type": "string"
         }
       },
-      "required": ["pluginInstallDirectory"],
-      "type": "object"
+      "type": "object",
+      "required": [
+        "pluginInstallDirectory"
+      ]
     },
     "cpes": {
       "items": {
@@ -2958,8 +3315,5 @@
       },
       "type": "array"
     }
-  },
-  "$id": "anchore.io/schema/syft/json/16.0.38/document",
-  "$ref": "#/$defs/Document",
-  "$schema": "https://json-schema.org/draft/2020-12/schema"
+  }
 }
