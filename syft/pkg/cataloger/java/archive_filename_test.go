@@ -187,6 +187,34 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			name:      "gradle-build-cache",
 			ty:        pkg.JavaPkg,
 		},
+		{
+			filename:  "/usr/share/jruby/3.1.0/gems/nokogiri-1.2.4-java/lib/nokogiri/nokogiri.jar",
+			version:   "1.2.4",
+			extension: "jar",
+			name:      "nokogiri",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/usr/share/jruby/3.1.0/gems/nokogiri-31.12.40-java/lib/nokogiri/nokogiri.jar",
+			version:   "31.12.40",
+			extension: "jar",
+			name:      "nokogiri",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/usr/share/repository/ehacache/12.11.10-rc1/ehacache.jar",
+			version:   "12.11.10-rc1",
+			extension: "jar",
+			name:      "ehacache",
+			ty:        pkg.JavaPkg,
+		},
+		{
+			filename:  "/usr/share/repository/ehacache/12.11.10-SNAPSHOT/ehacache.jar",
+			version:   "12.11.10-SNAPSHOT",
+			extension: "jar",
+			name:      "ehacache",
+			ty:        pkg.JavaPkg,
+		},
 	}
 
 	for _, test := range tests {

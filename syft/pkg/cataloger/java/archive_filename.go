@@ -92,6 +92,17 @@ func newJavaArchiveFilename(raw string) archiveFilename {
 		version = getSubexp(matches, "version", secondaryVersionPattern, raw)
 		if version != "" {
 			name = name[0 : len(name)-len(version)-1]
+		} else {
+			// some jars have the version only in the path, e.g.:
+			// .../jruby/3.1.0/gems/nokogiri-1.16.4-java/lib/nokogiri/nokogiri.jar
+			// or .../repository/com/nokogiri/1.16.4/nokogiri.jar
+			versionExpression, err := regexp.Compile(name + `.(\d+(?:[-.][-a-zA-Z]*\d+)+(?:-SNAPSHOT)?)`)
+			if err == nil {
+				versionMatches := versionExpression.FindStringSubmatch(raw)
+				if len(versionMatches) > 1 {
+					version = versionMatches[1]
+				}
+			}
 		}
 	}
 
