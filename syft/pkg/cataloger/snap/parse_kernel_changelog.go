@@ -36,23 +36,23 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 	// Parse the first line to extract kernel version information
 	// Format: "linux (5.4.0-195.215) focal; urgency=medium"
 	firstLine := lines[0]
-	
+
 	// Extract kernel version using regex
 	kernelVersionRegex := regexp.MustCompile(`linux \(([0-9]+\.[0-9]+\.[0-9]+-[0-9]+)\.([0-9]+)\)`)
 	matches := kernelVersionRegex.FindStringSubmatch(firstLine)
-	
+
 	if len(matches) < 3 {
 		return nil, nil, fmt.Errorf("could not parse kernel version from changelog: %s", firstLine)
 	}
 
-	baseVersion := matches[1]     // e.g., "5.4.0-195"
-	releaseVersion := matches[2]  // e.g., "215"
+	baseVersion := matches[1]                                        // e.g., "5.4.0-195"
+	releaseVersion := matches[2]                                     // e.g., "215"
 	fullVersion := fmt.Sprintf("%s.%s", baseVersion, releaseVersion) // e.g., "5.4.0-195.215"
 
 	// Extract major version for package naming
 	majorVersionRegex := regexp.MustCompile(`([0-9]+\.[0-9]+)\.[0-9]+-[0-9]+`)
 	majorMatches := majorVersionRegex.FindStringSubmatch(baseVersion)
-	
+
 	var majorVersion string
 	if len(majorMatches) >= 2 {
 		majorVersion = majorMatches[1] // e.g., "5.4"
@@ -66,7 +66,7 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 
 	// Create a Linux kernel image package
 	kernelPackageName := fmt.Sprintf("linux-image-%s-generic", baseVersion)
-	
+
 	kernelPkg := newDebianPackageFromSnap(
 		kernelPackageName,
 		fullVersion,
@@ -80,18 +80,18 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 	// Parse additional lines for base kernel entry if present
 	// Look for lines containing version information for the base kernel
 	baseKernelEntry := fmt.Sprintf("%s/linux:", strings.ReplaceAll(releaseVersion, ";", "/"))
-	
+
 	for _, line := range lines {
 		if strings.Contains(line, baseKernelEntry) {
 			// Extract base kernel version using regex
 			baseKernelRegex := regexp.MustCompile(fmt.Sprintf(`(%s-[0-9]+)\.?[0-9]*`, regexp.QuoteMeta(majorVersion)))
 			baseMatches := baseKernelRegex.FindStringSubmatch(line)
-			
+
 			if len(baseMatches) >= 2 {
 				baseKernelVersion := baseMatches[1]
 				baseKernelFullRegex := regexp.MustCompile(fmt.Sprintf(`(%s-[0-9]+\.[0-9]+)`, regexp.QuoteMeta(majorVersion)))
 				baseFullMatches := baseKernelFullRegex.FindStringSubmatch(line)
-				
+
 				var baseFullVersion string
 				if len(baseFullMatches) >= 2 {
 					baseFullVersion = baseFullMatches[1]
@@ -106,7 +106,7 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 					snapMetadata,
 					reader.Location,
 				)
-				
+
 				packages = append(packages, baseKernelPkg)
 			}
 			break

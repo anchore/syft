@@ -15,30 +15,30 @@ import (
 
 // snapcraftYaml represents the structure of snapcraft.yaml files found in snapd snaps
 type snapcraftYaml struct {
-	Name         string                 `yaml:"name"`
-	Version      string                 `yaml:"version"`
-	Summary      string                 `yaml:"summary"`
-	Description  string                 `yaml:"description"`
-	Base         string                 `yaml:"base"`
-	Grade        string                 `yaml:"grade"`
-	Confinement  string                 `yaml:"confinement"`
-	Architectures []string              `yaml:"architectures"`
-	Parts        map[string]snapcraftPart `yaml:"parts"`
+	Name          string                   `yaml:"name"`
+	Version       string                   `yaml:"version"`
+	Summary       string                   `yaml:"summary"`
+	Description   string                   `yaml:"description"`
+	Base          string                   `yaml:"base"`
+	Grade         string                   `yaml:"grade"`
+	Confinement   string                   `yaml:"confinement"`
+	Architectures []string                 `yaml:"architectures"`
+	Parts         map[string]snapcraftPart `yaml:"parts"`
 }
 
 // snapcraftPart represents a part in a snapcraft.yaml file
 type snapcraftPart struct {
-	Plugin           string            `yaml:"plugin"`
-	Source           string            `yaml:"source"`
-	SourceType       string            `yaml:"source-type"`
-	SourceTag        string            `yaml:"source-tag"`
-	SourceCommit     string            `yaml:"source-commit"`
-	BuildPackages    []string          `yaml:"build-packages"`
-	StagePackages    []string          `yaml:"stage-packages"`
-	BuildSnaps       []string          `yaml:"build-snaps"`
-	StageSnaps       []string          `yaml:"stage-snaps"`
+	Plugin           string              `yaml:"plugin"`
+	Source           string              `yaml:"source"`
+	SourceType       string              `yaml:"source-type"`
+	SourceTag        string              `yaml:"source-tag"`
+	SourceCommit     string              `yaml:"source-commit"`
+	BuildPackages    []string            `yaml:"build-packages"`
+	StagePackages    []string            `yaml:"stage-packages"`
+	BuildSnaps       []string            `yaml:"build-snaps"`
+	StageSnaps       []string            `yaml:"stage-snaps"`
 	BuildEnvironment []map[string]string `yaml:"build-environment"`
-	Override         map[string]string `yaml:"override-build"`
+	Override         map[string]string   `yaml:"override-build"`
 }
 
 // parseSnapdSnapcraft parses snapcraft.yaml files from snapd snaps

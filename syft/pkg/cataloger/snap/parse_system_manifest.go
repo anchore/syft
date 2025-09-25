@@ -15,10 +15,10 @@ import (
 
 // systemManifest represents the structure of manifest.yaml files found in system/gadget snaps
 type systemManifest struct {
-	Name                  string   `yaml:"name"`
-	Version               string   `yaml:"version"`
-	Base                  string   `yaml:"base"`
-	Grade                 string   `yaml:"grade"`
+	Name                 string   `yaml:"name"`
+	Version              string   `yaml:"version"`
+	Base                 string   `yaml:"base"`
+	Grade                string   `yaml:"grade"`
 	Confinement          string   `yaml:"confinement"`
 	PrimedStagePackages  []string `yaml:"primed-stage-packages"`
 	Architectures        []string `yaml:"architectures"`
@@ -50,10 +50,10 @@ func parseSystemManifest(_ context.Context, _ file.Resolver, _ *generic.Environm
 	}
 
 	snapMetadata := SnapMetadata{
-		SnapType:     snapType,
-		Base:         manifest.Base,
-		SnapName:     manifest.Name,
-		SnapVersion:  manifest.Version,
+		SnapType:    snapType,
+		Base:        manifest.Base,
+		SnapName:    manifest.Name,
+		SnapVersion: manifest.Version,
 	}
 
 	// Set architecture if available
