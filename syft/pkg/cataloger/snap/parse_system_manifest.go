@@ -49,7 +49,7 @@ func parseSystemManifest(_ context.Context, _ file.Resolver, _ *generic.Environm
 		}
 	}
 
-	snapMetadata := SnapMetadata{
+	snapMetadata := Metadata{
 		SnapType:    snapType,
 		Base:        manifest.Base,
 		SnapName:    manifest.Name,

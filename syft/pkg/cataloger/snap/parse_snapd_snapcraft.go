@@ -50,110 +50,139 @@ func parseSnapdSnapcraft(_ context.Context, _ file.Resolver, _ *generic.Environm
 		return nil, nil, fmt.Errorf("failed to parse snapcraft.yaml: %w", err)
 	}
 
-	var packages []pkg.Package
+	snapMetadata := createMetadata(snapcraft)
+	packages := extractPackagesFromParts(snapcraft, snapMetadata, reader.Location)
 
-	snapMetadata := SnapMetadata{
+	return packages, nil, nil
+}
+
+// createMetadata creates metadata from snapcraft.yaml
+func createMetadata(snapcraft snapcraftYaml) Metadata {
+	metadata := Metadata{
 		SnapType:    SnapTypeSnapd,
 		Base:        snapcraft.Base,
 		SnapName:    snapcraft.Name,
 		SnapVersion: snapcraft.Version,
 	}
 
-	// Set architecture if available
 	if len(snapcraft.Architectures) > 0 {
-		snapMetadata.Architecture = snapcraft.Architectures[0]
+		metadata.Architecture = snapcraft.Architectures[0]
 	}
 
-	// Parse packages from all parts
-	for partName, part := range snapcraft.Parts {
-		// Process build-packages
-		for _, pkgName := range part.BuildPackages {
-			if pkgName == "" {
-				continue
-			}
+	return metadata
+}
 
-			// Build packages might not have explicit versions, use unknown
-			buildPkg := newDebianPackageFromSnap(
-				pkgName,
-				"unknown",
-				SnapMetadata{
-					SnapType:     SnapTypeSnapd,
-					Base:         snapcraft.Base,
-					SnapName:     snapcraft.Name,
-					SnapVersion:  snapcraft.Version,
-					Architecture: snapMetadata.Architecture,
-				},
-				reader.Location,
-			)
+// extractPackagesFromParts processes all parts to extract packages
+func extractPackagesFromParts(snapcraft snapcraftYaml, baseMetadata Metadata, location file.Location) []pkg.Package {
+	var packages []pkg.Package
 
-			packages = append(packages, buildPkg)
-		}
+	for _, part := range snapcraft.Parts {
+		buildPackages := processBuildPackages(part.BuildPackages, baseMetadata, location)
+		packages = append(packages, buildPackages...)
 
-		// Process stage-packages (these might have version constraints)
-		for _, pkgEntry := range part.StagePackages {
-			if pkgEntry == "" {
-				continue
-			}
+		stagePackages := processStagePackages(part.StagePackages, baseMetadata, location)
+		packages = append(packages, stagePackages...)
 
-			name := pkgEntry
-			version := "unknown"
-
-			// Handle version constraints like "package=version" or "package>=version"
-			if strings.ContainsAny(pkgEntry, "=<>") {
-				// Split on various version operators
-				for _, op := range []string{">=", "<=", "==", "!=", "=", ">", "<"} {
-					if strings.Contains(pkgEntry, op) {
-						parts := strings.SplitN(pkgEntry, op, 2)
-						if len(parts) == 2 {
-							name = strings.TrimSpace(parts[0])
-							version = strings.TrimSpace(parts[1])
-							break
-						}
-					}
-				}
-			}
-
-			stagePkg := newDebianPackageFromSnap(
-				name,
-				version,
-				SnapMetadata{
-					SnapType:     SnapTypeSnapd,
-					Base:         snapcraft.Base,
-					SnapName:     snapcraft.Name,
-					SnapVersion:  snapcraft.Version,
-					Architecture: snapMetadata.Architecture,
-				},
-				reader.Location,
-			)
-
-			packages = append(packages, stagePkg)
-		}
-
-		// Process build-snaps and stage-snaps as snap dependencies
-		for _, snapName := range append(part.BuildSnaps, part.StageSnaps...) {
-			if snapName == "" {
-				continue
-			}
-
-			snapPkg := newPackage(
-				snapName,
-				"unknown",
-				SnapMetadata{
-					SnapType:     SnapTypeApp, // Assume app type for dependencies
-					SnapName:     snapName,
-					SnapVersion:  "unknown",
-					Architecture: snapMetadata.Architecture,
-				},
-				reader.Location,
-			)
-
-			packages = append(packages, snapPkg)
-		}
-
-		// If part has source information, we could potentially track source dependencies
-		// For now, we'll skip this as it's complex and may not provide much value
-		_ = partName // Suppress unused variable warning
+		snapPackages := processSnapPackages(part.BuildSnaps, part.StageSnaps, baseMetadata, location)
+		packages = append(packages, snapPackages...)
 	}
 
-	return packages, nil, nil
+	return packages
+}
+
+// processBuildPackages creates packages from build-packages list
+func processBuildPackages(buildPackages []string, metadata Metadata, location file.Location) []pkg.Package {
+	var packages []pkg.Package
+
+	for _, pkgName := range buildPackages {
+		if pkgName == "" {
+			continue
+		}
+
+		buildPkg := newDebianPackageFromSnap(
+			pkgName,
+			"unknown",
+			metadata,
+			location,
+		)
+		packages = append(packages, buildPkg)
+	}
+
+	return packages
+}
+
+// processStagePackages creates packages from stage-packages list with version parsing
+func processStagePackages(stagePackages []string, metadata Metadata, location file.Location) []pkg.Package {
+	var packages []pkg.Package
+
+	for _, pkgEntry := range stagePackages {
+		if pkgEntry == "" {
+			continue
+		}
+
+		name, version := parsePackageWithVersion(pkgEntry)
+		stagePkg := newDebianPackageFromSnap(
+			name,
+			version,
+			metadata,
+			location,
+		)
+		packages = append(packages, stagePkg)
+	}
+
+	return packages
+}
+
+// parsePackageWithVersion extracts package name and version from version-constrained entries
+func parsePackageWithVersion(pkgEntry string) (string, string) {
+	name := pkgEntry
+	version := "unknown"
+
+	if !strings.ContainsAny(pkgEntry, "=<>") {
+		return name, version
+	}
+
+	// Try to split on version operators
+	operators := []string{">=", "<=", "==", "!=", "=", ">", "<"}
+	for _, op := range operators {
+		if strings.Contains(pkgEntry, op) {
+			parts := strings.SplitN(pkgEntry, op, 2)
+			if len(parts) == 2 {
+				return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+			}
+		}
+	}
+
+	return name, version
+}
+
+// processSnapPackages creates packages from snap dependencies
+func processSnapPackages(buildSnaps, stageSnaps []string, baseMetadata Metadata, location file.Location) []pkg.Package {
+	var packages []pkg.Package
+	allSnaps := make([]string, 0, len(buildSnaps)+len(stageSnaps))
+	allSnaps = append(allSnaps, buildSnaps...)
+	allSnaps = append(allSnaps, stageSnaps...)
+
+	for _, snapName := range allSnaps {
+		if snapName == "" {
+			continue
+		}
+
+		snapMetadata := Metadata{
+			SnapType:     SnapTypeApp,
+			SnapName:     snapName,
+			SnapVersion:  "unknown",
+			Architecture: baseMetadata.Architecture,
+		}
+
+		snapPkg := newPackage(
+			snapName,
+			"unknown",
+			snapMetadata,
+			location,
+		)
+		packages = append(packages, snapPkg)
+	}
+
+	return packages
 }

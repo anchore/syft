@@ -43,7 +43,7 @@ func parseSnapYaml(_ context.Context, _ file.Resolver, _ *generic.Environment, r
 		snapType = SnapTypeApp
 	}
 
-	metadata := SnapMetadata{
+	metadata := Metadata{
 		SnapType:     snapType,
 		Base:         snap.Base,
 		SnapName:     snap.Name,
