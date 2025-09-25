@@ -30,6 +30,7 @@ func AllTypes() []any {
 		pkg.GitHubActionsUseStatement{},
 		pkg.GolangBinaryBuildinfoEntry{},
 		pkg.GolangModuleEntry{},
+		pkg.GolangSourceEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HomebrewFormula{},

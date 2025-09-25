@@ -36,7 +36,7 @@ type RpmDBEntry struct {
 	Signatures      []RpmSignature  `json:"signatures,omitempty" cyclonedx:"signatures"`
 	Size            int             `json:"size" cyclonedx:"size"`
 	Vendor          string          `json:"vendor"`
-	ModularityLabel *string         `json:"modularityLabel,omitempty"`
+	ModularityLabel *string         `json:"modularityLabel,omitempty" cyclonedx:"modularityLabel"`
 	Provides        []string        `json:"provides,omitempty"`
 	Requires        []string        `json:"requires,omitempty"`
 	Files           []RpmFileRecord `json:"files"`
