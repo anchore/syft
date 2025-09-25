@@ -23,18 +23,20 @@ type kernelVersionInfo struct {
 
 // parseKernelChangelog parses changelog files from kernel snaps to extract kernel version
 func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// The file should be gzipped
 	lines, err := readChangelogLines(reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// pull from first line
 	versionInfo, err := extractKernelVersion(lines[0])
 	if err != nil {
 		return nil, nil, err
 	}
 
-	snapMetadata := Metadata{
-		SnapType: SnapTypeKernel,
+	snapMetadata := pkg.SnapEntry{
+		SnapType: pkg.SnapTypeKernel,
 	}
 
 	packages := createMainKernelPackage(versionInfo, snapMetadata, reader.Location)
@@ -66,6 +68,8 @@ func readChangelogLines(reader file.LocationReadCloser) ([]string, error) {
 		return nil, fmt.Errorf("changelog file is empty")
 	}
 
+	// Parse the first line to extract kernel version information
+	// Format: "linux (5.4.0-195.215) focal; urgency=medium"
 	return lines, nil
 }
 
@@ -80,12 +84,13 @@ func extractKernelVersion(firstLine string) (*kernelVersionInfo, error) {
 	}
 
 	info := &kernelVersionInfo{
-		baseVersion:    matches[1],
-		releaseVersion: matches[2],
+		baseVersion:    matches[1], // e.g., "5.4.0-195"
+		releaseVersion: matches[2], // eg., "215"
 	}
+	// eg "5.4.0-195.215"
 	info.fullVersion = fmt.Sprintf("%s.%s", info.baseVersion, info.releaseVersion)
 
-	// Extract major version
+	// Extract major version; package naming
 	majorVersionRegex := regexp.MustCompile(`([0-9]+\.[0-9]+)\.[0-9]+-[0-9]+`)
 	majorMatches := majorVersionRegex.FindStringSubmatch(info.baseVersion)
 
@@ -99,7 +104,7 @@ func extractKernelVersion(firstLine string) (*kernelVersionInfo, error) {
 }
 
 // createMainKernelPackage creates the main kernel package
-func createMainKernelPackage(versionInfo *kernelVersionInfo, snapMetadata Metadata, location file.Location) []pkg.Package {
+func createMainKernelPackage(versionInfo *kernelVersionInfo, snapMetadata pkg.SnapEntry, location file.Location) []pkg.Package {
 	kernelPackageName := fmt.Sprintf("linux-image-%s-generic", versionInfo.baseVersion)
 	kernelPkg := newDebianPackageFromSnap(
 		kernelPackageName,
@@ -112,7 +117,7 @@ func createMainKernelPackage(versionInfo *kernelVersionInfo, snapMetadata Metada
 }
 
 // findBaseKernelPackage searches for and creates base kernel package if present
-func findBaseKernelPackage(lines []string, versionInfo *kernelVersionInfo, snapMetadata Metadata, location file.Location) *pkg.Package {
+func findBaseKernelPackage(lines []string, versionInfo *kernelVersionInfo, snapMetadata pkg.SnapEntry, location file.Location) *pkg.Package {
 	baseKernelEntry := fmt.Sprintf("%s/linux:", strings.ReplaceAll(versionInfo.releaseVersion, ";", "/"))
 
 	for _, line := range lines {
@@ -125,7 +130,7 @@ func findBaseKernelPackage(lines []string, versionInfo *kernelVersionInfo, snapM
 }
 
 // parseBaseKernelLine extracts base kernel version from a changelog line
-func parseBaseKernelLine(line string, majorVersion string, snapMetadata Metadata, location file.Location) *pkg.Package {
+func parseBaseKernelLine(line string, majorVersion string, snapMetadata pkg.SnapEntry, location file.Location) *pkg.Package {
 	baseKernelRegex := regexp.MustCompile(fmt.Sprintf(`(%s-[0-9]+)\.?[0-9]*`, regexp.QuoteMeta(majorVersion)))
 	baseMatches := baseKernelRegex.FindStringSubmatch(line)
 

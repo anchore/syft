@@ -48,8 +48,8 @@ func TestRealDpkgYamlParsing(t *testing.T) {
 
 	// Check that architecture is parsed correctly from package names
 	gccPkg := foundPackages["gcc-10-base"]
-	metadata, ok := gccPkg.Metadata.(Metadata)
+	metadata, ok := gccPkg.Metadata.(pkg.SnapEntry)
 	require.True(t, ok)
 	assert.Equal(t, "amd64", metadata.Architecture)
-	assert.Equal(t, SnapTypeBase, metadata.SnapType)
+	assert.Equal(t, pkg.SnapTypeBase, metadata.SnapType)
 }

@@ -57,9 +57,9 @@ func parseSnapdSnapcraft(_ context.Context, _ file.Resolver, _ *generic.Environm
 }
 
 // createMetadata creates metadata from snapcraft.yaml
-func createMetadata(snapcraft snapcraftYaml) Metadata {
-	metadata := Metadata{
-		SnapType:    SnapTypeSnapd,
+func createMetadata(snapcraft snapcraftYaml) pkg.SnapEntry {
+	metadata := pkg.SnapEntry{
+		SnapType:    pkg.SnapTypeSnapd,
 		Base:        snapcraft.Base,
 		SnapName:    snapcraft.Name,
 		SnapVersion: snapcraft.Version,
@@ -73,7 +73,7 @@ func createMetadata(snapcraft snapcraftYaml) Metadata {
 }
 
 // extractPackagesFromParts processes all parts to extract packages
-func extractPackagesFromParts(snapcraft snapcraftYaml, baseMetadata Metadata, location file.Location) []pkg.Package {
+func extractPackagesFromParts(snapcraft snapcraftYaml, baseMetadata pkg.SnapEntry, location file.Location) []pkg.Package {
 	var packages []pkg.Package
 
 	for _, part := range snapcraft.Parts {
@@ -91,7 +91,7 @@ func extractPackagesFromParts(snapcraft snapcraftYaml, baseMetadata Metadata, lo
 }
 
 // processBuildPackages creates packages from build-packages list
-func processBuildPackages(buildPackages []string, metadata Metadata, location file.Location) []pkg.Package {
+func processBuildPackages(buildPackages []string, metadata pkg.SnapEntry, location file.Location) []pkg.Package {
 	var packages []pkg.Package
 
 	for _, pkgName := range buildPackages {
@@ -112,7 +112,7 @@ func processBuildPackages(buildPackages []string, metadata Metadata, location fi
 }
 
 // processStagePackages creates packages from stage-packages list with version parsing
-func processStagePackages(stagePackages []string, metadata Metadata, location file.Location) []pkg.Package {
+func processStagePackages(stagePackages []string, metadata pkg.SnapEntry, location file.Location) []pkg.Package {
 	var packages []pkg.Package
 
 	for _, pkgEntry := range stagePackages {
@@ -157,7 +157,7 @@ func parsePackageWithVersion(pkgEntry string) (string, string) {
 }
 
 // processSnapPackages creates packages from snap dependencies
-func processSnapPackages(buildSnaps, stageSnaps []string, baseMetadata Metadata, location file.Location) []pkg.Package {
+func processSnapPackages(buildSnaps, stageSnaps []string, baseMetadata pkg.SnapEntry, location file.Location) []pkg.Package {
 	var packages []pkg.Package
 	allSnaps := make([]string, 0, len(buildSnaps)+len(stageSnaps))
 	allSnaps = append(allSnaps, buildSnaps...)
@@ -168,8 +168,8 @@ func processSnapPackages(buildSnaps, stageSnaps []string, baseMetadata Metadata,
 			continue
 		}
 
-		snapMetadata := Metadata{
-			SnapType:     SnapTypeApp,
+		snapMetadata := pkg.SnapEntry{
+			SnapType:     pkg.SnapTypeApp,
 			SnapName:     snapName,
 			SnapVersion:  "unknown",
 			Architecture: baseMetadata.Architecture,

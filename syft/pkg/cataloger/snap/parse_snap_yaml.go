@@ -40,10 +40,10 @@ func parseSnapYaml(_ context.Context, _ file.Resolver, _ *generic.Environment, r
 	// Determine snap type - default to "app" if not specified
 	snapType := snap.Type
 	if snapType == "" {
-		snapType = SnapTypeApp
+		snapType = pkg.SnapTypeApp
 	}
 
-	metadata := Metadata{
+	metadata := pkg.SnapEntry{
 		SnapType:     snapType,
 		Base:         snap.Base,
 		SnapName:     snap.Name,

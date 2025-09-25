@@ -38,18 +38,18 @@ func parseSystemManifest(_ context.Context, _ file.Resolver, _ *generic.Environm
 	var packages []pkg.Package
 
 	// Determine snap type - could be system, gadget, or app
-	snapType := SnapTypeApp // Default
+	snapType := pkg.SnapTypeApp // Default
 	if manifest.Name != "" {
 		// Try to infer type from name patterns or content
 		switch {
 		case strings.Contains(strings.ToLower(manifest.Name), "gadget"):
-			snapType = SnapTypeGadget
+			snapType = pkg.SnapTypeGadget
 		default:
-			snapType = SnapTypeApp // System snaps are often just regular apps
+			snapType = pkg.SnapTypeApp // System snaps are often just regular apps
 		}
 	}
 
-	snapMetadata := Metadata{
+	snapMetadata := pkg.SnapEntry{
 		SnapType:    snapType,
 		Base:        manifest.Base,
 		SnapName:    manifest.Name,

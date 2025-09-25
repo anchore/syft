@@ -6,25 +6,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// Metadata represents metadata for a snap package
-type Metadata struct {
-	SnapType     string `json:"snapType" yaml:"snapType"`         // base, kernel, system, gadget, snapd
-	Base         string `json:"base" yaml:"base"`                 // base snap name (e.g., core20, core22)
-	SnapName     string `json:"snapName" yaml:"snapName"`         // name of the snap
-	SnapVersion  string `json:"snapVersion" yaml:"snapVersion"`   // version of the snap
-	Architecture string `json:"architecture" yaml:"architecture"` // architecture (amd64, arm64, etc.)
-}
-
-const (
-	SnapTypeBase   = "base"
-	SnapTypeKernel = "kernel"
-	SnapTypeApp    = "app"
-	SnapTypeGadget = "gadget"
-	SnapTypeSnapd  = "snapd"
-)
-
 // newPackage creates a new Package from snap metadata
-func newPackage(name, version string, metadata Metadata, locations ...file.Location) pkg.Package {
+func newPackage(name, version string, metadata pkg.SnapEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
@@ -40,7 +23,7 @@ func newPackage(name, version string, metadata Metadata, locations ...file.Locat
 }
 
 // packageURL returns the PURL for a snap package
-func packageURL(name, version string, metadata Metadata) string {
+func packageURL(name, version string, metadata pkg.SnapEntry) string {
 	var qualifiers packageurl.Qualifiers
 
 	if metadata.Architecture != "" {
@@ -75,7 +58,7 @@ func packageURL(name, version string, metadata Metadata) string {
 }
 
 // newDebianPackageFromSnap creates a Debian-style package entry from snap manifest data
-func newDebianPackageFromSnap(name, version string, snapMetadata Metadata, locations ...file.Location) pkg.Package {
+func newDebianPackageFromSnap(name, version string, snapMetadata pkg.SnapEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,

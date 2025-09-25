@@ -19,8 +19,8 @@ func TestParseBaseDpkgYaml(t *testing.T) {
 			Type:      pkg.DebPkg,
 			PURL:      "pkg:deb/ubuntu/adduser@3.118ubuntu2",
 			Locations: locations,
-			Metadata: Metadata{
-				SnapType: SnapTypeBase,
+			Metadata: pkg.SnapEntry{
+				SnapType: pkg.SnapTypeBase,
 			},
 		},
 		{
@@ -29,8 +29,8 @@ func TestParseBaseDpkgYaml(t *testing.T) {
 			Type:      pkg.DebPkg,
 			PURL:      "pkg:deb/ubuntu/apparmor@2.13.3-7ubuntu5.3",
 			Locations: locations,
-			Metadata: Metadata{
-				SnapType: SnapTypeBase,
+			Metadata: pkg.SnapEntry{
+				SnapType: pkg.SnapTypeBase,
 			},
 		},
 		{
@@ -39,8 +39,8 @@ func TestParseBaseDpkgYaml(t *testing.T) {
 			Type:      pkg.DebPkg,
 			PURL:      "pkg:deb/ubuntu/gcc-10-base@10.5.0-1ubuntu1~20.04?arch=amd64",
 			Locations: locations,
-			Metadata: Metadata{
-				SnapType:     SnapTypeBase,
+			Metadata: pkg.SnapEntry{
+				SnapType:     pkg.SnapTypeBase,
 				Architecture: "amd64", // from package name suffix
 			},
 		},

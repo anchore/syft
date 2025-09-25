@@ -36,8 +36,8 @@ func parseBaseDpkgYaml(_ context.Context, _ file.Resolver, _ *generic.Environmen
 
 	var packages []pkg.Package
 
-	snapMetadata := Metadata{
-		SnapType: SnapTypeBase,
+	snapMetadata := pkg.SnapEntry{
+		SnapType: pkg.SnapTypeBase,
 	}
 
 	// Parse each package entry in "name=version" format
