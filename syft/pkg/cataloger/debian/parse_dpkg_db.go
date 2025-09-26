@@ -40,7 +40,7 @@ func parseDpkgDB(cfg CatalogerConfig) generic.Parser {
 }
 
 func parseDpkgDBWithConfig(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser, cfg CatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
-	metadata, err := parseDpkgStatusWithConfig(reader, cfg)
+	metadata, err := parseDpkgStatus(reader, cfg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
 	}
@@ -82,11 +82,7 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	return locations
 }
 
-func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgDBEntry, error) {
-	return parseDpkgStatusWithConfig(reader, DefaultCatalogerConfig())
-}
-
-func parseDpkgStatusWithConfig(reader io.Reader, cfg CatalogerConfig) ([]pkg.DpkgDBEntry, error) {
+func parseDpkgStatus(reader io.Reader, cfg CatalogerConfig) ([]pkg.DpkgDBEntry, error) {
 	buffedReader := bufio.NewReader(reader)
 	var metadata []pkg.DpkgDBEntry
 

@@ -34,7 +34,7 @@ func parseDebArchive(cfg CatalogerConfig) generic.Parser {
 	}
 }
 
-func parseDebArchiveWithConfig(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser, _ CatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDebArchiveWithConfig(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser, cfg CatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	arReader := ar.NewReader(reader)
 
 	var metadata *pkg.DpkgArchiveEntry
@@ -56,7 +56,7 @@ func parseDebArchiveWithConfig(ctx context.Context, _ file.Resolver, _ *generic.
 			if err != nil {
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to decompress control.tar.* file: %w", err))
 			}
-			metadata, err = processControlTar(dcReader)
+			metadata, err = processControlTar(dcReader, cfg)
 			if err != nil {
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to process control.tar.* file: %w", err))
 			}
@@ -110,7 +110,7 @@ func processDataTar(dcReader io.ReadCloser) ([]string, error) {
 	return licenses, nil
 }
 
-func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
+func processControlTar(dcReader io.ReadCloser, cfg CatalogerConfig) (*pkg.DpkgArchiveEntry, error) {
 	defer internal.CloseAndLogError(dcReader, "")
 
 	// Extract control, md5sums, and conffiles files from control.tar
@@ -124,7 +124,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 		return nil, fmt.Errorf("control file not found in archive")
 	}
 
-	metadata, err := newDpkgArchiveMetadata(controlFileContent, md5Content, confContent)
+	metadata, err := newDpkgArchiveMetadata(controlFileContent, md5Content, confContent, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create package metadata: %w", err)
 	}
@@ -132,9 +132,9 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	return &metadata, nil
 }
 
-func newDpkgArchiveMetadata(controlFile, md5sums, confFiles []byte) (pkg.DpkgArchiveEntry, error) {
+func newDpkgArchiveMetadata(controlFile, md5sums, confFiles []byte, cfg CatalogerConfig) (pkg.DpkgArchiveEntry, error) {
 	// parse the control file to get package metadata
-	metadata, err := parseControlFile(string(controlFile))
+	metadata, err := parseControlFile(string(controlFile), cfg)
 	if err != nil {
 		return pkg.DpkgArchiveEntry{}, fmt.Errorf("failed to parse control file: %w", err)
 	}
@@ -207,11 +207,11 @@ func readControlFiles(tarReader *tar.Reader) (controlFile, md5sums, conffiles []
 }
 
 // parseControlFile parses the content of a debian control file into package metadata
-func parseControlFile(controlFileContent string) (pkg.DpkgArchiveEntry, error) {
+func parseControlFile(controlFileContent string, cfg CatalogerConfig) (pkg.DpkgArchiveEntry, error) {
 	// Reuse the existing dpkg status file parsing logic
 	reader := strings.NewReader(controlFileContent)
 
-	entries, err := parseDpkgStatus(reader)
+	entries, err := parseDpkgStatus(reader, cfg)
 	if err != nil {
 		return pkg.DpkgArchiveEntry{}, fmt.Errorf("failed to parse control file: %w", err)
 	}
