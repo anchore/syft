@@ -403,7 +403,7 @@ Installed-Size: 10kib
 				WithErrorAssertion(tt.wantErr).
 				WithLinuxRelease(linux.Release{ID: "debian", VersionID: "10"}).
 				Expects(tt.want, nil).
-				TestParser(t, parseDpkgDB)
+				TestParser(t, parseDpkgDB(DefaultCatalogerConfig()))
 		})
 	}
 }

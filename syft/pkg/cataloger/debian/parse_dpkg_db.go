@@ -33,7 +33,7 @@ var (
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 )
 
-func newDpkgDBParser(cfg CatalogerConfig) generic.Parser {
+func parseDpkgDB(cfg CatalogerConfig) generic.Parser {
 	return func(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		return parseDpkgDBWithConfig(ctx, resolver, env, reader, cfg)
 	}
@@ -82,13 +82,17 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	return locations
 }
 
+func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgDBEntry, error) {
+	return parseDpkgStatusWithConfig(reader, DefaultCatalogerConfig())
+}
+
 func parseDpkgStatusWithConfig(reader io.Reader, cfg CatalogerConfig) ([]pkg.DpkgDBEntry, error) {
 	buffedReader := bufio.NewReader(reader)
 	var metadata []pkg.DpkgDBEntry
 
 	continueProcessing := true
 	for continueProcessing {
-		entry, err := parseDpkgStatusEntryWithConfig(buffedReader, cfg)
+		entry, err := parseDpkgStatusEntry(buffedReader, cfg)
 		if err != nil {
 			if errors.Is(err, errEndOfPackages) {
 				continueProcessing = false
@@ -123,12 +127,7 @@ type dpkgExtractedMetadata struct {
 	Status        string `mapstructure:"Status"`
 }
 
-// parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
-func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
-	return parseDpkgStatusEntryWithConfig(reader, DefaultCatalogerConfig())
-}
-
-func parseDpkgStatusEntryWithConfig(reader *bufio.Reader, cfg CatalogerConfig) (*pkg.DpkgDBEntry, error) {
+func parseDpkgStatusEntry(reader *bufio.Reader, cfg CatalogerConfig) (*pkg.DpkgDBEntry, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
