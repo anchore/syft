@@ -47,6 +47,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PythonUvLockEntry{},
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
+		pkg.SnapEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
 		pkg.OpamPackage{},
