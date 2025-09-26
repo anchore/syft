@@ -494,3 +494,54 @@ func abstractRelationships(t testing.TB, relationships []artifact.Relationship) 
 
 	return abstracted
 }
+
+func Test_parseDpkgStatus_deinstall(t *testing.T) {
+	tests := []struct {
+		name             string
+		includeDeinstall bool
+		expectedCount    int
+	}{
+		{
+			name:             "exclude deinstalled packages (default)",
+			includeDeinstall: false,
+			expectedCount:    1,
+		},
+		{
+			name:             "include deinstalled packages",
+			includeDeinstall: true,
+			expectedCount:    2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixture, err := os.Open("test-fixtures/var/lib/dpkg/status.d/deinstall")
+			require.NoError(t, err)
+			defer fixture.Close()
+
+			cfg := CatalogerConfig{
+				IncludeDeInstalled: tt.includeDeinstall,
+			}
+
+			entries, err := parseDpkgStatusWithConfig(fixture, cfg)
+			require.NoError(t, err)
+
+			assert.Len(t, entries, tt.expectedCount, "expected %d entries", tt.expectedCount)
+
+			if tt.includeDeinstall {
+				var foundDeinstalled bool
+				for _, entry := range entries {
+					if entry.Package == "linux-image-6.8.0-1029-aws" {
+						foundDeinstalled = true
+						break
+					}
+				}
+				assert.True(t, foundDeinstalled, "should find deinstalled package when includeDeinstall=true")
+			} else {
+				for _, entry := range entries {
+					assert.NotEqual(t, "linux-image-6.8.0-1029-aws", entry.Package, "should not find deinstalled package when includeDeinstall=false")
+				}
+			}
+		})
+	}
+}

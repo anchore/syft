@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/debian"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -44,6 +45,7 @@ type Catalog struct {
 	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
+	Debian      debianConfig      `yaml:"debian" json:"debian" mapstructure:"debian"`
 	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
@@ -76,6 +78,7 @@ func DefaultCatalog() Catalog {
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
+		Debian:        defaultDebianConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		Nix:           defaultNixConfig(),
 		Dotnet:        defaultDotnetConfig(),
@@ -170,6 +173,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
+		Debian: debian.DefaultCatalogerConfig().
+			WithIncludeDeInstalled(cfg.Debian.IncludeDeInstalled),
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).

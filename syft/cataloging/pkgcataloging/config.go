@@ -2,6 +2,7 @@ package pkgcataloging
 
 import (
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/debian"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -13,6 +14,7 @@ import (
 
 type Config struct {
 	Binary      binary.ClassifierCatalogerConfig  `yaml:"binary" json:"binary" mapstructure:"binary"`
+	Debian      debian.CatalogerConfig            `yaml:"debian" json:"debian" mapstructure:"debian"`
 	Dotnet      dotnet.CatalogerConfig            `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
@@ -25,6 +27,7 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		Binary:      binary.DefaultClassifierCatalogerConfig(),
+		Debian:      debian.DefaultCatalogerConfig(),
 		Dotnet:      dotnet.DefaultCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),
@@ -71,5 +74,10 @@ func (c Config) WithPythonConfig(cfg python.CatalogerConfig) Config {
 
 func (c Config) WithJavaArchiveConfig(cfg java.ArchiveCatalogerConfig) Config {
 	c.JavaArchive = cfg
+	return c
+}
+
+func (c Config) WithDebianConfig(cfg debian.CatalogerConfig) Config {
+	c.Debian = cfg
 	return c
 }

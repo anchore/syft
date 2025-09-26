@@ -21,6 +21,12 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+func newDebArchiveParser(cfg CatalogerConfig) generic.Parser {
+	return func(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		return parseDebArchiveWithConfig(ctx, resolver, env, reader, cfg)
+	}
+}
+
 // parseDebArchive parses a Debian package archive (.deb) file and returns the packages it contains.
 // A .deb file is an ar archive containing three main files:
 // - debian-binary: Version of the .deb format (usually "2.0")
@@ -29,6 +35,10 @@ import (
 //
 // This function extracts and processes the control information to create package metadata.
 func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	return parseDebArchiveWithConfig(ctx, nil, nil, reader, DefaultCatalogerConfig())
+}
+
+func parseDebArchiveWithConfig(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser, cfg CatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	arReader := ar.NewReader(reader)
 
 	var metadata *pkg.DpkgArchiveEntry

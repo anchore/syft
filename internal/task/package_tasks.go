@@ -59,13 +59,23 @@ func DefaultPackageTaskFactories() Factories {
 		// OS package installed catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(arch.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "alpm", "archlinux"),
 		newSimplePackageTaskFactory(alpine.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "apk", "alpine"),
-		newSimplePackageTaskFactory(debian.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "dpkg", "debian"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return debian.NewDBCatalogerWithOpts(cfg.PackagesConfig.Debian)
+			},
+			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "dpkg", "debian",
+		),
 		newSimplePackageTaskFactory(gentoo.NewPortageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "portage", "gentoo"),
 		newSimplePackageTaskFactory(redhat.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
 
 		// OS package declared catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(redhat.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
-		newSimplePackageTaskFactory(debian.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "deb", "debian"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return debian.NewArchiveCatalogerWithOpts(cfg.PackagesConfig.Debian)
+			},
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "deb", "debian",
+		),
 
 		// language-specific package installed catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(cpp.NewConanInfoCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "cpp", "conan"),

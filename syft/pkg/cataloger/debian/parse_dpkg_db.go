@@ -33,9 +33,14 @@ var (
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
 )
 
-// parseDpkgDB reads a dpkg database "status" file (and surrounding data files) and returns the packages and relationships found.
-func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	metadata, err := parseDpkgStatus(reader)
+func newDpkgDBParser(cfg CatalogerConfig) generic.Parser {
+	return func(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		return parseDpkgDBWithConfig(ctx, resolver, env, reader, cfg)
+	}
+}
+
+func parseDpkgDBWithConfig(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser, cfg CatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
+	metadata, err := parseDpkgStatusWithConfig(reader, cfg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to catalog dpkg DB=%q: %w", reader.RealPath, err)
 	}
@@ -77,14 +82,13 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	return locations
 }
 
-// parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgDBEntry, error) {
+func parseDpkgStatusWithConfig(reader io.Reader, cfg CatalogerConfig) ([]pkg.DpkgDBEntry, error) {
 	buffedReader := bufio.NewReader(reader)
 	var metadata []pkg.DpkgDBEntry
 
 	continueProcessing := true
 	for continueProcessing {
-		entry, err := parseDpkgStatusEntry(buffedReader)
+		entry, err := parseDpkgStatusEntryWithConfig(buffedReader, cfg)
 		if err != nil {
 			if errors.Is(err, errEndOfPackages) {
 				continueProcessing = false
@@ -121,6 +125,10 @@ type dpkgExtractedMetadata struct {
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
 func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
+	return parseDpkgStatusEntryWithConfig(reader, DefaultCatalogerConfig())
+}
+
+func parseDpkgStatusEntryWithConfig(reader *bufio.Reader, cfg CatalogerConfig) (*pkg.DpkgDBEntry, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
@@ -140,7 +148,7 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
 	}
 
 	// Skip entries which have been removed but not purged, e.g. "rc" status in dpkg -l
-	if strings.Contains(raw.Status, deinstallStatus) {
+	if !cfg.IncludeDeInstalled && strings.Contains(raw.Status, deinstallStatus) {
 		return nil, nil
 	}
 
