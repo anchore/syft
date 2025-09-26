@@ -1426,6 +1426,8 @@ var licenseIDs = map[string]string{
 var urlToLicense = map[string]string{
 	"ftp://ftp.tin.org/pub/news/utils/newsx/newsx-1.6.tar.gz":                                                             "Zeeff",
 	"http://apache.org/licenses/LICENSE-1.1":                                                                              "Apache-1.1",
+    "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html": "LGPL-2.1-only",
+    "http://www.eclipse.org/org/documents/edl-v10.php": "BSD-3-Clause",
 	"http://artlibre.org/licence/lal/licence-art-libre-12/":                                                               "LAL-1.2",
 	"http://bits.netizen.com.au/licenses/NOSL/nosl.txt":                                                                   "NOSL",
 	"http://bzip.org/1.0.5/bzip2-manual-1.0.5.html":                                                                       "bzip2-1.0.6",

@@ -54,6 +54,18 @@ func TestLicenseByURL(t *testing.T) {
 			wantFound: false,
 		},
 		{
+			name:      "EPL-1.0 license URL",
+			url:       "http://www.eclipse.org/legal/epl-v10.html",
+			wantID:    "EPL-1.0",
+			wantFound: true,
+		},
+		{
+			name:      "LGPL-2.1-only license URL",
+			url:       "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
+			wantID:    "LGPL-2.1-only",
+			wantFound: true,
+		},
+		{
 			name:      "Empty URL",
 			url:       "",
 			wantID:    "",

@@ -25,6 +25,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
+	"github.com/anchore/syft/internal/spdxlicense"
 )
 
 var archiveFormatGlobs = []string{
@@ -374,6 +375,11 @@ func toPkgLicenses(ctx context.Context, location *file.Location, licenses []mave
 		// - have a URL without a license (this is weird, but can happen)
 		if name == "" && url == "" {
 			continue
+		}
+		if licInfo, ok := spdxlicense.LicenseByURL(url); ok {
+			if name == "" {
+				name = licInfo.ID // use detected license ID if no name given
+			}
 		}
 		out = append(out, pkg.NewLicenseFromFieldsWithContext(ctx, name, url, location))
 	}
