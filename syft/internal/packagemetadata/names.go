@@ -102,6 +102,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.PhpPearEntry{}, "php-pear-entry"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
 	jsonNames(pkg.PythonPackage{}, "python-package", "PythonPackageMetadata"),
+	jsonNames(pkg.PythonPdmLockEntry{}, "python-pdm-lock-entry", "PythonPdmLockMetadata"),
 	jsonNames(pkg.PythonPipfileLockEntry{}, "python-pipfile-lock-entry", "PythonPipfileLockMetadata"),
 	jsonNames(pkg.PythonPoetryLockEntry{}, "python-poetry-lock-entry", "PythonPoetryLockMetadata"),
 	jsonNames(pkg.PythonRequirementsEntry{}, "python-pip-requirements-entry", "PythonRequirementsMetadata"),
