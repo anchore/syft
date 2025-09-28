@@ -62,6 +62,7 @@ func AllTypes() []any {
 		pkg.RubyGemspec{},
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
+		pkg.SnapEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
 		pkg.TerraformLockProviderEntry{},

@@ -1392,6 +1392,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ffmpeg-binary"),
 			},
 		},
+		{
+			logicalFixture: "ffmpeg-shared-libs/5.1.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ffmpeg",
+				Version:   "5.1.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/ffmpeg@5.1.4",
+				Locations: locations("libavcodec"),
+				Metadata:  metadata("ffmpeg-library"),
+			},
+		},
 	}
 
 	for _, test := range tests {

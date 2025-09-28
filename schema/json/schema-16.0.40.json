@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.0.41/document",
+  "$id": "anchore.io/schema/syft/json/16.0.40/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -2165,9 +2165,6 @@
               "$ref": "#/$defs/PythonPackage"
             },
             {
-              "$ref": "#/$defs/PythonPdmLockEntry"
-            },
-            {
               "$ref": "#/$defs/PythonPipRequirementsEntry"
             },
             {
@@ -2658,28 +2655,6 @@
         "authorEmail",
         "platform",
         "sitePackagesRootPath"
-      ]
-    },
-    "PythonPdmLockEntry": {
-      "properties": {
-        "Hashes": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "Index": {
-          "type": "string"
-        },
-        "Summary": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "Hashes",
-        "Index",
-        "Summary"
       ]
     },
     "PythonPipRequirementsEntry": {
