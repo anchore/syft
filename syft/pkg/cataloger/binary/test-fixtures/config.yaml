@@ -838,7 +838,4 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavcodec-9aae324f.so.59.37.100
-      - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavformat-3ff1be5b.so.59.27.100
-      - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavutil-a0a0531e.so.57.28.100
-      - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libswresample-2ec4394e.so.4.7.100
 

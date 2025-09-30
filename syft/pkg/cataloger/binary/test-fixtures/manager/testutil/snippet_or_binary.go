@@ -42,7 +42,7 @@ func SnippetOrBinary(t *testing.T, path string, requireBinary bool) string {
 	require.NoError(t, err)
 
 	var fixturePath string
-	for k, v := range entries {
+	for k, v := range entries.Sorted() {
 		if filepath.Dir(k.Path()) == path {
 			// prefer the snippet over the binary
 			if !requireBinary {
