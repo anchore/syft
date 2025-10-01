@@ -22,12 +22,25 @@ func TestParsePdmLock(t *testing.T) {
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
-				Index: "https://pypi.org/simple",
-				Hashes: []string{
-					"sha256:fd894b8d319934dfd75285b58da35560670e57182d0148c54a3d4ee5da730c78",
-					"sha256:92c3232e0bf7dcb5d921cd1eb8c5e0b856c3985f7c1cd32ab3cd51adc5c9b5da",
-				},
 				Summary: "Async boto3 wrapper",
+				Name:    "aioboto3",
+				Version: "13.2.0",
+				Files: []pkg.PythonFileRecord{
+					{
+						Path: "aioboto3-13.2.0-py3-none-any.whl",
+						Digest: &pkg.PythonFileDigest{
+							Algorithm: "sha256",
+							Value:     "fd894b8d319934dfd75285b58da35560670e57182d0148c54a3d4ee5da730c78",
+						},
+					},
+					{
+						Path: "aioboto3-13.2.0.tar.gz",
+						Digest: &pkg.PythonFileDigest{
+							Algorithm: "sha256",
+							Value:     "92c3232e0bf7dcb5d921cd1eb8c5e0b856c3985f7c1cd32ab3cd51adc5c9b5da",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -38,12 +51,25 @@ func TestParsePdmLock(t *testing.T) {
 			Language:  pkg.Python,
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
-				Index: "https://pypi.org/simple",
-				Hashes: []string{
-					"sha256:d4d3128b4b558e2b4c369bfa963b022d7e87303adb82eec623cec8aa77ae578a",
-					"sha256:9ac1cfcaccccc80602968174aa032bf978abe36bd4e55e6781d6500909af1375",
-				},
 				Summary: "Async client for aws services using botocore and aiohttp",
+				Name:    "aiobotocore",
+				Version: "2.15.2",
+				Files: []pkg.PythonFileRecord{
+					{
+						Path: "aiobotocore-2.15.2-py3-none-any.whl",
+						Digest: &pkg.PythonFileDigest{
+							Algorithm: "sha256",
+							Value:     "d4d3128b4b558e2b4c369bfa963b022d7e87303adb82eec623cec8aa77ae578a",
+						},
+					},
+					{
+						Path: "aiobotocore-2.15.2.tar.gz",
+						Digest: &pkg.PythonFileDigest{
+							Algorithm: "sha256",
+							Value:     "9ac1cfcaccccc80602968174aa032bf978abe36bd4e55e6781d6500909af1375",
+						},
+					},
+				},
 			},
 		},
 	}

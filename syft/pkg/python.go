@@ -60,9 +60,10 @@ func (m PythonPackage) OwnedFiles() (result []string) {
 
 // PythonPdmLockEntry represents a single package entry within a pdm.lock file.
 type PythonPdmLockEntry struct {
-	Hashes  []string `mapstructure:"hashes" toml:"hashes"`
-	Index   string   `mapstructure:"index" toml:"index"`
 	Summary string   `mapstructure:"summary" toml:"summary"`
+	Name    string   `mapstructure:"name" toml:"name"`
+	Version string   `mapstructure:"version" toml:"version"`
+	Files   []PythonFileRecord `mapstructure:"files" toml:"files"`
 }
 
 // PythonPipfileLockEntry represents a single package entry within a Pipfile.lock file.
