@@ -3,6 +3,7 @@ package python
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 
@@ -50,24 +51,33 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 	var pkgs []pkg.Package
 	for _, p := range lock.Package {
 		// Extract hashes from files
-		var hashes []string
+		var files []pkg.PythonFileRecord
 		for _, file := range p.Files {
-			if file.Hash != "" {
-				hashes = append(hashes, file.Hash)
+			if colonIndex := strings.Index(file.Hash, ":"); colonIndex != -1 {
+				algorithm := file.Hash[:colonIndex]
+				value := file.Hash[colonIndex+1:]
+
+				files = append(files, pkg.PythonFileRecord{
+					Path: file.File,
+					Digest: &pkg.PythonFileDigest{
+						Algorithm: algorithm,
+						Value:     value,
+					},
+				})
 			}
 		}
 
-		// Use default PyPI index for now
-		const index = "https://pypi.org/simple"
+		pythonPkgMetadata := pkg.PythonPdmLockEntry{
+			Name:    p.Name,
+			Version: p.Version,
+			Files:   files,
+			Summary: p.Summary,
+		}
 
 		pkgs = append(pkgs, newPackageForIndexWithMetadata(
 			p.Name,
 			p.Version,
-			pkg.PythonPdmLockEntry{
-				Index:   index,
-				Hashes:  hashes,
-				Summary: p.Summary,
-			},
+			pythonPkgMetadata,
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		))
 	}
