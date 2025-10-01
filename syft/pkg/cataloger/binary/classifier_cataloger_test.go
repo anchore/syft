@@ -1399,7 +1399,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "5.1.4",
 				Type:      "binary",
 				PURL:      "pkg:generic/ffmpeg@5.1.4",
-				Locations: locations("libavcodec"),
+				Locations: locations("libavcodec-9aae324f.so.59.37.100"),
 				Metadata:  metadata("ffmpeg-library"),
 			},
 		},
