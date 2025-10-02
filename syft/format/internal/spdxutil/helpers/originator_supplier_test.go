@@ -42,6 +42,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPipfileLockEntry{},
+		pkg.PythonPdmLockEntry{},
 		pkg.PythonRequirementsEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.PythonUvLockEntry{},
@@ -341,6 +342,18 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Person: auth (auth@auth.gov)",
 			supplier:   "Person: auth (auth@auth.gov)",
+		},
+		{
+			name: "from python PDM lock",
+			input: pkg.Package{
+				Metadata: pkg.PythonPdmLockEntry{
+					Hashes:  []string{"sha256:abc123"},
+					Index:   "https://pypi.org/simple",
+					Summary: "A test package",
+				},
+			},
+			originator: "",
+			supplier:   "",
 		},
 		{
 			name: "from r -- maintainer > author",
