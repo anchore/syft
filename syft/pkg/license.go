@@ -22,28 +22,38 @@ import (
 
 var _ sort.Interface = (*Licenses)(nil)
 
-// License represents an SPDX Expression or license value extracted from a package's metadata
-// We want to ignore URLs and Location since we merge these fields across equal licenses.
-// A License is a unique combination of value, expression and type, where
-// its sources are always considered merged and additions to the evidence
-// of where it was found and how it was sourced.
-// This is different from how we treat a package since we consider package paths
-// in order to distinguish if packages should be kept separate
-// this is different for licenses since we're only looking for evidence
-// of where a license was declared/concluded for a given package.
-// If a license is given as it's full text in the metadata rather than it's value or SPDX expression.
-// The Contents field is used to represent this data.
-// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM).
-// The Declared License is what the authors of a project believe govern the package. This is the default type syft declares.
+// License represents an SPDX Expression or license value extracted from a package's metadata.
+// A License is a unique combination of value, expression and type, where its sources are always
+// considered merged and additions to the evidence of where it was found and how it was sourced.
+// This is different from how we treat a package since we consider package paths in order to
+// distinguish if packages should be kept separate. This is different for licenses since we're
+// only looking for evidence of where a license was declared/concluded for a given package.
 type License struct {
+	// SPDXExpression is parsed SPDX license expression (e.g. "MIT OR Apache-2.0")
 	SPDXExpression string
-	Value          string
-	Type           license.Type
-	Contents       string           `hash:"ignore"` // we want to ignore the contents here so we can drop contents in the post-processing step
-	URLs           []string         `hash:"ignore"` // TODO: there is such thing as a url-only license, but we aren't hashing on this, which means overwriting could occur in the license set
-	Locations      file.LocationSet `hash:"ignore"`
+
+	// Value is original raw license string as found in metadata (e.g. "mit or apache-2")
+	Value string
+
+	// Type is classification of how this license was discovered (declared, concluded, etc.).
+	// A Concluded License type is the license the SBOM creator believes governs the package (human crafted or altered SBOM).
+	// The Declared License is what the authors of a project believe govern the package (this is the default type syft uses).
+	Type license.Type
+
+	// Contents is full license text if available. If a license is given as its full text in the
+	// metadata rather than its value or SPDX expression, this field is used to represent that data.
+	Contents string `hash:"ignore"`
+
+	// URLs are the list of URLs where license information was found. These are ignored for uniqueness
+	// since we merge these fields across equal licenses.
+	URLs []string `hash:"ignore"`
+
+	// Locations are the file locations where this license was discovered. These are ignored for uniqueness
+	// since we merge these fields across equal licenses.
+	Locations file.LocationSet `hash:"ignore"`
 }
 
+// Licenses is a sortable collection of License objects implementing sort.Interface.
 type Licenses []License
 
 func (l Licenses) Len() int {
@@ -190,12 +200,18 @@ func (s License) Merge(l License) (*License, error) {
 	return &s, nil
 }
 
+// licenseBuilder is an internal builder for constructing License objects with validation and normalization.
 type licenseBuilder struct {
-	values    []string
-	contents  []io.ReadCloser
+	// values are raw license strings or SPDX expressions to process.
+	values []string
+	// contents are readers for full license text content.
+	contents []io.ReadCloser
+	// locations are file locations where license information was discovered.
 	locations []file.Location
-	urls      []string
-	tp        license.Type
+	// urls are web URLs where license information can be found.
+	urls []string
+	// tp is the license type classification (declared, concluded, etc.).
+	tp license.Type
 }
 
 func newLicenseBuilder() *licenseBuilder {
