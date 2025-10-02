@@ -1163,6 +1163,46 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 		},
 	}
 
+	micronautAop := pkg.Package{
+		Name:      "micronaut-aop",
+		Version:   "4.9.11",
+		PURL:      "pkg:maven/io.micronaut/micronaut-aop@4.9.11",
+		Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/micronaut-aop-4.9.11.jar")),
+		Type:      pkg.JavaPkg,
+		Language:  pkg.Java,
+		Metadata: pkg.JavaArchive{
+			VirtualPath: "test-fixtures/jar-metadata/cache/micronaut-aop-4.9.11.jar",
+			Manifest: &pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{
+						Key:   "Manifest-Version",
+						Value: "1.0",
+					},
+					{
+						Key:   "Automatic-Module-Name",
+						Value: "io.micronaut.micronaut_aop",
+					},
+					{
+						Key:   "Implementation-Version",
+						Value: "4.9.11",
+					},
+					{
+						Key:   "Implementation-Title",
+						Value: "Micronaut Core",
+					},
+				},
+			}, PomProject: &pkg.JavaPomProject{
+				Path:        "META-INF/maven/io.micronaut/micronaut-aop/pom.xml",
+				ArtifactID:  "micronaut-aop",
+				GroupID:     "io.micronaut",
+				Version:     "4.9.11",
+				Name:        "Micronaut Core",
+				Description: "Core components supporting the Micronaut Framework",
+				URL:         "https://micronaut.io",
+			},
+		},
+	}
+
 	tests := []struct {
 		name                  string
 		fixtureName           string
@@ -1339,6 +1379,14 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
 					},
 				},
+			},
+		},
+		{
+			name:          "micronaut-aop",
+			fixtureName:   "micronaut-aop-4.9.11",
+			fileExtension: "jar",
+			expectedPkgs: []pkg.Package{
+				micronautAop,
 			},
 		},
 	}

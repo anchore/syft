@@ -393,7 +393,7 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
-	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
+	// map of all the artifacts in the pom properties, in order to check exact match with the filename
 	artifactsMap := strset.New()
 	for _, propertiesObj := range properties {
 		artifactsMap.Add(propertiesObj.ArtifactID)
@@ -421,6 +421,13 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 					break
 				}
 			}
+		}
+	}
+
+	// TEST FIX for having pom.xml but no
+	if len(properties) == 0 && len(projects) == 1 {
+		for _, projectsObj := range projects {
+			parsedPom = projectsObj
 		}
 	}
 
