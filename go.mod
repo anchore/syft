@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/CycloneDX/cyclonedx-go v0.9.2
+	github.com/CycloneDX/cyclonedx-go v0.9.3
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/OneOfOne/xxhash v1.2.8
