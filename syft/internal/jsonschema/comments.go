@@ -69,7 +69,7 @@ func findTypeAliases(repoRoot string) map[string]string {
 	})
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: failed to find type aliases: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error: failed to find type aliases: %v\n", err)
 		panic(err)
 	}
 
