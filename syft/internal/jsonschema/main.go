@@ -78,6 +78,33 @@ func build() *jsonschema.Schema {
 		Namer: func(r reflect.Type) string {
 			return strings.TrimPrefix(r.Name(), "JSON")
 		},
+		CommentMap: make(map[string]string),
+	}
+
+	// extract comments from Go source files to enrich schema descriptions
+	//
+	// note: AddGoComments parses from the module root and creates keys like "syft/pkg.TypeName",
+	// but the reflector expects fully qualified paths like "github.com/anchore/syft/syft/pkg.TypeName".
+	// We fix up the keys after extraction to match the expected format.
+	if err := reflector.AddGoComments("github.com/anchore/syft", "../../.."); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to extract Go comments: %v\n", err)
+	} else {
+		// fix up comment map keys to use fully qualified import paths
+		fixedMap := make(map[string]string)
+		for k, v := range reflector.CommentMap {
+			newKey := k
+			if !strings.HasPrefix(k, "github.com/") {
+				newKey = "github.com/anchore/syft/" + k
+			}
+			fixedMap[newKey] = v
+		}
+		reflector.CommentMap = fixedMap
+
+		// copy field comments for type aliases (e.g., type RpmArchive RpmDBEntry)
+		repoRoot, err := packagemetadata.RepoRoot()
+		if err == nil {
+			copyAliasFieldComments(reflector.CommentMap, repoRoot)
+		}
 	}
 
 	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
@@ -129,6 +156,9 @@ func build() *jsonschema.Schema {
 	documentSchema.Definitions["Package"].Properties.Set("metadata", map[string][]map[string]string{
 		"anyOf": metadataTypes,
 	})
+
+	// warn about missing descriptions
+	warnMissingDescriptions(documentSchema, metadataNames)
 
 	return documentSchema
 }

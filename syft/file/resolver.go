@@ -18,6 +18,7 @@ type ContentResolver interface {
 	FileContentsByLocation(Location) (io.ReadCloser, error)
 }
 
+// MetadataResolver provides file metadata lookup by location.
 type MetadataResolver interface {
 	FileMetadataByLocation(Location) (Metadata, error)
 }
@@ -51,6 +52,7 @@ type PathResolver interface {
 	RelativeFileByPath(_ Location, path string) *Location
 }
 
+// LocationResolver provides iteration over all file locations in a source.
 type LocationResolver interface {
 	// AllLocations returns a channel of all file references from the underlying source.
 	// The implementation for this may vary, however, generally the following considerations should be made:
@@ -59,6 +61,7 @@ type LocationResolver interface {
 	AllLocations(ctx context.Context) <-chan Location
 }
 
+// WritableResolver extends Resolver with the ability to write file content.
 type WritableResolver interface {
 	Resolver
 
