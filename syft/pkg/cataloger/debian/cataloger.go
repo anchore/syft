@@ -14,12 +14,27 @@ func NewDBCataloger() pkg.Cataloger {
 	return generic.NewCataloger("dpkg-db-cataloger").
 		// note: these globs have been intentionally split up in order to improve search performance,
 		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
-		WithParserByGlobs(parseDpkgDB, "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
+		WithParserByGlobs(parseDpkgDB(CatalogerConfig{IncludeDeInstalled: true}), "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
+		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
+}
+
+// NewDBCatalogerWithOpts returns a new Deb package cataloger capable of parsing DPKG status DB flat-file stores with syft configuration.
+func NewDBCatalogerWithOpts(cfg CatalogerConfig) pkg.Cataloger {
+	return generic.NewCataloger("dpkg-db-cataloger").
+		// note: these globs have been intentionally split up in order to improve search performance,
+		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
+		WithParserByGlobs(parseDpkgDB(cfg), "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
 }
 
 // NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb archive files
 func NewArchiveCataloger() pkg.Cataloger {
 	return generic.NewCataloger("deb-archive-cataloger").
-		WithParserByGlobs(parseDebArchive, "**/*.deb")
+		WithParserByGlobs(parseDebArchive(CatalogerConfig{IncludeDeInstalled: true}), "**/*.deb")
+}
+
+// NewArchiveCatalogerWithOpts returns a new Debian package cataloger object capable of parsing .deb archive files with syft configuration.
+func NewArchiveCatalogerWithOpts(cfg CatalogerConfig) pkg.Cataloger {
+	return generic.NewCataloger("deb-archive-cataloger").
+		WithParserByGlobs(parseDebArchive(cfg), "**/*.deb")
 }

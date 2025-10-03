@@ -237,6 +237,37 @@ func Test_parseDpkgStatus(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "deinstall status packages are ignored",
+			fixturePath: "test-fixtures/var/lib/dpkg/status.d/deinstall",
+			expected: []pkg.DpkgDBEntry{
+				{
+					Package:       "linux-image-6.14.0-1012-aws",
+					Source:        "linux-signed-aws-6.14",
+					Version:       "6.14.0-1012.12~24.04.1",
+					Architecture:  "amd64",
+					InstalledSize: 15221,
+					Maintainer:    "Canonical Kernel Team <kernel-team@lists.ubuntu.com>",
+					Description: `Signed kernel image aws
+ A kernel image for aws.  This version of it is signed with
+ Canonical's signing key.`,
+					Provides: []string{"fuse-module",
+						"linux-image",
+						"spl-dkms",
+						"spl-modules",
+						"v4l2loopback-dkms",
+						"v4l2loopback-modules",
+						"zfs-dkms",
+						"zfs-modules"},
+					Depends: []string{
+						"kmod",
+						"linux-base (>= 4.5ubuntu1~16.04.1)",
+						"linux-modules-6.14.0-1012-aws",
+					},
+					Files: []pkg.DpkgFileRecord{},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -372,7 +403,7 @@ Installed-Size: 10kib
 				WithErrorAssertion(tt.wantErr).
 				WithLinuxRelease(linux.Release{ID: "debian", VersionID: "10"}).
 				Expects(tt.want, nil).
-				TestParser(t, parseDpkgDB)
+				TestParser(t, parseDpkgDB(DefaultCatalogerConfig()))
 		})
 	}
 }
@@ -462,4 +493,55 @@ func abstractRelationships(t testing.TB, relationships []artifact.Relationship) 
 	}
 
 	return abstracted
+}
+
+func Test_parseDpkgStatus_deinstall(t *testing.T) {
+	tests := []struct {
+		name             string
+		includeDeinstall bool
+		expectedCount    int
+	}{
+		{
+			name:             "exclude deinstalled packages (default)",
+			includeDeinstall: false,
+			expectedCount:    1,
+		},
+		{
+			name:             "include deinstalled packages",
+			includeDeinstall: true,
+			expectedCount:    2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixture, err := os.Open("test-fixtures/var/lib/dpkg/status.d/deinstall")
+			require.NoError(t, err)
+			defer fixture.Close()
+
+			cfg := CatalogerConfig{
+				IncludeDeInstalled: tt.includeDeinstall,
+			}
+
+			entries, err := parseDpkgStatusWithConfig(fixture, cfg)
+			require.NoError(t, err)
+
+			assert.Len(t, entries, tt.expectedCount, "expected %d entries", tt.expectedCount)
+
+			if tt.includeDeinstall {
+				var foundDeinstalled bool
+				for _, entry := range entries {
+					if entry.Package == "linux-image-6.8.0-1029-aws" {
+						foundDeinstalled = true
+						break
+					}
+				}
+				assert.True(t, foundDeinstalled, "should find deinstalled package when includeDeinstall=true")
+			} else {
+				for _, entry := range entries {
+					assert.NotEqual(t, "linux-image-6.8.0-1029-aws", entry.Package, "should not find deinstalled package when includeDeinstall=false")
+				}
+			}
+		})
+	}
 }
