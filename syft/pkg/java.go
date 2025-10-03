@@ -94,12 +94,13 @@ type JavaVMRelease struct {
 
 // JavaArchive encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
 type JavaArchive struct {
-	VirtualPath    string             `json:"virtualPath" cyclonedx:"virtualPath"` // we need to include the virtual path in cyclonedx documents to prevent deduplication of jars within jars
-	Manifest       *JavaManifest      `mapstructure:"Manifest" json:"manifest,omitempty"`
-	PomProperties  *JavaPomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
-	PomProject     *JavaPomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
-	ArchiveDigests []file.Digest      `hash:"ignore" json:"digest,omitempty"`
-	Parent         *Package           `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
+	VirtualPath       string             `json:"virtualPath" cyclonedx:"virtualPath"` // we need to include the virtual path in cyclonedx documents to prevent deduplication of jars within jars
+	Manifest          *JavaManifest      `mapstructure:"Manifest" json:"manifest,omitempty"`
+	PomProperties     *JavaPomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
+	PomProject        *JavaPomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
+	ContainedPackages []string           `mapstructure:"ContainedPackages" json:"containedPackages"`
+	ArchiveDigests    []file.Digest      `hash:"ignore" json:"digest,omitempty"`
+	Parent            *Package           `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
 }
 
 // JavaPomProperties represents the fields of interest extracted from a Java archive's pom.properties file.
