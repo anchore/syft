@@ -145,6 +145,50 @@ func TestParsePnpmV6Lock(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePnpmLockV9(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/pnpm-v9/pnpm-lock.yaml"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expected := []pkg.Package{
+		{
+			Name:      "@babel/core",
+			Version:   "7.24.7",
+			PURL:      "pkg:npm/%40babel/core@7.24.7",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "@babel/helper-plugin-utils",
+			Version:   "7.24.7",
+			PURL:      "pkg:npm/%40babel/helper-plugin-utils@7.24.7",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "is-positive",
+			Version:   "3.1.0",
+			PURL:      "pkg:npm/is-positive@3.1.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+		{
+			Name:      "rollup",
+			Version:   "4.18.0",
+			PURL:      "pkg:npm/rollup@4.18.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+		},
+	}
+
+	// TODO: no relationships are under test
+	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expected, expectedRelationships)
+}
+
 func Test_corruptPnpmLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/corrupt/pnpm-lock.yaml").
