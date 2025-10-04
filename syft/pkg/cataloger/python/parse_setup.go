@@ -22,6 +22,7 @@ var _ generic.Parser = parseSetup
 //	 "mypy==v0.770",                        --> match(name=mypy version=v0.770)
 //	" mypy2 == v0.770", ' mypy3== v0.770',  --> match(name=mypy2 version=v0.770), match(name=mypy3, version=v0.770)
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w.]*)`)
+var unquotedPinnedDependency = regexp.MustCompile(`^\s*(\w+)\s*==\s*([\w\.\-]+)`)
 
 func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
@@ -63,7 +64,34 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 				),
 			)
 		}
-	}
+                if matches := unquotedPinnedDependency.FindStringSubmatch(line); len(matches) == 3 {
+                   name := strings.TrimSpace(matches[1])
+                   version := strings.TrimSpace(matches[2])
+            
+                   if hasTemplateDirective(name) || hasTemplateDirective(version) {
+                      continue
+                    }
+            
+                   if name != "" && version != "" {
+                      // Avoid duplicates
+                      isDuplicate := false
+                      for _, p := range packages {
+                          if p.Name == name && p.Version == version {
+                             isDuplicate = true
+                             break
+                          }
+                      }
+                
+                      if !isDuplicate {
+                         packages = append(
+                         packages,
+                         newPackageForIndex(name,version,reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),),
+                         )
+                         }
+                      }
+                 }
+           }
+		
 
 	return packages, nil, nil
 }
