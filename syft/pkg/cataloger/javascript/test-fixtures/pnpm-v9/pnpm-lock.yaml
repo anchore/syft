@@ -1,0 +1,31 @@
+lockfileVersion: '9.0'
+
+importers:
+  .:
+    dependencies:
+      is-positive:
+        specifier: ^3.1.0
+        version: 3.1.0
+      rollup:
+        specifier: ^4.18.0
+        version: 4.18.0
+
+packages:
+  /@babel/core@7.24.7:
+    resolution: {integrity: sha512-4RjkiFFI42+268iBv2nC+iMLTJGQW3u9P7YvA3x/6MDrJ9IYZ8I/xx5a2GIhY5gBTOcI4iC5S5in2fGjE+P4Yw==}
+    dev: false
+
+  /@babel/helper-plugin-utils@7.24.7(@babel/core@7.24.7):
+    resolution: {integrity: sha512-8A2+zKm53/3w4rwbX11FMW/yFS6c5Vam02P/dw01aK6KbwkKqBaIt3eEATiKtn9I2uS1itk8/aZ2yZ/kURee4Q==}
+    peerDependencies:
+      '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
+    dev: false
+
+  /is-positive@3.1.0:
+    resolution: {integrity: sha512-9ffLCf_f5sopimAhg2g91a7b9Rw5A1aA9eI6S391S3VEzYw99I3iKjcZGxLp25s0cRxNBV5aL2mhn7421SSlA==}
+    dev: false
+
+  /rollup@4.18.0:
+    resolution: {integrity: sha512-QpQY2Q5i0y0Q3RoAvoChE/R5iN2k05N//bNvQbC2XvRjHFT1qWJ2r3n1bNqE+gGRJaeuQf0BxE42D7CyuLh3ZQ==}
+    hasBin: true
+    dev: false
