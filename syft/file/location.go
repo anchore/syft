@@ -27,18 +27,24 @@ type Location struct {
 	LocationMetadata `cyclonedx:""`
 }
 
+// LocationData contains the core identifying information for a file location.
 type LocationData struct {
 	Coordinates `cyclonedx:""` // Empty string here means there is no intermediate property name, e.g. syft:locations:0:path without "coordinates"
 	// note: it is IMPORTANT to ignore anything but the coordinates for a Location when considering the ID (hash value)
 	// since the coordinates are the minimally correct ID for a location (symlinks should not come into play)
-	AccessPath string         `hash:"ignore" json:"accessPath"` // The path to the file which may or may not have hardlinks / symlinks
-	ref        file.Reference `hash:"ignore"`                   // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
+
+	// AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)
+	AccessPath string `hash:"ignore" json:"accessPath"`
+
+	// ref is the stereoscope file reference relative to the stereoscope.FileCatalog that has more information about this location.
+	ref file.Reference `hash:"ignore"`
 }
 
 func (l LocationData) Reference() file.Reference {
 	return l.ref
 }
 
+// LocationMetadata provides additional contextual information about a file location.
 type LocationMetadata struct {
 	Annotations map[string]string `json:"annotations,omitempty"` // Arbitrary key-value pairs that can be used to annotate a location
 }

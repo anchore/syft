@@ -8,6 +8,7 @@ import (
 
 var locationSorterWithoutLayers = LocationSorter(nil)
 
+// Locations is a sortable slice of Location values.
 type Locations []Location
 
 func (l Locations) Len() int {

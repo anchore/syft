@@ -18,15 +18,20 @@ var jenkinsPluginPomPropertiesGroupIDs = []string{
 	"com.cloudbees.jenkins.plugins",
 }
 
+// JavaVMInstallation represents a Java Virtual Machine installation discovered on the system with its release information and file list.
 type JavaVMInstallation struct {
+	// Release is JVM release information and version details
 	Release JavaVMRelease `json:"release"`
-	Files   []string      `json:"files"`
+
+	// Files are the list of files that are part of this JVM installation
+	Files []string `json:"files"`
 }
 
 func (m JavaVMInstallation) OwnedFiles() []string {
 	return m.Files
 }
 
+// JavaVMRelease represents JVM version and build information extracted from the release file in a Java installation.
 type JavaVMRelease struct {
 	// Implementor is extracted with the `java.vendor` JVM property
 	Implementor string `mapstructure:"IMPLEMENTOR,omitempty" json:"implementor,omitempty"`
@@ -94,42 +99,86 @@ type JavaVMRelease struct {
 
 // JavaArchive encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship.
 type JavaArchive struct {
-	VirtualPath    string             `json:"virtualPath" cyclonedx:"virtualPath"` // we need to include the virtual path in cyclonedx documents to prevent deduplication of jars within jars
-	Manifest       *JavaManifest      `mapstructure:"Manifest" json:"manifest,omitempty"`
-	PomProperties  *JavaPomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
-	PomProject     *JavaPomProject    `mapstructure:"PomProject" json:"pomProject,omitempty"`
-	ArchiveDigests []file.Digest      `hash:"ignore" json:"digest,omitempty"`
-	Parent         *Package           `hash:"ignore" json:"-"` // note: the parent cannot be included in the minimal definition of uniqueness since this field is not reproducible in an encode-decode cycle (is lossy).
+	// VirtualPath is path within the archive hierarchy, where nested entries are delimited with ':' (for nested JARs)
+	VirtualPath string `json:"virtualPath" cyclonedx:"virtualPath"`
+
+	// Manifest is parsed META-INF/MANIFEST.MF contents
+	Manifest *JavaManifest `mapstructure:"Manifest" json:"manifest,omitempty"`
+
+	// PomProperties is parsed pom.properties file contents
+	PomProperties *JavaPomProperties `mapstructure:"PomProperties" json:"pomProperties,omitempty" cyclonedx:"-"`
+
+	// PomProject is parsed pom.xml file contents
+	PomProject *JavaPomProject `mapstructure:"PomProject" json:"pomProject,omitempty"`
+
+	// ArchiveDigests is cryptographic hashes of the archive file
+	ArchiveDigests []file.Digest `hash:"ignore" json:"digest,omitempty"`
+
+	// Parent is reference to parent package (for nested archives)
+	Parent *Package `hash:"ignore" json:"-"`
 }
 
 // JavaPomProperties represents the fields of interest extracted from a Java archive's pom.properties file.
 type JavaPomProperties struct {
-	Path       string            `mapstructure:"path" json:"path"`
-	Name       string            `mapstructure:"name" json:"name"`
-	GroupID    string            `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
-	ArtifactID string            `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
-	Version    string            `mapstructure:"version" json:"version"`
-	Scope      string            `mapstructure:"scope" json:"scope,omitempty"`
-	Extra      map[string]string `mapstructure:",remain" json:"extraFields,omitempty"`
+	// Path is path to the pom.properties file within the archive
+	Path string `mapstructure:"path" json:"path"`
+
+	// Name is the project name
+	Name string `mapstructure:"name" json:"name"`
+
+	// GroupID is Maven group identifier uniquely identifying the project across all projects (follows reversed domain name convention like com.company.project)
+	GroupID string `mapstructure:"groupId" json:"groupId" cyclonedx:"groupID"`
+
+	// ArtifactID is Maven artifact identifier, the name of the jar/artifact (unique within the groupId scope)
+	ArtifactID string `mapstructure:"artifactId" json:"artifactId" cyclonedx:"artifactID"`
+
+	// Version is artifact version
+	Version string `mapstructure:"version" json:"version"`
+
+	// Scope is dependency scope determining when dependency is available (compile=default all phases, test=test compilation/execution only, runtime=runtime and test not compile, provided=expected from JDK or container)
+	Scope string `mapstructure:"scope" json:"scope,omitempty"`
+
+	// Extra is additional custom properties not in standard Maven coordinates
+	Extra map[string]string `mapstructure:",remain" json:"extraFields,omitempty"`
 }
 
 // JavaPomProject represents fields of interest extracted from a Java archive's pom.xml file. See https://maven.apache.org/ref/3.6.3/maven-model/maven.html for more details.
 type JavaPomProject struct {
-	Path        string         `json:"path"`
-	Parent      *JavaPomParent `json:"parent,omitempty"`
-	GroupID     string         `json:"groupId"`
-	ArtifactID  string         `json:"artifactId"`
-	Version     string         `json:"version"`
-	Name        string         `json:"name"`
-	Description string         `json:"description,omitempty"`
-	URL         string         `json:"url,omitempty"`
+	// Path is path to the pom.xml file within the archive
+	Path string `json:"path"`
+
+	// Parent is the parent POM reference for inheritance (child POMs inherit configuration from parent)
+	Parent *JavaPomParent `json:"parent,omitempty"`
+
+	// GroupID is Maven group identifier (reversed domain name like org.apache.maven)
+	GroupID string `json:"groupId"`
+
+	// ArtifactID is Maven artifact identifier (project name)
+	ArtifactID string `json:"artifactId"`
+
+	// Version is project version (together with groupId and artifactId forms Maven coordinates groupId:artifactId:version)
+	Version string `json:"version"`
+
+	// Name is a human-readable project name (displayed in Maven-generated documentation)
+	Name string `json:"name"`
+
+	// Description is detailed project description
+	Description string `json:"description,omitempty"`
+
+	// URL is the project URL (typically project website or repository)
+	URL string `json:"url,omitempty"`
 }
 
 // JavaPomParent contains the fields within the <parent> tag in a pom.xml file
 type JavaPomParent struct {
-	GroupID    string `json:"groupId"`
+	// GroupID is the parent Maven group identifier
+	GroupID string `json:"groupId"`
+
+	// ArtifactID is the parent Maven artifact identifier
 	ArtifactID string `json:"artifactId"`
-	Version    string `json:"version"`
+
+	// Version is the parent version (child inherits configuration from this specific version of parent POM)
+	Version string `json:"version"`
 }
 
 // PkgTypeIndicated returns the package Type indicated by the data contained in the JavaPomProperties.
@@ -143,7 +192,10 @@ func (p JavaPomProperties) PkgTypeIndicated() Type {
 
 // JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file.
 type JavaManifest struct {
-	Main     KeyValues   `json:"main,omitempty"`
+	// Main is main manifest attributes as key-value pairs
+	Main KeyValues `json:"main,omitempty"`
+
+	// Sections are the named sections from the manifest (e.g. per-entry attributes)
 	Sections []KeyValues `json:"sections,omitempty"`
 }
 

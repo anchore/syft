@@ -6,11 +6,16 @@ import (
 	"sort"
 )
 
+// KeyValue represents a single key-value pair.
 type KeyValue struct {
-	Key   string `json:"key"`
+	// Key is the key name
+	Key string `json:"key"`
+
+	// Value is the value associated with the key
 	Value string `json:"value"`
 }
 
+// KeyValues represents an ordered collection of key-value pairs that preserves insertion order.
 type KeyValues []KeyValue
 
 func (k KeyValues) Get(key string) (string, bool) {

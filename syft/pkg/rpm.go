@@ -22,31 +22,64 @@ const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"
 
 var _ FileOwner = (*RpmDBEntry)(nil)
 
-// RpmArchive represents all captured data from a RPM package archive.
+// RpmArchive represents package metadata extracted directly from a .rpm archive file, containing the same information as an RPM database entry.
 type RpmArchive RpmDBEntry
 
 // RpmDBEntry represents all captured data from a RPM DB package entry.
 type RpmDBEntry struct {
-	Name            string          `json:"name"`
-	Version         string          `json:"version"`
-	Epoch           *int            `json:"epoch"  cyclonedx:"epoch" jsonschema:"nullable"`
-	Arch            string          `json:"architecture"`
-	Release         string          `json:"release" cyclonedx:"release"`
-	SourceRpm       string          `json:"sourceRpm" cyclonedx:"sourceRpm"`
-	Signatures      []RpmSignature  `json:"signatures,omitempty" cyclonedx:"signatures"`
-	Size            int             `json:"size" cyclonedx:"size"`
-	Vendor          string          `json:"vendor"`
-	ModularityLabel *string         `json:"modularityLabel,omitempty" cyclonedx:"modularityLabel"`
-	Provides        []string        `json:"provides,omitempty"`
-	Requires        []string        `json:"requires,omitempty"`
-	Files           []RpmFileRecord `json:"files"`
+	// Name is the RPM package name as found in the RPM database.
+	Name string `json:"name"`
+
+	// Version is the upstream version of the package.
+	Version string `json:"version"`
+
+	// Epoch is the version epoch used to force upgrade ordering (null if not set).
+	Epoch *int `json:"epoch"  cyclonedx:"epoch" jsonschema:"nullable"`
+
+	// Arch is the target CPU architecture (e.g., "x86_64", "aarch64", "noarch").
+	Arch string `json:"architecture"`
+
+	// Release is the package release number or distribution-specific version suffix.
+	Release string `json:"release" cyclonedx:"release"`
+
+	// SourceRpm is the source RPM filename that was used to build this package.
+	SourceRpm string `json:"sourceRpm" cyclonedx:"sourceRpm"`
+
+	// Signatures contains GPG signature metadata for package verification.
+	Signatures []RpmSignature `json:"signatures,omitempty" cyclonedx:"signatures"`
+
+	// Size is the total installed size of the package in bytes.
+	Size int `json:"size" cyclonedx:"size"`
+
+	// Vendor is the organization that packaged the software.
+	Vendor string `json:"vendor"`
+
+	// ModularityLabel identifies the module stream for modular RPM packages (e.g., "nodejs:12:20200101").
+	ModularityLabel *string `json:"modularityLabel,omitempty" cyclonedx:"modularityLabel"`
+
+	// Provides lists the virtual packages and capabilities this package provides.
+	Provides []string `json:"provides,omitempty"`
+
+	// Requires lists the dependencies required by this package.
+	Requires []string `json:"requires,omitempty"`
+
+	// Files are the file records for all files owned by this package.
+	Files []RpmFileRecord `json:"files"`
 }
 
+// RpmSignature represents a GPG signature for an RPM package used for authenticity verification.
 type RpmSignature struct {
+	// PublicKeyAlgorithm is the public key algorithm used for signing (e.g., "RSA").
 	PublicKeyAlgorithm string `json:"algo"`
-	HashAlgorithm      string `json:"hash"`
-	Created            string `json:"created"`
-	IssuerKeyID        string `json:"issuer"`
+
+	// HashAlgorithm is the hash algorithm used for the signature (e.g., "SHA256").
+	HashAlgorithm string `json:"hash"`
+
+	// Created is the timestamp when the signature was created.
+	Created string `json:"created"`
+
+	// IssuerKeyID is the GPG key ID that created the signature.
+	IssuerKeyID string `json:"issuer"`
 }
 
 func (s RpmSignature) String() string {
@@ -60,13 +93,26 @@ func (s RpmSignature) String() string {
 
 // RpmFileRecord represents the file metadata for a single file attributed to a RPM package.
 type RpmFileRecord struct {
-	Path      string      `json:"path"`
-	Mode      RpmFileMode `json:"mode"`
-	Size      int         `json:"size"`
-	Digest    file.Digest `json:"digest"`
-	UserName  string      `json:"userName"`
-	GroupName string      `json:"groupName"`
-	Flags     string      `json:"flags"`
+	// Path is the absolute file path where the file is installed.
+	Path string `json:"path"`
+
+	// Mode is the file permission mode bits following Unix stat.h conventions.
+	Mode RpmFileMode `json:"mode"`
+
+	// Size is the file size in bytes.
+	Size int `json:"size"`
+
+	// Digest contains the hash algorithm and value for file integrity verification.
+	Digest file.Digest `json:"digest"`
+
+	// UserName is the owner username for the file.
+	UserName string `json:"userName"`
+
+	// GroupName is the group name for the file.
+	GroupName string `json:"groupName"`
+
+	// Flags indicates the file type (e.g., "%config", "%doc", "%ghost").
+	Flags string `json:"flags"`
 }
 
 // RpmFileMode is the raw file mode for a single file. This can be interpreted as the linux stat.h mode (see https://pubs.opengroup.org/onlinepubs/007908799/xsh/sysstat.h.html)

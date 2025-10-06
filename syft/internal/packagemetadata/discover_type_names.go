@@ -24,7 +24,7 @@ var knownNonMetadataTypeNames = strset.New(
 
 // these are names that would be removed due to common convention (e.g. used within another metadata type) but are
 // known to be metadata types themselves. Adding to this list will prevent the removal of the type from the schema.
-var knownMetadaTypeNames = strset.New(
+var knownMetadataTypeNames = strset.New(
 	"DotnetPortableExecutableEntry",
 )
 
@@ -72,7 +72,7 @@ func findMetadataDefinitionNames(paths ...string) ([]string, error) {
 	}
 
 	// any definition that is used within another struct should not be considered a top-level metadata definition
-	removeNames := strset.Difference(usedNames, knownMetadaTypeNames)
+	removeNames := strset.Difference(usedNames, knownMetadataTypeNames)
 	names.Remove(removeNames.List()...)
 
 	// remove known exceptions, that is, types exported in the pkg Package that are not used
