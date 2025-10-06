@@ -347,7 +347,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 			name: "from python PDM lock",
 			input: pkg.Package{
 				Metadata: pkg.PythonPdmLockEntry{
-					Files:  []pkg.PythonFileRecord{
+					Files: []pkg.PythonFileRecord{
 						{
 							Path: "",
 							Digest: &pkg.PythonFileDigest{
@@ -356,7 +356,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 							},
 						},
 					},
-					Name:   "pkg-name",
+					Name:    "pkg-name",
 					Summary: "A test package",
 					Version: "1.2.3",
 				},

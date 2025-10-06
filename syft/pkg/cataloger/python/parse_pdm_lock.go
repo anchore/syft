@@ -86,7 +86,7 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 
 	var pkgsArray []pkg.Package
 	for _, v := range pkgs {
-			pkgsArray = append(pkgsArray, v)
+		pkgsArray = append(pkgsArray, v)
 	}
 	pkg.Sort(pkgsArray)
 
@@ -122,7 +122,6 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 			}
 		}
 	}
-
 
 	return pkgsArray, relationships, unknown.IfEmptyf(pkgsArray, "unable to determine packages")
 }
