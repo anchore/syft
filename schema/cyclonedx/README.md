@@ -13,6 +13,6 @@ prior spec version (e.g. if updating to 1.7, compare the files in this directory
 equivalents). 
 
 One can also update the schemas and observe the errors in order to make the necessary updates. 
-At the time of writing, the cyclonedx.xsd needed modifications to link to the local spdx.xsd, 
-and also to changes the minOccurs for a license tag to 0. (The json schema does not require 
+At the time of writing, the cyclonedx.xsd needed modifications to link to the local spdx.xsd,
+and also to change the minOccurs for a license tag to 0. (The json schema does not require
 modification for the generated file to lint properly, but can simply be copy/pasted).   
