@@ -48,9 +48,11 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		return nil, nil, fmt.Errorf("failed to parse pdm.lock file: %w", err)
 	}
 
-	var pkgs []pkg.Package
+	var relationshipsHash = make(map[string][]string)
+	var pkgs = make(map[string]pkg.Package)
 	for _, p := range lock.Package {
-		// Extract hashes from files
+		relationshipsHash[p.Name] = p.Dependencies // array of strings like "aiohttp<4.0.0,>=3.9.2"
+
 		var files []pkg.PythonFileRecord
 		for _, file := range p.Files {
 			if colonIndex := strings.Index(file.Hash, ":"); colonIndex != -1 {
@@ -74,15 +76,53 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 			Summary: p.Summary,
 		}
 
-		pkgs = append(pkgs, newPackageForIndexWithMetadata(
+		pkgs[p.Name] = newPackageForIndexWithMetadata(
 			p.Name,
 			p.Version,
 			pythonPkgMetadata,
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		))
+		)
 	}
 
-	pkg.Sort(pkgs)
+	var pkgsArray []pkg.Package
+	for _, v := range pkgs {
+			pkgsArray = append(pkgsArray, v)
+	}
+	pkg.Sort(pkgsArray)
 
-	return pkgs, []artifact.Relationship{}, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	var relationships []artifact.Relationship
+	relationshipSet := make(map[string]bool) // To avoid duplicate relationships
+
+	for _, pkg := range pkgsArray {
+		for _, dep := range relationshipsHash[pkg.Name] {
+			// Handle environment markers (semicolon)
+			depName := strings.Split(dep, ";")[0]
+			// Handle version specifiers
+			depName = strings.Split(depName, "<")[0]
+			depName = strings.Split(depName, ">")[0]
+			depName = strings.Split(depName, "=")[0]
+			depName = strings.Split(depName, "~")[0]
+			depName = strings.TrimSpace(depName)
+			if depName == "" {
+				continue
+			}
+
+			// Only create relationship if the target package exists
+			if targetPkg, exists := pkgs[depName]; exists {
+				// Create a unique key to avoid duplicates
+				relKey := fmt.Sprintf("%s->%s", pkg.Name, depName)
+				if !relationshipSet[relKey] {
+					relationshipSet[relKey] = true
+					relationships = append(relationships, artifact.Relationship{
+						From: pkg,
+						To:   targetPkg,
+						Type: artifact.DependencyOfRelationship,
+					})
+				}
+			}
+		}
+	}
+
+
+	return pkgsArray, relationships, unknown.IfEmptyf(pkgsArray, "unable to determine packages")
 }

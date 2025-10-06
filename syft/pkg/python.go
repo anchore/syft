@@ -64,6 +64,7 @@ type PythonPdmLockEntry struct {
 	Name    string   `mapstructure:"name" toml:"name"`
 	Version string   `mapstructure:"version" toml:"version"`
 	Files   []PythonFileRecord `mapstructure:"files" toml:"files"`
+	Dependencies []string `mapstructure:"dependencies" toml:"dependencies"`
 }
 
 // PythonPipfileLockEntry represents a single package entry within a Pipfile.lock file.

@@ -347,9 +347,18 @@ func Test_OriginatorSupplier(t *testing.T) {
 			name: "from python PDM lock",
 			input: pkg.Package{
 				Metadata: pkg.PythonPdmLockEntry{
-					Hashes:  []string{"sha256:abc123"},
-					Index:   "https://pypi.org/simple",
+					Files:  []pkg.PythonFileRecord{
+						{
+							Path: "",
+							Digest: &pkg.PythonFileDigest{
+								Algorithm: "sha256",
+								Value:     "3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651",
+							},
+						},
+					},
+					Name:   "pkg-name",
 					Summary: "A test package",
+					Version: "1.2.3",
 				},
 			},
 			originator: "",
