@@ -1910,5 +1910,4 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"kafka_2.8.2":                                              "org.apache.kafka",
 	"kafka_2.9.1":                                              "org.apache.kafka",
 	"kafka_2.9.2":                                              "org.apache.kafka",
-	"micronaut-aop":                                            "io.micronaut",
 }

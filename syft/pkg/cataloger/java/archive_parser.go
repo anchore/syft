@@ -257,9 +257,13 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		return nil, err
 	}
 
-	name, version, lics, err := j.discoverNameVersionLicense(ctx, manifest)
+	name, version, lics, parsedPom, err := j.discoverNameVersionLicense(ctx, manifest)
 	if err != nil {
 		return nil, err
+	}
+	var pkgPomProject *pkg.JavaPomProject
+	if parsedPom != nil {
+		pkgPomProject = newPomProject(ctx, nil, parsedPom.path, parsedPom.project)
 	}
 
 	return &pkg.Package{
@@ -275,12 +279,13 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		Metadata: pkg.JavaArchive{
 			VirtualPath:    j.location.Path(),
 			Manifest:       manifest,
+			PomProject:     pkgPomProject,
 			ArchiveDigests: digests,
 		},
 	}, nil
 }
 
-func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, error) {
+func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, *parsedPomProject, error) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
 	lics := pkg.NewLicensesFromLocationWithContext(ctx, j.location, selectLicenses(manifest)...)
@@ -302,7 +307,7 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 	if len(lics) == 0 {
 		fileLicenses, err := j.getLicenseFromFileInArchive(ctx)
 		if err != nil {
-			return "", "", nil, err
+			return "", "", nil, parsedPom, err
 		}
 		if fileLicenses != nil {
 			lics = append(lics, fileLicenses...)
@@ -317,7 +322,7 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 		lics = j.findLicenseFromJavaMetadata(ctx, groupID, artifactID, version, parsedPom, manifest)
 	}
 
-	return artifactID, version, lics, nil
+	return artifactID, version, lics, parsedPom, nil
 }
 
 // findLicenseFromJavaMetadata attempts to find license information from all available maven metadata properties and pom info
@@ -393,7 +398,7 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
-	// map of all the artifacts in the pom properties, in order to check exact match with the filename
+	// map of all the artifacts in the pom properties, in order to chek exact match with the filename
 	artifactsMap := strset.New()
 	for _, propertiesObj := range properties {
 		artifactsMap.Add(propertiesObj.ArtifactID)
@@ -424,7 +429,8 @@ func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (gro
 		}
 	}
 
-	// TEST FIX for having pom.xml but no
+	// If there is a single pom.xml but no pom.properties, parse and use the pom
+	// TODO: More work to require multiple pom files needed
 	if len(properties) == 0 && len(projects) == 1 {
 		for _, projectsObj := range projects {
 			parsedPom = projectsObj
