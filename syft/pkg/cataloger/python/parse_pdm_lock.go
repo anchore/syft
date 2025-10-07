@@ -51,7 +51,7 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 	var relationshipsHash = make(map[string][]string)
 	var pkgs = make(map[string]pkg.Package)
 	for _, p := range lock.Package {
-		relationshipsHash[p.Name] = p.Dependencies // array of strings like "aiohttp<4.0.0,>=3.9.2"
+		relationshipsHash[p.Name] = p.Dependencies
 
 		var files []pkg.PythonFileRecord
 		for _, file := range p.Files {
@@ -84,17 +84,24 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		)
 	}
 
+	relationships := buildPdmRelationships(pkgs, relationshipsHash)
+
+	// Create array only at the end
 	var pkgsArray []pkg.Package
 	for _, v := range pkgs {
 		pkgsArray = append(pkgsArray, v)
 	}
 	pkg.Sort(pkgsArray)
 
-	var relationships []artifact.Relationship
-	relationshipSet := make(map[string]bool) // To avoid duplicate relationships
+	return pkgsArray, relationships, unknown.IfEmptyf(pkgsArray, "unable to determine packages")
+}
 
-	for _, pkg := range pkgsArray {
-		for _, dep := range relationshipsHash[pkg.Name] {
+func buildPdmRelationships(pkgs map[string]pkg.Package, relationshipsHash map[string][]string) []artifact.Relationship {
+	// Map: source package name -> set of target package names
+	depMap := make(map[string]map[string]bool)
+
+	for pkgName := range pkgs {
+		for _, dep := range relationshipsHash[pkgName] {
 			// Handle environment markers (semicolon)
 			depName := strings.Split(dep, ";")[0]
 			// Handle version specifiers
@@ -107,21 +114,28 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 				continue
 			}
 
-			// Only create relationship if the target package exists
-			if targetPkg, exists := pkgs[depName]; exists {
-				// Create a unique key to avoid duplicates
-				relKey := fmt.Sprintf("%s->%s", pkg.Name, depName)
-				if !relationshipSet[relKey] {
-					relationshipSet[relKey] = true
-					relationships = append(relationships, artifact.Relationship{
-						From: pkg,
-						To:   targetPkg,
-						Type: artifact.DependencyOfRelationship,
-					})
+			if _, exists := pkgs[depName]; exists {
+				if depMap[pkgName] == nil {
+					depMap[pkgName] = make(map[string]bool)
 				}
+				depMap[pkgName][depName] = true
 			}
 		}
 	}
 
-	return pkgsArray, relationships, unknown.IfEmptyf(pkgsArray, "unable to determine packages")
+	// Convert to relationships
+	var relationships []artifact.Relationship
+	for sourceName, targets := range depMap {
+		sourcePackage := pkgs[sourceName]
+		for targetName := range targets {
+			targetPackage := pkgs[targetName]
+			relationships = append(relationships, artifact.Relationship{
+				From: sourcePackage,
+				To:   targetPackage,
+				Type: artifact.DependencyOfRelationship,
+			})
+		}
+	}
+
+	return relationships
 }
