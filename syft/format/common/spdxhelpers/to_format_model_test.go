@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spdx/tools-golang/spdx"
@@ -16,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"

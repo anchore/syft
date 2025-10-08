@@ -16,6 +16,8 @@ bin/
 /snapshot
 /.tool
 /.task
+/generate
+/specs
 
 # changelog generation
 CHANGELOG.md
@@ -32,6 +34,7 @@ VERSION
 /test/results
 coverage.txt
 *.log
+**/test-fixtures/test-observations.json
 
 # probable archives
 .images

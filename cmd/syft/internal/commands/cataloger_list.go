@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
 )
@@ -101,7 +102,7 @@ func catalogerListReport(opts *catalogerListOptions, allTaskGroups [][]task.Task
 	var report string
 
 	switch opts.Output {
-	case "json":
+	case jsonFormat:
 		report, err = renderCatalogerListJSON(flattenTaskGroups(selectedTaskGroups), selectionEvidence, defaultCatalogers, selectCatalogers)
 	case "table", "":
 		if opts.ShowHidden {
@@ -306,22 +307,14 @@ func formatToken(token string, selection *task.TokenSelection, included bool, de
 }
 
 func extractTaskInfo(tasks []task.Task) ([]string, map[string][]string) {
+	infos := capabilities.ExtractCatalogerInfo(tasks)
+
 	tagsByName := make(map[string][]string)
 	var names []string
 
-	for _, tsk := range tasks {
-		var tags []string
-		name := tsk.Name()
-
-		if s, ok := tsk.(task.Selector); ok {
-			set := strset.New(s.Selectors()...)
-			set.Remove(name)
-			tags = set.List()
-			sort.Strings(tags)
-		}
-
-		tagsByName[name] = tags
-		names = append(names, name)
+	for _, info := range infos {
+		tagsByName[info.Name] = info.Selectors
+		names = append(names, info.Name)
 	}
 
 	sort.Strings(names)

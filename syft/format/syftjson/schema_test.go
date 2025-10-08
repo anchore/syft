@@ -6,9 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/iancoleman/strcase"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/packagemetadata"
 )
 
 type schema struct {

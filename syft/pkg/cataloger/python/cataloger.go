@@ -11,6 +11,8 @@ import (
 const eggInfoGlob = "**/*.egg-info"
 
 type CatalogerConfig struct {
+	// GuessUnpinnedRequirements attempts to infer package versions from version constraints when no explicit version is specified in requirements files.
+	// app-config: python.guess-unpinned-requirements
 	GuessUnpinnedRequirements bool `yaml:"guess-unpinned-requirements" json:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
 }
 
