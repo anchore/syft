@@ -3136,25 +3136,37 @@
     },
     "PythonPdmLockEntry": {
       "properties": {
-        "Hashes": {
+        "Summary": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "Version": {
+          "type": "string"
+        },
+        "Files": {
+          "items": {
+            "$ref": "#/$defs/PythonFileRecord"
+          },
+          "type": "array"
+        },
+        "Dependencies": {
           "items": {
             "type": "string"
           },
           "type": "array"
-        },
-        "Index": {
-          "type": "string"
-        },
-        "Summary": {
-          "type": "string"
         }
       },
       "type": "object",
       "required": [
-        "Hashes",
-        "Index",
-        "Summary"
-      ]
+        "Summary",
+        "Name",
+        "Version",
+        "Files",
+        "Dependencies"
+      ],
+      "description": "PythonPdmLockEntry represents a single package entry within a pdm.lock file."
     },
     "PythonPipRequirementsEntry": {
       "properties": {
