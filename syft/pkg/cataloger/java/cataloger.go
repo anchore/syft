@@ -41,11 +41,14 @@ func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 // Note: Older versions of lockfiles aren't supported yet
 func NewGradleLockfileCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
-		WithParserByGlobs(parseGradleLockfile, gradleLockfileGlob)
+		WithParserByGlobs(parseGradleLockfile, "**/gradle.lockfile*")
 }
 
 // NewJvmDistributionCataloger returns packages representing JDK/JRE installations (of multiple distribution types).
 func NewJvmDistributionCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-jvm-cataloger").
-		WithParserByGlobs(parseJVMRelease, jvmReleaseGlob)
+		// this is a very permissive glob that will match more than just the JVM release file.
+		// we started with "**/{java,jvm}/*/release", but this prevents scanning JVM archive contents (e.g. jdk8u402.zip).
+		// this approach lets us check more files for JVM release info, but be rather silent about errors.
+		WithParserByGlobs(parseJVMRelease, "**/release")
 }

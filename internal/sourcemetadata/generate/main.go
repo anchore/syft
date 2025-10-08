@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/dave/jennifer/jen"
+
+	"github.com/anchore/syft/internal/sourcemetadata"
 )
 
 // This program is invoked from syft/internal and generates sourcemetadata/generated.go

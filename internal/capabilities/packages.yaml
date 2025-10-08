@@ -1,0 +1,2912 @@
+# This file is partially auto-generated. Run 'go generate ./internal/capabilities' to regenerate.
+# Fields marked AUTO-GENERATED will be updated during regeneration.
+# All 'capabilities' sections are MANUAL - edit these to describe cataloger behavior.
+
+# CAPABILITY SECTIONS:
+#   There are two types of capability sections depending on cataloger type:
+
+#   1. Generic catalogers (type=generic): Have capabilities at the PARSER level
+#      - Each parser function has its own capabilities section
+#      - Allows different parsers within the same cataloger to have different capabilities
+
+#   2. Custom catalogers (type=custom): Have capabilities at the CATALOGER level
+#      - Single capabilities section for the entire cataloger
+
+# ENRICHMENT MODES:
+#   Capabilities are organized by enrichment mode, which describes how cataloging is performed:
+#   - offline: Uses only information in the artifact itself (default, most common)
+#   - online: May fetch additional metadata from external sources (registries, APIs)
+#   - tool-execution: Requires executing tools or binaries in the artifact
+
+# CAPABILITY FIELDS:
+#   Each capability section can specify what information can be discovered:
+
+#   license: (boolean)
+#     Whether license information is available.
+#     Example: true
+
+#   dependencies:
+#     Information about dependency discovery.
+
+#     reach: (array of strings)
+#       Which dependency depths can be discovered.
+#       Values: "direct" (immediate deps), "indirect" (transitive deps)
+#       Examples:
+#         - ["direct"]               # only immediate dependencies
+#         - ["direct", "indirect"]   # full transitive closure
+
+#     topology: (string)
+#       Completeness of the dependency graph structure.
+#       Values:
+#         - "none"     # dependencies found but no edges between them
+#         - "flat"     # there is a single level of dependencies with edges to the root package only
+#         - "reduced"  # transitive reduction (redundant edges removed)
+#         - "complete" # dependencies found with all relationships with accurate direct and indirect edges
+#       Example: "complete"
+
+#     kinds: (array of strings)
+#       Types of dependencies that can be discovered.
+#       Values: "runtime", "dev", "build", "optional"
+#       Examples:
+#         - ["runtime"]                    # production dependencies only
+#         - ["runtime", "dev"]             # production and development
+#         - ["runtime", "dev", "build"]    # all dependency types
+
+#   package_manager:
+#     Package manager-specific metadata.
+
+#     files:
+#       File-related metadata from package manager records.
+
+#       listing: (boolean)
+#         Whether file listings are available (which files belong to the package).
+#         Example: true
+
+#       digests: (boolean)
+#         Whether file digests/checksums are included in listings.
+#         Example: true
+
+#     package_integrity_hash: (boolean)
+#       Whether a hash for verifying package integrity is available.
+#       Example: true
+
+# EXAMPLES:
+
+#   # Minimal capabilities (no additional metadata)
+#   capabilities:
+#     offline:
+#       license: false
+#       dependencies:
+#         reach: []
+#         topology: none
+#         kinds: []
+#       package_manager:
+#         files:
+#           listing: false
+#           digests: false
+#         package_integrity_hash: false
+
+#   # Full metadata with dependency graph
+#   capabilities:
+#     offline:
+#       license: true
+#       dependencies:
+#         reach:
+#           - direct
+#           - indirect
+#         topology: complete
+#         kinds:
+#           - runtime
+#           - dev
+#       package_manager:
+#         files:
+#           listing: true
+#           digests: true
+#         package_integrity_hash: true
+
+catalogers:
+  # Arch linux (alpm) #################################################################################################
+  - ecosystem: arch # MANUAL
+    name: alpm-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/arch/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - alpm
+      - archlinux
+      - directory
+      - image
+      - installed
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseAlpmDB # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/var/lib/pacman/local/**/desc'
+        metadata_types: # AUTO-GENERATED
+          - pkg.AlpmDBEntry
+        package_types: # AUTO-GENERATED
+          - alpm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # AlpmDBEntry.Files
+                digests: true # AlpmDBEntry.Files[].Digests
+              package_integrity_hash: false
+  # Alpine linux (apk) ################################################################################################
+  - ecosystem: alpine # MANUAL
+    name: apk-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/alpine/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - alpine
+      - apk
+      - directory
+      - image
+      - installed
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseApkDB # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/lib/apk/db/installed'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ApkDBEntry
+        package_types: # AUTO-GENERATED
+          - apk
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # ApkDBEntry.Files
+                digests: true # ApkDBEntry.Files[].Digest
+              package_integrity_hash: true # ApkDBEntry.Checksum
+  # Binary ############################################################################################################
+  - ecosystem: binary # MANUAL
+    name: binary-classifier-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/binary/classifier_cataloger.go
+      function: NewClassifierCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - image
+      - installed
+      - package
+    detectors: # AUTO-GENERATED
+      - method: glob
+        # TODO: fill in binary cataloger globs via a different path
+        criteria:
+          - '**/VERSION*'
+          - '**/arangosh'
+          - '**/bash'
+          - '**/beam.smp'
+          - '**/busybox'
+          - '**/cabal'
+          - '**/chrome'
+          - '**/composer*'
+          - '**/consul'
+          - '**/curl'
+          - '**/dart'
+          - '**/erlexec'
+          - '**/ffmpeg'
+          - '**/fluent-bit'
+          - '**/gcc'
+          - '**/getopt'
+          - '**/ghc*'
+          - '**/go'
+          - '**/gzip'
+          - '**/haproxy'
+          - '**/helm'
+          - '**/httpd'
+          - '**/java'
+          - '**/jdb'
+          - '**/jq'
+          - '**/libav*'
+          - '**/liberts_internal.a'
+          - '**/libjulia-internal.so'
+          - '**/libpypy*.so*'
+          - '**/libpython*.so*'
+          - '**/libstd-????????????????.dylib'
+          - '**/libstd-????????????????.so'
+          - '**/libswresample*'
+          - '**/lighttpd'
+          - '**/memcached'
+          - '**/mysql'
+          - '**/nginx'
+          - '**/node'
+          - '**/openssl'
+          - '**/perl'
+          - '**/postgres'
+          - '**/proftpd'
+          - '**/python*'
+          - '**/redis-server'
+          - '**/ruby'
+          - '**/sqlcipher'
+          - '**/stack'
+          - '**/swipl'
+          - '**/traefik'
+          - '**/vault'
+          - '**/wp'
+          - '**/xtrabackup'
+          - '**/xz'
+          - '**/zstd'
+          - '**/{mariadb,mysql}'
+    metadata_types: # AUTO-GENERATED
+      - pkg.BinarySignature
+    package_types: # AUTO-GENERATED
+      - binary
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        # TODO: what about shared libs, other elf packages, and os packages? this should work outside of the cataloger
+        dependencies:
+          reach: []
+          topology: none
+          kinds: []
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  - ecosystem: binary # MANUAL
+    name: elf-binary-package-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - elf
+      - elf-package
+      - image
+      - installed
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: mimetype
+        criteria:
+          - application/x-executable
+          - application/x-mach-binary
+          - application/x-elf
+          - application/x-sharedlib
+          - application/vnd.microsoft.portable-executable
+    metadata_types: # AUTO-GENERATED
+      - pkg.ELFBinaryPackageNoteJSONPayload
+    package_types: # AUTO-GENERATED
+      - binary
+      - rpm
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        # licenses can be detected in some elf packages (via the licenses note field)
+        license: true
+        # TODO: what about shared libs, other elf packages, and os packages? this should work outside of the cataloger
+        dependencies:
+          reach: []
+          topology: none
+          kinds: []
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  - ecosystem: binary # MANUAL
+    name: pe-binary-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/binary/pe_package_cataloger.go
+      function: NewPEPackageCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - dll
+      - exe
+      - image
+      - installed
+      - package
+      - pe
+      - pe-package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePE # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.dll'
+            - '**/*.exe'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PEBinary
+        package_types: # AUTO-GENERATED
+          - binary
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            # TODO: what about shared libs, other elf packages, and os packages? this should work outside of the cataloger
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Bitnami ###########################################################################################################
+  - ecosystem: bitnami # MANUAL
+    name: bitnami-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/bitnami/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - bitnami
+      - image
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseSBOM # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - /opt/bitnami/**/.spdx-*.spdx
+        metadata_types: # AUTO-GENERATED
+          - pkg.BitnamiSBOMEntry
+        package_types: # AUTO-GENERATED
+          - bitnami
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              # the reach will vary for each ecosystem
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # BitnamiSBOMEntry.Files
+                digests: false
+              package_integrity_hash: false
+  # Rust (cargo) #####################################################################################################
+  - ecosystem: rust # MANUAL
+    name: cargo-auditable-binary-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/rust/cataloger.go
+      function: NewAuditBinaryCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - rust
+    parsers: # AUTO-GENERATED structure
+      - function: parseAuditBinary # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: mimetype # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - application/x-executable
+            - application/x-mach-binary
+            - application/x-elf
+            - application/x-sharedlib
+            - application/vnd.microsoft.portable-executable
+            - application/x-executable
+        metadata_types: # AUTO-GENERATED
+          - pkg.RustBinaryAuditEntry
+        package_types: # AUTO-GENERATED
+          - rust-crate
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: rust # MANUAL
+    name: rust-cargo-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/rust/cataloger.go
+      function: NewCargoLockCataloger
+    selectors: # AUTO-GENERATED
+      - cargo
+      - declared
+      - directory
+      - language
+      - package
+      - rust
+    parsers: # AUTO-GENERATED structure
+      - function: parseCargoLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Cargo.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RustCargoLockEntry
+        package_types: # AUTO-GENERATED
+          - rust-crate
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              # though the toml has a dev/build section for deps, the lock has no knowledge of that
+              kinds:
+                - runtime
+                - dev
+                - build
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # RustCargoLockEntry.Checksum
+  # Swift #########################################################################################################
+  - ecosystem: swift # MANUAL
+    name: cocoapods-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/swift/cataloger.go
+      function: NewCocoapodsCataloger
+    selectors: # AUTO-GENERATED
+      - cocoapods
+      - declared
+      - directory
+      - language
+      - package
+      - swift
+    parsers: # AUTO-GENERATED structure
+      - function: parsePodfileLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Podfile.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CocoaPodfileLockEntry
+        package_types: # AUTO-GENERATED
+          - pod
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              # we raise up all nodes in the graph, but don't relate them together in any way
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # CocoapodsLockEntry.Checksum
+  - ecosystem: swift # MANUAL
+    name: swift-package-manager-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/swift/cataloger.go
+      function: NewSwiftPackageManagerCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - package
+      - spm
+      - swift
+    parsers: # AUTO-GENERATED structure
+      - function: parsePackageResolved # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Package.resolved'
+            - '**/.package.resolved'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SwiftPackageManagerResolvedEntry
+        package_types: # AUTO-GENERATED
+          - swift
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # C/C++ ############################################################################################################
+  - ecosystem: c++ # MANUAL
+    name: conan-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/cpp/cataloger.go
+      function: NewConanCataloger
+    selectors: # AUTO-GENERATED
+      - conan
+      - cpp
+      - declared
+      - directory
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseConanLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conan.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ConanV1LockEntry
+          - pkg.ConanV2LockEntry
+        package_types: # AUTO-GENERATED
+          - conan
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              # we can detect nodes, but not how they relate to each other
+              topology: none
+              kinds:
+                - runtime
+                - build
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseConanfile # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conanfile.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ConanfileEntry
+        package_types: # AUTO-GENERATED
+          - conan
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              # we can detect nodes, but not how they relate to each other
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: c++ # MANUAL
+    name: conan-info-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/cpp/cataloger.go
+      function: NewConanInfoCataloger
+    selectors: # AUTO-GENERATED
+      - conan
+      - cpp
+      - image
+      - installed
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseConaninfo # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conaninfo.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ConaninfoEntry
+        package_types: # AUTO-GENERATED
+          - conan
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: flat
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Conda ############################################################################################################
+  - ecosystem: conda # MANUAL
+    name: conda-meta-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/conda/cataloger.go
+      function: NewCondaMetaCataloger
+    selectors: # AUTO-GENERATED
+      - conda
+      - directory
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseCondaMetaJSON # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conda-meta/*.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CondaMetaPackage
+        package_types: # AUTO-GENERATED
+          - conda
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # CondaMetaPackage.Files, CondaMetaPackage.PathsData.Paths
+                digests: true # CondaMetaPackage.PathsData.Paths.SHA256
+              package_integrity_hash: true
+  # Dart #############################################################################################################
+  - ecosystem: dart # MANUAL
+    name: dart-pubspec-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dart/cataloger.go
+      function: NewPubspecCataloger
+    selectors: # AUTO-GENERATED
+      - dart
+      - declared
+      - directory
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePubspec # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pubspec.yml'
+            - '**/pubspec.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DartPubspec
+        package_types: # AUTO-GENERATED
+          - dart-pub
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: dart # MANUAL
+    name: dart-pubspec-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dart/cataloger.go
+      function: NewPubspecLockCataloger
+    selectors: # AUTO-GENERATED
+      - dart
+      - declared
+      - directory
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePubspecLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pubspec.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DartPubspecLockEntry
+        package_types: # AUTO-GENERATED
+          - dart-pub
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Debian (dpkg) ###################################################################################################
+  - ecosystem: debian # MANUAL
+    name: dpkg-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/debian/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - debian
+      - directory
+      - dpkg
+      - image
+      - installed
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDpkgDB # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/lib/dpkg/status'
+            - '**/lib/dpkg/status.d/*'
+            - '**/lib/opkg/info/*.control'
+            - '**/lib/opkg/status'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DpkgDBEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # DpkgDBEntry.Files
+                digests: true # DpkgDBEntry.Files[].Digest
+              package_integrity_hash: false
+  - ecosystem: debian # MANUAL
+    name: deb-archive-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/debian/cataloger.go
+      function: NewArchiveCataloger
+    selectors: # AUTO-GENERATED
+      - deb
+      - debian
+      - declared
+      - directory
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDebArchive # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.deb'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DpkgArchiveEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            # an archive only has dependency CLAIMS in the metadata, but not dependencies incorporated as nodes/edges in the SBOM
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: true # DpkgArchiveEntry.Files
+                digests: true # DpkgArchiveEntry.Files[].Digest
+              package_integrity_hash: false
+  # .NET ###################################################################################################
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-deps-binary-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - c#
+      - directory
+      - dotnet
+      - image
+      - installed
+      - language
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.deps.json'
+          - '**/*.dll'
+          - '**/*.exe'
+    metadata_types: # AUTO-GENERATED
+      - pkg.DotnetDepsEntry
+      - pkg.DotnetPortableExecutableEntry
+    package_types: # AUTO-GENERATED
+      - dotnet
+      - npm
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        dependencies:
+          reach:
+            - direct
+            - indirect
+          topology: complete
+          kinds:
+            - runtime
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-deps-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.deps.json'
+    metadata_types: # AUTO-GENERATED
+      - pkg.DotnetDepsEntry
+    package_types: # AUTO-GENERATED
+      - dotnet
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        dependencies:
+          reach:
+            - direct
+            - indirect
+          topology: complete
+          kinds:
+            - runtime
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-packages-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dotnet/cataloger.go
+      function: NewDotnetPackagesLockCataloger
+    selectors: # AUTO-GENERATED
+      - c#
+      - declared
+      - directory
+      - dotnet
+      - image
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDotnetPackagesLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/packages.lock.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DotnetPackagesLockEntry
+        package_types: # AUTO-GENERATED
+          - dotnet
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - runtime
+                - dev
+                - build
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # DotnetPackagesLockEntry.ContentHash
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-portable-executable-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.dll'
+          - '**/*.exe'
+    metadata_types: # AUTO-GENERATED
+      - pkg.DotnetPortableExecutableEntry
+    package_types: # AUTO-GENERATED
+      - dotnet
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        dependencies:
+          reach: []
+          topology: none
+          kinds: []
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  # Elixir ##########################################################################################################
+  - ecosystem: elixir # MANUAL
+    name: elixir-mix-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/elixir/cataloger.go
+      function: NewMixLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - elixir
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseMixLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/mix.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ElixirMixLockEntry
+        package_types: # AUTO-GENERATED
+          - hex
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              # we find nodes, but can't relate them together
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # ElixirMixLockEntry.PkgHash, ElixirMixLockEntry.PkgHashExt
+  # Erlang ##########################################################################################################
+  - ecosystem: erlang # MANUAL
+    name: erlang-otp-application-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/erlang/cataloger.go
+      function: NewOTPCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - erlang
+      - language
+      - otp
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseOTPApp # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.app'
+        package_types: # AUTO-GENERATED
+          - erlang-otp
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: erlang # MANUAL
+    name: erlang-rebar-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/erlang/cataloger.go
+      function: NewRebarLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - erlang
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseRebarLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/rebar.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ErlangRebarLockEntry
+        package_types: # AUTO-GENERATED
+          - hex
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # ErlangRebarLockEntry.PkgHash, ErlangRebarLockEntry.PkgHashExt
+  # GitHub Actions ##################################################################################################
+  - ecosystem: github-actions # MANUAL
+    name: github-action-workflow-usage-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/githubactions/cataloger.go
+      function: NewWorkflowUsageCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - github
+      - github-actions
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseWorkflowForWorkflowUsage # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.github/workflows/*.yaml'
+            - '**/.github/workflows/*.yml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GitHubActionsUseStatement
+        package_types: # AUTO-GENERATED
+          - github-action-workflow
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            # no dependencies supported
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: github-actions # MANUAL
+    name: github-actions-usage-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/githubactions/cataloger.go
+      function: NewActionUsageCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - github
+      - github-actions
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseCompositeActionForActionUsage # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.github/actions/*/action.yml'
+            - '**/.github/actions/*/action.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GitHubActionsUseStatement
+        package_types: # AUTO-GENERATED
+          - github-action
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            # no dependencies supported
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseWorkflowForActionUsage # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.github/workflows/*.yaml'
+            - '**/.github/workflows/*.yml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GitHubActionsUseStatement
+        package_types: # AUTO-GENERATED
+          - github-action
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            # no dependencies supported
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Go ##############################################################################################################
+  - ecosystem: go # MANUAL
+    name: go-module-binary-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/golang/cataloger.go
+      function: NewGoModuleBinaryCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - directory
+      - go
+      - golang
+      - gomod
+      - image
+      - installed
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGoBinary # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: mimetype # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - application/x-executable
+            - application/x-mach-binary
+            - application/x-elf
+            - application/x-sharedlib
+            - application/vnd.microsoft.portable-executable
+            - application/x-executable
+        metadata_types: # AUTO-GENERATED
+          - pkg.GolangBinaryBuildinfoEntry
+        package_types: # AUTO-GENERATED
+          - go-module
+        capabilities: # MANUAL - preserved across regeneration
+          # TODO: add mode for license scanning
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: flat
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # GolangBinaryBuildinfoEntry.H1Digest
+  - ecosystem: go # MANUAL
+    name: go-module-file-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/golang/cataloger.go
+      function: NewGoModuleFileCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - go
+      - golang
+      - gomod
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGoModFile # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/go.mod'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GolangModuleEntry
+          - pkg.GolangSourceEntry
+        package_types: # AUTO-GENERATED
+          - go-module
+        capabilities: # MANUAL - preserved across regeneration
+          # TODO: add mode for license scanning
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: flat
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # GolangModuleEntry.H1Digest, GolangSourceEntry.H1Digest
+  # Java ############################################################################################################
+  - ecosystem: java # MANUAL
+    name: java-archive-cataloger # AUTO-GENERATED
+    type: custom # MANUAL OVERRIDE
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/java/cataloger.go
+      function: NewArchiveCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - java
+      - language
+      - maven
+      - package
+    detectors: # MANUAL - edit detectors here
+      # TODO: need to convey conditions around these archive types...
+      # # affected by IncludeIndexedArchives configuration
+      # - method: glob
+      #   criteria:
+      #     - "**/*.zip"
+      # # affected by IncludeUnindexedArchives configuration
+      # - method: glob
+      #   criteria:
+      #     - "**/*.tar"
+      #     - "**/*.tar.gz"
+      #     - "**/*.tgz"
+      #     - "**/*.tar.bz"
+      #     - "**/*.tar.bz2"
+      #     - "**/*.tbz"
+      #     - "**/*.tbz2"
+      #     - "**/*.tar.br"
+      #     - "**/*.tbr"
+      #     - "**/*.tar.lz4"
+      #     - "**/*.tlz4"
+      #     - "**/*.tar.sz"
+      #     - "**/*.tsz"
+      #     - "**/*.tar.xz"
+      #     - "**/*.txz"
+      #     - "**/*.tar.zst"
+      #     - "**/*.tzst"
+      #     - "**/*.tar.zstd"
+      #     - "**/*.tzstd"
+      - method: glob
+        criteria:
+          - '**/*.jar'
+          - '**/*.war'
+          - '**/*.ear'
+          - '**/*.par'
+          - '**/*.sar'
+          - '**/*.nar'
+          - '**/*.jpi'
+          - '**/*.hpi'
+          - '**/*.kar'
+          - '**/*.lpkg'
+    metadata_types: # AUTO-GENERATED
+      - pkg.JavaArchive
+    package_types: # AUTO-GENERATED
+      - java-archive
+    capabilities: # MANUAL - preserved across regeneration
+      # TODO: online capabilities
+      offline:
+        license: false
+        # TODO: this does not account for the various sources (maven/gradle/other) that have different dependency qualities
+        dependencies:
+          reach:
+            - direct
+            - indirect
+          topology: complete
+          kinds:
+            - runtime
+            - dev
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          # note: only applicable to archives, but not raw gradle/maven files
+          package_integrity_hash: true # JavaArchive.ArchiveDigests
+  - ecosystem: java # MANUAL
+    name: java-gradle-lockfile-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/java/cataloger.go
+      function: NewGradleLockfileCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - gradle
+      - java
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGradleLockfile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/gradle.lockfile*'
+        metadata_types: # AUTO-GENERATED
+          - pkg.JavaArchive
+        package_types: # AUTO-GENERATED
+          - java-archive
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              # we detect nodes, but can't relate them together
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: java # MANUAL
+    name: java-pom-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - java
+      - language
+      - maven
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '*pom.xml'
+    metadata_types: # AUTO-GENERATED
+      - pkg.JavaArchive
+    package_types: # AUTO-GENERATED
+      - java-archive
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: true
+        dependencies:
+          reach:
+            - direct
+          topology: complete
+          kinds:
+            - runtime
+            - dev
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  - ecosystem: java # MANUAL
+    name: java-jvm-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/java/cataloger.go
+      function: NewJvmDistributionCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - image
+      - installed
+      - java
+      - jdk
+      - jre
+      - jvm
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseJVMRelease
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/release'
+        metadata_types: # AUTO-GENERATED
+          - pkg.JavaVMInstallation
+        package_types: # AUTO-GENERATED
+          - binary
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: true # JavaVMInstallation.Files
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: java # MANUAL
+    name: graalvm-native-image-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - java
+      - language
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: mimetype
+        criteria:
+          - application/x-executable
+          - application/x-mach-binary
+          - application/x-elf
+          - application/x-sharedlib
+          - application/vnd.microsoft.portable-executable
+    package_types: # MANUAL - edit package types here
+      - graalvm-native-image
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        # note: the dependencies depends on the quality of the embedded SBOM, which can differ per image
+        dependencies:
+          reach:
+            - direct
+            - indirect
+          topology: complete
+          kinds:
+            - runtime
+            - dev
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  # Haskell #########################################################################################################
+  - ecosystem: haskell # MANUAL
+    name: haskell-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/haskell/cataloger.go
+      function: NewHackageCataloger
+    selectors: # AUTO-GENERATED
+      - cabal
+      - declared
+      - directory
+      - hackage
+      - haskell
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseCabalFreeze # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/cabal.project.freeze'
+        package_types: # AUTO-GENERATED
+          - hackage
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseStackLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/stack.yaml.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.HackageStackYamlLockEntry
+        package_types: # AUTO-GENERATED
+          - hackage
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # HackageStackYamlLockEntry.PkgHash
+      - function: parseStackYaml # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/stack.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.HackageStackYamlEntry
+        package_types: # AUTO-GENERATED
+          - hackage
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # HackageStackYamlEntry.PkgHash
+  # Homebrew #######################################################################################################
+  - ecosystem: homebrew # MANUAL
+    name: homebrew-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/homebrew/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - homebrew
+      - image
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseHomebrewFormula # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Cellar/*/*/.brew/*.rb'
+            - '**/Library/Taps/*/*/Formula/*.rb'
+        metadata_types: # AUTO-GENERATED
+          - pkg.HomebrewFormula
+        package_types: # AUTO-GENERATED
+          - homebrew
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # JavaScript ######################################################################################################
+  - ecosystem: javascript # MANUAL
+    name: javascript-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/javascript/cataloger.go
+      function: NewLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - javascript
+      - language
+      - node
+      - npm
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePnpmLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pnpm-lock.yaml'
+        package_types: # AUTO-GENERATED
+          - npm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              # though there are dev dependencies listed, they are in a different section in the document
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseYarnLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/yarn.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.YarnLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            # TODO: add SearchRemoteLicenses indicating searching licenses from the NPM registry
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              # though there are dev dependencies listed, they are in a different section in the document
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # YarnLockEntry.Integrity
+      - function: parsePackageLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/package-lock.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmPackageLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              # though there are dev dependencies listed, they are in a different section in the document
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true # NpmPackageLockEntry.Integrity
+  - ecosystem: javascript # MANUAL
+    name: javascript-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/javascript/cataloger.go
+      function: NewPackageCataloger
+    selectors: # AUTO-GENERATED
+      - image
+      - installed
+      - javascript
+      - language
+      - node
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePackageJSON # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/package.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmPackage
+        package_types: # AUTO-GENERATED
+          - npm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Linux ##########################################################################################################
+  - ecosystem: linux # MANUAL
+    name: linux-kernel-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - image
+      - installed
+      - kernel
+      - linux
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/kernel'
+          - '**/kernel-*'
+          - '**/vmlinux'
+          - '**/vmlinux-*'
+          - '**/vmlinuz'
+          - '**/vmlinuz-*'
+          - '**/lib/modules/**/*.ko'
+    metadata_types: # AUTO-GENERATED
+      - pkg.LinuxKernel
+      - pkg.LinuxKernelModule
+    package_types: # AUTO-GENERATED
+      - linux-kernel
+      - linux-kernel-module
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        # only for modules, not the kernel itself
+        license: true
+        dependencies:
+          reach: []
+          topology: none
+          kinds: []
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  # Lua #############################################################################################################
+  - ecosystem: lua # MANUAL
+    name: lua-rock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/lua/cataloger.go
+      function: NewPackageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - lua
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseRockspec # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.rockspec'
+        metadata_types: # AUTO-GENERATED
+          - pkg.LuaRocksPackage
+        package_types: # AUTO-GENERATED
+          - lua-rocks
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              # there are build time deps, but they are captured in another file (build_dependencies)
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Nix #############################################################################################################
+  - ecosystem: nix # MANUAL
+    name: nix-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - nix
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/nix/var/nix/db/db.sqlite'
+          - '**/nix/store/*'
+          - '**/nix/store/*.drv'
+    metadata_types: # AUTO-GENERATED
+      - pkg.NixStoreEntry
+    package_types: # AUTO-GENERATED
+      - nix
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        dependencies:
+          reach:
+            - direct
+            - indirect
+          topology: complete
+          kinds:
+            - runtime
+        package_manager:
+          files:
+            # TODO: there is a configuration CaptureOwnedFiles but defaults to false
+            listing: true
+            digests: false
+          package_integrity_hash: true # NixStoreEntry.OutputHash
+  - ecosystem: nix # MANUAL
+    name: nix-store-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/nix/store/*'
+          - '**/nix/store/*.drv'
+    metadata_types: # AUTO-GENERATED
+      - pkg.NixStoreEntry
+    package_types: # AUTO-GENERATED
+      - nix
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        dependencies:
+          reach:
+            - direct
+            - indirect
+          topology: complete
+          kinds:
+            - runtime
+        package_manager:
+          files:
+            listing: true # NixStoreEntry.Files
+            digests: false
+          package_integrity_hash: true # NixStoreEntry.OutputHash
+  # OCaml ##########################################################################################################
+  - ecosystem: ocaml # MANUAL
+    name: opam-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ocaml/cataloger.go
+      function: NewOpamPackageManagerCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - ocaml
+      - opam
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseOpamPackage # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*opam'
+        metadata_types: # AUTO-GENERATED
+          - pkg.OpamPackage
+        package_types: # AUTO-GENERATED
+          - opam
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              # there are partitions for other kinds, but we are not reading those sections
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # PHP #############################################################################################################
+  - ecosystem: php # MANUAL
+    name: php-composer-installed-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewComposerInstalledCataloger
+    selectors: # AUTO-GENERATED
+      - composer
+      - image
+      - installed
+      - language
+      - package
+      - php
+    parsers: # AUTO-GENERATED structure
+      - function: parseInstalledJSON # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/installed.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpComposerInstalledEntry
+        package_types: # AUTO-GENERATED
+          - php-composer
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: php # MANUAL
+    name: php-composer-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewComposerLockCataloger
+    selectors: # AUTO-GENERATED
+      - composer
+      - declared
+      - directory
+      - language
+      - package
+      - php
+    parsers: # AUTO-GENERATED structure
+      - function: parseComposerLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/composer.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpComposerLockEntry
+        package_types: # AUTO-GENERATED
+          - php-composer
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              # note: the dev dependencies are in a separate section in the lock file
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true
+  - ecosystem: php # MANUAL
+    name: php-interpreter-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - image
+      - installed
+      - package
+      - php
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/php*/**/*.so'
+          - '**/php-fpm*'
+          - '**/apache*/**/libphp*.so'
+    metadata_types: # AUTO-GENERATED
+      - pkg.BinarySignature
+    package_types: # AUTO-GENERATED
+      - binary
+    capabilities: # MANUAL - edit capabilities here
+      offline:
+        license: false
+        dependencies:
+          reach:
+            - direct
+          topology: flat
+          kinds:
+            - runtime
+        package_manager:
+          files:
+            listing: false
+            digests: false
+          package_integrity_hash: false
+  - ecosystem: php # MANUAL
+    name: php-pear-serialized-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewPearCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - image
+      - language
+      - package
+      - pear
+      - php
+    parsers: # AUTO-GENERATED structure
+      - function: parsePear # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/php/.registry/**/*.reg'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpPearEntry
+        package_types: # AUTO-GENERATED
+          - php-pear
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true
+                digests: true
+              package_integrity_hash: false
+  - ecosystem: php # MANUAL
+    name: php-pecl-serialized-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewPeclCataloger
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePecl # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/php/.registry/.channel.*/*.reg'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpPeclEntry
+        package_types: # AUTO-GENERATED
+          - php-pecl
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Gentoo ########################################################################################################
+  - ecosystem: gentoo # MANUAL
+    name: portage-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/gentoo/cataloger.go
+      function: NewPortageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - gentoo
+      - image
+      - installed
+      - linux
+      - os
+      - package
+      - portage
+    parsers: # AUTO-GENERATED structure
+      - function: parsePortageContents # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/var/db/pkg/*/*/CONTENTS'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PortageEntry
+        package_types: # AUTO-GENERATED
+          - portage
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # PortageEntry.Files
+                digests: true # PortageEntry.Files[].Digest
+              package_integrity_hash: false
+  # Python #########################################################################################################
+  - ecosystem: python # MANUAL
+    name: python-installed-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/python/cataloger.go
+      function: NewInstalledPackageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - python
+    parsers: # AUTO-GENERATED structure
+      - function: parseWheelOrEgg # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.egg-info'
+            - '**/*dist-info/METADATA'
+            - '**/*egg-info/PKG-INFO'
+            - '**/*DIST-INFO/METADATA'
+            - '**/*EGG-INFO/PKG-INFO'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPackage
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # PythonPackage.Files
+                digests: true # PythonPackage.Files[].Digest
+              package_integrity_hash: false
+  - ecosystem: python # MANUAL
+    name: python-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/python/cataloger.go
+      function: NewPackageCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - package
+      - python
+    parsers: # AUTO-GENERATED structure
+      - function: parseUvLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/uv.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonUvLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - dev
+                - optional
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseSetup # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/setup.py'
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parsePipfileLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Pipfile.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPipfileLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: true # PythonPipfileLockEntry.Hashes
+              package_integrity_hash: false
+      - function: parsePoetryLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/poetry.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPoetryLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - dev
+                - optional
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseRequirementsTxt # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*requirements*.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonRequirementsEntry
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # R ###############################################################################################################
+  - ecosystem: r # MANUAL
+    name: r-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/r/cataloger.go
+      function: NewPackageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - r
+    parsers: # AUTO-GENERATED structure
+      - function: parseDescriptionFile # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/DESCRIPTION'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RDescription
+        package_types: # AUTO-GENERATED
+          - R-package
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            # we aren't capturing these in the context of an installed path, thus are not guaranteed to get all nodes in the dep graph
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Red Hat #######################################################################################################
+  - ecosystem: rpm # MANUAL
+    name: rpm-archive-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/redhat/cataloger.go
+      function: NewArchiveCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - linux
+      - os
+      - package
+      - redhat
+      - rpm
+    parsers: # AUTO-GENERATED structure
+      - function: parseRpmArchive # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.rpm'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RpmArchive
+        package_types: # AUTO-GENERATED
+          - rpm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # RpmArchive.Files
+                digests: true # RpmArchive.Files[].Digest
+              package_integrity_hash: false # closest is RpmArchive.Signatures, but this is not required
+  - ecosystem: rpm # MANUAL
+    name: rpm-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/redhat/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - linux
+      - os
+      - package
+      - redhat
+      - rpm
+    parsers: # AUTO-GENERATED structure
+      - function: parseRpmManifest # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/var/lib/rpmmanifest/container-manifest-2'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RpmDBEntry
+        package_types: # AUTO-GENERATED
+          - rpm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseRpmDB # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/{var/lib,usr/share,usr/lib/sysimage}/rpm/{Packages,Packages.db,rpmdb.sqlite}'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RpmDBEntry
+        package_types: # AUTO-GENERATED
+          - rpm
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: complete
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # RpmDBEntry.Files
+                digests: true # RpmDBEntry.Files[].Digest
+              package_integrity_hash: false # closest is RpmDBEntry.Signatures, but this is not required
+  # Ruby ###########################################################################################################
+  - ecosystem: ruby # MANUAL
+    name: ruby-gemfile-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ruby/cataloger.go
+      function: NewGemFileLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - gem
+      - language
+      - package
+      - ruby
+    parsers: # AUTO-GENERATED structure
+      - function: parseGemFileLockEntries # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Gemfile.lock'
+        package_types: # AUTO-GENERATED
+          - gem
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: ruby # MANUAL
+    name: ruby-gemspec-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ruby/cataloger.go
+      function: NewGemSpecCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - gem
+      - gemspec
+      - language
+      - package
+      - ruby
+    parsers: # AUTO-GENERATED structure
+      - function: parseGemSpecEntries # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.gemspec'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RubyGemspec
+        package_types: # AUTO-GENERATED
+          - gem
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # RubyGemspec.Files
+                digests: false
+              package_integrity_hash: false
+  - ecosystem: ruby # MANUAL
+    name: ruby-installed-gemspec-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ruby/cataloger.go
+      function: NewInstalledGemSpecCataloger
+    selectors: # AUTO-GENERATED
+      - gem
+      - gemspec
+      - image
+      - installed
+      - language
+      - package
+      - ruby
+    parsers: # AUTO-GENERATED structure
+      - function: parseGemSpecEntries # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/specifications/**/*.gemspec'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RubyGemspec
+        package_types: # AUTO-GENERATED
+          - gem
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach:
+                - direct
+                - indirect
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: true # RubyGemspec.Files
+                digests: false
+              package_integrity_hash: false
+  # SBOM ##########################################################################################################
+  - ecosystem: sbom # MANUAL
+    name: sbom-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/sbom/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - package
+      - sbom
+    parsers: # AUTO-GENERATED structure
+      - function: parseSBOM # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.syft.json'
+            - '**/*.bom.*'
+            - '**/*.bom'
+            - '**/bom'
+            - '**/*.sbom.*'
+            - '**/*.sbom'
+            - '**/sbom'
+            - '**/*.cdx.*'
+            - '**/*.cdx'
+            - '**/*.spdx.*'
+            - '**/*.spdx'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ApkDBEntry
+        package_types: # AUTO-GENERATED
+          - apk
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Snap ##########################################################################################################
+  - ecosystem: snap # MANUAL
+    name: snap-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/snap/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - package
+      - snap
+    parsers: # AUTO-GENERATED structure
+      - function: parseSnapdSnapcraft # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/snap/snapcraft.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseSystemManifest # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/snap/manifest.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseKernelChangelog # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/doc/linux-modules-*/changelog.Debian.gz'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseBaseDpkgYaml # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/usr/share/snappy/dpkg.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+      - function: parseSnapYaml # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/meta/snap.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Prolog ########################################################################################################
+  - ecosystem: prolog # MANUAL
+    name: swipl-pack-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/swipl/cataloger.go
+      function: NewSwiplPackCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - pack
+      - package
+      - swipl
+    parsers: # AUTO-GENERATED structure
+      - function: parsePackPackage # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pack.pl'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SwiplPackEntry
+        package_types: # AUTO-GENERATED
+          - swiplpack
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+                - dev
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false
+  # Terraform ######################################################################################################
+  - ecosystem: terraform # MANUAL
+    name: terraform-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/terraform/cataloger.go
+      function: NewLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - package
+      - terraform
+    parsers: # AUTO-GENERATED structure
+      - function: parseTerraformLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.terraform.lock.hcl'
+        metadata_types: # AUTO-GENERATED
+          - pkg.TerraformLockProviderEntry
+        package_types: # AUTO-GENERATED
+          - terraform
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: false
+            dependencies:
+              reach:
+                - direct
+              topology: none
+              kinds:
+                - runtime
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: true
+  # WordPress ######################################################################################################
+  - ecosystem: wordpress # MANUAL
+    name: wordpress-plugins-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/wordpress/cataloger.go
+      function: NewWordpressPluginCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - package
+      - wordpress
+    parsers: # AUTO-GENERATED structure
+      - function: parseWordpressPluginFiles # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/wp-content/plugins/*/*.php'
+        metadata_types: # AUTO-GENERATED
+          - pkg.WordpressPluginEntry
+        package_types: # AUTO-GENERATED
+          - wordpress-plugin
+        capabilities: # MANUAL - preserved across regeneration
+          offline:
+            license: true
+            dependencies:
+              reach: []
+              topology: none
+              kinds: []
+            package_manager:
+              files:
+                listing: false
+                digests: false
+              package_integrity_hash: false

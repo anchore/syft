@@ -14,6 +14,7 @@ func Cataloger(app clio.Application) *cobra.Command {
 
 	cmd.AddCommand(
 		CatalogerList(app),
+		CatalogerInfo(app),
 	)
 
 	return cmd

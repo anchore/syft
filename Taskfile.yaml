@@ -214,6 +214,7 @@ tasks:
       # unit test coverage threshold (in % coverage)
       COVERAGE_THRESHOLD: 62
     cmds:
+      - task: clean-test-observations
       - "go test -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
       - cmd: ".github/scripts/coverage.py {{ .COVERAGE_THRESHOLD }} {{ .TMP_DIR }}/unit-coverage-details.txt"
         silent: true
@@ -641,3 +642,8 @@ tasks:
         done
         echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
       - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}
+
+  clean-test-observations:
+    desc: Remove all test observations (i.e. test-fixtures/test-observations.json)
+    cmds:
+      - find . -type f -wholename "**/test-fixtures/test-observations.json" | xargs rm -f
