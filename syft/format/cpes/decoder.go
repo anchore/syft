@@ -80,7 +80,6 @@ func toSyftModel(r io.Reader) (*sbom.SBOM, error) {
 			Name:    c.Attributes.Product,
 			Version: c.Attributes.Version,
 			CPEs:    []cpe.CPE{c},
-			Type:    internal.CPETargetSoftwareToPackageType(c.Attributes.TargetSW),
 		}
 
 		internal.Backfill(&p)
