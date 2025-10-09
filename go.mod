@@ -113,7 +113,7 @@ require (
 	github.com/STARRY-S/zip v0.2.1 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect; indirectt
 	github.com/anchore/go-lzo v0.1.0 // indirect
-	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
+	github.com/anchore/go-struct-converter v0.0.0-20251008145103-b79fc8ba4f45 // indirect
 	github.com/andybalholm/brotli v1.1.2-0.20250424173009-453214e765f3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aquasecurity/go-version v0.0.1 // indirect
@@ -306,6 +306,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0 // indirect
 	github.com/aws/smithy-go v1.22.4 // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.65 // indirect
+	github.com/kzantow/go-ld v0.0.0-20251008235635-4379583bef45 // indirect
+	github.com/piprate/json-gold v0.7.0 // indirect
+	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 )
 
 retract (
@@ -313,3 +316,5 @@ retract (
 	v0.53.2
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
+
+replace github.com/spdx/tools-golang => github.com/kzantow-anchore/tools-golang v0.2.1-0.20251009001345-4a11143e0606
