@@ -9,6 +9,7 @@ import (
 	"github.com/spdx/tools-golang/spdx/v2/v2_1"
 	"github.com/spdx/tools-golang/spdx/v2/v2_2"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
+	"github.com/spdx/tools-golang/spdx/v3/v3_0_1"
 
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/format/internal/spdxutil"
@@ -68,6 +69,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		doc := v2_1.Document{}
 		err = convert.Document(latestDoc, &doc)
 		encodeDoc = doc
+
 	case "2.2":
 		doc := v2_2.Document{}
 		err = convert.Document(latestDoc, &doc)
@@ -76,6 +78,11 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	case "2.3":
 		doc := v2_3.Document{}
 		err = convert.Document(latestDoc, &doc)
+		encodeDoc = doc
+
+	case "3.0.1":
+		doc := &v3_0_1.Document{}
+		err = convert.Document(latestDoc, doc)
 		encodeDoc = doc
 	default:
 		return fmt.Errorf("unsupported SPDX version %q", e.cfg.Version)
