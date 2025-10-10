@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )

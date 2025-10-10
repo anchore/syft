@@ -3,10 +3,10 @@ package syft
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
