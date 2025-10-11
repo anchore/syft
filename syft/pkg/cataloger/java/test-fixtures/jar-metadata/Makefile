@@ -13,6 +13,7 @@ API_ALL_SOURCES = api-all-2.0.0-sources
 SPRING_INSTRUMENTATION = spring-instrumentation-4.3.0-1.0
 MULTIPLE_MATCHING = multiple-matching-2.11.5
 ORG_MULTIPLE_THENAME = org.multiple-thename
+MICRONAUT_AOP = micronaut-aop-4.9.11
 
 
 .DEFAULT_GOAL := fixtures
@@ -23,7 +24,7 @@ fixtures: $(CACHE_DIR)
 # requirement 2: 'fingerprint' goal to determine if the fixture input that indicates any existing cache should be busted
 fingerprint: $(FINGERPRINT_FILE)
 
-$(CACHE_DIR): $(CACHE_DIR)/$(JACKSON_CORE).jar $(CACHE_DIR)/$(SBT_JACKSON_CORE).jar $(CACHE_DIR)/$(OPENSAML_CORE).jar  $(CACHE_DIR)/$(API_ALL_SOURCES).jar $(CACHE_DIR)/$(SPRING_INSTRUMENTATION).jar $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar
+$(CACHE_DIR): $(CACHE_DIR)/$(JACKSON_CORE).jar $(CACHE_DIR)/$(SBT_JACKSON_CORE).jar $(CACHE_DIR)/$(OPENSAML_CORE).jar  $(CACHE_DIR)/$(API_ALL_SOURCES).jar $(CACHE_DIR)/$(SPRING_INSTRUMENTATION).jar $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar $(CACHE_DIR)/$(MICRONAUT_AOP).jar
 
 $(CACHE_DIR)/$(JACKSON_CORE).jar:
 	mkdir -p $(CACHE_DIR)
@@ -52,6 +53,10 @@ $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar:
 $(CACHE_DIR)/$(ORG_MULTIPLE_THENAME).jar:
 	mkdir -p $(CACHE_DIR)
 	cd $(ORG_MULTIPLE_THENAME) && zip -r $(CACHE_PATH)/$(ORG_MULTIPLE_THENAME).jar .
+
+$(CACHE_DIR)/$(MICRONAUT_AOP).jar:
+	mkdir -p $(CACHE_DIR)
+	cd $(MICRONAUT_AOP) && zip -r $(CACHE_PATH)/$(MICRONAUT_AOP).jar .
 
 # Jenkins plugins typically do not have the version included in the archive name,
 # so it is important to not include it in the generated test fixture

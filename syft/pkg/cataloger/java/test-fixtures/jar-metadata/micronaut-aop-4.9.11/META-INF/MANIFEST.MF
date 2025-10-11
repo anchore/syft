@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: io.micronaut.micronaut_aop
+Implementation-Version: 4.9.11
+Implementation-Title: Micronaut Core
+
