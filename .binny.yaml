@@ -42,7 +42,7 @@ tools:
   # used for signing the checksums file at release
   - name: cosign
     version:
-      want: v3.0.1
+      want: v3.0.2
     method: github-release
     with:
       repo: sigstore/cosign
@@ -114,7 +114,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.47.2
+      want: v4.48.1
     method: github-release
     with:
       repo: mikefarah/yq
