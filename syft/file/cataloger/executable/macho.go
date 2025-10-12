@@ -2,7 +2,10 @@ package executable
 
 import (
 	"debug/macho"
+	"encoding/binary"
+	"errors"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
@@ -19,20 +22,64 @@ const (
 func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) error {
 	// TODO: support security features
 
-	// TODO: support multi-architecture binaries
-	f, err := macho.NewFile(reader)
-	if err != nil {
+	// Read and decode Mach magic number
+	var ident [4]byte
+	if _, err := reader.ReadAt(ident[0:], 0); err != nil {
 		return err
 	}
 
-	libs, err := f.ImportedLibraries()
-	if err != nil {
-		return err
-	}
+	// get the magic in both endiannesses
+	be := binary.BigEndian.Uint32(ident[0:])
+	le := binary.LittleEndian.Uint32(ident[0:])
 
-	data.ImportedLibraries = libs
-	data.HasEntrypoint = machoHasEntrypoint(f)
-	data.HasExports = machoHasExports(f)
+	machoMagic := macho.Magic32 &^ 1 // bottom bit is size (0=32,1=64)
+	if machoMagic == be&^1 || machoMagic == le&^1 {
+		f, err := macho.NewFile(reader)
+		if err != nil {
+			return err
+		}
+
+		libs, err := f.ImportedLibraries()
+		if err != nil {
+			return err
+		}
+
+		data.ImportedLibraries = libs
+		data.HasEntrypoint = machoHasEntrypoint(f)
+		data.HasExports = machoHasExports(f)
+	} else if be == macho.MagicFat || le == macho.MagicFat {
+		f, err := macho.NewFatFile(reader)
+		if err != nil {
+			return err
+		}
+
+		var libs []string
+		for _, arch := range f.Arches {
+			aLibs, err := arch.File.ImportedLibraries()
+			if err != nil {
+				return err
+			}
+
+			libs = append(libs, aLibs...)
+		}
+
+		// de-duplicate libraries
+		data.ImportedLibraries = internal.NewSet(libs...).ToSlice()
+
+		// TODO handle only some having entrypoints/exports? If that is even practical
+		for _, arch := range f.Arches {
+			// only check for entrypoint if we don't already have one
+			if !data.HasEntrypoint {
+				data.HasEntrypoint = machoHasEntrypoint(arch.File)
+			}
+			// only check for exports if we don't already have them
+			if !data.HasExports {
+				data.HasExports = machoHasExports(arch.File)
+			}
+		}
+	} else {
+		return errors.New("not a Mach-O file")
+	}
 
 	return nil
 }
