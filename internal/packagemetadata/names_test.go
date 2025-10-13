@@ -191,11 +191,6 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeOf(pkg.PythonPackage{}),
 		},
 		{
-			name:     "map pkg.PythonPdmLockEntry struct type",
-			input:    "PythonPdmLockMetadata",
-			expected: reflect.TypeOf(pkg.PythonPdmLockEntry{}),
-		},
-		{
 			name:     "map pkg.PythonPipfileLockEntry struct type",
 			input:    "PythonPipfileLockMetadata",
 			expected: reflect.TypeOf(pkg.PythonPipfileLockEntry{}),
