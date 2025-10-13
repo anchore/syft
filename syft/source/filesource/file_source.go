@@ -264,7 +264,11 @@ func unarchiveToTmp(path string, unarchiver archives.Extractor) (string, func() 
 	}
 
 	visitor := func(_ context.Context, file archives.FileInfo) error {
-		destPath := filepath.Join(tempDir, file.NameInArchive)
+		destPath, err := intFile.SafeJoin(tempDir, file.NameInArchive)
+		if err != nil {
+			return fmt.Errorf("unsafe path in archive (potential path traversal): %w", err)
+		}
+
 		if file.IsDir() {
 			return os.MkdirAll(destPath, file.Mode())
 		}

@@ -308,7 +308,7 @@ func TestSafeJoin(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%+v:%+v", test.prefix, test.args), func(t *testing.T) {
-			actual, err := safeJoin(test.prefix, test.args...)
+			actual, err := SafeJoin(test.prefix, test.args...)
 			test.errAssertion(t, err)
 			assert.Equal(t, test.expected, actual)
 		})
