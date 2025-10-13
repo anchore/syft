@@ -15,8 +15,8 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/packagemetadata"
 	syftJsonModel "github.com/anchore/syft/syft/format/syftjson/model"
-	"github.com/anchore/syft/syft/internal/packagemetadata"
 )
 
 /*
@@ -25,6 +25,17 @@ JSON output and integrations. The downside to this approach is that any values a
 are not captured (empty interfaces). This means that pkg.Package.Metadata is not validated at this time. This approach
 can be extended to include specific package metadata struct shapes in the future.
 */
+
+var repoRoot string
+
+func init() {
+	var err error
+	repoRoot, err = packagemetadata.RepoRoot()
+	if err != nil {
+		fmt.Println("unable to determine repo root")
+		os.Exit(1)
+	}
+}
 
 func main() {
 	write(encode(build()))
@@ -60,7 +71,7 @@ func assembleTypeContainer(items []any) (any, map[string]string) {
 	}
 
 	if len(typesMissingNames) > 0 {
-		fmt.Println("the following types are missing JSON names (manually curated in ./syft/internal/packagemetadata/names.go):")
+		fmt.Println("the following types are missing JSON names (manually curated in ./internal/packagemetadata/names.go):")
 		for _, t := range typesMissingNames {
 			fmt.Println("  - ", t.Name())
 		}
@@ -86,25 +97,30 @@ func build() *jsonschema.Schema {
 	// note: AddGoComments parses from the module root and creates keys like "syft/pkg.TypeName",
 	// but the reflector expects fully qualified paths like "github.com/anchore/syft/syft/pkg.TypeName".
 	// We fix up the keys after extraction to match the expected format.
-	if err := reflector.AddGoComments("github.com/anchore/syft", "../../.."); err != nil {
+	if err := reflector.AddGoComments("github.com/anchore/syft", repoRoot); err != nil {
 		fmt.Fprintf(os.Stderr, "warning: failed to extract Go comments: %v\n", err)
 	} else {
 		// fix up comment map keys to use fully qualified import paths
+		// note: AddGoComments includes the absolute repo path WITHOUT the leading slash
+		repoRootNoSlash := strings.TrimPrefix(repoRoot, "/")
 		fixedMap := make(map[string]string)
 		for k, v := range reflector.CommentMap {
 			newKey := k
 			if !strings.HasPrefix(k, "github.com/") {
+				// key doesn't have module prefix, add it
 				newKey = "github.com/anchore/syft/" + k
+			} else if strings.Contains(k, repoRootNoSlash) {
+				// key has the absolute repo path embedded, strip it
+				// format: github.com/anchore/syft/Users/wagoodman/code/syft-manual/syft/pkg.Type
+				// should be: github.com/anchore/syft/syft/pkg.Type
+				newKey = strings.Replace(k, repoRootNoSlash+"/", "", 1)
 			}
 			fixedMap[newKey] = v
 		}
 		reflector.CommentMap = fixedMap
 
 		// copy field comments for type aliases (e.g., type RpmArchive RpmDBEntry)
-		repoRoot, err := packagemetadata.RepoRoot()
-		if err == nil {
-			copyAliasFieldComments(reflector.CommentMap, repoRoot)
-		}
+		copyAliasFieldComments(reflector.CommentMap, repoRoot)
 	}
 
 	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
@@ -178,11 +194,6 @@ func encode(schema *jsonschema.Schema) []byte {
 }
 
 func write(schema []byte) {
-	repoRoot, err := packagemetadata.RepoRoot()
-	if err != nil {
-		fmt.Println("unable to determine repo root")
-		os.Exit(1)
-	}
 	schemaPath := filepath.Join(repoRoot, "schema", "json", fmt.Sprintf("schema-%s.json", internal.JSONSchemaVersion))
 	latestSchemaPath := filepath.Join(repoRoot, "schema", "json", "schema-latest.json")
 

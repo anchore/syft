@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 

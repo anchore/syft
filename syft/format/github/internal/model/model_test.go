@@ -3,13 +3,13 @@ package model
 import (
 	"testing"
 
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"

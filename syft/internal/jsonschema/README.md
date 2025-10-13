@@ -1,1 +1,0 @@
-Please see [schema/json/README.md](../../../schema/json/README.md) for more information on the JSON schema files in this directory.
