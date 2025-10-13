@@ -64,34 +64,33 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 				),
 			)
 		}
-                if matches := unquotedPinnedDependency.FindStringSubmatch(line); len(matches) == 3 {
-                   name := strings.TrimSpace(matches[1])
-                   version := strings.TrimSpace(matches[2])
-            
-                   if hasTemplateDirective(name) || hasTemplateDirective(version) {
-                      continue
-                    }
-            
-                   if name != "" && version != "" {
-                      // Avoid duplicates
-                      isDuplicate := false
-                      for _, p := range packages {
-                          if p.Name == name && p.Version == version {
-                             isDuplicate = true
-                             break
-                          }
-                      }
-                
-                      if !isDuplicate {
-                         packages = append(
-                         packages,
-                         newPackageForIndex(name,version,reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),),
-                         )
-                         }
-                      }
-                 }
-           }
-		
+		if matches := unquotedPinnedDependency.FindStringSubmatch(line); len(matches) == 3 {
+			name := strings.TrimSpace(matches[1])
+			version := strings.TrimSpace(matches[2])
+
+			if hasTemplateDirective(name) || hasTemplateDirective(version) {
+				continue
+			}
+
+			if name != "" && version != "" {
+				// Avoid duplicates
+				isDuplicate := false
+				for _, p := range packages {
+					if p.Name == name && p.Version == version {
+						isDuplicate = true
+						break
+					}
+				}
+
+				if !isDuplicate {
+					packages = append(
+						packages,
+						newPackageForIndex(name, version, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+					)
+				}
+			}
+		}
+	}
 
 	return packages, nil, nil
 }
