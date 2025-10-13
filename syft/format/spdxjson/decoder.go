@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
+	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/format/internal/stream"
 	"github.com/anchore/syft/syft/sbom"
 )
@@ -44,6 +45,11 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, "", "", fmt.Errorf("unable to seek to start of SPDX JSON SBOM: %+v", err)
 	}
 
+	if version == spdxutil.V3_0_1 {
+		v3decoder := spdx3Decoder{}
+		return v3decoder.Decode(reader)
+	}
+
 	doc, err := spdxJson.Read(reader)
 	if err != nil {
 		return nil, id, version, fmt.Errorf("unable to decode spdx json: %w", err)
@@ -60,6 +66,12 @@ func (d decoder) Identify(r io.Reader) (sbom.FormatID, string) {
 	reader, err := stream.SeekableReader(r)
 	if err != nil {
 		return "", ""
+	}
+
+	v3decoder := spdx3Decoder{}
+	id3, version3 := v3decoder.Identify(reader)
+	if id3 != "" && version3 != "" {
+		return id3, version3
 	}
 
 	if _, err := reader.Seek(0, io.SeekStart); err != nil {
