@@ -152,7 +152,7 @@ func ContentsFromZip(ctx context.Context, archivePath string, paths ...string) (
 // UnzipToDir extracts a zip archive to a target directory.
 func UnzipToDir(ctx context.Context, archivePath, targetDir string) error {
 	visitor := func(_ context.Context, file archives.FileInfo) error {
-		joinedPath, err := safeJoin(targetDir, file.NameInArchive)
+		joinedPath, err := SafeJoin(targetDir, file.NameInArchive)
 		if err != nil {
 			return err
 		}
@@ -163,8 +163,8 @@ func UnzipToDir(ctx context.Context, archivePath, targetDir string) error {
 	return TraverseFilesInZip(ctx, archivePath, visitor)
 }
 
-// safeJoin ensures that any destinations do not resolve to a path above the prefix path.
-func safeJoin(prefix string, dest ...string) (string, error) {
+// SafeJoin ensures that any destinations do not resolve to a path above the prefix path.
+func SafeJoin(prefix string, dest ...string) (string, error) {
 	joinResult := filepath.Join(append([]string{prefix}, dest...)...)
 	cleanJoinResult := filepath.Clean(joinResult)
 	if !strings.HasPrefix(cleanJoinResult, filepath.Clean(prefix)) {

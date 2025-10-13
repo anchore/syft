@@ -263,7 +263,7 @@ func unarchiveToTmp(path string, unarchiver archives.Extractor) (string, func() 
 			return os.MkdirAll(destPath, file.Mode())
 		}
 
-		if err := os.MkdirAll(filepath.Dir(destPath), os.ModeDir|0755); err != nil {
+		if err = os.MkdirAll(filepath.Dir(destPath), os.ModeDir|0755); err != nil {
 			return fmt.Errorf("failed to create parent directory: %w", err)
 		}
 

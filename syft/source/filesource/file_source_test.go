@@ -1,6 +1,7 @@
 package filesource
 
 import (
+	"archive/tar"
 	"io"
 	"os"
 	"os/exec"
@@ -317,4 +318,90 @@ func Test_FileSource_ID(t *testing.T) {
 			assert.Equalf(t, tt.wantDigest, s.digestForVersion, "digestForVersion mismatch")
 		})
 	}
+}
+
+func TestUnarchiveToTmp_PathTraversalProtection(t *testing.T) {
+	// This test verifies that malicious archives with path traversal attempts
+	// (e.g., ../../../etc/passwd) are properly blocked by SafeJoin
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
+	// Create a malicious tar archive with path traversal attempts
+	tempDir := t.TempDir()
+	maliciousArchive := filepath.Join(tempDir, "malicious.tar")
+
+	// Create a temporary directory with a file that we'll add to the archive
+	sourceDir := filepath.Join(tempDir, "source")
+	require.NoError(t, os.MkdirAll(sourceDir, 0755))
+
+	testFile := filepath.Join(sourceDir, "test.txt")
+	require.NoError(t, os.WriteFile(testFile, []byte("malicious content"), 0644))
+
+	// Create a malicious tar manually using Go's archive/tar
+	// This allows us to inject path traversal entries
+	archiveFile, err := os.Create(maliciousArchive)
+	require.NoError(t, err)
+	defer archiveFile.Close()
+
+	tw := tar.NewWriter(archiveFile)
+	defer tw.Close()
+
+	// Add a file with path traversal in its name
+	content := []byte("malicious content")
+	header := &tar.Header{
+		Name: "../../../tmp/malicious.txt",
+		Mode: 0644,
+		Size: int64(len(content)),
+	}
+	require.NoError(t, tw.WriteHeader(header))
+	_, err = tw.Write(content)
+	require.NoError(t, err)
+
+	require.NoError(t, tw.Close())
+	require.NoError(t, archiveFile.Close())
+
+	// Attempt to create a source from the malicious archive
+	// This should fail due to path traversal protection
+	cfg := Config{
+		Path:               maliciousArchive,
+		SkipExtractArchive: false,
+	}
+
+	src, err := New(cfg)
+
+	// We expect an error containing "path traversal" or "unsafe path"
+	if err == nil {
+		if src != nil {
+			src.Close()
+		}
+		t.Fatal("expected error when extracting archive with path traversal, but got none")
+	}
+
+	// Verify the error message indicates path traversal was detected
+	assert.Contains(t, err.Error(), "path traversal",
+		"error should mention path traversal, got: %v", err)
+}
+
+func TestUnarchiveToTmp_LegitimateArchive(t *testing.T) {
+	// This test verifies that legitimate archives without path traversal work correctly
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
+	archivePath := setupArchiveTest(t, "test-fixtures/path-detected", false)
+
+	cfg := Config{
+		Path:               archivePath,
+		SkipExtractArchive: false,
+	}
+
+	src, err := New(cfg)
+	require.NoError(t, err, "legitimate archive should extract without error")
+	require.NotNil(t, src)
+
+	t.Cleanup(func() {
+		require.NoError(t, src.Close())
+	})
+
+	// Verify we can access the resolver
+	res, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 }
