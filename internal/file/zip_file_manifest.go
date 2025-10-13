@@ -6,9 +6,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/mholt/archives"
 	"github.com/scylladb/go-set/strset"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 // ZipFileManifest is a collection of paths and their file metadata.

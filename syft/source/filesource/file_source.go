@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/mholt/archives"
 	"github.com/opencontainers/go-digest"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
@@ -21,7 +22,6 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/internal"
-	"github.com/mholt/archives"
 )
 
 var _ source.Source = (*fileSource)(nil)

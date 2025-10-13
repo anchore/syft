@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/mholt/archives"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 const (
