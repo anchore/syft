@@ -61,6 +61,94 @@ func TestParseSetup(t *testing.T) {
 			fixture:  "test-fixtures/setup/dynamic-setup.py",
 			expected: nil,
 		},
+		{
+			fixture: "test-fixtures/setup/multiline-split-setup.py",
+			expected: []pkg.Package{
+				{
+					Name:     "black",
+					Version:  "23.12.1",
+					PURL:     "pkg:pypi/black@23.12.1",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "cairosvg",
+					Version:  "2.7.1",
+					PURL:     "pkg:pypi/cairosvg@2.7.1",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "celery",
+					Version:  "5.3.4",
+					PURL:     "pkg:pypi/celery@5.3.4",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "django",
+					Version:  "4.2.23",
+					PURL:     "pkg:pypi/django@4.2.23",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "mypy",
+					Version:  "1.7.1",
+					PURL:     "pkg:pypi/mypy@1.7.1",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "pillow",
+					Version:  "11.0.0",
+					PURL:     "pkg:pypi/pillow@11.0.0",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "pytest",
+					Version:  "7.4.3",
+					PURL:     "pkg:pypi/pytest@7.4.3",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "requests",
+					Version:  "2.31.0",
+					PURL:     "pkg:pypi/requests@2.31.0",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+			},
+		},
+		{
+			// Test mixed quoted and unquoted dependencies - ensure no duplicates
+			fixture: "test-fixtures/setup/mixed-format-setup.py",
+			expected: []pkg.Package{
+				{
+					Name:     "requests",
+					Version:  "2.31.0",
+					PURL:     "pkg:pypi/requests@2.31.0",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "django",
+					Version:  "4.2.23",
+					PURL:     "pkg:pypi/django@4.2.23",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+				{
+					Name:     "flask",
+					Version:  "3.0.0",
+					PURL:     "pkg:pypi/flask@3.0.0",
+					Language: pkg.Python,
+					Type:     pkg.PythonPkg,
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
