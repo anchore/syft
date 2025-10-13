@@ -4,13 +4,14 @@ import (
 	"context"
 	"strings"
 
+	"github.com/mholt/archives"
+
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/mholt/archives"
 )
 
 const unknownsLabelerTaskName = "unknowns-labeler"

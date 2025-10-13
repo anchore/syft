@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mholt/archives"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/mholt/archives"
 )
 
 // ToGithubModel converts the provided SBOM to a GitHub dependency model

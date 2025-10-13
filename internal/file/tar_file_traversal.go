@@ -6,9 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archives"
+
+	"github.com/anchore/syft/internal/log"
 )
 
 // TraverseFilesInTar enumerates all paths stored within a tar archive using the visitor pattern.
