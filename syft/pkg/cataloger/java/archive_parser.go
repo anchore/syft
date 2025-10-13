@@ -435,6 +435,10 @@ func (j *archiveParser) updateMatchIfBetter(currentProps pkg.JavaPomProperties, 
 	newProps pkg.JavaPomProperties, parentPath string, projects map[string]*parsedPomProject) (pkg.JavaPomProperties, *parsedPomProject) {
 	// Keep the first match
 	if currentProps.ArtifactID == "" {
+		proj, hasProject := projects[parentPath]
+		if hasProject {
+			return newProps, proj
+		}
 		return newProps, currentPom
 	}
 

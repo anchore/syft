@@ -79,9 +79,12 @@ func TestSearchMavenForLicenses(t *testing.T) {
 					ReadCloser: fixture,
 				}, tc.detectNested, tc.config)
 			defer cleanupFn()
+			require.NoError(t, err)
 
 			// assert licenses are discovered from upstream
 			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
+			require.NotNil(t, parsedPom, "expected to find pom information in the fixture")
+			require.NotNil(t, parsedPom.project, "expected parsedPom to have a project")
 			resolvedLicenses, _ := ap.maven.ResolveLicenses(context.Background(), parsedPom.project)
 			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(ctx, nil, resolvedLicenses))
 		})
