@@ -3136,22 +3136,22 @@
     },
     "PythonPdmLockEntry": {
       "properties": {
-        "Summary": {
+        "summary": {
           "type": "string"
         },
-        "Name": {
+        "name": {
           "type": "string"
         },
-        "Version": {
+        "version": {
           "type": "string"
         },
-        "Files": {
+        "files": {
           "items": {
             "$ref": "#/$defs/PythonFileRecord"
           },
           "type": "array"
         },
-        "Dependencies": {
+        "dependencies": {
           "items": {
             "type": "string"
           },
@@ -3160,11 +3160,11 @@
       },
       "type": "object",
       "required": [
-        "Summary",
-        "Name",
-        "Version",
-        "Files",
-        "Dependencies"
+        "summary",
+        "name",
+        "version",
+        "files",
+        "dependencies"
       ],
       "description": "PythonPdmLockEntry represents a single package entry within a pdm.lock file."
     },
