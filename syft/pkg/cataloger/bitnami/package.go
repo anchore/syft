@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	version "github.com/bitnami/go-version/pkg/version"
+	"github.com/bitnami/go-version/pkg/version"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/artifact"
