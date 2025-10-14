@@ -106,6 +106,20 @@ func Test_Backfill(t *testing.T) {
 				Metadata: pkg.JavaArchive{},
 			},
 		},
+		{
+			name: "target-sw from CPE",
+			in: pkg.Package{
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:amazon:opensearch:*:*:*:*:*:ruby:*:*", ""),
+				},
+			},
+			expected: pkg.Package{
+				CPEs: []cpe.CPE{
+					cpe.Must("cpe:2.3:a:amazon:opensearch:*:*:*:*:*:ruby:*:*", ""),
+				},
+				Type: pkg.GemPkg,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
