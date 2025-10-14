@@ -351,6 +351,14 @@ func Test_SourceInfo(t *testing.T) {
 				"acquired package info from Terraform dependency lock file",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.ModelPkg,
+			},
+			expected: []string{
+				"",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {
