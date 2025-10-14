@@ -234,10 +234,11 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 		// when tar/zip files are extracted, if there are multiple entries at the same
 		// location, the last entry wins
 		// NOTE: this currently does not display any messages if an overwrite happens
-		if tar, tarOk := unarchiver.(*archiver.Tar); tarOk {
-			tar.OverwriteExisting = true
-		} else if zip, zipOk := unarchiver.(*archiver.Zip); zipOk {
-			zip.OverwriteExisting = true
+		switch v := unarchiver.(type) {
+		case *archiver.Tar:
+			v.OverwriteExisting = true
+		case *archiver.Zip:
+			v.OverwriteExisting = true
 		}
 
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
