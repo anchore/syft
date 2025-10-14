@@ -42,6 +42,8 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 	componentType := cyclonedx.ComponentTypeLibrary
 	if p.Type == pkg.BinaryPkg {
 		componentType = cyclonedx.ComponentTypeApplication
+	} else if p.Type == pkg.ModelPkg {
+		componentType = cyclonedx.ComponentTypeMachineLearningModel
 	}
 
 	return cyclonedx.Component{
