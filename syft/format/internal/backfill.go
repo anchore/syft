@@ -17,13 +17,8 @@ import (
 //
 // Backfill does not call p.SetID(), but this needs to be called later to ensure it's up to date
 func Backfill(p *pkg.Package) {
-	if p.PURL != "" {
-		backfillFromPurl(p)
-	}
-
-	if len(p.CPEs) != 0 {
-		backfillFromCPE(p)
-	}
+	backfillFromPurl(p)
+	backfillFromCPE(p)
 }
 
 func backfillFromCPE(p *pkg.Package) {
