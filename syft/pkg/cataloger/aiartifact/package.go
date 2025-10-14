@@ -1,9 +1,6 @@
 package aiartifact
 
 import (
-	"fmt"
-
-	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -12,11 +9,12 @@ func newGGUFPackage(metadata *pkg.GGUFFileMetadata, locations ...file.Location) 
 	p := pkg.Package{
 		Name:      metadata.ModelName,
 		Version:   metadata.ModelVersion,
-		PURL:      packageURL(metadata),
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.ModelPkg,
 		Licenses:  pkg.NewLicenseSet(),
 		Metadata:  *metadata,
+		// NOTE: PURL is intentionally not set as the package-url spec
+		// has not yet finalized support for ML model packages
 	}
 
 	// Add license to the package if present in metadata
@@ -27,42 +25,4 @@ func newGGUFPackage(metadata *pkg.GGUFFileMetadata, locations ...file.Location) 
 	p.SetID()
 
 	return p
-}
-
-// packageURL returns the PURL for the specific GGUF model package (see https://github.com/package-url/purl-spec)
-func packageURL(metadata *pkg.GGUFFileMetadata) string {
-	var qualifiers packageurl.Qualifiers
-
-	// Add model-specific qualifiers
-	if metadata.Architecture != "" {
-		qualifiers = append(qualifiers, packageurl.Qualifier{
-			Key:   "arch",
-			Value: metadata.Architecture,
-		})
-	}
-
-	if metadata.Quantization != "" && metadata.Quantization != "unknown" {
-		qualifiers = append(qualifiers, packageurl.Qualifier{
-			Key:   "quantization",
-			Value: metadata.Quantization,
-		})
-	}
-
-	if metadata.Parameters > 0 {
-		qualifiers = append(qualifiers, packageurl.Qualifier{
-			Key:   "parameters",
-			Value: fmt.Sprintf("%d", metadata.Parameters),
-		})
-	}
-
-	// Use mlmodel as the type for machine learning models in GGUF format
-	// This follows the PURL spec guidance for ML models
-	return packageurl.NewPackageURL(
-		"mlmodel",
-		"gguf",
-		metadata.ModelName,
-		metadata.ModelVersion,
-		qualifiers,
-		"",
-	).ToString()
 }
