@@ -16,6 +16,8 @@ bin/
 /snapshot
 /.tool
 /.task
+/generate
+/specs
 
 # changelog generation
 CHANGELOG.md

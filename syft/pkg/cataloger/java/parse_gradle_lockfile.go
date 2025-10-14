@@ -11,8 +11,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const gradleLockfileGlob = "**/gradle.lockfile*"
-
 // lockfileDependency represents a single dependency in the gradle.lockfile file
 type lockfileDependency struct {
 	Group   string
