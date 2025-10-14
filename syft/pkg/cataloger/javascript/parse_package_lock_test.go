@@ -122,7 +122,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/npm@6.14.6",
-			Metadata: pkg.NpmPackageLockEntry{},
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"@types/react": "^18.0.9"}},
 		},
 		{
 			Name:     "@types/prop-types",
@@ -144,7 +144,7 @@ func TestParsePackageLockV2(t *testing.T) {
 			Licenses: pkg.NewLicenseSet(
 				pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
 			),
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.17.tgz", Integrity: "sha1-RYPZwyLWfv5LOak10iPtzHBQzPQ=", Dependencies: map[string]string{"@types/prop-types": "*", "@types/scheduler": "*", "csstype": "^3.0.2"}},
 		},
 		{
 			Name:     "@types/scheduler",
@@ -172,6 +172,28 @@ func TestParsePackageLockV2(t *testing.T) {
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
+	expectedRelationships = []artifact.Relationship{
+		{
+			From: expectedPkgs[1],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[3],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[4],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[2],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
 	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
@@ -186,7 +208,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/lock-v3-fixture@1.0.0",
-			Metadata: pkg.NpmPackageLockEntry{},
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"@types/react": "^18.0.9"}},
 		},
 		{
 			Name:     "@types/prop-types",
@@ -202,7 +224,7 @@ func TestParsePackageLockV3(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			PURL:     "pkg:npm/%40types/react@18.0.20",
-			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA=="},
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA==", Dependencies: map[string]string{"@types/prop-types": "*", "@types/scheduler": "*", "csstype": "^3.0.2"}},
 		},
 		{
 			Name:     "@types/scheduler",
@@ -223,6 +245,28 @@ func TestParsePackageLockV3(t *testing.T) {
 	}
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
+	}
+	expectedRelationships = []artifact.Relationship{
+		{
+			From: expectedPkgs[1],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[3],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[4],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[2],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
 	}
 	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
@@ -271,7 +315,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 		Licenses: pkg.NewLicenseSet(
 			pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation(packageLockV2)),
 		),
-		Metadata: pkg.NpmPackageLockEntry{},
+		Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"case": "1.6.2", "case-alias": "npm:case@^1.6.3", "chai": "npm:@bundled-es-modules/chai@^4.2.2"}},
 	}
 
 	for _, pl := range packageLocks {
@@ -284,6 +328,26 @@ func TestParsePackageLockAlias(t *testing.T) {
 
 		for i := range expected {
 			expected[i].Locations.Add(file.NewLocation(pl))
+		}
+
+		if pl == packageLockV2 {
+			expectedRelationships = []artifact.Relationship{
+				{
+					From: expected[0],
+					To:   expected[3],
+					Type: artifact.DependencyOfRelationship,
+				},
+				{
+					From: expected[1],
+					To:   expected[3],
+					Type: artifact.DependencyOfRelationship,
+				},
+				{
+					From: expected[2],
+					To:   expected[3],
+					Type: artifact.DependencyOfRelationship,
+				},
+			}
 		}
 		adapter := newGenericPackageLockAdapter(CatalogerConfig{})
 		pkgtest.TestFileParser(t, pl, adapter.parsePackageLock, expected, expectedRelationships)
@@ -304,7 +368,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 				pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/tmp@1.0.0",
-			Metadata: pkg.NpmPackageLockEntry{},
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"pause-stream": "0.0.11"}},
 		},
 		{
 			Name:     "pause-stream",
@@ -317,7 +381,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 				pkg.NewLicenseFromLocationsWithContext(ctx, "Apache2", file.NewLocation(fixture)),
 			),
 			PURL:     "pkg:npm/pause-stream@0.0.11",
-			Metadata: pkg.NpmPackageLockEntry{},
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"through": "~2.3"}},
 		},
 		{
 			Name:     "through",
@@ -333,6 +397,19 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	}
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
+	}
+
+	expectedRelationships = []artifact.Relationship{
+		{
+			From: expectedPkgs[2],
+			To:   expectedPkgs[1],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[1],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
 	}
 	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
