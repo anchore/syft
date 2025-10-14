@@ -64,7 +64,36 @@ func Test_CPEProvider(t *testing.T) {
 				},
 			},
 		},
-
+		{
+			name:      "deduces target SW from CPE - known target_sw",
+			userInput: "cpe:2.3:a:amazon:opensearch:*:*:*:*:*:ruby:*:*",
+			sbom: &sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name: "opensearch",
+						Type: pkg.GemPkg,
+						CPEs: []cpe.CPE{
+							cpe.Must("cpe:2.3:a:amazon:opensearch:*:*:*:*:*:ruby:*:*", ""),
+						},
+					}),
+				},
+			},
+		},
+		{
+			name:      "handles unknown target_sw CPE field",
+			userInput: "cpe:2.3:a:amazon:opensearch:*:*:*:*:*:loremipsum:*:*",
+			sbom: &sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name: "opensearch",
+						Type: "",
+						CPEs: []cpe.CPE{
+							cpe.Must("cpe:2.3:a:amazon:opensearch:*:*:*:*:*:loremipsum:*:*", ""),
+						},
+					}),
+				},
+			},
+		},
 		{
 			name:      "invalid prefix",
 			userInput: "dir:test-fixtures/cpe",
@@ -77,7 +106,7 @@ func Test_CPEProvider(t *testing.T) {
 	}
 
 	syftPkgOpts := []cmp.Option{
-		cmpopts.IgnoreFields(pkg.Package{}, "id", "Type", "Language"),
+		cmpopts.IgnoreFields(pkg.Package{}, "id", "Language"),
 		cmpopts.IgnoreUnexported(pkg.Package{}, file.LocationSet{}, pkg.LicenseSet{}),
 	}
 
