@@ -55,7 +55,7 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 
 		var libs []string
 		for _, arch := range f.Arches {
-			aLibs, err := arch.File.ImportedLibraries()
+			aLibs, err := arch.ImportedLibraries()
 			if err != nil {
 				return err
 			}
