@@ -231,11 +231,13 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	// unarchived.
 	envelopedUnarchiver, err := archiver.ByExtension(path)
 	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
-		if tar, ok := unarchiver.(*archiver.Tar); ok {
-			// when tar files are extracted, if there are multiple entries at the same
-			// location, the last entry wins
-			// NOTE: this currently does not display any messages if an overwrite happens
+		// when tar/zip files are extracted, if there are multiple entries at the same
+		// location, the last entry wins
+		// NOTE: this currently does not display any messages if an overwrite happens
+		if tar, tarOk := unarchiver.(*archiver.Tar); tarOk {
 			tar.OverwriteExisting = true
+		} else if zip, zipOk := unarchiver.(*archiver.Zip); zipOk {
+			zip.OverwriteExisting = true
 		}
 
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
