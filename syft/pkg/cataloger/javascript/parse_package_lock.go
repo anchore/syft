@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 // packageLock represents a JavaScript package.lock json file
@@ -33,12 +34,13 @@ type lockDependency struct {
 }
 
 type lockPackage struct {
-	Name      string             `json:"name"` // only present in the root package entry (named "")
-	Version   string             `json:"version"`
-	Resolved  string             `json:"resolved"`
-	Integrity string             `json:"integrity"`
-	License   packageLockLicense `json:"license"`
-	Dev       bool               `json:"dev"`
+	Name         string             `json:"name"` // only present in the root package entry (named "")
+	Version      string             `json:"version"`
+	Resolved     string             `json:"resolved"`
+	Integrity    string             `json:"integrity"`
+	License      packageLockLicense `json:"license"`
+	Dev          bool               `json:"dev"`
+	Dependencies map[string]string  `json:"dependencies"`
 }
 
 // packageLockLicense
@@ -104,16 +106,14 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 				name = pkgMeta.Name
 			}
 
-			pkgs = append(
-				pkgs,
-				newPackageLockV2Package(ctx, a.cfg, resolver, reader.Location, getNameFromPath(name), pkgMeta),
-			)
+			newPkg := newPackageLockV2Package(ctx, a.cfg, resolver, reader.Location, getNameFromPath(name), pkgMeta)
+			pkgs = append(pkgs, newPkg)
 		}
 	}
 
 	pkg.Sort(pkgs)
 
-	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, dependency.Resolve(packageLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
 func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {
