@@ -3137,32 +3137,27 @@
     "PythonPdmLockEntry": {
       "properties": {
         "summary": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Summary provides a description of the package"
         },
         "files": {
           "items": {
             "$ref": "#/$defs/PythonFileRecord"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Files are the package files with their paths and hash digests"
         },
         "dependencies": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Dependencies are the dependency specifications, without environment qualifiers"
         }
       },
       "type": "object",
       "required": [
         "summary",
-        "name",
-        "version",
         "files",
         "dependencies"
       ],

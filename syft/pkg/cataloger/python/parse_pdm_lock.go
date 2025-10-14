@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -48,19 +49,16 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		return nil, nil, fmt.Errorf("failed to parse pdm.lock file: %w", err)
 	}
 
-	var relationshipsHash = make(map[string][]string)
-	var pkgs = make(map[string]pkg.Package)
+	var pkgs []pkg.Package
 	for _, p := range lock.Package {
-		relationshipsHash[p.Name] = p.Dependencies
-
 		var files []pkg.PythonFileRecord
-		for _, file := range p.Files {
-			if colonIndex := strings.Index(file.Hash, ":"); colonIndex != -1 {
-				algorithm := file.Hash[:colonIndex]
-				value := file.Hash[colonIndex+1:]
+		for _, f := range p.Files {
+			if colonIndex := strings.Index(f.Hash, ":"); colonIndex != -1 {
+				algorithm := f.Hash[:colonIndex]
+				value := f.Hash[colonIndex+1:]
 
 				files = append(files, pkg.PythonFileRecord{
-					Path: file.File,
+					Path: f.File,
 					Digest: &pkg.PythonFileDigest{
 						Algorithm: algorithm,
 						Value:     value,
@@ -69,71 +67,72 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 			}
 		}
 
-		pythonPkgMetadata := pkg.PythonPdmLockEntry{
-			Name:    p.Name,
-			Version: p.Version,
-			Files:   files,
-			Summary: p.Summary,
+		// only store used part of the dependency information
+		var deps []string
+		for _, dep := range p.Dependencies {
+			// remove environment markers (after semicolon)
+			dep = strings.Split(dep, ";")[0]
+			dep = strings.TrimSpace(dep)
+			if dep != "" {
+				deps = append(deps, dep)
+			}
 		}
 
-		pkgs[p.Name] = newPackageForIndexWithMetadata(
+		pythonPkgMetadata := pkg.PythonPdmLockEntry{
+			Files:        files,
+			Summary:      p.Summary,
+			Dependencies: deps,
+		}
+
+		pkgs = append(pkgs, newPackageForIndexWithMetadata(
 			p.Name,
 			p.Version,
 			pythonPkgMetadata,
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-		)
+		))
 	}
 
-	relationships := buildPdmRelationships(pkgs, relationshipsHash)
+	relationships := buildPdmRelationships(pkgs)
 
-	// Create array only at the end
-	var pkgsArray []pkg.Package
-	for _, v := range pkgs {
-		pkgsArray = append(pkgsArray, v)
-	}
-	pkg.Sort(pkgsArray)
-
-	return pkgsArray, relationships, unknown.IfEmptyf(pkgsArray, "unable to determine packages")
+	return pkgs, relationships, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
-func buildPdmRelationships(pkgs map[string]pkg.Package, relationshipsHash map[string][]string) []artifact.Relationship {
-	// Map: source package name -> set of target package names
-	depMap := make(map[string]map[string]bool)
+func buildPdmRelationships(pkgs []pkg.Package) []artifact.Relationship {
+	pkgMap := make(map[string]pkg.Package, len(pkgs))
+	for _, p := range pkgs {
+		pkgMap[p.Name] = p
+	}
 
-	for pkgName := range pkgs {
-		for _, dep := range relationshipsHash[pkgName] {
-			// Handle environment markers (semicolon)
-			depName := strings.Split(dep, ";")[0]
+	var relationships []artifact.Relationship
+	for _, p := range pkgs {
+		meta, ok := p.Metadata.(pkg.PythonPdmLockEntry)
+		if !ok {
+			continue
+		}
+
+		// collect unique dependencies
+		added := strset.New()
+
+		for _, depName := range meta.Dependencies {
 			// Handle version specifiers
 			depName = strings.Split(depName, "<")[0]
 			depName = strings.Split(depName, ">")[0]
 			depName = strings.Split(depName, "=")[0]
 			depName = strings.Split(depName, "~")[0]
 			depName = strings.TrimSpace(depName)
-			if depName == "" {
+
+			if depName == "" || added.Has(depName) {
 				continue
 			}
+			added.Add(depName)
 
-			if _, exists := pkgs[depName]; exists {
-				if depMap[pkgName] == nil {
-					depMap[pkgName] = make(map[string]bool)
-				}
-				depMap[pkgName][depName] = true
+			if dep, exists := pkgMap[depName]; exists {
+				relationships = append(relationships, artifact.Relationship{
+					From: dep,
+					To:   p,
+					Type: artifact.DependencyOfRelationship,
+				})
 			}
-		}
-	}
-
-	// Convert to relationships
-	var relationships []artifact.Relationship
-	for sourceName, targets := range depMap {
-		sourcePackage := pkgs[sourceName]
-		for targetName := range targets {
-			targetPackage := pkgs[targetName]
-			relationships = append(relationships, artifact.Relationship{
-				From: sourcePackage,
-				To:   targetPackage,
-				Type: artifact.DependencyOfRelationship,
-			})
 		}
 	}
 

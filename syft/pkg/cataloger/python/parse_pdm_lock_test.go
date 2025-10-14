@@ -23,8 +23,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Python package for providing Mozilla's CA Bundle.",
-				Name:    "certifi",
-				Version: "2025.1.31",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -52,8 +50,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Universal encoding detector for Python 2 and 3",
-				Name:    "chardet",
-				Version: "3.0.4",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -81,8 +77,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet.",
-				Name:    "charset-normalizer",
-				Version: "2.0.12",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -110,8 +104,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Cross-platform colored terminal text.",
-				Name:    "colorama",
-				Version: "0.3.9",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -139,8 +131,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Internationalized Domain Names in Applications (IDNA)",
-				Name:    "idna",
-				Version: "2.7",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -168,8 +158,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "library with cross-python path, ini-parsing, io, code, log facilities",
-				Name:    "py",
-				Version: "1.4.34",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -197,8 +185,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "pytest: simple powerful testing with Python",
-				Name:    "pytest",
-				Version: "3.2.5",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -215,6 +201,13 @@ func TestParsePdmLock(t *testing.T) {
 						},
 					},
 				},
+				Dependencies: []string{
+					"argparse",
+					"colorama",
+					"ordereddict",
+					"py>=1.4.33",
+					"setuptools",
+				},
 			},
 		},
 		{
@@ -226,8 +219,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Python HTTP for Humans.",
-				Name:    "requests",
-				Version: "2.27.1",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -244,6 +235,14 @@ func TestParsePdmLock(t *testing.T) {
 						},
 					},
 				},
+				Dependencies: []string{
+					"certifi>=2017.4.17",
+					"chardet<5,>=3.0.2",
+					"charset-normalizer~=2.0.0",
+					"idna<3,>=2.5",
+					"idna<4,>=2.5",
+					"urllib3<1.27,>=1.21.1",
+				},
 			},
 		},
 		{
@@ -255,8 +254,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Easily download, build, install, upgrade, and uninstall Python packages",
-				Name:    "setuptools",
-				Version: "39.2.0",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -284,8 +281,6 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "HTTP library with thread-safe connection pooling, file post, and more.",
-				Name:    "urllib3",
-				Version: "1.26.20",
 				Files: []pkg.PythonFileRecord{
 					{
 						Path: "",
@@ -315,44 +310,44 @@ func TestParsePdmLock(t *testing.T) {
 	expectedRelationships := []artifact.Relationship{
 		// pytest dependencies
 		{
-			From: pkgMap["pytest"],
-			To:   pkgMap["colorama"],
+			From: pkgMap["colorama"],
+			To:   pkgMap["pytest"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: pkgMap["pytest"],
-			To:   pkgMap["py"],
+			From: pkgMap["py"],
+			To:   pkgMap["pytest"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: pkgMap["pytest"],
-			To:   pkgMap["setuptools"],
+			From: pkgMap["setuptools"],
+			To:   pkgMap["pytest"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		// requests dependencies
 		{
-			From: pkgMap["requests"],
-			To:   pkgMap["certifi"],
+			From: pkgMap["certifi"],
+			To:   pkgMap["requests"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: pkgMap["requests"],
-			To:   pkgMap["chardet"],
+			From: pkgMap["chardet"],
+			To:   pkgMap["requests"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: pkgMap["requests"],
-			To:   pkgMap["charset-normalizer"],
+			From: pkgMap["charset-normalizer"],
+			To:   pkgMap["requests"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: pkgMap["requests"],
-			To:   pkgMap["idna"],
+			From: pkgMap["urllib3"],
+			To:   pkgMap["requests"],
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: pkgMap["requests"],
-			To:   pkgMap["urllib3"],
+			From: pkgMap["idna"],
+			To:   pkgMap["requests"],
 			Type: artifact.DependencyOfRelationship,
 		},
 	}
