@@ -16,7 +16,7 @@ import (
 
 // parseGGUFModel parses a GGUF model file and returns the discovered package.
 func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	defer internal.CloseAndLogError(reader, reader.Location.Path())
+	defer internal.CloseAndLogError(reader, reader.Path())
 
 	// Read header (we'll read a reasonable amount to parse the header without reading entire file)
 	// GGUF headers are typically < 1MB, but we'll use a 10MB limit to be safe
@@ -39,7 +39,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 		// Stop if we've read enough for a reasonable header
 		if len(headerData) > maxHeaderSize {
-			log.Warnf("GGUF header at %s exceeds max size, truncating", reader.Location.Path())
+			log.Warnf("GGUF header at %s exceeds max size, truncating", reader.Path())
 			break
 		}
 	}
@@ -50,7 +50,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	}
 
 	// Parse the GGUF header
-	metadata, err := parseGGUFHeader(headerData, reader.Location.Path())
+	metadata, err := parseGGUFHeader(headerData, reader.Path())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse GGUF file: %w", err)
 	}
@@ -58,7 +58,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// Create package from metadata
 	p := newGGUFPackage(
 		metadata,
-		reader.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
 	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse GGUF file")

@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/dave/jennifer/jen"
+
+	"github.com/anchore/syft/internal/packagemetadata"
 )
 
 // This program is invoked from syft/internal and generates packagemetadata/generated.go

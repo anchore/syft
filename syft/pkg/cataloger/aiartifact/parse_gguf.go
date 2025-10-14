@@ -41,7 +41,9 @@ const (
 	ggufTypeArray   = 12
 )
 
-// parseGGUFHeader parses the header of a GGUF file from raw bytes and extracts metadata
+const unkownGGUFData = "unknown"
+
+//nolint:funlen
 func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error) {
 	reader := bytes.NewReader(data)
 	// Read magic number
@@ -83,7 +85,7 @@ func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error
 	}
 
 	// Parse metadata key-value pairs
-	kvMap := make(map[string]interface{})
+	kvMap := make(map[string]any)
 	truncated := false
 
 	for i := uint64(0); i < kvCount; i++ {
@@ -133,7 +135,7 @@ func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error
 		metadata.ModelVersion = version
 		delete(kvMap, "general.version")
 	} else {
-		metadata.ModelVersion = "unknown"
+		metadata.ModelVersion = unkownGGUFData
 	}
 
 	// Extract parameters count if present
@@ -151,7 +153,7 @@ func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error
 		metadata.Quantization = inferQuantizationFromFilename(location)
 		// Note: we keep general.quantized_by in Header since it's not directly mapped to a field
 	} else {
-		metadata.Quantization = "unknown"
+		metadata.Quantization = unkownGGUFData
 	}
 
 	// Compute hash of metadata for stable identifier
@@ -194,8 +196,8 @@ func readKVPair(reader io.Reader) (string, interface{}, error) {
 	return key, value, nil
 }
 
-// readValue reads a value based on its type
-func readValue(reader io.Reader, valueType uint32) (interface{}, error) {
+//nolint:funlen
+func readValue(reader io.Reader, valueType uint32) (any, error) {
 	switch valueType {
 	case ggufTypeUint8:
 		var v uint8
@@ -308,7 +310,7 @@ func inferQuantizationFromFilename(filename string) string {
 	if match := quantPattern.FindString(filename); match != "" {
 		return match
 	}
-	return "unknown"
+	return unkownGGUFData
 }
 
 // computeMetadataHash computes a stable hash of the metadata for use as a global identifier
@@ -341,4 +343,3 @@ func computeMetadataHash(metadata *pkg.GGUFFileMetadata) string {
 	hash := sha256.Sum256(jsonBytes)
 	return fmt.Sprintf("%x", hash[:8]) // Use first 8 bytes (16 hex chars)
 }
-

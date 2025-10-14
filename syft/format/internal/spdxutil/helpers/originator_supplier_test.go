@@ -3,9 +3,9 @@ package helpers
 import (
 	"testing"
 
-	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
 )
 

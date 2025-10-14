@@ -3,6 +3,7 @@ package task
 import (
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/aiartifact"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
@@ -37,7 +38,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/swipl"
 	"github.com/anchore/syft/syft/pkg/cataloger/terraform"
 	"github.com/anchore/syft/syft/pkg/cataloger/wordpress"
-	"github.com/anchore/syft/syft/pkg/cataloger/aiartifact"
 )
 
 const (
