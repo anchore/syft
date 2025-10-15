@@ -59,7 +59,7 @@ func getProviders(userInput string, cfg *GetSourceConfig) ([]source.Provider, er
 	allSourceProviders := sourceproviders.All(userInput, cfg.SourceProviderConfig)
 	providers := collections.TaggedValueSet[source.Provider]{}.Join(allSourceProviders...)
 
-	//if the "default image pull source" is set, we move this as the first pull source
+	// if the "default image pull source" is set, we move this as the first pull source
 	if cfg.DefaultImagePullSource != "" {
 		base := providers.Remove(sourceproviders.PullTag)
 		pull := providers.Select(sourceproviders.PullTag)
