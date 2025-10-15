@@ -155,6 +155,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(HomebrewPkg))
 	expectedTypes.Remove(string(TerraformPkg))
 	expectedTypes.Remove(string(GraalVMNativeImagePkg))
+	expectedTypes.Remove(string(ModelPkg))   // no valid purl for ai artifacts currently
 	expectedTypes.Remove(string(PhpPeclPkg)) // we should always consider this a pear package
 
 	for _, test := range tests {
