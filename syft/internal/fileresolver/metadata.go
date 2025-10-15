@@ -2,7 +2,6 @@ package fileresolver
 
 import (
 	"os"
-	"runtime"
 	"syscall"
 
 	"github.com/anchore/stereoscope/pkg/file"
@@ -19,7 +18,7 @@ func NewMetadataFromPath(path string, info os.FileInfo) file.Metadata {
 	if ty == file.TypeRegular {
 		usablePath := path
 		// denormalize the path back to windows so we can open the file
-		if runtime.GOOS == "windows" {
+		if windows.HostRunningOnWindows() {
 			usablePath = windows.FromPosix(usablePath)
 		}
 
