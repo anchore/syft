@@ -263,7 +263,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	}
 	var pkgPomProject *pkg.JavaPomProject
 	if parsedPom != nil {
-		pkgPomProject = newPomProject(ctx, nil, parsedPom.path, parsedPom.project)
+		pkgPomProject = newPomProject(ctx, j.maven, parsedPom.path, parsedPom.project)
 	}
 
 	return &pkg.Package{
