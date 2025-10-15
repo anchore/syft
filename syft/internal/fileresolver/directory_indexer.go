@@ -322,7 +322,7 @@ func (r directoryIndexer) addDirectoryToIndex(p string, info os.FileInfo) error 
 		return err
 	}
 
-	metadata := file.NewMetadataFromPath(p, info)
+	metadata := NewMetadataFromPath(p, info)
 	r.index.Add(*ref, metadata)
 
 	return nil
@@ -334,7 +334,7 @@ func (r directoryIndexer) addFileToIndex(p string, info os.FileInfo) error {
 		return err
 	}
 
-	metadata := file.NewMetadataFromPath(p, info)
+	metadata := NewMetadataFromPath(p, info)
 	r.index.Add(*ref, metadata)
 
 	return nil
@@ -416,7 +416,7 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
 	}
 
-	metadata := file.NewMetadataFromPath(p, info)
+	metadata := NewMetadataFromPath(p, info)
 	metadata.LinkDestination = linkTarget
 	r.index.Add(*ref, metadata)
 
