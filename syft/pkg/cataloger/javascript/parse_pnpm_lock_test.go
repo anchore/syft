@@ -50,7 +50,8 @@ func TestParsePnpmLock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePnpmV6Lock(t *testing.T) {
@@ -142,7 +143,8 @@ func TestParsePnpmV6Lock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expectedPkgs, expectedRelationships)
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePnpmLockV9(t *testing.T) {
@@ -184,14 +186,15 @@ func TestParsePnpmLockV9(t *testing.T) {
 			Type:      pkg.NpmPkg,
 		},
 	}
-
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
 	// TODO: no relationships are under test
-	pkgtest.TestFileParser(t, fixture, parsePnpmLock, expected, expectedRelationships)
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expected, expectedRelationships)
 }
 
 func Test_corruptPnpmLock(t *testing.T) {
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/corrupt/pnpm-lock.yaml").
 		WithError().
-		TestParser(t, parsePnpmLock)
+		TestParser(t, adapter.parsePnpmLock)
 }

@@ -107,7 +107,7 @@ func newPackageLockV1Package(ctx context.Context, cfg CatalogerConfig, resolver 
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+			log.Debugf("unable to extract licenses from javascript package-lock.json for package %s:%s: %+v", name, version, err)
 		}
 	}
 
@@ -140,7 +140,7 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
+			log.Debugf("unable to extract licenses from javascript package-lock.json for package %s:%s: %+v", name, u.Version, err)
 		}
 	}
 
@@ -161,7 +161,20 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 	)
 }
 
-func newPnpmPackage(ctx context.Context, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newPnpmPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+	var licenseSet pkg.LicenseSet
+
+	if cfg.SearchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
+		if err == nil && license != "" {
+			licenses := pkg.NewLicensesFromValuesWithContext(ctx, license)
+			licenseSet = pkg.NewLicenseSet(licenses...)
+		}
+		if err != nil {
+			log.Debugf("unable to extract licenses from javascript pnpm-lock.yaml for package %s:%s: %+v", name, version, err)
+		}
+
+	}
 	return finalizeLockPkg(
 		ctx,
 		resolver,
@@ -169,6 +182,7 @@ func newPnpmPackage(ctx context.Context, resolver file.Resolver, location file.L
 		pkg.Package{
 			Name:      name,
 			Version:   version,
+			Licenses:  licenseSet,
 			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
