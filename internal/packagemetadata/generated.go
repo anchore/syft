@@ -51,6 +51,7 @@ func AllTypes() []any {
 		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPackage{},
+		pkg.PythonPdmLockEntry{},
 		pkg.PythonPipfileLockEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.PythonRequirementsEntry{},
