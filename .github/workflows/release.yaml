@@ -161,7 +161,7 @@ jobs:
           # for updating brew formula in anchore/homebrew-syft
           GITHUB_BREW_TOKEN: ${{ secrets.ANCHOREOPS_GITHUB_OSS_WRITE_TOKEN }}
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b #v0.20.6
+      - uses: anchore/sbom-action@d8a2c0130026bf585de5c176ab8f7ce62d75bf04 #v0.20.7
         continue-on-error: true
         with:
           file: go.mod
