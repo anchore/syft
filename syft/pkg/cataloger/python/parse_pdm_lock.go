@@ -39,10 +39,18 @@ type pdmLockPackageFile struct {
 	Hash string `toml:"hash"`
 }
 
-var _ generic.Parser = parsePdmLock
+type pdmLockParser struct {
+	cfg CatalogerConfig
+}
+
+func newPdmLockParser(cfg CatalogerConfig) pdmLockParser {
+	return pdmLockParser{
+		cfg: cfg,
+	}
+}
 
 // parsePdmLock is a parser function for pdm.lock contents, returning python packages discovered.
-func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (plp pdmLockParser) parsePdmLock(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var lock pdmLock
 	_, err := toml.NewDecoder(reader).Decode(&lock)
 	if err != nil {
@@ -85,6 +93,8 @@ func parsePdmLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 		}
 
 		pkgs = append(pkgs, newPackageForIndexWithMetadata(
+			ctx,
+			plp.cfg,
 			p.Name,
 			p.Version,
 			pythonPkgMetadata,

@@ -198,9 +198,10 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		},
 		Nix: nix.DefaultConfig().
 			WithCaptureOwnedFiles(cfg.Nix.CaptureOwnedFiles),
-		Python: python.CatalogerConfig{
-			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
-		},
+		Python: python.DefaultCatalogerConfig().
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.SearchRemoteLicenses)).
+			WithPypiBaseURL(cfg.Python.PypiBaseURL).
+			WithGuessUnpinnedRequirements(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.GuessUnpinnedRequirements)),
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseMavenLocalRepository)).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
@@ -320,6 +321,7 @@ var publicisedEnrichmentOptions = []string{
 	task.Golang,
 	task.Java,
 	task.JavaScript,
+	task.Python,
 }
 
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {

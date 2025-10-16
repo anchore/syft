@@ -1,6 +1,11 @@
 package python
 
 import (
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -352,12 +357,123 @@ func TestParsePdmLock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parsePdmLock, expectedPkgs, expectedRelationships)
+	pdmLockParser := newPdmLockParser(DefaultCatalogerConfig())
+	pkgtest.TestFileParser(t, fixture, pdmLockParser.parsePdmLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParsePdmLockWithLicenseEnrichment(t *testing.T) {
+	ctx := context.TODO()
+	fixture := "test-fixtures/pypi-remote/pdm.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+	mux, url, teardown := setupPypiRegistry()
+	defer teardown()
+	tests := []struct {
+		name             string
+		fixture          string
+		config           CatalogerConfig
+		requestHandlers  []handlerPath
+		expectedPackages []pkg.Package
+	}{
+		{
+			name:   "search remote licenses returns the expected licenses when search is set to true",
+			config: CatalogerConfig{SearchRemoteLicenses: true},
+			requestHandlers: []handlerPath{
+				{
+					path:    "/certifi/2025.10.5/json",
+					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+				},
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "certifi",
+					Version:   "2025.10.5",
+					Locations: locations,
+					PURL:      "pkg:pypi/certifi@2025.10.5",
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MPL-2.0")),
+					Language:  pkg.Python,
+					Type:      pkg.PythonPkg,
+					Metadata: pkg.PythonPdmLockEntry{
+						Summary: "Python package for providing Mozilla's CA Bundle.",
+						Files: []pkg.PythonFileRecord{
+							{
+								Path: "",
+								Digest: &pkg.PythonFileDigest{
+									Algorithm: "sha256",
+									Value:     "47c09d31ccf2acf0be3f701ea53595ee7e0b8fa08801c6624be771df09ae7b43",
+								},
+							},
+							{
+								Path: "",
+								Digest: &pkg.PythonFileDigest{
+									Algorithm: "sha256",
+									Value:     "0f212c2744a9bb6de0c56639a6f68afe01ecd92d91f14ae897c4fe7bbeeef0de",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// set up the mock server
+			for _, handler := range tc.requestHandlers {
+				mux.HandleFunc(handler.path, handler.handler)
+			}
+			tc.config.PypiBaseURL = url
+			pdmLockParser := newPdmLockParser(tc.config)
+			pkgtest.TestFileParser(t, fixture, pdmLockParser.parsePdmLock, tc.expectedPackages, nil)
+		})
+	}
 }
 
 func Test_corruptPdmLock(t *testing.T) {
+	pdmLockParser := newPdmLockParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/src/pdm.lock").
 		WithError().
-		TestParser(t, parsePdmLock)
+		TestParser(t, pdmLockParser.parsePdmLock)
+}
+
+type handlerPath struct {
+	path    string
+	handler func(w http.ResponseWriter, r *http.Request)
+}
+
+func generateMockPypiRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Copy the file's content to the response writer
+		file, err := os.Open(responseFixture)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+
+		_, err = io.Copy(w, file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+// setup sets up a test HTTP server for mocking requests to a particular registry.
+// The returned url is injected into the Config so the client uses the test server.
+// Tests should register handlers on mux to simulate the expected request/response structure
+func setupPypiRegistry() (mux *http.ServeMux, serverURL string, teardown func()) {
+	// mux is the HTTP request multiplexer used with the test server.
+	mux = http.NewServeMux()
+
+	// We want to ensure that tests catch mistakes where the endpoint URL is
+	// specified as absolute rather than relative. It only makes a difference
+	// when there's a non-empty base URL path. So, use that. See issue #752.
+	apiHandler := http.NewServeMux()
+	apiHandler.Handle("/", mux)
+	// server is a test HTTP server used to provide mock API responses.
+	server := httptest.NewServer(apiHandler)
+
+	return mux, server.URL, server.Close
 }

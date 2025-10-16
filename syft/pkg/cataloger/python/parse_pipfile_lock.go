@@ -39,10 +39,18 @@ type pipfileLockDependency struct {
 	Index   string   `json:"index"`
 }
 
-var _ generic.Parser = parsePipfileLock
+type pipfileLockParser struct {
+	cfg CatalogerConfig
+}
+
+func newPipfileLockParser(cfg CatalogerConfig) pipfileLockParser {
+	return pipfileLockParser{
+		cfg: cfg,
+	}
+}
 
 // parsePipfileLock is a parser function for Pipfile.lock contents, returning "Default" python packages discovered.
-func parsePipfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (plp pipfileLockParser) parsePipfileLock(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pkgs := make([]pkg.Package, 0)
 	dec := json.NewDecoder(reader)
 
@@ -66,7 +74,7 @@ func parsePipfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			pkgs = append(pkgs, newPackageForIndexWithMetadata(name, version, pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(ctx, plp.cfg, name, version, pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 

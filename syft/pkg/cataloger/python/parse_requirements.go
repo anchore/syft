@@ -83,18 +83,18 @@ func newRequirement(raw string) *unprocessedRequirement {
 }
 
 type requirementsParser struct {
-	guessUnpinnedRequirements bool
+	cfg CatalogerConfig
 }
 
 func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
 	return requirementsParser{
-		guessUnpinnedRequirements: cfg.GuessUnpinnedRequirements,
+		cfg: cfg,
 	}
 }
 
 // parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
 // specific version.
-func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var errs error
 	var packages []pkg.Package
 
@@ -133,7 +133,7 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		}
 
 		name := removeExtras(req.Name)
-		version := parseVersion(req.VersionConstraint, rp.guessUnpinnedRequirements)
+		version := parseVersion(req.VersionConstraint, rp.cfg.GuessUnpinnedRequirements)
 
 		if version == "" {
 			log.WithFields("path", reader.RealPath, "line", line).Trace("unable to determine package version in requirements.txt line")
@@ -144,6 +144,8 @@ func (rp requirementsParser) parseRequirementsTxt(_ context.Context, _ file.Reso
 		packages = append(
 			packages,
 			newPackageForRequirementsWithMetadata(
+				ctx,
+				rp.cfg,
 				name,
 				version,
 				pkg.PythonRequirementsEntry{
