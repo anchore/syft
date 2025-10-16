@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/anchore/stereoscope/pkg/file"
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/internal/windows"
 )
 
@@ -26,11 +26,7 @@ func NewMetadataFromPath(path string, info os.FileInfo) file.Metadata {
 			// TODO: it may be that the file is inaccessible, however, this is not an error or a warning. In the future we need to track these as known-unknowns
 			f = nil
 		} else {
-			defer func() {
-				if err := f.Close(); err != nil {
-					log.Warnf("unable to close file while obtaining metadata: %s", path)
-				}
-			}()
+			defer internal.CloseAndLogError(f, usablePath)
 		}
 
 		mimeType = file.MIMEType(f)
