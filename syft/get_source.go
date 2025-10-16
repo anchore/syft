@@ -7,9 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/anchore/go-collections"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
 // GetSource uses all of Syft's known source providers to attempt to resolve the user input to a usable source.Source
@@ -18,7 +16,7 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 		cfg = DefaultGetSourceConfig()
 	}
 
-	providers, err := getProviders(userInput, cfg)
+	providers, err := cfg.getProviders(userInput)
 	if err != nil {
 		return nil, err
 	}
@@ -53,32 +51,6 @@ func GetSource(ctx context.Context, userInput string, cfg *GetSourceConfig) (sou
 	}
 
 	return nil, sourceError(userInput, errs...)
-}
-
-func getProviders(userInput string, cfg *GetSourceConfig) ([]source.Provider, error) {
-	allSourceProviders := sourceproviders.All(userInput, cfg.SourceProviderConfig)
-	providers := collections.TaggedValueSet[source.Provider]{}.Join(allSourceProviders...)
-
-	// if the "default image pull source" is set, we move this as the first pull source
-	if cfg.DefaultImagePullSource != "" {
-		base := providers.Remove(sourceproviders.PullTag)
-		pull := providers.Select(sourceproviders.PullTag)
-		def := pull.Select(cfg.DefaultImagePullSource)
-		if len(def) == 0 {
-			return nil, fmt.Errorf("invalid DefaultImagePullSource: %s; available values are: %v", cfg.DefaultImagePullSource, pull.Tags())
-		}
-
-		pullWithoutDef := pull.Remove(cfg.DefaultImagePullSource)
-		providers = base.Join(def...).Join(pullWithoutDef...)
-	}
-
-	// narrow the sources to those explicitly requested generally by a user
-	if len(cfg.Sources) > 0 {
-		// select the explicitly provided sources, in order
-		providers = providers.Select(cfg.Sources...)
-	}
-
-	return providers.Values(), nil
 }
 
 func validateSourcePlatform(src source.Source, cfg *GetSourceConfig) error {
