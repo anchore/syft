@@ -173,7 +173,6 @@ func newPnpmPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Reso
 		if err != nil {
 			log.Debugf("unable to extract licenses from javascript pnpm-lock.yaml for package %s:%s: %+v", name, version, err)
 		}
-
 	}
 	return finalizeLockPkg(
 		ctx,
