@@ -15,12 +15,12 @@ require (
 	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
 	github.com/anchore/clio v0.0.0-20250319180342-2cfe4b0cb716
 	github.com/anchore/fangs v0.0.0-20250319222917-446a1e748ec2
-	github.com/anchore/go-collections v0.0.0-20240216171411-9321230ce537
+	github.com/anchore/go-collections v0.0.0-20251016125210-a3c352120e8c
 	github.com/anchore/go-homedir v0.0.0-20250319154043-c29668562e4d
 	github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722
 	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
 	github.com/anchore/go-rpmdb v0.0.0-20250516171929-f77691e1faec
-	github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
+	github.com/anchore/go-sync v0.0.0-20251016131156-c92221f8e3da
 	github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115
