@@ -90,14 +90,15 @@ func getLicenseFromPypiRegistry(baseURL, packageName, version string) (string, e
 	if err != nil {
 		return "", fmt.Errorf("unable to get package from pypi registry: %w", err)
 	}
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("unable to get package from pypi registry")
-	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			log.Errorf("unable to close body: %+v", err)
 		}
 	}()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("unable to get package from pypi registry")
+	}
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {

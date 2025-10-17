@@ -51,7 +51,11 @@ func TestFormatPyPiRegistryURL(t *testing.T) {
 			got, err := formatPypiRegistryURL(cfg.PypiBaseURL, test.name, test.version)
 
 			require.Equal(t, test.expected, got)
-			require.Equal(t, test.expectedError, err)
+			if test.expectedError != nil {
+				require.ErrorContains(t, err, test.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 
@@ -112,15 +116,13 @@ func TestGetLicenseFromPypiRegistry(t *testing.T) {
 			}
 			got, err := getLicenseFromPypiRegistry(url, tc.name, tc.version)
 			require.Equal(t, tc.expected, got)
-			if err != nil {
-				require.Equal(t, tc.expectedError.Error(), err.Error())
+			if tc.expectedError != nil {
+				require.ErrorContains(t, err, tc.expectedError.Error())
 			} else {
-				require.Equal(t, tc.expectedError, err)
+				require.NoError(t, err)
 			}
-
 		})
 	}
-
 }
 
 type handlerPath struct {
