@@ -33,7 +33,8 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 	le := binary.LittleEndian.Uint32(ident[0:])
 
 	machoMagic := macho.Magic32 &^ 1 // bottom bit is size (0=32,1=64)
-	if machoMagic == be&^1 || machoMagic == le&^1 {
+	switch {
+	case machoMagic == be&^1 || machoMagic == le&^1:
 		f, err := macho.NewFile(reader)
 		if err != nil {
 			return err
@@ -47,7 +48,7 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 		data.ImportedLibraries = libs
 		data.HasEntrypoint = machoHasEntrypoint(f)
 		data.HasExports = machoHasExports(f)
-	} else if be == macho.MagicFat || le == macho.MagicFat {
+	case be == macho.MagicFat || le == macho.MagicFat:
 		f, err := macho.NewFatFile(reader)
 		if err != nil {
 			return err
@@ -77,7 +78,7 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 				data.HasExports = machoHasExports(arch.File)
 			}
 		}
-	} else {
+	default:
 		return errors.New("not a Mach-O file")
 	}
 
