@@ -2,8 +2,6 @@ package executable
 
 import (
 	"debug/macho"
-	"encoding/binary"
-	"errors"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
@@ -22,65 +20,38 @@ const (
 func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) error {
 	// TODO: support security features
 
-	// Read and decode Mach magic number
-	var ident [4]byte
-	if _, err := reader.ReadAt(ident[0:], 0); err != nil {
+	// a universal binary may have multiple architectures, so we need to check each one
+	readers, err := unionreader.GetReaders(reader)
+	if err != nil {
 		return err
 	}
 
-	// get the magic in both endiannesses
-	be := binary.BigEndian.Uint32(ident[0:])
-	le := binary.LittleEndian.Uint32(ident[0:])
-
-	machoMagic := macho.Magic32 &^ 1 // bottom bit is size (0=32,1=64)
-	switch {
-	case machoMagic == be&^1 || machoMagic == le&^1:
-		f, err := macho.NewFile(reader)
+	var libs []string
+	for _, r := range readers {
+		f, err := macho.NewFile(r)
 		if err != nil {
 			return err
 		}
 
-		libs, err := f.ImportedLibraries()
+		rLibs, err := f.ImportedLibraries()
 		if err != nil {
 			return err
 		}
-
-		data.ImportedLibraries = libs
-		data.HasEntrypoint = machoHasEntrypoint(f)
-		data.HasExports = machoHasExports(f)
-	case be == macho.MagicFat || le == macho.MagicFat:
-		f, err := macho.NewFatFile(reader)
-		if err != nil {
-			return err
-		}
-
-		var libs []string
-		for _, arch := range f.Arches {
-			aLibs, err := arch.ImportedLibraries()
-			if err != nil {
-				return err
-			}
-
-			libs = append(libs, aLibs...)
-		}
-
-		// de-duplicate libraries
-		data.ImportedLibraries = internal.NewSet(libs...).ToSlice()
+		libs = append(libs, rLibs...)
 
 		// TODO handle only some having entrypoints/exports? If that is even practical
-		for _, arch := range f.Arches {
-			// only check for entrypoint if we don't already have one
-			if !data.HasEntrypoint {
-				data.HasEntrypoint = machoHasEntrypoint(arch.File)
-			}
-			// only check for exports if we don't already have them
-			if !data.HasExports {
-				data.HasExports = machoHasExports(arch.File)
-			}
+		// only check for entrypoint if we don't already have one
+		if !data.HasEntrypoint {
+			data.HasEntrypoint = machoHasEntrypoint(f)
 		}
-	default:
-		return errors.New("not a Mach-O file")
+		// only check for exports if we don't already have them
+		if !data.HasExports {
+			data.HasExports = machoHasExports(f)
+		}
 	}
+
+	// de-duplicate libraries
+	data.ImportedLibraries = internal.NewSet(libs...).ToSlice()
 
 	return nil
 }
