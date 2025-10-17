@@ -312,8 +312,8 @@ configs: # AUTO-GENERATED - config structs and their fields
         description: GuessUnpinnedRequirements attempts to infer package versions from version constraints when no explicit version is specified in requirements files.
         app_key: python.guess-unpinned-requirements
 catalogers:
-  # Arch linux (alpm) #################################################################################################
-  - ecosystem: arch # MANUAL
+  # alpm (arch / pacman) #################################################################################################
+  - ecosystem: alpm # MANUAL
     name: alpm-db-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -2625,8 +2625,8 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
-  # Gentoo ########################################################################################################
-  - ecosystem: gentoo # MANUAL
+  # Portage (gentoo) ########################################################################################################
+  - ecosystem: portage # MANUAL
     name: portage-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
