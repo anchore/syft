@@ -75,14 +75,10 @@ func TestGGUFCataloger_Globs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fixtureDir := tt.setup(t)
 
-			tester := pkgtest.NewCatalogTester().
-				FromDirectory(t, fixtureDir)
-
-			if len(tt.expected) > 0 {
-				tester.ExpectsResolverContentQueries(tt.expected)
-			}
-
-			tester.TestCataloger(t, NewGGUFCataloger())
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, fixtureDir).
+				ExpectsResolverContentQueries(tt.expected).
+				TestCataloger(t, NewGGUFCataloger())
 		})
 	}
 }

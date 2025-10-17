@@ -41,7 +41,7 @@ const (
 	ggufTypeArray   = 12
 )
 
-const unkownGGUFData = "unknown"
+const unknownGGUFData = "unknown"
 
 //nolint:funlen
 func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error) {
@@ -135,7 +135,7 @@ func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error
 		metadata.ModelVersion = version
 		delete(kvMap, "general.version")
 	} else {
-		metadata.ModelVersion = unkownGGUFData
+		metadata.ModelVersion = unknownGGUFData
 	}
 
 	// Extract parameters count if present
@@ -153,7 +153,7 @@ func parseGGUFHeader(data []byte, location string) (*pkg.GGUFFileMetadata, error
 		metadata.Quantization = inferQuantizationFromFilename(location)
 		// Note: we keep general.quantized_by in Header since it's not directly mapped to a field
 	} else {
-		metadata.Quantization = unkownGGUFData
+		metadata.Quantization = unknownGGUFData
 	}
 
 	// Compute hash of metadata for stable identifier
@@ -310,7 +310,7 @@ func inferQuantizationFromFilename(filename string) string {
 	if match := quantPattern.FindString(filename); match != "" {
 		return match
 	}
-	return unkownGGUFData
+	return unknownGGUFData
 }
 
 // computeMetadataHash computes a stable hash of the metadata for use as a global identifier
