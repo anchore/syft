@@ -2,10 +2,6 @@ package python
 
 import (
 	"context"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -434,46 +430,4 @@ func Test_corruptPdmLock(t *testing.T) {
 		FromFile(t, "test-fixtures/glob-paths/src/pdm.lock").
 		WithError().
 		TestParser(t, pdmLockParser.parsePdmLock)
-}
-
-type handlerPath struct {
-	path    string
-	handler func(w http.ResponseWriter, r *http.Request)
-}
-
-func generateMockPypiRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		// Copy the file's content to the response writer
-		file, err := os.Open(responseFixture)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer file.Close()
-
-		_, err = io.Copy(w, file)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
-// setup sets up a test HTTP server for mocking requests to a particular registry.
-// The returned url is injected into the Config so the client uses the test server.
-// Tests should register handlers on mux to simulate the expected request/response structure
-func setupPypiRegistry() (mux *http.ServeMux, serverURL string, teardown func()) {
-	// mux is the HTTP request multiplexer used with the test server.
-	mux = http.NewServeMux()
-
-	// We want to ensure that tests catch mistakes where the endpoint URL is
-	// specified as absolute rather than relative. It only makes a difference
-	// when there's a non-empty base URL path. So, use that. See issue #752.
-	apiHandler := http.NewServeMux()
-	apiHandler.Handle("/", mux)
-	// server is a test HTTP server used to provide mock API responses.
-	server := httptest.NewServer(apiHandler)
-
-	return mux, server.URL, server.Close
 }

@@ -40,12 +40,14 @@ type pipfileLockDependency struct {
 }
 
 type pipfileLockParser struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
 }
 
 func newPipfileLockParser(cfg CatalogerConfig) pipfileLockParser {
 	return pipfileLockParser{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
 	}
 }
 
@@ -74,7 +76,7 @@ func (plp pipfileLockParser) parsePipfileLock(ctx context.Context, _ file.Resolv
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			pkgs = append(pkgs, newPackageForIndexWithMetadata(ctx, plp.cfg, name, version, pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(ctx, plp.cfg, plp.licenseResolver, name, version, pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 

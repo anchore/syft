@@ -14,12 +14,14 @@ import (
 )
 
 type setupFileParser struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
 }
 
 func newSetupFileParser(cfg CatalogerConfig) setupFileParser {
 	return setupFileParser{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
 	}
 }
 
@@ -108,6 +110,7 @@ func (sp setupFileParser) validateAndCreatePackage(ctx context.Context, name, ve
 	p := newPackageForIndex(
 		ctx,
 		sp.cfg,
+		sp.licenseResolver,
 		name,
 		version,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),

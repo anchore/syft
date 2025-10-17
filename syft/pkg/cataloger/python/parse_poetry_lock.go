@@ -46,12 +46,14 @@ type poetryPackageDependency struct {
 }
 
 type poetryLockParser struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
 }
 
 func newPoetryLockParser(cfg CatalogerConfig) poetryLockParser {
 	return poetryLockParser{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
 	}
 }
 
@@ -105,6 +107,7 @@ func (plp poetryLockParser) poetryLockPackages(ctx context.Context, reader file.
 			newPackageForIndexWithMetadata(
 				ctx,
 				plp.cfg,
+				plp.licenseResolver,
 				p.Name,
 				p.Version,
 				newPythonPoetryLockEntry(p),

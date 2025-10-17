@@ -83,12 +83,14 @@ func newRequirement(raw string) *unprocessedRequirement {
 }
 
 type requirementsParser struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
 }
 
 func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
 	return requirementsParser{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
 	}
 }
 
@@ -146,6 +148,7 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 			newPackageForRequirementsWithMetadata(
 				ctx,
 				rp.cfg,
+				rp.licenseResolver,
 				name,
 				version,
 				pkg.PythonRequirementsEntry{

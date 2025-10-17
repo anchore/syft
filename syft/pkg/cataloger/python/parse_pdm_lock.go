@@ -40,12 +40,14 @@ type pdmLockPackageFile struct {
 }
 
 type pdmLockParser struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
 }
 
 func newPdmLockParser(cfg CatalogerConfig) pdmLockParser {
 	return pdmLockParser{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
 	}
 }
 
@@ -95,6 +97,7 @@ func (plp pdmLockParser) parsePdmLock(ctx context.Context, _ file.Resolver, _ *g
 		pkgs = append(pkgs, newPackageForIndexWithMetadata(
 			ctx,
 			plp.cfg,
+			plp.licenseResolver,
 			p.Name,
 			p.Version,
 			pythonPkgMetadata,

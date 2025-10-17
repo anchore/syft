@@ -70,12 +70,14 @@ type uvMetadata struct {
 }
 
 type uvLockParser struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
 }
 
 func newUvLockParser(cfg CatalogerConfig) uvLockParser {
 	return uvLockParser{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
 	}
 }
 
@@ -179,6 +181,7 @@ func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.Location
 			newPackageForIndexWithMetadata(
 				ctx,
 				ulp.cfg,
+				ulp.licenseResolver,
 				p.Name,
 				p.Version,
 				newPythonUvLockEntry(p),
