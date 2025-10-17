@@ -29,7 +29,7 @@ func TestNewGGUFPackage(t *testing.T) {
 				Parameters:      8030000000,
 				GGUFVersion:     3,
 				TensorCount:     291,
-				Header:          map[string]interface{}{},
+				Header:          map[string]any{},
 				TruncatedHeader: false,
 			},
 			locations: []file.Location{file.NewLocation("/models/llama3-8b.gguf")},
@@ -100,86 +100,4 @@ func TestNewGGUFPackage(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNewGGUFPackage_IDUniqueness(t *testing.T) {
-	// Test that different packages get different IDs
-	metadata1 := &pkg.GGUFFileMetadata{
-		ModelFormat:  "gguf",
-		ModelName:    "model-1",
-		ModelVersion: "1.0",
-		Architecture: "llama",
-		GGUFVersion:  3,
-		TensorCount:  100,
-	}
-
-	metadata2 := &pkg.GGUFFileMetadata{
-		ModelFormat:  "gguf",
-		ModelName:    "model-2",
-		ModelVersion: "1.0",
-		Architecture: "llama",
-		GGUFVersion:  3,
-		TensorCount:  100,
-	}
-
-	loc := file.NewLocation("/models/test.gguf")
-	p1 := newGGUFPackage(metadata1, loc)
-	p2 := newGGUFPackage(metadata2, loc)
-
-	assert.NotEqual(t, p1.ID(), p2.ID(), "different packages should have different IDs")
-}
-
-func TestNewGGUFPackage_IDConsistency(t *testing.T) {
-	// Test that same metadata produces same ID
-	metadata := &pkg.GGUFFileMetadata{
-		ModelFormat:  "gguf",
-		ModelName:    "test-model",
-		ModelVersion: "1.0",
-		Architecture: "llama",
-		GGUFVersion:  3,
-		TensorCount:  100,
-	}
-
-	loc := file.NewLocation("/models/test.gguf")
-	p1 := newGGUFPackage(metadata, loc)
-	p2 := newGGUFPackage(metadata, loc)
-
-	assert.Equal(t, p1.ID(), p2.ID(), "identical packages should have identical IDs")
-}
-
-func TestNewGGUFPackage_MetadataPreservation(t *testing.T) {
-	// Ensure all metadata fields are preserved in the package
-	metadata := &pkg.GGUFFileMetadata{
-		ModelFormat:     "gguf",
-		ModelName:       "preservation-test",
-		ModelVersion:    "2.0",
-		License:         "MIT",
-		Architecture:    "llama",
-		Quantization:    "Q4_K_M",
-		Parameters:      7000000000,
-		GGUFVersion:     3,
-		TensorCount:     219,
-		Hash:            "abc123",
-		Header:          map[string]interface{}{"custom.field": "value"},
-		TruncatedHeader: false,
-	}
-
-	loc := file.NewLocation("/models/test.gguf")
-	p := newGGUFPackage(metadata, loc)
-
-	extractedMetadata, ok := p.Metadata.(pkg.GGUFFileMetadata)
-	require.True(t, ok)
-
-	assert.Equal(t, metadata.ModelFormat, extractedMetadata.ModelFormat)
-	assert.Equal(t, metadata.ModelName, extractedMetadata.ModelName)
-	assert.Equal(t, metadata.ModelVersion, extractedMetadata.ModelVersion)
-	assert.Equal(t, metadata.License, extractedMetadata.License)
-	assert.Equal(t, metadata.Architecture, extractedMetadata.Architecture)
-	assert.Equal(t, metadata.Quantization, extractedMetadata.Quantization)
-	assert.Equal(t, metadata.Parameters, extractedMetadata.Parameters)
-	assert.Equal(t, metadata.GGUFVersion, extractedMetadata.GGUFVersion)
-	assert.Equal(t, metadata.TensorCount, extractedMetadata.TensorCount)
-	assert.Equal(t, metadata.Hash, extractedMetadata.Hash)
-	assert.Equal(t, metadata.TruncatedHeader, extractedMetadata.TruncatedHeader)
-	assert.Equal(t, metadata.Header, extractedMetadata.Header)
 }

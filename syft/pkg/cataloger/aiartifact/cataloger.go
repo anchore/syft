@@ -11,6 +11,6 @@ import (
 
 // NewGGUFCataloger returns a new cataloger instance for GGUF model files.
 func NewGGUFCataloger() pkg.Cataloger {
-	return generic.NewCataloger("gguf-cataloger").
+	return generic.NewCataloger("model-gguf-cataloger").
 		WithParserByGlobs(parseGGUFModel, "**/*.gguf")
 }
