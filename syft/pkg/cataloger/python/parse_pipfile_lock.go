@@ -76,7 +76,7 @@ func (plp pipfileLockParser) parsePipfileLock(ctx context.Context, _ file.Resolv
 				index = "https://pypi.org/simple"
 			}
 			version := strings.TrimPrefix(pkgMeta.Version, "==")
-			pkgs = append(pkgs, newPackageForIndexWithMetadata(ctx, plp.cfg, plp.licenseResolver, name, version, pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
+			pkgs = append(pkgs, newPackageForIndexWithMetadata(ctx, plp.licenseResolver, name, version, pkg.PythonPipfileLockEntry{Index: index, Hashes: pkgMeta.Hashes}, reader.Location))
 		}
 	}
 

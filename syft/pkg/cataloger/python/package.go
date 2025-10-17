@@ -18,7 +18,7 @@ func normalize(name string) string {
 	return strings.ToLower(normalized)
 }
 
-func newPackageForIndex(ctx context.Context, cfg CatalogerConfig, lr pythonLicenseResolver, name, version string, locations ...file.Location) pkg.Package {
+func newPackageForIndex(ctx context.Context, lr pythonLicenseResolver, name, version string, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 	licenseSet := lr.getLicenses(ctx, name, version)
 
@@ -37,7 +37,7 @@ func newPackageForIndex(ctx context.Context, cfg CatalogerConfig, lr pythonLicen
 	return p
 }
 
-func newPackageForIndexWithMetadata(ctx context.Context, cfg CatalogerConfig, lr pythonLicenseResolver, name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 	licenseSet := lr.getLicenses(ctx, name, version)
 
@@ -57,7 +57,7 @@ func newPackageForIndexWithMetadata(ctx context.Context, cfg CatalogerConfig, lr
 	return p
 }
 
-func newPackageForRequirementsWithMetadata(ctx context.Context, cfg CatalogerConfig, lr pythonLicenseResolver, name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
+func newPackageForRequirementsWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 	licenseSet := lr.getLicenses(ctx, name, version)
 

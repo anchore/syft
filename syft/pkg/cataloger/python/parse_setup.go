@@ -109,7 +109,6 @@ func (sp setupFileParser) validateAndCreatePackage(ctx context.Context, name, ve
 
 	p := newPackageForIndex(
 		ctx,
-		sp.cfg,
 		sp.licenseResolver,
 		name,
 		version,

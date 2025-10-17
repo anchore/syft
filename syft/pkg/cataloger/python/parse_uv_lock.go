@@ -180,7 +180,6 @@ func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.Location
 		pkgs = append(pkgs,
 			newPackageForIndexWithMetadata(
 				ctx,
-				ulp.cfg,
 				ulp.licenseResolver,
 				p.Name,
 				p.Version,

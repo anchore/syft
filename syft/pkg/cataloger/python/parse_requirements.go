@@ -147,7 +147,6 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 			packages,
 			newPackageForRequirementsWithMetadata(
 				ctx,
-				rp.cfg,
 				rp.licenseResolver,
 				name,
 				version,

@@ -106,7 +106,6 @@ func (plp poetryLockParser) poetryLockPackages(ctx context.Context, reader file.
 			pkgs,
 			newPackageForIndexWithMetadata(
 				ctx,
-				plp.cfg,
 				plp.licenseResolver,
 				p.Name,
 				p.Version,

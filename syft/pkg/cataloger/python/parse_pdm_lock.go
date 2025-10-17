@@ -96,7 +96,6 @@ func (plp pdmLockParser) parsePdmLock(ctx context.Context, _ file.Resolver, _ *g
 
 		pkgs = append(pkgs, newPackageForIndexWithMetadata(
 			ctx,
-			plp.cfg,
 			plp.licenseResolver,
 			p.Name,
 			p.Version,
