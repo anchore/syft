@@ -156,7 +156,7 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 			PURL:      packageURL(name, u.Version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity},
+			Metadata:  pkg.NpmPackageLockEntry{Resolved: u.Resolved, Integrity: u.Integrity, Dependencies: u.Dependencies},
 		},
 	)
 }
