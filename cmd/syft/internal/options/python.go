@@ -3,7 +3,9 @@ package options
 import "github.com/anchore/clio"
 
 type pythonConfig struct {
-	GuessUnpinnedRequirements bool `json:"guess-unpinned-requirements" yaml:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
+	SearchRemoteLicenses      *bool  `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+	PypiBaseURL               string `json:"pypi-base-url" yaml:"pypi-base-url" mapstructure:"pypi-base-url"`
+	GuessUnpinnedRequirements *bool  `json:"guess-unpinned-requirements" yaml:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
 }
 
 var _ interface {
@@ -11,6 +13,8 @@ var _ interface {
 } = (*pythonConfig)(nil)
 
 func (o *pythonConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
+	descriptions.Add(&o.SearchRemoteLicenses, `enables Syft to use the network to fill in more detailed license information`)
+	descriptions.Add(&o.PypiBaseURL, `base Pypi url to use`)
 	descriptions.Add(&o.GuessUnpinnedRequirements, `when running across entries in requirements.txt that do not specify a specific version 
 (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could
 be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version 

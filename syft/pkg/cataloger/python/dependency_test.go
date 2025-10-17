@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -259,7 +260,8 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 			fh, err := os.Open(tt.fixture)
 			require.NoError(t, err)
 
-			pkgs, err := poetryLockPackages(file.NewLocationReadCloser(file.NewLocation(tt.fixture), fh))
+			plp := newPoetryLockParser(DefaultCatalogerConfig())
+			pkgs, err := plp.poetryLockPackages(context.TODO(), file.NewLocationReadCloser(file.NewLocation(tt.fixture), fh))
 			require.NoError(t, err)
 
 			var got []dependency.Specification

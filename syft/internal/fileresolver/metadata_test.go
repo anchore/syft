@@ -4,9 +4,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/anchore/stereoscope/pkg/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/stereoscope/pkg/file"
 )
 
 func TestFileMetadataFromPath(t *testing.T) {
