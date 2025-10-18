@@ -10,16 +10,16 @@ import (
 
 var ErrSkipPath = errors.New("skip path")
 
-var _ file.Resolver = (*Directory)(nil)
+var _ file.Resolver = (*DirectoryResolver)(nil)
 
-// Directory implements path and content access for the directory data source.
-type Directory struct {
+// DirectoryResolver implements path and content access for the directory data source.
+type DirectoryResolver struct {
 	FiletreeResolver
 	path    string
 	indexer *directoryIndexer
 }
 
-func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
+func NewFromDirectory(root, base string, pathFilters ...PathIndexVisitor) (*DirectoryResolver, error) {
 	r, err := newFromDirectoryWithoutIndex(root, base, pathFilters...)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewFromDirectory(root string, base string, pathFilters ...PathIndexVisitor)
 	return r, r.buildIndex()
 }
 
-func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
+func newFromDirectoryWithoutIndex(root, base string, pathFilters ...PathIndexVisitor) (*DirectoryResolver, error) {
 	chroot, err := NewChrootContextFromCWD(root, base)
 	if err != nil {
 		return nil, fmt.Errorf("unable to interpret chroot context: %w", err)
@@ -37,7 +37,7 @@ func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathI
 	cleanRoot := chroot.Root()
 	cleanBase := chroot.Base()
 
-	return &Directory{
+	return &DirectoryResolver{
 		path: cleanRoot,
 		FiletreeResolver: FiletreeResolver{
 			Chroot: *chroot,
@@ -49,7 +49,7 @@ func newFromDirectoryWithoutIndex(root string, base string, pathFilters ...PathI
 	}, nil
 }
 
-func (r *Directory) buildIndex() error {
+func (r *DirectoryResolver) buildIndex() error {
 	if r.indexer == nil {
 		return fmt.Errorf("no directory indexer configured")
 	}
@@ -66,6 +66,6 @@ func (r *Directory) buildIndex() error {
 }
 
 // Stringer to represent a directory path data source
-func (r Directory) String() string {
+func (r *DirectoryResolver) String() string {
 	return fmt.Sprintf("dir:%s", r.path)
 }
