@@ -185,7 +185,6 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	}
 
 	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
-
 	if err != nil {
 		return err
 	}
