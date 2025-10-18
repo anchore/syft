@@ -81,6 +81,10 @@ func Test_EnvironmentTask(t *testing.T) {
 			// get the source
 			theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, theSource.Close())
+			})
+
 			resolver, err := theSource.FileResolver(source.SquashedScope)
 			require.NoError(t, err)
 

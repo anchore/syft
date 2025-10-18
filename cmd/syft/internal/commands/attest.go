@@ -253,7 +253,6 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 	}
 
 	src, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
-
 	if err != nil {
 		return nil, err
 	}
