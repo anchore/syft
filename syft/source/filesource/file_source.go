@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"sync"
 
 	"github.com/opencontainers/go-digest"
@@ -155,13 +154,8 @@ func (s *fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	absParentDir, err := absoluteSymlinkFreePathToParent(s.analysisPath)
-	if err != nil {
-		return nil, err
-	}
-
 	// This is analysis of a single file. Use file indexer.
-	res, err := fileresolver.NewFromFile(absParentDir, s.analysisPath, exclusionFunctions...)
+	res, err := fileresolver.NewFromFile(s.analysisPath, exclusionFunctions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create file resolver: %w", err)
 	}
@@ -196,18 +190,6 @@ func deriveIDFromFile(cfg Config) (artifact.ID, string) {
 	}
 
 	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
-}
-
-func absoluteSymlinkFreePathToParent(path string) (string, error) {
-	absAnalysisPath, err := filepath.Abs(path)
-	if err != nil {
-		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
-	}
-	dereferencedAbsAnalysisPath, err := filepath.EvalSymlinks(absAnalysisPath)
-	if err != nil {
-		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
-	}
-	return filepath.Dir(dereferencedAbsAnalysisPath), nil
 }
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
@@ -249,15 +231,17 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 }
 
 func digestOfFileContents(path string) string {
-	file, err := os.Open(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return digest.SHA256.FromString(path).String()
 	}
-	defer file.Close()
-	di, err := digest.SHA256.FromReader(file)
+	defer f.Close()
+
+	di, err := digest.SHA256.FromReader(f)
 	if err != nil {
 		return digest.SHA256.FromString(path).String()
 	}
+
 	return di.String()
 }
 

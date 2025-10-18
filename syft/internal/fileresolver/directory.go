@@ -20,12 +20,12 @@ type DirectoryResolver struct {
 }
 
 func NewFromDirectory(root, base string, pathFilters ...PathIndexVisitor) (*DirectoryResolver, error) {
-	r, err := newFromDirectoryWithoutIndex(root, base, pathFilters...)
+	resolver, err := newFromDirectoryWithoutIndex(root, base, pathFilters...)
 	if err != nil {
 		return nil, err
 	}
 
-	return r, r.buildIndex()
+	return resolver, resolver.buildIndex()
 }
 
 func newFromDirectoryWithoutIndex(root, base string, pathFilters ...PathIndexVisitor) (*DirectoryResolver, error) {

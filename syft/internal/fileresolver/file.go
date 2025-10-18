@@ -19,8 +19,8 @@ type FileResolver struct {
 
 // NewFromFile parent should be the symlink free absolute path to the parent directory
 // path is the filepath of the file we're creating content access for
-func NewFromFile(parent, path string, pathFilters ...PathIndexVisitor) (*FileResolver, error) {
-	resolver, err := newFromFileWithoutIndex(parent, path, pathFilters...)
+func NewFromFile(path string, pathFilters ...PathIndexVisitor) (*FileResolver, error) {
+	resolver, err := newFromFileWithoutIndex(path, pathFilters...)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +28,13 @@ func NewFromFile(parent, path string, pathFilters ...PathIndexVisitor) (*FileRes
 	return resolver, resolver.buildIndex()
 }
 
-func newFromFileWithoutIndex(parent, path string, pathFilters ...PathIndexVisitor) (*FileResolver, error) {
-	chroot, err := NewChrootContextFromCWD(parent, parent)
+func newFromFileWithoutIndex(path string, pathFilters ...PathIndexVisitor) (*FileResolver, error) {
+	absParentDir, err := absoluteSymlinkFreePathToParent(path)
+	if err != nil {
+		return nil, err
+	}
+
+	chroot, err := NewChrootContextFromCWD(absParentDir, absParentDir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to interpret chroot context: %w", err)
 	}
