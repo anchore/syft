@@ -37,6 +37,7 @@ var archiveFormatGlobs = []string{
 	"**/*.jpi",
 	"**/*.hpi",
 	"**/*.kar",
+	"**/*.far",
 	"**/*.lpkg", // Zip-compressed package used to deploy applications
 	// (aka plugins) to Liferay Portal server. Those files contains .JAR(s) and a .PROPERTIES file, the latter
 	// has information about the application and installation requirements.
