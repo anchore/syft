@@ -1052,8 +1052,8 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
-  # Debian (dpkg) ###################################################################################################
-  - ecosystem: debian # MANUAL
+  # Dpkg (debian) ###################################################################################################
+  - ecosystem: dpkg # MANUAL
     name: dpkg-db-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -1103,7 +1103,7 @@ catalogers:
               - DpkgDBEntry.Files[].Digest
           - name: package_manager.package_integrity_hash
             default: false
-  - ecosystem: debian # MANUAL
+  - ecosystem: dpkg # MANUAL
     name: deb-archive-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -2906,7 +2906,7 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
-  # Red Hat #######################################################################################################
+  # RPM (RedHat) #######################################################################################################
   - ecosystem: rpm # MANUAL
     name: rpm-archive-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
