@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/internal"
 )
 
@@ -48,13 +49,13 @@ func NewFromPath(path string) (source.Source, error) {
 }
 
 func New(cfg Config) (source.Source, error) {
-	fh, err := os.Open(cfg.Path)
+	f, err := os.Open(cfg.Path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file=%q: %w", cfg.Path, err)
 	}
-	defer fh.Close()
+	defer f.Close()
 
-	fileMeta, err := fh.Stat()
+	fileMeta, err := f.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
 	}
@@ -65,7 +66,7 @@ func New(cfg Config) (source.Source, error) {
 
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
-		digests, err = intFile.NewDigestsFromFile(context.TODO(), fh, cfg.DigestAlgorithms)
+		digests, err = intFile.NewDigestsFromFile(context.TODO(), f, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
 		}
@@ -86,15 +87,15 @@ func New(cfg Config) (source.Source, error) {
 		analysisPath:     analysisPath,
 		digestForVersion: versionDigest,
 		digests:          digests,
-		mimeType:         stereoFile.MIMEType(fh),
+		mimeType:         stereoFile.MIMEType(f),
 	}, nil
 }
 
-func (s *fileSource) ID() artifact.ID {
+func (s fileSource) ID() artifact.ID {
 	return s.id
 }
 
-func (s *fileSource) Describe() source.Description {
+func (s fileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
 	supplier := ""
@@ -125,7 +126,7 @@ func (s *fileSource) Describe() source.Description {
 	}
 }
 
-func (s *fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
+func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -133,7 +134,7 @@ func (s *fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	exclusionFunctions, err := source.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
+	exclusionFunctions, err := directorysource.GetDirectoryExclusionFunctions(s.analysisPath, s.config.Exclude.Paths)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +144,7 @@ func (s *fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", s.analysisPath, err)
 	}
 
-	if fi.IsDir() {
+	if isArchiveAnalysis := fi.IsDir(); isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
 		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
 		if err != nil {

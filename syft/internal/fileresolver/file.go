@@ -8,18 +8,18 @@ import (
 )
 
 // Compile time assurance that we meet the Resolver interface.
-var _ file.Resolver = (*FileResolver)(nil)
+var _ file.Resolver = (*File)(nil)
 
-// FileResolver implements path and content access for the file data source.
-type FileResolver struct {
+// File implements path and content access for the file data source.
+type File struct {
 	FiletreeResolver
 	path    string
 	indexer *fileIndexer
 }
 
-// NewFromFile parent should be the symlink free absolute path to the parent directory
+// NewFromFile single file analyser
 // path is the filepath of the file we're creating content access for
-func NewFromFile(path string, pathFilters ...PathIndexVisitor) (*FileResolver, error) {
+func NewFromFile(path string, pathFilters ...PathIndexVisitor) (*File, error) {
 	resolver, err := newFromFileWithoutIndex(path, pathFilters...)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewFromFile(path string, pathFilters ...PathIndexVisitor) (*FileResolver, e
 	return resolver, resolver.buildIndex()
 }
 
-func newFromFileWithoutIndex(path string, pathFilters ...PathIndexVisitor) (*FileResolver, error) {
+func newFromFileWithoutIndex(path string, pathFilters ...PathIndexVisitor) (*File, error) {
 	absParentDir, err := absoluteSymlinkFreePathToParent(path)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func newFromFileWithoutIndex(path string, pathFilters ...PathIndexVisitor) (*Fil
 
 	cleanBase := chroot.Base()
 
-	return &FileResolver{
+	return &File{
 		path: path,
 		FiletreeResolver: FiletreeResolver{
 			Chroot: *chroot,
@@ -53,7 +53,7 @@ func newFromFileWithoutIndex(path string, pathFilters ...PathIndexVisitor) (*Fil
 	}, nil
 }
 
-func (r *FileResolver) buildIndex() error {
+func (r *File) buildIndex() error {
 	if r.indexer == nil {
 		return fmt.Errorf("no file indexer configured")
 	}
@@ -70,6 +70,6 @@ func (r *FileResolver) buildIndex() error {
 }
 
 // Stringer to represent a file path data source
-func (r *FileResolver) String() string {
+func (r *File) String() string {
 	return fmt.Sprintf("file:%s", r.path)
 }
