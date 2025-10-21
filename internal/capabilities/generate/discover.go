@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal/capabilities"
@@ -650,24 +649,10 @@ func RepoRoot() (string, error) {
 	return absRepoRoot, nil
 }
 
-// extractBinaryClassifierGlobs extracts all FileGlob patterns from binary classifiers
-func extractBinaryClassifierGlobs() []string {
+// extractBinaryClassifiers extracts all binary classifiers with their full information
+func extractBinaryClassifiers() []binary.Classifier {
 	classifiers := binary.DefaultClassifiers()
 
-	// extract all unique FileGlob values
-	globs := make(map[string]bool)
-	for _, classifier := range classifiers {
-		if classifier.FileGlob != "" {
-			globs[classifier.FileGlob] = true
-		}
-	}
-
-	// convert to sorted slice
-	result := make([]string, 0, len(globs))
-	for glob := range globs {
-		result = append(result, glob)
-	}
-	sort.Strings(result)
-
-	return result
+	// return all classifiers (already sorted by the default function)
+	return classifiers
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 
 func TestMergeConfigSections(t *testing.T) {
@@ -113,7 +114,7 @@ func TestMergeConfigSections(t *testing.T) {
 				map[string]DiscoveredCataloger{},
 				map[string][]string{},
 				map[string][]string{},
-				[]string{},
+				[]binary.Classifier{},
 				[]capabilities.CatalogerInfo{},
 				tt.existingDoc,
 				tt.newConfigs,
@@ -250,7 +251,7 @@ func TestMergePreservesManualCapabilities(t *testing.T) {
 		discovered,
 		map[string][]string{},
 		map[string][]string{},
-		[]string{},
+		[]binary.Classifier{},
 		[]capabilities.CatalogerInfo{
 			{Name: "test-cataloger", Selectors: []string{"test"}},
 		},
@@ -337,7 +338,7 @@ func TestCatalogerConfigFieldUpdatedForNewCatalogers(t *testing.T) {
 					discovered,
 					map[string][]string{},
 					map[string][]string{},
-					[]string{},
+					[]binary.Classifier{},
 					[]capabilities.CatalogerInfo{
 						{Name: tt.catalogerName, Selectors: []string{"test"}},
 					},
@@ -357,7 +358,7 @@ func TestCatalogerConfigFieldUpdatedForNewCatalogers(t *testing.T) {
 					map[string]DiscoveredCataloger{},
 					map[string][]string{},
 					map[string][]string{},
-					[]string{},
+					[]binary.Classifier{},
 					[]capabilities.CatalogerInfo{
 						{Name: tt.catalogerName, Selectors: []string{"test"}},
 					},

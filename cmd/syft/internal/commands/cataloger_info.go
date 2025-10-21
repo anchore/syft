@@ -115,10 +115,19 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 		Fields []configFieldInfo `json:"fields,omitempty"`
 	}
 
+	type detectorPackageInfo struct {
+		Class string   `json:"class"`
+		Name  string   `json:"name"`
+		PURL  string   `json:"purl"`
+		CPEs  []string `json:"cpes"`
+		Type  string   `json:"type"`
+	}
+
 	type patternInfo struct {
 		Method       string                           `json:"method"`
 		Criteria     []string                         `json:"criteria"`
 		Conditions   []capabilities.DetectorCondition `json:"conditions,omitempty"`
+		Packages     []detectorPackageInfo            `json:"packages,omitempty"`
 		Comment      string                           `json:"comment,omitempty"`
 		Capabilities capabilities.CapabilitySet       `json:"capabilities,omitempty"`
 	}
@@ -146,10 +155,23 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 		}
 
 		for _, parser := range cat.Parsers {
+			// convert detector packages
+			var pkgs []detectorPackageInfo
+			for _, pkg := range parser.Detector.Packages {
+				pkgs = append(pkgs, detectorPackageInfo{
+					Class: pkg.Class,
+					Name:  pkg.Name,
+					PURL:  pkg.PURL,
+					CPEs:  pkg.CPEs,
+					Type:  pkg.Type,
+				})
+			}
+
 			pi := patternInfo{
 				Method:       string(parser.Detector.Method),
 				Criteria:     parser.Detector.Criteria,
 				Conditions:   parser.Detector.Conditions,
+				Packages:     pkgs,
 				Comment:      parser.Detector.Comment,
 				Capabilities: parser.Capabilities,
 			}
@@ -161,10 +183,23 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 			info.Capabilities = cat.Capabilities
 
 			for _, det := range cat.Detectors {
+				// convert detector packages
+				var pkgs []detectorPackageInfo
+				for _, pkg := range det.Packages {
+					pkgs = append(pkgs, detectorPackageInfo{
+						Class: pkg.Class,
+						Name:  pkg.Name,
+						PURL:  pkg.PURL,
+						CPEs:  pkg.CPEs,
+						Type:  pkg.Type,
+					})
+				}
+
 				pi := patternInfo{
 					Method:     string(det.Method),
 					Criteria:   det.Criteria,
 					Conditions: det.Conditions,
+					Packages:   pkgs,
 					Comment:    det.Comment,
 				}
 				info.Patterns = append(info.Patterns, pi)

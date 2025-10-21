@@ -49,7 +49,17 @@ type Detector struct {
 	Method     ArtifactDetectionMethod `yaml:"method" json:"method"`                             // AUTO-GENERATED
 	Criteria   []string                `yaml:"criteria" json:"criteria"`                         // AUTO-GENERATED
 	Conditions []DetectorCondition     `yaml:"conditions,omitempty" json:"conditions,omitempty"` // MANUAL - when this detector should be active
+	Packages   []DetectorPackageInfo   `yaml:"packages,omitempty" json:"packages,omitempty"`     // AUTO-GENERATED for binary-classifier-cataloger
 	Comment    string                  `yaml:"comment,omitempty" json:"comment,omitempty"`       // MANUAL - explanation of this detector
+}
+
+// DetectorPackageInfo describes package information that a detector can produce
+type DetectorPackageInfo struct {
+	Class string   `yaml:"class" json:"class"` // classifier class (e.g., "python-binary-lib")
+	Name  string   `yaml:"name" json:"name"`   // package name (e.g., "python")
+	PURL  string   `yaml:"purl" json:"purl"`   // package URL without version (e.g., "pkg:generic/python")
+	CPEs  []string `yaml:"cpes" json:"cpes"`   // CPE strings
+	Type  string   `yaml:"type" json:"type"`   // package type (e.g., "BinaryPkg")
 }
 
 // DetectorCondition specifies when a detector should be active based on configuration

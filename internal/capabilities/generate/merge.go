@@ -7,9 +7,19 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 
 const genericCatalogerType = "generic"
+
+// stripPURLVersion removes the @version suffix from a PURL string
+// e.g., "pkg:generic/python@version" -> "pkg:generic/python"
+func stripPURLVersion(purl string) string {
+	if idx := strings.LastIndex(purl, "@"); idx != -1 {
+		return purl[:idx]
+	}
+	return purl
+}
 
 // catalogerTypeOverrides specifies catalogers that should have their type manually controlled
 // rather than determined from the discovered cataloger structure.
@@ -71,10 +81,10 @@ func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, erro
 	}
 	fmt.Println(" done")
 
-	// 1b. Extract binary classifier globs
-	fmt.Print("  → Extracting binary classifier globs...")
-	binaryClassifierGlobs := extractBinaryClassifierGlobs()
-	fmt.Printf(" found %d globs\n", len(binaryClassifierGlobs))
+	// 1b. Extract binary classifiers
+	fmt.Print("  → Extracting binary classifiers...")
+	binaryClassifiers := extractBinaryClassifiers()
+	fmt.Printf(" found %d classifiers\n", len(binaryClassifiers))
 
 	// Count parser functions
 	for _, disc := range discovered {
@@ -205,7 +215,7 @@ func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, erro
 		discovered,
 		customCatalogerMetadata,
 		customCatalogerPackageTypes,
-		binaryClassifierGlobs,
+		binaryClassifiers,
 		allCatalogers,
 		existing,
 		discoveredConfigs,
@@ -286,19 +296,19 @@ func (r *CatalogerRegistry) AllCatalogers() []capabilities.CatalogerInfo {
 	return r.all
 }
 
-// EnrichmentData encapsulates metadata enrichment information (metadata types, package types, binary classifier globs)
+// EnrichmentData encapsulates metadata enrichment information (metadata types, package types, binary classifiers)
 type EnrichmentData struct {
-	metadata              map[string][]string
-	packageTypes          map[string][]string
-	binaryClassifierGlobs []string
+	metadata          map[string][]string
+	packageTypes      map[string][]string
+	binaryClassifiers []binary.Classifier
 }
 
 // NewEnrichmentData creates a new enrichment data container
-func NewEnrichmentData(metadata, packageTypes map[string][]string, binaryClassifierGlobs []string) *EnrichmentData {
+func NewEnrichmentData(metadata, packageTypes map[string][]string, binaryClassifiers []binary.Classifier) *EnrichmentData {
 	return &EnrichmentData{
-		metadata:              metadata,
-		packageTypes:          packageTypes,
-		binaryClassifierGlobs: binaryClassifierGlobs,
+		metadata:          metadata,
+		packageTypes:      packageTypes,
+		binaryClassifiers: binaryClassifiers,
 	}
 }
 
@@ -326,16 +336,36 @@ func (e *EnrichmentData) EnrichEntry(catalogerName string, entry *capabilities.C
 	}
 }
 
-// EnrichWithBinaryClassifier enriches an entry with binary classifier globs if it's the binary-classifier-cataloger
+// EnrichWithBinaryClassifier enriches an entry with binary classifier detectors if it's the binary-classifier-cataloger
 func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry *capabilities.CatalogerEntry) {
-	// special handling for binary-classifier-cataloger: auto-generate detectors from classifier globs
-	if catalogerName == "binary-classifier-cataloger" && len(e.binaryClassifierGlobs) > 0 {
-		entry.Detectors = []capabilities.Detector{
-			{
+	// special handling for binary-classifier-cataloger: auto-generate one detector per classifier
+	if catalogerName == "binary-classifier-cataloger" && len(e.binaryClassifiers) > 0 {
+		var detectors []capabilities.Detector
+		for _, classifier := range e.binaryClassifiers {
+			// convert CPEs to strings
+			cpeStrings := make([]string, len(classifier.CPEs))
+			for i, c := range classifier.CPEs {
+				cpeStrings[i] = c.Attributes.BindToFmtString()
+			}
+
+			// strip @version from PURL
+			purlStr := stripPURLVersion(classifier.PURL.String())
+
+			detectors = append(detectors, capabilities.Detector{
 				Method:   "glob",
-				Criteria: e.binaryClassifierGlobs,
-			},
+				Criteria: []string{classifier.FileGlob},
+				Packages: []capabilities.DetectorPackageInfo{
+					{
+						Class: classifier.Class,
+						Name:  classifier.Package,
+						PURL:  purlStr,
+						CPEs:  cpeStrings,
+						Type:  "BinaryPkg",
+					},
+				},
+			})
 		}
+		entry.Detectors = detectors
 	}
 }
 
@@ -512,7 +542,7 @@ func mergeDiscoveredWithExisting(
 	discovered map[string]DiscoveredCataloger,
 	customMetadata map[string][]string,
 	customPackageTypes map[string][]string,
-	binaryClassifierGlobs []string,
+	binaryClassifiers []binary.Classifier,
 	allCatalogers []capabilities.CatalogerInfo,
 	existing *capabilities.Document,
 	configs map[string]capabilities.CatalogerConfigEntry,
@@ -520,7 +550,7 @@ func mergeDiscoveredWithExisting(
 	catalogerConfigMappings map[string]string,
 ) (*capabilities.Document, []orphanInfo, *mergeStatistics) {
 	registry := NewCatalogerRegistry(discovered, allCatalogers)
-	enrichment := NewEnrichmentData(customMetadata, customPackageTypes, binaryClassifierGlobs)
+	enrichment := NewEnrichmentData(customMetadata, customPackageTypes, binaryClassifiers)
 	merger := NewCatalogerMerger(registry, enrichment, existing, catalogerConfigMappings)
 
 	// set the AUTO-GENERATED config sections
