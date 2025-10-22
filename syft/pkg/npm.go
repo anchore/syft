@@ -47,3 +47,13 @@ type YarnLockEntry struct {
 	// Dependencies is a map of dependencies and their versions
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
+
+type PnpmLockResolution struct {
+	Integrity string `mapstructure:"integrity" json:"integrity"`
+}
+
+type PnpmLockEntry struct {
+	Resolution PnpmLockResolution `mapstructure:"resolution" json:"resolution"`
+
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
+}

@@ -2,17 +2,25 @@ package javascript
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"maps"
 	"regexp"
+	"slices"
+	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 var (
@@ -49,6 +57,21 @@ var (
 	integrityExp = regexp.MustCompile(`^\s+integrity\s+([^\s]+)`)
 )
 
+type yarnPackage struct {
+	Name         string
+	Version      string
+	Resolved     string
+	Integrity    string
+	Dependencies map[string]string // We don't currently support dependencies for yarn v1 lock files
+}
+
+type yarnV2PackageEntry struct {
+	Version      string            `yaml:"version"`
+	Resolution   string            `yaml:"resolution"`
+	Checksum     string            `yaml:"checksum"`
+	Dependencies map[string]string `yaml:"dependencies"`
+}
+
 type genericYarnLockAdapter struct {
 	cfg CatalogerConfig
 }
@@ -59,14 +82,8 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	}
 }
 
-func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// in the case we find yarn.lock files in the node_modules directories, skip those
-	// as the whole purpose of the lock file is for the specific dependencies of the project
-	if pathContainsNodeModulesDirectory(reader.Path()) {
-		return nil, nil, nil
-	}
-
-	var pkgs []pkg.Package
+func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
+	var pkgs []yarnPackage
 	var currentPackage, currentVersion, currentResolved, currentIntegrity string
 
 	scanner := bufio.NewScanner(reader)
@@ -78,7 +95,7 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		if packageName := findPackageName(line); packageName != "" {
 			// When we find a new package, check if we have unsaved identifiers
 			if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
+				pkgs = append(pkgs, yarnPackage{Name: currentPackage, Version: currentVersion, Resolved: currentResolved, Integrity: currentIntegrity})
 				parsedPackages.Add(currentPackage + "@" + currentVersion)
 			}
 
@@ -90,7 +107,7 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 			currentPackage = packageName
 			currentVersion = version
 		} else if integrity := findIntegrity(line); integrity != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-			pkgs = append(pkgs, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, integrity))
+			pkgs = append(pkgs, yarnPackage{Name: currentPackage, Version: currentVersion, Resolved: currentResolved, Integrity: integrity})
 			parsedPackages.Add(currentPackage + "@" + currentVersion)
 
 			// Cleanup to indicate no unsaved identifiers
@@ -103,17 +120,71 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 
 	// check if we have valid unsaved data after end-of-file has reached
 	if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, currentPackage, currentVersion, currentResolved, currentIntegrity))
+		pkgs = append(pkgs, yarnPackage{Name: currentPackage, Version: currentVersion, Resolved: currentResolved, Integrity: currentIntegrity})
 		parsedPackages.Add(currentPackage + "@" + currentVersion)
 	}
 
 	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
+	}
+
+	return pkgs, nil
+}
+
+func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
+	var lockfile = map[string]yarnV2PackageEntry{}
+	if err := yaml.NewDecoder(reader, yaml.AllowDuplicateMapKey()).Decode(&lockfile); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal yarn v2 lockfile: %w", err)
+	}
+
+	packages := make(map[string]yarnPackage)
+	for key, value := range lockfile {
+		packageName := findPackageName(key)
+		if packageName == "" {
+			log.WithFields("key", key).Error("unable to parse yarn v2 package key")
+			continue
+		}
+
+		packages[packageName] = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+	}
+
+	return slices.Collect(maps.Values(packages)), nil
+}
+
+func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// in the case we find yarn.lock files in the node_modules directories, skip those
+	// as the whole purpose of the lock file is for the specific dependencies of the project
+	if pathContainsNodeModulesDirectory(reader.Path()) {
+		return nil, nil, nil
+	}
+
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load yarn.lock file: %w", err)
+	}
+	// Reset the reader to the beginning of the file
+	reader.ReadCloser = io.NopCloser(bytes.NewBuffer(data))
+
+	var yarnPkgs []yarnPackage
+	// v1 Yarn lockfiles are not YAML, so we need to parse them as a special case. They typically
+	// include a comment line that indicates the version. I.e. "# yarn lockfile v1"
+	if strings.Contains(string(data), "# yarn lockfile v1") {
+		yarnPkgs, err = parseYarnV1LockFile(reader)
+	} else {
+		yarnPkgs, err = parseYarnLockYaml(reader)
+	}
+	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
 	}
 
-	pkg.Sort(pkgs)
+	packages := make([]pkg.Package, len(yarnPkgs))
+	for i, p := range yarnPkgs {
+		packages[i] = newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies)
+	}
 
-	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	pkg.Sort(packages)
+
+	return packages, dependency.Resolve(yarnLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")
 }
 
 func findPackageName(line string) string {

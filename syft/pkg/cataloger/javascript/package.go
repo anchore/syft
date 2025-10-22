@@ -161,7 +161,7 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 	)
 }
 
-func newPnpmPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newPnpmPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, integrity string, dependencies map[string]string) pkg.Package {
 	var licenseSet pkg.LicenseSet
 
 	if cfg.SearchRemoteLicenses {
@@ -186,11 +186,12 @@ func newPnpmPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Reso
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
+			Metadata:  pkg.PnpmLockEntry{Resolution: pkg.PnpmLockResolution{Integrity: integrity}, Dependencies: dependencies},
 		},
 	)
 }
 
-func newYarnLockPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, resolved string, integrity string) pkg.Package {
+func newYarnLockPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, resolved string, integrity string, dependencies map[string]string) pkg.Package {
 	var licenseSet pkg.LicenseSet
 
 	if cfg.SearchRemoteLicenses {
@@ -215,7 +216,7 @@ func newYarnLockPackage(ctx context.Context, cfg CatalogerConfig, resolver file.
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.YarnLockEntry{Resolved: resolved, Integrity: integrity},
+			Metadata:  pkg.YarnLockEntry{Resolved: resolved, Integrity: integrity, Dependencies: dependencies},
 		},
 	)
 }
