@@ -33,7 +33,6 @@ func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
 		Locations: file.NewLocationSet(locations...),
-		FoundBy:   cargoAuditBinaryCatalogerName,
 		Metadata: pkg.RustBinaryAuditEntry{
 			Name:    dep.Name,
 			Version: dep.Version,

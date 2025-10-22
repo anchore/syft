@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -80,6 +81,42 @@ func Test_machoHasExports(t *testing.T) {
 			f, err := macho.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, machoHasExports(f))
+		})
+	}
+}
+
+func Test_machoUniversal(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name    string
+		fixture string
+		want    file.Executable
+	}{
+		{
+			name:    "universal lib",
+			fixture: "bin/libhello_universal.dylib",
+			want:    file.Executable{HasExports: true, HasEntrypoint: false},
+		},
+		{
+			name:    "universal application",
+			fixture: "bin/hello_mac_universal",
+			want:    file.Executable{HasExports: false, HasEntrypoint: true},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var data file.Executable
+			err := findMachoFeatures(&data, readerForFixture(t, tt.fixture))
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.want.HasEntrypoint, data.HasEntrypoint)
+			assert.Equal(t, tt.want.HasExports, data.HasExports)
 		})
 	}
 }

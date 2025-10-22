@@ -18,9 +18,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// integrity check
-var _ generic.Parser = parsePnpmLock
-
 // pnpmPackage holds the raw name and version extracted from the lockfile.
 type pnpmPackage struct {
 	Name    string
@@ -43,6 +40,16 @@ type pnpmV9LockYaml struct {
 	LockfileVersion string                 `yaml:"lockfileVersion"`
 	Importers       map[string]interface{} `yaml:"importers"` // Using interface{} for forward compatibility
 	Packages        map[string]interface{} `yaml:"packages"`
+}
+
+type genericPnpmLockAdapter struct {
+	cfg CatalogerConfig
+}
+
+func newGenericPnpmLockAdapter(cfg CatalogerConfig) genericPnpmLockAdapter {
+	return genericPnpmLockAdapter{
+		cfg: cfg,
+	}
 }
 
 // Parse implements the pnpmLockfileParser interface for v6-v8 lockfiles.
@@ -116,7 +123,7 @@ func newPnpmLockfileParser(version float64) pnpmLockfileParser {
 }
 
 // parsePnpmLock is the main parser function for pnpm-lock.yaml files.
-func parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
@@ -142,7 +149,7 @@ func parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Envir
 
 	packages := make([]pkg.Package, len(pnpmPkgs))
 	for i, p := range pnpmPkgs {
-		packages[i] = newPnpmPackage(ctx, resolver, reader.Location, p.Name, p.Version)
+		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version)
 	}
 
 	return packages, nil, unknown.IfEmptyf(packages, "unable to determine packages")

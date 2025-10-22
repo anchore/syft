@@ -3,6 +3,7 @@ package executable
 import (
 	"debug/macho"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
@@ -19,20 +20,38 @@ const (
 func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) error {
 	// TODO: support security features
 
-	// TODO: support multi-architecture binaries
-	f, err := macho.NewFile(reader)
+	// a universal binary may have multiple architectures, so we need to check each one
+	readers, err := unionreader.GetReaders(reader)
 	if err != nil {
 		return err
 	}
 
-	libs, err := f.ImportedLibraries()
-	if err != nil {
-		return err
+	var libs []string
+	for _, r := range readers {
+		f, err := macho.NewFile(r)
+		if err != nil {
+			return err
+		}
+
+		rLibs, err := f.ImportedLibraries()
+		if err != nil {
+			return err
+		}
+		libs = append(libs, rLibs...)
+
+		// TODO handle only some having entrypoints/exports? If that is even practical
+		// only check for entrypoint if we don't already have one
+		if !data.HasEntrypoint {
+			data.HasEntrypoint = machoHasEntrypoint(f)
+		}
+		// only check for exports if we don't already have them
+		if !data.HasExports {
+			data.HasExports = machoHasExports(f)
+		}
 	}
 
-	data.ImportedLibraries = libs
-	data.HasEntrypoint = machoHasEntrypoint(f)
-	data.HasExports = machoHasExports(f)
+	// de-duplicate libraries
+	data.ImportedLibraries = internal.NewSet(libs...).ToSlice()
 
 	return nil
 }

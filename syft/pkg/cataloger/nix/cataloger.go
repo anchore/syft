@@ -10,6 +10,8 @@ import (
 )
 
 type Config struct {
+	// CaptureOwnedFiles determines whether to record the list of files owned by each Nix package discovered in the store. Recording owned files provides more detailed information but increases processing time and memory usage.
+	// app-config: nix.capture-owned-files
 	CaptureOwnedFiles bool `json:"capture-owned-files" yaml:"capture-owned-files" mapstructure:"capture-owned-files"`
 }
 

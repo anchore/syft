@@ -9,6 +9,9 @@ permit:
   - Unlicense
 
 ignore-packages:
+  # https://github.com/sorairolake/lzip-go/blob/34a2615d2abf740175c6b0a835baa08364e09430/go.sum.license#L3
+  # has `SPDX-License-Identifier: Apache-2.0 OR MIT`, both of which are acceptable
+  - github.com/sorairolake/lzip-go
   # packageurl-go is released under the MIT license located in the root of the repo at /mit.LICENSE
   - github.com/anchore/packageurl-go
 

@@ -2,13 +2,13 @@
 
 BIN=../../bin
 
-all:  $(BIN)/libhello.so  $(BIN)/libhello.dll $(BIN)/libhello.dylib
+all:  $(BIN)/libhello.so  $(BIN)/libhello.dll $(BIN)/libhello.dylib $(BIN)/libhello_universal.dylib
 
 linux: $(BIN)/libhello.so
 
 windows: $(BIN)/libhello.dll
 
-mac: $(BIN)/libhello.dylib
+mac: $(BIN)/libhello.dylib $(BIN)/libhello_universal.dylib
 
 $(BIN)/libhello.so:
 	gcc -shared -fPIC -o $(BIN)/libhello.so hello.c
@@ -19,5 +19,8 @@ $(BIN)/libhello.dll:
 $(BIN)/libhello.dylib:
 	o64-clang -dynamiclib -o $(BIN)/libhello.dylib hello.c
 
+$(BIN)/libhello_universal.dylib:
+	o64-clang -dynamiclib -arch arm64 -arch x86_64 hello.c -o $(BIN)/libhello_universal.dylib
+
 clean:
-	rm -f $(BIN)/libhello.so $(BIN)/hello.dll $(BIN)/libhello.dylib $(BIN)/libhello.a
+	rm -f $(BIN)/libhello.so $(BIN)/hello.dll $(BIN)/libhello.dylib $(BIN)/libhello.a $(BIN)/libhello_universal.dylib

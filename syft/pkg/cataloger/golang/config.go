@@ -19,19 +19,48 @@ var (
 )
 
 type CatalogerConfig struct {
-	SearchLocalModCacheLicenses bool                    `yaml:"search-local-mod-cache-licenses" json:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
-	LocalModCacheDir            string                  `yaml:"local-mod-cache-dir" json:"local-mod-cache-dir" mapstructure:"local-mod-cache-dir"`
-	SearchLocalVendorLicenses   bool                    `yaml:"search-local-vendor-licenses" json:"search-local-vendor-licenses" mapstructure:"search-local-vendor-licenses"`
-	LocalVendorDir              string                  `yaml:"local-vendor-dir" json:"local-vendor-dir" mapstructure:"local-vendor-dir"`
-	SearchRemoteLicenses        bool                    `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
-	Proxies                     []string                `yaml:"proxies,omitempty" json:"proxies,omitempty" mapstructure:"proxies"`
-	NoProxy                     []string                `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
-	MainModuleVersion           MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
+	// SearchLocalModCacheLicenses enables searching for go package licenses in the local GOPATH mod cache.
+	// app-config: golang.search-local-mod-cache-licenses
+	SearchLocalModCacheLicenses bool `yaml:"search-local-mod-cache-licenses" json:"search-local-mod-cache-licenses" mapstructure:"search-local-mod-cache-licenses"`
+
+	// LocalModCacheDir specifies the location of the local go module cache directory. When not set, syft will attempt to discover the GOPATH env or default to $HOME/go.
+	// app-config: golang.local-mod-cache-dir
+	LocalModCacheDir string `yaml:"local-mod-cache-dir" json:"local-mod-cache-dir" mapstructure:"local-mod-cache-dir"`
+
+	// SearchLocalVendorLicenses enables searching for go package licenses in the local vendor directory relative to the go.mod file.
+	// app-config: golang.search-local-vendor-licenses
+	SearchLocalVendorLicenses bool `yaml:"search-local-vendor-licenses" json:"search-local-vendor-licenses" mapstructure:"search-local-vendor-licenses"`
+
+	// LocalVendorDir specifies the location of the local vendor directory. When not set, syft will search for a vendor directory relative to the go.mod file.
+	// app-config: golang.local-vendor-dir
+	LocalVendorDir string `yaml:"local-vendor-dir" json:"local-vendor-dir" mapstructure:"local-vendor-dir"`
+
+	// SearchRemoteLicenses enables downloading go package licenses from the upstream go proxy (typically proxy.golang.org).
+	// app-config: golang.search-remote-licenses
+	SearchRemoteLicenses bool `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
+
+	// Proxies is a list of go module proxies to use when fetching go module metadata and licenses. When not set, syft will use the GOPROXY env or default to https://proxy.golang.org,direct.
+	// app-config: golang.proxy
+	Proxies []string `yaml:"proxies,omitempty" json:"proxies,omitempty" mapstructure:"proxies"`
+
+	// NoProxy is a list of glob patterns that match go module names that should not be fetched from the go proxy. When not set, syft will use the GOPRIVATE and GONOPROXY env vars.
+	// app-config: golang.no-proxy
+	NoProxy []string `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
+
+	MainModuleVersion MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
 }
 
 type MainModuleVersionConfig struct {
-	FromLDFlags       bool `yaml:"from-ld-flags" json:"from-ld-flags" mapstructure:"from-ld-flags"`
-	FromContents      bool `yaml:"from-contents" json:"from-contents" mapstructure:"from-contents"`
+	// FromLDFlags enables parsing the main module version from the -ldflags build settings.
+	// app-config: golang.main-module-version.from-ld-flags
+	FromLDFlags bool `yaml:"from-ld-flags" json:"from-ld-flags" mapstructure:"from-ld-flags"`
+
+	// FromContents enables parsing the main module version from the binary contents. This is useful when the version is embedded in the binary but not in the build settings.
+	// app-config: golang.main-module-version.from-contents
+	FromContents bool `yaml:"from-contents" json:"from-contents" mapstructure:"from-contents"`
+
+	// FromBuildSettings enables parsing the main module version from the go build settings.
+	// app-config: golang.main-module-version.from-build-settings
 	FromBuildSettings bool `yaml:"from-build-settings" json:"from-build-settings" mapstructure:"from-build-settings"`
 }
 

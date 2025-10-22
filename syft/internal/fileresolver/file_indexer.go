@@ -173,7 +173,7 @@ func (r *fileIndexer) addDirectoryToIndex(path string, info os.FileInfo) error {
 		return err
 	}
 
-	metadata := file.NewMetadataFromPath(path, info)
+	metadata := NewMetadataFromPath(path, info)
 	r.index.Add(*ref, metadata)
 
 	return nil
@@ -185,7 +185,7 @@ func (r *fileIndexer) addFileToIndex(path string, info os.FileInfo) error {
 		return err
 	}
 
-	metadata := file.NewMetadataFromPath(path, info)
+	metadata := NewMetadataFromPath(path, info)
 	r.index.Add(*ref, metadata)
 
 	return nil

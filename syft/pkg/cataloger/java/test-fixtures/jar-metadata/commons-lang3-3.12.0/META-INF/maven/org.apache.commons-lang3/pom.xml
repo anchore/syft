@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-parent</artifactId>
+        <version>54</version>
+    </parent>
+  <groupId>org.apache.commons</groupId>
+  <artifactId>commons-lang3</artifactId>
+  <version>${commons.release.version}</version>
+  <packaging>pom</packaging>
+  <name>JUnit 5 (Bill of Materials)</name>
+  <licenses>
+    <license>
+      <name>Eclipse Public License v2.0</name>
+      <url>https://www.eclipse.org/legal/epl-v20.html</url>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:git:git://github.com/junit-team/junit5.git</connection>
+    <developerConnection>scm:git:git://github.com/junit-team/junit5.git</developerConnection>
+    <url>https://github.com/junit-team/junit5</url>
+  </scm>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit.vintage</groupId>
+        <artifactId>junit-vintage-engine</artifactId>
+        <version>${commons.release.version}</version>
+      </dependency>
+    </dependencies>
+</project>
