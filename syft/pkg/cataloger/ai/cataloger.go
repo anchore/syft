@@ -1,8 +1,8 @@
 /*
-Package aiartifact provides concrete Cataloger implementations for AI artifacts and machine learning models,
+Package ai provides concrete Cataloger implementations for AI artifacts and machine learning models,
 including support for GGUF (GPT-Generated Unified Format) model files.
 */
-package aiartifact
+package ai
 
 import (
 	"github.com/anchore/syft/syft/pkg"
@@ -11,6 +11,6 @@ import (
 
 // NewGGUFCataloger returns a new cataloger instance for GGUF model files.
 func NewGGUFCataloger() pkg.Cataloger {
-	return generic.NewCataloger("model-gguf-cataloger").
+	return generic.NewCataloger("gguf-cataloger").
 		WithParserByGlobs(parseGGUFModel, "**/*.gguf")
 }

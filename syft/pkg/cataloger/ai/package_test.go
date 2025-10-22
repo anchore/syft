@@ -1,4 +1,4 @@
-package aiartifact
+package ai
 
 import (
 	"testing"

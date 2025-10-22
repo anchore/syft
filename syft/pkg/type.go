@@ -262,8 +262,6 @@ func TypeByName(name string) Type {
 		return WordpressPluginPkg
 	case "homebrew":
 		return HomebrewPkg
-	case "model":
-		return ModelPkg
 	default:
 		return UnknownPkg
 	}
