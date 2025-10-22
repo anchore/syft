@@ -168,7 +168,6 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
 		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
 	}
-	cfg.Dotnet.AddDefaultLocalNuGetCachePathIfEmpty()
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Dotnet: dotnet.DefaultCatalogerConfig().
@@ -179,8 +178,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.Dotnet.SearchLocalLicenses)).
 			WithLocalCachePaths(cfg.Dotnet.LocalCachePaths).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.Dotnet.SearchRemoteLicenses)).
-			WithProviders(cfg.Dotnet.Providers).
-			WithCredentials(cfg.Dotnet.ProviderCredentials.ToProviderCredentials()),
+			WithNuGetRepositoryURLs(cfg.Dotnet.NuGetRepositoryURLs).
+			WithCredentials(cfg.Dotnet.NuGetRepositoryCredentials.ToProviderCredentials()),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).

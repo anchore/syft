@@ -7,7 +7,7 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRemoveBOM(t *testing.T) {
@@ -50,7 +50,7 @@ func TestRemoveBOM(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := removeBOM(test.in)
-			assert.Equal(t, test.expected, result)
+			require.Equal(t, test.expected, result)
 		})
 	}
 }
@@ -127,28 +127,65 @@ func TestExtractLicensesFromNuSpec(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := licenseParser.extractLicensesFromNuSpec(context.Background(), test.spec, nil)
-			assert.Equal(t, test.expected, result)
+			require.Equal(t, test.expected, result)
 		})
 	}
 }
 
 func TestGetLicensesFromRemotePackage(t *testing.T) {
-	fixture := "newtonsoft.json 13.0.1"
-
-	expected := []pkg.License{
+	tests := []struct {
+		name     string
+		version  string
+		expected []pkg.License
+	}{
 		{
-			Value:          "MIT",
-			SPDXExpression: "MIT",
-			Type:           "declared",
-			URLs:           []string{"https://licenses.nuget.org/MIT"},
-			Locations:      file.LocationSet{},
+			name:    "newtonsoft.json",
+			version: "13.0.1",
+			expected: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           "declared",
+					URLs:           []string{"https://licenses.nuget.org/MIT"},
+					Locations:      file.LocationSet{},
+				},
+			},
+		},
+		{
+			name:    "bouncycastle.cryptography",
+			version: "2.6.2",
+			expected: []pkg.License{
+				{
+					Value:          "MIT",
+					SPDXExpression: "MIT",
+					Type:           "declared",
+					URLs:           []string{"https://licenses.nuget.org/MIT"},
+					Locations:      file.LocationSet{},
+				},
+			},
+		},
+		{
+			name:    "log4net",
+			version: "3.2.0",
+			expected: []pkg.License{
+				{
+					Value:          "Apache-2.0",
+					SPDXExpression: "Apache-2.0",
+					Type:           "declared",
+					URLs:           []string{"https://licenses.nuget.org/Apache-2.0"},
+					Locations:      file.LocationSet{},
+				},
+			},
 		},
 	}
 
 	licenseParser := newNugetLicenseResolver(CatalogerConfig{})
 
-	t.Run(fixture, func(t *testing.T) {
-		result, _ := licenseParser.getLicensesFromRemotePackage(context.Background(), defaultNuGetProvider, "newtonsoft.json", "13.0.1")
-		assert.Equal(t, expected, result)
-	})
+	for _, test := range tests {
+		t.Run(test.name+" "+test.version, func(t *testing.T) {
+			result, success := licenseParser.getLicensesFromRemotePackage(context.Background(), defaultNuGetProvider, test.name, test.version)
+			require.True(t, success)
+			require.Equal(t, test.expected, result)
+		})
+	}
 }

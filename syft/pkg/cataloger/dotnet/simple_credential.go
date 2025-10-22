@@ -1,4 +1,4 @@
-package credential
+package dotnet
 
 type SimpleCredential struct {
 	Username string `yaml:"username" json:"username" mapstructure:"username"`

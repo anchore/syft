@@ -11,7 +11,10 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
+	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -36,6 +39,17 @@ type nugetLicenseResolver struct {
 	lowerLicenseFileNames    *strset.Set
 	assetDefinitions         []projectAssets
 	licenseCache             cache.Resolver[[]pkg.License]
+}
+
+func getDefaultLocalNuGetCachePath() string {
+	environmentPackagesPath := os.Getenv("NUGET_PACKAGES")
+	if len(environmentPackagesPath) > 0 {
+		return environmentPackagesPath
+	}
+	if runtime.GOOS == "windows" {
+		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
+	}
+	return "~/.nuget/packages"
 }
 
 func newNugetLicenseResolver(config CatalogerConfig) nugetLicenseResolver {
@@ -79,13 +93,11 @@ func (c *nugetLicenseResolver) getLicenses(ctx context.Context, moduleName, modu
 	var licenses []pkg.License
 
 	if c.cfg.SearchLocalLicenses {
-		if c.localNuGetCacheResolvers == nil {
+		if len(c.localNuGetCacheResolvers) == 0 {
 			// Try to determine NuGet package folder resolvers
 			c.localNuGetCacheResolvers = c.getLocalNugetFolderResolvers(c.assetDefinitions)
 		}
 
-		// if we're running against a directory on the filesystem, it may not include the
-		// user's homedir, so we defer to using the localModCacheResolvers
 		for _, resolver := range c.localNuGetCacheResolvers {
 			if lics, err := c.findLocalLicenses(ctx, resolver, moduleName, moduleVersion); err == nil {
 				if len(lics) > 0 {
@@ -223,13 +235,23 @@ func (c *nugetLicenseResolver) getModuleFileLocations(moduleName, moduleVersion 
 
 	if len(c.cfg.LocalCachePaths) > 0 {
 		for _, localCachePath := range c.cfg.LocalCachePaths {
-			modulePath := ""
-			if modulePath, err = findExpectedSubfolderPath(localCachePath, moduleName, invariant); err == nil && len(modulePath) > 0 {
-				if modulePath, err = findExpectedSubfolderPath(localCachePath, moduleVersion, invariant); err == nil && len(modulePath) > 0 {
-					// Found the correct module version folder
-					locations = append(locations, enumerateFiles(modulePath)...)
-				}
+			if cachedLocations, err := getModuleFileLocationsFromLocalCache(localCachePath, moduleName, moduleVersion, invariant); err == nil && len(cachedLocations) > 0 {
+				locations = append(locations, cachedLocations...)
 			}
+		}
+	} else if cachedLocations, err := getModuleFileLocationsFromLocalCache(getDefaultLocalNuGetCachePath(), moduleName, moduleVersion, invariant); err == nil && len(cachedLocations) > 0 {
+		locations = append(locations, cachedLocations...)
+	}
+
+	return locations, err
+}
+
+func getModuleFileLocationsFromLocalCache(rootPath, moduleName, moduleVersion string, invariant bool) (locations []file.Location, err error) {
+	modulePath := ""
+	if modulePath, err = findExpectedSubfolderPath(rootPath, moduleName, invariant); err == nil && len(modulePath) > 0 {
+		if modulePath, err = findExpectedSubfolderPath(rootPath, moduleVersion, invariant); err == nil && len(modulePath) > 0 {
+			// Found the correct module version folder
+			locations = append(locations, enumerateFiles(modulePath)...)
 		}
 	}
 
@@ -466,12 +488,12 @@ func (c *nugetLicenseResolver) getResponseForRemotePackage(providerURL, moduleNa
 	url := fmt.Sprintf("%s/%s/%s/%s.%s.nupkg", strings.TrimSuffix(providerURL, "/"), moduleName, moduleVersion, moduleName, moduleVersion)
 	response, err = httpClient.Get(url)
 	if err == nil {
-		if response.StatusCode == http.StatusUnauthorized && len(c.cfg.ProviderCredentials) > 0 {
+		if response.StatusCode == http.StatusUnauthorized && len(c.cfg.NuGetRepositoryCredentials) > 0 {
 			if response.Body != nil {
 				response.Body.Close()
 			}
 			// Let's try, using the given credentials
-			for _, credential := range c.cfg.ProviderCredentials {
+			for _, credential := range c.cfg.NuGetRepositoryCredentials {
 				req, _ := http.NewRequest("GET", url, nil)
 				req.SetBasicAuth(credential.Username, credential.Password)
 				response, err = httpClient.Do(req)
@@ -529,7 +551,7 @@ func findMatchingLibrariesInProjectAssets(moduleName, moduleVersion string, asse
 
 func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleName, moduleVersion string, assets ...projectAssets) (out []pkg.License, err error) {
 	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]pkg.License, error) {
-		if len(c.cfg.Providers) == 0 {
+		if len(c.cfg.NuGetRepositoryURLs) == 0 {
 			return nil, errors.ErrUnsupported
 		}
 
@@ -542,7 +564,7 @@ func (c *nugetLicenseResolver) findRemoteLicenses(ctx context.Context, moduleNam
 		}
 
 		foundPackage := false
-		for _, provider := range c.cfg.Providers {
+		for _, provider := range c.cfg.NuGetRepositoryURLs {
 			out, foundPackage = c.getLicensesFromRemotePackage(ctx, provider, moduleName, moduleVersion)
 			if foundPackage {
 				break
@@ -578,7 +600,7 @@ func getProjectAssets(resolver file.Resolver) ([]projectAssets, error) {
 	// Try to determine NuGet package assets from temporary object files
 	// (usually located in the /obj folder)
 	var assetFiles []file.Location
-	if assetFiles, err = resolver.FilesByGlob("**/*.json"); err == nil && len(assetFiles) > 0 {
+	if assetFiles, err = resolver.FilesByGlob("**/project.assets.json"); err == nil && len(assetFiles) > 0 {
 		for _, assetFile := range assetFiles {
 			_, fileName := filepath.Split(strings.ReplaceAll(assetFile.RealPath, "\\", "/"))
 			if strings.ToLower(fileName) == "project.assets.json" {

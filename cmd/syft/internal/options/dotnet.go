@@ -2,21 +2,18 @@ package options
 
 import (
 	"os"
-	"path"
-	"runtime"
 	"strings"
 
 	"github.com/anchore/clio"
-	"github.com/anchore/syft/syft/credential"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 )
 
 type dotNetProviderCredentials []dotNetProviderCredential
 
-func (dnpc dotNetProviderCredentials) ToProviderCredentials() []credential.SimpleCredential {
-	result := []credential.SimpleCredential{}
+func (dnpc dotNetProviderCredentials) ToProviderCredentials() []dotnet.SimpleCredential {
+	result := []dotnet.SimpleCredential{}
 	for _, _credential := range dnpc {
-		result = append(result, credential.SimpleCredential{
+		result = append(result, dotnet.SimpleCredential{
 			Username: _credential.Username.String(),
 			Password: _credential.Password.String(),
 		})
@@ -46,9 +43,9 @@ type dotnetConfig struct {
 
 	SearchRemoteLicenses *bool `yaml:"search-remote-licenses" json:"search-remote-licenses" mapstructure:"search-remote-licenses"`
 
-	Providers string `yaml:"package-providers,omitempty" json:"package-providers,omitempty" mapstructure:"package-providers"`
+	NuGetRepositoryURLs string `yaml:"package-nugetrepositoryurls,omitempty" json:"package-nugetrepositoryurls,omitempty" mapstructure:"package-nugetrepositoryurls"`
 
-	ProviderCredentials dotNetProviderCredentials `yaml:"package-provider-credentials,omitempty" json:"package-provider-credentials,omitempty" mapstructure:"package-provider-credentials"`
+	NuGetRepositoryCredentials dotNetProviderCredentials `yaml:"package-nugetrepository-credentials,omitempty" json:"package-nugetrepository-credentials,omitempty" mapstructure:"package-nugetrepository-credentials"`
 }
 
 var _ interface {
@@ -62,7 +59,7 @@ func (o *dotnetConfig) PostLoad() error {
 		os.Getenv("SYFT_DOTNET_PACKAGE_PROVIDER_CREDENTIALS_PASSWORD")
 
 	if username != "" && password != "" {
-		o.ProviderCredentials = append(o.ProviderCredentials, dotNetProviderCredential{
+		o.NuGetRepositoryCredentials = append(o.NuGetRepositoryCredentials, dotNetProviderCredential{
 			Username: secret(username),
 			Password: secret(password),
 		})
@@ -78,32 +75,15 @@ func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchLocalLicenses, `search for NuGet package licences in the local cache of the system running Syft, note that this is outside the container filesystem and probably outside the root of a local directory scan`)
 	descriptions.Add(&o.LocalCachePaths, `local cache folders (comma-separated) to use when retrieving NuGet packages locally; defaults to the standard NuGet cache folder`)
 	descriptions.Add(&o.SearchRemoteLicenses, `search for NuGet package licences by retrieving the package from a network proxy`)
-	descriptions.Add(&o.Providers, `remote NuGet package providers (comma-separated) to use when retrieving NuGet packages from the network; defaults to the nuget.org-repository`)
-	descriptions.Add(&o.ProviderCredentials, `remote NuGet package provider credentials to use when retrieving NuGet packages from the network.`)
-}
-
-func (o *dotnetConfig) AddDefaultLocalNuGetCachePathIfEmpty() {
-	if len(o.LocalCachePaths) == 0 {
-		o.LocalCachePaths = getDefaultLocalNuGetCachePath()
-	}
-}
-
-func getDefaultLocalNuGetCachePath() string {
-	environmentPackagesPath := os.Getenv("NUGET_PACKAGES")
-	if len(environmentPackagesPath) > 0 {
-		return environmentPackagesPath
-	}
-	if runtime.GOOS == "windows" {
-		return path.Clean(path.Join(os.Getenv("USERPROFILE"), ".nuget", "packages"))
-	}
-	return "~/.nuget/packages"
+	descriptions.Add(&o.NuGetRepositoryURLs, `remote NuGet repository URLs (comma-separated) to use when retrieving NuGet packages from the network; defaults to the nuget.org-repository`)
+	descriptions.Add(&o.NuGetRepositoryCredentials, `remote NuGet package provider credentials to use when retrieving NuGet packages from the network.`)
 }
 
 func defaultDotnetConfig() dotnetConfig {
 	def := dotnet.DefaultCatalogerConfig()
 	providerCredentials := []dotNetProviderCredential{}
-	if len(def.ProviderCredentials) > 0 {
-		for _, credential := range def.ProviderCredentials {
+	if len(def.NuGetRepositoryCredentials) > 0 {
+		for _, credential := range def.NuGetRepositoryCredentials {
 			providerCredentials = append(providerCredentials, dotNetProviderCredential{
 				Username: secret(credential.Username),
 				Password: secret(credential.Password),
@@ -118,7 +98,7 @@ func defaultDotnetConfig() dotnetConfig {
 		SearchLocalLicenses:                &def.SearchLocalLicenses,
 		LocalCachePaths:                    strings.Join(def.LocalCachePaths, ","),
 		SearchRemoteLicenses:               &def.SearchRemoteLicenses,
-		Providers:                          strings.Join(def.Providers, ","),
-		ProviderCredentials:                providerCredentials,
+		NuGetRepositoryURLs:                strings.Join(def.NuGetRepositoryURLs, ","),
+		NuGetRepositoryCredentials:         providerCredentials,
 	}
 }

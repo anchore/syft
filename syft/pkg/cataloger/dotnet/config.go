@@ -2,8 +2,6 @@ package dotnet
 
 import (
 	"strings"
-
-	"github.com/anchore/syft/syft/credential"
 )
 
 const (
@@ -32,9 +30,9 @@ type CatalogerConfig struct {
 	SearchLocalLicenses bool     `mapstructure:"search-local-licenses" json:"search-local-licenses" yaml:"search-local-licenses"`
 	LocalCachePaths     []string `mapstructure:"local-cache-paths" json:"local-cache-paths" yaml:"local-cache-paths"`
 
-	SearchRemoteLicenses bool                          `mapstructure:"search-remote-licenses" json:"search-remote-licenses" yaml:"search-remote-licenses"`
-	Providers            []string                      `mapstructure:"package-providers" json:"package-providers,omitempty" yaml:"package-providers,omitempty"`
-	ProviderCredentials  []credential.SimpleCredential `mapstructure:"package-provider-credentials" json:"package-provider-credentials,omitempty" yaml:"package-provider-credentials,omitempty"`
+	SearchRemoteLicenses       bool               `mapstructure:"search-remote-licenses" json:"search-remote-licenses" yaml:"search-remote-licenses"`
+	NuGetRepositoryURLs        []string           `mapstructure:"package-nugetrepositoryurls" json:"package-nugetrepositoryurls,omitempty" yaml:"package-nugetrepositoryurls,omitempty"`
+	NuGetRepositoryCredentials []SimpleCredential `mapstructure:"package-nugetrepository-credentials" json:"package-nugetrepository-credentials,omitempty" yaml:"package-nugetrepository-credentials,omitempty"`
 }
 
 func (c CatalogerConfig) WithDepPackagesMustHaveDLL(requireDlls bool) CatalogerConfig {
@@ -72,30 +70,30 @@ func (c CatalogerConfig) WithLocalCachePaths(input string) CatalogerConfig {
 
 func (c CatalogerConfig) WithSearchRemoteLicenses(input bool) CatalogerConfig {
 	c.SearchRemoteLicenses = input
-	if c.SearchRemoteLicenses && len(c.Providers) == 0 {
-		c.WithProviders(defaultNuGetProvider)
+	if c.SearchRemoteLicenses && len(c.NuGetRepositoryURLs) == 0 {
+		c.WithNuGetRepositoryURLs(defaultNuGetProvider)
 	}
 	return c
 }
 
-func (c CatalogerConfig) WithProviders(input string) CatalogerConfig {
+func (c CatalogerConfig) WithNuGetRepositoryURLs(input string) CatalogerConfig {
 	if input == "" {
 		return c
 	}
-	c.Providers = strings.Split(input, ",")
+	c.NuGetRepositoryURLs = strings.Split(input, ",")
 	return c
 }
 
-func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) CatalogerConfig {
+func (c CatalogerConfig) WithCredentials(input []SimpleCredential) CatalogerConfig {
 	if len(input) == 0 {
 		return c
 	}
 
-	c.ProviderCredentials = []credential.SimpleCredential{}
+	c.NuGetRepositoryCredentials = []SimpleCredential{}
 
-	for _, _credential := range input {
-		if _credential.Valid() {
-			c.ProviderCredentials = append(c.ProviderCredentials, _credential)
+	for _, credential := range input {
+		if credential.Valid() {
+			c.NuGetRepositoryCredentials = append(c.NuGetRepositoryCredentials, credential)
 		}
 	}
 
@@ -111,7 +109,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		SearchLocalLicenses:                true,
 		LocalCachePaths:                    []string{},
 		SearchRemoteLicenses:               false,
-		Providers:                          []string{defaultNuGetProvider},
-		ProviderCredentials:                []credential.SimpleCredential{},
+		NuGetRepositoryURLs:                []string{defaultNuGetProvider},
+		NuGetRepositoryCredentials:         []SimpleCredential{},
 	}
 }
