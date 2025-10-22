@@ -176,8 +176,6 @@ func (t Type) PackageURLType() string {
 		return "wordpress-plugin"
 	case HomebrewPkg:
 		return "homebrew"
-	case ModelPkg:
-		return "generic/model"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
