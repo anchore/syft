@@ -104,6 +104,8 @@ run_test_case test_positive_snapshot_download_asset "darwin" "arm64" "tar.gz"
 
 run_test_case test_positive_snapshot_download_asset "windows" "amd64" "sbom"
 run_test_case test_positive_snapshot_download_asset "windows" "amd64" "zip"
+run_test_case test_positive_snapshot_download_asset "windows" "arm64" "sbom"
+run_test_case test_positive_snapshot_download_asset "windows" "arm64" "zip"
 # note: the mac signing process produces a dmg which is not part of the snapshot process (thus is not exercised here)
 
 # let's make certain we covered all assets that were expected

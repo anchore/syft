@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 )
 
+// LocationSet provides a unique collection of Locations with metadata and set operations.
 type LocationSet struct {
 	set map[LocationData]LocationMetadata
 }

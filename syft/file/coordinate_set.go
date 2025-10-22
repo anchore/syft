@@ -7,6 +7,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
+// CoordinateSet provides a unique collection of Coordinates with set operations.
 type CoordinateSet struct {
 	set map[Coordinates]struct{}
 }

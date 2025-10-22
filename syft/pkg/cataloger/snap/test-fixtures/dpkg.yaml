@@ -1,0 +1,7 @@
+package-repositories:
+- type: apt
+  ppa: ucdev/ubuntu/base-ppa
+packages:
+- adduser=3.118ubuntu2
+- apparmor=2.13.3-7ubuntu5.3
+- gcc-10-base:amd64=10.5.0-1ubuntu1~20.04

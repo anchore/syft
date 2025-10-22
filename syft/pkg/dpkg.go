@@ -12,6 +12,7 @@ const DpkgDBGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
 var _ FileOwner = (*DpkgDBEntry)(nil)
 
+// DpkgArchiveEntry represents package metadata extracted from a .deb archive file.
 type DpkgArchiveEntry DpkgDBEntry
 
 // DpkgDBEntry represents all captured data for a Debian package DB entry; available fields are described
@@ -22,49 +23,53 @@ type DpkgArchiveEntry DpkgDBEntry
 //   - https://www.debian.org/doc/debian-policy/ch-binary.html#s-virtual-pkg
 //   - https://www.debian.org/doc/debian-policy/ch-relationships.html#s-virtual
 type DpkgDBEntry struct {
-	Package       string `json:"package"`
-	Source        string `json:"source" cyclonedx:"source"`
-	Version       string `json:"version"`
+	// Package is the package name as found in the status file
+	Package string `json:"package"`
+
+	// Source is the source package name this binary was built from (one source can produce multiple binary packages)
+	Source string `json:"source" cyclonedx:"source"`
+
+	// Version is the binary package version as found in the status file
+	Version string `json:"version"`
+
+	// SourceVersion is the source package version (may differ from binary version when binNMU rebuilds occur)
 	SourceVersion string `json:"sourceVersion" cyclonedx:"sourceVersion"`
 
-	// Architecture can include the following sets of values depending on context and the control file used:
-	//  - a unique single word identifying a Debian machine architecture as described in Architecture specification string (https://www.debian.org/doc/debian-policy/ch-customized-programs.html#s-arch-spec) .
-	//  - an architecture wildcard identifying a set of Debian machine architectures, see Architecture wildcards (https://www.debian.org/doc/debian-policy/ch-customized-programs.html#s-arch-wildcard-spec). any matches all Debian machine architectures and is the most frequently used.
-	//  - "all", which indicates an architecture-independent package.
-	//  - "source", which indicates a source package.
+	// Architecture is the target architecture per Debian spec (specific arch like amd64/arm64, wildcard like any, architecture-independent "all", or "source" for source packages)
 	Architecture string `json:"architecture"`
 
-	// Maintainer is the package maintainer’s name and email address. The name must come first, then the email
-	// address inside angle brackets <> (in RFC822 format).
+	// Maintainer is the package maintainer's name and email in RFC822 format (name must come first, then email in angle brackets)
 	Maintainer string `json:"maintainer"`
 
+	// InstalledSize is the total size of installed files in kilobytes
 	InstalledSize int `json:"installedSize" cyclonedx:"installedSize"`
 
-	// Description contains a description of the binary package, consisting of two parts, the synopsis or the short
-	// description, and the long description (in a multiline format).
+	// Description is a human-readable package description with synopsis (first line) and long description (multiline format)
 	Description string `hash:"ignore" json:"-"`
 
-	// Provides is a virtual package that is provided by one or more packages. A virtual package is one which appears
-	// in the Provides control field of another package. The effect is as if the package(s) which provide a particular
-	// virtual package name had been listed by name everywhere the virtual package name appears. (See also Virtual packages)
+	// Provides are the virtual packages provided by this package (allows other packages to depend on capabilities. Can include versioned provides like "libdigest-md5-perl (= 2.55.01)")
 	Provides []string `json:"provides,omitempty"`
 
-	// Depends This declares an absolute dependency. A package will not be configured unless all of the packages listed in
-	// its Depends field have been correctly configured (unless there is a circular dependency).
+	// Depends are the packages required for this package to function (will not be installed unless these requirements are met, creates strict ordering constraint)
 	Depends []string `json:"depends,omitempty"`
 
-	// PreDepends is like Depends, except that it also forces dpkg to complete installation of the packages named
-	// before even starting the installation of the package which declares the pre-dependency.
+	// PreDepends are the packages that must be installed and configured BEFORE even starting installation of this package (stronger than Depends, discouraged unless absolutely necessary as it adds strict constraints for apt)
 	PreDepends []string `json:"preDepends,omitempty"`
 
+	// Files are the files installed by this package
 	Files []DpkgFileRecord `json:"files"`
 }
 
 // DpkgFileRecord represents a single file attributed to a debian package.
 type DpkgFileRecord struct {
-	Path         string       `json:"path"`
-	Digest       *file.Digest `json:"digest,omitempty"`
-	IsConfigFile bool         `json:"isConfigFile"`
+	// Path is the file path relative to the filesystem root
+	Path string `json:"path"`
+
+	// Digest is the file content hash (typically MD5 for dpkg compatibility with legacy systems)
+	Digest *file.Digest `json:"digest,omitempty"`
+
+	// IsConfigFile is whether this file is marked as a configuration file (dpkg will preserve user modifications during upgrades)
+	IsConfigFile bool `json:"isConfigFile"`
 }
 
 func (m DpkgDBEntry) OwnedFiles() (result []string) {

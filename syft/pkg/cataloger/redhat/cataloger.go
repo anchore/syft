@@ -5,8 +5,8 @@ package redhat
 
 import (
 	"database/sql"
+	"fmt"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -15,15 +15,11 @@ import (
 
 // NewDBCataloger returns a new RPM DB cataloger object.
 func NewDBCataloger() pkg.Cataloger {
-	// check if a sqlite driver is available
-	if !isSqliteDriverAvailable() {
-		log.Debugf("sqlite driver is not available, newer RPM databases might not be cataloged")
-	}
-
 	return generic.NewCataloger("rpm-db-cataloger").
 		WithParserByGlobs(parseRpmDB, pkg.RpmDBGlob).
 		WithParserByGlobs(parseRpmManifest, pkg.RpmManifestGlob).
-		WithProcessors(dependency.Processor(dbEntryDependencySpecifier), denySelfReferences)
+		WithProcessors(dependency.Processor(dbEntryDependencySpecifier), denySelfReferences).
+		WithChecks(ensureSqliteDriverAvailable)
 }
 
 func denySelfReferences(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
@@ -47,11 +43,11 @@ func NewArchiveCataloger() pkg.Cataloger {
 		WithParserByGlobs(parseRpmArchive, "**/*.rpm")
 }
 
-func isSqliteDriverAvailable() bool {
+func ensureSqliteDriverAvailable() error {
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		return false
+		return fmt.Errorf("sqlite driver is required for cataloging newer RPM databases, none registered: %v", err)
 	}
 	_ = db.Close()
-	return true
+	return nil
 }

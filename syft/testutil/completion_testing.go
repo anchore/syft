@@ -3,8 +3,8 @@ package testutil
 import (
 	"testing"
 
-	"github.com/anchore/syft/syft/internal/packagemetadata"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
+	"github.com/anchore/syft/internal/packagemetadata"
+	"github.com/anchore/syft/internal/sourcemetadata"
 )
 
 type PackageMetadataCompletionTester struct {

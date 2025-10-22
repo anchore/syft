@@ -810,3 +810,32 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/jq
+
+  - name: ffmpeg
+    version: 8.0
+    images:
+      - ref: linuxserver/ffmpeg:version-8.0-cli@sha256:9d7e80710e7f11a276a4185f07e5e81db26fc7027ea70d1591f93ddf58e36ab4
+        platform: linux/amd64
+      - ref: linuxserver/ffmpeg:arm64v8-version-8.0-cli@sha256:0b6cf2e15a78094396f23a7cb3afaf7dffcad195573a2b97f190eae1ee1a0420
+        platform: linux/arm64
+    paths:
+      - /usr/local/bin/ffmpeg
+
+  - name: ffmpeg
+    version: 7.1.1
+    images:
+      - ref: linuxserver/ffmpeg:7.1.1@sha256:aea59a11c54291ac456bb2d67000445e5a8994f70bc3d96cdc29f022fbbf89fb
+        platform: linux/amd64
+      - ref: linuxserver/ffmpeg:arm64v8-7.1.1@sha256:b2aa507f205ea2dc32369c55d0f93b5649f1b39e42d9e6cd27bd53def7a63655
+        platform: linux/arm64
+    paths:
+      - /usr/local/bin/ffmpeg
+
+  - name: ffmpeg-shared-libs
+    version: 5.1.4
+    images:
+      - ref: demisto/opencv:1.0.0.111908@sha256:abba3aab213990c666900a93db03420238527b757bf5825543cf7b4c5e11ac65
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavcodec-9aae324f.so.59.37.100
+

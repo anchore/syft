@@ -42,7 +42,7 @@ builds:
     dir: ./cmd/syft
     binary: syft
     goos: [windows]
-    goarch: [amd64]
+    goarch: [amd64, arm64]
     mod_timestamp: *build-timestamp
     ldflags: *build-ldflags
 
@@ -337,6 +337,7 @@ signs:
     certificate: "${artifact}.pem"
     args:
       - "sign-blob"
+      - "--use-signing-config=false"
       - "--oidc-issuer=https://token.actions.githubusercontent.com"
       - "--output-certificate=${certificate}"
       - "--output-signature=${signature}"

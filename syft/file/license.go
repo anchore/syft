@@ -5,18 +5,33 @@ import (
 	"github.com/anchore/syft/syft/license"
 )
 
+// License represents license information discovered within a file.
 type License struct {
-	Value           string
-	SPDXExpression  string
-	Type            license.Type
-	LicenseEvidence *LicenseEvidence // evidence from license classifier
-	Contents        string           `hash:"ignore"`
+	// Value is the raw license string as found in the file.
+	Value string
+
+	// SPDXExpression is the parsed SPDX license expression if available.
+	SPDXExpression string
+
+	// Type categorizes how the license was determined (e.g., declared, concluded -- following the same semantics as SPDX).
+	Type license.Type
+
+	LicenseEvidence *LicenseEvidence
+
+	// Contents optionally stores the full license text.
+	Contents string `hash:"ignore"`
 }
 
+// LicenseEvidence contains details from license classifier analysis.
 type LicenseEvidence struct {
+	// Confidence is a score indicating certainty of the license match.
 	Confidence int
-	Offset     int
-	Extent     int
+
+	// Offset is the byte position where the license text begins in the file.
+	Offset int
+
+	// Extent is the length in bytes of the matched license text.
+	Extent int
 }
 
 func NewLicense(value string) License {
