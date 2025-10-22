@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
@@ -168,17 +167,17 @@ func TestGetLogicalDepsJSON_MergeTargets(t *testing.T) {
 
 	result := getLogicalDepsJSON(deps, &libmanJSON{})
 
-	assert.Equal(t, "/path/to/deps.json", result.Location.RealPath)
-	assert.Equal(t, ".NETCoreApp,Version=v6.0", result.RuntimeTarget.Name)
+	require.Equal(t, "/path/to/deps.json", result.Location.RealPath)
+	require.Equal(t, ".NETCoreApp,Version=v6.0", result.RuntimeTarget.Name)
 
 	libPackage, exists := result.PackagesByNameVersion["Microsoft.CodeAnalysis.CSharp/4.0.0"]
 	require.True(t, exists, "Expected to find the merged package")
 
-	assert.NotNil(t, libPackage.Library)
-	assert.Equal(t, "package", libPackage.Library.Type)
-	assert.Equal(t, "microsoft.codeanalysis.csharp/4.0.0", libPackage.Library.Path)
-	assert.Equal(t, "sha512-example-hash", libPackage.Library.Sha512)
-	assert.Equal(t, "microsoft.codeanalysis.csharp.4.0.0.nupkg.sha512", libPackage.Library.HashPath)
+	require.NotNil(t, libPackage.Library)
+	require.Equal(t, "package", libPackage.Library.Type)
+	require.Equal(t, "microsoft.codeanalysis.csharp/4.0.0", libPackage.Library.Path)
+	require.Equal(t, "sha512-example-hash", libPackage.Library.Sha512)
+	require.Equal(t, "microsoft.codeanalysis.csharp.4.0.0.nupkg.sha512", libPackage.Library.HashPath)
 
 	require.Equal(t, 2, len(libPackage.Targets), "Expected 2 targets to be merged")
 
@@ -215,7 +214,7 @@ func TestGetLogicalDepsJSON_MergeTargets(t *testing.T) {
 		t.Errorf("CompilePathsByRelativeDLLPath mismatch (-expected +actual):\n%s", diff)
 	}
 
-	assert.Equal(t, 0, libPackage.NativePaths.Size(), "Expected no native paths")
+	require.Equal(t, 0, libPackage.NativePaths.Size(), "Expected no native paths")
 
-	assert.True(t, result.PackageNameVersions.Has("Microsoft.CodeAnalysis.CSharp/4.0.0"))
+	require.True(t, result.PackageNameVersions.Has("Microsoft.CodeAnalysis.CSharp/4.0.0"))
 }

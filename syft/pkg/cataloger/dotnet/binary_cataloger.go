@@ -14,13 +14,14 @@ import (
 // package will be created.
 // Deprecated: use depsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 type binaryCataloger struct {
+	licenses nugetLicenseResolver
 }
 
 func (c binaryCataloger) Name() string {
 	return "dotnet-portable-executable-cataloger"
 }
 
-func (c binaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c binaryCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	var unknowns error
 	peFiles, ldpeUnknownErr, err := findPEFiles(resolver)
 	if err != nil {
@@ -33,6 +34,13 @@ func (c binaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]p
 	var pkgs []pkg.Package
 	for _, pe := range peFiles {
 		pkgs = append(pkgs, newDotnetBinaryPackage(pe.VersionResources, pe.Location))
+	}
+
+	// Try to resolve *.nupkg License(s)
+	for i := range pkgs {
+		if licenses, err := c.licenses.getLicenses(ctx, pkgs[i].Name, pkgs[i].Version); err == nil && len(licenses) > 0 {
+			pkgs[i].Licenses = pkg.NewLicenseSet(licenses...)
+		}
 	}
 
 	return pkgs, nil, unknowns
