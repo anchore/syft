@@ -59,7 +59,7 @@ func computeMetadataHash(metadata *pkg.GGUFFileHeader) string {
 	// Marshal to JSON for stable hashing
 	jsonBytes, err := json.Marshal(hashData)
 	if err != nil {
-		log.Warnf("failed to marshal metadata for hashing: %v", err)
+		log.Debugf("failed to marshal metadata for hashing: %v", err)
 		return ""
 	}
 
