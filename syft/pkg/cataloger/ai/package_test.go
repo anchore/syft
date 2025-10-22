@@ -3,6 +3,7 @@ package ai
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,12 +35,20 @@ func TestNewGGUFPackage(t *testing.T) {
 			},
 			locations: []file.Location{file.NewLocation("/models/llama3-8b.gguf")},
 			checkFunc: func(t *testing.T, p pkg.Package) {
-				assert.Equal(t, "llama3-8b-instruct", p.Name)
-				assert.Equal(t, "3.0", p.Version)
-				assert.Equal(t, pkg.ModelPkg, p.Type)
+				if d := cmp.Diff("llama3-8b-instruct", p.Name); d != "" {
+					t.Errorf("Name mismatch (-want +got):\n%s", d)
+				}
+				if d := cmp.Diff("3.0", p.Version); d != "" {
+					t.Errorf("Version mismatch (-want +got):\n%s", d)
+				}
+				if d := cmp.Diff(pkg.ModelPkg, p.Type); d != "" {
+					t.Errorf("Type mismatch (-want +got):\n%s", d)
+				}
 				assert.Empty(t, p.PURL, "PURL should not be set for model packages")
 				assert.Len(t, p.Licenses.ToSlice(), 1)
-				assert.Equal(t, "Apache-2.0", p.Licenses.ToSlice()[0].Value)
+				if d := cmp.Diff("Apache-2.0", p.Licenses.ToSlice()[0].Value); d != "" {
+					t.Errorf("License value mismatch (-want +got):\n%s", d)
+				}
 				assert.NotEmpty(t, p.ID())
 			},
 		},
@@ -55,9 +64,15 @@ func TestNewGGUFPackage(t *testing.T) {
 			},
 			locations: []file.Location{file.NewLocation("/models/simple.gguf")},
 			checkFunc: func(t *testing.T, p pkg.Package) {
-				assert.Equal(t, "simple-model", p.Name)
-				assert.Equal(t, "1.0", p.Version)
-				assert.Equal(t, pkg.ModelPkg, p.Type)
+				if d := cmp.Diff("simple-model", p.Name); d != "" {
+					t.Errorf("Name mismatch (-want +got):\n%s", d)
+				}
+				if d := cmp.Diff("1.0", p.Version); d != "" {
+					t.Errorf("Version mismatch (-want +got):\n%s", d)
+				}
+				if d := cmp.Diff(pkg.ModelPkg, p.Type); d != "" {
+					t.Errorf("Type mismatch (-want +got):\n%s", d)
+				}
 				assert.Empty(t, p.PURL, "PURL should not be set for model packages")
 				assert.Empty(t, p.Licenses.ToSlice())
 			},
@@ -86,14 +101,22 @@ func TestNewGGUFPackage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := newGGUFPackage(tt.metadata, tt.locations...)
 
-			assert.Equal(t, tt.metadata.ModelName, p.Name)
-			assert.Equal(t, tt.metadata.ModelVersion, p.Version)
-			assert.Equal(t, pkg.ModelPkg, p.Type)
+			if d := cmp.Diff(tt.metadata.ModelName, p.Name); d != "" {
+				t.Errorf("Name mismatch (-want +got):\n%s", d)
+			}
+			if d := cmp.Diff(tt.metadata.ModelVersion, p.Version); d != "" {
+				t.Errorf("Version mismatch (-want +got):\n%s", d)
+			}
+			if d := cmp.Diff(pkg.ModelPkg, p.Type); d != "" {
+				t.Errorf("Type mismatch (-want +got):\n%s", d)
+			}
 
 			// Verify metadata is attached
 			metadata, ok := p.Metadata.(pkg.GGUFFileHeader)
 			require.True(t, ok, "metadata should be GGUFFileHeader")
-			assert.Equal(t, *tt.metadata, metadata)
+			if d := cmp.Diff(*tt.metadata, metadata); d != "" {
+				t.Errorf("Metadata mismatch (-want +got):\n%s", d)
+			}
 
 			if tt.checkFunc != nil {
 				tt.checkFunc(t, p)
