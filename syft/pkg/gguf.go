@@ -1,9 +1,9 @@
 package pkg
 
-// GGUFFileMetadata represents metadata extracted from a GGUF (GPT-Generated Unified Format) model file.
+// GGUFFileHeader represents metadata extracted from a GGUF (GPT-Generated Unified Format) model file.
 // GGUF is a binary file format used for storing model weights for the GGML library, designed for fast
 // loading and saving of models, particularly quantized large language models.
-type GGUFFileMetadata struct {
+type GGUFFileHeader struct {
 	// ModelFormat is always "gguf"
 	ModelFormat string `json:"modelFormat" cyclonedx:"modelFormat"`
 

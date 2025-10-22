@@ -13,13 +13,13 @@ import (
 func TestNewGGUFPackage(t *testing.T) {
 	tests := []struct {
 		name      string
-		metadata  *pkg.GGUFFileMetadata
+		metadata  *pkg.GGUFFileHeader
 		locations []file.Location
 		checkFunc func(t *testing.T, p pkg.Package)
 	}{
 		{
 			name: "complete GGUF package with all fields",
-			metadata: &pkg.GGUFFileMetadata{
+			metadata: &pkg.GGUFFileHeader{
 				ModelFormat:     "gguf",
 				ModelName:       "llama3-8b-instruct",
 				ModelVersion:    "3.0",
@@ -45,7 +45,7 @@ func TestNewGGUFPackage(t *testing.T) {
 		},
 		{
 			name: "minimal GGUF package",
-			metadata: &pkg.GGUFFileMetadata{
+			metadata: &pkg.GGUFFileHeader{
 				ModelFormat:  "gguf",
 				ModelName:    "simple-model",
 				ModelVersion: "1.0",
@@ -64,7 +64,7 @@ func TestNewGGUFPackage(t *testing.T) {
 		},
 		{
 			name: "GGUF package with multiple locations",
-			metadata: &pkg.GGUFFileMetadata{
+			metadata: &pkg.GGUFFileHeader{
 				ModelFormat:  "gguf",
 				ModelName:    "multi-location-model",
 				ModelVersion: "1.5",
@@ -91,8 +91,8 @@ func TestNewGGUFPackage(t *testing.T) {
 			assert.Equal(t, pkg.ModelPkg, p.Type)
 
 			// Verify metadata is attached
-			metadata, ok := p.Metadata.(pkg.GGUFFileMetadata)
-			require.True(t, ok, "metadata should be GGUFFileMetadata")
+			metadata, ok := p.Metadata.(pkg.GGUFFileHeader)
+			require.True(t, ok, "metadata should be GGUFFileHeader")
 			assert.Equal(t, *tt.metadata, metadata)
 
 			if tt.checkFunc != nil {
