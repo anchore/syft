@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -36,8 +36,9 @@ func Test_toFormatModel(t *testing.T) {
 			name: "container",
 			in: sbom.SBOM{
 				Source: source.Description{
-					Name:    "alpine",
-					Version: "sha256:d34db33f",
+					Name:     "alpine",
+					Version:  "sha256:d34db33f",
+					Supplier: "Alpine Linux",
 					Metadata: source.ImageMetadata{
 						UserInput:      "alpine:latest",
 						ManifestDigest: "sha256:d34db33f",
@@ -61,7 +62,8 @@ func Test_toFormatModel(t *testing.T) {
 						PackageName:           "pkg-1",
 						PackageVersion:        "version-1",
 						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
+							Supplier:     "Alpine Linux",
+							SupplierType: "Organization",
 						},
 					},
 					{
@@ -78,7 +80,8 @@ func Test_toFormatModel(t *testing.T) {
 							},
 						},
 						PackageSupplier: &spdx.Supplier{
-							Supplier: "NOASSERTION",
+							Supplier:     "Alpine Linux",
+							SupplierType: "Organization",
 						},
 					},
 				},
@@ -231,6 +234,82 @@ func Test_toFormatModel(t *testing.T) {
 						},
 						RefB: spdx.DocElementID{
 							ElementRefID: "DocumentRoot-File-path-to-some.file",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+		{
+			name: "snap",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "etcd",
+					Version: "3.4.36",
+					Metadata: source.SnapMetadata{
+						Summary:     "Distributed reliable key-value store",
+						Base:        "core18",
+						Grade:       "stable",
+						Confinement: "strict",
+						Architectures: []string{
+							"amd64",
+						},
+						Digests: []file.Digest{
+							{
+								Algorithm: "sha256",
+								Value:     "d34db33f",
+							},
+						},
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "etcd",
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-Snap-etcd",
+						PackageName:           "etcd",
+						PackageVersion:        "3.4.36",
+						PrimaryPackagePurpose: "CONTAINER",
+						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Snap-etcd",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-Snap-etcd",
 						},
 						Relationship: spdx.RelationshipDescribes,
 					},

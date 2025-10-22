@@ -14,5 +14,5 @@ type EvidenceMatcher = binutils.EvidenceMatcher
 func FileContentsVersionMatcher(
 	pattern string,
 ) EvidenceMatcher {
-	return binutils.FileContentsVersionMatcher(pattern, catalogerName)
+	return binutils.FileContentsVersionMatcher(catalogerName, pattern)
 }

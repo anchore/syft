@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
@@ -218,8 +218,9 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 	cfg := syft.DefaultGetSourceConfig().
 		WithRegistryOptions(opts.Registry.ToOptions()).
 		WithAlias(source.Alias{
-			Name:    opts.Source.Name,
-			Version: opts.Source.Version,
+			Name:     opts.Source.Name,
+			Version:  opts.Source.Version,
+			Supplier: opts.Source.Supplier,
 		}).
 		WithExcludeConfig(source.ExcludeConfig{
 			Paths: opts.Exclusions,

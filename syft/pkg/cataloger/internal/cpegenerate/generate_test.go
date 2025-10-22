@@ -1145,3 +1145,67 @@ func TestDictionaryFindIsWired(t *testing.T) {
 		})
 	}
 }
+
+// TestAddBinaryPackageDigitVariations tests the heuristic for binary package types
+// where names ending with digits get variations with all suffix-digits removed (e.g. Qt5 -> Qt).
+// This improves vulnerability matching for binary packages like Qt6, libfoo123, etc.
+func TestAddBinaryPackageDigitVariations(t *testing.T) {
+	tests := []struct {
+		name            string
+		packageType     pkg.Type
+		inputCandidates []string
+		expectedPresent []string // These should be present in the result
+		expectedAbsent  []string // These should NOT be present in the result
+	}{
+		{
+			name:            "Qt5 binary package example",
+			packageType:     pkg.BinaryPkg,
+			inputCandidates: []string{"Qt5"},
+			expectedPresent: []string{"Qt5", "Qt"},
+			expectedAbsent:  []string{},
+		},
+		{
+			name:            "package with trailing digits",
+			packageType:     pkg.BinaryPkg,
+			inputCandidates: []string{"Qt5", "libfoo123", "bar42", "baz"},
+			expectedPresent: []string{"Qt5", "Qt", "libfoo123", "libfoo", "bar42", "bar", "baz"},
+			expectedAbsent:  []string{},
+		},
+		{
+			name:            "multiple trailing digits",
+			inputCandidates: []string{"Qt872", "package999"},
+			expectedPresent: []string{"Qt872", "Qt", "package999", "package"},
+			expectedAbsent:  []string{},
+		},
+		{
+			name:            "package without trailing digits",
+			inputCandidates: []string{"QtCore", "libfoo", "bar"},
+			expectedPresent: []string{"QtCore", "libfoo", "bar"},
+			expectedAbsent:  []string{"QtCor", "libfo", "ba"},
+		},
+		{
+			name:            "empty candidate set",
+			packageType:     pkg.BinaryPkg,
+			inputCandidates: []string{},
+			expectedPresent: []string{},
+			expectedAbsent:  []string{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fields := newFieldCandidateSet(test.inputCandidates...)
+			addBinaryPackageDigitVariations(fields)
+
+			values := fields.uniqueValues()
+
+			for _, expected := range test.expectedPresent {
+				assert.Contains(t, values, expected, "expected %q to be present", expected)
+			}
+
+			for _, notExpected := range test.expectedAbsent {
+				assert.NotContains(t, values, notExpected, "expected %q to be absent", notExpected)
+			}
+		})
+	}
+}

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -204,5 +204,6 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 		}
 	}
 	p.Metadata = reflect.ValueOf(val).Elem().Interface()
+	p.MetadataType = ty
 	return nil
 }

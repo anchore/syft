@@ -91,6 +91,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -110,6 +111,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -130,6 +132,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -149,6 +152,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames("file-metadata", "content", "binary-metadata"),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -169,6 +173,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				nil, // note: there is a file cataloging group, with no items in it
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -192,6 +197,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -213,6 +219,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -234,6 +241,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -255,6 +263,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -277,6 +286,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -298,6 +308,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 				fileCatalogerNames(),
 				relationshipCatalogerNames(),
 				unknownsTaskNames(),
+				osFeatureDetectionTaskNames(),
 			},
 			wantManifest: &catalogerManifest{
 				Requested: cataloging.SelectionRequest{
@@ -428,6 +439,10 @@ func relationshipCatalogerNames() []string {
 
 func unknownsTaskNames() []string {
 	return []string{"unknowns-labeler"}
+}
+
+func osFeatureDetectionTaskNames() []string {
+	return []string{"os-feature-detection"}
 }
 
 func environmentCatalogerNames() []string {

@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/syftjson/model"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -97,6 +97,36 @@ func Test_toSyftSourceData(t *testing.T) {
 					ID:             "id...",
 					ManifestDigest: "digest...",
 					MediaType:      "type...",
+				},
+			},
+		},
+		{
+			name: "snap",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "snap",
+				Metadata: source.SnapMetadata{
+					Summary:       "something!",
+					Base:          "base!",
+					Grade:         "grade!",
+					Confinement:   "confined!",
+					Architectures: []string{"arch!"},
+					Digests:       []file.Digest{{Algorithm: "sha256", Value: "some-digest!"}},
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.SnapMetadata{
+					Summary:       "something!",
+					Base:          "base!",
+					Grade:         "grade!",
+					Confinement:   "confined!",
+					Architectures: []string{"arch!"},
+					Digests:       []file.Digest{{Algorithm: "sha256", Value: "some-digest!"}},
 				},
 			},
 		},

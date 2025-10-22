@@ -2,6 +2,7 @@
 go.work
 go.work.sum
 .tool-versions
+.python-version
 
 # app configuration
 /.syft.yaml
@@ -16,6 +17,8 @@ bin/
 /snapshot
 /.tool
 /.task
+/generate
+/specs
 
 # changelog generation
 CHANGELOG.md

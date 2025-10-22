@@ -18,7 +18,7 @@ based on the _structure_ of the provided type.
 If the structure changes in any way it will end up with a new version key and all will re populate this new key,
 ignoring cached values from older, different versions.
 The resolver will store items using the `json` package to serialize/deserialize values, so to save space
-it is encouraged  to use `omitempty`. For example:
+it is encouraged to use `omitempty`. For example:
 
 ```go
 type myCacheItem struct {

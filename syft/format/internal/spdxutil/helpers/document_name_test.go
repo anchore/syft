@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -44,6 +44,15 @@ func Test_DocumentName(t *testing.T) {
 				Metadata: source.FileMetadata{Path: "some/path/to/place"},
 			},
 			expected: "some/path/to/place",
+		},
+		{
+			name: "snap",
+			srcMetadata: source.Description{
+				Name: "some/name",
+				// there is nothing in the snap metadata that indicates a name
+				Metadata: source.SnapMetadata{},
+			},
+			expected: "some/name",
 		},
 		{
 			name: "named",

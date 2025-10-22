@@ -25,6 +25,39 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 	}
 
 	license := pkg.NewLicensesFromLocationWithContext(ctx, indexLocation, licenseCandidates...)
+	// Handle author, authors, contributors, and maintainers fields
+	var authorParts []string
+
+	// Add a single author field if it exists
+	if u.Author.Name != "" || u.Author.Email != "" || u.Author.URL != "" {
+		if authStr := u.Author.AuthorString(); authStr != "" {
+			authorParts = append(authorParts, authStr)
+		}
+	}
+
+	// Add authors field if it exists
+	if len(u.Authors) > 0 {
+		if authorsStr := u.Authors.String(); authorsStr != "" {
+			authorParts = append(authorParts, authorsStr)
+		}
+	}
+
+	// Add contributors field if it exists
+	if len(u.Contributors) > 0 {
+		if contributorsStr := u.Contributors.String(); contributorsStr != "" {
+			authorParts = append(authorParts, contributorsStr)
+		}
+	}
+
+	// Add maintainers field if it exists
+	if len(u.Maintainers) > 0 {
+		if maintainersStr := u.Maintainers.String(); maintainersStr != "" {
+			authorParts = append(authorParts, maintainersStr)
+		}
+	}
+
+	authorInfo := strings.Join(authorParts, ", ")
+
 	p := pkg.Package{
 		Name:      u.Name,
 		Version:   u.Version,
@@ -37,7 +70,7 @@ func newPackageJSONPackage(ctx context.Context, u packageJSON, indexLocation fil
 			Name:        u.Name,
 			Version:     u.Version,
 			Description: u.Description,
-			Author:      u.Author.AuthorString(),
+			Author:      authorInfo,
 			Homepage:    u.Homepage,
 			URL:         u.Repository.URL,
 			Private:     u.Private,
@@ -74,7 +107,7 @@ func newPackageLockV1Package(ctx context.Context, cfg CatalogerConfig, resolver 
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, version, err)
+			log.Debugf("unable to extract licenses from javascript package-lock.json for package %s:%s: %+v", name, version, err)
 		}
 	}
 
@@ -107,7 +140,7 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 			licenseSet = pkg.NewLicenseSet(licenses...)
 		}
 		if err != nil {
-			log.Debugf("unable to extract licenses from javascript yarn.lock for package %s:%s: %+v", name, u.Version, err)
+			log.Debugf("unable to extract licenses from javascript package-lock.json for package %s:%s: %+v", name, u.Version, err)
 		}
 	}
 
@@ -128,7 +161,19 @@ func newPackageLockV2Package(ctx context.Context, cfg CatalogerConfig, resolver 
 	)
 }
 
-func newPnpmPackage(ctx context.Context, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+func newPnpmPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string) pkg.Package {
+	var licenseSet pkg.LicenseSet
+
+	if cfg.SearchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
+		if err == nil && license != "" {
+			licenses := pkg.NewLicensesFromValuesWithContext(ctx, license)
+			licenseSet = pkg.NewLicenseSet(licenses...)
+		}
+		if err != nil {
+			log.Debugf("unable to extract licenses from javascript pnpm-lock.yaml for package %s:%s: %+v", name, version, err)
+		}
+	}
 	return finalizeLockPkg(
 		ctx,
 		resolver,
@@ -136,6 +181,7 @@ func newPnpmPackage(ctx context.Context, resolver file.Resolver, location file.L
 		pkg.Package{
 			Name:      name,
 			Version:   version,
+			Licenses:  licenseSet,
 			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,

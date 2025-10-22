@@ -8,12 +8,12 @@ import (
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/packagemetadata"
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	formatInternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/syftjson/model"
-	"github.com/anchore/syft/syft/internal/packagemetadata"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -41,7 +41,7 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 		ArtifactRelationships: toRelationshipModel(s.Relationships),
 		Files:                 toFile(s, coordinateSorter),
 		Source:                toSourceModel(s.Source),
-		Distro:                toLinuxReleaser(s.Artifacts.LinuxDistribution),
+		Distro:                toLinuxRelease(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
@@ -50,7 +50,7 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 	}
 }
 
-func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
+func toLinuxRelease(d *linux.Release) model.LinuxRelease {
 	if d == nil {
 		return model.LinuxRelease{}
 	}
@@ -73,6 +73,7 @@ func toLinuxReleaser(d *linux.Release) model.LinuxRelease {
 		PrivacyPolicyURL: d.PrivacyPolicyURL,
 		CPEName:          d.CPEName,
 		SupportEnd:       d.SupportEnd,
+		ExtendedSupport:  d.ExtendedSupport,
 	}
 }
 
@@ -319,6 +320,7 @@ func toSourceModel(src source.Description) model.Source {
 		ID:       src.ID,
 		Name:     src.Name,
 		Version:  src.Version,
+		Supplier: src.Supplier,
 		Type:     sourcemetadata.JSONName(src.Metadata),
 		Metadata: src.Metadata,
 	}

@@ -187,14 +187,6 @@ from-images:
     paths:
       - /usr/local/apache2/bin/httpd
 
-  - name: java-jre-ibm
-    version: 1.8.0_391
-    images:
-      - ref: ibmjava:8@sha256:05ef6b0f754aa3a8cebcec36260a70c234a217b21240a998604f33459037bc08
-        platform: linux/amd64
-    paths:
-      - /opt/ibm/java/jre/bin/java
-
   - version: 10.6.15
     images:
       - ref: mariadb:10.6.15@sha256:92d499d9e02e92dc55c8160ef4004aa07f2e835197b18864ed214ca441e0dcfc
@@ -319,6 +311,23 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/node
+
+  - name: java-jdk-oracle
+    version: 1.8.0_451-b10
+    images:
+      - ref: container-registry.oracle.com/java/jdk:8u451-oraclelinux8@sha256:f9c980e52853bd0a8815ad908c9a4025ed68cb52f31f3b8cd0cd442ee367bfd1
+        platform: linux/amd64
+    paths:
+      - /usr/java/jdk-8/bin/java
+      - /usr/java/jdk-8/bin/jdb
+
+  - name: java-jre-oracle-sdk
+    version: 1.8.0_451-b10
+    images:
+      - ref: container-registry.oracle.com/java/serverjre:1.8.0_451@sha256:fe78fe3efd292dceb5685882ce1b13eb78492f383ccfd52a1b88a4f755b9d996
+        platform: linux/amd64
+    paths:
+      - /usr/java/jdk-8/bin/java
 
   - name: java-jre-openjdk
     version: 1.8.0_352-b08
@@ -688,6 +697,20 @@ from-images:
     paths:
       - /bin/consul
 
+  - version: 1.20.2
+    images:
+      - ref: hashicorp/vault@sha256:5cd2003247e0a574a66c66aee1916b1e9e7f99640298f2e61271a8842d2d2a19
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
+  - version: 1.19.4
+    images:
+      - ref: hashicorp/vault@sha256:b5f675b0bf681568cd7354c697fe4ce953024312d6d23ee7216deda60c192bad
+        platform: linux/arm64
+    paths:
+      - /bin/vault
+
   - version: 3.0.2
     images:
       - ref: fluent/fluent-bit:3.0.2-amd64@sha256:7e6fe8efd51dda0739e355f58bf5e3b1623cbf2d4a23c06c7a365d9553e2d242
@@ -787,3 +810,32 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/jq
+
+  - name: ffmpeg
+    version: 8.0
+    images:
+      - ref: linuxserver/ffmpeg:version-8.0-cli@sha256:9d7e80710e7f11a276a4185f07e5e81db26fc7027ea70d1591f93ddf58e36ab4
+        platform: linux/amd64
+      - ref: linuxserver/ffmpeg:arm64v8-version-8.0-cli@sha256:0b6cf2e15a78094396f23a7cb3afaf7dffcad195573a2b97f190eae1ee1a0420
+        platform: linux/arm64
+    paths:
+      - /usr/local/bin/ffmpeg
+
+  - name: ffmpeg
+    version: 7.1.1
+    images:
+      - ref: linuxserver/ffmpeg:7.1.1@sha256:aea59a11c54291ac456bb2d67000445e5a8994f70bc3d96cdc29f022fbbf89fb
+        platform: linux/amd64
+      - ref: linuxserver/ffmpeg:arm64v8-7.1.1@sha256:b2aa507f205ea2dc32369c55d0f93b5649f1b39e42d9e6cd27bd53def7a63655
+        platform: linux/arm64
+    paths:
+      - /usr/local/bin/ffmpeg
+
+  - name: ffmpeg-shared-libs
+    version: 5.1.4
+    images:
+      - ref: demisto/opencv:1.0.0.111908@sha256:abba3aab213990c666900a93db03420238527b757bf5825543cf7b4c5e11ac65
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavcodec-9aae324f.so.59.37.100
+

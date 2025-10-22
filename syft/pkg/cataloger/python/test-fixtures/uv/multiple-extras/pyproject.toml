@@ -1,0 +1,8 @@
+# fixture is not under test, just used to produde the uv.lock
+[project]
+name = "testpkg"
+version = "0.1.0"
+
+dependencies = [
+    "httpx[brotli,http2,socks]>=0.27.0<0.30.0"
+]

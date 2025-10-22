@@ -48,6 +48,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from installed cocoapods manifest file"
 	case pkg.ConanPkg:
 		answer = "acquired package info from conan manifest"
+	case pkg.CondaPkg:
+		answer = "acquired package info from conda metadata"
 	case pkg.PortagePkg:
 		answer = "acquired package info from portage DB"
 	case pkg.HackagePkg:

@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/syftjson/model"
-	"github.com/anchore/syft/syft/internal/sourcemetadata"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 )
@@ -56,19 +56,21 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "directory",
 			src: source.Description{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
 				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
 				},
 			},
 			expected: model.Source{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
-				Type:    "directory",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
+				Type:     "directory",
 				Metadata: source.DirectoryMetadata{
 					Path: "some/path",
 					Base: "some/base",
@@ -78,9 +80,10 @@ func Test_toSourceModel(t *testing.T) {
 		{
 			name: "file",
 			src: source.Description{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
 				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
@@ -88,10 +91,11 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 			expected: model.Source{
-				ID:      "test-id",
-				Name:    "some-name",
-				Version: "some-version",
-				Type:    "file",
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
+				Type:     "file",
 				Metadata: source.FileMetadata{
 					Path:     "some/path",
 					Digests:  []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
@@ -124,6 +128,36 @@ func Test_toSourceModel(t *testing.T) {
 					MediaType:      "type...",
 					RepoDigests:    []string{},
 					Tags:           []string{},
+				},
+			},
+		},
+		{
+			name: "snap",
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.SnapMetadata{
+					Summary:       "some summary",
+					Base:          "some/base",
+					Grade:         "some grade",
+					Confinement:   "some confinement",
+					Architectures: []string{"x86_64", "arm64"},
+					Digests:       []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
+				},
+			},
+			expected: model.Source{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "snap",
+				Metadata: source.SnapMetadata{
+					Summary:       "some summary",
+					Base:          "some/base",
+					Grade:         "some grade",
+					Confinement:   "some confinement",
+					Architectures: []string{"x86_64", "arm64"},
+					Digests:       []file.Digest{{Algorithm: "sha256", Value: "some-digest"}},
 				},
 			},
 		},

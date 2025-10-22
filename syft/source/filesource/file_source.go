@@ -123,6 +123,7 @@ func (s fileSource) ID() artifact.ID {
 func (s fileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
+	supplier := ""
 	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
@@ -132,11 +133,16 @@ func (s fileSource) Describe() source.Description {
 		if a.Version != "" {
 			version = a.Version
 		}
+
+		if a.Supplier != "" {
+			supplier = a.Supplier
+		}
 	}
 	return source.Description{
-		ID:      string(s.id),
-		Name:    name,
-		Version: version,
+		ID:       string(s.id),
+		Name:     name,
+		Version:  version,
+		Supplier: supplier,
 		Metadata: source.FileMetadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,
@@ -225,11 +231,14 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	// unarchived.
 	envelopedUnarchiver, err := archiver.ByExtension(path)
 	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
-		if tar, ok := unarchiver.(*archiver.Tar); ok {
-			// when tar files are extracted, if there are multiple entries at the same
-			// location, the last entry wins
-			// NOTE: this currently does not display any messages if an overwrite happens
-			tar.OverwriteExisting = true
+		// when tar/zip files are extracted, if there are multiple entries at the same
+		// location, the last entry wins
+		// NOTE: this currently does not display any messages if an overwrite happens
+		switch v := unarchiver.(type) {
+		case *archiver.Tar:
+			v.OverwriteExisting = true
+		case *archiver.Zip:
+			v.OverwriteExisting = true
 		}
 
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)

@@ -2,24 +2,18 @@ package pkg
 
 // RubyGemspec represents all metadata parsed from the *.gemspec file
 type RubyGemspec struct {
-	Name    string `mapstructure:"name" json:"name"`
+	// Name is gem name as specified in the gemspec
+	Name string `mapstructure:"name" json:"name"`
+
+	// Version is gem version as specified in the gemspec
 	Version string `mapstructure:"version" json:"version"`
-	// note regarding if Files can contribute to GemMetadata being able to implement FileOwner: this list is a
-	// "logical" list of files, not a list of paths that can be used to find the files without additional processing.
-	//
-	// For example: The "bundler" gem has a file entry of:
-	//   "lib/bundler/vendor/uri/lib/uri/ldap.rb"
-	// but the actual file is located at:
-	//   "/usr/local/lib/ruby/3.2.0/bundler/vendor/uri/lib/uri/ldap.rb"
-	// which do not match (the "lib" prefix is missing even for relative processing).
-	//
-	// without additional information about:
-	// 	- the gem installation path
-	// 	- the ruby installation path
-	// 	- the ruby version
-	// 	- environment variables (e.g. GEM_HOME) that may affect the gem installation path
-	// ... we can't reliably determine the full path to the file on disk, thus cannot implement FileOwner (...yet...).
-	Files    []string `mapstructure:"files" json:"files,omitempty"`
-	Authors  []string `mapstructure:"authors" json:"authors,omitempty"`
-	Homepage string   `mapstructure:"homepage" json:"homepage,omitempty"`
+
+	// Files is logical list of files in the gem (NOT directly usable as filesystem paths. Example: bundler gem lists "lib/bundler/vendor/uri/lib/uri/ldap.rb" but actual path is "/usr/local/lib/ruby/3.2.0/bundler/vendor/uri/lib/uri/ldap.rb". Would need gem installation path, ruby version, and env vars like GEM_HOME to resolve actual paths.)
+	Files []string `mapstructure:"files" json:"files,omitempty"`
+
+	// Authors are the list of gem authors (stored as array regardless of using `author` or `authors` method in gemspec)
+	Authors []string `mapstructure:"authors" json:"authors,omitempty"`
+
+	// Homepage is project homepage URL
+	Homepage string `mapstructure:"homepage" json:"homepage,omitempty"`
 }

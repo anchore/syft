@@ -122,6 +122,22 @@ func Test_encodeLicense(t *testing.T) {
 			},
 		},
 		{
+			name: "with URL only and no name or SPDX ID",
+			input: pkg.Package{
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromURLsWithContext(ctx, "", "http://jaxen.codehaus.org/license.html"),
+				),
+			},
+			expected: &cyclonedx.Licenses{
+				{
+					License: &cyclonedx.License{
+						Name: "http://jaxen.codehaus.org/license.html",
+						URL:  "http://jaxen.codehaus.org/license.html",
+					},
+				},
+			},
+		},
+		{
 			name: "with multiple values licenses are deduplicated",
 			input: pkg.Package{
 				Licenses: pkg.NewLicenseSet(

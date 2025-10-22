@@ -1,0 +1,8 @@
+# fixture is not under test, just used to produde the uv.lock
+[project]
+name = "testpkg"
+version = "0.1.0"
+
+dependencies = [
+    "fastapi[all]>=0.111.0<0.112.0"
+]

@@ -10,23 +10,31 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
 // parseWheelOrEggRecord takes a Python Egg or Wheel (which share the same format and values for our purposes),
 // returning all Python packages listed.
-func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
+func parseWheelOrEggRecord(reader file.LocationReadCloser) ([]pkg.PythonFileRecord, error) {
 	var records []pkg.PythonFileRecord
 	r := csv.NewReader(reader)
 
 	for {
 		recordList, err := r.Read()
-		if errors.Is(err, io.EOF) {
-			break
-		}
 		if err != nil {
-			log.Debugf("unable to read python record file: %w", err)
-			continue
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			var parseErr *csv.ParseError
+			if errors.As(err, &parseErr) {
+				log.WithFields("error", parseErr).Debug("unable to read python record entry (skipping entry)")
+				continue
+			}
+
+			// probably an I/O error... we could have missed some package content, so we include this location as an unknown
+			return records, unknown.Newf(reader.Coordinates, "unable to read python record file: %w", err)
 		}
 
 		if len(recordList) != 3 {
@@ -62,7 +70,7 @@ func parseWheelOrEggRecord(reader io.Reader) []pkg.PythonFileRecord {
 		records = append(records, record)
 	}
 
-	return records
+	return records, nil
 }
 
 func parseInstalledFiles(reader io.Reader, location, sitePackagesRootPath string) ([]pkg.PythonFileRecord, error) {

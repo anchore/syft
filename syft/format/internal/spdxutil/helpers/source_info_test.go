@@ -193,6 +193,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.CondaPkg,
+			},
+			expected: []string{
+				"from conda metadata",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.PortagePkg,
 			},
 			expected: []string{

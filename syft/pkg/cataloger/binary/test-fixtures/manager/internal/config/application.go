@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/scylladb/go-set/strset"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 const Path = "config.yaml"
