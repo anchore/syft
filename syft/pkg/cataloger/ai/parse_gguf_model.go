@@ -59,7 +59,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	metadata := ggufFile.Metadata()
 
 	// Convert to syft metadata structure
-	syftMetadata := &pkg.GGUFFileMetadata{
+	syftMetadata := &pkg.GGUFFileHeader{
 		ModelFormat:     "gguf",
 		ModelName:       metadata.Name,
 		ModelVersion:    extractVersion(ggufFile.Header.MetadataKV),

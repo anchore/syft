@@ -55,7 +55,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
 		pkg.TerraformLockProviderEntry{},
-		pkg.GGUFFileMetadata{},
+		pkg.GGUFFileHeader{},
 	)
 	tests := []struct {
 		name       string

@@ -10,7 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newGGUFPackage(metadata *pkg.GGUFFileMetadata, locations ...file.Location) pkg.Package {
+func newGGUFPackage(metadata *pkg.GGUFFileHeader, locations ...file.Location) pkg.Package {
 	// Compute hash if not already set
 	if metadata.Hash == "" {
 		metadata.Hash = computeMetadataHash(metadata)
@@ -38,7 +38,7 @@ func newGGUFPackage(metadata *pkg.GGUFFileMetadata, locations ...file.Location) 
 }
 
 // computeMetadataHash computes a stable hash of the metadata for use as a global identifier
-func computeMetadataHash(metadata *pkg.GGUFFileMetadata) string {
+func computeMetadataHash(metadata *pkg.GGUFFileHeader) string {
 	// Create a stable representation of the metadata
 	hashData := struct {
 		Format       string

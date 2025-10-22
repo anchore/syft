@@ -117,7 +117,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromFields("Apache-2.0", "", nil),
 					),
-					Metadata: pkg.GGUFFileMetadata{
+					Metadata: pkg.GGUFFileHeader{
 						ModelFormat:     "gguf",
 						ModelName:       "llama3-8b",
 						ModelVersion:    "3.0",
@@ -166,7 +166,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 					Name:    "model1",
 					Version: "1.0",
 					Type:    pkg.ModelPkg,
-					Metadata: pkg.GGUFFileMetadata{
+					Metadata: pkg.GGUFFileHeader{
 						ModelFormat:     "gguf",
 						ModelName:       "model1",
 						ModelVersion:    "1.0",
@@ -182,7 +182,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 					Name:    "model2",
 					Version: "2.0",
 					Type:    pkg.ModelPkg,
-					Metadata: pkg.GGUFFileMetadata{
+					Metadata: pkg.GGUFFileHeader{
 						ModelFormat:     "gguf",
 						ModelName:       "model2",
 						ModelVersion:    "2.0",
@@ -219,7 +219,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 					Name:    "qwen-nested",
 					Version: unknownGGUFData,
 					Type:    pkg.ModelPkg,
-					Metadata: pkg.GGUFFileMetadata{
+					Metadata: pkg.GGUFFileHeader{
 						ModelFormat:     "gguf",
 						ModelName:       "qwen-nested",
 						ModelVersion:    unknownGGUFData,
@@ -248,7 +248,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 				IgnorePackageFields("FoundBy", "Locations"). // These are set by the cataloger
 				WithCompareOptions(
 					// Ignore Hash as it's computed dynamically
-					cmpopts.IgnoreFields(pkg.GGUFFileMetadata{}, "Hash"),
+					cmpopts.IgnoreFields(pkg.GGUFFileHeader{}, "Hash"),
 				)
 
 			tester.TestCataloger(t, NewGGUFCataloger())
