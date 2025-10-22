@@ -2,6 +2,8 @@ package dotnet
 
 import (
 	"strings"
+
+	"github.com/anchore/syft/syft/credential"
 )
 
 const (
@@ -30,9 +32,9 @@ type CatalogerConfig struct {
 	SearchLocalLicenses bool     `mapstructure:"search-local-licenses" json:"search-local-licenses" yaml:"search-local-licenses"`
 	LocalCachePaths     []string `mapstructure:"local-cache-paths" json:"local-cache-paths" yaml:"local-cache-paths"`
 
-	SearchRemoteLicenses       bool               `mapstructure:"search-remote-licenses" json:"search-remote-licenses" yaml:"search-remote-licenses"`
-	NuGetRepositoryURLs        []string           `mapstructure:"package-nugetrepositoryurls" json:"package-nugetrepositoryurls,omitempty" yaml:"package-nugetrepositoryurls,omitempty"`
-	NuGetRepositoryCredentials []SimpleCredential `mapstructure:"package-nugetrepository-credentials" json:"package-nugetrepository-credentials,omitempty" yaml:"package-nugetrepository-credentials,omitempty"`
+	SearchRemoteLicenses       bool                          `mapstructure:"search-remote-licenses" json:"search-remote-licenses" yaml:"search-remote-licenses"`
+	NuGetRepositoryURLs        []string                      `mapstructure:"package-nugetrepositoryurls" json:"package-nugetrepositoryurls,omitempty" yaml:"package-nugetrepositoryurls,omitempty"`
+	NuGetRepositoryCredentials []credential.SimpleCredential `mapstructure:"package-nugetrepository-credentials" json:"package-nugetrepository-credentials,omitempty" yaml:"package-nugetrepository-credentials,omitempty"`
 }
 
 func (c CatalogerConfig) WithDepPackagesMustHaveDLL(requireDlls bool) CatalogerConfig {
@@ -84,12 +86,12 @@ func (c CatalogerConfig) WithNuGetRepositoryURLs(input string) CatalogerConfig {
 	return c
 }
 
-func (c CatalogerConfig) WithCredentials(input []SimpleCredential) CatalogerConfig {
+func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) CatalogerConfig {
 	if len(input) == 0 {
 		return c
 	}
 
-	c.NuGetRepositoryCredentials = []SimpleCredential{}
+	c.NuGetRepositoryCredentials = []credential.SimpleCredential{}
 
 	for _, credential := range input {
 		if credential.Valid() {
@@ -110,6 +112,6 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		LocalCachePaths:                    []string{},
 		SearchRemoteLicenses:               false,
 		NuGetRepositoryURLs:                []string{defaultNuGetProvider},
-		NuGetRepositoryCredentials:         []SimpleCredential{},
+		NuGetRepositoryCredentials:         []credential.SimpleCredential{},
 	}
 }

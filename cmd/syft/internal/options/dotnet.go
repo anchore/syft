@@ -5,15 +5,16 @@ import (
 	"strings"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/credential"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 )
 
 type dotNetProviderCredentials []dotNetProviderCredential
 
-func (dnpc dotNetProviderCredentials) ToProviderCredentials() []dotnet.SimpleCredential {
-	result := []dotnet.SimpleCredential{}
+func (dnpc dotNetProviderCredentials) ToProviderCredentials() []credential.SimpleCredential {
+	result := []credential.SimpleCredential{}
 	for _, _credential := range dnpc {
-		result = append(result, dotnet.SimpleCredential{
+		result = append(result, credential.SimpleCredential{
 			Username: _credential.Username.String(),
 			Password: _credential.Password.String(),
 		})
