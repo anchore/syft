@@ -17,17 +17,31 @@ type File struct {
 	indexer *fileIndexer
 }
 
-// parent should be the symlink free absolute path to the parent directory
+// NewFromFile single file analyser
 // path is the filepath of the file we're creating content access for
-func NewFromFile(parent, path string, pathFilters ...PathIndexVisitor) (*File, error) {
-	chroot, err := NewChrootContextFromCWD(parent, parent)
+func NewFromFile(path string, pathFilters ...PathIndexVisitor) (*File, error) {
+	resolver, err := newFromFileWithoutIndex(path, pathFilters...)
+	if err != nil {
+		return nil, err
+	}
+
+	return resolver, resolver.buildIndex()
+}
+
+func newFromFileWithoutIndex(path string, pathFilters ...PathIndexVisitor) (*File, error) {
+	absParentDir, err := absoluteSymlinkFreePathToParent(path)
+	if err != nil {
+		return nil, err
+	}
+
+	chroot, err := NewChrootContextFromCWD(absParentDir, absParentDir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to interpret chroot context: %w", err)
 	}
 
 	cleanBase := chroot.Base()
 
-	file := &File{
+	return &File{
 		path: path,
 		FiletreeResolver: FiletreeResolver{
 			Chroot: *chroot,
@@ -36,9 +50,7 @@ func NewFromFile(parent, path string, pathFilters ...PathIndexVisitor) (*File, e
 			Opener: nativeOSFileOpener,
 		},
 		indexer: newFileIndexer(path, cleanBase, pathFilters...),
-	}
-
-	return file, file.buildIndex()
+	}, nil
 }
 
 func (r *File) buildIndex() error {
@@ -58,6 +70,6 @@ func (r *File) buildIndex() error {
 }
 
 // Stringer to represent a file path data source
-func (r File) String() string {
+func (r *File) String() string {
 	return fmt.Sprintf("file:%s", r.path)
 }
