@@ -1,8 +1,26 @@
-package aiartifact
+package ai
 
 import (
 	"bytes"
 	"encoding/binary"
+)
+
+// GGUF type constants for test builder
+const (
+	ggufMagic       = 0x46554747 // "GGUF" in little-endian
+	ggufTypeUint8   = 0
+	ggufTypeInt8    = 1
+	ggufTypeUint16  = 2
+	ggufTypeInt16   = 3
+	ggufTypeUint32  = 4
+	ggufTypeInt32   = 5
+	ggufTypeFloat32 = 6
+	ggufTypeUint64  = 7
+	ggufTypeInt64   = 8
+	ggufTypeFloat64 = 9
+	ggufTypeBool    = 10
+	ggufTypeString  = 11
+	ggufTypeArray   = 12
 )
 
 // testGGUFBuilder helps build GGUF files for testing

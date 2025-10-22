@@ -1,4 +1,4 @@
-package aiartifact
+package ai
 
 import (
 	"os"
@@ -171,7 +171,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						ModelName:       "model1",
 						ModelVersion:    "1.0",
 						Architecture:    "llama",
-						Quantization:    unkownGGUFData,
+						Quantization:    unknownGGUFData,
 						GGUFVersion:     3,
 						TensorCount:     100,
 						Header:          map[string]interface{}{},
@@ -187,7 +187,7 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						ModelName:       "model2",
 						ModelVersion:    "2.0",
 						Architecture:    "mistral",
-						Quantization:    unkownGGUFData,
+						Quantization:    unknownGGUFData,
 						GGUFVersion:     3,
 						TensorCount:     200,
 						Header:          map[string]interface{}{},
@@ -217,14 +217,14 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 			expectedPackages: []pkg.Package{
 				{
 					Name:    "qwen-nested",
-					Version: unkownGGUFData,
+					Version: unknownGGUFData,
 					Type:    pkg.ModelPkg,
 					Metadata: pkg.GGUFFileMetadata{
 						ModelFormat:     "gguf",
 						ModelName:       "qwen-nested",
-						ModelVersion:    unkownGGUFData,
+						ModelVersion:    unknownGGUFData,
 						Architecture:    "qwen",
-						Quantization:    unkownGGUFData,
+						Quantization:    unknownGGUFData,
 						GGUFVersion:     3,
 						TensorCount:     150,
 						Header:          map[string]interface{}{},
