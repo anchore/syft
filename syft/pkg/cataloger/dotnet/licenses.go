@@ -233,13 +233,14 @@ func (c *nugetLicenseResolver) getModuleFileLocations(moduleName, moduleVersion 
 	var err error
 	locations := []file.Location{}
 
+	var cachedLocations []file.Location
 	if len(c.cfg.LocalCachePaths) > 0 {
 		for _, localCachePath := range c.cfg.LocalCachePaths {
-			if cachedLocations, err := getModuleFileLocationsFromLocalCache(localCachePath, moduleName, moduleVersion, invariant); err == nil && len(cachedLocations) > 0 {
+			if cachedLocations, err = getModuleFileLocationsFromLocalCache(localCachePath, moduleName, moduleVersion, invariant); err == nil && len(cachedLocations) > 0 {
 				locations = append(locations, cachedLocations...)
 			}
 		}
-	} else if cachedLocations, err := getModuleFileLocationsFromLocalCache(getDefaultLocalNuGetCachePath(), moduleName, moduleVersion, invariant); err == nil && len(cachedLocations) > 0 {
+	} else if cachedLocations, err = getModuleFileLocationsFromLocalCache(getDefaultLocalNuGetCachePath(), moduleName, moduleVersion, invariant); err == nil && len(cachedLocations) > 0 {
 		locations = append(locations, cachedLocations...)
 	}
 
