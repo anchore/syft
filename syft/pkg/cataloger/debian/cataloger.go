@@ -10,6 +10,7 @@ import (
 )
 
 // NewDBCataloger returns a new Deb package cataloger capable of parsing DPKG status DB flat-file stores.
+// Deprecated: use NewDpkgDBCataloger with a configuration
 func NewDBCataloger() pkg.Cataloger {
 	return NewDpkgDBCataloger(DefaultCatalogerConfig())
 }
@@ -24,6 +25,7 @@ func NewDpkgDBCataloger(cfg CatalogerConfig) pkg.Cataloger {
 }
 
 // NewArchiveCataloger returns a new Debian package cataloger object capable of parsing .deb archive files
+// Deprecated: use NewDpkgArchiveCataloger with a configuration
 func NewArchiveCataloger() pkg.Cataloger {
 	return NewDpkgDBCataloger(DefaultCatalogerConfig())
 }

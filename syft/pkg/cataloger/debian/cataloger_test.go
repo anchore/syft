@@ -281,7 +281,7 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewArchiveCataloger()
+			c := NewDpkgArchiveCataloger(CatalogerConfig{IncludeDeInstalled: true})
 			pkgtest.NewCatalogTester().
 				WithImageResolver(t, tt.name).
 				IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
