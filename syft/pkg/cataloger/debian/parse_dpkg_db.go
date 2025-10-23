@@ -24,6 +24,10 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const (
+	deinstallStatus string = "deinstall"
+)
+
 var (
 	errEndOfPackages = fmt.Errorf("no more packages to read")
 	sourceRegexp     = regexp.MustCompile(`(?P<name>\S+)( \((?P<version>.*)\))?`)
@@ -112,6 +116,7 @@ type dpkgExtractedMetadata struct {
 	Provides      string `mapstructure:"Provides"`
 	Depends       string `mapstructure:"Depends"`
 	PreDepends    string `mapstructure:"PreDepends"` // note: original doc is Pre-Depends
+	Status        string `mapstructure:"Status"`
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
@@ -132,6 +137,11 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
 	err = mapstructure.Decode(dpkgFields, &raw)
 	if err != nil {
 		return nil, err
+	}
+
+	// Skip entries which have been removed but not purged, e.g. "rc" status in dpkg -l
+	if strings.Contains(raw.Status, deinstallStatus) {
+		return nil, nil
 	}
 
 	sourceName, sourceVersion := extractSourceVersion(raw.Source)
