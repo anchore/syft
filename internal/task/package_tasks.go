@@ -61,7 +61,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(alpine.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "apk", "alpine"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
-				return debian.NewDBCatalogerWithOpts(cfg.PackagesConfig.Debian)
+				return debian.NewDpkgDBCataloger(cfg.PackagesConfig.Debian)
 			},
 			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "dpkg", "debian",
 		),
@@ -72,7 +72,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(redhat.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
-				return debian.NewArchiveCatalogerWithOpts(cfg.PackagesConfig.Debian)
+				return debian.NewDpkgArchiveCataloger(cfg.PackagesConfig.Debian)
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "deb", "debian",
 		),

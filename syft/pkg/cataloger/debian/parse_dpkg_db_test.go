@@ -278,7 +278,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 
 			reader := bufio.NewReader(f)
 
-			entries, err := parseDpkgStatus(reader)
+			entries, err := parseDpkgStatus(reader, CatalogerConfig{})
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(test.expected, entries); diff != "" {
@@ -295,7 +295,7 @@ func Test_corruptEntry(t *testing.T) {
 
 	reader := bufio.NewReader(f)
 
-	_, err = parseDpkgStatus(reader)
+	_, err = parseDpkgStatus(reader, CatalogerConfig{})
 	require.Error(t, err)
 }
 
@@ -523,7 +523,7 @@ func Test_parseDpkgStatus_deinstall(t *testing.T) {
 				IncludeDeInstalled: tt.includeDeinstall,
 			}
 
-			entries, err := parseDpkgStatusWithConfig(fixture, cfg)
+			entries, err := parseDpkgStatus(fixture, cfg)
 			require.NoError(t, err)
 
 			assert.Len(t, entries, tt.expectedCount, "expected %d entries", tt.expectedCount)

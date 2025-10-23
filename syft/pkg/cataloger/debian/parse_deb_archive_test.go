@@ -127,7 +127,7 @@ Description: This is a test package
  And even more details
 `
 
-	metadata, err := parseControlFile(controlContent)
+	metadata, err := parseControlFile(controlContent, CatalogerConfig{})
 
 	require.NoError(t, err)
 	assert.Equal(t, "test-package", metadata.Package)
