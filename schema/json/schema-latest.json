@@ -1895,6 +1895,28 @@
       ],
       "description": "NpmPackageLockEntry represents a single entry within the \"packages\" section of a package-lock.json file."
     },
+    "JavascriptPnpmLockEntry": {
+      "properties": {
+        "resolution": {
+          "$ref": "#/$defs/PnpmLockResolution",
+          "description": "Resolution is the resolution information for the package"
+        },
+        "dependencies": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Dependencies is a map of dependencies and their versions"
+        }
+      },
+      "type": "object",
+      "required": [
+        "resolution",
+        "dependencies"
+      ]
+    },
     "JavascriptYarnLockEntry": {
       "properties": {
         "resolved": {
@@ -2528,6 +2550,9 @@
               "$ref": "#/$defs/JavascriptNpmPackageLockEntry"
             },
             {
+              "$ref": "#/$defs/JavascriptPnpmLockEntry"
+            },
+            {
               "$ref": "#/$defs/JavascriptYarnLockEntry"
             },
             {
@@ -2977,6 +3002,18 @@
         "version"
       ],
       "description": "PhpPeclEntry represents a single package entry found within php pecl metadata files."
+    },
+    "PnpmLockResolution": {
+      "properties": {
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is Subresource Integrity hash for verification (SRI format)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "integrity"
+      ]
     },
     "PortageDbEntry": {
       "properties": {

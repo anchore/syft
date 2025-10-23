@@ -49,11 +49,14 @@ type YarnLockEntry struct {
 }
 
 type PnpmLockResolution struct {
+	// Integrity is Subresource Integrity hash for verification (SRI format)
 	Integrity string `mapstructure:"integrity" json:"integrity"`
 }
 
 type PnpmLockEntry struct {
+	// Resolution is the resolution information for the package
 	Resolution PnpmLockResolution `mapstructure:"resolution" json:"resolution"`
 
+	// Dependencies is a map of dependencies and their versions
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
