@@ -528,6 +528,82 @@ func TestParseYarnLockWithRelationships(t *testing.T) {
 	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
 }
+func TestParseYarnLockWithDuplicates(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "test-fixtures/yarn-dups/yarn.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "async",
+			Version:   "0.9.2",
+			Locations: locations,
+			PURL:      "pkg:npm/async@0.9.2",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/async/-/async-0.9.2.tgz#aea74d5e61c1f899613bf64bda66d4c78f2fd17d",
+				Integrity:    "sha1-rqdNXmHB+JlhO/ZL2mbUx48v0X0=",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "async",
+			Version:   "3.2.3",
+			Locations: locations,
+			PURL:      "pkg:npm/async@3.2.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/async/-/async-3.2.3.tgz#ac53dafd3f4720ee9e8a160628f18ea91df196c9",
+				Integrity:    "sha512-spZRyzKL5l5BZQrr/6m/SqFdBN0q3OCI0f9rjfBzCMBIP4p75P620rR3gTmaksNOhmzgdxcaxdNfMy6anrbM0g==",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "merge-objects",
+			Version:   "1.0.5",
+			Locations: locations,
+			PURL:      "pkg:npm/merge-objects@1.0.5",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/merge-objects/-/merge-objects-1.0.5.tgz#ad923ff3910091acc1438f53eb75b8f37d862a86",
+				Integrity:    "sha1-rZI/85EAkazBQ49T63W4832GKoY=",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "@4lolo/resize-observer-polyfill",
+			Version:   "1.5.2",
+			Locations: locations,
+			PURL:      "pkg:npm/%404lolo/resize-observer-polyfill@1.5.2",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/@4lolo/resize-observer-polyfill/-/resize-observer-polyfill-1.5.2.tgz#58868fc7224506236b5550d0c68357f0a874b84b",
+				Integrity:    "sha512-HY4JYLITsWBOdeqCF/x3q7Aa2PVl/BmfkPv4H/Qzplc4Lrn9cKmWz6jHyAREH9tFuD0xELjJVgX3JaEmdcXu3g==",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "should-type",
+			Version:   "1.3.0",
+			Locations: locations,
+			PURL:      "pkg:npm/should-type@1.3.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://github.com/shouldjs/type.git#31d26945cb3b4ad21d2308776e4442c461666390",
+				Integrity:    "",
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
+}
 
 type handlerPath struct {
 	path    string

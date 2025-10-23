@@ -113,9 +113,13 @@ func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
 				pkg.Version = strings.Trim(array[1], "\"")
 			case "resolved":
 				name, version, resolved := findResolvedPackageAndVersion(line)
-				pkg.Name = name
-				pkg.Version = version
-				pkg.Resolved = resolved
+				if name != "" && version != "" && resolved != "" {
+					pkg.Name = name
+					pkg.Version = version
+					pkg.Resolved = resolved
+				} else {
+					pkg.Resolved = strings.Trim(array[1], "\"")
+				}
 			case "integrity":
 				pkg.Integrity = strings.Trim(array[1], "\"")
 			}
