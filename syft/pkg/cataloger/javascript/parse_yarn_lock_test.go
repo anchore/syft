@@ -220,6 +220,9 @@ func TestParseYarnLock(t *testing.T) {
 			Metadata: pkg.YarnLockEntry{
 				Resolved:  "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.10.4.tgz#168da1a36e90da68ae8d49c0f1b48c7c6249213a",
 				Integrity: "sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg==",
+				Dependencies: map[string]string{
+					"@babel/highlight": "^7.10.4",
+				},
 			},
 		},
 		{
@@ -230,8 +233,9 @@ func TestParseYarnLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d",
-				Integrity: "sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==",
+				Resolved:     "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d",
+				Integrity:    "sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==",
+				Dependencies: map[string]string{},
 			},
 		},
 		{
@@ -242,8 +246,9 @@ func TestParseYarnLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.4.tgz#a59e851c1ba16c0513ea123830dd639a0a15cb6a",
-				Integrity: "sha512-+wYo+L6ZF6BMoEjtf8zB2esQsqdV6WsjRK/GP9WOgLPrq87PbNWgIxS76dS5uvl/QXtHGakZmwTznIfcPXcKlQ==",
+				Resolved:     "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.4.tgz#a59e851c1ba16c0513ea123830dd639a0a15cb6a",
+				Integrity:    "sha512-+wYo+L6ZF6BMoEjtf8zB2esQsqdV6WsjRK/GP9WOgLPrq87PbNWgIxS76dS5uvl/QXtHGakZmwTznIfcPXcKlQ==",
+				Dependencies: map[string]string{},
 			},
 		},
 		{
@@ -256,6 +261,12 @@ func TestParseYarnLock(t *testing.T) {
 			Metadata: pkg.YarnLockEntry{
 				Resolved:  "https://registry.yarnpkg.com/ajv/-/ajv-6.12.3.tgz#18c5af38a111ddeb4f2697bd78d68abc1cabd706",
 				Integrity: "sha512-4K0cK3L1hsqk9xIb2z9vs/XU+PGJZ9PNpJRDS9YLzmNdX6jmVPfamLvTJr0aDAusnHyCHO6MjzlkAsgtqp9teA==",
+				Dependencies: map[string]string{
+					"fast-deep-equal":            "^3.1.1",
+					"fast-json-stable-stringify": "^2.0.0",
+					"json-schema-traverse":       "^0.4.1",
+					"uri-js":                     "^4.2.2",
+				},
 			},
 		},
 		{
@@ -268,6 +279,11 @@ func TestParseYarnLock(t *testing.T) {
 			Metadata: pkg.YarnLockEntry{
 				Resolved:  "https://registry.yarnpkg.com/asn1.js/-/asn1.js-4.10.1.tgz#b9c2bf5805f1e64aadeed6df3a2bfafb5a73f5a0",
 				Integrity: "sha512-p32cOF5q0Zqs9uBiONKYLm6BClCoBCM5O9JfeUSlnQLBTxYdTK+pW+nXflm8UkKd2UYlEbYz5qEi0JuZR9ckSw==",
+				Dependencies: map[string]string{
+					"bn.js":               "^4.0.0",
+					"inherits":            "^2.0.1",
+					"minimalistic-assert": "^1.0.0",
+				},
 			},
 		},
 		{
@@ -279,8 +295,9 @@ func TestParseYarnLock(t *testing.T) {
 			Language: pkg.JavaScript,
 			Type:     pkg.NpmPkg,
 			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9",
-				Integrity: "sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==",
+				Resolved:     "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9",
+				Integrity:    "sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==",
+				Dependencies: map[string]string{},
 			},
 		},
 		{
@@ -293,6 +310,17 @@ func TestParseYarnLock(t *testing.T) {
 			Metadata: pkg.YarnLockEntry{
 				Resolved:  "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.706.0.tgz#09f65e9a91ecac5a635daf934082abae30eca953",
 				Integrity: "sha512-7GT+yrB5Wb/zOReRdv/Pzkb2Qt+hz6B/8FGMVaoysX3NryHvQUdz7EQWi5yhg9CxOjKxdw5lFwYSs69YlSp1KA==",
+				Dependencies: map[string]string{
+					"buffer":      "4.9.2",
+					"events":      "1.1.1",
+					"ieee754":     "1.1.13",
+					"jmespath":    "0.15.0",
+					"querystring": "0.2.0",
+					"sax":         "1.2.1",
+					"url":         "0.10.3",
+					"uuid":        "3.3.2",
+					"xml2js":      "0.4.19",
+				},
 			},
 		},
 		{
@@ -305,6 +333,12 @@ func TestParseYarnLock(t *testing.T) {
 			Metadata: pkg.YarnLockEntry{
 				Resolved:  "https://registry.yarnpkg.com/jhipster-core/-/jhipster-core-7.3.4.tgz#c34b8c97c7f4e8b7518dae015517e2112c73cc80",
 				Integrity: "sha512-AUhT69kNkqppaJZVfan/xnKG4Gs9Ggj7YLtTZFVe+xg+THrbMb5Ng7PL07PDlDw4KAEA33GMCwuAf65E8EpC4g==",
+				Dependencies: map[string]string{
+					"chevrotain": "7.0.1",
+					"fs-extra":   "8.1.0",
+					"lodash":     "4.17.15",
+					"winston":    "3.2.1",
+				},
 			},
 		},
 		{
@@ -315,12 +349,182 @@ func TestParseYarnLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/something-i-made-up/-/c0n-fab_u.laTION-7.7.7.tgz#b9c2bf5805f1e64aadeed6df3a2bfafb5a73f5a0",
-				Integrity: "sha512-p32cOF5q0Zqs9uBiONKYLm6BClCoBCM5O9JfeUSlnQLBTxYdTK+pW+nXflm8UkKd2UYlEbYz5qEi0JuZR9ckSw==",
+				Resolved:     "https://registry.yarnpkg.com/something-i-made-up/-/c0n-fab_u.laTION-7.7.7.tgz#b9c2bf5805f1e64aadeed6df3a2bfafb5a73f5a0",
+				Integrity:    "sha512-p32cOF5q0Zqs9uBiONKYLm6BClCoBCM5O9JfeUSlnQLBTxYdTK+pW+nXflm8UkKd2UYlEbYz5qEi0JuZR9ckSw==",
+				Dependencies: map[string]string{},
 			},
 		},
 	}
 
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParseYarnLockWithRelationships(t *testing.T) {
+	fixture := "test-fixtures/yarn-v1-deps/yarn.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "@babel/code-frame",
+			Version:   "7.10.4",
+			Locations: locations,
+			PURL:      "pkg:npm/%40babel/code-frame@7.10.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.10.4.tgz#168da1a36e90da68ae8d49c0f1b48c7c6249213a",
+				Integrity: "sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg==",
+				Dependencies: map[string]string{
+					"@babel/highlight": "^7.10.4",
+				},
+			},
+		},
+		{
+			Name:      "@types/minimatch",
+			Version:   "3.0.3",
+			Locations: locations,
+			PURL:      "pkg:npm/%40types/minimatch@3.0.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d",
+				Integrity:    "sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "@types/qs",
+			Version:   "6.9.4",
+			Locations: locations,
+			PURL:      "pkg:npm/%40types/qs@6.9.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/@types/qs/-/qs-6.9.4.tgz#a59e851c1ba16c0513ea123830dd639a0a15cb6a",
+				Integrity:    "sha512-+wYo+L6ZF6BMoEjtf8zB2esQsqdV6WsjRK/GP9WOgLPrq87PbNWgIxS76dS5uvl/QXtHGakZmwTznIfcPXcKlQ==",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "ajv",
+			Version:   "6.12.3",
+			Locations: locations,
+			PURL:      "pkg:npm/ajv@6.12.3",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/ajv/-/ajv-6.12.3.tgz#18c5af38a111ddeb4f2697bd78d68abc1cabd706",
+				Integrity: "sha512-4K0cK3L1hsqk9xIb2z9vs/XU+PGJZ9PNpJRDS9YLzmNdX6jmVPfamLvTJr0aDAusnHyCHO6MjzlkAsgtqp9teA==",
+				Dependencies: map[string]string{
+					"fast-deep-equal":            "^3.1.1",
+					"fast-json-stable-stringify": "^2.0.0",
+					"json-schema-traverse":       "^0.4.1",
+					"uri-js":                     "^4.2.2",
+				},
+			},
+		},
+		{
+			Name:      "asn1.js",
+			Version:   "4.10.1",
+			Locations: locations,
+			PURL:      "pkg:npm/asn1.js@4.10.1",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/asn1.js/-/asn1.js-4.10.1.tgz#b9c2bf5805f1e64aadeed6df3a2bfafb5a73f5a0",
+				Integrity: "sha512-p32cOF5q0Zqs9uBiONKYLm6BClCoBCM5O9JfeUSlnQLBTxYdTK+pW+nXflm8UkKd2UYlEbYz5qEi0JuZR9ckSw==",
+				Dependencies: map[string]string{
+					"atob":                "^2.1.2",
+					"bn.js":               "^4.0.0",
+					"inherits":            "^2.0.1",
+					"minimalistic-assert": "^1.0.0",
+				},
+			},
+		},
+		{
+			Name:      "atob",
+			Version:   "2.1.2",
+			Locations: locations,
+
+			PURL:     "pkg:npm/atob@2.1.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9",
+				Integrity:    "sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "aws-sdk",
+			Version:   "2.706.0",
+			Locations: locations,
+			PURL:      "pkg:npm/aws-sdk@2.706.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.706.0.tgz#09f65e9a91ecac5a635daf934082abae30eca953",
+				Integrity: "sha512-7GT+yrB5Wb/zOReRdv/Pzkb2Qt+hz6B/8FGMVaoysX3NryHvQUdz7EQWi5yhg9CxOjKxdw5lFwYSs69YlSp1KA==",
+				Dependencies: map[string]string{
+					"asn1.js":     "4.10.1",
+					"buffer":      "4.9.2",
+					"events":      "1.1.1",
+					"ieee754":     "1.1.13",
+					"jmespath":    "0.15.0",
+					"querystring": "0.2.0",
+					"sax":         "1.2.1",
+					"url":         "0.10.3",
+					"uuid":        "3.3.2",
+					"xml2js":      "0.4.19",
+				},
+			},
+		},
+		{
+			Name:      "jhipster-core",
+			Version:   "7.3.4",
+			Locations: locations,
+			PURL:      "pkg:npm/jhipster-core@7.3.4",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/jhipster-core/-/jhipster-core-7.3.4.tgz#c34b8c97c7f4e8b7518dae015517e2112c73cc80",
+				Integrity: "sha512-AUhT69kNkqppaJZVfan/xnKG4Gs9Ggj7YLtTZFVe+xg+THrbMb5Ng7PL07PDlDw4KAEA33GMCwuAf65E8EpC4g==",
+				Dependencies: map[string]string{
+					"chevrotain": "7.0.1",
+					"fs-extra":   "8.1.0",
+					"lodash":     "4.17.15",
+					"winston":    "3.2.1",
+				},
+			},
+		},
+		{
+			Name:      "something-i-made-up",
+			Version:   "7.7.7",
+			Locations: locations,
+			PURL:      "pkg:npm/something-i-made-up@7.7.7",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/something-i-made-up/-/c0n-fab_u.laTION-7.7.7.tgz#b9c2bf5805f1e64aadeed6df3a2bfafb5a73f5a0",
+				Integrity:    "sha512-p32cOF5q0Zqs9uBiONKYLm6BClCoBCM5O9JfeUSlnQLBTxYdTK+pW+nXflm8UkKd2UYlEbYz5qEi0JuZR9ckSw==",
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[4],
+			To:   expectedPkgs[6],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[5],
+			To:   expectedPkgs[4],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
 	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
 }
@@ -365,6 +569,9 @@ func TestSearchYarnForLicenses(t *testing.T) {
 					Metadata: pkg.YarnLockEntry{
 						Resolved:  "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.10.4.tgz#168da1a36e90da68ae8d49c0f1b48c7c6249213a",
 						Integrity: "sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg==",
+						Dependencies: map[string]string{
+							"@babel/highlight": "^7.10.4",
+						},
 					},
 				},
 			},
@@ -447,94 +654,6 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 		t.Run(test.expected, func(t *testing.T) {
 			t.Parallel()
 			actual := findPackageName(test.line)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestParseYarnFindPackageVersions(t *testing.T) {
-	tests := []struct {
-		line     string
-		expected string
-	}{
-		{
-			line:     `  version "7.10.4"`,
-			expected: "7.10.4",
-		},
-		{
-			line:     ` version "7.11.5"`,
-			expected: "7.11.5",
-		},
-		{
-			line:     `version "7.12.6"`,
-			expected: "",
-		},
-		{
-			line:     `  version "0.0.0"`,
-			expected: "0.0.0",
-		},
-		{
-			line:     `  version "2" `,
-			expected: "2",
-		},
-		{
-			line:     `  version "9.3"`,
-			expected: "9.3",
-		},
-		{
-			line:     "ajv@^6.10.2, ajv@^6.5.5",
-			expected: "",
-		},
-		{
-			line:     "atob@^2.1.2:",
-			expected: "",
-		},
-		{
-			line:     `"color-convert@npm:^1.9.0":`,
-			expected: "",
-		},
-		{
-			line:     "  version: 1.9.3",
-			expected: "1.9.3",
-		},
-		{
-			line:     "  version: 2",
-			expected: "2",
-		},
-		{
-			line:     "  version: 9.3",
-			expected: "9.3",
-		},
-		{
-			line:     "ajv@^6.10.2, ajv@^6.5.5",
-			expected: "",
-		},
-		{
-			line:     "atob@^2.1.2:",
-			expected: "",
-		},
-		{
-			line:     "  version: 1.0.0-alpha+001",
-			expected: "1.0.0-alpha",
-		},
-		{
-			line:     "  version: 1.0.0-beta_test+exp.sha.5114f85",
-			expected: "1.0.0-beta_test",
-		},
-		{
-			line:     "  version: 1.0.0+21AF26D3-117B344092BD",
-			expected: "1.0.0",
-		},
-		{
-			line:     "  version: 0.0.0-use.local",
-			expected: "0.0.0-use.local",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.expected, func(t *testing.T) {
-			t.Parallel()
-			actual := findPackageVersion(test.line)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

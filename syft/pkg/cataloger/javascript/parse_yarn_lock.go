@@ -1,7 +1,6 @@
 package javascript
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -30,10 +29,6 @@ var (
 	//              "@babel/code-frame@^7.0.0" returns "@babel/code-frame"
 	packageNameExp = regexp.MustCompile(`^"?((?:@\w[\w-_.]*\/)?\w[\w-_.]*)@`)
 
-	// versionExp matches the "version" line of a yarn.lock entry and captures the version value.
-	// For example: version "4.10.1" (...and the value "4.10.1" is captured)
-	versionExp = regexp.MustCompile(`^\W+version(?:\W+"|:\W+)([\w-_.]+)"?`)
-
 	// packageURLExp matches the name and version of the dependency in yarn.lock
 	// from the resolved URL, including scope/namespace prefix if any.
 	// For example:
@@ -42,19 +37,13 @@ var (
 	//
 	//		`resolved "https://registry.yarnpkg.com/@4lolo/resize-observer-polyfill/-/resize-observer-polyfill-1.5.2.tgz#58868fc7224506236b5550d0c68357f0a874b84b"`
 	//			would return "@4lolo/resize-observer-polyfill" and "1.5.2"
-	packageURLExp = regexp.MustCompile(`^\s+resolved\s+"https://registry\.(?:yarnpkg\.com|npmjs\.org)/(.+?)/-/(?:.+?)-(\d+\..+?)\.tgz`)
+	packageURLExp = regexp.MustCompile(`^resolved\s+"https://registry\.(?:yarnpkg\.com|npmjs\.org)/(.+?)/-/(?:.+?)-(\d+\..+?)\.tgz`)
 
 	// resolvedExp matches the resolved of the dependency in yarn.lock
 	// For example:
 	// 		resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
 	// 			would return "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
-	resolvedExp = regexp.MustCompile(`^\s+resolved\s+"(.+?)"`)
-
-	// integrityExp matches the integrity of the dependency in yarn.lock
-	// For example:
-	//		integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
-	// 			would return "sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==""
-	integrityExp = regexp.MustCompile(`^\s+integrity\s+([^\s]+)`)
+	resolvedExp = regexp.MustCompile(`^resolved\s+"(.+?)"`)
 )
 
 type yarnPackage struct {
@@ -83,49 +72,69 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 }
 
 func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read yarn.lock file: %w", err)
+	}
+
+	re := regexp.MustCompile(`\r?\n`)
+	lines := re.Split(string(content), -1)
 	var pkgs []yarnPackage
-	var currentPackage, currentVersion, currentResolved, currentIntegrity string
+	var pkg = yarnPackage{}
+	var seenPkgs = strset.New()
+	dependencies := make(map[string]string)
 
-	scanner := bufio.NewScanner(reader)
-	parsedPackages := strset.New()
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if packageName := findPackageName(line); packageName != "" {
-			// When we find a new package, check if we have unsaved identifiers
-			if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-				pkgs = append(pkgs, yarnPackage{Name: currentPackage, Version: currentVersion, Resolved: currentResolved, Integrity: currentIntegrity})
-				parsedPackages.Add(currentPackage + "@" + currentVersion)
+	for _, line := range lines {
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		// Blank lines indicate the end of a package entry, so we add the package
+		// to the list and reset the dependencies
+		if len(line) == 0 && len(pkg.Name) > 0 && !seenPkgs.Has(pkg.Name+"@"+pkg.Version) {
+			pkg.Dependencies = dependencies
+			pkgs = append(pkgs, pkg)
+			seenPkgs.Add(pkg.Name + "@" + pkg.Version)
+			dependencies = make(map[string]string)
+			pkg = yarnPackage{}
+			continue
+		}
+		// The first line of a package entry is the name of the package with no
+		// leading spaces
+		if !strings.HasPrefix(line, " ") {
+			name := line
+			pkg.Name = findPackageName(name)
+			continue
+		}
+		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "    ") {
+			line = strings.Trim(line, " ")
+			array := strings.Split(line, " ")
+			switch array[0] {
+			case "version":
+				pkg.Version = strings.Trim(array[1], "\"")
+			case "resolved":
+				name, version, resolved := findResolvedPackageAndVersion(line)
+				pkg.Name = name
+				pkg.Version = version
+				pkg.Resolved = resolved
+			case "integrity":
+				pkg.Integrity = strings.Trim(array[1], "\"")
 			}
-
-			currentPackage = packageName
-		} else if version := findPackageVersion(line); version != "" {
-			currentVersion = version
-		} else if packageName, version, resolved := findResolvedPackageAndVersion(line); packageName != "" && version != "" && resolved != "" {
-			currentResolved = resolved
-			currentPackage = packageName
-			currentVersion = version
-		} else if integrity := findIntegrity(line); integrity != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-			pkgs = append(pkgs, yarnPackage{Name: currentPackage, Version: currentVersion, Resolved: currentResolved, Integrity: integrity})
-			parsedPackages.Add(currentPackage + "@" + currentVersion)
-
-			// Cleanup to indicate no unsaved identifiers
-			currentPackage = ""
-			currentVersion = ""
-			currentResolved = ""
-			currentIntegrity = ""
+			continue
+		}
+		if strings.HasPrefix(line, "    ") {
+			line = strings.Trim(line, " ")
+			array := strings.Split(line, " ")
+			dependencyName := strings.Trim(array[0], "\"")
+			dependencyVersion := strings.Trim(array[1], "\"")
+			dependencies[dependencyName] = dependencyVersion
 		}
 	}
-
-	// check if we have valid unsaved data after end-of-file has reached
-	if currentPackage != "" && currentVersion != "" && !parsedPackages.Has(currentPackage+"@"+currentVersion) {
-		pkgs = append(pkgs, yarnPackage{Name: currentPackage, Version: currentVersion, Resolved: currentResolved, Integrity: currentIntegrity})
-		parsedPackages.Add(currentPackage + "@" + currentVersion)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
+	// If the last package in the list is not the same as the current package, add the current package
+	// to the list. In case there was no trailing new line before we hit EOF.
+	if len(pkg.Name) > 0 && !seenPkgs.Has(pkg.Name+"@"+pkg.Version) {
+		pkg.Dependencies = dependencies
+		pkgs = append(pkgs, pkg)
+		seenPkgs.Add(pkg.Name + "@" + pkg.Version)
 	}
 
 	return pkgs, nil
@@ -195,14 +204,6 @@ func findPackageName(line string) string {
 	return ""
 }
 
-func findPackageVersion(line string) string {
-	if matches := versionExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1]
-	}
-
-	return ""
-}
-
 func findResolvedPackageAndVersion(line string) (string, string, string) {
 	var resolved string
 	if matches := resolvedExp.FindStringSubmatch(line); len(matches) >= 2 {
@@ -213,12 +214,4 @@ func findResolvedPackageAndVersion(line string) (string, string, string) {
 	}
 
 	return "", "", ""
-}
-
-func findIntegrity(line string) string {
-	if matches := integrityExp.FindStringSubmatch(line); len(matches) >= 2 {
-		return matches[1]
-	}
-
-	return ""
 }
