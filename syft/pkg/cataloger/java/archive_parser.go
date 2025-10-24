@@ -45,6 +45,7 @@ var archiveFormatGlobs = []string{
 	// LifeRay makes it pretty cumbersome to make a such plugins; their docs are
 	// out of date, and they charge for their IDE. If you find an example
 	// project that we can build in CI feel free to include it
+	"**/*.rar", // Java Resource Adapter Archive
 }
 
 // javaArchiveHashes are all the current hash algorithms used to calculate archive digests

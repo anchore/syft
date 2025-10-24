@@ -135,7 +135,7 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Go (go.mod, Go binaries)
 - GitHub (workflows, actions)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, nar, native-image)
+- Java (jar, ear, war, par, sar, nar, rar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
 - Linux kernel archives (vmlinz)
