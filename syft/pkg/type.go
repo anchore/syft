@@ -50,6 +50,7 @@ const (
 	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	ModelPkg                Type = "model"
 )
 
 // AllPkgs represents all supported package types
@@ -94,6 +95,7 @@ var AllPkgs = []Type{
 	TerraformPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	ModelPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
