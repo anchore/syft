@@ -7,6 +7,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 
@@ -329,11 +330,30 @@ func (e *EnrichmentData) EnrichEntry(catalogerName string, entry *capabilities.C
 	// update metadata types if available
 	if types, ok := e.GetMetadataTypes(catalogerName); ok {
 		entry.MetadataTypes = types
+		// generate JSON schema types from metadata types
+		entry.JSONSchemaTypes = convertToJSONSchemaTypesFromMetadata(types)
 	}
 	// update package types if available
 	if types, ok := e.GetPackageTypes(catalogerName); ok {
 		entry.PackageTypes = types
 	}
+}
+
+// convertToJSONSchemaTypesFromMetadata converts Go struct names to UpperCamelCase JSON schema names
+func convertToJSONSchemaTypesFromMetadata(metadataTypes []string) []string {
+	if len(metadataTypes) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(metadataTypes))
+	for _, typeName := range metadataTypes {
+		jsonName := packagemetadata.JSONNameFromString(typeName)
+		if jsonName != "" {
+			camelCase := packagemetadata.ToUpperCamelCase(jsonName)
+			result = append(result, camelCase)
+		}
+	}
+	return result
 }
 
 // EnrichWithBinaryClassifier enriches an entry with binary classifier detectors if it's the binary-classifier-cataloger
@@ -487,6 +507,12 @@ func (m *CatalogerMerger) addNewCustomCatalogers() {
 		// enrich with metadata and package types
 		m.enrichment.EnrichEntry(catalogerName, &entry)
 
+		// fallback: if we have metadata_types but no json_schema_types, convert them
+		// this handles cases where metadata_types exist in YAML but no enrichment data
+		if len(entry.MetadataTypes) > 0 && len(entry.JSONSchemaTypes) == 0 {
+			entry.JSONSchemaTypes = convertToJSONSchemaTypesFromMetadata(entry.MetadataTypes)
+		}
+
 		// enrich with binary classifier globs
 		m.enrichment.EnrichWithBinaryClassifier(catalogerName, &entry)
 
@@ -500,6 +526,13 @@ func (m *CatalogerMerger) addNewCustomCatalogers() {
 // processGenericCataloger processes an existing generic cataloger entry
 func (m *CatalogerMerger) processGenericCataloger(existingEntry *capabilities.CatalogerEntry, disc DiscoveredCataloger, info *capabilities.CatalogerInfo) {
 	entry, catalogerOrphans, newParsers := updateEntry(existingEntry, disc, info, m.catalogerConfigMappings)
+
+	// fallback for catalogers with type override to custom but processed as generic
+	// these may have cataloger-level metadata_types that need json_schema_types
+	if len(entry.MetadataTypes) > 0 && len(entry.JSONSchemaTypes) == 0 {
+		entry.JSONSchemaTypes = convertToJSONSchemaTypesFromMetadata(entry.MetadataTypes)
+	}
+
 	m.updated.Catalogers = append(m.updated.Catalogers, entry)
 	m.orphans = append(m.orphans, catalogerOrphans...)
 	if len(newParsers) > 0 || len(catalogerOrphans) > 0 {
@@ -523,6 +556,12 @@ func (m *CatalogerMerger) processCustomCataloger(existingEntry *capabilities.Cat
 
 	// enrich with metadata and package types
 	m.enrichment.EnrichEntry(existingEntry.Name, &entry)
+
+	// fallback: if we have metadata_types but no json_schema_types, convert them
+	// this handles cases where metadata_types exist in YAML but no enrichment data
+	if len(entry.MetadataTypes) > 0 && len(entry.JSONSchemaTypes) == 0 {
+		entry.JSONSchemaTypes = convertToJSONSchemaTypesFromMetadata(entry.MetadataTypes)
+	}
 
 	// enrich with binary classifier globs
 	m.enrichment.EnrichWithBinaryClassifier(existingEntry.Name, &entry)
@@ -640,8 +679,21 @@ func updateParsers(existingParsers []capabilities.Parser, discoveredParsers []Di
 			p := *existingParser
 			p.Detector.Method = discParser.Method
 			p.Detector.Criteria = discParser.Criteria
-			p.MetadataTypes = discParser.MetadataTypes
-			p.PackageTypes = discParser.PackageTypes
+
+			// only update metadata/package types if discovered parser has them
+			// this preserves existing YAML values when no test observations exist
+			if len(discParser.MetadataTypes) > 0 {
+				p.MetadataTypes = discParser.MetadataTypes
+				p.JSONSchemaTypes = discParser.JSONSchemaTypes
+			} else if len(p.MetadataTypes) > 0 && len(p.JSONSchemaTypes) == 0 {
+				// fallback: if parser has metadata_types but no json_schema_types, convert them
+				p.JSONSchemaTypes = convertToJSONSchemaTypesFromMetadata(p.MetadataTypes)
+			}
+
+			if len(discParser.PackageTypes) > 0 {
+				p.PackageTypes = discParser.PackageTypes
+			}
+
 			// p.Capabilities is preserved from existing
 			updated = append(updated, p)
 		}
@@ -704,9 +756,10 @@ func createTemplateParser(disc DiscoveredParser) capabilities.Parser {
 			Method:   disc.Method,
 			Criteria: disc.Criteria,
 		},
-		MetadataTypes: disc.MetadataTypes,
-		PackageTypes:  disc.PackageTypes,
-		Capabilities:  capabilities.CapabilitySet{}, // empty array - must be filled manually
+		MetadataTypes:   disc.MetadataTypes,
+		PackageTypes:    disc.PackageTypes,
+		JSONSchemaTypes: disc.JSONSchemaTypes,
+		Capabilities:    capabilities.CapabilitySet{}, // empty array - must be filled manually
 	}
 }
 

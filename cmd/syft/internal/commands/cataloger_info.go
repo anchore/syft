@@ -124,14 +124,14 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 	}
 
 	type patternInfo struct {
-		Method        string                           `json:"method"`
-		Criteria      []string                         `json:"criteria"`
-		Conditions    []capabilities.DetectorCondition `json:"conditions,omitempty"`
-		Packages      []detectorPackageInfo            `json:"packages,omitempty"`
-		Comment       string                           `json:"comment,omitempty"`
-		MetadataTypes []string                         `json:"metadata_types,omitempty"`
-		PackageTypes  []string                         `json:"package_types,omitempty"`
-		Capabilities  capabilities.CapabilitySet       `json:"capabilities,omitempty"`
+		Method          string                           `json:"method"`
+		Criteria        []string                         `json:"criteria"`
+		Conditions      []capabilities.DetectorCondition `json:"conditions,omitempty"`
+		Packages        []detectorPackageInfo            `json:"packages,omitempty"`
+		Comment         string                           `json:"comment,omitempty"`
+		PackageTypes    []string                         `json:"package_types,omitempty"`
+		JSONSchemaTypes []string                         `json:"json_schema_types,omitempty"`
+		Capabilities    capabilities.CapabilitySet       `json:"capabilities,omitempty"`
 	}
 
 	type catalogerInfo struct {
@@ -170,14 +170,14 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 			}
 
 			pi := patternInfo{
-				Method:        string(parser.Detector.Method),
-				Criteria:      parser.Detector.Criteria,
-				Conditions:    parser.Detector.Conditions,
-				Packages:      pkgs,
-				Comment:       parser.Detector.Comment,
-				MetadataTypes: parser.MetadataTypes,
-				PackageTypes:  parser.PackageTypes,
-				Capabilities:  parser.Capabilities,
+				Method:          string(parser.Detector.Method),
+				Criteria:        parser.Detector.Criteria,
+				Conditions:      parser.Detector.Conditions,
+				Packages:        pkgs,
+				Comment:         parser.Detector.Comment,
+				PackageTypes:    parser.PackageTypes,
+				JSONSchemaTypes: parser.JSONSchemaTypes,
+				Capabilities:    parser.Capabilities,
 			}
 
 			info.Patterns = append(info.Patterns, pi)
@@ -200,13 +200,13 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 				}
 
 				pi := patternInfo{
-					Method:        string(det.Method),
-					Criteria:      det.Criteria,
-					Conditions:    det.Conditions,
-					Packages:      pkgs,
-					Comment:       det.Comment,
-					MetadataTypes: cat.MetadataTypes,
-					PackageTypes:  cat.PackageTypes,
+					Method:          string(det.Method),
+					Criteria:        det.Criteria,
+					Conditions:      det.Conditions,
+					Packages:        pkgs,
+					Comment:         det.Comment,
+					PackageTypes:    cat.PackageTypes,
+					JSONSchemaTypes: cat.JSONSchemaTypes,
 				}
 				info.Patterns = append(info.Patterns, pi)
 			}

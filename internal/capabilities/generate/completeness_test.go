@@ -869,6 +869,100 @@ func validateCapabilityValueType(fieldPath string, value interface{}) error {
 	return nil
 }
 
+// TestMetadataTypesHaveJSONSchemaTypes validates that metadata_types and json_schema_types are synchronized
+// in packages.yaml - every metadata type should have a corresponding json_schema_type with correct conversion
+func TestMetadataTypesHaveJSONSchemaTypes(t *testing.T) {
+	repoRoot, err := RepoRoot()
+	require.NoError(t, err)
+
+	// load the packages.yaml
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages.yaml"))
+	require.NoError(t, err)
+
+	// collect all validation errors
+	var errors []string
+
+	// validate cataloger-level types (custom catalogers)
+	for _, cataloger := range doc.Catalogers {
+		if cataloger.Type == "custom" {
+			if len(cataloger.MetadataTypes) > 0 {
+				// verify counts match
+				if len(cataloger.MetadataTypes) != len(cataloger.JSONSchemaTypes) {
+					errors = append(errors,
+						fmt.Sprintf("Cataloger %q has %d metadata_types but %d json_schema_types (counts must match)",
+							cataloger.Name, len(cataloger.MetadataTypes), len(cataloger.JSONSchemaTypes)))
+					continue
+				}
+
+				// verify each metadata_type converts to its corresponding json_schema_type
+				for i, metadataType := range cataloger.MetadataTypes {
+					expectedJSONSchemaType := convertMetadataTypeToJSONSchemaType(metadataType)
+					if expectedJSONSchemaType == "" {
+						errors = append(errors,
+							fmt.Sprintf("Cataloger %q metadata_type[%d] %q could not be converted to json_schema_type (not found in packagemetadata registry)",
+								cataloger.Name, i, metadataType))
+						continue
+					}
+
+					actualJSONSchemaType := cataloger.JSONSchemaTypes[i]
+					if expectedJSONSchemaType != actualJSONSchemaType {
+						errors = append(errors,
+							fmt.Sprintf("Cataloger %q metadata_type[%d] %q should convert to json_schema_type %q but found %q",
+								cataloger.Name, i, metadataType, expectedJSONSchemaType, actualJSONSchemaType))
+					}
+				}
+			}
+		}
+
+		// validate parser-level types (generic catalogers)
+		if cataloger.Type == "generic" {
+			for _, parser := range cataloger.Parsers {
+				if len(parser.MetadataTypes) > 0 {
+					// verify counts match
+					if len(parser.MetadataTypes) != len(parser.JSONSchemaTypes) {
+						errors = append(errors,
+							fmt.Sprintf("Parser %q/%s has %d metadata_types but %d json_schema_types (counts must match)",
+								cataloger.Name, parser.ParserFunction, len(parser.MetadataTypes), len(parser.JSONSchemaTypes)))
+						continue
+					}
+
+					// verify each metadata_type converts to its corresponding json_schema_type
+					for i, metadataType := range parser.MetadataTypes {
+						expectedJSONSchemaType := convertMetadataTypeToJSONSchemaType(metadataType)
+						if expectedJSONSchemaType == "" {
+							errors = append(errors,
+								fmt.Sprintf("Parser %q/%s metadata_type[%d] %q could not be converted to json_schema_type (not found in packagemetadata registry)",
+									cataloger.Name, parser.ParserFunction, i, metadataType))
+							continue
+						}
+
+						actualJSONSchemaType := parser.JSONSchemaTypes[i]
+						if expectedJSONSchemaType != actualJSONSchemaType {
+							errors = append(errors,
+								fmt.Sprintf("Parser %q/%s metadata_type[%d] %q should convert to json_schema_type %q but found %q",
+									cataloger.Name, parser.ParserFunction, i, metadataType, expectedJSONSchemaType, actualJSONSchemaType))
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// report all errors at once
+	if len(errors) > 0 {
+		require.Fail(t, "Metadata types and JSON schema types validation failed", strings.Join(errors, "\n"))
+	}
+}
+
+// convertMetadataTypeToJSONSchemaType converts a metadata type (e.g., "pkg.AlpmDBEntry") to its JSON schema type (e.g., "AlpmDbEntry")
+func convertMetadataTypeToJSONSchemaType(metadataType string) string {
+	jsonName := packagemetadata.JSONNameFromString(metadataType)
+	if jsonName == "" {
+		return ""
+	}
+	return packagemetadata.ToUpperCamelCase(jsonName)
+}
+
 // loadConfigStructFields loads the config struct definition from source code using AST parsing
 func loadConfigStructFields(repoRoot, configName string) (map[string]string, error) {
 	// configName format: "package.StructName" (e.g., "golang.CatalogerConfig")

@@ -72,26 +72,28 @@ type DetectorCondition struct {
 
 // CatalogerEntry represents a single cataloger's capabilities
 type CatalogerEntry struct {
-	Ecosystem     string        `yaml:"ecosystem" json:"ecosystem"`                               // MANUAL - ecosystem categorization (e.g., "python", "java", "javascript")
-	Name          string        `yaml:"name" json:"name"`                                         // AUTO-GENERATED for generic, MANUAL for custom
-	Type          string        `yaml:"type" json:"type"`                                         // AUTO-GENERATED: "generic" or "custom"
-	Source        Source        `yaml:"source" json:"source"`                                     // AUTO-GENERATED for generic, MANUAL for custom
-	Config        string        `yaml:"config,omitempty" json:"config,omitempty"`                 // e.g., "golang.CatalogerConfig"
-	Selectors     []string      `yaml:"selectors,omitempty" json:"selectors,omitempty"`           // AUTO-GENERATED - cataloger name tags for selection
-	Parsers       []Parser      `yaml:"parsers,omitempty" json:"parsers,omitempty"`               // AUTO-GENERATED structure, only for type=generic
-	Detectors     []Detector    `yaml:"detectors,omitempty" json:"detectors,omitempty"`           // AUTO-GENERATED - detection methods (only for type=custom)
-	MetadataTypes []string      `yaml:"metadata_types,omitempty" json:"metadata_types,omitempty"` // AUTO-GENERATED - pkg metadata types emitted (only for type=custom)
-	PackageTypes  []string      `yaml:"package_types,omitempty" json:"package_types,omitempty"`   // AUTO-GENERATED - package types emitted (only for type=custom)
-	Capabilities  CapabilitySet `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`     // MANUAL - config-driven capability definitions (only for type=custom)
+	Ecosystem       string        `yaml:"ecosystem" json:"ecosystem"`                                     // MANUAL - ecosystem categorization (e.g., "python", "java", "javascript")
+	Name            string        `yaml:"name" json:"name"`                                               // AUTO-GENERATED for generic, MANUAL for custom
+	Type            string        `yaml:"type" json:"type"`                                               // AUTO-GENERATED: "generic" or "custom"
+	Source          Source        `yaml:"source" json:"source"`                                           // AUTO-GENERATED for generic, MANUAL for custom
+	Config          string        `yaml:"config,omitempty" json:"config,omitempty"`                       // e.g., "golang.CatalogerConfig"
+	Selectors       []string      `yaml:"selectors,omitempty" json:"selectors,omitempty"`                 // AUTO-GENERATED - cataloger name tags for selection
+	Parsers         []Parser      `yaml:"parsers,omitempty" json:"parsers,omitempty"`                     // AUTO-GENERATED structure, only for type=generic
+	Detectors       []Detector    `yaml:"detectors,omitempty" json:"detectors,omitempty"`                 // AUTO-GENERATED - detection methods (only for type=custom)
+	MetadataTypes   []string      `yaml:"metadata_types,omitempty" json:"metadata_types,omitempty"`       // AUTO-GENERATED - pkg metadata types emitted (only for type=custom)
+	PackageTypes    []string      `yaml:"package_types,omitempty" json:"package_types,omitempty"`         // AUTO-GENERATED - package types emitted (only for type=custom)
+	JSONSchemaTypes []string      `yaml:"json_schema_types,omitempty" json:"json_schema_types,omitempty"` // AUTO-GENERATED - JSON schema type names (UpperCamelCase)
+	Capabilities    CapabilitySet `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`           // MANUAL - config-driven capability definitions (only for type=custom)
 }
 
 // Parser represents a parser function and its artifact detection criteria for generic catalogers
 type Parser struct {
-	ParserFunction string        `yaml:"function" json:"function"`                                 // AUTO-GENERATED (used as preservation key)
-	Detector       Detector      `yaml:"detector" json:"detector"`                                 // AUTO-GENERATED - how artifacts are detected
-	MetadataTypes  []string      `yaml:"metadata_types,omitempty" json:"metadata_types,omitempty"` // AUTO-GENERATED - pkg metadata types emitted by this parser
-	PackageTypes   []string      `yaml:"package_types,omitempty" json:"package_types,omitempty"`   // AUTO-GENERATED - package types emitted by this parser
-	Capabilities   CapabilitySet `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`     // MANUAL - config-driven capability definitions
+	ParserFunction  string        `yaml:"function" json:"function"`                                       // AUTO-GENERATED (used as preservation key)
+	Detector        Detector      `yaml:"detector" json:"detector"`                                       // AUTO-GENERATED - how artifacts are detected
+	MetadataTypes   []string      `yaml:"metadata_types,omitempty" json:"metadata_types,omitempty"`       // AUTO-GENERATED - pkg metadata types emitted by this parser
+	PackageTypes    []string      `yaml:"package_types,omitempty" json:"package_types,omitempty"`         // AUTO-GENERATED - package types emitted by this parser
+	JSONSchemaTypes []string      `yaml:"json_schema_types,omitempty" json:"json_schema_types,omitempty"` // AUTO-GENERATED - JSON schema type names (UpperCamelCase)
+	Capabilities    CapabilitySet `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`           // MANUAL - config-driven capability definitions
 }
 
 // CapabilityField represents a single capability field with optional conditional values based on configuration.

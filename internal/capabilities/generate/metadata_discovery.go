@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"github.com/anchore/syft/internal/capabilities/pkgtestobservation"
+	"github.com/anchore/syft/internal/packagemetadata"
 )
 
 // TestObservationIndex indexes all test observations for efficient lookup and application.
@@ -22,8 +23,9 @@ type TestObservationIndex struct {
 
 // TypeObservation combines metadata types and package types
 type TypeObservation struct {
-	MetadataTypes []string
-	PackageTypes  []string
+	MetadataTypes   []string
+	PackageTypes    []string
+	JSONSchemaTypes []string
 }
 
 // newTestObservationIndex creates a new empty index
@@ -166,6 +168,23 @@ func mergeAndDeduplicateStrings(existing, additional []string) []string {
 	return result
 }
 
+// convertToJSONSchemaTypes converts Go struct names to UpperCamelCase JSON schema names
+func convertToJSONSchemaTypes(metadataTypes []string) []string {
+	if len(metadataTypes) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(metadataTypes))
+	for _, typeName := range metadataTypes {
+		jsonName := packagemetadata.JSONNameFromString(typeName)
+		if jsonName != "" {
+			camelCase := packagemetadata.ToUpperCamelCase(jsonName)
+			result = append(result, camelCase)
+		}
+	}
+	return result
+}
+
 // mergeTestObservations merges metadata and package type data from a test-observations.json file
 // into the observation index
 func mergeTestObservations(observations *pkgtestobservation.Test, index *TestObservationIndex) {
@@ -185,6 +204,8 @@ func mergeTestObservations(observations *pkgtestobservation.Test, index *TestObs
 		// merge the types
 		existing.MetadataTypes = mergeAndDeduplicateStrings(existing.MetadataTypes, parserObs.MetadataTypes)
 		existing.PackageTypes = mergeAndDeduplicateStrings(existing.PackageTypes, parserObs.PackageTypes)
+		// generate JSON schema types from metadata types
+		existing.JSONSchemaTypes = convertToJSONSchemaTypes(existing.MetadataTypes)
 
 		index.setParserObservations(pkg, parserName, existing)
 	}
@@ -203,6 +224,8 @@ func mergeTestObservations(observations *pkgtestobservation.Test, index *TestObs
 		// merge the types
 		existing.MetadataTypes = mergeAndDeduplicateStrings(existing.MetadataTypes, catalogerObs.MetadataTypes)
 		existing.PackageTypes = mergeAndDeduplicateStrings(existing.PackageTypes, catalogerObs.PackageTypes)
+		// generate JSON schema types from metadata types
+		existing.JSONSchemaTypes = convertToJSONSchemaTypes(existing.MetadataTypes)
 
 		index.setCatalogerObservations(catalogerName, existing)
 	}
@@ -217,6 +240,7 @@ func applyParserObservations(cataloger *DiscoveredCataloger, index *TestObservat
 		if obs := index.getParserObservations(cataloger.PackageName, parser.ParserFunction); obs != nil {
 			if len(obs.MetadataTypes) > 0 {
 				cataloger.Parsers[i].MetadataTypes = obs.MetadataTypes
+				cataloger.Parsers[i].JSONSchemaTypes = obs.JSONSchemaTypes
 				foundData = true
 			}
 			if len(obs.PackageTypes) > 0 {
@@ -239,6 +263,7 @@ func applySingleParserCatalogerObservations(cataloger *DiscoveredCataloger, cata
 			cataloger.Parsers[0].MetadataTypes,
 			catalogerObs.MetadataTypes,
 		)
+		cataloger.Parsers[0].JSONSchemaTypes = convertToJSONSchemaTypes(cataloger.Parsers[0].MetadataTypes)
 		foundData = true
 	}
 
@@ -274,6 +299,7 @@ func applyMultiParserCatalogerObservations(cataloger *DiscoveredCataloger, catal
 		for i := range cataloger.Parsers {
 			if len(catalogerObs.MetadataTypes) > 0 {
 				cataloger.Parsers[i].MetadataTypes = catalogerObs.MetadataTypes
+				cataloger.Parsers[i].JSONSchemaTypes = catalogerObs.JSONSchemaTypes
 				foundData = true
 			}
 			if len(catalogerObs.PackageTypes) > 0 {
@@ -286,6 +312,7 @@ func applyMultiParserCatalogerObservations(cataloger *DiscoveredCataloger, catal
 		for i, parser := range cataloger.Parsers {
 			if len(parser.MetadataTypes) == 0 && len(catalogerObs.MetadataTypes) > 0 {
 				cataloger.Parsers[i].MetadataTypes = catalogerObs.MetadataTypes
+				cataloger.Parsers[i].JSONSchemaTypes = catalogerObs.JSONSchemaTypes
 				foundData = true
 			}
 			if len(parser.PackageTypes) == 0 && len(catalogerObs.PackageTypes) > 0 {

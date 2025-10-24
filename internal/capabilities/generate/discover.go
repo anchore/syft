@@ -26,11 +26,12 @@ type DiscoveredCataloger struct {
 
 // DiscoveredParser represents a parser function and its detection criteria discovered from source
 type DiscoveredParser struct {
-	ParserFunction string
-	Method         capabilities.ArtifactDetectionMethod
-	Criteria       []string
-	MetadataTypes  []string // populated from cataloger-type-uses.json files
-	PackageTypes   []string // populated from cataloger-type-uses.json files
+	ParserFunction  string
+	Method          capabilities.ArtifactDetectionMethod
+	Criteria        []string
+	MetadataTypes   []string // populated from cataloger-type-uses.json files
+	PackageTypes    []string // populated from cataloger-type-uses.json files
+	JSONSchemaTypes []string // populated from MetadataTypes
 }
 
 // discoverGenericCatalogers finds all uses of generic.NewCataloger() in the codebase

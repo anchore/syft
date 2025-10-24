@@ -313,7 +313,7 @@ configs: # AUTO-GENERATED - config structs and their fields
         app_key: python.guess-unpinned-requirements
 catalogers:
   # alpm (arch / pacman) #################################################################################################
-  - ecosystem: alpm # MANUAL
+  - ecosystem: arch # MANUAL
     name: alpm-db-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -339,6 +339,8 @@ catalogers:
           - pkg.AlpmDBEntry
         package_types: # AUTO-GENERATED
           - alpm
+        json_schema_types: # AUTO-GENERATED
+          - AlpmDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -387,6 +389,8 @@ catalogers:
           - pkg.ApkDBEntry
         package_types: # AUTO-GENERATED
           - apk
+        json_schema_types: # AUTO-GENERATED
+          - ApkDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -1003,6 +1007,8 @@ catalogers:
       - pkg.BinarySignature
     package_types: # AUTO-GENERATED
       - binary
+    json_schema_types: # AUTO-GENERATED
+      - BinarySignature
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -1047,6 +1053,8 @@ catalogers:
     package_types: # AUTO-GENERATED
       - binary
       - rpm
+    json_schema_types: # AUTO-GENERATED
+      - ElfBinaryPackageNoteJsonPayload
     capabilities: # MANUAL - config-driven capability definitions
       # licenses can be detected in some elf packages (via the licenses note field)
       - name: license
@@ -1092,6 +1100,8 @@ catalogers:
           - pkg.PEBinary
         package_types: # AUTO-GENERATED
           - binary
+        json_schema_types: # AUTO-GENERATED
+          - PeBinary
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1130,6 +1140,8 @@ catalogers:
           - pkg.BitnamiSBOMEntry
         package_types: # AUTO-GENERATED
           - bitnami
+        json_schema_types: # AUTO-GENERATED
+          - BitnamiSbomEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1181,6 +1193,8 @@ catalogers:
           - pkg.RustBinaryAuditEntry
         package_types: # AUTO-GENERATED
           - rust-crate
+        json_schema_types: # AUTO-GENERATED
+          - RustCargoAuditEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1222,6 +1236,8 @@ catalogers:
           - pkg.RustCargoLockEntry
         package_types: # AUTO-GENERATED
           - rust-crate
+        json_schema_types: # AUTO-GENERATED
+          - RustCargoLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1269,6 +1285,8 @@ catalogers:
           - pkg.CocoaPodfileLockEntry
         package_types: # AUTO-GENERATED
           - pod
+        json_schema_types: # AUTO-GENERATED
+          - CocoaPodfileLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1314,6 +1332,8 @@ catalogers:
           - pkg.SwiftPackageManagerResolvedEntry
         package_types: # AUTO-GENERATED
           - swift
+        json_schema_types: # AUTO-GENERATED
+          - SwiftPackageManagerLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1357,6 +1377,9 @@ catalogers:
           - pkg.ConanV2LockEntry
         package_types: # AUTO-GENERATED
           - conan
+        json_schema_types: # AUTO-GENERATED
+          - CConanLockEntry
+          - CConanLockV2Entry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1386,6 +1409,8 @@ catalogers:
           - pkg.ConanfileEntry
         package_types: # AUTO-GENERATED
           - conan
+        json_schema_types: # AUTO-GENERATED
+          - CConanFileEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1427,6 +1452,8 @@ catalogers:
           - pkg.ConaninfoEntry
         package_types: # AUTO-GENERATED
           - conan
+        json_schema_types: # AUTO-GENERATED
+          - CConanInfoEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1466,6 +1493,8 @@ catalogers:
           - pkg.CondaMetaPackage
         package_types: # AUTO-GENERATED
           - conda
+        json_schema_types: # AUTO-GENERATED
+          - CondaMetadataEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -1512,6 +1541,8 @@ catalogers:
           - pkg.DartPubspec
         package_types: # AUTO-GENERATED
           - dart-pub
+        json_schema_types: # AUTO-GENERATED
+          - DartPubspec
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1551,6 +1582,8 @@ catalogers:
           - pkg.DartPubspecLockEntry
         package_types: # AUTO-GENERATED
           - dart-pub
+        json_schema_types: # AUTO-GENERATED
+          - DartPubspecLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1571,7 +1604,7 @@ catalogers:
           - name: package_manager.package_integrity_hash
             default: false
   # Dpkg (debian) ###################################################################################################
-  - ecosystem: dpkg # MANUAL
+  - ecosystem: debian # MANUAL
     name: dpkg-db-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -1599,6 +1632,8 @@ catalogers:
           - pkg.DpkgDBEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - DpkgDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -1621,7 +1656,7 @@ catalogers:
               - DpkgDBEntry.Files[].Digest
           - name: package_manager.package_integrity_hash
             default: false
-  - ecosystem: dpkg # MANUAL
+  - ecosystem: debian # MANUAL
     name: deb-archive-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -1645,6 +1680,8 @@ catalogers:
           - pkg.DpkgArchiveEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - DpkgArchiveEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -1692,6 +1729,9 @@ catalogers:
     package_types: # AUTO-GENERATED
       - dotnet
       - npm
+    json_schema_types: # AUTO-GENERATED
+      - DotnetDepsEntry
+      - DotnetPortableExecutableEntry
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -1727,6 +1767,8 @@ catalogers:
       - pkg.DotnetDepsEntry
     package_types: # AUTO-GENERATED
       - dotnet
+    json_schema_types: # AUTO-GENERATED
+      - DotnetDepsEntry
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -1769,6 +1811,8 @@ catalogers:
           - pkg.DotnetPackagesLockEntry
         package_types: # AUTO-GENERATED
           - dotnet
+        json_schema_types: # AUTO-GENERATED
+          - DotnetPackagesLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1810,6 +1854,8 @@ catalogers:
       - pkg.DotnetPortableExecutableEntry
     package_types: # AUTO-GENERATED
       - dotnet
+    json_schema_types: # AUTO-GENERATED
+      - DotnetPortableExecutableEntry
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -1848,6 +1894,8 @@ catalogers:
           - pkg.ElixirMixLockEntry
         package_types: # AUTO-GENERATED
           - hex
+        json_schema_types: # AUTO-GENERATED
+          - ElixirMixLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1933,6 +1981,8 @@ catalogers:
           - pkg.ErlangRebarLockEntry
         package_types: # AUTO-GENERATED
           - hex
+        json_schema_types: # AUTO-GENERATED
+          - ErlangRebarLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -1978,6 +2028,8 @@ catalogers:
           - pkg.GitHubActionsUseStatement
         package_types: # AUTO-GENERATED
           - github-action-workflow
+        json_schema_types: # AUTO-GENERATED
+          - GithubActionsUseStatement
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2017,6 +2069,8 @@ catalogers:
           - pkg.GitHubActionsUseStatement
         package_types: # AUTO-GENERATED
           - github-action
+        json_schema_types: # AUTO-GENERATED
+          - GithubActionsUseStatement
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2043,6 +2097,8 @@ catalogers:
           - pkg.GitHubActionsUseStatement
         package_types: # AUTO-GENERATED
           - github-action
+        json_schema_types: # AUTO-GENERATED
+          - GithubActionsUseStatement
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2092,6 +2148,8 @@ catalogers:
           - pkg.GolangBinaryBuildinfoEntry
         package_types: # AUTO-GENERATED
           - go-module
+        json_schema_types: # AUTO-GENERATED
+          - GoModuleBuildinfoEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2146,6 +2204,9 @@ catalogers:
           - pkg.GolangSourceEntry
         package_types: # AUTO-GENERATED
           - go-module
+        json_schema_types: # AUTO-GENERATED
+          - GoModuleEntry
+          - GoSourceEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2241,6 +2302,8 @@ catalogers:
       - pkg.JavaArchive
     package_types: # AUTO-GENERATED
       - java-archive
+    json_schema_types: # AUTO-GENERATED
+      - JavaArchive
     capabilities: # MANUAL - config-driven capability definitions
       # TODO: online capabilities
       - name: license
@@ -2288,6 +2351,8 @@ catalogers:
           - pkg.JavaArchive
         package_types: # AUTO-GENERATED
           - java-archive
+        json_schema_types: # AUTO-GENERATED
+          - JavaArchive
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2329,6 +2394,8 @@ catalogers:
       - pkg.JavaArchive
     package_types: # AUTO-GENERATED
       - java-archive
+    json_schema_types: # AUTO-GENERATED
+      - JavaArchive
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: true
@@ -2373,6 +2440,8 @@ catalogers:
           - pkg.JavaVMInstallation
         package_types: # AUTO-GENERATED
           - binary
+        json_schema_types: # AUTO-GENERATED
+          - JavaJvmInstallation
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -2488,6 +2557,8 @@ catalogers:
           - pkg.HackageStackYamlLockEntry
         package_types: # AUTO-GENERATED
           - hackage
+        json_schema_types: # AUTO-GENERATED
+          - HaskellHackageStackLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2518,6 +2589,8 @@ catalogers:
           - pkg.HackageStackYamlEntry
         package_types: # AUTO-GENERATED
           - hackage
+        json_schema_types: # AUTO-GENERATED
+          - HaskellHackageStackEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2562,6 +2635,8 @@ catalogers:
           - pkg.HomebrewFormula
         package_types: # AUTO-GENERATED
           - homebrew
+        json_schema_types: # AUTO-GENERATED
+          - HomebrewFormula
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -2629,6 +2704,8 @@ catalogers:
           - pkg.YarnLockEntry
         package_types: # AUTO-GENERATED
           - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptYarnLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -2660,6 +2737,8 @@ catalogers:
           - pkg.NpmPackageLockEntry
         package_types: # AUTO-GENERATED
           - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmPackageLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -2704,6 +2783,8 @@ catalogers:
           - pkg.NpmPackage
         package_types: # AUTO-GENERATED
           - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmPackage
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -2754,6 +2835,9 @@ catalogers:
     package_types: # AUTO-GENERATED
       - linux-kernel
       - linux-kernel-module
+    json_schema_types: # AUTO-GENERATED
+      - LinuxKernelArchive
+      - LinuxKernelModule
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: true
@@ -2793,6 +2877,8 @@ catalogers:
           - pkg.LuaRocksPackage
         package_types: # AUTO-GENERATED
           - lua-rocks
+        json_schema_types: # AUTO-GENERATED
+          - LuarocksPackage
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -2834,6 +2920,8 @@ catalogers:
       - pkg.NixStoreEntry
     package_types: # AUTO-GENERATED
       - nix
+    json_schema_types: # AUTO-GENERATED
+      - NixStoreEntry
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -2873,6 +2961,8 @@ catalogers:
       - pkg.NixStoreEntry
     package_types: # AUTO-GENERATED
       - nix
+    json_schema_types: # AUTO-GENERATED
+      - NixStoreEntry
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -2923,6 +3013,8 @@ catalogers:
           - pkg.OpamPackage
         package_types: # AUTO-GENERATED
           - opam
+        json_schema_types: # AUTO-GENERATED
+          - OpamPackage
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -2964,6 +3056,8 @@ catalogers:
           - pkg.PhpComposerInstalledEntry
         package_types: # AUTO-GENERATED
           - php-composer
+        json_schema_types: # AUTO-GENERATED
+          - PhpComposerInstalledEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3006,6 +3100,8 @@ catalogers:
           - pkg.PhpComposerLockEntry
         package_types: # AUTO-GENERATED
           - php-composer
+        json_schema_types: # AUTO-GENERATED
+          - PhpComposerLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3049,6 +3145,8 @@ catalogers:
       - pkg.BinarySignature
     package_types: # AUTO-GENERATED
       - binary
+    json_schema_types: # AUTO-GENERATED
+      - BinarySignature
     capabilities: # MANUAL - config-driven capability definitions
       - name: license
         default: false
@@ -3090,6 +3188,8 @@ catalogers:
           - pkg.PhpPearEntry
         package_types: # AUTO-GENERATED
           - php-pear
+        json_schema_types: # AUTO-GENERATED
+          - PhpPearEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3126,6 +3226,8 @@ catalogers:
           - pkg.PhpPeclEntry
         package_types: # AUTO-GENERATED
           - php-pecl
+        json_schema_types: # AUTO-GENERATED
+          - PhpPeclEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3144,7 +3246,7 @@ catalogers:
           - name: package_manager.package_integrity_hash
             default: false
   # Portage (gentoo) ########################################################################################################
-  - ecosystem: portage # MANUAL
+  - ecosystem: gentoo # MANUAL
     name: portage-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -3169,6 +3271,8 @@ catalogers:
           - pkg.PortageEntry
         package_types: # AUTO-GENERATED
           - portage
+        json_schema_types: # AUTO-GENERATED
+          - PortageDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3218,6 +3322,8 @@ catalogers:
           - pkg.PythonPackage
         package_types: # AUTO-GENERATED
           - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPackage
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3262,6 +3368,8 @@ catalogers:
           - pkg.PythonUvLockEntry
         package_types: # AUTO-GENERATED
           - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonUvLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3313,6 +3421,8 @@ catalogers:
           - pkg.PythonPipfileLockEntry
         package_types: # AUTO-GENERATED
           - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPipfileLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3342,6 +3452,8 @@ catalogers:
           - pkg.PythonPoetryLockEntry
         package_types: # AUTO-GENERATED
           - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPoetryLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3370,6 +3482,8 @@ catalogers:
           - pkg.PythonRequirementsEntry
         package_types: # AUTO-GENERATED
           - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPipRequirementsEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3409,6 +3523,8 @@ catalogers:
           - pkg.RDescription
         package_types: # AUTO-GENERATED
           - R-package
+        json_schema_types: # AUTO-GENERATED
+          - RDescription
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3449,6 +3565,8 @@ catalogers:
           - pkg.RpmArchive
         package_types: # AUTO-GENERATED
           - rpm
+        json_schema_types: # AUTO-GENERATED
+          - RpmArchive
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3495,6 +3613,8 @@ catalogers:
           - pkg.RpmDBEntry
         package_types: # AUTO-GENERATED
           - rpm
+        json_schema_types: # AUTO-GENERATED
+          - RpmDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3522,6 +3642,8 @@ catalogers:
           - pkg.RpmDBEntry
         package_types: # AUTO-GENERATED
           - rpm
+        json_schema_types: # AUTO-GENERATED
+          - RpmDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3609,6 +3731,8 @@ catalogers:
           - pkg.RubyGemspec
         package_types: # AUTO-GENERATED
           - gem
+        json_schema_types: # AUTO-GENERATED
+          - RubyGemspec
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3652,6 +3776,8 @@ catalogers:
           - pkg.RubyGemspec
         package_types: # AUTO-GENERATED
           - gem
+        json_schema_types: # AUTO-GENERATED
+          - RubyGemspec
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3702,6 +3828,8 @@ catalogers:
           - pkg.ApkDBEntry
         package_types: # AUTO-GENERATED
           - apk
+        json_schema_types: # AUTO-GENERATED
+          - ApkDbEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
@@ -3740,6 +3868,8 @@ catalogers:
           - pkg.SnapEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3764,6 +3894,8 @@ catalogers:
           - pkg.SnapEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3788,6 +3920,8 @@ catalogers:
           - pkg.SnapEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3812,6 +3946,8 @@ catalogers:
           - pkg.SnapEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3836,6 +3972,8 @@ catalogers:
           - pkg.SnapEntry
         package_types: # AUTO-GENERATED
           - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3875,6 +4013,8 @@ catalogers:
           - pkg.SwiplPackEntry
         package_types: # AUTO-GENERATED
           - swiplpack
+        json_schema_types: # AUTO-GENERATED
+          - SwiplpackPackage
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3915,6 +4055,8 @@ catalogers:
           - pkg.TerraformLockProviderEntry
         package_types: # AUTO-GENERATED
           - terraform
+        json_schema_types: # AUTO-GENERATED
+          - TerraformLockProviderEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3954,6 +4096,8 @@ catalogers:
           - pkg.WordpressPluginEntry
         package_types: # AUTO-GENERATED
           - wordpress-plugin
+        json_schema_types: # AUTO-GENERATED
+          - WordpressPluginEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: true
