@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -124,5 +125,58 @@ func TestParseUvLock(t *testing.T) {
 		},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseUvLock, expectedPkgs, expectedRelationships)
+	uvLockParser := newUvLockParser(DefaultCatalogerConfig())
+	pkgtest.TestFileParser(t, fixture, uvLockParser.parseUvLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParseUvLockWithLicenseEnrichment(t *testing.T) {
+	ctx := context.TODO()
+	fixture := "test-fixtures/pypi-remote/uv.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+	mux, url, teardown := setupPypiRegistry()
+	defer teardown()
+	tests := []struct {
+		name             string
+		fixture          string
+		config           CatalogerConfig
+		requestHandlers  []handlerPath
+		expectedPackages []pkg.Package
+	}{
+		{
+			name:   "search remote licenses returns the expected licenses when search is set to true",
+			config: CatalogerConfig{SearchRemoteLicenses: true},
+			requestHandlers: []handlerPath{
+				{
+					path:    "/certifi/2025.10.5/json",
+					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+				},
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "certifi",
+					Version:   "2025.10.5",
+					Locations: locations,
+					PURL:      "pkg:pypi/certifi@2025.10.5",
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MPL-2.0")),
+					Language:  pkg.Python,
+					Type:      pkg.PythonPkg,
+					Metadata: pkg.PythonUvLockEntry{
+						Index:        "https://pypi.org/simple",
+						Dependencies: nil,
+					},
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// set up the mock server
+			for _, handler := range tc.requestHandlers {
+				mux.HandleFunc(handler.path, handler.handler)
+			}
+			tc.config.PypiBaseURL = url
+			uvLockParser := newUvLockParser(tc.config)
+			pkgtest.TestFileParser(t, fixture, uvLockParser.parseUvLock, tc.expectedPackages, nil)
+		})
+	}
 }

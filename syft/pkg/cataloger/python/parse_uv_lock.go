@@ -69,9 +69,21 @@ type uvMetadata struct {
 	ProvidesExtras []string       `toml:"provides-extras"`
 }
 
+type uvLockParser struct {
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
+}
+
+func newUvLockParser(cfg CatalogerConfig) uvLockParser {
+	return uvLockParser{
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
+	}
+}
+
 // parseUvLock is a parser function for uv.lock contents, returning all the pakcages discovered
-func parseUvLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	pkgs, err := uvLockPackages(reader)
+func (ulp uvLockParser) parseUvLock(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgs, err := ulp.uvLockPackages(ctx, reader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -127,7 +139,7 @@ func newPythonUvLockEntry(p uvPackage) pkg.PythonUvLockEntry {
 	}
 }
 
-func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
+func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.LocationReadCloser) ([]pkg.Package, error) {
 	var parsedLockFileVersion uvLockFileVersion
 
 	// we cannot use the reader twice, so we read the contents first --uv.lock files tend to be small enough
@@ -167,6 +179,8 @@ func uvLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 	for _, p := range parsedLockFile.Packages {
 		pkgs = append(pkgs,
 			newPackageForIndexWithMetadata(
+				ctx,
+				ulp.licenseResolver,
 				p.Name,
 				p.Version,
 				newPythonUvLockEntry(p),
