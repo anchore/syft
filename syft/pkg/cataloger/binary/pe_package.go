@@ -8,6 +8,7 @@ import (
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	packageurl "github.com/anchore/packageurl-go"
 )
 
 var (
@@ -30,6 +31,19 @@ func newPEPackage(versionResources map[string]string, f file.Location) pkg.Packa
 		Locations: file.NewLocationSet(f.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 		Type:      pkg.BinaryPkg,
 		Metadata:  newPEBinaryVersionResourcesFromMap(versionResources),
+	}
+
+	// If this appears to be Ghostscript, emit a canonical generic purl
+	// Example expected: pkg:generic/ghostscript@<version>
+	prod := strings.ToLower(spaceNormalize(versionResources["ProductName"]))
+	if prod == "" {
+		// fall back to FileDescription if ProductName is missing
+		prod = strings.ToLower(spaceNormalize(versionResources["FileDescription"]))
+	}
+	if p.Version != "" && strings.Contains(prod, "ghostscript") {
+		// build a generic PURL for ghostscript
+		purl := packageurl.NewPackageURL(packageurl.TypeGeneric, "", "ghostscript", p.Version, nil, "").ToString()
+		p.PURL = purl
 	}
 
 	p.SetID()
