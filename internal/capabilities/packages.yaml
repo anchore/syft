@@ -397,6 +397,7 @@ catalogers:
           - name: dependency.depth
             default:
               - direct
+              - indirect
           - name: dependency.edges
             default: complete
           - name: dependency.kinds
@@ -1144,7 +1145,7 @@ catalogers:
           - BitnamiSbomEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
-            default: false
+            default: true
           # the reach will vary for each ecosystem
           - name: dependency.depth
             default:
@@ -1517,6 +1518,9 @@ catalogers:
               - CondaMetaPackage.PathsData.Paths.SHA256
           - name: package_manager.package_integrity_hash
             default: true
+            evidence:
+              - CondaMetaPackage.MD5
+              - CondaMetaPackage.SHA256
   # Dart #############################################################################################################
   - ecosystem: dart # MANUAL
     name: dart-pubspec-cataloger # AUTO-GENERATED

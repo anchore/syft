@@ -1058,3 +1058,248 @@ func getTypeName(expr ast.Expr) string {
 		return "unknown"
 	}
 }
+
+// findMetadataStructFile finds the Go file containing a metadata struct definition
+// searches in syft/pkg/*.go for the given struct name
+// also handles type aliases and returns the underlying struct name
+func findMetadataStructFile(repoRoot, structName string) (filePath string, actualStructName string, err error) {
+	pkgDir := filepath.Join(repoRoot, "syft", "pkg")
+	files, err := filepath.Glob(filepath.Join(pkgDir, "*.go"))
+	if err != nil {
+		return "", "", err
+	}
+
+	for _, fpath := range files {
+		if strings.HasSuffix(fpath, "_test.go") {
+			continue
+		}
+
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, fpath, nil, 0)
+		if err != nil {
+			continue
+		}
+
+		// check if this file contains the struct definition or type alias
+		found := false
+		var resolvedName string
+		ast.Inspect(file, func(n ast.Node) bool {
+			typeSpec, ok := n.(*ast.TypeSpec)
+			if !ok || typeSpec.Name.Name != structName {
+				return true
+			}
+			// check if it's a struct type
+			if _, ok := typeSpec.Type.(*ast.StructType); ok {
+				found = true
+				resolvedName = structName
+				return false
+			}
+			// check if it's a type alias (e.g., type DpkgArchiveEntry DpkgDBEntry)
+			if ident, ok := typeSpec.Type.(*ast.Ident); ok {
+				found = true
+				resolvedName = ident.Name
+				return false
+			}
+			return true
+		})
+
+		if found {
+			// if it's a type alias, recursively find the underlying struct
+			if resolvedName != structName {
+				return findMetadataStructFile(repoRoot, resolvedName)
+			}
+			return fpath, structName, nil
+		}
+	}
+
+	return "", "", fmt.Errorf("struct %q not found in syft/pkg/", structName)
+}
+
+// parseEvidenceReference parses an evidence string like "StructName.Field" or "StructName.Field1.Field2"
+// into struct name and field path components
+// examples:
+//   - "CondaMetaPackage.MD5" -> ("CondaMetaPackage", []string{"MD5"})
+//   - "CondaMetaPackage.PathsData.Paths" -> ("CondaMetaPackage", []string{"PathsData", "Paths"})
+//   - "AlpmDBEntry.Files[].Digest" -> ("AlpmDBEntry", []string{"Files", "[]", "Digest"})
+func parseEvidenceReference(evidence string) (structName string, fieldPath []string, err error) {
+	parts := strings.Split(evidence, ".")
+	if len(parts) < 2 {
+		return "", nil, fmt.Errorf("invalid evidence format: %q (expected at least StructName.Field)", evidence)
+	}
+
+	structName = parts[0]
+	// process the remaining parts, splitting on [] for array notation
+	for _, part := range parts[1:] {
+		// check if this part contains array notation
+		if strings.Contains(part, "[]") {
+			// split on [] - e.g., "Files[]" becomes ["Files", ""]
+			subparts := strings.Split(part, "[]")
+			if len(subparts) > 0 && subparts[0] != "" {
+				fieldPath = append(fieldPath, subparts[0])
+			}
+			fieldPath = append(fieldPath, "[]")
+		} else {
+			fieldPath = append(fieldPath, part)
+		}
+	}
+
+	return structName, fieldPath, nil
+}
+
+// validateFieldPath validates that a field path exists in a struct definition
+// handles simple fields, nested fields, and array element fields
+// fieldPath can contain "[]" to indicate array dereferencing
+func validateFieldPath(repoRoot, structName string, fieldPath []string) error {
+	if len(fieldPath) == 0 {
+		return fmt.Errorf("empty field path")
+	}
+
+	// find the file containing the struct (handles type aliases)
+	filePath, actualStructName, err := findMetadataStructFile(repoRoot, structName)
+	if err != nil {
+		return err
+	}
+
+	// parse the file
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, filePath, nil, 0)
+	if err != nil {
+		return fmt.Errorf("failed to parse %s: %w", filePath, err)
+	}
+
+	// find the struct fields using the actual struct name
+	fields := findStructFields(file, actualStructName)
+	if len(fields) == 0 {
+		return fmt.Errorf("struct %q not found in %s", actualStructName, filePath)
+	}
+
+	// validate each component of the field path
+	currentFields := fields
+	currentStructName := actualStructName
+	for i, component := range fieldPath {
+		if component == "[]" {
+			// array dereference - this is a no-op for validation
+			// the previous component should have been an array type
+			continue
+		}
+
+		fieldType, exists := currentFields[component]
+		if !exists {
+			return fmt.Errorf("field %q not found in struct %q (path: %s)", component, currentStructName, strings.Join(fieldPath[:i+1], "."))
+		}
+
+		// if there are more components, we need to navigate to the next struct
+		if i < len(fieldPath)-1 {
+			// extract the actual type name, removing pointer/array/slice markers
+			typeName := strings.TrimPrefix(fieldType, "*")
+			typeName = strings.TrimPrefix(typeName, "[]")
+
+			// if it's not a simple type name (e.g., "CondaPathsData"), skip validation
+			// this handles primitive types that don't have further fields
+			if strings.Contains(typeName, ".") {
+				// qualified type like "pkg.Something" - extract just "Something"
+				parts := strings.Split(typeName, ".")
+				typeName = parts[len(parts)-1]
+			}
+
+			// try to find the nested struct (handles type aliases)
+			nestedFilePath, nestedStructName, err := findMetadataStructFile(repoRoot, typeName)
+			if err != nil {
+				// if we can't find the struct, it might be a primitive or external type
+				// we'll allow this to pass
+				continue
+			}
+
+			nestedFset := token.NewFileSet()
+			nestedFile, err := parser.ParseFile(nestedFset, nestedFilePath, nil, 0)
+			if err != nil {
+				continue
+			}
+
+			currentFields = findStructFields(nestedFile, nestedStructName)
+			currentStructName = nestedStructName
+			if len(currentFields) == 0 {
+				// couldn't load the nested struct, but we found the field, so allow it
+				continue
+			}
+		}
+	}
+
+	return nil
+}
+
+// TestCapabilityEvidenceFieldReferences validates that evidence field references in capabilities
+// actually exist on their corresponding metadata structs
+func TestCapabilityEvidenceFieldReferences(t *testing.T) {
+	repoRoot, err := RepoRoot()
+	require.NoError(t, err)
+
+	// load the packages.yaml
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages.yaml"))
+	require.NoError(t, err)
+
+	// collect all evidence field references
+	type evidenceRef struct {
+		catalogerName  string
+		parserFunction string // empty for cataloger-level
+		capabilityName string
+		evidenceField  string
+	}
+
+	var allReferences []evidenceRef
+
+	// collect from cataloger-level capabilities (custom catalogers)
+	for _, cataloger := range doc.Catalogers {
+		if cataloger.Type == "custom" && len(cataloger.Capabilities) > 0 {
+			for _, capField := range cataloger.Capabilities {
+				for _, evidence := range capField.Evidence {
+					allReferences = append(allReferences, evidenceRef{
+						catalogerName:  cataloger.Name,
+						capabilityName: capField.Name,
+						evidenceField:  evidence,
+					})
+				}
+			}
+		}
+
+		// collect from parser-level capabilities (generic catalogers)
+		if cataloger.Type == "generic" {
+			for _, parser := range cataloger.Parsers {
+				if len(parser.Capabilities) > 0 {
+					for _, capField := range parser.Capabilities {
+						for _, evidence := range capField.Evidence {
+							allReferences = append(allReferences, evidenceRef{
+								catalogerName:  cataloger.Name,
+								parserFunction: parser.ParserFunction,
+								capabilityName: capField.Name,
+								evidenceField:  evidence,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// validate each evidence reference
+	for _, ref := range allReferences {
+		ref := ref // capture for subtest
+
+		// create test name
+		testName := ref.catalogerName
+		if ref.parserFunction != "" {
+			testName = fmt.Sprintf("%s/%s", ref.catalogerName, ref.parserFunction)
+		}
+		testName = fmt.Sprintf("%s/%s/%s", testName, ref.capabilityName, ref.evidenceField)
+
+		t.Run(testName, func(t *testing.T) {
+			// parse the evidence reference
+			structName, fieldPath, err := parseEvidenceReference(ref.evidenceField)
+			require.NoError(t, err, "failed to parse evidence reference")
+
+			// validate the field path exists
+			err = validateFieldPath(repoRoot, structName, fieldPath)
+			require.NoError(t, err, "evidence field reference is invalid")
+		})
+	}
+}
