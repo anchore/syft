@@ -138,6 +138,8 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 		Ecosystem    string                     `json:"ecosystem,omitempty"`
 		Name         string                     `json:"name"`
 		Type         string                     `json:"type"`
+		Selectors    []string                   `json:"selectors,omitempty"`
+		Deprecated   bool                       `json:"deprecated,omitempty"`
 		Patterns     []patternInfo              `json:"patterns,omitempty"`
 		Capabilities capabilities.CapabilitySet `json:"capabilities,omitempty"`
 		Config       *configInfo                `json:"config,omitempty"`
@@ -154,6 +156,15 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 			Ecosystem: cat.Ecosystem,
 			Name:      cat.Name,
 			Type:      cat.Type,
+			Selectors: cat.Selectors,
+		}
+
+		// check if cataloger is deprecated based on selectors
+		for _, selector := range cat.Selectors {
+			if selector == "deprecated" {
+				info.Deprecated = true
+				break
+			}
 		}
 
 		for _, parser := range cat.Parsers {

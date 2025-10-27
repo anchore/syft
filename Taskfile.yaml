@@ -497,6 +497,7 @@ tasks:
     desc: Add data generation tasks
     cmds:
       - task: generate-json-schema
+      - task: generate-capabilities
       - task: generate-license-list
       - task: generate-cpe-dictionary-index
 
@@ -516,6 +517,12 @@ tasks:
     dir: "syft/pkg/cataloger/internal/cpegenerate/dictionary"
     cmds:
       - "go generate"
+
+  generate-capabilities:
+    desc: Generate the capabilities data file
+    cmds:
+      - "go generate ./internal/capabilities/..."
+      - "gofmt -s -w ./internal/capabilities"
 
 
   ## Build-related targets #################################

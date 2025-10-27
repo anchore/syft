@@ -546,7 +546,10 @@ func (m *CatalogerMerger) processGenericCataloger(existingEntry *capabilities.Ca
 // processCustomCataloger processes an existing custom cataloger entry
 func (m *CatalogerMerger) processCustomCataloger(existingEntry *capabilities.CatalogerEntry, info *capabilities.CatalogerInfo) {
 	entry := *existingEntry
-	entry.Ecosystem = inferEcosystem(existingEntry.Name)
+	// only infer ecosystem if not manually set (ecosystem is MANUAL)
+	if existingEntry.Ecosystem == "" {
+		entry.Ecosystem = inferEcosystem(existingEntry.Name)
+	}
 	entry.Selectors = info.Selectors
 
 	// update config field from discovered mappings (AUTO-GENERATED)
@@ -631,8 +634,10 @@ func updateEntry(existing *capabilities.CatalogerEntry, discovered DiscoveredCat
 		updated.Config = ""
 	}
 
-	// always re-infer ecosystem (it's MANUAL so users can override if needed)
-	updated.Ecosystem = inferEcosystem(discovered.Name)
+	// only infer ecosystem if not manually set (ecosystem is MANUAL)
+	if existing.Ecosystem == "" {
+		updated.Ecosystem = inferEcosystem(discovered.Name)
+	}
 
 	var orphans []orphanInfo
 	var newParsers []string

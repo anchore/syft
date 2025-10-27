@@ -313,7 +313,7 @@ configs: # AUTO-GENERATED - config structs and their fields
         app_key: python.guess-unpinned-requirements
 catalogers:
   # alpm (arch / pacman) #################################################################################################
-  - ecosystem: arch # MANUAL
+  - ecosystem: alpm # MANUAL
     name: alpm-db-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -1400,7 +1400,10 @@ catalogers:
           - name: package_manager.files.digests
             default: false
           - name: package_manager.package_integrity_hash
-            default: false
+            default: true
+            evidence:
+              - ConanV1LockEntry.Ref
+              - ConanV2LockEntry.RecipeRevision
       - function: parseConanfile # AUTO-GENERATED
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
@@ -1608,7 +1611,7 @@ catalogers:
           - name: package_manager.package_integrity_hash
             default: false
   # Dpkg (debian) ###################################################################################################
-  - ecosystem: debian # MANUAL
+  - ecosystem: dpkg # MANUAL
     name: dpkg-db-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -1660,7 +1663,7 @@ catalogers:
               - DpkgDBEntry.Files[].Digest
           - name: package_manager.package_integrity_hash
             default: false
-  - ecosystem: debian # MANUAL
+  - ecosystem: dpkg # MANUAL
     name: deb-archive-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -3250,7 +3253,7 @@ catalogers:
           - name: package_manager.package_integrity_hash
             default: false
   # Portage (gentoo) ########################################################################################################
-  - ecosystem: gentoo # MANUAL
+  - ecosystem: portage # MANUAL
     name: portage-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
@@ -3492,11 +3495,13 @@ catalogers:
           - name: license
             default: false
           - name: dependency.depth
-            default: []
+            default:
+              - direct
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
-            default: []
+            default:
+              - any
           - name: package_manager.files.listing
             default: false
           - name: package_manager.files.digests
@@ -3575,13 +3580,11 @@ catalogers:
           - name: license
             default: true
           - name: dependency.depth
-            default:
-              - direct
+            default: []
           - name: dependency.edges
-            default: complete
+            default: ""
           - name: dependency.kinds
-            default:
-              - runtime
+            default: []
           - name: package_manager.files.listing
             default: true
             evidence:
@@ -4078,6 +4081,8 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: true
+            evidence:
+              - TerraformLockProviderEntry.Hashes
   # WordPress ######################################################################################################
   - ecosystem: wordpress # MANUAL
     name: wordpress-plugins-cataloger # AUTO-GENERATED
