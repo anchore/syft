@@ -54,6 +54,21 @@ func Test_Backfill(t *testing.T) {
 			},
 		},
 		{
+			name: "rpm with rpmmod",
+			in: pkg.Package{
+				PURL: "pkg:rpm/redhat/httpd@2.4.37-51?arch=x86_64&distro=rhel-8.7&rpmmod=httpd:2.4",
+			},
+			expected: pkg.Package{
+				PURL:    "pkg:rpm/redhat/httpd@2.4.37-51?arch=x86_64&distro=rhel-8.7&rpmmod=httpd:2.4",
+				Type:    pkg.RpmPkg,
+				Name:    "httpd",
+				Version: "2.4.37-51",
+				Metadata: pkg.RpmDBEntry{
+					ModularityLabel: strRef("httpd:2.4"),
+				},
+			},
+		},
+		{
 			name: "bad cpe",
 			in: pkg.Package{
 				PURL: "pkg:npm/testp@3.0.0?cpes=cpe:2.3a:testv:testp:3.0.0:*:*:*:*:*:*:*",
@@ -170,4 +185,8 @@ func Test_nameFromPurl(t *testing.T) {
 			require.Equal(t, tt.expected, got)
 		})
 	}
+}
+
+func strRef(s string) *string {
+	return &s
 }
