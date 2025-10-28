@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
@@ -14,8 +16,16 @@ func Cataloger(app clio.Application) *cobra.Command {
 
 	cmd.AddCommand(
 		CatalogerList(app),
-		CatalogerInfo(app),
 	)
 
+	// only add cataloger info command if experimental capabilities feature is enabled
+	if isCapabilitiesExperimentEnabled() {
+		cmd.AddCommand(CatalogerInfo(app))
+	}
+
 	return cmd
+}
+
+func isCapabilitiesExperimentEnabled() bool {
+	return os.Getenv("SYFT_EXP_CAPABILITIES") == "true"
 }

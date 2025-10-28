@@ -65,40 +65,11 @@ type Statistics struct {
 func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, error) {
 	stats := &Statistics{}
 
-	// 1. Discover generic catalogers from code
-	fmt.Print("  → Scanning source code for generic catalogers...")
-	discovered, err := discoverGenericCatalogers(repoRoot)
+	// 1-2. Discover all cataloger data
+	discovered, customCatalogerMetadata, customCatalogerPackageTypes, binaryClassifiers, allCatalogers, err := discoverAllCatalogerData(repoRoot, stats)
 	if err != nil {
-		return nil, fmt.Errorf("failed to discover catalogers: %w", err)
+		return nil, err
 	}
-	stats.TotalGenericCatalogers = len(discovered)
-	fmt.Printf(" found %d\n", stats.TotalGenericCatalogers)
-
-	// 1a. Discover metadata types and package types from test-generated JSON files
-	fmt.Print("  → Searching for metadata type and package type information...")
-	customCatalogerMetadata, customCatalogerPackageTypes, err := discoverMetadataTypes(repoRoot, discovered)
-	if err != nil {
-		return nil, fmt.Errorf("failed to discover metadata types: %w", err)
-	}
-	fmt.Println(" done")
-
-	// 1b. Extract binary classifiers
-	fmt.Print("  → Extracting binary classifiers...")
-	binaryClassifiers := extractBinaryClassifiers()
-	fmt.Printf(" found %d classifiers\n", len(binaryClassifiers))
-
-	// Count parser functions
-	for _, disc := range discovered {
-		stats.TotalParserFunctions += len(disc.Parsers)
-	}
-
-	// 2. Get all package cataloger info (names and selectors)
-	fmt.Print("  → Fetching all cataloger info from syft...")
-	allCatalogers, err := allPackageCatalogerInfo()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cataloger info: %w", err)
-	}
-	fmt.Printf(" found %d total\n", len(allCatalogers))
 
 	// 3. Load existing YAML (if exists) - now returns both document and node tree
 	fmt.Print("  → Loading existing packages.yaml...")
@@ -108,107 +79,24 @@ func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, erro
 	}
 	fmt.Printf(" loaded %d entries\n", len(existing.Catalogers))
 
-	// 3a. Discover cataloger config structs
-	fmt.Print("  → Discovering cataloger config structs...")
-	configInfoMap, err := DiscoverConfigs(repoRoot)
+	// 3a-3c. Discover and process all config-related information
+	discoveredConfigs, err := discoverAndFilterConfigs(repoRoot)
 	if err != nil {
-		return nil, fmt.Errorf("failed to discover configs: %w", err)
+		return nil, err
 	}
-	fmt.Printf(" found %d\n", len(configInfoMap))
 
-	// 3a-1. Get whitelist of allowed config structs from pkgcataloging.Config
-	fmt.Print("  → Filtering configs by pkgcataloging.Config whitelist...")
-	allowedConfigs, err := DiscoverAllowedConfigStructs(repoRoot)
+	discoveredAppConfigs, err := discoverAndConvertAppConfigs(repoRoot)
 	if err != nil {
-		return nil, fmt.Errorf("failed to discover allowed config structs: %w", err)
+		return nil, err
 	}
 
-	// filter discovered configs to only include allowed ones
-	filteredConfigInfoMap := make(map[string]ConfigInfo)
-	for key, configInfo := range configInfoMap {
-		if allowedConfigs[key] {
-			filteredConfigInfoMap[key] = configInfo
-		}
-	}
-	fmt.Printf(" %d allowed (filtered %d)\n", len(filteredConfigInfoMap), len(configInfoMap)-len(filteredConfigInfoMap))
-
-	// convert ConfigInfo to CatalogerConfigEntry format for packages.yaml
-	discoveredConfigs := make(map[string]capabilities.CatalogerConfigEntry)
-	for key, configInfo := range filteredConfigInfoMap {
-		fields := make([]capabilities.CatalogerConfigFieldEntry, len(configInfo.Fields))
-		for i, field := range configInfo.Fields {
-			fields[i] = capabilities.CatalogerConfigFieldEntry{
-				Key:         field.Name,
-				Description: field.Description,
-				AppKey:      field.AppKey,
-			}
-		}
-		discoveredConfigs[key] = capabilities.CatalogerConfigEntry{
-			Fields: fields,
-		}
-	}
-
-	// 3b. Discover app-level configs
-	fmt.Print("  → Discovering app-level config fields...")
-	appConfigFields, err := DiscoverAppConfigs(repoRoot)
-	if err != nil {
-		return nil, fmt.Errorf("failed to discover app configs: %w", err)
-	}
-	fmt.Printf(" found %d\n", len(appConfigFields))
-
-	// convert to ApplicationConfigField format
-	discoveredAppConfigs := make([]capabilities.ApplicationConfigField, len(appConfigFields))
-	for i, field := range appConfigFields {
-		discoveredAppConfigs[i] = capabilities.ApplicationConfigField{
-			Key:          field.Key,
-			Description:  field.Description,
-			DefaultValue: field.DefaultValue,
-		}
-	}
-
-	// 3c. Link catalogers to their configs
-	fmt.Print("  → Linking catalogers to config structs...")
 	catalogerConfigMappings, err := LinkCatalogersToConfigs(repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to link catalogers to configs: %w", err)
 	}
-	fmt.Printf(" found %d mappings\n", len(catalogerConfigMappings))
+	fmt.Printf("  → Linking catalogers to config structs... found %d mappings\n", len(catalogerConfigMappings))
 
-	// 3c-1. Filter cataloger config mappings by exceptions
-	// Remove any catalogers that should not have config fields
-	fmt.Print("  → Filtering cataloger config mappings by exceptions...")
-	filteredCatalogerConfigMappings := make(map[string]string)
-	filteredCount := 0
-	for catalogerName, configName := range catalogerConfigMappings {
-		if catalogerConfigExceptions.Has(catalogerName) {
-			filteredCount++
-			continue
-		}
-		filteredCatalogerConfigMappings[catalogerName] = configName
-	}
-	if filteredCount > 0 {
-		fmt.Printf(" filtered %d\n", filteredCount)
-	} else {
-		fmt.Println(" none")
-	}
-
-	// 3c-2. Merge manual config overrides
-	// Manual overrides take precedence over discovered mappings
-	fmt.Print("  → Merging manual config overrides...")
-	overrideCount := 0
-	for catalogerName, configName := range catalogerConfigOverrides {
-		if catalogerConfigExceptions.Has(catalogerName) {
-			// skip if this cataloger is in the exceptions list
-			continue
-		}
-		filteredCatalogerConfigMappings[catalogerName] = configName
-		overrideCount++
-	}
-	if overrideCount > 0 {
-		fmt.Printf(" added %d\n", overrideCount)
-	} else {
-		fmt.Println(" none")
-	}
+	filteredCatalogerConfigMappings := applyConfigMappingFilters(catalogerConfigMappings)
 
 	// 4. Build updated catalogers list
 	fmt.Println("  → Merging discovered catalogers with existing entries...")
@@ -242,6 +130,156 @@ func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, erro
 	fmt.Println(" done")
 
 	return stats, nil
+}
+
+// discoverAllCatalogerData discovers all cataloger-related data including generic catalogers, metadata, binary classifiers, and all catalogers
+func discoverAllCatalogerData(repoRoot string, stats *Statistics) (
+	map[string]DiscoveredCataloger,
+	map[string][]string,
+	map[string][]string,
+	[]binary.Classifier, //nolint:staticcheck
+	[]capabilities.CatalogerInfo,
+	error,
+) {
+	// discover generic catalogers
+	fmt.Print("  → Scanning source code for generic catalogers...")
+	discovered, err := discoverGenericCatalogers(repoRoot)
+	if err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to discover catalogers: %w", err)
+	}
+	stats.TotalGenericCatalogers = len(discovered)
+	fmt.Printf(" found %d\n", stats.TotalGenericCatalogers)
+
+	// discover metadata types
+	fmt.Print("  → Searching for metadata type and package type information...")
+	customCatalogerMetadata, customCatalogerPackageTypes, err := discoverMetadataTypes(repoRoot, discovered)
+	if err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to discover metadata types: %w", err)
+	}
+	fmt.Println(" done")
+
+	// extract binary classifiers
+	fmt.Print("  → Extracting binary classifiers...")
+	binaryClassifiers := extractBinaryClassifiers()
+	fmt.Printf(" found %d classifiers\n", len(binaryClassifiers))
+
+	// count parser functions
+	for _, disc := range discovered {
+		stats.TotalParserFunctions += len(disc.Parsers)
+	}
+
+	// get all cataloger info
+	fmt.Print("  → Fetching all cataloger info from syft...")
+	allCatalogers, err := allPackageCatalogerInfo()
+	if err != nil {
+		return nil, nil, nil, nil, nil, fmt.Errorf("failed to get cataloger info: %w", err)
+	}
+	fmt.Printf(" found %d total\n", len(allCatalogers))
+
+	return discovered, customCatalogerMetadata, customCatalogerPackageTypes, binaryClassifiers, allCatalogers, nil
+}
+
+// discoverAndFilterConfigs discovers cataloger config structs, filters by whitelist, and converts to capabilities format
+func discoverAndFilterConfigs(repoRoot string) (map[string]capabilities.CatalogerConfigEntry, error) {
+	fmt.Print("  → Discovering cataloger config structs...")
+	configInfoMap, err := DiscoverConfigs(repoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover configs: %w", err)
+	}
+	fmt.Printf(" found %d\n", len(configInfoMap))
+
+	fmt.Print("  → Filtering configs by pkgcataloging.Config whitelist...")
+	allowedConfigs, err := DiscoverAllowedConfigStructs(repoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover allowed config structs: %w", err)
+	}
+
+	// filter discovered configs to only include allowed ones
+	filteredConfigInfoMap := make(map[string]ConfigInfo)
+	for key, configInfo := range configInfoMap {
+		if allowedConfigs[key] {
+			filteredConfigInfoMap[key] = configInfo
+		}
+	}
+	fmt.Printf(" %d allowed (filtered %d)\n", len(filteredConfigInfoMap), len(configInfoMap)-len(filteredConfigInfoMap))
+
+	// convert ConfigInfo to CatalogerConfigEntry format for packages.yaml
+	discoveredConfigs := make(map[string]capabilities.CatalogerConfigEntry)
+	for key, configInfo := range filteredConfigInfoMap {
+		fields := make([]capabilities.CatalogerConfigFieldEntry, len(configInfo.Fields))
+		for i, field := range configInfo.Fields {
+			fields[i] = capabilities.CatalogerConfigFieldEntry{
+				Key:         field.Name,
+				Description: field.Description,
+				AppKey:      field.AppKey,
+			}
+		}
+		discoveredConfigs[key] = capabilities.CatalogerConfigEntry{
+			Fields: fields,
+		}
+	}
+
+	return discoveredConfigs, nil
+}
+
+// discoverAndConvertAppConfigs discovers app-level config fields and converts them to capabilities format
+func discoverAndConvertAppConfigs(repoRoot string) ([]capabilities.ApplicationConfigField, error) {
+	fmt.Print("  → Discovering app-level config fields...")
+	appConfigFields, err := DiscoverAppConfigs(repoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover app configs: %w", err)
+	}
+	fmt.Printf(" found %d\n", len(appConfigFields))
+
+	// convert to ApplicationConfigField format
+	discoveredAppConfigs := make([]capabilities.ApplicationConfigField, len(appConfigFields))
+	for i, field := range appConfigFields {
+		discoveredAppConfigs[i] = capabilities.ApplicationConfigField{
+			Key:          field.Key,
+			Description:  field.Description,
+			DefaultValue: field.DefaultValue,
+		}
+	}
+
+	return discoveredAppConfigs, nil
+}
+
+// applyConfigMappingFilters applies exceptions and manual overrides to cataloger config mappings
+func applyConfigMappingFilters(catalogerConfigMappings map[string]string) map[string]string {
+	// filter by exceptions
+	fmt.Print("  → Filtering cataloger config mappings by exceptions...")
+	filteredCatalogerConfigMappings := make(map[string]string)
+	filteredCount := 0
+	for catalogerName, configName := range catalogerConfigMappings {
+		if catalogerConfigExceptions.Has(catalogerName) {
+			filteredCount++
+			continue
+		}
+		filteredCatalogerConfigMappings[catalogerName] = configName
+	}
+	if filteredCount > 0 {
+		fmt.Printf(" filtered %d\n", filteredCount)
+	} else {
+		fmt.Println(" none")
+	}
+
+	// merge manual overrides
+	fmt.Print("  → Merging manual config overrides...")
+	overrideCount := 0
+	for catalogerName, configName := range catalogerConfigOverrides {
+		if catalogerConfigExceptions.Has(catalogerName) {
+			continue
+		}
+		filteredCatalogerConfigMappings[catalogerName] = configName
+		overrideCount++
+	}
+	if overrideCount > 0 {
+		fmt.Printf(" added %d\n", overrideCount)
+	} else {
+		fmt.Println(" none")
+	}
+
+	return filteredCatalogerConfigMappings
 }
 
 type orphanInfo struct {
@@ -301,11 +339,11 @@ func (r *CatalogerRegistry) AllCatalogers() []capabilities.CatalogerInfo {
 type EnrichmentData struct {
 	metadata          map[string][]string
 	packageTypes      map[string][]string
-	binaryClassifiers []binary.Classifier
+	binaryClassifiers []binary.Classifier //nolint:staticcheck
 }
 
 // NewEnrichmentData creates a new enrichment data container
-func NewEnrichmentData(metadata, packageTypes map[string][]string, binaryClassifiers []binary.Classifier) *EnrichmentData {
+func NewEnrichmentData(metadata, packageTypes map[string][]string, binaryClassifiers []binary.Classifier) *EnrichmentData { //nolint:staticcheck
 	return &EnrichmentData{
 		metadata:          metadata,
 		packageTypes:      packageTypes,
@@ -584,7 +622,7 @@ func mergeDiscoveredWithExisting(
 	discovered map[string]DiscoveredCataloger,
 	customMetadata map[string][]string,
 	customPackageTypes map[string][]string,
-	binaryClassifiers []binary.Classifier,
+	binaryClassifiers []binary.Classifier, //nolint:staticcheck
 	allCatalogers []capabilities.CatalogerInfo,
 	existing *capabilities.Document,
 	configs map[string]capabilities.CatalogerConfigEntry,

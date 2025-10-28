@@ -27,6 +27,50 @@ var (
 	criteriaMargin = 10
 )
 
+// types for JSON cataloger info output
+type (
+	configFieldInfo struct {
+		Key         string `json:"key"`
+		Description string `json:"description"`
+		AppKey      string `json:"app_key,omitempty"`
+	}
+
+	configInfo struct {
+		Type   string            `json:"type"`
+		Fields []configFieldInfo `json:"fields,omitempty"`
+	}
+
+	detectorPackageInfo struct {
+		Class string   `json:"class"`
+		Name  string   `json:"name"`
+		PURL  string   `json:"purl"`
+		CPEs  []string `json:"cpes"`
+		Type  string   `json:"type"`
+	}
+
+	patternInfo struct {
+		Method          string                           `json:"method"`
+		Criteria        []string                         `json:"criteria"`
+		Conditions      []capabilities.DetectorCondition `json:"conditions,omitempty"`
+		Packages        []detectorPackageInfo            `json:"packages,omitempty"`
+		Comment         string                           `json:"comment,omitempty"`
+		PackageTypes    []string                         `json:"package_types,omitempty"`
+		JSONSchemaTypes []string                         `json:"json_schema_types,omitempty"`
+		Capabilities    capabilities.CapabilitySet       `json:"capabilities,omitempty"`
+	}
+
+	catalogerInfo struct {
+		Ecosystem    string                     `json:"ecosystem,omitempty"`
+		Name         string                     `json:"name"`
+		Type         string                     `json:"type"`
+		Selectors    []string                   `json:"selectors,omitempty"`
+		Deprecated   bool                       `json:"deprecated,omitempty"`
+		Patterns     []patternInfo              `json:"patterns,omitempty"`
+		Capabilities capabilities.CapabilitySet `json:"capabilities,omitempty"`
+		Config       *configInfo                `json:"config,omitempty"`
+	}
+)
+
 type catalogerInfoOptions struct {
 	Output string   `yaml:"output" json:"output" mapstructure:"output"`
 	Names  []string // cataloger names from args
@@ -73,6 +117,7 @@ func runCatalogerInfo(opts *catalogerInfoOptions) error {
 	}
 
 	bus.Report(report)
+	bus.Notify("Note: the `cataloger info` command is experimental and may change or be removed without notice. Do not depend on its output in production systems.")
 
 	return nil
 }
@@ -104,47 +149,6 @@ func catalogerInfoReport(opts *catalogerInfoOptions, doc *capabilities.Document,
 }
 
 func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabilities.CatalogerEntry) (string, error) {
-	type configFieldInfo struct {
-		Key         string `json:"key"`
-		Description string `json:"description"`
-		AppKey      string `json:"app_key,omitempty"`
-	}
-
-	type configInfo struct {
-		Type   string            `json:"type"`
-		Fields []configFieldInfo `json:"fields,omitempty"`
-	}
-
-	type detectorPackageInfo struct {
-		Class string   `json:"class"`
-		Name  string   `json:"name"`
-		PURL  string   `json:"purl"`
-		CPEs  []string `json:"cpes"`
-		Type  string   `json:"type"`
-	}
-
-	type patternInfo struct {
-		Method          string                           `json:"method"`
-		Criteria        []string                         `json:"criteria"`
-		Conditions      []capabilities.DetectorCondition `json:"conditions,omitempty"`
-		Packages        []detectorPackageInfo            `json:"packages,omitempty"`
-		Comment         string                           `json:"comment,omitempty"`
-		PackageTypes    []string                         `json:"package_types,omitempty"`
-		JSONSchemaTypes []string                         `json:"json_schema_types,omitempty"`
-		Capabilities    capabilities.CapabilitySet       `json:"capabilities,omitempty"`
-	}
-
-	type catalogerInfo struct {
-		Ecosystem    string                     `json:"ecosystem,omitempty"`
-		Name         string                     `json:"name"`
-		Type         string                     `json:"type"`
-		Selectors    []string                   `json:"selectors,omitempty"`
-		Deprecated   bool                       `json:"deprecated,omitempty"`
-		Patterns     []patternInfo              `json:"patterns,omitempty"`
-		Capabilities capabilities.CapabilitySet `json:"capabilities,omitempty"`
-		Config       *configInfo                `json:"config,omitempty"`
-	}
-
 	type document struct {
 		Catalogers []catalogerInfo `json:"catalogers"`
 	}
@@ -153,98 +157,111 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 
 	for _, cat := range catalogers {
 		info := catalogerInfo{
-			Ecosystem: cat.Ecosystem,
-			Name:      cat.Name,
-			Type:      cat.Type,
-			Selectors: cat.Selectors,
+			Ecosystem:  cat.Ecosystem,
+			Name:       cat.Name,
+			Type:       cat.Type,
+			Selectors:  cat.Selectors,
+			Deprecated: isDeprecatedCataloger(cat.Selectors),
 		}
 
-		// check if cataloger is deprecated based on selectors
-		for _, selector := range cat.Selectors {
-			if selector == "deprecated" {
-				info.Deprecated = true
-				break
-			}
-		}
+		// convert parsers to patterns if available
+		info.Patterns = convertParsersToPatterns(cat.Parsers)
 
-		for _, parser := range cat.Parsers {
-			// convert detector packages
-			var pkgs []detectorPackageInfo
-			for _, pkg := range parser.Detector.Packages {
-				pkgs = append(pkgs, detectorPackageInfo{
-					Class: pkg.Class,
-					Name:  pkg.Name,
-					PURL:  pkg.PURL,
-					CPEs:  pkg.CPEs,
-					Type:  pkg.Type,
-				})
-			}
-
-			pi := patternInfo{
-				Method:          string(parser.Detector.Method),
-				Criteria:        parser.Detector.Criteria,
-				Conditions:      parser.Detector.Conditions,
-				Packages:        pkgs,
-				Comment:         parser.Detector.Comment,
-				PackageTypes:    parser.PackageTypes,
-				JSONSchemaTypes: parser.JSONSchemaTypes,
-				Capabilities:    parser.Capabilities,
-			}
-
-			info.Patterns = append(info.Patterns, pi)
-		}
-
+		// if no parsers, use detectors instead
 		if len(info.Patterns) == 0 {
 			info.Capabilities = cat.Capabilities
-
-			for _, det := range cat.Detectors {
-				// convert detector packages
-				var pkgs []detectorPackageInfo
-				for _, pkg := range det.Packages {
-					pkgs = append(pkgs, detectorPackageInfo{
-						Class: pkg.Class,
-						Name:  pkg.Name,
-						PURL:  pkg.PURL,
-						CPEs:  pkg.CPEs,
-						Type:  pkg.Type,
-					})
-				}
-
-				pi := patternInfo{
-					Method:          string(det.Method),
-					Criteria:        det.Criteria,
-					Conditions:      det.Conditions,
-					Packages:        pkgs,
-					Comment:         det.Comment,
-					PackageTypes:    cat.PackageTypes,
-					JSONSchemaTypes: cat.JSONSchemaTypes,
-				}
-				info.Patterns = append(info.Patterns, pi)
-			}
+			info.Patterns = convertDetectorsToPatterns(cat.Detectors, cat.PackageTypes, cat.JSONSchemaTypes)
 		}
 
-		// add config information
-		if cat.Config != "" {
-			if configEntry, ok := doc.Configs[cat.Config]; ok {
-				cfg := &configInfo{
-					Type: cat.Config,
-				}
-				for _, field := range configEntry.Fields {
-					cfg.Fields = append(cfg.Fields, configFieldInfo{
-						Key:         field.Key,
-						Description: field.Description,
-						AppKey:      field.AppKey,
-					})
-				}
-				info.Config = cfg
-			}
-		}
+		info.Config = getConfigInfoFromDocument(doc, cat.Config)
 
 		docOut.Catalogers = append(docOut.Catalogers, info)
 	}
 
 	by, err := json.Marshal(docOut)
 	return string(by), err
+}
+
+// isDeprecatedCataloger checks if a cataloger is deprecated based on its selectors
+func isDeprecatedCataloger(selectors []string) bool {
+	for _, selector := range selectors {
+		if selector == "deprecated" {
+			return true
+		}
+	}
+	return false
+}
+
+// convertDetectorPackages converts detector package info to the JSON output format
+func convertDetectorPackages(pkgs []capabilities.DetectorPackageInfo) []detectorPackageInfo {
+	var result []detectorPackageInfo
+	for _, pkg := range pkgs {
+		result = append(result, detectorPackageInfo{
+			Class: pkg.Class,
+			Name:  pkg.Name,
+			PURL:  pkg.PURL,
+			CPEs:  pkg.CPEs,
+			Type:  pkg.Type,
+		})
+	}
+	return result
+}
+
+// convertParsersToPatterns converts parser entries to pattern info for JSON output
+func convertParsersToPatterns(parsers []capabilities.Parser) []patternInfo {
+	var patterns []patternInfo
+	for _, parser := range parsers {
+		patterns = append(patterns, patternInfo{
+			Method:          string(parser.Detector.Method),
+			Criteria:        parser.Detector.Criteria,
+			Conditions:      parser.Detector.Conditions,
+			Packages:        convertDetectorPackages(parser.Detector.Packages),
+			Comment:         parser.Detector.Comment,
+			PackageTypes:    parser.PackageTypes,
+			JSONSchemaTypes: parser.JSONSchemaTypes,
+			Capabilities:    parser.Capabilities,
+		})
+	}
+	return patterns
+}
+
+// convertDetectorsToPatterns converts detector entries to pattern info for JSON output (for non-parser catalogers)
+func convertDetectorsToPatterns(detectors []capabilities.Detector, packageTypes, jsonSchemaTypes []string) []patternInfo {
+	var patterns []patternInfo
+	for _, det := range detectors {
+		patterns = append(patterns, patternInfo{
+			Method:          string(det.Method),
+			Criteria:        det.Criteria,
+			Conditions:      det.Conditions,
+			Packages:        convertDetectorPackages(det.Packages),
+			Comment:         det.Comment,
+			PackageTypes:    packageTypes,
+			JSONSchemaTypes: jsonSchemaTypes,
+		})
+	}
+	return patterns
+}
+
+// getConfigInfoFromDocument retrieves config info from the capabilities document
+func getConfigInfoFromDocument(doc *capabilities.Document, configType string) *configInfo {
+	if configType == "" {
+		return nil
+	}
+	configEntry, ok := doc.Configs[configType]
+	if !ok {
+		return nil
+	}
+	cfg := &configInfo{
+		Type: configType,
+	}
+	for _, field := range configEntry.Fields {
+		cfg.Fields = append(cfg.Fields, configFieldInfo{
+			Key:         field.Key,
+			Description: field.Description,
+			AppKey:      field.AppKey,
+		})
+	}
+	return cfg
 }
 
 func renderCatalogerInfoTable(_ *capabilities.Document, catalogers []capabilities.CatalogerEntry) string {
@@ -391,53 +408,57 @@ func extractArrayCapability(caps capabilities.CapabilitySet, name string) string
 func extractNodesCapability(caps capabilities.CapabilitySet) string {
 	for _, cap := range caps {
 		if cap.Name == "dependency.depth" {
-			// handle various array types
 			switch v := cap.Default.(type) {
 			case []string:
-				if len(v) == 0 {
-					return noStyle.Render("·")
-				}
-				// check if both direct and indirect are present
-				hasDirect := false
-				hasIndirect := false
-				for _, item := range v {
-					if item == "direct" {
-						hasDirect = true
-					}
-					if item == "indirect" {
-						hasIndirect = true
-					}
-				}
-				if hasDirect && hasIndirect {
-					return "transitive"
-				}
-				return strings.Join(v, ", ")
+				return formatDepthStringArray(v)
 			case []interface{}:
-				if len(v) == 0 {
-					return noStyle.Render("·")
-				}
-				hasDirect := false
-				hasIndirect := false
-				strs := make([]string, 0, len(v))
-				for _, item := range v {
-					str := fmt.Sprintf("%v", item)
-					strs = append(strs, str)
-					if str == "direct" {
-						hasDirect = true
-					}
-					if str == "indirect" {
-						hasIndirect = true
-					}
-				}
-				if hasDirect && hasIndirect {
-					return "transitive"
-				}
-				return strings.Join(strs, ", ")
+				return formatDepthInterfaceArray(v)
 			}
 			return noStyle.Render("·")
 		}
 	}
 	return noStyle.Render("·")
+}
+
+// formatDepthStringArray formats a []string dependency depth value
+func formatDepthStringArray(v []string) string {
+	if len(v) == 0 {
+		return noStyle.Render("·")
+	}
+	if hasBothDirectAndIndirect(v) {
+		return "transitive"
+	}
+	return strings.Join(v, ", ")
+}
+
+// formatDepthInterfaceArray formats a []interface{} dependency depth value
+func formatDepthInterfaceArray(v []interface{}) string {
+	if len(v) == 0 {
+		return noStyle.Render("·")
+	}
+	strs := make([]string, 0, len(v))
+	for _, item := range v {
+		strs = append(strs, fmt.Sprintf("%v", item))
+	}
+	if hasBothDirectAndIndirect(strs) {
+		return "transitive"
+	}
+	return strings.Join(strs, ", ")
+}
+
+// hasBothDirectAndIndirect checks if a slice contains both "direct" and "indirect" strings
+func hasBothDirectAndIndirect(items []string) bool {
+	hasDirect := false
+	hasIndirect := false
+	for _, item := range items {
+		if item == "direct" {
+			hasDirect = true
+		}
+		if item == "indirect" {
+			hasIndirect = true
+		}
+	}
+	return hasDirect && hasIndirect
 }
 
 func formatCriteria(detectors []capabilities.Detector) string {

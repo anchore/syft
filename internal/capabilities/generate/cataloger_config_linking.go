@@ -161,14 +161,18 @@ func extractCatalogerName(funcDecl *ast.FuncDecl, file *ast.File, filePath, repo
 // inferCatalogerNameFromCustomImpl tries to infer the cataloger name from custom cataloger implementations
 // by looking for Name() method implementations or hardcoded name variables
 func inferCatalogerNameFromCustomImpl(funcDecl *ast.FuncDecl, file *ast.File, ctx *parseContext) string {
-	// look for patterns like:
-	// return &someCataloger{cfg: cfg}
-	// return someCataloger{cfg: cfg}
+	typeName := extractReturnTypeName(funcDecl)
+	if typeName == "" {
+		return ""
+	}
+	return findNameMethodReturn(file, typeName, ctx)
+}
 
+// extractReturnTypeName extracts the type name from the return statement of a constructor function
+func extractReturnTypeName(funcDecl *ast.FuncDecl) string {
 	var typeName string
 
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-		// look for return statements
 		returnStmt, ok := n.(*ast.ReturnStmt)
 		if !ok || len(returnStmt.Results) == 0 {
 			return true
@@ -197,68 +201,75 @@ func inferCatalogerNameFromCustomImpl(funcDecl *ast.FuncDecl, file *ast.File, ct
 		return true
 	})
 
-	if typeName == "" {
-		return ""
-	}
+	return typeName
+}
 
-	// now look for the Name() method on this type
+// findNameMethodReturn finds the Name() method for the given type and extracts its return value
+func findNameMethodReturn(file *ast.File, typeName string, ctx *parseContext) string {
 	for _, decl := range file.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
 		if !ok || funcDecl.Name.Name != "Name" {
 			continue
 		}
 
-		// check if this is a method on our type
 		if funcDecl.Recv == nil || len(funcDecl.Recv.List) == 0 {
 			continue
 		}
 
-		recvType := funcDecl.Recv.List[0].Type
-		var recvTypeName string
-
-		// handle both T and *T receivers
-		if ident, ok := recvType.(*ast.Ident); ok {
-			recvTypeName = ident.Name
-		} else if starExpr, ok := recvType.(*ast.StarExpr); ok {
-			if ident, ok := starExpr.X.(*ast.Ident); ok {
-				recvTypeName = ident.Name
-			}
-		}
-
+		recvTypeName := extractReceiverTypeName(funcDecl.Recv.List[0].Type)
 		if recvTypeName != typeName {
 			continue
 		}
 
 		// found the Name() method, extract the return value
 		if funcDecl.Body != nil {
-			var name string
-			ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
-				returnStmt, ok := n.(*ast.ReturnStmt)
-				if !ok || len(returnStmt.Results) == 0 {
-					return true
-				}
-
-				// handle string literal
-				if lit, ok := returnStmt.Results[0].(*ast.BasicLit); ok && lit.Kind == token.STRING {
-					name = strings.Trim(lit.Value, `"`)
-					return false
-				}
-
-				// handle constant identifier (e.g., pomCatalogerName)
-				if ident, ok := returnStmt.Results[0].(*ast.Ident); ok {
-					name = resolveLocalConstant(ident.Name, ctx)
-					return false
-				}
-
-				return true
-			})
-			if name != "" {
+			if name := extractNameFromMethodBody(funcDecl.Body, ctx); name != "" {
 				return name
 			}
 		}
 	}
 
 	return ""
+}
+
+// extractReceiverTypeName extracts the type name from a receiver type expression
+func extractReceiverTypeName(recvType ast.Expr) string {
+	// handle both T and *T receivers
+	if ident, ok := recvType.(*ast.Ident); ok {
+		return ident.Name
+	}
+	if starExpr, ok := recvType.(*ast.StarExpr); ok {
+		if ident, ok := starExpr.X.(*ast.Ident); ok {
+			return ident.Name
+		}
+	}
+	return ""
+}
+
+// extractNameFromMethodBody extracts the cataloger name from a Name() method body
+func extractNameFromMethodBody(body *ast.BlockStmt, ctx *parseContext) string {
+	var name string
+	ast.Inspect(body, func(n ast.Node) bool {
+		returnStmt, ok := n.(*ast.ReturnStmt)
+		if !ok || len(returnStmt.Results) == 0 {
+			return true
+		}
+
+		// handle string literal
+		if lit, ok := returnStmt.Results[0].(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			name = strings.Trim(lit.Value, `"`)
+			return false
+		}
+
+		// handle constant identifier (e.g., pomCatalogerName)
+		if ident, ok := returnStmt.Results[0].(*ast.Ident); ok {
+			name = resolveLocalConstant(ident.Name, ctx)
+			return false
+		}
+
+		return true
+	})
+	return name
 }
 
 // extractConfigParameter extracts the config type from the first parameter of a cataloger constructor.

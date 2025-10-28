@@ -419,5 +419,5 @@ func DiscoverAllowedConfigStructs(repoRoot string) (map[string]bool, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Config struct not found in %s", configFilePath)
+	return nil, fmt.Errorf("config struct not found in %s", configFilePath)
 }

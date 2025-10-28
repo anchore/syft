@@ -333,48 +333,55 @@ func updateNodeTree(rootNode *yaml.Node, doc *capabilities.Document) error {
 	updateOrAddSection(existingMapping, newMapping, "application")
 
 	// update catalogers section (preserve comments)
+	updateCatalogersSection(existingMapping, newMapping)
+
+	return nil
+}
+
+// updateCatalogersSection updates the catalogers section while preserving comments
+func updateCatalogersSection(existingMapping, newMapping *yaml.Node) {
 	existingCatalogersNode := findSectionNode(existingMapping, "catalogers")
 	newCatalogersNode := findSectionNode(newMapping, "catalogers")
 
-	if existingCatalogersNode != nil && newCatalogersNode != nil {
-		// create a map of existing cataloger nodes by name for quick lookup
-		existingByName := make(map[string]*yaml.Node)
-		if existingCatalogersNode.Kind == yaml.SequenceNode {
-			for _, catalogerNode := range existingCatalogersNode.Content {
-				if catalogerNode.Kind == yaml.MappingNode {
-					name := findFieldValue(catalogerNode, "name")
-					if name != "" {
-						existingByName[name] = catalogerNode
-					}
-				}
-			}
-		}
-
-		// update each cataloger in the new tree with preserved comments
-		if newCatalogersNode.Kind == yaml.SequenceNode {
-			for _, newCatalogerNode := range newCatalogersNode.Content {
-				if newCatalogerNode.Kind != yaml.MappingNode {
-					continue
-				}
-
-				name := findFieldValue(newCatalogerNode, "name")
-				if existingNode := existingByName[name]; existingNode != nil {
-					// preserve comments from existing cataloger entry
-					newCatalogerNode.HeadComment = existingNode.HeadComment
-					newCatalogerNode.LineComment = existingNode.LineComment
-					newCatalogerNode.FootComment = existingNode.FootComment
-
-					// preserve field-level and nested comments
-					preserveFieldComments(existingNode, newCatalogerNode)
-				}
-			}
-		}
-
-		// replace the catalogers content
-		existingCatalogersNode.Content = newCatalogersNode.Content
+	if existingCatalogersNode == nil || newCatalogersNode == nil {
+		return
 	}
 
-	return nil
+	// create a map of existing cataloger nodes by name for quick lookup
+	existingByName := make(map[string]*yaml.Node)
+	if existingCatalogersNode.Kind == yaml.SequenceNode {
+		for _, catalogerNode := range existingCatalogersNode.Content {
+			if catalogerNode.Kind == yaml.MappingNode {
+				name := findFieldValue(catalogerNode, "name")
+				if name != "" {
+					existingByName[name] = catalogerNode
+				}
+			}
+		}
+	}
+
+	// update each cataloger in the new tree with preserved comments
+	if newCatalogersNode.Kind == yaml.SequenceNode {
+		for _, newCatalogerNode := range newCatalogersNode.Content {
+			if newCatalogerNode.Kind != yaml.MappingNode {
+				continue
+			}
+
+			name := findFieldValue(newCatalogerNode, "name")
+			if existingNode := existingByName[name]; existingNode != nil {
+				// preserve comments from existing cataloger entry
+				newCatalogerNode.HeadComment = existingNode.HeadComment
+				newCatalogerNode.LineComment = existingNode.LineComment
+				newCatalogerNode.FootComment = existingNode.FootComment
+
+				// preserve field-level and nested comments
+				preserveFieldComments(existingNode, newCatalogerNode)
+			}
+		}
+	}
+
+	// replace the catalogers content
+	existingCatalogersNode.Content = newCatalogersNode.Content
 }
 
 // updateOrAddSection updates or adds a section in the existing mapping from the new mapping

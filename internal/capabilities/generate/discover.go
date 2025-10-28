@@ -651,7 +651,7 @@ func RepoRoot() (string, error) {
 }
 
 // extractBinaryClassifiers extracts all binary classifiers with their full information
-func extractBinaryClassifiers() []binary.Classifier {
+func extractBinaryClassifiers() []binary.Classifier { //nolint:staticcheck
 	classifiers := binary.DefaultClassifiers()
 
 	// return all classifiers (already sorted by the default function)

@@ -1308,7 +1308,7 @@ catalogers:
           - name: package_manager.package_integrity_hash
             default: true
             evidence:
-              - CocoapodsLockEntry.Checksum
+              - CocoaPodfileLockEntry.Checksum
   - ecosystem: swift # MANUAL
     name: swift-package-manager-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED

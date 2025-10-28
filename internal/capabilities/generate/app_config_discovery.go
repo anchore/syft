@@ -117,22 +117,27 @@ func extractAppConfigFields(filePath, topLevelKey string) ([]AppConfigField, err
 // findAppConfigStructAndDescriptions finds the main config struct and extracts field descriptions
 // from the DescribeFields method
 func findAppConfigStructAndDescriptions(f *ast.File, topLevelKey string) (*ast.StructType, map[string]string) {
-	var configStruct *ast.StructType
-	descriptions := make(map[string]string)
+	expectedName := determineExpectedConfigName(topLevelKey)
+	configStruct := findConfigStruct(f, expectedName)
+	descriptions := extractDescriptionsFromDescribeFields(f)
+	return configStruct, descriptions
+}
 
-	// determine the expected main config struct name based on the top-level key
-	// e.g., "dotnet" -> "dotnetConfig", "golang" -> "golangConfig", "linux-kernel" -> "linuxKernelConfig"
-	expectedName := topLevelKey + "Config"
-	// handle special case for linux-kernel
-	if topLevelKey == "linux-kernel" {
-		expectedName = "linuxKernelConfig"
+// determineExpectedConfigName maps the top-level key to the expected config struct name
+func determineExpectedConfigName(topLevelKey string) string {
+	// handle special cases first
+	switch topLevelKey {
+	case "linux-kernel":
+		return "linuxKernelConfig"
+	case "javascript":
+		return "javaScriptConfig"
+	default:
+		return topLevelKey + "Config"
 	}
-	// handle javascript
-	if topLevelKey == "javascript" {
-		expectedName = "javaScriptConfig"
-	}
+}
 
-	// find the main config struct (not nested ones)
+// findConfigStruct searches for the config struct with the expected name in the AST
+func findConfigStruct(f *ast.File, expectedName string) *ast.StructType {
 	for _, decl := range f.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
 		if !ok || genDecl.Tok != token.TYPE {
@@ -150,18 +155,18 @@ func findAppConfigStructAndDescriptions(f *ast.File, topLevelKey string) (*ast.S
 				continue
 			}
 
-			// match the expected main config struct name
 			if typeSpec.Name.Name == expectedName {
-				configStruct = structType
-				break
+				return structType
 			}
 		}
-		if configStruct != nil {
-			break
-		}
 	}
+	return nil
+}
 
-	// find DescribeFields method and extract descriptions
+// extractDescriptionsFromDescribeFields extracts field descriptions from the DescribeFields method
+func extractDescriptionsFromDescribeFields(f *ast.File) map[string]string {
+	descriptions := make(map[string]string)
+
 	for _, decl := range f.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
 		if !ok || funcDecl.Name.Name != "DescribeFields" {
@@ -194,7 +199,6 @@ func findAppConfigStructAndDescriptions(f *ast.File, topLevelKey string) (*ast.S
 			// second argument is the description string
 			description := extractStringLiteral(callExpr.Args[1])
 			if description != "" {
-				// clean up multi-line descriptions
 				description = cleanDescription(description)
 				descriptions[fieldPath] = description
 			}
@@ -203,7 +207,7 @@ func findAppConfigStructAndDescriptions(f *ast.File, topLevelKey string) (*ast.S
 		})
 	}
 
-	return configStruct, descriptions
+	return descriptions
 }
 
 // extractNestedAppConfigs handles nested config structs like golang.MainModuleVersion
