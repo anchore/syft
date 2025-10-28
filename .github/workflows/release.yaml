@@ -19,6 +19,16 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - name: Validate Apple notarization credentials
+        run: .tool/quill submission list
+        env:
+          QUILL_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
+          QUILL_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          QUILL_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+
       - name: Check if running on main
         if: github.ref != 'refs/heads/main'
         # we are using the following flag when running `cosign blob-verify` for checksum signature verification:
