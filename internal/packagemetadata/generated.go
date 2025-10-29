@@ -27,6 +27,7 @@ func AllTypes() []any {
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
+		pkg.GGUFFileHeader{},
 		pkg.GitHubActionsUseStatement{},
 		pkg.GolangBinaryBuildinfoEntry{},
 		pkg.GolangModuleEntry{},
