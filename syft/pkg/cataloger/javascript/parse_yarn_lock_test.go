@@ -284,7 +284,11 @@ func TestSearchYarnForLicenses(t *testing.T) {
 			}
 			tc.config.NPMBaseURL = url
 			adapter := newGenericYarnLockAdapter(tc.config)
-			pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, tc.expectedPackages, nil)
+			pkgtest.NewCatalogTester().
+				FromFile(t, fixture).
+				Expects(tc.expectedPackages, nil).
+				WithoutTestObserver(). // this is an online test, thus not the default configuration
+				TestParser(t, adapter.parseYarnLock)
 		})
 	}
 }

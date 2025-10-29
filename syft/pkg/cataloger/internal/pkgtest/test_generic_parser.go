@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -56,6 +58,7 @@ type CatalogTester struct {
 	packageStringer                func(pkg.Package) string
 	customAssertions               []func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship)
 	context                        context.Context
+	skipTestObservations           bool
 }
 
 func Context() context.Context {
@@ -260,13 +263,23 @@ func (p *CatalogTester) IgnoreUnfulfilledPathResponses(paths ...string) *Catalog
 	return p
 }
 
+func (p *CatalogTester) WithoutTestObserver() *CatalogTester {
+	p.skipTestObservations = true
+	return p
+}
+
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
 	pkgs, relationships, err := parser(p.context, p.resolver, p.env, p.reader)
+
 	// only test for errors if explicitly requested
 	if p.wantErr != nil {
 		p.wantErr(t, err)
 	}
+
+	// track metadata types for cataloger discovery
+	p.trackParserMetadata(t, parser, pkgs, relationships)
+
 	p.assertPkgs(t, pkgs, relationships)
 }
 
@@ -291,6 +304,9 @@ func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	if p.wantErr != nil {
 		p.wantErr(t, err)
 	}
+
+	// track metadata types for cataloger discovery
+	p.trackCatalogerMetadata(t, cataloger, pkgs, relationships)
 
 	if p.assertResultExpectations {
 		p.assertPkgs(t, pkgs, relationships)
@@ -457,4 +473,164 @@ func stringPackage(p pkg.Package) string {
 	}
 
 	return fmt.Sprintf("%s @ %s (%s)", p.Name, p.Version, loc)
+}
+
+// getFunctionName extracts the function name from a function pointer using reflection
+func getFunctionName(fn interface{}) string {
+	// get the function pointer
+	ptr := reflect.ValueOf(fn).Pointer()
+
+	// get the function details
+	funcForPC := runtime.FuncForPC(ptr)
+	if funcForPC == nil {
+		return ""
+	}
+
+	fullName := funcForPC.Name()
+
+	// extract just the function name from the full path
+	// e.g., "github.com/anchore/syft/syft/pkg/cataloger/python.parseRequirementsTxt"
+	//   -> "parseRequirementsTxt"
+	parts := strings.Split(fullName, ".")
+	if len(parts) > 0 {
+		name := parts[len(parts)-1]
+		// strip the -fm suffix that Go's reflection adds for methods
+		// e.g., "parsePackageLock-fm" -> "parsePackageLock"
+		return strings.TrimSuffix(name, "-fm")
+	}
+
+	return fullName
+}
+
+// getCatalogerName extracts the cataloger name from the test context or cataloger name
+func getCatalogerName(_ *testing.T, cataloger pkg.Cataloger) string {
+	// use the cataloger's name method if available
+	return cataloger.Name()
+}
+
+// getPackagePath extracts the package path from a function name
+// e.g., "github.com/anchore/syft/syft/pkg/cataloger/python.parseRequirementsTxt" -> "python"
+func getPackagePath(fn interface{}) string {
+	ptr := reflect.ValueOf(fn).Pointer()
+	funcForPC := runtime.FuncForPC(ptr)
+	if funcForPC == nil {
+		return ""
+	}
+
+	fullName := funcForPC.Name()
+
+	// extract package name from path
+	// e.g., "github.com/anchore/syft/syft/pkg/cataloger/python.parseRequirementsTxt"
+	//   -> "python"
+	if strings.Contains(fullName, "/cataloger/") {
+		parts := strings.Split(fullName, "/cataloger/")
+		if len(parts) > 1 {
+			// get the next segment after "/cataloger/"
+			remaining := parts[1]
+			// split by "." to get package name
+			pkgParts := strings.Split(remaining, ".")
+			if len(pkgParts) > 0 {
+				return pkgParts[0]
+			}
+		}
+	}
+
+	return ""
+}
+
+// getPackagePathFromCataloger extracts the package path from the caller's file path
+// For generic catalogers, the cataloger type is from the generic package, but we need
+// the package where the test is defined (e.g., rust, python, etc.)
+func getPackagePathFromCataloger(_ pkg.Cataloger) string {
+	// walk up the call stack to find the test file
+	// we're looking for a file in the cataloger directory structure
+	for i := 0; i < 10; i++ {
+		_, file, _, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+
+		// extract package name from file path
+		// e.g., "/Users/.../syft/pkg/cataloger/rust/cataloger_test.go" -> "rust"
+		if strings.Contains(file, "/cataloger/") {
+			parts := strings.Split(file, "/cataloger/")
+			if len(parts) > 1 {
+				// get the next segment after "/cataloger/"
+				remaining := parts[1]
+				// split by "/" to get package name
+				pkgParts := strings.Split(remaining, "/")
+				if len(pkgParts) > 0 && pkgParts[0] != "internal" {
+					return pkgParts[0]
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// trackParserMetadata records metadata types for a parser function
+func (p *CatalogTester) trackParserMetadata(t *testing.T, parser generic.Parser, pkgs []pkg.Package, relationships []artifact.Relationship) {
+	if p.skipTestObservations {
+		return
+	}
+
+	parserName := getFunctionName(parser)
+	if parserName == "" {
+		return
+	}
+
+	// try to infer package name from function path
+	packageName := getPackagePath(parser)
+	if packageName == "" {
+		return
+	}
+
+	tracker := getTracker()
+
+	// old tracking (still used by metadata discovery)
+	for _, pkg := range pkgs {
+		tracker.RecordParserPackageMetadata(packageName, parserName, pkg)
+	}
+
+	// new unified observations with capability tracking
+	tracker.RecordParserObservations(packageName, parserName, pkgs, relationships)
+
+	// ensure results are written when tests complete
+	t.Cleanup(func() {
+		_ = WriteResultsIfEnabled()
+	})
+}
+
+// trackCatalogerMetadata records metadata types for a cataloger
+func (p *CatalogTester) trackCatalogerMetadata(t *testing.T, cataloger pkg.Cataloger, pkgs []pkg.Package, relationships []artifact.Relationship) {
+	if p.skipTestObservations {
+		return
+	}
+
+	catalogerName := getCatalogerName(t, cataloger)
+	if catalogerName == "" {
+		return
+	}
+
+	// try to infer package name from cataloger type
+	packageName := getPackagePathFromCataloger(cataloger)
+	if packageName == "" {
+		return
+	}
+
+	tracker := getTracker()
+
+	// old tracking (still used by metadata discovery)
+	for _, pkg := range pkgs {
+		tracker.RecordCatalogerPackageMetadata(catalogerName, pkg)
+	}
+
+	// new unified observations with capability tracking
+	tracker.RecordCatalogerObservations(packageName, catalogerName, pkgs, relationships)
+
+	// ensure results are written when tests complete
+	t.Cleanup(func() {
+		_ = WriteResultsIfEnabled()
+	})
 }
