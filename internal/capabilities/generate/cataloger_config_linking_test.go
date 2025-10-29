@@ -10,128 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLinkCatalogersToConfigs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	repoRoot, err := RepoRoot()
-	require.NoError(t, err)
-
-	linkages, err := LinkCatalogersToConfigs(repoRoot)
-	require.NoError(t, err)
-
-	// verify we discovered multiple catalogers
-	require.NotEmpty(t, linkages, "should discover at least one cataloger linkage")
-
-	// test cases for known catalogers with configs
-	// NOTE: Some catalogers may not be detected if their Name() method is in a different file
-	// than the constructor function. This is a known limitation.
-	tests := []struct {
-		catalogerName string
-		wantConfig    string
-		optional      bool // set to true if detection may not work due to cross-file Name() methods
-	}{
-		{
-			catalogerName: "go-module-binary-cataloger",
-			wantConfig:    "golang.CatalogerConfig",
-		},
-		{
-			catalogerName: "go-module-file-cataloger",
-			wantConfig:    "golang.CatalogerConfig",
-		},
-		{
-			catalogerName: "python-package-cataloger",
-			wantConfig:    "python.CatalogerConfig",
-		},
-		{
-			catalogerName: "java-archive-cataloger",
-			wantConfig:    "java.ArchiveCatalogerConfig",
-		},
-		{
-			catalogerName: "java-pom-cataloger",
-			wantConfig:    "java.ArchiveCatalogerConfig",
-			optional:      true, // Name() method in different file
-		},
-		{
-			catalogerName: "dotnet-deps-binary-cataloger",
-			wantConfig:    "dotnet.CatalogerConfig",
-			optional:      true, // Name() method in different file
-		},
-		{
-			catalogerName: "javascript-lock-cataloger",
-			wantConfig:    "javascript.CatalogerConfig",
-		},
-		{
-			catalogerName: "linux-kernel-cataloger",
-			wantConfig:    "kernel.LinuxKernelCatalogerConfig",
-		},
-		{
-			catalogerName: "nix-cataloger",
-			wantConfig:    "nix.Config",
-			optional:      true, // Name() method in different file
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.catalogerName, func(t *testing.T) {
-			config, ok := linkages[tt.catalogerName]
-			if tt.optional && !ok {
-				t.Skipf("cataloger %s not detected (expected due to cross-file Name() method)", tt.catalogerName)
-				return
-			}
-			require.True(t, ok, "should find linkage for cataloger: %s", tt.catalogerName)
-			require.Equal(t, tt.wantConfig, config, "config type should match for cataloger: %s", tt.catalogerName)
-		})
-	}
-
-	// test catalogers without configs (should have empty string)
-	catalogersWithoutConfig := []string{
-		"python-installed-package-cataloger",
-		"java-gradle-lockfile-cataloger",
-		"java-jvm-cataloger",
-		"dotnet-packages-lock-cataloger",
-		"javascript-package-cataloger",
-	}
-
-	for _, catalogerName := range catalogersWithoutConfig {
-		t.Run(catalogerName+"_no_config", func(t *testing.T) {
-			config, ok := linkages[catalogerName]
-			if ok {
-				require.Empty(t, config, "cataloger %s should have empty config", catalogerName)
-			}
-		})
-	}
-
-	// print summary for manual inspection
-	t.Logf("Discovered %d cataloger-to-config linkages:", len(linkages))
-
-	// separate into catalogers with and without configs
-	withConfig := make(map[string]string)
-	withoutConfig := make([]string, 0)
-
-	for name, config := range linkages {
-		if config != "" {
-			withConfig[name] = config
-		} else {
-			withoutConfig = append(withoutConfig, name)
-		}
-	}
-
-	t.Logf("Catalogers with configs (%d):", len(withConfig))
-	for name, config := range withConfig {
-		t.Logf("  %s -> %s", name, config)
-	}
-
-	t.Logf("Catalogers without configs (%d):", len(withoutConfig))
-	for _, name := range withoutConfig {
-		t.Logf("  %s", name)
-	}
-
-	// ensure we found at least some catalogers with configs
-	require.GreaterOrEqual(t, len(withConfig), 6, "should find at least 6 catalogers with configs")
-}
-
 func TestLinkCatalogersToConfigsFromPath(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -161,8 +39,8 @@ func TestLinkCatalogersToConfigsFromPath(t *testing.T) {
 			},
 		},
 		{
-			name:        "custom cataloger with Name() in different file - not detected",
-			fixturePath: "custom-cataloger-different-file",
+			name:             "custom cataloger with Name() in different file - not detected",
+			fixturePath:      "custom-cataloger-different-file",
 			expectedLinkages: map[string]string{
 				// empty - current limitation, cannot detect cross-file Names
 			},
@@ -204,7 +82,7 @@ func TestLinkCatalogersToConfigsFromPath(t *testing.T) {
 			name:        "selector expression config",
 			fixturePath: "selector-expression-config",
 			expectedLinkages: map[string]string{
-				"rust-cataloger": "cargo.CatalogerConfig",
+				"rust-cataloger": "rust.CatalogerConfig",
 			},
 		},
 	}
@@ -215,8 +93,9 @@ func TestLinkCatalogersToConfigsFromPath(t *testing.T) {
 				tt.wantErr = require.NoError
 			}
 
-			fixtureDir := filepath.Join("test-fixtures", "config-linking", tt.fixturePath)
-			linkages, err := LinkCatalogersToConfigsFromPath(fixtureDir, fixtureDir)
+			fixtureDir := filepath.Join("testdata", "cataloger", tt.fixturePath)
+			catalogerRoot := filepath.Join(fixtureDir, "cataloger")
+			linkages, err := LinkCatalogersToConfigsFromPath(catalogerRoot, fixtureDir)
 			tt.wantErr(t, err)
 
 			if err != nil {
@@ -229,51 +108,64 @@ func TestLinkCatalogersToConfigsFromPath(t *testing.T) {
 }
 
 func TestExtractConfigTypeName(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
 	tests := []struct {
 		name             string
+		fixturePath      string
 		catalogerName    string
 		expectedConfig   string
 		expectedNoConfig bool
 	}{
 		{
 			name:           "golang config",
-			catalogerName:  "go-module-binary-cataloger",
+			fixturePath:    "simple-generic-cataloger",
+			catalogerName:  "go-module-cataloger",
 			expectedConfig: "golang.CatalogerConfig",
 		},
 		{
-			name:           "python config",
+			name:           "python config with constant",
+			fixturePath:    "cataloger-with-constant",
 			catalogerName:  "python-package-cataloger",
 			expectedConfig: "python.CatalogerConfig",
 		},
 		{
-			name:           "java archive config",
-			catalogerName:  "java-archive-cataloger",
+			name:           "java archive config same file",
+			fixturePath:    "custom-cataloger-same-file",
+			catalogerName:  "java-pom-cataloger",
 			expectedConfig: "java.ArchiveCatalogerConfig",
 		},
 		{
-			name:           "kernel config",
+			name:           "kernel config imported type",
+			fixturePath:    "imported-config-type",
 			catalogerName:  "linux-kernel-cataloger",
 			expectedConfig: "kernel.LinuxKernelCatalogerConfig",
 		},
 		{
-			name:             "python installed - no config",
-			catalogerName:    "python-installed-package-cataloger",
+			name:             "javascript - no config",
+			fixturePath:      "no-config-cataloger",
+			catalogerName:    "javascript-cataloger",
 			expectedNoConfig: true,
+		},
+		{
+			name:           "ruby with mixed naming",
+			fixturePath:    "mixed-naming-patterns",
+			catalogerName:  "ruby-cataloger",
+			expectedConfig: "ruby.Config",
+		},
+		{
+			name:           "rust with selector expression",
+			fixturePath:    "selector-expression-config",
+			catalogerName:  "rust-cataloger",
+			expectedConfig: "rust.CatalogerConfig",
 		},
 	}
 
-	repoRoot, err := RepoRoot()
-	require.NoError(t, err)
-
-	linkages, err := LinkCatalogersToConfigs(repoRoot)
-	require.NoError(t, err)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			fixtureDir := filepath.Join("testdata", "cataloger", tt.fixturePath)
+			catalogerRoot := filepath.Join(fixtureDir, "cataloger")
+			linkages, err := LinkCatalogersToConfigsFromPath(catalogerRoot, fixtureDir)
+			require.NoError(t, err)
+
 			config, ok := linkages[tt.catalogerName]
 
 			if tt.expectedNoConfig {

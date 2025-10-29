@@ -215,12 +215,18 @@ func parseGenericCatalogerFunction(funcDecl *ast.FuncDecl, filePath, repoRoot st
 func extractPackageNameFromPath(filePath string) string {
 	parts := strings.Split(filePath, string(filepath.Separator))
 
-	// find the index of "cataloger" in the path
+	// find the LAST occurrence of "cataloger" in the path
+	// (to handle test fixtures with multiple "cataloger" segments)
+	lastCatalogerIndex := -1
 	for i, part := range parts {
-		if part == "cataloger" && i+1 < len(parts) {
-			// return the next segment after "cataloger"
-			return parts[i+1]
+		if part == "cataloger" {
+			lastCatalogerIndex = i
 		}
+	}
+
+	if lastCatalogerIndex != -1 && lastCatalogerIndex+1 < len(parts) {
+		// return the next segment after the last "cataloger"
+		return parts[lastCatalogerIndex+1]
 	}
 
 	return ""

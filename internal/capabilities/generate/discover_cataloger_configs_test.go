@@ -2,129 +2,131 @@ package main
 
 import (
 	"go/ast"
+	"path/filepath"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
-// expected config structs that should be discovered with app-config annotations
-var expectedCatalogConfigs = []string{
-	"golang.CatalogerConfig",
-	"golang.MainModuleVersionConfig",
-	"java.ArchiveCatalogerConfig",
-	"python.CatalogerConfig",
-	"dotnet.CatalogerConfig",
-	"kernel.LinuxKernelCatalogerConfig",
-	"javascript.CatalogerConfig",
-	"nix.Config",
-}
-
 func TestDiscoverConfigs(t *testing.T) {
-	repoRoot, err := RepoRoot()
-	require.NoError(t, err)
+	tests := []struct {
+		name            string
+		fixturePath     string
+		expectedConfigs []string
+		verifyConfig    func(t *testing.T, configs map[string]ConfigInfo)
+	}{
+		{
+			name:        "simple config with annotations",
+			fixturePath: "simple-config",
+			expectedConfigs: []string{
+				"golang.CatalogerConfig",
+			},
+			verifyConfig: func(t *testing.T, configs map[string]ConfigInfo) {
+				golangConfig := configs["golang.CatalogerConfig"]
+				require.Equal(t, "golang", golangConfig.PackageName)
+				require.Equal(t, "CatalogerConfig", golangConfig.StructName)
+				require.Len(t, golangConfig.Fields, 3, "should have 3 annotated fields")
 
-	configs, err := DiscoverConfigs(repoRoot)
-	require.NoError(t, err)
+				// verify specific field
+				var foundSearchLocalModCache bool
+				for _, field := range golangConfig.Fields {
+					if field.Name == "SearchLocalModCacheLicenses" {
+						foundSearchLocalModCache = true
+						require.Equal(t, "bool", field.Type)
+						require.Equal(t, "golang.search-local-mod-cache-licenses", field.AppKey)
+						require.Contains(t, field.Description, "searching for go package licenses")
+					}
+				}
+				require.True(t, foundSearchLocalModCache, "should find SearchLocalModCacheLicenses field")
+			},
+		},
+		{
+			name:        "nested config struct",
+			fixturePath: "nested-config",
+			expectedConfigs: []string{
+				"golang.CatalogerConfig",
+				"golang.MainModuleVersionConfig",
+			},
+			verifyConfig: func(t *testing.T, configs map[string]ConfigInfo) {
+				// verify main config
+				golangConfig := configs["golang.CatalogerConfig"]
+				require.Equal(t, "golang", golangConfig.PackageName)
+				require.Equal(t, "CatalogerConfig", golangConfig.StructName)
 
-	// verify we discovered multiple config structs
-	require.NotEmpty(t, configs, "should discover at least one config struct")
+				// verify nested config
+				mainModuleConfig := configs["golang.MainModuleVersionConfig"]
+				require.Equal(t, "golang", mainModuleConfig.PackageName)
+				require.Equal(t, "MainModuleVersionConfig", mainModuleConfig.StructName)
+				require.Len(t, mainModuleConfig.Fields, 2, "should have 2 annotated fields")
 
-	// check for known config structs that have app-config annotations
-	for _, expected := range expectedCatalogConfigs {
-		config, ok := configs[expected]
-		require.True(t, ok, "should discover config: %s", expected)
-		require.NotEmpty(t, config.Fields, "config %s should have fields", expected)
-		require.Equal(t, expected, config.PackageName+"."+config.StructName)
+				// check for specific nested field
+				var foundFromLDFlags bool
+				for _, field := range mainModuleConfig.Fields {
+					if field.Name == "FromLDFlags" {
+						foundFromLDFlags = true
+						require.Equal(t, "bool", field.Type)
+						require.Equal(t, "golang.main-module-version.from-ld-flags", field.AppKey)
+						require.Contains(t, field.Description, "extract version from LD flags")
+					}
+				}
+				require.True(t, foundFromLDFlags, "should find FromLDFlags field")
+			},
+		},
+		{
+			name:        "multiple configs in different packages",
+			fixturePath: "multiple-configs",
+			expectedConfigs: []string{
+				"python.CatalogerConfig",
+				"java.ArchiveCatalogerConfig",
+			},
+			verifyConfig: func(t *testing.T, configs map[string]ConfigInfo) {
+				// verify python config
+				pythonConfig := configs["python.CatalogerConfig"]
+				require.Equal(t, "python", pythonConfig.PackageName)
+				require.Len(t, pythonConfig.Fields, 1)
+
+				// verify java config
+				javaConfig := configs["java.ArchiveCatalogerConfig"]
+				require.Equal(t, "java", javaConfig.PackageName)
+				require.Len(t, javaConfig.Fields, 1)
+			},
+		},
+		{
+			name:            "config without annotations",
+			fixturePath:     "no-annotations",
+			expectedConfigs: []string{},
+			verifyConfig: func(t *testing.T, configs map[string]ConfigInfo) {
+				// should not discover any configs without annotations
+				require.Empty(t, configs, "should not discover configs without app-config annotations")
+			},
+		},
 	}
 
-	// verify golang.CatalogerConfig structure
-	golangConfig := configs["golang.CatalogerConfig"]
-	wantGolangConfig := ConfigInfo{
-		PackageName: "golang",
-		StructName:  "CatalogerConfig",
-	}
-	if diff := cmp.Diff(wantGolangConfig.PackageName, golangConfig.PackageName); diff != "" {
-		t.Errorf("golang.CatalogerConfig.PackageName mismatch (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(wantGolangConfig.StructName, golangConfig.StructName); diff != "" {
-		t.Errorf("golang.CatalogerConfig.StructName mismatch (-want +got):\n%s", diff)
-	}
-	require.NotEmpty(t, golangConfig.Fields)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixtureDir := filepath.Join("testdata", "config-discovery", tt.fixturePath, "cataloger")
+			configs, err := DiscoverConfigsFromPath(fixtureDir)
+			require.NoError(t, err)
 
-	// check for specific field
-	var foundSearchLocalModCache bool
-	for _, field := range golangConfig.Fields {
-		if field.Name == "SearchLocalModCacheLicenses" {
-			foundSearchLocalModCache = true
-			wantField := ConfigField{
-				Name:   "SearchLocalModCacheLicenses",
-				Type:   "bool",
-				AppKey: "golang.search-local-mod-cache-licenses",
+			// Debug: log what was discovered
+			t.Logf("Discovered %d configs:", len(configs))
+			for key, config := range configs {
+				t.Logf("  %s: %d fields", key, len(config.Fields))
 			}
-			if diff := cmp.Diff(wantField.Name, field.Name); diff != "" {
-				t.Errorf("SearchLocalModCacheLicenses field Name mismatch (-want +got):\n%s", diff)
-			}
-			if diff := cmp.Diff(wantField.Type, field.Type); diff != "" {
-				t.Errorf("SearchLocalModCacheLicenses field Type mismatch (-want +got):\n%s", diff)
-			}
-			if diff := cmp.Diff(wantField.AppKey, field.AppKey); diff != "" {
-				t.Errorf("SearchLocalModCacheLicenses field AppKey mismatch (-want +got):\n%s", diff)
-			}
-			require.NotEmpty(t, field.Description)
-			require.Contains(t, field.Description, "searching for go package licenses")
-		}
-	}
-	require.True(t, foundSearchLocalModCache, "should find SearchLocalModCacheLicenses field")
 
-	// verify nested config struct
-	golangMainModuleConfig := configs["golang.MainModuleVersionConfig"]
-	wantMainModuleConfig := ConfigInfo{
-		PackageName: "golang",
-		StructName:  "MainModuleVersionConfig",
-	}
-	if diff := cmp.Diff(wantMainModuleConfig.PackageName, golangMainModuleConfig.PackageName); diff != "" {
-		t.Errorf("golang.MainModuleVersionConfig.PackageName mismatch (-want +got):\n%s", diff)
-	}
-	if diff := cmp.Diff(wantMainModuleConfig.StructName, golangMainModuleConfig.StructName); diff != "" {
-		t.Errorf("golang.MainModuleVersionConfig.StructName mismatch (-want +got):\n%s", diff)
-	}
-	require.NotEmpty(t, golangMainModuleConfig.Fields)
+			// verify expected configs were discovered
+			for _, expected := range tt.expectedConfigs {
+				config, ok := configs[expected]
+				require.True(t, ok, "should discover config: %s", expected)
+				require.NotEmpty(t, config.Fields, "config %s should have fields", expected)
+				require.Equal(t, expected, config.PackageName+"."+config.StructName)
+			}
 
-	// check for specific nested field
-	var foundFromLDFlags bool
-	for _, field := range golangMainModuleConfig.Fields {
-		if field.Name == "FromLDFlags" {
-			foundFromLDFlags = true
-			wantField := ConfigField{
-				Name:   "FromLDFlags",
-				Type:   "bool",
-				AppKey: "golang.main-module-version.from-ld-flags",
+			// run custom verification
+			if tt.verifyConfig != nil {
+				tt.verifyConfig(t, configs)
 			}
-			if diff := cmp.Diff(wantField.Name, field.Name); diff != "" {
-				t.Errorf("FromLDFlags field Name mismatch (-want +got):\n%s", diff)
-			}
-			if diff := cmp.Diff(wantField.Type, field.Type); diff != "" {
-				t.Errorf("FromLDFlags field Type mismatch (-want +got):\n%s", diff)
-			}
-			if diff := cmp.Diff(wantField.AppKey, field.AppKey); diff != "" {
-				t.Errorf("FromLDFlags field AppKey mismatch (-want +got):\n%s", diff)
-			}
-			require.NotEmpty(t, field.Description)
-		}
-	}
-	require.True(t, foundFromLDFlags, "should find FromLDFlags field in MainModuleVersionConfig")
-
-	// print summary for manual inspection
-	t.Logf("Discovered %d config structs:", len(configs))
-	for key, config := range configs {
-		t.Logf("  %s: %d fields", key, len(config.Fields))
-		for _, field := range config.Fields {
-			t.Logf("    - %s (%s): %s", field.Name, field.Type, field.AppKey)
-			if diff := cmp.Diff("", field.Description); diff == "" {
-				t.Logf("      WARNING: field %s has no description", field.Name)
-			}
-		}
+		})
 	}
 }
 

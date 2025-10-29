@@ -9,52 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDetermineExpectedConfigName(t *testing.T) {
-	tests := []struct {
-		name        string
-		topLevelKey string
-		wantName    string
-	}{
-		{
-			name:        "linux-kernel special case",
-			topLevelKey: "linux-kernel",
-			wantName:    "linuxKernelConfig",
-		},
-		{
-			name:        "javascript special case",
-			topLevelKey: "javascript",
-			wantName:    "javaScriptConfig",
-		},
-		{
-			name:        "standard config golang",
-			topLevelKey: "golang",
-			wantName:    "golangConfig",
-		},
-		{
-			name:        "standard config python",
-			topLevelKey: "python",
-			wantName:    "pythonConfig",
-		},
-		{
-			name:        "standard config java",
-			topLevelKey: "java",
-			wantName:    "javaConfig",
-		},
-		{
-			name:        "standard config dotnet",
-			topLevelKey: "dotnet",
-			wantName:    "dotnetConfig",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := determineExpectedConfigName(tt.topLevelKey)
-			require.Equal(t, tt.wantName, got)
-		})
-	}
-}
-
 func TestCleanDescription(t *testing.T) {
 	tests := []struct {
 		name string

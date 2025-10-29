@@ -58,6 +58,8 @@ var observationExceptions = map[string]*strset.Set{
 	"linux-kernel-cataloger": strset.New("relationships"),
 }
 
+// TestCatalogersInSync ensures that all catalogers from the syft binary are documented in packages.yaml
+// and vice versa, and that all capability fields are properly filled without TODOs or null values.
 func TestCatalogersInSync(t *testing.T) {
 	// get canonical list from syft binary
 	catalogersInBinary := getCatalogerNamesFromBinary(t)
@@ -141,6 +143,8 @@ func validateCapabilitiesFilled(t *testing.T, catalogers []capabilities.Cataloge
 	}
 }
 
+// TestPackageTypeCoverage ensures that every package type defined in pkg.AllPkgs is represented in at least
+// one cataloger's capabilities, preventing orphaned package types that are defined but never documented.
 func TestPackageTypeCoverage(t *testing.T) {
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
@@ -184,6 +188,8 @@ func TestPackageTypeCoverage(t *testing.T) {
 		missingTypesWithoutExceptions)
 }
 
+// TestMetadataTypeCoverage ensures that every metadata type defined in packagemetadata.AllTypes() is represented
+// in at least one cataloger's capabilities, preventing orphaned metadata types that are defined but never produced.
 func TestMetadataTypeCoverage(t *testing.T) {
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
@@ -231,6 +237,9 @@ func TestMetadataTypeCoverage(t *testing.T) {
 		missingTypesWithoutExceptions)
 }
 
+// TestCatalogerStructure validates that catalogers follow structural conventions: generic catalogers must have
+// parsers and parser-level capabilities, custom catalogers must have detectors and cataloger-level capabilities,
+// and all catalogers must have an ecosystem set.
 func TestCatalogerStructure(t *testing.T) {
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
@@ -269,6 +278,8 @@ func TestCatalogerStructure(t *testing.T) {
 	}
 }
 
+// TestCatalogerDataQuality checks for data integrity issues in packages.yaml, including duplicate cataloger
+// names, duplicate parser functions within catalogers, and validates that detector definitions are well-formed.
 func TestCatalogerDataQuality(t *testing.T) {
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
@@ -345,7 +356,8 @@ func TestCatalogerDataQuality(t *testing.T) {
 	})
 }
 
-// TestCapabilitiesAreUpToDate verifies that regeneration runs successfully
+// TestCapabilitiesAreUpToDate verifies that packages.yaml is up to date by running regeneration and checking
+// for uncommitted changes. This test only runs in CI to catch cases where code changed but capabilities weren't regenerated.
 func TestCapabilitiesAreUpToDate(t *testing.T) {
 	if os.Getenv("CI") == "" {
 		t.Skip("skipping regeneration test in local environment")
@@ -367,8 +379,9 @@ func TestCapabilitiesAreUpToDate(t *testing.T) {
 	require.NoError(t, err, "packages.yaml has uncommitted changes after regeneration. Run 'go generate ./internal/capabilities' locally and commit the changes.")
 }
 
-// TestCatalogersHaveTestObservations verifies that all catalogers have test observations,
-// ensuring they are using the pkgtest helpers
+// TestCatalogersHaveTestObservations ensures that all custom catalogers (and optionally parsers) have
+// test observations recorded in test-fixtures/test-observations.json, which proves they are using the
+// pkgtest.CatalogTester helpers and have test coverage.
 func TestCatalogersHaveTestObservations(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -486,6 +499,9 @@ func extractPackageName(catalogerName string) string {
 	return catalogerName
 }
 
+// TestConfigCompleteness validates the integrity of config references in packages.yaml, ensuring that all
+// configs in the configs section are referenced by at least one cataloger, all cataloger config references exist,
+// and all app-key references in config fields exist in the application section.
 func TestConfigCompleteness(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -543,6 +559,8 @@ func TestConfigCompleteness(t *testing.T) {
 	}
 }
 
+// TestAppConfigFieldsHaveDescriptions ensures that all application config fields discovered from the
+// options package have descriptions, which are required for user-facing documentation.
 func TestAppConfigFieldsHaveDescriptions(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -561,6 +579,8 @@ func TestAppConfigFieldsHaveDescriptions(t *testing.T) {
 	require.Empty(t, missingDescriptions, "the following configs are missing descriptions: %v", missingDescriptions)
 }
 
+// TestAppConfigKeyFormat validates that all application config keys follow the expected naming convention
+// of "ecosystem.field-name" using kebab-case (lowercase with hyphens, no underscores or spaces).
 func TestAppConfigKeyFormat(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -579,8 +599,9 @@ func TestAppConfigKeyFormat(t *testing.T) {
 	}
 }
 
-// TestCapabilityConfigFieldReferences validates that config field names referenced in CapabilitiesV2
-// conditions actually exist in the cataloger's config struct
+// TestCapabilityConfigFieldReferences validates that config field names referenced in capability conditions
+// actually exist in the cataloger's config struct, preventing typos and ensuring capability conditions can
+// be properly evaluated at runtime.
 func TestCapabilityConfigFieldReferences(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -697,7 +718,9 @@ func TestCapabilityConfigFieldReferences(t *testing.T) {
 	}
 }
 
-// TestCapabilityFieldNaming validates that capability field names follow known patterns
+// TestCapabilityFieldNaming validates that all capability field names follow known patterns
+// (e.g., "license", "dependency.depth", "package_manager.files.listing"), catching typos and ensuring
+// consistency across catalogers.
 func TestCapabilityFieldNaming(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -754,7 +777,9 @@ func TestCapabilityFieldNaming(t *testing.T) {
 	}
 }
 
-// TestCapabilityValueTypes validates that capability field values match expected types
+// TestCapabilityValueTypes validates that capability field values match their expected types based on the
+// field name (e.g., boolean fields like "license" must have bool values, array fields like "dependency.depth"
+// must have []string values), preventing type mismatches that would cause runtime errors.
 func TestCapabilityValueTypes(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -870,8 +895,9 @@ func validateCapabilityValueType(fieldPath string, value interface{}) error {
 	return nil
 }
 
-// TestMetadataTypesHaveJSONSchemaTypes validates that metadata_types and json_schema_types are synchronized
-// in packages.yaml - every metadata type should have a corresponding json_schema_type with correct conversion
+// TestMetadataTypesHaveJSONSchemaTypes validates that metadata_types and json_schema_types arrays are synchronized
+// in packages.yaml, ensuring every metadata type (e.g., "pkg.AlpmDBEntry") has a corresponding json_schema_type
+// (e.g., "AlpmDbEntry") with correct conversion, which is required for JSON schema generation.
 func TestMetadataTypesHaveJSONSchemaTypes(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -1230,7 +1256,8 @@ func validateFieldPath(repoRoot, structName string, fieldPath []string) error {
 }
 
 // TestCapabilityEvidenceFieldReferences validates that evidence field references in capabilities
-// actually exist on their corresponding metadata structs
+// (e.g., "AlpmDBEntry.Files[].Digests") actually exist on their corresponding metadata structs by using
+// AST parsing to verify the field paths, preventing broken references when structs are refactored.
 func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
@@ -1305,8 +1332,9 @@ func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 	}
 }
 
-// TestDetectorConfigFieldReferences validates that config field names referenced in detector
-// conditions actually exist in the cataloger's config struct
+// TestDetectorConfigFieldReferences validates that config field names referenced in detector conditions
+// actually exist in the cataloger's config struct, ensuring that conditional detectors can properly
+// evaluate their activation conditions based on configuration.
 func TestDetectorConfigFieldReferences(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)

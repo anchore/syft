@@ -9,52 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// test helper functions
-
-// parseFuncDecl parses a function declaration from a code string
-func parseFuncDecl(t *testing.T, code string) *ast.FuncDecl {
-	t.Helper()
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "", "package test\n"+code, 0)
-	require.NoError(t, err)
-	require.Len(t, file.Decls, 1, "expected exactly one declaration")
-	funcDecl, ok := file.Decls[0].(*ast.FuncDecl)
-	require.True(t, ok, "expected declaration to be a function")
-	return funcDecl
-}
-
-// parseCallExpr parses a call expression from a code string
-func parseCallExpr(t *testing.T, code string) *ast.CallExpr {
-	t.Helper()
-	expr, err := parser.ParseExpr(code)
-	require.NoError(t, err)
-	callExpr, ok := expr.(*ast.CallExpr)
-	require.True(t, ok, "expected expression to be a call expression")
-	return callExpr
-}
-
-// parseCompositeLit parses a composite literal from a code string
-func parseCompositeLit(t *testing.T, code string) *ast.CompositeLit {
-	t.Helper()
-	expr, err := parser.ParseExpr(code)
-	require.NoError(t, err)
-	lit, ok := expr.(*ast.CompositeLit)
-	require.True(t, ok, "expected expression to be a composite literal")
-	return lit
-}
-
-// parseConstDecl parses a const declaration from a code string and returns the GenDecl
-func parseConstDecl(t *testing.T, code string) *ast.GenDecl {
-	t.Helper()
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "", "package test\n"+code, 0)
-	require.NoError(t, err)
-	require.Len(t, file.Decls, 1, "expected exactly one declaration")
-	genDecl, ok := file.Decls[0].(*ast.GenDecl)
-	require.True(t, ok, "expected declaration to be a general declaration")
-	return genDecl
-}
-
 func TestReturnsPackageCataloger(t *testing.T) {
 	tests := []struct {
 		name string
@@ -386,4 +340,50 @@ func TestResolveImportPath(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// test helper functions
+
+// parseFuncDecl parses a function declaration from a code string
+func parseFuncDecl(t *testing.T, code string) *ast.FuncDecl {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "", "package test\n"+code, 0)
+	require.NoError(t, err)
+	require.Len(t, file.Decls, 1, "expected exactly one declaration")
+	funcDecl, ok := file.Decls[0].(*ast.FuncDecl)
+	require.True(t, ok, "expected declaration to be a function")
+	return funcDecl
+}
+
+// parseCallExpr parses a call expression from a code string
+func parseCallExpr(t *testing.T, code string) *ast.CallExpr {
+	t.Helper()
+	expr, err := parser.ParseExpr(code)
+	require.NoError(t, err)
+	callExpr, ok := expr.(*ast.CallExpr)
+	require.True(t, ok, "expected expression to be a call expression")
+	return callExpr
+}
+
+// parseCompositeLit parses a composite literal from a code string
+func parseCompositeLit(t *testing.T, code string) *ast.CompositeLit {
+	t.Helper()
+	expr, err := parser.ParseExpr(code)
+	require.NoError(t, err)
+	lit, ok := expr.(*ast.CompositeLit)
+	require.True(t, ok, "expected expression to be a composite literal")
+	return lit
+}
+
+// parseConstDecl parses a const declaration from a code string and returns the GenDecl
+func parseConstDecl(t *testing.T, code string) *ast.GenDecl {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "", "package test\n"+code, 0)
+	require.NoError(t, err)
+	require.Len(t, file.Decls, 1, "expected exactly one declaration")
+	genDecl, ok := file.Decls[0].(*ast.GenDecl)
+	require.True(t, ok, "expected declaration to be a general declaration")
+	return genDecl
 }

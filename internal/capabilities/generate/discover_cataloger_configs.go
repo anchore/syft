@@ -33,8 +33,13 @@ var appConfigAnnotationPattern = regexp.MustCompile(`^//\s*app-config:\s*(.+)$`)
 // Returns map where key is "packageName.StructName" (e.g., "golang.CatalogerConfig")
 func DiscoverConfigs(repoRoot string) (map[string]ConfigInfo, error) {
 	catalogerRoot := filepath.Join(repoRoot, "syft", "pkg", "cataloger")
+	return DiscoverConfigsFromPath(catalogerRoot)
+}
 
-	// find all .go files under syft/pkg/cataloger/ recursively
+// DiscoverConfigsFromPath walks the given directory and discovers all configuration structs
+// Returns map where key is "packageName.StructName" (e.g., "golang.CatalogerConfig")
+func DiscoverConfigsFromPath(catalogerRoot string) (map[string]ConfigInfo, error) {
+	// find all .go files under the directory recursively
 	var files []string
 	err := filepath.Walk(catalogerRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -52,7 +57,7 @@ func DiscoverConfigs(repoRoot string) (map[string]ConfigInfo, error) {
 	discovered := make(map[string]ConfigInfo)
 
 	for _, file := range files {
-		configs, err := discoverConfigsInFile(file, repoRoot)
+		configs, err := discoverConfigsInFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %w", file, err)
 		}
@@ -68,19 +73,15 @@ func DiscoverConfigs(repoRoot string) (map[string]ConfigInfo, error) {
 	return discovered, nil
 }
 
-func discoverConfigsInFile(path, repoRoot string) (map[string]ConfigInfo, error) {
+func discoverConfigsInFile(path string) (map[string]ConfigInfo, error) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
 
-	// extract package name from file path
-	relPath, err := filepath.Rel(repoRoot, path)
-	if err != nil {
-		relPath = path
-	}
-	packageName := extractPackageNameFromPath(relPath)
+	// extract package name from file path (use absolute path, not relative)
+	packageName := extractPackageNameFromPath(path)
 	if packageName == "" {
 		return nil, nil
 	}

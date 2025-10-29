@@ -156,25 +156,25 @@ func extractConfigStructTypes(filePath string) ([]string, error) {
 // 1. Finding files with cataloger imports in options directory
 // 2. Extracting ecosystem config fields from Catalog struct
 // 3. Matching file structs against Catalog fields
-// Returns a map of file path to top-level YAML key
-func discoverCatalogerConfigs(repoRoot string) (map[string]string, error) {
+// Returns a map of file path to top-level YAML key and a reverse lookup map of YAML key to struct name
+func discoverCatalogerConfigs(repoRoot string) (map[string]string, map[string]string, error) {
 	optionsDir := filepath.Join(repoRoot, "cmd", "syft", "internal", "options")
 	catalogFilePath := filepath.Join(optionsDir, "catalog.go")
 
 	// get ecosystem config fields from Catalog struct
 	ecosystemConfigs, err := extractEcosystemConfigFieldsFromCatalog(catalogFilePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(ecosystemConfigs) == 0 {
-		return nil, fmt.Errorf("no ecosystem config fields found in Catalog struct")
+		return nil, nil, fmt.Errorf("no ecosystem config fields found in Catalog struct")
 	}
 
 	// find files with cataloger imports
 	candidateFiles, err := findFilesWithCatalogerImports(optionsDir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// match candidate files against Catalog ecosystem fields
@@ -184,7 +184,7 @@ func discoverCatalogerConfigs(repoRoot string) (map[string]string, error) {
 	for _, filePath := range candidateFiles {
 		structTypes, err := extractConfigStructTypes(filePath)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// check if any struct type matches an ecosystem config
@@ -207,17 +207,23 @@ func discoverCatalogerConfigs(repoRoot string) (map[string]string, error) {
 
 	if len(missingConfigs) > 0 {
 		sort.Strings(missingConfigs)
-		return nil, fmt.Errorf("could not find files for ecosystem configs: %s", strings.Join(missingConfigs, ", "))
+		return nil, nil, fmt.Errorf("could not find files for ecosystem configs: %s", strings.Join(missingConfigs, ", "))
 	}
 
-	return fileToKey, nil
+	// build reverse lookup map (yamlKey -> structName)
+	keyToStruct := make(map[string]string)
+	for structName, yamlKey := range ecosystemConfigs {
+		keyToStruct[yamlKey] = structName
+	}
+
+	return fileToKey, keyToStruct, nil
 }
 
 // DiscoverAppConfigs discovers all application-level cataloger configuration fields
 // from the options package
 func DiscoverAppConfigs(repoRoot string) ([]AppConfigField, error) {
 	// discover cataloger config files dynamically
-	configFiles, err := discoverCatalogerConfigs(repoRoot)
+	configFiles, keyToStruct, err := discoverCatalogerConfigs(repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to discover cataloger configs: %w", err)
 	}
@@ -225,7 +231,7 @@ func DiscoverAppConfigs(repoRoot string) ([]AppConfigField, error) {
 	// extract configuration fields from each discovered file
 	var configs []AppConfigField
 	for filePath, topLevelKey := range configFiles {
-		fields, err := extractAppConfigFields(filePath, topLevelKey)
+		fields, err := extractAppConfigFields(filePath, topLevelKey, keyToStruct)
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract config from %s: %w", filePath, err)
 		}
@@ -241,7 +247,7 @@ func DiscoverAppConfigs(repoRoot string) ([]AppConfigField, error) {
 }
 
 // extractAppConfigFields extracts config fields from an options file
-func extractAppConfigFields(filePath, topLevelKey string) ([]AppConfigField, error) {
+func extractAppConfigFields(filePath, topLevelKey string, keyToStruct map[string]string) ([]AppConfigField, error) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, filePath, nil, parser.ParseComments)
 	if err != nil {
@@ -251,7 +257,7 @@ func extractAppConfigFields(filePath, topLevelKey string) ([]AppConfigField, err
 	var configs []AppConfigField
 
 	// find the main config struct (not nested ones)
-	configStruct, descriptions := findAppConfigStructAndDescriptions(f, topLevelKey)
+	configStruct, descriptions := findAppConfigStructAndDescriptions(f, topLevelKey, keyToStruct)
 	if configStruct == nil {
 		return nil, fmt.Errorf("no config struct found in %s", filePath)
 	}
@@ -302,24 +308,11 @@ func extractAppConfigFields(filePath, topLevelKey string) ([]AppConfigField, err
 
 // findAppConfigStructAndDescriptions finds the main config struct and extracts field descriptions
 // from the DescribeFields method
-func findAppConfigStructAndDescriptions(f *ast.File, topLevelKey string) (*ast.StructType, map[string]string) {
-	expectedName := determineExpectedConfigName(topLevelKey)
-	configStruct := findConfigStruct(f, expectedName)
+func findAppConfigStructAndDescriptions(f *ast.File, topLevelKey string, keyToStruct map[string]string) (*ast.StructType, map[string]string) {
+	structName := keyToStruct[topLevelKey]
+	configStruct := findConfigStruct(f, structName)
 	descriptions := extractDescriptionsFromDescribeFields(f)
 	return configStruct, descriptions
-}
-
-// determineExpectedConfigName maps the top-level key to the expected config struct name
-func determineExpectedConfigName(topLevelKey string) string {
-	// handle special cases first
-	switch topLevelKey {
-	case "linux-kernel":
-		return "linuxKernelConfig"
-	case "javascript":
-		return "javaScriptConfig"
-	default:
-		return topLevelKey + "Config"
-	}
 }
 
 // findConfigStruct searches for the config struct with the expected name in the AST
