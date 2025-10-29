@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/clio"
 	"github.com/anchore/fangs"
@@ -185,7 +185,6 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	}
 
 	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
-
 	if err != nil {
 		return err
 	}

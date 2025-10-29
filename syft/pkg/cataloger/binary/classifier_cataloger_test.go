@@ -1370,6 +1370,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("chrome-binary"),
 			},
 		},
+		{
+			logicalFixture: "ffmpeg/7.1.1/darwin-arm64",
+			expected: pkg.Package{
+				Name:      "ffmpeg",
+				Version:   "7.1.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ffmpeg@7.1.1",
+				Locations: locations("ffmpeg"),
+				Metadata:  metadata("ffmpeg-binary"),
+			},
+		},
+		{
+			logicalFixture: "ffmpeg/6.1.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ffmpeg",
+				Version:   "6.1.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/ffmpeg@6.1.1",
+				Locations: locations("ffmpeg"),
+				Metadata:  metadata("ffmpeg-binary"),
+			},
+		},
+		{
+			logicalFixture: "ffmpeg-shared-libs/5.1.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "ffmpeg",
+				Version:   "5.1.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/ffmpeg@5.1.4",
+				Locations: locations("libavcodec-9aae324f.so.59.37.100"),
+				Metadata:  metadata("ffmpeg-library"),
+			},
+		},
 	}
 
 	for _, test := range tests {

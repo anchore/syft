@@ -6,7 +6,7 @@ This folder contains the test data for the Conan package manager.
 
 The conan lock file is created in the following way.
 
-We explicitly use a package which has dependencies, which in turn also have dependendencies.
+We explicitly use a package which has dependencies, which in turn also have dependencies.
 This is necessary to verify that the dependency tree is properly parsed.
 
 1. Use `conan lock create --reference "mfast/1.2.2#c6f6387c9b99780f0ee05e25f99d0f39"`

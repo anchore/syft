@@ -1,0 +1,38 @@
+Package: linux-image-6.14.0-1012-aws
+Status: install ok installed
+Priority: optional
+Section: kernel
+Installed-Size: 15221
+Maintainer: Canonical Kernel Team <kernel-team@lists.ubuntu.com>
+Architecture: amd64
+Source: linux-signed-aws-6.14
+Version: 6.14.0-1012.12~24.04.1
+Provides: fuse-module, linux-image, spl-dkms, spl-modules, v4l2loopback-dkms, v4l2loopback-modules, zfs-dkms, zfs-modules
+Depends: kmod, linux-base (>= 4.5ubuntu1~16.04.1), linux-modules-6.14.0-1012-aws
+Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub | lilo, initramfs-tools | linux-initramfs-tool
+Suggests: bpftool, linux-perf, linux-aws-6.14-doc-6.14.0 | linux-aws-6.14-source-6.14.0, linux-aws-6.14-tools, linux-headers-6.14.0-1012-aws
+Conflicts: linux-image-unsigned-6.14.0-1012-aws
+Description: Signed kernel image aws
+ A kernel image for aws.  This version of it is signed with
+ Canonical's signing key.
+Built-Using: linux-aws-6.14 (= 6.14.0-1012.12~24.04.1)
+
+Package: linux-image-6.8.0-1029-aws
+Status: deinstall ok config-files
+Priority: optional
+Section: kernel
+Installed-Size: 14591
+Maintainer: Canonical Kernel Team <kernel-team@lists.ubuntu.com>
+Architecture: amd64
+Source: linux-signed-aws
+Version: 6.8.0-1029.31
+Config-Version: 6.8.0-1029.31
+Provides: fuse-module, linux-image, spl-dkms, spl-modules, v4l2loopback-dkms, v4l2loopback-modules, zfs-dkms, zfs-modules
+Depends: kmod, linux-base (>= 4.5ubuntu1~16.04.1), linux-modules-6.8.0-1029-aws
+Recommends: grub-pc | grub-efi-amd64 | grub-efi-ia32 | grub | lilo, initramfs-tools | linux-initramfs-tool
+Suggests: fdutils, linux-aws-doc-6.8.0 | linux-aws-source-6.8.0, linux-aws-tools, linux-headers-6.8.0-1029-aws
+Conflicts: linux-image-unsigned-6.8.0-1029-aws
+Description: Signed kernel image aws
+ A kernel image for aws.  This version of it is signed with
+ Canonical's signing key.
+Built-Using: linux-aws (= 6.8.0-1029.31)

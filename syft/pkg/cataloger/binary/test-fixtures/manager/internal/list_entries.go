@@ -2,10 +2,14 @@ package internal
 
 import (
 	"fmt"
+	"iter"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
+
+	"golang.org/x/exp/maps"
 
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/internal/config"
 )
@@ -194,4 +198,18 @@ func (e Entries) BinaryFromImageHasSnippet(cfg config.BinaryFromImage) bool {
 		}
 	}
 	return true
+}
+
+func (e Entries) Sorted() iter.Seq2[LogicalEntryKey, EntryInfo] {
+	keys := maps.Keys(e)
+	slices.SortFunc(keys, func(a, b LogicalEntryKey) int {
+		return strings.Compare(a.Path(), b.Path())
+	})
+	return func(yield func(LogicalEntryKey, EntryInfo) bool) {
+		for _, k := range keys {
+			if !yield(k, e[k]) {
+				return
+			}
+		}
+	}
 }

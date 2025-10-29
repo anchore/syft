@@ -2,6 +2,7 @@ package file
 
 import "io"
 
+// LocationReadCloser combines a Location with a ReadCloser for accessing file content with location metadata.
 type LocationReadCloser struct {
 	Location
 	io.ReadCloser
