@@ -21,6 +21,7 @@ targetCompatibility = 1.8
 
 dependencies {
     implementation "joda-time:joda-time:2.2"
+    implementation "net.bytebuddy:byte-buddy:1.17.5"
     testImplementation "junit:junit:4.12"
 }
 // end::dependencies[]
@@ -37,6 +38,8 @@ jar {
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 // end::jar[]
 
