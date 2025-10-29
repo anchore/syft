@@ -352,6 +352,9 @@ func (p *CatalogTester) assertPkgs(t *testing.T, pkgs []pkg.Package, relationshi
 		opts = append(opts, p.compareOptions...)
 		opts = append(opts, cmp.Reporter(&r))
 
+		// ignore the "FoundBy" field on relationships as it is set in the generic cataloger before it's presence on the relationship
+		opts = append(opts, cmpopts.IgnoreFields(pkg.Package{}, "FoundBy"))
+
 		// order should not matter
 		relationship.Sort(p.expectedRelationships)
 		relationship.Sort(relationships)

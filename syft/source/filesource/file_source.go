@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"sync"
 
 	"github.com/opencontainers/go-digest"
@@ -50,7 +49,13 @@ func NewFromPath(path string) (source.Source, error) {
 }
 
 func New(cfg Config) (source.Source, error) {
-	fileMeta, err := os.Stat(cfg.Path)
+	f, err := os.Open(cfg.Path)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open file=%q: %w", cfg.Path, err)
+	}
+	defer f.Close()
+
+	fileMeta, err := f.Stat()
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", cfg.Path, err)
 	}
@@ -59,32 +64,18 @@ func New(cfg Config) (source.Source, error) {
 		return nil, fmt.Errorf("given path is a directory: %q", cfg.Path)
 	}
 
-	analysisPath, cleanupFn, err := fileAnalysisPath(cfg.Path, cfg.SkipExtractArchive)
-	if err != nil {
-		return nil, fmt.Errorf("unable to extract file analysis path=%q: %w", cfg.Path, err)
-	}
-
 	var digests []file.Digest
 	if len(cfg.DigestAlgorithms) > 0 {
-		fh, err := os.Open(cfg.Path)
-		if err != nil {
-			return nil, fmt.Errorf("unable to open file=%q: %w", cfg.Path, err)
-		}
-
-		defer fh.Close()
-
-		digests, err = intFile.NewDigestsFromFile(context.TODO(), fh, cfg.DigestAlgorithms)
+		digests, err = intFile.NewDigestsFromFile(context.TODO(), f, cfg.DigestAlgorithms)
 		if err != nil {
 			return nil, fmt.Errorf("unable to calculate digests for file=%q: %w", cfg.Path, err)
 		}
 	}
 
-	fh, err := os.Open(cfg.Path)
+	analysisPath, cleanupFn, err := fileAnalysisPath(cfg.Path, cfg.SkipExtractArchive)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open file=%q: %w", cfg.Path, err)
+		return nil, fmt.Errorf("unable to extract file analysis path=%q: %w", cfg.Path, err)
 	}
-
-	defer fh.Close()
 
 	id, versionDigest := deriveIDFromFile(cfg)
 
@@ -96,24 +87,8 @@ func New(cfg Config) (source.Source, error) {
 		analysisPath:     analysisPath,
 		digestForVersion: versionDigest,
 		digests:          digests,
-		mimeType:         stereoFile.MIMEType(fh),
+		mimeType:         stereoFile.MIMEType(f),
 	}, nil
-}
-
-// deriveIDFromFile derives an artifact ID from the contents of a file. If an alias is provided, it will be included
-// in the ID derivation (along with contents). This way if the user scans the same item but is considered to be
-// logically different, then ID will express that.
-func deriveIDFromFile(cfg Config) (artifact.ID, string) {
-	d := digestOfFileContents(cfg.Path)
-	info := d
-
-	if !cfg.Alias.IsEmpty() {
-		// if the user provided an alias, we want to consider that in the artifact ID. This way if the user
-		// scans the same item but is considered to be logically different, then ID will express that.
-		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
-	}
-
-	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
 func (s fileSource) ID() artifact.ID {
@@ -168,50 +143,54 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to stat path=%q: %w", s.analysisPath, err)
 	}
-	isArchiveAnalysis := fi.IsDir()
 
-	absParentDir, err := absoluteSymlinkFreePathToParent(s.analysisPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if isArchiveAnalysis {
+	if isArchiveAnalysis := fi.IsDir(); isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
 		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
+
 		s.resolver = res
 		return s.resolver, nil
 	}
 
 	// This is analysis of a single file. Use file indexer.
-	res, err := fileresolver.NewFromFile(absParentDir, s.analysisPath, exclusionFunctions...)
+	res, err := fileresolver.NewFromFile(s.analysisPath, exclusionFunctions...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create file resolver: %w", err)
 	}
+
 	s.resolver = res
 	return s.resolver, nil
 }
 
-func absoluteSymlinkFreePathToParent(path string) (string, error) {
-	absAnalysisPath, err := filepath.Abs(path)
-	if err != nil {
-		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
-	}
-	dereferencedAbsAnalysisPath, err := filepath.EvalSymlinks(absAnalysisPath)
-	if err != nil {
-		return "", fmt.Errorf("unable to get absolute path for analysis path=%q: %w", path, err)
-	}
-	return filepath.Dir(dereferencedAbsAnalysisPath), nil
-}
-
 func (s *fileSource) Close() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	if s.closer == nil {
 		return nil
 	}
+
 	s.resolver = nil
 	return s.closer()
+}
+
+// deriveIDFromFile derives an artifact ID from the contents of a file. If an alias is provided, it will be included
+// in the ID derivation (along with contents). This way if the user scans the same item but is considered to be
+// logically different, then ID will express that.
+func deriveIDFromFile(cfg Config) (artifact.ID, string) {
+	d := digestOfFileContents(cfg.Path)
+	info := d
+
+	if !cfg.Alias.IsEmpty() {
+		// if the user provided an alias, we want to consider that in the artifact ID. This way if the user
+		// scans the same item but is considered to be logically different, then ID will express that.
+		info += fmt.Sprintf(":%s@%s", cfg.Alias.Name, cfg.Alias.Version)
+	}
+
+	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
@@ -231,11 +210,14 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	// unarchived.
 	envelopedUnarchiver, err := archiver.ByExtension(path)
 	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
-		if tar, ok := unarchiver.(*archiver.Tar); ok {
-			// when tar files are extracted, if there are multiple entries at the same
-			// location, the last entry wins
-			// NOTE: this currently does not display any messages if an overwrite happens
-			tar.OverwriteExisting = true
+		// when tar/zip files are extracted, if there are multiple entries at the same
+		// location, the last entry wins
+		// NOTE: this currently does not display any messages if an overwrite happens
+		switch v := unarchiver.(type) {
+		case *archiver.Tar:
+			v.OverwriteExisting = true
+		case *archiver.Zip:
+			v.OverwriteExisting = true
 		}
 
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
@@ -250,15 +232,17 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 }
 
 func digestOfFileContents(path string) string {
-	file, err := os.Open(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return digest.SHA256.FromString(path).String()
 	}
-	defer file.Close()
-	di, err := digest.SHA256.FromReader(file)
+	defer f.Close()
+
+	di, err := digest.SHA256.FromReader(f)
 	if err != nil {
 		return digest.SHA256.FromString(path).String()
 	}
+
 	return di.String()
 }
 

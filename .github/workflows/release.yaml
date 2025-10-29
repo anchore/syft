@@ -19,6 +19,16 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - name: Validate Apple notarization credentials
+        run: .tool/quill submission list
+        env:
+          QUILL_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
+          QUILL_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          QUILL_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+
       - name: Check if running on main
         if: github.ref != 'refs/heads/main'
         # we are using the following flag when running `cosign blob-verify` for checksum signature verification:
@@ -161,7 +171,7 @@ jobs:
           # for updating brew formula in anchore/homebrew-syft
           GITHUB_BREW_TOKEN: ${{ secrets.ANCHOREOPS_GITHUB_OSS_WRITE_TOKEN }}
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b #v0.20.6
+      - uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 #v0.20.9
         continue-on-error: true
         with:
           file: go.mod

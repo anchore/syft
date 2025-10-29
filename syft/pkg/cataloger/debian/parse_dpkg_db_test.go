@@ -237,6 +237,37 @@ func Test_parseDpkgStatus(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "deinstall status packages are ignored",
+			fixturePath: "test-fixtures/var/lib/dpkg/status.d/deinstall",
+			expected: []pkg.DpkgDBEntry{
+				{
+					Package:       "linux-image-6.14.0-1012-aws",
+					Source:        "linux-signed-aws-6.14",
+					Version:       "6.14.0-1012.12~24.04.1",
+					Architecture:  "amd64",
+					InstalledSize: 15221,
+					Maintainer:    "Canonical Kernel Team <kernel-team@lists.ubuntu.com>",
+					Description: `Signed kernel image aws
+ A kernel image for aws.  This version of it is signed with
+ Canonical's signing key.`,
+					Provides: []string{"fuse-module",
+						"linux-image",
+						"spl-dkms",
+						"spl-modules",
+						"v4l2loopback-dkms",
+						"v4l2loopback-modules",
+						"zfs-dkms",
+						"zfs-modules"},
+					Depends: []string{
+						"kmod",
+						"linux-base (>= 4.5ubuntu1~16.04.1)",
+						"linux-modules-6.14.0-1012-aws",
+					},
+					Files: []pkg.DpkgFileRecord{},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

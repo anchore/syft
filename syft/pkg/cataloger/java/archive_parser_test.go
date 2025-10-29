@@ -79,9 +79,12 @@ func TestSearchMavenForLicenses(t *testing.T) {
 					ReadCloser: fixture,
 				}, tc.detectNested, tc.config)
 			defer cleanupFn()
+			require.NoError(t, err)
 
 			// assert licenses are discovered from upstream
 			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
+			require.NotNil(t, parsedPom, "expected to find pom information in the fixture")
+			require.NotNil(t, parsedPom.project, "expected parsedPom to have a project")
 			resolvedLicenses, _ := ap.maven.ResolveLicenses(context.Background(), parsedPom.project)
 			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(ctx, nil, resolvedLicenses))
 		})
@@ -148,9 +151,22 @@ func TestParseJar(t *testing.T) {
 						},
 						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/io.jenkins.plugins/example-jenkins-plugin/pom.properties",
+							Name:       "",
 							GroupID:    "io.jenkins.plugins",
 							ArtifactID: "example-jenkins-plugin",
 							Version:    "1.0-SNAPSHOT",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:       "META-INF/maven/io.jenkins.plugins/example-jenkins-plugin/pom.xml",
+							Name:       "Example Jenkins Plugin",
+							GroupID:    "io.jenkins.plugins",
+							ArtifactID: "example-jenkins-plugin",
+							Version:    "1.0-SNAPSHOT",
+							Parent: &pkg.JavaPomParent{
+								GroupID:    "org.jenkins-ci.plugins",
+								ArtifactID: "plugin",
+								Version:    "4.46",
+							},
 						},
 					},
 				},
@@ -189,6 +205,14 @@ func TestParseJar(t *testing.T) {
 								},
 							},
 						},
+						// PomProject: &pkg.JavaPomProject{
+						// 	Path:       "META-INF/maven/io.jenkins.plugins/example-jenkins-plugin/pom.xml",
+						// 	Parent:     &pkg.JavaPomParent{GroupID: "org.jenkins-ci.plugins", ArtifactID: "plugin", Version: "4.46"},
+						// 	GroupID:    "io.jenkins.plugins",
+						// 	ArtifactID: "example-jenkins-plugin",
+						// 	Version:    "1.0-SNAPSHOT",
+						// 	Name:       "Example Jenkins Plugin",
+						// },
 					},
 				},
 				"joda-time": {
@@ -282,6 +306,12 @@ func TestParseJar(t *testing.T) {
 						},
 						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.properties",
+							GroupID:    "org.anchore",
+							ArtifactID: "example-java-app-maven",
+							Version:    "0.1.0",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:       "META-INF/maven/org.anchore/example-java-app-maven/pom.xml",
 							GroupID:    "org.anchore",
 							ArtifactID: "example-java-app-maven",
 							Version:    "0.1.0",
@@ -1127,6 +1157,13 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				GroupID:    "org.apache.directory.api",
 				ArtifactID: "api-all",
 				Version:    "2.0.0",
+			}, PomProject: &pkg.JavaPomProject{
+				Path:       "META-INF/maven/org.apache.directory.api/api-all/pom.xml",
+				ArtifactID: "api-all",
+				GroupID:    "org.apache.directory.api",
+				Version:    "2.0.0",
+				Name:       "Apache Directory API All",
+				Parent:     &pkg.JavaPomParent{GroupID: "org.apache.directory.api", ArtifactID: "api-parent", Version: "2.0.0"},
 			},
 		},
 	}
@@ -1160,6 +1197,46 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 				},
 			},
 			Parent: &apiAll,
+		},
+	}
+
+	micronautAop := pkg.Package{
+		Name:      "micronaut-aop",
+		Version:   "4.9.11",
+		PURL:      "pkg:maven/io.micronaut/micronaut-aop@4.9.11",
+		Locations: file.NewLocationSet(file.NewLocation("test-fixtures/jar-metadata/cache/micronaut-aop-4.9.11.jar")),
+		Type:      pkg.JavaPkg,
+		Language:  pkg.Java,
+		Metadata: pkg.JavaArchive{
+			VirtualPath: "test-fixtures/jar-metadata/cache/micronaut-aop-4.9.11.jar",
+			Manifest: &pkg.JavaManifest{
+				Main: []pkg.KeyValue{
+					{
+						Key:   "Manifest-Version",
+						Value: "1.0",
+					},
+					{
+						Key:   "Automatic-Module-Name",
+						Value: "io.micronaut.micronaut_aop",
+					},
+					{
+						Key:   "Implementation-Version",
+						Value: "4.9.11",
+					},
+					{
+						Key:   "Implementation-Title",
+						Value: "Micronaut Core",
+					},
+				},
+			}, PomProject: &pkg.JavaPomProject{
+				Path:        "META-INF/maven/io.micronaut/micronaut-aop/pom.xml",
+				ArtifactID:  "micronaut-aop",
+				GroupID:     "io.micronaut",
+				Version:     "4.9.11",
+				Name:        "Micronaut Core",
+				Description: "Core components supporting the Micronaut Framework",
+				URL:         "https://micronaut.io",
+			},
 		},
 	}
 
@@ -1220,6 +1297,16 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 								{Key: "Specification-Version", Value: "2.15.2"},
 							},
 						},
+						PomProject: &pkg.JavaPomProject{
+							Path:        "META-INF/maven/com.fasterxml.jackson.core/jackson-core/pom.xml",
+							ArtifactID:  "jackson-core",
+							GroupID:     "com.fasterxml.jackson.core",
+							Version:     "2.15.2",
+							Name:        "Jackson-core",
+							Description: "Core Jackson processing abstractions (aka Streaming API), implementation for JSON",
+							URL:         "https://github.com/FasterXML/jackson-core",
+							Parent:      &pkg.JavaPomParent{GroupID: "com.fasterxml.jackson", ArtifactID: "jackson-base", Version: "2.15.2"},
+						},
 						// not under test
 						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
 					},
@@ -1274,6 +1361,16 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 								{Key: "Created-By", Value: "Apache Maven Bundle Plugin 5.1.8"},
 								{Key: "Specification-Version", Value: "2.15.2"},
 							},
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:        "META-INF/maven/com.fasterxml.jackson.core/jackson-core/pom.xml",
+							ArtifactID:  "jackson-core",
+							GroupID:     "com.fasterxml.jackson.core",
+							Version:     "2.15.2",
+							Name:        "Jackson-core",
+							Description: "Core Jackson processing abstractions (aka Streaming API), implementation for JSON",
+							URL:         "https://github.com/FasterXML/jackson-core",
+							Parent:      &pkg.JavaPomParent{GroupID: "com.fasterxml.jackson", ArtifactID: "jackson-base", Version: "2.15.2"},
 						},
 						// not under test
 						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "abd3e329270fc54a2acaceb45420fd5710ecefd5"}},
@@ -1339,6 +1436,14 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 						//ArchiveDigests: []file.Digest{{Algorithm: "sha1", Value: "d8bc1d9c428c96fe447e2c429fc4304d141024df"}},
 					},
 				},
+			},
+		},
+		{
+			name:          "micronaut-aop",
+			fixtureName:   "micronaut-aop-4.9.11",
+			fileExtension: "jar",
+			expectedPkgs: []pkg.Package{
+				micronautAop,
 			},
 		},
 	}
@@ -1526,4 +1631,27 @@ func Test_corruptJarArchive(t *testing.T) {
 		FromFile(t, "test-fixtures/corrupt/example.jar").
 		WithError().
 		TestParser(t, ap.parseJavaArchive)
+}
+
+func Test_jarPomPropertyResolutionDoesNotPanic(t *testing.T) {
+	jarName := generateJavaMetadataJarFixture(t, "commons-lang3-3.12.0", "jar")
+	fixture, err := os.Open(jarName)
+	require.NoError(t, err)
+
+	ctx := context.TODO()
+	// setup parser
+	ap, cleanupFn, err := newJavaArchiveParser(
+		ctx,
+		file.LocationReadCloser{
+			Location:   file.NewLocation(fixture.Name()),
+			ReadCloser: fixture,
+		}, false, ArchiveCatalogerConfig{
+			UseMavenLocalRepository: true,
+			MavenLocalRepositoryDir: "internal/maven/test-fixtures/maven-repo",
+		})
+	defer cleanupFn()
+	require.NoError(t, err)
+
+	_, _, err = ap.parse(ctx, nil)
+	require.NoError(t, err)
 }

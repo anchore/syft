@@ -42,7 +42,7 @@ tools:
   # used for signing the checksums file at release
   - name: cosign
     version:
-      want: v3.0.1
+      want: v3.0.2
     method: github-release
     with:
       repo: sigstore/cosign
@@ -58,7 +58,7 @@ tools:
   # used to release all artifacts
   - name: goreleaser
     version:
-      want: v2.12.5
+      want: v2.12.7
     method: github-release
     with:
       repo: goreleaser/goreleaser
@@ -98,7 +98,7 @@ tools:
   # used for triggering a release
   - name: gh
     version:
-      want: v2.81.0
+      want: v2.82.1
     method: github-release
     with:
       repo: cli/cli
@@ -114,7 +114,7 @@ tools:
   # used to upload test fixture cache
   - name: yq
     version:
-      want: v4.47.2
+      want: v4.48.1
     method: github-release
     with:
       repo: mikefarah/yq
