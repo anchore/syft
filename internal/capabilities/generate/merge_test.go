@@ -374,3 +374,153 @@ func TestCatalogerConfigFieldUpdatedForNewCatalogers(t *testing.T) {
 		})
 	}
 }
+
+func TestStripPURLVersion(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "purl with version",
+			input: "pkg:generic/python@1.0.0",
+			want:  "pkg:generic/python",
+		},
+		{
+			name:  "purl without version",
+			input: "pkg:generic/python",
+			want:  "pkg:generic/python",
+		},
+		{
+			name:  "purl with multiple @ signs",
+			input: "pkg:generic/py@thon@1.0.0",
+			want:  "pkg:generic/py@thon",
+		},
+		{
+			name:  "empty string",
+			input: "",
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := stripPURLVersion(tt.input)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestInferEcosystem(t *testing.T) {
+	tests := []struct {
+		name          string
+		catalogerName string
+		want          string
+	}{
+		{
+			name:          "go module cataloger",
+			catalogerName: "go-module-binary-cataloger",
+			want:          "go",
+		},
+		{
+			name:          "python cataloger",
+			catalogerName: "python-package-cataloger",
+			want:          "python",
+		},
+		{
+			name:          "java archive cataloger",
+			catalogerName: "java-archive-cataloger",
+			want:          "java",
+		},
+		{
+			name:          "rust cargo cataloger",
+			catalogerName: "rust-cargo-lock-cataloger",
+			want:          "rust",
+		},
+		{
+			name:          "javascript npm cataloger",
+			catalogerName: "javascript-package-cataloger",
+			want:          "javascript",
+		},
+		{
+			name:          "ruby gem cataloger",
+			catalogerName: "ruby-gemspec-cataloger",
+			want:          "ruby",
+		},
+		{
+			name:          "debian dpkg cataloger",
+			catalogerName: "dpkg-db-cataloger",
+			want:          "debian",
+		},
+		{
+			name:          "alpine apk cataloger",
+			catalogerName: "apk-db-cataloger",
+			want:          "alpine",
+		},
+		{
+			name:          "linux kernel cataloger",
+			catalogerName: "linux-kernel-cataloger",
+			want:          "linux",
+		},
+		{
+			name:          "binary classifier cataloger",
+			catalogerName: "binary-classifier-cataloger",
+			want:          "binary",
+		},
+		{
+			name:          "github actions cataloger",
+			catalogerName: "github-actions-usage-cataloger",
+			want:          "github-actions",
+		},
+		{
+			name:          "unknown cataloger defaults to other",
+			catalogerName: "unknown-custom-cataloger",
+			want:          "other",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := inferEcosystem(tt.catalogerName)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestConvertToJSONSchemaTypesFromMetadata(t *testing.T) {
+	tests := []struct {
+		name          string
+		metadataTypes []string
+		want          []string
+	}{
+		{
+			name:          "empty slice returns nil",
+			metadataTypes: []string{},
+			want:          nil,
+		},
+		{
+			name:          "nil slice returns nil",
+			metadataTypes: nil,
+			want:          nil,
+		},
+		{
+			name:          "single metadata type",
+			metadataTypes: []string{"pkg.AlpmDBEntry"},
+			want:          []string{"AlpmDbEntry"},
+		},
+		{
+			name:          "multiple metadata types",
+			metadataTypes: []string{"pkg.ApkDBEntry", "pkg.BinarySignature"},
+			want:          []string{"ApkDbEntry", "BinarySignature"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := convertToJSONSchemaTypesFromMetadata(tt.metadataTypes)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("convertToJSONSchemaTypesFromMetadata() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

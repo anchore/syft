@@ -1,3 +1,4 @@
+// this file links catalogers to their configuration structs by analyzing constructor function signatures to determine which config struct each cataloger uses.
 package main
 
 import (
@@ -16,8 +17,18 @@ import (
 // Returns empty string for catalogers that don't take a config parameter.
 func LinkCatalogersToConfigs(repoRoot string) (map[string]string, error) {
 	catalogerRoot := filepath.Join(repoRoot, "syft", "pkg", "cataloger")
+	return LinkCatalogersToConfigsFromPath(catalogerRoot, repoRoot)
+}
 
-	// find all .go files under syft/pkg/cataloger/ recursively
+// LinkCatalogersToConfigsFromPath analyzes cataloger constructor functions in the specified directory
+// to determine which config struct each cataloger uses. This is the parameterized version that allows
+// testing with custom fixture directories.
+// Returns a map where key is the cataloger name (e.g., "go-module-binary-cataloger")
+// and value is the config struct reference (e.g., "golang.CatalogerConfig").
+// Returns empty string for catalogers that don't take a config parameter.
+// The baseRoot parameter is used for relative path calculation to determine package names.
+func LinkCatalogersToConfigsFromPath(catalogerRoot, baseRoot string) (map[string]string, error) {
+	// find all .go files under the cataloger root recursively
 	var files []string
 	err := filepath.Walk(catalogerRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -35,7 +46,7 @@ func LinkCatalogersToConfigs(repoRoot string) (map[string]string, error) {
 	linkages := make(map[string]string)
 
 	for _, file := range files {
-		links, err := linkCatalogersInFile(file, repoRoot)
+		links, err := linkCatalogersInFile(file, baseRoot)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %w", file, err)
 		}
@@ -324,7 +335,5 @@ func looksLikeConfigType(typeName string) bool {
 	structName := parts[len(parts)-1]
 
 	// check for common config patterns
-	return strings.Contains(structName, "Config") ||
-		strings.HasSuffix(structName, "Config") ||
-		strings.HasPrefix(structName, "Config")
+	return strings.Contains(structName, "Config")
 }

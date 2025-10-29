@@ -1,3 +1,4 @@
+// this is the entry point for regenerating the packages.yaml file, which orchestrates discovery, merging, and validation of cataloger capabilities.
 package main
 
 import (
@@ -18,25 +19,6 @@ var (
 	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("14"))            // cyan
 	dimStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))           // lighter grey (256-color)
 )
-
-func printSuccessASCII() {
-	fmt.Println()
-	fmt.Println(successStyle.Render("✓ All validations passed!") + " 🎉")
-	fmt.Println()
-	fmt.Println(successStyle.Render("  ░█▀▀░█░█░█▀▀░█▀▀░█▀▀░█▀▀░█▀▀"))
-	fmt.Println(successStyle.Render("  ░▀▀█░█░█░█░░░█░░░█▀▀░▀▀█░▀▀█"))
-	fmt.Println(successStyle.Render("  ░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀"))
-	fmt.Println()
-}
-
-func printFailureASCII() {
-	fmt.Println(errorStyle.Render("✗ Validation failed") + " 😢")
-	fmt.Println()
-	fmt.Println(errorStyle.Render("  ░█▀▀░█▀█░▀█▀░█░░░█▀▀░█▀▄"))
-	fmt.Println(errorStyle.Render("  ░█▀▀░█▀█░░█░░█░░░█▀▀░█░█"))
-	fmt.Println(errorStyle.Render("  ░▀░░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀▀░"))
-	fmt.Println()
-}
 
 func main() {
 	repoRoot, err := RepoRoot()
@@ -146,4 +128,23 @@ func hasEmptyCapabilities(caps capabilities.CapabilitySet) bool {
 	// only flag if capabilities are completely missing (empty array)
 	// if someone filled out the capabilities section (even with all false/empty values), that's intentional
 	return len(caps) == 0
+}
+
+func printSuccessASCII() {
+	fmt.Println()
+	fmt.Println(successStyle.Render("✓ All validations passed!") + " 🎉")
+	fmt.Println()
+	fmt.Println(successStyle.Render("  ░█▀▀░█░█░█▀▀░█▀▀░█▀▀░█▀▀░█▀▀"))
+	fmt.Println(successStyle.Render("  ░▀▀█░█░█░█░░░█░░░█▀▀░▀▀█░▀▀█"))
+	fmt.Println(successStyle.Render("  ░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀"))
+	fmt.Println()
+}
+
+func printFailureASCII() {
+	fmt.Println(errorStyle.Render("✗ Validation failed") + " 😢")
+	fmt.Println()
+	fmt.Println(errorStyle.Render("  ░█▀▀░█▀█░▀█▀░█░░░█▀▀░█▀▄"))
+	fmt.Println(errorStyle.Render("  ░█▀▀░█▀█░░█░░█░░░█▀▀░█░█"))
+	fmt.Println(errorStyle.Render("  ░▀░░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀▀░"))
+	fmt.Println()
 }

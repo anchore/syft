@@ -1,3 +1,4 @@
+// this file discovers application-level configuration from cmd/syft/internal/options/ by parsing ecosystem config structs, their DescribeFields() methods, and default value functions.
 package main
 
 import (
@@ -5,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -18,30 +20,214 @@ type AppConfigField struct {
 	DefaultValue interface{} // extracted from Default*() functions
 }
 
+// extractEcosystemConfigFieldsFromCatalog parses catalog.go and extracts the ecosystem-specific
+// config fields from the Catalog struct, returning a map of struct type name to YAML tag
+func extractEcosystemConfigFieldsFromCatalog(catalogFilePath string) (map[string]string, error) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, catalogFilePath, nil, parser.ParseComments)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse catalog.go: %w", err)
+	}
+
+	// find the Catalog struct
+	catalogStruct := findConfigStruct(f, "Catalog")
+	if catalogStruct == nil {
+		return nil, fmt.Errorf("catalog struct not found in %s", catalogFilePath)
+	}
+
+	// extract ecosystem config fields from the Catalog struct
+	// these are between the "ecosystem-specific cataloger configuration" comment and the next section
+	ecosystemConfigs := make(map[string]string)
+	inEcosystemSection := false
+
+	for _, field := range catalogStruct.Fields.List {
+		// check for ecosystem section marker comment
+		if field.Doc != nil {
+			for _, comment := range field.Doc.List {
+				if strings.Contains(comment.Text, "ecosystem-specific cataloger configuration") {
+					inEcosystemSection = true
+					break
+				}
+				// check if we've hit the next section (any comment marking a new section)
+				if inEcosystemSection && strings.HasPrefix(comment.Text, "// configuration for") {
+					inEcosystemSection = false
+					break
+				}
+			}
+		}
+
+		if !inEcosystemSection {
+			continue
+		}
+
+		// extract field type and yaml tag
+		if len(field.Names) == 0 {
+			continue
+		}
+
+		// get the type name (e.g., "golangConfig")
+		var typeName string
+		if ident, ok := field.Type.(*ast.Ident); ok {
+			typeName = ident.Name
+		} else {
+			continue
+		}
+
+		// get the yaml tag
+		yamlTag := extractYAMLTag(field)
+		if yamlTag == "" || yamlTag == "-" {
+			continue
+		}
+
+		ecosystemConfigs[typeName] = yamlTag
+	}
+
+	return ecosystemConfigs, nil
+}
+
+// findFilesWithCatalogerImports scans the options directory for .go files that import
+// from "github.com/anchore/syft/syft/pkg/cataloger/*" packages
+func findFilesWithCatalogerImports(optionsDir string) ([]string, error) {
+	entries, err := os.ReadDir(optionsDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read options directory: %w", err)
+	}
+
+	var candidateFiles []string
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+			continue
+		}
+
+		filePath := filepath.Join(optionsDir, entry.Name())
+
+		// parse the file to check imports
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, filePath, nil, parser.ImportsOnly)
+		if err != nil {
+			continue // skip files that can't be parsed
+		}
+
+		// check if file imports from cataloger packages
+		for _, imp := range f.Imports {
+			importPath := strings.Trim(imp.Path.Value, `"`)
+			if strings.HasPrefix(importPath, "github.com/anchore/syft/syft/pkg/cataloger/") {
+				candidateFiles = append(candidateFiles, filePath)
+				break
+			}
+		}
+	}
+
+	return candidateFiles, nil
+}
+
+// extractConfigStructTypes parses a Go file and returns all struct type names defined in it
+func extractConfigStructTypes(filePath string) ([]string, error) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, filePath, nil, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse %s: %w", filePath, err)
+	}
+
+	var structTypes []string
+	for _, decl := range f.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.TYPE {
+			continue
+		}
+
+		for _, spec := range genDecl.Specs {
+			typeSpec, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				continue
+			}
+
+			// check if it's a struct type
+			if _, ok := typeSpec.Type.(*ast.StructType); ok {
+				structTypes = append(structTypes, typeSpec.Name.Name)
+			}
+		}
+	}
+
+	return structTypes, nil
+}
+
+// discoverCatalogerConfigs discovers cataloger config files by:
+// 1. Finding files with cataloger imports in options directory
+// 2. Extracting ecosystem config fields from Catalog struct
+// 3. Matching file structs against Catalog fields
+// Returns a map of file path to top-level YAML key
+func discoverCatalogerConfigs(repoRoot string) (map[string]string, error) {
+	optionsDir := filepath.Join(repoRoot, "cmd", "syft", "internal", "options")
+	catalogFilePath := filepath.Join(optionsDir, "catalog.go")
+
+	// get ecosystem config fields from Catalog struct
+	ecosystemConfigs, err := extractEcosystemConfigFieldsFromCatalog(catalogFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ecosystemConfigs) == 0 {
+		return nil, fmt.Errorf("no ecosystem config fields found in Catalog struct")
+	}
+
+	// find files with cataloger imports
+	candidateFiles, err := findFilesWithCatalogerImports(optionsDir)
+	if err != nil {
+		return nil, err
+	}
+
+	// match candidate files against Catalog ecosystem fields
+	fileToKey := make(map[string]string)
+	foundStructs := make(map[string]bool)
+
+	for _, filePath := range candidateFiles {
+		structTypes, err := extractConfigStructTypes(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		// check if any struct type matches an ecosystem config
+		for _, structType := range structTypes {
+			if yamlKey, exists := ecosystemConfigs[structType]; exists {
+				fileToKey[filePath] = yamlKey
+				foundStructs[structType] = true
+				break
+			}
+		}
+	}
+
+	// validate that all ecosystem configs were found
+	var missingConfigs []string
+	for structType := range ecosystemConfigs {
+		if !foundStructs[structType] {
+			missingConfigs = append(missingConfigs, structType)
+		}
+	}
+
+	if len(missingConfigs) > 0 {
+		sort.Strings(missingConfigs)
+		return nil, fmt.Errorf("could not find files for ecosystem configs: %s", strings.Join(missingConfigs, ", "))
+	}
+
+	return fileToKey, nil
+}
+
 // DiscoverAppConfigs discovers all application-level cataloger configuration fields
 // from the options package
 func DiscoverAppConfigs(repoRoot string) ([]AppConfigField, error) {
-	optionsDir := filepath.Join(repoRoot, "cmd", "syft", "internal", "options")
-
-	// parse all .go files in the options directory to extract configuration fields
-	configs := []AppConfigField{}
-
-	// define the config files we want to parse with their top-level keys
-	configFiles := map[string]string{
-		"dotnet.go":       "dotnet",
-		"golang.go":       "golang",
-		"java.go":         "java",
-		"javascript.go":   "javascript",
-		"linux_kernel.go": "linux-kernel",
-		"nix.go":          "nix",
-		"python.go":       "python",
+	// discover cataloger config files dynamically
+	configFiles, err := discoverCatalogerConfigs(repoRoot)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover cataloger configs: %w", err)
 	}
 
-	for filename, topLevelKey := range configFiles {
-		filePath := filepath.Join(optionsDir, filename)
+	// extract configuration fields from each discovered file
+	var configs []AppConfigField
+	for filePath, topLevelKey := range configFiles {
 		fields, err := extractAppConfigFields(filePath, topLevelKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract config from %s: %w", filename, err)
+			return nil, fmt.Errorf("failed to extract config from %s: %w", filePath, err)
 		}
 		configs = append(configs, fields...)
 	}

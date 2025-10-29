@@ -1,3 +1,4 @@
+// this file contains the core merging logic that combines discovered cataloger data with existing packages.yaml, preserving all manual sections while updating auto-generated fields.
 package main
 
 import (
@@ -47,6 +48,74 @@ var catalogerConfigExceptions = strset.New(
 var catalogerConfigOverrides = map[string]string{
 	"dotnet-portable-executable-cataloger": "dotnet.CatalogerConfig",
 	"nix-store-cataloger":                  "nix.Config",
+}
+
+// ecosystemMapping maps patterns in cataloger names to ecosystem names.
+// order matters - more specific patterns should come first.
+type ecosystemMapping struct {
+	patterns  []string // patterns to match in the cataloger name
+	ecosystem string   // ecosystem to return if any pattern matches
+}
+
+// ecosystemMappings defines the pattern-to-ecosystem mappings.
+// note: order matters - check more specific patterns first
+var ecosystemMappings = []ecosystemMapping{
+	// language-based ecosystems
+	{[]string{"rust", "cargo"}, "rust"},
+	{[]string{"javascript", "node", "npm"}, "javascript"},
+	{[]string{"python"}, "python"},
+	{[]string{"java", "graalvm"}, "java"},
+	{[]string{"go-module", "golang"}, "go"},
+	{[]string{"ruby", "gem"}, "ruby"},
+	{[]string{"php", "composer", "pear", "pecl"}, "php"},
+	{[]string{"dotnet", ".net", "csharp"}, "dotnet"},
+	{[]string{"swift", "cocoapods"}, "swift"},
+	{[]string{"dart", "pubspec"}, "dart"},
+	{[]string{"elixir", "mix"}, "elixir"},
+	{[]string{"erlang", "rebar"}, "erlang"},
+	{[]string{"haskell", "cabal", "stack"}, "haskell"},
+	{[]string{"lua"}, "lua"},
+	{[]string{"ocaml", "opam"}, "ocaml"},
+	{[]string{"r-package"}, "r"},
+	{[]string{"swipl", "prolog"}, "prolog"},
+	{[]string{"cpp", "conan"}, "c++"},
+	{[]string{"kotlin"}, "kotlin"},
+
+	// os/distro-based ecosystems
+	{[]string{"apk", "alpine"}, "alpine"},
+	{[]string{"dpkg", "deb", "debian"}, "debian"},
+	{[]string{"rpm", "redhat"}, "rpm"},
+	{[]string{"alpm", "arch"}, "arch"},
+	{[]string{"portage", "gentoo"}, "gentoo"},
+	{[]string{"homebrew"}, "homebrew"},
+	{[]string{"snap"}, "snap"},
+
+	// other ecosystems
+	{[]string{"binary", "elf", "pe-binary"}, "binary"},
+	{[]string{"conda"}, "conda"},
+	{[]string{"nix"}, "nix"},
+	{[]string{"kernel"}, "linux"},
+	{[]string{"bitnami"}, "bitnami"},
+	{[]string{"terraform"}, "terraform"},
+	{[]string{"github"}, "github-actions"},
+	{[]string{"wordpress"}, "wordpress"},
+	{[]string{"sbom"}, "sbom"},
+}
+
+// inferEcosystem attempts to determine the ecosystem from a cataloger name
+func inferEcosystem(catalogerName string) string {
+	name := strings.ToLower(catalogerName)
+
+	for _, mapping := range ecosystemMappings {
+		for _, pattern := range mapping.patterns {
+			if strings.Contains(name, pattern) {
+				return mapping.ecosystem
+			}
+		}
+	}
+
+	// default
+	return "other"
 }
 
 // Statistics contains information about the regeneration process
@@ -812,72 +881,4 @@ func formatOrphans(orphans []orphanInfo) string {
 		lines = append(lines, fmt.Sprintf("  - cataloger: %s, parser function: %s", o.catalogerName, o.parserFunction))
 	}
 	return strings.Join(lines, "\n")
-}
-
-// ecosystemMapping maps patterns in cataloger names to ecosystem names.
-// order matters - more specific patterns should come first.
-type ecosystemMapping struct {
-	patterns  []string // patterns to match in the cataloger name
-	ecosystem string   // ecosystem to return if any pattern matches
-}
-
-// ecosystemMappings defines the pattern-to-ecosystem mappings.
-// note: order matters - check more specific patterns first
-var ecosystemMappings = []ecosystemMapping{
-	// language-based ecosystems
-	{[]string{"rust", "cargo"}, "rust"},
-	{[]string{"javascript", "node", "npm"}, "javascript"},
-	{[]string{"python"}, "python"},
-	{[]string{"java", "graalvm"}, "java"},
-	{[]string{"go-module", "golang"}, "go"},
-	{[]string{"ruby", "gem"}, "ruby"},
-	{[]string{"php", "composer", "pear", "pecl"}, "php"},
-	{[]string{"dotnet", ".net", "csharp"}, "dotnet"},
-	{[]string{"swift", "cocoapods"}, "swift"},
-	{[]string{"dart", "pubspec"}, "dart"},
-	{[]string{"elixir", "mix"}, "elixir"},
-	{[]string{"erlang", "rebar"}, "erlang"},
-	{[]string{"haskell", "cabal", "stack"}, "haskell"},
-	{[]string{"lua"}, "lua"},
-	{[]string{"ocaml", "opam"}, "ocaml"},
-	{[]string{"r-package"}, "r"},
-	{[]string{"swipl", "prolog"}, "prolog"},
-	{[]string{"cpp", "conan"}, "c++"},
-	{[]string{"kotlin"}, "kotlin"},
-
-	// os/distro-based ecosystems
-	{[]string{"apk", "alpine"}, "alpine"},
-	{[]string{"dpkg", "deb", "debian"}, "debian"},
-	{[]string{"rpm", "redhat"}, "rpm"},
-	{[]string{"alpm", "arch"}, "arch"},
-	{[]string{"portage", "gentoo"}, "gentoo"},
-	{[]string{"homebrew"}, "homebrew"},
-	{[]string{"snap"}, "snap"},
-
-	// other ecosystems
-	{[]string{"binary", "elf", "pe-binary"}, "binary"},
-	{[]string{"conda"}, "conda"},
-	{[]string{"nix"}, "nix"},
-	{[]string{"kernel"}, "linux"},
-	{[]string{"bitnami"}, "bitnami"},
-	{[]string{"terraform"}, "terraform"},
-	{[]string{"github"}, "github-actions"},
-	{[]string{"wordpress"}, "wordpress"},
-	{[]string{"sbom"}, "sbom"},
-}
-
-// inferEcosystem attempts to determine the ecosystem from a cataloger name
-func inferEcosystem(catalogerName string) string {
-	name := strings.ToLower(catalogerName)
-
-	for _, mapping := range ecosystemMappings {
-		for _, pattern := range mapping.patterns {
-			if strings.Contains(name, pattern) {
-				return mapping.ecosystem
-			}
-		}
-	}
-
-	// default
-	return "other"
 }

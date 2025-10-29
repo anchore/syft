@@ -218,7 +218,6 @@ application: # AUTO-GENERATED - application-level config keys
     description: enables Syft to use the network to fill in more detailed license information
   - key: linux-kernel.catalog-modules
     description: whether to catalog linux kernel modules found within lib/modules/** directories
-    default: true
   - key: nix.capture-owned-files
     description: enumerate all files owned by packages found within Nix store paths
   - key: python.guess-unpinned-requirements

@@ -1,3 +1,4 @@
+// this file discovers cataloger configuration structs using AST parsing to find Config structs and extract fields with app-config annotations.
 package main
 
 import (
@@ -135,9 +136,7 @@ func discoverConfigsInFile(path, repoRoot string) (map[string]ConfigInfo, error)
 // isConfigStruct determines if a struct name looks like a configuration struct
 func isConfigStruct(name string) bool {
 	// check for common config patterns
-	return strings.Contains(name, "Config") ||
-		strings.HasSuffix(name, "Config") ||
-		strings.HasPrefix(name, "Config")
+	return strings.Contains(name, "Config")
 }
 
 // extractCatalogerConfigFields parses struct fields and extracts their metadata

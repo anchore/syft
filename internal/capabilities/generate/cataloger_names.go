@@ -1,3 +1,4 @@
+// this file retrieves the canonical list of cataloger names and their selectors from syft's task factories.
 package main
 
 import (

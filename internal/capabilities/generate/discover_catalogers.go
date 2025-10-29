@@ -1,3 +1,4 @@
+// this file discovers generic catalogers from source code by walking syft/pkg/cataloger/ and using AST parsing to find generic.NewCataloger() calls and extract parser information.
 package main
 
 import (

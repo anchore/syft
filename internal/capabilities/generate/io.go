@@ -1,3 +1,4 @@
+// this file handles YAML file reading and writing with comment preservation, using gopkg.in/yaml.v3's node tree to maintain all existing comments during regeneration.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package capabilities provides discovery and tracking of cataloger capabilities.
 package capabilities
 
 import (
@@ -10,6 +11,8 @@ import (
 
 	"github.com/anchore/syft/internal/task"
 )
+
+//go:generate go run ./generate
 
 //go:embed packages.yaml
 var catalogersYAML []byte

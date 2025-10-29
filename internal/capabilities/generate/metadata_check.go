@@ -1,3 +1,4 @@
+// this file validates that all known metadata and package types are documented in packages.yaml by checking coverage and reporting any missing types.
 package main
 
 import (

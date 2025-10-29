@@ -1,3 +1,4 @@
+// this file verifies the claims made in packages.yaml against test observations and source code, ensuring cataloger capabilities are accurate and complete.
 package main
 
 import (
@@ -344,8 +345,8 @@ func TestCatalogerDataQuality(t *testing.T) {
 	})
 }
 
-// TestRegenerateCapabilitiesDoesNotFail verifies that regeneration runs successfully
-func TestRegenerateCapabilitiesDoesNotFail(t *testing.T) {
+// TestCapabilitiesAreUpToDate verifies that regeneration runs successfully
+func TestCapabilitiesAreUpToDate(t *testing.T) {
 	if os.Getenv("CI") == "" {
 		t.Skip("skipping regeneration test in local environment")
 	}
@@ -366,9 +367,9 @@ func TestRegenerateCapabilitiesDoesNotFail(t *testing.T) {
 	require.NoError(t, err, "packages.yaml has uncommitted changes after regeneration. Run 'go generate ./internal/capabilities' locally and commit the changes.")
 }
 
-// TestAllCatalogersHaveObservations verifies that all catalogers have test observations,
+// TestCatalogersHaveTestObservations verifies that all catalogers have test observations,
 // ensuring they are using the pkgtest helpers
-func TestAllCatalogersHaveObservations(t *testing.T) {
+func TestCatalogersHaveTestObservations(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -1301,5 +1302,72 @@ func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 			err = validateFieldPath(repoRoot, structName, fieldPath)
 			require.NoError(t, err, "evidence field reference is invalid")
 		})
+	}
+}
+
+// TestDetectorConfigFieldReferences validates that config field names referenced in detector
+// conditions actually exist in the cataloger's config struct
+func TestDetectorConfigFieldReferences(t *testing.T) {
+	repoRoot, err := RepoRoot()
+	require.NoError(t, err)
+
+	// load the packages.yaml
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages.yaml"))
+	require.NoError(t, err)
+
+	// collect all validation errors before failing
+	var errors []string
+
+	// check each cataloger's detectors
+	for _, cataloger := range doc.Catalogers {
+		if cataloger.Type != "custom" {
+			continue // only custom catalogers have detectors
+		}
+
+		for detectorIdx, detector := range cataloger.Detectors {
+			// if detector has no conditions, skip validation
+			if len(detector.Conditions) == 0 {
+				continue
+			}
+
+			// detector has conditions - cataloger must have a config
+			if cataloger.Config == "" {
+				errors = append(errors,
+					fmt.Sprintf("Cataloger %q detector %d has conditions but cataloger has no config struct",
+						cataloger.Name, detectorIdx))
+				continue
+			}
+
+			// load the cataloger's config struct
+			configEntry, exists := doc.Configs[cataloger.Config]
+			if !exists {
+				errors = append(errors,
+					fmt.Sprintf("Cataloger %q references config %q which doesn't exist",
+						cataloger.Name, cataloger.Config))
+				continue
+			}
+
+			// build a set of valid config field names
+			validFields := make(map[string]bool)
+			for _, field := range configEntry.Fields {
+				validFields[field.Key] = true
+			}
+
+			// validate each condition
+			for condIdx, condition := range detector.Conditions {
+				for fieldName := range condition.When {
+					if !validFields[fieldName] {
+						errors = append(errors,
+							fmt.Sprintf("Cataloger %q detector %d condition %d references config field %q which doesn't exist in config struct %q",
+								cataloger.Name, detectorIdx, condIdx, fieldName, cataloger.Config))
+					}
+				}
+			}
+		}
+	}
+
+	// report all errors at once
+	if len(errors) > 0 {
+		require.Fail(t, "Detector config field reference validation failed", strings.Join(errors, "\n"))
 	}
 }

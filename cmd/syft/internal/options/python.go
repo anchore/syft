@@ -1,6 +1,9 @@
 package options
 
-import "github.com/anchore/clio"
+import (
+	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/pkg/cataloger/python"
+)
 
 type pythonConfig struct {
 	GuessUnpinnedRequirements bool `json:"guess-unpinned-requirements" yaml:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
@@ -9,6 +12,13 @@ type pythonConfig struct {
 var _ interface {
 	clio.FieldDescriber
 } = (*pythonConfig)(nil)
+
+func defaultPythonConfig() pythonConfig {
+	def := python.DefaultCatalogerConfig()
+	return pythonConfig{
+		GuessUnpinnedRequirements: def.GuessUnpinnedRequirements,
+	}
+}
 
 func (o *pythonConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.GuessUnpinnedRequirements, `when running across entries in requirements.txt that do not specify a specific version 

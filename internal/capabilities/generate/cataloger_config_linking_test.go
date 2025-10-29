@@ -1,12 +1,20 @@
 package main
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestLinkCatalogersToConfigs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -124,7 +132,107 @@ func TestLinkCatalogersToConfigs(t *testing.T) {
 	require.GreaterOrEqual(t, len(withConfig), 6, "should find at least 6 catalogers with configs")
 }
 
+func TestLinkCatalogersToConfigsFromPath(t *testing.T) {
+	tests := []struct {
+		name             string
+		fixturePath      string
+		expectedLinkages map[string]string
+		wantErr          require.ErrorAssertionFunc
+	}{
+		{
+			name:        "simple generic cataloger with local config",
+			fixturePath: "simple-generic-cataloger",
+			expectedLinkages: map[string]string{
+				"go-module-cataloger": "golang.CatalogerConfig",
+			},
+		},
+		{
+			name:        "cataloger name from constant",
+			fixturePath: "cataloger-with-constant",
+			expectedLinkages: map[string]string{
+				"python-package-cataloger": "python.CatalogerConfig",
+			},
+		},
+		{
+			name:        "custom cataloger with Name() in same file",
+			fixturePath: "custom-cataloger-same-file",
+			expectedLinkages: map[string]string{
+				"java-pom-cataloger": "java.ArchiveCatalogerConfig",
+			},
+		},
+		{
+			name:        "custom cataloger with Name() in different file - not detected",
+			fixturePath: "custom-cataloger-different-file",
+			expectedLinkages: map[string]string{
+				// empty - current limitation, cannot detect cross-file Names
+			},
+		},
+		{
+			name:        "cataloger without config parameter",
+			fixturePath: "no-config-cataloger",
+			expectedLinkages: map[string]string{
+				"javascript-cataloger": "", // empty string means no config
+			},
+		},
+		{
+			name:        "imported config type",
+			fixturePath: "imported-config-type",
+			expectedLinkages: map[string]string{
+				"linux-kernel-cataloger": "kernel.LinuxKernelCatalogerConfig",
+			},
+		},
+		{
+			name:        "non-config first parameter",
+			fixturePath: "non-config-first-param",
+			expectedLinkages: map[string]string{
+				"binary-cataloger": "", // Parser not a config type
+			},
+		},
+		{
+			name:        "conflicting cataloger names",
+			fixturePath: "conflicting-names",
+			wantErr:     require.Error,
+		},
+		{
+			name:        "mixed naming patterns",
+			fixturePath: "mixed-naming-patterns",
+			expectedLinkages: map[string]string{
+				"ruby-cataloger": "ruby.Config",
+			},
+		},
+		{
+			name:        "selector expression config",
+			fixturePath: "selector-expression-config",
+			expectedLinkages: map[string]string{
+				"rust-cataloger": "cargo.CatalogerConfig",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
+			}
+
+			fixtureDir := filepath.Join("test-fixtures", "config-linking", tt.fixturePath)
+			linkages, err := LinkCatalogersToConfigsFromPath(fixtureDir, fixtureDir)
+			tt.wantErr(t, err)
+
+			if err != nil {
+				return
+			}
+
+			require.Equal(t, tt.expectedLinkages, linkages)
+		})
+	}
+}
+
 func TestExtractConfigTypeName(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
 	tests := []struct {
 		name             string
 		catalogerName    string
@@ -236,6 +344,165 @@ func TestLooksLikeConfigType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := looksLikeConfigType(tt.typeName)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestExtractReceiverTypeName(t *testing.T) {
+	tests := []struct {
+		name     string
+		receiver string // receiver code snippet
+		want     string
+	}{
+		{
+			name:     "value receiver",
+			receiver: "func (c Cataloger) Name() string { return \"\" }",
+			want:     "Cataloger",
+		},
+		{
+			name:     "pointer receiver",
+			receiver: "func (c *Cataloger) Name() string { return \"\" }",
+			want:     "Cataloger",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// parse the function to get the receiver type
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", "package test\n"+tt.receiver, 0)
+			require.NoError(t, err)
+
+			// extract the function declaration
+			require.Len(t, file.Decls, 1)
+			funcDecl, ok := file.Decls[0].(*ast.FuncDecl)
+			require.True(t, ok)
+
+			// get receiver type
+			var recvType ast.Expr
+			if funcDecl.Recv != nil && len(funcDecl.Recv.List) > 0 {
+				recvType = funcDecl.Recv.List[0].Type
+			}
+
+			got := extractReceiverTypeName(recvType)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestExtractConfigTypeNameHelper(t *testing.T) {
+	tests := []struct {
+		name             string
+		funcSig          string // function signature with parameter
+		localPackageName string
+		want             string
+	}{
+		{
+			name:             "local type",
+			funcSig:          "func New(cfg CatalogerConfig) pkg.Cataloger { return nil }",
+			localPackageName: "python",
+			want:             "python.CatalogerConfig",
+		},
+		{
+			name:             "imported type",
+			funcSig:          "func New(cfg java.ArchiveCatalogerConfig) pkg.Cataloger { return nil }",
+			localPackageName: "python",
+			want:             "java.ArchiveCatalogerConfig",
+		},
+		{
+			name:             "imported type - kernel package",
+			funcSig:          "func New(cfg kernel.LinuxKernelCatalogerConfig) pkg.Cataloger { return nil }",
+			localPackageName: "other",
+			want:             "kernel.LinuxKernelCatalogerConfig",
+		},
+		{
+			name:             "no parameters",
+			funcSig:          "func New() pkg.Cataloger { return nil }",
+			localPackageName: "python",
+			want:             "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// parse the function to get parameter type
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", "package test\n"+tt.funcSig, 0)
+			require.NoError(t, err)
+
+			// extract the function declaration
+			require.Len(t, file.Decls, 1)
+			funcDecl, ok := file.Decls[0].(*ast.FuncDecl)
+			require.True(t, ok)
+
+			// get first parameter type
+			var paramType ast.Expr
+			if funcDecl.Type.Params != nil && len(funcDecl.Type.Params.List) > 0 {
+				paramType = funcDecl.Type.Params.List[0].Type
+			}
+
+			got := extractConfigTypeName(paramType, tt.localPackageName)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestExtractReturnTypeName(t *testing.T) {
+	tests := []struct {
+		name    string
+		funcDef string // complete function definition
+		want    string
+	}{
+		{
+			name: "pointer to composite literal",
+			funcDef: `func New() pkg.Cataloger {
+				return &javaCataloger{name: "test"}
+			}`,
+			want: "javaCataloger",
+		},
+		{
+			name: "composite literal",
+			funcDef: `func New() pkg.Cataloger {
+				return pythonCataloger{name: "test"}
+			}`,
+			want: "pythonCataloger",
+		},
+		{
+			name: "variable return",
+			funcDef: `func New() pkg.Cataloger {
+				c := &Cataloger{}
+				return c
+			}`,
+			want: "",
+		},
+		{
+			name: "nil return",
+			funcDef: `func New() pkg.Cataloger {
+				return nil
+			}`,
+			want: "",
+		},
+		{
+			name:    "empty function body",
+			funcDef: `func New() pkg.Cataloger {}`,
+			want:    "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// parse the function
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, "", "package test\n"+tt.funcDef, 0)
+			require.NoError(t, err)
+
+			// extract the function declaration
+			require.Len(t, file.Decls, 1)
+			funcDecl, ok := file.Decls[0].(*ast.FuncDecl)
+			require.True(t, ok)
+
+			got := extractReturnTypeName(funcDecl)
 			require.Equal(t, tt.want, got)
 		})
 	}
