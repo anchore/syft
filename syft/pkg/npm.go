@@ -53,6 +53,7 @@ type PnpmLockResolution struct {
 	Integrity string `mapstructure:"integrity" json:"integrity"`
 }
 
+// PnpmLockEntry represents a single entry in the "packages" section of a pnpm-lock.yaml file.
 type PnpmLockEntry struct {
 	// Resolution is the resolution information for the package
 	Resolution PnpmLockResolution `mapstructure:"resolution" json:"resolution"`

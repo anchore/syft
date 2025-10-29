@@ -1915,7 +1915,8 @@
       "required": [
         "resolution",
         "dependencies"
-      ]
+      ],
+      "description": "PnpmLockEntry represents a single entry in the \"packages\" section of a pnpm-lock.yaml file."
     },
     "JavascriptYarnLockEntry": {
       "properties": {
