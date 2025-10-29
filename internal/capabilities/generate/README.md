@@ -40,7 +40,7 @@ go test ./internal/capabilities/generate
 ## Data Flow
 
 ```mermaid
-graph TB
+graph LR
     subgraph "Source Code Inputs"
         A1[syft/pkg/cataloger/*/<br/>cataloger.go]
         A2[syft/pkg/cataloger/*/<br/>config.go]
@@ -72,8 +72,8 @@ graph TB
     end
 
     subgraph "Configuration/Overrides"
-        E1[catalogerTypeOverrides<br/>catalogerConfigOverrides<br/>catalogerConfigExceptions]
         E2[metadataTypeCoverageExceptions<br/>packageTypeCoverageExceptions<br/>observationExceptions]
+        E1[catalogerTypeOverrides<br/>catalogerConfigOverrides<br/>catalogerConfigExceptions]
     end
 
     subgraph "Merge Process"
