@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/internal/packagemetadata"
+	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -42,11 +42,13 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PhpPeclEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPipfileLockEntry{},
+		pkg.PythonPdmLockEntry{},
 		pkg.PythonRequirementsEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.PythonUvLockEntry{},
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
+		pkg.SnapEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},
 		pkg.OpamPackage{},
@@ -340,6 +342,25 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Person: auth (auth@auth.gov)",
 			supplier:   "Person: auth (auth@auth.gov)",
+		},
+		{
+			name: "from python PDM lock",
+			input: pkg.Package{
+				Metadata: pkg.PythonPdmLockEntry{
+					Files: []pkg.PythonFileRecord{
+						{
+							Path: "",
+							Digest: &pkg.PythonFileDigest{
+								Algorithm: "sha256",
+								Value:     "3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651",
+							},
+						},
+					},
+					Summary: "A test package",
+				},
+			},
+			originator: "",
+			supplier:   "",
 		},
 		{
 			name: "from r -- maintainer > author",

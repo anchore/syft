@@ -87,6 +87,9 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 		}
 
 		name := dependencyName(p)
+		if name == "" || p.PURL == "" {
+			continue
+		}
 		manifest.Resolved[name] = DependencyNode{
 			PackageURL:   p.PURL,
 			Metadata:     toDependencyMetadata(p),

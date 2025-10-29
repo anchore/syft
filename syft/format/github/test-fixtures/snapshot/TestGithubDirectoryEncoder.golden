@@ -16,11 +16,6 @@
         "source_location": "redacted/some/path/some/path/pkg1"
       },
       "resolved": {
-        "": {
-          "package_url": "a-purl-2",
-          "relationship": "direct",
-          "scope": "runtime"
-        },
         "pkg:deb/debian/package-2@2.0.1": {
           "package_url": "pkg:deb/debian/package-2@2.0.1",
           "relationship": "direct",

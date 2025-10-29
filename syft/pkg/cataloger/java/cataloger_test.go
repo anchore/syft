@@ -31,6 +31,7 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 				"java-archives/example.hpi",
 				"java-archives/example.far",
 				"java-archives/example.lpkg",
+				"java-archives/example.rar",
 				"archives/example.zip",
 				"archives/example.tar",
 				"archives/example.tar.gz",

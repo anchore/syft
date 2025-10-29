@@ -55,7 +55,7 @@ Contents of section .note.package:
 ```
 
 #### Binaries related to Libraries
-The resulting SBOM shoult show the following relationships:
+The resulting SBOM should show the following relationships:
 ```
 elfbinwithnestedlib -> libhello_world.so
 elfwithparallellibbin2 -> libhello_world.so

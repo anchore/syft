@@ -239,7 +239,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 	ctx := context.TODO()
 	fixture := "test-fixtures/yarn-remote/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
-	mux, url, teardown := setup()
+	mux, url, teardown := setupYarnRegistry()
 	defer teardown()
 	tests := []struct {
 		name             string
@@ -255,7 +255,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 				{
 					// https://registry.yarnpkg.com/@babel/code-frame/7.10.4
 					path:    "/@babel/code-frame/7.10.4",
-					handler: generateMockNPMHandler("test-fixtures/yarn-remote/registry_response.json"),
+					handler: generateMockYarnRegistryHandler("test-fixtures/yarn-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -445,7 +445,7 @@ func TestParseYarnFindPackageVersions(t *testing.T) {
 	}
 }
 
-func generateMockNPMHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
+func generateMockYarnRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		// Copy the file's content to the response writer
@@ -464,10 +464,10 @@ func generateMockNPMHandler(responseFixture string) func(w http.ResponseWriter, 
 	}
 }
 
-// setup sets up a test HTTP server for mocking requests to maven central.
+// setup sets up a test HTTP server for mocking requests to a particular registry.
 // The returned url is injected into the Config so the client uses the test server.
 // Tests should register handlers on mux to simulate the expected request/response structure
-func setup() (mux *http.ServeMux, serverURL string, teardown func()) {
+func setupYarnRegistry() (mux *http.ServeMux, serverURL string, teardown func()) {
 	// mux is the HTTP request multiplexer used with the test server.
 	mux = http.NewServeMux()
 

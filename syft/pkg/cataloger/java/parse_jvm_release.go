@@ -22,10 +22,6 @@ import (
 )
 
 const (
-	// this is a very permissive glob that will match more than just the JVM release file.
-	// we started with "**/{java,jvm}/*/release", but this prevents scanning JVM archive contents (e.g. jdk8u402.zip).
-	// this approach lets us check more files for JVM release info, but be rather silent about errors.
-	jvmReleaseGlob = "**/release"
 	oracleVendor   = "oracle"
 	openJdkProduct = "openjdk"
 	jre            = "jre"
