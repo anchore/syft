@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
+	packageurl "github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	packageurl "github.com/anchore/packageurl-go"
 )
 
 var (
