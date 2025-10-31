@@ -217,11 +217,10 @@ func (c *goModCataloger) visitPackages(
 			pkgDir:     pkgDir,
 			moduleDir:  module.Dir,
 		}
-
 		if !slices.Contains(pkgs[module.Path], info) { // avoid duplicates
 			pkgs[module.Path] = append(pkgs[module.Path], info)
-			modules[p.Module.Path] = module
 		}
+		modules[p.Module.Path] = module
 
 		return true
 	}, nil)

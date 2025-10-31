@@ -70,8 +70,8 @@ func TestFindAllLicenseCandidatesUpwards(t *testing.T) {
 				fs.MkdirAll("/empty/dir/tree", 0755)
 				// No license files
 			},
-			expectedFiles: []string{},
-			description:   "Should return empty slice when no license files found",
+			expectedFiles: nil,
+			description:   "Should return nil when no license files found",
 		},
 		{
 			name:     "handles directory at filesystem root",

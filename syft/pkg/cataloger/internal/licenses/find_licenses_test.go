@@ -2,8 +2,6 @@ package licenses
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -41,7 +39,7 @@ func Test_FindRelativeLicenses(t *testing.T) {
 		},
 		{
 			name:     "no licenses",
-			resolver: emptyResolver{},
+			resolver: fileresolver.Empty{},
 			p: pkg.Package{
 				Locations: sourceTxt,
 			},
@@ -101,7 +99,7 @@ func Test_Finders(t *testing.T) {
 		{
 			name: "FindAtLocations with empty resolver returns none",
 			finder: func(t *testing.T) []pkg.License {
-				return FindAtLocations(ctx, emptyResolver{}, licenseLoc)
+				return FindAtLocations(ctx, fileresolver.Empty{}, licenseLoc)
 			},
 		},
 		{
@@ -163,42 +161,6 @@ func licenseNames(slice []pkg.License) []string {
 	}
 	return out
 }
-
-type emptyResolver struct{}
-
-func (e emptyResolver) FileContentsByLocation(_ file.Location) (io.ReadCloser, error) {
-	return nil, fmt.Errorf("notFound")
-}
-
-func (e emptyResolver) HasPath(_ string) bool {
-	return false
-}
-
-func (e emptyResolver) FilesByPath(_ ...string) ([]file.Location, error) {
-	return nil, fmt.Errorf("notFound")
-}
-
-func (e emptyResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
-	return nil, fmt.Errorf("notFound")
-}
-
-func (e emptyResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
-	return nil, fmt.Errorf("notFound")
-}
-
-func (e emptyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Location {
-	return nil
-}
-
-func (e emptyResolver) AllLocations(_ context.Context) <-chan file.Location {
-	return nil
-}
-
-func (e emptyResolver) FileMetadataByLocation(_ file.Location) (file.Metadata, error) {
-	return file.Metadata{}, fmt.Errorf("notFound")
-}
-
-var _ file.Resolver = emptyResolver{}
 
 func getScanner() licenses.Scanner {
 	s, err := licenses.NewDefaultScanner()

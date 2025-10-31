@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -58,7 +59,7 @@ func Test_parseDescriptionFile(t *testing.T) {
 				Location:   file.NewLocation(tt.fixture),
 				ReadCloser: f,
 			}
-			got, _, err := parseDescriptionFile(context.Background(), nil, nil, input)
+			got, _, err := parseDescriptionFile(context.Background(), fileresolver.Empty{}, nil, input)
 			assert.NoError(t, err)
 			for _, assertion := range tt.assertions {
 				assertion(t, got)

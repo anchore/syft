@@ -114,7 +114,7 @@ func NewFromValues(ctx context.Context, locations []file.Location, values ...str
 
 func readFromResolver(ctx context.Context, resolver file.Resolver, location file.Location) []pkg.License {
 	metadataContents, err := resolver.FileContentsByLocation(location)
-	if err != nil {
+	if err != nil || metadataContents == nil {
 		log.WithFields("error", err, "path", location.Path()).Trace("unable to license file contents")
 		return nil
 	}
