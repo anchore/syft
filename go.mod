@@ -53,7 +53,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
-	github.com/hashicorp/go-getter v1.8.2
+	github.com/hashicorp/go-getter v1.8.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/iancoleman/strcase v0.3.0
