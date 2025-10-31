@@ -17,13 +17,13 @@ import (
 
 	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
 )
 
@@ -55,15 +55,14 @@ var javaArchiveHashes = []crypto.Hash{
 }
 
 type archiveParser struct {
-	fileManifest   intFile.ZipFileManifest
-	location       file.Location
-	archivePath    string
-	contentPath    string
-	fileInfo       archiveFilename
-	detectNested   bool
-	cfg            ArchiveCatalogerConfig
-	maven          *maven.Resolver
-	licenseScanner licenses.Scanner
+	fileManifest intFile.ZipFileManifest
+	location     file.Location
+	archivePath  string
+	contentPath  string
+	fileInfo     archiveFilename
+	detectNested bool
+	cfg          ArchiveCatalogerConfig
+	maven        *maven.Resolver
 }
 
 type genericArchiveParserAdapter struct {
@@ -81,7 +80,7 @@ func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ f
 
 // processJavaArchive processes an archive for java contents, returning all Java libraries and nested archives
 func (gap genericArchiveParserAdapter) processJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
-	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, true, gap.cfg)
+	parser, cleanupFn, err := newJavaArchiveParser(reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -100,12 +99,7 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
-func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
-	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not build license scanner for java archive parser: %w", err)
-	}
-
+func newJavaArchiveParser(reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -121,15 +115,14 @@ func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, d
 	}
 
 	return &archiveParser{
-		fileManifest:   fileManifest,
-		location:       reader.Location,
-		archivePath:    archivePath,
-		contentPath:    contentPath,
-		fileInfo:       newJavaArchiveFilename(currentFilepath),
-		detectNested:   detectNested,
-		cfg:            cfg,
-		maven:          maven.NewResolver(nil, cfg.mavenConfig()),
-		licenseScanner: licenseScanner,
+		fileManifest: fileManifest,
+		location:     reader.Location,
+		archivePath:  archivePath,
+		contentPath:  contentPath,
+		fileInfo:     newJavaArchiveFilename(currentFilepath),
+		detectNested: detectNested,
+		cfg:          cfg,
+		maven:        maven.NewResolver(nil, cfg.mavenConfig()),
 	}, cleanupFn, nil
 }
 
@@ -570,30 +563,34 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 
 func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
 	var out []pkg.License
-	for _, filename := range licenses.FileNames() {
-		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
-		if len(licenseMatches) == 0 {
-			// Try the root directory if it's not in META-INF
-			licenseMatches = j.fileManifest.GlobMatch(true, "/"+filename)
+	var licenseMatches []string
+	for _, f := range j.fileManifest.GlobMatch(true, "/META-INF/*") {
+		if licenses.IsLicenseFile(f) {
+			licenseMatches = append(licenseMatches, f)
 		}
-
-		if len(licenseMatches) > 0 {
-			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
-			if err != nil {
-				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
-			}
-
-			for _, licenseMatch := range licenseMatches {
-				licenseContents := contents[licenseMatch]
-				r := strings.NewReader(licenseContents)
-				lics := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
-				if len(lics) > 0 {
-					out = append(out, lics...)
-				}
+	}
+	if len(licenseMatches) == 0 {
+		for _, f := range j.fileManifest.GlobMatch(true, "/*") {
+			if licenses.IsLicenseFile(f) {
+				licenseMatches = append(licenseMatches, f)
 			}
 		}
 	}
+	if len(licenseMatches) > 0 {
+		contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+		if err != nil {
+			return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
+		}
 
+		for _, licenseMatch := range licenseMatches {
+			licenseContents := contents[licenseMatch]
+			r := strings.NewReader(licenseContents)
+			lics := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+			if len(lics) > 0 {
+				out = append(out, lics...)
+			}
+		}
+	}
 	return out, nil
 }
 
@@ -799,7 +796,7 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 		switch {
 		case !ok:
 			log.WithFields("package", p.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
-		case !parentOk:
+		default: // !parentOk
 			log.WithFields("package", parentPkg.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
 		}
 		// if we can't extract metadata, we can check for matching identities via the package name

@@ -205,7 +205,7 @@ func TestFindAllLicenseCandidatesUpwards(t *testing.T) {
 			tt.setupFS(fs)
 
 			// Run the function
-			result, err := findAllLicenseCandidatesUpwards(tt.startDir, licenseRegexp, tt.stopAt, fs)
+			result, err := findAllLicenseCandidatesUpwards(tt.startDir, tt.stopAt, fs)
 
 			// Check error expectation
 			if tt.expectedError {

@@ -19,23 +19,21 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/cache"
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 type goLicenseResolver struct {
-	catalogerName         string
-	opts                  CatalogerConfig
-	localModCacheDir      fs.FS
-	localVendorDir        fs.FS
-	licenseCache          cache.Resolver[[]pkg.License]
-	lowerLicenseFileNames *strset.Set
+	catalogerName    string
+	opts             CatalogerConfig
+	localModCacheDir fs.FS
+	localVendorDir   fs.FS
+	licenseCache     cache.Resolver[[]pkg.License]
 }
 
 func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseResolver {
@@ -59,21 +57,12 @@ func newGoLicenseResolver(catalogerName string, opts CatalogerConfig) goLicenseR
 	}
 
 	return goLicenseResolver{
-		catalogerName:         catalogerName,
-		opts:                  opts,
-		localModCacheDir:      localModCacheDir,
-		localVendorDir:        localVendorDir,
-		licenseCache:          cache.GetResolverCachingErrors[[]pkg.License]("golang", "v2"),
-		lowerLicenseFileNames: strset.New(lowercaseLicenseFiles()...),
+		catalogerName:    catalogerName,
+		opts:             opts,
+		localModCacheDir: localModCacheDir,
+		localVendorDir:   localVendorDir,
+		licenseCache:     cache.GetResolverCachingErrors[[]pkg.License]("golang", "v2"),
 	}
-}
-
-func lowercaseLicenseFiles() []string {
-	fileNames := licenses.FileNames()
-	for i := range fileNames {
-		fileNames[i] = strings.ToLower(fileNames[i])
-	}
-	return fileNames
 }
 
 func remotesForModule(proxies []string, noProxy []string, module string) []string {
@@ -194,7 +183,7 @@ func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, urlPrefix stri
 			log.Debugf("nil entry for %s#%s", urlPrefix, filePath)
 			return nil
 		}
-		if !c.lowerLicenseFileNames.Has(strings.ToLower(d.Name())) {
+		if !licenses.IsLicenseFile(d.Name()) {
 			return nil
 		}
 		rdr, err := fsys.Open(filePath)
@@ -203,11 +192,11 @@ func (c *goLicenseResolver) findLicensesInFS(ctx context.Context, urlPrefix stri
 			return nil
 		}
 		defer internal.CloseAndLogError(rdr, filePath)
-		licenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
+		foundLicenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.NewLocation(filePath), rdr))
 		// since these licenses are found in an external fs.FS, not in the scanned source,
 		// get rid of the locations but keep information about the where the license was found
 		// by prepending the urlPrefix to the internal path for an accurate representation
-		for _, l := range licenses {
+		for _, l := range foundLicenses {
 			l.URLs = []string{urlPrefix + filePath}
 			l.Locations = file.NewLocationSet()
 			out = append(out, l)
@@ -246,7 +235,7 @@ func (c *goLicenseResolver) findLicensesInSource(ctx context.Context, resolver f
 func (c *goLicenseResolver) parseLicenseFromLocation(ctx context.Context, l file.Location, resolver file.Resolver) ([]pkg.License, error) {
 	var out []pkg.License
 	fileName := path.Base(l.RealPath)
-	if c.lowerLicenseFileNames.Has(strings.ToLower(fileName)) {
+	if licenses.IsLicenseFile(fileName) {
 		contents, err := resolver.FileContentsByLocation(l)
 		if err != nil {
 			return nil, err
