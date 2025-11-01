@@ -7,7 +7,7 @@ import (
 	"go/build"
 	"io"
 	"path/filepath"
-	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -20,12 +20,9 @@ import (
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-)
-
-var (
-	licenseRegexp = regexp.MustCompile(`^(?i)((UN)?LICEN(S|C)E|COPYING|NOTICE).*$`)
 )
 
 type goModCataloger struct {
@@ -46,9 +43,14 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
+	scanRoot := ""
+	if dir, ok := resolver.(*fileresolver.Directory); ok && dir != nil {
+		scanRoot = dir.Chroot.Base()
+	}
+
 	// source analysis using go toolchain if available
 	syftSourcePackages, sourceModules, sourceDependencies, unknownErr := c.loadPackages(modDir, reader.Location)
-	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, syftSourcePackages, sourceModules, reader, digests)
+	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, scanRoot, syftSourcePackages, sourceModules, reader, digests)
 	relationships := buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
 
 	// base case go.mod file parsing
@@ -208,12 +210,16 @@ func (c *goModCataloger) visitPackages(
 				}
 			}
 		}
-		pkgs[module.Path] = append(pkgs[module.Path], pkgInfo{
+
+		info := pkgInfo{
 			pkgPath:    p.PkgPath,
 			modulePath: module.Path,
 			pkgDir:     pkgDir,
 			moduleDir:  module.Dir,
-		})
+		}
+		if !slices.Contains(pkgs[module.Path], info) { // avoid duplicates
+			pkgs[module.Path] = append(pkgs[module.Path], info)
+		}
 		modules[p.Module.Path] = module
 
 		return true
@@ -224,6 +230,7 @@ func (c *goModCataloger) visitPackages(
 // create syft packages from Go modules found by the go toolchain
 func (c *goModCataloger) catalogModules(
 	ctx context.Context,
+	scanRoot string,
 	pkgs map[string][]pkgInfo,
 	modules map[string]*packages.Module,
 	reader file.LocationReadCloser,
@@ -243,7 +250,7 @@ func (c *goModCataloger) catalogModules(
 		}
 
 		pkgInfos := pkgs[m.Path]
-		moduleLicenses := resolveModuleLicenses(ctx, pkgInfos, afero.NewOsFs())
+		moduleLicenses := resolveModuleLicenses(ctx, scanRoot, pkgInfos, afero.NewOsFs())
 		// we do out of source lookups for module parsing
 		// locations are NOT included in the SBOM because of this
 		goModulePkg := pkg.Package{

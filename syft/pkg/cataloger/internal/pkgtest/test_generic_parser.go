@@ -26,6 +26,7 @@ import (
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -81,6 +82,7 @@ func NewCatalogTester() *CatalogTester {
 		locationComparer: cmptest.DefaultLocationComparer,
 		licenseComparer:  cmptest.DefaultLicenseComparer,
 		packageStringer:  stringPackage,
+		resolver:         fileresolver.Empty{},
 		ignoreUnfulfilledPathResponses: map[string][]string{
 			"FilesByPath": {
 				// most catalogers search for a linux release, which will not be fulfilled in testing

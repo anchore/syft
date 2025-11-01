@@ -7,19 +7,18 @@ import (
 	"io"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 // parseWheelOrEgg takes the primary metadata file reference and returns the python package it represents. Contained
@@ -249,7 +248,7 @@ func assembleEggOrWheelMetadata(resolver file.Resolver, metadataLocation file.Lo
 }
 
 func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg.LicenseSet {
-	var licenseSet pkg.LicenseSet
+	var out []pkg.License
 
 	licenseLocations := file.NewLocationSet()
 	if m.LicenseFilePath != "" {
@@ -263,16 +262,12 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 
 	switch {
 	case m.LicenseExpression != "" || m.Licenses != "":
-		licenseSet = getLicenseSetFromValues(ctx, licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
+		out = licenses.NewFromValues(ctx, licenseLocations.ToSlice(), m.LicenseExpression, m.Licenses)
 	case !licenseLocations.Empty():
-		licenseSet = getLicenseSetFromFiles(ctx, resolver, licenseLocations.ToSlice()...)
+		out = licenses.FindAtLocations(ctx, resolver, licenseLocations.ToSlice()...)
 
 	default:
 		// search for known license paths from RECORDS file
-		licenseNames := strset.New()
-		for _, n := range licenses.FileNames() {
-			licenseNames.Add(strings.ToLower(n))
-		}
 		parent := path.Base(path.Dir(m.DistInfoLocation.Path()))
 		candidatePaths := strset.New()
 		for _, f := range m.Files {
@@ -280,58 +275,12 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 				continue
 			}
 
-			if licenseNames.Has(strings.ToLower(filepath.Base(f.Path))) {
+			if licenses.IsLicenseFile(filepath.Base(f.Path)) {
 				candidatePaths.Add(path.Join(m.SitePackagesRootPath, f.Path))
 			}
 		}
 
-		paths := candidatePaths.List()
-		sort.Strings(paths)
-		locationSet := file.NewLocationSet()
-		for _, p := range paths {
-			locs, err := resolver.FilesByPath(p)
-			if err != nil {
-				log.WithFields("error", err, "path", p).Trace("unable to resolve python license in dist-info")
-				continue
-			}
-			locationSet.Add(locs...)
-		}
-
-		licenseSet = getLicenseSetFromFiles(ctx, resolver, locationSet.ToSlice()...)
+		out = licenses.FindAtPaths(ctx, resolver, candidatePaths.List()...)
 	}
-	return licenseSet
-}
-
-func getLicenseSetFromValues(ctx context.Context, locations []file.Location, licenseValues ...string) pkg.LicenseSet {
-	if len(locations) == 0 {
-		return pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseValues...)...)
-	}
-
-	licenseSet := pkg.NewLicenseSet()
-	for _, value := range licenseValues {
-		if value == "" {
-			continue
-		}
-
-		licenseSet.Add(pkg.NewLicenseFromLocationsWithContext(ctx, value, locations...))
-	}
-	return licenseSet
-}
-
-func getLicenseSetFromFiles(ctx context.Context, resolver file.Resolver, locations ...file.Location) pkg.LicenseSet {
-	licenseSet := pkg.NewLicenseSet()
-	for _, loc := range locations {
-		licenseSet.Add(getLicenseSetFromFile(ctx, resolver, loc)...)
-	}
-	return licenseSet
-}
-
-func getLicenseSetFromFile(ctx context.Context, resolver file.Resolver, location file.Location) []pkg.License {
-	metadataContents, err := resolver.FileContentsByLocation(location)
-	if err != nil {
-		log.WithFields("error", err, "path", location.Path()).Trace("unable to read file contents")
-		return nil
-	}
-	defer internal.CloseAndLogError(metadataContents, location.Path())
-	return pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, metadataContents))
+	return pkg.NewLicenseSet(out...)
 }

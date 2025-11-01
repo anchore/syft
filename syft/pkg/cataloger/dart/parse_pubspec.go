@@ -29,7 +29,7 @@ type dartPubspecEnvironment struct {
 	Flutter string `mapstructure:"flutter" yaml:"flutter"`
 }
 
-func parsePubspec(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePubspec(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	dec := yaml.NewDecoder(reader)
@@ -41,6 +41,8 @@ func parsePubspec(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 
 	pkgs = append(pkgs,
 		newPubspecPackage(
+			ctx,
+			resolver,
 			p,
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),

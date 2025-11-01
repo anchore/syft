@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 /* some examples of license strings found in DESCRIPTION files:
@@ -29,13 +30,14 @@ License: Part of R 4.3.0
 License: Unlimited
 */
 
-func parseDescriptionFile(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseDescriptionFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	values := extractFieldsFromDescriptionFile(reader)
 	m := parseDataFromDescriptionMap(values)
 	p := newPackage(ctx, m, []file.Location{reader.Location}...)
 	if p.Name == "" || p.Version == "" {
 		return nil, nil, nil
 	}
+	p = licenses.RelativeToPackage(ctx, resolver, p)
 	return []pkg.Package{p}, nil, nil
 }
 
