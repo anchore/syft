@@ -280,7 +280,7 @@ func findLicenses(ctx context.Context, resolver file.Resolver, m parsedData) pkg
 			}
 		}
 
-		out = licenses.FindInDirs(ctx, resolver, candidatePaths.List()...)
+		out = licenses.FindAtPaths(ctx, resolver, candidatePaths.List()...)
 	}
 	return pkg.NewLicenseSet(out...)
 }

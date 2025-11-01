@@ -562,36 +562,49 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 }
 
 func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
-	var out []pkg.License
-	var licenseMatches []string
-	for _, f := range j.fileManifest.GlobMatch(true, "/META-INF/*") {
-		if licenses.IsLicenseFile(f) {
-			licenseMatches = append(licenseMatches, f)
-		}
-	}
-	if len(licenseMatches) == 0 {
-		for _, f := range j.fileManifest.GlobMatch(true, "/*") {
-			if licenses.IsLicenseFile(f) {
+	// prefer identified licenses, fall back to unknown
+	var identified []pkg.License
+	var unidentified []pkg.License
+
+	for _, glob := range []string{"/META-INF/*", "/*"} {
+		var licenseMatches []string
+		for _, f := range j.fileManifest.GlobMatch(true, glob) {
+			if licenses.IsLicenseFile(path.Base(f)) {
 				licenseMatches = append(licenseMatches, f)
 			}
 		}
-	}
-	if len(licenseMatches) > 0 {
-		contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
-		if err != nil {
-			return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
-		}
 
-		for _, licenseMatch := range licenseMatches {
-			licenseContents := contents[licenseMatch]
-			r := strings.NewReader(licenseContents)
-			lics := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
-			if len(lics) > 0 {
-				out = append(out, lics...)
+		if len(licenseMatches) > 0 {
+			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+			if err != nil {
+				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
+			}
+
+			for _, licenseMatch := range licenseMatches {
+				licenseContents := contents[licenseMatch]
+				r := strings.NewReader(licenseContents)
+				foundLicenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+				for _, l := range foundLicenses {
+					if l.SPDXExpression != "" {
+						identified = append(identified, l)
+					} else {
+						unidentified = append(unidentified, l)
+					}
+				}
+			}
+
+			// prefer licenses found in /META-INF
+			if len(identified) > 0 {
+				break
 			}
 		}
 	}
-	return out, nil
+
+	if len(identified) == 0 {
+		return unidentified, nil
+	}
+
+	return identified, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
