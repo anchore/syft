@@ -123,6 +123,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 	jsonNames(pkg.CondaMetaPackage{}, "conda-metadata-entry", "CondaPackageMetadata"),
+	jsonNames(pkg.VcpkgManifest{}, "vcpkg-manifest"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {
