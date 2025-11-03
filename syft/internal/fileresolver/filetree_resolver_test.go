@@ -1384,9 +1384,10 @@ func TestFileResolver_FilesByPath(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, parentPath)
 
-			resolver, err := NewFromFile(parentPath, tt.filePath)
+			resolver, err := NewFromFile(tt.filePath)
 			require.NoError(t, err)
 			require.NotNil(t, resolver)
+			assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 			refs, err := resolver.FilesByPath(tt.fileByPathInput)
 			require.NoError(t, err)
@@ -1431,8 +1432,11 @@ func TestFileResolver_MultipleFilesByPath(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, parentPath)
 
-			resolver, err := NewFromFile(parentPath, filePath)
+			resolver, err := NewFromFile(filePath)
 			assert.NoError(t, err)
+			require.NotNil(t, resolver)
+			assert.Equal(t, resolver.Chroot.Base(), parentPath)
+
 			refs, err := resolver.FilesByPath(tt.input...)
 			assert.NoError(t, err)
 
@@ -1449,8 +1453,11 @@ func TestFileResolver_FilesByGlob(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
 
-	resolver, err := NewFromFile(parentPath, filePath)
+	resolver, err := NewFromFile(filePath)
 	assert.NoError(t, err)
+	require.NotNil(t, resolver)
+	assert.Equal(t, resolver.Chroot.Base(), parentPath)
+
 	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
 
@@ -1476,8 +1483,11 @@ func Test_fileResolver_FilesByMIMEType(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, parentPath)
 
-			resolver, err := NewFromFile(parentPath, filePath)
+			resolver, err := NewFromFile(filePath)
 			assert.NoError(t, err)
+			require.NotNil(t, resolver)
+			assert.Equal(t, resolver.Chroot.Base(), parentPath)
+
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expectedPaths.Size(), len(locations))
@@ -1497,10 +1507,12 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
 
-	r, err := NewFromFile(parentPath, filePath)
+	resolver, err := NewFromFile(filePath)
 	require.NoError(t, err)
+	require.NotNil(t, resolver)
+	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
-	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := resolver.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1525,7 +1537,7 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			actual, err := r.FileContentsByLocation(test.location)
+			actual, err := resolver.FileContentsByLocation(test.location)
 			if test.err {
 				require.Error(t, err)
 				return
@@ -1546,8 +1558,11 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
-	resolver, err := NewFromFile(parentPath, filePath)
+
+	resolver, err := NewFromFile(filePath)
 	require.NoError(t, err)
+	require.NotNil(t, resolver)
+	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 	var dirLoc *file.Location
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1575,8 +1590,11 @@ func TestFileResolver_AllLocations(t *testing.T) {
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
-	resolver, err := NewFromFile(parentPath, filePath)
+
+	resolver, err := NewFromFile(filePath)
 	require.NoError(t, err)
+	require.NotNil(t, resolver)
+	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 	paths := strset.New()
 	for loc := range resolver.AllLocations(context.Background()) {
@@ -1600,8 +1618,11 @@ func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
-	resolver, err := NewFromFile(parentPath, filePath)
+
+	resolver, err := NewFromFile(filePath)
 	require.NoError(t, err)
+	require.NotNil(t, resolver)
+	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())

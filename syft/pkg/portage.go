@@ -12,14 +12,22 @@ var _ FileOwner = (*PortageEntry)(nil)
 
 // PortageEntry represents a single package entry in the portage DB flat-file store.
 type PortageEntry struct {
-	InstalledSize int                 `json:"installedSize" cyclonedx:"installedSize"`
-	Licenses      string              `json:"licenses,omitempty"`
-	Files         []PortageFileRecord `json:"files"`
+	// InstalledSize is total size of installed files in bytes
+	InstalledSize int `json:"installedSize" cyclonedx:"installedSize"`
+
+	// Licenses is license string which may be an expression (e.g. "GPL-2 OR Apache-2.0")
+	Licenses string `json:"licenses,omitempty"`
+
+	// Files are the files installed by this package (tracked in CONTENTS file)
+	Files []PortageFileRecord `json:"files"`
 }
 
 // PortageFileRecord represents a single file attributed to a portage package.
 type PortageFileRecord struct {
-	Path   string       `json:"path"`
+	// Path is the file path relative to the filesystem root
+	Path string `json:"path"`
+
+	// Digest is file content hash (MD5 for regular files in CONTENTS format: "obj filename md5hash mtime")
 	Digest *file.Digest `json:"digest,omitempty"`
 }
 

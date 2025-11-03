@@ -17,13 +17,6 @@
       },
       "metadata": {
         "syft:filesystem":"redacted"
-      },
-      "resolved": {
-        "": {
-          "package_url": "a-purl-1",
-          "relationship": "direct",
-          "scope": "runtime"
-        }
       }
     },
     "user-image-input:/somefile-2.txt": {

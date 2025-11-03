@@ -10,7 +10,14 @@ import (
 )
 
 func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBinaryBuildinfoEntry, licenses []pkg.License, locations ...file.Location) pkg.Package {
+	// Similar to syft/pkg/cataloger/golang/parse_go_mod.go logic - use original path for relative replacements
+	finalPath := dep.Path
 	if dep.Replace != nil {
+		if strings.HasPrefix(dep.Replace.Path, ".") || strings.HasPrefix(dep.Replace.Path, "/") {
+			finalPath = dep.Path
+		} else {
+			finalPath = dep.Replace.Path
+		}
 		dep = dep.Replace
 	}
 
@@ -23,10 +30,10 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBi
 	}
 
 	p := pkg.Package{
-		Name:      dep.Path,
+		Name:      finalPath,
 		Version:   version,
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(dep.Path, version),
+		PURL:      packageURL(finalPath, version),
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Locations: file.NewLocationSet(locations...),

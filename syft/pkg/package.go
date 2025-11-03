@@ -17,17 +17,38 @@ import (
 // Package represents an application or library that has been bundled into a distributable format.
 // TODO: if we ignore FoundBy for ID generation should we merge the field to show it was found in two places?
 type Package struct {
-	id        artifact.ID      `hash:"ignore"`
-	Name      string           // the package name
-	Version   string           // the version of the package
-	FoundBy   string           `hash:"ignore" cyclonedx:"foundBy"` // the specific cataloger that discovered this package
-	Locations file.LocationSet // the locations that lead to the discovery of this package (note: this is not necessarily the locations that make up this package)
-	Licenses  LicenseSet       // licenses discovered with the package metadata
-	Language  Language         `hash:"ignore" cyclonedx:"language"` // the language ecosystem this package belongs to (e.g. JavaScript, Python, etc)
-	Type      Type             `cyclonedx:"type"`                   // the package type (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
-	CPEs      []cpe.CPE        `hash:"ignore"`                      // all possible Common Platform Enumerators (note: this is NOT included in the definition of the ID since all fields on a CPE are derived from other fields)
-	PURL      string           `hash:"ignore"`                      // the Package URL (see https://github.com/package-url/purl-spec)
-	Metadata  any              // additional data found while parsing the package source
+	// id is a content-addressable identifier for this package, computed from most attribute values (applied recursively)
+	id artifact.ID `hash:"ignore"`
+
+	// Name is the package name
+	Name string
+
+	// Version is the package version
+	Version string
+
+	// FoundBy is the specific cataloger that discovered this package
+	FoundBy string `hash:"ignore" cyclonedx:"foundBy"`
+
+	// Locations are the locations that lead to the discovery of this package (note: not necessarily the locations that make up the package)
+	Locations file.LocationSet
+
+	// Licenses are the licenses discovered from the package metadata
+	Licenses LicenseSet
+
+	// Language is the language this package was written in (e.g. JavaScript, Python, etc)
+	Language Language `hash:"ignore" cyclonedx:"language"`
+
+	// Type is the ecosystem the package belongs to (e.g. Npm, Yarn, Python, Rpm, Deb, etc)
+	Type Type `cyclonedx:"type"`
+
+	// CPEs are all possible Common Platform Enumerators (note: NOT included in ID since derived from other fields)
+	CPEs []cpe.CPE `hash:"ignore"`
+
+	// PURL is the Package URL (see https://github.com/package-url/purl-spec)
+	PURL string `hash:"ignore"`
+
+	// Metadata is additional data found while parsing the package source
+	Metadata any
 }
 
 func (p *Package) OverrideID(id artifact.ID) {

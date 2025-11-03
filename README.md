@@ -116,7 +116,7 @@ Where the `formats` available are:
 - `spdx-json@2.2`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
 - `github-json`: A JSON report conforming to GitHub's dependency snapshot format.
 - `syft-table`: A columnar summary (default).
-- `template`: Lets the user specify the output format. See ["Using templates"](#using-templates) below.
+- `template`: Lets the user specify the output format. See ["Using templates"](https://github.com/anchore/syft/wiki/using-templates) below.
 
 Note that flags using the @<version> can be used for earlier versions of each specification as well.
 
@@ -133,8 +133,9 @@ Note that flags using the @<version> can be used for earlier versions of each sp
 - Elixir (mix)
 - Erlang (rebar3)
 - Go (go.mod, Go binaries)
+- GitHub (workflows, actions)
 - Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, nar, native-image)
+- Java (jar, ear, war, par, sar, nar, rar, native-image)
 - JavaScript (npm, yarn)
 - Jenkins Plugins (jpi, hpi)
 - Linux kernel archives (vmlinz)

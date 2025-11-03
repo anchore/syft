@@ -13,9 +13,9 @@ type ClassifierMatch struct {
 	Location   file.Location `mapstructure:"Location" json:"location"`
 }
 
-// ELFBinaryPackageNoteJSONPayload Represents metadata captured from the .note.package section of the binary
+// ELFBinaryPackageNoteJSONPayload Represents metadata captured from the .note.package section of an ELF-formatted binary
 type ELFBinaryPackageNoteJSONPayload struct {
-	// these are well-known fields as defined by systemd ELF package metadata "spec" https://systemd.io/ELF_PACKAGE_METADATA/
+	// (these are well-known fields as defined by systemd ELF package metadata "spec" https://systemd.io/ELF_PACKAGE_METADATA/)
 
 	// Type is the type of the package (e.g. "rpm", "deb", "apk", etc.)
 	Type string `json:"type,omitempty"`
@@ -23,7 +23,7 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	// Architecture of the binary package (e.g. "amd64", "arm", etc.)
 	Architecture string `json:"architecture,omitempty"`
 
-	// OS CPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
+	// OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
 	OSCPE string `json:"osCPE,omitempty"`
 
 	// OS is the OS name, typically corresponding to ID in os-release (e.g. "fedora")
@@ -32,7 +32,8 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	// osVersion is the version of the OS, typically corresponding to VERSION_ID in os-release (e.g. "33")
 	OSVersion string `json:"osVersion,omitempty"`
 
-	// these are additional fields that are not part of the systemd spec
+	/////////////////////////////////////////////////////////////////////////////////
+	// (these are additional fields that are not part of the systemd spec)
 
 	// System is a context-specific name for the system that the binary package is intended to run on or a part of
 	System string `json:"system,omitempty"`
@@ -49,5 +50,6 @@ type ELFBinaryPackageNoteJSONPayload struct {
 
 // PEBinary represents metadata captured from a Portable Executable formatted binary (dll, exe, etc.)
 type PEBinary struct {
+	// VersionResources contains key-value pairs extracted from the PE file's version resource section (e.g., FileVersion, ProductName, CompanyName).
 	VersionResources KeyValues
 }

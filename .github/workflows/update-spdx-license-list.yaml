@@ -1,0 +1,54 @@
+name: PR to update SPDX license list
+on:
+  schedule:
+    - cron: "0 6 * * 1" # every monday at 6 AM UTC
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SLACK_NOTIFICATIONS: true
+
+jobs:
+  upgrade-spdx-license-list:
+    runs-on: ubuntu-latest
+    if: github.repository == 'anchore/syft' # only run for main repo
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - run: |
+          make generate-license-list
+
+      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a #v2.1.0
+        id: generate-token
+        with:
+          app_id: ${{ secrets.TOKEN_APP_ID }}
+          private_key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
+
+      - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
+        with:
+          signoff: true
+          delete-branch: true
+          branch: auto/latest-spdx-license-list
+          labels: dependencies
+          commit-message: "chore(deps): update SPDX license list"
+          title: "chore(deps): update SPDX license list"
+          body: |
+            Update SPDX license list based on the latest available list from spdx.org
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e #v3.19.0
+        with:
+          status: ${{ job.status }}
+          fields: workflow,eventName,job
+          text: Syft SPDX license list update failed
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+        if: ${{ failure() && env.SLACK_NOTIFICATIONS == 'true' }}

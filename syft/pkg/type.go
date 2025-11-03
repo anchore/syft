@@ -7,6 +7,10 @@ import (
 // Type represents a Package Type for or within a language ecosystem (there may be multiple package types within a language ecosystem)
 type Type string
 
+func (t Type) String() string {
+	return string(t)
+}
+
 const (
 	// the full set of supported packages
 	UnknownPkg              Type = "UnknownPackage"

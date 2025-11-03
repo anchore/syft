@@ -11,6 +11,8 @@ import (
 const eggInfoGlob = "**/*.egg-info"
 
 type CatalogerConfig struct {
+	// GuessUnpinnedRequirements attempts to infer package versions from version constraints when no explicit version is specified in requirements files.
+	// app-config: python.guess-unpinned-requirements
 	GuessUnpinnedRequirements bool `yaml:"guess-unpinned-requirements" json:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
 }
 
@@ -28,7 +30,8 @@ func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 		WithParserByGlobs(parsePoetryLock, "**/poetry.lock").
 		WithParserByGlobs(parsePipfileLock, "**/Pipfile.lock").
 		WithParserByGlobs(parseSetup, "**/setup.py").
-		WithParserByGlobs(parseUvLock, "**/uv.lock")
+		WithParserByGlobs(parseUvLock, "**/uv.lock").
+		WithParserByGlobs(parsePdmLock, "**/pdm.lock")
 }
 
 // NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.
