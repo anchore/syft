@@ -9,6 +9,7 @@ import (
 )
 
 // depsCataloger will search for deps.json file contents.
+//
 // Deprecated: use depsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 type depsCataloger struct {
 }

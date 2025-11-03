@@ -24,6 +24,7 @@ type storeCataloger struct {
 }
 
 // NewStoreCataloger returns a new cataloger object initialized for Nix store files.
+//
 // Deprecated: please use NewCataloger instead
 func NewStoreCataloger() pkg.Cataloger {
 	return newStoreCataloger(Config{CaptureOwnedFiles: true}, "nix-store-cataloger")

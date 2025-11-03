@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/xml"
 	"io"
 	"os"
 	"testing"
@@ -15,22 +16,37 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate/dictionary"
 )
 
-func Test_generateIndexedDictionaryJSON(t *testing.T) {
+func Test_processCPEList(t *testing.T) {
+	// load test data from XML file (legacy format for testing backward compatibility)
 	f, err := os.Open("testdata/official-cpe-dictionary_v2.3.xml")
 	require.NoError(t, err)
+	defer f.Close()
 
-	// Create a buffer to store the gzipped data in memory
+	// create a buffer to store the gzipped data in memory
 	buf := new(bytes.Buffer)
 
 	w := gzip.NewWriter(buf)
 	_, err = io.Copy(w, f)
 	require.NoError(t, err)
 
-	// (finalize the gzip stream)
+	// finalize the gzip stream
 	err = w.Close()
 	require.NoError(t, err)
 
-	dictionaryJSON, err := generateIndexedDictionaryJSON(buf)
+	// decompress and parse XML to get CpeList
+	gzipReader, err := gzip.NewReader(buf)
+	require.NoError(t, err)
+	defer gzipReader.Close()
+
+	data, err := io.ReadAll(gzipReader)
+	require.NoError(t, err)
+
+	var cpeList CpeList
+	err = xml.Unmarshal(data, &cpeList)
+	require.NoError(t, err)
+
+	// process the CPE list
+	dictionaryJSON, err := processCPEList(cpeList)
 	assert.NoError(t, err)
 
 	expected, err := os.ReadFile("./testdata/expected-cpe-index.json")
@@ -40,7 +56,7 @@ func Test_generateIndexedDictionaryJSON(t *testing.T) {
 	dictionaryJSONString := string(dictionaryJSON)
 
 	if diff := cmp.Diff(expectedDictionaryJSONString, dictionaryJSONString); diff != "" {
-		t.Errorf("generateIndexedDictionaryJSON() mismatch (-want +got):\n%s", diff)
+		t.Errorf("processCPEList() mismatch (-want +got):\n%s", diff)
 	}
 }
 

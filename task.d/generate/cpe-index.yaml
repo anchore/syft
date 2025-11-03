@@ -1,0 +1,152 @@
+version: "3"
+
+vars:
+  CPE_CACHE_DIR: "syft/pkg/cataloger/internal/cpegenerate/dictionary/index-generator/.cpe-cache"
+  CPE_CACHE_REGISTRY: "ghcr.io/anchore/syft/cpe-cache:latest"
+  CPE_INDEX_OUTPUT: "syft/pkg/cataloger/internal/cpegenerate/dictionary/data/cpe-index.json"
+  CPE_GENERATOR_DIR: "syft/pkg/cataloger/internal/cpegenerate/dictionary/index-generator"
+
+tasks:
+  cache:pull:
+    desc: Pull CPE cache from ORAS registry (ghcr.io/anchore/syft/cpe-cache:latest)
+    # deps: [tools]
+    cmds:
+      - cmd: |
+          set -eu
+          echo "Pulling CPE cache from ORAS registry..."
+          mkdir -p {{ .CPE_CACHE_DIR }}
+
+          # pull compressed files from ORAS
+          {{ .ORAS }} pull {{ .CPE_CACHE_REGISTRY }} --output {{ .CPE_CACHE_DIR }} || {
+            exit_code=$?
+            if [ $exit_code -eq 1 ]; then
+              echo "No existing cache found in registry (this is normal for first run)"
+              exit 0
+            else
+              exit $exit_code
+            fi
+          }
+
+          # handle nested directory structure from old pushes (if exists)
+          # files might be at .cpe-cache/syft/pkg/.../cpe-cache/*.json.zst
+          nested_cache=$(find {{ .CPE_CACHE_DIR }} -type d -name ".cpe-cache" ! -path {{ .CPE_CACHE_DIR }} | head -1)
+          if [ -n "$nested_cache" ]; then
+            echo "Found nested cache structure, moving files to correct location..."
+            mv "$nested_cache"/*.json.zst {{ .CPE_CACHE_DIR }}/ 2>/dev/null || true
+            # clean up nested directories
+            rm -rf {{ .CPE_CACHE_DIR }}/syft 2>/dev/null || true
+          fi
+
+          # decompress all .json.zst files to .json
+          echo "Decompressing cache files..."
+          decompressed_count=0
+          for zst_file in {{ .CPE_CACHE_DIR }}/*.json.zst; do
+            # skip if no .zst files found (glob didn't match)
+            if [ ! -f "$zst_file" ]; then
+              echo "No compressed files to decompress"
+              break
+            fi
+
+            # decompress to .json (removing .zst extension)
+            json_file="${zst_file%.zst}"
+            echo "  Decompressing $(basename "$zst_file")..."
+            zstd -d -q -f "$zst_file" -o "$json_file"
+
+            # remove compressed file
+            rm "$zst_file"
+            decompressed_count=$((decompressed_count + 1))
+          done
+
+          if [ $decompressed_count -gt 0 ]; then
+            echo "Decompressed $decompressed_count file(s) successfully"
+          fi
+        silent: false
+
+  cache:update:
+    desc: Fetch incremental CPE updates from NVD API and update local cache
+    # deps: [tools]
+    dir: "{{ .CPE_GENERATOR_DIR }}"
+    cmds:
+      - cmd: |
+          echo "Updating CPE cache from NVD Products API..."
+          go run . -cache-only
+        silent: false
+    sources:
+      - "{{ .CPE_GENERATOR_DIR }}/*.go"
+    generates:
+      - "{{ .CPE_CACHE_DIR }}/metadata.json"
+      - "{{ .CPE_CACHE_DIR }}/products/*.json"
+
+  cache:push:
+    desc: Push updated CPE cache to ORAS registry
+    # deps: [tools]
+    cmds:
+      - cmd: |
+          set -eu
+          echo "Pushing CPE cache to ORAS registry..."
+
+          if [ ! -d "{{ .CPE_CACHE_DIR }}" ]; then
+            echo "No cache directory found"
+            exit 1
+          fi
+
+          # store absolute path to ORAS before changing directory
+          oras_bin="$(pwd)/{{ .ORAS }}"
+
+          # change to cache directory to avoid including full paths in ORAS push
+          cd {{ .CPE_CACHE_DIR }}
+
+          # find all JSON files (basenames only)
+          json_files=$(find . -maxdepth 1 -type f -name "*.json" -exec basename {} \;)
+          if [ -z "$json_files" ]; then
+            echo "No cache files to push"
+            exit 1
+          fi
+
+          # compress each JSON file to .json.zst
+          echo "Compressing cache files..."
+          compressed_files=""
+          for json_file in $json_files; do
+            zst_file="${json_file}.zst"
+            echo "  Compressing $(basename "$json_file")..."
+            zstd -q -f "$json_file" -o "$zst_file"
+            compressed_files="$compressed_files $zst_file"
+          done
+
+          # push compressed files to ORAS (from cache directory, so only basenames are used)
+          echo "Pushing compressed files to registry..."
+          "$oras_bin" push {{ .CPE_CACHE_REGISTRY }} $compressed_files \
+            --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .PROJECT }} \
+            --annotation org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # clean up compressed files
+          echo "Cleaning up compressed files..."
+          for zst_file in $compressed_files; do
+            rm "$zst_file"
+          done
+
+          echo "Cache pushed successfully"
+        silent: false
+
+  build:
+    desc: Generate cpe-index.json from existing local cache (does not pull/push/update)
+    dir: "{{ .CPE_GENERATOR_DIR }}"
+    cmds:
+      - cmd: |
+          echo "Generating CPE index from local cache..."
+          go run . -o ../data/cpe-index.json
+          echo "CPE index generated successfully"
+        silent: false
+    sources:
+      - "{{ .CPE_GENERATOR_DIR }}/*.go"
+      - "{{ .CPE_CACHE_DIR }}/metadata.json"
+      - "{{ .CPE_CACHE_DIR }}/products/*.json"
+    generates:
+      - "{{ .CPE_INDEX_OUTPUT }}"
+
+  cache:clean:
+    desc: Remove local CPE cache directory
+    dir: "{{ .CPE_GENERATOR_DIR }}"
+    cmds:
+      - rm -rf .cpe-cache
+      - echo "CPE cache cleaned"
