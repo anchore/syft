@@ -22,7 +22,7 @@ type parsedHomebrewData struct {
 	License  string
 }
 
-func parseHomebrewFormula(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseHomebrewFormula(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	pd, err := parseFormulaFile(reader)
 	if err != nil {
 		log.WithFields("path", reader.RealPath).Trace("failed to parse formula")
@@ -35,6 +35,8 @@ func parseHomebrewFormula(_ context.Context, _ file.Resolver, _ *generic.Environ
 
 	return []pkg.Package{
 		newHomebrewPackage(
+			ctx,
+			resolver,
 			*pd,
 			reader.Location,
 		),
