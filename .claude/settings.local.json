@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go test:*)",
+      "Bash(git stash:*)",
+      "Bash(go doc:*)",
+      "Read(//Users/hal/go/pkg/mod/github.com/gpustack/gguf-parser-go@v0.22.1/**)",
+      "Bash(timeout 5 go test:*)",
+      "Bash(timeout 10 go test:*)",
+      "Bash(timeout:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

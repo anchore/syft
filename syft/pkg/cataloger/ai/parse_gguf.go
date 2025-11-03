@@ -21,6 +21,7 @@ type ggufHeaderReader struct {
 
 // readHeader reads only the GGUF header (metadata) without reading tensor data
 // This is much more efficient than reading the entire file
+// The reader should be wrapped with io.LimitedReader to prevent OOM issues
 func (r *ggufHeaderReader) readHeader() ([]byte, error) {
 	// Read initial chunk to determine header size
 	// GGUF format: magic(4) + version(4) + tensor_count(8) + metadata_kv_count(8) + metadata_kvs + tensors_info
@@ -36,29 +37,25 @@ func (r *ggufHeaderReader) readHeader() ([]byte, error) {
 	}
 
 	// We need to read the metadata KV pairs to know the full header size
-	// For efficiency, we'll read incrementally up to maxHeaderSize
+	// The io.LimitedReader wrapping this reader ensures we don't read more than maxHeaderSize
 	headerData := make([]byte, 0, 1024*1024) // Start with 1MB capacity
 	headerData = append(headerData, initialBuf...)
 
 	// Read the rest of the header in larger chunks for efficiency
+	// The LimitedReader will return EOF once maxHeaderSize is reached
 	buf := make([]byte, 64*1024) // 64KB chunks
-	for len(headerData) < maxHeaderSize {
+	for {
 		n, err := r.reader.Read(buf)
 		if n > 0 {
 			headerData = append(headerData, buf[:n]...)
 		}
 		if err == io.EOF {
-			// Reached end of file, we have all the data
+			// Reached end of file or limit, we have all available data
 			break
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to read GGUF header: %w", err)
 		}
-	}
-
-	if len(headerData) > maxHeaderSize {
-		// Truncate if we somehow read too much
-		headerData = headerData[:maxHeaderSize]
 	}
 
 	return headerData, nil

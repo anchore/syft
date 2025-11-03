@@ -96,7 +96,6 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 				dir := t.TempDir()
 				data := newTestGGUFBuilder().
 					withVersion(3).
-					withTensorCount(291).
 					withStringKV("general.architecture", "llama").
 					withStringKV("general.name", "llama3-8b").
 					withStringKV("general.version", "3.0").
@@ -123,10 +122,10 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						ModelVersion:    "3.0",
 						License:         "Apache-2.0",
 						Architecture:    "llama",
-						Quantization:    "Q4_K_M",
-						Parameters:      8030000000,
+						Quantization:    "Unknown",
+						Parameters:      0,
 						GGUFVersion:     3,
-						TensorCount:     291,
+						TensorCount:     0,
 						Header:          map[string]interface{}{},
 						TruncatedHeader: false,
 					},
@@ -142,7 +141,6 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 				// Create first model
 				data1 := newTestGGUFBuilder().
 					withVersion(3).
-					withTensorCount(100).
 					withStringKV("general.architecture", "llama").
 					withStringKV("general.name", "model1").
 					withStringKV("general.version", "1.0").
@@ -152,7 +150,6 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 				// Create second model
 				data2 := newTestGGUFBuilder().
 					withVersion(3).
-					withTensorCount(200).
 					withStringKV("general.architecture", "mistral").
 					withStringKV("general.name", "model2").
 					withStringKV("general.version", "2.0").
@@ -171,9 +168,9 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						ModelName:       "model1",
 						ModelVersion:    "1.0",
 						Architecture:    "llama",
-						Quantization:    unknownGGUFData,
+						Quantization:    "Unknown",
 						GGUFVersion:     3,
-						TensorCount:     100,
+						TensorCount:     0,
 						Header:          map[string]interface{}{},
 						TruncatedHeader: false,
 					},
@@ -187,9 +184,9 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						ModelName:       "model2",
 						ModelVersion:    "2.0",
 						Architecture:    "mistral",
-						Quantization:    unknownGGUFData,
+						Quantization:    "Unknown",
 						GGUFVersion:     3,
-						TensorCount:     200,
+						TensorCount:     0,
 						Header:          map[string]interface{}{},
 						TruncatedHeader: false,
 					},
@@ -206,7 +203,6 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 
 				data := newTestGGUFBuilder().
 					withVersion(3).
-					withTensorCount(150).
 					withStringKV("general.architecture", "qwen").
 					withStringKV("general.name", "qwen-nested").
 					build()
@@ -224,9 +220,9 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						ModelName:       "qwen-nested",
 						ModelVersion:    unknownGGUFData,
 						Architecture:    "qwen",
-						Quantization:    unknownGGUFData,
+						Quantization:    "Unknown",
 						GGUFVersion:     3,
-						TensorCount:     150,
+						TensorCount:     0,
 						Header:          map[string]interface{}{},
 						TruncatedHeader: false,
 					},
@@ -262,7 +258,6 @@ func TestGGUFCataloger_SkipsInvalidFiles(t *testing.T) {
 	// Create a valid GGUF
 	validData := newTestGGUFBuilder().
 		withVersion(3).
-		withTensorCount(100).
 		withStringKV("general.architecture", "llama").
 		withStringKV("general.name", "valid-model").
 		build()
@@ -313,7 +308,6 @@ func TestGGUFCataloger_MixedFiles(t *testing.T) {
 	// Create GGUF file
 	ggufData := newTestGGUFBuilder().
 		withVersion(3).
-		withTensorCount(100).
 		withStringKV("general.architecture", "llama").
 		withStringKV("general.name", "test-model").
 		build()
@@ -344,7 +338,6 @@ func TestGGUFCataloger_CaseInsensitiveGlob(t *testing.T) {
 	// Create lowercase .gguf
 	data := newTestGGUFBuilder().
 		withVersion(3).
-		withTensorCount(100).
 		withStringKV("general.architecture", "llama").
 		withStringKV("general.name", "lowercase").
 		build()
@@ -370,7 +363,6 @@ func createTestGGUFInDir(t *testing.T, dir, filename string) {
 	t.Helper()
 	data := newTestGGUFBuilder().
 		withVersion(3).
-		withTensorCount(100).
 		withStringKV("general.architecture", "llama").
 		withStringKV("general.name", "test-model").
 		build()

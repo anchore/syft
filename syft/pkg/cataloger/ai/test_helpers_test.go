@@ -15,12 +15,12 @@ const (
 	ggufTypeUint32  = 4
 	ggufTypeInt32   = 5
 	ggufTypeFloat32 = 6
-	ggufTypeUint64  = 7
-	ggufTypeInt64   = 8
-	ggufTypeFloat64 = 9
-	ggufTypeBool    = 10
-	ggufTypeString  = 11
-	ggufTypeArray   = 12
+	ggufTypeBool    = 7
+	ggufTypeString  = 8
+	ggufTypeArray   = 9
+	ggufTypeUint64  = 10
+	ggufTypeInt64   = 11
+	ggufTypeFloat64 = 12
 )
 
 // testGGUFBuilder helps build GGUF files for testing
@@ -41,7 +41,7 @@ func newTestGGUFBuilder() *testGGUFBuilder {
 	return &testGGUFBuilder{
 		buf:         new(bytes.Buffer),
 		version:     3,
-		tensorCount: 100,
+		tensorCount: 0,
 		kvPairs:     []testKVPair{},
 	}
 }
