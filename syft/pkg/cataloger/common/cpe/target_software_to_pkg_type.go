@@ -1,4 +1,4 @@
-package internal
+package cpe
 
 import (
 	"strings"
@@ -6,9 +6,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// CPETargetSoftwareToPackageType is derived from looking at target_software attributes in the NVD dataset
+// TargetSoftwareToPackageType is derived from looking at target_software attributes in the NVD dataset
 // TODO: ideally this would be driven from the store, where we can resolve ecosystem aliases directly
-func CPETargetSoftwareToPackageType(tsw string) pkg.Type {
+func TargetSoftwareToPackageType(tsw string) pkg.Type {
 	tsw = strings.NewReplacer("-", "_", " ", "_").Replace(strings.ToLower(tsw))
 	switch tsw {
 	case "alpine", "apk":

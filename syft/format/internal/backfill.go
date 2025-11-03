@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
+	cataloger "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
 // Backfill takes all information present in the package and attempts to fill in any missing information
@@ -29,7 +30,7 @@ func backfillFromCPE(p *pkg.Package) {
 	c := p.CPEs[0]
 
 	if p.Type == "" {
-		p.Type = CPETargetSoftwareToPackageType(c.Attributes.TargetSW)
+		p.Type = cataloger.TargetSoftwareToPackageType(c.Attributes.TargetSW)
 	}
 }
 
