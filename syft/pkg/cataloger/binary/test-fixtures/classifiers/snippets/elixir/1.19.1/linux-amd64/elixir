@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2021 The Elixir Team
+# SPDX-FileCopyrightText: 2012 Plataformatec
+
+set -e
+
+ELIXIR_VERSION=1.19.1
+
+if [ $# -eq 0 ] || { [ $# -eq 1 ] && { [ "$1" = "--help" ] || [ "$1" = "-h" ]; }; }; then
+  cat <<USAGE >&2
+Usage: $(basename "$0") [options] [.exs file] [data]
+
+## General options
+
+  -e "COMMAND"                 Evaluates the given command (*)
+  -h, --help                   Prints this message (standalone)
+  -r "FILE"                    Requires the given files/patterns (*)
+  -S SCRIPT                    Finds and executes the given script in \$PATH
