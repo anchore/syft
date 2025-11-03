@@ -36,6 +36,47 @@ func Test_CPEProvider(t *testing.T) {
 			},
 		},
 		{
+			name: "takes multiple cpes",
+			userInput: `cpe:/a:apache:log4j:2.14.1
+						cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*;
+						cpe:2.3:a:f5:nginx:0.5.2:*:*:*:*:*:*:*;
+						cpe:2.3:a:f5:nginx:0.5.3:*:*:*:*:*:*:*;`,
+			sbom: &sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(
+						pkg.Package{
+							Name:    "log4j",
+							Version: "2.14.1",
+							CPEs: []cpe.CPE{
+								cpe.Must("cpe:/a:apache:log4j:2.14.1", ""),
+							},
+						},
+						pkg.Package{
+							Name:    "nginx",
+							Version: "",
+							CPEs: []cpe.CPE{
+								cpe.Must("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*;", ""),
+							},
+						},
+						pkg.Package{
+							Name:    "nginx",
+							Version: "0.5.2",
+							CPEs: []cpe.CPE{
+								cpe.Must("cpe:2.3:a:f5:nginx:0.5.2:*:*:*:*:*:*:*;", ""),
+							},
+						},
+						pkg.Package{
+							Name:    "nginx",
+							Version: "0.5.3",
+							CPEs: []cpe.CPE{
+								cpe.Must("cpe:2.3:a:f5:nginx:0.5.3:*:*:*:*:*:*:*;", ""),
+							},
+						},
+					),
+				},
+			},
+		},
+		{
 			name:      "takes cpe with no version",
 			userInput: "cpe:/a:apache:log4j",
 			sbom: &sbom.SBOM{
