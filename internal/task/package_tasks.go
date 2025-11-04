@@ -52,6 +52,11 @@ const (
 	JavaScript = "javascript"
 	Node       = "node"
 	NPM        = "npm"
+
+	// Dotnet ecosystem labels
+	Dotnet           = "dotnet"
+	CSharp           = "c#"
+	CSharpWrittenOut = "csharp"
 )
 
 //nolint:funlen
@@ -124,9 +129,9 @@ func DefaultPackageTaskFactories() Factories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return dotnet.NewDotnetDepsBinaryCataloger(cfg.PackagesConfig.Dotnet)
 			},
-			pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#",
+			pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Dotnet, CSharp, CSharpWrittenOut,
 		),
-		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
+		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Dotnet, CSharp, CSharpWrittenOut),
 		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "python"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
@@ -178,9 +183,17 @@ func DefaultPackageTaskFactories() Factories {
 
 		// deprecated catalogers ////////////////////////////////////////
 		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)
-		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeprecatedTag),               // TODO: remove in syft v2.0
-		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DeprecatedTag), // TODO: remove in syft v2.0
-		newSimplePackageTaskFactory(php.NewPeclCataloger, pkgcataloging.DeprecatedTag),                        // TODO: remove in syft v2.0
-		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag),                       // TODO: remove in syft v2.0
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return dotnet.NewDotnetDepsCataloger(cfg.PackagesConfig.Dotnet)
+			},
+			pkgcataloging.DeprecatedTag), // TODO: remove in syft v2.0
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return dotnet.NewDotnetPortableExecutableCataloger(cfg.PackagesConfig.Dotnet)
+			},
+			pkgcataloging.DeprecatedTag), // TODO: remove in syft v2.0
+		newSimplePackageTaskFactory(php.NewPeclCataloger, pkgcataloging.DeprecatedTag),  // TODO: remove in syft v2.0
+		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag), // TODO: remove in syft v2.0
 	}
 }
