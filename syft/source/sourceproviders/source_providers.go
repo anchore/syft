@@ -7,15 +7,17 @@ import (
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
+	"github.com/anchore/syft/syft/source/ocimodelsource"
 	"github.com/anchore/syft/syft/source/snapsource"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
 const (
-	FileTag = stereoscope.FileTag
-	DirTag  = stereoscope.DirTag
-	PullTag = stereoscope.PullTag
-	SnapTag = "snap"
+	FileTag      = stereoscope.FileTag
+	DirTag       = stereoscope.DirTag
+	PullTag      = stereoscope.PullTag
+	SnapTag      = "snap"
+	OCIModelTag  = "oci-model"
 )
 
 // All returns all the configured source providers known to syft
@@ -39,6 +41,9 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 		Join(tagProvider(directorysource.NewSourceProvider(userInput, cfg.Exclude, cfg.Alias, cfg.BasePath), DirTag)).
 
 		// 3. try remote sources after everything else...
+
+		// --from oci-model (model artifacts with header-only fetching)
+		Join(tagProvider(ocimodelsource.NewSourceProvider(userInput, cfg.RegistryOptions, cfg.Alias), OCIModelTag)).
 
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select(PullTag)...).
