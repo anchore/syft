@@ -1403,6 +1403,22 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ffmpeg-library"),
 			},
 		},
+		{
+			logicalFixture: "elixir/1.19.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elixir",
+				Version:   "1.19.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/elixir@1.19.1",
+				Locations: locations("elixir", "lib/elixir/ebin/elixir.app"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("elixir-binary", "elixir"),
+						match("elixir-library", "lib/elixir/ebin/elixir.app"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
