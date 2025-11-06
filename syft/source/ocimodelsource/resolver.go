@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bmatcuk/doublestar/v4"
 	stereofile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/anchore/syft/syft/file"
 )
@@ -178,12 +178,6 @@ func (r *ociModelResolver) cleanup() error {
 // extractVirtualPath generates a virtual path for a GGUF layer.
 // This simulates where the file would be in the artifact.
 func extractVirtualPath(layerIndex int, annotations map[string]string) string {
-	// Check if there's a filename in annotations
-	if filename, ok := annotations["org.opencontainers.image.title"]; ok {
-		return "/" + filename
-	}
-
-	// Fall back to generic name based on index
 	return fmt.Sprintf("/model-layer-%d.gguf", layerIndex)
 }
 
