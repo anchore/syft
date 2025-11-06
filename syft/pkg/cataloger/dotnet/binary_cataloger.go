@@ -12,6 +12,7 @@ import (
 // binary cataloger will search for .dll and .exe files and create packages based off of the version resources embedded
 // as a resource directory within the executable. If there is no evidence of a .NET runtime (a CLR header) then no
 // package will be created.
+//
 // Deprecated: use depsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 type binaryCataloger struct {
 }

@@ -1,11 +1,6 @@
 package main
 
 import (
-	"compress/gzip"
-	"encoding/json"
-	"encoding/xml"
-	"fmt"
-	"io"
 	"log"
 	"slices"
 	"strings"
@@ -14,39 +9,6 @@ import (
 
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate/dictionary"
 )
-
-func generateIndexedDictionaryJSON(rawGzipData io.Reader) ([]byte, error) {
-	gzipReader, err := gzip.NewReader(rawGzipData)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decompress CPE dictionary: %w", err)
-	}
-	defer gzipReader.Close()
-
-	// Read XML data
-	data, err := io.ReadAll(gzipReader)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read CPE dictionary: %w", err)
-	}
-
-	// Unmarshal XML
-	var cpeList CpeList
-	if err := xml.Unmarshal(data, &cpeList); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal CPE dictionary XML: %w", err)
-	}
-
-	// Filter out data that's not applicable here
-	cpeList = filterCpeList(cpeList)
-
-	// Create indexed dictionary to help with looking up CPEs
-	indexedDictionary := indexCPEList(cpeList)
-
-	// Convert to JSON
-	jsonData, err := json.MarshalIndent(indexedDictionary, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal CPE dictionary to JSON: %w", err)
-	}
-	return jsonData, nil
-}
 
 // filterCpeList removes CPE items that are not applicable to software packages.
 func filterCpeList(cpeList CpeList) CpeList {
