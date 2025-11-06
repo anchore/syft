@@ -52,6 +52,9 @@ const (
 	JavaScript = "javascript"
 	Node       = "node"
 	NPM        = "npm"
+
+	// Python ecosystem labels
+	Python = "python"
 )
 
 //nolint:funlen
@@ -109,7 +112,7 @@ func DefaultPackageTaskFactories() Factories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return python.NewPackageCataloger(cfg.PackagesConfig.Python)
 			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "python",
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Python,
 		),
 		newSimplePackageTaskFactory(ruby.NewGemFileLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ruby", "gem"),
 		newSimplePackageTaskFactory(ruby.NewGemSpecCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "ruby", "gem", "gemspec"),
@@ -127,7 +130,7 @@ func DefaultPackageTaskFactories() Factories {
 			pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#",
 		),
 		newSimplePackageTaskFactory(dotnet.NewDotnetPackagesLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dotnet", "c#"),
-		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "python"),
+		newSimplePackageTaskFactory(python.NewInstalledPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, Python),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return golang.NewGoModuleBinaryCataloger(cfg.PackagesConfig.Golang)
