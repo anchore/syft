@@ -4,22 +4,26 @@ import (
 	"context"
 	"crypto"
 	"fmt"
+	"io"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/opencontainers/go-digest"
 
-	"github.com/anchore/archiver/v3"
 	stereoFile "github.com/anchore/stereoscope/pkg/file"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/internal"
+	"github.com/mholt/archives"
 )
 
 var _ source.Source = (*fileSource)(nil)
@@ -198,35 +202,37 @@ func deriveIDFromFile(cfg Config) (artifact.ID, string) {
 // Users can disable unpacking archives, allowing individual cataloguers to extract them instead (where
 // supported)
 func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() error, error) {
-	var cleanupFn = func() error { return nil }
-	var analysisPath = path
+	cleanupFn := func() error { return nil }
+	analysisPath := path
 
 	if skipExtractArchive {
 		return analysisPath, cleanupFn, nil
 	}
 
-	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
-	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
-	// unarchived.
-	envelopedUnarchiver, err := archiver.ByExtension(path)
-	if unarchiver, ok := envelopedUnarchiver.(archiver.Unarchiver); err == nil && ok {
-		// when tar/zip files are extracted, if there are multiple entries at the same
-		// location, the last entry wins
-		// NOTE: this currently does not display any messages if an overwrite happens
-		switch v := unarchiver.(type) {
-		case *archiver.Tar:
-			v.OverwriteExisting = true
-		case *archiver.Zip:
-			v.OverwriteExisting = true
-		}
+	// Check if the given file is an archive by identifying its format
+	ctx := context.Background()
 
-		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
-		if err != nil {
-			return "", nil, fmt.Errorf("unable to unarchive source file: %w", err)
-		}
-
-		log.Debugf("source path is an archive")
+	// Pass nil as stream to match by filename only
+	format, _, err := archives.Identify(ctx, path, nil)
+	if err != nil {
+		// Not an archive format, just return the original path
+		return analysisPath, cleanupFn, nil
 	}
+
+	// Check if it's actually an archive using the MIME type
+	if !mimetype.IsArchive(format.MediaType()) {
+		// Not an archive, just return the original path
+		return analysisPath, cleanupFn, nil
+	}
+
+	// Extract the archive to a temp directory
+	// Use the archives library to extract, which properly handles all formats
+	analysisPath, cleanupFn, err = unarchiveToTmp(ctx, path, format)
+	if err != nil {
+		return "", nil, fmt.Errorf("unable to unarchive source file: %w", err)
+	}
+
+	log.Debugf("source path is an archive")
 
 	return analysisPath, cleanupFn, nil
 }
@@ -246,7 +252,9 @@ func digestOfFileContents(path string) string {
 	return di.String()
 }
 
-func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func() error, error) {
+// unarchiveToTmp extracts an archive to a temporary directory using the archives library.
+// This function properly handles duplicate entries in archives (like tar) where "last entry wins".
+func unarchiveToTmp(ctx context.Context, archivePath string, format archives.Format) (string, func() error, error) {
 	tempDir, err := os.MkdirTemp("", "syft-archive-contents-")
 	if err != nil {
 		return "", func() error { return nil }, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
@@ -256,5 +264,67 @@ func unarchiveToTmp(path string, unarchiver archiver.Unarchiver) (string, func()
 		return os.RemoveAll(tempDir)
 	}
 
-	return tempDir, cleanupFn, unarchiver.Unarchive(path, tempDir)
+	// Open the archive file
+	archiveFile, err := os.Open(archivePath)
+	if err != nil {
+		cleanupFn()
+		return "", func() error { return nil }, fmt.Errorf("unable to open archive: %w", err)
+	}
+	defer archiveFile.Close()
+
+	// Get the appropriate extractor for this format
+	extractor, ok := format.(archives.Extractor)
+	if !ok {
+		cleanupFn()
+		return "", func() error { return nil }, fmt.Errorf("format does not support extraction: %T", format)
+	}
+
+	// Extract all files from the archive
+	// The FileHandler callback is called for each file in the archive
+	err = extractor.Extract(ctx, archiveFile, func(ctx context.Context, fileInfo archives.FileInfo) error {
+		// Skip directories - they'll be created as needed
+		if fileInfo.IsDir() {
+			return nil
+		}
+
+		destPath := filepath.Join(tempDir, fileInfo.NameInArchive)
+
+		// Ensure the destination path is within tempDir (prevent path traversal)
+		if !strings.HasPrefix(filepath.Clean(destPath), filepath.Clean(tempDir)) {
+			return nil // Skip this file
+		}
+
+		// Create parent directories if needed
+		if err := os.MkdirAll(filepath.Dir(destPath), 0o755); err != nil {
+			return fmt.Errorf("unable to create parent directories for %q: %w", destPath, err)
+		}
+
+		// Open the file from the archive
+		srcFile, err := fileInfo.Open()
+		if err != nil {
+			return fmt.Errorf("unable to open file %q from archive: %w", fileInfo.NameInArchive, err)
+		}
+		defer srcFile.Close()
+
+		// Create/overwrite the destination file
+		// Using os.Create ensures "last entry wins" for archives with duplicate paths
+		dstFile, err := os.Create(destPath)
+		if err != nil {
+			return fmt.Errorf("unable to create file %q: %w", destPath, err)
+		}
+		defer dstFile.Close()
+
+		// Copy contents
+		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			return fmt.Errorf("unable to copy file %q: %w", fileInfo.NameInArchive, err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		cleanupFn()
+		return "", func() error { return nil }, fmt.Errorf("unable to extract archive: %w", err)
+	}
+
+	return tempDir, cleanupFn, nil
 }

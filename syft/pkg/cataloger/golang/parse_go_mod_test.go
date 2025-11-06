@@ -52,9 +52,9 @@ func TestParseGoMod(t *testing.T) {
 			fixture: "test-fixtures/go-mod-fixtures/many-packages/go.mod",
 			expected: []pkg.Package{
 				{
-					Name:      "github.com/anchore/archiver/v3",
-					Version:   "v3.5.2",
-					PURL:      "pkg:golang/github.com/anchore/archiver@v3.5.2#v3",
+					Name:      "github.com/mholt/archives",
+					Version:   "v0.1.5",
+					PURL:      "pkg:golang/github.com/mholt/archives@v0.1.5",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,

@@ -1,16 +1,18 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/anchore/archiver/v3"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
+	"github.com/mholt/archives"
 )
 
 // ToGithubModel converts the provided SBOM to a GitHub dependency model
@@ -151,10 +153,16 @@ func trimRelative(s string) string {
 	return s
 }
 
-// isArchive returns true if the path appears to be an archive
+// isArchive returns true if the path appears to be an archive.
 func isArchive(path string) bool {
-	_, err := archiver.ByExtension(path)
-	return err == nil
+	ctx := context.Background()
+	// Pass nil as stream to match by filename only
+	format, _, err := archives.Identify(ctx, path, nil)
+	if err != nil {
+		return false
+	}
+
+	return mimetype.IsArchive(format.MediaType())
 }
 
 func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {

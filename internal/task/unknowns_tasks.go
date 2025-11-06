@@ -4,13 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/anchore/archiver/v3"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/mholt/archives"
 )
 
 const unknownsLabelerTaskName = "unknowns-labeler"
@@ -58,12 +59,23 @@ func (c unknownsLabelerTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 
 	if c.IncludeUnexpandedArchives {
 		for coords := range s.Artifacts.FileMetadata {
-			unarchiver, notArchiveErr := archiver.ByExtension(coords.RealPath)
-			if unarchiver != nil && notArchiveErr == nil && !hasPackageReference(coords) {
+			if isArchive(coords.RealPath) && !hasPackageReference(coords) {
 				s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], "archive not cataloged")
 			}
 		}
 	}
+}
+
+// isArchive checks if the given file path is an archive by identifying its format.
+func isArchive(path string) bool {
+	ctx := context.Background()
+	// Pass nil as stream to match by filename only
+	format, _, err := archives.Identify(ctx, path, nil)
+	if err != nil {
+		return false
+	}
+
+	return mimetype.IsArchive(format.MediaType())
 }
 
 func formatUnknown(err string, task ...string) string {
