@@ -40,6 +40,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PhpComposerInstalledEntry{},
 		pkg.PhpPearEntry{},
 		pkg.PhpPeclEntry{},
+		pkg.PnpmLockEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPipfileLockEntry{},
 		pkg.PythonPdmLockEntry{},
