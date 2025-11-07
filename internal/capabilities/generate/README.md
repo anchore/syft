@@ -135,10 +135,8 @@ graph LR
     style E2 fill:#fff9c4
 ```
 
-### Key Data Flows
-
 1. **Cataloger Discovery**: AST parser walks `syft/pkg/cataloger/` to find `generic.NewCataloger()` calls and extract parser information
-2. **Config Discovery**: AST parser finds config structs and extracts fields with `// app-config:` annotations
+2. **Cataloger Config Discovery**: AST parser finds config structs and extracts fields with `// app-config:` annotations
 3. **App Config Discovery**: AST parser extracts ecosystem configurations from options package, including descriptions and defaults
 4. **Metadata Discovery**: JSON reader loads test observations that record what metadata/package types each parser produces
 5. **Linking**: AST analyzer connects catalogers to their config structs by examining constructor parameters

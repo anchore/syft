@@ -3365,6 +3365,37 @@ catalogers:
       - package
       - python
     parsers: # AUTO-GENERATED structure
+      - function: parsePdmLock # AUTO-GENERATED
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pdm.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPdmLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPdmLockEntry
+        capabilities: # MANUAL - config-driven capability definitions
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+              - optional
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
       - function: parseUvLock # AUTO-GENERATED
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
@@ -3387,6 +3418,7 @@ catalogers:
             default: complete
           - name: dependency.kinds
             default:
+              - runtime
               - dev
               - optional
           - name: package_manager.files.listing
@@ -3471,6 +3503,7 @@ catalogers:
             default: complete
           - name: dependency.kinds
             default:
+              - runtime
               - dev
               - optional
           - name: package_manager.files.listing
@@ -3478,8 +3511,10 @@ catalogers:
           - name: package_manager.files.digests
             default: false
           - name: package_manager.package_integrity_hash
-            default: false
-      - function: parseRequirementsTxt # AUTO-GENERATED
+            default: true
+            evidence:
+              - PythonPoetryLockEntry.PackageHashes
+      - function: parseRequirementsTxt
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
@@ -3490,7 +3525,7 @@ catalogers:
           - python
         json_schema_types: # AUTO-GENERATED
           - PythonPipRequirementsEntry
-        capabilities: # MANUAL - config-driven capability definitions
+        capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: false
           - name: dependency.depth
