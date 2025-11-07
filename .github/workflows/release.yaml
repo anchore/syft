@@ -13,7 +13,8 @@ on:
 jobs:
   quality-gate:
     environment: release
-    runs-on: ubuntu-24.04
+    # Runner definition: workflows/.github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=tiny
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -119,7 +120,8 @@ jobs:
 
   release:
     needs: [quality-gate]
-    runs-on: ubuntu-24.04
+    # Runner definition: workflows/.github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=release
     permissions:
       contents: write
       packages: write
@@ -190,6 +192,7 @@ jobs:
   release-install-script:
     needs: [release]
     if: ${{ needs.release.result == 'success' }}
+    # Runner definition: workflows/.github/runs-on.yml
     uses: "anchore/workflows/.github/workflows/release-install-script.yaml@main"
     with:
       tag: ${{ github.event.inputs.version }}

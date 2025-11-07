@@ -18,7 +18,8 @@ permissions:
 jobs:
   zizmor:
     name: "Lint"
-    runs-on: ubuntu-latest
+    # Runner definition: workflows/.github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
     permissions:
       contents: read
       security-events: write  # for uploading SARIF results
