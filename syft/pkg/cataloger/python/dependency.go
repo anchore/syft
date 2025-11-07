@@ -82,6 +82,63 @@ func packageRef(name, extra string) string {
 	return cleanName + "[" + cleanExtra + "]"
 }
 
+func pdmLockDependencySpecifier(p pkg.Package) dependency.Specification {
+	meta, ok := p.Metadata.(pkg.PythonPdmLockEntry)
+	if !ok {
+		log.Tracef("cataloger failed to extract pdm lock metadata for package %+v", p.Name)
+		return dependency.Specification{}
+	}
+
+	// base package provides the package name without extras
+	provides := []string{p.Name}
+
+	// base requirements from Dependencies field
+	var requires []string
+	for _, dep := range meta.Dependencies {
+		depName := extractPackageName(dep)
+		if depName == "" {
+			continue
+		}
+		requires = append(requires, depName)
+	}
+
+	// create variants for each extras combination
+	var variants []dependency.ProvidesRequires
+	for _, extraVariant := range meta.Extras {
+		// each extra in the variant provides packagename[extra]
+		var variantProvides []string
+		for _, extra := range extraVariant.Extras {
+			variantProvides = append(variantProvides, packageRef(p.Name, extra))
+		}
+
+		// extract dependencies for this variant, excluding self-references
+		var variantRequires []string
+		for _, dep := range extraVariant.Dependencies {
+			depName := extractPackageName(dep)
+			if depName == "" || depName == p.Name {
+				// skip empty or self-references (e.g., coverage[toml] depends on coverage==7.4.1)
+				continue
+			}
+			variantRequires = append(variantRequires, depName)
+		}
+
+		if len(variantProvides) > 0 {
+			variants = append(variants, dependency.ProvidesRequires{
+				Provides: variantProvides,
+				Requires: variantRequires,
+			})
+		}
+	}
+
+	return dependency.Specification{
+		ProvidesRequires: dependency.ProvidesRequires{
+			Provides: provides,
+			Requires: requires,
+		},
+		Variants: variants,
+	}
+}
+
 func wheelEggDependencySpecifier(p pkg.Package) dependency.Specification {
 	meta, ok := p.Metadata.(pkg.PythonPackage)
 	if !ok {
