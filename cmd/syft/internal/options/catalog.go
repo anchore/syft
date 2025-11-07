@@ -283,10 +283,10 @@ func (cfg *Catalog) PostLoad() error {
 
 	cfg.From = Flatten(cfg.From)
 
-	cfg.Catalogers = Flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
-	cfg.Enrich = Flatten(cfg.Enrich)
+	cfg.Catalogers = FlattenAndSort(cfg.Catalogers)
+	cfg.DefaultCatalogers = FlattenAndSort(cfg.DefaultCatalogers)
+	cfg.SelectCatalogers = FlattenAndSort(cfg.SelectCatalogers)
+	cfg.Enrich = FlattenAndSort(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -311,6 +311,11 @@ func Flatten(commaSeparatedEntries []string) []string {
 			out = append(out, strings.TrimSpace(s))
 		}
 	}
+	return out
+}
+
+func FlattenAndSort(commaSeparatedEntries []string) []string {
+	out := Flatten(commaSeparatedEntries)
 	sort.Strings(out)
 	return out
 }
