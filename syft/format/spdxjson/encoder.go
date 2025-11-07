@@ -24,6 +24,7 @@ func SupportedVersions() []string {
 type EncoderConfig struct {
 	Version string
 	Pretty  bool // don't include spaces and newlines; same as jq -c
+	Indent  string
 }
 
 type encoder struct {
@@ -40,6 +41,7 @@ func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
 		Version: spdxutil.DefaultVersion,
 		Pretty:  false,
+		Indent:  " ",
 	}
 }
 
@@ -90,7 +92,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	enc.SetEscapeHTML(false)
 
 	if e.cfg.Pretty {
-		enc.SetIndent("", " ")
+		enc.SetIndent("", e.cfg.Indent)
 	}
 
 	return enc.Encode(encodeDoc)
