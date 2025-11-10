@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/mholt/archives"
@@ -254,7 +253,7 @@ func unarchiveToTmp(path string, unarchiver archives.Extractor) (string, func() 
 
 	visitor := func(_ context.Context, file archives.FileInfo) error {
 		// Protect against symlink attacks by ensuring path doesn't escape tempDir
-		destPath, err := safeJoinPath(tempDir, file.NameInArchive)
+		destPath, err := intFile.SafeJoin(tempDir, file.NameInArchive)
 		if err != nil {
 			return err
 		}
@@ -293,15 +292,4 @@ func unarchiveToTmp(path string, unarchiver archives.Extractor) (string, func() 
 	return tempDir, func() error {
 		return os.RemoveAll(tempDir)
 	}, unarchiver.Extract(context.Background(), archive, visitor)
-}
-
-// safeJoinPath ensures that any destinations do not resolve to a path above the prefix path.
-// This protects against directory traversal attacks (zip slip).
-func safeJoinPath(prefix string, dest ...string) (string, error) {
-	joinResult := filepath.Join(append([]string{prefix}, dest...)...)
-	cleanJoinResult := filepath.Clean(joinResult)
-	if !strings.HasPrefix(cleanJoinResult, filepath.Clean(prefix)) {
-		return "", fmt.Errorf("path traversal detected: paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", prefix, dest)
-	}
-	return joinResult, nil
 }
