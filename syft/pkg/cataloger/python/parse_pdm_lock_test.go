@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -475,15 +476,47 @@ func TestParsePdmLockWithExtras(t *testing.T) {
 	require.Equal(t, 1, coverageCount, "coverage should appear exactly ONCE in the package list (PDM has it twice in the lock file)")
 	require.NotNil(t, coveragePkg, "coverage package should be found")
 
-	// Verify coverage metadata has extras
+	// This test verifies file deduplication behavior!
+	// The fixture has identical files in both base and extras=["toml"] entries.
+	// After merging, the base should have Files populated, but the extras variant should NOT
+	// have Files (they're deduplicated because they're identical to base).
 	coverageMeta, ok := coveragePkg.Metadata.(pkg.PythonPdmLockEntry)
 	require.True(t, ok, "coverage metadata should be PythonPdmLockEntry")
-	require.Len(t, coverageMeta.Extras, 1, "coverage should have 1 extras variant")
-	require.Equal(t, []string{"toml"}, coverageMeta.Extras[0].Extras, "coverage extras variant should be [toml]")
 
-	// Verify the extras variant has the correct dependencies
-	require.Contains(t, coverageMeta.Extras[0].Dependencies, "coverage==7.4.1", "coverage[toml] should depend on coverage==7.4.1")
-	require.Contains(t, coverageMeta.Extras[0].Dependencies, "tomli; python_full_version <= \"3.11.0a6\"", "coverage[toml] should depend on tomli")
+	expectedMeta := pkg.PythonPdmLockEntry{
+		Summary:        "Code coverage measurement for Python",
+		RequiresPython: ">=3.8",
+		Files: []pkg.PythonPdmFileEntry{
+			{
+				URL: "coverage-7.4.1-cp310-cp310-macosx_10_9_x86_64.whl",
+				Digest: pkg.PythonFileDigest{
+					Algorithm: "sha256",
+					Value:     "077d366e724f24fc02dbfe9d946534357fda71af9764ff99d73c3c596001bbd7",
+				},
+			},
+			{
+				URL: "coverage-7.4.1.tar.gz",
+				Digest: pkg.PythonFileDigest{
+					Algorithm: "sha256",
+					Value:     "1ed4b95480952b1a26d863e546fa5094564aa0065e1e5f0d4d0041f293251d04",
+				},
+			},
+		},
+		Extras: []pkg.PythonPdmLockExtraVariant{
+			{
+				Extras: []string{"toml"},
+				Dependencies: []string{
+					"coverage==7.4.1",
+					"tomli; python_full_version <= \"3.11.0a6\"",
+				},
+				// Files is nil/empty here because they're identical to base (deduplicated)
+			},
+		},
+	}
+
+	if diff := cmp.Diff(expectedMeta, coverageMeta); diff != "" {
+		t.Errorf("coverage metadata mismatch (-want +got):\n%s", diff)
+	}
 
 	// Verify relationships were created
 	require.NotEmpty(t, relationships, "relationships should be created")
@@ -507,10 +540,79 @@ func TestParsePdmLockWithExtras(t *testing.T) {
 	require.True(t, foundPytestCovToCoverage, "should have a dependency relationship from coverage to pytest-cov")
 }
 
-func Test_corruptPdmLock(t *testing.T) {
+func TestParsePdmLockWithSeparateFilesFixture(t *testing.T) {
+	// verify that PythonPdmLockExtraVariant metadata is properly populated when parsing PDM lock files
+	// with extras variants. The separate-files fixture contains rfc3986 with base + extras=["idna2008"] variant.
+	//
+	// The fixture contains TWO [[package]] entries for "rfc3986":
+	//   1. Base rfc3986 package (no extras, no dependencies)
+	//   2. rfc3986 with extras = ["idna2008"] and dependencies = ["idna", "rfc3986==1.5.0"]
+	//
+	// We should get exactly ONE rfc3986 package in the output, with the extras variant properly tracked
+	// in the Extras field.
+
+	fixture := "test-fixtures/pdm-lock-separate-files/pdm.lock"
 	pdmLockParser := newPdmLockParser(DefaultCatalogerConfig())
+
+	fh, err := os.Open(fixture)
+	require.NoError(t, err)
+	defer fh.Close()
+
+	pkgs, relationships, err := pdmLockParser.parsePdmLock(
+		context.TODO(),
+		nil,
+		nil,
+		file.NewLocationReadCloser(file.NewLocation(fixture), fh),
+	)
+
+	require.NoError(t, err)
+
+	// Find the rfc3986 package and verify it's only present once
+	var rfc3986Pkg *pkg.Package
+	rfc3986Count := 0
+	for i := range pkgs {
+		if pkgs[i].Name == "rfc3986" {
+			rfc3986Count++
+			rfc3986Pkg = &pkgs[i]
+		}
+	}
+
+	require.Equal(t, 1, rfc3986Count)
+	require.NotNil(t, rfc3986Pkg)
+
+	require.Equal(t, "rfc3986", rfc3986Pkg.Name)
+	require.Equal(t, "1.5.0", rfc3986Pkg.Version)
+
+	rfc3986Meta, ok := rfc3986Pkg.Metadata.(pkg.PythonPdmLockEntry)
+	require.True(t, ok)
+
+	expectedMeta := pkg.PythonPdmLockEntry{
+		Summary:        "Validating URI References per RFC 3986",
+		RequiresPython: "",
+		Files:          nil, // base package has no files in fixture
+		Extras: []pkg.PythonPdmLockExtraVariant{
+			{
+				Extras: []string{"idna2008"},
+				Dependencies: []string{
+					"idna",
+					"rfc3986==1.5.0",
+				},
+				Files: nil, // variant also has no files (fixture has no files for either entry)
+			},
+		},
+	}
+
+	if diff := cmp.Diff(expectedMeta, rfc3986Meta); diff != "" {
+		t.Errorf("rfc3986 metadata mismatch (-want +got):\n%s", diff)
+	}
+
+	require.NotEmpty(t, relationships, "relationships should be created")
+}
+
+func Test_corruptPdmLock(t *testing.T) {
+	psr := newPdmLockParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
 		FromFile(t, "test-fixtures/glob-paths/src/pdm.lock").
 		WithError().
-		TestParser(t, pdmLockParser.parsePdmLock)
+		TestParser(t, psr.parsePdmLock)
 }
