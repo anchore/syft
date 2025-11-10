@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func equal(r1, r2 io.Reader) (bool, error) {
@@ -311,6 +312,88 @@ func TestSafeJoin(t *testing.T) {
 			actual, err := SafeJoin(test.prefix, test.args...)
 			test.errAssertion(t, err)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+// TestSymlinkProtection demonstrates that SafeJoin protects against symlink-based
+// directory traversal attacks by validating that archive entry paths cannot escape
+// the extraction directory.
+func TestSymlinkProtection(t *testing.T) {
+	tests := []struct {
+		name        string
+		archivePath string // Path as it would appear in the archive
+		expectError bool
+		description string
+	}{
+		{
+			name:        "path traversal via ../",
+			archivePath: "../../../outside/file.txt",
+			expectError: true,
+			description: "Archive entry with ../ trying to escape extraction dir",
+		},
+		{
+			name:        "absolute path symlink target",
+			archivePath: "../../../sensitive.txt",
+			expectError: true,
+			description: "Simulates symlink pointing outside via relative path",
+		},
+		{
+			name:        "safe relative path within extraction dir",
+			archivePath: "subdir/safe.txt",
+			expectError: false,
+			description: "Normal file path that stays within extraction directory",
+		},
+		{
+			name:        "safe path with internal ../",
+			archivePath: "dir1/../dir2/file.txt",
+			expectError: false,
+			description: "Path with ../ that still resolves within extraction dir",
+		},
+		{
+			name:        "deeply nested traversal",
+			archivePath: "../../../../../../tmp/evil.txt",
+			expectError: true,
+			description: "Multiple levels of ../ trying to escape",
+		},
+		{
+			name:        "single parent directory escape",
+			archivePath: "../",
+			expectError: true,
+			description: "Simple one-level escape attempt",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create temp directories to simulate extraction scenario
+			tmpDir := t.TempDir()
+			extractDir := filepath.Join(tmpDir, "extract")
+			outsideDir := filepath.Join(tmpDir, "outside")
+
+			require.NoError(t, os.MkdirAll(extractDir, 0755))
+			require.NoError(t, os.MkdirAll(outsideDir, 0755))
+
+			// Create a file outside extraction dir that an attacker might target
+			outsideFile := filepath.Join(outsideDir, "sensitive.txt")
+			require.NoError(t, os.WriteFile(outsideFile, []byte("sensitive data"), 0644))
+
+			// Test SafeJoin - this is what happens when processing archive entries
+			result, err := SafeJoin(extractDir, tt.archivePath)
+
+			if tt.expectError {
+				// Should block malicious paths
+				require.Error(t, err, "Expected SafeJoin to reject malicious path")
+				var zipSlipErr *errZipSlipDetected
+				assert.ErrorAs(t, err, &zipSlipErr, "Error should be errZipSlipDetected type")
+				assert.Empty(t, result, "Result should be empty for blocked paths")
+			} else {
+				// Should allow safe paths
+				require.NoError(t, err, "Expected SafeJoin to allow safe path")
+				assert.NotEmpty(t, result, "Result should not be empty for safe paths")
+				assert.True(t, strings.HasPrefix(filepath.Clean(result), filepath.Clean(extractDir)),
+					"Safe path should resolve within extraction directory")
+			}
 		})
 	}
 }

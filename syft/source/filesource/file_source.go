@@ -301,7 +301,7 @@ func safeJoinPath(prefix string, dest ...string) (string, error) {
 	joinResult := filepath.Join(append([]string{prefix}, dest...)...)
 	cleanJoinResult := filepath.Clean(joinResult)
 	if !strings.HasPrefix(cleanJoinResult, filepath.Clean(prefix)) {
-		return "", fmt.Errorf("paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", prefix, dest)
+		return "", fmt.Errorf("path traversal detected: paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", prefix, dest)
 	}
 	return joinResult, nil
 }

@@ -27,7 +27,7 @@ type errZipSlipDetected struct {
 }
 
 func (e *errZipSlipDetected) Error() string {
-	return fmt.Sprintf("paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", e.Prefix, e.JoinArgs)
+	return fmt.Sprintf("path traversal detected: paths are not allowed to resolve outside of the root prefix (%q). Destination: %q", e.Prefix, e.JoinArgs)
 }
 
 type zipTraversalRequest map[string]struct{}
