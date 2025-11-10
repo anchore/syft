@@ -15,7 +15,7 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: runs-on=${{ github.run_id }}/runner=small
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -32,7 +32,7 @@ jobs:
     name: "Unit tests"
     # we need more storage than what's on the default runner
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: runs-on=${{ github.run_id }}/runner=small
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -50,7 +50,7 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: runs-on=${{ github.run_id }}/runner=small
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -162,7 +162,7 @@ jobs:
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: runs-on=${{ github.run_id }}/runner=small
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -248,7 +248,7 @@ jobs:
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: runs-on=${{ github.run_id }}/runner=small
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
