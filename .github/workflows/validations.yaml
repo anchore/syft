@@ -87,24 +87,25 @@ jobs:
       - name: Smoke test snapshot build
         run: make snapshot-smoke-test
 
-      # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
-      # see https://github.com/actions/upload-artifact/issues/199 for more info
+      # using artifacts instead of cache to support cross-runner sharing between runs-on and GitHub-hosted runners
+      # (runs-on uses S3-backed magic cache, GitHub-hosted runners use GitHub Actions cache - incompatible)
       - name: Upload snapshot artifacts
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 #v4.3.0
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
         with:
           # we need to preserve the snapshot data itself as well as the task data that confirms if the
           # snapshot build is stale or not. Otherwise the downstream jobs will attempt to rebuild the snapshot
           # even though it already exists.
+          name: snapshot-build-${{ github.run_id }}
           path: |
             snapshot
             .task
-          key: snapshot-build-${{ github.run_id }}
+          retention-days: 1
 
   Upload-Snapshot-Artifacts:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Upload snapshot artifacts"
     needs: [Build-Snapshot-Artifacts]
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -116,19 +117,9 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 #v4.3.0
+        uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
-
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+          name: snapshot-build-${{ github.run_id }}
 
       - run: npm install @actions/artifact@2.2.2
 
@@ -174,19 +165,9 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 #v4.3.0
+        uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
-
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+          name: snapshot-build-${{ github.run_id }}
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -223,19 +204,9 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 #v4.3.0
+        uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
-
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+          name: snapshot-build-${{ github.run_id }}
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
@@ -260,40 +231,9 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 #v4.3.0
+        uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
-
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+          name: snapshot-build-${{ github.run_id }}
 
       - name: Run CLI Tests (Linux)
         run: make cli
-
-  Cleanup-Cache:
-    name: "Cleanup snapshot cache"
-    if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      actions: write
-    needs:
-      - Acceptance-Linux
-      - Acceptance-Mac
-      - Cli-Linux
-      - Upload-Snapshot-Artifacts
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
-        with:
-          persist-credentials: false
-
-      - name: Delete snapshot cache
-        run: gh cache delete "snapshot-build-${{ github.run_id }}"
-        env:
-          GH_TOKEN: ${{ github.token }}
