@@ -106,8 +106,14 @@ jobs:
             const dirs = ls(baseDir).filter(f => f.isDirectory()).map(f => f.name)
             const uploads = []
 
+            // filter to only amd64 and arm64 architectures
+            const supportedArchs = ['amd64', 'arm64']
+            const filteredDirs = dirs.filter(dir =>
+              supportedArchs.some(arch => dir.includes(arch))
+            )
+
             // upload platform subdirectories
-            for (const dir of dirs) {
+            for (const dir of filteredDirs) {
               // uploadArtifact returns Promise<{id, size}>
               uploads.push(artifact.uploadArtifact(
                 // name of the archive:
@@ -116,6 +122,21 @@ jobs:
                 ls(`${baseDir}/${dir}`).map(f => `${baseDir}/${dir}/${f.name}`),
                 // base directory to trim from entries:
                 `${baseDir}/${dir}`,
+                { retentionDays: 30 }
+              ))
+            }
+
+            // upload RPM and DEB packages for supported architectures
+            const packageFiles = ls(baseDir).filter(f =>
+              f.isFile() &&
+              (f.name.endsWith('.deb') || f.name.endsWith('.rpm')) &&
+              supportedArchs.some(arch => f.name.includes(`_${arch}.`))
+            )
+            for (const file of packageFiles) {
+              uploads.push(artifact.uploadArtifact(
+                file.name,
+                [`${baseDir}/${file.name}`],
+                baseDir,
                 { retentionDays: 30 }
               ))
             }
