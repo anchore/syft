@@ -146,7 +146,7 @@ jobs:
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small
+    runs-on: runs-on=${{ github.run_id }}/runner=small/extras=
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -167,7 +167,7 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
         with:
           name: linux-build_linux_amd64_v1
-          path: snapshot/linux-build_linux_amd64_v1/syft
+          path: snapshot/linux-build_linux_amd64_v1
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -213,7 +213,7 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
         with:
           name: darwin-build_darwin_amd64_v1
-          path: snapshot/darwin-build_darwin_amd64_v1/syft
+          path: snapshot/darwin-build_darwin_amd64_v1
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
@@ -226,7 +226,7 @@ jobs:
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small
+    runs-on: runs-on=${{ github.run_id }}/runner=small/extras=
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -241,7 +241,7 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
         with:
           name: linux-build_linux_amd64_v1
-          path: snapshot/linux-build_linux_amd64_v1/syft
+          path: snapshot/linux-build_linux_amd64_v1
 
       - name: Run CLI Tests (Linux)
         run: make cli
