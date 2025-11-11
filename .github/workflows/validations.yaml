@@ -87,43 +87,13 @@ jobs:
       - name: Smoke test snapshot build
         run: make snapshot-smoke-test
 
-      # using artifacts instead of cache to support cross-runner sharing between runs-on and GitHub-hosted runners
-      # (runs-on uses S3-backed magic cache, GitHub-hosted runners use GitHub Actions cache - incompatible)
-      - name: Upload snapshot artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          # we need to preserve the snapshot data itself as well as the task data that confirms if the
-          # snapshot build is stale or not. Otherwise the downstream jobs will attempt to rebuild the snapshot
-          # even though it already exists.
-          name: snapshot-build-${{ github.run_id }}
-          path: |
-            snapshot
-            .task
-          retention-days: 1
-
-  Upload-Snapshot-Artifacts:
-    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
-    name: "Upload snapshot artifacts"
-    needs: [Build-Snapshot-Artifacts]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
-        with:
-          persist-credentials: false
-
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
-        with:
-          download-test-fixture-cache: true
-
-      - name: Download snapshot build
-        uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
-        with:
-          name: snapshot-build-${{ github.run_id }}
-
+      # upload each platform artifact individually so downstream jobs can download only what they need
       - run: npm install @actions/artifact@2.2.2
 
-      - uses: actions/github-script@v8
+      - name: Upload individual platform artifacts
+        uses: actions/github-script@v8
+        env:
+          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: 10
         with:
           script: |
             const { readdirSync } = require('fs')
@@ -146,7 +116,13 @@ jobs:
               ))
             }
             // wait for all uploads to finish
-            Promise.all(uploads)
+            try {
+              const results = await Promise.all(uploads)
+              console.log(`Successfully uploaded ${results.length} platform artifacts`)
+            } catch (error) {
+              console.error('Upload failed:', error)
+              throw error
+            }
 
   Acceptance-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
@@ -164,10 +140,11 @@ jobs:
         with:
           download-test-fixture-cache: true
 
-      - name: Download snapshot build
+      - name: Download Linux amd64 snapshot
         uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          name: snapshot-build-${{ github.run_id }}
+          name: linux-build_linux_amd64_v1
+          path: snapshot/linux-build_linux_amd64_v1
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -203,10 +180,11 @@ jobs:
           go-dependencies: false
           download-test-fixture-cache: true
 
-      - name: Download snapshot build
+      - name: Download macOS Intel snapshot
         uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          name: snapshot-build-${{ github.run_id }}
+          name: darwin-build_darwin_amd64_v1
+          path: snapshot/darwin-build_darwin_amd64_v1
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
@@ -230,10 +208,11 @@ jobs:
         with:
           download-test-fixture-cache: true
 
-      - name: Download snapshot build
+      - name: Download Linux amd64 snapshot
         uses: actions/download-artifact@8db8e0a4fa3e65a503184c3b18cdbb9cdc646fc0 #v4.2.0
         with:
-          name: snapshot-build-${{ github.run_id }}
+          name: linux-build_linux_amd64_v1
+          path: snapshot/linux-build_linux_amd64_v1
 
       - name: Run CLI Tests (Linux)
         run: make cli
