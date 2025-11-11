@@ -142,6 +142,21 @@ jobs:
               ))
             }
 
+            // upload SBOM files for supported architectures
+            const sbomFiles = ls(baseDir).filter(f =>
+              f.isFile() &&
+              f.name.endsWith('.sbom') &&
+              supportedArchs.some(arch => f.name.includes(`_${arch}.`))
+            )
+            for (const file of sbomFiles) {
+              uploads.push(artifact.uploadArtifact(
+                file.name,
+                [`${baseDir}/${file.name}`],
+                baseDir,
+                { retentionDays: 30 }
+              ))
+            }
+
             // upload checksums file (needed by install tests)
             const rootFiles = ls(baseDir).filter(f => f.isFile() && f.name.match(/syft_.*_checksums\.txt$/))
             if (rootFiles.length > 0) {
@@ -194,6 +209,24 @@ jobs:
           name: linux-build_linux_amd64_v1
           path: snapshot/linux-build_linux_amd64_v1
 
+      - name: Download Linux amd64 deb
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          pattern: syft_*_linux_amd64.deb
+          path: snapshot
+
+      - name: Download Linux amd64 rpm
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          pattern: syft_*_linux_amd64.rpm
+          path: snapshot
+
+      - name: Download Linux amd64 sbom
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          pattern: syft_*_linux_amd64.sbom
+          path: snapshot
+
       - name: Run comparison tests (Linux)
         run: make compare-linux
 
@@ -240,6 +273,12 @@ jobs:
         with:
           name: darwin-build_darwin_amd64_v1
           path: snapshot/darwin-build_darwin_amd64_v1
+
+      - name: Download macOS amd64 sbom
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          pattern: syft_*_darwin_amd64.sbom
+          path: snapshot
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
