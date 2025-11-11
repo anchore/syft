@@ -105,6 +105,8 @@ jobs:
             const baseDir = "./snapshot"
             const dirs = ls(baseDir).filter(f => f.isDirectory()).map(f => f.name)
             const uploads = []
+
+            // upload platform subdirectories
             for (const dir of dirs) {
               // uploadArtifact returns Promise<{id, size}>
               uploads.push(artifact.uploadArtifact(
@@ -117,10 +119,23 @@ jobs:
                 { retentionDays: 30 }
               ))
             }
+
+            // upload checksums file (needed by install tests)
+            const rootFiles = ls(baseDir).filter(f => f.isFile() && f.name.match(/syft_.*_checksums\.txt$/))
+            if (rootFiles.length > 0) {
+              const checksumsFile = rootFiles[0].name
+              uploads.push(artifact.uploadArtifact(
+                'syft_checksums.txt',
+                [`${baseDir}/${checksumsFile}`],
+                baseDir,
+                { retentionDays: 30 }
+              ))
+            }
+
             // wait for all uploads to finish
             try {
               const results = await Promise.all(uploads)
-              console.log(`Successfully uploaded ${results.length} platform artifacts`)
+              console.log(`Successfully uploaded ${results.length} artifacts`)
             } catch (error) {
               console.error('Upload failed:', error)
               throw error
@@ -142,11 +157,17 @@ jobs:
         with:
           download-test-fixture-cache: true
 
+      - name: Download checksums file
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          name: syft_checksums.txt
+          path: snapshot
+
       - name: Download Linux amd64 snapshot
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
         with:
           name: linux-build_linux_amd64_v1
-          path: snapshot/linux-build_linux_amd64_v1
+          path: snapshot/linux-build_linux_amd64_v1/syft
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -182,11 +203,17 @@ jobs:
           go-dependencies: false
           download-test-fixture-cache: true
 
+      - name: Download checksums file
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
+        with:
+          name: syft_checksums.txt
+          path: snapshot
+
       - name: Download macOS Intel snapshot
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
         with:
           name: darwin-build_darwin_amd64_v1
-          path: snapshot/darwin-build_darwin_amd64_v1
+          path: snapshot/darwin-build_darwin_amd64_v1/syft
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
@@ -214,7 +241,7 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
         with:
           name: linux-build_linux_amd64_v1
-          path: snapshot/linux-build_linux_amd64_v1
+          path: snapshot/linux-build_linux_amd64_v1/syft
 
       - name: Run CLI Tests (Linux)
         run: make cli
