@@ -121,6 +121,19 @@ func Test_Backfill(t *testing.T) {
 				Metadata: pkg.JavaArchive{},
 			},
 		},
+		{
+			name: "golang with subpath",
+			in: pkg.Package{
+				PURL: "pkg:golang/github.com/hashicorp/vault@v0.9.0#api/auth/kubernetes",
+			},
+			expected: pkg.Package{
+				PURL:     "pkg:golang/github.com/hashicorp/vault@v0.9.0#api/auth/kubernetes",
+				Type:     pkg.GoModulePkg,
+				Language: pkg.Go,
+				Name:     "github.com/hashicorp/vault/api/auth/kubernetes",
+				Version:  "v0.9.0",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -175,6 +188,10 @@ func Test_nameFromPurl(t *testing.T) {
 		{
 			in:       "pkg:oci/library/mysql@8.1.0",
 			expected: "library/mysql",
+		},
+		{
+			in:       "pkg:golang/github.com/hashicorp/vault@v0.9.0#api/auth/kubernetes",
+			expected: "github.com/hashicorp/vault/api/auth/kubernetes",
 		},
 	}
 	for _, tt := range tests {

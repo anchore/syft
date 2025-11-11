@@ -133,10 +133,14 @@ var epochPrefix = regexp.MustCompile(`^\d+:`)
 // nameFromPurl returns the syft package name of the package from the purl. If the purl includes a namespace,
 // the name is prefixed as appropriate based on the PURL type
 func nameFromPurl(purl packageurl.PackageURL) string {
+	result := purl.Name
 	if !nameExcludesPurlNamespace(purl.Type) && purl.Namespace != "" {
-		return fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
+		result = fmt.Sprintf("%s/%s", purl.Namespace, result)
 	}
-	return purl.Name
+	if purl.Subpath != "" {
+		result = fmt.Sprintf("%s/%s", result, purl.Subpath)
+	}
+	return result
 }
 
 func nameExcludesPurlNamespace(purlType string) bool {
