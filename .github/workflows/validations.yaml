@@ -70,7 +70,9 @@ jobs:
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
     # Runner definition: workflows/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=build
+    # note: we explicitly do not use the magic cache feature (https://runs-on.com/caching/magic-cache/)
+    # since it is not compatible with artifact uploads/downloads in the same workflow (https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
+    runs-on: runs-on=${{ github.run_id }}/runner=build/extras=
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
         with:
@@ -88,69 +90,41 @@ jobs:
         run: make snapshot-smoke-test
 
       # upload each platform artifact individually so downstream jobs can download only what they need
-      # using explicit upload steps instead of programmatic API for runs-on compatibility
-      - name: Upload Linux amd64 artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: linux-build_linux_amd64_v1
-          path: snapshot/linux-build_linux_amd64_v1
-          retention-days: 30
+      - run: npm install @actions/artifact@2.2.2
 
-      - name: Upload Linux arm64 artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
+      - name: Upload individual platform artifacts
+        uses: actions/github-script@v8
+        env:
+          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: 10
         with:
-          name: linux-build_linux_arm64_v8.0
-          path: snapshot/linux-build_linux_arm64_v8.0
-          retention-days: 30
-
-      - name: Upload Linux ppc64le artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: linux-build_linux_ppc64le_power8
-          path: snapshot/linux-build_linux_ppc64le_power8
-          retention-days: 30
-
-      - name: Upload Linux s390x artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: linux-build_linux_s390x
-          path: snapshot/linux-build_linux_s390x
-          retention-days: 30
-
-      - name: Upload macOS Intel artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: darwin-build_darwin_amd64_v1
-          path: snapshot/darwin-build_darwin_amd64_v1
-          retention-days: 30
-
-      - name: Upload macOS Apple Silicon artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: darwin-build_darwin_arm64_v8.0
-          path: snapshot/darwin-build_darwin_arm64_v8.0
-          retention-days: 30
-
-      - name: Upload Windows amd64 artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: windows-build_windows_amd64_v1
-          path: snapshot/windows-build_windows_amd64_v1
-          retention-days: 30
-
-      - name: Upload Windows arm64 artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: windows-build_windows_arm64_v8.0
-          path: snapshot/windows-build_windows_arm64_v8.0
-          retention-days: 30
-
-      - name: Upload Homebrew artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.0
-        with:
-          name: homebrew
-          path: snapshot/homebrew
-          retention-days: 30
+          script: |
+            const { readdirSync } = require('fs')
+            const { DefaultArtifactClient } = require('@actions/artifact')
+            const artifact = new DefaultArtifactClient()
+            const ls = d => readdirSync(d, { withFileTypes: true })
+            const baseDir = "./snapshot"
+            const dirs = ls(baseDir).filter(f => f.isDirectory()).map(f => f.name)
+            const uploads = []
+            for (const dir of dirs) {
+              // uploadArtifact returns Promise<{id, size}>
+              uploads.push(artifact.uploadArtifact(
+                // name of the archive:
+                `${dir}`,
+                // array of all files to include:
+                ls(`${baseDir}/${dir}`).map(f => `${baseDir}/${dir}/${f.name}`),
+                // base directory to trim from entries:
+                `${baseDir}/${dir}`,
+                { retentionDays: 30 }
+              ))
+            }
+            // wait for all uploads to finish
+            try {
+              const results = await Promise.all(uploads)
+              console.log(`Successfully uploaded ${results.length} platform artifacts`)
+            } catch (error) {
+              console.error('Upload failed:', error)
+              throw error
+            }
 
   Acceptance-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
