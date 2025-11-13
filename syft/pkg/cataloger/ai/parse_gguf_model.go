@@ -67,26 +67,26 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	// Convert to syft metadata structure
 	syftMetadata := &pkg.GGUFFileHeader{
-		ModelName:    metadata.Name,
-		License:      metadata.License,
-		Architecture: metadata.Architecture,
-		Quantization: metadata.FileTypeDescriptor,
-		Parameters:   uint64(metadata.Parameters),
-		GGUFVersion:  uint32(ggufFile.Header.Version),
-		TensorCount:  ggufFile.Header.TensorCount,
-		Header:       convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
-		MetadataHash: computeKVMetadataHash(ggufFile.Header.MetadataKV),
+		Architecture:          metadata.Architecture,
+		Quantization:          metadata.FileTypeDescriptor,
+		Parameters:            uint64(metadata.Parameters),
+		GGUFVersion:           uint32(ggufFile.Header.Version),
+		TensorCount:           ggufFile.Header.TensorCount,
+		Header:                convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
+		MetadataKeyValuesHash: computeKVMetadataHash(ggufFile.Header.MetadataKV),
 	}
 
 	// If model name is not in metadata, use filename
-	if syftMetadata.ModelName == "" {
-		syftMetadata.ModelName = extractModelNameFromPath(reader.Path())
+	if metadata.Name == "" {
+		metadata.Name = extractModelNameFromPath(reader.Path())
 	}
 
 	// Create package from metadata
 	p := newGGUFPackage(
 		syftMetadata,
+		metadata.Name,
 		modelVersion,
+		metadata.License,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 

@@ -5,9 +5,9 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newGGUFPackage(metadata *pkg.GGUFFileHeader, version string, locations ...file.Location) pkg.Package {
+func newGGUFPackage(metadata *pkg.GGUFFileHeader, modelName, version, license string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      metadata.ModelName,
+		Name:      modelName,
 		Version:   version,
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.ModelPkg,
@@ -18,8 +18,8 @@ func newGGUFPackage(metadata *pkg.GGUFFileHeader, version string, locations ...f
 	}
 
 	// Add license to the package if present in metadata
-	if metadata.License != "" {
-		p.Licenses.Add(pkg.NewLicenseFromFields(metadata.License, "", nil))
+	if license != "" {
+		p.Licenses.Add(pkg.NewLicenseFromFields(license, "", nil))
 	}
 
 	p.SetID()

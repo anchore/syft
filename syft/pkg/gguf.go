@@ -3,18 +3,13 @@ package pkg
 // GGUFFileHeader represents metadata extracted from a GGUF (GPT-Generated Unified Format) model file.
 // GGUF is a binary file format used for storing model weights for the GGML library, designed for fast
 // loading and saving of models, particularly quantized large language models.
+// The Model Name, License, and Version fields have all been lifted up to be on the syft Package.
 type GGUFFileHeader struct {
 	// GGUFVersion is the GGUF format version (e.g., 3)
 	GGUFVersion uint32 `json:"ggufVersion" cyclonedx:"ggufVersion"`
 
-	// ModelName is the name of the model (from general.name or filename)
-	ModelName string `json:"modelName" cyclonedx:"modelName"`
-
 	// FileSize is the size of the GGUF file in bytes (best-effort if available from resolver)
 	FileSize int64 `json:"fileSize,omitempty" cyclonedx:"fileSize"`
-
-	// License is the license identifier (from general.license if present)
-	License string `json:"license,omitempty" cyclonedx:"license"`
 
 	// Architecture is the model architecture (from general.architecture, e.g., "qwen3moe", "llama")
 	Architecture string `json:"architecture,omitempty" cyclonedx:"architecture"`
@@ -33,10 +28,10 @@ type GGUFFileHeader struct {
 	// (namespaced with general.*, llama.*, etc.) while avoiding duplication.
 	Header map[string]interface{} `json:"header,omitempty" cyclonedx:"header"`
 
-	// MetadataHash is a xx64 hash of all key-value pairs from the GGUF header metadata.
+	// MetadataKeyValuesHash is a xx64 hash of all key-value pairs from the GGUF header metadata.
 	// This hash is computed over the complete header metadata (including the fields extracted
 	// into typed fields above) and provides a stable identifier for the model configuration
 	// across different file locations or remotes. It allows matching identical models even
 	// when stored in different repositories or with different filenames.
-	MetadataHash string `json:"metadataHash,omitempty" cyclonedx:"metadataHash"`
+	MetadataKeyValuesHash string `json:"metadataHash,omitempty" cyclonedx:"metadataHash"`
 }
