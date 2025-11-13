@@ -1,9 +1,10 @@
 package ai
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+
+	"github.com/cespare/xxhash/v2"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
@@ -48,7 +49,6 @@ func computeMetadataHash(metadata *pkg.GGUFFileHeader) string {
 		GGUFVersion  uint32
 		TensorCount  uint64
 	}{
-		Format:       metadata.ModelFormat,
 		Name:         metadata.ModelName,
 		Version:      metadata.ModelVersion,
 		Architecture: metadata.Architecture,
@@ -63,7 +63,7 @@ func computeMetadataHash(metadata *pkg.GGUFFileHeader) string {
 		return ""
 	}
 
-	// Compute SHA256 hash
-	hash := sha256.Sum256(jsonBytes)
-	return fmt.Sprintf("%x", hash[:8]) // Use first 8 bytes (16 hex chars)
+	// Compute xxhash
+	hash := xxhash.Sum64(jsonBytes)
+	return fmt.Sprintf("%016x", hash) // 16 hex chars (64 bits)
 }

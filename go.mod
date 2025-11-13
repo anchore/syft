@@ -286,7 +286,10 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 )
 
-require github.com/gpustack/gguf-parser-go v0.22.1
+require (
+	github.com/cespare/xxhash/v2 v2.3.0
+	github.com/gpustack/gguf-parser-go v0.22.1
+)
 
 require (
 	cyphar.com/go-pathrs v0.2.1 // indirect

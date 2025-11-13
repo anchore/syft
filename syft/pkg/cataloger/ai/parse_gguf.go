@@ -14,19 +14,14 @@ const (
 	maxHeaderSize   = 50 * 1024 * 1024 // 50MB for large tokenizer vocabularies
 )
 
-// ggufHeaderReader reads just the header portion of a GGUF file efficiently
-type ggufHeaderReader struct {
-	reader io.Reader
-}
-
 // readHeader reads only the GGUF header (metadata) without reading tensor data
 // This is much more efficient than reading the entire file
 // The reader should be wrapped with io.LimitedReader to prevent OOM issues
-func (r *ggufHeaderReader) readHeader() ([]byte, error) {
+func readHeader(r io.Reader) ([]byte, error) {
 	// Read initial chunk to determine header size
 	// GGUF format: magic(4) + version(4) + tensor_count(8) + metadata_kv_count(8) + metadata_kvs + tensors_info
 	initialBuf := make([]byte, 24) // Enough for magic, version, tensor count, and kv count
-	if _, err := io.ReadFull(r.reader, initialBuf); err != nil {
+	if _, err := io.ReadFull(r, initialBuf); err != nil {
 		return nil, fmt.Errorf("failed to read GGUF header prefix: %w", err)
 	}
 
@@ -45,7 +40,7 @@ func (r *ggufHeaderReader) readHeader() ([]byte, error) {
 	// The LimitedReader will return EOF once maxHeaderSize is reached
 	buf := make([]byte, 64*1024) // 64KB chunks
 	for {
-		n, err := r.reader.Read(buf)
+		n, err := r.Read(buf)
 		if n > 0 {
 			headerData = append(headerData, buf[:n]...)
 		}
@@ -65,24 +60,14 @@ func (r *ggufHeaderReader) readHeader() ([]byte, error) {
 func convertGGUFMetadataKVs(kvs gguf_parser.GGUFMetadataKVs) map[string]interface{} {
 	result := make(map[string]interface{})
 
-	// Limit KV pairs to avoid bloat
-	const maxKVPairs = 200
-	count := 0
-
 	for _, kv := range kvs {
-		if count >= maxKVPairs {
-			break
-		}
-
 		// Skip standard fields that are extracted separately
 		switch kv.Key {
 		case "general.architecture", "general.name", "general.license",
 			"general.version", "general.parameter_count", "general.quantization":
 			continue
 		}
-
 		result[kv.Key] = kv.Value
-		count++
 	}
 
 	return result

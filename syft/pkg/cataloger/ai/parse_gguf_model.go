@@ -2,23 +2,25 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
+	"github.com/cespare/xxhash/v2"
 	gguf_parser "github.com/gpustack/gguf-parser-go"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
-
-const unknownGGUFData = "unknown"
 
 // parseGGUFModel parses a GGUF model file and returns the discovered package.
 // This implementation only reads the header portion of the file, not the entire model.
@@ -28,8 +30,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// Read and validate the GGUF file header using LimitedReader to prevent OOM
 	// We use LimitedReader to cap reads at maxHeaderSize (50MB)
 	limitedReader := &io.LimitedReader{R: reader, N: maxHeaderSize}
-	headerReader := &ggufHeaderReader{reader: limitedReader}
-	headerData, err := headerReader.readHeader()
+	headerData, err := readHeader(limitedReader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read GGUF header: %w", err)
 	}
@@ -63,7 +64,6 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 
 	// Convert to syft metadata structure
 	syftMetadata := &pkg.GGUFFileHeader{
-		ModelFormat:     "gguf",
 		ModelName:       metadata.Name,
 		ModelVersion:    extractVersion(ggufFile.Header.MetadataKV),
 		License:         metadata.License,
@@ -71,20 +71,14 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		Quantization:    metadata.FileTypeDescriptor,
 		Parameters:      uint64(metadata.Parameters),
 		GGUFVersion:     uint32(ggufFile.Header.Version),
-		TensorCount:     ggufFile.Header.TensorCount,
-		Header:          convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
-		TruncatedHeader: false, // We read the full header
-		Hash:            "",    // Will be computed in newGGUFPackage
+		TensorCount:  ggufFile.Header.TensorCount,
+		Header:       convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
+		MetadataHash: computeKVMetadataHash(ggufFile.Header.MetadataKV),
 	}
 
 	// If model name is not in metadata, use filename
 	if syftMetadata.ModelName == "" {
 		syftMetadata.ModelName = extractModelNameFromPath(reader.Path())
-	}
-
-	// If version is still unknown, try to infer from name
-	if syftMetadata.ModelVersion == unknownGGUFData {
-		syftMetadata.ModelVersion = extractVersionFromName(syftMetadata.ModelName)
 	}
 
 	// Create package from metadata
@@ -96,6 +90,27 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse GGUF file")
 }
 
+// computeKVMetadataHash computes a stable hash of the KV metadata for use as a global identifier
+func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) string {
+	// Sort the KV pairs by key for stable hashing
+	sortedKVs := make([]gguf_parser.GGUFMetadataKV, len(metadata))
+	copy(sortedKVs, metadata)
+	sort.Slice(sortedKVs, func(i, j int) bool {
+		return sortedKVs[i].Key < sortedKVs[j].Key
+	})
+
+	// Marshal sorted KVs to JSON for stable hashing
+	jsonBytes, err := json.Marshal(sortedKVs)
+	if err != nil {
+		log.Debugf("failed to marshal metadata for hashing: %v", err)
+		return ""
+	}
+
+	// Compute xxhash
+	hash := xxhash.Sum64(jsonBytes)
+	return fmt.Sprintf("%016x", hash) // 16 hex chars (64 bits)
+}
+
 // extractVersion attempts to extract version from metadata KV pairs
 func extractVersion(kvs gguf_parser.GGUFMetadataKVs) string {
 	for _, kv := range kvs {
@@ -105,14 +120,7 @@ func extractVersion(kvs gguf_parser.GGUFMetadataKVs) string {
 			}
 		}
 	}
-	return unknownGGUFData
-}
-
-// extractVersionFromName tries to extract version from model name
-func extractVersionFromName(_ string) string {
-	// Look for version patterns like "v1.0", "1.5b", "3.0", etc.
-	// For now, return unknown - this could be enhanced with regex
-	return unknownGGUFData
+	return ""
 }
 
 // extractModelNameFromPath extracts the model name from the file path

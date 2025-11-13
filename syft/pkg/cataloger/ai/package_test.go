@@ -21,17 +21,15 @@ func TestNewGGUFPackage(t *testing.T) {
 		{
 			name: "complete GGUF package with all fields",
 			metadata: &pkg.GGUFFileHeader{
-				ModelFormat:     "gguf",
 				ModelName:       "llama3-8b-instruct",
 				ModelVersion:    "3.0",
 				License:         "Apache-2.0",
 				Architecture:    "llama",
 				Quantization:    "Q4_K_M",
 				Parameters:      8030000000,
-				GGUFVersion:     3,
-				TensorCount:     291,
-				Header:          map[string]any{},
-				TruncatedHeader: false,
+				GGUFVersion: 3,
+				TensorCount: 291,
+				Header:      map[string]any{},
 			},
 			locations: []file.Location{file.NewLocation("/models/llama3-8b.gguf")},
 			checkFunc: func(t *testing.T, p pkg.Package) {
@@ -55,7 +53,6 @@ func TestNewGGUFPackage(t *testing.T) {
 		{
 			name: "minimal GGUF package",
 			metadata: &pkg.GGUFFileHeader{
-				ModelFormat:  "gguf",
 				ModelName:    "simple-model",
 				ModelVersion: "1.0",
 				Architecture: "gpt2",
@@ -80,7 +77,6 @@ func TestNewGGUFPackage(t *testing.T) {
 		{
 			name: "GGUF package with multiple locations",
 			metadata: &pkg.GGUFFileHeader{
-				ModelFormat:  "gguf",
 				ModelName:    "multi-location-model",
 				ModelVersion: "1.5",
 				Architecture: "llama",
