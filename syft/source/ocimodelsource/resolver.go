@@ -127,14 +127,14 @@ func (r *ociModelResolver) FilesByGlob(patterns ...string) ([]file.Location, err
 
 // FilesByMIMEType returns locations for files with the given MIME types.
 // This is not implemented for OCI model artifacts as we don't have MIME type detection.
-func (r *ociModelResolver) FilesByMIMEType(types ...string) ([]file.Location, error) {
+func (r *ociModelResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	// Not implemented - OCI model artifacts don't have MIME type detection
 	return nil, nil
 }
 
 // RelativeFileByPath returns a file at the given path relative to the reference location.
 // This is not applicable for OCI model artifacts.
-func (r *ociModelResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
+func (r *ociModelResolver) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	// Not implemented - no layer hierarchy in OCI model artifacts
 	return nil
 }
