@@ -32,10 +32,7 @@ type RegistryClient struct {
 
 // NewRegistryClient creates a new registry client with authentication from RegistryOptions.
 func NewRegistryClient(registryOpts *image.RegistryOptions) (*RegistryClient, error) {
-	opts, err := buildRemoteOptions(registryOpts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build remote options: %w", err)
-	}
+	opts := buildRemoteOptions(registryOpts)
 
 	return &RegistryClient{
 		options: opts,
@@ -43,11 +40,11 @@ func NewRegistryClient(registryOpts *image.RegistryOptions) (*RegistryClient, er
 }
 
 // buildRemoteOptions converts stereoscope RegistryOptions to go-containerregistry remote.Options.
-func buildRemoteOptions(registryOpts *image.RegistryOptions) ([]remote.Option, error) {
+func buildRemoteOptions(registryOpts *image.RegistryOptions) []remote.Option {
 	var opts []remote.Option
 
 	if registryOpts == nil {
-		return opts, nil
+		return opts
 	}
 
 	// Build authenticator
@@ -66,7 +63,7 @@ func buildRemoteOptions(registryOpts *image.RegistryOptions) ([]remote.Option, e
 		opts = append(opts, remote.WithTransport(http.DefaultTransport))
 	}
 
-	return opts, nil
+	return opts
 }
 
 // buildAuthenticator creates an authn.Authenticator from RegistryOptions.
@@ -104,7 +101,7 @@ type ModelArtifact struct {
 }
 
 // FetchModelArtifact fetches and parses an OCI model artifact from the registry.
-func (c *RegistryClient) FetchModelArtifact(ctx context.Context, refStr string) (*ModelArtifact, error) {
+func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*ModelArtifact, error) {
 	// Parse reference
 	ref, err := name.ParseReference(refStr)
 	if err != nil {
@@ -176,7 +173,7 @@ func extractGGUFLayers(manifest *v1.Manifest) []v1.Descriptor {
 
 // FetchBlobRange fetches a byte range from a blob in the registry.
 // This is used to fetch only the GGUF header without downloading the entire multi-GB file.
-func (c *RegistryClient) FetchBlobRange(ctx context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
+func (c *RegistryClient) FetchBlobRange(_ context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
 	// Use the remote package's Layer fetching with our options
 	// Then read only the first maxBytes
 	repo := ref.Context()
@@ -207,7 +204,7 @@ func (c *RegistryClient) FetchBlobRange(ctx context.Context, ref name.Reference,
 
 // IsModelArtifactReference checks if a reference points to a model artifact.
 // This is a lightweight check that only fetches the manifest.
-func (c *RegistryClient) IsModelArtifactReference(ctx context.Context, refStr string) (bool, error) {
+func (c *RegistryClient) IsModelArtifactReference(_ context.Context, refStr string) (bool, error) {
 	ref, err := name.ParseReference(refStr)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse reference %q: %w", refStr, err)

@@ -178,13 +178,14 @@ func calculateTotalSize(layers []source.LayerMetadata) int64 {
 func deriveIDFromArtifact(cfg Config) artifact.ID {
 	var info string
 
-	if !cfg.Alias.IsEmpty() {
+	switch {
+	case !cfg.Alias.IsEmpty():
 		// Use alias for stable artifact ID
 		info = fmt.Sprintf("%s@%s", cfg.Alias.Name, cfg.Alias.Version)
-	} else if cfg.Metadata.ManifestDigest != "" {
+	case cfg.Metadata.ManifestDigest != "":
 		// Use manifest digest
 		info = cfg.Metadata.ManifestDigest
-	} else {
+	default:
 		// Fall back to reference
 		log.Warn("no explicit name/version or manifest digest, deriving artifact ID from reference")
 		info = cfg.Reference
@@ -255,6 +256,6 @@ func (s *ociModelSource) Close() error {
 }
 
 // removeFile removes a file and logs any errors.
-func removeFile(path string) error {
+func removeFile(_ string) error {
 	return nil // Placeholder for now
 }
