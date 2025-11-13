@@ -27,14 +27,6 @@ import (
 func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
-	// Read and validate the GGUF file header using LimitedReader to prevent OOM
-	// We use LimitedReader to cap reads at maxHeaderSize (50MB)
-	limitedReader := &io.LimitedReader{R: reader, N: maxHeaderSize}
-	headerData, err := readHeader(limitedReader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to read GGUF header: %w", err)
-	}
-
 	// Create a temporary file for the library to parse
 	// The library requires a file path, so we create a temp file
 	tempFile, err := os.CreateTemp("", "syft-gguf-*.gguf")
@@ -44,10 +36,12 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	tempPath := tempFile.Name()
 	defer os.Remove(tempPath)
 
-	// Write the validated header data to temp file
-	if _, err := tempFile.Write(headerData); err != nil {
+	// Copy and validate the GGUF file header using LimitedReader to prevent OOM
+	// We use LimitedReader to cap reads at maxHeaderSize (50MB)
+	limitedReader := &io.LimitedReader{R: reader, N: maxHeaderSize}
+	if err := copyHeader(tempFile, limitedReader); err != nil {
 		tempFile.Close()
-		return nil, nil, fmt.Errorf("failed to write to temp file: %w", err)
+		return nil, nil, fmt.Errorf("failed to copy GGUF header: %w", err)
 	}
 	tempFile.Close()
 
