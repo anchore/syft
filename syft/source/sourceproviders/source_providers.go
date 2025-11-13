@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	FileTag      = stereoscope.FileTag
-	DirTag       = stereoscope.DirTag
-	PullTag      = stereoscope.PullTag
-	SnapTag      = "snap"
-	OCIModelTag  = "oci-model"
+	FileTag     = stereoscope.FileTag
+	DirTag      = stereoscope.DirTag
+	PullTag     = stereoscope.PullTag
+	SnapTag     = "snap"
+	OCIModelTag = "oci-model"
 )
 
 // All returns all the configured source providers known to syft

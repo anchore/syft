@@ -14,13 +14,7 @@ func TestExtractVirtualPath(t *testing.T) {
 		expected    string
 	}{
 		{
-			name:        "with title annotation",
-			layerIndex:  0,
-			annotations: map[string]string{"org.opencontainers.image.title": "model.gguf"},
-			expected:    "/model.gguf",
-		},
-		{
-			name:        "without title annotation",
+			name:        "use index as model layer virtual path",
 			layerIndex:  1,
 			annotations: map[string]string{},
 			expected:    "/model-layer-1.gguf",
@@ -29,7 +23,7 @@ func TestExtractVirtualPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := extractVirtualPath(tt.layerIndex, tt.annotations)
+			result := extractVirtualPath(tt.layerIndex)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

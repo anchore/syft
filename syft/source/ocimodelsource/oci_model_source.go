@@ -18,12 +18,12 @@ var _ source.Source = (*ociModelSource)(nil)
 
 // Config holds the configuration for an OCI model artifact source.
 type Config struct {
-	Reference   string
-	Platform    string
-	Alias       source.Alias
-	Client      *RegistryClient
-	Metadata    *OCIModelMetadata
-	TempFiles   map[string]string // Virtual path -> temp file path
+	Reference string
+	Platform  string
+	Alias     source.Alias
+	Client    *RegistryClient
+	Metadata  *OCIModelMetadata
+	TempFiles map[string]string // Virtual path -> temp file path
 }
 
 // ociModelSource implements the source.Source interface for OCI model artifacts.
@@ -53,7 +53,7 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 		}
 
 		// Extract virtual path from annotations
-		virtualPath := extractVirtualPath(idx, extractAnnotations(layer.Annotations))
+		virtualPath := extractVirtualPath(idx)
 
 		// Create temp file
 		tempPath, err := createTempFileFromData(headerData, virtualPath)
