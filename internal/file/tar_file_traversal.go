@@ -9,7 +9,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archives"
 
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal"
 )
 
 // TraverseFilesInTar enumerates all paths stored within a tar archive using the visitor pattern.
@@ -18,11 +18,7 @@ func TraverseFilesInTar(ctx context.Context, archivePath string, visitor archive
 	if err != nil {
 		return fmt.Errorf("unable to open tar archive (%s): %w", archivePath, err)
 	}
-	defer func() {
-		if err := tarReader.Close(); err != nil {
-			log.Errorf("unable to close tar archive (%s): %+v", archivePath, err)
-		}
-	}()
+	defer internal.CloseAndLogError(tarReader, archivePath)
 
 	format, _, err := archives.Identify(ctx, archivePath, nil)
 	if err != nil {
@@ -72,11 +68,7 @@ func ExtractGlobsFromTarToUniqueTempFile(ctx context.Context, archivePath, dir s
 		if err != nil {
 			return fmt.Errorf("unable to read file=%q from tar=%q: %w", file.NameInArchive, archivePath, err)
 		}
-		defer func() {
-			if err := packedFile.Close(); err != nil {
-				log.Errorf("unable to close source file=%q from tar=%q: %+v", file.NameInArchive, archivePath, err)
-			}
-		}()
+		defer internal.CloseAndLogError(packedFile, archivePath)
 
 		if err := safeCopy(tempFile, packedFile); err != nil {
 			return fmt.Errorf("unable to copy source=%q for tar=%q: %w", file.Name(), archivePath, err)
