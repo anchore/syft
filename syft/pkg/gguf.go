@@ -23,10 +23,10 @@ type GGUFFileHeader struct {
 	// TensorCount is the number of tensors in the model
 	TensorCount uint64 `json:"tensorCount" cyclonedx:"tensorCount"`
 
-	// Header contains the remaining key-value pairs from the GGUF header that are not already
+	// RemainingKeyValues contains the remaining key-value pairs from the GGUF header that are not already
 	// represented as typed fields above. This preserves additional metadata fields for reference
 	// (namespaced with general.*, llama.*, etc.) while avoiding duplication.
-	Header map[string]interface{} `json:"header,omitempty" cyclonedx:"header"`
+	RemainingKeyValues map[string]interface{} `json:"header,omitempty" cyclonedx:"header"`
 
 	// MetadataKeyValuesHash is a xx64 hash of all key-value pairs from the GGUF header metadata.
 	// This hash is computed over the complete header metadata (including the fields extracted

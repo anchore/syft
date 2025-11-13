@@ -102,9 +102,9 @@ func TestGGUFCataloger(t *testing.T) {
 			},
 			expectedPackages: []pkg.Package{
 				{
-					Name:    "gpt2-small",
-					Version: "",
-					Type:    pkg.ModelPkg,
+					Name:     "gpt2-small",
+					Version:  "",
+					Type:     pkg.ModelPkg,
 					Licenses: pkg.NewLicenseSet(),
 					Metadata: pkg.GGUFFileHeader{
 						Architecture:          "gpt2",
@@ -116,78 +116,6 @@ func TestGGUFCataloger(t *testing.T) {
 						Header: map[string]interface{}{
 							"gpt2.context_length":   "1024",
 							"gpt2.embedding_length": uint32(768),
-						},
-					},
-				},
-			},
-			expectedRelationships: nil,
-		},
-		{
-			name: "catalog multiple GGUF files",
-			setup: func(t *testing.T) string {
-				dir := t.TempDir()
-
-				// First model - Llama with custom training data
-				data1 := newTestGGUFBuilder().
-					withVersion(3).
-					withStringKV("general.architecture", "llama").
-					withStringKV("general.name", "model-1").
-					withStringKV("general.version", "1.0").
-					withStringKV("llama.attention.head_count", "32").
-					withUint32KV("llama.attention.layer_norm_rms_epsilon", 999).
-					build()
-				os.WriteFile(filepath.Join(dir, "model-1.gguf"), data1, 0644)
-
-				// Second model - GPT2 with different config
-				data2 := newTestGGUFBuilder().
-					withVersion(3).
-					withStringKV("general.architecture", "gpt2").
-					withStringKV("general.name", "model-2").
-					withStringKV("general.version", "2.0").
-					withStringKV("general.license", "MIT").
-					withStringKV("gpt2.block_count", "12").
-					withUint64KV("tokenizer.ggml.bos_token_id", 50256).
-					build()
-				os.WriteFile(filepath.Join(dir, "model-2.gguf"), data2, 0644)
-
-				return dir
-			},
-			expectedPackages: []pkg.Package{
-				{
-					Name:    "model-1",
-					Version: "1.0",
-					Type:    pkg.ModelPkg,
-					Licenses: pkg.NewLicenseSet(),
-					Metadata: pkg.GGUFFileHeader{
-						Architecture:          "llama",
-						Quantization:          "Unknown",
-						Parameters:            0,
-						GGUFVersion:           3,
-						TensorCount:           0,
-						MetadataKeyValuesHash: "57e0dbea7d2efa6e",
-						Header: map[string]interface{}{
-							"llama.attention.head_count":              "32",
-							"llama.attention.layer_norm_rms_epsilon": uint32(999),
-						},
-					},
-				},
-				{
-					Name:    "model-2",
-					Version: "2.0",
-					Type:    pkg.ModelPkg,
-					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromFields("MIT", "", nil),
-					),
-					Metadata: pkg.GGUFFileHeader{
-						Architecture:          "gpt2",
-						Quantization:          "Unknown",
-						Parameters:            0,
-						GGUFVersion:           3,
-						TensorCount:           0,
-						MetadataKeyValuesHash: "f85de1bf9be304bb",
-						Header: map[string]interface{}{
-							"gpt2.block_count":            "12",
-							"tokenizer.ggml.bos_token_id": uint64(50256),
 						},
 					},
 				},

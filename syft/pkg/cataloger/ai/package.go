@@ -11,17 +11,11 @@ func newGGUFPackage(metadata *pkg.GGUFFileHeader, modelName, version, license st
 		Version:   version,
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.ModelPkg,
-		Licenses:  pkg.NewLicenseSet(),
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValues(license)...),
 		Metadata:  *metadata,
 		// NOTE: PURL is intentionally not set as the package-url spec
 		// has not yet finalized support for ML model packages
 	}
-
-	// Add license to the package if present in metadata
-	if license != "" {
-		p.Licenses.Add(pkg.NewLicenseFromFields(license, "", nil))
-	}
-
 	p.SetID()
 
 	return p

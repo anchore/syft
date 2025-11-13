@@ -72,7 +72,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		Parameters:            uint64(metadata.Parameters),
 		GGUFVersion:           uint32(ggufFile.Header.Version),
 		TensorCount:           ggufFile.Header.TensorCount,
-		Header:                convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
+		RemainingKeyValues:    convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
 		MetadataKeyValuesHash: computeKVMetadataHash(ggufFile.Header.MetadataKV),
 	}
 

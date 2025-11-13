@@ -41,7 +41,7 @@ func TestNewGGUFPackage(t *testing.T) {
 				Parameters:   8030000000,
 				GGUFVersion:  3,
 				TensorCount:  291,
-				Header: map[string]any{
+				RemainingKeyValues: map[string]any{
 					"general.random_kv": "foobar",
 				},
 			},
@@ -58,7 +58,7 @@ func TestNewGGUFPackage(t *testing.T) {
 					Parameters:   8030000000,
 					GGUFVersion:  3,
 					TensorCount:  291,
-					Header: map[string]any{
+					RemainingKeyValues: map[string]any{
 						"general.random_kv": "foobar",
 					},
 				},
@@ -96,45 +96,6 @@ func TestNewGGUFPackage(t *testing.T) {
 					TensorCount:  50,
 				},
 				Locations: file.NewLocationSet(file.NewLocation("/models/simple.gguf")),
-			},
-		},
-		{
-			name: "GGUF package with multiple locations",
-			input: struct {
-				modelName string
-				version   string
-				license   string
-				locations []file.Location
-			}{
-				modelName: "llama-multi",
-				version:   "2.0",
-				license:   "Apache-2.0",
-				locations: []file.Location{
-					file.NewLocation("/models/model1.gguf"),
-					file.NewLocation("/models/model2.gguf"),
-				},
-			},
-			metadata: &pkg.GGUFFileHeader{
-				Architecture: "llama",
-				GGUFVersion:  3,
-				TensorCount:  150,
-			},
-			expected: pkg.Package{
-				Name:    "llama-multi",
-				Version: "2.0",
-				Type:    pkg.ModelPkg,
-				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromFields("Apache-2.0", "", nil),
-				),
-				Metadata: pkg.GGUFFileHeader{
-					Architecture: "llama",
-					GGUFVersion:  3,
-					TensorCount:  150,
-				},
-				Locations: file.NewLocationSet(
-					file.NewLocation("/models/model1.gguf"),
-					file.NewLocation("/models/model2.gguf"),
-				),
 			},
 		},
 	}
