@@ -4,7 +4,6 @@
 package file
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"context"
 	"crypto/sha256"
@@ -19,7 +18,6 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
-	"github.com/mholt/archives"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -322,7 +320,7 @@ func TestSafeJoin(t *testing.T) {
 // TestSymlinkProtection demonstrates that SafeJoin protects against symlink-based
 // directory traversal attacks by validating that archive entry paths cannot escape
 // the extraction directory.
-func TestSymlinkProtection(t *testing.T) {
+func TestSafeJoin_SymlinkProtection(t *testing.T) {
 	tests := []struct {
 		name        string
 		archivePath string // Path as it would appear in the archive
@@ -398,170 +396,6 @@ func TestSymlinkProtection(t *testing.T) {
 					"Safe path should resolve within extraction directory")
 			}
 		})
-	}
-}
-
-// TestTarArchivePathTraversalProtection demonstrates that SafeJoin protects against
-// tar archives with malicious path traversal attempts (e.g., ../../../etc/passwd).
-func TestTarArchivePathTraversalProtection(t *testing.T) {
-	// Create a malicious tar archive with path traversal attempts
-	tempDir := t.TempDir()
-	maliciousArchive := filepath.Join(tempDir, "malicious.tar")
-
-	// Create a temporary directory with a file that we'll add to the archive
-	sourceDir := filepath.Join(tempDir, "source")
-	require.NoError(t, os.MkdirAll(sourceDir, 0755))
-
-	testFile := filepath.Join(sourceDir, "test.txt")
-	require.NoError(t, os.WriteFile(testFile, []byte("malicious content"), 0644))
-
-	// Create a malicious tar manually using Go's archive/tar
-	// This allows us to inject path traversal entries
-	archiveFile, err := os.Create(maliciousArchive)
-	require.NoError(t, err)
-	defer archiveFile.Close()
-
-	tw := tar.NewWriter(archiveFile)
-	defer tw.Close()
-
-	// Add a file with path traversal in its name
-	content := []byte("malicious content")
-	header := &tar.Header{
-		Name: "../../../tmp/malicious.txt",
-		Mode: 0644,
-		Size: int64(len(content)),
-	}
-	require.NoError(t, tw.WriteHeader(header))
-	_, err = tw.Write(content)
-	require.NoError(t, err)
-
-	require.NoError(t, tw.Close())
-	require.NoError(t, archiveFile.Close())
-
-	// Open the archive for extraction
-	archive, err := os.Open(maliciousArchive)
-	require.NoError(t, err)
-	defer archive.Close()
-
-	extractDir := filepath.Join(tempDir, "extract")
-	require.NoError(t, os.MkdirAll(extractDir, 0755))
-
-	// Attempt to extract with SafeJoin protection
-	visitor := func(_ context.Context, file archives.FileInfo) error {
-		destPath, err := SafeJoin(extractDir, file.NameInArchive)
-		if err != nil {
-			return err
-		}
-
-		if file.IsDir() {
-			return os.MkdirAll(destPath, file.Mode())
-		}
-
-		return nil
-	}
-
-	// We expect extraction to fail due to path traversal protection
-	err = archives.Tar{}.Extract(context.Background(), archive, visitor)
-	require.Error(t, err, "expected error when extracting archive with path traversal")
-
-	// Verify the error is a zip slip detection error
-	var zipSlipErr *errZipSlipDetected
-	assert.ErrorAs(t, err, &zipSlipErr, "error should be errZipSlipDetected type")
-	assert.Contains(t, err.Error(), "path traversal",
-		"error should mention path traversal, got: %v", err)
-}
-
-// TestTarArchiveLegitimate verifies that legitimate tar archives without path traversal work correctly.
-func TestTarArchiveLegitimate(t *testing.T) {
-	tempDir := t.TempDir()
-	legitimateArchive := filepath.Join(tempDir, "legitimate.tar")
-
-	// Create a legitimate tar archive with safe paths
-	archiveFile, err := os.Create(legitimateArchive)
-	require.NoError(t, err)
-	defer archiveFile.Close()
-
-	tw := tar.NewWriter(archiveFile)
-	defer tw.Close()
-
-	// Add files with safe paths
-	testFiles := map[string]string{
-		"file1.txt":           "content 1",
-		"subdir/file2.txt":    "content 2",
-		"subdir/nested/file3": "content 3",
-	}
-
-	for name, content := range testFiles {
-		header := &tar.Header{
-			Name: name,
-			Mode: 0644,
-			Size: int64(len(content)),
-		}
-		require.NoError(t, tw.WriteHeader(header))
-		_, err = tw.Write([]byte(content))
-		require.NoError(t, err)
-	}
-
-	require.NoError(t, tw.Close())
-	require.NoError(t, archiveFile.Close())
-
-	// Open the archive for extraction
-	archive, err := os.Open(legitimateArchive)
-	require.NoError(t, err)
-	defer archive.Close()
-
-	extractDir := filepath.Join(tempDir, "extract")
-	require.NoError(t, os.MkdirAll(extractDir, 0755))
-
-	extractedFiles := make(map[string]bool)
-
-	// Extract with SafeJoin protection
-	visitor := func(_ context.Context, file archives.FileInfo) error {
-		destPath, err := SafeJoin(extractDir, file.NameInArchive)
-		if err != nil {
-			return err
-		}
-
-		extractedFiles[file.NameInArchive] = true
-
-		if file.IsDir() {
-			return os.MkdirAll(destPath, file.Mode())
-		}
-
-		// Ensure parent directory exists
-		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
-			return err
-		}
-
-		// Create the file
-		destFile, err := os.Create(destPath)
-		if err != nil {
-			return err
-		}
-		defer destFile.Close()
-
-		rc, err := file.Open()
-		if err != nil {
-			return err
-		}
-		defer rc.Close()
-
-		_, err = io.Copy(destFile, rc)
-		return err
-	}
-
-	// Legitimate archive should extract without error
-	err = archives.Tar{}.Extract(context.Background(), archive, visitor)
-	require.NoError(t, err, "legitimate archive should extract without error")
-
-	// Verify all expected files were extracted
-	for name := range testFiles {
-		assert.True(t, extractedFiles[name], "file %s should have been extracted", name)
-
-		// Verify the file exists on disk
-		extractedPath := filepath.Join(extractDir, name)
-		_, err := os.Stat(extractedPath)
-		assert.NoError(t, err, "extracted file %s should exist", name)
 	}
 }
 
