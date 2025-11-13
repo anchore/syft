@@ -11,7 +11,6 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/archiver/v3 v3.5.3-0.20241210171143-5b1d8d1c7c51
 	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
 	github.com/anchore/clio v0.0.0-20250319180342-2cfe4b0cb716
 	github.com/anchore/fangs v0.0.0-20250319222917-446a1e748ec2
@@ -168,7 +167,6 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/pprof v0.0.0-20250317173921-a4b03ec1a45e // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
@@ -209,10 +207,6 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/nwaples/rardecode v1.1.3 // indirect
-	github.com/nwaples/rardecode/v2 v2.2.0 // indirect
-	github.com/olekukonko/errors v1.1.0 // indirect
-	github.com/olekukonko/ll v0.1.2 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.1.0 // indirect
 	github.com/opencontainers/selinux v1.13.0 // indirect
@@ -319,7 +313,10 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nwaples/rardecode/v2 v2.2.0 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
+	github.com/olekukonko/errors v1.1.0 // indirect
+	github.com/olekukonko/ll v0.1.2 // indirect
 	github.com/smallnest/ringbuffer v0.0.0-20241116012123-461381446e3d // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 )

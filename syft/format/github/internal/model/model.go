@@ -1,11 +1,13 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/anchore/archiver/v3"
+	"github.com/mholt/archives"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -153,8 +155,8 @@ func trimRelative(s string) string {
 
 // isArchive returns true if the path appears to be an archive
 func isArchive(path string) bool {
-	_, err := archiver.ByExtension(path)
-	return err == nil
+	format, _, err := archives.Identify(context.Background(), path, nil)
+	return err == nil && format != nil
 }
 
 func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {
