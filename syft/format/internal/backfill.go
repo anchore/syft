@@ -10,13 +10,31 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
+	cataloger "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
 // Backfill takes all information present in the package and attempts to fill in any missing information
-// from any available sources, such as the Metadata and PURL.
+// from any available sources, such as the Metadata, PURL, or CPEs.
 //
 // Backfill does not call p.SetID(), but this needs to be called later to ensure it's up to date
 func Backfill(p *pkg.Package) {
+	backfillFromPurl(p)
+	backfillFromCPE(p)
+}
+
+func backfillFromCPE(p *pkg.Package) {
+	if len(p.CPEs) == 0 {
+		return
+	}
+
+	c := p.CPEs[0]
+
+	if p.Type == "" {
+		p.Type = cataloger.TargetSoftwareToPackageType(c.Attributes.TargetSW)
+	}
+}
+
+func backfillFromPurl(p *pkg.Package) {
 	if p.PURL == "" {
 		return
 	}

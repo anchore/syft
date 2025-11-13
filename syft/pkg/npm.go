@@ -48,6 +48,7 @@ type YarnLockEntry struct {
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
 
+// PnpmLockResolution contains package resolution metadata from pnpm lockfiles, including the integrity hash used for verification.
 type PnpmLockResolution struct {
 	// Integrity is Subresource Integrity hash for verification (SRI format)
 	Integrity string `mapstructure:"integrity" json:"integrity"`
