@@ -14,6 +14,28 @@ import (
 )
 
 func TestGGUFCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain gguf files",
+			fixture: "test-fixtures/glob-paths",
+			expected: []string{
+				"models/model.gguf",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewGGUFCataloger())
+		})
+	}
 }
 
 func TestGGUFCataloger_Integration(t *testing.T) {
@@ -50,15 +72,15 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 						pkg.NewLicenseFromFields("Apache-2.0", "", nil),
 					),
 					Metadata: pkg.GGUFFileHeader{
-						ModelName:       "llama3-8b",
-						ModelVersion:    "3.0",
-						License:         "Apache-2.0",
-						Architecture:    "llama",
-						Quantization:    "Unknown",
-						Parameters:      0,
-						GGUFVersion: 3,
-						TensorCount: 0,
-						Header:      map[string]interface{}{},
+						ModelName:    "llama3-8b",
+						ModelVersion: "3.0",
+						License:      "Apache-2.0",
+						Architecture: "llama",
+						Quantization: "Unknown",
+						Parameters:   0,
+						GGUFVersion:  3,
+						TensorCount:  0,
+						Header:       map[string]interface{}{},
 					},
 				},
 			},
@@ -77,8 +99,8 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 				IgnoreLocationLayer().
 				IgnorePackageFields("FoundBy", "Locations"). // These are set by the cataloger
 				WithCompareOptions(
-					// Ignore Hash as it's computed dynamically
-					cmpopts.IgnoreFields(pkg.GGUFFileHeader{}, "Hash"),
+					// Ignore MetadataHash as it's computed dynamically
+					cmpopts.IgnoreFields(pkg.GGUFFileHeader{}, "MetadataHash"),
 				)
 
 			tester.TestCataloger(t, NewGGUFCataloger())
