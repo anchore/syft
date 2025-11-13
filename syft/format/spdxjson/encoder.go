@@ -41,7 +41,7 @@ func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
 		Version: spdxutil.DefaultVersion,
 		Pretty:  false,
-		Indent:  " ",
+		Indent:  "  ",
 	}
 }
 
