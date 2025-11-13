@@ -62,10 +62,12 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// Extract metadata
 	metadata := ggufFile.Metadata()
 
+	// Extract version separately (will be set on Package.Version)
+	modelVersion := extractVersion(ggufFile.Header.MetadataKV)
+
 	// Convert to syft metadata structure
 	syftMetadata := &pkg.GGUFFileHeader{
 		ModelName:    metadata.Name,
-		ModelVersion: extractVersion(ggufFile.Header.MetadataKV),
 		License:      metadata.License,
 		Architecture: metadata.Architecture,
 		Quantization: metadata.FileTypeDescriptor,
@@ -84,6 +86,7 @@ func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	// Create package from metadata
 	p := newGGUFPackage(
 		syftMetadata,
+		modelVersion,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 

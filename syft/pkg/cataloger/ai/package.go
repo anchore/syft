@@ -5,10 +5,10 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func newGGUFPackage(metadata *pkg.GGUFFileHeader, locations ...file.Location) pkg.Package {
+func newGGUFPackage(metadata *pkg.GGUFFileHeader, version string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      metadata.ModelName,
-		Version:   metadata.ModelVersion,
+		Version:   version,
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.ModelPkg,
 		Licenses:  pkg.NewLicenseSet(),

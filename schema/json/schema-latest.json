@@ -1443,10 +1443,6 @@
           "type": "string",
           "description": "ModelName is the name of the model (from general.name or filename)"
         },
-        "modelVersion": {
-          "type": "string",
-          "description": "ModelVersion is the version of the model (if available in header, else \"unknown\")"
-        },
         "fileSize": {
           "type": "integer",
           "description": "FileSize is the size of the GGUF file in bytes (best-effort if available from resolver)"

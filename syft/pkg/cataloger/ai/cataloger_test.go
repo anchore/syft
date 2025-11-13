@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -73,7 +72,6 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 					),
 					Metadata: pkg.GGUFFileHeader{
 						ModelName:    "llama3-8b",
-						ModelVersion: "3.0",
 						License:      "Apache-2.0",
 						Architecture: "llama",
 						Quantization: "Unknown",
@@ -106,9 +104,4 @@ func TestGGUFCataloger_Integration(t *testing.T) {
 			tester.TestCataloger(t, NewGGUFCataloger())
 		})
 	}
-}
-
-func TestGGUFCataloger_Name(t *testing.T) {
-	cataloger := NewGGUFCataloger()
-	assert.Equal(t, "gguf-cataloger", cataloger.Name())
 }

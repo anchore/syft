@@ -10,9 +10,6 @@ type GGUFFileHeader struct {
 	// ModelName is the name of the model (from general.name or filename)
 	ModelName string `json:"modelName" cyclonedx:"modelName"`
 
-	// ModelVersion is the version of the model (if available in header, else "unknown")
-	ModelVersion string `json:"modelVersion,omitempty" cyclonedx:"modelVersion"`
-
 	// FileSize is the size of the GGUF file in bytes (best-effort if available from resolver)
 	FileSize int64 `json:"fileSize,omitempty" cyclonedx:"fileSize"`
 

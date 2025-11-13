@@ -15,14 +15,15 @@ func TestNewGGUFPackage(t *testing.T) {
 	tests := []struct {
 		name      string
 		metadata  *pkg.GGUFFileHeader
+		version   string
 		locations []file.Location
 		checkFunc func(t *testing.T, p pkg.Package)
 	}{
 		{
-			name: "complete GGUF package with all fields",
+			name:    "complete GGUF package with all fields",
+			version: "3.0",
 			metadata: &pkg.GGUFFileHeader{
 				ModelName:    "llama3-8b-instruct",
-				ModelVersion: "3.0",
 				License:      "Apache-2.0",
 				Architecture: "llama",
 				Quantization: "Q4_K_M",
@@ -51,10 +52,10 @@ func TestNewGGUFPackage(t *testing.T) {
 			},
 		},
 		{
-			name: "minimal GGUF package",
+			name:    "minimal GGUF package",
+			version: "1.0",
 			metadata: &pkg.GGUFFileHeader{
 				ModelName:    "simple-model",
-				ModelVersion: "1.0",
 				Architecture: "gpt2",
 				GGUFVersion:  3,
 				TensorCount:  50,
@@ -75,10 +76,10 @@ func TestNewGGUFPackage(t *testing.T) {
 			},
 		},
 		{
-			name: "GGUF package with multiple locations",
+			name:    "GGUF package with multiple locations",
+			version: "1.5",
 			metadata: &pkg.GGUFFileHeader{
 				ModelName:    "multi-location-model",
-				ModelVersion: "1.5",
 				Architecture: "llama",
 				GGUFVersion:  3,
 				TensorCount:  150,
@@ -95,12 +96,12 @@ func TestNewGGUFPackage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := newGGUFPackage(tt.metadata, tt.locations...)
+			p := newGGUFPackage(tt.metadata, tt.version, tt.locations...)
 
 			if d := cmp.Diff(tt.metadata.ModelName, p.Name); d != "" {
 				t.Errorf("Name mismatch (-want +got):\n%s", d)
 			}
-			if d := cmp.Diff(tt.metadata.ModelVersion, p.Version); d != "" {
+			if d := cmp.Diff(tt.version, p.Version); d != "" {
 				t.Errorf("Version mismatch (-want +got):\n%s", d)
 			}
 			if d := cmp.Diff(pkg.ModelPkg, p.Type); d != "" {
