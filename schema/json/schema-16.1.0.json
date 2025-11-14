@@ -3382,6 +3382,10 @@
           },
           "type": "array",
           "description": "Files are the package files specific to this variant (only populated if different from base)"
+        },
+        "marker": {
+          "type": "string",
+          "description": "Marker is the environment conditional expression for this variant (e.g., \"python_version \u003c \\\"3.11\\\"\")"
         }
       },
       "type": "object",
