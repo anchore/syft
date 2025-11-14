@@ -97,94 +97,6 @@ jobs:
           path: snapshot/
           retention-days: 30
 
-#      # upload each platform artifact individually so downstream jobs can download only what they need
-#      - run: npm install @actions/artifact@2.3.2
-#
-#      - name: Upload individual platform artifacts
-#        uses: actions/github-script@v8
-#        env:
-#          ACTIONS_ARTIFACT_UPLOAD_CONCURRENCY: 10
-#        with:
-#          script: |
-#            const { readdirSync } = require('fs')
-#            const { DefaultArtifactClient } = require('@actions/artifact')
-#            const artifact = new DefaultArtifactClient()
-#            const ls = d => readdirSync(d, { withFileTypes: true })
-#            const baseDir = "./snapshot"
-#            const dirs = ls(baseDir).filter(f => f.isDirectory()).map(f => f.name)
-#            const uploads = []
-#
-#            // filter to only amd64 and arm64 architectures
-#            const supportedArchs = ['amd64', 'arm64']
-#            const filteredDirs = dirs.filter(dir =>
-#              supportedArchs.some(arch => dir.includes(arch))
-#            )
-#
-#            // upload platform subdirectories
-#            for (const dir of filteredDirs) {
-#              // uploadArtifact returns Promise<{id, size}>
-#              uploads.push(artifact.uploadArtifact(
-#                // name of the archive:
-#                `${dir}`,
-#                // array of all files to include:
-#                ls(`${baseDir}/${dir}`).map(f => `${baseDir}/${dir}/${f.name}`),
-#                // base directory to trim from entries:
-#                `${baseDir}/${dir}`,
-#                { retentionDays: 30 }
-#              ))
-#            }
-#
-#            // upload RPM and DEB packages for supported architectures
-#            const packageFiles = ls(baseDir).filter(f =>
-#              f.isFile() &&
-#              (f.name.endsWith('.deb') || f.name.endsWith('.rpm')) &&
-#              supportedArchs.some(arch => f.name.includes(`_${arch}.`))
-#            )
-#            for (const file of packageFiles) {
-#              uploads.push(artifact.uploadArtifact(
-#                file.name,
-#                [`${baseDir}/${file.name}`],
-#                baseDir,
-#                { retentionDays: 30 }
-#              ))
-#            }
-#
-#            // upload SBOM files for supported architectures
-#            const sbomFiles = ls(baseDir).filter(f =>
-#              f.isFile() &&
-#              f.name.endsWith('.sbom') &&
-#              supportedArchs.some(arch => f.name.includes(`_${arch}.`))
-#            )
-#            for (const file of sbomFiles) {
-#              uploads.push(artifact.uploadArtifact(
-#                file.name,
-#                [`${baseDir}/${file.name}`],
-#                baseDir,
-#                { retentionDays: 30 }
-#              ))
-#            }
-#
-#            // upload checksums file (needed by install tests)
-#            const rootFiles = ls(baseDir).filter(f => f.isFile() && f.name.match(/syft_.*_checksums\.txt$/))
-#            if (rootFiles.length > 0) {
-#              const checksumsFile = rootFiles[0].name
-#              uploads.push(artifact.uploadArtifact(
-#                'syft_checksums.txt',
-#                [`${baseDir}/${checksumsFile}`],
-#                baseDir,
-#                { retentionDays: 30 }
-#              ))
-#            }
-#
-#            // wait for all uploads to finish
-#            try {
-#              const results = await Promise.all(uploads)
-#              console.log(`Successfully uploaded ${results.length} artifacts`)
-#            } catch (error) {
-#              console.error('Upload failed:', error)
-#              throw error
-#            }
-
   Acceptance-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Linux)"
@@ -209,36 +121,6 @@ jobs:
         with:
           name: snapshot
           path: snapshot
-
-#      - name: Download checksums file
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          name: syft_checksums.txt
-#          path: snapshot
-#
-#      - name: Download Linux amd64 snapshot
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          name: linux-build_linux_amd64_v1
-#          path: snapshot/linux-build_linux_amd64_v1
-#
-#      - name: Download Linux amd64 deb
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          pattern: syft_*_linux_amd64.deb
-#          path: snapshot
-#
-#      - name: Download Linux amd64 rpm
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          pattern: syft_*_linux_amd64.rpm
-#          path: snapshot
-#
-#      - name: Download Linux amd64 sbom
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          pattern: syft_*_linux_amd64.sbom
-#          path: snapshot
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -281,39 +163,6 @@ jobs:
           name: snapshot
           path: snapshot
 
-      - name: Debug - Check snapshot structure and binary
-        run: |
-          echo "=== Snapshot directory structure ==="
-          ls -la snapshot/ || echo "snapshot/ not found"
-          find snapshot -type f -name 'syft*' -exec ls -lh {} \;
-
-          echo -e "\n=== Binary permissions (ARM64) ==="
-          ls -l snapshot/darwin-build_darwin_arm64_v8.0/syft || echo "ARM64 binary not found"
-
-          echo -e "\n=== Binary permissions (AMD64) ==="
-          ls -l snapshot/darwin-build_darwin_amd64_v1/syft || echo "AMD64 binary not found"
-
-          echo -e "\n=== File type ==="
-          file snapshot/darwin-build_darwin_arm64_v8.0/syft 2>/dev/null || file snapshot/darwin-build_darwin_amd64_v1/syft 2>/dev/null || echo "Cannot check file type"
-
-#      - name: Download checksums file
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          name: syft_checksums.txt
-#          path: snapshot
-#
-#      - name: Download macOS Intel snapshot
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          name: darwin-build_darwin_amd64_v1
-#          path: snapshot/darwin-build_darwin_amd64_v1
-#
-#      - name: Download macOS amd64 sbom
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          pattern: syft_*_darwin_amd64.sbom
-#          path: snapshot
-
       - name: Run comparison tests (Mac)
         run: make compare-mac
 
@@ -344,31 +193,6 @@ jobs:
         with:
           name: snapshot
           path: snapshot
-
-      - name: Debug - Check snapshot structure and binary
-        run: |
-          echo "=== Snapshot directory structure ==="
-          ls -la snapshot/ || echo "snapshot/ not found"
-          find snapshot -type f -name 'syft*' -exec ls -lh {} \;
-
-          echo -e "\n=== Binary permissions ==="
-          ls -l snapshot/linux-build_linux_amd64_v1/syft || echo "Binary not found at expected location"
-
-          echo -e "\n=== File type ==="
-          file snapshot/linux-build_linux_amd64_v1/syft || echo "Cannot check file type"
-
-          echo -e "\n=== Attempt to execute ==="
-          ./snapshot/linux-build_linux_amd64_v1/syft version || echo "Binary execution failed with exit code: $?"
-
-          echo -e "\n=== Make executable and retry ==="
-          chmod +x snapshot/linux-build_linux_amd64_v1/syft
-          ./snapshot/linux-build_linux_amd64_v1/syft version || echo "Still failed after chmod with exit code: $?"
-
-#      - name: Download Linux amd64 snapshot
-#        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
-#        with:
-#          name: linux-build_linux_amd64_v1
-#          path: snapshot/linux-build_linux_amd64_v1
 
       - name: Run CLI Tests (Linux)
         run: make cli
