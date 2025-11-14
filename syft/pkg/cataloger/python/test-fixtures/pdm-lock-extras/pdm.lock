@@ -73,3 +73,16 @@ files = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
+
+[[package]]
+name = "uvloop"
+version = "0.19.0"
+requires_python = ">=3.8"
+summary = "Fast implementation of asyncio event loop"
+groups = ["dev"]
+# IMPORTANT! This package has a complex marker with multiple AND conditions, negations, and mixed quote styles
+marker = "platform_python_implementation != 'PyPy' and sys_platform != 'win32' and python_version >= \"3.8\""
+files = [
+    {file = "uvloop-0.19.0.tar.gz", hash = "sha256:0246f4fd1bf2bf702e06b0d45ee91677ee5c31242f39aab4ea6fe0c51aedd0fd"},
+    {file = "uvloop-0.19.0-cp38-cp38-manylinux_2_17_x86_64.whl", hash = "sha256:de4313d7f575474c8f5a12e163f6d89c0a878bc49219641d49e6f1444369a90e"},
+]

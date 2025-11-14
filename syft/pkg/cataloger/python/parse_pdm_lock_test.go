@@ -468,7 +468,7 @@ func TestParsePdmLockWithExtras(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify we have the expected number of packages (NOT duplicated coverage)
-	require.Len(t, pkgs, 4, "should have exactly 4 packages: coverage, pytest, pytest-cov, tomli")
+	require.Len(t, pkgs, 5, "should have exactly 5 packages: coverage, pytest, pytest-cov, tomli, uvloop")
 
 	// Find the coverage package and verify it's only present once
 	var coveragePkg *pkg.Package
@@ -547,6 +547,19 @@ func TestParsePdmLockWithExtras(t *testing.T) {
 	tomliMeta, ok := tomliPkg.Metadata.(pkg.PythonPdmLockEntry)
 	require.True(t, ok, "tomli metadata should be PythonPdmLockEntry")
 	require.Equal(t, `python_version < "3.11"`, tomliMeta.Marker, "tomli should have marker preserved")
+
+	// Verify uvloop package has complex marker preserved (multiple AND conditions, negations, mixed quotes)
+	var uvloopPkg *pkg.Package
+	for i := range pkgs {
+		if pkgs[i].Name == "uvloop" {
+			uvloopPkg = &pkgs[i]
+			break
+		}
+	}
+	require.NotNil(t, uvloopPkg, "uvloop package should be found")
+	uvloopMeta, ok := uvloopPkg.Metadata.(pkg.PythonPdmLockEntry)
+	require.True(t, ok, "uvloop metadata should be PythonPdmLockEntry")
+	require.Equal(t, `platform_python_implementation != 'PyPy' and sys_platform != 'win32' and python_version >= "3.8"`, uvloopMeta.Marker, "uvloop should have complex marker preserved exactly as-is")
 
 	var foundPytestCovToCoverage bool
 	for _, rel := range relationships {
@@ -627,6 +640,58 @@ func TestParsePdmLockWithSeparateFilesFixture(t *testing.T) {
 	}
 
 	require.NotEmpty(t, relationships, "relationships should be created")
+}
+
+func TestMergePdmLockPackagesNoBasePackage(t *testing.T) {
+	// test the edge case where only extras variants exist (no base package entry)
+	// this can happen if PDM lock file only contains package entries with extras
+	packages := []pdmLockPackage{
+		{
+			Name:           "test-package",
+			Version:        "1.0.0",
+			RequiresPython: ">=3.8",
+			Summary:        "Test package summary",
+			Marker:         "extra == 'dev'",
+			Dependencies:   []string{"pytest", "test-package==1.0.0"},
+			Extras:         []string{"dev"},
+			Files: []pdmLockPackageFile{
+				{
+					File: "test-package-1.0.0.tar.gz",
+					Hash: "sha256:abc123",
+				},
+			},
+		},
+		{
+			Name:           "test-package",
+			Version:        "1.0.0",
+			RequiresPython: ">=3.8",
+			Summary:        "Test package summary",
+			Marker:         "extra == 'test'",
+			Dependencies:   []string{"coverage", "test-package==1.0.0"},
+			Extras:         []string{"test"},
+			Files: []pdmLockPackageFile{
+				{
+					File: "test-package-1.0.0.tar.gz",
+					Hash: "sha256:abc123",
+				},
+			},
+		},
+	}
+
+	entry := mergePdmLockPackages(packages)
+
+	// verify fallback logic: when no base package exists, first package's metadata is used
+	require.Equal(t, "Test package summary", entry.Summary)
+	require.Equal(t, ">=3.8", entry.RequiresPython)
+	require.Equal(t, []string{"pytest", "test-package==1.0.0"}, entry.Dependencies)
+	require.Equal(t, "extra == 'dev'", entry.Marker)
+
+	// verify both extras variants are present
+	require.Len(t, entry.Extras, 2)
+	require.Equal(t, []string{"dev"}, entry.Extras[0].Extras)
+	require.Equal(t, []string{"pytest", "test-package==1.0.0"}, entry.Extras[0].Dependencies)
+	require.Equal(t, []string{"test"}, entry.Extras[1].Extras)
+	require.Equal(t, []string{"coverage", "test-package==1.0.0"}, entry.Extras[1].Dependencies)
 }
 
 func Test_corruptPdmLock(t *testing.T) {

@@ -90,10 +90,13 @@ func mergePdmLockPackages(packages []pdmLockPackage) pkg.PythonPdmLockEntry {
 	var baseFiles []pkg.PythonPdmFileEntry
 
 	// Separate base package from extras variants
+	// note: this logic processes packages in order and assumes the base package (no extras) appears
+	// before extras variants in the PDM lock file, which is PDM's current behavior
 	for _, p := range packages {
 		// Convert files format
 		var files []pkg.PythonPdmFileEntry
 		for _, f := range p.Files {
+			// skip files with invalid hash format (missing colon separator between algorithm and value)
 			if colonIndex := strings.Index(f.Hash, ":"); colonIndex != -1 {
 				algorithm := f.Hash[:colonIndex]
 				value := f.Hash[colonIndex+1:]
@@ -140,12 +143,15 @@ func mergePdmLockPackages(packages []pdmLockPackage) pkg.PythonPdmLockEntry {
 	if entry.Summary == "" && len(packages) > 0 {
 		entry.Summary = packages[0].Summary
 		entry.RequiresPython = packages[0].RequiresPython
+		entry.Dependencies = packages[0].Dependencies
+		entry.Marker = packages[0].Marker
 	}
 
 	return entry
 }
 
-// filesEqual checks if two file slices are equal (for deduplication purposes)
+// filesEqual checks if two file slices are equal by comparing URL and digest fields.
+// assumes files appear in the same order in both slices.
 func filesEqual(a, b []pkg.PythonPdmFileEntry) bool {
 	if len(a) != len(b) {
 		return false
