@@ -130,7 +130,8 @@
           "description": "Digests contains file content hashes for integrity verification"
         }
       },
-      "type": "object"
+      "type": "object",
+      "description": "AlpmFileRecord represents a single file entry within an Arch Linux package with its associated metadata tracked by pacman."
     },
     "ApkDbEntry": {
       "properties": {
@@ -433,16 +434,19 @@
     "CPE": {
       "properties": {
         "cpe": {
-          "type": "string"
+          "type": "string",
+          "description": "Value is the CPE string identifier."
         },
         "source": {
-          "type": "string"
+          "type": "string",
+          "description": "Source is the source where this CPE was obtained or generated from."
         }
       },
       "type": "object",
       "required": [
         "cpe"
-      ]
+      ],
+      "description": "CPE represents a Common Platform Enumeration identifier used for matching packages to known vulnerabilities in security databases."
     },
     "ClassifierMatch": {
       "properties": {
@@ -747,19 +751,23 @@
     "Descriptor": {
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name is the name of the tool that generated this SBOM (e.g., \"syft\")."
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Version is the version of the tool that generated this SBOM."
         },
-        "configuration": true
+        "configuration": {
+          "description": "Configuration contains the tool configuration used during SBOM generation."
+        }
       },
       "type": "object",
       "required": [
         "name",
         "version"
       ],
-      "description": "Descriptor describes what created the document as well as surrounding metadata"
+      "description": "Descriptor identifies the tool that generated this SBOM document, including its name, version, and configuration used during catalog generation."
     },
     "Digest": {
       "properties": {
@@ -1285,58 +1293,71 @@
     "File": {
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "ID is a unique identifier for this file within the SBOM."
         },
         "location": {
-          "$ref": "#/$defs/Coordinates"
+          "$ref": "#/$defs/Coordinates",
+          "description": "Location is the file path and layer information where this file was found."
         },
         "metadata": {
-          "$ref": "#/$defs/FileMetadataEntry"
+          "$ref": "#/$defs/FileMetadataEntry",
+          "description": "Metadata contains filesystem metadata such as permissions, ownership, and file type."
         },
         "contents": {
-          "type": "string"
+          "type": "string",
+          "description": "Contents is the file contents for small files."
         },
         "digests": {
           "items": {
             "$ref": "#/$defs/Digest"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Digests contains cryptographic hashes of the file contents."
         },
         "licenses": {
           "items": {
             "$ref": "#/$defs/FileLicense"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Licenses contains license information discovered within this file."
         },
         "executable": {
-          "$ref": "#/$defs/Executable"
+          "$ref": "#/$defs/Executable",
+          "description": "Executable contains executable metadata if this file is a binary."
         },
         "unknowns": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Unknowns contains unknown fields for forward compatibility."
         }
       },
       "type": "object",
       "required": [
         "id",
         "location"
-      ]
+      ],
+      "description": "File represents a file discovered during cataloging with its metadata, content digests, licenses, and relationships to packages."
     },
     "FileLicense": {
       "properties": {
         "value": {
-          "type": "string"
+          "type": "string",
+          "description": "Value is the raw license identifier or text as found in the file."
         },
         "spdxExpression": {
-          "type": "string"
+          "type": "string",
+          "description": "SPDXExpression is the parsed SPDX license expression."
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type is the license type classification (e.g., declared, concluded, discovered)."
         },
         "evidence": {
-          "$ref": "#/$defs/FileLicenseEvidence"
+          "$ref": "#/$defs/FileLicenseEvidence",
+          "description": "Evidence contains supporting evidence for this license detection."
         }
       },
       "type": "object",
@@ -1344,18 +1365,22 @@
         "value",
         "spdxExpression",
         "type"
-      ]
+      ],
+      "description": "FileLicense represents license information discovered within a file's contents or metadata, including the matched license text and SPDX expression."
     },
     "FileLicenseEvidence": {
       "properties": {
         "confidence": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Confidence is the confidence score for this license detection (0-100)."
         },
         "offset": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Offset is the byte offset where the license text starts in the file."
         },
         "extent": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Extent is the length of the license text in bytes."
         }
       },
       "type": "object",
@@ -1363,30 +1388,38 @@
         "confidence",
         "offset",
         "extent"
-      ]
+      ],
+      "description": "FileLicenseEvidence contains supporting evidence for a license detection in a file, including the byte offset, extent, and confidence level."
     },
     "FileMetadataEntry": {
       "properties": {
         "mode": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Mode is the Unix file permission mode in octal format."
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type is the file type (e.g., \"RegularFile\", \"Directory\", \"SymbolicLink\")."
         },
         "linkDestination": {
-          "type": "string"
+          "type": "string",
+          "description": "LinkDestination is the target path for symbolic links."
         },
         "userID": {
-          "type": "integer"
+          "type": "integer",
+          "description": "UserID is the file owner user ID."
         },
         "groupID": {
-          "type": "integer"
+          "type": "integer",
+          "description": "GroupID is the file owner group ID."
         },
         "mimeType": {
-          "type": "string"
+          "type": "string",
+          "description": "MIMEType is the MIME type of the file contents."
         },
         "size": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Size is the file size in bytes."
         }
       },
       "type": "object",
@@ -1397,7 +1430,8 @@
         "groupID",
         "mimeType",
         "size"
-      ]
+      ],
+      "description": "FileMetadataEntry contains filesystem-level metadata attributes such as permissions, ownership, type, and size for a cataloged file."
     },
     "GithubActionsUseStatement": {
       "properties": {
@@ -1545,7 +1579,8 @@
       "items": {
         "type": "string"
       },
-      "type": "array"
+      "type": "array",
+      "description": "IDLikes represents a list of distribution IDs that this Linux distribution is similar to or derived from, as defined in os-release ID_LIKE field."
     },
     "JavaArchive": {
       "properties": {
@@ -1974,28 +2009,34 @@
     "License": {
       "properties": {
         "value": {
-          "type": "string"
+          "type": "string",
+          "description": "Value is the raw license identifier or expression as found."
         },
         "spdxExpression": {
-          "type": "string"
+          "type": "string",
+          "description": "SPDXExpression is the parsed SPDX license expression."
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type is the license type classification (e.g., declared, concluded, discovered)."
         },
         "urls": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "URLs are URLs where license text or information can be found."
         },
         "locations": {
           "items": {
             "$ref": "#/$defs/Location"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Locations are file locations where this license was discovered."
         },
         "contents": {
-          "type": "string"
+          "type": "string",
+          "description": "Contents is the full license text content."
         }
       },
       "type": "object",
@@ -2005,7 +2046,8 @@
         "type",
         "urls",
         "locations"
-      ]
+      ],
+      "description": "License represents software license information discovered for a package, including SPDX expressions and supporting evidence locations."
     },
     "LinuxKernelArchive": {
       "properties": {
@@ -2130,64 +2172,84 @@
     "LinuxRelease": {
       "properties": {
         "prettyName": {
-          "type": "string"
+          "type": "string",
+          "description": "PrettyName is a human-readable operating system name with version."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name is the operating system name without version information."
         },
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "ID is the lower-case operating system identifier (e.g., \"ubuntu\", \"rhel\")."
         },
         "idLike": {
-          "$ref": "#/$defs/IDLikes"
+          "$ref": "#/$defs/IDLikes",
+          "description": "IDLike is a list of operating system IDs this distribution is similar to or derived from."
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Version is the operating system version including codename if available."
         },
         "versionID": {
-          "type": "string"
+          "type": "string",
+          "description": "VersionID is the operating system version number or identifier."
         },
         "versionCodename": {
-          "type": "string"
+          "type": "string",
+          "description": "VersionCodename is the operating system release codename (e.g., \"jammy\", \"bullseye\")."
         },
         "buildID": {
-          "type": "string"
+          "type": "string",
+          "description": "BuildID is a build identifier for the operating system."
         },
         "imageID": {
-          "type": "string"
+          "type": "string",
+          "description": "ImageID is an identifier for container or cloud images."
         },
         "imageVersion": {
-          "type": "string"
+          "type": "string",
+          "description": "ImageVersion is the version for container or cloud images."
         },
         "variant": {
-          "type": "string"
+          "type": "string",
+          "description": "Variant is the operating system variant name (e.g., \"Server\", \"Workstation\")."
         },
         "variantID": {
-          "type": "string"
+          "type": "string",
+          "description": "VariantID is the lower-case operating system variant identifier."
         },
         "homeURL": {
-          "type": "string"
+          "type": "string",
+          "description": "HomeURL is the homepage URL for the operating system."
         },
         "supportURL": {
-          "type": "string"
+          "type": "string",
+          "description": "SupportURL is the support or help URL for the operating system."
         },
         "bugReportURL": {
-          "type": "string"
+          "type": "string",
+          "description": "BugReportURL is the bug reporting URL for the operating system."
         },
         "privacyPolicyURL": {
-          "type": "string"
+          "type": "string",
+          "description": "PrivacyPolicyURL is the privacy policy URL for the operating system."
         },
         "cpeName": {
-          "type": "string"
+          "type": "string",
+          "description": "CPEName is the Common Platform Enumeration name for the operating system."
         },
         "supportEnd": {
-          "type": "string"
+          "type": "string",
+          "description": "SupportEnd is the end of support date or version identifier."
         },
         "extendedSupport": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "ExtendedSupport indicates whether extended security or support is available."
         }
       },
-      "type": "object"
+      "type": "object",
+      "description": "LinuxRelease contains Linux distribution identification and version information extracted from /etc/os-release or similar system files."
     },
     "Location": {
       "properties": {
@@ -2283,7 +2345,7 @@
         "product_id",
         "kb"
       ],
-      "description": "MicrosoftKbPatch is slightly odd in how it is expected to map onto data."
+      "description": "MicrosoftKbPatch represents a Windows Knowledge Base patch identifier associated with a specific Microsoft product from the MSRC (Microsoft Security Response Center)."
     },
     "NixDerivation": {
       "properties": {
@@ -3014,7 +3076,8 @@
       "type": "object",
       "required": [
         "integrity"
-      ]
+      ],
+      "description": "PnpmLockResolution contains package resolution metadata from pnpm lockfiles, including the integrity hash used for verification."
     },
     "PortageDbEntry": {
       "properties": {
@@ -3501,22 +3564,28 @@
     "Relationship": {
       "properties": {
         "parent": {
-          "type": "string"
+          "type": "string",
+          "description": "Parent is the ID of the parent artifact in this relationship."
         },
         "child": {
-          "type": "string"
+          "type": "string",
+          "description": "Child is the ID of the child artifact in this relationship."
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type is the relationship type (e.g., \"contains\", \"dependency-of\", \"ancestor-of\")."
         },
-        "metadata": true
+        "metadata": {
+          "description": "Metadata contains additional relationship-specific metadata."
+        }
       },
       "type": "object",
       "required": [
         "parent",
         "child",
         "type"
-      ]
+      ],
+      "description": "Relationship represents a directed relationship between two artifacts in the SBOM, such as package-contains-file or package-depends-on-package."
     },
     "RpmArchive": {
       "properties": {
@@ -3863,17 +3932,20 @@
     "Schema": {
       "properties": {
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Version is the JSON schema version for this document format."
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "URL is the URL to the JSON schema definition document."
         }
       },
       "type": "object",
       "required": [
         "version",
         "url"
-      ]
+      ],
+      "description": "Schema specifies the JSON schema version and URL reference that defines the structure and validation rules for this document format."
     },
     "SnapEntry": {
       "properties": {
@@ -3911,21 +3983,28 @@
     "Source": {
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "ID is a unique identifier for the analyzed source artifact."
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name is the name of the analyzed artifact (e.g., image name, directory path)."
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Version is the version of the analyzed artifact (e.g., image tag)."
         },
         "supplier": {
-          "type": "string"
+          "type": "string",
+          "description": "Supplier is supplier information, which can be user-provided for NTIA minimum elements compliance."
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type is the source type (e.g., \"image\", \"directory\", \"file\")."
         },
-        "metadata": true
+        "metadata": {
+          "description": "Metadata contains additional source-specific metadata."
+        }
       },
       "type": "object",
       "required": [
@@ -3935,7 +4014,7 @@
         "type",
         "metadata"
       ],
-      "description": "Instead, the Supplier can be determined by the user of syft and passed as a config or flag to help fulfill the NTIA minimum elements."
+      "description": "Source represents the artifact that was analyzed to generate this SBOM, such as a container image, directory, or file archive."
     },
     "SwiftPackageManagerLockEntry": {
       "properties": {
