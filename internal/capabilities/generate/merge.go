@@ -478,18 +478,30 @@ func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry 
 			// strip @version from PURL
 			purlStr := stripPURLVersion(classifier.PURL.String())
 
+			packages := []capabilities.DetectorPackageInfo{
+				{
+					Class: classifier.Class,
+					Name:  classifier.Package,
+					PURL:  purlStr,
+					CPEs:  cpeStrings,
+					Type:  "BinaryPkg",
+				},
+			}
+
+			for _, o := range binaryClassifierOverrides[classifier.Class] {
+				packages = append(packages, capabilities.DetectorPackageInfo{
+					Class: o.Class,
+					Name:  o.Package,
+					PURL:  o.PURL,
+					CPEs:  o.CPEs,
+					Type:  "BinaryPkg",
+				})
+			}
+
 			detectors = append(detectors, capabilities.Detector{
 				Method:   "glob",
 				Criteria: []string{classifier.FileGlob},
-				Packages: []capabilities.DetectorPackageInfo{
-					{
-						Class: classifier.Class,
-						Name:  classifier.Package,
-						PURL:  purlStr,
-						CPEs:  cpeStrings,
-						Type:  "BinaryPkg",
-					},
-				},
+				Packages: packages,
 			})
 		}
 		entry.Detectors = detectors
