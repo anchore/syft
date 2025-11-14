@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 // why the build tags? there is behavior from filepath.ToSlash() that must be tested, but can't be tested on non-windows
 // since the stdlib keeps this functionality behind a build tag (specifically filepath.Separator):

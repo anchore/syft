@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.0.42/document",
+  "$id": "anchore.io/schema/syft/json/16.0.43/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1433,6 +1433,48 @@
       ],
       "description": "FileMetadataEntry contains filesystem-level metadata attributes such as permissions, ownership, type, and size for a cataloged file."
     },
+    "GgufFileHeader": {
+      "properties": {
+        "ggufVersion": {
+          "type": "integer",
+          "description": "GGUFVersion is the GGUF format version (e.g., 3)"
+        },
+        "fileSize": {
+          "type": "integer",
+          "description": "FileSize is the size of the GGUF file in bytes (best-effort if available from resolver)"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the model architecture (from general.architecture, e.g., \"qwen3moe\", \"llama\")"
+        },
+        "quantization": {
+          "type": "string",
+          "description": "Quantization is the quantization type (e.g., \"IQ4_NL\", \"Q4_K_M\")"
+        },
+        "parameters": {
+          "type": "integer",
+          "description": "Parameters is the number of model parameters (if present in header)"
+        },
+        "tensorCount": {
+          "type": "integer",
+          "description": "TensorCount is the number of tensors in the model"
+        },
+        "header": {
+          "type": "object",
+          "description": "RemainingKeyValues contains the remaining key-value pairs from the GGUF header that are not already\nrepresented as typed fields above. This preserves additional metadata fields for reference\n(namespaced with general.*, llama.*, etc.) while avoiding duplication."
+        },
+        "metadataHash": {
+          "type": "string",
+          "description": "MetadataKeyValuesHash is a xx64 hash of all key-value pairs from the GGUF header metadata.\nThis hash is computed over the complete header metadata (including the fields extracted\ninto typed fields above) and provides a stable identifier for the model configuration\nacross different file locations or remotes. It allows matching identical models even\nwhen stored in different repositories or with different filenames."
+        }
+      },
+      "type": "object",
+      "required": [
+        "ggufVersion",
+        "tensorCount"
+      ],
+      "description": "GGUFFileHeader represents metadata extracted from a GGUF (GPT-Generated Unified Format) model file."
+    },
     "GithubActionsUseStatement": {
       "properties": {
         "value": {
@@ -2578,6 +2620,9 @@
             },
             {
               "$ref": "#/$defs/ErlangRebarLockEntry"
+            },
+            {
+              "$ref": "#/$defs/GgufFileHeader"
             },
             {
               "$ref": "#/$defs/GithubActionsUseStatement"

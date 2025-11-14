@@ -62,7 +62,7 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 	switch component.Type {
 	case cyclonedx.ComponentTypeOS:
 	case cyclonedx.ComponentTypeContainer:
-	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary:
+	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary, cyclonedx.ComponentTypeMachineLearningModel:
 		p := decodeComponent(component)
 		idMap[component.BOMRef] = p
 		if component.BOMRef != "" {
