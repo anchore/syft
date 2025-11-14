@@ -281,6 +281,21 @@ jobs:
           name: snapshot
           path: snapshot
 
+      - name: Debug - Check snapshot structure and binary
+        run: |
+          echo "=== Snapshot directory structure ==="
+          ls -la snapshot/ || echo "snapshot/ not found"
+          find snapshot -type f -name 'syft*' -exec ls -lh {} \;
+
+          echo -e "\n=== Binary permissions (ARM64) ==="
+          ls -l snapshot/darwin-build_darwin_arm64_v8.0/syft || echo "ARM64 binary not found"
+
+          echo -e "\n=== Binary permissions (AMD64) ==="
+          ls -l snapshot/darwin-build_darwin_amd64_v1/syft || echo "AMD64 binary not found"
+
+          echo -e "\n=== File type ==="
+          file snapshot/darwin-build_darwin_arm64_v8.0/syft 2>/dev/null || file snapshot/darwin-build_darwin_amd64_v1/syft 2>/dev/null || echo "Cannot check file type"
+
 #      - name: Download checksums file
 #        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
 #        with:
@@ -329,6 +344,25 @@ jobs:
         with:
           name: snapshot
           path: snapshot
+
+      - name: Debug - Check snapshot structure and binary
+        run: |
+          echo "=== Snapshot directory structure ==="
+          ls -la snapshot/ || echo "snapshot/ not found"
+          find snapshot -type f -name 'syft*' -exec ls -lh {} \;
+
+          echo -e "\n=== Binary permissions ==="
+          ls -l snapshot/linux-build_linux_amd64_v1/syft || echo "Binary not found at expected location"
+
+          echo -e "\n=== File type ==="
+          file snapshot/linux-build_linux_amd64_v1/syft || echo "Cannot check file type"
+
+          echo -e "\n=== Attempt to execute ==="
+          ./snapshot/linux-build_linux_amd64_v1/syft version || echo "Binary execution failed with exit code: $?"
+
+          echo -e "\n=== Make executable and retry ==="
+          chmod +x snapshot/linux-build_linux_amd64_v1/syft
+          ./snapshot/linux-build_linux_amd64_v1/syft version || echo "Still failed after chmod with exit code: $?"
 
 #      - name: Download Linux amd64 snapshot
 #        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 #v6.0.0
