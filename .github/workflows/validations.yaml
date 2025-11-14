@@ -122,6 +122,9 @@ jobs:
           name: snapshot
           path: snapshot
 
+      - name: Restore binary permissions
+        run: chmod +x snapshot/*/syft snapshot/*/*.exe 2>/dev/null || true
+
       - name: Run comparison tests (Linux)
         run: make compare-linux
 
@@ -163,6 +166,9 @@ jobs:
           name: snapshot
           path: snapshot
 
+      - name: Restore binary permissions
+        run: chmod +x snapshot/*/syft 2>/dev/null || true
+
       - name: Run comparison tests (Mac)
         run: make compare-mac
 
@@ -193,6 +199,9 @@ jobs:
         with:
           name: snapshot
           path: snapshot
+
+      - name: Restore binary permissions
+        run: chmod +x snapshot/*/syft snapshot/*/*.exe 2>/dev/null || true
 
       - name: Run CLI Tests (Linux)
         run: make cli
