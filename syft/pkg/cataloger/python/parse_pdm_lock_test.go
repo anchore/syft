@@ -28,6 +28,7 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Python package for providing Mozilla's CA Bundle.",
+				Marker:  `python_version >= "3.6"`,
 				Files: []pkg.PythonPdmFileEntry{
 					{
 						URL: "",
@@ -56,6 +57,7 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Universal encoding detector for Python 2 and 3",
+				Marker:  `os_name == "nt"`,
 				Files: []pkg.PythonPdmFileEntry{
 					{
 						URL: "",
@@ -83,6 +85,7 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet.",
+				Marker:  `python_version >= "3.6"`,
 				Files: []pkg.PythonPdmFileEntry{
 					{
 						URL: "",
@@ -111,6 +114,7 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Cross-platform colored terminal text.",
+				Marker:  `sys_platform == "win32"`,
 				Files: []pkg.PythonPdmFileEntry{
 					{
 						URL: "",
@@ -226,6 +230,7 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "Python HTTP for Humans.",
+				Marker:  `python_version >= "3.6"`,
 				Files: []pkg.PythonPdmFileEntry{
 					{
 						URL: "",
@@ -290,6 +295,7 @@ func TestParsePdmLock(t *testing.T) {
 			Type:      pkg.PythonPkg,
 			Metadata: pkg.PythonPdmLockEntry{
 				Summary: "HTTP library with thread-safe connection pooling, file post, and more.",
+				Marker:  `python_version >= "3.6"`,
 				Files: []pkg.PythonPdmFileEntry{
 					{
 						URL: "",
@@ -399,6 +405,7 @@ func TestParsePdmLockWithLicenseEnrichment(t *testing.T) {
 					Type:      pkg.PythonPkg,
 					Metadata: pkg.PythonPdmLockEntry{
 						Summary: "Python package for providing Mozilla's CA Bundle.",
+						Marker:  `python_version >= "3.7"`,
 						Files: []pkg.PythonPdmFileEntry{
 							{
 								URL: "",
@@ -527,6 +534,19 @@ func TestParsePdmLockWithExtras(t *testing.T) {
 	for _, p := range pkgs {
 		pkgMap[p.Name] = p
 	}
+
+	// Verify tomli package has marker preserved
+	var tomliPkg *pkg.Package
+	for i := range pkgs {
+		if pkgs[i].Name == "tomli" {
+			tomliPkg = &pkgs[i]
+			break
+		}
+	}
+	require.NotNil(t, tomliPkg, "tomli package should be found")
+	tomliMeta, ok := tomliPkg.Metadata.(pkg.PythonPdmLockEntry)
+	require.True(t, ok, "tomli metadata should be PythonPdmLockEntry")
+	require.Equal(t, `python_version < "3.11"`, tomliMeta.Marker, "tomli should have marker preserved")
 
 	var foundPytestCovToCoverage bool
 	for _, rel := range relationships {

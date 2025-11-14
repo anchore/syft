@@ -113,12 +113,14 @@ func mergePdmLockPackages(packages []pdmLockPackage) pkg.PythonPdmLockEntry {
 			entry.Summary = p.Summary
 			entry.RequiresPython = p.RequiresPython
 			entry.Dependencies = p.Dependencies
+			entry.Marker = p.Marker
 			baseFiles = files
 		} else {
 			// Extras variant
 			variant := pkg.PythonPdmLockExtraVariant{
 				Extras:       p.Extras,
 				Dependencies: p.Dependencies,
+				Marker:       p.Marker,
 			}
 
 			// Only include files if different from base

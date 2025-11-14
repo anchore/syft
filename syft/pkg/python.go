@@ -88,6 +88,8 @@ type PythonPdmLockExtraVariant struct {
 	Dependencies []string `json:"dependencies,omitempty"`
 	// Files are the package files specific to this variant (only populated if different from base)
 	Files []PythonPdmFileEntry `json:"files,omitempty"`
+	// Marker is the environment conditional expression for this variant (e.g., "python_version < \"3.11\"")
+	Marker string `json:"marker,omitempty"`
 }
 
 // PythonPdmLockEntry represents a single package entry within a pdm.lock file.
