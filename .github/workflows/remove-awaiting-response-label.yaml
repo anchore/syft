@@ -10,7 +10,6 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
-    # Runner definition: workflows/.github/runs-on.yml
     uses: "anchore/workflows/.github/workflows/remove-awaiting-response-label.yaml@main"
     secrets:
       token: ${{ secrets.OSS_PROJECT_GH_TOKEN }}

@@ -192,7 +192,6 @@ jobs:
   release-install-script:
     needs: [release]
     if: ${{ needs.release.result == 'success' }}
-    # Runner definition: workflows/.github/runs-on.yml
     uses: "anchore/workflows/.github/workflows/release-install-script.yaml@main"
     with:
       tag: ${{ github.event.inputs.version }}

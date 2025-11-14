@@ -1,6 +1,7 @@
 name: "Validate GitHub Actions"
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - '.github/workflows/**'

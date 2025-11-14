@@ -7,5 +7,4 @@ permissions:
 
 jobs:
   run:
-    # Runner definition: workflows/.github/runs-on.yml
     uses: anchore/workflows/.github/workflows/dependabot-automation.yaml@main
