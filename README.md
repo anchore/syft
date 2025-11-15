@@ -106,8 +106,8 @@ syft <image> -o <format>
 Where the `formats` available are:
 - `syft-json`: Use this to get as much information out of Syft as possible!
 - `syft-text`: A row-oriented, human-and-machine-friendly output.
-- `cyclonedx-xml`: A XML report conforming to the [CycloneDX 1.6 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-xml@1.5`: A XML report conforming to the [CycloneDX 1.5 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.6 specification](https://cyclonedx.org/specification/overview/).
+- `cyclonedx-xml@1.5`: An XML report conforming to the [CycloneDX 1.5 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.6 specification](https://cyclonedx.org/specification/overview/).
 - `cyclonedx-json@1.5`: A JSON report conforming to the [CycloneDX 1.5 specification](https://cyclonedx.org/specification/overview/).
 - `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.3 specification](https://spdx.github.io/spdx-spec/v2.3/).

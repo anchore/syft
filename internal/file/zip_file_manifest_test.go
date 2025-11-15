@@ -4,6 +4,7 @@
 package file
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path"
@@ -24,7 +25,7 @@ func TestNewZipFileManifest(t *testing.T) {
 
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
-	actual, err := NewZipFileManifest(archiveFilePath)
+	actual, err := NewZipFileManifest(context.Background(), archiveFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
@@ -59,7 +60,7 @@ func TestNewZip64FileManifest(t *testing.T) {
 	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, true)
 
-	actual, err := NewZipFileManifest(archiveFilePath)
+	actual, err := NewZipFileManifest(context.Background(), archiveFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
@@ -99,7 +100,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
-	z, err := NewZipFileManifest(archiveFilePath)
+	z, err := NewZipFileManifest(context.Background(), archiveFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}

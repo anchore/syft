@@ -40,6 +40,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PhpComposerInstalledEntry{},
 		pkg.PhpPearEntry{},
 		pkg.PhpPeclEntry{},
+		pkg.PnpmLockEntry{},
 		pkg.PortageEntry{},
 		pkg.PythonPipfileLockEntry{},
 		pkg.PythonPdmLockEntry{},
@@ -54,6 +55,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.OpamPackage{},
 		pkg.YarnLockEntry{},
 		pkg.TerraformLockProviderEntry{},
+		pkg.GGUFFileHeader{},
 	)
 	tests := []struct {
 		name       string
@@ -347,10 +349,10 @@ func Test_OriginatorSupplier(t *testing.T) {
 			name: "from python PDM lock",
 			input: pkg.Package{
 				Metadata: pkg.PythonPdmLockEntry{
-					Files: []pkg.PythonFileRecord{
+					Files: []pkg.PythonPdmFileEntry{
 						{
-							Path: "",
-							Digest: &pkg.PythonFileDigest{
+							URL: "https://pypi.org/project/testpkg/1.2.3/file1.tar.gz",
+							Digest: pkg.PythonFileDigest{
 								Algorithm: "sha256",
 								Value:     "3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651",
 							},

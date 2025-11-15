@@ -200,9 +200,10 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		},
 		Nix: nix.DefaultConfig().
 			WithCaptureOwnedFiles(cfg.Nix.CaptureOwnedFiles),
-		Python: python.CatalogerConfig{
-			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
-		},
+		Python: python.DefaultCatalogerConfig().
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.SearchRemoteLicenses)).
+			WithPypiBaseURL(cfg.Python.PypiBaseURL).
+			WithGuessUnpinnedRequirements(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.GuessUnpinnedRequirements)),
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseMavenLocalRepository)).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
@@ -285,10 +286,10 @@ func (cfg *Catalog) PostLoad() error {
 
 	cfg.From = Flatten(cfg.From)
 
-	cfg.Catalogers = Flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
-	cfg.Enrich = Flatten(cfg.Enrich)
+	cfg.Catalogers = FlattenAndSort(cfg.Catalogers)
+	cfg.DefaultCatalogers = FlattenAndSort(cfg.DefaultCatalogers)
+	cfg.SelectCatalogers = FlattenAndSort(cfg.SelectCatalogers)
+	cfg.Enrich = FlattenAndSort(cfg.Enrich)
 
 	// for backwards compatibility
 	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
@@ -313,6 +314,11 @@ func Flatten(commaSeparatedEntries []string) []string {
 			out = append(out, strings.TrimSpace(s))
 		}
 	}
+	return out
+}
+
+func FlattenAndSort(commaSeparatedEntries []string) []string {
+	out := Flatten(commaSeparatedEntries)
 	sort.Strings(out)
 	return out
 }
@@ -322,6 +328,7 @@ var publicisedEnrichmentOptions = []string{
 	task.Golang,
 	task.Java,
 	task.JavaScript,
+	task.Python,
 }
 
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {

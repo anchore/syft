@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -17,12 +18,14 @@ func normalize(name string) string {
 	return strings.ToLower(normalized)
 }
 
-func newPackageForIndex(name, version string, locations ...file.Location) pkg.Package {
+func newPackageForIndex(ctx context.Context, lr pythonLicenseResolver, name, version string, locations ...file.Location) pkg.Package {
 	name = normalize(name)
+	licenseSet := lr.getLicenses(ctx, name, version)
 
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
+		Licenses:  licenseSet,
 		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(name, version, nil),
 		Language:  pkg.Python,
@@ -34,12 +37,14 @@ func newPackageForIndex(name, version string, locations ...file.Location) pkg.Pa
 	return p
 }
 
-func newPackageForIndexWithMetadata(name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
 	name = normalize(name)
+	licenseSet := lr.getLicenses(ctx, name, version)
 
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
+		Licenses:  licenseSet,
 		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(name, version, nil),
 		Language:  pkg.Python,
@@ -52,12 +57,14 @@ func newPackageForIndexWithMetadata(name, version string, metadata interface{}, 
 	return p
 }
 
-func newPackageForRequirementsWithMetadata(name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
+func newPackageForRequirementsWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata pkg.PythonRequirementsEntry, locations ...file.Location) pkg.Package {
 	name = normalize(name)
+	licenseSet := lr.getLicenses(ctx, name, version)
 
 	p := pkg.Package{
 		Name:      name,
 		Version:   version,
+		Licenses:  licenseSet,
 		Locations: file.NewLocationSet(locations...),
 		PURL:      packageURL(name, version, nil),
 		Language:  pkg.Python,

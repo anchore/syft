@@ -17,13 +17,13 @@ import (
 
 	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
-	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
 )
 
@@ -55,15 +55,14 @@ var javaArchiveHashes = []crypto.Hash{
 }
 
 type archiveParser struct {
-	fileManifest   intFile.ZipFileManifest
-	location       file.Location
-	archivePath    string
-	contentPath    string
-	fileInfo       archiveFilename
-	detectNested   bool
-	cfg            ArchiveCatalogerConfig
-	maven          *maven.Resolver
-	licenseScanner licenses.Scanner
+	fileManifest intFile.ZipFileManifest
+	location     file.Location
+	archivePath  string
+	contentPath  string
+	fileInfo     archiveFilename
+	detectNested bool
+	cfg          ArchiveCatalogerConfig
+	maven        *maven.Resolver
 }
 
 type genericArchiveParserAdapter struct {
@@ -101,11 +100,6 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 // newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
 // and parse nested archives or ignore them.
 func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
-	licenseScanner, err := licenses.ContextLicenseScanner(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not build license scanner for java archive parser: %w", err)
-	}
-
 	// fetch the last element of the virtual path
 	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
@@ -115,21 +109,20 @@ func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, d
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}
 
-	fileManifest, err := intFile.NewZipFileManifest(archivePath)
+	fileManifest, err := intFile.NewZipFileManifest(ctx, archivePath)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to read files from java archive: %w", err)
 	}
 
 	return &archiveParser{
-		fileManifest:   fileManifest,
-		location:       reader.Location,
-		archivePath:    archivePath,
-		contentPath:    contentPath,
-		fileInfo:       newJavaArchiveFilename(currentFilepath),
-		detectNested:   detectNested,
-		cfg:            cfg,
-		maven:          maven.NewResolver(nil, cfg.mavenConfig()),
-		licenseScanner: licenseScanner,
+		fileManifest: fileManifest,
+		location:     reader.Location,
+		archivePath:  archivePath,
+		contentPath:  contentPath,
+		fileInfo:     newJavaArchiveFilename(currentFilepath),
+		detectNested: detectNested,
+		cfg:          cfg,
+		maven:        maven.NewResolver(nil, cfg.mavenConfig()),
 	}, cleanupFn, nil
 }
 
@@ -233,7 +226,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	}
 
 	// fetch the manifest file
-	contents, err := intFile.ContentsFromZip(j.archivePath, manifestMatches...)
+	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, manifestMatches...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract java manifests (%s): %w", j.location, err)
 	}
@@ -394,8 +387,9 @@ type parsedPomProject struct {
 
 // discoverMainPackageFromPomInfo attempts to resolve maven groupId, artifactId, version and other info from found pom information
 func (j *archiveParser) discoverMainPackageFromPomInfo(ctx context.Context) (group, name, version string, parsedPom *parsedPomProject) {
-	properties, _ := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
-	projects, _ := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	// Find the pom.properties/pom.xml if the names seem like a plausible match
+	properties, _ := pomPropertiesByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
+	projects, _ := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 
 	artifactsMap := j.buildArtifactsMap(properties)
 	pomProperties, parsedPom := j.findBestPomMatch(properties, projects, artifactsMap)
@@ -526,13 +520,13 @@ func (j *archiveParser) discoverPkgsFromAllMavenFiles(ctx context.Context, paren
 	var pkgs []pkg.Package
 
 	// pom.properties
-	properties, err := pomPropertiesByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
+	properties, err := pomPropertiesByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomPropertiesGlob))
 	if err != nil {
 		return nil, err
 	}
 
 	// pom.xml
-	projects, err := pomProjectByParentPath(j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
+	projects, err := pomProjectByParentPath(ctx, j.archivePath, j.location, j.fileManifest.GlobMatch(false, pomXMLGlob))
 	if err != nil {
 		return nil, err
 	}
@@ -569,16 +563,20 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 }
 
 func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
-	var out []pkg.License
-	for _, filename := range licenses.FileNames() {
-		licenseMatches := j.fileManifest.GlobMatch(true, "/META-INF/"+filename)
-		if len(licenseMatches) == 0 {
-			// Try the root directory if it's not in META-INF
-			licenseMatches = j.fileManifest.GlobMatch(true, "/"+filename)
+	// prefer identified licenses, fall back to unknown
+	var identified []pkg.License
+	var unidentified []pkg.License
+
+	for _, glob := range []string{"/META-INF/*", "/*"} {
+		var licenseMatches []string
+		for _, f := range j.fileManifest.GlobMatch(true, glob) {
+			if licenses.IsLicenseFile(path.Base(f)) {
+				licenseMatches = append(licenseMatches, f)
+			}
 		}
 
 		if len(licenseMatches) > 0 {
-			contents, err := intFile.ContentsFromZip(j.archivePath, licenseMatches...)
+			contents, err := intFile.ContentsFromZip(ctx, j.archivePath, licenseMatches...)
 			if err != nil {
 				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
 			}
@@ -586,15 +584,28 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 			for _, licenseMatch := range licenseMatches {
 				licenseContents := contents[licenseMatch]
 				r := strings.NewReader(licenseContents)
-				lics := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
-				if len(lics) > 0 {
-					out = append(out, lics...)
+				foundLicenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+				for _, l := range foundLicenses {
+					if l.SPDXExpression != "" {
+						identified = append(identified, l)
+					} else {
+						unidentified = append(unidentified, l)
+					}
 				}
+			}
+
+			// prefer licenses found in /META-INF
+			if len(identified) > 0 {
+				break
 			}
 		}
 	}
 
-	return out, nil
+	if len(identified) == 0 {
+		return unidentified, nil
+	}
+
+	return identified, nil
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
@@ -606,7 +617,7 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, pare
 // associating each discovered package to the given parent package.
 func discoverPkgsFromZip(ctx context.Context, location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
-	openers, err := intFile.ExtractFromZipToUniqueTempFile(archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
@@ -670,8 +681,8 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	return nestedPkgs, nestedRelationships, nil
 }
 
-func pomPropertiesByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
-	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
+func pomPropertiesByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string) (map[string]pkg.JavaPomProperties, error) {
+	contentsOfMavenPropertiesFiles, err := intFile.ContentsFromZip(ctx, archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -699,8 +710,8 @@ func pomPropertiesByParentPath(archivePath string, location file.Location, extra
 	return propertiesByParentPath, nil
 }
 
-func pomProjectByParentPath(archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
-	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(archivePath, extractPaths...)
+func pomProjectByParentPath(ctx context.Context, archivePath string, location file.Location, extractPaths []string) (map[string]*parsedPomProject, error) {
+	contentsOfMavenProjectFiles, err := intFile.ContentsFromZip(ctx, archivePath, extractPaths...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract maven files: %w", err)
 	}
@@ -799,7 +810,7 @@ func packageIdentitiesMatch(p pkg.Package, parentPkg *pkg.Package) bool {
 		switch {
 		case !ok:
 			log.WithFields("package", p.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", p.Name)
-		case !parentOk:
+		default: // !parentOk
 			log.WithFields("package", parentPkg.String()).Trace("unable to extract java metadata to check for matching package identity for package: %s", parentPkg.Name)
 		}
 		// if we can't extract metadata, we can check for matching identities via the package name

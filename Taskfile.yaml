@@ -1,5 +1,9 @@
 
 version: "3"
+
+includes:
+  generate:cpe-index: ./task.d/generate/cpe-index.yaml
+
 vars:
   OWNER: anchore
   PROJECT: syft
@@ -513,10 +517,11 @@ tasks:
       - "gofmt -s -w ./internal/spdxlicense"
 
   generate-cpe-dictionary-index:
-    desc: Generate the CPE index based off of the latest available CPE dictionary
-    dir: "syft/pkg/cataloger/internal/cpegenerate/dictionary"
+    desc: Generate the CPE index from local cache
     cmds:
-      - "go generate"
+      - task: generate:cpe-index:cache:pull
+      - task: generate:cpe-index:cache:update
+      - task: generate:cpe-index:build
 
   generate-capabilities:
     desc: Generate the capabilities data file

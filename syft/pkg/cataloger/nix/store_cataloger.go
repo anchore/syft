@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 // storeCataloger finds package outputs installed in the Nix store location (/nix/store/*).
@@ -24,6 +25,7 @@ type storeCataloger struct {
 }
 
 // NewStoreCataloger returns a new cataloger object initialized for Nix store files.
+//
 // Deprecated: please use NewCataloger instead
 func NewStoreCataloger() pkg.Cataloger {
 	return newStoreCataloger(Config{CaptureOwnedFiles: true}, "nix-store-cataloger")
@@ -58,11 +60,11 @@ func (c storeCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]
 		}
 	}
 
-	pkgs, rels := c.finalizeStorePackages(prototypes, drvs)
+	pkgs, rels := c.finalizeStorePackages(ctx, resolver, prototypes, drvs)
 	return pkgs, rels, err
 }
 
-func (c storeCataloger) finalizeStorePackages(pkgPrototypes []nixStorePackage, drvs *derivations) ([]pkg.Package, []artifact.Relationship) {
+func (c storeCataloger) finalizeStorePackages(ctx context.Context, resolver file.Resolver, pkgPrototypes []nixStorePackage, drvs *derivations) ([]pkg.Package, []artifact.Relationship) {
 	var pkgs []pkg.Package
 	var pkgByStorePath = make(map[string]pkg.Package)
 	for _, pp := range pkgPrototypes {
@@ -71,6 +73,7 @@ func (c storeCataloger) finalizeStorePackages(pkgPrototypes []nixStorePackage, d
 		}
 
 		p := newNixStorePackage(pp, c.name)
+		p = licenses.RelativeToPackage(ctx, resolver, p)
 		pkgs = append(pkgs, p)
 		pkgByStorePath[pp.Location.RealPath] = p
 	}

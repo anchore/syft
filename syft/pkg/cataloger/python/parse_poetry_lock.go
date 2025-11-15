@@ -16,9 +16,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-// integrity check
-var _ generic.Parser = parsePoetryLock
-
 type poetryPackageSource struct {
 	URL       string `toml:"url"`
 	Type      string `toml:"type"`
@@ -48,9 +45,21 @@ type poetryPackageDependency struct {
 	Extras   []string `toml:"extras"`
 }
 
+type poetryLockParser struct {
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
+}
+
+func newPoetryLockParser(cfg CatalogerConfig) poetryLockParser {
+	return poetryLockParser{
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
+	}
+}
+
 // parsePoetryLock is a parser function for poetry.lock contents, returning all python packages discovered.
-func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	pkgs, err := poetryLockPackages(reader)
+func (plp poetryLockParser) parsePoetryLock(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	pkgs, err := plp.poetryLockPackages(ctx, reader)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -61,7 +70,7 @@ func parsePoetryLock(_ context.Context, _ file.Resolver, _ *generic.Environment,
 	return pkgs, dependency.Resolve(poetryLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
-func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
+func (plp poetryLockParser) poetryLockPackages(ctx context.Context, reader file.LocationReadCloser) ([]pkg.Package, error) {
 	metadata := poetryPackages{}
 	md, err := toml.NewDecoder(reader).Decode(&metadata)
 	if err != nil {
@@ -96,6 +105,8 @@ func poetryLockPackages(reader file.LocationReadCloser) ([]pkg.Package, error) {
 		pkgs = append(
 			pkgs,
 			newPackageForIndexWithMetadata(
+				ctx,
+				plp.licenseResolver,
 				p.Name,
 				p.Version,
 				newPythonPoetryLockEntry(p),

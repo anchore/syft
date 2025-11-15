@@ -225,6 +225,9 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForAPK(p))
 	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
+	case pkg.PEBinary:
+		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
+		vendors.union(candidateVendorsForPE(p))
 	case pkg.WordpressPluginEntry:
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
@@ -301,6 +304,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 	switch p.Metadata.(type) {
 	case pkg.ApkDBEntry:
 		products.union(candidateProductsForAPK(p))
+	case pkg.PEBinary:
+		// Add PE-specific product hints (e.g. ghostscript)
+		products.union(candidateProductsForPE(p))
 	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))

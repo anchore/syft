@@ -13,8 +13,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// integrity check
-var _ generic.Parser = parseSetup
+type setupFileParser struct {
+	cfg             CatalogerConfig
+	licenseResolver pythonLicenseResolver
+}
+
+func newSetupFileParser(cfg CatalogerConfig) setupFileParser {
+	return setupFileParser{
+		cfg:             cfg,
+		licenseResolver: newPythonLicenseResolver(cfg),
+	}
+}
 
 // match examples:
 //
@@ -24,7 +33,7 @@ var _ generic.Parser = parseSetup
 var pinnedDependency = regexp.MustCompile(`['"]\W?(\w+\W?==\W?[\w.]*)`)
 var unquotedPinnedDependency = regexp.MustCompile(`^\s*(\w+)\s*==\s*([\w\.\-]+)`)
 
-func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (sp setupFileParser) parseSetupFile(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 
 	scanner := bufio.NewScanner(reader)
@@ -33,23 +42,23 @@ func parseSetup(_ context.Context, _ file.Resolver, _ *generic.Environment, read
 		line := scanner.Text()
 		line = strings.TrimRight(line, "\n")
 
-		packages = processQuotedDependencies(line, reader, packages)
-		packages = processUnquotedDependency(line, reader, packages)
+		packages = sp.processQuotedDependencies(ctx, line, reader, packages)
+		packages = sp.processUnquotedDependency(ctx, line, reader, packages)
 	}
 
 	return packages, nil, nil
 }
 
-func processQuotedDependencies(line string, reader file.LocationReadCloser, packages []pkg.Package) []pkg.Package {
+func (sp setupFileParser) processQuotedDependencies(ctx context.Context, line string, reader file.LocationReadCloser, packages []pkg.Package) []pkg.Package {
 	for _, match := range pinnedDependency.FindAllString(line, -1) {
-		if p, ok := parseQuotedDependency(match, line, reader); ok {
+		if p, ok := sp.parseQuotedDependency(ctx, match, line, reader); ok {
 			packages = append(packages, p)
 		}
 	}
 	return packages
 }
 
-func parseQuotedDependency(match, line string, reader file.LocationReadCloser) (pkg.Package, bool) {
+func (sp setupFileParser) parseQuotedDependency(ctx context.Context, match, line string, reader file.LocationReadCloser) (pkg.Package, bool) {
 	parts := strings.Split(match, "==")
 	if len(parts) != 2 {
 		return pkg.Package{}, false
@@ -58,11 +67,11 @@ func parseQuotedDependency(match, line string, reader file.LocationReadCloser) (
 	name := cleanDependencyString(parts[0])
 	version := cleanDependencyString(parts[len(parts)-1])
 
-	return validateAndCreatePackage(name, version, line, reader)
+	return sp.validateAndCreatePackage(ctx, name, version, line, reader)
 }
 
 // processUnquotedDependency extracts and processes an unquoted dependency from a line
-func processUnquotedDependency(line string, reader file.LocationReadCloser, packages []pkg.Package) []pkg.Package {
+func (sp setupFileParser) processUnquotedDependency(ctx context.Context, line string, reader file.LocationReadCloser, packages []pkg.Package) []pkg.Package {
 	matches := unquotedPinnedDependency.FindStringSubmatch(line)
 	if len(matches) != 3 {
 		return packages
@@ -71,7 +80,7 @@ func processUnquotedDependency(line string, reader file.LocationReadCloser, pack
 	name := strings.TrimSpace(matches[1])
 	version := strings.TrimSpace(matches[2])
 
-	if p, ok := validateAndCreatePackage(name, version, line, reader); ok {
+	if p, ok := sp.validateAndCreatePackage(ctx, name, version, line, reader); ok {
 		if !isDuplicatePackage(p, packages) {
 			packages = append(packages, p)
 		}
@@ -87,7 +96,7 @@ func cleanDependencyString(s string) string {
 	return s
 }
 
-func validateAndCreatePackage(name, version, line string, reader file.LocationReadCloser) (pkg.Package, bool) {
+func (sp setupFileParser) validateAndCreatePackage(ctx context.Context, name, version, line string, reader file.LocationReadCloser) (pkg.Package, bool) {
 	if hasTemplateDirective(name) || hasTemplateDirective(version) {
 		// this can happen in more dynamic setup.py where there is templating
 		return pkg.Package{}, false
@@ -99,6 +108,8 @@ func validateAndCreatePackage(name, version, line string, reader file.LocationRe
 	}
 
 	p := newPackageForIndex(
+		ctx,
+		sp.licenseResolver,
 		name,
 		version,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),

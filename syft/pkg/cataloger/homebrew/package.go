@@ -1,15 +1,22 @@
 package homebrew
 
 import (
+	"context"
+	"path"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
-func newHomebrewPackage(pd parsedHomebrewData, formulaLocation file.Location) pkg.Package {
-	var licenses []string
+func newHomebrewPackage(ctx context.Context, resolver file.Resolver, pd parsedHomebrewData, formulaLocation file.Location) pkg.Package {
+	var lics []pkg.License
 	if pd.License != "" {
-		licenses = append(licenses, pd.License)
+		lics = append(lics, pkg.NewLicensesFromValues(pd.License)...)
+	} else {
+		// sometimes licenses are included in the parent directory
+		lics = licenses.FindInDirs(ctx, resolver, path.Dir(formulaLocation.Path()))
 	}
 
 	p := pkg.Package{
@@ -17,7 +24,7 @@ func newHomebrewPackage(pd parsedHomebrewData, formulaLocation file.Location) pk
 		Version:   pd.Version,
 		Type:      pkg.HomebrewPkg,
 		Locations: file.NewLocationSet(formulaLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValues(licenses...)...),
+		Licenses:  pkg.NewLicenseSet(lics...),
 		FoundBy:   "homebrew-cataloger",
 		PURL:      packageURL(pd.Name, pd.Version),
 		Metadata: pkg.HomebrewFormula{

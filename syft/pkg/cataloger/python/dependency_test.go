@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -259,7 +260,8 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 			fh, err := os.Open(tt.fixture)
 			require.NoError(t, err)
 
-			pkgs, err := poetryLockPackages(file.NewLocationReadCloser(file.NewLocation(tt.fixture), fh))
+			plp := newPoetryLockParser(DefaultCatalogerConfig())
+			pkgs, err := plp.poetryLockPackages(context.TODO(), file.NewLocationReadCloser(file.NewLocation(tt.fixture), fh))
 			require.NoError(t, err)
 
 			var got []dependency.Specification
@@ -270,6 +272,187 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 			if d := cmp.Diff(tt.want, got); d != "" {
 				t.Errorf("wrong result (-want +got):\n%s", d)
 			}
+		})
+	}
+}
+
+func Test_pdmLockDependencySpecifier(t *testing.T) {
+
+	tests := []struct {
+		name string
+		p    pkg.Package
+		want dependency.Specification
+	}{
+		{
+			name: "no dependencies",
+			p: pkg.Package{
+				Name: "foo",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+				},
+			},
+		},
+		{
+			name: "with simple dependencies",
+			p: pkg.Package{
+				Name: "requests",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{
+						"certifi>=2017.4.17",
+						"urllib3<1.27,>=1.21.1",
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"requests"},
+					Requires: []string{"certifi", "urllib3"},
+				},
+			},
+		},
+		{
+			name: "with dependencies containing environment markers",
+			p: pkg.Package{
+				Name: "requests",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{
+						"certifi>=2017.4.17",
+						"chardet<5,>=3.0.2; python_version < \"3\"",
+						"charset-normalizer~=2.0.0; python_version >= \"3\"",
+						"idna<3,>=2.5; python_version < \"3\"",
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"requests"},
+					Requires: []string{"certifi", "chardet", "charset-normalizer", "idna"},
+				},
+			},
+		},
+		{
+			name: "with dependencies containing extras",
+			p: pkg.Package{
+				Name: "pytest-cov",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{
+						"coverage[toml]>=5.2.1",
+						"pytest>=4.6",
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"pytest-cov"},
+					Requires: []string{"coverage", "pytest"},
+				},
+			},
+		},
+		{
+			name: "package with single extra variant",
+			p: pkg.Package{
+				Name: "coverage",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{}, // base package has no dependencies
+					Extras: []pkg.PythonPdmLockExtraVariant{
+						{
+							Extras: []string{"toml"},
+							Dependencies: []string{
+								"coverage==7.4.1", // self-reference, should be excluded
+								"tomli; python_full_version <= \"3.11.0a6\"",
+							},
+						},
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"coverage"},
+					Requires: nil,
+				},
+				Variants: []dependency.ProvidesRequires{
+					{
+						Provides: []string{"coverage[toml]"},
+						Requires: []string{"tomli"}, // coverage self-reference excluded
+					},
+				},
+			},
+		},
+		{
+			name: "package with multiple extras in one variant",
+			p: pkg.Package{
+				Name: "foo",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{"bar>=1.0"},
+					Extras: []pkg.PythonPdmLockExtraVariant{
+						{
+							Extras: []string{"dev", "test"},
+							Dependencies: []string{
+								"pytest>=6.0",
+								"black~=22.0",
+								"foo==1.0.0", // self-reference, should be excluded
+							},
+						},
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: []string{"bar"},
+				},
+				Variants: []dependency.ProvidesRequires{
+					{
+						Provides: []string{"foo[dev]", "foo[test]"},
+						Requires: []string{"pytest", "black"}, // foo self-reference excluded
+					},
+				},
+			},
+		},
+		{
+			name: "package with multiple separate extra variants",
+			p: pkg.Package{
+				Name: "example",
+				Metadata: pkg.PythonPdmLockEntry{
+					Dependencies: []string{"requests"},
+					Extras: []pkg.PythonPdmLockExtraVariant{
+						{
+							Extras:       []string{"redis"},
+							Dependencies: []string{"redis>=4.0"},
+						},
+						{
+							Extras:       []string{"postgres"},
+							Dependencies: []string{"psycopg2>=2.9"},
+						},
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"example"},
+					Requires: []string{"requests"},
+				},
+				Variants: []dependency.ProvidesRequires{
+					{
+						Provides: []string{"example[redis]"},
+						Requires: []string{"redis"},
+					},
+					{
+						Provides: []string{"example[postgres]"},
+						Requires: []string{"psycopg2"},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, pdmLockDependencySpecifier(tt.p))
 		})
 	}
 }

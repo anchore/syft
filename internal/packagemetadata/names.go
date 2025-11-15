@@ -95,10 +95,11 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.NpmPackage{}, "javascript-npm-package", "NpmPackageJsonMetadata"),
 	jsonNames(pkg.NpmPackageLockEntry{}, "javascript-npm-package-lock-entry", "NpmPackageLockJsonMetadata"),
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
+	jsonNames(pkg.PnpmLockEntry{}, "javascript-pnpm-lock-entry"),
 	jsonNames(pkg.PEBinary{}, "pe-binary"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
-	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),
+	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),                                                 //nolint:staticcheck
 	jsonNames(pkg.PhpPearEntry{}, "php-pear-entry"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
 	jsonNames(pkg.PythonPackage{}, "python-package", "PythonPackageMetadata"),
@@ -123,6 +124,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 	jsonNames(pkg.CondaMetaPackage{}, "conda-metadata-entry", "CondaPackageMetadata"),
+	jsonNames(pkg.GGUFFileHeader{}, "gguf-file-header"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

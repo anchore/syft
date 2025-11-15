@@ -16,12 +16,15 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 // pnpmPackage holds the raw name and version extracted from the lockfile.
 type pnpmPackage struct {
-	Name    string
-	Version string
+	Name         string
+	Version      string
+	Integrity    string
+	Dependencies map[string]string
 }
 
 // pnpmLockfileParser defines the interface for parsing different versions of pnpm lockfiles.
@@ -29,17 +32,35 @@ type pnpmLockfileParser interface {
 	Parse(version float64, data []byte) ([]pnpmPackage, error)
 }
 
+type pnpmV6PackageEntry struct {
+	Resolution   map[string]string `yaml:"resolution"`
+	Dependencies map[string]string `yaml:"dependencies"`
+}
+
 // pnpmV6LockYaml represents the structure of pnpm lockfiles for versions < 9.0.
 type pnpmV6LockYaml struct {
-	Dependencies map[string]interface{} `yaml:"dependencies"`
-	Packages     map[string]interface{} `yaml:"packages"`
+	Dependencies map[string]interface{}        `yaml:"dependencies"`
+	Packages     map[string]pnpmV6PackageEntry `yaml:"packages"`
+}
+
+type pnpmV9SnapshotEntry struct {
+	Dependencies               map[string]string `yaml:"dependencies"`
+	Optional                   bool              `yaml:"optional"`
+	OptionalDependencies       map[string]string `yaml:"optionalDependencies"`
+	TransitivePeerDependencies []string          `yaml:"transitivePeerDependencies"`
+}
+
+type pnpmV9PackageEntry struct {
+	Resolution       map[string]string `yaml:"resolution"`
+	PeerDependencies map[string]string `yaml:"peerDependencies"`
 }
 
 // pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
 type pnpmV9LockYaml struct {
-	LockfileVersion string                 `yaml:"lockfileVersion"`
-	Importers       map[string]interface{} `yaml:"importers"` // Using interface{} for forward compatibility
-	Packages        map[string]interface{} `yaml:"packages"`
+	LockfileVersion string                         `yaml:"lockfileVersion"`
+	Importers       map[string]interface{}         `yaml:"importers"` // Using interface{} for forward compatibility
+	Packages        map[string]pnpmV9PackageEntry  `yaml:"packages"`
+	Snapshots       map[string]pnpmV9SnapshotEntry `yaml:"snapshots"`
 }
 
 type genericPnpmLockAdapter struct {
@@ -77,14 +98,26 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 	}
 
 	// All transitive dependencies
-	for key := range p.Packages {
+	for key, pkgInfo := range p.Packages {
 		name, ver, ok := parsePnpmPackageKey(key, splitChar)
 		if !ok {
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver}
+
+		integrity := ""
+		if value, ok := pkgInfo.Resolution["integrity"]; ok {
+			integrity = value
+		}
+
+		dependencies := make(map[string]string)
+		for depName, depVersion := range pkgInfo.Dependencies {
+			var normalizedVersion = strings.SplitN(depVersion, "(", 2)[0]
+			dependencies[depName] = normalizedVersion
+		}
+
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrity, Dependencies: dependencies}
 	}
 
 	return toSortedSlice(packages), nil
@@ -100,7 +133,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 
 	// In v9, all resolved dependencies are listed in the top-level "packages" field.
 	// The key format is like /<name>@<version> or /<name>@<version>(<peer-deps>).
-	for key := range p.Packages {
+	for key, entry := range p.Packages {
 		// The separator for name and version is consistently '@' in v9+ keys.
 		name, ver, ok := parsePnpmPackageKey(key, "@")
 		if !ok {
@@ -108,7 +141,26 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"]}
+	}
+
+	for key, snapshotInfo := range p.Snapshots {
+		name, ver, ok := parsePnpmPackageKey(key, "@")
+		if !ok {
+			log.WithFields("key", key).Trace("unable to parse pnpm v9 package snapshot key")
+			continue
+		}
+		pkgKey := name + "@" + ver
+		if pkg, ok := packages[pkgKey]; ok {
+			pkg.Dependencies = make(map[string]string)
+			for name, versionSpecifier := range snapshotInfo.Dependencies {
+				var normalizedVersion = strings.SplitN(versionSpecifier, "(", 2)[0]
+				pkg.Dependencies[name] = normalizedVersion
+			}
+			packages[pkgKey] = pkg
+		} else {
+			log.WithFields("package", pkgKey).Trace("package not found in packages map")
+		}
 	}
 
 	return toSortedSlice(packages), nil
@@ -149,10 +201,10 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 
 	packages := make([]pkg.Package, len(pnpmPkgs))
 	for i, p := range pnpmPkgs {
-		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version)
+		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies)
 	}
 
-	return packages, nil, unknown.IfEmptyf(packages, "unable to determine packages")
+	return packages, dependency.Resolve(pnpmLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")
 }
 
 // parseVersionField extracts the version string from a dependency entry.

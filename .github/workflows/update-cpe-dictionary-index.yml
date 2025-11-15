@@ -14,6 +14,9 @@ env:
 jobs:
   upgrade-cpe-dictionary-index:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: github.repository == 'anchore/syft' # only run for main repo
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
@@ -22,18 +25,31 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        id: bootstrap
 
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | ${{ steps.bootstrap.outputs.oras }} login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - run: |
-          make generate-cpe-dictionary-index
+      - name: Pull CPE cache from registry
+        run: make generate:cpe-index:cache:pull
 
-      - uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a #v2.1.0
+      - name: Update CPE cache from NVD API
+        run: make generate:cpe-index:cache:update
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      - name: Generate CPE dictionary index
+        run: make generate:cpe-index:build
+
+      - name: Push updated CPE cache to registry
+        run: make generate:cpe-index:cache:push
+
+      - uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42 #v2.1.4
         id: generate-token
         with:
-          app_id: ${{ secrets.TOKEN_APP_ID }}
-          private_key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.TOKEN_APP_ID }}
+          private-key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
 
       - uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
         with:

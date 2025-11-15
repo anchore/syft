@@ -72,8 +72,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			require.NoError(t, err)
 
 			// setup parser
-			ap, cleanupFn, err := newJavaArchiveParser(
-				ctx,
+			ap, cleanupFn, err := newJavaArchiveParser(context.Background(),
 				file.LocationReadCloser{
 					Location:   file.NewLocation(fixture.Name()),
 					ReadCloser: fixture,
@@ -373,8 +372,7 @@ func TestParseJar(t *testing.T) {
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
 			}
-			parser, cleanupFn, err := newJavaArchiveParser(
-				ctx,
+			parser, cleanupFn, err := newJavaArchiveParser(context.Background(),
 				file.LocationReadCloser{
 					Location:   file.NewLocation(fixture.Name()),
 					ReadCloser: fixture,
@@ -1478,7 +1476,6 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 }
 
 func Test_deterministicMatchingPomProperties(t *testing.T) {
-	ctx := pkgtest.Context()
 	tests := []struct {
 		fixture  string
 		expected maven.ID
@@ -1502,8 +1499,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					fixture, err := os.Open(fixturePath)
 					require.NoError(t, err)
 
-					parser, cleanupFn, err := newJavaArchiveParser(
-						ctx,
+					parser, cleanupFn, err := newJavaArchiveParser(context.Background(),
 						file.LocationReadCloser{
 							Location:   file.NewLocation(fixture.Name()),
 							ReadCloser: fixture,
@@ -1640,8 +1636,7 @@ func Test_jarPomPropertyResolutionDoesNotPanic(t *testing.T) {
 
 	ctx := context.TODO()
 	// setup parser
-	ap, cleanupFn, err := newJavaArchiveParser(
-		ctx,
+	ap, cleanupFn, err := newJavaArchiveParser(context.Background(),
 		file.LocationReadCloser{
 			Location:   file.NewLocation(fixture.Name()),
 			ReadCloser: fixture,

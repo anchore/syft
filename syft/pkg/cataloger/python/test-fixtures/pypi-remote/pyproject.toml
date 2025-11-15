@@ -1,0 +1,9 @@
+[tool.poetry]
+name = "testpkg"
+version = "0.1.0"
+description = ""
+authors = ["Alex Goodman <wagoodman@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+certifi = "^2025.10.5"

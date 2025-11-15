@@ -88,8 +88,8 @@ func runCatalogerList(opts *catalogerListOptions) error {
 }
 
 func catalogerListReport(opts *catalogerListOptions, allTaskGroups [][]task.Task) (string, error) {
-	defaultCatalogers := options.Flatten(opts.DefaultCatalogers)
-	selectCatalogers := options.Flatten(opts.SelectCatalogers)
+	defaultCatalogers := options.FlattenAndSort(opts.DefaultCatalogers)
+	selectCatalogers := options.FlattenAndSort(opts.SelectCatalogers)
 	selectedTaskGroups, selectionEvidence, err := task.SelectInGroups(
 		allTaskGroups,
 		cataloging.NewSelectionRequest().

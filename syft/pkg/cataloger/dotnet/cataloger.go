@@ -13,12 +13,14 @@ func NewDotnetDepsBinaryCataloger(config CatalogerConfig) pkg.Cataloger {
 }
 
 // NewDotnetDepsCataloger returns a cataloger based on deps.json file contents.
+//
 // Deprecated: use NewDotnetDepsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 func NewDotnetDepsCataloger() pkg.Cataloger {
 	return &depsCataloger{}
 }
 
 // NewDotnetPortableExecutableCataloger returns a cataloger based on PE file contents.
+//
 // Deprecated: use NewDotnetDepsBinaryCataloger instead which combines the PE and deps.json data which yields more accurate results (will be removed in syft v2.0).
 func NewDotnetPortableExecutableCataloger() pkg.Cataloger {
 	return &binaryCataloger{}

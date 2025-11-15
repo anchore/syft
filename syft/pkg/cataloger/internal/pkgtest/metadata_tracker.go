@@ -1,3 +1,5 @@
+// Package pkgtest provides test helpers for cataloger and parser testing,
+// including automatic observation tracking for capability documentation.
 package pkgtest
 
 import (
@@ -14,6 +16,19 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+var (
+	globalTracker     *MetadataTracker
+	globalTrackerOnce sync.Once
+
+	// commonPackageIntegrityFields are common field names used to store integrity hashes in package metadata.
+	// TODO: this is a best-effort list and may need to be expanded as new package types are added. Don't depend on this list to catch everything - it's only for test validation.
+	commonPackageIntegrityFields = []string{
+		"Integrity", "Checksum", "H1Digest",
+		"OutputHash", "PkgHash", "ContentHash",
+		"PkgHashExt", "Hash", "IntegrityHash",
+	}
+)
+
 // MetadataTracker collects metadata type and package type usage during test execution
 type MetadataTracker struct {
 	mu                    sync.Mutex
@@ -25,15 +40,6 @@ type MetadataTracker struct {
 	// unified observations for the current test package
 	observations *pkgtestobservation.Test
 }
-
-const (
-	unknownPackageType = "UnknownPackage"
-)
-
-var (
-	globalTracker     *MetadataTracker
-	globalTrackerOnce sync.Once
-)
 
 // getTracker returns the singleton metadata tracker
 func getTracker() *MetadataTracker {
@@ -101,7 +107,7 @@ func (t *MetadataTracker) RecordParserPackageType(packageName, parserFunction, p
 	}
 
 	// filter out unknown types
-	if pkgType == unknownPackageType || pkgType == "" {
+	if pkgType == pkg.UnknownPkg.String() || pkgType == "" {
 		return
 	}
 
@@ -126,7 +132,7 @@ func (t *MetadataTracker) RecordCatalogerPackageType(catalogerName, pkgType stri
 	}
 
 	// filter out unknown types
-	if pkgType == unknownPackageType || pkgType == "" {
+	if pkgType == pkg.UnknownPkg.String() || pkgType == "" {
 		return
 	}
 
@@ -166,45 +172,15 @@ func (t *MetadataTracker) RecordCatalogerPackageMetadata(catalogerName string, p
 	t.RecordCatalogerPackageType(catalogerName, string(p.Type))
 }
 
-// observationHolder provides a common interface for parser and cataloger observations
-type observationHolder interface {
-	GetMetadataTypes() *[]string
-	GetPackageTypes() *[]string
-	GetObservations() *pkgtestobservation.Observations
-}
-
-// parserObservationHolder wraps a parser observation
-type parserObservationHolder struct{ *pkgtestobservation.Parser }
-
-func (p parserObservationHolder) GetMetadataTypes() *[]string {
-	return &p.MetadataTypes
-}
-func (p parserObservationHolder) GetPackageTypes() *[]string {
-	return &p.PackageTypes
-}
-func (p parserObservationHolder) GetObservations() *pkgtestobservation.Observations {
-	return &p.Observations
-}
-
-// catalogerObservationHolder wraps a cataloger observation
-type catalogerObservationHolder struct{ *pkgtestobservation.Cataloger }
-
-func (c catalogerObservationHolder) GetMetadataTypes() *[]string {
-	return &c.MetadataTypes
-}
-func (c catalogerObservationHolder) GetPackageTypes() *[]string {
-	return &c.PackageTypes
-}
-func (c catalogerObservationHolder) GetObservations() *pkgtestobservation.Observations {
-	return &c.Observations
-}
-
-// aggregateObservations aggregates package and relationship observations into the holder
-func aggregateObservations(holder observationHolder, pkgs []pkg.Package, relationships []artifact.Relationship) {
-	metadataTypes := holder.GetMetadataTypes()
-	packageTypes := holder.GetPackageTypes()
-	obs := holder.GetObservations()
-
+// aggregateObservations aggregates package and relationship observations into metadata types, package types, and observations.
+// this is used by both parser and cataloger observation recording.
+func aggregateObservations(
+	metadataTypes *[]string,
+	packageTypes *[]string,
+	obs *pkgtestobservation.Observations,
+	pkgs []pkg.Package,
+	relationships []artifact.Relationship,
+) {
 	// aggregate observations from packages
 	for _, p := range pkgs {
 		// metadata types
@@ -217,7 +193,7 @@ func aggregateObservations(holder observationHolder, pkgs []pkg.Package, relatio
 
 		// package types
 		pkgType := string(p.Type)
-		if pkgType != "" && pkgType != unknownPackageType && !contains(*packageTypes, pkgType) {
+		if pkgType != "" && pkgType != pkg.UnknownPkg.String() && !contains(*packageTypes, pkgType) {
 			*packageTypes = append(*packageTypes, pkgType)
 		}
 
@@ -269,6 +245,7 @@ func (t *MetadataTracker) ensureObservationsInitialized(packageName string) {
 			Catalogers: make(map[string]*pkgtestobservation.Cataloger),
 			Parsers:    make(map[string]*pkgtestobservation.Parser),
 		}
+		return
 	}
 
 	// update package name if not set (for the first test) or if it matches (for subsequent tests in same package)
@@ -277,7 +254,33 @@ func (t *MetadataTracker) ensureObservationsInitialized(packageName string) {
 	}
 }
 
-// RecordParserObservations records comprehensive observations for a parser
+// getOrCreateParser gets an existing parser observation or creates a new one.
+// must be called with t.mu locked.
+func (t *MetadataTracker) getOrCreateParser(parserFunction string) *pkgtestobservation.Parser {
+	if t.observations.Parsers[parserFunction] == nil {
+		t.observations.Parsers[parserFunction] = &pkgtestobservation.Parser{
+			MetadataTypes: []string{},
+			PackageTypes:  []string{},
+			Observations:  pkgtestobservation.Observations{},
+		}
+	}
+	return t.observations.Parsers[parserFunction]
+}
+
+// getOrCreateCataloger gets an existing cataloger observation or creates a new one.
+// must be called with t.mu locked.
+func (t *MetadataTracker) getOrCreateCataloger(catalogerName string) *pkgtestobservation.Cataloger {
+	if t.observations.Catalogers[catalogerName] == nil {
+		t.observations.Catalogers[catalogerName] = &pkgtestobservation.Cataloger{
+			MetadataTypes: []string{},
+			PackageTypes:  []string{},
+			Observations:  pkgtestobservation.Observations{},
+		}
+	}
+	return t.observations.Catalogers[catalogerName]
+}
+
+// RecordParserObservations records comprehensive observations for a parser.
 func (t *MetadataTracker) RecordParserObservations(
 	packageName, parserFunction string,
 	pkgs []pkg.Package,
@@ -291,20 +294,11 @@ func (t *MetadataTracker) RecordParserObservations(
 	defer t.mu.Unlock()
 
 	t.ensureObservationsInitialized(packageName)
-
-	// get or create parser observation
-	if t.observations.Parsers[parserFunction] == nil {
-		t.observations.Parsers[parserFunction] = &pkgtestobservation.Parser{
-			MetadataTypes: []string{},
-			PackageTypes:  []string{},
-			Observations:  pkgtestobservation.Observations{},
-		}
-	}
-
-	aggregateObservations(parserObservationHolder{t.observations.Parsers[parserFunction]}, pkgs, relationships)
+	parser := t.getOrCreateParser(parserFunction)
+	aggregateObservations(&parser.MetadataTypes, &parser.PackageTypes, &parser.Observations, pkgs, relationships)
 }
 
-// RecordCatalogerObservations records comprehensive observations for a cataloger
+// RecordCatalogerObservations records comprehensive observations for a cataloger.
 func (t *MetadataTracker) RecordCatalogerObservations(
 	packageName, catalogerName string,
 	pkgs []pkg.Package,
@@ -318,20 +312,16 @@ func (t *MetadataTracker) RecordCatalogerObservations(
 	defer t.mu.Unlock()
 
 	t.ensureObservationsInitialized(packageName)
-
-	// get or create cataloger observation
-	if t.observations.Catalogers[catalogerName] == nil {
-		t.observations.Catalogers[catalogerName] = &pkgtestobservation.Cataloger{
-			MetadataTypes: []string{},
-			PackageTypes:  []string{},
-			Observations:  pkgtestobservation.Observations{},
-		}
-	}
-
-	aggregateObservations(catalogerObservationHolder{t.observations.Catalogers[catalogerName]}, pkgs, relationships)
+	cataloger := t.getOrCreateCataloger(catalogerName)
+	aggregateObservations(&cataloger.MetadataTypes, &cataloger.PackageTypes, &cataloger.Observations, pkgs, relationships)
 }
 
-// getMetadataTypeName returns the fully qualified type name of metadata
+// ===== Metadata Type and Capability Detection =====
+// These functions use reflection to inspect package metadata and detect capabilities.
+// They are best-effort and may not catch all cases.
+
+// getMetadataTypeName returns the fully qualified type name of metadata (e.g., "pkg.ApkDBEntry").
+// extracts just the last package path segment to keep names concise.
 func getMetadataTypeName(metadata interface{}) string {
 	if metadata == nil {
 		return ""
@@ -350,54 +340,35 @@ func getMetadataTypeName(metadata interface{}) string {
 	// return pkg path + type name (e.g., "pkg.ApkDBEntry")
 	if t.PkgPath() != "" {
 		// extract just "pkg" from "github.com/anchore/syft/syft/pkg"
-		pkgPath := t.PkgPath()
-		if idx := len(pkgPath) - 1; idx >= 0 {
-			// find last segment
-			for i := len(pkgPath) - 1; i >= 0; i-- {
-				if pkgPath[i] == '/' {
-					pkgPath = pkgPath[i+1:]
-					break
-				}
-			}
-		}
+		pkgPath := lastPathSegment(t.PkgPath())
 		return pkgPath + "." + t.Name()
 	}
 
 	return t.Name()
 }
 
-// hasIntegrityHash checks if metadata contains an integrity hash field
-// Note: this is a best-effort check, this is not meant to be exhaustive or a catch-all.
-// DO NOT DEPEND ON THESE VALUES IN AUTO-GENERATED CAPABILITIES DEFINITIONS in packages.yaml.
-// This should only be used for cross checking assumptions in completion tests, nothing more.
-func hasIntegrityHash(metadata interface{}) bool {
-	if metadata == nil {
-		return false
-	}
-
-	v := reflect.ValueOf(metadata)
-	if v.Kind() == reflect.Ptr {
-		if v.IsNil() {
-			return false
+// lastPathSegment extracts the last segment from a package path.
+// for example: "github.com/anchore/syft/syft/pkg" -> "pkg"
+func lastPathSegment(path string) string {
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == '/' {
+			return path[i+1:]
 		}
-		v = v.Elem()
 	}
+	return path
+}
 
-	// only structs have fields
-	if v.Kind() != reflect.Struct {
+// hasIntegrityHash checks if metadata contains an integrity hash field.
+// note: this uses a best-effort approach checking common field names.
+// DO NOT depend on these values in auto-generated capabilities definitions - use for test validation only.
+func hasIntegrityHash(metadata interface{}) bool {
+	v := dereferenceToStruct(metadata)
+	if !v.IsValid() || v.Kind() != reflect.Struct {
 		return false
 	}
 
-	// check for common integrity hash field names
-	integrityFields := []string{
-		"Integrity", "Checksum", "H1Digest",
-		"OutputHash", "PkgHash", "ContentHash",
-		"PkgHashExt", "Hash", "IntegrityHash",
-	}
-
-	for _, fieldName := range integrityFields {
-		field := v.FieldByName(fieldName)
-		if field.IsValid() && field.Kind() == reflect.String && field.String() != "" {
+	for _, fieldName := range commonPackageIntegrityFields {
+		if hasPopulatedStringField(v, fieldName) {
 			return true
 		}
 	}
@@ -405,24 +376,11 @@ func hasIntegrityHash(metadata interface{}) bool {
 }
 
 // hasFileDigests checks if metadata contains file records with digests.
-// Note: this is a best-effort check, this is not meant to be exhaustive or a catch-all.
-// DO NOT DEPEND ON THESE VALUES IN AUTO-GENERATED CAPABILITIES DEFINITIONS in packages.yaml.
-// This should only be used for cross checking assumptions in completion tests, nothing more.
+// note: uses a best-effort approach for detection.
+// DO NOT depend on these values in auto-generated capabilities definitions - use for test validation only.
 func hasFileDigests(metadata interface{}) bool {
-	if metadata == nil {
-		return false
-	}
-
-	v := reflect.ValueOf(metadata)
-	if v.Kind() == reflect.Ptr {
-		if v.IsNil() {
-			return false
-		}
-		v = v.Elem()
-	}
-
-	// only structs have fields
-	if v.Kind() != reflect.Struct {
+	v := dereferenceToStruct(metadata)
+	if !v.IsValid() || v.Kind() != reflect.Struct {
 		return false
 	}
 
@@ -440,18 +398,33 @@ func hasFileDigests(metadata interface{}) bool {
 	return false
 }
 
-// hasPopulatedDigest checks if a file record has a populated Digest field
-func hasPopulatedDigest(fileRecord reflect.Value) bool {
-	// handle pointer to struct
-	if fileRecord.Kind() == reflect.Ptr {
-		if fileRecord.IsNil() {
-			return false
-		}
-		fileRecord = fileRecord.Elem()
+// dereferenceToStruct handles pointer dereferencing and returns the underlying value.
+// returns an invalid value if the input is nil or not convertible to a struct.
+func dereferenceToStruct(v interface{}) reflect.Value {
+	if v == nil {
+		return reflect.Value{}
 	}
 
-	// only structs have fields
-	if fileRecord.Kind() != reflect.Struct {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return reflect.Value{}
+		}
+		val = val.Elem()
+	}
+	return val
+}
+
+// hasPopulatedStringField checks if a struct has a non-empty string field with the given name.
+func hasPopulatedStringField(v reflect.Value, fieldName string) bool {
+	field := v.FieldByName(fieldName)
+	return field.IsValid() && field.Kind() == reflect.String && field.String() != ""
+}
+
+// hasPopulatedDigest checks if a file record has a populated Digest field.
+func hasPopulatedDigest(fileRecord reflect.Value) bool {
+	fileRecord = dereferenceToStruct(fileRecord.Interface())
+	if !fileRecord.IsValid() || fileRecord.Kind() != reflect.Struct {
 		return false
 	}
 
@@ -472,7 +445,9 @@ func hasPopulatedDigest(fileRecord reflect.Value) bool {
 	return false
 }
 
-// countDependencyRelationships counts the number of dependency relationships
+// ===== Utility Functions =====
+
+// countDependencyRelationships counts the number of dependency relationships.
 func countDependencyRelationships(relationships []artifact.Relationship) int {
 	count := 0
 	for _, rel := range relationships {
@@ -483,7 +458,7 @@ func countDependencyRelationships(relationships []artifact.Relationship) int {
 	return count
 }
 
-// contains checks if a string slice contains a specific string
+// contains checks if a string slice contains a specific string.
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
@@ -493,7 +468,9 @@ func contains(slice []string, item string) bool {
 	return false
 }
 
-// WriteResults writes the collected data to test-fixtures/ directory
+// ===== Result Writing =====
+
+// WriteResults writes the collected observation data to test-fixtures/test-observations.json.
 func (t *MetadataTracker) WriteResults() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -513,13 +490,10 @@ func (t *MetadataTracker) WriteResults() error {
 	t.observations.UpdatedAt = time.Now().UTC()
 
 	filename := filepath.Join(outDir, "test-observations.json")
-	if err := writeJSONFile(filename, t.observations); err != nil {
-		return err
-	}
-
-	return nil
+	return writeJSONFile(filename, t.observations)
 }
 
+// writeJSONFile writes data as pretty-printed JSON to the specified path.
 func writeJSONFile(path string, data interface{}) error {
 	file, err := os.Create(path)
 	if err != nil {
@@ -532,7 +506,8 @@ func writeJSONFile(path string, data interface{}) error {
 	return encoder.Encode(data)
 }
 
-// WriteResultsIfEnabled writes results if tracking is enabled
+// WriteResultsIfEnabled writes results if tracking is enabled.
+// this is typically called via t.Cleanup() in tests.
 func WriteResultsIfEnabled() error {
 	tracker := getTracker()
 	return tracker.WriteResults()
