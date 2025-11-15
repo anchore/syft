@@ -222,6 +222,10 @@ application: # AUTO-GENERATED - application-level config keys
     description: enumerate all files owned by packages found within Nix store paths
   - key: python.guess-unpinned-requirements
     description: when running across entries in requirements.txt that do not specify a specific version (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version when given an arbitrary constraint will be used (even if that version may not be available/published).
+  - key: python.pypi-base-url
+    description: base Pypi url to use
+  - key: python.search-remote-licenses
+    description: enables Syft to use the network to fill in more detailed license information
 configs: # AUTO-GENERATED - config structs and their fields
   dotnet.CatalogerConfig:
     fields:
@@ -310,6 +314,12 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: GuessUnpinnedRequirements
         description: GuessUnpinnedRequirements attempts to infer package versions from version constraints when no explicit version is specified in requirements files.
         app_key: python.guess-unpinned-requirements
+      - key: SearchRemoteLicenses
+        description: SearchRemoteLicenses enables querying the NPM registry API to retrieve license information for packages that are missing license data in their local metadata.
+        app_key: python.search-remote-licenses
+      - key: PypiBaseURL
+        description: PypiBaseURL specifies the base URL for the Pypi registry API used when searching for remote license information.
+        app_key: python.pypi-base-url
 catalogers:
   # alpm (arch / pacman) #################################################################################################
   - ecosystem: alpm # MANUAL
@@ -984,6 +994,26 @@ catalogers:
             purl: pkg:generic/ffmpeg
             cpes:
               - cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/elixir'
+        packages:
+          - class: elixir-binary
+            name: elixir
+            purl: pkg:generic/elixir
+            cpes:
+              - cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/elixir/ebin/elixir.app'
+        packages:
+          - class: elixir-library
+            name: elixir
+            purl: pkg:generic/elixir
+            cpes:
+              - cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:
@@ -2758,8 +2788,12 @@ catalogers:
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/pnpm-lock.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PnpmLockEntry
         package_types: # AUTO-GENERATED
           - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptPnpmLockEntry
         capabilities: # MANUAL - config-driven capability definitions
           - name: license
             default: false
@@ -3505,7 +3539,7 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
-      - function: parseSetup # AUTO-GENERATED
+      - function: parseSetupFile # AUTO-GENERATED
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
@@ -4234,3 +4268,46 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
+  - ecosystem: other # MANUAL
+    name: gguf-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ai/cataloger.go
+      function: NewGGUFCataloger
+    selectors: # AUTO-GENERATED
+      - ai
+      - directory
+      - gguf
+      - image
+      - ml
+      - model
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGGUFModel
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.gguf'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GGUFFileHeader
+        package_types: # AUTO-GENERATED
+          - model
+        json_schema_types: # AUTO-GENERATED
+          - GgufFileHeader
+        capabilities: # MANUAL - config-driven capability definitions
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - GGUFFileHeader.MetadataKeyValuesHash
