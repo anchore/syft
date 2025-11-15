@@ -218,6 +218,7 @@ tasks:
       # unit test coverage threshold (in % coverage)
       COVERAGE_THRESHOLD: 62
     cmds:
+      - task: clean-test-observations
       - "go test -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
       - cmd: ".github/scripts/coverage.py {{ .COVERAGE_THRESHOLD }} {{ .TMP_DIR }}/unit-coverage-details.txt"
         silent: true
@@ -500,6 +501,7 @@ tasks:
     desc: Add data generation tasks
     cmds:
       - task: generate-json-schema
+      - task: generate-capabilities
       - task: generate-license-list
       - task: generate-cpe-dictionary-index
 
@@ -520,6 +522,16 @@ tasks:
       - task: generate:cpe-index:cache:pull
       - task: generate:cpe-index:cache:update
       - task: generate:cpe-index:build
+
+  generate-capabilities:
+    desc: Generate the capabilities data file
+    cmds:
+      # remove all test observations prior to regenerating
+      - find ./syft/pkg -type f -name "test-observations.json" -exec rm -f {} \;
+      # this is required to update test observations; such evidence is used to update the packages.yaml
+      - "go test ./syft/pkg/..."
+      - "go generate ./internal/capabilities/..."
+      - "gofmt -s -w ./internal/capabilities"
 
 
   ## Build-related targets #################################
@@ -646,3 +658,8 @@ tasks:
         done
         echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
       - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}
+
+  clean-test-observations:
+    desc: Remove all test observations (i.e. test-fixtures/test-observations.json)
+    cmds:
+      - find . -type f -wholename "**/test-fixtures/test-observations.json" | xargs rm -f
