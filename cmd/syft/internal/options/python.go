@@ -18,7 +18,7 @@ var _ interface {
 func defaultPythonConfig() pythonConfig {
 	def := python.DefaultCatalogerConfig()
 	return pythonConfig{
-		GuessUnpinnedRequirements: def.GuessUnpinnedRequirements,
+		GuessUnpinnedRequirements: &def.GuessUnpinnedRequirements,
 	}
 }
 
