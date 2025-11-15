@@ -3001,8 +3001,7 @@ catalogers:
           - name: license
             default: true
           - name: dependency.depth
-            default:
-              - direct
+            default: []
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
@@ -3622,10 +3621,9 @@ catalogers:
             default: false
           - name: package_manager.files.digests
             default: false
+          # TODO: we can enhance this to track file hashes from the poetry.lock file
           - name: package_manager.package_integrity_hash
-            default: true
-            evidence:
-              - PythonPoetryLockEntry.PackageHashes
+            default: false
       - function: parseRequirementsTxt
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
