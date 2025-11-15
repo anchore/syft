@@ -492,7 +492,7 @@ func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry 
 				packages = append(packages, capabilities.DetectorPackageInfo{
 					Class: o.Class,
 					Name:  o.Package,
-					PURL:  o.PURL,
+					PURL:  stripPURLVersion(o.PURL),
 					CPEs:  o.CPEs,
 					Type:  "BinaryPkg",
 				})
