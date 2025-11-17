@@ -4265,7 +4265,7 @@ catalogers:
             default: false
           - name: package_manager.package_integrity_hash
             default: false
-  - ecosystem: other # MANUAL
+  - ecosystem: ai # MANUAL
     name: gguf-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
     source: # AUTO-GENERATED
