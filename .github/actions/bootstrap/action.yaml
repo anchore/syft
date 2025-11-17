@@ -25,6 +25,11 @@ inputs:
     description: "Space delimited list of tools to install via apt"
     default: "libxml2-utils"
 
+outputs:
+  oras:
+    description: "Path to the oras binary"
+    value: ${{ github.workspace }}/.tool/oras
+
 runs:
   using: "composite"
   steps:
