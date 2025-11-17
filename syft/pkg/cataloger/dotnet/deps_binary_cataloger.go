@@ -1,8 +1,11 @@
 package dotnet
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"path"
 	"regexp"
 	"sort"
@@ -16,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
 )
 
 const (
@@ -48,6 +52,8 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	if ldpeUnknownErr != nil {
 		unknowns = unknown.Join(unknowns, ldpeUnknownErr)
 	}
+
+	depJSONDocs = append(depJSONDocs, extractEmbeddedDeps(peFiles)...)
 
 	// partition the logical PE files by location and pair them with the logicalDepsJSON
 	pairedDepsJSONs, remainingPeFiles, remainingDepsJSONs := partitionPEs(depJSONDocs, peFiles)
@@ -473,8 +479,23 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
-	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, reader))
+	data, err := io.ReadAll(reader)
 	if err != nil {
+		return nil, unknown.New(loc, fmt.Errorf("unable to read file data: %w", err))
+	}
+
+	embeddedJSON := extractEmbeddedDepsJSONFromBytes(data)
+
+	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, io.NopCloser(bytes.NewReader(data))))
+	if err != nil {
+		if embeddedJSON != "" {
+			return &logicalPE{
+				File: pe.File{
+					Location: loc,
+				},
+				EmbeddedDepsJSON: embeddedJSON,
+			}, nil
+		}
 		return nil, unknown.New(loc, fmt.Errorf("unable to parse PE file: %w", err))
 	}
 
@@ -488,4 +509,20 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	}
 
 	return ldpe, nil
+}
+
+func extractEmbeddedDeps(peFiles []logicalPE) []logicalDepsJSON {
+	var docs []logicalDepsJSON
+	for _, pe := range peFiles {
+		if pe.EmbeddedDepsJSON == "" {
+			continue
+		}
+		var doc depsJSON
+		if err := json.Unmarshal([]byte(pe.EmbeddedDepsJSON), &doc); err != nil {
+			continue
+		}
+		doc.Location = pe.Location
+		docs = append(docs, getLogicalDepsJSON(doc, nil))
+	}
+	return docs
 }
