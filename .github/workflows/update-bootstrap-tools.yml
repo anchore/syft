@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   update-bootstrap-tools:
-    # Runner definition: workflows/.github/runs-on.yml
+    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
     runs-on: runs-on=${{ github.run_id }}/runner=small
     if: github.repository == 'anchore/syft' # only run for main repo
     steps:

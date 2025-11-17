@@ -13,7 +13,7 @@ on:
 jobs:
   quality-gate:
     environment: release
-    # Runner definition: workflows/.github/runs-on.yml
+    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
     runs-on: runs-on=${{ github.run_id }}/runner=tiny
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
@@ -120,7 +120,7 @@ jobs:
 
   release:
     needs: [quality-gate]
-    # Runner definition: workflows/.github/runs-on.yml
+    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
     runs-on: runs-on=${{ github.run_id }}/runner=release
     permissions:
       contents: write

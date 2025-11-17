@@ -27,7 +27,7 @@ env:
 jobs:
   label:
     name: "Label changes"
-    # Runner definition: workflows/.github/runs-on.yml
+    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
     runs-on: runs-on=${{ github.run_id }}/runner=small-arm
     permissions:
       contents: read
