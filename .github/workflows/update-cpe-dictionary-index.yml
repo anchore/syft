@@ -28,8 +28,9 @@ jobs:
         id: bootstrap
 
       - name: Login to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | ${{ steps.bootstrap.outputs.oras }} login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | .tool/oras login ghcr.io -u "$ACTOR" --password-stdin
+        env:
+          ACTOR: ${{ github.actor }}
 
       - name: Pull CPE cache from registry
         run: make generate:cpe-index:cache:pull
