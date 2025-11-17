@@ -2,6 +2,7 @@ package cyclonedxhelpers
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -40,7 +41,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	// https://github.com/CycloneDX/specification/blob/master/schema/bom-1.3-strict.schema.json#L36
 	// "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 	cdxBOM.SerialNumber = uuid.New().URN()
-	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source, s.Tags)
+	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source, s.Properties)
 
 	coordinates, locationSorter := getCoordinates(s)
 
@@ -207,7 +208,7 @@ func formatCPE(cpeString string) string {
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata source.Description, tags map[string]string) *cyclonedx.Metadata {
+func toBomDescriptor(name, version string, srcMetadata source.Description, properties map[string]string) *cyclonedx.Metadata {
 	return &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tools: &cyclonedx.ToolsChoice{
@@ -221,7 +222,7 @@ func toBomDescriptor(name, version string, srcMetadata source.Description, tags 
 			},
 		},
 		Supplier:   toBomSupplier(srcMetadata),
-		Properties: toBomProperties(srcMetadata, tags),
+		Properties: toBomProperties(srcMetadata, properties),
 		Component:  toBomDescriptorComponent(srcMetadata),
 	}
 }
@@ -301,7 +302,7 @@ func toDependencies(relationships []artifact.Relationship) []cyclonedx.Dependenc
 	return result
 }
 
-func toBomProperties(srcMetadata source.Description, tags map[string]string) *[]cyclonedx.Property {
+func toBomProperties(srcMetadata source.Description, properties map[string]string) *[]cyclonedx.Property {
 	var allProps []cyclonedx.Property
 
 	// Add image labels if available
@@ -313,19 +314,15 @@ func toBomProperties(srcMetadata source.Description, tags map[string]string) *[]
 		}
 	}
 
-	// Add SBOM tags with guaranteed alphabetical order
-	if len(tags) > 0 {
-		// Get sorted keys for reproducible output
-		keys := make([]string, 0, len(tags))
-		for k := range tags {
-			keys = append(keys, k)
-		}
-		slices.Sort(keys)
+	// Add SBOM properties with guaranteed alphabetical order
+	if len(properties) > 0 {
+		// Get sorted keys for reproducible output using slices.Sorted and maps.Keys
+		keys := slices.Sorted(maps.Keys(properties))
 
 		for _, key := range keys {
 			allProps = append(allProps, cyclonedx.Property{
-				Name:  "syft:sbom:tag:" + key,
-				Value: tags[key],
+				Name:  "syft:sbom:property:" + key,
+				Value: properties[key],
 			})
 		}
 	}

@@ -277,9 +277,11 @@ func Test_encodeDecodeFileMetadata(t *testing.T) {
 		},
 		Descriptor: sbom.Descriptor{
 			Name:    "syft",
-			Version: "this-version",
+			Version: "v0.42.0-bogus",
 		},
-		Tags: make(map[string]string),
+		Properties: map[string]string{
+			"foo": "bar",
+		},
 	}
 
 	buf := &bytes.Buffer{}

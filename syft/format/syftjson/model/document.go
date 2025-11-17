@@ -14,7 +14,7 @@ type Document struct {
 	Distro                LinuxRelease      `json:"distro"`          // Distro represents the Linux distribution that was detected from the source
 	Descriptor            Descriptor        `json:"descriptor"`      // Descriptor is a block containing self-describing information about syft
 	Schema                Schema            `json:"schema"`          // Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape
-	Tags                  map[string]string `json:"tags"`            // Tags contains custom properties added to the SBOM
+	Properties            map[string]string `json:"properties"`      // Properties contains custom properties added to the SBOM
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {

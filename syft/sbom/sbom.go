@@ -17,7 +17,7 @@ type SBOM struct {
 	Relationships []artifact.Relationship
 	Source        source.Description
 	Descriptor    Descriptor
-	Tags          map[string]string
+	Properties    map[string]string
 }
 
 type Artifacts struct {

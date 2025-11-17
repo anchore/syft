@@ -103,7 +103,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
-		WithTags(cfg.ParseSBOMProperties()).
+		WithProperties(cfg.ParseSBOMProperties()).
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).

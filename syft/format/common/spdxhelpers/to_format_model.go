@@ -4,6 +4,7 @@ package spdxhelpers
 import (
 	"crypto/sha1"
 	"fmt"
+	"maps"
 	"path"
 	"slices"
 	"sort"
@@ -123,7 +124,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 
 		// 6.11: Document Comment
 		// Cardinality: optional, one
-		DocumentComment: toDocumentComment(s.Tags),
+		DocumentComment: toDocumentComment(s.Properties),
 
 		CreationInfo: &spdx.CreationInfo{
 			// 6.7: License List Version
@@ -159,26 +160,20 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 	}
 }
 
-// toDocumentComment creates a formatted comment with SBOM tags for the SPDX document
-func toDocumentComment(tags map[string]string) string {
-	if len(tags) == 0 {
+// toDocumentComment creates a formatted comment with SBOM properties for the SPDX document
+func toDocumentComment(properties map[string]string) string {
+	if len(properties) == 0 {
 		return ""
 	}
 
-	// Get sorted keys for reproducible output
-	keys := make([]string, 0, len(tags))
-	for k := range tags {
-		keys = append(keys, k)
-	}
-	slices.Sort(keys)
+	// Get sorted keys for reproducible output using slices.Sorted and maps.Keys
+	keys := slices.Sorted(maps.Keys(properties))
 
 	var parts []string
-	parts = append(parts, "SBOM Properties:")
 	for _, key := range keys {
-		parts = append(parts, fmt.Sprintf("  %s: %s", key, tags[key]))
+		parts = append(parts, fmt.Sprintf("%s=%s", key, properties[key]))
 	}
-
-	return strings.Join(parts, "\n")
+	return strings.Join(parts, ";")
 }
 
 func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (out []*spdx.Relationship) {

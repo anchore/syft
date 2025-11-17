@@ -43,7 +43,7 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 		Source:                toSourceModel(s.Source),
 		Distro:                toLinuxRelease(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
-		Tags:                  toTags(s.Tags),
+		Properties:            toProperties(s.Properties),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
@@ -86,16 +86,11 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 	}
 }
 
-func toTags(tags map[string]string) map[string]string {
-	if tags == nil {
+func toProperties(properties map[string]string) map[string]string {
+	if properties == nil {
 		return make(map[string]string)
 	}
-	// Create a copy to avoid modifying the original map
-	result := make(map[string]string, len(tags))
-	for key, value := range tags {
-		result[key] = value
-	}
-	return result
+	return properties
 }
 
 func toFile(s sbom.SBOM, coordinateSorter func(a, b file.Coordinates) int) []model.File {
