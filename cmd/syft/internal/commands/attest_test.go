@@ -75,7 +75,7 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
   "version": "non-version"
  },
  "schema": {},
- "tags": {}
+ "properties": {}
 }`,
 			wantErr: false,
 		},
