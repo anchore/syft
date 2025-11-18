@@ -98,17 +98,17 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	case pkg.WordpressPluginPkg:
 		metadata, valid := p.Metadata.(pkg.WordpressPluginEntry)
 		if !valid {
-			return []cpe.CPE{}, false
+			return nil, false
 		}
 		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemWordpressPlugins][metadata.PluginInstallDirectory]
 
 	case pkg.ModelPkg:
 		// ML models should not have CPEs as they are not traditional software packages
 		// and don't fit the vulnerability model used for software packages.
-		return []cpe.CPE{}, false
+		return nil, false
 	default:
 		// The dictionary doesn't support this package type yet.
-		return []cpe.CPE{}, false
+		return nil, false
 	}
 
 	if !ok {
@@ -128,7 +128,7 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	}
 
 	if len(parsedCPEs) == 0 {
-		return []cpe.CPE{}, false
+		return nil, false
 	}
 
 	sort.Sort(cpe.BySourceThenSpecificity(parsedCPEs))
