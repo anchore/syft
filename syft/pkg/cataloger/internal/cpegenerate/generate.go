@@ -62,16 +62,13 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 
 func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
-	parsedCPEs := []cpe.CPE{}
 	if err != nil {
 		log.Debugf("CPE dictionary lookup not available: %+v", err)
-		return parsedCPEs, false
+		return []cpe.CPE{}, false
 	}
 
-	var (
-		cpes *dictionary.Set
-		ok   bool
-	)
+	var cpes *dictionary.Set
+	var ok bool
 
 	switch p.Type {
 	case pkg.NpmPkg:
@@ -101,25 +98,25 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	case pkg.WordpressPluginPkg:
 		metadata, valid := p.Metadata.(pkg.WordpressPluginEntry)
 		if !valid {
-			return parsedCPEs, false
+			return []cpe.CPE{}, false
 		}
 		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemWordpressPlugins][metadata.PluginInstallDirectory]
 
 	case pkg.ModelPkg:
 		// ML models should not have CPEs as they are not traditional software packages
 		// and don't fit the vulnerability model used for software packages.
-		return parsedCPEs, false
-
+		return []cpe.CPE{}, false
 	default:
 		// The dictionary doesn't support this package type yet.
-		return parsedCPEs, false
+		return []cpe.CPE{}, false
 	}
 
 	if !ok {
 		// The dictionary doesn't have a CPE for this package.
-		return parsedCPEs, false
+		return []cpe.CPE{}, false
 	}
 
+	parsedCPEs := []cpe.CPE{}
 	for _, c := range cpes.List() {
 		parsedCPE, err := cpe.New(c, cpe.NVDDictionaryLookupSource)
 		if err != nil {
