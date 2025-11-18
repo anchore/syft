@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-func Test_CPEProvider(t *testing.T) {
+func TestDecoder_Decode(t *testing.T) {
 	tests := []struct {
 		name      string
 		userInput string
