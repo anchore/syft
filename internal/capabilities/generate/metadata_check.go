@@ -133,17 +133,17 @@ func collectReferencedMetadataTypes(doc *capabilities.Document) []string {
 
 // checkMetadataTypeCoverage compares metadata types from packagemetadata/generated.go
 // with types referenced in packages.yaml and returns unreferenced types
-func checkMetadataTypeCoverage(yamlPath string, repoRoot string) ([]string, error) {
+func checkMetadataTypeCoverage(capabilitiesDir string, repoRoot string) ([]string, error) {
 	// parse packagemetadata/generated.go to get all types
 	allTypes, err := parsePackageMetadataTypes(repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse package metadata types: %w", err)
 	}
 
-	// load packages.yaml to get referenced types
-	doc, _, err := loadCapabilities(yamlPath)
+	// load capabilities files to get referenced types
+	doc, _, err := loadCapabilities(capabilitiesDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load packages.yaml: %w", err)
+		return nil, fmt.Errorf("failed to load capabilities files: %w", err)
 	}
 
 	referencedTypes := collectReferencedMetadataTypes(doc)
@@ -167,8 +167,8 @@ func checkMetadataTypeCoverage(yamlPath string, repoRoot string) ([]string, erro
 
 // printMetadataTypeCoverageWarning prints a warning if there are metadata types
 // from packagemetadata/generated.go that aren't referenced in packages.yaml
-func printMetadataTypeCoverageWarning(yamlPath string, repoRoot string) {
-	unreferenced, err := checkMetadataTypeCoverage(yamlPath, repoRoot)
+func printMetadataTypeCoverageWarning(capabilitiesDir string, repoRoot string) {
+	unreferenced, err := checkMetadataTypeCoverage(capabilitiesDir, repoRoot)
 	if err != nil {
 		// don't fail generation, just skip the check
 		fmt.Printf("%s Could not check metadata type coverage: %v\n", warningStyleMeta.Render("⚠"), err)
@@ -315,17 +315,17 @@ func collectReferencedPackageTypes(doc *capabilities.Document) []string {
 
 // checkPackageTypeCoverage compares package types from pkg.AllPkgs
 // with types referenced in packages.yaml and returns unreferenced types
-func checkPackageTypeCoverage(yamlPath string, repoRoot string) ([]string, error) {
+func checkPackageTypeCoverage(capabilitiesDir string, repoRoot string) ([]string, error) {
 	// parse pkg/type.go to get all package types
 	allTypes, err := parseAllPackageTypes(repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse package types: %w", err)
 	}
 
-	// load packages.yaml to get referenced types
-	doc, _, err := loadCapabilities(yamlPath)
+	// load capabilities files to get referenced types
+	doc, _, err := loadCapabilities(capabilitiesDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load packages.yaml: %w", err)
+		return nil, fmt.Errorf("failed to load capabilities files: %w", err)
 	}
 
 	referencedTypes := collectReferencedPackageTypes(doc)
@@ -349,8 +349,8 @@ func checkPackageTypeCoverage(yamlPath string, repoRoot string) ([]string, error
 
 // printPackageTypeCoverageWarning prints a warning if there are package types
 // from pkg.AllPkgs that aren't referenced in packages.yaml
-func printPackageTypeCoverageWarning(yamlPath string, repoRoot string) {
-	unreferenced, err := checkPackageTypeCoverage(yamlPath, repoRoot)
+func printPackageTypeCoverageWarning(capabilitiesDir string, repoRoot string) {
+	unreferenced, err := checkPackageTypeCoverage(capabilitiesDir, repoRoot)
 	if err != nil {
 		// don't fail generation, just skip the check
 		fmt.Printf("%s Could not check package type coverage: %v\n", warningStyleMeta.Render("⚠"), err)

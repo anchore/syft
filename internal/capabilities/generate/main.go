@@ -26,19 +26,19 @@ func main() {
 		log.Fatalf("failed to find repo root: %v", err)
 	}
 
-	yamlPath := filepath.Join(repoRoot, "internal/capabilities/packages.yaml")
+	capabilitiesDir := filepath.Join(repoRoot, "internal/capabilities")
 
-	fmt.Println("Regenerating packages.yaml...")
+	fmt.Println("Regenerating capabilities files...")
 	fmt.Println()
-	stats, err := RegenerateCapabilities(yamlPath, repoRoot)
+	stats, err := RegenerateCapabilities(capabilitiesDir, repoRoot)
 	if err != nil {
 		log.Fatalf("failed to regenerate capabilities: %v", err)
 	}
 
 	printSummary(stats)
-	checkIncompleteCapabilities(yamlPath)
-	printMetadataTypeCoverageWarning(yamlPath, repoRoot)
-	printPackageTypeCoverageWarning(yamlPath, repoRoot)
+	checkIncompleteCapabilities(capabilitiesDir)
+	printMetadataTypeCoverageWarning(capabilitiesDir, repoRoot)
+	printPackageTypeCoverageWarning(capabilitiesDir, repoRoot)
 }
 
 func printSummary(stats *Statistics) {
@@ -69,11 +69,11 @@ func printSummary(stats *Statistics) {
 	}
 
 	fmt.Println()
-	fmt.Println(successStyle.Render("✓ Updated packages.yaml successfully"))
+	fmt.Println(successStyle.Render("✓ Updated capabilities files successfully"))
 }
 
-func checkIncompleteCapabilities(yamlPath string) {
-	doc, _, err := loadCapabilities(yamlPath)
+func checkIncompleteCapabilities(capabilitiesDir string) {
+	doc, _, err := loadCapabilities(capabilitiesDir)
 	if err != nil {
 		log.Fatalf("failed to load updated capabilities: %v", err)
 	}
@@ -115,7 +115,7 @@ func checkIncompleteCapabilities(yamlPath string) {
 		}
 
 		fmt.Println()
-		fmt.Println(dimStyle.Render("Please update these entries in packages.yaml before running tests."))
+		fmt.Println(dimStyle.Render("Please update these entries in the capabilities files before running tests."))
 		fmt.Println()
 		fmt.Println(dimStyle.Render("Exit code: 1"))
 		os.Exit(1)

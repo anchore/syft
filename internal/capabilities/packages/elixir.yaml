@@ -1,0 +1,49 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: elixir # MANUAL
+    name: elixir-mix-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/elixir/cataloger.go
+      function: NewMixLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - elixir
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseMixLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/mix.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ElixirMixLockEntry
+        package_types: # AUTO-GENERATED
+          - hex
+        json_schema_types: # AUTO-GENERATED
+          - ElixirMixLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - ElixirMixLockEntry.PkgHash
+              - ElixirMixLockEntry.PkgHashExt

@@ -1,0 +1,147 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  golang.CatalogerConfig:
+    fields:
+      - key: SearchLocalModCacheLicenses
+        description: SearchLocalModCacheLicenses enables searching for go package licenses in the local GOPATH mod cache.
+        app_key: golang.search-local-mod-cache-licenses
+      - key: LocalModCacheDir
+        description: LocalModCacheDir specifies the location of the local go module cache directory. When not set, syft will attempt to discover the GOPATH env or default to $HOME/go.
+        app_key: golang.local-mod-cache-dir
+      - key: SearchLocalVendorLicenses
+        description: SearchLocalVendorLicenses enables searching for go package licenses in the local vendor directory relative to the go.mod file.
+        app_key: golang.search-local-vendor-licenses
+      - key: LocalVendorDir
+        description: LocalVendorDir specifies the location of the local vendor directory. When not set, syft will search for a vendor directory relative to the go.mod file.
+        app_key: golang.local-vendor-dir
+      - key: SearchRemoteLicenses
+        description: SearchRemoteLicenses enables downloading go package licenses from the upstream go proxy (typically proxy.golang.org).
+        app_key: golang.search-remote-licenses
+      - key: Proxies
+        description: Proxies is a list of go module proxies to use when fetching go module metadata and licenses. When not set, syft will use the GOPROXY env or default to https://proxy.golang.org,direct.
+        app_key: golang.proxy
+      - key: NoProxy
+        description: NoProxy is a list of glob patterns that match go module names that should not be fetched from the go proxy. When not set, syft will use the GOPRIVATE and GONOPROXY env vars.
+        app_key: golang.no-proxy
+catalogers:
+  - ecosystem: go # MANUAL
+    name: go-module-binary-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/golang/cataloger.go
+      function: NewGoModuleBinaryCataloger
+    config: golang.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - binary
+      - directory
+      - go
+      - golang
+      - gomod
+      - image
+      - installed
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGoBinary
+        detector: # AUTO-GENERATED
+          method: mimetype # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - application/x-executable
+            - application/x-mach-binary
+            - application/x-elf
+            - application/x-sharedlib
+            - application/vnd.microsoft.portable-executable
+            - application/x-executable
+        metadata_types: # AUTO-GENERATED
+          - pkg.GolangBinaryBuildinfoEntry
+        package_types: # AUTO-GENERATED
+          - go-module
+        json_schema_types: # AUTO-GENERATED
+          - GoModuleBuildinfoEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+            conditions:
+              - when:
+                  SearchLocalModCacheLicenses: true
+                value: true
+              - when:
+                  SearchRemoteLicenses: true
+                value: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: flat
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - GolangBinaryBuildinfoEntry.H1Digest
+  - ecosystem: go # MANUAL
+    name: go-module-file-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/golang/cataloger.go
+      function: NewGoModuleFileCataloger
+    config: golang.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - go
+      - golang
+      - gomod
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGoModFile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/go.mod'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GolangModuleEntry
+          - pkg.GolangSourceEntry
+        package_types: # AUTO-GENERATED
+          - go-module
+        json_schema_types: # AUTO-GENERATED
+          - GoModuleEntry
+          - GoSourceEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+            conditions:
+              - when:
+                  SearchLocalModCacheLicenses: true
+                value: true
+              - when:
+                  SearchRemoteLicenses: true
+                value: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: flat
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - GolangModuleEntry.H1Digest
+              - GolangSourceEntry.H1Digest

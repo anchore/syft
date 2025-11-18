@@ -128,10 +128,10 @@ type Statistics struct {
 	UpdatedCatalogers      []string
 }
 
-// RegenerateCapabilities updates the YAML file with discovered catalogers
+// RegenerateCapabilities updates the distributed YAML files with discovered catalogers
 // while preserving manually-edited capability information.
 // This is exported for use by the generator in generate/main.go
-func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, error) {
+func RegenerateCapabilities(capabilitiesDir string, repoRoot string) (*Statistics, error) {
 	stats := &Statistics{}
 
 	// 1-2. Discover all cataloger data
@@ -140,9 +140,9 @@ func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, erro
 		return nil, err
 	}
 
-	// 3. Load existing YAML (if exists) - now returns both document and node tree
-	fmt.Print("  → Loading existing packages.yaml...")
-	existing, existingNode, err := loadCapabilities(yamlPath)
+	// 3. Load existing YAML files - now returns both document and node trees
+	fmt.Print("  → Loading existing capabilities files...")
+	existing, existingNodes, err := loadCapabilities(capabilitiesDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load existing capabilities: %w", err)
 	}
@@ -187,13 +187,13 @@ func RegenerateCapabilities(yamlPath string, repoRoot string) (*Statistics, erro
 
 	// 5. Check for orphaned parsers (parser functions that were renamed/deleted)
 	if len(orphans) > 0 {
-		return nil, fmt.Errorf("orphaned parsers detected (parser functions renamed or deleted):\n%s\n\nPlease manually remove these from %s or restore the parser functions in the code",
-			formatOrphans(orphans), yamlPath)
+		return nil, fmt.Errorf("orphaned parsers detected (parser functions renamed or deleted):\n%s\n\nPlease manually remove these from the capabilities files or restore the parser functions in the code",
+			formatOrphans(orphans))
 	}
 
-	// 6. Write back to YAML with comments, preserving existing node tree
-	fmt.Print("  → Writing updated packages.yaml...")
-	if err := saveCapabilities(yamlPath, updated, existingNode); err != nil {
+	// 6. Write back to YAML files with comments, preserving existing node trees
+	fmt.Print("  → Writing updated capabilities files...")
+	if err := saveCapabilities(capabilitiesDir, updated, existingNodes); err != nil {
 		return nil, fmt.Errorf("failed to save capabilities: %w", err)
 	}
 	fmt.Println(" done")

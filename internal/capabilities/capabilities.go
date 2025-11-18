@@ -2,8 +2,10 @@
 package capabilities
 
 import (
-	_ "embed"
+	"embed"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
@@ -14,16 +16,73 @@ import (
 
 //go:generate go run ./generate
 
-//go:embed packages.yaml
-var catalogersYAML []byte
+//go:embed appconfig.yaml
+var appconfigYAML []byte
+
+//go:embed packages/*.yaml
+var catalogerFiles embed.FS
 
 // LoadDocument loads and returns the complete document including configs and app-configs
 func LoadDocument() (*Document, error) {
-	var doc Document
-	if err := yaml.Unmarshal(catalogersYAML, &doc); err != nil {
-		return nil, fmt.Errorf("failed to parse embedded capabilities YAML: %w", err)
+	// parse application config
+	var appDoc struct {
+		Application []ApplicationConfigField `yaml:"application"`
 	}
-	return &doc, nil
+	if err := yaml.Unmarshal(appconfigYAML, &appDoc); err != nil {
+		return nil, fmt.Errorf("failed to parse appconfig.yaml: %w", err)
+	}
+
+	// walk the embedded filesystem to find all cataloger capabilities.yaml files
+	var catalogersDoc Document
+	catalogersDoc.ApplicationConfig = appDoc.Application
+	catalogersDoc.Configs = make(map[string]CatalogerConfigEntry)
+
+	err := fs.WalkDir(catalogerFiles, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// skip non-yaml files and directories
+		if d.IsDir() || filepath.Ext(path) != ".yaml" || path == "." {
+			return nil
+		}
+
+		// read the file
+		data, err := catalogerFiles.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read %s: %w", path, err)
+		}
+
+		// parse the file
+		var capDoc struct {
+			Configs    map[string]CatalogerConfigEntry `yaml:"configs"`
+			Catalogers []CatalogerEntry                `yaml:"catalogers"`
+		}
+		if err := yaml.Unmarshal(data, &capDoc); err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+
+		// merge configs
+		for k, v := range capDoc.Configs {
+			catalogersDoc.Configs[k] = v
+		}
+
+		// merge catalogers
+		catalogersDoc.Catalogers = append(catalogersDoc.Catalogers, capDoc.Catalogers...)
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to walk cataloger capabilities: %w", err)
+	}
+
+	// sort catalogers by name for consistency
+	sort.Slice(catalogersDoc.Catalogers, func(i, j int) bool {
+		return catalogersDoc.Catalogers[i].Name < catalogersDoc.Catalogers[j].Name
+	})
+
+	return &catalogersDoc, nil
 }
 
 // Packages loads and returns all cataloger capabilities from the embedded YAML file
