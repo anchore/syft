@@ -17,7 +17,7 @@ jobs:
     name: "Static analysis"
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -34,7 +34,7 @@ jobs:
     # we need more storage than what's on the default runner
     runs-on: ubuntu-22.04-4core-16gb
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -52,7 +52,7 @@ jobs:
     name: "Integration tests"
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -72,7 +72,7 @@ jobs:
     name: "Build snapshot artifacts"
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -107,7 +107,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -164,7 +164,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -212,7 +212,7 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -251,7 +251,7 @@ jobs:
     needs: [Build-Snapshot-Artifacts]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
@@ -291,7 +291,7 @@ jobs:
       - Cli-Linux
       - Upload-Snapshot-Artifacts
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5.0.1
         with:
           persist-credentials: false
 
