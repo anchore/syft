@@ -105,6 +105,11 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 		}
 		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemWordpressPlugins][metadata.PluginInstallDirectory]
 
+	case pkg.ModelPkg:
+		// ML models should not have CPEs as they are not traditional software packages
+		// and don't fit the vulnerability model used for software packages.
+		return parsedCPEs, false
+
 	default:
 		// The dictionary doesn't support this package type yet.
 		return parsedCPEs, false
@@ -137,6 +142,12 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
 func FromPackageAttributes(p pkg.Package) []cpe.CPE {
+	// ML models should not have CPEs as they are not traditional software packages
+	// and don't fit the vulnerability model used for software packages.
+	if p.Type == pkg.ModelPkg {
+		return nil
+	}
+
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	targetSWs := candidateTargetSw(p)
