@@ -155,6 +155,14 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 
 	docOut := document{}
 
+	// sort catalogers by ecosystem then name
+	sort.Slice(catalogers, func(i, j int) bool {
+		if catalogers[i].Ecosystem != catalogers[j].Ecosystem {
+			return catalogers[i].Ecosystem < catalogers[j].Ecosystem
+		}
+		return catalogers[i].Name < catalogers[j].Name
+	})
+
 	for _, cat := range catalogers {
 		info := catalogerInfo{
 			Ecosystem:  cat.Ecosystem,
