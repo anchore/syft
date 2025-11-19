@@ -105,6 +105,7 @@ catalogers:
     detectors: # MANUAL - edit detectors here
       - method: glob
         criteria:
+          - '**/php*'
           - '**/php*/**/*.so'
           - '**/php-fpm*'
           - '**/apache*/**/libphp*.so'

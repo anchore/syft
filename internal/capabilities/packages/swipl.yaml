@@ -30,14 +30,11 @@ catalogers:
           - name: license
             default: false
           - name: dependency.depth
-            default:
-              - direct
+            default: []
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
-            default:
-              - runtime
-              - dev
+            default: []
           - name: package_manager.files.listing
             default: false
           - name: package_manager.files.digests
