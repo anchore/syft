@@ -82,9 +82,28 @@ func packageURL(moduleName, moduleVersion string) string {
 		name = fields[1]
 		namespace = fields[0]
 	default:
-		name = fields[2]
-		namespace = strings.Join(fields[0:2], "/")
-		subpath = strings.Join(fields[3:], "/")
+		lastField := fields[len(fields)-1]
+		isVersionSuffix := strings.HasPrefix(lastField, "v") && len(lastField) > 1
+		if isVersionSuffix {
+			for _, r := range lastField[1:] {
+				if r < '0' || r > '9' {
+					isVersionSuffix = false
+					break
+				}
+			}
+		}
+
+		if isVersionSuffix {
+			namespace = strings.Join(fields[0:len(fields)-1], "/")
+			name = lastField
+			if len(fields) > 4 {
+				subpath = strings.Join(fields[3:len(fields)-1], "/")
+			}
+		} else {
+			name = fields[2]
+			namespace = strings.Join(fields[0:2], "/")
+			subpath = strings.Join(fields[3:], "/")
+		}
 	}
 
 	return packageurl.NewPackageURL(
