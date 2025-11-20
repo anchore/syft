@@ -321,6 +321,7 @@ func toSourceModel(src source.Description) model.Source {
 		Name:     src.Name,
 		Version:  src.Version,
 		Supplier: src.Supplier,
+		Authors:  src.Authors,
 		Type:     sourcemetadata.JSONName(src.Metadata),
 		Metadata: src.Metadata,
 	}

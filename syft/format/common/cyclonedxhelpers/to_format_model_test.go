@@ -608,3 +608,127 @@ func Test_toOSBomRef(t *testing.T) {
 		})
 	}
 }
+
+func Test_toBomAuthors(t *testing.T) {
+	tests := []struct {
+		name     string
+		authors  []source.Author
+		expected *[]cyclonedx.OrganizationalContact
+	}{
+		{
+			name:     "no authors",
+			authors:  nil,
+			expected: nil,
+		},
+		{
+			name:     "empty authors",
+			authors:  []source.Author{},
+			expected: nil,
+		},
+		{
+			name: "single Person author with email",
+			authors: []source.Author{
+				{
+					Name:  "John Doe",
+					Email: "john@example.com",
+					Type:  "Person",
+				},
+			},
+			expected: &[]cyclonedx.OrganizationalContact{
+				{
+					Name:  "John Doe",
+					Email: "john@example.com",
+				},
+			},
+		},
+		{
+			name: "single Person author without email",
+			authors: []source.Author{
+				{
+					Name:  "Jane Smith",
+					Email: "",
+					Type:  "Person",
+				},
+			},
+			expected: &[]cyclonedx.OrganizationalContact{
+				{
+					Name:  "Jane Smith",
+					Email: "",
+				},
+			},
+		},
+		{
+			name: "single Organization author",
+			authors: []source.Author{
+				{
+					Name:  "ACME Corp",
+					Email: "info@acme.com",
+					Type:  "Organization",
+				},
+			},
+			expected: &[]cyclonedx.OrganizationalContact{
+				{
+					Name:  "ACME Corp",
+					Email: "info@acme.com",
+				},
+			},
+		},
+		{
+			name: "single Tool author",
+			authors: []source.Author{
+				{
+					Name:  "scanner-tool",
+					Email: "tool@scanner.io",
+					Type:  "Tool",
+				},
+			},
+			expected: &[]cyclonedx.OrganizationalContact{
+				{
+					Name:  "scanner-tool",
+					Email: "tool@scanner.io",
+				},
+			},
+		},
+		{
+			name: "multiple authors",
+			authors: []source.Author{
+				{
+					Name:  "Alice Developer",
+					Email: "alice@company.com",
+					Type:  "Person",
+				},
+				{
+					Name:  "Tech Company",
+					Email: "contact@techcompany.com",
+					Type:  "Organization",
+				},
+				{
+					Name:  "build-tool",
+					Email: "",
+					Type:  "Tool",
+				},
+			},
+			expected: &[]cyclonedx.OrganizationalContact{
+				{
+					Name:  "Alice Developer",
+					Email: "alice@company.com",
+				},
+				{
+					Name:  "Tech Company",
+					Email: "contact@techcompany.com",
+				},
+				{
+					Name:  "build-tool",
+					Email: "",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := toBomAuthors(test.authors)
+			require.Equal(t, test.expected, actual)
+		})
+	}
+}

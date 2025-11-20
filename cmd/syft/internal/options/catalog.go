@@ -263,6 +263,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.Supplier, "source-supplier", "",
 		"the organization that supplied the component, which often may be the manufacturer, distributor, or repackager")
+
+	flags.StringArrayVarP(&cfg.Source.Authors, "authors", "",
+		"the authors who created this SBOM, format: 'type:name:email' where type is Person, Organization, or Tool (can be repeated)")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {

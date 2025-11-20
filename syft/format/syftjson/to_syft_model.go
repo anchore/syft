@@ -316,6 +316,7 @@ func toSyftSourceData(s model.Source) *source.Description {
 		Name:     s.Name,
 		Version:  s.Version,
 		Supplier: s.Supplier,
+		Authors:  s.Authors,
 		Metadata: s.Metadata,
 	}
 }

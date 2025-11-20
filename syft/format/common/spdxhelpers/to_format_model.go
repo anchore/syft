@@ -133,16 +133,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// 6.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
 			// Cardinality: mandatory, one or many
-			Creators: []spdx.Creator{
-				{
-					Creator:     "Anchore, Inc",
-					CreatorType: "Organization",
-				},
-				{
-					Creator:     s.Descriptor.Name + "-" + s.Descriptor.Version,
-					CreatorType: "Tool",
-				},
-			},
+			Creators: toSPDXCreators(s.Descriptor.Name, s.Descriptor.Version, s.Source.Authors),
 
 			// 6.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
@@ -340,6 +331,40 @@ func toSPDXSupplier(s source.Description) *spdx.Supplier {
 		Supplier:     supplier,
 		SupplierType: supplierType,
 	}
+}
+
+func toSPDXCreators(toolName, toolVersion string, authors []source.Author) []spdx.Creator {
+	// If user provided authors, use only those
+	if len(authors) > 0 {
+		return toSPDXAuthors(authors)
+	}
+
+	// Otherwise, use defaults
+	return []spdx.Creator{
+		{
+			Creator:     "Anchore, Inc",
+			CreatorType: "Organization",
+		},
+		{
+			Creator:     toolName + "-" + toolVersion,
+			CreatorType: "Tool",
+		},
+	}
+}
+
+func toSPDXAuthors(authors []source.Author) []spdx.Creator {
+	var creators []spdx.Creator
+	for _, author := range authors {
+		creator := author.Name
+		if author.Email != "" {
+			creator = fmt.Sprintf("%s (%s)", author.Name, author.Email)
+		}
+		creators = append(creators, spdx.Creator{
+			Creator:     creator,
+			CreatorType: author.Type,
+		})
+	}
+	return creators
 }
 
 // packages populates all Package Information from the package Collection (see https://spdx.github.io/spdx-spec/3-package-information/)

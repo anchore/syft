@@ -116,9 +116,9 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 
 	switch p.PrimaryPackagePurpose {
 	case spdxPrimaryPurposeContainer:
-		src = containerSource(p)
+		src = containerSource(p, doc)
 	case spdxPrimaryPurposeFile:
-		src = fileSource(p)
+		src = fileSource(p, doc)
 	default:
 		return src
 	}
@@ -131,7 +131,7 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	return src
 }
 
-func containerSource(p *spdx.Package) source.Description {
+func containerSource(p *spdx.Package, doc *spdx.Document) source.Description {
 	id := string(p.PackageSPDXIdentifier)
 
 	container := p.PackageName
@@ -169,7 +169,7 @@ func containerSource(p *spdx.Package) source.Description {
 	}
 }
 
-func fileSource(p *spdx.Package) source.Description {
+func fileSource(p *spdx.Package, doc *spdx.Document) source.Description {
 	typeRegex := regexp.MustCompile("^DocumentRoot-([^-]+)-.*$")
 	typeName := typeRegex.ReplaceAllString(string(p.PackageSPDXIdentifier), "$1")
 
