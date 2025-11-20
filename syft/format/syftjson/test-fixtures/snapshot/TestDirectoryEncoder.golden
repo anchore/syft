@@ -102,5 +102,6 @@
   "configuration": {
    "config-key": "config-value"
   }
- }
+ },
+ "properties": {}
 }
