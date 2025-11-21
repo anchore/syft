@@ -1,0 +1,122 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: c++ # MANUAL
+    name: conan-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/cpp/cataloger.go
+      function: NewConanCataloger
+    selectors: # AUTO-GENERATED
+      - conan
+      - cpp
+      - declared
+      - directory
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseConanLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conan.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ConanV1LockEntry
+          - pkg.ConanV2LockEntry
+        package_types: # AUTO-GENERATED
+          - conan
+        json_schema_types: # AUTO-GENERATED
+          - CConanLockEntry
+          - CConanLockV2Entry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - build
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - ConanV1LockEntry.Ref
+              - ConanV2LockEntry.RecipeRevision
+      - function: parseConanfile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conanfile.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ConanfileEntry
+        package_types: # AUTO-GENERATED
+          - conan
+        json_schema_types: # AUTO-GENERATED
+          - CConanFileEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: c++ # MANUAL
+    name: conan-info-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/cpp/cataloger.go
+      function: NewConanInfoCataloger
+    selectors: # AUTO-GENERATED
+      - conan
+      - cpp
+      - image
+      - installed
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseConaninfo
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conaninfo.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ConaninfoEntry
+        package_types: # AUTO-GENERATED
+          - conan
+        json_schema_types: # AUTO-GENERATED
+          - CConanInfoEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: flat
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

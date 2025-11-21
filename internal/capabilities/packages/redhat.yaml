@@ -1,0 +1,126 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: rpm # MANUAL
+    name: rpm-archive-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/redhat/cataloger.go
+      function: NewArchiveCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - linux
+      - os
+      - package
+      - redhat
+      - rpm
+    parsers: # AUTO-GENERATED structure
+      - function: parseRpmArchive
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.rpm'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RpmArchive
+        package_types: # AUTO-GENERATED
+          - rpm
+        json_schema_types: # AUTO-GENERATED
+          - RpmArchive
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - RpmArchive.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - RpmArchive.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: rpm # MANUAL
+    name: rpm-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/redhat/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - linux
+      - os
+      - package
+      - redhat
+      - rpm
+    parsers: # AUTO-GENERATED structure
+      - function: parseRpmManifest
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/var/lib/rpmmanifest/container-manifest-2'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RpmDBEntry
+        package_types: # AUTO-GENERATED
+          - rpm
+        json_schema_types: # AUTO-GENERATED
+          - RpmDbEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseRpmDB
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/{var/lib,usr/share,usr/lib/sysimage}/rpm/{Packages,Packages.db,rpmdb.sqlite}'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RpmDBEntry
+        package_types: # AUTO-GENERATED
+          - rpm
+        json_schema_types: # AUTO-GENERATED
+          - RpmDbEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - RpmDBEntry.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - RpmDBEntry.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false

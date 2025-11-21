@@ -1,0 +1,45 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: terraform # MANUAL
+    name: terraform-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/terraform/cataloger.go
+      function: NewLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - package
+      - terraform
+    parsers: # AUTO-GENERATED structure
+      - function: parseTerraformLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.terraform.lock.hcl'
+        metadata_types: # AUTO-GENERATED
+          - pkg.TerraformLockProviderEntry
+        package_types: # AUTO-GENERATED
+          - terraform
+        json_schema_types: # AUTO-GENERATED
+          - TerraformLockProviderEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - TerraformLockProviderEntry.Hashes

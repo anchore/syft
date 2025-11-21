@@ -1,0 +1,49 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: portage # MANUAL
+    name: portage-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/gentoo/cataloger.go
+      function: NewPortageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - gentoo
+      - image
+      - installed
+      - linux
+      - os
+      - package
+      - portage
+    parsers: # AUTO-GENERATED structure
+      - function: parsePortageContents
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/var/db/pkg/*/*/CONTENTS'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PortageEntry
+        package_types: # AUTO-GENERATED
+          - portage
+        json_schema_types: # AUTO-GENERATED
+          - PortageDbEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - PortageEntry.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - PortageEntry.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false
