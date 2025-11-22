@@ -57,8 +57,7 @@ func stripVersionSpecifier(s string) string {
 }
 
 func splitPackageChoice(s string) (ret []string) {
-	fields := strings.Split(s, "|")
-	for _, field := range fields {
+	for field := range strings.SplitSeq(s, "|") {
 		field = strings.TrimSpace(field)
 		if field != "" {
 			ret = append(ret, stripVersionSpecifier(field))

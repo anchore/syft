@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -194,11 +195,8 @@ func assertPackages(t *testing.T, sbom sbom.SBOM, test testCase, observedLanguag
 		}
 
 		var foundLang bool
-		for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
-			if actualPkg.Language.String() == lang {
-				foundLang = true
-				break
-			}
+		if slices.Contains(strings.Split(test.pkgLanguage.String(), ","), actualPkg.Language.String()) {
+			foundLang = true
 		}
 		if !foundLang {
 			t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)

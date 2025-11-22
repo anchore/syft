@@ -23,8 +23,7 @@ func EncodeProperties(obj interface{}, prefix string) (out []cyclonedx.Property)
 func decodeProperties(properties []cyclonedx.Property, prefix string) map[string]string {
 	labels := make(map[string]string)
 	for _, property := range properties {
-		if strings.HasPrefix(property.Name, prefix) {
-			labelName := strings.TrimPrefix(property.Name, prefix)
+		if labelName, ok := strings.CutPrefix(property.Name, prefix); ok {
 			labels[labelName] = property.Value
 		}
 	}

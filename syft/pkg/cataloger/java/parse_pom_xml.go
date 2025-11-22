@@ -300,13 +300,11 @@ func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.
 }
 
 func cleanDescription(original string) (cleaned string) {
-	descriptionLines := strings.Split(original, "\n")
-	for _, line := range descriptionLines {
+	for line := range strings.SplitSeq(original, "\n") {
 		line = strings.TrimSpace(line)
-		if len(line) == 0 {
-			continue
+		if line != "" {
+			cleaned += line + " "
 		}
-		cleaned += line + " "
 	}
 	return strings.TrimSpace(cleaned)
 }
