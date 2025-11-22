@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -342,10 +343,8 @@ func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
 				directive = directive[1:]
 				enable = false
 			}
-			for _, feature := range features {
-				if directive == feature {
-					return &enable
-				}
+			if slices.Contains(features, directive) {
+				return &enable
 			}
 		}
 		return nil
