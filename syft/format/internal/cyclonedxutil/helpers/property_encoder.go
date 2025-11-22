@@ -300,8 +300,8 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		// NOTE: this will not work for nested maps
 		for key := range vals {
 			// test for map prefix
-			if strings.HasPrefix(key, str) {
-				keyVals[key] = strings.TrimPrefix(key, str)
+			if valueWithoutPrefix, ok := strings.CutPrefix(key, str); ok {
+				keyVals[key] = valueWithoutPrefix
 				// create new placeholder and decode key
 				newKeyType := keyType
 				if keyType.Kind() == reflect.Ptr {

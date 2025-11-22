@@ -279,9 +279,9 @@ func toRootPackage(s source.Description) *spdx.Package {
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 	id := string(identifiable.ID())
-	if strings.HasPrefix(id, "SPDXRef-") {
+	if idWithoutPrefix, ok := strings.CutPrefix(id, "SPDXRef-"); ok {
 		// this is already an SPDX ID, no need to change it (except for the prefix)
-		return spdx.ElementID(helpers.SanitizeElementID(strings.TrimPrefix(id, "SPDXRef-")))
+		return spdx.ElementID(helpers.SanitizeElementID(idWithoutPrefix))
 	}
 	maxLen := 40
 	switch it := identifiable.(type) {
