@@ -153,7 +153,7 @@ func newScanner(reader io.Reader) *bufio.Scanner {
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(bufScan, maxScannerCapacity)
 	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		for i := 0; i < len(data); i++ {
+		for i := range data {
 			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {
 				return i + 1, data[:i-1], nil
 			}

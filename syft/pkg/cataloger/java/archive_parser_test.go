@@ -1494,7 +1494,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			fixturePath := generateJavaMetadataJarFixture(t, test.fixture, "jar")
 
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				func() {
 					fixture, err := os.Open(fixturePath)
 					require.NoError(t, err)

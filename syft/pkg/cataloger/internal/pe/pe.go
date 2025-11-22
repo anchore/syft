@@ -412,7 +412,7 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 		return fmt.Errorf("invalid number of entries in resource directory: %d", numEntries)
 	}
 
-	for i := 0; i < numEntries; i++ {
+	for i := range numEntries {
 		var entry peImageResourceDirectoryEntry
 
 		entryOffset := offset + int64(binary.Size(directoryHeader)) + int64(i*binary.Size(entry))
