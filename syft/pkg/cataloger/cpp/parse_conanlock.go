@@ -133,8 +133,7 @@ func parseOptions(options string) []pkg.KeyValue {
 		return nil
 	}
 
-	kvps := strings.Split(options, "\n")
-	for _, kvp := range kvps {
+	for kvp := range strings.SplitSeq(options, "\n") {
 		kv := strings.Split(kvp, "=")
 		if len(kv) == 2 {
 			o = append(o, pkg.KeyValue{

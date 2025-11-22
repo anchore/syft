@@ -59,7 +59,7 @@ var postProcessors = map[string]postProcessor{
 
 func processList(s string) []string {
 	var results []string
-	for _, item := range strings.Split(s, ",") {
+	for item := range strings.SplitSeq(s, ",") {
 		results = append(results, strings.Trim(item, "\" "))
 	}
 	return results

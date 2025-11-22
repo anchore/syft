@@ -55,7 +55,7 @@ func (s SelectionRequest) IsEmpty() bool {
 func cleanSelection(tags []string) []string {
 	var cleaned []string
 	for _, tag := range tags {
-		for _, t := range strings.Split(tag, ",") {
+		for t := range strings.SplitSeq(tag, ",") {
 			t = strings.TrimSpace(t)
 			if t == "" {
 				continue

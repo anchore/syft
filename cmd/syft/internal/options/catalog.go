@@ -308,7 +308,7 @@ func (cfg *Catalog) PostLoad() error {
 func Flatten(commaSeparatedEntries []string) []string {
 	var out []string
 	for _, v := range commaSeparatedEntries {
-		for _, s := range strings.Split(v, ",") {
+		for s := range strings.SplitSeq(v, ",") {
 			out = append(out, strings.TrimSpace(s))
 		}
 	}

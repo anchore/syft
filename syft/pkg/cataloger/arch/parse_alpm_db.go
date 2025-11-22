@@ -205,7 +205,7 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 		switch key {
 		case "files":
 			var files []map[string]string
-			for _, f := range strings.Split(value, "\n") {
+			for f := range strings.SplitSeq(value, "\n") {
 				p := fmt.Sprintf("/%s", f)
 				if ok := ignoredFiles[p]; !ok {
 					files = append(files, map[string]string{"path": p})
@@ -214,7 +214,7 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 			pkgFields[key] = files
 		case "backup":
 			var backup []map[string]interface{}
-			for _, f := range strings.Split(value, "\n") {
+			for f := range strings.SplitSeq(value, "\n") {
 				fields := strings.SplitN(f, "\t", 2)
 				p := fmt.Sprintf("/%s", fields[0])
 				if ok := ignoredFiles[p]; !ok {

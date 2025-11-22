@@ -49,8 +49,7 @@ func parseLicenseData(ctx context.Context, license string, locations ...file.Loc
 	licenses := make([]pkg.License, 0)
 
 	// check if multiple licenses are separated by |
-	splitField := strings.Split(license, "|")
-	for _, l := range splitField {
+	for l := range strings.SplitSeq(license, "|") {
 		// check case 1 for surrounding parens
 		l = strings.TrimSpace(l)
 		if strings.Contains(l, "(") && strings.Contains(l, ")") {
@@ -97,10 +96,9 @@ func parseVersion(version string) string {
 
 	// multiple constraints
 	if strings.Contains(version, ",") {
-		multipleConstraints := strings.Split(version, ",")
 		// SPDX does not support considering multiple constraints
 		// so we will just take the first one and attempt to form the best SPDX ID we can
-		for _, v := range multipleConstraints {
+		for v := range strings.SplitSeq(version, ",") {
 			constraintVersion := strings.SplitN(v, " ", 2)
 			if len(constraintVersion) == 2 {
 				// switch on the operator and return the version with + or without

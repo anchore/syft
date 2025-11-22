@@ -273,7 +273,7 @@ func parseExtras(packageName string) []string {
 	}
 
 	extraString := packageName[start+1 : stop]
-	for _, extra := range strings.Split(extraString, ",") {
+	for extra := range strings.SplitSeq(extraString, ",") {
 		extras = append(extras, strings.TrimSpace(extra))
 	}
 	return extras

@@ -105,7 +105,7 @@ func parseOsRelease(contents string) (*Release, error) {
 	}
 
 	var idLike []string
-	for _, s := range strings.Split(values["ID_LIKE"], " ") {
+	for s := range strings.SplitSeq(values["ID_LIKE"], " ") {
 		s = strings.TrimSpace(s)
 		if s == "" {
 			continue
