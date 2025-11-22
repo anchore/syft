@@ -111,9 +111,9 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 		}
 
 		// remove line continuations... smashes the file into a single line
-		if strings.HasSuffix(line, "\\") {
+		if lineWithoutContinuation, ok := strings.CutSuffix(line, "\\"); ok {
 			// this line is a continuation of the previous line
-			lastLine += strings.TrimSuffix(line, "\\")
+			lastLine += lineWithoutContinuation
 			continue
 		}
 
