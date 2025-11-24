@@ -70,6 +70,7 @@ catalogers:
           - name: dependency.depth
             default:
               - direct
+              - indirect
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
