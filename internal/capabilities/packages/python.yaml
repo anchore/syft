@@ -7,7 +7,7 @@ configs: # AUTO-GENERATED - config structs and their fields
         description: GuessUnpinnedRequirements attempts to infer package versions from version constraints when no explicit version is specified in requirements files.
         app_key: python.guess-unpinned-requirements
       - key: SearchRemoteLicenses
-        description: SearchRemoteLicenses enables querying the NPM registry API to retrieve license information for packages that are missing license data in their local metadata.
+        description: SearchRemoteLicenses enables querying the PyPI registry API to retrieve license information for packages that are missing license data in their local metadata.
         app_key: python.search-remote-licenses
       - key: PypiBaseURL
         description: PypiBaseURL specifies the base URL for the Pypi registry API used when searching for remote license information.
@@ -155,7 +155,8 @@ catalogers:
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
-            default: []
+            default:
+              - any
           - name: package_manager.files.listing
             default: false
           - name: package_manager.files.digests
