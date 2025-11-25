@@ -71,13 +71,11 @@ catalogers:
           - name: license
             default: true
           - name: dependency.depth
-            default:
-              - direct
+            default: []
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
-            default:
-              - runtime
+            default: []
           - name: package_manager.files.listing
             default: true
             evidence:
