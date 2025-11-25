@@ -4,7 +4,7 @@ configs: # AUTO-GENERATED - config structs and their fields
   kernel.LinuxKernelCatalogerConfig:
     fields:
       - key: CatalogModules
-        description: CatalogModules enables cataloging linux kernel modules (*.ko files) in addition to the kernel itself.
+        description: CatalogModules enables cataloging linux kernel modules (`*.ko` files) in addition to the kernel itself.
         app_key: linux-kernel.catalog-modules
 catalogers:
   - ecosystem: linux # MANUAL
