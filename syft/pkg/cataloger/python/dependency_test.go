@@ -222,7 +222,7 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 					Variants: []dependency.ProvidesRequires{
 						{
 							Provides: []string{"requests[socks]"},
-							Requires: []string{"PySocks"},
+							Requires: []string{"pysocks"},
 						},
 						{
 							Provides: []string{"requests[use-chardet-on-py3]"},
@@ -272,6 +272,162 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 			if d := cmp.Diff(tt.want, got); d != "" {
 				t.Errorf("wrong result (-want +got):\n%s", d)
 			}
+		})
+	}
+}
+
+func Test_extractPackageName(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "simple package name",
+			input: "requests",
+			want:  "requests",
+		},
+		{
+			name:  "package with version constraint",
+			input: "requests >= 2.8.1",
+			want:  "requests",
+		},
+		{
+			name:  "package with parentheses version constraint",
+			input: "requests (>= 2.8.1)",
+			want:  "requests",
+		},
+		{
+			name:  "package with extras",
+			input: "requests[security,tests]",
+			want:  "requests",
+		},
+		{
+			name:  "package with extras and version",
+			input: "requests[security] >= 2.8.1",
+			want:  "requests",
+		},
+		{
+			name:  "package with environment marker",
+			input: "requests ; python_version < \"2.7\"",
+			want:  "requests",
+		},
+		{
+			name:  "package with everything",
+			input: "requests[security] >= 2.8.1 ; python_version < \"3\"",
+			want:  "requests",
+		},
+		{
+			name:  "package name with capitals (normalization test)",
+			input: "Werkzeug (>=0.15)",
+			want:  "werkzeug",
+		},
+		{
+			name:  "package name with mixed case",
+			input: "Jinja2 (>=2.10.1)",
+			want:  "jinja2",
+		},
+		{
+			name:  "package name with underscores",
+			input: "some_package >= 1.0",
+			want:  "some-package",
+		},
+		{
+			name:  "package name with mixed separators",
+			input: "Some_Package.Name >= 1.0",
+			want:  "some-package-name",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractPackageName(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_wheelEggDependencySpecifier(t *testing.T) {
+	tests := []struct {
+		name string
+		p    pkg.Package
+		want dependency.Specification
+	}{
+		{
+			name: "no dependencies",
+			p: pkg.Package{
+				Name: "foo",
+				Metadata: pkg.PythonPackage{
+					RequiresDist: []string{},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+				},
+			},
+		},
+		{
+			name: "simple dependencies",
+			p: pkg.Package{
+				Name: "requests",
+				Metadata: pkg.PythonPackage{
+					RequiresDist: []string{
+						"certifi>=2017.4.17",
+						"urllib3<1.27,>=1.21.1",
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"requests"},
+					Requires: []string{"certifi", "urllib3"},
+				},
+			},
+		},
+		{
+			name: "dependencies with capital letters (Flask-like)",
+			p: pkg.Package{
+				Name: "flask",
+				Metadata: pkg.PythonPackage{
+					RequiresDist: []string{
+						"Werkzeug (>=0.15)",
+						"Jinja2 (>=2.10.1)",
+						"itsdangerous (>=0.24)",
+						"click (>=5.1)",
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"flask"},
+					// Requires are returned in the order they appear in RequiresDist
+					Requires: []string{"werkzeug", "jinja2", "itsdangerous", "click"},
+				},
+			},
+		},
+		{
+			name: "dependencies with extras",
+			p: pkg.Package{
+				Name: "foo",
+				Metadata: pkg.PythonPackage{
+					RequiresDist: []string{
+						"bar >= 1.0",
+						"pytest ; extra == 'dev'",
+						"sphinx ; extra == 'docs'",
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"foo"},
+					Requires: []string{"bar", "pytest", "sphinx"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, wheelEggDependencySpecifier(tt.p))
 		})
 	}
 }
