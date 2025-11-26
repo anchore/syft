@@ -11,16 +11,16 @@ configs: # AUTO-GENERATED - config structs and their fields
         description: UseNetwork enables network operations for java package metadata enrichment, such as fetching parent POMs and license information.
         app_key: java.use-network
       - key: UseMavenLocalRepository
-        description: UseMavenLocalRepository enables searching the local maven repository (`~/.m2/repository` by default) for parent POMs and other metadata.
+        description: UseMavenLocalRepository enables searching the local maven repository (~/.m2/repository by default) for parent POMs and other metadata.
         app_key: java.use-maven-local-repository
       - key: MavenLocalRepositoryDir
-        description: MavenLocalRepositoryDir specifies the location of the local maven repository. When not set, defaults to `~/.m2/repository`.
+        description: MavenLocalRepositoryDir specifies the location of the local maven repository. When not set, defaults to ~/.m2/repository.
         app_key: java.maven-local-repository-dir
       - key: MavenBaseURL
-        description: MavenBaseURL specifies the base URL(s) to use for fetching POMs and metadata from maven central or other repositories. When not set, defaults to `https://repo1.maven.org/maven2`.
+        description: MavenBaseURL specifies the base URL(s) to use for fetching POMs and metadata from maven central or other repositories. When not set, defaults to https://repo1.maven.org/maven2.
         app_key: java.maven-url
       - key: MaxParentRecursiveDepth
-        description: MaxParentRecursiveDepth limits how many parent POMs will be fetched recursively before stopping. This prevents fetching excessively deep parent graphs.
+        description: MaxParentRecursiveDepth limits how many parent POMs will be fetched recursively before stopping. This prevents infinite loops or excessively deep parent chains.
         app_key: java.max-parent-recursive-depth
       - key: ResolveTransitiveDependencies
         description: ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
