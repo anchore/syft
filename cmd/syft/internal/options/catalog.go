@@ -77,6 +77,8 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		JavaScript:    defaultJavaScriptConfig(),
+		Python:        defaultPythonConfig(),
 		Nix:           defaultNixConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),

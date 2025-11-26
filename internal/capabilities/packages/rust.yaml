@@ -1,0 +1,99 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: rust # MANUAL
+    name: cargo-auditable-binary-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/rust/cataloger.go
+      function: NewAuditBinaryCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - rust
+    parsers: # AUTO-GENERATED structure
+      - function: parseAuditBinary
+        detector: # AUTO-GENERATED
+          method: mimetype # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - application/x-executable
+            - application/x-mach-binary
+            - application/x-elf
+            - application/x-sharedlib
+            - application/vnd.microsoft.portable-executable
+            - application/x-executable
+        metadata_types: # AUTO-GENERATED
+          - pkg.RustBinaryAuditEntry
+        package_types: # AUTO-GENERATED
+          - rust-crate
+        json_schema_types: # AUTO-GENERATED
+          - RustCargoAuditEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: rust # MANUAL
+    name: rust-cargo-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/rust/cataloger.go
+      function: NewCargoLockCataloger
+    selectors: # AUTO-GENERATED
+      - cargo
+      - declared
+      - directory
+      - language
+      - package
+      - rust
+    parsers: # AUTO-GENERATED structure
+      - function: parseCargoLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Cargo.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RustCargoLockEntry
+        package_types: # AUTO-GENERATED
+          - rust-crate
+        json_schema_types: # AUTO-GENERATED
+          - RustCargoLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+              - build
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - RustCargoLockEntry.Checksum

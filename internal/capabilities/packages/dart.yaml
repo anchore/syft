@@ -1,0 +1,88 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: dart # MANUAL
+    name: dart-pubspec-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dart/cataloger.go
+      function: NewPubspecCataloger
+    selectors: # AUTO-GENERATED
+      - dart
+      - declared
+      - directory
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePubspec
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pubspec.yml'
+            - '**/pubspec.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DartPubspec
+        package_types: # AUTO-GENERATED
+          - dart-pub
+        json_schema_types: # AUTO-GENERATED
+          - DartPubspec
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: dart # MANUAL
+    name: dart-pubspec-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dart/cataloger.go
+      function: NewPubspecLockCataloger
+    selectors: # AUTO-GENERATED
+      - dart
+      - declared
+      - directory
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePubspecLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pubspec.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DartPubspecLockEntry
+        package_types: # AUTO-GENERATED
+          - dart-pub
+        json_schema_types: # AUTO-GENERATED
+          - DartPubspecLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

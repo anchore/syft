@@ -1,0 +1,46 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: ai # MANUAL
+    name: gguf-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ai/cataloger.go
+      function: NewGGUFCataloger
+    selectors: # AUTO-GENERATED
+      - ai
+      - directory
+      - gguf
+      - image
+      - ml
+      - model
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGGUFModel
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.gguf'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GGUFFileHeader
+        package_types: # AUTO-GENERATED
+          - model
+        json_schema_types: # AUTO-GENERATED
+          - GgufFileHeader
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - GGUFFileHeader.MetadataKeyValuesHash

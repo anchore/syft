@@ -1,0 +1,215 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: php # MANUAL
+    name: php-composer-installed-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewComposerInstalledCataloger
+    selectors: # AUTO-GENERATED
+      - composer
+      - image
+      - installed
+      - language
+      - package
+      - php
+    parsers: # AUTO-GENERATED structure
+      - function: parseInstalledJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/installed.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpComposerInstalledEntry
+        package_types: # AUTO-GENERATED
+          - php-composer
+        json_schema_types: # AUTO-GENERATED
+          - PhpComposerInstalledEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: php # MANUAL
+    name: php-composer-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewComposerLockCataloger
+    selectors: # AUTO-GENERATED
+      - composer
+      - declared
+      - directory
+      - language
+      - package
+      - php
+    parsers: # AUTO-GENERATED structure
+      - function: parseComposerLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/composer.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpComposerLockEntry
+        package_types: # AUTO-GENERATED
+          - php-composer
+        json_schema_types: # AUTO-GENERATED
+          - PhpComposerLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+  - ecosystem: php # MANUAL
+    name: php-interpreter-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - image
+      - installed
+      - package
+      - php
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/php*'
+          - '**/php*/**/*.so'
+          - '**/php-fpm*'
+          - '**/apache*/**/libphp*.so'
+    metadata_types: # AUTO-GENERATED
+      - pkg.BinarySignature
+    package_types: # AUTO-GENERATED
+      - binary
+    json_schema_types: # AUTO-GENERATED
+      - BinarySignature
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default:
+          - direct
+      - name: dependency.edges
+        default: flat
+      - name: dependency.kinds
+        default:
+          - runtime
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
+  - ecosystem: php # MANUAL
+    name: php-pear-serialized-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewPearCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - image
+      - language
+      - package
+      - pear
+      - php
+    parsers: # AUTO-GENERATED structure
+      - function: parsePear
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/php/.registry/**/*.reg'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpPearEntry
+        package_types: # AUTO-GENERATED
+          - php-pear
+        json_schema_types: # AUTO-GENERATED
+          - PhpPearEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+          - name: package_manager.files.digests
+            default: true
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: php # MANUAL
+    name: php-pecl-serialized-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/php/cataloger.go
+      function: NewPeclCataloger
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePecl
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/php/.registry/.channel.*/*.reg'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PhpPeclEntry
+        package_types: # AUTO-GENERATED
+          - php-pecl
+        json_schema_types: # AUTO-GENERATED
+          - PhpPeclEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

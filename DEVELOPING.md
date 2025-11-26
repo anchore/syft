@@ -215,6 +215,24 @@ Interested in building a new cataloger? Checkout the [list of issues with the `n
 If you have questions about implementing a cataloger feel free to file an issue or reach out to us [on discourse](https://anchore.com/discourse)!
 
 
+#### Documenting Cataloger Capabilities
+
+When adding a new cataloger or changing the capabilities of an existing one, you'll need to document its capabilities in `internal/capabilities/packages.yaml`. This includes:
+- What metadata types it produces
+- What package types it catalogs
+- What dependency information it provides (depth, edges, kinds)
+- Whether it extracts license information
+- How configuration affects its behavior
+
+After implementing your cataloger:
+
+1. **Write tests using the `pkgtest` helpers** - this automatically generates test observations that feed into capability documentation
+2. **Run `make generate-capabilities`** - this regenerates the `packages.yaml` file and validates your changes
+3. **Manually edit capabilities** - add the `ecosystem` field and detailed `capabilities` sections in `packages.yaml`
+
+For detailed information about the capability documentation system, see [`internal/capabilities/generate/README.md`](internal/capabilities/generate/README.md).
+
+
 #### Searching for files
 
 All catalogers are provided an instance of the [`file.Resolver`](https://github.com/anchore/syft/blob/v0.70.0/syft/source/file_resolver.go#L8) to interface with the image and search for files. The implementations for these 
