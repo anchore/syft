@@ -70,7 +70,7 @@ func TestExcludingResolver(t *testing.T) {
 
 			locations = []file.Location{}
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			channel := er.AllLocations(ctx)
 			for location := range channel {

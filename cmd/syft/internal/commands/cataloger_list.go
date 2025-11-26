@@ -187,45 +187,49 @@ func renderCatalogerListJSON(tasks []task.Task, selection task.Selection, defaul
 }
 
 func renderCatalogerListTables(taskGroups [][]task.Task, selection task.Selection) string {
-	pkgCatalogerTable := renderCatalogerListTable(taskGroups[0], selection, "Package Cataloger")
-	fileCatalogerTable := renderCatalogerListTable(taskGroups[1], selection, "File Cataloger")
-
-	report := fileCatalogerTable + "\n" + pkgCatalogerTable + "\n"
-
 	hasAdditions := len(selection.Request.AddNames) > 0
 	hasDefaults := len(selection.Request.DefaultNamesOrTags) > 0
 	hasRemovals := len(selection.Request.RemoveNamesOrTags) > 0
 	hasSubSelections := len(selection.Request.SubSelectTags) > 0
 	expressions := len(selection.Request.SubSelectTags) + len(selection.Request.AddNames) + len(selection.Request.RemoveNamesOrTags)
 
-	var header string
+	var out strings.Builder
 
-	header += fmt.Sprintf("Default selections: %d\n", len(selection.Request.DefaultNamesOrTags))
+	fmt.Fprintf(&out, "Default selections: %d\n", len(selection.Request.DefaultNamesOrTags))
+
 	if hasDefaults {
 		for _, expr := range selection.Request.DefaultNamesOrTags {
-			header += fmt.Sprintf("  • '%s'\n", expr)
+			fmt.Fprintf(&out, "  • '%s'\n", expr)
 		}
 	}
 
-	header += fmt.Sprintf("Selection expressions: %d\n", expressions)
+	fmt.Fprintf(&out, "Selection expressions: %d\n", expressions)
 
 	if hasSubSelections {
 		for _, n := range selection.Request.SubSelectTags {
-			header += fmt.Sprintf("  • '%s' (intersect)\n", n)
+			fmt.Fprintf(&out, "  • '%s' (intersect)\n", n)
 		}
 	}
 	if hasRemovals {
 		for _, n := range selection.Request.RemoveNamesOrTags {
-			header += fmt.Sprintf("  • '-%s' (remove)\n", n)
+			fmt.Fprintf(&out, "  • '-%s' (remove)\n", n)
 		}
 	}
 	if hasAdditions {
 		for _, n := range selection.Request.AddNames {
-			header += fmt.Sprintf("  • '+%s' (add)\n", n)
+			fmt.Fprintf(&out, "  • '+%s' (add)\n", n)
 		}
 	}
 
-	return header + report
+	pkgCatalogerTable := renderCatalogerListTable(taskGroups[0], selection, "Package Cataloger")
+	fileCatalogerTable := renderCatalogerListTable(taskGroups[1], selection, "File Cataloger")
+
+	out.WriteString(fileCatalogerTable)
+	out.WriteRune('\n')
+	out.WriteString(pkgCatalogerTable)
+	out.WriteRune('\n')
+
+	return out.String()
 }
 
 func renderCatalogerListTable(tasks []task.Task, selection task.Selection, kindTitle string) string {

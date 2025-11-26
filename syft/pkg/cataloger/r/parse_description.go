@@ -84,13 +84,11 @@ func yesNoToBool(s string) bool {
 
 func commaSeparatedList(s string) []string {
 	var result []string
-	split := strings.Split(s, ",")
-	for _, piece := range split {
+	for piece := range strings.SplitSeq(s, ",") {
 		value := strings.TrimSpace(piece)
-		if value == "" {
-			continue
+		if value != "" {
+			result = append(result, value)
 		}
-		result = append(result, value)
 	}
 	return result
 }

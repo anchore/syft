@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -209,12 +210,7 @@ func licensesFromJSON(b []byte) ([]npmPackageLicense, error) {
 var filepathSeparator = regexp.MustCompile(`[\\/]`)
 
 func pathContainsNodeModulesDirectory(p string) bool {
-	for _, subPath := range filepathSeparator.Split(p, -1) {
-		if subPath == "node_modules" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(filepathSeparator.Split(p, -1), "node_modules")
 }
 
 func (p *people) UnmarshalJSON(b []byte) error {

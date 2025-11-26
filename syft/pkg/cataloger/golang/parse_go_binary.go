@@ -367,7 +367,7 @@ func getExperimentsFromVersion(version string) (string, []string) {
 	version, rest, ok := strings.Cut(version, " ")
 	if ok {
 		// Assume they may add more non-version chunks in the future, so only look for "X:".
-		for _, chunk := range strings.Split(rest, " ") {
+		for chunk := range strings.SplitSeq(rest, " ") {
 			if strings.HasPrefix(rest, "X:") {
 				csv := strings.TrimPrefix(chunk, "X:")
 				experiments = append(experiments, strings.Split(csv, ",")...)

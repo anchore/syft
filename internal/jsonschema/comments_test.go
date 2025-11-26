@@ -1,6 +1,7 @@
 package main
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -92,9 +93,7 @@ func TestCopyAliasFieldComments(t *testing.T) {
 
 			// make a copy of the comment map since the function modifies it
 			commentMap := make(map[string]string)
-			for k, v := range tt.commentMap {
-				commentMap[k] = v
-			}
+			maps.Copy(commentMap, tt.commentMap)
 
 			// run the function
 			copyAliasFieldComments(commentMap, tmpDir)

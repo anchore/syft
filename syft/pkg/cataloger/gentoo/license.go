@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"maps"
 	"slices"
 	"strings"
 
@@ -143,9 +144,8 @@ func replaceLicenseGroups(licenses []string, groups map[string][]string) []strin
 
 	result := make([]string, 0, len(licenses))
 	for _, license := range licenses {
-		if strings.HasPrefix(license, "@") {
+		if name, ok := strings.CutPrefix(license, "@"); ok {
 			// this is a license group...
-			name := strings.TrimPrefix(license, "@")
 			if expandedLicenses, ok := groups[name]; ok {
 				result = append(result, expandedLicenses...)
 			} else {
@@ -224,9 +224,7 @@ func expandLicenses(currentGroup string, licenses []string, rawGroups map[string
 			}
 
 			newVisited := make(map[string]bool)
-			for k, v := range visited {
-				newVisited[k] = v
-			}
+			maps.Copy(newVisited, visited)
 
 			expanded, err := expandLicenses(refGroupName, refLicenses, rawGroups, newVisited)
 			if err != nil {

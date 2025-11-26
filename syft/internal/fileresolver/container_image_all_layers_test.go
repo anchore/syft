@@ -359,7 +359,7 @@ func TestAllLayersImageResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.img.FileCatalog.Get(loc.Reference())
@@ -520,7 +520,7 @@ func TestAllLayersResolver_AllLocations(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	visibleSet := strset.New()
 	hiddenSet := strset.New()
