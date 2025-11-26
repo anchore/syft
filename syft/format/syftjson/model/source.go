@@ -26,6 +26,9 @@ type Source struct {
 	// Supplier is supplier information, which can be user-provided for NTIA minimum elements compliance.
 	Supplier string `json:"supplier,omitempty"`
 
+	// Authors is information about who created the SBOM, which can be user-provided.
+	Authors []source.Author `json:"authors,omitempty"`
+
 	// Type is the source type (e.g., "image", "directory", "file").
 	Type string `json:"type"`
 
@@ -39,6 +42,7 @@ type sourceUnpacker struct {
 	Name     string          `json:"name"`
 	Version  string          `json:"version"`
 	Supplier string          `json:"supplier,omitempty"`
+	Authors  []source.Author `json:"authors,omitempty"`
 	Type     string          `json:"type"`
 	Metadata json.RawMessage `json:"metadata"`
 	Target   json.RawMessage `json:"target"` // pre-v9 schema support
@@ -55,6 +59,7 @@ func (s *Source) UnmarshalJSON(b []byte) error {
 	s.Name = unpacker.Name
 	s.Version = unpacker.Version
 	s.Supplier = unpacker.Supplier
+	s.Authors = unpacker.Authors
 	s.Type = unpacker.Type
 	s.ID = unpacker.ID
 

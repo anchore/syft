@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/clio"
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/sourceproviders"
 )
 
@@ -17,6 +18,7 @@ type sourceConfig struct {
 	Name     string      `json:"name" yaml:"name" mapstructure:"name"`
 	Version  string      `json:"version" yaml:"version" mapstructure:"version"`
 	Supplier string      `json:"supplier" yaml:"supplier" mapstructure:"supplier"`
+	Authors  []string    `json:"authors" yaml:"authors" mapstructure:"authors"`
 	Source   string      `json:"source" yaml:"source" mapstructure:"source"`
 	BasePath string      `yaml:"base-path" json:"base-path" mapstructure:"base-path"` // specify base path for all file paths
 	File     fileSource  `json:"file" yaml:"file" mapstructure:"file"`
@@ -84,4 +86,37 @@ func checkDefaultSourceValues(source string) error {
 	}
 
 	return nil
+}
+
+// ParseAuthors parses author strings in the format "type:name:email" into source.Author structs
+func ParseAuthors(authorStrings []string) ([]source.Author, error) {
+	var authors []source.Author
+	for _, authorStr := range authorStrings {
+		parts := strings.Split(authorStr, ":")
+		if len(parts) < 2 {
+			return nil, fmt.Errorf("invalid author format '%s', expected 'type:name' or 'type:name:email'", authorStr)
+		}
+
+		authorType := parts[0]
+		if authorType != "Person" && authorType != "Organization" && authorType != "Tool" {
+			return nil, fmt.Errorf("invalid author type '%s', must be Person, Organization, or Tool", authorType)
+		}
+
+		name := parts[1]
+		if name == "" {
+			return nil, fmt.Errorf("author name cannot be empty")
+		}
+
+		email := ""
+		if len(parts) >= 3 {
+			email = parts[2]
+		}
+
+		authors = append(authors, source.Author{
+			Name:  name,
+			Email: email,
+			Type:  authorType,
+		})
+	}
+	return authors, nil
 }

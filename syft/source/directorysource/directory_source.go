@@ -63,6 +63,7 @@ func (s directorySource) Describe() source.Description {
 	name := cleanDirPath(s.config.Path, s.config.Base)
 	version := ""
 	supplier := ""
+	var authors []source.Author
 	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
@@ -76,12 +77,17 @@ func (s directorySource) Describe() source.Description {
 		if a.Supplier != "" {
 			supplier = a.Supplier
 		}
+
+		if len(a.Authors) > 0 {
+			authors = a.Authors
+		}
 	}
 	return source.Description{
 		ID:       string(s.id),
 		Name:     name,
 		Version:  version,
 		Supplier: supplier,
+		Authors:  authors,
 		Metadata: source.DirectoryMetadata{
 			Path: s.config.Path,
 			Base: s.config.Base,
