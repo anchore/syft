@@ -45,7 +45,15 @@ func toSyftModel(doc model.Document) *sbom.SBOM {
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
 		Relationships: warnConversionErrors(toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases)),
+		Properties:    ensureProperties(doc.Properties),
 	}
+}
+
+func ensureProperties(properties map[string]string) map[string]string {
+	if properties == nil {
+		return make(map[string]string)
+	}
+	return properties
 }
 
 func warnConversionErrors[T any](converted []T, errors []error) []T {
