@@ -880,7 +880,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:     "example.com/mylib",
-					Version:  "UNKNOWN",
+					Version:  "",
 					PURL:     "pkg:golang/example.com/mylib",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
@@ -901,7 +901,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				},
 				{
 					Name:     "command-line-arguments",
-					Version:  "UNKNOWN",
+					Version:  "",
 					PURL:     "pkg:golang/command-line-arguments",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
