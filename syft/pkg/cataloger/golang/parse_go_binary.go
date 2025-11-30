@@ -115,7 +115,9 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 		if dep == nil {
 			continue
 		}
-
+		if dep.ModuleEqual(&mod.Main) {
+			continue
+		}
 		lics := c.licenseResolver.getLicenses(ctx, resolver, dep.Path, dep.Version)
 		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 

@@ -848,6 +848,86 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			},
 		},
 		{
+			name: "parse a populated mod string and returns packages when a replace directive and synthetic main module 'command line arguments' exists",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "command-line-arguments", Version: devel},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "linux"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Path: "command-line-arguments",
+					Deps: []*debug.Module{
+						{
+							Path:    "example.com/mylib",
+							Version: "v0.0.0",
+							Replace: &debug.Module{
+								Path:    "./mylib",
+								Version: devel,
+							},
+						},
+						{
+							Path:    "command-line-arguments",
+							Version: devel,
+						},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "example.com/mylib",
+					Version:  "UNKNOWN",
+					PURL:     "pkg:golang/example.com/mylib",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
+						MainModule:        "command-line-arguments",
+					},
+				},
+				{
+					Name:     "command-line-arguments",
+					Version:  "UNKNOWN",
+					PURL:     "pkg:golang/command-line-arguments",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						BuildSettings: pkg.KeyValues{
+							{Key: "GOARCH", Value: "amd64"},
+							{Key: "GOOS", Value: "linux"},
+							{Key: "GOAMD64", Value: "v1"},
+						},
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
+						MainModule:        "command-line-arguments",
+					},
+				},
+			},
+		},
+		{
 			name: "parse main mod and replace devel with pattern from binary contents",
 			cfg: func() *CatalogerConfig {
 				c := DefaultCatalogerConfig()
