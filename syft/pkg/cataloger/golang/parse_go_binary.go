@@ -76,9 +76,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, resolver, reader.Location, mod, mod.arch, unionReader)
 		if mainPkg != nil {
 			rels = createModuleRelationships(*mainPkg, depPkgs)
-			if mainPkg.Name != "command-line-arguments" {
-				pkgs = append(pkgs, *mainPkg)
-			}
+			pkgs = append(pkgs, *mainPkg)
 		}
 		pkgs = append(pkgs, depPkgs...)
 	}
@@ -90,9 +88,6 @@ func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.
 	var relationships []artifact.Relationship
 
 	for _, dep := range deps {
-		if dep.Name == main.Name && dep.Version == main.Version {
-			continue
-		}
 		relationships = append(relationships, artifact.Relationship{
 			From: dep,
 			To:   main,
@@ -150,9 +145,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 	}
 
 	main := c.makeGoMainPackage(ctx, resolver, mod, arch, location, reader)
-	if main.Name == "command-line-arguments" {
-		pkgs = append(pkgs, main)
-	}
+
 	return &main, pkgs
 }
 
@@ -365,6 +358,7 @@ func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
 			Value: s.Value,
 		})
 	}
+
 	return m
 }
 
