@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -22,16 +23,22 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBi
 	}
 
 	version := dep.Version
+	finalVersion := dep.Version
 	if version == devel {
 		// this is a special case for the "devel" version, which is used when the module is built from source
 		// and there is no vcs tag info available. In this case, we remove the placeholder to indicate
 		// we don't know the version.
 		version = ""
 	}
+	// empty version is non-compliant and thus will probably result in 1 more ghost module to appear in some relationship
+	// see:https://github.com/anchore/syft/issues/4415
+	if version == "" {
+		finalVersion = cataloging.UnknownStubValue
+	}
 
 	p := pkg.Package{
 		Name:      finalPath,
-		Version:   version,
+		Version:   finalVersion,
 		Licenses:  pkg.NewLicenseSet(licenses...),
 		PURL:      packageURL(finalPath, version),
 		Language:  pkg.Go,
