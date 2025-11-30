@@ -18,9 +18,6 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBi
 		} else {
 			finalPath = dep.Replace.Path
 		}
-		if dep.Replace.Version != "" {
-			dep.Version = dep.Replace.Version
-		}
 	}
 
 	version := dep.Version

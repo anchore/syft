@@ -358,7 +358,6 @@ func getBuildSettings(settings []debug.BuildSetting) pkg.KeyValues {
 			Value: s.Value,
 		})
 	}
-
 	return m
 }
 
