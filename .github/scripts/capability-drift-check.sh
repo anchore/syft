@@ -6,12 +6,12 @@ if [ "$(git status --porcelain | wc -l)" -ne "0" ]; then
   exit 1
 fi
 
-if ! make generate-json-schema; then
-  echo "Generating json schema failed"
+if ! make generate-capabilities; then
+  echo "Generating capability descriptions failed"
   exit 1
 fi
 
 if [ "$(git status --porcelain | wc -l)" -ne "0" ]; then
-  echo "  🔴 there is drift in json schema! Please run 'make generate-json-schema' and commit the changes."
+  echo "  🔴 there is drift in capability descriptions! Please run 'make generate-capabilities' and commit the changes."
   exit 1
 fi
