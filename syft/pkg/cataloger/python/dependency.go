@@ -181,7 +181,9 @@ func extractPackageName(s string) string {
 	// requests (>= 2.8.1)			--> requests
 	// requests ; python_version < "2.7"	--> requests
 
-	return strings.TrimSpace(internal.SplitAny(s, "[(<!=>~;")[0])
+	name := strings.TrimSpace(internal.SplitAny(s, "[(<!=>~;")[0])
+	// normalize the name to match how packages are stored (lowercase, with hyphens instead of underscores)
+	return normalize(name)
 }
 
 // extractPackageNames applies extractPackageName to each string in the slice.

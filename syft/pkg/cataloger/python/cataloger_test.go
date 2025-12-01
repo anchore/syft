@@ -614,6 +614,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 				"colorama @ 0.4.6 (.) [dependency-of] pygments @ 2.18.0 (.)",
 				"colorama @ 0.4.6 (.) [dependency-of] uvicorn @ 0.29.0 (.)", // proof of uvicorn[standard]
 				"dnspython @ 2.6.1 (.) [dependency-of] email-validator @ 2.1.1 (.)",
+				"email-validator @ 2.1.1 (.) [dependency-of] fastapi @ 0.111.0 (.)",
 				"email-validator @ 2.1.1 (.) [dependency-of] pydantic @ 2.7.1 (.)",
 				"fastapi @ 0.111.0 (.) [dependency-of] fastapi-cli @ 0.0.4 (.)",
 				"fastapi-cli @ 0.0.4 (.) [dependency-of] fastapi @ 0.111.0 (.)",
