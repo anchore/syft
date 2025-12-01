@@ -1,15 +1,15 @@
 # Capabilities Generation System
 
 This internal tool is responsible for:
-- partially generating the `packages.yaml` file, which documents what capabilities each cataloger in syft has
-- running completeness / consistency tests of the claims from `packages.yaml` against actual test observation
+- partially generating the `packages/*.yaml` ecosystem files, which document what capabilities each cataloger in syft has
+- running completeness / consistency tests of the claims from `packages/*.yaml` against actual test observation
 
 Syft has dozens of catalogers across many ecosystems. Each cataloger has different capabilities, such as:
 - Some provide license information, others don't
 - Some detect transitive dependencies, others only direct
 - Some capabilities depend on configuration
 
-The `packages.yaml` contains all of these capability claims.
+The `packages/*.yaml` files contain all of these capability claims, organized by ecosystem.
 
 The `capabilities` generation system itself:
 1. **Discovers** cataloger information from source code using AST parsing
@@ -23,7 +23,7 @@ The short answer is to provide a foundation for the OSS documentation, where the
 
 ## Quick Start
 
-**To regenerate packages.yaml after code changes:**
+**To regenerate packages/*.yaml files after code changes:**
 ```bash
 go generate ./internal/capabilities
 ```
@@ -76,14 +76,14 @@ graph LR
         E1[catalogerTypeOverrides<br/>catalogerConfigOverrides<br/>catalogerConfigExceptions]
     end
 
-    subgraph "Merge Process"
+    subgraph "Packages.yaml processing"
         F1[io.go<br/>Load Existing YAML]
         F2[merge.go<br/>Merge Logic]
         F3[Preserve MANUAL fields<br/>Update AUTO-GENERATED]
     end
 
     subgraph "Output"
-        G1[packages.yaml<br/>Complete Catalog Document]
+        G1[packages/*.yaml<br/>Ecosystem-Specific Files]
     end
 
     subgraph "Validation"
@@ -143,11 +143,11 @@ graph LR
 6. **Merge**: Discovered data combines with existing YAML, preserving all manually-maintained capability sections
 7. **Validation**: Comprehensive tests ensure the output is complete and synchronized with codebase
 
-## The `packages.yaml` File
+## The `packages/*.yaml` Files
 
 ### Purpose
 
-`internal/capabilities/packages.yaml` is the canonical documentation of:
+`internal/capabilities/packages/*.yaml` files are the canonical documentation of:
 - Every cataloger in syft
 - What files/patterns each cataloger detects
 - What metadata and package types each cataloger produces
@@ -156,17 +156,12 @@ graph LR
 
 ### Structure
 
+Each ecosystem has its own file (e.g., `packages/golang.yaml`, `packages/python.yaml`):
+
 ```yaml
-# File header with usage instructions (AUTO-GENERATED)
+# packages/golang.yaml - Cataloger capabilities for the golang ecosystem
 
-application:  # AUTO-GENERATED
-  # Application-level config keys with descriptions
-  - key: golang.search-local-mod-cache-licenses
-    description: search for go package licences in the GOPATH...
-    default_value: false
-
-configs:  # AUTO-GENERATED
-  # Config struct definitions
+configs:  # AUTO-GENERATED - config structs for this ecosystem
   golang.CatalogerConfig:
     fields:
       - key: SearchLocalModCacheLicenses
@@ -233,8 +228,8 @@ These are updated on every regeneration:
 - `json_schema_types` - converted from metadata_types
 
 **Sections:**
-- Entire `application:` section: a flat mapping of the application config keys relevant to catalogers
-- Entire `configs:` section: a flat mapping of the API-level cataloger config keys, for each cataloger (map of maps) 
+- `appconfig.yaml`: contains the `application:` section with app-level config keys relevant to catalogers
+- `configs:` section in each ecosystem file: config structs used by catalogers in that ecosystem 
 
 #### MANUAL Fields
 These are preserved across regeneration and must be edited by hand:
@@ -248,7 +243,7 @@ These are preserved across regeneration and must be edited by hand:
 
 When you run `go generate ./internal/capabilities`:
 
-1. **Loads existing YAML** into both a struct (for logic) and a node tree (for comment preservation)
+1. **Loads existing YAML files** from `packages/*.yaml` and `appconfig.yaml` into both structs (for logic) and node trees (for comment preservation)
 2. **Discovers all cataloger data** from source code and tests
 3. **Merges** discovered data with existing:
    - Updates AUTO-GENERATED fields
@@ -274,7 +269,7 @@ When you run `go generate ./internal/capabilities`:
    └─ Link catalogers to their configs
 
 2. Merge Phase
-   ├─ Load existing packages.yaml
+   ├─ Load existing packages/*.yaml files
    ├─ Process each cataloger:
    │  ├─ Update AUTO-GENERATED fields
    │  └─ Preserve MANUAL fields
@@ -282,9 +277,10 @@ When you run `go generate ./internal/capabilities`:
    └─ Detect orphaned entries
 
 3. Write Phase
-   ├─ Update YAML node tree in-place
+   ├─ Group catalogers by ecosystem
+   ├─ Update YAML node trees per ecosystem
    ├─ Add field annotations
-   └─ Write to disk
+   └─ Write to packages/*.yaml and appconfig.yaml
 
 4. Validation Phase
    ├─ Check all catalogers present
@@ -627,7 +623,7 @@ var observationExceptions = map[string]*strset.Set{
 
 ### Purpose
 
-The `completeness_test.go` file ensures `packages.yaml` stays in perfect sync with the codebase. These tests catch:
+The `completeness_test.go` file ensures `packages/*.yaml` files stay in perfect sync with the codebase. These tests catch:
 - New catalogers that haven't been documented
 - Orphaned cataloger entries (cataloger was removed but YAML wasn't updated)
 - Missing metadata/package type documentation
@@ -643,7 +639,7 @@ The `completeness_test.go` file ensures `packages.yaml` stays in perfect sync wi
 - Ensures all catalogers in YAML exist in the binary
 - Ensures all capabilities sections are filled (no TODOs/nulls)
 
-**Failure means:** you added/removed a cataloger but didn't regenerate packages.yaml
+**Failure means:** you added/removed a cataloger but didn't regenerate the ecosystem YAML files
 
 **Fix:** run `go generate ./internal/capabilities`
 
@@ -652,9 +648,9 @@ The `completeness_test.go` file ensures `packages.yaml` stays in perfect sync wi
 **`TestCapabilitiesAreUpToDate`**
 - Runs only in CI
 - Ensures regeneration succeeds
-- Ensures generated file has no uncommitted changes
+- Ensures generated files have no uncommitted changes
 
-**Failure means:** packages.yaml wasn't regenerated after code changes
+**Failure means:** ecosystem YAML files weren't regenerated after code changes
 
 **Fix:** run `go generate ./internal/capabilities` and commit changes
 
@@ -699,7 +695,7 @@ The `completeness_test.go` file ensures `packages.yaml` stays in perfect sync wi
 
 **Failure means:** cataloger structure doesn't follow conventions
 
-**Fix:** correct the cataloger structure in packages.yaml
+**Fix:** correct the cataloger structure in the appropriate `packages/*.yaml` file
 
 ---
 
@@ -708,7 +704,7 @@ The `completeness_test.go` file ensures `packages.yaml` stays in perfect sync wi
 - Validates detector formats for custom catalogers
 - Checks for duplicate parser functions within catalogers
 
-**Failure means:** data integrity issue in packages.yaml
+**Failure means:** data integrity issue in ecosystem YAML files
 
 **Fix:** remove duplicates or fix detector definitions
 
@@ -850,7 +846,7 @@ pkgtest.NewCatalogTester().
 
 ### What Requires Manual Editing
 
-these fields in `packages.yaml` are **MANUAL** and must be maintained by hand:
+These fields in `packages/*.yaml` files are **MANUAL** and must be maintained by hand:
 
 #### 1. Ecosystem Field (Cataloger Level)
 ```yaml
@@ -1028,15 +1024,15 @@ evidence:
 **What happens automatically:**
 1. Generator discovers the cataloger via AST parsing
 2. Extracts parsers, detectors, and patterns
-3. Adds entry to packages.yaml with structure
+3. Adds entry to the appropriate ecosystem YAML file
 4. Links to config (if constructor has config parameter)
 5. Extracts metadata types from test-observations.json (if test uses pkgtest)
 
 **What you must do manually:**
-1. Set the `ecosystem` field in packages.yaml
+1. Set the `ecosystem` field in the ecosystem YAML file
 2. Add `capabilities` sections to each parser
 3. Run `go generate ./internal/capabilities`
-4. Commit the updated packages.yaml
+4. Commit the updated ecosystem YAML file
 
 **Example workflow:**
 ```bash
@@ -1049,11 +1045,11 @@ vim syft/pkg/cataloger/mynew/cataloger_test.go
 # 3. Run tests to generate observations
 go test ./syft/pkg/cataloger/mynew
 
-# 4. Regenerate packages.yaml
+# 4. Regenerate ecosystem YAML files
 go generate ./internal/capabilities
 
-# 5. Edit packages.yaml manually
-vim internal/capabilities/packages.yaml
+# 5. Edit the ecosystem file manually
+vim internal/capabilities/packages/mynew.yaml
 # - Set ecosystem field
 # - Add capabilities sections
 
@@ -1061,7 +1057,7 @@ vim internal/capabilities/packages.yaml
 go test ./internal/capabilities/generate
 
 # 7. Commit
-git add internal/capabilities/packages.yaml
+git add internal/capabilities/packages/mynew.yaml
 git add syft/pkg/cataloger/mynew/test-fixtures/test-observations.json
 git commit
 ```
@@ -1093,10 +1089,10 @@ vim syft/pkg/cataloger/something/cataloger.go
 go generate ./internal/capabilities
 
 # 3. Review changes
-git diff internal/capabilities/packages.yaml
+git diff internal/capabilities/packages/
 
 # 4. Commit
-git add internal/capabilities/packages.yaml
+git add internal/capabilities/packages/
 git commit
 ```
 
@@ -1119,7 +1115,7 @@ go test ./syft/pkg/cataloger/something
 go generate ./internal/capabilities
 
 # 5. Commit
-git add internal/capabilities/packages.yaml
+git add internal/capabilities/packages/
 git add syft/pkg/cataloger/something/test-fixtures/test-observations.json
 git commit
 ```
@@ -1130,14 +1126,14 @@ git commit
 
 **Workflow:**
 ```bash
-# 1. Edit packages.yaml directly
-vim internal/capabilities/packages.yaml
+# 1. Edit the ecosystem file directly
+vim internal/capabilities/packages/something.yaml
 
 # 2. Validate
 go test ./internal/capabilities/generate
 
 # 3. Commit
-git commit internal/capabilities/packages.yaml
+git commit internal/capabilities/packages/something.yaml
 ```
 
 ### Adding New Capability Fields
@@ -1147,8 +1143,8 @@ if you need to add a completely new capability field (e.g., `package_manager.bui
 **Steps:**
 1. Add field name to known fields in `TestCapabilityFieldNaming` (completeness_test.go)
 2. Add value type validation to `validateCapabilityValueType()` (completeness_test.go)
-3. Update file header documentation in packages.yaml
-4. Add the field to relevant catalogers in packages.yaml
+3. Update file header documentation in ecosystem YAML files
+4. Add the field to relevant catalogers in the appropriate `packages/*.yaml` files
 5. Update any runtime code that consumes capabilities
 
 ### When to Update Exceptions
@@ -1197,7 +1193,7 @@ if you need to add a completely new capability field (e.g., `package_manager.bui
 
 ### Validation & Utilities
 
-- **`completeness_test.go`**: comprehensive test suite ensuring packages.yaml is complete and synced
+- **`completeness_test.go`**: comprehensive test suite ensuring `packages/*.yaml` files are complete and synced
 - **`cataloger_names.go`**: helper to get all cataloger names from syft task factories
 - **`metadata_check.go`**: validates metadata and package type coverage
 
@@ -1210,9 +1206,9 @@ if you need to add a completely new capability field (e.g., `package_manager.bui
 
 ## Troubleshooting
 
-### "Cataloger X not found in packages.yaml"
+### "Cataloger X not found in ecosystem YAML"
 
-**Cause:** you added a new cataloger but didn't regenerate packages.yaml
+**Cause:** you added a new cataloger but didn't regenerate the ecosystem YAML files
 
 **Fix:**
 ```bash
@@ -1281,7 +1277,7 @@ func TestMyParser(t *testing.T) {
 
 **Cause:** capability condition references a non-existent config field
 
-**Fix:** edit packages.yaml and correct the field name:
+**Fix:** edit the ecosystem YAML file and correct the field name:
 ```yaml
 # Before:
 conditions:
@@ -1298,7 +1294,7 @@ conditions:
 - Typo in evidence reference, OR
 - Struct was refactored and field moved/renamed
 
-**Fix:** edit packages.yaml and correct the evidence reference:
+**Fix:** edit the ecosystem YAML file and correct the evidence reference:
 ```yaml
 # Before:
 evidence:
@@ -1309,14 +1305,14 @@ evidence:
   - AlpmDBEntry.Files
 ```
 
-### "packages.yaml has uncommitted changes after regeneration"
+### "Ecosystem YAML files have uncommitted changes after regeneration"
 
-**Cause:** packages.yaml is out of date (usually caught in CI)
+**Cause:** ecosystem YAML files are out of date (usually caught in CI)
 
 **Fix:**
 ```bash
 go generate ./internal/capabilities
-git add internal/capabilities/packages.yaml
+git add internal/capabilities/packages/
 git commit -m "chore: regenerate capabilities"
 ```
 
@@ -1342,7 +1338,7 @@ var catalogerConfigExceptions = strset.New(
 
 ### "Parser capabilities must be defined"
 
-**Cause:** parser in packages.yaml has no capabilities section
+**Cause:** parser in ecosystem YAML file has no capabilities section
 
 **Fix:** add capabilities to the parser:
 ```yaml

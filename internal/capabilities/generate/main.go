@@ -1,4 +1,4 @@
-// this is the entry point for regenerating the packages.yaml file, which orchestrates discovery, merging, and validation of cataloger capabilities.
+// this is the entry point for regenerating the packages/*.yaml files, which orchestrates discovery, merging, and validation of cataloger capabilities.
 package main
 
 import (

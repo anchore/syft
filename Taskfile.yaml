@@ -528,7 +528,7 @@ tasks:
     cmds:
       # remove all test observations prior to regenerating
       - find ./syft/pkg -type f -name "test-observations.json" -exec rm -f {} \;
-      # this is required to update test observations; such evidence is used to update the packages.yaml
+      # this is required to update test observations; such evidence is used to update the packages/*.yaml
       - "go test ./syft/pkg/... -count=1"
       - "go generate ./internal/capabilities/..."
       - "gofmt -s -w ./internal/capabilities"

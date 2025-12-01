@@ -1,4 +1,4 @@
-// this file contains the core merging logic that combines discovered cataloger data with existing packages.yaml, preserving all manual sections while updating auto-generated fields.
+// this file contains the core merging logic that combines discovered cataloger data with existing packages/*.yaml files, preserving all manual sections while updating auto-generated fields.
 package main
 
 import (
@@ -272,7 +272,7 @@ func discoverAndFilterConfigs(repoRoot string) (map[string]capabilities.Cataloge
 	}
 	fmt.Printf(" %d allowed (filtered %d)\n", len(filteredConfigInfoMap), len(configInfoMap)-len(filteredConfigInfoMap))
 
-	// convert ConfigInfo to CatalogerConfigEntry format for packages.yaml
+	// convert ConfigInfo to CatalogerConfigEntry format for ecosystem YAML files
 	discoveredConfigs := make(map[string]capabilities.CatalogerConfigEntry)
 	for key, configInfo := range filteredConfigInfoMap {
 		fields := make([]capabilities.CatalogerConfigFieldEntry, len(configInfo.Fields))
@@ -695,7 +695,7 @@ func (m *CatalogerMerger) processCustomCataloger(existingEntry *capabilities.Cat
 // preserving manual sections (capabilities) while updating AUTO-GENERATED sections.
 //
 // The configs and appConfigs parameters are AUTO-GENERATED sections that completely replace
-// any existing configs/app-config data in the packages.yaml file.
+// any existing configs/app-config data in the ecosystem YAML files.
 //
 // The catalogerConfigMappings parameter maps cataloger names to their config struct names
 // (e.g., "go-module-binary-cataloger" -> "golang.CatalogerConfig").
