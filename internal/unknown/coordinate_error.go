@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 )
@@ -184,18 +185,25 @@ func visitErrors(err error, fn func(error) error) error {
 		// errors.Join omits nil errors and will return nil if all passed errors are nil
 		return errors.Join(out...)
 	}
+	// handle PanicErrors directly, since these are wrapped errors
+	if e, ok := err.(sync.PanicError); ok {
+		return fn(e)
+	}
 	// unwrap singly wrapped errors
 	if e, ok := err.(interface{ Unwrap() error }); ok {
 		wrapped := e.Unwrap()
-		got := visitErrors(wrapped, fn)
-		if got == nil {
-			return nil
+		// if there is not a wrapped error, fall through to visit the error directly
+		if wrapped != nil {
+			got := visitErrors(wrapped, fn)
+			if got == nil {
+				return nil
+			}
+			if wrapped.Error() != got.Error() {
+				prefix := strings.TrimSuffix(err.Error(), wrapped.Error())
+				return fmt.Errorf("%s%w", prefix, got)
+			}
+			return err
 		}
-		if wrapped.Error() != got.Error() {
-			prefix := strings.TrimSuffix(err.Error(), wrapped.Error())
-			return fmt.Errorf("%s%w", prefix, got)
-		}
-		return err
 	}
 	return fn(err)
 }
