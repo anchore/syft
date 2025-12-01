@@ -231,11 +231,11 @@ catalogers:
           - name: license
             default: true
           - name: dependency.depth
-            default:
+            default: null
           - name: dependency.edges
             default: ""
           - name: dependency.kinds
-            default:
+            default: null
           - name: package_manager.files.listing
             default: true
             evidence:
