@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/mholt/archives"
@@ -195,6 +196,29 @@ func deriveIDFromFile(cfg Config) (artifact.ID, string) {
 	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String()), d
 }
 
+// see: https://github.com/anchore/syft/issues/4416
+func handleCompoundAliases(path string) (pathAlias string) {
+	// reference: https://github.com/mholt/archives?tab=readme-ov-file#supported-compression-formats
+	extMap := map[string]string{
+		".tgz":  ".tar.gz",
+		".tbz2": ".tar.bz2",
+		".txz":  ".tar.xz",
+		".tlz":  ".tar.lz",
+		".tzst": ".tar.zst",
+	}
+
+	ext := filepath.Ext(path)
+
+	newExt, ok := extMap[ext]
+	if ok {
+		base := strings.TrimSuffix(path, ext)
+		pathAlias = base + newExt
+	} else {
+		pathAlias = path
+	}
+	return
+}
+
 // fileAnalysisPath returns the path given, or in the case the path is an archive, the location where the archive
 // contents have been made available. A cleanup function is provided for any temp files created (if any).
 // Users can disable unpacking archives, allowing individual cataloguers to extract them instead (where
@@ -210,7 +234,7 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
 	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
 	// unarchived.
-	envelopedUnarchiver, _, err := archives.Identify(context.Background(), path, nil)
+	envelopedUnarchiver, _, err := archives.Identify(context.Background(), handleCompoundAliases(path), nil)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
