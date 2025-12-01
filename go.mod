@@ -64,7 +64,7 @@ require (
 	github.com/mholt/archives v0.1.5
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/nix-community/go-nix v0.0.0-20250101154619-4bdde671e0a1
-	github.com/olekukonko/tablewriter v1.1.1
+	github.com/olekukonko/tablewriter v1.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/quasilyte/go-ruleguard/dsl v0.3.23
@@ -305,9 +305,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.39.1 // indirect
 	github.com/aws/smithy-go v1.23.2 // indirect
-	github.com/clipperhouse/displaywidth v0.3.1 // indirect
+	github.com/clipperhouse/displaywidth v0.6.0 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.65 // indirect
 	github.com/henvic/httpretty v0.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -316,7 +316,7 @@ require (
 	github.com/nwaples/rardecode/v2 v2.2.0 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
 	github.com/olekukonko/errors v1.1.0 // indirect
-	github.com/olekukonko/ll v0.1.2 // indirect
+	github.com/olekukonko/ll v0.1.3 // indirect
 	github.com/smallnest/ringbuffer v0.0.0-20241116012123-461381446e3d // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 )
