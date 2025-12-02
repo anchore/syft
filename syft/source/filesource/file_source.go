@@ -207,7 +207,7 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 		return analysisPath, cleanupFn, nil
 	}
 
-	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path)
+	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, nil)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {

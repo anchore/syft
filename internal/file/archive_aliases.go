@@ -3,7 +3,6 @@ package file
 import (
 	"context"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -29,24 +28,10 @@ var compoundExtensionAliases = map[string]string{
 //
 // This function is a drop-in replacement for archives.Identify that centralizes
 // the compound alias handling logic in one place.
-func IdentifyArchive(ctx context.Context, path string) (archives.Format, io.Reader, error) {
+func IdentifyArchive(ctx context.Context, path string, r io.Reader) (archives.Format, io.Reader, error) {
 	// First, try to identify using the alias-mapped path (filename-based detection)
 	normalizedPath := handleCompoundArchiveAliases(path)
-	format, outReader, err := archives.Identify(ctx, normalizedPath, nil)
-	if err == nil && format != nil {
-		return format, outReader, nil
-	}
-
-	// If filename-based detection failed,
-	// try opening the file for content-based detection
-	f, openErr := os.Open(path)
-	if openErr != nil {
-		// Return the original error from archives.Identify
-		return format, outReader, err
-	}
-	defer f.Close()
-
-	return archives.Identify(ctx, path, f)
+	return archives.Identify(ctx, normalizedPath, r)
 }
 
 // handleCompoundArchiveAliases normalizes archive file paths that use compound extension

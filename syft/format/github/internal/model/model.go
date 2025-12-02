@@ -154,7 +154,7 @@ func trimRelative(s string) string {
 
 // isArchive returns true if the path appears to be an archive
 func isArchive(path string) bool {
-	format, _, err := file.IdentifyArchive(context.Background(), path)
+	format, _, err := file.IdentifyArchive(context.Background(), path, nil)
 	return err == nil && format != nil
 }
 
