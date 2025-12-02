@@ -59,11 +59,3 @@ func handleCompoundArchiveAliases(path string) string {
 	}
 	return path
 }
-
-// HandleCompoundArchiveAliases is the exported version for cases where only
-// path normalization is needed without identification.
-//
-// Deprecated: Prefer using IdentifyArchive which handles aliases automatically.
-func HandleCompoundArchiveAliases(path string) string {
-	return handleCompoundArchiveAliases(path)
-}
