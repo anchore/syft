@@ -43,7 +43,7 @@ func (cfg *CatalogerSelection) PostLoad() error {
 	usingNewCatalogers := len(cfg.DefaultCatalogers) > 0 || len(cfg.SelectCatalogers) > 0
 
 	if usingLegacyCatalogers && usingNewCatalogers {
-		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
+		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags %q | %q %q", cfg.Catalogers, cfg.SelectCatalogers, cfg.DefaultCatalogers)
 	}
 
 	cfg.Catalogers = FlattenAndSort(cfg.Catalogers)

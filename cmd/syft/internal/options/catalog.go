@@ -259,22 +259,8 @@ Available options are: %s`, strings.Join(publicisedEnrichmentOptions, ", ")))
 }
 
 func (cfg *Catalog) PostLoad() error {
-	usingLegacyCatalogers := len(cfg.Catalogers) > 0
-	usingNewCatalogers := len(cfg.DefaultCatalogers) > 0 || len(cfg.SelectCatalogers) > 0
-
-	if usingLegacyCatalogers && usingNewCatalogers {
-		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
-	}
-
 	cfg.From = Flatten(cfg.From)
-
-	cfg.Catalogers = FlattenAndSort(cfg.Catalogers)
-	cfg.DefaultCatalogers = FlattenAndSort(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = FlattenAndSort(cfg.SelectCatalogers)
 	cfg.Enrich = FlattenAndSort(cfg.Enrich)
-
-	// for backwards compatibility
-	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
 
 	s := source.ParseScope(cfg.Scope)
 	if s == source.UnknownScope {
