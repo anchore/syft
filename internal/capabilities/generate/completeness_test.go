@@ -128,11 +128,11 @@ func validateCapabilitiesFilled(t *testing.T, catalogers []capabilities.Cataloge
 				// generic catalogers have parsers with capabilities
 				require.NotEmpty(t, cataloger.Parsers, "generic cataloger must have at least one parser")
 
-				for _, parser := range cataloger.Parsers {
-					parser := parser // capture loop variable for subtest
+				for _, p := range cataloger.Parsers {
+					p := p // capture loop variable for subtest
 
-					t.Run(parser.ParserFunction, func(t *testing.T) {
-						require.NotEmpty(t, parser.Capabilities, "parser must have at least one capability field defined")
+					t.Run(p.ParserFunction, func(t *testing.T) {
+						require.NotEmpty(t, p.Capabilities, "parser must have at least one capability field defined")
 					})
 				}
 			} else if cataloger.Type == "custom" {
@@ -199,8 +199,8 @@ func TestMetadataTypeCoverage(t *testing.T) {
 	foundMetadataTypes := strset.New()
 	for _, cataloger := range catalogerEntries {
 		if cataloger.Type == "generic" {
-			for _, parser := range cataloger.Parsers {
-				for _, metadataType := range parser.MetadataTypes {
+			for _, p := range cataloger.Parsers {
+				for _, metadataType := range p.MetadataTypes {
 					foundMetadataTypes.Add(strings.TrimPrefix(metadataType, "pkg."))
 				}
 			}
@@ -245,34 +245,34 @@ func TestCatalogerStructure(t *testing.T) {
 	catalogerEntries, err := capabilities.Packages()
 	require.NoError(t, err)
 
-	for _, cataloger := range catalogerEntries {
-		cataloger := cataloger // capture loop variable for subtest
+	for _, c := range catalogerEntries {
+		c := c // capture loop variable for subtest
 
-		t.Run(cataloger.Name, func(t *testing.T) {
+		t.Run(c.Name, func(t *testing.T) {
 			// ecosystem must always be set (it's MANUAL)
-			require.NotEmpty(t, cataloger.Ecosystem, "ecosystem must be set for all catalogers")
+			require.NotEmpty(t, c.Ecosystem, "ecosystem must be set for all catalogers")
 
-			if cataloger.Type == "generic" {
+			if c.Type == "generic" {
 				// generic catalogers must have parsers
-				require.NotEmpty(t, cataloger.Parsers, "generic cataloger must have at least one parser")
+				require.NotEmpty(t, c.Parsers, "generic cataloger must have at least one parser")
 
 				// generic catalogers should not have cataloger-level capabilities
-				require.Empty(t, cataloger.Capabilities, "generic cataloger should not have cataloger-level capabilities (use parser-level instead)")
+				require.Empty(t, c.Capabilities, "generic cataloger should not have cataloger-level capabilities (use parser-level instead)")
 
 				// generic catalogers should not have cataloger-level metadata/package types
-				require.Empty(t, cataloger.MetadataTypes, "generic cataloger should not have cataloger-level metadata types")
-				require.Empty(t, cataloger.PackageTypes, "generic cataloger should not have cataloger-level package types")
-			} else if cataloger.Type == "custom" {
+				require.Empty(t, c.MetadataTypes, "generic cataloger should not have cataloger-level metadata types")
+				require.Empty(t, c.PackageTypes, "generic cataloger should not have cataloger-level package types")
+			} else if c.Type == "custom" {
 				// custom catalogers must have detectors
-				require.NotEmpty(t, cataloger.Detectors, "custom cataloger must have at least one detector")
+				require.NotEmpty(t, c.Detectors, "custom cataloger must have at least one detector")
 
 				// custom catalogers must have cataloger-level capabilities
-				require.NotEmpty(t, cataloger.Capabilities, "custom cataloger must have cataloger-level capabilities")
+				require.NotEmpty(t, c.Capabilities, "custom cataloger must have cataloger-level capabilities")
 
 				// custom catalogers should not have parsers
-				require.Empty(t, cataloger.Parsers, "custom cataloger should not have parsers (those are for generic catalogers)")
+				require.Empty(t, c.Parsers, "custom cataloger should not have parsers (those are for generic catalogers)")
 			} else {
-				t.Errorf("unknown cataloger type: %q (must be 'generic' or 'custom')", cataloger.Type)
+				t.Errorf("unknown cataloger type: %q (must be 'generic' or 'custom')", c.Type)
 			}
 		})
 	}
@@ -302,17 +302,17 @@ func TestCatalogerDataQuality(t *testing.T) {
 	})
 
 	t.Run("detector validation for custom catalogers", func(t *testing.T) {
-		for _, cataloger := range catalogerEntries {
-			if cataloger.Type != "custom" {
+		for _, c := range catalogerEntries {
+			if c.Type != "custom" {
 				continue
 			}
 
-			cataloger := cataloger // capture loop variable
+			c := c // capture loop variable
 
-			t.Run(cataloger.Name, func(t *testing.T) {
-				require.NotEmpty(t, cataloger.Detectors, "custom cataloger must have at least one detector")
+			t.Run(c.Name, func(t *testing.T) {
+				require.NotEmpty(t, c.Detectors, "custom cataloger must have at least one detector")
 
-				for i, detector := range cataloger.Detectors {
+				for i, detector := range c.Detectors {
 					t.Run(fmt.Sprintf("detector-%d", i), func(t *testing.T) {
 						// detector criteria must not be empty
 						require.NotEmpty(t, detector.Criteria, "detector criteria must not be empty")
@@ -332,22 +332,22 @@ func TestCatalogerDataQuality(t *testing.T) {
 	})
 
 	t.Run("no duplicate parser functions within cataloger", func(t *testing.T) {
-		for _, cataloger := range catalogerEntries {
-			if cataloger.Type != "generic" {
+		for _, c := range catalogerEntries {
+			if c.Type != "generic" {
 				continue
 			}
 
-			cataloger := cataloger // capture loop variable
+			c := c // capture loop variable
 
-			t.Run(cataloger.Name, func(t *testing.T) {
+			t.Run(c.Name, func(t *testing.T) {
 				parserFuncs := strset.New()
 				var duplicates []string
 
-				for _, parser := range cataloger.Parsers {
-					if parserFuncs.Has(parser.ParserFunction) {
-						duplicates = append(duplicates, parser.ParserFunction)
+				for _, p := range c.Parsers {
+					if parserFuncs.Has(p.ParserFunction) {
+						duplicates = append(duplicates, p.ParserFunction)
 					}
-					parserFuncs.Add(parser.ParserFunction)
+					parserFuncs.Add(p.ParserFunction)
 				}
 
 				require.Empty(t, duplicates, "Found duplicate parser functions: %v", duplicates)
@@ -417,12 +417,12 @@ func TestCatalogersHaveTestObservations(t *testing.T) {
 		}
 
 		// track observed parsers
-		pkg := observations.Package
-		if observedParsers[pkg] == nil {
-			observedParsers[pkg] = strset.New()
+		p := observations.Package
+		if observedParsers[p] == nil {
+			observedParsers[p] = strset.New()
 		}
 		for parserName := range observations.Parsers {
-			observedParsers[pkg].Add(parserName)
+			observedParsers[p].Add(parserName)
 		}
 	}
 
@@ -462,13 +462,13 @@ func TestCatalogersHaveTestObservations(t *testing.T) {
 			// extract package name from cataloger name
 			packageName := extractPackageName(cataloger.Name)
 
-			for _, parser := range cataloger.Parsers {
-				parserKey := fmt.Sprintf("%s/%s", cataloger.Name, parser.ParserFunction)
+			for _, p := range cataloger.Parsers {
+				parserKey := fmt.Sprintf("%s/%s", cataloger.Name, p.ParserFunction)
 				// skip if this specific parser has an exception (nil or non-nil)
 				if _, hasException := observationExceptions[parserKey]; hasException {
 					continue
 				}
-				if observedParsers[packageName] == nil || !observedParsers[packageName].Has(parser.ParserFunction) {
+				if observedParsers[packageName] == nil || !observedParsers[packageName].Has(p.ParserFunction) {
 					missingParsers = append(missingParsers, parserKey)
 				}
 			}
@@ -664,8 +664,8 @@ func TestCapabilityConfigFieldReferences(t *testing.T) {
 
 		// check parser-level CapabilitiesV2 (for generic catalogers)
 		if cataloger.Type == "generic" {
-			for _, parser := range cataloger.Parsers {
-				if len(parser.Capabilities) > 0 {
+			for _, p := range cataloger.Parsers {
+				if len(p.Capabilities) > 0 {
 					// load the cataloger's config struct if it has one
 					if cataloger.Config != "" {
 						configEntry, exists := doc.Configs[cataloger.Config]
@@ -681,27 +681,27 @@ func TestCapabilityConfigFieldReferences(t *testing.T) {
 						}
 
 						// validate each capability field
-						for _, capField := range parser.Capabilities {
+						for _, capField := range p.Capabilities {
 							// check conditions for config field references
 							for _, condition := range capField.Conditions {
 								for fieldName := range condition.When {
 									if !validFields[fieldName] {
 										errors = append(errors,
 											fmt.Sprintf("Parser %q/%s capability field %q references config field %q which doesn't exist in config struct %q",
-												cataloger.Name, parser.ParserFunction, capField.Name, fieldName, cataloger.Config))
+												cataloger.Name, p.ParserFunction, capField.Name, fieldName, cataloger.Config))
 									}
 								}
 							}
 						}
 					} else {
 						// parser has CapabilitiesV2 with conditions but cataloger has no config
-						for _, capField := range parser.Capabilities {
+						for _, capField := range p.Capabilities {
 							if len(capField.Conditions) > 0 {
 								for _, condition := range capField.Conditions {
 									if len(condition.When) > 0 {
 										errors = append(errors,
 											fmt.Sprintf("Parser %q/%s capability field %q has conditions but cataloger has no config struct",
-												cataloger.Name, parser.ParserFunction, capField.Name))
+												cataloger.Name, p.ParserFunction, capField.Name))
 										break
 									}
 								}
@@ -911,64 +911,64 @@ func TestMetadataTypesHaveJSONSchemaTypes(t *testing.T) {
 	var errors []string
 
 	// validate cataloger-level types (custom catalogers)
-	for _, cataloger := range doc.Catalogers {
-		if cataloger.Type == "custom" {
-			if len(cataloger.MetadataTypes) > 0 {
+	for _, c := range doc.Catalogers {
+		if c.Type == "custom" {
+			if len(c.MetadataTypes) > 0 {
 				// verify counts match
-				if len(cataloger.MetadataTypes) != len(cataloger.JSONSchemaTypes) {
+				if len(c.MetadataTypes) != len(c.JSONSchemaTypes) {
 					errors = append(errors,
 						fmt.Sprintf("Cataloger %q has %d metadata_types but %d json_schema_types (counts must match)",
-							cataloger.Name, len(cataloger.MetadataTypes), len(cataloger.JSONSchemaTypes)))
+							c.Name, len(c.MetadataTypes), len(c.JSONSchemaTypes)))
 					continue
 				}
 
 				// verify each metadata_type converts to its corresponding json_schema_type
-				for i, metadataType := range cataloger.MetadataTypes {
+				for i, metadataType := range c.MetadataTypes {
 					expectedJSONSchemaType := convertMetadataTypeToJSONSchemaType(metadataType)
 					if expectedJSONSchemaType == "" {
 						errors = append(errors,
 							fmt.Sprintf("Cataloger %q metadata_type[%d] %q could not be converted to json_schema_type (not found in packagemetadata registry)",
-								cataloger.Name, i, metadataType))
+								c.Name, i, metadataType))
 						continue
 					}
 
-					actualJSONSchemaType := cataloger.JSONSchemaTypes[i]
+					actualJSONSchemaType := c.JSONSchemaTypes[i]
 					if expectedJSONSchemaType != actualJSONSchemaType {
 						errors = append(errors,
 							fmt.Sprintf("Cataloger %q metadata_type[%d] %q should convert to json_schema_type %q but found %q",
-								cataloger.Name, i, metadataType, expectedJSONSchemaType, actualJSONSchemaType))
+								c.Name, i, metadataType, expectedJSONSchemaType, actualJSONSchemaType))
 					}
 				}
 			}
 		}
 
 		// validate parser-level types (generic catalogers)
-		if cataloger.Type == "generic" {
-			for _, parser := range cataloger.Parsers {
-				if len(parser.MetadataTypes) > 0 {
+		if c.Type == "generic" {
+			for _, p := range c.Parsers {
+				if len(p.MetadataTypes) > 0 {
 					// verify counts match
-					if len(parser.MetadataTypes) != len(parser.JSONSchemaTypes) {
+					if len(p.MetadataTypes) != len(p.JSONSchemaTypes) {
 						errors = append(errors,
 							fmt.Sprintf("Parser %q/%s has %d metadata_types but %d json_schema_types (counts must match)",
-								cataloger.Name, parser.ParserFunction, len(parser.MetadataTypes), len(parser.JSONSchemaTypes)))
+								c.Name, p.ParserFunction, len(p.MetadataTypes), len(p.JSONSchemaTypes)))
 						continue
 					}
 
 					// verify each metadata_type converts to its corresponding json_schema_type
-					for i, metadataType := range parser.MetadataTypes {
+					for i, metadataType := range p.MetadataTypes {
 						expectedJSONSchemaType := convertMetadataTypeToJSONSchemaType(metadataType)
 						if expectedJSONSchemaType == "" {
 							errors = append(errors,
 								fmt.Sprintf("Parser %q/%s metadata_type[%d] %q could not be converted to json_schema_type (not found in packagemetadata registry)",
-									cataloger.Name, parser.ParserFunction, i, metadataType))
+									c.Name, p.ParserFunction, i, metadataType))
 							continue
 						}
 
-						actualJSONSchemaType := parser.JSONSchemaTypes[i]
+						actualJSONSchemaType := p.JSONSchemaTypes[i]
 						if expectedJSONSchemaType != actualJSONSchemaType {
 							errors = append(errors,
 								fmt.Sprintf("Parser %q/%s metadata_type[%d] %q should convert to json_schema_type %q but found %q",
-									cataloger.Name, parser.ParserFunction, i, metadataType, expectedJSONSchemaType, actualJSONSchemaType))
+									c.Name, p.ParserFunction, i, metadataType, expectedJSONSchemaType, actualJSONSchemaType))
 						}
 					}
 				}
@@ -989,50 +989,6 @@ func convertMetadataTypeToJSONSchemaType(metadataType string) string {
 		return ""
 	}
 	return packagemetadata.ToUpperCamelCase(jsonName)
-}
-
-// loadConfigStructFields loads the config struct definition from source code using AST parsing
-func loadConfigStructFields(repoRoot, configName string) (map[string]string, error) {
-	// configName format: "package.StructName" (e.g., "golang.CatalogerConfig")
-	parts := strings.Split(configName, ".")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid config name format: %q", configName)
-	}
-
-	packageName := parts[0]
-	structName := parts[1]
-
-	// find the package directory
-	packageDir := filepath.Join(repoRoot, "syft", "pkg", "cataloger", packageName)
-	if _, err := os.Stat(packageDir); os.IsNotExist(err) {
-		return nil, fmt.Errorf("package directory not found: %s", packageDir)
-	}
-
-	// parse all .go files in the package
-	files, err := filepath.Glob(filepath.Join(packageDir, "*.go"))
-	if err != nil {
-		return nil, err
-	}
-
-	for _, filePath := range files {
-		if strings.HasSuffix(filePath, "_test.go") {
-			continue
-		}
-
-		fset := token.NewFileSet()
-		file, err := parser.ParseFile(fset, filePath, nil, 0)
-		if err != nil {
-			continue
-		}
-
-		// find the struct definition
-		fields := findStructFields(file, structName)
-		if len(fields) > 0 {
-			return fields, nil
-		}
-	}
-
-	return nil, fmt.Errorf("config struct %q not found in package %q", structName, packageName)
 }
 
 // findStructFields extracts field names and types from a struct definition
