@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/mholt/archives"
-
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
@@ -61,7 +59,7 @@ func (c unknownsLabelerTask) finalize(resolver file.Resolver, s *sbom.SBOM) {
 	if c.IncludeUnexpandedArchives {
 		ctx := context.Background()
 		for coords := range s.Artifacts.FileMetadata {
-			format, _, notArchiveErr := archives.Identify(ctx, intFile.HandleCompoundArchiveAliases(coords.RealPath), nil)
+			format, _, notArchiveErr := intFile.IdentifyArchive(ctx, coords.RealPath)
 			if format != nil && notArchiveErr == nil && !hasPackageReference(coords) {
 				s.Artifacts.Unknowns[coords] = append(s.Artifacts.Unknowns[coords], "archive not cataloged")
 			}
