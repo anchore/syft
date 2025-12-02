@@ -31,17 +31,16 @@ import (
 
 type Catalog struct {
 	// high-level cataloger configuration
-	Catalogers        []string            `yaml:"-" json:"catalogers" mapstructure:"catalogers"` // deprecated and not shown in yaml output
-	DefaultCatalogers []string            `yaml:"default-catalogers" json:"default-catalogers" mapstructure:"default-catalogers"`
-	SelectCatalogers  []string            `yaml:"select-catalogers" json:"select-catalogers" mapstructure:"select-catalogers"`
-	Package           packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
-	License           licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
-	File              fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
-	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
-	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
-	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
-	Compliance        complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
-	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
+	CatalogerSelection `yaml:",inline" json:",inline" mapstructure:",squash"`
+
+	Package       packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
+	License       licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
+	File          fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
+	Scope         string              `yaml:"scope" json:"scope" mapstructure:"scope"`
+	Parallelism   int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
+	Relationships relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
+	Compliance    complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
+	Enrich        []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
 	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
@@ -231,25 +230,8 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.Exclusions, "exclude", "",
 		"exclude paths from being scanned using a glob expression")
 
-	flags.StringArrayVarP(&cfg.Catalogers, "catalogers", "",
-		"enable one or more package catalogers")
-
 	flags.IntVarP(&cfg.Parallelism, "parallelism", "",
 		"number of cataloger workers to run in parallel")
-
-	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
-		if err := pfp.PFlagSet().MarkDeprecated("catalogers", "use: override-default-catalogers and select-catalogers"); err != nil {
-			panic(err)
-		}
-	} else {
-		panic("unable to mark flags as deprecated")
-	}
-
-	flags.StringArrayVarP(&cfg.DefaultCatalogers, "override-default-catalogers", "",
-		"set the base set of catalogers to use (defaults to 'image' or 'directory' depending on the scan source)")
-
-	flags.StringArrayVarP(&cfg.SelectCatalogers, "select-catalogers", "",
-		"add, remove, and filter the catalogers to be used")
 
 	flags.StringArrayVarP(&cfg.Enrich, "enrich", "",
 		fmt.Sprintf("enable package data enrichment from local and online sources (options: %s)", strings.Join(publicisedEnrichmentOptions, ", ")))

@@ -20,7 +20,7 @@ func Cataloger(app clio.Application) *cobra.Command {
 
 	// only add cataloger info command if experimental capabilities feature is enabled
 	if isCapabilitiesExperimentEnabled() {
-		cmd.AddCommand(CatalogerInfo(app))
+		cmd.AddCommand(CatalogerCaps(app))
 	}
 
 	return cmd

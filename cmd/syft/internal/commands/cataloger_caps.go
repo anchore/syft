@@ -16,8 +16,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/internal/task"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 var (
@@ -71,35 +74,88 @@ type (
 	}
 )
 
-type catalogerInfoOptions struct {
-	Output string   `yaml:"output" json:"output" mapstructure:"output"`
-	Names  []string // cataloger names from args
+type catalogerCapsOptions struct {
+	Output                     string `yaml:"output" json:"output" mapstructure:"output"`
+	options.CatalogerSelection `yaml:",inline" json:",inline" mapstructure:",squash"`
+	Names                      []string // cataloger names from args
 }
 
-func (o *catalogerInfoOptions) AddFlags(flags clio.FlagSet) {
+func (o *catalogerCapsOptions) setNames(args []string) error {
+	o.Names = args
+
+	usingLegacyCatalogers := len(o.Catalogers) > 0
+	usingNewCatalogers := len(o.DefaultCatalogers) > 0 || len(o.SelectCatalogers) > 0
+	usingSelection := usingNewCatalogers || usingLegacyCatalogers
+
+	if usingSelection && len(o.Names) > 0 {
+		return fmt.Errorf("cannot use both cataloger names and 'catalogers'/'select-catalogers'/'default-catalogers' flags")
+	}
+
+	if usingSelection {
+		// get all available package cataloger tasks
+		pkgTaskFactories := task.DefaultPackageTaskFactories()
+		allPkgTasks, err := pkgTaskFactories.Tasks(task.DefaultCatalogingFactoryConfig())
+		if err != nil {
+			return fmt.Errorf("unable to create pkg cataloger tasks: %w", err)
+		}
+
+		// make the selection based on user input
+		defaultCatalogers := options.FlattenAndSort(o.DefaultCatalogers)
+		selectCatalogers := options.FlattenAndSort(o.SelectCatalogers)
+		selectedTaskGroups, _, err := task.SelectInGroups(
+			[][]task.Task{allPkgTasks},
+			cataloging.NewSelectionRequest().
+				WithDefaults(defaultCatalogers...).
+				WithExpression(selectCatalogers...),
+		)
+
+		if err != nil {
+			return fmt.Errorf("unable to select catalogers: %w", err)
+		}
+
+		// build the list of cataloger names based on the selection
+		for _, g := range selectedTaskGroups {
+			for _, t := range g {
+				o.Names = append(o.Names, t.Name())
+			}
+		}
+	}
+	return nil
+}
+
+func (o *catalogerCapsOptions) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.Output, "output", "o", "format to output the cataloger info (available: table, json)")
 }
 
-func defaultCatalogerInfoOptions() *catalogerInfoOptions {
-	return &catalogerInfoOptions{}
+func defaultCatalogerCapsOptions() *catalogerCapsOptions {
+	return &catalogerCapsOptions{
+		CatalogerSelection: options.CatalogerSelection{
+			// this is different than the default behavior where a scan will automatically detect the default set
+			DefaultCatalogers: []string{"all"},
+		},
+	}
 }
 
-func CatalogerInfo(app clio.Application) *cobra.Command {
-	opts := defaultCatalogerInfoOptions()
+func CatalogerCaps(app clio.Application) *cobra.Command {
+	opts := defaultCatalogerCapsOptions()
 
 	return app.SetupCommand(&cobra.Command{
-		Use:     "info [OPTIONS] [CATALOGER_NAMES...]",
+		Use:     "caps [OPTIONS] [CATALOGER_NAMES...]",
+		Aliases: []string{"capabilities"},
 		Short:   "Show detailed capabilities of catalogers",
 		Args:    cobra.ArbitraryArgs,
 		PreRunE: disableUI(app, os.Stdout),
 		RunE: func(_ *cobra.Command, args []string) error {
-			opts.Names = args
-			return runCatalogerInfo(opts)
+			if err := opts.setNames(args); err != nil {
+				return err
+			}
+
+			return runCatalogerCaps(opts)
 		},
 	}, opts)
 }
 
-func runCatalogerInfo(opts *catalogerInfoOptions) error {
+func runCatalogerCaps(opts *catalogerCapsOptions) error {
 	doc, err := capabilities.LoadDocument()
 	if err != nil {
 		return fmt.Errorf("unable to load cataloger capabilities: %w", err)
@@ -137,7 +193,7 @@ func filterCatalogersByName(catalogers []capabilities.CatalogerEntry, names []st
 	return filtered
 }
 
-func catalogerInfoReport(opts *catalogerInfoOptions, doc *capabilities.Document, catalogers []capabilities.CatalogerEntry) (string, error) {
+func catalogerInfoReport(opts *catalogerCapsOptions, doc *capabilities.Document, catalogers []capabilities.CatalogerEntry) (string, error) {
 	switch opts.Output {
 	case jsonFormat:
 		return renderCatalogerInfoJSON(doc, catalogers)
@@ -520,6 +576,10 @@ func formatCriteria(detectors []capabilities.Detector) string {
 	methodsList := methods.List()
 	sort.Strings(methodsList)
 	method := strings.Join(methodsList, ", ")
+
+	if len(lines) == 0 {
+		return ""
+	}
 
 	joined := strings.Join(lines, "\n")
 	if method != string(capabilities.GlobDetection) {

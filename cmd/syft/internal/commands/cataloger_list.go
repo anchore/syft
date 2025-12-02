@@ -29,25 +29,23 @@ var (
 )
 
 type catalogerListOptions struct {
-	Output            string   `yaml:"output" json:"output" mapstructure:"output"`
-	DefaultCatalogers []string `yaml:"default-catalogers" json:"default-catalogers" mapstructure:"default-catalogers"`
-	SelectCatalogers  []string `yaml:"select-catalogers" json:"select-catalogers" mapstructure:"select-catalogers"`
-	ShowHidden        bool     `yaml:"show-hidden" json:"show-hidden" mapstructure:"show-hidden"`
+	Output                     string `yaml:"output" json:"output" mapstructure:"output"`
+	options.CatalogerSelection `yaml:",inline" json:",inline" mapstructure:",squash"`
+	ShowHidden                 bool `yaml:"show-hidden" json:"show-hidden" mapstructure:"show-hidden"`
 }
 
 func (o *catalogerListOptions) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.Output, "output", "o", "format to output the cataloger list (available: table, json)")
-
-	flags.StringArrayVarP(&o.DefaultCatalogers, "override-default-catalogers", "", "override the default catalogers with an expression")
-
-	flags.StringArrayVarP(&o.SelectCatalogers, "select-catalogers", "", "select catalogers with an expression")
 
 	flags.BoolVarP(&o.ShowHidden, "show-hidden", "s", "show catalogers that have been de-selected")
 }
 
 func defaultCatalogerListOptions() *catalogerListOptions {
 	return &catalogerListOptions{
-		DefaultCatalogers: []string{"all"},
+		CatalogerSelection: options.CatalogerSelection{
+			// this is different than the default behavior where a scan will automatically detect the default set
+			DefaultCatalogers: []string{"all"},
+		},
 	}
 }
 
