@@ -25,17 +25,16 @@ The short answer is to provide a foundation for the OSS documentation, where the
 
 **To regenerate packages/*.yaml files after code changes:**
 ```bash
-go generate ./internal/capabilities
+make generate-capabilities
 ```
 
-**To run validation of capability claims:**
-```bash
-# update test evidence
-go test ./syft/pkg/...
+This will:
+- Run unit tests under ./syft/pkg... to gather up-to-date cataloger behavior
+- Regenerate code that describes cataloger capabilities
+- Runs completeness tests against the newly generated code to ensure all `packages/*.yaml` claims are consistent with test observations
 
-# check claims against test evidence
-go test ./internal/capabilities/generate
-```
+If you have made cataloger code changes you may see completeness tests fail, that's ok! 
+That only means that you need to manually update the `packages/*.yaml` that were generated.
 
 ## Data Flow
 
