@@ -88,7 +88,7 @@ func (o *catalogerCapsOptions) setNames(args []string) error {
 	usingSelection := usingNewCatalogers || usingLegacyCatalogers
 
 	if usingSelection && len(o.Names) > 0 {
-		return fmt.Errorf("cannot use both cataloger names and 'catalogers'/'select-catalogers'/'default-catalogers' flags")
+		return fmt.Errorf("cannot use both cataloger name arguments and '--catalogers'/'--select-catalogers'/'--default-catalogers' flags")
 	}
 
 	if usingSelection {

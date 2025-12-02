@@ -182,8 +182,8 @@ func parseGenericCatalogerFunction(funcDecl *ast.FuncDecl, filePath, repoRoot st
 		}
 
 		// check if this is a WithParserBy* call
-		if parser := parseWithParserByCall(callExpr, ctx); parser != nil {
-			parsers = append(parsers, *parser)
+		if p := parseWithParserByCall(callExpr, ctx); p != nil {
+			parsers = append(parsers, *p)
 		}
 
 		return true
