@@ -30,8 +30,8 @@ func (p *peclPearData) ToPear() pkg.PhpPearEntry {
 	}
 }
 
-func (p *peclPearData) ToPecl() pkg.PhpPeclEntry {
-	return pkg.PhpPeclEntry(p.ToPear())
+func (p *peclPearData) ToPecl() pkg.PhpPeclEntry { //nolint:staticcheck
+	return pkg.PhpPeclEntry(p.ToPear()) //nolint:staticcheck
 }
 
 func parsePecl(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {

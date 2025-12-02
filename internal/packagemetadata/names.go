@@ -99,6 +99,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.PEBinary{}, "pe-binary"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
+	//nolint:staticcheck
 	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),
 	jsonNames(pkg.PhpPearEntry{}, "php-pear-entry"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
