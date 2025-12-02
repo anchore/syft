@@ -58,9 +58,25 @@ var observationExceptions = map[string]*strset.Set{
 	"linux-kernel-cataloger": strset.New("relationships"),
 }
 
+// checkTestsEnabled skips the test if completeness tests are not enabled via environment variable.
+// Why do this at all? Can't we just run these tests all the time? Short answer: No.
+// These tests are coupled with unit tests under ./syft/pkg/..., which means that these tests must be run not only
+// after those unit tests, but also after code generation that reads observations from test results.
+// This means that we should not really consider these tests as part of normal unit test runs, but rather as a separate
+// self-consistency check during generation, and it's really static analysis that should be checking
+// if the generated code has drifted (not a unit test).
+func checkTestsEnabled(t *testing.T) {
+	enabled := os.Getenv("SYFT_ENABLE_COMPLETENESS_TESTS") == "true"
+	if !enabled {
+		t.Skip("skipping completeness tests (SYFT_ENABLE_COMPLETENESS_TESTS is not set to 'true')")
+	}
+}
+
 // TestCatalogersInSync ensures that all catalogers from the syft binary are documented in packages/*.yaml
 // and vice versa, and that all capability fields are properly filled without TODOs or null values.
 func TestCatalogersInSync(t *testing.T) {
+	checkTestsEnabled(t)
+
 	// get canonical list from syft binary
 	catalogersInBinary := getCatalogerNamesFromBinary(t)
 
@@ -106,6 +122,8 @@ func TestCatalogersInSync(t *testing.T) {
 }
 
 func getCatalogerNamesFromBinary(t *testing.T) []string {
+	checkTestsEnabled(t)
+
 	// get cataloger names from task factories
 	infos, err := allPackageCatalogerInfo()
 	require.NoError(t, err)
@@ -120,24 +138,26 @@ func getCatalogerNamesFromBinary(t *testing.T) []string {
 }
 
 func validateCapabilitiesFilled(t *testing.T, catalogers []capabilities.CatalogerEntry) {
-	for _, cataloger := range catalogers {
-		cataloger := cataloger // capture loop variable for subtest
+	checkTestsEnabled(t)
 
-		t.Run(cataloger.Name, func(t *testing.T) {
-			if cataloger.Type == "generic" {
+	for _, c := range catalogers {
+		c := c // capture loop variable for subtest
+
+		t.Run(c.Name, func(t *testing.T) {
+			if c.Type == "generic" {
 				// generic catalogers have parsers with capabilities
-				require.NotEmpty(t, cataloger.Parsers, "generic cataloger must have at least one parser")
+				require.NotEmpty(t, c.Parsers, "generic cataloger must have at least one parser")
 
-				for _, p := range cataloger.Parsers {
+				for _, p := range c.Parsers {
 					p := p // capture loop variable for subtest
 
 					t.Run(p.ParserFunction, func(t *testing.T) {
 						require.NotEmpty(t, p.Capabilities, "parser must have at least one capability field defined")
 					})
 				}
-			} else if cataloger.Type == "custom" {
+			} else if c.Type == "custom" {
 				// custom catalogers have cataloger-level capabilities
-				require.NotEmpty(t, cataloger.Capabilities, "custom cataloger must have at least one capability field defined")
+				require.NotEmpty(t, c.Capabilities, "custom cataloger must have at least one capability field defined")
 			}
 		})
 	}
@@ -146,6 +166,8 @@ func validateCapabilitiesFilled(t *testing.T, catalogers []capabilities.Cataloge
 // TestPackageTypeCoverage ensures that every package type defined in pkg.AllPkgs is represented in at least
 // one cataloger's capabilities, preventing orphaned package types that are defined but never documented.
 func TestPackageTypeCoverage(t *testing.T) {
+	checkTestsEnabled(t)
+
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
 	require.NoError(t, err)
@@ -191,6 +213,8 @@ func TestPackageTypeCoverage(t *testing.T) {
 // TestMetadataTypeCoverage ensures that every metadata type defined in packagemetadata.AllTypes() is represented
 // in at least one cataloger's capabilities, preventing orphaned metadata types that are defined but never produced.
 func TestMetadataTypeCoverage(t *testing.T) {
+	checkTestsEnabled(t)
+
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
 	require.NoError(t, err)
@@ -241,6 +265,8 @@ func TestMetadataTypeCoverage(t *testing.T) {
 // parsers and parser-level capabilities, custom catalogers must have detectors and cataloger-level capabilities,
 // and all catalogers must have an ecosystem set.
 func TestCatalogerStructure(t *testing.T) {
+	checkTestsEnabled(t)
+
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
 	require.NoError(t, err)
@@ -281,6 +307,8 @@ func TestCatalogerStructure(t *testing.T) {
 // TestCatalogerDataQuality checks for data integrity issues in packages/*.yaml, including duplicate cataloger
 // names, duplicate parser functions within catalogers, and validates that detector definitions are well-formed.
 func TestCatalogerDataQuality(t *testing.T) {
+	checkTestsEnabled(t)
+
 	// load catalogers from embedded YAML
 	catalogerEntries, err := capabilities.Packages()
 	require.NoError(t, err)
@@ -359,6 +387,8 @@ func TestCatalogerDataQuality(t *testing.T) {
 // TestCapabilitiesAreUpToDate verifies that packages/*.yaml files are up to date by running regeneration and checking
 // for uncommitted changes. This test only runs in CI to catch cases where code changed but capabilities weren't regenerated.
 func TestCapabilitiesAreUpToDate(t *testing.T) {
+	checkTestsEnabled(t)
+
 	if os.Getenv("CI") == "" {
 		t.Skip("skipping regeneration test in local environment")
 	}
@@ -384,6 +414,8 @@ func TestCapabilitiesAreUpToDate(t *testing.T) {
 // test observations recorded in test-fixtures/test-observations.json, which proves they are using the
 // pkgtest.CatalogTester helpers and have test coverage.
 func TestCatalogersHaveTestObservations(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -488,22 +520,12 @@ func TestCatalogersHaveTestObservations(t *testing.T) {
 	}
 }
 
-// extractPackageName extracts the package name from a cataloger name
-// e.g., "javascript-lock-cataloger" -> "javascript"
-func extractPackageName(catalogerName string) string {
-	// package name is the first segment before the first dash
-	for i, ch := range catalogerName {
-		if ch == '-' {
-			return catalogerName[:i]
-		}
-	}
-	return catalogerName
-}
-
 // TestConfigCompleteness validates the integrity of config references in packages/*.yaml, ensuring that all
 // configs in the configs section are referenced by at least one cataloger, all cataloger config references exist,
 // and all app-key references in config fields exist in the application section.
 func TestConfigCompleteness(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -563,6 +585,8 @@ func TestConfigCompleteness(t *testing.T) {
 // TestAppConfigFieldsHaveDescriptions ensures that all application config fields discovered from the
 // options package have descriptions, which are required for user-facing documentation.
 func TestAppConfigFieldsHaveDescriptions(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -583,6 +607,8 @@ func TestAppConfigFieldsHaveDescriptions(t *testing.T) {
 // TestAppConfigKeyFormat validates that all application config keys follow the expected naming convention
 // of "ecosystem.field-name" using kebab-case (lowercase with hyphens, no underscores or spaces).
 func TestAppConfigKeyFormat(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -604,6 +630,8 @@ func TestAppConfigKeyFormat(t *testing.T) {
 // actually exist in the cataloger's config struct, preventing typos and ensuring capability conditions can
 // be properly evaluated at runtime.
 func TestCapabilityConfigFieldReferences(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -723,6 +751,8 @@ func TestCapabilityConfigFieldReferences(t *testing.T) {
 // (e.g., "license", "dependency.depth", "package_manager.files.listing"), catching typos and ensuring
 // consistency across catalogers.
 func TestCapabilityFieldNaming(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -782,6 +812,8 @@ func TestCapabilityFieldNaming(t *testing.T) {
 // field name (e.g., boolean fields like "license" must have bool values, array fields like "dependency.depth"
 // must have []string values), preventing type mismatches that would cause runtime errors.
 func TestCapabilityValueTypes(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -900,6 +932,8 @@ func validateCapabilityValueType(fieldPath string, value interface{}) error {
 // in packages.yaml, ensuring every metadata type (e.g., "pkg.AlpmDBEntry") has a corresponding json_schema_type
 // (e.g., "AlpmDbEntry") with correct conversion, which is required for JSON schema generation.
 func TestMetadataTypesHaveJSONSchemaTypes(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -1216,6 +1250,8 @@ func validateFieldPath(repoRoot, structName string, fieldPath []string) error {
 // (e.g., "AlpmDBEntry.Files[].Digests") actually exist on their corresponding metadata structs by using
 // AST parsing to verify the field paths, preventing broken references when structs are refactored.
 func TestCapabilityEvidenceFieldReferences(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -1293,6 +1329,8 @@ func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 // actually exist in the cataloger's config struct, ensuring that conditional detectors can properly
 // evaluate their activation conditions based on configuration.
 func TestDetectorConfigFieldReferences(t *testing.T) {
+	checkTestsEnabled(t)
+
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
@@ -1355,4 +1393,16 @@ func TestDetectorConfigFieldReferences(t *testing.T) {
 	if len(errors) > 0 {
 		require.Fail(t, "Detector config field reference validation failed", strings.Join(errors, "\n"))
 	}
+}
+
+// extractPackageName extracts the package name from a cataloger name
+// e.g., "javascript-lock-cataloger" -> "javascript"
+func extractPackageName(catalogerName string) string {
+	// package name is the first segment before the first dash
+	for i, ch := range catalogerName {
+		if ch == '-' {
+			return catalogerName[:i]
+		}
+	}
+	return catalogerName
 }
