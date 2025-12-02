@@ -531,6 +531,9 @@ tasks:
 
   generate-capabilities:
     desc: Generate the capabilities data file
+    deps:
+      - tmpdir
+      - fixtures
     cmds:
       # remove all test observations prior to regenerating
       - task: clean-test-observations
