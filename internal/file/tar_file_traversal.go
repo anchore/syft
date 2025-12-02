@@ -20,7 +20,7 @@ func TraverseFilesInTar(ctx context.Context, archivePath string, visitor archive
 	}
 	defer internal.CloseAndLogError(tarReader, archivePath)
 
-	format, _, err := archives.Identify(ctx, archivePath, nil)
+	format, _, err := IdentifyArchive(ctx, archivePath, tarReader)
 	if err != nil {
 		return fmt.Errorf("failed to identify tar compression format: %w", err)
 	}
