@@ -207,10 +207,16 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 		return analysisPath, cleanupFn, nil
 	}
 
-	// if the given file is an archive (as indicated by the file extension and not MIME type) then unarchive it and
+	// if the given file is an archive (as indicated by magic bytes) then unarchive it and
 	// use the contents as the source. Note: this does NOT recursively unarchive contents, only the given path is
 	// unarchived.
-	envelopedUnarchiver, _, err := archives.Identify(context.Background(), intFile.HandleCompoundArchiveAliases(path), nil)
+	f, err := os.Open(path)
+	if err != nil {
+		return analysisPath, cleanupFn, nil
+	}
+	defer f.Close()
+
+	envelopedUnarchiver, _, err := archives.Identify(context.Background(), path, f)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
