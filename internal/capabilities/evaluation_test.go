@@ -517,9 +517,9 @@ func TestEvaluateCapabilities(t *testing.T) {
 				"SearchRemoteLicenses":        true,
 			},
 			want: map[string]interface{}{
-				"license":                      true,
-				"dependency.depth":             []string{"direct", "indirect"},
-				"dependency.edges":             "flat",
+				"license":                       true,
+				"dependency.depth":              []string{"direct", "indirect"},
+				"dependency.edges":              "flat",
 				"package_manager.files.listing": false,
 			},
 		},
