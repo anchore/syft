@@ -37,7 +37,7 @@ func IdentifyArchive(ctx context.Context, path string) (archives.Format, io.Read
 		return format, outReader, nil
 	}
 
-	// If filename-based detection failed and no reader was provided,
+	// If filename-based detection failed,
 	// try opening the file for content-based detection
 	f, openErr := os.Open(path)
 	if openErr != nil {

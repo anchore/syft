@@ -216,7 +216,7 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	}
 	defer f.Close()
 
-	envelopedUnarchiver, _, err := archives.Identify(context.Background(), path, f)
+	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
