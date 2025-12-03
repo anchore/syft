@@ -1167,9 +1167,13 @@
           "type": "string",
           "description": "Architecture of the binary package (e.g. \"amd64\", \"arm\", etc.)"
         },
-        "osCPE": {
+        "osCpe": {
           "type": "string",
-          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+          "description": "osCpe is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+        },
+        "appCpe": {
+          "type": "string",
+          "description": "appCpe is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)"
         },
         "os": {
           "type": "string",
