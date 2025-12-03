@@ -26,9 +26,6 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	// OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
 	OSCPE string `json:"osCpe,omitempty"`
 
-	// APPCPE is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)
-	APPCPE string `json:"appCpe,omitempty"`
-
 	// OS is the OS name, typically corresponding to ID in os-release (e.g. "fedora")
 	OS string `json:"os,omitempty"`
 
