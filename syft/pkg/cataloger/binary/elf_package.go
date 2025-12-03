@@ -64,11 +64,15 @@ func osNameAndVersionFromMetadata(metadata elfBinaryPackageNotes) (string, strin
 	os := metadata.OS
 	osVersion := metadata.OSVersion
 
-	if os != "" {
+	if os != "" && osVersion != "" {
 		return os, osVersion
 	}
 	// TODO: There are some ELF binaries whose .note.package section has key appCpe which hasn't been tested yet
 	if metadata.OSCPE == "" && metadata.APPCPE == "" {
+		// best-effort to get the os info
+		if os != "" {
+			return os, ""
+		}
 		return "", ""
 	}
 
