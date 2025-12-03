@@ -92,6 +92,28 @@ func Test_ELFPackageCataloger(t *testing.T) {
 			},
 		},
 		{
+			name:    "fedora 32 bit binaries",
+			fixture: "image-fedora-32bit",
+			expected: []pkg.Package{
+				{
+					Name:    "coreutils",
+					Version: "9.0-5.fc36",
+					PURL:    "pkg:rpm/fedora/coreutils@9.0-5.fc36?distro=fedora-36",
+					Locations: file.NewLocationSet(
+						file.NewLocation("/sha256sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+						file.NewLocation("/sha1sum").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Licenses: pkg.NewLicenseSet(),
+					Type:     pkg.RpmPkg,
+					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
+						Type:         "rpm",
+						Architecture: "arm",
+						OSCPE:        "cpe:/o:fedoraproject:fedora:36",
+					},
+				},
+			},
+		},
+		{
 			name:    "Debian 64 bit binaries w/o os version",
 			fixture: "image-wolfi-64bit-without-version",
 			expected: []pkg.Package{
