@@ -409,6 +409,9 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 			case helpers.DependencyOfRelationship:
 				typ = artifact.DependencyOfRelationship
 				to = toPackage
+			case helpers.TestDependencyOfRelationship:
+				typ = artifact.TestDependencyOfRelationship
+				to = toPackage
 			case helpers.DependsOnRelationship:
 				typ = artifact.DependencyOfRelationship
 				to = from
