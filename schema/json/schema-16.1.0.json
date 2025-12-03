@@ -1167,9 +1167,9 @@
           "type": "string",
           "description": "Architecture of the binary package (e.g. \"amd64\", \"arm\", etc.)"
         },
-        "osCpe": {
+        "osCPE": {
           "type": "string",
-          "description": "osCpe is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
         },
         "os": {
           "type": "string",
