@@ -29,8 +29,7 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 	}
 
 	content := string(data)
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
+	for line := range strings.SplitSeq(content, "\n") {
 		if value := findLicenseClause(licensePattern, line); value != "" {
 			findings.Add(value)
 		}

@@ -546,7 +546,7 @@ func Test_UnindexedDirectoryResolver_NoGoroutineLeak(t *testing.T) {
 	require.NoError(t, err)
 
 	r := NewFromUnindexedDirectory(path.Join(wd, "test-fixtures"))
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	for range r.AllLocations(ctx) {
 		break
 	}
@@ -1183,7 +1183,7 @@ func Test_UnindexedDirectoryResolver_resolvesLinks(t *testing.T) {
 func Test_UnindexedDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-prune-indexing")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	allLocations := resolver.AllLocations(ctx)
 	var allRealPaths []stereoscopeFile.Path
@@ -1217,7 +1217,7 @@ func Test_UnindexedDirectoryResolver_AllLocations(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture")
 
 	paths := strset.New()
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
 		if strings.HasPrefix(loc.RealPath, "/") {

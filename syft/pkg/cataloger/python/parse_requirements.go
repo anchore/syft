@@ -111,9 +111,9 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 		}
 
 		// remove line continuations... smashes the file into a single line
-		if strings.HasSuffix(line, "\\") {
+		if lineWithoutContinuation, ok := strings.CutSuffix(line, "\\"); ok {
 			// this line is a continuation of the previous line
-			lastLine += strings.TrimSuffix(line, "\\")
+			lastLine += lineWithoutContinuation
 			continue
 		}
 
@@ -273,7 +273,7 @@ func parseExtras(packageName string) []string {
 	}
 
 	extraString := packageName[start+1 : stop]
-	for _, extra := range strings.Split(extraString, ",") {
+	for extra := range strings.SplitSeq(extraString, ",") {
 		extras = append(extras, strings.TrimSpace(extra))
 	}
 	return extras

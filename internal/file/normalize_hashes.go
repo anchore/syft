@@ -2,7 +2,7 @@ package file
 
 import (
 	"crypto"
-	"sort"
+	"slices"
 
 	"github.com/scylladb/go-set/uset"
 )
@@ -13,9 +13,7 @@ func NormalizeHashes(hashes []crypto.Hash) []crypto.Hash {
 		set.Add(uint(h))
 	}
 	list := set.List()
-	sort.Slice(list, func(i, j int) bool {
-		return list[i] < list[j]
-	})
+	slices.Sort(list)
 	result := make([]crypto.Hash, len(list))
 	for i, v := range list {
 		result[i] = crypto.Hash(v)

@@ -395,7 +395,7 @@ func Test_ContainerImageDeepSquash_FilesContents_errorOnDirRequest(t *testing.T)
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	for loc := range resolver.AllLocations(ctx) {
@@ -577,7 +577,7 @@ func Test_ContainerImageDeepSquash_AllLocations(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations(context.Background()) {
+	for loc := range resolver.AllLocations(t.Context()) {
 		paths.Add(loc.RealPath)
 	}
 	expected := []string{
@@ -883,7 +883,7 @@ func TestContainerImageDeepSquash_MergeLocationStreams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 
 			resolver := &ContainerImageDeepSquash{
@@ -972,9 +972,9 @@ func TestContainerImageDeepSquash_MergeLocationStreams(t *testing.T) {
 func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 
 	t.Run("concurrent context cancellation", func(t *testing.T) {
-		upstreamCtx, upstreamCancel := context.WithCancel(context.Background())
+		upstreamCtx, upstreamCancel := context.WithCancel(t.Context())
 
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 
 		resolver := &ContainerImageDeepSquash{
 			squashed: newMockSimpleResolver(nil),
@@ -1036,7 +1036,7 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 	})
 
 	t.Run("empty streams", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 
 		resolver := &ContainerImageDeepSquash{
@@ -1059,7 +1059,7 @@ func TestContainerImageDeepSquash_MergeLocationStreams_FunCases(t *testing.T) {
 	})
 
 	t.Run("squashed empty but all layers has data", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 
 		resolver := &ContainerImageDeepSquash{

@@ -1245,7 +1245,7 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 	require.NoError(t, err)
 
 	var allRealPaths []stereoscopeFile.Path
-	for l := range resolver.AllLocations(context.Background()) {
+	for l := range resolver.AllLocations(t.Context()) {
 		allRealPaths = append(allRealPaths, stereoscopeFile.Path(l.RealPath))
 	}
 	pathSet := stereoscopeFile.NewPathSet(allRealPaths...)
@@ -1268,7 +1268,7 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.Index.Get(loc.Reference())
@@ -1291,7 +1291,7 @@ func TestDirectoryResolver_AllLocations(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations(context.Background()) {
+	for loc := range resolver.AllLocations(t.Context()) {
 		if strings.HasPrefix(loc.RealPath, "/") {
 			// ignore outside the fixture root for now
 			continue
@@ -1322,7 +1322,7 @@ func TestAllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	resolver, err := NewFromDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
 	require.NoError(t, err)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	for range resolver.AllLocations(ctx) {
 		break
 	}
@@ -1565,7 +1565,7 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 	var dirLoc *file.Location
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	for loc := range resolver.AllLocations(ctx) {
 		entry, err := resolver.Index.Get(loc.Reference())
@@ -1597,7 +1597,7 @@ func TestFileResolver_AllLocations(t *testing.T) {
 	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 	paths := strset.New()
-	for loc := range resolver.AllLocations(context.Background()) {
+	for loc := range resolver.AllLocations(t.Context()) {
 		paths.Add(loc.RealPath)
 	}
 	expected := []string{
@@ -1625,7 +1625,7 @@ func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
 	require.NoError(t, err)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	for range resolver.AllLocations(ctx) {
 		break
 	}

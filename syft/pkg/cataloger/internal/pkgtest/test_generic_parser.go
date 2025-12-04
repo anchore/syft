@@ -546,7 +546,7 @@ func getPackagePath(fn interface{}) string {
 func getPackagePathFromCataloger(_ pkg.Cataloger) string {
 	// walk up the call stack to find the test file
 	// we're looking for a file in the cataloger directory structure
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		_, file, _, ok := runtime.Caller(i)
 		if !ok {
 			break

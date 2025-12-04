@@ -447,7 +447,7 @@ func Test_resolveLicenses(t *testing.T) {
 			require.Equal(t, "child-one", child1.Name)
 
 			got := child1.Licenses.ToSlice()
-			for i := 0; i < len(got); i++ {
+			for i := range got {
 				// ignore locations, just check license text
 				(&got[i]).Locations = file.LocationSet{}
 			}
@@ -811,7 +811,7 @@ func expectedTransientPackageData() expected {
 	}
 
 	pkgs := make([]pkg.Package, len(allPackages))
-	for i := 0; i < len(allPackages); i++ {
+	for i := range allPackages {
 		pkgs[i] = *allPackages[i]
 	}
 

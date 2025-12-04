@@ -153,7 +153,7 @@ func newScanner(reader io.Reader) *bufio.Scanner {
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(bufScan, maxScannerCapacity)
 	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		for i := 0; i < len(data); i++ {
+		for i := range data {
 			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {
 				return i + 1, data[:i-1], nil
 			}
@@ -205,7 +205,7 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 		switch key {
 		case "files":
 			var files []map[string]string
-			for _, f := range strings.Split(value, "\n") {
+			for f := range strings.SplitSeq(value, "\n") {
 				p := fmt.Sprintf("/%s", f)
 				if ok := ignoredFiles[p]; !ok {
 					files = append(files, map[string]string{"path": p})
@@ -214,7 +214,7 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 			pkgFields[key] = files
 		case "backup":
 			var backup []map[string]interface{}
-			for _, f := range strings.Split(value, "\n") {
+			for f := range strings.SplitSeq(value, "\n") {
 				fields := strings.SplitN(f, "\t", 2)
 				p := fmt.Sprintf("/%s", fields[0])
 				if ok := ignoredFiles[p]; !ok {

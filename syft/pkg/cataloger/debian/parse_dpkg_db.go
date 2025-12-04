@@ -184,8 +184,7 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
 }
 
 func splitPkgList(pkgList string) (ret []string) {
-	fields := strings.Split(pkgList, ",")
-	for _, field := range fields {
+	for field := range strings.SplitSeq(pkgList, ",") {
 		field = strings.TrimSpace(field)
 		if field != "" {
 			ret = append(ret, field)

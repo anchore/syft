@@ -1,6 +1,9 @@
 package internal
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // HasAnyOfPrefixes returns an indication if the given string has any of the given prefixes.
 func HasAnyOfPrefixes(input string, prefixes ...string) bool {
@@ -32,12 +35,7 @@ func TruncateMiddleEllipsis(input string, maxLen int) string {
 }
 
 func StringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, a)
 }
 
 func SplitAny(s string, seps string) []string {

@@ -150,7 +150,7 @@ func (c *NVDAPIClient) FetchProductsSince(ctx context.Context, lastModStartDate 
 func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, lastModStartDate time.Time) (NVDProductsResponse, error) {
 	var lastErr error
 
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		// wait for rate limiter
 		if err := c.rateLimiter.Wait(ctx); err != nil {
 			return NVDProductsResponse{}, fmt.Errorf("rate limiter error: %w", err)

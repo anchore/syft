@@ -29,9 +29,8 @@ func upstreamCandidates(m pkg.ApkDBEntry) (candidates []upstreamCandidate) {
 
 	name := m.Package
 	groups := internal.MatchNamedCaptureGroups(streamVersionPkgNamePattern, m.Package)
-	stream, ok := groups["stream"]
 
-	if ok && stream != "" {
+	if stream, ok := groups["stream"]; ok && stream != "" {
 		sub, ok := groups["subPackage"]
 
 		if ok && sub != "" {
@@ -42,8 +41,7 @@ func upstreamCandidates(m pkg.ApkDBEntry) (candidates []upstreamCandidate) {
 	}
 
 	for prefix, typ := range prefixesToPackageType {
-		if strings.HasPrefix(name, prefix) {
-			t := strings.TrimPrefix(name, prefix)
+		if t, ok := strings.CutPrefix(name, prefix); ok {
 			if t != "" {
 				candidates = append(candidates, upstreamCandidate{Name: t, Type: typ})
 				return candidates

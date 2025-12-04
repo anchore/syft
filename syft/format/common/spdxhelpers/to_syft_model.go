@@ -244,8 +244,7 @@ func extractSourceFromNamespace(ns string) source.Description {
 		}
 	}
 
-	parts := strings.Split(u.Path, "/")
-	for _, p := range parts {
+	for p := range strings.SplitSeq(u.Path, "/") {
 		switch p {
 		case helpers.InputFile:
 			return source.Description{
