@@ -98,7 +98,7 @@ var imageOnlyTestCases = []testCase{
 			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
 			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
 			//"TestCommon":  "1.0.0",
-			//"TestLibrary": "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 }
@@ -275,7 +275,7 @@ var dirOnlyTestCases = []testCase{
 			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
 			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
 			//"TestCommon":  "1.0.0",
-			//"TestLibrary": "1.0.0",
+			"TestLibrary": "1.0.0",
 		},
 	},
 	{

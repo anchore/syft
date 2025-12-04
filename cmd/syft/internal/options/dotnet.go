@@ -27,7 +27,6 @@ func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.PropagateDLLClaimsToParents, `treat DLL claims or on-disk evidence for child packages as DLL claims or on-disk evidence for any parent package`)
 	descriptions.Add(&o.RelaxDLLClaimsWhenBundlingDetected, `show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)`)
 	descriptions.Add(&o.ExcludeProjectReferences, `exclude packages with type "project" from deps.json output (these are internal project references, not NuGet packages)`)
-
 }
 
 func defaultDotnetConfig() dotnetConfig {

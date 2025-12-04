@@ -267,7 +267,6 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.BoolVarP(&cfg.Dotnet.ExcludeProjectReferences, "dotnet-exclude-project-references", "",
 		"exclude packages with type 'project' from deps.json output (default: true)")
-
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
