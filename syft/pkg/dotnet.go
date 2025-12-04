@@ -17,6 +17,8 @@ type DotnetDepsEntry struct {
 	// HashPath is the relative path to the .nupkg.sha512 hash file (e.g. "app.metrics.3.0.0.nupkg.sha512")
 	HashPath string `mapstructure:"hashPath" json:"hashPath"`
 
+	Type string `mapstructure:"type" json:"type,omitempty"`
+
 	// Executables are the map of .NET Portable Executable files within this package with their version resources
 	Executables map[string]DotnetPortableExecutableEntry `json:"executables,omitempty"`
 }

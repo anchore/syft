@@ -276,6 +276,12 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 			continue
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
+
+		if config.ExcludeProjectReferences && lp.Library != nil && lp.Library.Type == "project" {
+			skippedDepPkgs[nameVersion] = lp
+			continue
+		}
+
 		if config.DepPackagesMustHaveDLL && !lp.FoundDLLs(config.PropagateDLLClaimsToParents) {
 			// could not find a paired DLL and the user required this...
 			skippedDepPkgs[nameVersion] = lp

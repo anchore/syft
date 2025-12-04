@@ -171,6 +171,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
 		Dotnet: dotnet.DefaultCatalogerConfig().
+			WithExcludeProjectReferences(cfg.Dotnet.ExcludeProjectReferences).
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
 			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
@@ -263,6 +264,10 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.Supplier, "source-supplier", "",
 		"the organization that supplied the component, which often may be the manufacturer, distributor, or repackager")
+
+	flags.BoolVarP(&cfg.Dotnet.ExcludeProjectReferences, "dotnet-exclude-project-references", "",
+		"exclude packages with type 'project' from deps.json output (default: true)")
+
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {
