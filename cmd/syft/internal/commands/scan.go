@@ -222,7 +222,9 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 			Supplier: opts.Source.Supplier,
 		}).
 		WithExcludeConfig(source.ExcludeConfig{
-			Paths: opts.Exclusions,
+			Paths:                opts.Exclusions,
+			ExcludeFile:          opts.ExcludeFile,
+			ExcludeGitignoreMode: opts.ExcludeGitignoreMode,
 		}).
 		WithBasePath(opts.Source.BasePath).
 		WithSources(sources...).
