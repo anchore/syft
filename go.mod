@@ -39,8 +39,8 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
-	github.com/github/go-spdx/v2 v2.3.4
-	github.com/gkampitakis/go-snaps v0.5.17
+	github.com/github/go-spdx/v2 v2.3.5
+	github.com/gkampitakis/go-snaps v0.5.18
 	github.com/go-git/go-billy/v5 v5.6.2
 	github.com/go-git/go-git/v5 v5.16.3
 	github.com/go-test/deep v1.1.1
@@ -78,7 +78,7 @@ require (
 	github.com/spdx/gordf v0.0.0-20201111095634-7098f93598fb
 	github.com/spdx/tools-golang v0.5.5
 	github.com/spf13/afero v1.15.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	github.com/vbatts/go-mtree v0.6.0
 	github.com/vifraa/gopom v1.0.0

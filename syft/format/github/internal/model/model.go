@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mholt/archives"
-
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -155,7 +154,7 @@ func trimRelative(s string) string {
 
 // isArchive returns true if the path appears to be an archive
 func isArchive(path string) bool {
-	format, _, err := archives.Identify(context.Background(), path, nil)
+	format, _, err := file.IdentifyArchive(context.Background(), path, nil)
 	return err == nil && format != nil
 }
 
