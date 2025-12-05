@@ -590,7 +590,7 @@ func Test_DirectorySource_ExcludeFile(t *testing.T) {
 				"node_modules/pkg/index.js",
 				"src/components/Button.tsx",
 				"src/main.ts",
-				"vendor/lib/util.go",
+				"vendor/lib/util.txt",
 			},
 		},
 		{
