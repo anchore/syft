@@ -17,7 +17,7 @@ import (
 var _ pkg.Cataloger = (*linuxKernelCataloger)(nil)
 
 type LinuxKernelCatalogerConfig struct {
-	// CatalogModules enables cataloging linux kernel modules (*.ko files) in addition to the kernel itself.
+	// CatalogModules enables cataloging linux kernel modules (`*.ko` files) in addition to the kernel itself.
 	// app-config: linux-kernel.catalog-modules
 	CatalogModules bool `yaml:"catalog-modules" json:"catalog-modules" mapstructure:"catalog-modules"`
 }

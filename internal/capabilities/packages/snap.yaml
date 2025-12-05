@@ -1,0 +1,146 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: snap # MANUAL
+    name: snap-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/snap/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - package
+      - snap
+    parsers: # AUTO-GENERATED structure
+      - function: parseSnapdSnapcraft
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/snap/snapcraft.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseSystemManifest
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/snap/manifest.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseKernelChangelog
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/doc/linux-modules-*/changelog.Debian.gz'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseBaseDpkgYaml
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/usr/share/snappy/dpkg.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseSnapYaml
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/meta/snap.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SnapEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - SnapEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

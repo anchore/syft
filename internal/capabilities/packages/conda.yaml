@@ -1,0 +1,51 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: conda # MANUAL
+    name: conda-meta-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/conda/cataloger.go
+      function: NewCondaMetaCataloger
+    selectors: # AUTO-GENERATED
+      - conda
+      - directory
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseCondaMetaJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/conda-meta/*.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CondaMetaPackage
+        package_types: # AUTO-GENERATED
+          - conda
+        json_schema_types: # AUTO-GENERATED
+          - CondaMetadataEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - CondaMetaPackage.Files
+              - CondaMetaPackage.PathsData.Paths
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - CondaMetaPackage.PathsData.Paths.SHA256
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - CondaMetaPackage.MD5
+              - CondaMetaPackage.SHA256

@@ -1,0 +1,58 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  kernel.LinuxKernelCatalogerConfig:
+    fields:
+      - key: CatalogModules
+        description: CatalogModules enables cataloging linux kernel modules (`*.ko` files) in addition to the kernel itself.
+        app_key: linux-kernel.catalog-modules
+catalogers:
+  - ecosystem: linux # MANUAL
+    name: linux-kernel-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    config: kernel.LinuxKernelCatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - image
+      - installed
+      - kernel
+      - linux
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/kernel'
+          - '**/kernel-*'
+          - '**/vmlinux'
+          - '**/vmlinux-*'
+          - '**/vmlinuz'
+          - '**/vmlinuz-*'
+          - '**/lib/modules/**/*.ko'
+    metadata_types: # AUTO-GENERATED
+      - pkg.LinuxKernel
+      - pkg.LinuxKernelModule
+    package_types: # AUTO-GENERATED
+      - linux-kernel
+      - linux-kernel-module
+    json_schema_types: # AUTO-GENERATED
+      - LinuxKernelArchive
+      - LinuxKernelModule
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: true
+      - name: dependency.depth
+        default: []
+      - name: dependency.edges
+        default: ""
+      - name: dependency.kinds
+        default: []
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false

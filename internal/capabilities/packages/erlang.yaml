@@ -1,0 +1,88 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: erlang # MANUAL
+    name: erlang-otp-application-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/erlang/cataloger.go
+      function: NewOTPCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - erlang
+      - language
+      - otp
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseOTPApp
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.app'
+        package_types: # AUTO-GENERATED
+          - erlang-otp
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: erlang # MANUAL
+    name: erlang-rebar-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/erlang/cataloger.go
+      function: NewRebarLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - erlang
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseRebarLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/rebar.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ErlangRebarLockEntry
+        package_types: # AUTO-GENERATED
+          - hex
+        json_schema_types: # AUTO-GENERATED
+          - ErlangRebarLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - ErlangRebarLockEntry.PkgHash
+              - ErlangRebarLockEntry.PkgHashExt

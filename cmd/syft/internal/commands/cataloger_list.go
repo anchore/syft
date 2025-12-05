@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
 )
@@ -28,25 +29,23 @@ var (
 )
 
 type catalogerListOptions struct {
-	Output            string   `yaml:"output" json:"output" mapstructure:"output"`
-	DefaultCatalogers []string `yaml:"default-catalogers" json:"default-catalogers" mapstructure:"default-catalogers"`
-	SelectCatalogers  []string `yaml:"select-catalogers" json:"select-catalogers" mapstructure:"select-catalogers"`
-	ShowHidden        bool     `yaml:"show-hidden" json:"show-hidden" mapstructure:"show-hidden"`
+	Output                     string `yaml:"output" json:"output" mapstructure:"output"`
+	options.CatalogerSelection `yaml:",inline" json:",inline" mapstructure:",squash"`
+	ShowHidden                 bool `yaml:"show-hidden" json:"show-hidden" mapstructure:"show-hidden"`
 }
 
 func (o *catalogerListOptions) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.Output, "output", "o", "format to output the cataloger list (available: table, json)")
-
-	flags.StringArrayVarP(&o.DefaultCatalogers, "override-default-catalogers", "", "override the default catalogers with an expression")
-
-	flags.StringArrayVarP(&o.SelectCatalogers, "select-catalogers", "", "select catalogers with an expression")
 
 	flags.BoolVarP(&o.ShowHidden, "show-hidden", "s", "show catalogers that have been de-selected")
 }
 
 func defaultCatalogerListOptions() *catalogerListOptions {
 	return &catalogerListOptions{
-		DefaultCatalogers: []string{"all"},
+		CatalogerSelection: options.CatalogerSelection{
+			// this is different than the default behavior where a scan will automatically detect the default set
+			DefaultCatalogers: []string{"all"},
+		},
 	}
 }
 
@@ -101,7 +100,7 @@ func catalogerListReport(opts *catalogerListOptions, allTaskGroups [][]task.Task
 	var report string
 
 	switch opts.Output {
-	case "json":
+	case jsonFormat:
 		report, err = renderCatalogerListJSON(flattenTaskGroups(selectedTaskGroups), selectionEvidence, defaultCatalogers, selectCatalogers)
 	case "table", "":
 		if opts.ShowHidden {
@@ -306,22 +305,14 @@ func formatToken(token string, selection *task.TokenSelection, included bool, de
 }
 
 func extractTaskInfo(tasks []task.Task) ([]string, map[string][]string) {
+	infos := capabilities.ExtractCatalogerInfo(tasks)
+
 	tagsByName := make(map[string][]string)
 	var names []string
 
-	for _, tsk := range tasks {
-		var tags []string
-		name := tsk.Name()
-
-		if s, ok := tsk.(task.Selector); ok {
-			set := strset.New(s.Selectors()...)
-			set.Remove(name)
-			tags = set.List()
-			sort.Strings(tags)
-		}
-
-		tagsByName[name] = tags
-		names = append(names, name)
+	for _, info := range infos {
+		tagsByName[info.Name] = info.Selectors
+		names = append(names, info.Name)
 	}
 
 	sort.Strings(names)

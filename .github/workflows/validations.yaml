@@ -23,6 +23,11 @@ jobs:
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        with:
+          # the self-consistency tests for the output of the capabilities code generation depends on unit test
+          # output from  ./syft/pkg/... packages. Therefore we need to download the test fixture cache here
+          # so that running the few unit tests as part of static analysis works correctly.
+          download-test-fixture-cache: true
 
       - name: Run static analysis
         run: make static-analysis

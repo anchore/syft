@@ -1,0 +1,289 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  java.ArchiveCatalogerConfig:
+    fields:
+      - key: IncludeIndexedArchives
+        description: IncludeIndexedArchives indicates whether to search within indexed archive files (e.g., .zip).
+      - key: IncludeUnindexedArchives
+        description: IncludeUnindexedArchives indicates whether to search within unindexed archive files (e.g., .tar*).
+      - key: UseNetwork
+        description: UseNetwork enables network operations for java package metadata enrichment, such as fetching parent POMs and license information.
+        app_key: java.use-network
+      - key: UseMavenLocalRepository
+        description: UseMavenLocalRepository enables searching the local maven repository (`~/.m2/repository` by default) for parent POMs and other metadata.
+        app_key: java.use-maven-local-repository
+      - key: MavenLocalRepositoryDir
+        description: MavenLocalRepositoryDir specifies the location of the local maven repository. When not set, defaults to `~/.m2/repository`.
+        app_key: java.maven-local-repository-dir
+      - key: MavenBaseURL
+        description: MavenBaseURL specifies the base URL(s) to use for fetching POMs and metadata from maven central or other repositories. When not set, defaults to `https://repo1.maven.org/maven2`.
+        app_key: java.maven-url
+      - key: MaxParentRecursiveDepth
+        description: MaxParentRecursiveDepth limits how many parent POMs will be fetched recursively before stopping. This prevents fetching excessively deep parent graphs.
+        app_key: java.max-parent-recursive-depth
+      - key: ResolveTransitiveDependencies
+        description: ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
+        app_key: java.resolve-transitive-dependencies
+catalogers:
+  - ecosystem: java # MANUAL
+    name: java-archive-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/java/cataloger.go
+      function: NewArchiveCataloger
+    config: java.ArchiveCatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - java
+      - language
+      - maven
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.jar'
+          - '**/*.war'
+          - '**/*.ear'
+          - '**/*.par'
+          - '**/*.sar'
+          - '**/*.nar'
+          - '**/*.jpi'
+          - '**/*.hpi'
+          - '**/*.kar'
+          - '**/*.lpkg'
+        comment: JAR-based archives - always active
+      - method: glob
+        criteria:
+          - '**/*.zip'
+        conditions:
+          - when:
+              IncludeIndexedArchives: true
+        comment: ZIP archives require indexed archive support
+      - method: glob
+        criteria:
+          - '**/*.tar'
+          - '**/*.tar.gz'
+          - '**/*.tgz'
+          - '**/*.tar.bz'
+          - '**/*.tar.bz2'
+          - '**/*.tbz'
+          - '**/*.tbz2'
+          - '**/*.tar.br'
+          - '**/*.tbr'
+          - '**/*.tar.lz4'
+          - '**/*.tlz4'
+          - '**/*.tar.sz'
+          - '**/*.tsz'
+          - '**/*.tar.xz'
+          - '**/*.txz'
+          - '**/*.tar.zst'
+          - '**/*.tzst'
+          - '**/*.tar.zstd'
+          - '**/*.tzstd'
+        conditions:
+          - when:
+              IncludeUnindexedArchives: true
+        comment: TAR archives require unindexed archive support
+    metadata_types: # AUTO-GENERATED
+      - pkg.JavaArchive
+    package_types: # AUTO-GENERATED
+      - java-archive
+    json_schema_types: # AUTO-GENERATED
+      - JavaArchive
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: true
+      - name: dependency.depth
+        default:
+          - direct
+          - indirect
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+          - dev
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: true
+        evidence:
+          - JavaArchive.ArchiveDigests
+  - ecosystem: java # MANUAL
+    name: java-gradle-lockfile-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/java/cataloger.go
+      function: NewGradleLockfileCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - gradle
+      - java
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseGradleLockfile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/gradle.lockfile*'
+        metadata_types: # AUTO-GENERATED
+          - pkg.JavaArchive
+        package_types: # AUTO-GENERATED
+          - java-archive
+        json_schema_types: # AUTO-GENERATED
+          - JavaArchive
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: java # MANUAL
+    name: java-pom-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - java
+      - language
+      - maven
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '*pom.xml'
+    metadata_types: # AUTO-GENERATED
+      - pkg.JavaArchive
+    package_types: # AUTO-GENERATED
+      - java-archive
+    json_schema_types: # AUTO-GENERATED
+      - JavaArchive
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: true
+      - name: dependency.depth
+        default:
+          - direct
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+          - dev
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
+  - ecosystem: java # MANUAL
+    name: java-jvm-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/java/cataloger.go
+      function: NewJvmDistributionCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - image
+      - installed
+      - java
+      - jdk
+      - jre
+      - jvm
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseJVMRelease
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/release'
+        metadata_types: # AUTO-GENERATED
+          - pkg.JavaVMInstallation
+        package_types: # AUTO-GENERATED
+          - binary
+        json_schema_types: # AUTO-GENERATED
+          - JavaJvmInstallation
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: null
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: null
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - JavaVMInstallation.Files
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: java # MANUAL
+    name: graalvm-native-image-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - java
+      - language
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: mimetype
+        criteria:
+          - application/x-executable
+          - application/x-mach-binary
+          - application/x-elf
+          - application/x-sharedlib
+          - application/vnd.microsoft.portable-executable
+    package_types: # AUTO-GENERATED
+      - graalvm-native-image
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: true
+      - name: dependency.depth
+        default:
+          - direct
+          - indirect
+        comment: the dependencies ultimately depends on the quality of the embedded SBOM
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+          - dev
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
