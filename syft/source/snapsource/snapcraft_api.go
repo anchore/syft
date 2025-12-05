@@ -60,11 +60,22 @@ type snapFindResponse struct {
 	} `json:"results"`
 }
 
+func getRevisionFromURL(cm snapChannelMapEntry) (rev int, err error) {
+	re := regexp.MustCompile(`(\d+)\.snap$`)
+	match := re.FindStringSubmatch(cm.Download.URL)
+	if len(match) < 2 {
+		err = fmt.Errorf("could not determine revision from %s", cm.Download.URL)
+		return
+	}
+	rev, err = strconv.Atoi(match[1])
+	return
+}
+
 // GetSnapDownloadURL retrieves the download URL for a snap package
 func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 	apiURL := c.InfoAPIURL + id.Name
 
-	if id.Revision == NOT_SPECIFIED_REVISION {
+	if id.Revision == NotSpecifiedRevision {
 		log.WithFields("name", id.Name, "channel", id.Channel, "architecture", id.Architecture).Trace("requesting snap info")
 	} else {
 		log.WithFields("name", id.Name, "revision", id.Revision, "architecture", id.Architecture).Trace("requesting snap info")
@@ -75,7 +86,7 @@ func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 		return "", fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	if id.Revision != NOT_SPECIFIED_REVISION {
+	if id.Revision != NotSpecifiedRevision {
 		q := req.URL.Query()
 		q.Add("revision", fmt.Sprintf("%d", id.Revision))
 		req.URL.RawQuery = q.Encode()
@@ -119,13 +130,8 @@ func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 
 	for _, cm := range info.ChannelMap {
 		// revision will supersede channel
-		if id.Revision != NOT_SPECIFIED_REVISION {
-			re := regexp.MustCompile(`(\d+)\.snap$`)
-			match := re.FindStringSubmatch(cm.Download.URL)
-			if len(match) < 2 {
-				continue
-			}
-			rev, err2 := strconv.Atoi(match[1])
+		if id.Revision != NotSpecifiedRevision {
+			rev, err2 := getRevisionFromURL(cm)
 			if err2 == nil && rev == id.Revision {
 				return cm.Download.URL, nil
 			}

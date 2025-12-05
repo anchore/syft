@@ -605,7 +605,7 @@ func TestParseSnapRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			name, revision, channel, err := parseSnapRequest(tt.request)
 			assert.Equal(t, tt.expectedName, name)
-			if tt.expectedRevision != NOT_SPECIFIED_REVISION {
+			if tt.expectedRevision != NotSpecifiedRevision {
 				assert.Equal(t, tt.expectedRevision, revision)
 			} else {
 				assert.Equal(t, tt.expectedChannel, channel)

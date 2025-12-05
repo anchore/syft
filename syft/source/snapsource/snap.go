@@ -32,7 +32,7 @@ type remoteSnap struct {
 	URL string
 }
 
-const NOT_SPECIFIED_REVISION int = 0
+const NotSpecifiedRevision int = 0
 
 type snapIdentity struct {
 	Name         string
@@ -44,7 +44,7 @@ type snapIdentity struct {
 func (s snapIdentity) String() string {
 	parts := []string{s.Name}
 	// revision will supersede channel
-	if s.Revision != NOT_SPECIFIED_REVISION {
+	if s.Revision != NotSpecifiedRevision {
 		parts = append(parts, fmt.Sprintf(":%d", s.Revision))
 	} else {
 		if s.Channel != "" {
@@ -222,7 +222,7 @@ func parseSnapRequest(request string) (name string, revision int, channel string
 		name = divisions[0]
 		revision, err = strconv.Atoi(divisions[1])
 		if err != nil {
-			return "", NOT_SPECIFIED_REVISION, "", err
+			return "", NotSpecifiedRevision, "", err
 		}
 		return name, revision, "", err
 	}
@@ -233,7 +233,7 @@ func parseSnapRequest(request string) (name string, revision int, channel string
 	if channel == "" {
 		channel = defaultChannel
 	}
-	return name, NOT_SPECIFIED_REVISION, channel, err
+	return name, NotSpecifiedRevision, channel, err
 }
 
 func downloadSnap(getter intFile.Getter, info *remoteSnap, dest string) error {
