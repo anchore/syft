@@ -52,6 +52,10 @@ func (s stereoscopeImageSource) Describe() source.Description {
 
 	name := a.Name
 	supplier := a.Supplier
+	var authors []source.Author
+	if len(a.Authors) > 0 {
+		authors = a.Authors
+	}
 	nameIfUnset := func(n string) {
 		if name != "" {
 			return
@@ -92,6 +96,7 @@ func (s stereoscopeImageSource) Describe() source.Description {
 		Name:     name,
 		Version:  version,
 		Supplier: supplier,
+		Authors:  authors,
 		Metadata: s.metadata,
 	}
 }

@@ -1056,3 +1056,131 @@ func Test_otherLicenses(t *testing.T) {
 		})
 	}
 }
+
+func Test_toSPDXCreators(t *testing.T) {
+	tests := []struct {
+		name     string
+		authors  []source.Author
+		expected []spdx.Creator
+	}{
+		{
+			name:    "no authors uses defaults",
+			authors: nil,
+			expected: []spdx.Creator{
+				{
+					CreatorType: "Organization",
+					Creator:     "Anchore, Inc",
+				},
+				{
+					CreatorType: "Tool",
+					Creator:     "syft-1.0.0",
+				},
+			},
+		},
+		{
+			name: "single Person author replaces defaults",
+			authors: []source.Author{
+				{
+					Name:  "John Doe",
+					Email: "john@example.com",
+					Type:  "Person",
+				},
+			},
+			expected: []spdx.Creator{
+				{
+					CreatorType: "Person",
+					Creator:     "John Doe (john@example.com)",
+				},
+			},
+		},
+		{
+			name: "single Organization author replaces defaults",
+			authors: []source.Author{
+				{
+					Name:  "ACME Corp",
+					Email: "info@acme.com",
+					Type:  "Organization",
+				},
+			},
+			expected: []spdx.Creator{
+				{
+					CreatorType: "Organization",
+					Creator:     "ACME Corp (info@acme.com)",
+				},
+			},
+		},
+		{
+			name: "single Tool author replaces defaults",
+			authors: []source.Author{
+				{
+					Name:  "custom-tool",
+					Email: "tool@example.com",
+					Type:  "Tool",
+				},
+			},
+			expected: []spdx.Creator{
+				{
+					CreatorType: "Tool",
+					Creator:     "custom-tool (tool@example.com)",
+				},
+			},
+		},
+		{
+			name: "multiple authors replaces defaults",
+			authors: []source.Author{
+				{
+					Name:  "Jane Smith",
+					Email: "jane@example.com",
+					Type:  "Person",
+				},
+				{
+					Name:  "Custom Corp",
+					Email: "",
+					Type:  "Organization",
+				},
+				{
+					Name:  "my-scanner",
+					Email: "",
+					Type:  "Tool",
+				},
+			},
+			expected: []spdx.Creator{
+				{
+					CreatorType: "Person",
+					Creator:     "Jane Smith (jane@example.com)",
+				},
+				{
+					CreatorType: "Organization",
+					Creator:     "Custom Corp",
+				},
+				{
+					CreatorType: "Tool",
+					Creator:     "my-scanner",
+				},
+			},
+		},
+		{
+			name: "author without email",
+			authors: []source.Author{
+				{
+					Name:  "No Email Person",
+					Email: "",
+					Type:  "Person",
+				},
+			},
+			expected: []spdx.Creator{
+				{
+					CreatorType: "Person",
+					Creator:     "No Email Person",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := toSPDXCreators("syft", "1.0.0", test.authors)
+			require.Equal(t, test.expected, actual)
+		})
+	}
+}

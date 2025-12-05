@@ -214,12 +214,18 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 }
 
 func getSource(ctx context.Context, opts *options.Catalog, userInput string, sources ...string) (source.Source, error) {
+	authors, err := options.ParseAuthors(opts.Source.Authors)
+	if err != nil {
+		return nil, fmt.Errorf("invalid authors: %w", err)
+	}
+
 	cfg := syft.DefaultGetSourceConfig().
 		WithRegistryOptions(opts.Registry.ToOptions()).
 		WithAlias(source.Alias{
 			Name:     opts.Source.Name,
 			Version:  opts.Source.Version,
 			Supplier: opts.Source.Supplier,
+			Authors:  authors,
 		}).
 		WithExcludeConfig(source.ExcludeConfig{
 			Paths: opts.Exclusions,
@@ -228,7 +234,6 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 		WithSources(sources...).
 		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 
-	var err error
 	var platform *image.Platform
 
 	if opts.Platform != "" {

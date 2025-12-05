@@ -221,6 +221,17 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		supplier = meta.Supplier.Name
 	}
 
+	var authors []source.Author
+	if meta.Authors != nil {
+		for _, author := range *meta.Authors {
+			authors = append(authors, source.Author{
+				Name:  author.Name,
+				Email: author.Email,
+				Type:  "Person", // CycloneDX doesn't specify type
+			})
+		}
+	}
+
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
 		var labels map[string]string
@@ -232,6 +243,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		return source.Description{
 			ID:       "",
 			Supplier: supplier,
+			Authors:  authors,
 			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
 
 			Metadata: source.ImageMetadata{
@@ -248,6 +260,7 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		return source.Description{
 			ID:       "",
 			Supplier: supplier,
+			Authors:  authors,
 			Metadata: source.FileMetadata{Path: c.Name},
 		}
 	}

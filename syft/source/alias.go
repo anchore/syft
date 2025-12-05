@@ -1,9 +1,10 @@
 package source
 
 type Alias struct {
-	Name     string `json:"name" yaml:"name" mapstructure:"name"`
-	Version  string `json:"version" yaml:"version" mapstructure:"version"`
-	Supplier string `json:"supplier" yaml:"supplier" mapstructure:"supplier"`
+	Name     string   `json:"name" yaml:"name" mapstructure:"name"`
+	Version  string   `json:"version" yaml:"version" mapstructure:"version"`
+	Supplier string   `json:"supplier" yaml:"supplier" mapstructure:"supplier"`
+	Authors  []Author `json:"authors" yaml:"authors" mapstructure:"authors"`
 }
 
 func (a *Alias) IsEmpty() bool {
