@@ -18,6 +18,11 @@ type CatalogerConfig struct {
 	// and, if found (and this config option is enabled), will relax the DepPackagesMustClaimDLL value to `false` only in those cases.
 	// app-config: dotnet.relax-dll-claims-when-bundling-detected
 	RelaxDLLClaimsWhenBundlingDetected bool `mapstructure:"relax-dll-claims-when-bundling-detected" json:"relax-dll-claims-when-bundling-detected" yaml:"relax-dll-claims-when-bundling-detected"`
+
+	// ExcludeProjectReferences excludes packages with type "project" from deps.json output.
+	// These are internal project references, not external NuGet packages.
+	// app-config: dotnet.exclude-project-references
+	ExcludeProjectReferences bool `mapstructure:"exclude-project-references" json:"exclude-project-references" yaml:"exclude-project-references"`
 }
 
 func (c CatalogerConfig) WithDepPackagesMustHaveDLL(requireDlls bool) CatalogerConfig {
@@ -40,11 +45,17 @@ func (c CatalogerConfig) WithPropagateDLLClaimsToParents(propagate bool) Catalog
 	return c
 }
 
+func (c CatalogerConfig) WithExcludeProjectReferences(exclude bool) CatalogerConfig {
+	c.ExcludeProjectReferences = exclude
+	return c
+}
+
 func DefaultCatalogerConfig() CatalogerConfig {
 	return CatalogerConfig{
 		DepPackagesMustHaveDLL:             false,
 		DepPackagesMustClaimDLL:            true,
 		PropagateDLLClaimsToParents:        true,
 		RelaxDLLClaimsWhenBundlingDetected: true,
+		ExcludeProjectReferences:           true,
 	}
 }
