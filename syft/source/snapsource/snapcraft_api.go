@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"strconv"
 
 	"github.com/anchore/syft/internal/log"
 )
@@ -62,13 +64,22 @@ type snapFindResponse struct {
 func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 	apiURL := c.InfoAPIURL + id.Name
 
-	log.WithFields("name", id.Name, "channel", id.Channel, "architecture", id.Architecture).Trace("requesting snap info")
+	if id.Revision == NOT_SPECIFIED_REVISION {
+		log.WithFields("name", id.Name, "channel", id.Channel, "architecture", id.Architecture).Trace("requesting snap info")
+	} else {
+		log.WithFields("name", id.Name, "revision", id.Revision, "architecture", id.Architecture).Trace("requesting snap info")
+	}
 
 	req, err := http.NewRequest(http.MethodGet, apiURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
+	if id.Revision != NOT_SPECIFIED_REVISION {
+		q := req.URL.Query()
+		q.Add("revision", fmt.Sprintf("%d", id.Revision))
+		req.URL.RawQuery = q.Encode()
+	}
 	req.Header.Set("Snap-Device-Series", defaultSeries)
 
 	resp, err := c.HTTPClient.Do(req)
@@ -107,7 +118,18 @@ func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 	}
 
 	for _, cm := range info.ChannelMap {
-		if cm.Channel.Architecture == id.Architecture && cm.Channel.Name == id.Channel {
+		// revision will supersede channel
+		if id.Revision != NOT_SPECIFIED_REVISION {
+			re := regexp.MustCompile(`(\d+)\.snap$`)
+			match := re.FindStringSubmatch(cm.Download.URL)
+			if len(match) < 2 {
+				continue
+			}
+			rev, err2 := strconv.Atoi(match[1])
+			if err2 == nil && rev == id.Revision {
+				return cm.Download.URL, nil
+			}
+		} else if cm.Channel.Architecture == id.Architecture && cm.Channel.Name == id.Channel {
 			return cm.Download.URL, nil
 		}
 	}
