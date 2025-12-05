@@ -236,3 +236,71 @@ func Test_enrichmentEnabled(t *testing.T) {
 		})
 	}
 }
+
+func TestCatalog_ParseSBOMProperties(t *testing.T) {
+	tests := []struct {
+		name       string
+		properties []string
+		expected   map[string]string
+	}{
+		{
+			name:       "empty properties",
+			properties: []string{},
+			expected:   map[string]string{},
+		},
+		{
+			name:       "nil properties",
+			properties: nil,
+			expected:   map[string]string{},
+		},
+		{
+			name:       "single property",
+			properties: []string{"environment=production"},
+			expected: map[string]string{
+				"environment": "production",
+			},
+		},
+		{
+			name:       "multiple properties",
+			properties: []string{"environment=production", "team=security", "version=1.0.0"},
+			expected: map[string]string{
+				"environment": "production",
+				"team":        "security",
+				"version":     "1.0.0",
+			},
+		},
+		{
+			name:       "property with equals in value",
+			properties: []string{"url=https://example.com?param=value"},
+			expected: map[string]string{
+				"url": "https://example.com?param=value",
+			},
+		},
+		{
+			name:       "property without equals (ignored)",
+			properties: []string{"invalidproperty", "valid=value"},
+			expected: map[string]string{
+				"valid": "value",
+			},
+		},
+		{
+			name:       "property with empty value",
+			properties: []string{"empty=", "filled=value"},
+			expected: map[string]string{
+				"empty":  "",
+				"filled": "value",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			catalog := Catalog{
+				SBOMProperties: tt.properties,
+			}
+
+			result := catalog.ParseSBOMProperties()
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
