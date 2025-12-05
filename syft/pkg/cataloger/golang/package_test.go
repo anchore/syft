@@ -38,7 +38,7 @@ func Test_packageURL(t *testing.T) {
 				Name:    "github.com/coreos/go-systemd/v22",
 				Version: "v22.1.0",
 			},
-			expected: "pkg:golang/github.com/coreos/go-systemd@v22.1.0#v22",
+			expected: "pkg:golang/github.com/coreos/go-systemd/v22@v22.1.0",
 		},
 		{
 			name: "golang with subpath deep",
