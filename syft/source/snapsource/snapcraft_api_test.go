@@ -186,6 +186,54 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 			expectError: require.NoError,
 		},
 		{
+			name: "successful download URL retrieval (w/ track&branch)",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "3.2/stable/fix-for-bug123",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+			expectError: require.NoError,
+		},
+		{
+			name: "branch unmatched",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable/fix-for-bug124",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "3.2/stable/fix-for-bug123",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectError:   require.Error,
+			errorContains: "no matching snap found",
+		},
+		{
 			name: "risk unmatched",
 			snapID: snapIdentity{
 				Name:         "etcd",
@@ -231,7 +279,7 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 				},
 			},
 			expectError:   require.Error,
-			errorContains: "there is no such risk as",
+			errorContains: "there is no such risk",
 		},
 		{
 			name: "region-locked snap - exists but unavailable",

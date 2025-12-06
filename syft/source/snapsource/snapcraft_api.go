@@ -114,26 +114,39 @@ func getRevisionFromURL(cm snapChannelMapEntry) (rev int, err error) {
 //	candidate="3.2/stable", request="3.2/beta"     -> false
 //	candidate="3.2/beta",   request="stable"       -> false
 //	candidate="3.2/alpha", request="alpha"         -> false(alpha is an invalid risk level)
+//	candidate="3.2/stable/fix-for-bug123", request="stable"       -> true
+//	candidate="3.2/stable/fix-for-bug123", request="3.2/stable"   -> true
 func isEligibleChannel(candidate, request string) (bool, error) {
-	cTrack, cRisk := splitChannel(candidate)
-	rTrack, rRisk := splitChannel(request)
-	if stringToSnapRisk(rRisk) == RiskUnknown {
-		return false, fmt.Errorf("there is no such risk as %s in the channel(only stable/candidate/beta/edge are valid)", rRisk)
+	cTrack, cRisk, cBranch := splitChannel(candidate)
+	rTrack, rRisk, rBranch := splitChannel(request)
+	if rTrack == "" && rRisk == "" && rBranch == "" {
+		return false, fmt.Errorf("there is no such risk in the channel(only stable/candidate/beta/edge are valid)")
 	}
 
 	if rTrack != "" {
-		return cTrack == rTrack && cRisk == rRisk, nil
+		return cTrack == rTrack && cRisk == rRisk && (cBranch == rBranch || rBranch == ""), nil
 	}
 
-	return cRisk == rRisk, nil
+	return cRisk == rRisk && (cBranch == rBranch || rBranch == ""), nil
 }
 
-func splitChannel(ch string) (track string, risk string) {
-	parts := strings.SplitN(ch, "/", 2)
-	if len(parts) == 1 {
-		return "", parts[0] // no track
+func splitChannel(ch string) (track string, risk string, branch string) {
+	parts := strings.SplitN(ch, "/", 3)
+	if stringToSnapRisk(parts[0]) != RiskUnknown {
+		if len(parts) == 1 {
+			return "", parts[0], "" // no track
+		} else if len(parts) == 2 {
+			return "", parts[0], parts[1]
+		}
+	} else if len(parts) >= 2 && stringToSnapRisk(parts[1]) != RiskUnknown {
+		if len(parts) == 3 {
+			return parts[0], parts[1], parts[2]
+		} else if len(parts) == 2 {
+			return parts[0], parts[1], ""
+		}
 	}
-	return parts[0], parts[1]
+
+	return "", "", ""
 }
 
 func matchSnapDownloadURL(cm snapChannelMapEntry, id snapIdentity) (string, error) {
