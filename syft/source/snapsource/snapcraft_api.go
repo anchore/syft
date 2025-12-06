@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/anchore/syft/internal/log"
 )
@@ -60,6 +61,33 @@ type snapFindResponse struct {
 	} `json:"results"`
 }
 
+type SnapRisk string
+
+const (
+	RiskStable    SnapRisk = "stable"
+	RiskCandidate SnapRisk = "candidate"
+	RiskBeta      SnapRisk = "beta"
+	RiskEdge      SnapRisk = "edge"
+	RiskUnknown   SnapRisk = "unknown"
+)
+
+func isValidSnapRisk(r SnapRisk) bool {
+	switch r {
+	case RiskStable, RiskCandidate, RiskBeta, RiskEdge:
+		return true
+	default:
+		return false
+	}
+}
+
+func stringToSnapRisk(s string) SnapRisk {
+	r := SnapRisk(s)
+	if !isValidSnapRisk(r) {
+		return RiskUnknown
+	}
+	return r
+}
+
 func getRevisionFromURL(cm snapChannelMapEntry) (rev int, err error) {
 	re := regexp.MustCompile(`(\d+)\.snap$`)
 	match := re.FindStringSubmatch(cm.Download.URL)
@@ -69,6 +97,62 @@ func getRevisionFromURL(cm snapChannelMapEntry) (rev int, err error) {
 	}
 	rev, err = strconv.Atoi(match[1])
 	return
+}
+
+// isEligibleChannel determines whether a candidate channel satisfies a requested
+// channel. Both channels are parsed into {track, risk} pairs.
+//
+// Matching rules:
+//   - If the request includes a track, both track and risk must match exactly.
+//   - If the request omits the track (e.g., "stable"), any candidate track is
+//     accepted as long as the risk matches.
+//
+// Examples:
+//
+//	candidate="3.2/stable", request="stable"       -> true
+//	candidate="3.2/stable", request="3.2/stable"   -> true
+//	candidate="3.2/stable", request="3.2/beta"     -> false
+//	candidate="3.2/beta",   request="stable"       -> false
+//	candidate="3.2/alpha", request="alpha"         -> false(alpha is an invalid risk level)
+func isEligibleChannel(candidate, request string) (bool, error) {
+	cTrack, cRisk := splitChannel(candidate)
+	rTrack, rRisk := splitChannel(request)
+	if stringToSnapRisk(rRisk) == RiskUnknown {
+		return false, fmt.Errorf("there is no such risk as %s in the channel(only stable/candidate/beta/edge are valid)", rRisk)
+	}
+
+	if rTrack != "" {
+		return cTrack == rTrack && cRisk == rRisk, nil
+	}
+
+	return cRisk == rRisk, nil
+}
+
+func splitChannel(ch string) (track string, risk string) {
+	parts := strings.SplitN(ch, "/", 2)
+	if len(parts) == 1 {
+		return "", parts[0] // no track
+	}
+	return parts[0], parts[1]
+}
+
+func matchSnapDownloadURL(cm snapChannelMapEntry, id snapIdentity) (string, error) {
+	// revision will supersede channel
+	if id.Revision != NotSpecifiedRevision {
+		rev, err2 := getRevisionFromURL(cm)
+		if err2 == nil && rev == id.Revision {
+			return cm.Download.URL, nil
+		}
+	} else if cm.Channel.Architecture == id.Architecture {
+		matched, err2 := isEligibleChannel(cm.Channel.Name, id.Channel)
+		if err2 != nil {
+			return "", err2
+		}
+		if matched {
+			return cm.Download.URL, nil
+		}
+	}
+	return "", nil
 }
 
 // GetSnapDownloadURL retrieves the download URL for a snap package
@@ -129,15 +213,11 @@ func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 	}
 
 	for _, cm := range info.ChannelMap {
-		// revision will supersede channel
-		if id.Revision != NotSpecifiedRevision {
-			rev, err2 := getRevisionFromURL(cm)
-			if err2 == nil && rev == id.Revision {
-				return cm.Download.URL, nil
-			}
-		} else if cm.Channel.Architecture == id.Architecture && cm.Channel.Name == id.Channel {
-			return cm.Download.URL, nil
+		url, err2 := matchSnapDownloadURL(cm, id)
+		if url == "" && err2 == nil {
+			continue
 		}
+		return url, err2
 	}
 
 	return "", fmt.Errorf("no matching snap found for %s", id.String())
