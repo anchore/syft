@@ -162,6 +162,126 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 			expectError: require.NoError,
 		},
 		{
+			name: "successful download URL retrieval (w/ track)",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "3.2/stable",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+			expectError: require.NoError,
+		},
+		{
+			name: "successful download URL retrieval (w/ track&branch)",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "3.2/stable/fix-for-bug123",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+			expectError: require.NoError,
+		},
+		{
+			name: "branch unmatched",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable/fix-for-bug124",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "3.2/stable/fix-for-bug123",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectError:   require.Error,
+			errorContains: "no matching snap found",
+		},
+		{
+			name: "risk unmatched",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "latest/beta",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectError:   require.Error,
+			errorContains: "no matching snap found",
+		},
+		{
+			name: "illegal risk",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "foobar",
+				Architecture: "amd64",
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "latest/beta",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/etcd_123.snap",
+						},
+					},
+				},
+			},
+			expectError:   require.Error,
+			errorContains: "there is no such risk",
+		},
+		{
 			name: "region-locked snap - exists but unavailable",
 			snapID: snapIdentity{
 				Name:         "jp-ledger",
@@ -284,6 +404,214 @@ func TestSnapcraftClient_GetSnapDownloadURL(t *testing.T) {
 			findStatusCode: http.StatusInternalServerError,
 			expectError:    require.Error,
 			errorContains:  "failed to check if snap exists",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectError == nil {
+				tt.expectError = require.NoError
+			}
+
+			infoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
+
+				expectedPath := "/" + tt.snapID.Name
+				assert.Equal(t, expectedPath, r.URL.Path)
+
+				w.WriteHeader(tt.infoStatusCode)
+
+				if tt.infoStatusCode == http.StatusOK {
+					responseBytes, err := json.Marshal(tt.infoResponse)
+					require.NoError(t, err)
+					w.Write(responseBytes)
+				}
+			}))
+			defer infoServer.Close()
+
+			var findServer *httptest.Server
+			if tt.findResponse != nil || tt.findStatusCode != 0 {
+				findServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
+					assert.Equal(t, tt.snapID.Name, r.URL.Query().Get("name-startswith"))
+
+					statusCode := tt.findStatusCode
+					if statusCode == 0 {
+						statusCode = http.StatusOK
+					}
+					w.WriteHeader(statusCode)
+
+					if tt.findResponse != nil && statusCode == http.StatusOK {
+						responseBytes, err := json.Marshal(tt.findResponse)
+						require.NoError(t, err)
+						w.Write(responseBytes)
+					}
+				}))
+				defer findServer.Close()
+			}
+
+			client := &snapcraftClient{
+				InfoAPIURL: infoServer.URL + "/",
+				HTTPClient: &http.Client{},
+			}
+			if findServer != nil {
+				client.FindAPIURL = findServer.URL
+			}
+
+			url, err := client.GetSnapDownloadURL(tt.snapID)
+			tt.expectError(t, err)
+			if err != nil {
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+				return
+			}
+			assert.Equal(t, tt.expectedURL, url)
+		})
+	}
+}
+
+func TestSnapcraftClient_GetSnapDownloadURL_WithVersion(t *testing.T) {
+	tests := []struct {
+		name           string
+		snapID         snapIdentity
+		infoResponse   snapcraftInfo
+		infoStatusCode int
+		findResponse   *snapFindResponse
+		findStatusCode int
+		expectedURL    string
+		expectError    require.ErrorAssertionFunc
+		errorContains  string
+	}{
+		{
+			name: "successful download URL retrieval",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable",
+				Architecture: "amd64",
+				Revision:     249,
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "stable",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/TKebVGcPeDKoOqAmNmczU2oWLtsojKD5_249.snap",
+						},
+					},
+				},
+			},
+			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/TKebVGcPeDKoOqAmNmczU2oWLtsojKD5_249.snap",
+			expectError: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectError == nil {
+				tt.expectError = require.NoError
+			}
+
+			infoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
+
+				expectedPath := "/" + tt.snapID.Name
+				assert.Equal(t, expectedPath, r.URL.Path)
+
+				w.WriteHeader(tt.infoStatusCode)
+
+				if tt.infoStatusCode == http.StatusOK {
+					responseBytes, err := json.Marshal(tt.infoResponse)
+					require.NoError(t, err)
+					w.Write(responseBytes)
+				}
+			}))
+			defer infoServer.Close()
+
+			var findServer *httptest.Server
+			if tt.findResponse != nil || tt.findStatusCode != 0 {
+				findServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, defaultSeries, r.Header.Get("Snap-Device-Series"))
+					assert.Equal(t, tt.snapID.Name, r.URL.Query().Get("name-startswith"))
+
+					statusCode := tt.findStatusCode
+					if statusCode == 0 {
+						statusCode = http.StatusOK
+					}
+					w.WriteHeader(statusCode)
+
+					if tt.findResponse != nil && statusCode == http.StatusOK {
+						responseBytes, err := json.Marshal(tt.findResponse)
+						require.NoError(t, err)
+						w.Write(responseBytes)
+					}
+				}))
+				defer findServer.Close()
+			}
+
+			client := &snapcraftClient{
+				InfoAPIURL: infoServer.URL + "/",
+				HTTPClient: &http.Client{},
+			}
+			if findServer != nil {
+				client.FindAPIURL = findServer.URL
+			}
+
+			url, err := client.GetSnapDownloadURL(tt.snapID)
+			tt.expectError(t, err)
+			if err != nil {
+				if tt.errorContains != "" {
+					assert.Contains(t, err.Error(), tt.errorContains)
+				}
+				return
+			}
+			assert.Equal(t, tt.expectedURL, url)
+		})
+	}
+}
+
+func TestSnapcraftClient_GetSnapDownloadURL_DoesntExist(t *testing.T) {
+	tests := []struct {
+		name           string
+		snapID         snapIdentity
+		infoResponse   snapcraftInfo
+		infoStatusCode int
+		findResponse   *snapFindResponse
+		findStatusCode int
+		expectedURL    string
+		expectError    require.ErrorAssertionFunc
+		errorContains  string
+	}{
+		{
+			name: "non-existent snap with revision",
+			snapID: snapIdentity{
+				Name:         "etcd",
+				Channel:      "stable",
+				Architecture: "amd64",
+				Revision:     248,
+			},
+			infoStatusCode: http.StatusOK,
+			infoResponse: snapcraftInfo{
+				ChannelMap: []snapChannelMapEntry{
+					{
+						Channel: snapChannel{
+							Architecture: "amd64",
+							Name:         "stable",
+						},
+						Download: snapDownload{
+							URL: "https://api.snapcraft.io/api/v1/snaps/download/TKebVGcPeDKoOqAmNmczU2oWLtsojKD5_249.snap",
+						},
+					},
+				},
+			},
+			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/TKebVGcPeDKoOqAmNmczU2oWLtsojKD5_249.snap",
+			expectError: func(t require.TestingT, err error, msgAndArgs ...interface{}) {
+				require.EqualError(t, err, "no matching snap found for etcd:248")
+			},
 		},
 	}
 
