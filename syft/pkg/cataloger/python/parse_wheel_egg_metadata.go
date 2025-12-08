@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/go-viper/mapstructure/v2"
 
-	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -141,7 +141,7 @@ func getFieldType(key, in string) any {
 // of egg metadata (as opposed to a directory that contains more metadata
 // files).
 func isEggRegularFile(path string) bool {
-	return intFile.GlobMatch(eggInfoGlob, path)
+	return doublestar.MatchUnvalidated(eggInfoGlob, path)
 }
 
 // determineSitePackagesRootPath returns the path of the site packages root,
