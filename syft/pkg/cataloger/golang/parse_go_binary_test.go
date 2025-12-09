@@ -86,12 +86,12 @@ func Test_getGOARCHFromBin(t *testing.T) {
 			name:     "pe",
 			filepath: "test-fixtures/archs/binaries/hello-win-amd64",
 			// see: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
-			expected: strconv.Itoa(0x8664),
+			expected: strconv.Itoa(0x8664), // AMD64
 		},
 		{
-			name:     "elf-ppc64",
+			name:     "elf-ppc64le",
 			filepath: "test-fixtures/archs/binaries/hello-linux-ppc64le",
-			expected: "ppc64",
+			expected: "ppc64le",
 		},
 		{
 			name:     "mach-o-arm64",
@@ -106,12 +106,42 @@ func Test_getGOARCHFromBin(t *testing.T) {
 		{
 			name:     "xcoff-32bit",
 			filepath: "internal/xcoff/testdata/gcc-ppc32-aix-dwarf2-exec",
-			expected: strconv.Itoa(0x1DF),
+			expected: "ppc32",
 		},
 		{
 			name:     "xcoff-64bit",
 			filepath: "internal/xcoff/testdata/gcc-ppc64-aix-dwarf2-exec",
-			expected: strconv.Itoa(0x1F7),
+			expected: "ppc64",
+		},
+		{
+			name:     "wasm",
+			filepath: "test-fixtures/archs/binaries/hello-wasm.wasm",
+			expected: "wasm",
+		},
+		{
+			name:     "riscv",
+			filepath: "test-fixtures/archs/binaries/hello-riscv",
+			expected: "riscv",
+		},
+		{
+			name:     "sparc",
+			filepath: "test-fixtures/archs/binaries/hello-sparc",
+			expected: "sparc",
+		},
+		{
+			name:     "sparc64",
+			filepath: "test-fixtures/archs/binaries/hello-sparc64",
+			expected: "sparc64",
+		},
+		{
+			name:     "mips",
+			filepath: "test-fixtures/archs/binaries/hello-mips",
+			expected: "mips",
+		},
+		{
+			name:     "mipsle",
+			filepath: "test-fixtures/archs/binaries/hello-mipsle",
+			expected: "mipsle",
 		},
 	}
 

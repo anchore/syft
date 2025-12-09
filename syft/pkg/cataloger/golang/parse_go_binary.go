@@ -341,24 +341,62 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = f.Machine.String()
+		// Handle special cases for ELF
+		switch arch {
+		case "EM_RISCV":
+			arch = "riscv"
+		case "EM_SPARC":
+			arch = "sparc"
+		case "EM_SPARCV9":
+			arch = "sparc64"
+		case "EM_MIPS":
+			arch = "mips"
+		case "EM_MIPS_RS3_LE":
+			arch = "mipsle"
+		}
 	case bytes.HasPrefix(ident, []byte("MZ")):
 		f, err := pe.NewFile(r)
 		if err != nil {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = fmt.Sprintf("%d", f.Machine)
-	case bytes.HasPrefix(ident, []byte("\xFE\xED\xFA")) || bytes.HasPrefix(ident[1:], []byte("\xFA\xED\xFE")):
+		// Handle special cases for PE
+		switch arch {
+		case "184": // EM_AARCH64
+			arch = "arm64"
+		case "20":  // EM_MIPS
+			arch = "mips"
+		}
+	case bytes.HasPrefix(ident, []byte("\xFE\xED\FA")) || bytes.HasPrefix(ident[1:], []byte("\xFA\xED\xFE")):
 		f, err := macho.NewFile(r)
 		if err != nil {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = f.Cpu.String()
-	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
+		// Handle special cases for Mach-O
+		switch arch {
+		case "CPU_TYPE_POWERPC":
+			arch = "ppc"
+		case "CPU_TYPE_POWERPC64":
+			arch = "ppc64"
+		case "CPU_TYPE_SPARC":
+			arch = "sparc"
+		}
+	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}): // XCOFF
 		f, err := xcoff.NewFile(r)
 		if err != nil {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}
 		arch = fmt.Sprintf("%d", f.TargetMachine)
+		// Handle special cases for XCOFF
+		switch arch {
+		case "1": // 32-bit
+			arch = "ppc32"
+		case "2": // 64-bit
+			arch = "ppc64"
+		}
+	case bytes.HasPrefix(ident, []byte("\x00\x61\x73\x6D")): // WebAssembly
+		arch = "wasm"
 	default:
 		return "", errUnrecognizedFormat
 	}
