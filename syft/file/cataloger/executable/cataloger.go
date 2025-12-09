@@ -25,8 +25,11 @@ import (
 )
 
 type Config struct {
+	// MIMETypes are the MIME types that will be considered for executable cataloging.
 	MIMETypes []string `json:"mime-types" yaml:"mime-types" mapstructure:"mime-types"`
-	Globs     []string `json:"globs" yaml:"globs" mapstructure:"globs"`
+
+	// Globs are the glob patterns that will be used to filter which files are cataloged.
+	Globs []string `json:"globs" yaml:"globs" mapstructure:"globs"`
 }
 
 type Cataloger struct {
@@ -106,6 +109,51 @@ func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file
 	return processExecutable(loc, uReader)
 }
 
+func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file.Executable, error) {
+	data := file.Executable{}
+
+	// determine the executable format
+
+	format, err := findExecutableFormat(reader)
+	if err != nil {
+		log.Debugf("unable to determine executable kind for %v: %v", loc.RealPath, err)
+		return nil, fmt.Errorf("unable to determine executable kind: %w", err)
+	}
+
+	if format == "" {
+		// this is not an "unknown", so just log -- this binary does not have parseable data in it
+		log.Debugf("unable to determine executable format for %q", loc.RealPath)
+		return nil, nil
+	}
+
+	data.Format = format
+
+	switch format {
+	case file.ELF:
+		if err = findELFFeatures(&data, reader); err != nil {
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine ELF features")
+			err = fmt.Errorf("unable to determine ELF features: %w", err)
+		}
+	case file.PE:
+		if err = findPEFeatures(&data, reader); err != nil {
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
+			err = fmt.Errorf("unable to determine PE features: %w", err)
+		}
+	case file.MachO:
+		if err = findMachoFeatures(&data, reader); err != nil {
+			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine Macho features")
+			err = fmt.Errorf("unable to determine Macho features: %w", err)
+		}
+	}
+
+	// always allocate collections for presentation
+	if data.ImportedLibraries == nil {
+		data.ImportedLibraries = []string{}
+	}
+
+	return &data, err
+}
+
 func catalogingProgress(locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
@@ -150,51 +198,6 @@ func locationMatchesGlob(loc file.Location, globs []string) (bool, error) {
 		}
 	}
 	return false, nil
-}
-
-func processExecutable(loc file.Location, reader unionreader.UnionReader) (*file.Executable, error) {
-	data := file.Executable{}
-
-	// determine the executable format
-
-	format, err := findExecutableFormat(reader)
-	if err != nil {
-		log.Debugf("unable to determine executable kind for %v: %v", loc.RealPath, err)
-		return nil, fmt.Errorf("unable to determine executable kind: %w", err)
-	}
-
-	if format == "" {
-		// this is not an "unknown", so just log -- this binary does not have parseable data in it
-		log.Debugf("unable to determine executable format for %q", loc.RealPath)
-		return nil, nil
-	}
-
-	data.Format = format
-
-	switch format {
-	case file.ELF:
-		if err = findELFFeatures(&data, reader); err != nil {
-			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine ELF features")
-			err = fmt.Errorf("unable to determine ELF features: %w", err)
-		}
-	case file.PE:
-		if err = findPEFeatures(&data, reader); err != nil {
-			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
-			err = fmt.Errorf("unable to determine PE features: %w", err)
-		}
-	case file.MachO:
-		if err = findMachoFeatures(&data, reader); err != nil {
-			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine Macho features")
-			err = fmt.Errorf("unable to determine Macho features: %w", err)
-		}
-	}
-
-	// always allocate collections for presentation
-	if data.ImportedLibraries == nil {
-		data.ImportedLibraries = []string{}
-	}
-
-	return &data, err
 }
 
 func findExecutableFormat(reader unionreader.UnionReader) (file.ExecutableFormat, error) {

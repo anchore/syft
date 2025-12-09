@@ -1,3 +1,4 @@
 bin
 actual_verify
 Dockerfile.sha256
+*.fingerprint

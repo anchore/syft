@@ -34,8 +34,31 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
 	data.HasEntrypoint = elfHasEntrypoint(f)
 	data.HasExports = elfHasExports(f)
+	data.Toolchains = elfToolchains(reader, f)
 
 	return err
+}
+
+func elfToolchains(reader unionreader.UnionReader, f *elf.File) []file.Toolchain {
+	// parse the .comment section and symbol tables once and share them across the detectors
+	comments := elfComments(f)
+	symbols := elfSymbolSet(f)
+	return includeNoneNil(
+		golangToolchainEvidence(reader),
+		cToolchainEvidence(comments, symbols),
+		rustToolchainEvidence(comments),
+		linkerToolchainEvidence(f, comments),
+	)
+}
+
+func includeNoneNil(evidence ...*file.Toolchain) []file.Toolchain {
+	var toolchains []file.Toolchain
+	for _, e := range evidence {
+		if e != nil {
+			toolchains = append(toolchains, *e)
+		}
+	}
+	return toolchains
 }
 
 func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {
@@ -79,6 +102,28 @@ func hasAnyDynamicSymbols(file *elf.File, symbolNames ...string) *bool {
 
 func boolRef(b bool) *bool {
 	return &b
+}
+
+// elfSymbolSet collects the names from the static and dynamic symbol tables into a single set, so
+// detectors can test for runtime markers without re-reading and re-iterating the symbol tables each
+// time. It covers both tables since some evidence (e.g. the Fortran MAIN__ entry) lives only in the
+// static symbol table.
+func elfSymbolSet(f *elf.File) *strset.Set {
+	set := strset.New()
+
+	if syms, err := f.Symbols(); err == nil {
+		for _, sym := range syms {
+			set.Add(sym.Name)
+		}
+	}
+
+	if dynSyms, err := f.DynamicSymbols(); err == nil {
+		for _, sym := range dynSyms {
+			set.Add(sym.Name)
+		}
+	}
+
+	return set
 }
 
 func checkElfNXProtection(file *elf.File) bool {

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -225,4 +226,74 @@ func Test_elfHasExports(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func Test_elfGoToolchainDetection(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("testdata/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name        string
+		fixture     string
+		wantPresent bool
+	}{
+		{
+			name:        "go binary has toolchain",
+			fixture:     "bin/hello_linux",
+			wantPresent: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := readerForFixture(t, tt.fixture)
+			f, err := elf.NewFile(reader)
+			require.NoError(t, err)
+
+			toolchains := elfToolchains(reader, f)
+			assert.Equal(t, tt.wantPresent, hasGoToolchain(toolchains))
+
+			if tt.wantPresent {
+				require.NotEmpty(t, toolchains)
+				assert.Equal(t, "go", toolchains[0].Name)
+				assert.NotEmpty(t, toolchains[0].Version)
+				assert.Equal(t, file.ToolchainComponentCompiler, toolchains[0].Component)
+			}
+		})
+	}
+}
+
+func Test_elfCgoToolchainDetection(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("testdata/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	t.Run("cgo binary has both go and c toolchains", func(t *testing.T) {
+		reader := readerForFixture(t, "bin/hello_linux_cgo")
+		f, err := elf.NewFile(reader)
+		require.NoError(t, err)
+
+		toolchains := elfToolchains(reader, f)
+
+		// versions are dynamic based on Docker image, so we ignore them in comparison
+		want := []file.Toolchain{
+			{Name: "go", Component: file.ToolchainComponentCompiler},
+			{Name: "gcc", Component: file.ToolchainComponentCompiler},
+		}
+
+		if d := cmp.Diff(want, toolchains, cmpopts.IgnoreFields(file.Toolchain{}, "Version")); d != "" {
+			t.Errorf("elfToolchains() mismatch (-want +got):\n%s", d)
+		}
+
+		// verify versions are populated
+		for _, tc := range toolchains {
+			assert.NotEmpty(t, tc.Version, "expected version to be set for %s toolchain", tc.Name)
+		}
+	})
 }
