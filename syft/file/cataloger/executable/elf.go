@@ -1,9 +1,7 @@
 package executable
 
 import (
-	"debug/buildinfo"
 	"debug/elf"
-	"io"
 	"regexp"
 	"strings"
 
@@ -47,26 +45,8 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader, cfg 
 func elfToolchains(reader unionreader.UnionReader, f *elf.File) []file.Toolchain {
 	return includeNoneNil(
 		golangToolchainEvidence(reader),
+		cToolchainEvidence(f),
 	)
-}
-
-func shouldCaptureSymbols(data *file.Executable, cfg SymbolConfig) bool {
-	// TODO: IMPLEMENT ME!
-	return true
-}
-
-// elfGolangToolchainEvidence attempts to extract Go toolchain information from the ELF file.
-func golangToolchainEvidence(reader io.ReaderAt) *file.Toolchain {
-	bi, err := buildinfo.Read(reader)
-	if err != nil || bi == nil {
-		// not a golang binary
-		return nil
-	}
-	return &file.Toolchain{
-		Name:    "go",
-		Version: bi.GoVersion,
-		Kind:    file.ToolchainKindCompiler,
-	}
 }
 
 func includeNoneNil(evidence ...*file.Toolchain) []file.Toolchain {
@@ -84,8 +64,18 @@ func elfNMSymbols(f *elf.File, cfg SymbolConfig, toolchains []file.Toolchain) []
 		return captureElfGoSymbols(f, cfg)
 	}
 
-	// TODO: capture other symbol types (non-go) based on the scope selection (lib, app, etc)
-	return nil
+	// include all symbols
+	syms, err := f.Symbols()
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read symbols from elf file")
+		return nil
+	}
+
+	var symbols []string
+	for _, sym := range syms {
+		symbols = append(symbols, sym.Name)
+	}
+	return symbols
 }
 
 func captureElfGoSymbols(f *elf.File, cfg SymbolConfig) []string {
@@ -96,7 +86,7 @@ func captureElfGoSymbols(f *elf.File, cfg SymbolConfig) []string {
 	}
 
 	var symbols []string
-	filter := createGoSymbolFilter(cfg.Go)
+	filter := createGoSymbolFilter(cfg)
 	for _, sym := range syms {
 		name, include := filter(sym.Name, elfSymbolType(sym, f.Sections))
 		if include {

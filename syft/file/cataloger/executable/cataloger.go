@@ -26,7 +26,7 @@ import (
 
 type SymbolCaptureScope string
 
-//type SymbolTypes string
+// type SymbolTypes string
 
 const (
 	SymbolScopeAll          SymbolCaptureScope = "all"          // any and all binaries
@@ -35,8 +35,8 @@ const (
 	SymbolScopeGolang       SymbolCaptureScope = "golang"       // only binaries built with the golang toolchain
 	SymbolScopeNone         SymbolCaptureScope = "none"         // do not capture any symbols
 
-	//SymbolTypeCode SymbolTypes = "code"
-	//SymbolTypeData SymbolTypes = "data"
+	// SymbolTypeCode SymbolTypes = "code"
+	// SymbolTypeData SymbolTypes = "data"
 )
 
 type Config struct {
@@ -55,16 +55,16 @@ type SymbolConfig struct {
 	// CaptureScope defines the scope of symbols to capture from executables (all binaries, libraries only, applications only, golang binaries only, or none).
 	CaptureScope []SymbolCaptureScope `json:"capture" yaml:"capture" mapstructure:"capture"`
 
+	// Types are the types of Go symbols to capture, relative to `go tool nm` output (e.g. T, t, R, r, D, d, B, b, C, U, etc).
+	// If empty, all symbol types are captured.
+	Types []string
+
 	// Go configures Go-specific symbol capturing settings.
 	Go GoSymbolConfig `json:"go" yaml:"go" mapstructure:"go"`
 }
 
 // GoSymbolConfig holds settings specific to capturing symbols from binaries built with the golang toolchain.
 type GoSymbolConfig struct {
-	// Types are the types of Go symbols to capture, relative to `go tool nm` output (e.g. T, t, R, r, D, d, B, b, C, U, etc).
-	// If empty, all symbol types are captured.
-	Types []string
-
 	// StandardLibrary indicates whether to capture Go standard library symbols (e.g. "fmt", "net/http", etc).
 	StandardLibrary bool `json:"standard-library" yaml:"standard-library" mapstructure:"standard-library"`
 
@@ -104,8 +104,8 @@ func DefaultConfig() Config {
 			CaptureScope: []SymbolCaptureScope{
 				SymbolScopeGolang,
 			},
+			Types: []string{"T", "t"},
 			Go: GoSymbolConfig{
-				Types:                    []string{"T", "t"},
 				StandardLibrary:          true,
 				ExtendedStandardLibrary:  true,
 				ThirdPartyModules:        true,

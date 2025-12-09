@@ -31,7 +31,7 @@ const (
 // createGoSymbolFilter creates a filter function for Go symbols based on the provided configuration. This filter function
 // returns true if a symbol should be included based on its name and type. This also allows for modification of the symbol name
 // if necessary (e.g., normalization of vendored module paths). The returned name is only valid if the boolean is true.
-func createGoSymbolFilter(cfg GoSymbolConfig) func(string, string) (string, bool) {
+func createGoSymbolFilter(cfg SymbolConfig) func(string, string) (string, bool) {
 	validNmTypes := buildNmTypes(cfg.Types)
 
 	return func(symName, symType string) (string, bool) {
@@ -47,13 +47,13 @@ func createGoSymbolFilter(cfg GoSymbolConfig) func(string, string) (string, bool
 
 		// filter based on exported/unexported symbol configuration
 		exported := isExportedSymbol(symName)
-		if !shouldIncludeByExportStatus(exported, cfg.ExportedSymbols, cfg.UnexportedSymbols) {
+		if !shouldIncludeByExportStatus(exported, cfg.Go.ExportedSymbols, cfg.Go.UnexportedSymbols) {
 			return "", false
 		}
 
 		// handle type equality functions (e.g., type:.eq.myStruct)
 		if isTypeEqualityFunction(symName) {
-			if !cfg.TypeEqualityFunctions {
+			if !cfg.Go.TypeEqualityFunctions {
 				return "", false
 			}
 			return symName, true
@@ -61,21 +61,21 @@ func createGoSymbolFilter(cfg GoSymbolConfig) func(string, string) (string, bool
 
 		// handle GC shape stencil functions (e.g., go.shape.func())
 		if isGCShapeStencil(symName) {
-			if !cfg.GCShapeStencils {
+			if !cfg.Go.GCShapeStencils {
 				return "", false
 			}
 			return symName, true
 		}
 
 		// normalize vendored module paths if configured
-		symName = normalizeVendoredPath(symName, cfg.NormalizeVendoredModules)
+		symName = normalizeVendoredPath(symName, cfg.Go.NormalizeVendoredModules)
 
 		// determine the package path for classification
 		pkgPath := extractPackagePath(symName)
 
 		// handle extended stdlib (golang.org/x/*)
 		if isExtendedStdlib(pkgPath) {
-			if !cfg.ExtendedStandardLibrary {
+			if !cfg.Go.ExtendedStandardLibrary {
 				return "", false
 			}
 			return symName, true
@@ -83,14 +83,14 @@ func createGoSymbolFilter(cfg GoSymbolConfig) func(string, string) (string, bool
 
 		// handle stdlib packages
 		if isStdlibPackage(pkgPath) {
-			if !cfg.StandardLibrary {
+			if !cfg.Go.StandardLibrary {
 				return "", false
 			}
 			return symName, true
 		}
 
 		// this is a third-party package
-		if !cfg.ThirdPartyModules {
+		if !cfg.Go.ThirdPartyModules {
 			return "", false
 		}
 		return symName, true
@@ -151,7 +151,7 @@ func isGCShapeStencil(symName string) bool {
 
 // normalizeVendoredPath removes the "vendor/" prefix from vendored module paths if normalization is enabled.
 func normalizeVendoredPath(symName string, normalize bool) string {
-	if normalize && strings.HasPrefix(symName, vendorPrefix) {
+	if normalize && isVendoredPath(symName) {
 		return strings.TrimPrefix(symName, vendorPrefix)
 	}
 	return symName

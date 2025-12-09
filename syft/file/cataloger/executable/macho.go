@@ -59,7 +59,7 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader, cf
 			data.HasExports = machoHasExports(f)
 		}
 
-		data.Toolchains = machoToolchains(reader, f)
+		data.Toolchains = machoToolchains(reader)
 		if shouldCaptureSymbols(data, cfg) {
 			symbols = machoNMSymbols(f, cfg, data.Toolchains)
 		}
@@ -72,7 +72,7 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader, cf
 	return nil
 }
 
-func machoToolchains(reader unionreader.UnionReader, f *macho.File) []file.Toolchain {
+func machoToolchains(reader unionreader.UnionReader) []file.Toolchain {
 	return includeNoneNil(
 		golangToolchainEvidence(reader),
 	)
@@ -83,13 +83,17 @@ func machoNMSymbols(f *macho.File, cfg SymbolConfig, toolchains []file.Toolchain
 		return captureMachoGoSymbols(f, cfg)
 	}
 
-	// TODO: capture other symbol types (non-go) based on the scope selection (lib, app, etc)
-	return nil
+	// include all symbols
+	var symbols []string
+	for _, sym := range f.Symtab.Syms {
+		symbols = append(symbols, sym.Name)
+	}
+	return symbols
 }
 
 func captureMachoGoSymbols(f *macho.File, cfg SymbolConfig) []string {
 	var symbols []string
-	filter := createGoSymbolFilter(cfg.Go)
+	filter := createGoSymbolFilter(cfg)
 	for _, sym := range f.Symtab.Syms {
 		name, include := filter(sym.Name, machoSymbolType(sym, f.Sections))
 		if include {
@@ -97,15 +101,6 @@ func captureMachoGoSymbols(f *macho.File, cfg SymbolConfig) []string {
 		}
 	}
 	return symbols
-}
-
-func isGoToolchainPresent(toolchains []file.Toolchain) bool {
-	for _, tc := range toolchains {
-		if tc.Name == "go" {
-			return true
-		}
-	}
-	return false
 }
 
 func machoSymbolType(s macho.Symbol, sections []*macho.Section) string {
@@ -133,7 +128,7 @@ func machoSymbolType(s macho.Symbol, sections []*macho.Section) string {
 
 	// lowercase for local symbols, uppercase for external
 	if !isExternal && typeChar != '-' && typeChar != '?' {
-		typeChar = typeChar + 32 // convert to lowercase
+		typeChar += 32 // convert to lowercase
 	}
 
 	return string(typeChar)

@@ -607,7 +607,7 @@ func Test_isStdlibPackage(t *testing.T) {
 func Test_createGoSymbolFilter(t *testing.T) {
 	tests := []struct {
 		name     string
-		cfg      GoSymbolConfig
+		cfg      SymbolConfig
 		symName  string
 		symType  string
 		wantName string
@@ -616,10 +616,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// NM type filtering
 		{
 			name: "valid NM type with defaults",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "T",
@@ -628,10 +630,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "invalid NM type with defaults",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "X", // important!
@@ -640,11 +644,13 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "custom NM types - included",
-			cfg: GoSymbolConfig{
-				Types:             []string{"T"},
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Types: []string{"T"},
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "T",
@@ -653,11 +659,13 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "custom NM types - excluded",
-			cfg: GoSymbolConfig{
-				Types:             []string{"T"},
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Types: []string{"T"},
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "t",
@@ -668,10 +676,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// floating point literal filtering
 		{
 			name: "floating point literal filtered",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "$f64.3fceb851eb851eb8",
 			symType:  "R",
@@ -682,10 +692,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// export status filtering
 		{
 			name: "exported symbol with only exported enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: false,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: false,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "T",
@@ -694,10 +706,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "unexported symbol with only exported enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: false,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: false,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.println",
 			symType:  "T",
@@ -708,10 +722,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// type equality functions
 		{
 			name: "type equality function - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:       true,
-				UnexportedSymbols:     true,
-				TypeEqualityFunctions: true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:       true,
+					UnexportedSymbols:     true,
+					TypeEqualityFunctions: true,
+				},
 			},
 			symName:  "type:.eq.myStruct",
 			symType:  "T",
@@ -720,10 +736,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "type equality function - disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:       true,
-				UnexportedSymbols:     true,
-				TypeEqualityFunctions: false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:       true,
+					UnexportedSymbols:     true,
+					TypeEqualityFunctions: false,
+				},
 			},
 			symName:  "type:.eq.myStruct",
 			symType:  "T",
@@ -734,10 +752,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// GC shape stencils
 		{
 			name: "gc shape stencil - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				GCShapeStencils:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					GCShapeStencils:   true,
+				},
 			},
 			symName:  "go.shape.func()",
 			symType:  "T",
@@ -746,10 +766,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "gc shape stencil - disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				GCShapeStencils:   false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					GCShapeStencils:   false,
+				},
 			},
 			symName:  "go.shape.func()",
 			symType:  "T",
@@ -758,10 +780,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "gc shape stencil embedded in generic - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				GCShapeStencils:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					GCShapeStencils:   true,
+				},
 			},
 			symName:  "slices.partitionCmpFunc[go.shape.struct { Key string; Value int }]",
 			symType:  "T",
@@ -770,10 +794,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "gc shape stencil embedded in generic - disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				GCShapeStencils:   false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					GCShapeStencils:   false,
+				},
 			},
 			symName:  "slices.partitionCmpFunc[go.shape.struct { Key string; Value int }]",
 			symType:  "T",
@@ -784,11 +810,13 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// vendored module normalization
 		{
 			name: "vendored path - normalization enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:          true,
-				UnexportedSymbols:        true,
-				ThirdPartyModules:        true,
-				NormalizeVendoredModules: true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:          true,
+					UnexportedSymbols:        true,
+					ThirdPartyModules:        true,
+					NormalizeVendoredModules: true,
+				},
 			},
 			symName:  "vendor/github.com/foo/bar.Baz",
 			symType:  "T",
@@ -797,11 +825,13 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "vendored path - normalization disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:          true,
-				UnexportedSymbols:        true,
-				ThirdPartyModules:        true,
-				NormalizeVendoredModules: false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:          true,
+					UnexportedSymbols:        true,
+					ThirdPartyModules:        true,
+					NormalizeVendoredModules: false,
+				},
 			},
 			symName:  "vendor/github.com/foo/bar.Baz",
 			symType:  "T",
@@ -812,10 +842,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// extended stdlib
 		{
 			name: "extended stdlib - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:         true,
-				UnexportedSymbols:       true,
-				ExtendedStandardLibrary: true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+					ExtendedStandardLibrary: true,
+				},
 			},
 			symName:  "golang.org/x/net/html.Parse",
 			symType:  "T",
@@ -824,10 +856,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "extended stdlib - disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:         true,
-				UnexportedSymbols:       true,
-				ExtendedStandardLibrary: false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+					ExtendedStandardLibrary: false,
+				},
 			},
 			symName:  "golang.org/x/net/html.Parse",
 			symType:  "T",
@@ -838,10 +872,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// stdlib
 		{
 			name: "stdlib - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "T",
@@ -850,10 +886,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "stdlib - disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   false,
+				},
 			},
 			symName:  "fmt.Println",
 			symType:  "T",
@@ -862,10 +900,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "nested stdlib - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "net/http.ListenAndServe",
 			symType:  "T",
@@ -876,10 +916,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// third party
 		{
 			name: "third party - enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				ThirdPartyModules: true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					ThirdPartyModules: true,
+				},
 			},
 			symName:  "github.com/spf13/cobra.Command",
 			symType:  "T",
@@ -888,10 +930,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "third party - disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				ThirdPartyModules: false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					ThirdPartyModules: false,
+				},
 			},
 			symName:  "github.com/spf13/cobra.Command",
 			symType:  "T",
@@ -902,10 +946,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		// main package (treated as stdlib)
 		{
 			name: "main package - stdlib enabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   true,
+				},
 			},
 			symName:  "main.main",
 			symType:  "T",
@@ -914,10 +960,12 @@ func Test_createGoSymbolFilter(t *testing.T) {
 		},
 		{
 			name: "main package - stdlib disabled",
-			cfg: GoSymbolConfig{
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
-				StandardLibrary:   false,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+					StandardLibrary:   false,
+				},
 			},
 			symName:  "main.main",
 			symType:  "T",

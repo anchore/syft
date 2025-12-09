@@ -227,26 +227,6 @@ func Test_elfHasExports(t *testing.T) {
 	}
 }
 
-func Test_elfNMSymbols_nonGoReturnsNil(t *testing.T) {
-	// for non-Go binaries, elfNMSymbols should return nil since we only support Go for now
-	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
-		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
-		require.NoError(t, err)
-		return f
-	}
-
-	f, err := elf.NewFile(readerForFixture(t, "bin/hello_linux"))
-	require.NoError(t, err)
-
-	// no Go toolchain present
-	toolchains := []file.Toolchain{}
-	cfg := SymbolConfig{}
-
-	symbols := elfNMSymbols(f, cfg, toolchains)
-	assert.Nil(t, symbols, "expected nil symbols for non-Go binary")
-}
-
 func Test_elfGoToolchainDetection(t *testing.T) {
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
@@ -296,19 +276,21 @@ func Test_elfGoSymbolCapture(t *testing.T) {
 	tests := []struct {
 		name               string
 		fixture            string
-		cfg                GoSymbolConfig
+		cfg                SymbolConfig
 		wantSymbols        []string // exact symbol names that must be present
 		wantMinSymbolCount int
 	}{
 		{
 			name:    "capture all symbol types",
 			fixture: "bin/hello_linux",
-			cfg: GoSymbolConfig{
-				StandardLibrary:         true,
-				ExtendedStandardLibrary: true,
-				ThirdPartyModules:       true,
-				ExportedSymbols:         true,
-				UnexportedSymbols:       true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					StandardLibrary:         true,
+					ExtendedStandardLibrary: true,
+					ThirdPartyModules:       true,
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+				},
 			},
 			wantSymbols: []string{
 				// stdlib - fmt package (used via fmt.Println)
@@ -331,10 +313,12 @@ func Test_elfGoSymbolCapture(t *testing.T) {
 		{
 			name:    "capture only third-party symbols",
 			fixture: "bin/hello_linux",
-			cfg: GoSymbolConfig{
-				ThirdPartyModules: true,
-				ExportedSymbols:   true,
-				UnexportedSymbols: true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ThirdPartyModules: true,
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+				},
 			},
 			wantSymbols: []string{
 				"github.com/davecgh/go-spew/spew.(*dumpState).dump",
@@ -345,10 +329,12 @@ func Test_elfGoSymbolCapture(t *testing.T) {
 		{
 			name:    "capture only extended stdlib symbols",
 			fixture: "bin/hello_linux",
-			cfg: GoSymbolConfig{
-				ExtendedStandardLibrary: true,
-				ExportedSymbols:         true,
-				UnexportedSymbols:       true,
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExtendedStandardLibrary: true,
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+				},
 			},
 			wantSymbols: []string{
 				"golang.org/x/text/internal/language.Tag.String",
@@ -358,13 +344,15 @@ func Test_elfGoSymbolCapture(t *testing.T) {
 		{
 			name:    "capture with text section types only",
 			fixture: "bin/hello_linux",
-			cfg: GoSymbolConfig{
-				Types:                   []string{"T", "t"}, // text section (code) symbols
-				StandardLibrary:         true,
-				ExtendedStandardLibrary: true,
-				ThirdPartyModules:       true,
-				ExportedSymbols:         true,
-				UnexportedSymbols:       true,
+			cfg: SymbolConfig{
+				Types: []string{"T", "t"}, // text section (code) symbols
+				Go: GoSymbolConfig{
+					StandardLibrary:         true,
+					ExtendedStandardLibrary: true,
+					ThirdPartyModules:       true,
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+				},
 			},
 			wantSymbols: []string{
 				"encoding/json.Marshal",
@@ -379,7 +367,7 @@ func Test_elfGoSymbolCapture(t *testing.T) {
 			f, err := elf.NewFile(reader)
 			require.NoError(t, err)
 
-			symbols := captureElfGoSymbols(f, SymbolConfig{Go: tt.cfg})
+			symbols := captureElfGoSymbols(f, tt.cfg)
 			symbolSet := make(map[string]struct{}, len(symbols))
 			for _, sym := range symbols {
 				symbolSet[sym] = struct{}{}
@@ -415,8 +403,8 @@ func Test_elfNMSymbols_goReturnsSymbols(t *testing.T) {
 		{Name: "go", Version: "1.24", Kind: file.ToolchainKindCompiler},
 	}
 	cfg := SymbolConfig{
+		Types: []string{"T", "t"},
 		Go: GoSymbolConfig{
-			Types:                   []string{"T", "t"},
 			StandardLibrary:         true,
 			ExtendedStandardLibrary: true,
 			ThirdPartyModules:       true,

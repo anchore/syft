@@ -7,7 +7,7 @@ type (
 	// RelocationReadOnly indicates the RELRO security protection level applied to an ELF binary.
 	RelocationReadOnly string
 
-	//SymbolType string
+	// SymbolType string
 
 	ToolchainKind string
 )
@@ -26,11 +26,11 @@ const (
 	RelocationReadOnlyFull    RelocationReadOnly = "full"    // full RELRO protection
 
 	//// from https://pkg.go.dev/cmd/nm
-	//SymbolTypeText           SymbolType = "T" // text (code) segment symbol
-	//SymbolTypeTextStatic     SymbolType = "t" // static text segment symbol
-	//SymbolTypeReadOnly       SymbolType = "R" // read-only data segment symbol
-	//SymbolTypeReadOnlyStatic SymbolType = "r" // static read-only data segment symbol
-	//SymbolTypeData           SymbolType = "D" // data segment symbol
+	// SymbolTypeText           SymbolType = "T" // text (code) segment symbol
+	// SymbolTypeTextStatic     SymbolType = "t" // static text segment symbol
+	// SymbolTypeReadOnly       SymbolType = "R" // read-only data segment symbol
+	// SymbolTypeReadOnlyStatic SymbolType = "r" // static read-only data segment symbol
+	// SymbolTypeData           SymbolType = "D" // data segment symbol
 	//SymbolTypeDataStatic     SymbolType = "d" // static data segment symbol
 	//SymbolTypeBSS            SymbolType = "B" // bss segment symbol
 	//SymbolTypeBSSStatic      SymbolType = "b" // static bss segment symbol
@@ -56,7 +56,7 @@ type Executable struct {
 	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
 
 	// Symbols captures the selection from the symbol table found in the binary.
-	//Symbols []Symbol `json:"symbols,omitempty" yaml:"symbols" mapstructure:"symbols"`
+	// Symbols []Symbol `json:"symbols,omitempty" yaml:"symbols" mapstructure:"symbols"`
 	SymbolNames []string `json:"symbolNames,omitempty" yaml:"symbolNames" mapstructure:"symbolNames"`
 
 	// Toolchains captures information about the the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
@@ -71,7 +71,7 @@ type Toolchain struct {
 	// TODO: should we allow for aux information here? free form?
 }
 
-//type Symbol struct {
+// type Symbol struct {
 //	//Type SymbolType `json:"type" yaml:"type" mapstructure:"type"`
 //	Type string `json:"type" yaml:"type" mapstructure:"type"`
 //	Name string `json:"name" yaml:"name" mapstructure:"name"`
