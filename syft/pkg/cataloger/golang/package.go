@@ -82,28 +82,9 @@ func packageURL(moduleName, moduleVersion string) string {
 		name = fields[1]
 		namespace = fields[0]
 	default:
-		lastField := fields[len(fields)-1]
-		isVersionSuffix := strings.HasPrefix(lastField, "v") && len(lastField) > 1
-		if isVersionSuffix {
-			for _, r := range lastField[1:] {
-				if r < '0' || r > '9' {
-					isVersionSuffix = false
-					break
-				}
-			}
-		}
-
-		if isVersionSuffix {
-			namespace = strings.Join(fields[0:len(fields)-1], "/")
-			name = lastField
-			if len(fields) > 4 {
-				subpath = strings.Join(fields[3:len(fields)-1], "/")
-			}
-		} else {
-			name = fields[2]
-			namespace = strings.Join(fields[0:2], "/")
-			subpath = strings.Join(fields[3:], "/")
-		}
+		name = fields[2]
+		namespace = strings.Join(fields[0:2], "/")
+		subpath = strings.Join(fields[3:], "/")
 	}
 
 	return packageurl.NewPackageURL(
@@ -113,5 +94,34 @@ func packageURL(moduleName, moduleVersion string) string {
 		moduleVersion,
 		nil,
 		subpath,
+	).ToString()
+}
+
+func packageURLForGoMod(moduleName, moduleVersion string) string {
+	fields := strings.Split(moduleName, "/")
+	if len(fields) == 0 {
+		return ""
+	}
+
+	var namespace, name string
+
+	switch len(fields) {
+	case 1:
+		name = fields[0]
+	case 2:
+		namespace = fields[0]
+		name = fields[1]
+	default:
+		namespace = strings.Join(fields[0:len(fields)-1], "/")
+		name = fields[len(fields)-1]
+	}
+
+	return packageurl.NewPackageURL(
+		packageurl.TypeGolang,
+		namespace,
+		name,
+		moduleVersion,
+		nil,
+		"",
 	).ToString()
 }

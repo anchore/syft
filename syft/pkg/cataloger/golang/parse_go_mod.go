@@ -260,7 +260,7 @@ func (c *goModCataloger) catalogModules(
 			Licenses:  moduleLicenses,
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
-			PURL:      packageURL(m.Path, m.Version),
+			PURL:      packageURLForGoMod(m.Path, m.Version),
 			Metadata:  createSourceMetadata(digests[fmt.Sprintf("%s %s", m.Path, m.Version)]),
 		}
 		goModulePkg.SetID()
@@ -334,7 +334,7 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 				Version:   m.Mod.Version,
 				Licenses:  pkg.NewLicenseSet(lics...),
 				Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-				PURL:      packageURL(m.Mod.Path, m.Mod.Version),
+				PURL:      packageURLForGoMod(m.Mod.Path, m.Mod.Version),
 				Language:  pkg.Go,
 				Type:      pkg.GoModulePkg,
 				Metadata: pkg.GolangModuleEntry{
@@ -365,7 +365,7 @@ func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver fi
 			Version:   m.New.Version,
 			Licenses:  pkg.NewLicenseSet(lics...),
 			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			PURL:      packageURL(finalPath, m.New.Version),
+			PURL:      packageURLForGoMod(finalPath, m.New.Version),
 			Language:  pkg.Go,
 			Type:      pkg.GoModulePkg,
 			Metadata: pkg.GolangModuleEntry{
