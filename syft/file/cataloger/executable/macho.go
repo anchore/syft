@@ -10,14 +10,24 @@ import (
 
 // source http://www.cilinder.be/docs/next/NeXTStep/3.3/nd/DevTools/14_MachO/MachO.htmld/index.html
 const (
-	machoNPExt uint8 = 0x10 /* N_PEXT: private external symbol bit */
-	machoNExt  uint8 = 0x01 /* N_EXT: external symbol bit, set for external symbols */
+	machoNStab uint8 = 0xe0 // N_STAB mask for debugging symbols
+	machoNPExt uint8 = 0x10 // N_PEXT: private external symbol bit
+	machoNType uint8 = 0x0e // N_TYPE mask for symbol type
+	machoNExt  uint8 = 0x01 // N_EXT: external symbol bit
+
+	// N_TYPE values (after masking with 0x0e)
+	machoNUndf uint8 = 0x00 // undefined symbol
+	machoNAbs  uint8 = 0x02 // absolute symbol
+	machoNSect uint8 = 0x0e // defined in section
+	machoNPbud uint8 = 0x0c // prebound undefined
+	machoNIndr uint8 = 0x0a // indirect symbol
+
 	// > #define LC_REQ_DYLD 0x80000000
 	// > #define LC_MAIN (0x28|LC_REQ_DYLD) /* replacement for LC_UNIXTHREAD */
 	lcMain = 0x28 | 0x80000000
 )
 
-func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) error {
+func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader, cfg SymbolConfig) error {
 	// TODO: support security features
 
 	// a universal binary may have multiple architectures, so we need to check each one
@@ -26,7 +36,7 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 		return err
 	}
 
-	var libs []string
+	var libs, symbols []string
 	for _, r := range readers {
 		f, err := macho.NewFile(r)
 		if err != nil {
@@ -48,12 +58,111 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 		if !data.HasExports {
 			data.HasExports = machoHasExports(f)
 		}
+
+		data.Toolchains = machoToolchains(reader, f)
+		if shouldCaptureSymbols(data, cfg) {
+			symbols = machoNMSymbols(f, cfg, data.Toolchains)
+		}
 	}
 
-	// de-duplicate libraries
+	// de-duplicate libraries andn symbols
 	data.ImportedLibraries = internal.NewSet(libs...).ToSlice()
+	data.SymbolNames = internal.NewSet(symbols...).ToSlice()
 
 	return nil
+}
+
+func machoToolchains(reader unionreader.UnionReader, f *macho.File) []file.Toolchain {
+	return includeNoneNil(
+		golangToolchainEvidence(reader),
+	)
+}
+
+func machoNMSymbols(f *macho.File, cfg SymbolConfig, toolchains []file.Toolchain) []string {
+	if isGoToolchainPresent(toolchains) {
+		return captureMachoGoSymbols(f, cfg)
+	}
+
+	// TODO: capture other symbol types (non-go) based on the scope selection (lib, app, etc)
+	return nil
+}
+
+func captureMachoGoSymbols(f *macho.File, cfg SymbolConfig) []string {
+	var symbols []string
+	filter := createGoSymbolFilter(cfg.Go)
+	for _, sym := range f.Symtab.Syms {
+		name, include := filter(sym.Name, machoSymbolType(sym, f.Sections))
+		if include {
+			symbols = append(symbols, name)
+		}
+	}
+	return symbols
+}
+
+func isGoToolchainPresent(toolchains []file.Toolchain) bool {
+	for _, tc := range toolchains {
+		if tc.Name == "go" {
+			return true
+		}
+	}
+	return false
+}
+
+func machoSymbolType(s macho.Symbol, sections []*macho.Section) string {
+	// stab (debugging) symbols get '-'
+	if s.Type&machoNStab != 0 {
+		return "-"
+	}
+
+	isExternal := s.Type&machoNExt != 0
+	symType := s.Type & machoNType
+
+	var typeChar byte
+	switch symType {
+	case machoNUndf, machoNPbud:
+		typeChar = 'U'
+	case machoNAbs:
+		typeChar = 'A'
+	case machoNSect:
+		typeChar = machoSectionTypeChar(s.Sect, sections)
+	case machoNIndr:
+		typeChar = 'I'
+	default:
+		typeChar = '?'
+	}
+
+	// lowercase for local symbols, uppercase for external
+	if !isExternal && typeChar != '-' && typeChar != '?' {
+		typeChar = typeChar + 32 // convert to lowercase
+	}
+
+	return string(typeChar)
+}
+
+// machoSectionTypeChar returns the nm-style character for a section-defined symbol.
+// Section numbers are 1-based; 0 means NO_SECT.
+func machoSectionTypeChar(sect uint8, sections []*macho.Section) byte {
+	if sect == 0 || int(sect) > len(sections) {
+		return 'S'
+	}
+
+	section := sections[sect-1]
+	seg := section.Seg
+
+	// match nm behavior based on segment and section names
+	switch seg {
+	case "__TEXT":
+		return 'T'
+	case "__DATA", "__DATA_CONST":
+		switch section.Name {
+		case "__bss", "__common":
+			return 'B'
+		default:
+			return 'D'
+		}
+	default:
+		return 'S'
+	}
 }
 
 func machoHasEntrypoint(f *macho.File) bool {

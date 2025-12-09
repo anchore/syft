@@ -16,8 +16,6 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
-	"github.com/anchore/syft/syft/file/cataloger/executable"
-	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
@@ -142,18 +140,14 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 		log.WithFields("error", err).Warn("unable to configure file hashers")
 	}
 
-	return filecataloging.Config{
-		Selection: cfg.File.Metadata.Selection,
-		Hashers:   hashers,
-		Content: filecontent.Config{
-			Globs:              cfg.File.Content.Globs,
-			SkipFilesAboveSize: cfg.File.Content.SkipFilesAboveSize,
-		},
-		Executable: executable.Config{
-			MIMETypes: executable.DefaultConfig().MIMETypes,
-			Globs:     cfg.File.Executable.Globs,
-		},
-	}
+	c := filecataloging.DefaultConfig()
+	c.Selection = cfg.File.Metadata.Selection
+	c.Hashers = hashers
+	c.Content.Globs = cfg.File.Content.Globs
+	c.Content.SkipFilesAboveSize = cfg.File.Content.SkipFilesAboveSize
+	c.Executable.Globs = cfg.File.Executable.Globs
+
+	return c
 }
 
 func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {

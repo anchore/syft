@@ -6,9 +6,17 @@ type (
 
 	// RelocationReadOnly indicates the RELRO security protection level applied to an ELF binary.
 	RelocationReadOnly string
+
+	//SymbolType string
+
+	ToolchainKind string
 )
 
 const (
+	ToolchainKindCompiler ToolchainKind = "compiler"
+	ToolchainKindLinker   ToolchainKind = "linker"
+	ToolchainKindRuntime  ToolchainKind = "runtime"
+
 	ELF   ExecutableFormat = "elf"   // Executable and Linkable Format used on Unix-like systems
 	MachO ExecutableFormat = "macho" // Mach object file format used on macOS and iOS
 	PE    ExecutableFormat = "pe"    // Portable Executable format used on Windows
@@ -16,6 +24,18 @@ const (
 	RelocationReadOnlyNone    RelocationReadOnly = "none"    // no RELRO protection
 	RelocationReadOnlyPartial RelocationReadOnly = "partial" // partial RELRO protection
 	RelocationReadOnlyFull    RelocationReadOnly = "full"    // full RELRO protection
+
+	//// from https://pkg.go.dev/cmd/nm
+	//SymbolTypeText           SymbolType = "T" // text (code) segment symbol
+	//SymbolTypeTextStatic     SymbolType = "t" // static text segment symbol
+	//SymbolTypeReadOnly       SymbolType = "R" // read-only data segment symbol
+	//SymbolTypeReadOnlyStatic SymbolType = "r" // static read-only data segment symbol
+	//SymbolTypeData           SymbolType = "D" // data segment symbol
+	//SymbolTypeDataStatic     SymbolType = "d" // static data segment symbol
+	//SymbolTypeBSS            SymbolType = "B" // bss segment symbol
+	//SymbolTypeBSSStatic      SymbolType = "b" // static bss segment symbol
+	//SymbolTypeConstant       SymbolType = "C" // constant address
+	//SymbolTypeUndefined      SymbolType = "U" // referenced but undefined symbol
 )
 
 // Executable contains metadata about binary files and their security features.
@@ -34,7 +54,28 @@ type Executable struct {
 
 	// ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF.
 	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
+
+	// Symbols captures the selection from the symbol table found in the binary.
+	//Symbols []Symbol `json:"symbols,omitempty" yaml:"symbols" mapstructure:"symbols"`
+	SymbolNames []string `json:"symbolNames,omitempty" yaml:"symbolNames" mapstructure:"symbolNames"`
+
+	// Toolchains captures information about the the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
+	Toolchains []Toolchain `json:"toolchains,omitempty" yaml:"toolchains" mapstructure:"toolchains"`
 }
+
+type Toolchain struct {
+	Name    string        `json:"name" yaml:"name" mapstructure:"name"`
+	Version string        `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version"`
+	Kind    ToolchainKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+
+	// TODO: should we allow for aux information here? free form?
+}
+
+//type Symbol struct {
+//	//Type SymbolType `json:"type" yaml:"type" mapstructure:"type"`
+//	Type string `json:"type" yaml:"type" mapstructure:"type"`
+//	Name string `json:"name" yaml:"name" mapstructure:"name"`
+//}
 
 // ELFSecurityFeatures captures security hardening and protection mechanisms in ELF binaries.
 type ELFSecurityFeatures struct {
