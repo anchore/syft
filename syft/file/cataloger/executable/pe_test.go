@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -75,6 +76,42 @@ func Test_peHasExports(t *testing.T) {
 			f, err := pe.NewFile(readerForFixture(t, tt.fixture))
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, peHasExports(f))
+		})
+	}
+}
+
+func Test_peGoToolchainDetection(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("testdata/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name        string
+		fixture     string
+		wantPresent bool
+	}{
+		{
+			name:        "go binary has toolchain",
+			fixture:     "bin/hello.exe",
+			wantPresent: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := readerForFixture(t, tt.fixture)
+
+			toolchains := peToolchains(reader)
+			assert.Equal(t, tt.wantPresent, hasGoToolchain(toolchains))
+
+			if tt.wantPresent {
+				require.NotEmpty(t, toolchains)
+				assert.Equal(t, "go", toolchains[0].Name)
+				assert.NotEmpty(t, toolchains[0].Version)
+				assert.Equal(t, file.ToolchainComponentCompiler, toolchains[0].Component)
+			}
 		})
 	}
 }
