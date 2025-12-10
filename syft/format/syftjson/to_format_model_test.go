@@ -1083,3 +1083,47 @@ func Test_sortFiles(t *testing.T) {
 		})
 	}
 }
+
+func Test_toProperties(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]string
+		expected map[string]string
+	}{
+		{
+			name:     "nil input returns empty map",
+			input:    nil,
+			expected: map[string]string{},
+		},
+		{
+			name:     "empty input returns empty map",
+			input:    map[string]string{},
+			expected: map[string]string{},
+		},
+		{
+			name: "populated input returns same map",
+			input: map[string]string{
+				"environment": "production",
+				"team":        "security",
+				"version":     "1.0.0",
+			},
+			expected: map[string]string{
+				"environment": "production",
+				"team":        "security",
+				"version":     "1.0.0",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := toProperties(tt.input)
+
+			// Check equality
+			assert.Equal(t, tt.expected, result)
+
+			// Ensure result is never nil
+			assert.NotNil(t, result, "toProperties should never return nil")
+		})
+	}
+}

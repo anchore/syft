@@ -36,6 +36,9 @@ type CreateSBOMConfig struct {
 	ToolVersion       string
 	ToolConfiguration interface{}
 
+	// custom properties that will be added to the SBOM
+	Properties map[string]string
+
 	packageTaskFactories       task.Factories
 	packageCatalogerReferences []pkgcataloging.CatalogerReference
 }
@@ -86,6 +89,12 @@ func (c *CreateSBOMConfig) WithTool(name, version string, cfg ...any) *CreateSBO
 	c.ToolName = name
 	c.ToolVersion = version
 	c.ToolConfiguration = cfg
+	return c
+}
+
+// WithProperties allows for setting custom properties that will be added to the SBOM
+func (c *CreateSBOMConfig) WithProperties(properties map[string]string) *CreateSBOMConfig {
+	c.Properties = properties
 	return c
 }
 
