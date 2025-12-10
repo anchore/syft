@@ -256,7 +256,7 @@ func (i *Cataloger) processExecutable(loc file.Location, reader unionreader.Unio
 			err = fmt.Errorf("unable to determine ELF features: %w", err)
 		}
 	case file.PE:
-		if err = findPEFeatures(&data, reader); err != nil {
+		if err = findPEFeatures(&data, reader, i.config.Symbols); err != nil {
 			log.WithFields("error", err, "path", loc.RealPath).Trace("unable to determine PE features")
 			err = fmt.Errorf("unable to determine PE features: %w", err)
 		}
