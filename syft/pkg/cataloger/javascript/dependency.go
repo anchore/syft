@@ -27,8 +27,6 @@ func packageLockDependencySpecifier(p pkg.Package) dependency.Specification {
 			// if the package url is valid, include the name from the package url since this is likely an alias
 			var fullName = fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
 			requires = append(requires, fullName)
-		} else {
-			fmt.Println("error", err)
 		}
 
 		requires = append(requires, name)
