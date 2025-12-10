@@ -303,6 +303,11 @@ func (cfg *Catalog) PostLoad() error {
 		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
 	}
 
+	// validate file executable options
+	if err := cfg.ToFilesConfig().Executable.Validate(); err != nil {
+		return fmt.Errorf("invalid file executable configuration: %w", err)
+	}
+
 	return nil
 }
 

@@ -21,14 +21,14 @@ import (
 )
 
 func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) (Task, error) {
-		return NewPackageTask(cfg, catalogerFactory(cfg), tags...), nil
+	return func(cfg CatalogingFactoryConfig) Task {
+		return NewPackageTask(cfg, catalogerFactory(cfg), tags...)
 	}
 }
 
 func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) (Task, error) {
-		return NewPackageTask(cfg, catalogerFactory(), tags...), nil
+	return func(cfg CatalogingFactoryConfig) Task {
+		return NewPackageTask(cfg, catalogerFactory(), tags...)
 	}
 }
 

@@ -31,8 +31,7 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 	taskFactories := task.DefaultPackageTaskFactories()
 	taskTagsByName := make(map[string][]string)
 	for _, factory := range taskFactories {
-		tsk, err := factory(task.DefaultCatalogingFactoryConfig())
-		require.NoError(t, err)
+		tsk := factory(task.DefaultCatalogingFactoryConfig())
 		if taskTagsByName[tsk.Name()] != nil {
 			t.Fatalf("duplicate task name: %q", tsk.Name())
 		}

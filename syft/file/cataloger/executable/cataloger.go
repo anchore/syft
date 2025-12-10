@@ -48,7 +48,7 @@ type SymbolConfig struct {
 
 	// Types are the types of Go symbols to capture, relative to `go tool nm` output (e.g. T, t, R, r, D, d, B, b, C, U, etc).
 	// If empty, all symbol types are captured.
-	Types []string
+	Types []string `json:"types" yaml:"types" mapstructure:"types"`
 
 	// Go configures Go-specific symbol capturing settings.
 	Go GoSymbolConfig `json:"go" yaml:"go" mapstructure:"go"`
