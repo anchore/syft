@@ -16,7 +16,7 @@ fingerprint: $(FINGERPRINT_FILE)
 
 jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar
 
-archives: $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz
+archives: $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz $(PKGSDIR)/example-java-app-maven-0.1.0.tgz
 
 native-image: $(PKGSDIR)/example-java-app $(PKGSDIR)/gcc-amd64-darwin-exec-debug
 
@@ -30,6 +30,9 @@ $(PKGSDIR)/example-java-app-maven-0.1.0.tar: $(PKGSDIR)/example-java-app-maven-0
 
 $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz: $(PKGSDIR)/example-java-app-maven-0.1.0.jar
 	tar -czvf $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz $(PKGSDIR)/example-java-app-maven-0.1.0.jar
+
+$(PKGSDIR)/example-java-app-maven-0.1.0.tgz: $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz
+	tar -czf $(PKGSDIR)/example-java-app-maven-0.1.0.tgz $(PKGSDIR)/example-java-app-maven-0.1.0.jar
 
 # Nested jar...
 
