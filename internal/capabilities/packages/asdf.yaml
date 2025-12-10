@@ -1,4 +1,5 @@
 # Cataloger capabilities. See ../README.md for documentation.
+
 catalogers:
   - ecosystem: other # MANUAL
     name: asdf-cataloger # AUTO-GENERATED
