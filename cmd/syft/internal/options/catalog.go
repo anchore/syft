@@ -147,6 +147,13 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 	c.Content.SkipFilesAboveSize = cfg.File.Content.SkipFilesAboveSize
 	c.Executable.Globs = cfg.File.Executable.Globs
 
+	// symbol capture configuration
+	c.Executable.Symbols.CaptureScope = cfg.File.Executable.Symbols.CaptureScope
+	c.Executable.Symbols.Types = cfg.File.Executable.Symbols.Types
+	c.Executable.Symbols.Go.StandardLibrary = cfg.File.Executable.Symbols.Go.StandardLibrary
+	c.Executable.Symbols.Go.ExtendedStandardLibrary = cfg.File.Executable.Symbols.Go.ExtendedStandardLibrary
+	c.Executable.Symbols.Go.ThirdPartyModules = cfg.File.Executable.Symbols.Go.ThirdPartyModules
+
 	return c
 }
 

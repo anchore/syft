@@ -21,6 +21,21 @@ var goNMTypes = []string{
 	"U", // referenced but undefined symbol
 }
 
+// validNMTypes returns the list of valid NM types for Go symbols.
+func validNMTypes() []string {
+	return goNMTypes
+}
+
+// isValidNMType checks if the given type is a valid NM type.
+func isValidNMType(t string) bool {
+	for _, valid := range goNMTypes {
+		if t == valid {
+			return true
+		}
+	}
+	return false
+}
+
 const (
 	vendorPrefix         = "vendor/"
 	extendedStdlibPrefix = "golang.org/x/"

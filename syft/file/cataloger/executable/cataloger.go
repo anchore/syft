@@ -24,20 +24,11 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
+// SymbolCaptureScope defines the scope of symbols to capture from executables. For the meantime only golang binaries are supported,
+// however, in the future this can be expanded to include rust audit binaries, libraries only, applications only, or all binaries.
 type SymbolCaptureScope string
 
-// type SymbolTypes string
-
-const (
-	SymbolScopeAll          SymbolCaptureScope = "all"          // any and all binaries
-	SymbolScopeLibraries    SymbolCaptureScope = "libraries"    // binaries with exported symbols
-	SymbolScopeApplications SymbolCaptureScope = "applications" // binaries with an entry point
-	SymbolScopeGolang       SymbolCaptureScope = "golang"       // only binaries built with the golang toolchain
-	SymbolScopeNone         SymbolCaptureScope = "none"         // do not capture any symbols
-
-	// SymbolTypeCode SymbolTypes = "code"
-	// SymbolTypeData SymbolTypes = "data"
-)
+const SymbolScopeGolang SymbolCaptureScope = "golang" // only binaries built with the golang toolchain
 
 type Config struct {
 	// MIMETypes are the MIME types that will be considered for executable cataloging.
@@ -90,6 +81,64 @@ type GoSymbolConfig struct {
 	UnexportedSymbols bool `json:"unexported-symbols" yaml:"unexported-symbols" mapstructure:"unexported-symbols"`
 }
 
+// Validate checks for logical configuration inconsistencies and returns an error if any are found.
+func (c Config) Validate() error {
+	return c.Symbols.Validate()
+}
+
+// Validate checks for logical configuration inconsistencies in symbol capture settings.
+func (s SymbolConfig) Validate() error {
+	// validate that all CaptureScope values are valid
+	for _, scope := range s.CaptureScope {
+		if !isValidCaptureScope(scope) {
+			return fmt.Errorf("invalid symbol capture scope %q: valid values are %q", scope, SymbolScopeGolang)
+		}
+	}
+
+	// validate NM types if specified
+	if len(s.Types) > 0 {
+		for _, t := range s.Types {
+			if !isValidNMType(t) {
+				return fmt.Errorf("invalid NM type %q: valid values are %v", t, validNMTypes())
+			}
+		}
+	}
+
+	// remaining validations only apply when Go symbol capture is enabled
+	if !s.hasGolangScope() {
+		return nil
+	}
+
+	// if Go symbol capture is enabled, at least one of exported/unexported must be true
+	if !s.Go.ExportedSymbols && !s.Go.UnexportedSymbols {
+		return fmt.Errorf("both exported-symbols and unexported-symbols are disabled; no Go symbols would be captured")
+	}
+
+	// if Go symbol capture is enabled, at least one module source must be enabled
+	if !s.Go.StandardLibrary && !s.Go.ExtendedStandardLibrary && !s.Go.ThirdPartyModules {
+		return fmt.Errorf("all module sources (standard-library, extended-standard-library, third-party-modules) are disabled; no meaningful Go symbols would be captured")
+	}
+
+	return nil
+}
+
+func (s SymbolConfig) hasGolangScope() bool {
+	for _, scope := range s.CaptureScope {
+		if scope == SymbolScopeGolang {
+			return true
+		}
+	}
+	return false
+}
+
+func isValidCaptureScope(scope SymbolCaptureScope) bool {
+	switch scope { //nolint:gocritic  // lets elect a pattern as if we'll have multiple options in the future...
+	case SymbolScopeGolang:
+		return true
+	}
+	return false
+}
+
 type Cataloger struct {
 	config Config
 }
@@ -101,10 +150,8 @@ func DefaultConfig() Config {
 		MIMETypes: m,
 		Globs:     nil,
 		Symbols: SymbolConfig{
-			CaptureScope: []SymbolCaptureScope{
-				SymbolScopeGolang,
-			},
-			Types: []string{"T", "t"},
+			CaptureScope: []SymbolCaptureScope{}, // important! by default we do not capture any symbols unless explicitly configured
+			Types:        []string{"T"},          // by default only capture "T" (text/code) symbols, since vulnerability data tracks accessible function symbols
 			Go: GoSymbolConfig{
 				StandardLibrary:          true,
 				ExtendedStandardLibrary:  true,

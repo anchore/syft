@@ -1,6 +1,7 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-type factory func(cfg CatalogingFactoryConfig) Task
+type factory func(cfg CatalogingFactoryConfig) (Task, error)
 
 type Factories []factory
 
@@ -16,9 +17,13 @@ func (f Factories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
 	var allTasks []Task
 	taskNames := strset.New()
 	duplicateTaskNames := strset.New()
-	var err error
+	var errs []error
 	for _, fact := range f {
-		tsk := fact(cfg)
+		tsk, err := fact(cfg)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
 		if tsk == nil {
 			continue
 		}
@@ -33,8 +38,8 @@ func (f Factories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
 	if duplicateTaskNames.Size() > 0 {
 		names := duplicateTaskNames.List()
 		sort.Strings(names)
-		err = fmt.Errorf("duplicate cataloger task names: %v", strings.Join(names, ", "))
+		errs = append(errs, fmt.Errorf("duplicate cataloger task names: %v", strings.Join(names, ", ")))
 	}
 
-	return allTasks, err
+	return allTasks, errors.Join(errs...)
 }

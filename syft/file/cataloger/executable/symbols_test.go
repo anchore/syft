@@ -19,7 +19,7 @@ func TestShouldCaptureSymbols(t *testing.T) {
 			name: "nil data returns false",
 			data: nil,
 			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeAll},
+				CaptureScope: []SymbolCaptureScope{SymbolScopeGolang},
 			},
 			want: false,
 		},
@@ -28,62 +28,6 @@ func TestShouldCaptureSymbols(t *testing.T) {
 			data: &file.Executable{},
 			cfg: SymbolConfig{
 				CaptureScope: []SymbolCaptureScope{},
-			},
-			want: false,
-		},
-		{
-			name: "scope none returns false",
-			data: &file.Executable{},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeNone},
-			},
-			want: false,
-		},
-		{
-			name: "scope all returns true",
-			data: &file.Executable{},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeAll},
-			},
-			want: true,
-		},
-		{
-			name: "scope libraries with exports returns true",
-			data: &file.Executable{
-				HasExports: true,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeLibraries},
-			},
-			want: true,
-		},
-		{
-			name: "scope libraries without exports returns false",
-			data: &file.Executable{
-				HasExports: false,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeLibraries},
-			},
-			want: false,
-		},
-		{
-			name: "scope applications with entrypoint returns true",
-			data: &file.Executable{
-				HasEntrypoint: true,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeApplications},
-			},
-			want: true,
-		},
-		{
-			name: "scope applications without entrypoint returns false",
-			data: &file.Executable{
-				HasEntrypoint: false,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeApplications},
 			},
 			want: false,
 		},
@@ -118,38 +62,6 @@ func TestShouldCaptureSymbols(t *testing.T) {
 				CaptureScope: []SymbolCaptureScope{SymbolScopeGolang},
 			},
 			want: false,
-		},
-		{
-			name: "multiple scopes with one match returns true",
-			data: &file.Executable{
-				HasExports:    false,
-				HasEntrypoint: true,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeLibraries, SymbolScopeApplications},
-			},
-			want: true,
-		},
-		{
-			name: "multiple scopes with no match returns false",
-			data: &file.Executable{
-				HasExports:    false,
-				HasEntrypoint: false,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeLibraries, SymbolScopeApplications},
-			},
-			want: false,
-		},
-		{
-			name: "none scope followed by matching scope returns true",
-			data: &file.Executable{
-				HasEntrypoint: true,
-			},
-			cfg: SymbolConfig{
-				CaptureScope: []SymbolCaptureScope{SymbolScopeNone, SymbolScopeApplications},
-			},
-			want: true,
 		},
 		{
 			name: "go toolchain among multiple toolchains returns true",
@@ -210,7 +122,6 @@ func TestHasGolangToolchain(t *testing.T) {
 				Toolchains: []file.Toolchain{
 					{Name: "gcc", Version: "12.0.0", Kind: file.ToolchainKindCompiler},
 					{Name: "go", Version: "1.21.0", Kind: file.ToolchainKindCompiler},
-					{Name: "ld", Version: "2.38", Kind: file.ToolchainKindLinker},
 				},
 			},
 			want: true,

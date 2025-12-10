@@ -7,15 +7,13 @@ type (
 	// RelocationReadOnly indicates the RELRO security protection level applied to an ELF binary.
 	RelocationReadOnly string
 
-	// SymbolType string
-
+	// ToolchainKind represents the type of toolchain used to build the executable. Today only "compiler" is supported,
+	// however, this can be expanded in the future to include linkers, runtimes, etc.
 	ToolchainKind string
 )
 
 const (
 	ToolchainKindCompiler ToolchainKind = "compiler"
-	ToolchainKindLinker   ToolchainKind = "linker"
-	ToolchainKindRuntime  ToolchainKind = "runtime"
 
 	ELF   ExecutableFormat = "elf"   // Executable and Linkable Format used on Unix-like systems
 	MachO ExecutableFormat = "macho" // Mach object file format used on macOS and iOS
@@ -44,7 +42,6 @@ type Executable struct {
 	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
 
 	// Symbols captures the selection from the symbol table found in the binary.
-	// Symbols []Symbol `json:"symbols,omitempty" yaml:"symbols" mapstructure:"symbols"`
 	SymbolNames []string `json:"symbolNames,omitempty" yaml:"symbolNames" mapstructure:"symbolNames"`
 
 	// Toolchains captures information about the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
@@ -52,9 +49,14 @@ type Executable struct {
 }
 
 type Toolchain struct {
-	Name    string        `json:"name" yaml:"name" mapstructure:"name"`
-	Version string        `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version"`
-	Kind    ToolchainKind `json:"kind" yaml:"kind" mapstructure:"kind"`
+	// Name is the name of the toolchain (e.g., "gcc", "clang", "ld", etc.).
+	Name string `json:"name" yaml:"name" mapstructure:"name"`
+
+	// Version is the version of the toolchain.
+	Version string `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version"`
+
+	// Kind indicates the type of toolchain (e.g., compiler, linker, runtime).
+	Kind ToolchainKind `json:"kind" yaml:"kind" mapstructure:"kind"`
 }
 
 // ELFSecurityFeatures captures security hardening and protection mechanisms in ELF binaries.

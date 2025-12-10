@@ -26,8 +26,8 @@ func DefaultFileTaskFactories() Factories {
 }
 
 func newFileDigestCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return newFileDigestCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Hashers, tags...)
+	return func(cfg CatalogingFactoryConfig) (Task, error) {
+		return newFileDigestCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Hashers, tags...), nil
 	}
 }
 
@@ -57,8 +57,8 @@ func newFileDigestCatalogerTask(selection file.Selection, hashers []crypto.Hash,
 }
 
 func newFileMetadataCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return newFileMetadataCatalogerTask(cfg.FilesConfig.Selection, tags...)
+	return func(cfg CatalogingFactoryConfig) (Task, error) {
+		return newFileMetadataCatalogerTask(cfg.FilesConfig.Selection, tags...), nil
 	}
 }
 
@@ -88,8 +88,8 @@ func newFileMetadataCatalogerTask(selection file.Selection, tags ...string) Task
 }
 
 func newFileContentCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return newFileContentCatalogerTask(cfg.FilesConfig.Content, tags...)
+	return func(cfg CatalogingFactoryConfig) (Task, error) {
+		return newFileContentCatalogerTask(cfg.FilesConfig.Content, tags...), nil
 	}
 }
 
@@ -114,12 +114,16 @@ func newFileContentCatalogerTask(cfg filecontent.Config, tags ...string) Task {
 }
 
 func newExecutableCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
+	return func(cfg CatalogingFactoryConfig) (Task, error) {
 		return newExecutableCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Executable, tags...)
 	}
 }
 
-func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config, tags ...string) Task {
+func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config, tags ...string) (Task, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
 		if selection == file.NoFilesSelection {
 			return nil
@@ -136,7 +140,7 @@ func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config,
 		return err
 	}
 
-	return NewTask("file-executable-cataloger", fn, commonFileTags(tags)...)
+	return NewTask("file-executable-cataloger", fn, commonFileTags(tags)...), nil
 }
 
 // TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger

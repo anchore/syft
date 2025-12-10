@@ -11,20 +11,7 @@ func shouldCaptureSymbols(data *file.Executable, cfg SymbolConfig) bool {
 	}
 
 	for _, scope := range cfg.CaptureScope {
-		switch scope {
-		case SymbolScopeNone:
-			// explicit "none" means don't capture (but continue checking other scopes)
-			continue
-		case SymbolScopeAll:
-			return true
-		case SymbolScopeLibraries:
-			if data.HasExports {
-				return true
-			}
-		case SymbolScopeApplications:
-			if data.HasEntrypoint {
-				return true
-			}
+		switch scope { //nolint:gocritic  // lets elect a pattern as if we'll have multiple options in the future...
 		case SymbolScopeGolang:
 			if hasGolangToolchain(data) {
 				return true

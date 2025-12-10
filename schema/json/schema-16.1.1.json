@@ -1285,7 +1285,7 @@
             "type": "string"
           },
           "type": "array",
-          "description": "Symbols captures the selection from the symbol table found in the binary.\nSymbols []Symbol `json:\"symbols,omitempty\" yaml:\"symbols\" mapstructure:\"symbols\"`"
+          "description": "Symbols captures the selection from the symbol table found in the binary."
         },
         "toolchains": {
           "items": {
@@ -4238,13 +4238,16 @@
     "Toolchain": {
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name is the name of the toolchain (e.g., \"gcc\", \"clang\", \"ld\", etc.)."
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "description": "Version is the version of the toolchain."
         },
         "kind": {
-          "type": "string"
+          "type": "string",
+          "description": "Kind indicates the type of toolchain (e.g., compiler, linker, runtime)."
         }
       },
       "type": "object",
