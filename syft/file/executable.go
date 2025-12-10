@@ -47,7 +47,7 @@ type Executable struct {
 	// Symbols []Symbol `json:"symbols,omitempty" yaml:"symbols" mapstructure:"symbols"`
 	SymbolNames []string `json:"symbolNames,omitempty" yaml:"symbolNames" mapstructure:"symbolNames"`
 
-	// Toolchains captures information about the the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
+	// Toolchains captures information about the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
 	Toolchains []Toolchain `json:"toolchains,omitempty" yaml:"toolchains" mapstructure:"toolchains"`
 }
 

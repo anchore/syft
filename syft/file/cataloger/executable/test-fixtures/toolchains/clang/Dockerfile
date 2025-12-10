@@ -1,1 +1,1 @@
-FROM silkeh/clang:18.1.8
+FROM silkeh/clang:18@sha256:6984fdf656b270ff3129e339a25083e0f8355f681b72fdeb5407da21a9bbf74d
