@@ -1,0 +1,15 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: other # MANUAL
+    name: asdf-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/asdf/cataloger.go
+      function: NewInstalledFileCataloger
+    selectors: # AUTO-GENERATED
+      - asdf
+      - directory
+      - image
+      - installed
+      - package

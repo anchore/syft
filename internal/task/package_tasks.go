@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/ai"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
+	"github.com/anchore/syft/syft/pkg/cataloger/asdf"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	bitnamiSbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/bitnami"
 	"github.com/anchore/syft/syft/pkg/cataloger/conda"
@@ -154,6 +155,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(lua.NewPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "lua"),
 
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
+		newSimplePackageTaskFactory(asdf.NewInstalledFileCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "asdf"),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return binary.NewClassifierCataloger(cfg.PackagesConfig.Binary)
