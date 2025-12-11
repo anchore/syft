@@ -57,6 +57,7 @@ func Test_Config(t *testing.T) {
 				Proxies:                     []string{"https://my.proxy"},
 				NoProxy:                     []string{"my.private", "no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
+				UsePackagesLib:              true,
 			},
 		},
 		{
@@ -84,6 +85,7 @@ func Test_Config(t *testing.T) {
 				Proxies:                     []string{"https://alt.proxy", "direct"},
 				NoProxy:                     []string{"alt.no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
+				UsePackagesLib:              true,
 			},
 		},
 	}
