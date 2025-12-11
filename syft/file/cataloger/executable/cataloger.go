@@ -151,7 +151,7 @@ func DefaultConfig() Config {
 		Globs:     nil,
 		Symbols: SymbolConfig{
 			CaptureScope: []SymbolCaptureScope{}, // important! by default we do not capture any symbols unless explicitly configured
-			Types:        []string{"T"},          // by default only capture "T" (text/code) symbols, since vulnerability data tracks accessible function symbols
+			Types:        []string{"T", "t"},     // by default only capture "T" (text/code) symbols, since vulnerability data tracks accessible function symbols
 			Go: GoSymbolConfig{
 				StandardLibrary:          true,
 				ExtendedStandardLibrary:  true,

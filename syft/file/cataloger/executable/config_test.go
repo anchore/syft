@@ -16,6 +16,8 @@ func TestDefaultConfig_SymbolCaptureIsDisabled(t *testing.T) {
 
 	require.Empty(t, cfg.Symbols.CaptureScope, "symbol capture should be disabled by default (empty capture scope)")
 
+	assert.Equal(t, cfg.Symbols.Types, []string{"T", "t"})
+
 	// verify that shouldCaptureSymbols returns false for any executable when using default config
 	assert.False(t, shouldCaptureSymbols(nil, cfg.Symbols), "should not capture symbols for nil executable")
 	assert.False(t, shouldCaptureSymbols(&file.Executable{}, cfg.Symbols), "should not capture symbols for empty executable")
