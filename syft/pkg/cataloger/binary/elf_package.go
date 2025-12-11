@@ -11,6 +11,12 @@ import (
 )
 
 func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, locations file.LocationSet) pkg.Package {
+	//　migrate the value of OsCpe to OSCPE
+	if metadata.OsCpe != "" {
+		metadata.OSCPE = metadata.OsCpe
+		metadata.OsCpe = ""
+	}
+
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,

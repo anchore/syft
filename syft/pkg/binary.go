@@ -24,7 +24,10 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	Architecture string `json:"architecture,omitempty"`
 
 	// OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
-	OSCPE string `json:"osCpe,omitempty"`
+	OSCPE string `json:"osCPE,omitempty"`
+
+	// OsCpe is an alias for osCPE,see https://systemd.io/PACKAGE_METADATA_FOR_EXECUTABLE_FILES/
+	OsCpe string `json:"osCpe,omitempty"`
 
 	// APPCPE is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)
 	APPCPE string `json:"appCpe,omitempty"`

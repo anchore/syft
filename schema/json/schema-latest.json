@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.1/document",
+  "$id": "anchore.io/schema/syft/json/16.2.0/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1167,9 +1167,13 @@
           "type": "string",
           "description": "Architecture of the binary package (e.g. \"amd64\", \"arm\", etc.)"
         },
+        "osCPE": {
+          "type": "string",
+          "description": "osCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+        },
         "osCpe": {
           "type": "string",
-          "description": "osCpe is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+          "description": "osCpe is an alias for osCPE,see https://systemd.io/PACKAGE_METADATA_FOR_EXECUTABLE_FILES/"
         },
         "appCpe": {
           "type": "string",
