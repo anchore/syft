@@ -2,22 +2,9 @@
 
 <!-- Please include a summary of the changes along with any relevant motivation and context -->
 
-<!-- If this completes an issue, please include: -->
-- Fixes #<PR-number>
+<!-- If CLI output changed, show an example (before/after if helpful) -->
 
-## Output Samples
-
-<!-- If the effect of the change can be seen in CLI output, please provide an example (and optionally a before-after example) -->
-<!-- Delete this section if not applicable -->
-
-## Configuration Changes
-
-<!-- If this PR changes application or API configuration, please describe -->
-<!-- Delete this section if not applicable -->
-
-- **New options**:
-- **Changed options**:
-- **Removed options**:
+<!-- If this changes application or API configuration, describe new/changed/removed options -->
 
 ## Type of change
 
@@ -35,3 +22,7 @@
 - [ ] I have added unit tests that cover changed behavior
 - [ ] I have tested my code in common scenarios and confirmed there are no regressions
 - [ ] I have added comments to my code, particularly in hard-to-understand sections
+
+## Issue references
+
+<!-- If this fixes an issue, include "Fixes #<issue-number>" or otherwise list the issue references -->
