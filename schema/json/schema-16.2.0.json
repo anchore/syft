@@ -1169,7 +1169,7 @@
         },
         "osCPE": {
           "type": "string",
-          "description": "osCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
         },
         "osCpe": {
           "type": "string",
