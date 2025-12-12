@@ -157,7 +157,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, err
 	}
 
-	sections, _, err := parsePEFile(r)
+	sections, sectionHeaders, err := parsePEFile(r)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse PE sections: %w", err)
 	}
@@ -175,7 +175,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
 
-	embeddedDepsJSON, err := extractDepsJSONFromBundle(r)
+	embeddedDepsJSON, err := extractDepsJSONFromBundle(r, sectionHeaders)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract embedded deps.json: %w", err)
 	}
