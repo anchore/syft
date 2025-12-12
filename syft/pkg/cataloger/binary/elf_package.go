@@ -68,11 +68,15 @@ func osNameAndVersionFromMetadata(metadata elfBinaryPackageNotes) (string, strin
 		return os, osVersion
 	}
 
-	if metadata.OSCPE == "" {
+	if metadata.OSCPE == "" { //nolint:staticcheck
+		// best-effort to get the os info
+		if os != "" {
+			return os, ""
+		}
 		return "", ""
 	}
 
-	attrs, err := cpe.NewAttributes(metadata.OSCPE)
+	attrs, err := cpe.NewAttributes(metadata.OSCPE) //nolint:staticcheck
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse cpe attributes for elf binary package")
 		return "", ""
