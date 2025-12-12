@@ -101,6 +101,7 @@ func (s fileSource) Describe() source.Description {
 	name := path.Base(s.config.Path)
 	version := s.digestForVersion
 	supplier := ""
+	var authors []source.Author
 	if !s.config.Alias.IsEmpty() {
 		a := s.config.Alias
 		if a.Name != "" {
@@ -114,12 +115,17 @@ func (s fileSource) Describe() source.Description {
 		if a.Supplier != "" {
 			supplier = a.Supplier
 		}
+
+		if len(a.Authors) > 0 {
+			authors = a.Authors
+		}
 	}
 	return source.Description{
 		ID:       string(s.id),
 		Name:     name,
 		Version:  version,
 		Supplier: supplier,
+		Authors:  authors,
 		Metadata: source.FileMetadata{
 			Path:     s.config.Path,
 			Digests:  s.digests,

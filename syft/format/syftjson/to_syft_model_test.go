@@ -192,6 +192,102 @@ func Test_toSyftSourceData(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "directory with authors",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "directory",
+				Authors: []source.Author{
+					{
+						Name:  "Test Author",
+						Email: "test@example.com",
+						Type:  "Person",
+					},
+				},
+				Metadata: source.DirectoryMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Authors: []source.Author{
+					{
+						Name:  "Test Author",
+						Email: "test@example.com",
+						Type:  "Person",
+					},
+				},
+				Metadata: source.DirectoryMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+		},
+		{
+			name: "image with multiple authors",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "image",
+				Authors: []source.Author{
+					{
+						Name:  "Developer One",
+						Email: "dev1@example.com",
+						Type:  "Person",
+					},
+					{
+						Name:  "Company LLC",
+						Email: "info@company.com",
+						Type:  "Organization",
+					},
+					{
+						Name:  "build-tool",
+						Email: "",
+						Type:  "Tool",
+					},
+				},
+				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Authors: []source.Author{
+					{
+						Name:  "Developer One",
+						Email: "dev1@example.com",
+						Type:  "Person",
+					},
+					{
+						Name:  "Company LLC",
+						Email: "info@company.com",
+						Type:  "Organization",
+					},
+					{
+						Name:  "build-tool",
+						Email: "",
+						Type:  "Tool",
+					},
+				},
+				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

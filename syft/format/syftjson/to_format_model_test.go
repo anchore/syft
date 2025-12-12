@@ -225,6 +225,96 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "directory with authors",
+			src: source.Description{
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
+				Authors: []source.Author{
+					{
+						Name:  "Test Author",
+						Email: "test@example.com",
+						Type:  "Person",
+					},
+				},
+				Metadata: source.DirectoryMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+			expected: model.Source{
+				ID:       "test-id",
+				Name:     "some-name",
+				Version:  "some-version",
+				Supplier: "optional-supplier",
+				Type:     "directory",
+				Authors: []source.Author{
+					{
+						Name:  "Test Author",
+						Email: "test@example.com",
+						Type:  "Person",
+					},
+				},
+				Metadata: source.DirectoryMetadata{
+					Path: "some/path",
+					Base: "some/base",
+				},
+			},
+		},
+		{
+			name: "image with multiple authors",
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Authors: []source.Author{
+					{
+						Name:  "Author One",
+						Email: "one@example.com",
+						Type:  "Person",
+					},
+					{
+						Name:  "Company LLC",
+						Email: "info@company.com",
+						Type:  "Organization",
+					},
+				},
+				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: model.Source{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "image",
+				Authors: []source.Author{
+					{
+						Name:  "Author One",
+						Email: "one@example.com",
+						Type:  "Person",
+					},
+					{
+						Name:  "Company LLC",
+						Email: "info@company.com",
+						Type:  "Organization",
+					},
+				},
+				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+					RepoDigests:    []string{},
+					Tags:           []string{},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

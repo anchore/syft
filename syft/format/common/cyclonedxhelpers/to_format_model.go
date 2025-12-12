@@ -220,6 +220,7 @@ func toBomDescriptor(name, version string, srcMetadata source.Description) *cycl
 				},
 			},
 		},
+		Authors:    toBomAuthors(srcMetadata.Authors),
 		Supplier:   toBomSupplier(srcMetadata),
 		Properties: toBomProperties(srcMetadata),
 		Component:  toBomDescriptorComponent(srcMetadata),
@@ -234,6 +235,21 @@ func toBomSupplier(srcMetadata source.Description) *cyclonedx.OrganizationalEnti
 	}
 
 	return nil
+}
+
+func toBomAuthors(authors []source.Author) *[]cyclonedx.OrganizationalContact {
+	if len(authors) == 0 {
+		return nil
+	}
+
+	var contacts []cyclonedx.OrganizationalContact
+	for _, author := range authors {
+		contacts = append(contacts, cyclonedx.OrganizationalContact{
+			Name:  author.Name,
+			Email: author.Email,
+		})
+	}
+	return &contacts
 }
 
 // used to indicate that a relationship listed under the syft artifact package can be represented as a cyclonedx dependency.
