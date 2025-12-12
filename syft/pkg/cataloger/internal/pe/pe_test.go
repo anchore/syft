@@ -1,26 +1,31 @@
 package pe
 
 import (
+	"fmt"
+	"os"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/stereoscopesource"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Read_DotNetDetection(t *testing.T) {
+	singleFileDepsJSON, err := os.ReadFile("test-fixtures/net8-app-single-file.deps.json")
+	require.NoError(t, err)
+
 	tests := []struct {
-		name    string
-		fixture string
-		path    string
-		wantVR  map[string]string
-		wantCLR bool
-		wantErr require.ErrorAssertionFunc
+		name         string
+		fixture      string
+		path         string
+		wantVR       map[string]string
+		wantCLR      bool
+		wantDepsJSON string
+		wantErr      require.ErrorAssertionFunc
 	}{
 		{
 			name:    "newtonsoft",
@@ -114,7 +119,8 @@ func Test_Read_DotNetDetection(t *testing.T) {
 				"ProductVersion":   "1.0.0",
 				"Assembly Version": "1.0.0.0",
 			},
-			wantErr: require.NoError,
+			wantDepsJSON: string(singleFileDepsJSON),
+			wantErr:      require.NoError,
 		},
 	}
 
@@ -137,6 +143,11 @@ func Test_Read_DotNetDetection(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.wantCLR, got.CLR.HasEvidenceOfCLR())
+
+			if d := cmp.Diff(tt.wantDepsJSON, got.EmbeddedDepsJSON); d != "" {
+				fmt.Printf("got embedded deps.json: %s\n", got.EmbeddedDepsJSON)
+				t.Errorf("unexpected deps.json location (-want +got): %s", d)
+			}
 		})
 	}
 }

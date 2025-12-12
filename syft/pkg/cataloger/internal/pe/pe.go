@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"debug/pe"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -176,11 +175,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
 
-	// TODO refactor this section to avoid searching the entire file again
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("unable to seek to beginning of PE file: %w", err)
-	}
-	embeddedDepsJSON, err := extractEmbeddedDepsJSONFromReader(r)
+	embeddedDepsJSON, err := extractDepsJSONFromBundle(r)
 	if err != nil {
 		return nil, fmt.Errorf("unable to extract embedded deps.json: %w", err)
 	}
@@ -192,52 +187,6 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		VersionResources: versionResources,
 	}, nil
 }
-
-func extractEmbeddedDepsJSONFromReader(reader io.Reader) (string, error) {
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-	// search marker deps.json
-	marker := []byte(`"runtimeTarget"`)
-	idx := bytes.Index(data, marker)
-	if idx == -1 {
-		return "", nil
-	}
-
-	searchStart := idx - 10240
-	if searchStart < 0 {
-		searchStart = 0
-	}
-
-	start := -1
-	for i := idx - 1; i >= searchStart; i-- {
-		if data[i] == '{' {
-			start = i
-			break
-		}
-	}
-	if start == -1 {
-		return "", nil
-	}
-
-	dec := json.NewDecoder(bytes.NewReader(data[start:]))
-	var doc interface{}
-	if err := dec.Decode(&doc); err != nil {
-		return "", nil
-	}
-
-	end := start + int(dec.InputOffset())
-	return string(data[start:end]), nil
-}
-
-// func extractEmbeddedDepsJSONFromReader(r unionreader.UnionReader) (string, error) {
-//	// The .NET host locates the bundle by:
-//	//   - Seeking to the end of the file
-//	//   - Reading backward to find the bundle header signature
-//	//   - Using the manifest to locate specific files by offset
-//
-//}
 
 // parsePEFile creates readers for targeted sections of the binary used by downstream processing.
 func parsePEFile(file unionreader.UnionReader) (map[int]*extractedSection, []pe.SectionHeader32, error) {
