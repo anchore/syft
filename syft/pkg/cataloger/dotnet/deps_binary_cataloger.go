@@ -1,9 +1,7 @@
 package dotnet
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"path"
@@ -19,7 +17,6 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
 )
 
 const (
@@ -52,8 +49,6 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 	if ldpeUnknownErr != nil {
 		unknowns = unknown.Join(unknowns, ldpeUnknownErr)
 	}
-
-	depJSONDocs = append(depJSONDocs, extractEmbeddedDeps(peFiles)...)
 
 	// partition the logical PE files by location and pair them with the logicalDepsJSON
 	pairedDepsJSONs, remainingPeFiles, remainingDepsJSONs := partitionPEs(depJSONDocs, peFiles)
@@ -153,6 +148,18 @@ func isRuntimePackageLocation(loc file.Location) (string, bool) {
 
 // partitionPEs pairs PE files with the deps.json based on directory containment.
 func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDepsJSON, []logicalPE, []logicalDepsJSON) {
+	// if there are any embedded deps.json files in PE files, extract them and add them to the list of deps.json files to process.
+	consideredPEs := file.NewCoordinateSet()
+	for _, pe := range peFiles {
+		if pe.EmbeddedDepsJSON != "" {
+			dep := extractEmbeddedDeps(pe)
+			if dep != nil {
+				depJsons = append(depJsons, *dep)
+				consideredPEs.Add(pe.Location.Coordinates) // mark this PE as already considered
+			}
+		}
+	}
+
 	// sort deps.json paths from longest to shortest. This is so we are processing the most specific match first.
 	sort.Slice(depJsons, func(i, j int) bool {
 		return depJsons[i].Location.RealPath > depJsons[j].Location.RealPath
@@ -176,7 +183,9 @@ func partitionPEs(depJsons []logicalDepsJSON, peFiles []logicalPE) ([]logicalDep
 				// across multiple deps.json files.
 			}
 		}
-		if !found {
+		// if we did not find a deps.json to associate this PE with, keep track of it for later processing.
+		// also, if we have already considered this PE because it had an embedded deps.json, skip it.
+		if !found && !consideredPEs.Contains(pe.Location.Coordinates) {
 			remainingPeFiles = append(remainingPeFiles, pe)
 		}
 	}
@@ -479,23 +488,8 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
-	data, err := io.ReadAll(reader)
+	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, reader))
 	if err != nil {
-		return nil, unknown.New(loc, fmt.Errorf("unable to read file data: %w", err))
-	}
-
-	embeddedJSON := extractEmbeddedDepsJSONFromBytes(data)
-
-	ldpe, err := readLogicalPE(file.NewLocationReadCloser(loc, io.NopCloser(bytes.NewReader(data))))
-	if err != nil {
-		if embeddedJSON != "" {
-			return &logicalPE{
-				File: pe.File{
-					Location: loc,
-				},
-				EmbeddedDepsJSON: embeddedJSON,
-			}, nil
-		}
 		return nil, unknown.New(loc, fmt.Errorf("unable to parse PE file: %w", err))
 	}
 
@@ -511,18 +505,13 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	return ldpe, nil
 }
 
-func extractEmbeddedDeps(peFiles []logicalPE) []logicalDepsJSON {
-	var docs []logicalDepsJSON
-	for _, pe := range peFiles {
-		if pe.EmbeddedDepsJSON == "" {
-			continue
-		}
-		var doc depsJSON
-		if err := json.Unmarshal([]byte(pe.EmbeddedDepsJSON), &doc); err != nil {
-			continue
-		}
-		doc.Location = pe.Location
-		docs = append(docs, getLogicalDepsJSON(doc, nil))
+func extractEmbeddedDeps(pe logicalPE) *logicalDepsJSON {
+	doc, err := newDepsJSON(file.NewLocationReadCloser(pe.Location, io.NopCloser(strings.NewReader(pe.EmbeddedDepsJSON))))
+	if err != nil || doc == nil {
+		return nil
 	}
-	return docs
+
+	doc.Location = pe.Location
+	lDoc := getLogicalDepsJSON(*doc, nil)
+	return &lDoc
 }
