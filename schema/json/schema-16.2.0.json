@@ -1173,11 +1173,11 @@
         },
         "osCpe": {
           "type": "string",
-          "description": "osCpe is an alias for osCPE,see https://systemd.io/PACKAGE_METADATA_FOR_EXECUTABLE_FILES/"
+          "description": "OsCpe is an alias for osCPE,see https://systemd.io/PACKAGE_METADATA_FOR_EXECUTABLE_FILES/"
         },
         "appCpe": {
           "type": "string",
-          "description": "appCpe is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)"
+          "description": "APPCPE is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)"
         },
         "os": {
           "type": "string",
