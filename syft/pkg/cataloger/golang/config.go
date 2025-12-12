@@ -48,6 +48,9 @@ type CatalogerConfig struct {
 	NoProxy []string `yaml:"no-proxy,omitempty" json:"no-proxy,omitempty" mapstructure:"no-proxy"`
 
 	MainModuleVersion MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
+
+	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
+	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
 }
 
 type MainModuleVersionConfig struct {
@@ -70,6 +73,7 @@ type MainModuleVersionConfig struct {
 // - setting the default local module cache dir if none is provided
 func DefaultCatalogerConfig() CatalogerConfig {
 	g := CatalogerConfig{
+		UsePackagesLib:    true,
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
 	}
@@ -177,6 +181,11 @@ func (g CatalogerConfig) WithNoProxy(input string) CatalogerConfig {
 
 func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) CatalogerConfig {
 	g.MainModuleVersion = input
+	return g
+}
+
+func (g CatalogerConfig) WithUsePackagesLib(useLib bool) CatalogerConfig {
+	g.UsePackagesLib = useLib
 	return g
 }
 
