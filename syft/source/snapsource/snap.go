@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -31,21 +32,28 @@ type remoteSnap struct {
 	URL string
 }
 
+const NotSpecifiedRevision int = 0
+
 type snapIdentity struct {
 	Name         string
 	Channel      string
 	Architecture string
+	Revision     int
 }
 
 func (s snapIdentity) String() string {
 	parts := []string{s.Name}
+	// revision will supersede channel
+	if s.Revision != NotSpecifiedRevision {
+		parts = append(parts, fmt.Sprintf(":%d", s.Revision))
+	} else {
+		if s.Channel != "" {
+			parts = append(parts, fmt.Sprintf("@%s", s.Channel))
+		}
 
-	if s.Channel != "" {
-		parts = append(parts, fmt.Sprintf("@%s", s.Channel))
-	}
-
-	if s.Architecture != "" {
-		parts = append(parts, fmt.Sprintf(" (%s)", s.Architecture))
+		if s.Architecture != "" {
+			parts = append(parts, fmt.Sprintf(" (%s)", s.Architecture))
+		}
 	}
 
 	return strings.Join(parts, "")
@@ -166,17 +174,21 @@ func getSnapFileInfo(ctx context.Context, fs afero.Fs, path string, hashes []cry
 // The request can be:
 // - A snap name (e.g., "etcd")
 // - A snap name with channel (e.g., "etcd@beta" or "etcd@2.3/stable")
+// - A snap name with revision (e.g. etcd:249@stable)
 func resolveRemoteSnap(request, architecture string) (*remoteSnap, error) {
 	if architecture == "" {
 		architecture = defaultArchitecture
 	}
 
-	snapName, channel := parseSnapRequest(request)
-
+	snapName, revision, channel, err := parseSnapRequest(request)
+	if err != nil {
+		return nil, err
+	}
 	id := snapIdentity{
 		Name:         snapName,
 		Channel:      channel,
 		Architecture: architecture,
+		Revision:     revision,
 	}
 
 	client := newSnapcraftClient()
@@ -194,15 +206,26 @@ func resolveRemoteSnap(request, architecture string) (*remoteSnap, error) {
 	}, nil
 }
 
-// parseSnapRequest parses a snap request into name and channel
+// parseSnapRequest parses a snap request into name and revision/channel
 // Examples:
 // - "etcd" -> name="etcd", channel="stable" (default)
 // - "etcd@beta" -> name="etcd", channel="beta"
 // - "etcd@2.3/stable" -> name="etcd", channel="2.3/stable"
-func parseSnapRequest(request string) (name, channel string) {
+// - "etcd:249@2.3/stable" -> name="etcd" revision=249 (channel not working because revision has been assigned)
+func parseSnapRequest(request string) (name string, revision int, channel string, err error) {
 	parts := strings.SplitN(request, "@", 2)
 	name = parts[0]
 
+	divisions := strings.Split(parts[0], ":")
+	// handle revision first
+	if len(divisions) == 2 {
+		name = divisions[0]
+		revision, err = strconv.Atoi(divisions[1])
+		if err != nil {
+			return "", NotSpecifiedRevision, "", err
+		}
+		return name, revision, "", err
+	}
 	if len(parts) == 2 {
 		channel = parts[1]
 	}
@@ -210,8 +233,7 @@ func parseSnapRequest(request string) (name, channel string) {
 	if channel == "" {
 		channel = defaultChannel
 	}
-
-	return name, channel
+	return name, NotSpecifiedRevision, channel, err
 }
 
 func downloadSnap(getter intFile.Getter, info *remoteSnap, dest string) error {
