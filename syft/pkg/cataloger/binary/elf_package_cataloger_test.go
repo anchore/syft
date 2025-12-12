@@ -150,3 +150,61 @@ func Test_ELFPackageCataloger(t *testing.T) {
 	}
 
 }
+
+func Test_unmarshalELFPackageNotesPayload(t *testing.T) {
+	tests := []struct {
+		name        string
+		payload     string
+		wantOSCPE   string
+		wantCorrect string
+		wantErr     require.ErrorAssertionFunc
+	}{
+		{
+			name:        "only osCPE (incorrect) provided",
+			payload:     `{"name":"test","version":"1.0","osCPE":"cpe:/o:fedoraproject:fedora:40"}`,
+			wantOSCPE:   "cpe:/o:fedoraproject:fedora:40",
+			wantCorrect: "",
+		},
+		{
+			name:        "only osCpe (correct) provided",
+			payload:     `{"name":"test","version":"1.0","osCpe":"cpe:/o:fedoraproject:fedora:40"}`,
+			wantOSCPE:   "cpe:/o:fedoraproject:fedora:40",
+			wantCorrect: "cpe:/o:fedoraproject:fedora:40",
+		},
+		{
+			name:        "both osCPE and osCpe provided uses osCPE",
+			payload:     `{"name":"test","version":"1.0","osCPE":"cpe:/o:fedoraproject:fedora:40","osCpe":"cpe:/o:redhat:rhel:9"}`,
+			wantOSCPE:   "cpe:/o:fedoraproject:fedora:40",
+			wantCorrect: "cpe:/o:redhat:rhel:9",
+		},
+		{
+			name:        "neither osCPE nor osCpe provided",
+			payload:     `{"name":"test","version":"1.0"}`,
+			wantOSCPE:   "",
+			wantCorrect: "",
+		},
+		{
+			name:    "invalid JSON",
+			payload: `{invalid}`,
+			wantErr: require.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
+			}
+
+			got, err := unmarshalELFPackageNotesPayload([]byte(tt.payload))
+			tt.wantErr(t, err)
+
+			if err != nil {
+				return
+			}
+
+			require.Equal(t, tt.wantOSCPE, got.OSCPE)
+			require.Equal(t, tt.wantCorrect, got.CorrectOSCPE)
+		})
+	}
+}

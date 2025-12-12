@@ -11,12 +11,6 @@ import (
 )
 
 func newELFPackage(ctx context.Context, metadata elfBinaryPackageNotes, locations file.LocationSet) pkg.Package {
-	//　migrate the value of OsCpe to OSCPE
-	if metadata.OsCpe != "" {
-		metadata.OSCPE = metadata.OsCpe
-		metadata.OsCpe = ""
-	}
-
 	p := pkg.Package{
 		Name:      metadata.Name,
 		Version:   metadata.Version,
@@ -74,7 +68,7 @@ func osNameAndVersionFromMetadata(metadata elfBinaryPackageNotes) (string, strin
 		return os, osVersion
 	}
 
-	if metadata.OSCPE == "" {
+	if metadata.OSCPE == "" { //nolint:staticcheck
 		// best-effort to get the os info
 		if os != "" {
 			return os, ""
@@ -82,7 +76,7 @@ func osNameAndVersionFromMetadata(metadata elfBinaryPackageNotes) (string, strin
 		return "", ""
 	}
 
-	attrs, err := cpe.NewAttributes(metadata.OSCPE)
+	attrs, err := cpe.NewAttributes(metadata.OSCPE) //nolint:staticcheck
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse cpe attributes for elf binary package")
 		return "", ""
