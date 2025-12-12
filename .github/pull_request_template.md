@@ -1,11 +1,23 @@
-# Description
+## Description
 
-Please include a summary of the changes along with any relevant motivation and context,
-or link to an issue where this is explained.
+<!-- Please include a summary of the changes along with any relevant motivation and context -->
 
 <!-- If this completes an issue, please include: -->
+- Fixes #<PR-number>
 
-- Fixes
+## Output Samples
+
+<!-- If the effect of the change can be seen in CLI output, please provide an example (and optionally a before-after example) -->
+<!-- Delete this section if not applicable -->
+
+## Configuration Changes
+
+<!-- If this PR changes application or API configuration, please describe -->
+<!-- Delete this section if not applicable -->
+
+- **New options**:
+- **Changed options**:
+- **Removed options**:
 
 ## Type of change
 
@@ -18,7 +30,7 @@ or link to an issue where this is explained.
 - [ ] Chore (improve the developer experience, fix a test flake, etc, without changing the visible behavior of Syft)
 - [ ] Performance (make Syft run faster or use less memory, without changing visible behavior much)
 
-# Checklist:
+## Checklist
 
 - [ ] I have added unit tests that cover changed behavior
 - [ ] I have tested my code in common scenarios and confirmed there are no regressions
