@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_PackageCataloger(t *testing.T) {
+func Test_InstalledPackageCataloger(t *testing.T) {
 	ctx := context.TODO()
 	tests := []struct {
 		name             string
@@ -402,10 +402,57 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			(pkgtest.NewCatalogTester().
+			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
-				TestCataloger(t, NewInstalledPackageCataloger()))
+				TestCataloger(t, NewInstalledPackageCataloger())
+		})
+	}
+}
+
+func Test_PackageCataloger(t *testing.T) {
+
+	tests := []struct {
+		name                  string
+		fixture               string
+		expectedPackages      []string
+		expectedRelationships []string
+	}{
+		{
+			name:    "pdm",
+			fixture: "test-fixtures/pdm-lock",
+			expectedPackages: []string{
+				"certifi @ 2025.1.31 (pdm.lock)",
+				"chardet @ 3.0.4 (pdm.lock)",
+				"charset-normalizer @ 2.0.12 (pdm.lock)",
+				"colorama @ 0.3.9 (pdm.lock)",
+				"idna @ 2.7 (pdm.lock)",
+				"py @ 1.4.34 (pdm.lock)",
+				"pytest @ 3.2.5 (pdm.lock)",
+				"requests @ 2.27.1 (pdm.lock)",
+				"setuptools @ 39.2.0 (pdm.lock)",
+				"urllib3 @ 1.26.20 (pdm.lock)",
+			},
+			expectedRelationships: []string{
+				"certifi @ 2025.1.31 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"chardet @ 3.0.4 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"charset-normalizer @ 2.0.12 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"colorama @ 0.3.9 (pdm.lock) [dependency-of] pytest @ 3.2.5 (pdm.lock)",
+				"idna @ 2.7 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"py @ 1.4.34 (pdm.lock) [dependency-of] pytest @ 3.2.5 (pdm.lock)",
+				"setuptools @ 39.2.0 (pdm.lock) [dependency-of] pytest @ 3.2.5 (pdm.lock)",
+				"urllib3 @ 1.26.20 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, tt.fixture).
+				ExpectsPackageStrings(tt.expectedPackages).
+				ExpectsRelationshipStrings(tt.expectedRelationships).
+				TestCataloger(t, NewPackageCataloger(DefaultCatalogerConfig()))
 		})
 	}
 }

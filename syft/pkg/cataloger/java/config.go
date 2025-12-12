@@ -14,19 +14,19 @@ type ArchiveCatalogerConfig struct {
 	// app-config: java.use-network
 	UseNetwork bool `yaml:"use-network" json:"use-network" mapstructure:"use-network"`
 
-	// UseMavenLocalRepository enables searching the local maven repository (~/.m2/repository by default) for parent POMs and other metadata.
+	// UseMavenLocalRepository enables searching the local maven repository (`~/.m2/repository` by default) for parent POMs and other metadata.
 	// app-config: java.use-maven-local-repository
 	UseMavenLocalRepository bool `yaml:"use-maven-localrepository" json:"use-maven-localrepository" mapstructure:"use-maven-localrepository"`
 
-	// MavenLocalRepositoryDir specifies the location of the local maven repository. When not set, defaults to ~/.m2/repository.
+	// MavenLocalRepositoryDir specifies the location of the local maven repository. When not set, defaults to `~/.m2/repository`.
 	// app-config: java.maven-local-repository-dir
 	MavenLocalRepositoryDir string `yaml:"maven-localrepository-dir" json:"maven-localrepository-dir" mapstructure:"maven-localrepository-dir"`
 
-	// MavenBaseURL specifies the base URL(s) to use for fetching POMs and metadata from maven central or other repositories. When not set, defaults to https://repo1.maven.org/maven2.
+	// MavenBaseURL specifies the base URL(s) to use for fetching POMs and metadata from maven central or other repositories. When not set, defaults to `https://repo1.maven.org/maven2`.
 	// app-config: java.maven-url
 	MavenBaseURL string `yaml:"maven-base-url" json:"maven-base-url" mapstructure:"maven-base-url"`
 
-	// MaxParentRecursiveDepth limits how many parent POMs will be fetched recursively before stopping. This prevents infinite loops or excessively deep parent chains.
+	// MaxParentRecursiveDepth limits how many parent POMs will be fetched recursively before stopping. This prevents fetching excessively deep parent graphs.
 	// app-config: java.max-parent-recursive-depth
 	MaxParentRecursiveDepth int `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
 

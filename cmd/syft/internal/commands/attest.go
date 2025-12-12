@@ -35,6 +35,7 @@ const (
 	attestSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp
 	attestHelp       = attestExample + attestSchemeHelp
 	cosignBinName    = "cosign"
+	jsonFormat       = "json"
 )
 
 type attestOptions struct {
@@ -93,9 +94,7 @@ func defaultAttestOutputOptions() options.Output {
 			string(spdxtagvalue.ID),
 		},
 		Outputs: []string{syftjson.ID.String()},
-		OutputFile: options.OutputFile{ //nolint:staticcheck
-			Enabled: false, // explicitly not allowed
-		},
+		// OutputFile is omitted (defaults to Enabled: false, explicitly not allowed for attestation)
 		Format: options.DefaultFormat(),
 	}
 }
@@ -240,7 +239,7 @@ func predicateType(outputName string) string {
 		return "cyclonedx"
 	case "spdx-tag-value", "spdx-tv":
 		return "spdx"
-	case "spdx-json", "json":
+	case "spdx-json", jsonFormat:
 		return "spdxjson"
 	default:
 		return "custom"
