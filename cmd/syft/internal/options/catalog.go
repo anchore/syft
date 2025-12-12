@@ -53,11 +53,13 @@ type Catalog struct {
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
 
 	// configuration for the source (the subject being analyzed)
-	Registry   registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
-	From       []string       `yaml:"from" json:"from" mapstructure:"from"`
-	Platform   string         `yaml:"platform" json:"platform" mapstructure:"platform"`
-	Source     sourceConfig   `yaml:"source" json:"source" mapstructure:"source"`
-	Exclusions []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	Registry             registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
+	From                 []string       `yaml:"from" json:"from" mapstructure:"from"`
+	Platform             string         `yaml:"platform" json:"platform" mapstructure:"platform"`
+	Source               sourceConfig   `yaml:"source" json:"source" mapstructure:"source"`
+	Exclusions           []string       `yaml:"exclude" json:"exclude" mapstructure:"exclude"`
+	ExcludeFile          string         `yaml:"exclude-file" json:"exclude-file" mapstructure:"exclude-file"`
+	ExcludeGitignoreMode string         `yaml:"exclude-gitignore-mode" json:"exclude-gitignore-mode" mapstructure:"exclude-gitignore-mode"`
 
 	// configuration for inclusion of unknown information within elements
 	Unknowns unknownsConfig `yaml:"unknowns" mapstructure:"unknowns"`
@@ -228,6 +230,12 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringArrayVarP(&cfg.Exclusions, "exclude", "",
 		"exclude paths from being scanned using a glob expression")
+
+	flags.StringVarP(&cfg.ExcludeFile, "exclude-file", "",
+		"file containing glob patterns to exclude (one per line)")
+
+	flags.StringVarP(&cfg.ExcludeGitignoreMode, "exclude-gitignore-mode", "",
+		"read .gitignore and use as exclusions (options: simple)")
 
 	flags.StringArrayVarP(&cfg.Catalogers, "catalogers", "",
 		"enable one or more package catalogers")

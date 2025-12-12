@@ -536,6 +536,259 @@ func Test_DirectorySource_ID(t *testing.T) {
 	}
 }
 
+func Test_DirectorySource_ExcludeFile(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
+	testCases := []struct {
+		desc        string
+		input       string
+		glob        string
+		excludeFile string
+		expected    []string
+		err         bool
+	}{
+		{
+			desc:        "exclude directory via exclude file",
+			input:       "test-fixtures/exclude-file-test",
+			glob:        "**",
+			excludeFile: "test-fixtures/exclude-file-test/excludes.txt",
+			expected: []string{
+				".gitignore",
+				"excludes.txt",
+				"included-dir/file.txt",
+				"root.txt",
+			},
+		},
+		{
+			desc:        "exclude multiple directories via exclude file",
+			input:       "test-fixtures/exclude-patterns-test",
+			glob:        "**",
+			excludeFile: "test-fixtures/exclude-patterns-test/excludes-multi.txt",
+			expected: []string{
+				".gitignore",
+				"README.md",
+				"debug.log",
+				"dot-git/objects/abc",
+				"excludes-globs.txt",
+				"excludes-multi.txt",
+				"src/components/Button.tsx",
+				"src/main.ts",
+			},
+		},
+		{
+			desc:        "exclude with glob patterns in file",
+			input:       "test-fixtures/exclude-patterns-test",
+			glob:        "**",
+			excludeFile: "test-fixtures/exclude-patterns-test/excludes-globs.txt",
+			expected: []string{
+				".gitignore",
+				"README.md",
+				"build/output/app.exe",
+				"dot-git/objects/abc",
+				"excludes-globs.txt",
+				"excludes-multi.txt",
+				"node_modules/pkg/index.js",
+				"src/components/Button.tsx",
+				"src/main.ts",
+				"vendor/lib/util.txt",
+			},
+		},
+		{
+			desc:        "non-existent exclude file",
+			input:       "test-fixtures/exclude-file-test",
+			glob:        "**",
+			excludeFile: "test-fixtures/exclude-file-test/non-existent.txt",
+			err:         true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, err := New(Config{
+				Path: test.input,
+				Exclude: source.ExcludeConfig{
+					ExcludeFile: test.excludeFile,
+				},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, src.Close())
+			})
+
+			if test.err {
+				_, err = src.FileResolver(source.SquashedScope)
+				require.Error(t, err)
+				return
+			}
+
+			res, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			locations, err := res.FilesByGlob(test.glob)
+			require.NoError(t, err)
+
+			var actual []string
+			for _, l := range locations {
+				actual = append(actual, l.RealPath)
+			}
+
+			assert.ElementsMatchf(t, test.expected, actual, "diff \n"+cmp.Diff(test.expected, actual))
+		})
+	}
+}
+
+func Test_DirectorySource_ExcludeGitignoreSimple(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/test-fixtures
+
+	testCases := []struct {
+		desc             string
+		input            string
+		glob             string
+		excludeGitignore string
+		expected         []string
+	}{
+		{
+			desc:             "exclude directory via gitignore simple mode",
+			input:            "test-fixtures/exclude-file-test",
+			glob:             "**",
+			excludeGitignore: "simple",
+			expected: []string{
+				".gitignore",
+				"excludes.txt",
+				"included-dir/file.txt",
+				"root.txt",
+			},
+		},
+		{
+			desc:             "exclude multiple patterns via gitignore simple mode",
+			input:            "test-fixtures/exclude-patterns-test",
+			glob:             "**",
+			excludeGitignore: "simple",
+			expected: []string{
+				".gitignore",
+				"dot-git/objects/abc",
+				"README.md",
+				"excludes-globs.txt",
+				"excludes-multi.txt",
+				"src/components/Button.tsx",
+				"src/main.ts",
+			},
+		},
+		{
+			desc:             "no exclusion without gitignore mode",
+			input:            "test-fixtures/exclude-file-test",
+			glob:             "**",
+			excludeGitignore: "",
+			expected: []string{
+				".gitignore",
+				"excluded-dir/file.txt",
+				"excludes.txt",
+				"included-dir/file.txt",
+				"root.txt",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, err := New(Config{
+				Path: test.input,
+				Exclude: source.ExcludeConfig{
+					ExcludeGitignoreMode: test.excludeGitignore,
+				},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, src.Close())
+			})
+
+			res, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			locations, err := res.FilesByGlob(test.glob)
+			require.NoError(t, err)
+
+			var actual []string
+			for _, l := range locations {
+				actual = append(actual, l.RealPath)
+			}
+
+			assert.ElementsMatchf(t, test.expected, actual, "diff \n"+cmp.Diff(test.expected, actual))
+		})
+	}
+}
+
+func Test_readExcludeFile(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		content  string
+		expected []string
+	}{
+		{
+			desc:     "simple entries",
+			content:  "node_modules\nvendor\n",
+			expected: []string{"**/node_modules", "**/vendor"},
+		},
+		{
+			desc:     "with comments and empty lines",
+			content:  "# comment\nnode_modules\n\nvendor\n",
+			expected: []string{"**/node_modules", "**/vendor"},
+		},
+		{
+			desc:     "already prefixed with ./",
+			content:  "./node_modules\n./vendor\n",
+			expected: []string{"./node_modules", "./vendor"},
+		},
+		{
+			desc:     "with ** prefix",
+			content:  "**/temp\n",
+			expected: []string{"**/temp"},
+		},
+		{
+			desc:     "with */ prefix",
+			content:  "*/temp\n",
+			expected: []string{"*/temp"},
+		},
+		{
+			desc:     "trailing slash adds glob",
+			content:  "node_modules/\n",
+			expected: []string{"**/node_modules/**"},
+		},
+		{
+			desc:     "glob suffix already present",
+			content:  "node_modules/*\n",
+			expected: []string{"**/node_modules/*"},
+		},
+		{
+			desc:     "negation patterns ignored",
+			content:  "!important\nnode_modules\n",
+			expected: []string{"**/node_modules"},
+		},
+		{
+			desc:     "absolute path converted",
+			content:  "/usr/local\n",
+			expected: []string{"./usr/local"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			tmpFile, err := os.CreateTemp("", "exclude-test")
+			require.NoError(t, err)
+			defer os.Remove(tmpFile.Name())
+
+			_, err = tmpFile.WriteString(test.content)
+			require.NoError(t, err)
+			tmpFile.Close()
+
+			result, err := readExcludeFile(tmpFile.Name())
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
 func Test_cleanDirPath(t *testing.T) {
 	testutil.Chdir(t, "..") // run with source/test-fixtures
 
