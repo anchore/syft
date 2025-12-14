@@ -10,18 +10,12 @@ import (
 )
 
 // dotNetBundleSignature is the SHA-256 hash of ".net core bundle" used to identify single-file bundles.
-// this marker is located at the last 32 bytes of a .NET single-file bundle.
 var dotNetBundleSignature = []byte{
 	0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
 	0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
 	0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
 	0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae,
 }
-
-const (
-	// bundleMarkerSize is the size of the bundle marker at the end of a .NET single-file bundle (8 byte offset + 32 byte signature)
-	bundleMarkerSize = 40
-)
 
 // dotNetBundleHeader represents the fixed portion of the bundle header (version 1+)
 type dotNetBundleHeader struct {
