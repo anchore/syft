@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	pomXMLGlob       = "*pom.xml"
+	pomXMLGlob       = "**/*pom.xml"
 	pomCatalogerName = "java-pom-cataloger"
 )
 

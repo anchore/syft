@@ -35,6 +35,7 @@ func parseRockspec(ctx context.Context, resolver file.Resolver, _ *generic.Envir
 	}
 
 	var name, version, license, homepage, description, url string
+	var dependencies map[string]string
 
 	for _, node := range doc.value {
 		switch node.key {
@@ -60,6 +61,16 @@ func parseRockspec(ctx context.Context, resolver file.Resolver, _ *generic.Envir
 					license = strings.ReplaceAll(child.String(), " ", "-")
 				}
 			}
+		case "dependencies":
+			if dependencies == nil {
+				dependencies = make(map[string]string)
+			}
+			for _, child := range node.Slice() {
+				depName, depVersion := parseDependency(child.String())
+				if depName != "" {
+					dependencies[depName] = depVersion
+				}
+			}
 		}
 	}
 
@@ -73,11 +84,34 @@ func parseRockspec(ctx context.Context, resolver file.Resolver, _ *generic.Envir
 			Repository: repository{
 				URL: url,
 			},
-			Homepage:    homepage,
-			Description: description,
+			Homepage:     homepage,
+			Description:  description,
+			Dependencies: dependencies,
 		},
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
 	return []pkg.Package{p}, nil, nil
+}
+
+// parseDependency extracts the package name and version constraint from a dependency string.
+// Examples:
+//   - "lua >= 5.1" -> ("lua", ">= 5.1")
+//   - "lpeg" -> ("lpeg", "")
+//   - "lualogging >= 1.4.0, < 2.0.0" -> ("lualogging", ">= 1.4.0, < 2.0.0")
+func parseDependency(dep string) (name string, version string) {
+	dep = strings.TrimSpace(dep)
+	if dep == "" {
+		return "", ""
+	}
+
+	// Find the first space which separates package name from version constraint
+	parts := strings.SplitN(dep, " ", 2)
+	name = strings.TrimSpace(parts[0])
+
+	if len(parts) == 2 {
+		version = strings.TrimSpace(parts[1])
+	}
+
+	return name, version
 }
