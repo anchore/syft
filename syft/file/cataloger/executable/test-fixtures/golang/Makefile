@@ -19,12 +19,12 @@ tools-check:
 
 tools:
 	@(docker inspect $(TOOL_IMAGE) > /dev/null && make tools-check) || \
-		(docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
+		(docker build --platform=linux/amd64 -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
 
 build: tools
 	@mkdir -p $(BIN)
 	docker run -i -v $(shell pwd)/$(BIN):/out $(TOOL_IMAGE) sh -c \
-		"cp /hello_linux /hello_mac /hello.exe /out/"
+		"cp /hello_linux /hello_mac /hello.exe /hello_linux_cgo /out/"
 
 debug:
 	docker run -it --rm -v $(shell pwd):/mount -w /mount $(TOOL_IMAGE) sh
