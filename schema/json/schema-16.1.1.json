@@ -1169,7 +1169,11 @@
         },
         "osCPE": {
           "type": "string",
-          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)\n\nDeprecated: in Syft 2.0 the struct tag will be corrected to `osCpe` to match the systemd spec casing."
+        },
+        "appCpe": {
+          "type": "string",
+          "description": "AppCpe is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)"
         },
         "os": {
           "type": "string",
@@ -1279,20 +1283,6 @@
         "elfSecurityFeatures": {
           "$ref": "#/$defs/ELFSecurityFeatures",
           "description": "ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF."
-        },
-        "symbolNames": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Symbols captures the selection from the symbol table found in the binary."
-        },
-        "toolchains": {
-          "items": {
-            "$ref": "#/$defs/Toolchain"
-          },
-          "type": "array",
-          "description": "Toolchains captures information about the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable."
         }
       },
       "type": "object",
@@ -4234,27 +4224,6 @@
         "hashes"
       ],
       "description": "TerraformLockProviderEntry represents a single provider entry in a Terraform dependency lock file (.terraform.lock.hcl)."
-    },
-    "Toolchain": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name is the name of the toolchain (e.g., \"gcc\", \"clang\", \"ld\", etc.)."
-        },
-        "version": {
-          "type": "string",
-          "description": "Version is the version of the toolchain."
-        },
-        "kind": {
-          "type": "string",
-          "description": "Kind indicates the type of toolchain (e.g., compiler, linker, runtime)."
-        }
-      },
-      "type": "object",
-      "required": [
-        "name",
-        "kind"
-      ]
     },
     "WordpressPluginEntry": {
       "properties": {
