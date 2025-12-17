@@ -184,7 +184,7 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		relationships = append(relationships, nestedRelationships...)
 	} else {
 		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
-		nestedArchives := j.fileManifest.GlobMatch(true, "*.jar", "*.war")
+		nestedArchives := j.fileManifest.GlobMatch(true, "**/*.jar", "**/*.war")
 		if len(nestedArchives) > 0 {
 			slices.Sort(nestedArchives)
 			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: %v", strings.Join(nestedArchives, ", "))
@@ -252,10 +252,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		return nil, err
 	}
 
-	name, version, lics, parsedPom, err := j.discoverNameVersionLicense(ctx, manifest)
-	if err != nil {
-		return nil, err
-	}
+	name, version, lics, parsedPom := j.discoverNameVersionLicense(ctx, manifest)
 	var pkgPomProject *pkg.JavaPomProject
 	if parsedPom != nil {
 		pkgPomProject = newPomProject(ctx, j.maven, parsedPom.path, parsedPom.project)
@@ -280,7 +277,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 	}, nil
 }
 
-func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, *parsedPomProject, error) {
+func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, *parsedPomProject) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
 	lics := pkg.NewLicensesFromLocationWithContext(ctx, j.location, selectLicenses(manifest)...)
@@ -300,10 +297,7 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 	}
 
 	if len(lics) == 0 {
-		fileLicenses, err := j.getLicenseFromFileInArchive(ctx)
-		if err != nil {
-			return "", "", nil, parsedPom, err
-		}
+		fileLicenses := j.getLicenseFromFileInArchive(ctx)
 		if fileLicenses != nil {
 			lics = append(lics, fileLicenses...)
 		}
@@ -317,7 +311,7 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 		lics = j.findLicenseFromJavaMetadata(ctx, groupID, artifactID, version, parsedPom, manifest)
 	}
 
-	return artifactID, version, lics, parsedPom, nil
+	return artifactID, version, lics, parsedPom
 }
 
 // findLicenseFromJavaMetadata attempts to find license information from all available maven metadata properties and pom info
@@ -562,7 +556,7 @@ func getDigestsFromArchive(ctx context.Context, archivePath string) ([]file.Dige
 	return digests, nil
 }
 
-func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.License, error) {
+func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.License {
 	// prefer identified licenses, fall back to unknown
 	var identified []pkg.License
 	var unidentified []pkg.License
@@ -578,7 +572,8 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 		if len(licenseMatches) > 0 {
 			contents, err := intFile.ContentsFromZip(ctx, j.archivePath, licenseMatches...)
 			if err != nil {
-				return nil, fmt.Errorf("unable to extract java license (%s): %w", j.location, err)
+				log.Debugf("unable to extract java license (%s): %w", j.location, err)
+				continue
 			}
 
 			for _, licenseMatch := range licenseMatches {
@@ -602,10 +597,10 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) ([]pkg.
 	}
 
 	if len(identified) == 0 {
-		return unidentified, nil
+		return unidentified
 	}
 
-	return identified, nil
+	return identified
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
