@@ -246,7 +246,7 @@ func testDocument() *capabilities.Document {
 func Test_catalogerInfoReport(t *testing.T) {
 	tests := []struct {
 		name       string
-		opts       *catalogerCapsOptions
+		opts       *catalogerInfoOptions
 		doc        *capabilities.Document
 		catalogers []capabilities.CatalogerEntry
 		wantErr    require.ErrorAssertionFunc
@@ -254,7 +254,7 @@ func Test_catalogerInfoReport(t *testing.T) {
 	}{
 		{
 			name: "empty catalogers table",
-			opts: &catalogerCapsOptions{Output: "table"},
+			opts: &catalogerInfoOptions{Output: "table"},
 			doc:  testDocument(),
 			assertions: func(t *testing.T, got string) {
 				assert.Contains(t, got, "No catalogers found")
@@ -262,7 +262,7 @@ func Test_catalogerInfoReport(t *testing.T) {
 		},
 		{
 			name: "empty catalogers json",
-			opts: &catalogerCapsOptions{Output: "json"},
+			opts: &catalogerInfoOptions{Output: "json"},
 			doc:  testDocument(),
 			assertions: func(t *testing.T, got string) {
 				assert.Contains(t, got, `"catalogers":null`)
@@ -270,7 +270,7 @@ func Test_catalogerInfoReport(t *testing.T) {
 		},
 		{
 			name: "single cataloger table output",
-			opts: &catalogerCapsOptions{Output: "table"},
+			opts: &catalogerInfoOptions{Output: "table"},
 			doc:  testDocument(),
 			catalogers: []capabilities.CatalogerEntry{
 				{
@@ -290,7 +290,7 @@ func Test_catalogerInfoReport(t *testing.T) {
 		},
 		{
 			name: "single cataloger json output",
-			opts: &catalogerCapsOptions{Output: "json"},
+			opts: &catalogerInfoOptions{Output: "json"},
 			doc:  testDocument(),
 			catalogers: []capabilities.CatalogerEntry{
 				{
@@ -308,7 +308,7 @@ func Test_catalogerInfoReport(t *testing.T) {
 		},
 		{
 			name: "deprecated cataloger json output",
-			opts: &catalogerCapsOptions{Output: "json"},
+			opts: &catalogerInfoOptions{Output: "json"},
 			doc:  testDocument(),
 			catalogers: []capabilities.CatalogerEntry{
 				{
@@ -324,7 +324,7 @@ func Test_catalogerInfoReport(t *testing.T) {
 		},
 		{
 			name:    "invalid output format",
-			opts:    &catalogerCapsOptions{Output: "invalid"},
+			opts:    &catalogerInfoOptions{Output: "invalid"},
 			doc:     testDocument(),
 			wantErr: require.Error,
 		},

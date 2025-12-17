@@ -74,13 +74,13 @@ type (
 	}
 )
 
-type catalogerCapsOptions struct {
+type catalogerInfoOptions struct {
 	Output                     string `yaml:"output" json:"output" mapstructure:"output"`
 	options.CatalogerSelection `yaml:",inline" json:",inline" mapstructure:",squash"`
 	Names                      []string // cataloger names from args
 }
 
-func (o *catalogerCapsOptions) setNames(args []string) error {
+func (o *catalogerInfoOptions) setNames(args []string) error {
 	o.Names = args
 
 	usingLegacyCatalogers := len(o.Catalogers) > 0
@@ -123,12 +123,12 @@ func (o *catalogerCapsOptions) setNames(args []string) error {
 	return nil
 }
 
-func (o *catalogerCapsOptions) AddFlags(flags clio.FlagSet) {
+func (o *catalogerInfoOptions) AddFlags(flags clio.FlagSet) {
 	flags.StringVarP(&o.Output, "output", "o", "format to output the cataloger info (available: table, json)")
 }
 
-func defaultCatalogerCapsOptions() *catalogerCapsOptions {
-	return &catalogerCapsOptions{
+func defaultCatalogerCapsOptions() *catalogerInfoOptions {
+	return &catalogerInfoOptions{
 		CatalogerSelection: options.CatalogerSelection{
 			// this is different than the default behavior where a scan will automatically detect the default set
 			DefaultCatalogers: []string{"all"},
@@ -140,8 +140,7 @@ func CatalogerCaps(app clio.Application) *cobra.Command {
 	opts := defaultCatalogerCapsOptions()
 
 	return app.SetupCommand(&cobra.Command{
-		Use:     "caps [OPTIONS] [CATALOGER_NAMES...]",
-		Aliases: []string{"capabilities"},
+		Use:     "info [OPTIONS] [CATALOGER_NAMES...]",
 		Short:   "Show detailed capabilities of catalogers",
 		Args:    cobra.ArbitraryArgs,
 		PreRunE: disableUI(app, os.Stdout),
@@ -150,12 +149,12 @@ func CatalogerCaps(app clio.Application) *cobra.Command {
 				return err
 			}
 
-			return runCatalogerCaps(opts)
+			return runCatalogerInfo(opts)
 		},
 	}, opts)
 }
 
-func runCatalogerCaps(opts *catalogerCapsOptions) error {
+func runCatalogerInfo(opts *catalogerInfoOptions) error {
 	doc, err := capabilities.LoadDocument()
 	if err != nil {
 		return fmt.Errorf("unable to load cataloger capabilities: %w", err)
@@ -193,7 +192,7 @@ func filterCatalogersByName(catalogers []capabilities.CatalogerEntry, names []st
 	return filtered
 }
 
-func catalogerInfoReport(opts *catalogerCapsOptions, doc *capabilities.Document, catalogers []capabilities.CatalogerEntry) (string, error) {
+func catalogerInfoReport(opts *catalogerInfoOptions, doc *capabilities.Document, catalogers []capabilities.CatalogerEntry) (string, error) {
 	switch opts.Output {
 	case jsonFormat:
 		return renderCatalogerInfoJSON(doc, catalogers)

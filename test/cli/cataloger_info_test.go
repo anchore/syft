@@ -28,7 +28,7 @@ func TestCatalogerCapsExperimentalFeatureGate(t *testing.T) {
 		},
 		{
 			name: "cataloger caps command shows help without env var",
-			args: []string{"cataloger", "caps"},
+			args: []string{"cataloger", "info"},
 			assertions: []traitAssertion{
 				// when the subcommand is not registered, the parent help is shown
 				assertNotInOutput(capsTableHeader),
@@ -50,7 +50,7 @@ func TestCatalogerCapsExperimentalFeatureGate(t *testing.T) {
 		},
 		{
 			name: "cataloger caps command shows help with env var false",
-			args: []string{"cataloger", "caps"},
+			args: []string{"cataloger", "info"},
 			env: map[string]string{
 				"SYFT_EXP_CAPABILITIES": "false",
 			},
@@ -75,7 +75,7 @@ func TestCatalogerCapsExperimentalFeatureGate(t *testing.T) {
 		},
 		{
 			name: "cataloger caps command shows capabilities table with env var true",
-			args: []string{"cataloger", "caps"},
+			args: []string{"cataloger", "info"},
 			env: map[string]string{
 				"SYFT_EXP_CAPABILITIES": "true",
 			},
