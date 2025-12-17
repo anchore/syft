@@ -950,7 +950,7 @@ func Test_UnindexedDirectoryResolver_FileContentsByLocation(t *testing.T) {
 		},
 		{
 			name:     "error on empty file reference",
-			location: file.NewLocationFromDirectory("doesn't matter", stereoscopeFile.Reference{}),
+			location: file.NewLocationFromDirectory("doesn't matter", "", stereoscopeFile.Reference{}),
 			err:      true,
 		},
 	}

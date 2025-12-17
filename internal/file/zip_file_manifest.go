@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/mholt/archives"
 	"github.com/scylladb/go-set/strset"
 
@@ -44,12 +45,17 @@ func (z ZipFileManifest) Add(entry string, info os.FileInfo) {
 	z[entry] = info
 }
 
-// GlobMatch returns the path keys that match the given value(s).
+// GlobMatch returns the path keys to files (not directories) that match the given value(s).
 func (z ZipFileManifest) GlobMatch(caseInsensitive bool, patterns ...string) []string {
 	uniqueMatches := strset.New()
 
 	for _, pattern := range patterns {
 		for entry := range z {
+			fileInfo := z[entry]
+			if fileInfo != nil && fileInfo.IsDir() {
+				continue
+			}
+
 			// We want to match globs as if entries begin with a leading slash (akin to an absolute path)
 			// so that glob logic is consistent inside and outside of ZIP archives
 			normalizedEntry := normalizeZipEntryName(caseInsensitive, entry)
@@ -57,7 +63,13 @@ func (z ZipFileManifest) GlobMatch(caseInsensitive bool, patterns ...string) []s
 			if caseInsensitive {
 				pattern = strings.ToLower(pattern)
 			}
-			if GlobMatch(pattern, normalizedEntry) {
+
+			matches, err := doublestar.Match(pattern, normalizedEntry)
+			if err != nil {
+				log.Debugf("error with match pattern '%s', including by default: %v", pattern, err)
+				matches = true
+			}
+			if matches {
 				uniqueMatches.Add(entry)
 			}
 		}

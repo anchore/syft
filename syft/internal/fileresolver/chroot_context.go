@@ -14,10 +14,11 @@ import (
 // the user given root, the base path (if any) to consider as the root, and the current working directory.
 // Note: this only works on a real filesystem, not on a virtual filesystem (such as a stereoscope filetree).
 type ChrootContext struct {
-	root              string
-	base              string
-	cwd               string
-	cwdRelativeToRoot string
+	root               string
+	rootRelativeToBase string
+	base               string
+	cwd                string
+	cwdRelativeToRoot  string
 }
 
 func NewChrootContextFromCWD(root, base string) (*ChrootContext, error) {
@@ -40,10 +41,26 @@ func NewChrootContext(root, base, cwd string) (*ChrootContext, error) {
 		return nil, err
 	}
 
+	// we need to track the relative path from root to base (if set) so that request paths can un-apply the base path
+	// changes from any incoming requests.
+	var rootRelativeToBase string
+	if cleanBase != cleanRoot && cleanBase != "" {
+		absRoot := cleanRoot
+		if !filepath.IsAbs(cleanRoot) {
+			absRoot = filepath.Join(cwd, cleanRoot)
+		}
+
+		rootRelativeToBase, err = filepath.Rel(absRoot, cleanBase) // validate that base is within root
+		if err != nil {
+			return nil, fmt.Errorf("base path %q is not within root path %q: %w", cleanBase, cleanRoot, err)
+		}
+	}
+
 	chroot := &ChrootContext{
-		root: cleanRoot,
-		base: cleanBase,
-		cwd:  cwd,
+		root:               cleanRoot,
+		rootRelativeToBase: rootRelativeToBase,
+		base:               cleanBase,
+		cwd:                cwd,
 	}
 
 	return chroot, chroot.ChangeDirectory(cwd)
@@ -125,8 +142,8 @@ func (r ChrootContext) ToNativePath(chrootPath string) (string, error) {
 	responsePath := chrootPath
 
 	if filepath.IsAbs(responsePath) {
-		// don't allow input to potentially hop above root path
-		responsePath = path.Join(r.root, responsePath)
+		// don't allow input to potentially hop above root path (and still un-apply any base paths)
+		responsePath = path.Join(r.root, r.rootRelativeToBase, responsePath)
 	} else {
 		// ensure we take into account any relative difference between the root path and the CWD for relative requests
 		responsePath = path.Join(r.cwdRelativeToRoot, responsePath)

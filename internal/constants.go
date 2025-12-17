@@ -7,5 +7,6 @@ const (
 
 	// Changelog
 	// 16.1.0 - reformulated the python pdm fields (added "URL" and removed the unused "path" field).
+	// 16.1.1 - correct elf package osCpe field according to the document of systemd (also add appCpe field)
 
 )
