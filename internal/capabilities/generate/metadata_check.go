@@ -1,4 +1,4 @@
-// this file validates that all known metadata and package types are documented in packages/*.yaml by checking coverage and reporting any missing types.
+// this file validates that all known metadata and package types are documented in cataloger/*/capabilities.yaml by checking coverage and reporting any missing types.
 package main
 
 import (
@@ -19,12 +19,12 @@ var (
 	warningStyleMeta = lipgloss.NewStyle().Foreground(lipgloss.Color("11")).Bold(true) // yellow
 	dimStyleMeta     = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))           // lighter grey (256-color)
 
-	// exceptions for metadata types that are intentionally not referenced in packages/*.yaml
+	// exceptions for metadata types that are intentionally not referenced in cataloger/*/capabilities.yaml
 	metadataTypeExceptions = map[string]bool{
 		"pkg.MicrosoftKbPatch": true,
 	}
 
-	// exceptions for package types that are intentionally not referenced in packages/*.yaml
+	// exceptions for package types that are intentionally not referenced in cataloger/*/capabilities.yaml
 	packageTypeExceptions = map[string]bool{
 		"jenkins-plugin": true,
 		"msrc-kb":        true,
@@ -132,7 +132,7 @@ func collectReferencedMetadataTypes(doc *capabilities.Document) []string {
 }
 
 // checkMetadataTypeCoverage compares metadata types from packagemetadata/generated.go
-// with types referenced in packages/*.yaml and returns unreferenced types
+// with types referenced in cataloger/*/capabilities.yaml and returns unreferenced types
 func checkMetadataTypeCoverage(capabilitiesDir string, repoRoot string) ([]string, error) {
 	// parse packagemetadata/generated.go to get all types
 	allTypes, err := parsePackageMetadataTypes(repoRoot)
@@ -166,7 +166,7 @@ func checkMetadataTypeCoverage(capabilitiesDir string, repoRoot string) ([]strin
 }
 
 // printMetadataTypeCoverageWarning prints a warning if there are metadata types
-// from packagemetadata/generated.go that aren't referenced in packages/*.yaml
+// from packagemetadata/generated.go that aren't referenced in cataloger/*/capabilities.yaml
 func printMetadataTypeCoverageWarning(capabilitiesDir string, repoRoot string) {
 	unreferenced, err := checkMetadataTypeCoverage(capabilitiesDir, repoRoot)
 	if err != nil {
@@ -177,7 +177,7 @@ func printMetadataTypeCoverageWarning(capabilitiesDir string, repoRoot string) {
 
 	if len(unreferenced) > 0 {
 		fmt.Println()
-		fmt.Printf("%s %s metadata types from packagemetadata are not referenced in packages/*.yaml:\n",
+		fmt.Printf("%s %s metadata types from packagemetadata are not referenced in cataloger/*/capabilities.yaml:\n",
 			warningStyleMeta.Render("⚠ INFO:"),
 			warningStyleMeta.Render(fmt.Sprintf("%d", len(unreferenced))))
 		for _, typeName := range unreferenced {
@@ -314,7 +314,7 @@ func collectReferencedPackageTypes(doc *capabilities.Document) []string {
 }
 
 // checkPackageTypeCoverage compares package types from pkg.AllPkgs
-// with types referenced in packages/*.yaml and returns unreferenced types
+// with types referenced in cataloger/*/capabilities.yaml and returns unreferenced types
 func checkPackageTypeCoverage(capabilitiesDir string, repoRoot string) ([]string, error) {
 	// parse pkg/type.go to get all package types
 	allTypes, err := parseAllPackageTypes(repoRoot)
@@ -348,7 +348,7 @@ func checkPackageTypeCoverage(capabilitiesDir string, repoRoot string) ([]string
 }
 
 // printPackageTypeCoverageWarning prints a warning if there are package types
-// from pkg.AllPkgs that aren't referenced in packages/*.yaml
+// from pkg.AllPkgs that aren't referenced in cataloger/*/capabilities.yaml
 func printPackageTypeCoverageWarning(capabilitiesDir string, repoRoot string) {
 	unreferenced, err := checkPackageTypeCoverage(capabilitiesDir, repoRoot)
 	if err != nil {
@@ -359,14 +359,14 @@ func printPackageTypeCoverageWarning(capabilitiesDir string, repoRoot string) {
 
 	if len(unreferenced) > 0 {
 		fmt.Println()
-		fmt.Printf("%s %s package types from pkg.AllPkgs are not referenced in packages/*.yaml:\n",
+		fmt.Printf("%s %s package types from pkg.AllPkgs are not referenced in cataloger/*/capabilities.yaml:\n",
 			warningStyleMeta.Render("⚠ WARNING:"),
 			warningStyleMeta.Render(fmt.Sprintf("%d", len(unreferenced))))
 		for _, typeName := range unreferenced {
 			fmt.Printf("  - %s\n", dimStyleMeta.Render(typeName))
 		}
 		fmt.Println()
-		fmt.Println(dimStyleMeta.Render("These package types should be documented in packages/*.yaml."))
+		fmt.Println(dimStyleMeta.Render("These package types should be documented in cataloger/*/capabilities.yaml."))
 		fmt.Println(dimStyleMeta.Render("If a package type is not emitted by any cataloger, it may be deprecated or unused."))
 	}
 }

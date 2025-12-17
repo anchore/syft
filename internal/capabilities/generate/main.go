@@ -1,4 +1,4 @@
-// this is the entry point for regenerating the packages/*.yaml files, which orchestrates discovery, merging, and validation of cataloger capabilities.
+// this is the entry point for regenerating the cataloger/*/capabilities.yaml files, which orchestrates discovery, merging, and validation of cataloger capabilities.
 package main
 
 import (
@@ -26,19 +26,19 @@ func main() {
 		log.Fatalf("failed to find repo root: %v", err)
 	}
 
-	capabilitiesDir := filepath.Join(repoRoot, "internal/capabilities")
+	catalogerDir := filepath.Join(repoRoot, "syft/pkg/cataloger")
 
 	fmt.Println("Regenerating capabilities files...")
 	fmt.Println()
-	stats, err := RegenerateCapabilities(capabilitiesDir, repoRoot)
+	stats, err := RegenerateCapabilities(catalogerDir, repoRoot)
 	if err != nil {
 		log.Fatalf("failed to regenerate capabilities: %v", err)
 	}
 
 	printSummary(stats)
-	checkIncompleteCapabilities(capabilitiesDir)
-	printMetadataTypeCoverageWarning(capabilitiesDir, repoRoot)
-	printPackageTypeCoverageWarning(capabilitiesDir, repoRoot)
+	checkIncompleteCapabilities(catalogerDir)
+	printMetadataTypeCoverageWarning(catalogerDir, repoRoot)
+	printPackageTypeCoverageWarning(catalogerDir, repoRoot)
 }
 
 func printSummary(stats *Statistics) {

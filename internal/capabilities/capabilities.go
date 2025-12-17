@@ -19,11 +19,18 @@ import (
 //go:embed appconfig.yaml
 var appconfigYAML []byte
 
-//go:embed packages/*.yaml
-var catalogerFiles embed.FS
+var catalogerFiles *embed.FS
+
+func RegisterCatalogerFiles(f embed.FS) {
+	catalogerFiles = &f
+}
 
 // LoadDocument loads and returns the complete document including configs and app-configs
 func LoadDocument() (*Document, error) {
+	if catalogerFiles == nil {
+		return nil, fmt.Errorf("cataloger files not registered")
+	}
+	
 	// parse application config
 	var appDoc struct {
 		Application []ApplicationConfigField `yaml:"application"`

@@ -15,7 +15,7 @@ func TestLoadDocument(t *testing.T) {
 	// validate application config is loaded
 	assert.NotEmpty(t, doc.ApplicationConfig, "should have application config")
 
-	// validate catalogers are loaded and merged from all packages/*.yaml files
+	// validate catalogers are loaded and merged from all cataloger/*/capabilities.yaml files
 	assert.NotEmpty(t, doc.Catalogers, "should have catalogers")
 	assert.Greater(t, len(doc.Catalogers), 50, "should have at least 50 catalogers")
 

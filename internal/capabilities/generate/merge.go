@@ -1,4 +1,4 @@
-// this file contains the core merging logic that combines discovered cataloger data with existing packages/*.yaml files, preserving all manual sections while updating auto-generated fields.
+// this file contains the core merging logic that combines discovered cataloger data with existing cataloger/*/capabilities.yaml files, preserving all manual sections while updating auto-generated fields.
 package main
 
 import (
@@ -131,7 +131,7 @@ type Statistics struct {
 // RegenerateCapabilities updates the distributed YAML files with discovered catalogers
 // while preserving manually-edited capability information.
 // This is exported for use by the generator in generate/main.go
-func RegenerateCapabilities(capabilitiesDir string, repoRoot string) (*Statistics, error) {
+func RegenerateCapabilities(catalogerDir string, repoRoot string) (*Statistics, error) {
 	stats := &Statistics{}
 
 	// 1-2. Discover all cataloger data
@@ -142,7 +142,7 @@ func RegenerateCapabilities(capabilitiesDir string, repoRoot string) (*Statistic
 
 	// 3. Load existing YAML files - now returns both document and node trees
 	fmt.Print("  → Loading existing capabilities files...")
-	existing, existingNodes, err := loadCapabilities(capabilitiesDir)
+	existing, existingNodes, err := loadCapabilities(catalogerDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load existing capabilities: %w", err)
 	}
@@ -193,7 +193,7 @@ func RegenerateCapabilities(capabilitiesDir string, repoRoot string) (*Statistic
 
 	// 6. Write back to YAML files with comments, preserving existing node trees
 	fmt.Print("  → Writing updated capabilities files...")
-	if err := saveCapabilities(capabilitiesDir, updated, existingNodes); err != nil {
+	if err := saveCapabilities(catalogerDir, updated, existingNodes); err != nil {
 		return nil, fmt.Errorf("failed to save capabilities: %w", err)
 	}
 	fmt.Println(" done")

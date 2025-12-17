@@ -1,4 +1,4 @@
-// this file verifies the claims made in packages/*.yaml against test observations and source code, ensuring cataloger capabilities are accurate and complete.
+// this file verifies the claims made in cataloger/*/capabilities.yaml against test observations and source code, ensuring cataloger capabilities are accurate and complete.
 package main
 
 import (
@@ -26,6 +26,9 @@ import (
 // - true: fail test if any parser is missing observations (strict mode)
 // - false: only check custom catalogers, skip parser checks (lenient mode, not all parsers are observable)
 const requireParserObservations = false
+
+// capabilitiesYamlRoot is the path relative to the root of the repo to the capabilities YAML files
+const capabilitiesYamlRoot = "syft/pkg/cataloger/"
 
 // metadataTypeCoverageExceptions lists metadata types that are allowed to not be represented in any cataloger
 var metadataTypeCoverageExceptions = strset.New(
@@ -72,7 +75,7 @@ func checkTestsEnabled(t *testing.T) {
 	}
 }
 
-// TestCatalogersInSync ensures that all catalogers from the syft binary are documented in packages/*.yaml
+// TestCatalogersInSync ensures that all catalogers from the syft binary are documented in cataloger/*/capabilities.yaml
 // and vice versa, and that all capability fields are properly filled without TODOs or null values.
 func TestCatalogersInSync(t *testing.T) {
 	checkTestsEnabled(t)
@@ -304,7 +307,7 @@ func TestCatalogerStructure(t *testing.T) {
 	}
 }
 
-// TestCatalogerDataQuality checks for data integrity issues in packages/*.yaml, including duplicate cataloger
+// TestCatalogerDataQuality checks for data integrity issues in cataloger/*/capabilities.yaml, including duplicate cataloger
 // names, duplicate parser functions within catalogers, and validates that detector definitions are well-formed.
 func TestCatalogerDataQuality(t *testing.T) {
 	checkTestsEnabled(t)
@@ -384,7 +387,7 @@ func TestCatalogerDataQuality(t *testing.T) {
 	})
 }
 
-// TestCapabilitiesAreUpToDate verifies that packages/*.yaml files are up to date by running regeneration and checking
+// TestCapabilitiesAreUpToDate verifies that cataloger/*/capabilities.yaml files are up to date by running regeneration and checking
 // for uncommitted changes. This test only runs in CI to catch cases where code changed but capabilities weren't regenerated.
 func TestCapabilitiesAreUpToDate(t *testing.T) {
 	checkTestsEnabled(t)
@@ -407,7 +410,7 @@ func TestCapabilitiesAreUpToDate(t *testing.T) {
 	cmd := exec.Command("git", "diff", "--exit-code", packagesDir)
 	cmd.Dir = repoRoot
 	err = cmd.Run()
-	require.NoError(t, err, "packages/*.yaml files have uncommitted changes after regeneration. Run 'go generate ./internal/capabilities' locally and commit the changes.")
+	require.NoError(t, err, "cataloger/*/capabilities.yaml files have uncommitted changes after regeneration. Run 'go generate ./internal/capabilities' locally and commit the changes.")
 }
 
 // TestCatalogersHaveTestObservations ensures that all custom catalogers (and optionally parsers) have
@@ -520,7 +523,7 @@ func TestCatalogersHaveTestObservations(t *testing.T) {
 	}
 }
 
-// TestConfigCompleteness validates the integrity of config references in packages/*.yaml, ensuring that all
+// TestConfigCompleteness validates the integrity of config references in cataloger/*/capabilities.yaml, ensuring that all
 // configs in the configs section are referenced by at least one cataloger, all cataloger config references exist,
 // and all app-key references in config fields exist in the application section.
 func TestConfigCompleteness(t *testing.T) {
@@ -529,7 +532,7 @@ func TestConfigCompleteness(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
-	// load the packages/*.yaml files
+	// load the cataloger/*/capabilities.yaml files
 	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities"))
 	require.NoError(t, err)
 
@@ -636,7 +639,7 @@ func TestCapabilityConfigFieldReferences(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages"))
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
 	require.NoError(t, err)
 
 	// collect all validation errors before failing
@@ -757,7 +760,7 @@ func TestCapabilityFieldNaming(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages"))
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
 	require.NoError(t, err)
 
 	// define known capability field paths
@@ -818,7 +821,7 @@ func TestCapabilityValueTypes(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages"))
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
 	require.NoError(t, err)
 
 	// collect all validation errors
@@ -938,7 +941,7 @@ func TestMetadataTypesHaveJSONSchemaTypes(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages"))
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
 	require.NoError(t, err)
 
 	// collect all validation errors
@@ -1255,8 +1258,8 @@ func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
-	// load the packages/*.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages"))
+	// load the cataloger/*/capabilities.yaml
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
 	require.NoError(t, err)
 
 	// collect all evidence field references
@@ -1334,8 +1337,8 @@ func TestDetectorConfigFieldReferences(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
-	// load the packages/*.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities/packages"))
+	// load the cataloger/*/capabilities.yaml
+	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
 	require.NoError(t, err)
 
 	// collect all validation errors before failing
