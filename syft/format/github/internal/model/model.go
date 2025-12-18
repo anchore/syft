@@ -1,12 +1,13 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/anchore/archiver/v3"
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -87,6 +88,9 @@ func toGithubManifests(s *sbom.SBOM) Manifests {
 		}
 
 		name := dependencyName(p)
+		if name == "" || p.PURL == "" {
+			continue
+		}
 		manifest.Resolved[name] = DependencyNode{
 			PackageURL:   p.PURL,
 			Metadata:     toDependencyMetadata(p),
@@ -150,8 +154,8 @@ func trimRelative(s string) string {
 
 // isArchive returns true if the path appears to be an archive
 func isArchive(path string) bool {
-	_, err := archiver.ByExtension(path)
-	return err == nil
+	format, _, err := file.IdentifyArchive(context.Background(), path, nil)
+	return err == nil && format != nil
 }
 
 func toDependencies(s *sbom.SBOM, p pkg.Package) (out []string) {

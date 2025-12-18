@@ -1,5 +1,9 @@
 
 version: "3"
+
+includes:
+  generate:cpe-index: ./task.d/generate/cpe-index.yaml
+
 vars:
   OWNER: anchore
   PROJECT: syft
@@ -502,7 +506,7 @@ tasks:
   generate-json-schema:
     desc: Generate a new JSON schema
     cmds:
-      - "cd syft/internal && go generate . && cd jsonschema && go run . && go fmt ../..."
+      - "cd ./internal && go generate . && cd ./jsonschema && go run . && go fmt ../..."
 
   generate-license-list:
     desc: Generate an updated license processing code off of the latest available SPDX license list
@@ -511,10 +515,11 @@ tasks:
       - "gofmt -s -w ./internal/spdxlicense"
 
   generate-cpe-dictionary-index:
-    desc: Generate the CPE index based off of the latest available CPE dictionary
-    dir: "syft/pkg/cataloger/internal/cpegenerate/dictionary"
+    desc: Generate the CPE index from local cache
     cmds:
-      - "go generate"
+      - task: generate:cpe-index:cache:pull
+      - task: generate:cpe-index:cache:update
+      - task: generate:cpe-index:build
 
 
   ## Build-related targets #################################

@@ -663,6 +663,26 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/ffmpeg@version"),
 			CPEs:    singleCPE("cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "elixir-binary",
+			FileGlob: "**/elixir",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "elixir",
+			PURL:    mustPURL("pkg:generic/elixir@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "elixir-library",
+			FileGlob: "**/elixir/ebin/elixir.app",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?)"\}`),
+			Package: "elixir",
+			PURL:    mustPURL("pkg:generic/elixir@version"),
+			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

@@ -10,13 +10,31 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
+	cataloger "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
 // Backfill takes all information present in the package and attempts to fill in any missing information
-// from any available sources, such as the Metadata and PURL.
+// from any available sources, such as the Metadata, PURL, or CPEs.
 //
 // Backfill does not call p.SetID(), but this needs to be called later to ensure it's up to date
 func Backfill(p *pkg.Package) {
+	backfillFromPurl(p)
+	backfillFromCPE(p)
+}
+
+func backfillFromCPE(p *pkg.Package) {
+	if len(p.CPEs) == 0 {
+		return
+	}
+
+	c := p.CPEs[0]
+
+	if p.Type == "" {
+		p.Type = cataloger.TargetSoftwareToPackageType(c.Attributes.TargetSW)
+	}
+}
+
+func backfillFromPurl(p *pkg.Package) {
 	if p.PURL == "" {
 		return
 	}
@@ -29,6 +47,7 @@ func Backfill(p *pkg.Package) {
 
 	var cpes []cpe.CPE
 	epoch := ""
+	rpmmod := ""
 
 	for _, qualifier := range purl.Qualifiers {
 		switch qualifier.Key {
@@ -44,6 +63,8 @@ func Backfill(p *pkg.Package) {
 			}
 		case pkg.PURLQualifierEpoch:
 			epoch = qualifier.Value
+		case pkg.PURLQualifierRpmModularity:
+			rpmmod = qualifier.Value
 		}
 	}
 
@@ -63,6 +84,10 @@ func Backfill(p *pkg.Package) {
 		setJavaMetadataFromPurl(p, purl)
 	}
 
+	if p.Type == pkg.RpmPkg {
+		setRpmMetadataFromPurl(p, rpmmod)
+	}
+
 	for _, c := range cpes {
 		if slices.Contains(p.CPEs, c) {
 			continue
@@ -79,6 +104,35 @@ func setJavaMetadataFromPurl(p *pkg.Package, _ packageurl.PackageURL) {
 		// since we don't know if the purl elements directly came from pom properties or the manifest,
 		// we can only go as far as to set the type to JavaArchive, but not fill in the group id and artifact id
 		p.Metadata = pkg.JavaArchive{}
+	}
+}
+
+func setRpmMetadataFromPurl(p *pkg.Package, rpmmod string) {
+	if p.Type != pkg.RpmPkg {
+		return
+	}
+	if rpmmod == "" {
+		return
+	}
+
+	if p.Metadata == nil {
+		p.Metadata = pkg.RpmDBEntry{
+			ModularityLabel: &rpmmod,
+		}
+		return
+	}
+
+	switch m := p.Metadata.(type) {
+	case pkg.RpmDBEntry:
+		if m.ModularityLabel == nil {
+			m.ModularityLabel = &rpmmod
+			p.Metadata = m
+		}
+	case pkg.RpmArchive:
+		if m.ModularityLabel == nil {
+			m.ModularityLabel = &rpmmod
+			p.Metadata = m
+		}
 	}
 }
 

@@ -79,6 +79,98 @@ func TestCatalog_PostLoad(t *testing.T) {
 	}
 }
 
+func TestFlatten(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "preserves order of comma-separated values",
+			input:    []string{"registry,docker,oci-dir"},
+			expected: []string{"registry", "docker", "oci-dir"},
+		},
+		{
+			name:     "preserves order across multiple entries",
+			input:    []string{"registry,docker", "oci-dir"},
+			expected: []string{"registry", "docker", "oci-dir"},
+		},
+		{
+			name:     "trims whitespace",
+			input:    []string{"  registry  ,  docker  ", "  oci-dir  "},
+			expected: []string{"registry", "docker", "oci-dir"},
+		},
+		{
+			name:     "handles single value",
+			input:    []string{"registry"},
+			expected: []string{"registry"},
+		},
+		{
+			name:     "handles empty input",
+			input:    []string{},
+			expected: nil,
+		},
+		{
+			name:     "preserves reverse alphabetical order",
+			input:    []string{"zebra,yankee,xray"},
+			expected: []string{"zebra", "yankee", "xray"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Flatten(tt.input)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestFlattenAndSort(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "sorts comma-separated values",
+			input:    []string{"registry,docker,oci-dir"},
+			expected: []string{"docker", "oci-dir", "registry"},
+		},
+		{
+			name:     "sorts across multiple entries",
+			input:    []string{"registry,docker", "oci-dir"},
+			expected: []string{"docker", "oci-dir", "registry"},
+		},
+		{
+			name:     "trims whitespace and sorts",
+			input:    []string{"  registry  ,  docker  ", "  oci-dir  "},
+			expected: []string{"docker", "oci-dir", "registry"},
+		},
+		{
+			name:     "handles single value",
+			input:    []string{"registry"},
+			expected: []string{"registry"},
+		},
+		{
+			name:     "handles empty input",
+			input:    []string{},
+			expected: nil,
+		},
+		{
+			name:     "sorts reverse alphabetical order",
+			input:    []string{"zebra,yankee,xray"},
+			expected: []string{"xray", "yankee", "zebra"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FlattenAndSort(tt.input)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
 func Test_enrichmentEnabled(t *testing.T) {
 	tests := []struct {
 		directives string
@@ -139,7 +231,7 @@ func Test_enrichmentEnabled(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.directives, func(t *testing.T) {
-			got := enrichmentEnabled(Flatten([]string{test.directives}), test.test)
+			got := enrichmentEnabled(FlattenAndSort([]string{test.directives}), test.test)
 			assert.Equal(t, test.expected, got)
 		})
 	}

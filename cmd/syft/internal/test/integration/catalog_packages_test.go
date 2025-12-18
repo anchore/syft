@@ -25,7 +25,6 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	// get the source object for the image
 	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 	require.NoError(b, err)
-
 	b.Cleanup(func() {
 		require.NoError(b, theSource.Close())
 	})
@@ -88,6 +87,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.TerraformPkg))
 	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // we have coverage for pear instead
 	definedPkgs.Remove(string(pkg.CondaPkg))
+	definedPkgs.Remove(string(pkg.ModelPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -162,6 +162,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.CondaPkg))
 	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // this is covered as pear packages
+	definedPkgs.Remove(string(pkg.ModelPkg))
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))

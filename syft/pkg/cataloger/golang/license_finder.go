@@ -4,18 +4,20 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/afero"
 
+	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 // resolveModuleLicenses finds and parses license files for Go modules
-func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo, fs afero.Fs) pkg.LicenseSet {
-	licenses := pkg.NewLicenseSet()
+func resolveModuleLicenses(ctx context.Context, scanRoot string, pkgInfos []pkgInfo, fs afero.Fs) pkg.LicenseSet {
+	out := pkg.NewLicenseSet()
 
 	for _, info := range pkgInfos {
 		modDir, pkgDir, err := getAbsolutePkgPaths(info)
@@ -23,22 +25,32 @@ func resolveModuleLicenses(ctx context.Context, pkgInfos []pkgInfo, fs afero.Fs)
 			continue
 		}
 
-		licenseFiles, err := findAllLicenseCandidatesUpwards(pkgDir, licenseRegexp, modDir, fs)
+		licenseFiles, err := findAllLicenseCandidatesUpwards(pkgDir, modDir, fs)
 		if err != nil {
 			continue
 		}
 
 		for _, f := range licenseFiles {
-			contents, err := fs.Open(f)
-			if err != nil {
-				continue
-			}
-			licenses.Add(pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(file.Location{}, contents))...)
-			_ = contents.Close()
+			out.Add(readLicenses(ctx, scanRoot, fs, f)...)
 		}
 	}
 
-	return licenses
+	return out
+}
+
+func readLicenses(ctx context.Context, scanRoot string, fs afero.Fs, f string) []pkg.License {
+	contents, err := fs.Open(f)
+	if err != nil {
+		log.WithFields("file", f, "error", err).Debug("unable to read license file")
+		return nil
+	}
+	defer internal.CloseAndLogError(contents, f)
+	location := file.Location{}
+	if scanRoot != "" && strings.HasPrefix(f, scanRoot) {
+		// include location when licenses are found within the scan target
+		location = file.NewLocation(strings.TrimPrefix(f, scanRoot))
+	}
+	return pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(location, contents))
 }
 
 /*
@@ -60,7 +72,7 @@ When we should consider redesign tip to stem:
 - We need to consider the case here where nested modules are visited by accident and licenses
 are erroneously associated to a 'parent module'; bubble up currently prevents this
 */
-func findAllLicenseCandidatesUpwards(dir string, r *regexp.Regexp, stopAt string, fs afero.Fs) ([]string, error) {
+func findAllLicenseCandidatesUpwards(dir string, stopAt string, fs afero.Fs) ([]string, error) {
 	// Validate that both paths are absolute
 	if !filepath.IsAbs(dir) {
 		return nil, fmt.Errorf("dir must be an absolute path, got: %s", dir)
@@ -69,25 +81,16 @@ func findAllLicenseCandidatesUpwards(dir string, r *regexp.Regexp, stopAt string
 		return nil, fmt.Errorf("stopAt must be an absolute path, got: %s", stopAt)
 	}
 
-	licenses, err := findLicenseCandidates(dir, r, stopAt, fs)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure we return an empty slice rather than nil for consistency
-	if licenses == nil {
-		return []string{}, nil
-	}
-	return licenses, nil
+	return findLicenseCandidates(dir, stopAt, fs)
 }
 
-func findLicenseCandidates(dir string, r *regexp.Regexp, stopAt string, fs afero.Fs) ([]string, error) {
+func findLicenseCandidates(dir string, stopAt string, fs afero.Fs) ([]string, error) {
 	// stop if we've gone outside the stopAt directory
 	if !strings.HasPrefix(dir, stopAt) {
 		return []string{}, nil
 	}
 
-	licenses, err := findLicensesInDir(dir, r, fs)
+	out, err := findLicensesInDir(dir, fs)
 	if err != nil {
 		return nil, err
 	}
@@ -95,17 +98,17 @@ func findLicenseCandidates(dir string, r *regexp.Regexp, stopAt string, fs afero
 	parent := filepath.Dir(dir)
 	// can't go any higher up the directory tree: "/" case
 	if parent == dir {
-		return licenses, nil
+		return out, nil
 	}
 
 	// search parent directory and combine results
-	parentLicenses, err := findLicenseCandidates(parent, r, stopAt, fs)
+	parentLicenses, err := findLicenseCandidates(parent, stopAt, fs)
 	if err != nil {
 		return nil, err
 	}
 
 	// Combine current directory licenses with parent directory licenses
-	return append(licenses, parentLicenses...), nil
+	return append(out, parentLicenses...), nil
 }
 
 func getAbsolutePkgPaths(info pkgInfo) (modDir string, pkgDir string, err error) {
@@ -126,8 +129,8 @@ func getAbsolutePkgPaths(info pkgInfo) (modDir string, pkgDir string, err error)
 	return modDir, pkgDir, nil
 }
 
-func findLicensesInDir(dir string, r *regexp.Regexp, fs afero.Fs) ([]string, error) {
-	var licenses []string
+func findLicensesInDir(dir string, fs afero.Fs) ([]string, error) {
+	var out []string
 
 	dirContents, err := afero.ReadDir(fs, dir)
 	if err != nil {
@@ -139,11 +142,11 @@ func findLicensesInDir(dir string, r *regexp.Regexp, fs afero.Fs) ([]string, err
 			continue
 		}
 
-		if r.MatchString(f.Name()) {
+		if licenses.IsLicenseFile(f.Name()) {
 			path := filepath.Join(dir, f.Name())
-			licenses = append(licenses, path)
+			out = append(out, path)
 		}
 	}
 
-	return licenses, nil
+	return out, nil
 }

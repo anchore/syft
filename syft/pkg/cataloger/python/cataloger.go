@@ -10,25 +10,21 @@ import (
 
 const eggInfoGlob = "**/*.egg-info"
 
-type CatalogerConfig struct {
-	GuessUnpinnedRequirements bool `yaml:"guess-unpinned-requirements" json:"guess-unpinned-requirements" mapstructure:"guess-unpinned-requirements"`
-}
-
-func DefaultCatalogerConfig() CatalogerConfig {
-	return CatalogerConfig{
-		GuessUnpinnedRequirements: false,
-	}
-}
-
 // NewPackageCataloger returns a new cataloger for python packages referenced from poetry lock files, requirements.txt files, and setup.py files.
 func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
-	rqp := newRequirementsParser(cfg)
+	poetryLockParser := newPoetryLockParser(cfg)
+	pipfileLockParser := newPipfileLockParser(cfg)
+	setupFileParser := newSetupFileParser(cfg)
+	uvLockParser := newUvLockParser(cfg)
+	pdmLockParser := newPdmLockParser(cfg)
+	requirementsFileParser := newRequirementsParser(cfg)
 	return generic.NewCataloger("python-package-cataloger").
-		WithParserByGlobs(rqp.parseRequirementsTxt, "**/*requirements*.txt").
-		WithParserByGlobs(parsePoetryLock, "**/poetry.lock").
-		WithParserByGlobs(parsePipfileLock, "**/Pipfile.lock").
-		WithParserByGlobs(parseSetup, "**/setup.py").
-		WithParserByGlobs(parseUvLock, "**/uv.lock")
+		WithParserByGlobs(requirementsFileParser.parseRequirementsTxt, "**/*requirements*.txt").
+		WithParserByGlobs(poetryLockParser.parsePoetryLock, "**/poetry.lock").
+		WithParserByGlobs(pipfileLockParser.parsePipfileLock, "**/Pipfile.lock").
+		WithParserByGlobs(setupFileParser.parseSetupFile, "**/setup.py").
+		WithParserByGlobs(uvLockParser.parseUvLock, "**/uv.lock").
+		WithParserByGlobs(pdmLockParser.parsePdmLock, "**/pdm.lock")
 }
 
 // NewInstalledPackageCataloger returns a new cataloger for python packages within egg or wheel installation directories.

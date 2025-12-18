@@ -9,15 +9,34 @@ on:
       version:
         description: tag the latest commit on main with the given version (prefixed with v)
         required: true
+      phase:
+        description: the specific workflow phase to run or all
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - "all"
+          - "install-script-only"
 
 jobs:
   quality-gate:
     environment: release
     runs-on: ubuntu-24.04
+    if: ${{ github.event.inputs.phase == 'all' }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
           persist-credentials: false
+
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
+
+      - name: Validate Apple notarization credentials
+        run: .tool/quill submission list
+        env:
+          QUILL_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
+          QUILL_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          QUILL_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
 
       - name: Check if running on main
         if: github.ref != 'refs/heads/main'
@@ -110,13 +129,14 @@ jobs:
   release:
     needs: [quality-gate]
     runs-on: ubuntu-24.04
+    if: ${{ github.event.inputs.phase == 'all' }}
     permissions:
       contents: write
       packages: write
       # required for goreleaser signs section with cosign
       id-token: write
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
           fetch-depth: 0
           persist-credentials: true
@@ -161,7 +181,7 @@ jobs:
           # for updating brew formula in anchore/homebrew-syft
           GITHUB_BREW_TOKEN: ${{ secrets.ANCHOREOPS_GITHUB_OSS_WRITE_TOKEN }}
 
-      - uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b #v0.20.6
+      - uses: anchore/sbom-action@43a17d6e7add2b5535efe4dcae9952337c479a93 #v0.20.11
         continue-on-error: true
         with:
           file: go.mod
@@ -179,7 +199,7 @@ jobs:
 
   release-install-script:
     needs: [release]
-    if: ${{ needs.release.result == 'success' }}
+    if: ${{ always() && (needs.release.result == 'success' || github.event.inputs.phase == 'install-script-only') }}
     uses: "anchore/workflows/.github/workflows/release-install-script.yaml@main"
     with:
       tag: ${{ github.event.inputs.version }}

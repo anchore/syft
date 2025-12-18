@@ -31,6 +31,9 @@ type NpmPackageLockEntry struct {
 
 	// Integrity is Subresource Integrity hash for verification using standard SRI format (sha512-... or sha1-...). npm changed from SHA-1 to SHA-512 in newer versions. For registry sources this is the integrity from registry, for remote tarballs it's SHA-512 of the file. npm verifies tarball matches this hash before unpacking, throwing EINTEGRITY error if mismatch detected.
 	Integrity string `mapstructure:"integrity" json:"integrity"`
+
+	// Dependencies is a map of dependencies and their version markers, i.e. "lodash": "^1.0.0"
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
 
 // YarnLockEntry represents a single entry section of a yarn.lock file.
@@ -40,4 +43,22 @@ type YarnLockEntry struct {
 
 	// Integrity is Subresource Integrity hash for verification (SRI format)
 	Integrity string `mapstructure:"integrity" json:"integrity"`
+
+	// Dependencies is a map of dependencies and their versions
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
+}
+
+// PnpmLockResolution contains package resolution metadata from pnpm lockfiles, including the integrity hash used for verification.
+type PnpmLockResolution struct {
+	// Integrity is Subresource Integrity hash for verification (SRI format)
+	Integrity string `mapstructure:"integrity" json:"integrity"`
+}
+
+// PnpmLockEntry represents a single entry in the "packages" section of a pnpm-lock.yaml file.
+type PnpmLockEntry struct {
+	// Resolution is the resolution information for the package
+	Resolution PnpmLockResolution `mapstructure:"resolution" json:"resolution"`
+
+	// Dependencies is a map of dependencies and their versions
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }

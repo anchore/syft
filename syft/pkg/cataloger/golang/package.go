@@ -10,7 +10,14 @@ import (
 )
 
 func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBinaryBuildinfoEntry, licenses []pkg.License, locations ...file.Location) pkg.Package {
+	// Similar to syft/pkg/cataloger/golang/parse_go_mod.go logic - use original path for relative replacements
+	finalPath := dep.Path
 	if dep.Replace != nil {
+		if strings.HasPrefix(dep.Replace.Path, ".") || strings.HasPrefix(dep.Replace.Path, "/") {
+			finalPath = dep.Path
+		} else {
+			finalPath = dep.Replace.Path
+		}
 		dep = dep.Replace
 	}
 
@@ -23,10 +30,10 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBi
 	}
 
 	p := pkg.Package{
-		Name:      dep.Path,
+		Name:      finalPath,
 		Version:   version,
 		Licenses:  pkg.NewLicenseSet(licenses...),
-		PURL:      packageURL(dep.Path, version),
+		PURL:      packageURL(finalPath, version),
 		Language:  pkg.Go,
 		Type:      pkg.GoModulePkg,
 		Locations: file.NewLocationSet(locations...),
@@ -57,27 +64,23 @@ func newBinaryMetadata(dep *debug.Module, mainModule, goVersion, architecture st
 func packageURL(moduleName, moduleVersion string) string {
 	// source: https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#golang
 	// note: "The version is often empty when a commit is not specified and should be the commit in most cases when available."
-
-	fields := strings.Split(moduleName, "/")
-	if len(fields) == 0 {
+	if moduleName == "" {
 		return ""
 	}
 
 	namespace := ""
-	name := ""
-	// The subpath is used to point to a subpath inside a package (e.g. pkg:golang/google.golang.org/genproto#googleapis/api/annotations)
-	subpath := ""
+	name := moduleName
 
-	switch len(fields) {
-	case 1:
-		name = fields[0]
-	case 2:
-		name = fields[1]
-		namespace = fields[0]
-	default:
-		name = fields[2]
-		namespace = strings.Join(fields[0:2], "/")
-		subpath = strings.Join(fields[3:], "/")
+	// golang PURLs from _modules_ are constructed as pkg:golang/<module>@version, where
+	// the full module name often includes multiple segments including `/v#`-type versions, for example:
+	//  pkg:golang/github.com/cli/cli/v2@2.63.0
+	// see: https://github.com/package-url/purl-spec/issues/63
+	// and: https://github.com/package-url/purl-spec/blob/main/types-doc/golang-definition.md#subpath-definition
+	// by setting the namespace this way, it does not escape the slashes:
+	lastSlash := strings.LastIndex(moduleName, "/")
+	if lastSlash > 0 && lastSlash < len(moduleName)-1 {
+		name = moduleName[lastSlash+1:]
+		namespace = moduleName[0:lastSlash]
 	}
 
 	return packageurl.NewPackageURL(
@@ -86,6 +89,6 @@ func packageURL(moduleName, moduleVersion string) string {
 		name,
 		moduleVersion,
 		nil,
-		subpath,
+		"", // subpath is used to reference a specific _package_ within the module
 	).ToString()
 }

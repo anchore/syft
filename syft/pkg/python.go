@@ -79,6 +79,42 @@ func (m PythonPackage) OwnedFiles() (result []string) {
 	return result
 }
 
+// PythonPdmLockExtraVariant represents a specific extras combination variant within a PDM lock file.
+// PDM creates separate package entries for different extras combinations; this struct captures those variants.
+type PythonPdmLockExtraVariant struct {
+	// Extras are the optional extras enabled for this variant (e.g., ["toml"], ["dev"], or ["toml", "dev"])
+	Extras []string `json:"extras"`
+	// Dependencies are the dependencies specific to this extras variant
+	Dependencies []string `json:"dependencies,omitempty"`
+	// Files are the package files specific to this variant (only populated if different from base)
+	Files []PythonPdmFileEntry `json:"files,omitempty"`
+	// Marker is the environment conditional expression for this variant (e.g., "python_version < \"3.11\"")
+	Marker string `json:"marker,omitempty"`
+}
+
+// PythonPdmLockEntry represents a single package entry within a pdm.lock file.
+type PythonPdmLockEntry struct {
+	// Summary provides a description of the package
+	Summary string `mapstructure:"summary" json:"summary"`
+	// Files are the package files with their paths and hash digests (for the base package without extras)
+	Files []PythonPdmFileEntry `mapstructure:"files" json:"files"`
+	// Marker is the "environment" --conditional expressions that determine whether a package should be installed based on the runtime environment
+	Marker string `mapstructure:"marker" json:"marker,omitempty"`
+	// RequiresPython specifies the Python version requirement (e.g., ">=3.6").
+	RequiresPython string `mapstructure:"RequiresPython" json:"requiresPython,omitempty" `
+	// Dependencies are the dependency specifications for the base package (without extras)
+	Dependencies []string `mapstructure:"dependencies" json:"dependencies,omitempty"`
+	// Extras contains variants for different extras combinations (PDM may have multiple entries per package)
+	Extras []PythonPdmLockExtraVariant `json:"extras,omitempty"`
+}
+
+type PythonPdmFileEntry struct {
+	// URL is the file download URL
+	URL string `mapstructure:"url" json:"url"`
+	// Digest is the hash digest of the file hosted at the URL
+	Digest PythonFileDigest `mapstructure:"hash" json:"digest"`
+}
+
 // PythonPipfileLockEntry represents a single package entry within a Pipfile.lock file.
 type PythonPipfileLockEntry struct {
 	// Hashes are the package file hash values in the format "algorithm:digest" for integrity verification.
