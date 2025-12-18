@@ -516,6 +516,7 @@ func TestCataloger(t *testing.T) {
 				Path:        "newtonsoft.json/13.0.3",
 				Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
 				HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
+				Type:        "package",
 				Executables: nil, // important!
 			},
 		}
@@ -550,6 +551,7 @@ func TestCataloger(t *testing.T) {
 				Path:        "newtonsoft.json/13.0.3",
 				Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
 				HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
+				Type:        "package",
 				Executables: nil, // important!
 			},
 		}
@@ -605,6 +607,7 @@ func TestCataloger(t *testing.T) {
 			Metadata: pkg.DotnetDepsEntry{
 				Name:    "dotnetapp",
 				Version: "1.0.0",
+				Type:    "project",
 				// note: the main package does not have a hash/path/etc
 				Executables: map[string]pkg.DotnetPortableExecutableEntry{
 					"dotnetapp.dll": {
@@ -1387,6 +1390,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestLibrary",
 			Version: "1.0.0",
+			Type:    "project",
 		},
 	}
 	testCommon := pkg.Package{
@@ -1399,6 +1403,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestCommon",
 			Version: "1.0.0",
+			Type:    "project",
 		},
 	}
 	awssdkcore := pkg.Package{
@@ -1414,6 +1419,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-kHBB+QmosVaG6DpngXQ8OlLVVNMzltNITfsRr68Z90qO7dSqJ2EHNd8dtBU1u3AQQLqqFHOY0lfmbpexeH6Pew==",
 			Path:     "awssdk.core/3.7.10.6",
 			HashPath: "awssdk.core.3.7.10.6.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftDependencyInjectionAbstractions := pkg.Package{
@@ -1429,6 +1435,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
 			Path:     "microsoft.extensions.dependencyinjection.abstractions/6.0.0",
 			HashPath: "microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftDependencyInjection := pkg.Package{
@@ -1444,6 +1451,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-k6PWQMuoBDGGHOQTtyois2u4AwyVcIwL2LaSLlTZQm2CYcJ1pxbt6jfAnpWmzENA/wfrYRI/X9DTLoUkE4AsLw==",
 			Path:     "microsoft.extensions.dependencyinjection/6.0.0",
 			HashPath: "microsoft.extensions.dependencyinjection.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftLoggingAbstractions := pkg.Package{
@@ -1459,6 +1467,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
 			Path:     "microsoft.extensions.logging.abstractions/6.0.0",
 			HashPath: "microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftExtensionsLogging := pkg.Package{
@@ -1474,6 +1483,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-eIbyj40QDg1NDz0HBW0S5f3wrLVnKWnDJ/JtZ+yJDFnDj90VoPuoPmFkeaXrtu+0cKm5GRAwoDf+dBWXK0TUdg==",
 			Path:     "microsoft.extensions.logging/6.0.0",
 			HashPath: "microsoft.extensions.logging.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftExtensionsOptions := pkg.Package{
@@ -1489,6 +1499,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-dzXN0+V1AyjOe2xcJ86Qbo233KHuLEY0njf/P2Kw8SfJU+d45HNS2ctJdnEnrWbM9Ye2eFgaC5Mj9otRMU6IsQ==",
 			Path:     "microsoft.extensions.options/6.0.0",
 			HashPath: "microsoft.extensions.options.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftExtensionsPrimitives := pkg.Package{
@@ -1504,6 +1515,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-9+PnzmQFfEFNR9J2aDTfJGGupShHjOuGw4VUv+JB044biSHrnmCIMD+mJHmb2H7YryrfBEXDurxQ47gJZdCKNQ==",
 			Path:     "microsoft.extensions.primitives/6.0.0",
 			HashPath: "microsoft.extensions.primitives.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	newtonsoftJson := pkg.Package{
@@ -1519,6 +1531,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
 			Path:     "newtonsoft.json/13.0.1",
 			HashPath: "newtonsoft.json.13.0.1.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	serilogSinksConsole := pkg.Package{
@@ -1534,6 +1547,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-apLOvSJQLlIbKlbx+Y2UDHSP05kJsV7mou+fvJoRGs/iR+jC22r8cuFVMjjfVxz/AD4B2UCltFhE1naRLXwKNw==",
 			Path:     "serilog.sinks.console/4.0.1",
 			HashPath: "serilog.sinks.console.4.0.1.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	serilog := pkg.Package{
@@ -1549,6 +1563,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
 			Path:     "serilog/2.10.0",
 			HashPath: "serilog.2.10.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	systemDiagnosticsDiagnosticsource := pkg.Package{
@@ -1564,6 +1579,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-frQDfv0rl209cKm1lnwTgFPzNigy2EKk1BS3uAvHvlBVKe5cymGyHO+Sj+NLv5VF/AhHsqPIUUwya5oV4CHMUw==",
 			Path:     "system.diagnostics.diagnosticsource/6.0.0",
 			HashPath: "system.diagnostics.diagnosticsource.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	systemRuntimeCompilerServicesUnsafe := pkg.Package{
@@ -1579,6 +1595,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
 			Path:     "system.runtime.compilerservices.unsafe/6.0.0",
 			HashPath: "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+			Type:     "package",
 		}}
 
 	expectedPkgs := []pkg.Package{

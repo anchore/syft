@@ -13,6 +13,8 @@ type dotnetConfig struct {
 	PropagateDLLClaimsToParents bool `mapstructure:"propagate-dll-claims-to-parents" json:"propagate-dll-claims-to-parents" yaml:"propagate-dll-claims-to-parents"`
 
 	RelaxDLLClaimsWhenBundlingDetected bool `mapstructure:"relax-dll-claims-when-bundling-detected" json:"relax-dll-claims-when-bundling-detected" yaml:"relax-dll-claims-when-bundling-detected"`
+
+	ExcludeProjectReferences bool `mapstructure:"exclude-project-references" json:"exclude-project-references" yaml:"exclude-project-references"`
 }
 
 var _ interface {
@@ -24,6 +26,7 @@ func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.DepPackagesMustClaimDLL, `only keep dep.json packages which have a runtime/resource DLL claimed in the deps.json targets section (but not necessarily found on disk). The package is also included if any child package claims a DLL, even if the package itself does not claim a DLL.`)
 	descriptions.Add(&o.PropagateDLLClaimsToParents, `treat DLL claims or on-disk evidence for child packages as DLL claims or on-disk evidence for any parent package`)
 	descriptions.Add(&o.RelaxDLLClaimsWhenBundlingDetected, `show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)`)
+	descriptions.Add(&o.ExcludeProjectReferences, `exclude packages with type "project" from deps.json output (these are internal project references, not NuGet packages)`)
 }
 
 func defaultDotnetConfig() dotnetConfig {
@@ -33,5 +36,6 @@ func defaultDotnetConfig() dotnetConfig {
 		DepPackagesMustClaimDLL:            def.DepPackagesMustClaimDLL,
 		PropagateDLLClaimsToParents:        def.PropagateDLLClaimsToParents,
 		RelaxDLLClaimsWhenBundlingDetected: def.RelaxDLLClaimsWhenBundlingDetected,
+		ExcludeProjectReferences:           def.ExcludeProjectReferences,
 	}
 }
