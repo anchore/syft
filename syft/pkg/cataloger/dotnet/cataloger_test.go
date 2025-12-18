@@ -516,6 +516,7 @@ func TestCataloger(t *testing.T) {
 				Path:        "newtonsoft.json/13.0.3",
 				Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
 				HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
+				Type:        "package",
 				Executables: nil, // important!
 			},
 		}

@@ -186,6 +186,12 @@ func getDepsJSONFilePrefix(p string) string {
 	if len(match) > 1 {
 		return match[1]
 	}
+
+	r = regexp.MustCompile(`([^\\\/]+)\.exe$`)
+	match = r.FindStringSubmatch(p)
+	if len(match) > 1 {
+		return match[1]
+	}
 	return ""
 }
 
