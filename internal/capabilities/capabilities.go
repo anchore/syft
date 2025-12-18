@@ -30,7 +30,7 @@ func LoadDocument() (*Document, error) {
 	if catalogerFiles == nil {
 		return nil, fmt.Errorf("cataloger files not registered")
 	}
-	
+
 	// parse application config
 	var appDoc struct {
 		Application []ApplicationConfigField `yaml:"application"`

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/capabilities"
@@ -142,7 +143,7 @@ func RegenerateCapabilities(catalogerDir string, repoRoot string) (*Statistics, 
 
 	// 3. Load existing YAML files - now returns both document and node trees
 	fmt.Print("  → Loading existing capabilities files...")
-	existing, existingNodes, err := loadCapabilities(catalogerDir, repoRoot)
+	existing, existingNodes, err := internal.LoadCapabilities(catalogerDir, repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load existing capabilities: %w", err)
 	}
@@ -239,7 +240,7 @@ func discoverAllCatalogerData(repoRoot string, stats *Statistics) (
 
 	// get all cataloger info
 	fmt.Print("  → Fetching all cataloger info from syft...")
-	allCatalogers, err := allPackageCatalogerInfo()
+	allCatalogers, err := internal.AllPackageCatalogerInfo()
 	if err != nil {
 		return nil, nil, nil, nil, nil, fmt.Errorf("failed to get cataloger info: %w", err)
 	}

@@ -1,14 +1,42 @@
 package main
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
+
+// TestCapabilitiesAreUpToDate verifies that cataloger/*/capabilities.yaml files are up to date by running regeneration and checking
+// for uncommitted changes. This test only runs in CI to catch cases where code changed but capabilities weren't regenerated.
+func TestCapabilitiesAreUpToDate(t *testing.T) {
+	checkCompletenessTestsEnabled(t)
+
+	if os.Getenv("CI") == "" {
+		t.Skip("skipping regeneration test in local environment")
+	}
+
+	repoRoot, err := internal.RepoRoot()
+	require.NoError(t, err)
+
+	catalogerDir := internal.CatalogerDir(repoRoot)
+
+	// regenerate should not fail
+	_, err = RegenerateCapabilities(catalogerDir, repoRoot)
+	require.NoError(t, err)
+
+	// verify files haven't changed (i.e., they were already up to date)
+	cmd := exec.Command("git", "diff", "--exit-code", catalogerDir)
+	cmd.Dir = repoRoot
+	err = cmd.Run()
+	require.NoError(t, err, "cataloger/*/capabilities.yaml files have uncommitted changes after regeneration. Run 'go generate ./internal/capabilities' locally and commit the changes.")
+}
 
 func TestMergeConfigSections(t *testing.T) {
 	tests := []struct {
@@ -460,7 +488,7 @@ func TestInferEcosystem(t *testing.T) {
 		{
 			name:          "linux kernel cataloger",
 			catalogerName: "linux-kernel-cataloger",
-			want:          "linux",
+			want:          "kernel",
 		},
 		{
 			name:          "binary classifier cataloger",

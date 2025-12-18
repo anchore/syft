@@ -2,12 +2,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/anchore/syft/internal/capabilities/pkgtestobservation"
 	"github.com/anchore/syft/internal/packagemetadata"
 )
@@ -80,31 +80,10 @@ func (idx *TestObservationIndex) extractCustomCatalogerData() (map[string][]stri
 	return metadata, packageTypes
 }
 
-// findTestFixtureDirs walks the cataloger directory tree and returns all test-fixtures directories
-func findTestFixtureDirs(repoRoot string) ([]string, error) {
-	catalogerRoot := filepath.Join(repoRoot, "syft", "pkg", "cataloger")
-	var testFixtureDirs []string
-
-	err := filepath.Walk(catalogerRoot, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() && info.Name() == "test-fixtures" {
-			testFixtureDirs = append(testFixtureDirs, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to walk cataloger directory: %w", err)
-	}
-
-	return testFixtureDirs, nil
-}
-
 // discoverMetadataTypes searches for test-observations.json files and merges metadata type information
 // into the discovered catalogers. Returns maps of custom cataloger metadata types and package types.
 func discoverMetadataTypes(repoRoot string, discovered map[string]DiscoveredCataloger) (map[string][]string, map[string][]string, error) {
-	testFixtureDirs, err := findTestFixtureDirs(repoRoot)
+	testFixtureDirs, err := internal.FindTestFixtureDirs(repoRoot)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -115,7 +94,7 @@ func discoverMetadataTypes(repoRoot string, discovered map[string]DiscoveredCata
 	// read all test-observations files and merge into index
 	for _, dir := range testFixtureDirs {
 		observationsFile := filepath.Join(dir, "test-observations.json")
-		if observations, err := readTestObservations(observationsFile); err == nil {
+		if observations, err := internal.ReadTestObservations(observationsFile); err == nil {
 			mergeTestObservations(observations, index)
 		} else if !os.IsNotExist(err) {
 			fmt.Printf("  Warning: failed to read %s: %v\n", observationsFile, err)
@@ -134,21 +113,6 @@ func discoverMetadataTypes(repoRoot string, discovered map[string]DiscoveredCata
 	// extract custom cataloger data for return
 	customMetadata, customPackageTypes := index.extractCustomCatalogerData()
 	return customMetadata, customPackageTypes, nil
-}
-
-// readTestObservations reads and parses a test-observations.json file
-func readTestObservations(path string) (*pkgtestobservation.Test, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var observations pkgtestobservation.Test
-	if err := json.Unmarshal(data, &observations); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
-	}
-
-	return &observations, nil
 }
 
 // mergeAndDeduplicateStrings merges two string slices, removes duplicates, and returns a sorted slice

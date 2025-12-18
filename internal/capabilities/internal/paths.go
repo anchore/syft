@@ -1,5 +1,5 @@
 // this file provides a single source of truth for all capability file paths used in generation and testing.
-package main
+package internal
 
 import "path/filepath"
 

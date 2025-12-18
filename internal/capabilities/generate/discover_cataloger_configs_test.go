@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -426,7 +427,7 @@ func TestExtractFieldComments(t *testing.T) {
 }
 
 func TestDiscoverAllowedConfigStructs(t *testing.T) {
-	repoRoot, err := RepoRoot()
+	repoRoot, err := internal.RepoRoot()
 	require.NoError(t, err)
 
 	allowedConfigs, err := DiscoverAllowedConfigStructs(repoRoot)

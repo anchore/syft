@@ -6,8 +6,53 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/stretchr/testify/require"
 )
+
+// TestAppConfigFieldsHaveDescriptions ensures that all application config fields discovered from the
+// options package have descriptions, which are required for user-facing documentation.
+func TestAppConfigFieldsHaveDescriptions(t *testing.T) {
+	checkCompletenessTestsEnabled(t)
+
+	repoRoot, err := internal.RepoRoot()
+	require.NoError(t, err)
+
+	configs, err := DiscoverAppConfigs(repoRoot)
+	require.NoError(t, err)
+
+	// verify that all configs have descriptions
+	var missingDescriptions []string
+	for _, cfg := range configs {
+		if cfg.Description == "" {
+			missingDescriptions = append(missingDescriptions, cfg.Key)
+		}
+	}
+
+	require.Empty(t, missingDescriptions, "the following configs are missing descriptions: %v", missingDescriptions)
+}
+
+// TestAppConfigKeyFormat validates that all application config keys follow the expected naming convention
+// of "ecosystem.field-name" using kebab-case (lowercase with hyphens, no underscores or spaces).
+func TestAppConfigKeyFormat(t *testing.T) {
+	checkCompletenessTestsEnabled(t)
+
+	repoRoot, err := internal.RepoRoot()
+	require.NoError(t, err)
+
+	configs, err := DiscoverAppConfigs(repoRoot)
+	require.NoError(t, err)
+
+	// verify that all config keys follow the expected format
+	for _, cfg := range configs {
+		// keys should be in format "ecosystem.field-name" or "ecosystem.nested.field-name"
+		require.Contains(t, cfg.Key, ".", "config key should contain at least one dot: %s", cfg.Key)
+
+		// keys should use kebab-case (all lowercase with hyphens)
+		require.NotContains(t, cfg.Key, "_", "config key should not contain underscores: %s", cfg.Key)
+		require.NotContains(t, cfg.Key, " ", "config key should not contain spaces: %s", cfg.Key)
+	}
+}
 
 func TestCleanDescription(t *testing.T) {
 	tests := []struct {

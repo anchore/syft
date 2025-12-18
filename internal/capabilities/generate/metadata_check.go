@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anchore/syft/internal/capabilities"
@@ -141,7 +142,7 @@ func checkMetadataTypeCoverage(capabilitiesDir string, repoRoot string) ([]strin
 	}
 
 	// load capabilities files to get referenced types
-	doc, _, err := loadCapabilities(capabilitiesDir, repoRoot)
+	doc, _, err := internal.LoadCapabilities(capabilitiesDir, repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load capabilities files: %w", err)
 	}
@@ -323,7 +324,7 @@ func checkPackageTypeCoverage(capabilitiesDir string, repoRoot string) ([]string
 	}
 
 	// load capabilities files to get referenced types
-	doc, _, err := loadCapabilities(capabilitiesDir, repoRoot)
+	doc, _, err := internal.LoadCapabilities(capabilitiesDir, repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load capabilities files: %w", err)
 	}

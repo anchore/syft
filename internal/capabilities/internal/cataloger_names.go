@@ -1,5 +1,5 @@
 // this file retrieves the canonical list of cataloger names and their selectors from syft's task factories.
-package main
+package internal
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 	"github.com/anchore/syft/internal/task"
 )
 
-// allPackageCatalogerInfo gets all package cataloger info (names and selectors) from task factories
-func allPackageCatalogerInfo() ([]capabilities.CatalogerInfo, error) {
+// AllPackageCatalogerInfo gets all package cataloger info (names and selectors) from task factories
+func AllPackageCatalogerInfo() ([]capabilities.CatalogerInfo, error) {
 	pkgTaskFactories := task.DefaultPackageTaskFactories()
 	allPkgTasks, err := pkgTaskFactories.Tasks(task.DefaultCatalogingFactoryConfig())
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/anchore/syft/internal/capabilities/internal"
 )
 
 // ConfigField represents a single field in a configuration struct
@@ -225,7 +227,7 @@ func resolveEmbeddedStructFields(fieldType ast.Expr, visitedTypes map[string]boo
 
 	// find the file containing this struct
 	// we need to search in the syft codebase for this package
-	repoRoot, err := RepoRoot()
+	repoRoot, err := internal.RepoRoot()
 	if err != nil {
 		return nil
 	}

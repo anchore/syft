@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anchore/syft/internal/capabilities"
@@ -20,12 +21,12 @@ var (
 )
 
 func main() {
-	repoRoot, err := RepoRoot()
+	repoRoot, err := internal.RepoRoot()
 	if err != nil {
 		log.Fatalf("failed to find repo root: %v", err)
 	}
 
-	catalogerDir := CatalogerDir(repoRoot)
+	catalogerDir := internal.CatalogerDir(repoRoot)
 
 	fmt.Println("Regenerating capabilities files...")
 	fmt.Println()
@@ -72,7 +73,7 @@ func printSummary(stats *Statistics) {
 }
 
 func checkIncompleteCapabilities(catalogerDir, repoRoot string) {
-	doc, _, err := loadCapabilities(catalogerDir, repoRoot)
+	doc, _, err := internal.LoadCapabilities(catalogerDir, repoRoot)
 	if err != nil {
 		log.Fatalf("failed to load updated capabilities: %v", err)
 	}

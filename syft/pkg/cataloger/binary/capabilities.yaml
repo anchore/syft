@@ -734,6 +734,7 @@ catalogers:
     metadata_types: # AUTO-GENERATED
       - pkg.ELFBinaryPackageNoteJSONPayload
     package_types: # AUTO-GENERATED
+      - apk
       - binary
       - rpm
     json_schema_types: # AUTO-GENERATED
