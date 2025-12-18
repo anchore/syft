@@ -28,7 +28,7 @@ import (
 const requireParserObservations = false
 
 // capabilitiesYamlRoot is the path relative to the root of the repo to the capabilities YAML files
-const capabilitiesYamlRoot = "syft/pkg/cataloger/"
+const capabilitiesYamlRoot = CatalogerDirRel
 
 // metadataTypeCoverageExceptions lists metadata types that are allowed to not be represented in any cataloger
 var metadataTypeCoverageExceptions = strset.New(
@@ -399,15 +399,14 @@ func TestCapabilitiesAreUpToDate(t *testing.T) {
 	repoRoot, err := RepoRoot()
 	require.NoError(t, err)
 
-	capabilitiesDir := filepath.Join(repoRoot, "internal/capabilities")
+	catalogerDir := CatalogerDir(repoRoot)
 
 	// regenerate should not fail
-	_, err = RegenerateCapabilities(capabilitiesDir, repoRoot)
+	_, err = RegenerateCapabilities(catalogerDir, repoRoot)
 	require.NoError(t, err)
 
 	// verify files haven't changed (i.e., they were already up to date)
-	packagesDir := filepath.Join(capabilitiesDir, "packages")
-	cmd := exec.Command("git", "diff", "--exit-code", packagesDir)
+	cmd := exec.Command("git", "diff", "--exit-code", catalogerDir)
 	cmd.Dir = repoRoot
 	err = cmd.Run()
 	require.NoError(t, err, "cataloger/*/capabilities.yaml files have uncommitted changes after regeneration. Run 'go generate ./internal/capabilities' locally and commit the changes.")
@@ -533,7 +532,7 @@ func TestConfigCompleteness(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the cataloger/*/capabilities.yaml files
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, "internal/capabilities"))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// collect all validation errors before failing
@@ -639,7 +638,7 @@ func TestCapabilityConfigFieldReferences(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// collect all validation errors before failing
@@ -760,7 +759,7 @@ func TestCapabilityFieldNaming(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// define known capability field paths
@@ -821,7 +820,7 @@ func TestCapabilityValueTypes(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// collect all validation errors
@@ -941,7 +940,7 @@ func TestMetadataTypesHaveJSONSchemaTypes(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the packages.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// collect all validation errors
@@ -1259,7 +1258,7 @@ func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the cataloger/*/capabilities.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// collect all evidence field references
@@ -1338,7 +1337,7 @@ func TestDetectorConfigFieldReferences(t *testing.T) {
 	require.NoError(t, err)
 
 	// load the cataloger/*/capabilities.yaml
-	doc, _, err := loadCapabilities(filepath.Join(repoRoot, capabilitiesYamlRoot))
+	doc, _, err := loadCapabilities(CatalogerDir(repoRoot), repoRoot)
 	require.NoError(t, err)
 
 	// collect all validation errors before failing

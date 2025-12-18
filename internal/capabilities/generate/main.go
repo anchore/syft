@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/charmbracelet/lipgloss"
 
@@ -26,7 +25,7 @@ func main() {
 		log.Fatalf("failed to find repo root: %v", err)
 	}
 
-	catalogerDir := filepath.Join(repoRoot, "syft/pkg/cataloger")
+	catalogerDir := CatalogerDir(repoRoot)
 
 	fmt.Println("Regenerating capabilities files...")
 	fmt.Println()
@@ -36,7 +35,7 @@ func main() {
 	}
 
 	printSummary(stats)
-	checkIncompleteCapabilities(catalogerDir)
+	checkIncompleteCapabilities(catalogerDir, repoRoot)
 	printMetadataTypeCoverageWarning(catalogerDir, repoRoot)
 	printPackageTypeCoverageWarning(catalogerDir, repoRoot)
 }
@@ -72,8 +71,8 @@ func printSummary(stats *Statistics) {
 	fmt.Println(successStyle.Render("✓ Updated capabilities files successfully"))
 }
 
-func checkIncompleteCapabilities(capabilitiesDir string) {
-	doc, _, err := loadCapabilities(capabilitiesDir)
+func checkIncompleteCapabilities(catalogerDir, repoRoot string) {
+	doc, _, err := loadCapabilities(catalogerDir, repoRoot)
 	if err != nil {
 		log.Fatalf("failed to load updated capabilities: %v", err)
 	}

@@ -141,7 +141,7 @@ func checkMetadataTypeCoverage(capabilitiesDir string, repoRoot string) ([]strin
 	}
 
 	// load capabilities files to get referenced types
-	doc, _, err := loadCapabilities(capabilitiesDir)
+	doc, _, err := loadCapabilities(capabilitiesDir, repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load capabilities files: %w", err)
 	}
@@ -323,7 +323,7 @@ func checkPackageTypeCoverage(capabilitiesDir string, repoRoot string) ([]string
 	}
 
 	// load capabilities files to get referenced types
-	doc, _, err := loadCapabilities(capabilitiesDir)
+	doc, _, err := loadCapabilities(capabilitiesDir, repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load capabilities files: %w", err)
 	}

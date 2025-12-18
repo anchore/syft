@@ -94,7 +94,7 @@ var ecosystemMappings = []ecosystemMapping{
 	{[]string{"binary", "elf", "pe-binary"}, "binary"},
 	{[]string{"conda"}, "conda"},
 	{[]string{"nix"}, "nix"},
-	{[]string{"kernel"}, "linux"},
+	{[]string{"kernel"}, "kernel"},
 	{[]string{"bitnami"}, "bitnami"},
 	{[]string{"terraform"}, "terraform"},
 	{[]string{"github"}, "github-actions"},
@@ -142,7 +142,7 @@ func RegenerateCapabilities(catalogerDir string, repoRoot string) (*Statistics, 
 
 	// 3. Load existing YAML files - now returns both document and node trees
 	fmt.Print("  → Loading existing capabilities files...")
-	existing, existingNodes, err := loadCapabilities(catalogerDir)
+	existing, existingNodes, err := loadCapabilities(catalogerDir, repoRoot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load existing capabilities: %w", err)
 	}
@@ -193,7 +193,7 @@ func RegenerateCapabilities(catalogerDir string, repoRoot string) (*Statistics, 
 
 	// 6. Write back to YAML files with comments, preserving existing node trees
 	fmt.Print("  → Writing updated capabilities files...")
-	if err := saveCapabilities(catalogerDir, updated, existingNodes); err != nil {
+	if err := saveCapabilities(catalogerDir, repoRoot, updated, existingNodes); err != nil {
 		return nil, fmt.Errorf("failed to save capabilities: %w", err)
 	}
 	fmt.Println(" done")

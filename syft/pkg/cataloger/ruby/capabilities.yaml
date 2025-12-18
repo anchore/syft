@@ -20,6 +20,7 @@ catalogers:
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/Gemfile.lock'
+            - '**/Gemfile.next.lock'
         package_types: # AUTO-GENERATED
           - gem
         capabilities: # MANUAL - preserved across regeneration
