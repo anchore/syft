@@ -4,11 +4,11 @@ This documentation describes the format and structure of cataloger capabilities 
 
 ## File Organization
 
-Capabilities are centralized in the `internal/capabilities/` directory:
-- **Cataloger capabilities**: Located in `internal/capabilities/packages/*.yaml` (one file per ecosystem: `golang.yaml`, `python.yaml`, etc.)
+Capabilities are organized as follows:
+- **Cataloger capabilities**: Located in `syft/pkg/cataloger/*/capabilities.yaml` (one file per ecosystem, alongside the cataloger source code: `golang/capabilities.yaml`, `python/capabilities.yaml`, etc.)
 - **Application configuration**: Located in `internal/capabilities/appconfig.yaml`
 
-Each file in `packages/*.yaml` is partially auto-generated. Run `go generate ./internal/capabilities` to regenerate.
+Each `capabilities.yaml` file is partially auto-generated. Run `go generate ./internal/capabilities` to regenerate.
 - Fields marked **AUTO-GENERATED** will be updated during regeneration
 - All **capabilities** sections are **MANUAL** - edit these to describe cataloger behavior
 
