@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/internal/capabilities/internal"
 )
 
 var (

@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/capabilities/internal"
 )
 
 func TestDiscoverConfigs(t *testing.T) {

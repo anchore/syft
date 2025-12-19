@@ -5,11 +5,11 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 

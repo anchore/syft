@@ -6,8 +6,9 @@ import (
 	"go/token"
 	"testing"
 
-	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/capabilities/internal"
 )
 
 // TestAppConfigFieldsHaveDescriptions ensures that all application config fields discovered from the

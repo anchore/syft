@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anchore/syft/internal/capabilities"
 	"gopkg.in/yaml.v3"
+
+	"github.com/anchore/syft/internal/capabilities"
 )
 
 // LoadCapabilities loads the capabilities document from a YAML file.
 // Returns both the parsed document and the original YAML node tree to preserve comments.
 // Exported for use by the generator in generate/main.go
 func LoadCapabilities(catalogerDir, repoRoot string) (*capabilities.Document, map[string]*yaml.Node, error) {
-
 	// load all cataloger/*/capabilities.yaml files
 	files, err := filepath.Glob(filepath.Join(catalogerDir, "*", CapabilitiesFilename))
 	if err != nil {

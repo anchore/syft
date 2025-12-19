@@ -13,14 +13,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anchore/syft/internal/capabilities"
-	"github.com/anchore/syft/internal/packagemetadata"
-	"github.com/anchore/syft/syft/pkg"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	// register cataloger capabilities
+	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/internal/packagemetadata"
+	"github.com/anchore/syft/syft/pkg"
 	_ "github.com/anchore/syft/syft/pkg/cataloger"
 )
 

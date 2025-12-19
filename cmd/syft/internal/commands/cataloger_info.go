@@ -21,9 +21,7 @@ import (
 	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
-
-	// register cataloger capabilities
-	_ "github.com/anchore/syft/syft/pkg/cataloger"
+	_ "github.com/anchore/syft/syft/pkg/cataloger" // register all cataloger capabilities, otherwise the info command will not function
 )
 
 var (

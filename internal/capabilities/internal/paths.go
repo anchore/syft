@@ -23,8 +23,8 @@ func CatalogerDir(repoRoot string) string {
 	return filepath.Join(repoRoot, CatalogerDirRel)
 }
 
-// InternalCapabilitiesDir returns absolute path to internal capabilities
-func InternalCapabilitiesDir(repoRoot string) string {
+// CapabilitiesDir returns absolute path to internal capabilities
+func CapabilitiesDir(repoRoot string) string {
 	return filepath.Join(repoRoot, InternalCapabilitiesDirRel)
 }
 
@@ -35,5 +35,5 @@ func EcosystemCapabilitiesPath(catalogerDir, ecosystem string) string {
 
 // AppconfigPath returns path to appconfig.yaml (in internal/capabilities)
 func AppconfigPath(repoRoot string) string {
-	return filepath.Join(InternalCapabilitiesDir(repoRoot), AppconfigFilename)
+	return filepath.Join(CapabilitiesDir(repoRoot), AppconfigFilename)
 }

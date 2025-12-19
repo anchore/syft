@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal/capabilities"
+	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/anchore/syft/internal/packagemetadata"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
