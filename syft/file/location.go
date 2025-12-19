@@ -153,11 +153,12 @@ func NewLocationFromImage(accessPath string, ref file.Reference, img *image.Imag
 }
 
 // NewLocationFromDirectory creates a new Location representing the given path (extracted from the Reference) relative to the given directory.
-func NewLocationFromDirectory(responsePath string, ref file.Reference) Location {
+func NewLocationFromDirectory(responsePath string, fd string, ref file.Reference) Location {
 	return Location{
 		LocationData: LocationData{
 			Coordinates: Coordinates{
-				RealPath: responsePath,
+				RealPath:     responsePath,
+				FileSystemID: fd,
 			},
 			AccessPath: responsePath,
 			ref:        ref,

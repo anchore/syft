@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
-	"golang.org/x/net/context"
 
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"

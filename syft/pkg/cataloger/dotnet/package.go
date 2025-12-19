@@ -132,12 +132,13 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 		}
 	}
 
-	var path, sha, hashPath string
+	var path, sha, hashPath, libType string
 	lib := lp.Library
 	if lib != nil {
 		path = lib.Path
 		sha = lib.Sha512
 		hashPath = lib.HashPath
+		libType = lib.Type
 	}
 
 	return pkg.DotnetDepsEntry{
@@ -146,6 +147,7 @@ func newDotnetDepsEntry(lp logicalDepsJSONPackage) pkg.DotnetDepsEntry {
 		Path:        path,
 		Sha512:      sha,
 		HashPath:    hashPath,
+		Type:        libType,
 		Executables: pes,
 	}
 }
@@ -181,6 +183,12 @@ func cleanVersionResourceField(values ...string) string {
 func getDepsJSONFilePrefix(p string) string {
 	r := regexp.MustCompile(`([^\\\/]+)\.deps\.json$`)
 	match := r.FindStringSubmatch(p)
+	if len(match) > 1 {
+		return match[1]
+	}
+
+	r = regexp.MustCompile(`([^\\\/]+)\.exe$`)
+	match = r.FindStringSubmatch(p)
 	if len(match) > 1 {
 		return match[1]
 	}

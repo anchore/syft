@@ -79,6 +79,10 @@ func (i *Index) Remove(id artifact.ID) {
 
 func (i *Index) Replace(ogID artifact.ID, replacement artifact.Identifiable) {
 	for _, mapped := range fromMappedByID(i.fromID, ogID) {
+		// the stale relationship(i.e. if there's an elder ID in either side) should be discarded
+		if len(fromMappedByID(i.toID, mapped.relationship.To.ID())) == 0 {
+			continue
+		}
 		i.Add(artifact.Relationship{
 			From: replacement,
 			To:   mapped.relationship.To,
@@ -87,6 +91,10 @@ func (i *Index) Replace(ogID artifact.ID, replacement artifact.Identifiable) {
 	}
 
 	for _, mapped := range fromMappedByID(i.toID, ogID) {
+		// same as the above
+		if len(fromMappedByID(i.fromID, mapped.relationship.To.ID())) == 0 {
+			continue
+		}
 		i.Add(artifact.Relationship{
 			From: mapped.relationship.From,
 			To:   replacement,

@@ -49,6 +49,12 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      # internal/os contains OS feature detection logic; the name reflects its purpose
+      - linters:
+          - revive
+        path: internal/os/
+        text: "var-naming: avoid package names that conflict"
     paths:
       - third_party$
       - builtin$

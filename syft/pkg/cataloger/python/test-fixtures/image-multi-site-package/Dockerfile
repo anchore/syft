@@ -5,8 +5,8 @@ FROM ubuntu:20.04@sha256:cc9cc8169c9517ae035cf293b15f06922cb8c6c864d625a72b7b186
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3.8 python3.9 python3-pip python3-venv python3.9-venv python3.8-venv
 
 # install pip and virtualenv for both Python versions
-RUN python3.8 -m pip install --upgrade pip virtualenv
-RUN python3.9 -m pip install --upgrade pip virtualenv
+RUN python3.8 -m pip install --upgrade pip virtualenv==20.31.2 distlib==0.3.9 filelock==3.16.1 platformdirs==4.3.6
+RUN python3.9 -m pip install --upgrade pip virtualenv==20.31.2 distlib==0.3.9 filelock==3.18.0 platformdirs==4.3.8
 
 # install global packages for Python 3.8 & 3.9
 RUN python3.9 -m pip install click==8.0.3 beautifulsoup4==4.9.3 soupsieve==2.2.1 requests==2.25.1

@@ -8,7 +8,6 @@ import (
 	"io"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -26,17 +25,19 @@ import (
 )
 
 type goModCataloger struct {
+	usePackagesLib  bool
 	licenseResolver goLicenseResolver
 }
 
 func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 	return &goModCataloger{
+		usePackagesLib:  opts.UsePackagesLib,
 		licenseResolver: newGoLicenseResolver(modFileCatalogerName, opts),
 	}
 }
 
 // parseGoModFile takes a go.mod and tries to resolve and lists all packages discovered.
-func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, relationships []artifact.Relationship, err error) {
 	modDir := filepath.Dir(string(reader.Location.Reference().RealPath))
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
@@ -48,24 +49,34 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		scanRoot = dir.Chroot.Base()
 	}
 
-	// source analysis using go toolchain if available
-	syftSourcePackages, sourceModules, sourceDependencies, unknownErr := c.loadPackages(modDir, reader.Location)
-	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, scanRoot, syftSourcePackages, sourceModules, reader, digests)
-	relationships := buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
-
 	// base case go.mod file parsing
 	modFile, err := c.parseModFileContents(reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// only use mod packages NOT found in source analysis
+	// source analysis using go toolchain if available
+	var sourceModules map[string]*packages.Module
+	var catalogedModules []pkg.Package
+
+	if c.usePackagesLib {
+		var sourcePackages map[string][]pkgInfo
+		var sourceDependencies map[string][]string
+		var sourceModuleToPkg map[string]artifact.Identifiable
+
+		sourcePackages, sourceModules, sourceDependencies, err = c.loadPackages(modDir, reader.Location)
+		catalogedModules, sourceModuleToPkg = c.catalogModules(ctx, scanRoot, sourcePackages, sourceModules, reader, digests)
+		relationships = buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
+	}
+
+	// only use go.mod packages NOT found in source analysis
 	goModPackages := c.createGoModPackages(ctx, resolver, modFile, sourceModules, reader, digests)
 	c.applyReplaceDirectives(ctx, resolver, modFile, goModPackages, reader, digests)
 	c.applyExcludeDirectives(modFile, goModPackages)
 
-	finalPkgs := c.assembleResults(catalogedModules, goModPackages)
-	return finalPkgs, relationships, unknownErr
+	pkgs = c.assembleResults(catalogedModules, goModPackages)
+
+	return pkgs, relationships, err
 }
 
 // loadPackages uses golang.org/x/tools/go/packages to get dependency information.
@@ -327,7 +338,7 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 	goModPackages := make(map[string]pkg.Package)
 
 	for _, m := range modFile.Require {
-		if _, exists := sourceModules[m.Mod.Path]; !exists {
+		if sourceModules == nil || sourceModules[m.Mod.Path] == nil {
 			lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
 			goModPkg := pkg.Package{
 				Name:      m.Mod.Path,
@@ -392,9 +403,7 @@ func (c *goModCataloger) assembleResults(catalogedPkgs []pkg.Package, goModPacka
 		pkgsSlice = append(pkgsSlice, p)
 	}
 
-	sort.SliceStable(pkgsSlice, func(i, j int) bool {
-		return pkgsSlice[i].Name < pkgsSlice[j].Name
-	})
+	pkg.Sort(pkgsSlice)
 
 	return pkgsSlice
 }

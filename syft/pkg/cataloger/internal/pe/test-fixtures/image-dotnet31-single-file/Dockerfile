@@ -1,0 +1,11 @@
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+WORKDIR /src
+COPY src/ .
+RUN dotnet publish -c Release -r win-x64 \
+    -p:PublishSingleFile=true \
+    -p:SelfContained=true \
+    -o /app
+
+FROM busybox
+WORKDIR /app
+COPY --from=build /app/hello.exe .

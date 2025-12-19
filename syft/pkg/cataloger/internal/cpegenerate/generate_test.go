@@ -846,6 +846,15 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:something_else:something_else_.net:2.5.1:*:*:*:*:*:*:*",
 			},
 		},
+		{
+			name: "ML model package should generate no CPEs",
+			p: pkg.Package{
+				Name:    "llama3-8b",
+				Version: "3.0",
+				Type:    pkg.ModelPkg,
+			},
+			expected: []string{},
+		},
 	}
 
 	for _, test := range tests {
@@ -1135,6 +1144,16 @@ func TestDictionaryFindIsWired(t *testing.T) {
 			},
 			// without the cpe data wired up, this would be empty (generation also creates cpe:2.3:a:openssl:openssl:1.0.2k:*:*:*:*:*:*:*)
 			wantExists: true,
+		},
+		{
+			name: "ML model packages should not have dictionary CPEs",
+			pkg: pkg.Package{
+				Name:    "llama3-8b",
+				Version: "3.0",
+				Type:    pkg.ModelPkg,
+			},
+			want:       []cpe.CPE{},
+			wantExists: false,
 		},
 	}
 	for _, tt := range tests {

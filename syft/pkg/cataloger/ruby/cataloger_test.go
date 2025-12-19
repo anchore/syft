@@ -17,6 +17,7 @@ func Test_GemFileLock_Globs(t *testing.T) {
 			fixture: "test-fixtures/glob-paths",
 			expected: []string{
 				"src/Gemfile.lock",
+				"src/Gemfile.next.lock",
 			},
 		},
 	}

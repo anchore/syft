@@ -452,6 +452,25 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 			expectedNativePath: absRelOutsidePath,
 			expectedChrootPath: "to/the/rel-outside.txt",
 		},
+		// base path within root cases...
+		// note: for absolute input paths, rootRelativeToBase is used to resolve the native path
+		// note: for relative input paths, cwdRelativeToRoot is used (base does not affect relative path resolution)
+		{
+			name:               "relative root, abs request, with base",
+			root:               relative,
+			base:               filepath.Join(relative, "path", "to"),
+			input:              "/the/file.txt",
+			expectedNativePath: absPathToTheFile,
+			expectedChrootPath: "/the/file.txt", // ToChrootPath trims base prefix without adding separator
+		},
+		{
+			name:               "abs root, abs request, with base",
+			root:               absolute,
+			base:               filepath.Join(absolute, "path", "to"),
+			input:              "/the/file.txt",
+			expectedNativePath: absPathToTheFile,
+			expectedChrootPath: "/the/file.txt", // ToChrootPath trims base prefix without adding separator
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -476,6 +495,69 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 
 			resp := chroot.ToChrootPath(req)
 			assert.Equal(t, c.expectedChrootPath, resp, "chroot path different")
+		})
+	}
+}
+
+func TestNewChrootContext_BaseValidation(t *testing.T) {
+	testDir, err := os.Getwd()
+	require.NoError(t, err)
+
+	relative := filepath.Join("test-fixtures", "req-resp")
+	absolute := filepath.Join(testDir, relative)
+
+	tests := []struct {
+		name                       string
+		root                       string
+		base                       string
+		cwd                        string
+		expectedRootRelativeToBase string
+		wantErr                    require.ErrorAssertionFunc
+	}{
+		{
+			name:                       "base within root",
+			root:                       absolute,
+			base:                       filepath.Join(absolute, "path", "to"),
+			cwd:                        testDir,
+			expectedRootRelativeToBase: filepath.Join("path", "to"),
+		},
+		{
+			name:                       "base equals root",
+			root:                       absolute,
+			base:                       absolute,
+			cwd:                        testDir,
+			expectedRootRelativeToBase: "",
+		},
+		{
+			name:                       "empty base",
+			root:                       absolute,
+			base:                       "",
+			cwd:                        testDir,
+			expectedRootRelativeToBase: "",
+		},
+		{
+			name:                       "relative root with base",
+			root:                       relative,
+			base:                       filepath.Join(absolute, "path", "to"),
+			cwd:                        testDir,
+			expectedRootRelativeToBase: filepath.Join("path", "to"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
+			}
+
+			ctx, err := NewChrootContext(tt.root, tt.base, tt.cwd)
+			tt.wantErr(t, err)
+
+			if err != nil {
+				return
+			}
+
+			assert.Equal(t, tt.expectedRootRelativeToBase, ctx.rootRelativeToBase)
 		})
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-const pomPropertiesGlob = "*pom.properties"
+const pomPropertiesGlob = "**/*pom.properties"
 
 func parsePomProperties(path string, reader io.Reader) (*pkg.JavaPomProperties, error) {
 	var props pkg.JavaPomProperties

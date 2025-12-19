@@ -34,6 +34,10 @@ type File struct {
 	// understand if this executable is even a .NET application.
 	CLR *CLREvidence
 
+	// EmbeddedDepsJSON is the contents of an embedded deps.json file found within the PE file, if any.
+	// This is typical when using the PublishSingleFile build option.
+	EmbeddedDepsJSON string
+
 	// VersionResources is a map of version resource keys to their values found in the VERSIONINFO resource directory.
 	VersionResources map[string]string
 }
@@ -153,7 +157,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, err
 	}
 
-	sections, _, err := parsePEFile(r)
+	sections, sectionHeaders, err := parsePEFile(r)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse PE sections: %w", err)
 	}
@@ -171,9 +175,15 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
 
+	embeddedDepsJSON, err := extractDepsJSONFromBundle(r, sectionHeaders)
+	if err != nil {
+		return nil, fmt.Errorf("unable to extract embedded deps.json: %w", err)
+	}
+
 	return &File{
 		Location:         f.Location,
 		CLR:              c,
+		EmbeddedDepsJSON: embeddedDepsJSON,
 		VersionResources: versionResources,
 	}, nil
 }

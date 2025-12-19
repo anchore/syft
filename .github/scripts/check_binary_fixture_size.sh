@@ -24,7 +24,7 @@ while IFS= read -r -d '' file; do
     echo "File $file is greater than ${size} bytes."
     found_large_files=1
   fi
-done < <(find "$directory" -type f -print0)
+done < <(git ls-files -z "$directory")
 
 if [ "$found_large_files" -eq 1 ]; then
   echo "Script failed: Some files are greater than ${size} bytes."

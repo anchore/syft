@@ -98,6 +98,24 @@ func createModuleRelationships(main pkg.Package, deps []pkg.Package) []artifact.
 	return relationships
 }
 
+// moduleEqual is used to deduplicate go modules especially the sub module may be identical to the main one
+func moduleEqual(lhs, rhs *debug.Module) bool {
+	if lhs == rhs {
+		return true
+	}
+	if lhs == nil || rhs == nil {
+		return false
+	}
+
+	if lhs.Path != rhs.Path ||
+		lhs.Version != rhs.Version ||
+		lhs.Sum != rhs.Sum {
+		return false
+	}
+
+	return moduleEqual(lhs.Replace, rhs.Replace)
+}
+
 var emptyModule debug.Module
 var moduleFromPartialPackageBuild = debug.Module{Path: "command-line-arguments"}
 
@@ -115,7 +133,9 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 		if dep == nil {
 			continue
 		}
-
+		if moduleEqual(dep, &mod.Main) {
+			continue
+		}
 		lics := c.licenseResolver.getLicenses(ctx, resolver, dep.Path, dep.Version)
 		gover, experiments := getExperimentsFromVersion(mod.GoVersion)
 

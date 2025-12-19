@@ -6,6 +6,7 @@ import (
 )
 
 // GGUF type constants for test builder
+// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md
 const (
 	ggufMagic       = 0x46554747 // "GGUF" in little-endian
 	ggufTypeUint8   = 0

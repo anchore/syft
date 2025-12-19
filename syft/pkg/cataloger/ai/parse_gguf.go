@@ -14,46 +14,35 @@ const (
 	maxHeaderSize   = 50 * 1024 * 1024 // 50MB for large tokenizer vocabularies
 )
 
-// readHeader reads only the GGUF header (metadata) without reading tensor data
-// This is much more efficient than reading the entire file
-// The reader should be wrapped with io.LimitedReader to prevent OOM issues
-func readHeader(r io.Reader) ([]byte, error) {
-	// Read initial chunk to determine header size
+// copyHeader copies the GGUF header from the reader to the writer.
+// It validates the magic number first, then copies the rest of the data.
+// The reader should be wrapped with io.LimitedReader to prevent OOM issues.
+func copyHeader(w io.Writer, r io.Reader) error {
+	// Read initial chunk to validate magic number
 	// GGUF format: magic(4) + version(4) + tensor_count(8) + metadata_kv_count(8) + metadata_kvs + tensors_info
 	initialBuf := make([]byte, 24) // Enough for magic, version, tensor count, and kv count
 	if _, err := io.ReadFull(r, initialBuf); err != nil {
-		return nil, fmt.Errorf("failed to read GGUF header prefix: %w", err)
+		return fmt.Errorf("failed to read GGUF header prefix: %w", err)
 	}
 
 	// Verify magic number
 	magic := binary.LittleEndian.Uint32(initialBuf[0:4])
 	if magic != ggufMagicNumber {
-		return nil, fmt.Errorf("invalid GGUF magic number: 0x%08X", magic)
+		return fmt.Errorf("invalid GGUF magic number: 0x%08X", magic)
 	}
 
-	// We need to read the metadata KV pairs to know the full header size
-	// The io.LimitedReader wrapping this reader ensures we don't read more than maxHeaderSize
-	headerData := make([]byte, 0, 1024*1024) // Start with 1MB capacity
-	headerData = append(headerData, initialBuf...)
+	// Write the initial buffer to the writer
+	if _, err := w.Write(initialBuf); err != nil {
+		return fmt.Errorf("failed to write GGUF header prefix: %w", err)
+	}
 
-	// Read the rest of the header in larger chunks for efficiency
+	// Copy the rest of the header from reader to writer
 	// The LimitedReader will return EOF once maxHeaderSize is reached
-	buf := make([]byte, 64*1024) // 64KB chunks
-	for {
-		n, err := r.Read(buf)
-		if n > 0 {
-			headerData = append(headerData, buf[:n]...)
-		}
-		if err == io.EOF {
-			// Reached end of file or limit, we have all available data
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("failed to read GGUF header: %w", err)
-		}
+	if _, err := io.Copy(w, r); err != nil {
+		return fmt.Errorf("failed to copy GGUF header: %w", err)
 	}
 
-	return headerData, nil
+	return nil
 }
 
 // Helper to convert gguf_parser metadata to simpler types

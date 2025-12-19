@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"syscall"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 var expectedZipArchiveEntries = []string{
-	"some-dir" + string(os.PathSeparator),
-	filepath.Join("some-dir", "a-file.txt"),
+	"some-dir/",
+	"some-dir/a-file.txt",
 	"b-file.txt",
+	"b-file/",
+	"b-file/in-subdir.txt",
 	"nested.zip",
 }
 
@@ -57,12 +57,6 @@ func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string
 		}
 	}
 
-}
-
-func assertNoError(t testing.TB, fn func() error) func() {
-	return func() {
-		assert.NoError(t, fn())
-	}
 }
 
 // setupZipFileTest encapsulates common test setup work for zip file tests. It returns a cleanup function,

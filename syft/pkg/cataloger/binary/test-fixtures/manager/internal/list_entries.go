@@ -174,7 +174,7 @@ func getLogicalKey(managedBinaryPath string) (*LogicalEntryKey, error) {
 func allFilePaths(root string) ([]string, error) {
 	var paths []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, _ error) error {
-		if info != nil && !info.IsDir() && !strings.HasSuffix(path, digestFileSuffix) {
+		if info != nil && !info.IsDir() && !strings.HasSuffix(path, digestFileSuffix) && !strings.HasSuffix(path, ".DS_Store") {
 			paths = append(paths, path)
 		}
 		return nil

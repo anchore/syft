@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	extFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -112,6 +113,29 @@ func Test_ELFPackageCataloger(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "Debian 64 bit binaries w/o os version",
+			fixture: "image-wolfi-64bit-without-version",
+			expected: []pkg.Package{
+				{
+					Name:    "glibc",
+					Version: "2.42-r4",
+					PURL:    "pkg:apk/wolfi/glibc@2.42-r4?distro=wolfi",
+					Locations: file.NewLocationSet(
+						file.NewLocationFromDirectory("/lib/libBrokenLocale.so.1",
+							"sha256:559eaef4e501b8e7a150661a94ee8b9ebc63bfca3256953a703f9f82053346f2",
+							*extFile.NewFileReference("/lib/libBrokenLocale.so.1")).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Licenses: pkg.NewLicenseSet(),
+					Type:     pkg.ApkPkg,
+					Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
+						Type:         "apk",
+						Architecture: "x86_64",
+						OS:           "wolfi",
+					},
+				},
+			},
+		},
 	}
 
 	for _, v := range cases {
@@ -125,4 +149,62 @@ func Test_ELFPackageCataloger(t *testing.T) {
 		})
 	}
 
+}
+
+func Test_unmarshalELFPackageNotesPayload(t *testing.T) {
+	tests := []struct {
+		name        string
+		payload     string
+		wantOSCPE   string
+		wantCorrect string
+		wantErr     require.ErrorAssertionFunc
+	}{
+		{
+			name:        "only osCPE (incorrect) provided",
+			payload:     `{"name":"test","version":"1.0","osCPE":"cpe:/o:fedoraproject:fedora:40"}`,
+			wantOSCPE:   "cpe:/o:fedoraproject:fedora:40",
+			wantCorrect: "",
+		},
+		{
+			name:        "only osCpe (correct) provided",
+			payload:     `{"name":"test","version":"1.0","osCpe":"cpe:/o:fedoraproject:fedora:40"}`,
+			wantOSCPE:   "cpe:/o:fedoraproject:fedora:40",
+			wantCorrect: "cpe:/o:fedoraproject:fedora:40",
+		},
+		{
+			name:        "both osCPE and osCpe provided uses osCPE",
+			payload:     `{"name":"test","version":"1.0","osCPE":"cpe:/o:fedoraproject:fedora:40","osCpe":"cpe:/o:redhat:rhel:9"}`,
+			wantOSCPE:   "cpe:/o:fedoraproject:fedora:40",
+			wantCorrect: "cpe:/o:redhat:rhel:9",
+		},
+		{
+			name:        "neither osCPE nor osCpe provided",
+			payload:     `{"name":"test","version":"1.0"}`,
+			wantOSCPE:   "",
+			wantCorrect: "",
+		},
+		{
+			name:    "invalid JSON",
+			payload: `{invalid}`,
+			wantErr: require.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantErr == nil {
+				tt.wantErr = require.NoError
+			}
+
+			got, err := unmarshalELFPackageNotesPayload([]byte(tt.payload))
+			tt.wantErr(t, err)
+
+			if err != nil {
+				return
+			}
+
+			require.Equal(t, tt.wantOSCPE, got.OSCPE)
+			require.Equal(t, tt.wantCorrect, got.CorrectOSCPE)
+		})
+	}
 }

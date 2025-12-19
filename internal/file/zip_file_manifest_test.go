@@ -4,10 +4,13 @@
 package file
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewZipFileManifest(t *testing.T) {
@@ -24,7 +27,7 @@ func TestNewZipFileManifest(t *testing.T) {
 
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
-	actual, err := NewZipFileManifest(archiveFilePath)
+	actual, err := NewZipFileManifest(context.Background(), archiveFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
@@ -59,7 +62,7 @@ func TestNewZip64FileManifest(t *testing.T) {
 	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, true)
 
-	actual, err := NewZipFileManifest(archiveFilePath)
+	actual, err := NewZipFileManifest(context.Background(), archiveFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
@@ -99,30 +102,34 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
-	z, err := NewZipFileManifest(archiveFilePath)
+	z, err := NewZipFileManifest(context.Background(), archiveFilePath)
 	if err != nil {
 		t.Fatalf("unable to extract from unzip archive: %+v", err)
 	}
 
 	cases := []struct {
 		glob     string
-		expected string
+		expected []string
 	}{
 		{
 			"/b*",
-			"b-file.txt",
+			[]string{"b-file.txt"},
 		},
 		{
-			"*/a-file.txt",
-			"some-dir/a-file.txt",
+			"/b*/**",
+			[]string{"b-file.txt", "b-file/in-subdir.txt"},
 		},
 		{
-			"*/A-file.txt",
-			"some-dir/a-file.txt",
+			"**/a-file.txt",
+			[]string{"some-dir/a-file.txt"},
+		},
+		{
+			"**/A-file.txt",
+			[]string{"some-dir/a-file.txt"},
 		},
 		{
 			"**/*.zip",
-			"nested.zip",
+			[]string{"nested.zip"},
 		},
 	}
 
@@ -132,11 +139,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 
 			results := z.GlobMatch(true, glob)
 
-			if len(results) == 1 && results[0] == tc.expected {
-				return
-			}
-
-			t.Errorf("unexpected results for glob '%s': %+v", glob, results)
+			require.ElementsMatch(t, tc.expected, results)
 		})
 	}
 }

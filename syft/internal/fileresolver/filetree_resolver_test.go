@@ -984,12 +984,12 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}{
 		{
 			name:     "use file reference for content requests",
-			location: file.NewLocationFromDirectory("some/place", *existingPath.Reference),
+			location: file.NewLocationFromDirectory("some/place", "", *existingPath.Reference),
 			expects:  "this file has contents",
 		},
 		{
 			name:     "error on empty file reference",
-			location: file.NewLocationFromDirectory("doesn't matter", stereoscopeFile.Reference{}),
+			location: file.NewLocationFromDirectory("doesn't matter", "", stereoscopeFile.Reference{}),
 			err:      true,
 		},
 	}
@@ -1525,12 +1525,12 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	}{
 		{
 			name:     "use file reference for content requests",
-			location: file.NewLocationFromDirectory("some/place", *existingPath.Reference),
+			location: file.NewLocationFromDirectory("some/place", "", *existingPath.Reference),
 			expects:  "this file has contents",
 		},
 		{
 			name:     "error on empty file reference",
-			location: file.NewLocationFromDirectory("doesn't matter", stereoscopeFile.Reference{}),
+			location: file.NewLocationFromDirectory("doesn't matter", "", stereoscopeFile.Reference{}),
 			err:      true,
 		},
 	}

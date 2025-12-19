@@ -489,6 +489,41 @@ func TestCataloger(t *testing.T) {
 		"netstandard @ 8.0.1425.11118 (/app/netstandard.dll)",
 	)
 
+	assertAllDepEntriesInEmbeddedExecutable := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		t.Helper()
+		for _, p := range pkgs {
+			// assert that all packages DO NOT have an executable associated with it
+			m, ok := p.Metadata.(pkg.DotnetDepsEntry)
+			if !ok {
+				t.Fatalf("expected metadata to be of type DotnetDepsEntry")
+			}
+			if len(m.Executables) != 0 {
+				t.Errorf("expected no executables for package %s, found %d", p.Name, len(m.Executables))
+			}
+		}
+
+		actual := extractMatchingPackage(t, "Newtonsoft.Json", pkgs)
+		expected := pkg.Package{
+			Name:      "Newtonsoft.Json",
+			Version:   "13.0.3",
+			Locations: file.NewLocationSet(file.NewLocation("/app/dotnetapp.exe")), // important! not this is an exe
+			Language:  pkg.Dotnet,
+			Type:      pkg.DotnetPkg,
+			PURL:      "pkg:nuget/Newtonsoft.Json@13.0.3",
+			Metadata: pkg.DotnetDepsEntry{
+				Name:        "Newtonsoft.Json",
+				Version:     "13.0.3",
+				Path:        "newtonsoft.json/13.0.3",
+				Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
+				HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
+				Type:        "package",
+				Executables: nil, // important!
+			},
+		}
+
+		pkgtest.AssertPackagesEqualIgnoreLayers(t, expected, actual)
+	}
+
 	assertAllDepEntriesWithoutExecutables := func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
 		t.Helper()
 		for _, p := range pkgs {
@@ -516,6 +551,7 @@ func TestCataloger(t *testing.T) {
 				Path:        "newtonsoft.json/13.0.3",
 				Sha512:      "sha512-HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
 				HashPath:    "newtonsoft.json.13.0.3.nupkg.sha512",
+				Type:        "package",
 				Executables: nil, // important!
 			},
 		}
@@ -571,6 +607,7 @@ func TestCataloger(t *testing.T) {
 			Metadata: pkg.DotnetDepsEntry{
 				Name:    "dotnetapp",
 				Version: "1.0.0",
+				Type:    "project",
 				// note: the main package does not have a hash/path/etc
 				Executables: map[string]pkg.DotnetPortableExecutableEntry{
 					"dotnetapp.dll": {
@@ -895,12 +932,163 @@ func TestCataloger(t *testing.T) {
 			name:      "combined cataloger (single file)",
 			fixture:   "image-net8-app-single-file",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
-
-			// important: no relationships should be found
-			expectedPkgs: []string{
-				"dotnetapp @ 1.0.0.0 (/app/dotnetapp.exe)",
+			expectedPkgs: []string{"Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				// extracted libraries from the embedded deps.json
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.bg @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.bn-BD @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.cs @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.da @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.de @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.el @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.es @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fa @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fi-FI @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fr-BE @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.he @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.hr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.hu @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.hy @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.id @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.is @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.it @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ja @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ko-KR @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ku @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.lv @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ms-MY @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.mt @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.nb @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.nb-NO @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.nl @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.pl @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.pt @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ro @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ru @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sk @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sl @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sr-Latn @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sv @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.th-TH @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.tr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.uk @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.uz-Cyrl-UZ @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.uz-Latn-UZ @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.vi @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.exe)",
+				"Newtonsoft.Json @ 13.0.3 (/app/dotnetapp.exe)",
+				"dotnetapp @ 1.0.0 (/app/dotnetapp.exe)",
+				"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.exe)",
 			},
-			assertion: assertSingleFileDeployment,
+			expectedRels: []string{
+				"Humanizer @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.bg @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.bn-BD @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.cs @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.da @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.de @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.el @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.es @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.fa @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.fi-FI @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.fr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.fr-BE @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.he @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.hr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.hu @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.hy @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.id @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.is @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.it @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ja @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ko-KR @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ku @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.lv @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ms-MY @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.mt @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.nb @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.nb-NO @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.nl @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.pl @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.pt @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ro @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.ru @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.sk @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.sl @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.sr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.sr-Latn @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.sv @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.th-TH @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.tr @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.uk @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.uz-Cyrl-UZ @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.uz-Latn-UZ @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.vi @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.af @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ar @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.az @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.bg @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.bn-BD @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.cs @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.da @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.de @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.el @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.es @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fa @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fi-FI @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fr @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.fr-BE @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.he @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.hr @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.hu @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.hy @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.id @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.is @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.it @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ja @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ko-KR @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ku @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.lv @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ms-MY @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.mt @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.nb @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.nb-NO @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.nl @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.pl @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.pt @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ro @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.ru @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sk @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sl @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sr @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sr-Latn @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.sv @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.th-TH @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.tr @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.uk @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.uz-Cyrl-UZ @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.uz-Latn-UZ @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.vi @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.zh-CN @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.zh-Hans @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Humanizer.Core.zh-Hant @ 2.14.1 (/app/dotnetapp.exe) [dependency-of] Humanizer @ 2.14.1 (/app/dotnetapp.exe)",
+				"Newtonsoft.Json @ 13.0.3 (/app/dotnetapp.exe) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.exe)",
+				"runtimepack.Microsoft.NETCore.App.Runtime.win-x64 @ 8.0.14 (/app/dotnetapp.exe) [dependency-of] dotnetapp @ 1.0.0 (/app/dotnetapp.exe)",
+			},
+			assertion: assertAllDepEntriesInEmbeddedExecutable,
 		},
 		{
 			name:      "pe cataloger (single file)",
@@ -1202,6 +1390,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestLibrary",
 			Version: "1.0.0",
+			Type:    "project",
 		},
 	}
 	testCommon := pkg.Package{
@@ -1214,6 +1403,7 @@ func TestParseDotnetDeps(t *testing.T) {
 		Metadata: pkg.DotnetDepsEntry{
 			Name:    "TestCommon",
 			Version: "1.0.0",
+			Type:    "project",
 		},
 	}
 	awssdkcore := pkg.Package{
@@ -1229,6 +1419,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-kHBB+QmosVaG6DpngXQ8OlLVVNMzltNITfsRr68Z90qO7dSqJ2EHNd8dtBU1u3AQQLqqFHOY0lfmbpexeH6Pew==",
 			Path:     "awssdk.core/3.7.10.6",
 			HashPath: "awssdk.core.3.7.10.6.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftDependencyInjectionAbstractions := pkg.Package{
@@ -1244,6 +1435,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-xlzi2IYREJH3/m6+lUrQlujzX8wDitm4QGnUu6kUXTQAWPuZY8i+ticFJbzfqaetLA6KR/rO6Ew/HuYD+bxifg==",
 			Path:     "microsoft.extensions.dependencyinjection.abstractions/6.0.0",
 			HashPath: "microsoft.extensions.dependencyinjection.abstractions.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftDependencyInjection := pkg.Package{
@@ -1259,6 +1451,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-k6PWQMuoBDGGHOQTtyois2u4AwyVcIwL2LaSLlTZQm2CYcJ1pxbt6jfAnpWmzENA/wfrYRI/X9DTLoUkE4AsLw==",
 			Path:     "microsoft.extensions.dependencyinjection/6.0.0",
 			HashPath: "microsoft.extensions.dependencyinjection.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftLoggingAbstractions := pkg.Package{
@@ -1274,6 +1467,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
 			Path:     "microsoft.extensions.logging.abstractions/6.0.0",
 			HashPath: "microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftExtensionsLogging := pkg.Package{
@@ -1289,6 +1483,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-eIbyj40QDg1NDz0HBW0S5f3wrLVnKWnDJ/JtZ+yJDFnDj90VoPuoPmFkeaXrtu+0cKm5GRAwoDf+dBWXK0TUdg==",
 			Path:     "microsoft.extensions.logging/6.0.0",
 			HashPath: "microsoft.extensions.logging.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftExtensionsOptions := pkg.Package{
@@ -1304,6 +1499,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-dzXN0+V1AyjOe2xcJ86Qbo233KHuLEY0njf/P2Kw8SfJU+d45HNS2ctJdnEnrWbM9Ye2eFgaC5Mj9otRMU6IsQ==",
 			Path:     "microsoft.extensions.options/6.0.0",
 			HashPath: "microsoft.extensions.options.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	msftExtensionsPrimitives := pkg.Package{
@@ -1319,6 +1515,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-9+PnzmQFfEFNR9J2aDTfJGGupShHjOuGw4VUv+JB044biSHrnmCIMD+mJHmb2H7YryrfBEXDurxQ47gJZdCKNQ==",
 			Path:     "microsoft.extensions.primitives/6.0.0",
 			HashPath: "microsoft.extensions.primitives.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	newtonsoftJson := pkg.Package{
@@ -1334,6 +1531,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
 			Path:     "newtonsoft.json/13.0.1",
 			HashPath: "newtonsoft.json.13.0.1.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	serilogSinksConsole := pkg.Package{
@@ -1349,6 +1547,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-apLOvSJQLlIbKlbx+Y2UDHSP05kJsV7mou+fvJoRGs/iR+jC22r8cuFVMjjfVxz/AD4B2UCltFhE1naRLXwKNw==",
 			Path:     "serilog.sinks.console/4.0.1",
 			HashPath: "serilog.sinks.console.4.0.1.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	serilog := pkg.Package{
@@ -1364,6 +1563,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-+QX0hmf37a0/OZLxM3wL7V6/ADvC1XihXN4Kq/p6d8lCPfgkRdiuhbWlMaFjR9Av0dy5F0+MBeDmDdRZN/YwQA==",
 			Path:     "serilog/2.10.0",
 			HashPath: "serilog.2.10.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	systemDiagnosticsDiagnosticsource := pkg.Package{
@@ -1379,6 +1579,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-frQDfv0rl209cKm1lnwTgFPzNigy2EKk1BS3uAvHvlBVKe5cymGyHO+Sj+NLv5VF/AhHsqPIUUwya5oV4CHMUw==",
 			Path:     "system.diagnostics.diagnosticsource/6.0.0",
 			HashPath: "system.diagnostics.diagnosticsource.6.0.0.nupkg.sha512",
+			Type:     "package",
 		},
 	}
 	systemRuntimeCompilerServicesUnsafe := pkg.Package{
@@ -1394,6 +1595,7 @@ func TestParseDotnetDeps(t *testing.T) {
 			Sha512:   "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
 			Path:     "system.runtime.compilerservices.unsafe/6.0.0",
 			HashPath: "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+			Type:     "package",
 		}}
 
 	expectedPkgs := []pkg.Package{

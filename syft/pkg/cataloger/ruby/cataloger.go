@@ -11,7 +11,7 @@ import (
 // NewGemFileLockCataloger returns a new Bundler cataloger object tailored for parsing index-oriented files (e.g. Gemfile.lock).
 func NewGemFileLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("ruby-gemfile-cataloger").
-		WithParserByGlobs(parseGemFileLockEntries, "**/Gemfile.lock")
+		WithParserByGlobs(parseGemFileLockEntries, "**/Gemfile.lock", "**/Gemfile.next.lock")
 }
 
 // NewInstalledGemSpecCataloger returns a new Bundler cataloger object tailored for detecting installations of gems (e.g. Gemspec).

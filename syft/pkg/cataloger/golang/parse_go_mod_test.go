@@ -54,7 +54,7 @@ func TestParseGoMod(t *testing.T) {
 				{
 					Name:      "github.com/anchore/archiver/v3",
 					Version:   "v3.5.2",
-					PURL:      "pkg:golang/github.com/anchore/archiver@v3.5.2#v3",
+					PURL:      "pkg:golang/github.com/anchore/archiver/v3@v3.5.2",
 					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/go-mod-fixtures/many-packages/go.mod")),
 					Language:  pkg.Go,
 					Type:      pkg.GoModulePkg,
@@ -111,7 +111,7 @@ func TestParseGoMod(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			c := newGoModCataloger(DefaultCatalogerConfig())
+			c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false))
 			pkgtest.NewCatalogTester().
 				FromFile(t, test.fixture).
 				Expects(test.expected, nil).
@@ -172,7 +172,9 @@ func Test_GoSumHashes(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expected, nil).
-				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
+				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{
+					UsePackagesLib: false,
+				}))
 		})
 	}
 }
@@ -189,7 +191,6 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 	tests := []struct {
 		name             string
 		fixturePath      string
-		config           CatalogerConfig
 		expectedPkgs     []string
 		expectedRels     []string
 		expectedLicenses map[string][]string
@@ -333,7 +334,7 @@ func Test_parseGoSource_packageResolution(t *testing.T) {
 						t.Errorf("mismatch in licenses (-want +got):\n%s", diff)
 					}
 				}).
-				TestCataloger(t, NewGoModuleFileCataloger(CatalogerConfig{}))
+				TestCataloger(t, NewGoModuleFileCataloger(DefaultCatalogerConfig().WithUsePackagesLib(true)))
 		})
 	}
 }

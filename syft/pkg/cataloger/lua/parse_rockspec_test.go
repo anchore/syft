@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -33,6 +35,38 @@ func TestParseRockspec(t *testing.T) {
 					Homepage:    "https://konghq.com",
 					Description: "Kong is a scalable and customizable API Management Layer built on top of Nginx.",
 					URL:         "git+https://github.com/Kong/kong.git",
+					Dependencies: map[string]string{
+						"inspect":               "== 3.1.3",
+						"luasec":                "== 1.3.2",
+						"luasocket":             "== 3.0-rc1",
+						"penlight":              "== 1.13.1",
+						"lua-resty-http":        "== 0.17.1",
+						"lua-resty-jit-uuid":    "== 0.0.7",
+						"lua-ffi-zlib":          "== 0.6",
+						"multipart":             "== 0.5.9",
+						"version":               "== 1.0.1",
+						"kong-lapis":            "== 1.16.0.1",
+						"kong-pgmoon":           "== 1.16.2",
+						"luatz":                 "== 0.4",
+						"lua_system_constants":  "== 0.1.4",
+						"lyaml":                 "== 6.2.8",
+						"luasyslog":             "== 2.0.1",
+						"lua_pack":              "== 2.0.0",
+						"binaryheap":            ">= 0.4",
+						"luaxxhash":             ">= 1.0",
+						"lua-protobuf":          "== 0.5.0",
+						"lua-resty-healthcheck": "== 3.0.1",
+						"lua-messagepack":       "== 0.5.4",
+						"lua-resty-aws":         "== 1.3.6",
+						"lua-resty-openssl":     "== 1.2.0",
+						"lua-resty-counter":     "== 0.2.1",
+						"lua-resty-ipmatcher":   "== 0.6.1",
+						"lua-resty-acme":        "== 0.12.0",
+						"lua-resty-session":     "== 4.0.5",
+						"lua-resty-timer-ng":    "== 0.2.6",
+						"lpeg":                  "== 1.1.0",
+						"lua-resty-ljsonschema": "== 1.1.6-2",
+					},
 				},
 			},
 		},
@@ -54,6 +88,9 @@ func TestParseRockspec(t *testing.T) {
 					Homepage:    "http://www.inf.puc-rio.br/~roberto/lpeg.html",
 					Description: "Parsing Expression Grammars For Lua",
 					URL:         "http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.0.2.tar.gz",
+					Dependencies: map[string]string{
+						"lua": ">= 5.1",
+					},
 				},
 			},
 		},
@@ -75,6 +112,10 @@ func TestParseRockspec(t *testing.T) {
 					Homepage:    "https://github.com/Kong/pgmoon",
 					Description: "Postgres driver for OpenResty and Lua",
 					URL:         "git+https://github.com/kong/pgmoon.git",
+					Dependencies: map[string]string{
+						"lua":  ">= 5.1",
+						"lpeg": "",
+					},
 				},
 			},
 		},
@@ -96,6 +137,10 @@ func TestParseRockspec(t *testing.T) {
 					Homepage:    "https://github.com/lunarmodules/luasyslog",
 					Description: "Syslog logging for Lua",
 					URL:         "git://github.com/lunarmodules/luasyslog.git",
+					Dependencies: map[string]string{
+						"lua":        ">= 5.1",
+						"lualogging": ">= 1.4.0, < 2.0.0",
+					},
 				},
 			},
 		},
@@ -114,4 +159,70 @@ func Test_corruptRockspec(t *testing.T) {
 		FromFile(t, "test-fixtures/corrupt/bad-1.23.0-0.rockspec").
 		WithError().
 		TestParser(t, parseRockspec)
+}
+
+func Test_parseDependency(t *testing.T) {
+	tests := []struct {
+		name            string
+		input           string
+		expectedName    string
+		expectedVersion string
+	}{
+		{
+			name:            "dependency with >= constraint",
+			input:           "lua >= 5.1",
+			expectedName:    "lua",
+			expectedVersion: ">= 5.1",
+		},
+		{
+			name:            "dependency with == constraint",
+			input:           "inspect == 3.1.3",
+			expectedName:    "inspect",
+			expectedVersion: "== 3.1.3",
+		},
+		{
+			name:            "dependency without constraint",
+			input:           "lpeg",
+			expectedName:    "lpeg",
+			expectedVersion: "",
+		},
+		{
+			name:            "dependency with complex constraint",
+			input:           "lualogging >= 1.4.0, < 2.0.0",
+			expectedName:    "lualogging",
+			expectedVersion: ">= 1.4.0, < 2.0.0",
+		},
+		{
+			name:            "dependency with version including dash",
+			input:           "luasocket == 3.0-rc1",
+			expectedName:    "luasocket",
+			expectedVersion: "== 3.0-rc1",
+		},
+		{
+			name:            "dependency with extra whitespace",
+			input:           "  kong-pgmoon   ==   1.16.2  ",
+			expectedName:    "kong-pgmoon",
+			expectedVersion: "==   1.16.2",
+		},
+		{
+			name:            "empty string",
+			input:           "",
+			expectedName:    "",
+			expectedVersion: "",
+		},
+		{
+			name:            "whitespace only",
+			input:           "   ",
+			expectedName:    "",
+			expectedVersion: "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actualName, actualVersion := parseDependency(test.input)
+			assert.Equal(t, test.expectedName, actualName)
+			assert.Equal(t, test.expectedVersion, actualVersion)
+		})
+	}
 }

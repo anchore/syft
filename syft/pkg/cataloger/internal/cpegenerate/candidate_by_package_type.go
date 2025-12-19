@@ -198,6 +198,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		// NPM packages
 		{
 			pkg.NpmPkg,
+			candidateKey{PkgName: "next"},
+			candidateAddition{AdditionalProducts: []string{"next.js"}, AdditionalVendors: []string{"vercel"}},
+		},
+		{
+			pkg.NpmPkg,
 			candidateKey{PkgName: "hapi"},
 			candidateAddition{AdditionalProducts: []string{"hapi_server_framework"}},
 		},
