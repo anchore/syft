@@ -11,6 +11,18 @@ type Resolver interface {
 	PathResolver
 	LocationResolver
 	MetadataResolver
+	OCIResolver
+}
+
+type OCIResolver interface {
+	// LayerDigestsByMediaType returns the digests of all layers with the given media type.
+	// This provides "locations" for content without pre-fetching everything.
+	LayerDigestsByMediaType(mediaType string) ([]string, error)
+
+	// LayerContentsByDigest returns a reader for the layer content identified by digest.
+	// Implementations may use range-GET for partial reads or full blob fetch.
+	// The caller is responsible for closing the returned reader.
+	LayerContentsByDigest(digest string) (io.ReadCloser, error)
 }
 
 // ContentResolver knows how to get file content for a given Location

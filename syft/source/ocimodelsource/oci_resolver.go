@@ -9,6 +9,7 @@ import (
 // OCIResolver extends file.Resolver with OCI layer-aware capabilities.
 // This allows catalogers to discover and access content by media type
 // rather than relying solely on file paths/globs.
+// TODO: this probably could live in the abstraction package of file and not the implementation of source
 type OCIResolver interface {
 	file.Resolver
 

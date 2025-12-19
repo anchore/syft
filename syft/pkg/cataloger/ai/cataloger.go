@@ -37,6 +37,7 @@ func NewGGUFCataloger() pkg.Cataloger {
 	return &ggufCataloger{
 		genericCataloger: generic.NewCataloger(catalogerName).
 			WithParserByGlobs(parseGGUFModel, "**/*.gguf"),
+		//  WithParserByMediaType(parseGGUFModel, ggufLayerMediaType)
 	}
 }
 
@@ -48,8 +49,11 @@ func (c *ggufCataloger) Name() string {
 // Catalog discovers GGUF model packages from the given resolver.
 // If the resolver implements OCIResolver, it uses layer-aware discovery.
 // Otherwise, it falls back to glob-based file discovery.
+// TODO: probably don't want to decide on which resolver is here
+// Let's look at deciding in generic cataloger of parseGGUFModel
 func (c *ggufCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// Check if the resolver supports OCI layer-aware access
+	// TODO: this is a smell that the cataloger knows about the source
 	if ociResolver, ok := resolver.(ocimodelsource.OCIResolver); ok {
 		return c.catalogFromOCILayers(ctx, ociResolver)
 	}
@@ -149,6 +153,8 @@ func (c *ggufCataloger) parseGGUFLayer(resolver ocimodelsource.OCIResolver, dige
 	}
 
 	// Create a virtual location for the layer
+	// TODO: this is a smell, we should have the OCIResolver handle creation of this location as "/"
+	// this should not be here
 	location := file.NewLocation("/").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 
 	// Create package from metadata
