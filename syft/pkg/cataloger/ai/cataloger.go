@@ -26,7 +26,6 @@ const (
 	ggufLayerMediaType = "application/vnd.docker.ai.gguf.v3"
 )
 
-// ggufCataloger implements pkg.Cataloger with support for both file-based and OCI layer-based discovery.
 type ggufCataloger struct {
 	genericCataloger pkg.Cataloger
 }
@@ -52,12 +51,10 @@ func (c *ggufCataloger) Name() string {
 func (c *ggufCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// Check if the resolver supports OCI layer-aware access
 	if ociResolver, ok := resolver.(ocimodelsource.OCIResolver); ok {
-		log.Debug("using OCI layer-aware discovery for GGUF models")
 		return c.catalogFromOCILayers(ctx, ociResolver)
 	}
 
 	// Fall back to generic glob-based discovery
-	log.Debug("using glob-based discovery for GGUF models")
 	return c.genericCataloger.Catalog(ctx, resolver)
 }
 
