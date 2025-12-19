@@ -9,6 +9,9 @@ import (
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	stereofile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/syft/syft/file"
@@ -16,15 +19,21 @@ import (
 
 var _ file.Resolver = (*ociModelResolver)(nil)
 
-// ociModelResolver is a minimal file.Resolver implementation that provides access to
+// ociModelResolver is a file.Resolver implementation that provides access to
 // GGUF header data fetched from OCI model artifacts via range-GET requests.
+// It also implements OCIResolver for layer-aware access patterns.
 type ociModelResolver struct {
 	tempFiles map[string]string // maps virtual path -> temporary file path
 	locations []file.Location
+
+	// OCI layer-aware fields
+	client   *RegistryClient // registry client for fetching layers
+	ref      name.Reference  // OCI reference for the artifact
+	manifest *v1.Manifest    // manifest containing layer information
 }
 
-// newOCIModelResolver creates a new resolver with the given temporary files.
-func newOCIModelResolver(tempFiles map[string]string) *ociModelResolver {
+// newOCIModelResolver creates a new resolver with the given temporary files and OCI context.
+func newOCIModelResolver(tempFiles map[string]string, client *RegistryClient, ref name.Reference, manifest *v1.Manifest) *ociModelResolver {
 	// Create locations for all temp files
 	locations := make([]file.Location, 0, len(tempFiles))
 	for virtualPath, tempPath := range tempFiles {
@@ -35,6 +44,9 @@ func newOCIModelResolver(tempFiles map[string]string) *ociModelResolver {
 	return &ociModelResolver{
 		tempFiles: tempFiles,
 		locations: locations,
+		client:    client,
+		ref:       ref,
+		manifest:  manifest,
 	}
 }
 
@@ -156,6 +168,45 @@ func (r *ociModelResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 	}()
 
 	return ch
+}
+
+// LayerDigestsByMediaType returns the digests of all layers with the given media type.
+// This allows catalogers to discover layers of interest without pre-fetching content.
+func (r *ociModelResolver) LayerDigestsByMediaType(mediaType string) ([]string, error) {
+	if r.manifest == nil {
+		return nil, fmt.Errorf("manifest not available")
+	}
+
+	var digests []string
+	for _, layer := range r.manifest.Layers {
+		if string(layer.MediaType) == mediaType {
+			digests = append(digests, layer.Digest.String())
+		}
+	}
+	return digests, nil
+}
+
+// LayerContentsByDigest returns a reader for the layer content identified by digest.
+// The caller is responsible for closing the returned reader.
+func (r *ociModelResolver) LayerContentsByDigest(digest string) (io.ReadCloser, error) {
+	if r.client == nil || r.ref == nil {
+		return nil, fmt.Errorf("registry client or reference not available")
+	}
+
+	// Fetch the layer using the registry client
+	repo := r.ref.Context()
+	layer, err := remote.Layer(repo.Digest(digest), r.client.options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch layer %s: %w", digest, err)
+	}
+
+	// Return the compressed layer content
+	reader, err := layer.Compressed()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get layer reader for %s: %w", digest, err)
+	}
+
+	return reader, nil
 }
 
 // cleanup removes all temporary files managed by this resolver.

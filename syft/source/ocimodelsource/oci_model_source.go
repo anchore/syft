@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/anchore/syft/internal/log"
@@ -24,6 +26,10 @@ type Config struct {
 	Client    *RegistryClient
 	Metadata  *OCIModelMetadata
 	TempFiles map[string]string // Virtual path -> temp file path
+
+	// OCI layer-aware fields for the resolver
+	Ref      name.Reference // parsed OCI reference
+	Manifest *v1.Manifest   // manifest containing layer information
 }
 
 // ociModelSource implements the source.Source interface for OCI model artifacts.
@@ -90,6 +96,8 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 		Client:    client,
 		Metadata:  metadata,
 		TempFiles: tempFiles,
+		Ref:       artifact.Reference,
+		Manifest:  artifact.Manifest,
 	}
 
 	// Derive artifact ID
@@ -228,12 +236,13 @@ func (s *ociModelSource) Describe() source.Description {
 }
 
 // FileResolver returns a file resolver for accessing GGUF header files.
+// The returned resolver also implements OCIResolver for layer-aware access.
 func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	if s.resolver == nil {
-		s.resolver = newOCIModelResolver(s.config.TempFiles)
+		s.resolver = newOCIModelResolver(s.config.TempFiles, s.config.Client, s.config.Ref, s.config.Manifest)
 	}
 
 	return s.resolver, nil
