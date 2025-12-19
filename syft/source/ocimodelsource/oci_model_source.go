@@ -64,10 +64,6 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 		// Create temp file
 		tempPath, err := createTempFileFromData(headerData, virtualPath)
 		if err != nil {
-			// Clean up any previously created temp files
-			for _, path := range tempFiles {
-				_ = removeFile(path)
-			}
 			return nil, fmt.Errorf("failed to create temp file: %w", err)
 		}
 
@@ -81,8 +77,6 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 			Annotations:  extractAnnotations(layer.Annotations),
 			FetchedBytes: int64(len(headerData)),
 		})
-
-		log.WithFields("virtualPath", virtualPath, "tempPath", tempPath, "bytes", len(headerData)).Debug("created temp file for GGUF header")
 	}
 
 	// Update metadata with GGUF layers
@@ -195,7 +189,6 @@ func deriveIDFromArtifact(cfg Config) artifact.ID {
 		info = cfg.Metadata.ManifestDigest
 	default:
 		// Fall back to reference
-		log.Warn("no explicit name/version or manifest digest, deriving artifact ID from reference")
 		info = cfg.Reference
 	}
 
@@ -255,16 +248,10 @@ func (s *ociModelSource) Close() error {
 
 	if s.resolver != nil {
 		if err := s.resolver.cleanup(); err != nil {
-			log.WithFields("error", err).Warn("failed to cleanup temp files")
 			return err
 		}
 		s.resolver = nil
 	}
 
 	return nil
-}
-
-// removeFile removes a file and logs any errors.
-func removeFile(_ string) error {
-	return nil // Placeholder for now
 }
