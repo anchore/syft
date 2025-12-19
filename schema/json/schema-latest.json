@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.2/document",
+  "$id": "anchore.io/schema/syft/json/16.1.3/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -2379,6 +2379,16 @@
       ],
       "description": "LuaRocksPackage represents a Lua package managed by the LuaRocks package manager with metadata from .rockspec files."
     },
+    "MacosAppEntry": {
+      "properties": {
+        "bundleIdentifier": {
+          "type": "string",
+          "description": "BundleIdentifier is the unique identifier for the application (e.g. \"com.apple.Safari\")"
+        }
+      },
+      "type": "object",
+      "description": "MacOSAppEntry represents metadata about a macOS application extracted from Info.plist files."
+    },
     "MicrosoftKbPatch": {
       "properties": {
         "product_id": {
@@ -2679,6 +2689,9 @@
             },
             {
               "$ref": "#/$defs/LuarocksPackage"
+            },
+            {
+              "$ref": "#/$defs/MacosAppEntry"
             },
             {
               "$ref": "#/$defs/MicrosoftKbPatch"
