@@ -80,6 +80,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from found wordpress plugin PHP source files"
 	case pkg.HomebrewPkg:
 		answer = "acquired package info from Homebrew formula"
+	case pkg.MacOSAppPkg:
+		answer = "acquired package info from macOS application Info.plist"
 	case pkg.TerraformPkg:
 		answer = "acquired package info from Terraform dependency lock file"
 	case pkg.ModelPkg:
