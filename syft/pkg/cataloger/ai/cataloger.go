@@ -153,8 +153,7 @@ func (c *ggufCataloger) parseGGUFLayer(resolver ocimodelsource.OCIResolver, dige
 	}
 
 	// Create a virtual location for the layer
-	virtualPath := fmt.Sprintf("/layer-%d.gguf", layerIndex)
-	location := file.NewLocation(virtualPath).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+	location := file.NewLocation("/").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 
 	// Create package from metadata
 	p := newGGUFPackage(
