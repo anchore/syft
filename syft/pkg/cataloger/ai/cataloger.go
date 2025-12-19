@@ -22,7 +22,8 @@ import (
 )
 
 const (
-	catalogerName = "gguf-cataloger"
+	catalogerName      = "gguf-cataloger"
+	ggufLayerMediaType = "application/vnd.docker.ai.gguf.v3"
 )
 
 // ggufCataloger implements pkg.Cataloger with support for both file-based and OCI layer-based discovery.
@@ -63,7 +64,7 @@ func (c *ggufCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]
 // catalogFromOCILayers discovers GGUF models by querying OCI layers by media type.
 func (c *ggufCataloger) catalogFromOCILayers(ctx context.Context, resolver ocimodelsource.OCIResolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// Find all GGUF layers by media type
-	digests, err := resolver.LayerDigestsByMediaType(ocimodelsource.GGUFLayerMediaType)
+	digests, err := resolver.LayerDigestsByMediaType(ggufLayerMediaType)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get GGUF layer digests: %w", err)
 	}
@@ -81,8 +82,6 @@ func (c *ggufCataloger) catalogFromOCILayers(ctx context.Context, resolver ocimo
 			return packages, nil, ctx.Err()
 		default:
 		}
-
-		log.WithFields("digest", digest, "index", idx).Debug("processing GGUF layer")
 
 		p, err := c.parseGGUFLayer(resolver, digest, idx)
 		if err != nil {

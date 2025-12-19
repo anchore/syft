@@ -49,12 +49,12 @@ func newOCIModelResolver(tempFiles map[string]string, client *RegistryClient, re
 }
 
 // FileContentsByLocation returns the contents of the file at the given location.
-func (r *ociModelResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+func (r *ociModelResolver) FileContentsByLocation(_ file.Location) (io.ReadCloser, error) {
 	return nil, nil
 }
 
 // FileMetadataByLocation returns metadata for the file at the given location.
-func (r *ociModelResolver) FileMetadataByLocation(location file.Location) (m file.Metadata, err error) {
+func (r *ociModelResolver) FileMetadataByLocation(_ file.Location) (m file.Metadata, err error) {
 	return m, nil
 }
 
@@ -65,12 +65,12 @@ func (r *ociModelResolver) HasPath(path string) bool {
 }
 
 // FilesByPath returns locations for files matching the given paths.
-func (r *ociModelResolver) FilesByPath(paths ...string) ([]file.Location, error) {
+func (r *ociModelResolver) FilesByPath(_ ...string) ([]file.Location, error) {
 	return nil, nil
 }
 
 // FilesByGlob returns locations for files matching the given glob patterns.
-func (r *ociModelResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
+func (r *ociModelResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 	return nil, nil
 }
 
