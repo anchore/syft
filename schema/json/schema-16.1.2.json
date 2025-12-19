@@ -853,6 +853,10 @@
           "type": "string",
           "description": "HashPath is the relative path to the .nupkg.sha512 hash file (e.g. \"app.metrics.3.0.0.nupkg.sha512\")"
         },
+        "type": {
+          "type": "string",
+          "description": "Type is type of entry could be package or project for internal refs"
+        },
         "executables": {
           "patternProperties": {
             ".*": {
@@ -1283,20 +1287,6 @@
         "elfSecurityFeatures": {
           "$ref": "#/$defs/ELFSecurityFeatures",
           "description": "ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF."
-        },
-        "symbolNames": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Symbols captures the selection from the symbol table found in the binary."
-        },
-        "toolchains": {
-          "items": {
-            "$ref": "#/$defs/Toolchain"
-          },
-          "type": "array",
-          "description": "Toolchains captures information about the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable."
         }
       },
       "type": "object",
@@ -4238,27 +4228,6 @@
         "hashes"
       ],
       "description": "TerraformLockProviderEntry represents a single provider entry in a Terraform dependency lock file (.terraform.lock.hcl)."
-    },
-    "Toolchain": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name is the name of the toolchain (e.g., \"gcc\", \"clang\", \"ld\", etc.)."
-        },
-        "version": {
-          "type": "string",
-          "description": "Version is the version of the toolchain."
-        },
-        "kind": {
-          "type": "string",
-          "description": "Kind indicates the type of toolchain (e.g., compiler, linker, runtime)."
-        }
-      },
-      "type": "object",
-      "required": [
-        "name",
-        "kind"
-      ]
     },
     "WordpressPluginEntry": {
       "properties": {

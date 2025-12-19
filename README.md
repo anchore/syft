@@ -18,171 +18,74 @@
 
 ![syft-demo](https://user-images.githubusercontent.com/590471/90277200-2a253000-de33-11ea-893f-32c219eea11a.gif)
 
-## Introduction
-
-Syft is a powerful and easy-to-use open-source tool for generating Software Bill of Materials (SBOMs) for container images and filesystems. It provides detailed visibility into the packages and dependencies in your software, helping you manage vulnerabilities, license compliance, and software supply chain security.
-
-Syft development is sponsored by [Anchore](https://anchore.com/), and is released under the [Apache-2.0 License](https://github.com/anchore/syft?tab=Apache-2.0-1-ov-file). For commercial support options with Syft or Grype, please [contact Anchore](https://get.anchore.com/contact/).
-
 ## Features
-- Generates SBOMs for container images, filesystems, archives, and more to discover packages and libraries
-- Supports OCI, Docker and [Singularity](https://github.com/sylabs/singularity) image formats
-- Linux distribution identification
-- Works seamlessly with [Grype](https://github.com/anchore/grype) (a fast, modern vulnerability scanner)
-- Able to create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
-- Convert between SBOM formats, such as CycloneDX, SPDX, and Syft's own format.
+
+- Generates SBOMs for **container images**, **filesystems**, **archives** (see the docs for a full list of [supported scan targets](https://oss.anchore.com/docs/guides/sbom/scan-targets/))
+- Supports dozens of packaging ecosystems (e.g. Alpine (apk), Debian (dpkg), RPM, Go, Python, Java, JavaScript, Ruby, Rust, PHP, .NET, and [many more](https://oss.anchore.com/docs/capabilities/all-packages/))
+- Supports OCI, Docker, [Singularity](https://github.com/sylabs/singularity), and [more image formats](https://oss.anchore.com/docs/guides/sbom/scan-targets/)
+- Works seamlessly with [Grype](https://github.com/anchore/grype) for vulnerability scanning
+- Multiple output formats (**CycloneDX**, **SPDX**, **Syft JSON**, and [more](https://oss.anchore.com/docs/guides/sbom/formats/)) including the ability to [convert between SBOM formats](https://oss.anchore.com/docs/guides/sbom/conversion/)
+- Create signed SBOM attestations using the [in-toto specification](https://github.com/in-toto/attestation/blob/main/spec/README.md)
+
+> [!TIP]
+> **New to Syft? Check out the [Getting Started guide](https://oss.anchore.com/docs/guides/sbom/getting-started/) for a walkthrough!**
 
 ## Installation
 
-Syft binaries are provided for Linux, macOS and Windows.
-
-### Recommended
-> ```bash
-> curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
-> ```
-
-Install script options:
--	`-b`: Specify a custom installation directory (defaults to `./bin`)
--	`-d`: More verbose logging levels (`-d` for debug, `-dd` for trace)
--	`-v`: Verify the signature of the downloaded artifact before installation (requires [`cosign`](https://github.com/sigstore/cosign) to be installed)
-
-### Homebrew
+The quickest way to get up and going:
 ```bash
-brew install syft
+curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
 ```
 
-### Scoop
+> [!TIP]
+> **See [Installation docs](https://oss.anchore.com/docs/installation/syft/) for more ways to get Syft, including Homebrew, Docker, Scoop, Chocolatey, Nix, and more!**
 
-```powershell
-scoop install syft
-```
+## The basics
 
-### Chocolatey
-
-The chocolatey distribution of Syft is community-maintained and not distributed by the Anchore team
-
-```powershell
-choco install syft -y
-```
-
-### Nix
-
-**Note**: Nix packaging of Syft is [community maintained](https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/sy/syft/package.nix). Syft is available in the [stable channel](https://wiki.nixos.org/wiki/Nix_channels#The_official_channels) since NixOS `22.05`.
+See the packages within a container image or directory:
 
 ```bash
-nix-env -i syft
+# container image
+syft alpine:latest
+
+# directory
+syft ./my-project
 ```
 
-... or, just try it out in an ephemeral nix shell:
+To get an SBOM, specify one or more output formats:
 
 ```bash
-nix-shell -p syft
+# SBOM to stdout
+syft <image> -o cyclonedx-json
+
+# Multiple SBOMs to files
+syft <image> -o spdx-json=./spdx.json -o cyclonedx-json=./cdx.json
 ```
 
-## Getting started
 
-### SBOM
+> [!TIP]
+> **Check out the [Getting Started guide](https://oss.anchore.com/docs/guides/sbom/getting-started/)** to explore all of the capabilities and features.
+>
+> **Want to know all of the ins-and-outs of Syft?** Check out the [CLI docs](https://oss.anchore.com/docs/reference/syft/cli/),  [configuration docs](https://oss.anchore.com/docs/reference/syft/configuration/), and [JSON schema](https://oss.anchore.com/docs/reference/syft/json/latest/).
 
-To generate an SBOM for a container image:
-
-```bash
-syft <image>
-```
-
-The above output includes only software that is visible in the container (i.e., the squashed representation of the image). To include software from all image layers in the SBOM, regardless of its presence in the final image, provide `--scope all-layers`:
-
-```bash
-syft <image> --scope all-layers
-```
-
-### Output formats
-
-The output format for Syft is configurable as well using the `-o` (or `--output`) option:
-
-```
-syft <image> -o <format>
-```
-
-Where the `formats` available are:
-- `syft-json`: Use this to get as much information out of Syft as possible!
-- `syft-text`: A row-oriented, human-and-machine-friendly output.
-- `cyclonedx-xml`: An XML report conforming to the [CycloneDX 1.6 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-xml@1.5`: An XML report conforming to the [CycloneDX 1.5 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-json`: A JSON report conforming to the [CycloneDX 1.6 specification](https://cyclonedx.org/specification/overview/).
-- `cyclonedx-json@1.5`: A JSON report conforming to the [CycloneDX 1.5 specification](https://cyclonedx.org/specification/overview/).
-- `spdx-tag-value`: A tag-value formatted report conforming to the [SPDX 2.3 specification](https://spdx.github.io/spdx-spec/v2.3/).
-- `spdx-tag-value@2.2`: A tag-value formatted report conforming to the [SPDX 2.2 specification](https://spdx.github.io/spdx-spec/v2.2.2/).
-- `spdx-json`: A JSON report conforming to the [SPDX 2.3 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.3/schemas/spdx-schema.json).
-- `spdx-json@2.2`: A JSON report conforming to the [SPDX 2.2 JSON Schema](https://github.com/spdx/spdx-spec/blob/v2.2/schemas/spdx-schema.json).
-- `github-json`: A JSON report conforming to GitHub's dependency snapshot format.
-- `syft-table`: A columnar summary (default).
-- `template`: Lets the user specify the output format. See ["Using templates"](https://github.com/anchore/syft/wiki/using-templates) below.
-
-Note that flags using the @<version> can be used for earlier versions of each specification as well.
-
-### Supported Ecosystems
-
-- Alpine (apk)
-- Bitnami packages
-- C (conan)
-- C++ (conan)
-- Dart (pubs)
-- Debian (dpkg)
-- Dotnet (deps.json)
-- Objective-C (cocoapods)
-- Elixir (mix)
-- Erlang (rebar3)
-- Go (go.mod, Go binaries)
-- GitHub (workflows, actions)
-- Haskell (cabal, stack)
-- Java (jar, ear, war, par, sar, nar, rar, native-image)
-- JavaScript (npm, yarn)
-- Jenkins Plugins (jpi, hpi)
-- Linux kernel archives (vmlinz)
-- Linux kernel modules (ko)
-- Nix (outputs in /nix/store)
-- PHP (composer, PECL, Pear)
-- Python (wheel, egg, poetry, requirements.txt, uv)
-- Red Hat (rpm)
-- Ruby (gem)
-- Rust (cargo.lock, auditable binary)
-- Swift (cocoapods, swift-package-manager)
-- Wordpress plugins
-- Terraform providers (.terraform.lock.hcl)
-
-## Documentation
-
-Our [wiki](https://github.com/anchore/syft/wiki) contains further details on the following topics:
-
-* [Supported Sources](https://github.com/anchore/syft/wiki/supported-sources)
-* [File Selection](https://github.com/anchore/syft/wiki/file-selection)
-* [Excluding file paths](https://github.com/anchore/syft/wiki/excluding-file-paths)
-* [Output formats](https://github.com/anchore/syft/wiki/output-formats)
-* [Package Cataloger Selection](https://github.com/anchore/syft/wiki/package-cataloger-selection)
-  * [Concepts](https://github.com/anchore/syft/wiki/package-cataloger-selection#concepts)
-  * [Examples](https://github.com/anchore/syft/wiki/package-cataloger-selection#examples)
-* [Using templates](https://github.com/anchore/syft/wiki/using-templates)
-* [Multiple outputs](https://github.com/anchore/syft/wiki/multiple-outputs)
-* [Private Registry Authentication](https://github.com/anchore/syft/wiki/private-registry-authentication)
-  * [Local Docker Credentials](https://github.com/anchore/syft/wiki/private-registry-authentication#local-docker)
-  * [Docker Credentials in Kubernetes](https://github.com/anchore/syft/wiki/private-registry-authentication#docker-credentials-in-kubernetes)
-* [Attestation (experimental)](https://github.com/anchore/syft/wiki/attestation)
-  * [Keyless Support](https://github.com/anchore/syft/wiki/attestation#keyless-support)
-  * [Local private key support](https://github.com/anchore/syft/wiki/attestation#local-private-key-support)
-  * [Adding an SBOM to an image as an attestation using Syft](https://github.com/anchore/syft/wiki/attestation#adding-an-sbom-to-an-image-as-an-attestation-using-syft)
-* [Configuration](https://github.com/anchore/syft/wiki/configuration)
 
 ## Contributing
 
-Check out our [contributing](/CONTRIBUTING.md) guide and [developer](/DEVELOPING.md) docs.
+We encourage users to help make these tools better by [submitting issues](https://github.com/anchore/syft/issues) when you find a bug or want a new feature. 
+Check out our [contributing overview](https://oss.anchore.com/docs/contributing/) and [developer-specific documentation](https://oss.anchore.com/docs/contributing/syft/) if you are interested in providing code contributions.
 
-## Syft Team Meetings
 
-The Syft Team hold regular community meetings online. All are welcome to join to bring topics for discussion.
+
+<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
+  Syft development is sponsored by <a href="https://anchore.com/">Anchore</a>, and is released under the <a href="https://github.com/anchore/syft?tab=Apache-2.0-1-ov-file">Apache-2.0 License</a>.
+  The <a property="dct:title" rel="cc:attributionURL" href="https://anchore.com/wp-content/uploads/2024/11/syft-logo.svg">Syft logo</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://anchore.com/">Anchore</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt=""></a>
+</p>
+
+For commercial support options with Syft or Grype, please [contact Anchore](https://get.anchore.com/contact/).
+
+## Come talk to us!
+
+The Syft Team holds regular community meetings online. All are welcome to join to bring topics for discussion.
 - Check the [calendar](https://calendar.google.com/calendar/u/0/r?cid=Y182OTM4dGt0MjRtajI0NnNzOThiaGtnM29qNEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t) for the next meeting date.
 - Add items to the [agenda](https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing) (join [this group](https://groups.google.com/g/anchore-oss-community) for write access to the [agenda](https://docs.google.com/document/d/1ZtSAa6fj2a6KRWviTn3WoJm09edvrNUp4Iz_dOjjyY8/edit?usp=sharing))
 - See you there!
-
-## Syft Logo
-
-<p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://anchore.com/wp-content/uploads/2024/11/syft-logo.svg">Syft Logo</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://anchore.com/">Anchore</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt=""></a></p>
