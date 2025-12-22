@@ -183,9 +183,9 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 		upstreamCataloger: "unit-test-cataloger",
 	}
 
-	assert.PanicsWithValue(t, "panic!", func() {
-		_, _, _ = c.Catalog(ctx, resolver)
-	})
+	_, _, err := c.Catalog(ctx, resolver)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "panic!")
 	require.True(t, spy.closed)
 }
 
