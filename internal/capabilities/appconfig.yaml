@@ -6,6 +6,8 @@ application: # AUTO-GENERATED - application-level config keys
     description: only keep dep.json packages which have a runtime/resource DLL claimed in the deps.json targets section (but not necessarily found on disk). The package is also included if any child package claims a DLL, even if the package itself does not claim a DLL.
   - key: dotnet.dep-packages-must-have-dll
     description: only keep dep.json packages which an executable on disk is found. The package is also included if a DLL is found for any child package, even if the package itself does not have a DLL.
+  - key: dotnet.exclude-project-references
+    description: exclude packages with type "project" from deps.json output (these are internal project references, not NuGet packages)
   - key: dotnet.propagate-dll-claims-to-parents
     description: treat DLL claims or on-disk evidence for child packages as DLL claims or on-disk evidence for any parent package
   - key: dotnet.relax-dll-claims-when-bundling-detected

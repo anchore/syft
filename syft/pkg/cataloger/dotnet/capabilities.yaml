@@ -15,6 +15,9 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: RelaxDLLClaimsWhenBundlingDetected
         description: RelaxDLLClaimsWhenBundlingDetected will look for indications of IL bundle tooling via deps.json package names and, if found (and this config option is enabled), will relax the DepPackagesMustClaimDLL value to `false` only in those cases.
         app_key: dotnet.relax-dll-claims-when-bundling-detected
+      - key: ExcludeProjectReferences
+        description: ExcludeProjectReferences excludes packages with type "project" from deps.json output. These are internal project references, not external NuGet packages.
+        app_key: dotnet.exclude-project-references
 catalogers:
   - ecosystem: dotnet # MANUAL
     name: dotnet-deps-binary-cataloger # AUTO-GENERATED
