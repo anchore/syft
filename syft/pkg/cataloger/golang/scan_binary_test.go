@@ -6,9 +6,10 @@ import (
 	"runtime/debug"
 	"testing"
 
-	"github.com/anchore/syft/syft/file"
 	"github.com/kastenhq/goversion/version"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 func Test_getBuildInfo(t *testing.T) {

@@ -13,7 +13,6 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 	tests := []struct {
 		name         string
 		fixture      string
-		skip         string // reason to skip this test, empty means don't skip
 		expectedPkgs []string
 		expectedRels []string
 	}{
@@ -116,9 +115,6 @@ func Test_PackageCataloger_Binary(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if test.skip != "" {
-				t.Skip(test.skip)
-			}
 			pkgtest.NewCatalogTester().
 				WithImageResolver(t, test.fixture).
 				ExpectsPackageStrings(test.expectedPkgs).
