@@ -30,7 +30,9 @@ jobs:
           download-test-fixture-cache: false
 
       - name: Run all tests
-        run: make test
+        run: |
+          make list-tasks-targets
+          make --debug=verbose test
         env:
           # we want to rebuild the cache with no previous state
           DOWNLOAD_TEST_FIXTURE_CACHE: "false"
