@@ -21,8 +21,9 @@ on:
 jobs:
   quality-gate:
     environment: release
-    runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.phase == 'all' }}
+    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=tiny
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -128,8 +129,9 @@ jobs:
 
   release:
     needs: [quality-gate]
-    runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.phase == 'all' }}
+    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=release
     permissions:
       contents: write
       packages: write
