@@ -40,6 +40,7 @@ func AllTypes() []any {
 		pkg.LinuxKernel{},
 		pkg.LinuxKernelModule{},
 		pkg.LuaRocksPackage{},
+		pkg.MacOSAppEntry{},
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
 		pkg.NpmPackage{},

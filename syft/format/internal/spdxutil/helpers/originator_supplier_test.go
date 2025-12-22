@@ -30,6 +30,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.GolangModuleEntry{},
 		pkg.GolangSourceEntry{},
 		pkg.HomebrewFormula{},
+		pkg.MacOSAppEntry{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.LinuxKernel{},

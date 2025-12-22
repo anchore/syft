@@ -282,6 +282,7 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/gpustack/gguf-parser-go v0.22.1
+	howett.net/plist v1.0.1
 )
 
 require (
