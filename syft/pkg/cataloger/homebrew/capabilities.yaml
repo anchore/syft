@@ -1,0 +1,43 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: homebrew # MANUAL
+    name: homebrew-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/homebrew/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - homebrew
+      - image
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseHomebrewFormula
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Cellar/*/*/.brew/*.rb'
+            - '**/Library/Taps/*/*/Formula/*.rb'
+        metadata_types: # AUTO-GENERATED
+          - pkg.HomebrewFormula
+        package_types: # AUTO-GENERATED
+          - homebrew
+        json_schema_types: # AUTO-GENERATED
+          - HomebrewFormula
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

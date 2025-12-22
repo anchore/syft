@@ -1,14 +1,18 @@
 package options
 
-import "github.com/anchore/clio"
+import (
+	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
+)
 
 type linuxKernelConfig struct {
 	CatalogModules bool `json:"catalog-modules" yaml:"catalog-modules" mapstructure:"catalog-modules"`
 }
 
 func defaultLinuxKernelConfig() linuxKernelConfig {
+	def := kernel.DefaultLinuxKernelCatalogerConfig()
 	return linuxKernelConfig{
-		CatalogModules: true,
+		CatalogModules: def.CatalogModules,
 	}
 }
 

@@ -1,0 +1,92 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: swift # MANUAL
+    name: cocoapods-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/swift/cataloger.go
+      function: NewCocoapodsCataloger
+    selectors: # AUTO-GENERATED
+      - cocoapods
+      - declared
+      - directory
+      - language
+      - package
+      - swift
+    parsers: # AUTO-GENERATED structure
+      - function: parsePodfileLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Podfile.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.CocoaPodfileLockEntry
+        package_types: # AUTO-GENERATED
+          - pod
+        json_schema_types: # AUTO-GENERATED
+          - CocoaPodfileLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - CocoaPodfileLockEntry.Checksum
+  - ecosystem: swift # MANUAL
+    name: swift-package-manager-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/swift/cataloger.go
+      function: NewSwiftPackageManagerCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - package
+      - spm
+      - swift
+    parsers: # AUTO-GENERATED structure
+      - function: parsePackageResolved
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Package.resolved'
+            - '**/.package.resolved'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SwiftPackageManagerResolvedEntry
+        package_types: # AUTO-GENERATED
+          - swift
+        json_schema_types: # AUTO-GENERATED
+          - SwiftPackageManagerLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
