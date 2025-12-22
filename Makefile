@@ -7,6 +7,8 @@ TASK = $(TOOL_DIR)/task
 
 .DEFAULT_GOAL := make-default
 
+.PHONY: test
+
 ## Bootstrapping targets #################################
 
 # note: we need to assume that binny and task have not already been installed
