@@ -15,8 +15,8 @@ var _ file.Resolver = (*ociModelResolver)(nil)
 // ociModelResolver is a file.Resolver implementation that provides access to
 // GGUF header data fetched from OCI model artifacts via range-GET requests.
 type ociModelResolver struct {
-	tempDir    string                 // temp directory containing all layer files
-	layerFiles map[string]LayerInfo   // digest -> layer info (temp path + media type)
+	tempDir    string                   // temp directory containing all layer files
+	layerFiles map[string]LayerInfo     // digest -> layer info (temp path + media type)
 	locations  map[string]file.Location // digest -> location
 }
 

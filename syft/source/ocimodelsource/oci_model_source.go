@@ -8,10 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-containerregistry/pkg/name"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/opencontainers/go-digest"
 
+	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -27,35 +26,65 @@ type LayerInfo struct {
 	MediaType string // OCI media type of the layer
 }
 
-// Config holds the configuration for an OCI model artifact source.
+// Config holds the input configuration for an OCI model artifact source.
 type Config struct {
-	Reference string
-	Platform  string
-	Alias     source.Alias
-	Client    *RegistryClient
-	Metadata  *OCIModelMetadata
-
-	// Temp directory containing all layer files
-	TempDir string
-
-	// Layer files indexed by digest
-	LayerFiles map[string]LayerInfo // digest -> layer info
-
-	// OCI layer-aware fields for the resolver
-	Ref      name.Reference // parsed OCI reference
-	Manifest *v1.Manifest   // manifest containing layer information
+	Reference    string
+	RegistryOpts *image.RegistryOptions
+	Alias        source.Alias
 }
 
 // ociModelSource implements the source.Source interface for OCI model artifacts.
 type ociModelSource struct {
-	id       artifact.ID
-	config   Config
-	resolver *ociModelResolver
-	mutex    *sync.Mutex
+	id         artifact.ID
+	reference  string
+	alias      source.Alias
+	metadata   *OCIModelMetadata
+	tempDir    string
+	layerFiles map[string]LayerInfo
+	resolver   *ociModelResolver
+	mutex      *sync.Mutex
 }
 
-// NewFromArtifact creates a new OCI model source from a fetched model artifact.
-func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias source.Alias) (source.Source, error) {
+// NewFromRegistry creates a new OCI model source by fetching the model artifact from a registry.
+// This handles all setup: registry client creation, artifact validation, metadata fetching,
+// and temp file creation for GGUF layer headers.
+func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
+	// Create registry client
+	client, err := NewRegistryClient(cfg.RegistryOpts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create registry client: %w", err)
+	}
+
+	// Check if this is a model artifact (lightweight check)
+	log.WithFields("reference", cfg.Reference).Debug("checking if reference is a model artifact")
+
+	isModel, err := client.IsModelArtifactReference(ctx, cfg.Reference)
+	if err != nil {
+		log.WithFields("reference", cfg.Reference, "error", err).Debug("failed to check if reference is a model artifact")
+		return nil, fmt.Errorf("not an OCI model artifact: %w", err)
+	}
+
+	if !isModel {
+		log.WithFields("reference", cfg.Reference).Debug("reference is not a model artifact")
+		return nil, fmt.Errorf("not an OCI model artifact")
+	}
+
+	log.WithFields("reference", cfg.Reference).Info("detected OCI model artifact, fetching headers")
+
+	// Fetch the full model artifact with metadata
+	artifact, err := client.FetchModelArtifact(ctx, cfg.Reference)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch model artifact: %w", err)
+	}
+
+	// Check if there are any GGUF layers
+	if len(artifact.GGUFLayers) == 0 {
+		log.WithFields("reference", cfg.Reference).Warn("model artifact has no GGUF layers")
+		return nil, fmt.Errorf("model artifact has no GGUF layers")
+	}
+
+	log.WithFields("reference", cfg.Reference, "ggufLayers", len(artifact.GGUFLayers)).Info("found GGUF layers in model artifact")
+
 	// Build metadata
 	metadata := buildMetadata(artifact)
 
@@ -72,9 +101,8 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 		log.WithFields("digest", layer.Digest, "size", layer.Size).Debug("fetching GGUF layer header")
 
 		// Fetch header via range-GET
-		headerData, err := client.FetchBlobRange(context.Background(), artifact.Reference, layer.Digest, MaxHeaderBytes)
+		headerData, err := client.FetchBlobRange(ctx, artifact.Reference, layer.Digest, MaxHeaderBytes)
 		if err != nil {
-			// Clean up temp dir on error
 			os.RemoveAll(tempDir)
 			return nil, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
 		}
@@ -96,25 +124,17 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 		}
 	}
 
-	// Build config
-	config := Config{
-		Reference:  artifact.Reference.String(),
-		Alias:      alias,
-		Client:     client,
-		Metadata:   metadata,
-		TempDir:    tempDir,
-		LayerFiles: layerFiles,
-		Ref:        artifact.Reference,
-		Manifest:   artifact.Manifest,
-	}
-
 	// Derive artifact ID
-	id := deriveIDFromArtifact(config)
+	id := deriveID(cfg.Reference, cfg.Alias, metadata.ManifestDigest)
 
 	return &ociModelSource{
-		id:     id,
-		config: config,
-		mutex:  &sync.Mutex{},
+		id:         id,
+		reference:  cfg.Reference,
+		alias:      cfg.Alias,
+		metadata:   metadata,
+		tempDir:    tempDir,
+		layerFiles: layerFiles,
+		mutex:      &sync.Mutex{},
 	}, nil
 }
 
@@ -184,20 +204,20 @@ func calculateTotalSize(layers []source.LayerMetadata) int64 {
 	return total
 }
 
-// deriveIDFromArtifact generates an artifact ID from the config.
-func deriveIDFromArtifact(cfg Config) artifact.ID {
+// deriveID generates an artifact ID from the reference, alias, and manifest digest.
+func deriveID(reference string, alias source.Alias, manifestDigest string) artifact.ID {
 	var info string
 
 	switch {
-	case !cfg.Alias.IsEmpty():
+	case !alias.IsEmpty():
 		// Use alias for stable artifact ID
-		info = fmt.Sprintf("%s@%s", cfg.Alias.Name, cfg.Alias.Version)
-	case cfg.Metadata.ManifestDigest != "":
+		info = fmt.Sprintf("%s@%s", alias.Name, alias.Version)
+	case manifestDigest != "":
 		// Use manifest digest
-		info = cfg.Metadata.ManifestDigest
+		info = manifestDigest
 	default:
 		// Fall back to reference
-		info = cfg.Reference
+		info = reference
 	}
 
 	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String())
@@ -210,20 +230,19 @@ func (s *ociModelSource) ID() artifact.ID {
 
 // Describe returns a description of the source.
 func (s *ociModelSource) Describe() source.Description {
-	name := s.config.Reference
+	name := s.reference
 	version := ""
 	supplier := ""
 
-	if !s.config.Alias.IsEmpty() {
-		a := s.config.Alias
-		if a.Name != "" {
-			name = a.Name
+	if !s.alias.IsEmpty() {
+		if s.alias.Name != "" {
+			name = s.alias.Name
 		}
-		if a.Version != "" {
-			version = a.Version
+		if s.alias.Version != "" {
+			version = s.alias.Version
 		}
-		if a.Supplier != "" {
-			supplier = a.Supplier
+		if s.alias.Supplier != "" {
+			supplier = s.alias.Supplier
 		}
 	}
 
@@ -232,7 +251,7 @@ func (s *ociModelSource) Describe() source.Description {
 		Name:     name,
 		Version:  version,
 		Supplier: supplier,
-		Metadata: s.config.Metadata,
+		Metadata: s.metadata,
 	}
 }
 
@@ -243,7 +262,7 @@ func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	defer s.mutex.Unlock()
 
 	if s.resolver == nil {
-		s.resolver = newOCIModelResolver(s.config.TempDir, s.config.LayerFiles)
+		s.resolver = newOCIModelResolver(s.tempDir, s.layerFiles)
 	}
 
 	return s.resolver, nil
