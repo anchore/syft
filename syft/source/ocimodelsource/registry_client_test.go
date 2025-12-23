@@ -18,7 +18,7 @@ func TestIsModelArtifact(t *testing.T) {
 			name: "valid model artifact",
 			manifest: &v1.Manifest{
 				Config: v1.Descriptor{
-					MediaType: ModelConfigMediaType,
+					MediaType: modelConfigMediaType,
 				},
 			},
 			expected: true,
@@ -61,7 +61,7 @@ func TestExtractGGUFLayers(t *testing.T) {
 			name: "single GGUF layer",
 			manifest: &v1.Manifest{
 				Layers: []v1.Descriptor{
-					{MediaType: types.MediaType(GGUFLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "abc"}},
+					{MediaType: types.MediaType(ggufLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "abc"}},
 				},
 			},
 			expected: 1,
@@ -70,8 +70,8 @@ func TestExtractGGUFLayers(t *testing.T) {
 			name: "multiple GGUF layers",
 			manifest: &v1.Manifest{
 				Layers: []v1.Descriptor{
-					{MediaType: types.MediaType(GGUFLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "abc"}},
-					{MediaType: types.MediaType(GGUFLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "def"}},
+					{MediaType: types.MediaType(ggufLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "abc"}},
+					{MediaType: types.MediaType(ggufLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "def"}},
 				},
 			},
 			expected: 2,
@@ -80,9 +80,9 @@ func TestExtractGGUFLayers(t *testing.T) {
 			name: "mixed layers",
 			manifest: &v1.Manifest{
 				Layers: []v1.Descriptor{
-					{MediaType: types.MediaType(GGUFLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "abc"}},
+					{MediaType: types.MediaType(ggufLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "abc"}},
 					{MediaType: types.DockerLayer, Digest: v1.Hash{Algorithm: "sha256", Hex: "def"}},
-					{MediaType: types.MediaType(GGUFLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "ghi"}},
+					{MediaType: types.MediaType(ggufLayerMediaType), Digest: v1.Hash{Algorithm: "sha256", Hex: "ghi"}},
 				},
 			},
 			expected: 2,

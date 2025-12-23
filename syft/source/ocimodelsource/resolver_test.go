@@ -24,15 +24,15 @@ func TestOCIModelResolver_FilesByMediaType(t *testing.T) {
 		{
 			name: "exact match GGUF",
 			layerFiles: map[string]layerInfo{
-				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: GGUFLayerMediaType},
+				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: ggufLayerMediaType},
 			},
-			patterns: []string{GGUFLayerMediaType},
+			patterns: []string{ggufLayerMediaType},
 			expected: 1,
 		},
 		{
 			name: "glob match docker ai",
 			layerFiles: map[string]layerInfo{
-				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: GGUFLayerMediaType},
+				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: ggufLayerMediaType},
 			},
 			patterns: []string{"application/vnd.docker.ai*"},
 			expected: 1,
@@ -40,7 +40,7 @@ func TestOCIModelResolver_FilesByMediaType(t *testing.T) {
 		{
 			name: "no match",
 			layerFiles: map[string]layerInfo{
-				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: GGUFLayerMediaType},
+				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: ggufLayerMediaType},
 			},
 			patterns: []string{"application/json"},
 			expected: 0,
@@ -48,10 +48,10 @@ func TestOCIModelResolver_FilesByMediaType(t *testing.T) {
 		{
 			name: "multiple patterns match multiple files",
 			layerFiles: map[string]layerInfo{
-				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: GGUFLayerMediaType},
+				"sha256:abc123": {TempPath: filepath.Join(tempDir, "f1"), MediaType: ggufLayerMediaType},
 				"sha256:def456": {TempPath: filepath.Join(tempDir, "f2"), MediaType: "application/octet-stream"},
 			},
-			patterns: []string{GGUFLayerMediaType, "application/octet-stream"},
+			patterns: []string{ggufLayerMediaType, "application/octet-stream"},
 			expected: 2,
 		},
 	}
@@ -76,7 +76,7 @@ func TestOCIModelResolver_FileContentsByLocation(t *testing.T) {
 
 	digest := "sha256:abc123"
 	layerFiles := map[string]layerInfo{
-		digest: {TempPath: tempFile, MediaType: GGUFLayerMediaType},
+		digest: {TempPath: tempFile, MediaType: ggufLayerMediaType},
 	}
 
 	resolver := newOCIModelResolver(tempDir, layerFiles)

@@ -51,11 +51,7 @@ type ociModelSource struct {
 
 // NewFromRegistry creates a new OCI model source by fetching the model artifact from a registry.
 func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
-	client, err := NewRegistryClient(cfg.RegistryOpts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create registry client: %w", err)
-	}
-
+	client := newRegistryClient(cfg.RegistryOpts)
 	artifact, err := validateAndFetchArtifact(ctx, client, cfg.Reference)
 	if err != nil {
 		return nil, err
@@ -80,10 +76,10 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 }
 
 // validateAndFetchArtifact fetches and validates a model artifact in a single registry call.
-func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, reference string) (*ModelArtifact, error) {
-	artifact, err := client.FetchModelArtifact(ctx, reference)
+func validateAndFetchArtifact(ctx context.Context, client *registryClient, reference string) (*modelArtifact, error) {
+	artifact, err := client.fetchModelArtifact(ctx, reference)
 	if err != nil {
-		// ErrNotModelArtifact is wrapped, so callers can use errors.Is() to check
+		// errNotModelArtifact is wrapped, so callers can use errors.Is() to check
 		return nil, err
 	}
 
@@ -95,7 +91,7 @@ func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, refer
 }
 
 // fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
-func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artifact *ModelArtifact) (string, map[string]layerInfo, error) {
+func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, map[string]layerInfo, error) {
 	tempDir, err := os.MkdirTemp("", "oci-gguf")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
@@ -115,8 +111,8 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artif
 }
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.
-func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (layerInfo, error) {
-	headerData, err := client.FetchBlobRange(ctx, ref, layer.Digest, MaxHeaderBytes)
+func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (layerInfo, error) {
+	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxHeaderBytes)
 	if err != nil {
 		return layerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
 	}
@@ -134,8 +130,8 @@ func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name
 	}, nil
 }
 
-// buildMetadata constructs OCIModelMetadata from a ModelArtifact.
-func buildMetadata(artifact *ModelArtifact) *OCIModelMetadata {
+// buildMetadata constructs OCIModelMetadata from a modelArtifact.
+func buildMetadata(artifact *modelArtifact) *OCIModelMetadata {
 	// layers
 	layers := make([]source.LayerMetadata, len(artifact.Manifest.Layers))
 	for i, layer := range artifact.Manifest.Layers {
