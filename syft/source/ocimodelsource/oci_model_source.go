@@ -15,17 +15,12 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/internal"
 )
 
 var _ source.Source = (*ociModelSource)(nil)
-
-// layerInfo holds information about a layer file stored on disk.
-type layerInfo struct {
-	TempPath  string // Path to the temp file on disk
-	MediaType string // OCI media type of the layer
-}
 
 // Config holds the input configuration for an OCI model artifact source.
 type Config struct {
@@ -36,13 +31,12 @@ type Config struct {
 
 // ociModelSource implements the source.Source interface for OCI model artifacts.
 type ociModelSource struct {
-	id         artifact.ID
-	reference  string
-	alias      source.Alias
-	metadata   *OCIModelMetadata
-	tempDir    string
-	layerFiles map[string]layerInfo
-	resolver   interface {
+	id        artifact.ID
+	reference string
+	alias     source.Alias
+	metadata  *OCIModelMetadata
+	tempDir   string
+	resolver  interface {
 		file.Resolver
 		file.OciLayerResolver
 	}
@@ -63,15 +57,16 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 		return nil, err
 	}
 
+	resolver := fileresolver.NewOCIModelResolver(tempDir, layerFiles)
 	id := deriveID(cfg.Reference, cfg.Alias, metadata.ManifestDigest)
 	return &ociModelSource{
-		id:         id,
-		reference:  cfg.Reference,
-		alias:      cfg.Alias,
-		metadata:   metadata,
-		tempDir:    tempDir,
-		layerFiles: layerFiles,
-		mutex:      &sync.Mutex{},
+		id:        id,
+		reference: cfg.Reference,
+		alias:     cfg.Alias,
+		metadata:  metadata,
+		tempDir:   tempDir,
+		resolver:  resolver,
+		mutex:     &sync.Mutex{},
 	}, nil
 }
 
@@ -91,13 +86,13 @@ func validateAndFetchArtifact(ctx context.Context, client *registryClient, refer
 }
 
 // fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
-func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, map[string]layerInfo, error) {
-	tempDir, err := os.MkdirTemp("", "oci-gguf")
+func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, map[string]fileresolver.LayerInfo, error) {
+	tempDir, err := os.MkdirTemp("", "syft-oci-gguf")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
-	layerFiles := make(map[string]layerInfo)
+	layerFiles := make(map[string]fileresolver.LayerInfo)
 	for _, layer := range artifact.GGUFLayers {
 		li, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
 		if err != nil {
@@ -111,20 +106,20 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artif
 }
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.
-func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (layerInfo, error) {
+func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (fileresolver.LayerInfo, error) {
 	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxHeaderBytes)
 	if err != nil {
-		return layerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
 	}
 
 	digestStr := layer.Digest.String()
 	safeDigest := strings.ReplaceAll(digestStr, ":", "-")
 	tempPath := filepath.Join(tempDir, safeDigest+".gguf")
 	if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
-		return layerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
 	}
 
-	return layerInfo{
+	return fileresolver.LayerInfo{
 		TempPath:  tempPath,
 		MediaType: string(layer.MediaType),
 	}, nil
@@ -248,13 +243,6 @@ func (s *ociModelSource) Describe() source.Description {
 
 // FileResolver returns a file resolver for accessing header of GGUF files.
 func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	if s.resolver == nil {
-		s.resolver = newOCIModelResolver(s.tempDir, s.layerFiles)
-	}
-
 	return s.resolver, nil
 }
 
