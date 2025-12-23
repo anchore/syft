@@ -16,7 +16,7 @@ const (
 
 // NewGGUFCataloger returns a new cataloger instance for GGUF model files.
 // It supports both traditional file-based discovery and OCI layer-aware discovery
-// when the resolver implements OCIResolver.
+// when the source for the SBOM is the oci model source
 func NewGGUFCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseGGUFModel, "**/*.gguf").
