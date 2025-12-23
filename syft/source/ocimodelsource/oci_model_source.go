@@ -76,20 +76,12 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 	}, nil
 }
 
-// validateAndFetchArtifact checks if the reference is a valid model artifact and fetches it.
+// validateAndFetchArtifact fetches and validates a model artifact in a single registry call.
 func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, reference string) (*ModelArtifact, error) {
-	isModel, err := client.IsModelArtifactReference(ctx, reference)
-	if err != nil {
-		return nil, fmt.Errorf("not an OCI model artifact: %w", err)
-	}
-
-	if !isModel {
-		return nil, fmt.Errorf("not an OCI model artifact")
-	}
-
 	artifact, err := client.FetchModelArtifact(ctx, reference)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch model artifact: %w", err)
+		// ErrNotModelArtifact is wrapped, so callers can use errors.Is() to check
+		return nil, err
 	}
 
 	if len(artifact.GGUFLayers) == 0 {
@@ -188,12 +180,11 @@ func buildMetadata(artifact *ModelArtifact) *OCIModelMetadata {
 }
 
 // extractManifestAnnotations extracts annotations from the manifest.
-func extractManifestAnnotations(manifest interface{}) map[string]string {
-	// v1.Manifest has Annotations field
-	if m, ok := manifest.(interface{ GetAnnotations() map[string]string }); ok {
-		return m.GetAnnotations()
+func extractManifestAnnotations(manifest *v1.Manifest) map[string]string {
+	if manifest == nil || manifest.Annotations == nil {
+		return make(map[string]string)
 	}
-	return make(map[string]string)
+	return manifest.Annotations
 }
 
 // calculateTotalSize sums up the size of all layers.

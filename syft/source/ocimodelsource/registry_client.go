@@ -2,7 +2,9 @@ package ocimodelsource
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,6 +16,9 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/image"
 )
+
+// ErrNotModelArtifact is returned when a reference does not point to a model artifact.
+var ErrNotModelArtifact = errors.New("not an OCI model artifact")
 
 const (
 	// Model artifact media types as per Docker's OCI artifacts for AI model packaging
@@ -53,9 +58,14 @@ func buildRemoteOptions(registryOpts *image.RegistryOptions) []remote.Option {
 
 	// Handle TLS settings
 	if registryOpts.InsecureSkipTLSVerify {
-		transport := remote.DefaultTransport.(*http.Transport).Clone()
-		transport.TLSClientConfig.InsecureSkipVerify = true
-		opts = append(opts, remote.WithTransport(transport))
+		if transport, ok := remote.DefaultTransport.(*http.Transport); ok {
+			transport = transport.Clone()
+			if transport.TLSClientConfig == nil {
+				transport.TLSClientConfig = &tls.Config{}
+			}
+			transport.TLSClientConfig.InsecureSkipVerify = true
+			opts = append(opts, remote.WithTransport(transport))
+		}
 	}
 
 	// Handle insecure HTTP
@@ -118,7 +128,7 @@ func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*
 	}
 
 	if !isModelArtifact(manifest) {
-		return nil, fmt.Errorf("not a model artifact (config media type: %s)", manifest.Config.MediaType)
+		return nil, fmt.Errorf("%w (config media type: %s)", ErrNotModelArtifact, manifest.Config.MediaType)
 	}
 
 	img, err := desc.Image()
@@ -192,24 +202,4 @@ func (c *RegistryClient) FetchBlobRange(_ context.Context, ref name.Reference, d
 	}
 
 	return data[:n], nil
-}
-
-// IsModelArtifactReference checks if a reference points to a model artifact.
-func (c *RegistryClient) IsModelArtifactReference(_ context.Context, refStr string) (bool, error) {
-	ref, err := name.ParseReference(refStr)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse reference %q: %w", refStr, err)
-	}
-
-	desc, err := remote.Get(ref, c.options...)
-	if err != nil {
-		return false, fmt.Errorf("failed to fetch descriptor: %w", err)
-	}
-
-	manifest := &v1.Manifest{}
-	if err := json.Unmarshal(desc.Manifest, manifest); err != nil {
-		return false, fmt.Errorf("failed to unmarshal manifest: %w", err)
-	}
-
-	return isModelArtifact(manifest), nil
 }
