@@ -214,6 +214,10 @@ func (r *ContainerImageSquash) FilesByMIMEType(types ...string) ([]file.Location
 	return uniqueLocations, nil
 }
 
+func (r *ContainerImageSquash) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return nil, nil
+}
+
 func (r *ContainerImageSquash) FileMetadataByLocation(location file.Location) (file.Metadata, error) {
 	return fileMetadataByLocation(r.img, location)
 }

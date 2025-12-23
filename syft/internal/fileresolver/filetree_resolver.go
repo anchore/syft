@@ -233,3 +233,7 @@ func (r *FiletreeResolver) FilesByMIMEType(types ...string) ([]file.Location, er
 
 	return uniqueLocations, nil
 }
+
+func (r *FiletreeResolver) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return nil, nil
+}

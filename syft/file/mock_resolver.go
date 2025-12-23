@@ -189,6 +189,10 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	return locations, nil
 }
 
+func (r MockResolver) FilesByMediaType(_ ...string) ([]Location, error) {
+	return nil, nil
+}
+
 func (r MockResolver) FilesByExtension(extensions ...string) ([]Location, error) {
 	var results []Location
 	for _, ext := range extensions {

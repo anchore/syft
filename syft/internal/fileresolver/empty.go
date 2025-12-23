@@ -31,6 +31,10 @@ func (e Empty) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	return nil, nil
 }
 
+func (e Empty) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return nil, nil
+}
+
 func (e Empty) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	return nil
 }
