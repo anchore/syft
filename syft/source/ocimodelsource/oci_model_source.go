@@ -42,8 +42,11 @@ type ociModelSource struct {
 	metadata   *OCIModelMetadata
 	tempDir    string
 	layerFiles map[string]layerInfo
-	resolver   file.Resolver
-	mutex      *sync.Mutex
+	resolver   interface {
+		file.Resolver
+		file.OciLayerResolver
+	}
+	mutex *sync.Mutex
 }
 
 // NewFromRegistry creates a new OCI model source by fetching the model artifact from a registry.

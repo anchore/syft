@@ -73,10 +73,6 @@ func (d *Deferred) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	return r.FilesByMIMEType(types...)
 }
 
-func (d *Deferred) FilesByMediaType(_ ...string) ([]file.Location, error) {
-	return nil, nil
-}
-
 func (d *Deferred) RelativeFileByPath(location file.Location, path string) *file.Location {
 	r, err := d.getResolver()
 	if err != nil {

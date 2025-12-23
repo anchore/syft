@@ -47,6 +47,12 @@ type PathResolver interface {
 	// FilesByMIMEType fetches a set of file references which the contents have been classified as one of the given MIME Types.
 	FilesByMIMEType(types ...string) ([]Location, error)
 
+	// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
+	// This is helpful when attempting to find a file that is in the same layer or lower as another file.
+	RelativeFileByPath(_ Location, path string) *Location
+}
+
+type OciLayerResolver interface {
 	// FilesByMediaType fetches a set of file references which the contents have been classified as one of the given Media Types.
 	// The implementation for this may vary, however, this was first implemented to classify ai globs stored in OCI images.
 	// The following considerations should be made when implementing:
@@ -54,10 +60,6 @@ type PathResolver interface {
 	// - locations for the implementer should be "/" and the fsid should be the layer digest the glob was found
 	// - locations should be used with the FileContents API to return readers to the temporary data
 	FilesByMediaType(types ...string) ([]Location, error)
-
-	// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
-	// This is helpful when attempting to find a file that is in the same layer or lower as another file.
-	RelativeFileByPath(_ Location, path string) *Location
 }
 
 // LocationResolver provides iteration over all file locations in a source.

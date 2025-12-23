@@ -193,6 +193,55 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 	require.True(t, spy.closed)
 }
 
+func Test_CatalogerWithParserByMediaType(t *testing.T) {
+	allParsedPaths := make(map[string]bool)
+	parser := func(_ context.Context, resolver file.Resolver, env *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		allParsedPaths[reader.Path()] = true
+		contents, err := io.ReadAll(reader)
+		require.NoError(t, err)
+
+		if len(contents) == 0 {
+			return nil, nil, nil
+		}
+
+		p := pkg.Package{
+			Name:      string(contents),
+			Locations: file.NewLocationSet(reader.Location),
+		}
+
+		return []pkg.Package{p}, nil, nil
+	}
+
+	upstream := "media-type-cataloger"
+
+	// Create locations with test fixtures that exist on disk
+	loc1 := file.NewLocation("test-fixtures/a-path.txt")
+	loc2 := file.NewLocation("test-fixtures/another-path.txt")
+
+	// Create a mock resolver that maps media types to locations
+	resolver := file.NewMockResolverForMediaTypes(map[string][]file.Location{
+		"application/vnd.test.model": {loc1, loc2},
+	})
+
+	cataloger := NewCataloger(upstream).
+		WithParserByMediaType(parser, "application/vnd.test.model")
+
+	actualPkgs, _, err := cataloger.Catalog(context.Background(), resolver)
+	assert.NoError(t, err)
+
+	// Verify both files were parsed
+	assert.True(t, allParsedPaths["test-fixtures/a-path.txt"], "expected a-path.txt to be parsed")
+	assert.True(t, allParsedPaths["test-fixtures/another-path.txt"], "expected another-path.txt to be parsed")
+
+	// Verify packages were created
+	assert.Len(t, actualPkgs, 2)
+
+	// Verify FoundBy is set correctly
+	for _, p := range actualPkgs {
+		assert.Equal(t, upstream, p.FoundBy)
+	}
+}
+
 func Test_genericCatalogerReturnsErrors(t *testing.T) {
 	genericErrorReturning := NewCataloger("error returning").WithParserByGlobs(func(ctx context.Context, resolver file.Resolver, environment *Environment, locationReader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 		return []pkg.Package{

@@ -11,6 +11,7 @@ import (
 )
 
 var _ file.Resolver = (*ociModelResolver)(nil)
+var _ file.OciLayerResolver = (*ociModelResolver)(nil)
 
 // ociModelResolver is a file.Resolver implementation that provides access to
 // GGUF header data fetched from OCI model artifacts via range-GET requests.
