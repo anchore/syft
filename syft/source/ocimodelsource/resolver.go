@@ -16,12 +16,12 @@ var _ file.Resolver = (*ociModelResolver)(nil)
 // GGUF header data fetched from OCI model artifacts via range-GET requests.
 type ociModelResolver struct {
 	tempDir    string                   // temp directory containing all layer files
-	layerFiles map[string]LayerInfo     // digest -> layer info (temp path + media type)
+	layerFiles map[string]layerInfo     // digest -> layer info (temp path + media type)
 	locations  map[string]file.Location // digest -> location
 }
 
 // newOCIModelResolver creates a new resolver with the given temp directory and layer files.
-func newOCIModelResolver(tempDir string, layerFiles map[string]LayerInfo) *ociModelResolver {
+func newOCIModelResolver(tempDir string, layerFiles map[string]layerInfo) *ociModelResolver {
 	// Create locations for all layer files
 	// Each location has RealPath="/", FileSystemID=digest, AccessPath="/"
 	locations := make(map[string]file.Location, len(layerFiles))

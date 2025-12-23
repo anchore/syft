@@ -22,8 +22,8 @@ import (
 
 var _ source.Source = (*ociModelSource)(nil)
 
-// LayerInfo holds information about a layer file stored on disk.
-type LayerInfo struct {
+// layerInfo holds information about a layer file stored on disk.
+type layerInfo struct {
 	TempPath  string // Path to the temp file on disk
 	MediaType string // OCI media type of the layer
 }
@@ -42,7 +42,7 @@ type ociModelSource struct {
 	alias      source.Alias
 	metadata   *OCIModelMetadata
 	tempDir    string
-	layerFiles map[string]LayerInfo
+	layerFiles map[string]layerInfo
 	resolver   *ociModelResolver
 	mutex      *sync.Mutex
 }
@@ -114,13 +114,13 @@ func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, refer
 }
 
 // fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
-func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artifact *ModelArtifact) (string, map[string]LayerInfo, error) {
+func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artifact *ModelArtifact) (string, map[string]layerInfo, error) {
 	tempDir, err := os.MkdirTemp("", "oci-gguf-*")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
-	layerFiles := make(map[string]LayerInfo)
+	layerFiles := make(map[string]layerInfo)
 
 	for _, layer := range artifact.GGUFLayers {
 		layerInfo, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
@@ -135,12 +135,12 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artif
 }
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.
-func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (LayerInfo, error) {
+func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (layerInfo, error) {
 	log.WithFields("digest", layer.Digest, "size", layer.Size).Debug("fetching GGUF layer header")
 
 	headerData, err := client.FetchBlobRange(ctx, ref, layer.Digest, MaxHeaderBytes)
 	if err != nil {
-		return LayerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
+		return layerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
 	}
 
 	digestStr := layer.Digest.String()
@@ -148,10 +148,10 @@ func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name
 	tempPath := filepath.Join(tempDir, safeDigest+".gguf")
 
 	if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
-		return LayerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
+		return layerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
 	}
 
-	return LayerInfo{
+	return layerInfo{
 		TempPath:  tempPath,
 		MediaType: string(layer.MediaType),
 	}, nil
