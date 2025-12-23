@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/anchore/stereoscope/pkg/image"
@@ -49,82 +51,23 @@ type ociModelSource struct {
 // This handles all setup: registry client creation, artifact validation, metadata fetching,
 // and temp file creation for GGUF layer headers.
 func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
-	// Create registry client
 	client, err := NewRegistryClient(cfg.RegistryOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry client: %w", err)
 	}
 
-	// Check if this is a model artifact (lightweight check)
-	log.WithFields("reference", cfg.Reference).Debug("checking if reference is a model artifact")
-
-	isModel, err := client.IsModelArtifactReference(ctx, cfg.Reference)
+	artifact, err := validateAndFetchArtifact(ctx, client, cfg.Reference)
 	if err != nil {
-		log.WithFields("reference", cfg.Reference, "error", err).Debug("failed to check if reference is a model artifact")
-		return nil, fmt.Errorf("not an OCI model artifact: %w", err)
+		return nil, err
 	}
 
-	if !isModel {
-		log.WithFields("reference", cfg.Reference).Debug("reference is not a model artifact")
-		return nil, fmt.Errorf("not an OCI model artifact")
-	}
-
-	log.WithFields("reference", cfg.Reference).Info("detected OCI model artifact, fetching headers")
-
-	// Fetch the full model artifact with metadata
-	artifact, err := client.FetchModelArtifact(ctx, cfg.Reference)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch model artifact: %w", err)
-	}
-
-	// Check if there are any GGUF layers
-	if len(artifact.GGUFLayers) == 0 {
-		log.WithFields("reference", cfg.Reference).Warn("model artifact has no GGUF layers")
-		return nil, fmt.Errorf("model artifact has no GGUF layers")
-	}
-
-	log.WithFields("reference", cfg.Reference, "ggufLayers", len(artifact.GGUFLayers)).Info("found GGUF layers in model artifact")
-
-	// Build metadata
 	metadata := buildMetadata(artifact)
 
-	// Create temp directory for GGUF layer files
-	tempDir, err := os.MkdirTemp("", "oci-gguf-*")
+	tempDir, layerFiles, err := fetchAndStoreGGUFHeaders(ctx, client, artifact)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+		return nil, err
 	}
 
-	// Fetch GGUF layer headers via range-GET
-	layerFiles := make(map[string]LayerInfo)
-
-	for _, layer := range artifact.GGUFLayers {
-		log.WithFields("digest", layer.Digest, "size", layer.Size).Debug("fetching GGUF layer header")
-
-		// Fetch header via range-GET
-		headerData, err := client.FetchBlobRange(ctx, artifact.Reference, layer.Digest, MaxHeaderBytes)
-		if err != nil {
-			os.RemoveAll(tempDir)
-			return nil, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
-		}
-
-		// Create temp file as <tempDir>/<digest>.gguf
-		// Use the algorithm:hash format, replacing : with - for filesystem compatibility
-		digestStr := layer.Digest.String()
-		safeDigest := strings.ReplaceAll(digestStr, ":", "-")
-		tempPath := filepath.Join(tempDir, safeDigest+".gguf")
-
-		if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
-			os.RemoveAll(tempDir)
-			return nil, fmt.Errorf("failed to write temp file: %w", err)
-		}
-
-		layerFiles[digestStr] = LayerInfo{
-			TempPath:  tempPath,
-			MediaType: string(layer.MediaType),
-		}
-	}
-
-	// Derive artifact ID
 	id := deriveID(cfg.Reference, cfg.Alias, metadata.ManifestDigest)
 
 	return &ociModelSource{
@@ -135,6 +78,82 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 		tempDir:    tempDir,
 		layerFiles: layerFiles,
 		mutex:      &sync.Mutex{},
+	}, nil
+}
+
+// validateAndFetchArtifact checks if the reference is a valid model artifact and fetches it.
+func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, reference string) (*ModelArtifact, error) {
+	log.WithFields("reference", reference).Debug("checking if reference is a model artifact")
+
+	isModel, err := client.IsModelArtifactReference(ctx, reference)
+	if err != nil {
+		log.WithFields("reference", reference, "error", err).Debug("failed to check if reference is a model artifact")
+		return nil, fmt.Errorf("not an OCI model artifact: %w", err)
+	}
+
+	if !isModel {
+		log.WithFields("reference", reference).Debug("reference is not a model artifact")
+		return nil, fmt.Errorf("not an OCI model artifact")
+	}
+
+	log.WithFields("reference", reference).Info("detected OCI model artifact, fetching headers")
+
+	artifact, err := client.FetchModelArtifact(ctx, reference)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch model artifact: %w", err)
+	}
+
+	if len(artifact.GGUFLayers) == 0 {
+		log.WithFields("reference", reference).Warn("model artifact has no GGUF layers")
+		return nil, fmt.Errorf("model artifact has no GGUF layers")
+	}
+
+	log.WithFields("reference", reference, "ggufLayers", len(artifact.GGUFLayers)).Info("found GGUF layers in model artifact")
+
+	return artifact, nil
+}
+
+// fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
+func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artifact *ModelArtifact) (string, map[string]LayerInfo, error) {
+	tempDir, err := os.MkdirTemp("", "oci-gguf-*")
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+
+	layerFiles := make(map[string]LayerInfo)
+
+	for _, layer := range artifact.GGUFLayers {
+		layerInfo, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
+		if err != nil {
+			os.RemoveAll(tempDir)
+			return "", nil, err
+		}
+		layerFiles[layer.Digest.String()] = layerInfo
+	}
+
+	return tempDir, layerFiles, nil
+}
+
+// fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.
+func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (LayerInfo, error) {
+	log.WithFields("digest", layer.Digest, "size", layer.Size).Debug("fetching GGUF layer header")
+
+	headerData, err := client.FetchBlobRange(ctx, ref, layer.Digest, MaxHeaderBytes)
+	if err != nil {
+		return LayerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
+	}
+
+	digestStr := layer.Digest.String()
+	safeDigest := strings.ReplaceAll(digestStr, ":", "-")
+	tempPath := filepath.Join(tempDir, safeDigest+".gguf")
+
+	if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
+		return LayerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	return LayerInfo{
+		TempPath:  tempPath,
+		MediaType: string(layer.MediaType),
 	}, nil
 }
 
