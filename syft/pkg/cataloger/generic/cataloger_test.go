@@ -138,6 +138,10 @@ func (m spyReturningFileResolver) FilesByMIMEType(types ...string) ([]file.Locat
 	return m.m.FilesByMIMEType(types...)
 }
 
+func (m spyReturningFileResolver) FilesByMediaType(types ...string) ([]file.Location, error) {
+	return m.m.FilesByMediaType(types...)
+}
+
 func (m spyReturningFileResolver) RelativeFileByPath(f file.Location, path string) *file.Location {
 	return m.m.RelativeFileByPath(f, path)
 }
