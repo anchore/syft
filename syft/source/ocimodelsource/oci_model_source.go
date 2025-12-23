@@ -29,9 +29,9 @@ type layerInfo struct {
 
 // Config holds the input configuration for an OCI model artifact source.
 type Config struct {
-	Reference    string
-	RegistryOpts *image.RegistryOptions
-	Alias        source.Alias
+	Reference       string
+	RegistryOptions *image.RegistryOptions
+	Alias           source.Alias
 }
 
 // ociModelSource implements the source.Source interface for OCI model artifacts.
@@ -51,7 +51,7 @@ type ociModelSource struct {
 
 // NewFromRegistry creates a new OCI model source by fetching the model artifact from a registry.
 func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
-	client := newRegistryClient(cfg.RegistryOpts)
+	client := newRegistryClient(cfg.RegistryOptions)
 	artifact, err := validateAndFetchArtifact(ctx, client, cfg.Reference)
 	if err != nil {
 		return nil, err
@@ -262,15 +262,7 @@ func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 func (s *ociModelSource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	defer func() { s.resolver = nil }()
 
-	if s.resolver != nil {
-		if r, ok := s.resolver.(*ociModelResolver); ok {
-			if err := r.cleanup(); err != nil {
-				return err
-			}
-		}
-		s.resolver = nil
-	}
-
-	return nil
+	return os.RemoveAll(s.tempDir)
 }

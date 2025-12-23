@@ -28,9 +28,9 @@ func (p *ociModelSourceProvider) Name() string {
 
 func (p *ociModelSourceProvider) Provide(ctx context.Context) (source.Source, error) {
 	cfg := Config{
-		Reference:    p.reference,
-		RegistryOpts: p.registryOpts,
-		Alias:        p.alias,
+		Reference:       p.reference,
+		RegistryOptions: p.registryOpts,
+		Alias:           p.alias,
 	}
 	return NewFromRegistry(ctx, cfg)
 }
