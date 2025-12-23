@@ -18,11 +18,12 @@ var _ Resolver = (*MockResolver)(nil)
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file
 // paths, which are typically paths to test fixtures.
 type MockResolver struct {
-	locations     []Location
-	metadata      map[Coordinates]Metadata
-	mimeTypeIndex map[string][]Location
-	extension     map[string][]Location
-	basename      map[string][]Location
+	locations      []Location
+	metadata       map[Coordinates]Metadata
+	mimeTypeIndex  map[string][]Location
+	mediaTypeIndex map[string][]Location
+	extension      map[string][]Location
+	basename       map[string][]Location
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
@@ -69,6 +70,34 @@ func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]Metadata) *Moc
 		mimeTypeIndex: mimeTypeIndex,
 		extension:     extension,
 		basename:      basename,
+	}
+}
+
+// NewMockResolverForMediaTypes creates a MockResolver that can resolve files by media type.
+// The mediaTypes map specifies which locations should be returned for each media type.
+func NewMockResolverForMediaTypes(mediaTypes map[string][]Location) *MockResolver {
+	var locations []Location
+	mediaTypeIndex := make(map[string][]Location)
+	extension := make(map[string][]Location)
+	basename := make(map[string][]Location)
+
+	for mediaType, locs := range mediaTypes {
+		mediaTypeIndex[mediaType] = append(mediaTypeIndex[mediaType], locs...)
+		for _, l := range locs {
+			locations = append(locations, l)
+			ext := path.Ext(l.RealPath)
+			extension[ext] = append(extension[ext], l)
+			bn := path.Base(l.RealPath)
+			basename[bn] = append(basename[bn], l)
+		}
+	}
+
+	return &MockResolver{
+		locations:      locations,
+		metadata:       make(map[Coordinates]Metadata),
+		mediaTypeIndex: mediaTypeIndex,
+		extension:      extension,
+		basename:       basename,
 	}
 }
 
@@ -187,10 +216,6 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 		locations = append(r.mimeTypeIndex[ty], locations...)
 	}
 	return locations, nil
-}
-
-func (r MockResolver) FilesByMediaType(_ ...string) ([]Location, error) {
-	return nil, nil
 }
 
 func (r MockResolver) FilesByExtension(extensions ...string) ([]Location, error) {

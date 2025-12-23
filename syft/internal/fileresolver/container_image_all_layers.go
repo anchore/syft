@@ -248,10 +248,6 @@ func (r *ContainerImageAllLayers) FilesByMIMEType(types ...string) ([]file.Locat
 	return uniqueLocations, nil
 }
 
-func (r *ContainerImageAllLayers) FilesByMediaType(_ ...string) ([]file.Location, error) {
-	return nil, nil
-}
-
 func (r *ContainerImageAllLayers) AllLocations(ctx context.Context) <-chan file.Location {
 	results := make(chan file.Location)
 	go func() {
