@@ -63,6 +63,8 @@ func (r *ociModelResolver) FilesByMediaType(types ...string) ([]file.Location, e
 
 // FileContentsByLocation returns the contents of the file at the given location.
 // The location's FileSystemID contains the layer digest, which is used to look up the temp file.
+// This method is used as part of the content selection in the generic cataloger when locations
+// are returned by searching for contents by media type.
 func (r *ociModelResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	// Look up the temp file path using the digest stored in FileSystemID
 	digest := location.FileSystemID
@@ -83,12 +85,6 @@ func (r *ociModelResolver) HasPath(path string) bool {
 	// The virtual path is "/" for all files
 	if path == "/" && len(r.layerFiles) > 0 {
 		return true
-	}
-	// Also check if it matches any of the real temp file paths
-	for _, info := range r.layerFiles {
-		if info.TempPath == path {
-			return true
-		}
 	}
 	return false
 }
