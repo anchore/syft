@@ -180,6 +180,10 @@ func (r *mockResolver) FilesByBasenameGlob(_ ...string) ([]file.Location, error)
 	return r.getLocations()
 }
 
+func (r *mockResolver) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return r.getLocations()
+}
+
 func (r *mockResolver) RelativeFileByPath(_ file.Location, path string) *file.Location {
 	l := file.NewLocation(path)
 	return &l
