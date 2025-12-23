@@ -102,30 +102,25 @@ type ModelArtifact struct {
 
 // FetchModelArtifact fetches and parses an OCI model artifact from the registry.
 func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*ModelArtifact, error) {
-	// Parse reference
 	ref, err := name.ParseReference(refStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse reference %q: %w", refStr, err)
 	}
 
-	// Fetch descriptor
 	desc, err := remote.Get(ref, c.options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch descriptor: %w", err)
 	}
 
-	// Parse manifest
 	manifest := &v1.Manifest{}
 	if err := json.Unmarshal(desc.Manifest, manifest); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal manifest: %w", err)
 	}
 
-	// Check if this is a model artifact
 	if !isModelArtifact(manifest) {
 		return nil, fmt.Errorf("not a model artifact (config media type: %s)", manifest.Config.MediaType)
 	}
 
-	// Fetch config
 	img, err := desc.Image()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image: %w", err)
@@ -141,7 +136,6 @@ func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*
 		return nil, fmt.Errorf("failed to get raw config: %w", err)
 	}
 
-	// Extract GGUF layers
 	ggufLayers := extractGGUFLayers(manifest)
 
 	return &ModelArtifact{
@@ -157,6 +151,7 @@ func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*
 
 // isModelArtifact checks if the manifest represents a model artifact.
 func isModelArtifact(manifest *v1.Manifest) bool {
+	// TODO: should this check be less specific
 	return manifest.Config.MediaType == ModelConfigMediaType
 }
 
@@ -172,26 +167,23 @@ func extractGGUFLayers(manifest *v1.Manifest) []v1.Descriptor {
 }
 
 // FetchBlobRange fetches a byte range from a blob in the registry.
-// This is used to fetch only the GGUF header without downloading the entire multi-GB file.
 func (c *RegistryClient) FetchBlobRange(_ context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
-	// Use the remote package's Layer fetching with our options
-	// Then read only the first maxBytes
 	repo := ref.Context()
 
-	// Fetch the layer (blob) using remote.Layer
 	layer, err := remote.Layer(repo.Digest(digest.String()), c.options...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch layer: %w", err)
 	}
 
-	// Get the compressed reader
 	reader, err := layer.Compressed()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get layer reader: %w", err)
 	}
 	defer reader.Close()
 
-	// Read up to maxBytes
+	// Note: this is not some arbitrary number picked out of the blue.
+	// This is based on the specification of header data found here:
+	// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#file-structure
 	data := make([]byte, maxBytes)
 	n, err := io.ReadFull(reader, data)
 	if err != nil && err != io.ErrUnexpectedEOF {
@@ -203,7 +195,6 @@ func (c *RegistryClient) FetchBlobRange(_ context.Context, ref name.Reference, d
 }
 
 // IsModelArtifactReference checks if a reference points to a model artifact.
-// This is a lightweight check that only fetches the manifest.
 func (c *RegistryClient) IsModelArtifactReference(_ context.Context, refStr string) (bool, error) {
 	ref, err := name.ParseReference(refStr)
 	if err != nil {

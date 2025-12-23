@@ -13,7 +13,6 @@ import (
 	"github.com/opencontainers/go-digest"
 
 	"github.com/anchore/stereoscope/pkg/image"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
@@ -43,13 +42,11 @@ type ociModelSource struct {
 	metadata   *OCIModelMetadata
 	tempDir    string
 	layerFiles map[string]layerInfo
-	resolver   *ociModelResolver
+	resolver   file.Resolver
 	mutex      *sync.Mutex
 }
 
 // NewFromRegistry creates a new OCI model source by fetching the model artifact from a registry.
-// This handles all setup: registry client creation, artifact validation, metadata fetching,
-// and temp file creation for GGUF layer headers.
 func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 	client, err := NewRegistryClient(cfg.RegistryOpts)
 	if err != nil {
@@ -62,14 +59,12 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 	}
 
 	metadata := buildMetadata(artifact)
-
 	tempDir, layerFiles, err := fetchAndStoreGGUFHeaders(ctx, client, artifact)
 	if err != nil {
 		return nil, err
 	}
 
 	id := deriveID(cfg.Reference, cfg.Alias, metadata.ManifestDigest)
-
 	return &ociModelSource{
 		id:         id,
 		reference:  cfg.Reference,
@@ -83,20 +78,14 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 
 // validateAndFetchArtifact checks if the reference is a valid model artifact and fetches it.
 func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, reference string) (*ModelArtifact, error) {
-	log.WithFields("reference", reference).Debug("checking if reference is a model artifact")
-
 	isModel, err := client.IsModelArtifactReference(ctx, reference)
 	if err != nil {
-		log.WithFields("reference", reference, "error", err).Debug("failed to check if reference is a model artifact")
 		return nil, fmt.Errorf("not an OCI model artifact: %w", err)
 	}
 
 	if !isModel {
-		log.WithFields("reference", reference).Debug("reference is not a model artifact")
 		return nil, fmt.Errorf("not an OCI model artifact")
 	}
-
-	log.WithFields("reference", reference).Info("detected OCI model artifact, fetching headers")
 
 	artifact, err := client.FetchModelArtifact(ctx, reference)
 	if err != nil {
@@ -104,31 +93,27 @@ func validateAndFetchArtifact(ctx context.Context, client *RegistryClient, refer
 	}
 
 	if len(artifact.GGUFLayers) == 0 {
-		log.WithFields("reference", reference).Warn("model artifact has no GGUF layers")
 		return nil, fmt.Errorf("model artifact has no GGUF layers")
 	}
-
-	log.WithFields("reference", reference, "ggufLayers", len(artifact.GGUFLayers)).Info("found GGUF layers in model artifact")
 
 	return artifact, nil
 }
 
 // fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
 func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artifact *ModelArtifact) (string, map[string]layerInfo, error) {
-	tempDir, err := os.MkdirTemp("", "oci-gguf-*")
+	tempDir, err := os.MkdirTemp("", "oci-gguf")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
 	layerFiles := make(map[string]layerInfo)
-
 	for _, layer := range artifact.GGUFLayers {
-		layerInfo, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
+		li, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
 		if err != nil {
 			os.RemoveAll(tempDir)
 			return "", nil, err
 		}
-		layerFiles[layer.Digest.String()] = layerInfo
+		layerFiles[layer.Digest.String()] = li
 	}
 
 	return tempDir, layerFiles, nil
@@ -136,8 +121,6 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *RegistryClient, artif
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.
 func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (layerInfo, error) {
-	log.WithFields("digest", layer.Digest, "size", layer.Size).Debug("fetching GGUF layer header")
-
 	headerData, err := client.FetchBlobRange(ctx, ref, layer.Digest, MaxHeaderBytes)
 	if err != nil {
 		return layerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
@@ -146,7 +129,6 @@ func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name
 	digestStr := layer.Digest.String()
 	safeDigest := strings.ReplaceAll(digestStr, ":", "-")
 	tempPath := filepath.Join(tempDir, safeDigest+".gguf")
-
 	if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
 		return layerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
 	}
@@ -159,7 +141,7 @@ func fetchSingleGGUFHeader(ctx context.Context, client *RegistryClient, ref name
 
 // buildMetadata constructs OCIModelMetadata from a ModelArtifact.
 func buildMetadata(artifact *ModelArtifact) *OCIModelMetadata {
-	// Extract layers
+	// layers
 	layers := make([]source.LayerMetadata, len(artifact.Manifest.Layers))
 	for i, layer := range artifact.Manifest.Layers {
 		layers[i] = source.LayerMetadata{
@@ -169,7 +151,7 @@ func buildMetadata(artifact *ModelArtifact) *OCIModelMetadata {
 		}
 	}
 
-	// Extract tags
+	// tags
 	var tags []string
 	if tagged, ok := artifact.Reference.(interface{ TagStr() string }); ok {
 		if tag := tagged.TagStr(); tag != "" {
@@ -177,13 +159,13 @@ func buildMetadata(artifact *ModelArtifact) *OCIModelMetadata {
 		}
 	}
 
-	// Extract repo digests
+	// digests
 	var repoDigests []string
 	if artifact.ManifestDigest != "" {
 		repoDigests = []string{artifact.Reference.Context().String() + "@" + artifact.ManifestDigest}
 	}
 
-	// Build metadata
+	// metadata
 	return &OCIModelMetadata{
 		ImageMetadata: source.ImageMetadata{
 			UserInput:      artifact.Reference.String(),
@@ -274,8 +256,7 @@ func (s *ociModelSource) Describe() source.Description {
 	}
 }
 
-// FileResolver returns a file resolver for accessing GGUF header files.
-// The returned resolver also implements OCIResolver for layer-aware access.
+// FileResolver returns a file resolver for accessing header of GGUF files.
 func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -293,8 +274,10 @@ func (s *ociModelSource) Close() error {
 	defer s.mutex.Unlock()
 
 	if s.resolver != nil {
-		if err := s.resolver.cleanup(); err != nil {
-			return err
+		if r, ok := s.resolver.(*ociModelResolver); ok {
+			if err := r.cleanup(); err != nil {
+				return err
+			}
 		}
 		s.resolver = nil
 	}
