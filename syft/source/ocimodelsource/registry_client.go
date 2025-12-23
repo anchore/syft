@@ -17,31 +17,31 @@ import (
 	"github.com/anchore/stereoscope/pkg/image"
 )
 
-// ErrNotModelArtifact is returned when a reference does not point to a model artifact.
-var ErrNotModelArtifact = errors.New("not an OCI model artifact")
+// errNotModelArtifact is returned when a reference does not point to a model artifact.
+var errNotModelArtifact = errors.New("not an OCI model artifact")
 
 const (
 	// Model artifact media types as per Docker's OCI artifacts for AI model packaging
 	// Reference: https://www.docker.com/blog/oci-artifacts-for-ai-model-packaging/
-	ModelConfigMediaType = "application/vnd.docker.ai.model.config.v0.1+json"
-	GGUFLayerMediaType   = "application/vnd.docker.ai.gguf.v3"
+	modelConfigMediaType = "application/vnd.docker.ai.model.config.v0.1+json"
+	ggufLayerMediaType   = "application/vnd.docker.ai.gguf.v3"
 
 	// Maximum bytes to fetch via range-GET for GGUF headers
-	MaxHeaderBytes = 10 * 1024 * 1024 // 10 MB
+	maxHeaderBytes = 10 * 1024 * 1024 // 10 MB
 )
 
-// RegistryClient handles OCI registry interactions for model artifacts.
-type RegistryClient struct {
+// registryClient handles OCI registry interactions for model artifacts.
+type registryClient struct {
 	options []remote.Option
 }
 
-// NewRegistryClient creates a new registry client with authentication from RegistryOptions.
-func NewRegistryClient(registryOpts *image.RegistryOptions) (*RegistryClient, error) {
+// newRegistryClient creates a new registry client with authentication from RegistryOptions.
+func newRegistryClient(registryOpts *image.RegistryOptions) *registryClient {
 	opts := buildRemoteOptions(registryOpts)
 
-	return &RegistryClient{
+	return &registryClient{
 		options: opts,
-	}, nil
+	}
 }
 
 // buildRemoteOptions converts stereoscope RegistryOptions to go-containerregistry remote.Options.
@@ -101,8 +101,8 @@ func buildAuthenticator(registryOpts *image.RegistryOptions) authn.Authenticator
 	return authn.Anonymous
 }
 
-// ModelArtifact represents a parsed OCI model artifact.
-type ModelArtifact struct {
+// modelArtifact represents a parsed OCI model artifact.
+type modelArtifact struct {
 	Reference      name.Reference
 	Manifest       *v1.Manifest
 	Config         *v1.ConfigFile
@@ -112,8 +112,7 @@ type ModelArtifact struct {
 	GGUFLayers     []v1.Descriptor
 }
 
-// FetchModelArtifact fetches and parses an OCI model artifact from the registry.
-func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*ModelArtifact, error) {
+func (c *registryClient) fetchModelArtifact(_ context.Context, refStr string) (*modelArtifact, error) {
 	ref, err := name.ParseReference(refStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse reference %q: %w", refStr, err)
@@ -130,7 +129,7 @@ func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*
 	}
 
 	if !isModelArtifact(manifest) {
-		return nil, fmt.Errorf("%w (config media type: %s)", ErrNotModelArtifact, manifest.Config.MediaType)
+		return nil, fmt.Errorf("%w (config media type: %s)", errNotModelArtifact, manifest.Config.MediaType)
 	}
 
 	img, err := desc.Image()
@@ -150,7 +149,7 @@ func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*
 
 	ggufLayers := extractGGUFLayers(manifest)
 
-	return &ModelArtifact{
+	return &modelArtifact{
 		Reference:      ref,
 		Manifest:       manifest,
 		Config:         configFile,
@@ -164,22 +163,21 @@ func (c *RegistryClient) FetchModelArtifact(_ context.Context, refStr string) (*
 // isModelArtifact checks if the manifest represents a model artifact.
 func isModelArtifact(manifest *v1.Manifest) bool {
 	// TODO: should this check be less specific
-	return manifest.Config.MediaType == ModelConfigMediaType
+	return manifest.Config.MediaType == modelConfigMediaType
 }
 
 // extractGGUFLayers extracts GGUF layer descriptors from the manifest.
 func extractGGUFLayers(manifest *v1.Manifest) []v1.Descriptor {
 	var ggufLayers []v1.Descriptor
 	for _, layer := range manifest.Layers {
-		if string(layer.MediaType) == GGUFLayerMediaType {
+		if string(layer.MediaType) == ggufLayerMediaType {
 			ggufLayers = append(ggufLayers, layer)
 		}
 	}
 	return ggufLayers
 }
 
-// FetchBlobRange fetches a byte range from a blob in the registry.
-func (c *RegistryClient) FetchBlobRange(_ context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
+func (c *registryClient) fetchBlobRange(_ context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
 	repo := ref.Context()
 
 	layer, err := remote.Layer(repo.Digest(digest.String()), c.options...)

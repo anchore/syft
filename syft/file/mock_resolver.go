@@ -13,6 +13,7 @@ import (
 )
 
 var _ Resolver = (*MockResolver)(nil)
+var _ OciLayerResolver = (*MockResolver)(nil)
 
 // MockResolver implements the FileResolver interface and is intended for use *only in test code*.
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file
@@ -214,6 +215,14 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	var locations []Location
 	for _, ty := range types {
 		locations = append(r.mimeTypeIndex[ty], locations...)
+	}
+	return locations, nil
+}
+
+func (r MockResolver) FilesByMediaType(types ...string) ([]Location, error) {
+	var locations []Location
+	for _, ty := range types {
+		locations = append(locations, r.mediaTypeIndex[ty]...)
 	}
 	return locations, nil
 }
