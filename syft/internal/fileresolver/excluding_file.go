@@ -62,6 +62,10 @@ func (r *excluding) FilesByMIMEType(types ...string) ([]file.Location, error) {
 	return filterLocations(locations, err, r.excludeFn)
 }
 
+func (r *excluding) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return nil, nil
+}
+
 func (r *excluding) RelativeFileByPath(location file.Location, path string) *file.Location {
 	l := r.delegate.RelativeFileByPath(location, path)
 	if l != nil && locationMatches(l, r.excludeFn) {

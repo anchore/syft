@@ -137,6 +137,10 @@ func (i *ContainerImageDeepSquash) FilesByMIMEType(types ...string) ([]file.Loca
 	return i.mergeLocations(squashedLocations, allLayersLocations), nil
 }
 
+func (i *ContainerImageDeepSquash) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return nil, nil
+}
+
 func (i *ContainerImageDeepSquash) AllLocations(ctx context.Context) <-chan file.Location {
 	return i.mergeLocationStreams(ctx, i.squashed.AllLocations(ctx), i.allLayers.AllLocations(ctx))
 }

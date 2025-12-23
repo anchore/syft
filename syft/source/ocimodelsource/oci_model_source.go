@@ -3,6 +3,9 @@ package ocimodelsource
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -18,6 +21,12 @@ import (
 
 var _ source.Source = (*ociModelSource)(nil)
 
+// LayerInfo holds information about a layer file stored on disk.
+type LayerInfo struct {
+	TempPath  string // Path to the temp file on disk
+	MediaType string // OCI media type of the layer
+}
+
 // Config holds the configuration for an OCI model artifact source.
 type Config struct {
 	Reference string
@@ -25,7 +34,12 @@ type Config struct {
 	Alias     source.Alias
 	Client    *RegistryClient
 	Metadata  *OCIModelMetadata
-	TempFiles map[string]string // Virtual path -> temp file path
+
+	// Temp directory containing all layer files
+	TempDir string
+
+	// Layer files indexed by digest
+	LayerFiles map[string]LayerInfo // digest -> layer info
 
 	// OCI layer-aware fields for the resolver
 	Ref      name.Reference // parsed OCI reference
@@ -45,53 +59,53 @@ func NewFromArtifact(artifact *ModelArtifact, client *RegistryClient, alias sour
 	// Build metadata
 	metadata := buildMetadata(artifact)
 
-	// Fetch GGUF layer headers via range-GET
-	tempFiles := make(map[string]string)
-	ggufLayers := make([]GGUFLayerInfo, 0, len(artifact.GGUFLayers))
+	// Create temp directory for GGUF layer files
+	tempDir, err := os.MkdirTemp("", "oci-gguf-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+	}
 
-	for idx, layer := range artifact.GGUFLayers {
+	// Fetch GGUF layer headers via range-GET
+	layerFiles := make(map[string]LayerInfo)
+
+	for _, layer := range artifact.GGUFLayers {
 		log.WithFields("digest", layer.Digest, "size", layer.Size).Debug("fetching GGUF layer header")
 
 		// Fetch header via range-GET
 		headerData, err := client.FetchBlobRange(context.Background(), artifact.Reference, layer.Digest, MaxHeaderBytes)
 		if err != nil {
+			// Clean up temp dir on error
+			os.RemoveAll(tempDir)
 			return nil, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
 		}
 
-		// Extract virtual path from annotations
-		virtualPath := extractVirtualPath(idx)
+		// Create temp file as <tempDir>/<digest>.gguf
+		// Use the algorithm:hash format, replacing : with - for filesystem compatibility
+		digestStr := layer.Digest.String()
+		safeDigest := strings.ReplaceAll(digestStr, ":", "-")
+		tempPath := filepath.Join(tempDir, safeDigest+".gguf")
 
-		// Create temp file
-		tempPath, err := createTempFileFromData(headerData, virtualPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create temp file: %w", err)
+		if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
+			os.RemoveAll(tempDir)
+			return nil, fmt.Errorf("failed to write temp file: %w", err)
 		}
 
-		tempFiles[virtualPath] = tempPath
-
-		// Add to GGUF layers metadata
-		ggufLayers = append(ggufLayers, GGUFLayerInfo{
-			Digest:       layer.Digest.String(),
-			Size:         layer.Size,
-			MediaType:    string(layer.MediaType),
-			Annotations:  extractAnnotations(layer.Annotations),
-			FetchedBytes: int64(len(headerData)),
-		})
+		layerFiles[digestStr] = LayerInfo{
+			TempPath:  tempPath,
+			MediaType: string(layer.MediaType),
+		}
 	}
-
-	// Update metadata with GGUF layers
-	metadata.GGUFLayers = ggufLayers
-	metadata.ModelFormat = "gguf"
 
 	// Build config
 	config := Config{
-		Reference: artifact.Reference.String(),
-		Alias:     alias,
-		Client:    client,
-		Metadata:  metadata,
-		TempFiles: tempFiles,
-		Ref:       artifact.Reference,
-		Manifest:  artifact.Manifest,
+		Reference:  artifact.Reference.String(),
+		Alias:      alias,
+		Client:     client,
+		Metadata:   metadata,
+		TempDir:    tempDir,
+		LayerFiles: layerFiles,
+		Ref:        artifact.Reference,
+		Manifest:   artifact.Manifest,
 	}
 
 	// Derive artifact ID
@@ -132,30 +146,24 @@ func buildMetadata(artifact *ModelArtifact) *OCIModelMetadata {
 
 	// Build metadata
 	return &OCIModelMetadata{
-		UserInput:      artifact.Reference.String(),
-		ID:             artifact.ManifestDigest,
-		ManifestDigest: artifact.ManifestDigest,
-		MediaType:      string(artifact.Manifest.MediaType),
-		Tags:           tags,
-		Size:           calculateTotalSize(layers),
-		Layers:         layers,
-		RawManifest:    artifact.RawManifest,
-		RawConfig:      artifact.RawConfig,
-		RepoDigests:    repoDigests,
-		Architecture:   artifact.Config.Architecture,
-		Variant:        artifact.Config.Variant,
-		OS:             artifact.Config.OS,
-		Labels:         artifact.Config.Config.Labels,
-		Annotations:    extractManifestAnnotations(artifact.Manifest),
+		ImageMetadata: source.ImageMetadata{
+			UserInput:      artifact.Reference.String(),
+			ID:             artifact.ManifestDigest,
+			ManifestDigest: artifact.ManifestDigest,
+			MediaType:      string(artifact.Manifest.MediaType),
+			Tags:           tags,
+			Size:           calculateTotalSize(layers),
+			Layers:         layers,
+			RawManifest:    artifact.RawManifest,
+			RawConfig:      artifact.RawConfig,
+			RepoDigests:    repoDigests,
+			Architecture:   artifact.Config.Architecture,
+			Variant:        artifact.Config.Variant,
+			OS:             artifact.Config.OS,
+			Labels:         artifact.Config.Config.Labels,
+		},
+		Annotations: extractManifestAnnotations(artifact.Manifest),
 	}
-}
-
-// extractAnnotations converts v1 annotations to a string map.
-func extractAnnotations(annotations map[string]string) map[string]string {
-	if annotations == nil {
-		return make(map[string]string)
-	}
-	return annotations
 }
 
 // extractManifestAnnotations extracts annotations from the manifest.
@@ -235,7 +243,7 @@ func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	defer s.mutex.Unlock()
 
 	if s.resolver == nil {
-		s.resolver = newOCIModelResolver(s.config.TempFiles, s.config.Client, s.config.Ref, s.config.Manifest)
+		s.resolver = newOCIModelResolver(s.config.TempDir, s.config.LayerFiles)
 	}
 
 	return s.resolver, nil

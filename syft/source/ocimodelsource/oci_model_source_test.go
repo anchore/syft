@@ -6,29 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExtractVirtualPath(t *testing.T) {
-	tests := []struct {
-		name        string
-		layerIndex  int
-		annotations map[string]string
-		expected    string
-	}{
-		{
-			name:        "use index as model layer virtual path",
-			layerIndex:  1,
-			annotations: map[string]string{},
-			expected:    "/model-layer-1.gguf",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := extractVirtualPath(tt.layerIndex)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
 func TestCalculateTotalSize(t *testing.T) {
 	// This is imported from syft/source
 	// Just a simple test to ensure it works
