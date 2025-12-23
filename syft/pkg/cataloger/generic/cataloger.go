@@ -119,9 +119,12 @@ func (c *Cataloger) WithParserByMediaType(parser Parser, types ...string) *Catal
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			log.WithFields("mediatypes", types).Trace("searching content matching mediatypes")
-			matches, err := resolver.FilesByMediaType(types...)
+			ociResolver, ok := resolver.(file.OciLayerResolver)
+			if !ok {
+				return nil
+			}
+			matches, err := ociResolver.FilesByMediaType(types...)
 			if err != nil {
-				log.Debugf("unable to process mimetypes=%+v: %+v", types, err)
 				return nil
 			}
 			requests = append(requests, makeRequests(parser, matches)...)
