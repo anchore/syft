@@ -61,9 +61,11 @@ func buildRemoteOptions(registryOpts *image.RegistryOptions) []remote.Option {
 		if transport, ok := remote.DefaultTransport.(*http.Transport); ok {
 			transport = transport.Clone()
 			if transport.TLSClientConfig == nil {
-				transport.TLSClientConfig = &tls.Config{}
+				transport.TLSClientConfig = &tls.Config{
+					MinVersion: tls.VersionTLS12,
+				}
 			}
-			transport.TLSClientConfig.InsecureSkipVerify = true
+			transport.TLSClientConfig.InsecureSkipVerify = true //#nosec G402 -- user explicitly requested insecure TLS
 			opts = append(opts, remote.WithTransport(transport))
 		}
 	}
