@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
@@ -58,7 +59,7 @@ func readChangelogLines(reader file.LocationReadCloser) ([]string, error) {
 	}
 	defer gzReader.Close()
 
-	content, err := readAll(gzReader)
+	content, err := io.ReadAll(gzReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read changelog content: %w", err)
 	}

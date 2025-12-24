@@ -10,24 +10,12 @@ import (
 
 func TestParseSnapYaml(t *testing.T) {
 	fixture := "test-fixtures/snap.yaml"
-	locations := file.NewLocationSet(file.NewLocation(fixture))
 
-	expected := []pkg.Package{
-		{
-			Name:      "test-snap",
-			Version:   "1.0.0",
-			Type:      pkg.DebPkg,
-			PURL:      "pkg:generic/snap/test-snap@1.0.0?arch=amd64&base=core20&type=app",
-			Locations: locations,
-			Metadata: pkg.SnapEntry{
-				SnapType:     pkg.SnapTypeApp,
-				Base:         "core20",
-				SnapName:     "test-snap",
-				SnapVersion:  "1.0.0",
-				Architecture: "amd64",
-			},
-		},
-	}
+	// snap.yaml contains metadata about the snap container itself, not about
+	// packages inside the snap. No packages should be created from this file -
+	// the actual contents (binaries, debs) are cataloged by their respective
+	// catalogers.
+	var expected []pkg.Package
 
 	pkgtest.TestFileParser(t, fixture, parseSnapYaml, expected, nil)
 }
