@@ -470,7 +470,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "valkey/9.0.0/linux-amd64",
+			logicalFixture: "valkey-server/9.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "valkey",
 				Version:   "9.0.0",
