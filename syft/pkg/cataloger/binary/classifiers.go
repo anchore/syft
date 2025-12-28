@@ -114,6 +114,20 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
+			Class:    "valkey-binary",
+			FileGlob: "**/valkey-server",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// valkey9.0.0buildkitsandbox-1764887574000000000
+				`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+			Package: "valkey",
+			PURL:    mustPURL("pkg:generic/valkey@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:lfprojects:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:linuxfoundation:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:valkey-io:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
 			Class:    "nodejs-binary",
 			FileGlob: "**/node",
 			EvidenceMatcher: binutils.MatchAny(
