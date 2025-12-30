@@ -1,7 +1,10 @@
 package cataloging
 
 type ArchiveSearchConfig struct {
-	IncludeIndexedArchives   bool `yaml:"include-indexed-archives" json:"include-indexed-archives" mapstructure:"include-indexed-archives"`
+	// IncludeIndexedArchives indicates whether to search within indexed archive files (e.g., .zip).
+	IncludeIndexedArchives bool `yaml:"include-indexed-archives" json:"include-indexed-archives" mapstructure:"include-indexed-archives"`
+
+	// IncludeUnindexedArchives indicates whether to search within unindexed archive files (e.g., .tar*).
 	IncludeUnindexedArchives bool `yaml:"include-unindexed-archives" json:"include-unindexed-archives" mapstructure:"include-unindexed-archives"`
 }
 

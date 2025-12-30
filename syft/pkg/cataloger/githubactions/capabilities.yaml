@@ -1,0 +1,110 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: github-actions # MANUAL
+    name: github-action-workflow-usage-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/githubactions/cataloger.go
+      function: NewWorkflowUsageCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - github
+      - github-actions
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseWorkflowForWorkflowUsage
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.github/workflows/*.yaml'
+            - '**/.github/workflows/*.yml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GitHubActionsUseStatement
+        package_types: # AUTO-GENERATED
+          - github-action-workflow
+        json_schema_types: # AUTO-GENERATED
+          - GithubActionsUseStatement
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: github-actions # MANUAL
+    name: github-actions-usage-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/githubactions/cataloger.go
+      function: NewActionUsageCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - github
+      - github-actions
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseCompositeActionForActionUsage
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.github/actions/*/action.yml'
+            - '**/.github/actions/*/action.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GitHubActionsUseStatement
+        package_types: # AUTO-GENERATED
+          - github-action
+        json_schema_types: # AUTO-GENERATED
+          - GithubActionsUseStatement
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseWorkflowForActionUsage
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.github/workflows/*.yaml'
+            - '**/.github/workflows/*.yml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.GitHubActionsUseStatement
+        package_types: # AUTO-GENERATED
+          - github-action
+        json_schema_types: # AUTO-GENERATED
+          - GithubActionsUseStatement
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
