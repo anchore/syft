@@ -171,8 +171,16 @@ func TestSupportedVersions(t *testing.T) {
 
 			assert.Equal(t, len(subject.Relationships), len(s.Relationships), "mismatched relationship count")
 
-			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount(), s.Artifacts.Packages.PackageCount(), "mismatched package count") {
-				t.Logf("expected: %d", subject.Artifacts.Packages.PackageCount())
+			// When encoding to CycloneDX, LinuxDistribution becomes an OS component.
+			// When decoding back, this OS component is also decoded as an OperatingSystemPkg,
+			// so the decoded SBOM will have one additional package.
+			expectedPkgCount := subject.Artifacts.Packages.PackageCount()
+			if subject.Artifacts.LinuxDistribution != nil {
+				expectedPkgCount++
+			}
+
+			if !assert.Equal(t, expectedPkgCount, s.Artifacts.Packages.PackageCount(), "mismatched package count") {
+				t.Logf("expected: %d", expectedPkgCount)
 				for _, p := range subject.Artifacts.Packages.Sorted() {
 					t.Logf("  - %s", p.String())
 				}

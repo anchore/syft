@@ -457,3 +457,41 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
 
 }
+
+func Test_decodeOSComponentAsPackage(t *testing.T) {
+	bom := cyclonedx.BOM{
+		Components: &[]cyclonedx.Component{
+			{
+				BOMRef:  "os:debian@11",
+				Type:    cyclonedx.ComponentTypeOS,
+				Name:    "debian",
+				Version: "11",
+				CPE:     "cpe:2.3:o:debian:debian_linux:11:*:*:*:*:*:*:*",
+				SWID: &cyclonedx.SWID{
+					TagID:   "debian",
+					Name:    "debian",
+					Version: "11",
+				},
+			},
+		},
+	}
+
+	s, err := ToSyftModel(&bom)
+	require.NoError(t, err)
+
+	// verify OS information is captured in LinuxDistribution
+	require.NotNil(t, s.Artifacts.LinuxDistribution)
+	assert.Equal(t, "debian", s.Artifacts.LinuxDistribution.ID)
+	assert.Equal(t, "11", s.Artifacts.LinuxDistribution.VersionID)
+
+	// verify OS component is also captured as a package (this is the fix for issue #4414)
+	osPkgs := s.Artifacts.Packages.PackagesByName("debian")
+	require.Len(t, osPkgs, 1)
+
+	osPkg := osPkgs[0]
+	assert.Equal(t, pkg.OperatingSystemPkg, osPkg.Type)
+	assert.Equal(t, "debian", osPkg.Name)
+	assert.Equal(t, "11", osPkg.Version)
+	require.Len(t, osPkg.CPEs, 1)
+	assert.Equal(t, "cpe:2.3:o:debian:debian_linux:11:*:*:*:*:*:*:*", osPkg.CPEs[0].Attributes.BindToFmtString())
+}
