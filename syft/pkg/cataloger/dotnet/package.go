@@ -192,6 +192,14 @@ func getDepsJSONFilePrefix(p string) string {
 	if len(match) > 1 {
 		return match[1]
 	}
+
+	// Handle ELF
+	r = regexp.MustCompile(`([^\\\/]+)$`)
+	match = r.FindStringSubmatch(p)
+	if len(match) > 1 && !strings.Contains(match[1], ".") {
+		return match[1]
+	}
+
 	return ""
 }
 
