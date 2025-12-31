@@ -13,9 +13,12 @@ jobs:
 
   Publish:
     name: "Publish test fixture image cache"
-    # we use this runner to get enough storage space for docker images and fixture cache
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=build/disk=large
+    # runs-on.com: memory-optimized instances for building test fixture cache
+    #   spot disabled: can run up to an hour, avoid interruptions
+    #   disk=large: need more storage for docker images and fixture cache
+    #   s3-cache: faster actions cache
+    #   tmpfs: faster io-intensive workflows
+    runs-on: runs-on=${{ github.run_id }}/cpu=4+8/ram=64+128/family=r5+r6+r7+r8/spot=false/disk=large/extras=s3-cache+tmpfs
     if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       packages: write

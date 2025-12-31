@@ -18,8 +18,11 @@ jobs:
   Static-Analysis:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=test
+    # runs-on.com: memory & general purpose instances for testing
+    #   spot enabled: ok to interrupt non-production workloads
+    #   s3-cache: faster actions cache
+    #   tmpfs: faster io-intensive workflows
+    runs-on: "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/extras=s3-cache+tmpfs" &test-runner
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -39,9 +42,7 @@ jobs:
   Unit-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
-    # we need more storage than what's on the default runner
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=test
+    runs-on: *test-runner
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -58,8 +59,7 @@ jobs:
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=test
+    runs-on: *test-runner
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -78,8 +78,12 @@ jobs:
 
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=build
+    # runs-on.com: memory, general, & compute instances for parallel builds
+    #   spot disabled: reliability for build workflows (used for releases too)
+    #   goreleaser uses parallelism of 12, so we need more CPUs
+    #   s3-cache: faster actions cache
+    #   tmpfs: faster io-intensive workflows
+    runs-on: "runs-on=${{ github.run_id }}/cpu=8+32/ram=32+128/family=m4+m5+m6+m7+m8+r3+r4+r5+r6+r7+r8+c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs"
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
       - uses: runs-on/action@v2
@@ -110,8 +114,7 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=test
+    runs-on: *test-runner
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
       - uses: runs-on/action@v2
@@ -188,8 +191,7 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
-    # Runner definitions: .github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=test
+    runs-on: *test-runner
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
       - uses: runs-on/action@v2
