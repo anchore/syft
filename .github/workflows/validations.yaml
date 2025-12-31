@@ -22,7 +22,7 @@ jobs:
     #   spot enabled: ok to interrupt non-production workloads
     #   s3-cache: faster actions cache
     #   tmpfs: faster io-intensive workflows
-    runs-on: "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/extras=s3-cache+tmpfs" &test-runner
+    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/extras=s3-cache+tmpfs"
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
