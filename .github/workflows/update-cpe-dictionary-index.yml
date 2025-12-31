@@ -13,8 +13,7 @@ env:
 
 jobs:
   upgrade-cpe-dictionary-index:
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write

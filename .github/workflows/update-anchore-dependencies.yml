@@ -12,8 +12,7 @@ permissions:
 
 jobs:
   update:
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: ubuntu-latest
     if: github.repository_owner == 'anchore' # only run for main repo (not forks)
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1

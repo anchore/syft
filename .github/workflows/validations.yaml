@@ -18,8 +18,8 @@ jobs:
   Static-Analysis:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small
+    # Runner definitions: .github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=test
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -40,8 +40,8 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
     # we need more storage than what's on the default runner
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=medium
+    # Runner definitions: .github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=test
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -58,8 +58,8 @@ jobs:
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=medium
+    # Runner definitions: .github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=test
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -78,7 +78,7 @@ jobs:
 
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
+    # Runner definitions: .github/runs-on.yml
     runs-on: runs-on=${{ github.run_id }}/runner=build
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
@@ -110,8 +110,8 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=medium
+    # Runner definitions: .github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=test
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
       - uses: runs-on/action@v2
@@ -188,8 +188,8 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=medium
+    # Runner definitions: .github/runs-on.yml
+    runs-on: runs-on=${{ github.run_id }}/runner=test
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
       - uses: runs-on/action@v2

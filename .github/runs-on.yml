@@ -1,0 +1,212 @@
+# runs-on.com runner configuration
+# see the runson tool in the anchore/workflows repo for more details on selecting ec2 instance types
+
+runners:
+
+  # used for static analysis and testing
+  test:
+    cpu: [4, 8]                      # min-max in vCPU
+    ram: [32, 128]                   # min-max RAM in GB
+    spot: price-capacity-optimized   # always in fast, non-production workloads, ok to interrupt
+    extras:
+      - s3-cache    # drives faster actions cache
+      - tmpfs       # much faster io-intensive workflows
+    family:
+      # $ uv run runson family 'c*' 'r*' 'm*' --cpu "4:8" --mem "32:128" -o yaml --budget 0.8
+      # config.Requirements: cpu=4:8, ram=32:128GB
+      # Patterns: c*, r*, m*
+      - "r6g.xlarge"     # memory, arm64, 32GB, 4 CPU, 1188 Mbps, $0.2016/hr
+      - "r7g.xlarge"     # memory, arm64, 32GB, 4 CPU, 1250 Mbps, $0.2142/hr
+      - "r5a.xlarge"     # memory, amd64, 32GB, 4 CPU, 1085 Mbps, $0.2260/hr
+      - "r6a.xlarge"     # memory, amd64, 32GB, 4 CPU, 1250 Mbps, $0.2268/hr
+      - "r6gd.xlarge"    # memory, arm64, 32GB, 4 CPU, 1188 Mbps, $0.2304/hr
+      - "r8g.xlarge"     # memory, arm64, 32GB, 4 CPU, 1250 Mbps, $0.2356/hr
+      - "r5.xlarge"      # memory, x86_64, 32GB, 4 CPU, 1150 Mbps, $0.2520/hr
+      - "r6i.xlarge"     # memory, x86_64, 32GB, 4 CPU, 1250 Mbps, $0.2520/hr
+      - "r5ad.xlarge"    # memory, amd64, 32GB, 4 CPU, 1085 Mbps, $0.2620/hr
+      - "r7i.xlarge"     # memory, x86_64, 32GB, 4 CPU, 1250 Mbps, $0.2646/hr
+      - "r7gd.xlarge"    # memory, arm64, 32GB, 4 CPU, 1250 Mbps, $0.2722/hr
+      - "r8i.xlarge"     # memory, x86_64, 32GB, 4 CPU, 1250 Mbps, $0.2778/hr
+      - "r5d.xlarge"     # memory, x86_64, 32GB, 4 CPU, 1150 Mbps, $0.2880/hr
+      - "r8gd.xlarge"    # memory, arm64, 32GB, 4 CPU, 1250 Mbps, $0.2939/hr
+      - "r5b.xlarge"     # memory, x86_64, 32GB, 4 CPU, 2500 Mbps, $0.2980/hr
+      - "r5n.xlarge"     # memory, x86_64, 32GB, 4 CPU, 1150 Mbps, $0.2980/hr
+      - "r6id.xlarge"    # memory, x86_64, 32GB, 4 CPU, 1250 Mbps, $0.3024/hr
+      - "r7a.xlarge"     # memory, amd64, 32GB, 4 CPU, 1250 Mbps, $0.3043/hr
+      - "m6g.2xlarge"    # general, arm64, 32GB, 8 CPU, 2375 Mbps, $0.3080/hr
+      - "r8a.xlarge"     # memory, amd64, 32GB, 4 CPU, 1250 Mbps, $0.3195/hr
+      - "m7g.2xlarge"    # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.3264/hr
+      - "r5dn.xlarge"    # memory, x86_64, 32GB, 4 CPU, 1150 Mbps, $0.3340/hr
+      - "m5a.2xlarge"    # general, amd64, 32GB, 8 CPU, 1580 Mbps, $0.3440/hr
+      - "m6a.2xlarge"    # general, amd64, 32GB, 8 CPU, 2500 Mbps, $0.3456/hr
+      - "r6in.xlarge"    # memory, x86_64, 32GB, 4 CPU, 3125 Mbps, $0.3487/hr
+      - "m8g.2xlarge"    # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.3590/hr
+      - "m6gd.2xlarge"   # general, arm64, 32GB, 8 CPU, 2375 Mbps, $0.3616/hr
+      - "r8gn.xlarge"    # memory, arm64, 32GB, 4 CPU, 2500 Mbps, $0.3644/hr
+      - "r8gb.xlarge"    # memory, arm64, 32GB, 4 CPU, 6250 Mbps, $0.3644/hr
+      - "r7iz.xlarge"    # memory, x86_64, 32GB, 4 CPU, 1584 Mbps, $0.3720/hr
+      - "m5.2xlarge"     # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.3840/hr
+      - "m6i.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.3840/hr
+      - "r6idn.xlarge"   # memory, x86_64, 32GB, 4 CPU, 3125 Mbps, $0.3908/hr
+      - "m4.2xlarge"     # general, x86_64, 32GB, 8 CPU, 1000 Mbps, $0.4000/hr
+      - "m7i.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.4032/hr
+      - "r6g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2375 Mbps, $0.4032/hr
+      - "m5ad.2xlarge"   # general, amd64, 32GB, 8 CPU, 1580 Mbps, $0.4120/hr
+      - "m8i.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.4234/hr
+      - "m7gd.2xlarge"   # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.4271/hr
+      - "r7g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.4284/hr
+      - "m5d.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.4520/hr
+      - "r5a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 1580 Mbps, $0.4520/hr
+      - "r6a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.4536/hr
+      - "r6gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2375 Mbps, $0.4608/hr
+      - "m8gd.2xlarge"   # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.4613/hr
+      - "m7a.2xlarge"    # general, amd64, 32GB, 8 CPU, 2500 Mbps, $0.4637/hr
+      - "r8g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.4713/hr
+      - "m6id.2xlarge"   # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.4746/hr
+      - "m5n.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.4760/hr
+      - "m8a.2xlarge"    # general, amd64, 32GB, 8 CPU, 2500 Mbps, $0.4869/hr
+      - "m2.2xlarge"     # general, x86_64, 34GB, 4 CPU, 500 Mbps, $0.4900/hr
+      - "r5.2xlarge"     # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5040/hr
+      - "r6i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5040/hr
+      - "r5ad.2xlarge"   # memory, amd64, 64GB, 8 CPU, 1580 Mbps, $0.5240/hr
+      - "r7i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5292/hr
+      - "r4.2xlarge"     # memory, x86_64, 61GB, 8 CPU, 1700 Mbps, $0.5320/hr
+      - "m5dn.2xlarge"   # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.5440/hr
+      - "r7gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.5443/hr
+      - "r8i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5557/hr
+      - "m6in.2xlarge"   # general, x86_64, 32GB, 8 CPU, 6250 Mbps, $0.5569/hr
+      - "r5d.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5760/hr
+      - "m8gb.2xlarge"   # general, arm64, 32GB, 8 CPU, 12500 Mbps, $0.5820/hr
+      - "m8gn.2xlarge"   # general, arm64, 32GB, 8 CPU, 5000 Mbps, $0.5820/hr
+      - "r8gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.5878/hr
+      - "r5b.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 5000 Mbps, $0.5960/hr
+      - "r5n.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5960/hr
+      - "r6id.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.6048/hr
+      - "r7a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.6086/hr
+
+  # goreleaser config is set to parallelism of 12
+  build:
+    cpu: [8, 32]    # min-max in vCPU
+    ram: [32, 128]  # min-max RAM in GB
+    spot: false     # reliability for build workflows (used for releases too)
+    extras:
+      - s3-cache    # drives faster actions cache
+      - tmpfs       # much faster io-intensive workflows
+    family:
+      # $ uv run runson family 'c*' 'r*' 'm*' --cpu "8:32" --mem "32:128" -o yaml --budget 0.8
+      # config.Requirements: cpu=8:32, ram=32:128GB
+      # Patterns: c*, r*, m*
+      - "m6g.2xlarge"    # general, arm64, 32GB, 8 CPU, 2375 Mbps, $0.3080/hr
+      - "m7g.2xlarge"    # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.3264/hr
+      - "m5a.2xlarge"    # general, amd64, 32GB, 8 CPU, 1580 Mbps, $0.3440/hr
+      - "m6a.2xlarge"    # general, amd64, 32GB, 8 CPU, 2500 Mbps, $0.3456/hr
+      - "m8g.2xlarge"    # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.3590/hr
+      - "m6gd.2xlarge"   # general, arm64, 32GB, 8 CPU, 2375 Mbps, $0.3616/hr
+      - "m5.2xlarge"     # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.3840/hr
+      - "m6i.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.3840/hr
+      - "m4.2xlarge"     # general, x86_64, 32GB, 8 CPU, 1000 Mbps, $0.4000/hr
+      - "m7i.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.4032/hr
+      - "r6g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2375 Mbps, $0.4032/hr
+      - "m5ad.2xlarge"   # general, amd64, 32GB, 8 CPU, 1580 Mbps, $0.4120/hr
+      - "m8i.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.4234/hr
+      - "m7gd.2xlarge"   # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.4271/hr
+      - "r7g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.4284/hr
+      - "m5d.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.4520/hr
+      - "r5a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 1580 Mbps, $0.4520/hr
+      - "r6a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.4536/hr
+      - "r6gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2375 Mbps, $0.4608/hr
+      - "m8gd.2xlarge"   # general, arm64, 32GB, 8 CPU, 2500 Mbps, $0.4613/hr
+      - "m7a.2xlarge"    # general, amd64, 32GB, 8 CPU, 2500 Mbps, $0.4637/hr
+      - "r8g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.4713/hr
+      - "m6id.2xlarge"   # general, x86_64, 32GB, 8 CPU, 2500 Mbps, $0.4746/hr
+      - "m5n.2xlarge"    # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.4760/hr
+      - "m8a.2xlarge"    # general, amd64, 32GB, 8 CPU, 2500 Mbps, $0.4869/hr
+      - "r5.2xlarge"     # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5040/hr
+      - "r6i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5040/hr
+      - "r5ad.2xlarge"   # memory, amd64, 64GB, 8 CPU, 1580 Mbps, $0.5240/hr
+      - "r7i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5292/hr
+      - "r4.2xlarge"     # memory, x86_64, 61GB, 8 CPU, 1700 Mbps, $0.5320/hr
+      - "c6g.4xlarge"    # compute, arm64, 32GB, 16 CPU, 4750 Mbps, $0.5440/hr
+      - "m5dn.2xlarge"   # general, x86_64, 32GB, 8 CPU, 2300 Mbps, $0.5440/hr
+      - "r7gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.5443/hr
+      - "r8i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5557/hr
+      - "m6in.2xlarge"   # general, x86_64, 32GB, 8 CPU, 6250 Mbps, $0.5569/hr
+      - "r5d.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5760/hr
+      - "c7g.4xlarge"    # compute, arm64, 32GB, 16 CPU, 5000 Mbps, $0.5800/hr
+      - "m8gb.2xlarge"   # general, arm64, 32GB, 8 CPU, 12500 Mbps, $0.5820/hr
+      - "m8gn.2xlarge"   # general, arm64, 32GB, 8 CPU, 5000 Mbps, $0.5820/hr
+      - "r8gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.5878/hr
+      - "r5b.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 5000 Mbps, $0.5960/hr
+      - "r5n.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5960/hr
+      - "r6id.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.6048/hr
+      - "r7a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.6086/hr
+      - "c6a.4xlarge"    # compute, amd64, 32GB, 16 CPU, 5000 Mbps, $0.6120/hr
+      - "c6gd.4xlarge"   # compute, arm64, 32GB, 16 CPU, 4750 Mbps, $0.6144/hr
+      - "c5a.4xlarge"    # compute, amd64, 32GB, 16 CPU, 1580 Mbps, $0.6160/hr
+      - "m6g.4xlarge"    # general, arm64, 64GB, 16 CPU, 4750 Mbps, $0.6160/hr
+      - "m6idn.2xlarge"  # general, x86_64, 32GB, 8 CPU, 6250 Mbps, $0.6365/hr
+      - "c8g.4xlarge"    # compute, arm64, 32GB, 16 CPU, 5000 Mbps, $0.6381/hr
+      - "r8a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.6390/hr
+      - "m7g.4xlarge"    # general, arm64, 64GB, 16 CPU, 5000 Mbps, $0.6528/hr
+      - "m5zn.2xlarge"   # general, x86_64, 32GB, 8 CPU, 3170 Mbps, $0.6607/hr
+      - "r3.2xlarge"     # memory, x86_64, 61GB, 8 CPU, 1000 Mbps, $0.6650/hr
+      - "r5dn.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.6680/hr
+      - "c5.4xlarge"     # compute, x86_64, 32GB, 16 CPU, 4750 Mbps, $0.6800/hr
+      - "c6i.4xlarge"    # compute, x86_64, 32GB, 16 CPU, 5000 Mbps, $0.6800/hr
+      - "c5ad.4xlarge"   # compute, amd64, 32GB, 16 CPU, 1580 Mbps, $0.6880/hr
+      - "m5a.4xlarge"    # general, amd64, 64GB, 16 CPU, 2880 Mbps, $0.6880/hr
+      - "c6gn.4xlarge"   # compute, arm64, 32GB, 16 CPU, 9500 Mbps, $0.6912/hr
+      - "m6a.4xlarge"    # general, amd64, 64GB, 16 CPU, 5000 Mbps, $0.6912/hr
+      - "r6in.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 6250 Mbps, $0.6973/hr
+      - "c7i.4xlarge"    # compute, x86_64, 32GB, 16 CPU, 5000 Mbps, $0.7140/hr
+      - "m8g.4xlarge"    # general, arm64, 64GB, 16 CPU, 5000 Mbps, $0.7181/hr
+      - "m6gd.4xlarge"   # general, arm64, 64GB, 16 CPU, 4750 Mbps, $0.7232/hr
+      - "c7gd.4xlarge"   # compute, arm64, 32GB, 16 CPU, 5000 Mbps, $0.7258/hr
+      - "r8gb.2xlarge"   # memory, arm64, 64GB, 8 CPU, 12500 Mbps, $0.7287/hr
+      - "r8gn.2xlarge"   # memory, arm64, 64GB, 8 CPU, 5000 Mbps, $0.7287/hr
+      - "r7iz.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 3168 Mbps, $0.7440/hr
+      - "c8i.4xlarge"    # compute, x86_64, 32GB, 16 CPU, 5000 Mbps, $0.7497/hr
+      - "c5d.4xlarge"    # compute, x86_64, 32GB, 16 CPU, 4750 Mbps, $0.7680/hr
+      - "m5.4xlarge"     # general, x86_64, 64GB, 16 CPU, 4750 Mbps, $0.7680/hr
+      - "m6i.4xlarge"    # general, x86_64, 64GB, 16 CPU, 5000 Mbps, $0.7680/hr
+      - "r6idn.2xlarge"  # memory, x86_64, 64GB, 8 CPU, 6250 Mbps, $0.7816/hr
+      - "c8gd.4xlarge"   # compute, arm64, 32GB, 16 CPU, 5000 Mbps, $0.7838/hr
+
+  # for building the shared test-fixtures cache OCI image
+  test-fixtures:
+    cpu: [4, 8]     # min-max in vCPU
+    ram: [64, 128]  # min-max RAM in GB
+    spot: false     # this can run up to an hour, avoid interruptions
+    extras:
+      - s3-cache    # drives faster actions cache
+      - tmpfs       # much faster io-intensive workflows
+    family:
+      # $ uv run runson family 'c*' 'r*' 'm*' --cpu "4:8" --mem "64:128" -o yaml --budget 0.8
+      # Loaded 10 runners from .github/runs-on.yml
+      # config.Requirements: cpu=4:8, ram=64:128GB
+      # Patterns: c*, r*, m*
+      - "r6g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2375 Mbps, $0.4032/hr
+      - "r7g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.4284/hr
+      - "r5a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 1580 Mbps, $0.4520/hr
+      - "r6a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.4536/hr
+      - "r6gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2375 Mbps, $0.4608/hr
+      - "r8g.2xlarge"    # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.4713/hr
+      - "r5.2xlarge"     # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5040/hr
+      - "r6i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5040/hr
+      - "r5ad.2xlarge"   # memory, amd64, 64GB, 8 CPU, 1580 Mbps, $0.5240/hr
+      - "r7i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5292/hr
+      - "r7gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.5443/hr
+      - "r8i.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.5557/hr
+      - "r5d.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5760/hr
+      - "r8gd.2xlarge"   # memory, arm64, 64GB, 8 CPU, 2500 Mbps, $0.5878/hr
+      - "r5b.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 5000 Mbps, $0.5960/hr
+      - "r5n.2xlarge"    # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.5960/hr
+      - "r6id.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 2500 Mbps, $0.6048/hr
+      - "r7a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.6086/hr
+      - "r8a.2xlarge"    # memory, amd64, 64GB, 8 CPU, 2500 Mbps, $0.6390/hr
+      - "r5dn.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 2300 Mbps, $0.6680/hr
+      - "r6in.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 6250 Mbps, $0.6973/hr
+      - "r8gb.2xlarge"   # memory, arm64, 64GB, 8 CPU, 12500 Mbps, $0.7287/hr
+      - "r8gn.2xlarge"   # memory, arm64, 64GB, 8 CPU, 5000 Mbps, $0.7287/hr
+      - "r7iz.2xlarge"   # memory, x86_64, 64GB, 8 CPU, 3168 Mbps, $0.7440/hr
+      - "r6idn.2xlarge"  # memory, x86_64, 64GB, 8 CPU, 6250 Mbps, $0.7816/hr

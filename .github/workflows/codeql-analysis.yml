@@ -6,7 +6,6 @@
 name: "CodeQL Security Scan"
 
 on:
-  workflow_dispatch:
   push:
     branches:
       # only run when there are pushes to the main branch (not on PRs)
@@ -21,8 +20,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze
-    # Runner definition: repo(anchore/workflows)/.github/runs-on.yml
-    runs-on: runs-on=${{ github.run_id }}/runner=small-arm
+    runs-on: ubuntu-22.04-4core-16gb
     if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       security-events: write
@@ -53,7 +51,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
-        # By default, queries listed here will override any specified in a config file.
+        # By default, queries listed here will override any specified in a config file. 
         # Prefix the list here with "+" to use these queries and those in the config file.
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
