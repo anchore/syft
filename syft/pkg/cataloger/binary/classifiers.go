@@ -683,6 +683,36 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "grafana-binary",
+			FileGlob: "**/grafana",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL][NUL][NUL][NUL]release-12.3.1[NUL][NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+release-(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+)\x00+`),
+				// HEAD[NUL][NUL][NUL][NUL]12.0.0[NUL][NUL]$a
+				// 11.0.0[NUL][NUL]$a
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+)\x00+\$a`),
+				// [NUL]0xDC0xBF10.4.19[NUL]
+				m.FileContentsVersionMatcher(`\x00.(?P<version>10\.[0-9]+\.[0-9]+)\x00`),
+				// 9.5.21[NUL][NUL]v9.5.x[NUL][NUL][NUL][NUL][NUL][NUL]$a
+				m.FileContentsVersionMatcher(`(?P<version>9\.[0-9]+\.[0-9]+)\x00\x00v`),
+			),
+			Package: "grafana",
+			PURL:    mustPURL("pkg:generic/grafana@version"),
+			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "grafana-binary",
+			FileGlob: "**/grafana-server",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// HEAD[NUL][NUL][NUL][NUL]9.0.0[NUL]:[NUL]
+				// HEAD[NUL][NUL][NUL][NUL]:[NUL][NUL][NUL][NUL][NUL][NUL][NUL]7.5.17[NUL][NUL][NUL][NUL]
+				// HEAD[NUL][NUL][NUL][NUL]m[NUL]...[NUL][NUL]6.7.6[NUL][NUL][NUL].[NUL][NUL][NUL][NUL][NUL][NUL][NUL]:
+				`HEAD\x00+.*\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+)\x00+`),
+			Package: "grafana",
+			PURL:    mustPURL("pkg:generic/grafana@version"),
+			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

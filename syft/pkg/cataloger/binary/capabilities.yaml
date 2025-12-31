@@ -593,6 +593,26 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/grafana'
+        packages:
+          - class: grafana-binary
+            name: grafana
+            purl: pkg:generic/grafana
+            cpes:
+              - cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/grafana-server'
+        packages:
+          - class: grafana-binary
+            name: grafana
+            purl: pkg:generic/grafana
+            cpes:
+              - cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary
