@@ -839,3 +839,65 @@ from-images:
     paths:
       - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavcodec-9aae324f.so.59.37.100
 
+  - version: 1.36.4
+    images:
+      - ref: envoyproxy/envoy:v1.36.4@sha256:ae31562b8cede20913a2d3d6a4f44c8479a50551e033cb8ef7bb8e38cec4b573
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.34.5
+    images:
+      - ref: envoyproxy/envoy:v1.34.5@sha256:8ed42378a045901df417eaf8dbaba8b24aead1e995bf1b0277d907ed6320322c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.28.7
+    images:
+      - ref: envoyproxy/envoy:v1.28.7@sha256:c62d3ccc883457d5403a0f77b31cf2f6d35572f3f9c1c0dd93498c39a281dcfc
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.22.11
+    images:
+      - ref: envoyproxy/envoy:v1.22.1@sha256:1385b1f75e74aef47b2cb1bafdffa43b171cf32b70e8e97d9f5d7cbf161a390a
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.20.7
+    images:
+      - ref: envoyproxy/envoy:v1.20.7@sha256:ca581c36093f2b78d371bff49198cd2cf06753a3ae6d91699788772842e67e3c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.18.6
+    images:
+      - ref: envoyproxy/envoy:v1.18.6@sha256:a49240deca44017155b880172f3b2919fc26d554ad301a6f9941421849337c08
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.14.3
+    images:
+      - ref: envoyproxy/envoy:v1.14.3@sha256:295522f90150dc787cc7fd4b104402c43ae53ffec82b2afcb1767cfdbfce2306
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.11.0
+    images:
+      - ref: envoyproxy/envoy:v1.11.0@sha256:3b3eb76bc74c8e36e0ed3507844b6c12f69e9efa7588a7e35a29f90ee3e90067
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.6.0
+    images:
+      - ref: envoyproxy/envoy:v1.6.0@sha256:6d02409028d76b69bc348650e080e68fd81b863e68aa16e96c95d74ab0f16f24
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
