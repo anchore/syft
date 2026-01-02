@@ -605,6 +605,26 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/pilot-discovery'
+        packages:
+          - class: istio-binary
+            name: pilot-discovery
+            purl: pkg:generic/istio
+            cpes:
+              - cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/pilot-agent'
+        packages:
+          - class: istio-binary
+            name: pilot-agent
+            purl: pkg:generic/istio
+            cpes:
+              - cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/grafana'
         packages:
           - class: grafana-binary

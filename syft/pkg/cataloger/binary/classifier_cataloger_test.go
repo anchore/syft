@@ -1442,6 +1442,83 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.26.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.26.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.8.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.3.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.3.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.3.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.26.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.26.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.8.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "grafana/12.3.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "grafana",
