@@ -17,6 +17,7 @@ type SBOM struct {
 	Relationships []artifact.Relationship
 	Source        source.Description
 	Descriptor    Descriptor
+	Authors       []source.Actor
 }
 
 type Artifacts struct {

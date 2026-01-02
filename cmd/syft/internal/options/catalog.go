@@ -60,6 +60,9 @@ type Catalog struct {
 
 	// configuration for inclusion of unknown information within elements
 	Unknowns unknownsConfig `yaml:"unknowns" mapstructure:"unknowns"`
+
+	// SBOM-level configuration
+	SBOM SBOMConfig `yaml:"sbom" json:"sbom" mapstructure:"sbom"`
 }
 
 var _ interface {
@@ -87,6 +90,7 @@ func DefaultCatalog() Catalog {
 		Unknowns:      defaultUnknowns(),
 		Source:        defaultSourceConfig(),
 		Parallelism:   cfg.Parallelism,
+		SBOM:          DefaultSBOMConfig(),
 	}
 }
 
@@ -100,6 +104,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithSearchConfig(cfg.ToSearchConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
+		WithAuthors(cfg.SBOM.GetAuthors()).
 		WithFilesConfig(cfg.ToFilesConfig()).
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().
@@ -233,6 +238,9 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.IntVarP(&cfg.Parallelism, "parallelism", "",
 		"number of cataloger workers to run in parallel")
+
+	flags.StringArrayVarP(&cfg.SBOM.Authors, "sbom-author", "",
+		"author information to include in the SBOM (format: 'type=<person|organization|tool>&name=<name>&email=<email>')")
 
 	flags.StringArrayVarP(&cfg.Enrich, "enrich", "",
 		fmt.Sprintf("enable package data enrichment from local and online sources (options: %s)", strings.Join(publicisedEnrichmentOptions, ", ")))

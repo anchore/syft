@@ -12,6 +12,8 @@ import (
 
 	"github.com/distribution/reference"
 	"github.com/spdx/tools-golang/spdx"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
@@ -133,16 +135,7 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 			// 6.8: Creators: may have multiple keys for Person, Organization
 			//      and/or Tool
 			// Cardinality: mandatory, one or many
-			Creators: []spdx.Creator{
-				{
-					Creator:     "Anchore, Inc",
-					CreatorType: "Organization",
-				},
-				{
-					Creator:     s.Descriptor.Name + "-" + s.Descriptor.Version,
-					CreatorType: "Tool",
-				},
-			},
+			Creators: toCreators(s),
 
 			// 6.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
@@ -156,6 +149,28 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 		Files:         toFiles(s),
 		Relationships: allRelationships,
 		OtherLicenses: convertOtherLicense(otherLicenses),
+	}
+}
+
+func toCreators(s sbom.SBOM) []spdx.Creator {
+	if len(s.Authors) > 0 {
+		creators := make([]spdx.Creator, 0, len(s.Authors))
+		for _, author := range s.Authors {
+			name := author.Name
+			if author.Email != "" {
+				name = fmt.Sprintf("%s (%s)", author.Name, author.Email)
+			}
+			creators = append(creators, spdx.Creator{
+				Creator:     name,
+				CreatorType: cases.Title(language.Und).String(author.Type),
+			})
+		}
+		return creators
+	}
+
+	return []spdx.Creator{
+		{Creator: "Anchore, Inc", CreatorType: "Organization"},
+		{Creator: s.Descriptor.Name + "-" + s.Descriptor.Version, CreatorType: "Tool"},
 	}
 }
 

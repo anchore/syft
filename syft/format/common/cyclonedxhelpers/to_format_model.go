@@ -40,7 +40,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	// https://github.com/CycloneDX/specification/blob/master/schema/bom-1.3-strict.schema.json#L36
 	// "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 	cdxBOM.SerialNumber = uuid.New().URN()
-	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source)
+	cdxBOM.Metadata = toBomDescriptor(s.Descriptor.Name, s.Descriptor.Version, s.Source, s.Authors)
 
 	coordinates, locationSorter := getCoordinates(s)
 
@@ -207,8 +207,8 @@ func formatCPE(cpeString string) string {
 }
 
 // NewBomDescriptor returns a new BomDescriptor tailored for the current time and "syft" tool details.
-func toBomDescriptor(name, version string, srcMetadata source.Description) *cyclonedx.Metadata {
-	return &cyclonedx.Metadata{
+func toBomDescriptor(name, version string, srcMetadata source.Description, authors []source.Actor) *cyclonedx.Metadata {
+	metadata := &cyclonedx.Metadata{
 		Timestamp: time.Now().Format(time.RFC3339),
 		Tools: &cyclonedx.ToolsChoice{
 			Components: &[]cyclonedx.Component{
@@ -224,6 +224,55 @@ func toBomDescriptor(name, version string, srcMetadata source.Description) *cycl
 		Properties: toBomProperties(srcMetadata),
 		Component:  toBomDescriptorComponent(srcMetadata),
 	}
+
+	// Route authors by type according to CycloneDX spec
+	if len(authors) > 0 {
+		var persons []cyclonedx.OrganizationalContact
+		var tools []cyclonedx.Component
+		var supplier *cyclonedx.OrganizationalEntity
+
+		for _, author := range authors {
+			switch author.Type {
+			case "person":
+				persons = append(persons, cyclonedx.OrganizationalContact{
+					Name:  author.Name,
+					Email: author.Email,
+				})
+			case "tool":
+				tools = append(tools, cyclonedx.Component{
+					Type: cyclonedx.ComponentTypeApplication,
+					Name: author.Name,
+				})
+			case "organization":
+				// Use the first organization as supplier (if not already set from source metadata)
+				if metadata.Supplier == nil {
+					supplier = &cyclonedx.OrganizationalEntity{
+						Name: author.Name,
+					}
+					if author.Email != "" {
+						supplier.Contact = &[]cyclonedx.OrganizationalContact{
+							{Email: author.Email},
+						}
+					}
+				}
+			}
+		}
+
+		if len(persons) > 0 {
+			metadata.Authors = &persons
+		}
+		if len(tools) > 0 {
+			// Append to existing tools
+			existing := *metadata.Tools.Components
+			existing = append(existing, tools...)
+			metadata.Tools.Components = &existing
+		}
+		if supplier != nil {
+			metadata.Supplier = supplier
+		}
+	}
+
+	return metadata
 }
 
 func toBomSupplier(srcMetadata source.Description) *cyclonedx.OrganizationalEntity {
