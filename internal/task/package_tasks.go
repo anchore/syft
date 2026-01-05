@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/debian"
+	"github.com/anchore/syft/syft/pkg/cataloger/deno"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
 	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
@@ -53,6 +54,7 @@ const (
 	JavaScript = "javascript"
 	Node       = "node"
 	NPM        = "npm"
+	Deno       = "deno"
 
 	// Python ecosystem labels
 	Python = "python"
@@ -107,6 +109,7 @@ func DefaultPackageTaskFactories() Factories {
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Node, NPM,
 		),
+		newSimplePackageTaskFactory(deno.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Deno, JavaScript),
 		newSimplePackageTaskFactory(php.NewComposerLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "php", "composer"),
 		newSimplePackageTaskFactory(php.NewPearCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, pkgcataloging.ImageTag, "php", "pear"),
 		newPackageTaskFactory(
