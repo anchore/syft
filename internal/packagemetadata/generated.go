@@ -20,6 +20,8 @@ func AllTypes() []any {
 		pkg.CondaMetaPackage{},
 		pkg.DartPubspec{},
 		pkg.DartPubspecLockEntry{},
+		pkg.DenoLockEntry{},
+		pkg.DenoRemoteLockEntry{},
 		pkg.DotnetDepsEntry{},
 		pkg.DotnetPackagesLockEntry{},
 		pkg.DotnetPortableExecutableEntry{},
