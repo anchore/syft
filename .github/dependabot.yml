@@ -31,24 +31,9 @@ updates:
           - "patch"
 
   - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "friday"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-    groups:
-      actions-minor-patch:
-        applies-to: version-updates  # security updates get individual PRs
-        patterns:
-          - "*"
-        update-types:  # major omitted, gets individual PRs
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "github-actions"
-    directory: "/.github/actions/bootstrap"
+    directories:
+      - "/"
+      - "/.github/actions/bootstrap"
     schedule:
       interval: "weekly"
       day: "friday"
