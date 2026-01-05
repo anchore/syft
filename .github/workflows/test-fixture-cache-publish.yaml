@@ -18,7 +18,7 @@ jobs:
     #   disk=large: need more storage for docker images and fixture cache
     #   s3-cache: faster actions cache
     #   tmpfs: faster io-intensive workflows
-    runs-on: runs-on=${{ github.run_id }}/cpu=4+8/ram=64+128/family=r5+r6+r7+r8/spot=false/disk=large/extras=s3-cache+tmpfs
+    runs-on: runs-on=${{ github.run_id }}/cpu=4+8/ram=64+128/family=r5+r6+r7+r8/spot=false/extras=s3-cache+tmpfs
     if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       packages: write

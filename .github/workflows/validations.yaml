@@ -88,7 +88,7 @@ jobs:
     runs-on: "runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs"
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
-      - uses: runs-on/action@v2
+      - uses: runs-on/action@cd2b598b0515d39d78c38a02d529db87d2196d1e  # v2.0.3
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -119,7 +119,7 @@ jobs:
     runs-on: *test-runner
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
-      - uses: runs-on/action@v2
+      - uses: runs-on/action@cd2b598b0515d39d78c38a02d529db87d2196d1e  # v2.0.3
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -196,7 +196,7 @@ jobs:
     runs-on: *test-runner
     steps:
       # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
-      - uses: runs-on/action@v2
+      - uses: runs-on/action@cd2b598b0515d39d78c38a02d529db87d2196d1e  # v2.0.3
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
