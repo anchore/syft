@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/bundle"
 )
@@ -557,16 +558,12 @@ func readELFBundledDepsJSON(resolver file.Resolver, loc file.Location) (*logical
 		return nil, nil
 	}
 
-	seeker, ok := reader.(io.ReadSeeker)
-	if !ok {
-		return nil, nil
-	}
-
-	if _, err := seeker.Seek(0, io.SeekStart); err != nil {
+	uReader, err := unionreader.GetUnionReader(reader)
+	if err != nil {
 		return nil, err
 	}
 
-	depsJSON, err := bundle.ExtractDepsJSONFromELFBundle(seeker)
+	depsJSON, err := bundle.ExtractDepsJSONFromELFBundle(uReader)
 	if err != nil {
 		return nil, err
 	}
