@@ -1,4 +1,4 @@
-package pe
+package bundle
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ func ExtractDepsJSONFromELFBundle(r io.ReadSeeker) (string, error) {
 	if err != nil || headerOffset == 0 {
 		return "", err
 	}
-	return readDepsJSONFromBundleHeader(r, headerOffset)
+	return ReadDepsJSONFromBundleHeader(r, headerOffset)
 }
 
 func findBundleHeaderOffsetInELF(r io.ReadSeeker) (int64, error) {
