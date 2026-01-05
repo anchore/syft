@@ -39,9 +39,9 @@ vars:
   # e.g. when installing snapshot debs from a local path, ./ forces the deb to be installed in the current working directory instead of referencing a package name
   SNAPSHOT_DIR: ./snapshot
   SNAPSHOT_BIN: "{{ .PROJECT_ROOT }}/{{ .SNAPSHOT_DIR }}/{{ .OS }}-build_{{ .OS }}_{{ .ARCH }}/{{ .PROJECT }}"
-  SNAPSHOT_CMD: "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --skip=publish --skip=sign --parallelism=12"
-  BUILD_CMD:    "{{ .TOOL_DIR }}/goreleaser build   --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --single-target --parallelism=12"
-  RELEASE_CMD:  "{{ .TOOL_DIR }}/goreleaser release --clean --release-notes {{ .CHANGELOG }} --parallelism=12"
+  SNAPSHOT_CMD: "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --skip=publish --skip=sign"
+  BUILD_CMD:    "{{ .TOOL_DIR }}/goreleaser build   --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --single-target"
+  RELEASE_CMD:  "{{ .TOOL_DIR }}/goreleaser release --clean --release-notes {{ .CHANGELOG }}"
   VERSION:
     sh: git describe --dirty --always --tags
 
@@ -225,14 +225,14 @@ tasks:
       COVERAGE_THRESHOLD: 62
     cmds:
       - task: clean-test-observations
-      - "go test -p=4 -parallel=8 -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
+      - "go test -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
       - cmd: ".github/scripts/coverage.py {{ .COVERAGE_THRESHOLD }} {{ .TMP_DIR }}/unit-coverage-details.txt"
         silent: true
 
   integration:
     desc: Run integration tests
     cmds:
-      - "go test -v -p=4 -parallel=8 ./cmd/syft/internal/test/integration"
+      - "go test -v ./cmd/syft/internal/test/integration"
       # exercise most of the CLI with the data race detector
       # we use a larger image to ensure we're using multiple catalogers at a time
       - "go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2"
