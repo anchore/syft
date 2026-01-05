@@ -21,8 +21,8 @@ on:
 jobs:
   quality-gate:
     environment: release
-    runs-on: ubuntu-24.04
     if: ${{ github.event.inputs.phase == 'all' }}
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
         with:
@@ -127,9 +127,14 @@ jobs:
           false
 
   release:
-    needs: [quality-gate]
-    runs-on: ubuntu-24.04
+    needs: [ quality-gate ]
     if: ${{ github.event.inputs.phase == 'all' }}
+    # runs-on.com: compute instances for parallel builds
+    #   spot disabled: reliability for build workflows (used for releases too)
+    #   goreleaser uses parallelism of 12, so we need more CPUs
+    #   s3-cache: faster actions cache
+    #   tmpfs: faster io-intensive workflows
+    runs-on: runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs
     permissions:
       contents: write
       packages: write
@@ -198,7 +203,7 @@ jobs:
         if: ${{ success() }}
 
   release-install-script:
-    needs: [release]
+    needs: [ release ]
     if: ${{ always() && (needs.release.result == 'success' || github.event.inputs.phase == 'install-script-only') }}
     uses: "anchore/workflows/.github/workflows/release-install-script.yaml@main"
     with:
