@@ -470,6 +470,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "valkey-server/9.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "valkey",
+				Version:   "9.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/valkey@9.0.0",
+				Locations: locations("valkey-server"),
+				Metadata:  metadata("valkey-binary"),
+			},
+		},
+		{
 			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
