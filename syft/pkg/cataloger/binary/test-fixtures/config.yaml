@@ -846,3 +846,74 @@ from-images:
     paths:
       - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavcodec-9aae324f.so.59.37.100
 
+  - name: grafana
+    version: 12.3.1
+    images:
+      - ref: grafana/grafana:12.3.1@sha256:7c064e627d9cb50c3485c9ded5ca0222de89a08e41403322a0c3ca6f1777a8d1
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.0.0
+    images:
+      - ref: grafana/grafana:12.0.0@sha256:884f0f140669a5b9dccee1baece011a3fa5dd1951f1ba158b03de8ad1d178380
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 11.0.0
+    images:
+      - ref: grafana/grafana:11.0.0@sha256:a80bc3848cf5d4b2958ea25dbeb36fa9442ef4be8c73fe4bff11340307c32919
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 10.4.19
+    images:
+      - ref: grafana/grafana:10.4.19@sha256:388cb75aa7ab40af6766f7a8db73c90abfbfb646bf8208e86f7198d2c9530793
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 9.5.21
+    images:
+      - ref: grafana/grafana:9.5.21@sha256:439f57822d2daa899c0a04420488fd7c638c1d41d5db417563692ed0bbbfbb9c
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 9.4.0
+    images:
+      - ref: grafana/grafana:9.4.0-beta1@sha256:d0060bcf84f0a0897e7c6c7e1b8740d89d10bf55b2dd45ba45942d36e40cdcc7
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 9.0.0
+    images:
+      - ref: grafana/grafana:9.0.0@sha256:1fdfc1f6feb47c0007ab59abdc5310493649367d9de1be27cf0e18ff529ca463
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 7.5.17
+    images:
+      - ref: grafana/grafana:7.5.17@sha256:6d4ab5ab5031f2725635522c28aa9917c6e614c49513a3f5c864900b868ea79a
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 6.7.6
+    images:
+      - ref: grafana/grafana:6.7.6@sha256:7ee99c7f0835f1023b3a56c275da8bb37068ab9fcd5e33378c65435928d54dd0
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
