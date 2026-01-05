@@ -587,6 +587,13 @@ from-images:
     paths:
       - /usr/local/bin/traefik
 
+  - version: 3.6.5
+    images:
+      - ref: traefik:v3.6.5@sha256:d944e3693bbf5a361ddd2e411bb713049cfb4f5ff3da200b30ee7a347dbd6abd
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/traefik
+
   # from the original dynamic fixtures...
 
   - name: python-rhel-shared-libs
