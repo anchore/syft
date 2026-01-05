@@ -12,9 +12,6 @@ type CatalogerConfig struct {
 	// IncludeDevDependencies controls whether development dependencies should be included in the catalog results, in addition to production dependencies.
 	// app-config: javascript.include-dev-dependencies
 	IncludeDevDependencies bool `json:"include-dev-dependencies" yaml:"include-dev-dependencies" mapstructure:"include-dev-dependencies"`
-	// PnpmExcludeDevDependencies controls whether development dependencies should be excluded from PNPM lockfiles.
-	// app-config: javascript.pnpm-exclude-dev-dependencies
-	PnpmExcludeDevDependencies bool `json:"pnpm-exclude-dev-dependencies" yaml:"pnpm-exclude-dev-dependencies" mapstructure:"pnpm-exclude-dev-dependencies"`
 }
 
 func DefaultCatalogerConfig() CatalogerConfig {
@@ -38,10 +35,5 @@ func (j CatalogerConfig) WithNpmBaseURL(input string) CatalogerConfig {
 
 func (j CatalogerConfig) WithIncludeDevDependencies(input bool) CatalogerConfig {
 	j.IncludeDevDependencies = input
-	return j
-}
-
-func (j CatalogerConfig) WithPnpmExcludeDevDependencies(input bool) CatalogerConfig {
-	j.PnpmExcludeDevDependencies = input
 	return j
 }

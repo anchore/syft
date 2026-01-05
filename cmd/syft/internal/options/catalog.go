@@ -193,9 +193,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
-			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL).
-			WithPnpmExcludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.PnpmExcludeDevDependencies)),
-
+			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},

@@ -204,7 +204,7 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 
 	packages := make([]pkg.Package, len(pnpmPkgs))
 	for i, p := range pnpmPkgs {
-		if p.Dev && a.cfg.PnpmExcludeDevDependencies {
+		if p.Dev && !a.cfg.IncludeDevDependencies {
 			continue
 		}
 		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies)
