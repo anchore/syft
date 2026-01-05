@@ -114,6 +114,20 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
+			Class:    "valkey-binary",
+			FileGlob: "**/valkey-server",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// valkey9.0.0buildkitsandbox-1764887574000000000
+				`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+			Package: "valkey",
+			PURL:    mustPURL("pkg:generic/valkey@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:lfprojects:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:linuxfoundation:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:valkey-io:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
 			Class:    "nodejs-binary",
 			FileGlob: "**/node",
 			EvidenceMatcher: binutils.MatchAny(
@@ -708,6 +722,36 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "envoy",
 			PURL:    mustPURL("pkg:generic/envoy@version"),
 			CPEs:    singleCPE("cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "grafana-binary",
+			FileGlob: "**/grafana",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL][NUL][NUL][NUL]release-12.3.1[NUL][NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+release-(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+)\x00+`),
+				// HEAD[NUL][NUL][NUL][NUL]12.0.0[NUL][NUL]$a
+				// 11.0.0[NUL][NUL]$a
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+)\x00+\$a`),
+				// [NUL]0xDC0xBF10.4.19[NUL]
+				m.FileContentsVersionMatcher(`\x00.(?P<version>10\.[0-9]+\.[0-9]+)\x00`),
+				// 9.5.21[NUL][NUL]v9.5.x[NUL][NUL][NUL][NUL][NUL][NUL]$a
+				m.FileContentsVersionMatcher(`(?P<version>9\.[0-9]+\.[0-9]+)\x00\x00v`),
+			),
+			Package: "grafana",
+			PURL:    mustPURL("pkg:generic/grafana@version"),
+			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "grafana-binary",
+			FileGlob: "**/grafana-server",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// HEAD[NUL][NUL][NUL][NUL]9.0.0[NUL]:[NUL]
+				// HEAD[NUL][NUL][NUL][NUL]:[NUL][NUL][NUL][NUL][NUL][NUL][NUL]7.5.17[NUL][NUL][NUL][NUL]
+				// HEAD[NUL][NUL][NUL][NUL]m[NUL]...[NUL][NUL]6.7.6[NUL][NUL][NUL].[NUL][NUL][NUL][NUL][NUL][NUL][NUL]:
+				`HEAD\x00+.*\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+)\x00+`),
+			Package: "grafana",
+			PURL:    mustPURL("pkg:generic/grafana@version"),
+			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 

@@ -89,6 +89,18 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/valkey-server'
+        packages:
+          - class: valkey-binary
+            name: valkey
+            purl: pkg:generic/valkey
+            cpes:
+              - cpe:2.3:a:lfprojects:valkey:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:linuxfoundation:valkey:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:valkey-io:valkey:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/node'
         packages:
           - class: nodejs-binary
@@ -590,6 +602,26 @@ catalogers:
             purl: pkg:generic/elixir
             cpes:
               - cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/grafana'
+        packages:
+          - class: grafana-binary
+            name: grafana
+            purl: pkg:generic/grafana
+            cpes:
+              - cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/grafana-server'
+        packages:
+          - class: grafana-binary
+            name: grafana
+            purl: pkg:generic/grafana
+            cpes:
+              - cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:
