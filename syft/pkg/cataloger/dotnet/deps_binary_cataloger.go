@@ -18,7 +18,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/bundle"
 )
 
 const (
@@ -566,7 +566,7 @@ func readELFBundledDepsJSON(resolver file.Resolver, loc file.Location) (*logical
 		return nil, err
 	}
 
-	depsJSON, err := pe.ExtractDepsJSONFromELFBundle(seeker)
+	depsJSON, err := bundle.ExtractDepsJSONFromELFBundle(seeker)
 	if err != nil {
 		return nil, err
 	}

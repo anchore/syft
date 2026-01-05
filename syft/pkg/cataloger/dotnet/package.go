@@ -20,6 +20,7 @@ var (
 	spaceRegex              = regexp.MustCompile(`[\s\xa0]+`)
 	numberRegex             = regexp.MustCompile(`\d`)
 	versionPunctuationRegex = regexp.MustCompile(`[.,]+`)
+	nonPrintableRegex       = regexp.MustCompile(`[\x00-\x1f]`)
 )
 
 // newDotnetDepsPackage creates a new Dotnet dependency package from a logicalDepsJSONPackage.
@@ -180,22 +181,25 @@ func cleanVersionResourceField(values ...string) string {
 	return ""
 }
 
+var (
+	depsJSONPathRegex = regexp.MustCompile(`([^\\\/]+)\.deps\.json$`)
+	exePathRegex      = regexp.MustCompile(`([^\\\/]+)\.exe$`)
+	singleFileRegex   = regexp.MustCompile(`([^\\\/]+)$`)
+)
+
 func getDepsJSONFilePrefix(p string) string {
-	r := regexp.MustCompile(`([^\\\/]+)\.deps\.json$`)
-	match := r.FindStringSubmatch(p)
+	match := depsJSONPathRegex.FindStringSubmatch(p)
 	if len(match) > 1 {
 		return match[1]
 	}
 
-	r = regexp.MustCompile(`([^\\\/]+)\.exe$`)
-	match = r.FindStringSubmatch(p)
+	match = exePathRegex.FindStringSubmatch(p)
 	if len(match) > 1 {
 		return match[1]
 	}
 
 	// Handle ELF
-	r = regexp.MustCompile(`([^\\\/]+)$`)
-	match = r.FindStringSubmatch(p)
+	match = singleFileRegex.FindStringSubmatch(p)
 	if len(match) > 1 && !strings.Contains(match[1], ".") {
 		return match[1]
 	}
@@ -320,7 +324,7 @@ func spaceNormalize(value string) string {
 	// Consolidate all whitespace.
 	value = spaceRegex.ReplaceAllString(value, " ")
 	// Remove non-printable characters.
-	value = regexp.MustCompile(`[\x00-\x1f]`).ReplaceAllString(value, "")
+	value = nonPrintableRegex.ReplaceAllString(value, "")
 	// Consolidate again and trim.
 	value = spaceRegex.ReplaceAllString(value, " ")
 	value = strings.TrimSpace(value)

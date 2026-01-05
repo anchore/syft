@@ -5,8 +5,9 @@ import (
 	"debug/pe"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
+
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/bundle"
 )
 
 // dotNetBundleSignature is the SHA-256 hash of ".net core bundle" used to identify single-file bundles.
@@ -45,7 +46,7 @@ const (
 	dotNetFileTypeSymbols
 )
 
-// extractDepsJSONFromBundle searches for an embedded deps.json file in a .NET single-file bundle.
+// ExtractDepsJSONFromBundle searches for an embedded deps.json file in a .NET single-file bundle.
 // When built with PublishSingleFile=true, .NET embeds the application and all dependencies into
 // the AppHost executable. The bundle marker (8-byte header offset + 32-byte signature) is placed
 // in a placeholder location within the PE structure, pointing to the bundle header which contains
@@ -86,7 +87,7 @@ func extractDepsJSONFromBundle(r io.ReadSeeker, sections []pe.SectionHeader32) (
 		return "", nil // not a .NET single-file bundle
 	}
 
-	return readDepsJSONFromBundleHeader(r, headerOffset)
+	return bundle.ReadDepsJSONFromBundleHeader(r, headerOffset)
 }
 
 // findBundleHeaderOffset locates the bundle marker within the PE structure and returns the header offset.
@@ -127,133 +128,4 @@ func calculatePEEndOffset(sections []pe.SectionHeader32) int64 {
 	}
 	// add buffer for alignment padding after sections
 	return peEndOffset + 4096
-}
-
-// readDepsJSONFromBundleHeader parses the bundle header at the given offset and extracts deps.json content.
-func readDepsJSONFromBundleHeader(r io.ReadSeeker, headerOffset int64) (string, error) {
-	if _, err := r.Seek(headerOffset, io.SeekStart); err != nil {
-		return "", err
-	}
-
-	var header dotNetBundleHeader
-	if err := binary.Read(r, binary.LittleEndian, &header); err != nil {
-		return "", err
-	}
-
-	// skip bundle ID (7-bit length-prefixed string)
-	if err := skipDotNetString(r); err != nil {
-		return "", err
-	}
-
-	// for V2+ bundles (.NET 5+), read deps.json location directly from header
-	if header.MajorVersion >= 2 {
-		var headerV2 dotNetBundleHeaderV2
-		if err := binary.Read(r, binary.LittleEndian, &headerV2); err != nil {
-			return "", err
-		}
-
-		if headerV2.DepsJSONSize > 0 && headerV2.DepsJSONOffset > 0 {
-			return readDepsJSONAtOffset(r, headerV2.DepsJSONOffset, headerV2.DepsJSONSize)
-		}
-	}
-
-	// for V1 bundles (.NET Core 3.x) or if V2 header doesn't have deps.json, parse manifest
-	return findDepsJSONInManifest(r, header.NumEmbeddedFiles, header.MajorVersion)
-}
-
-// skipDotNetString skips a 7-bit length-prefixed string (.NET BinaryWriter format)
-func skipDotNetString(r io.ReadSeeker) error {
-	length, err := read7BitEncodedInt(r)
-	if err != nil {
-		return err
-	}
-	_, err = r.Seek(int64(length), io.SeekCurrent)
-	return err
-}
-
-// read7BitEncodedInt reads a .NET 7-bit encoded integer (variable-length encoding used by BinaryWriter)
-func read7BitEncodedInt(r io.Reader) (int, error) {
-	result := 0
-	shift := 0
-	for {
-		var b [1]byte
-		if _, err := r.Read(b[:]); err != nil {
-			return 0, err
-		}
-		result |= int(b[0]&0x7F) << shift
-		if b[0]&0x80 == 0 {
-			break
-		}
-		shift += 7
-		if shift >= 35 { // prevent overflow
-			return 0, errors.New("invalid 7-bit encoded int")
-		}
-	}
-	return result, nil
-}
-
-// readDepsJSONAtOffset reads deps.json content at a specific offset using seeks (avoiding loading entire file)
-func readDepsJSONAtOffset(r io.ReadSeeker, offset, size int64) (string, error) {
-	if _, err := r.Seek(offset, io.SeekStart); err != nil {
-		return "", fmt.Errorf("failed to seek to deps.json at offset %d: %w", offset, err)
-	}
-	data := make([]byte, size)
-	if _, err := io.ReadFull(r, data); err != nil {
-		return "", fmt.Errorf("failed to read deps.json (%d bytes): %w", size, err)
-	}
-	return string(data), nil
-}
-
-// findDepsJSONInManifest parses manifest entries to find deps.json (for V1 bundles or fallback)
-func findDepsJSONInManifest(r io.ReadSeeker, numFiles int32, majorVersion uint32) (string, error) {
-	for i := int32(0); i < numFiles; i++ {
-		var offset, size int64
-
-		if err := binary.Read(r, binary.LittleEndian, &offset); err != nil {
-			return "", err
-		}
-		if err := binary.Read(r, binary.LittleEndian, &size); err != nil {
-			return "", err
-		}
-
-		// V6+ bundles (.NET 6+) have compressed size field
-		if majorVersion >= 6 {
-			var compressedSize int64
-			if err := binary.Read(r, binary.LittleEndian, &compressedSize); err != nil {
-				return "", err
-			}
-		}
-
-		var fileType dotNetFileType
-		if err := binary.Read(r, binary.LittleEndian, &fileType); err != nil {
-			return "", err
-		}
-
-		// skip relativePath string
-		if err := skipDotNetString(r); err != nil {
-			return "", err
-		}
-
-		if fileType == dotNetFileTypeDepsJSON && size > 0 {
-			// save current position to resume manifest parsing if needed
-			currentPos, err := r.Seek(0, io.SeekCurrent)
-			if err != nil {
-				return "", err
-			}
-
-			// read deps.json content
-			content, err := readDepsJSONAtOffset(r, offset, size)
-			if err != nil {
-				return "", err
-			}
-
-			// restore position (in case caller needs to continue)
-			if _, err := r.Seek(currentPos, io.SeekStart); err != nil {
-				return "", err
-			}
-
-			return content, nil
-		}
-	}
-	return "", nil
 }
