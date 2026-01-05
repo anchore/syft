@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"debug/elf"
 	"encoding/binary"
+	"errors"
 	"io"
+
+	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
 // ExtractDepsJSONFromELFBundle extracts the deps.json content from a .net singlefile
 // bundle contained within an ELF bin
-func ExtractDepsJSONFromELFBundle(r io.ReadSeeker) (string, error) {
+func ExtractDepsJSONFromELFBundle(r unionreader.UnionReader) (string, error) {
 	headerOffset, err := findBundleHeaderOffsetInELF(r)
 	if err != nil || headerOffset == 0 {
 		return "", err
@@ -17,19 +20,8 @@ func ExtractDepsJSONFromELFBundle(r io.ReadSeeker) (string, error) {
 	return ReadDepsJSONFromBundleHeader(r, headerOffset)
 }
 
-func findBundleHeaderOffsetInELF(r io.ReadSeeker) (int64, error) {
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return 0, err
-	}
-
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return 0, err
-	}
-
-	reader := bytes.NewReader(data)
-
-	elfFile, err := elf.NewFile(reader)
+func findBundleHeaderOffsetInELF(r unionreader.UnionReader) (int64, error) {
+	elfFile, err := elf.NewFile(r)
 	if err != nil {
 		return 0, nil
 	}
@@ -39,18 +31,23 @@ func findBundleHeaderOffsetInELF(r io.ReadSeeker) (int64, error) {
 		return 0, nil
 	}
 
-	searchData := data
-	if int64(len(data)) > elfEndOffset {
-		searchData = data[:elfEndOffset]
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return 0, err
 	}
+
+	searchData := make([]byte, elfEndOffset)
+	n, err := io.ReadFull(r, searchData)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return 0, err
+	}
+	searchData = searchData[:n]
 
 	idx := bytes.Index(searchData, dotNetBundleSignature)
 	if idx == -1 || idx < 8 {
 		return 0, nil
 	}
 
-	headerOffset := int64(binary.LittleEndian.Uint64(searchData[idx-8 : idx]))
-	return headerOffset, nil
+	return int64(binary.LittleEndian.Uint64(searchData[idx-8 : idx])), nil
 }
 
 func calculateELFEndOffset(f *elf.File) int64 {
