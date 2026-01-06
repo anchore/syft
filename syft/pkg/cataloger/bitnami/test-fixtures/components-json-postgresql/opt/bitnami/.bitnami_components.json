@@ -1,0 +1,8 @@
+{
+    "postgresql": {
+        "arch": "amd64",
+        "distro": "debian-11",
+        "type": "NAMI",
+        "version": "11.22.0-4"
+    }
+}
