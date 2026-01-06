@@ -202,12 +202,12 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
 	}
 
-	packages := make([]pkg.Package, len(pnpmPkgs))
-	for i, p := range pnpmPkgs {
+	packages := make([]pkg.Package, 0, len(pnpmPkgs))
+	for _, p := range pnpmPkgs {
 		if p.Dev && !a.cfg.IncludeDevDependencies {
 			continue
 		}
-		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies)
+		packages = append(packages, newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
 	}
 
 	return packages, dependency.Resolve(pnpmLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")
