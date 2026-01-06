@@ -727,6 +727,32 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/grafana@version"),
 			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "envoy-binary",
+			FileGlob: "**/envoy",
+			EvidenceMatcher: binutils.MatchAny(
+				// 1.3x [NUL]1.36.4[NUL]...envoy_reloadable_features
+				// 1.34.5 [NUL]1.34.5[NUL]...envoy.reloadable_features
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_reloadable_features`),
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.34\.5)\x00.{0,200}envoy\.reloadable_features`),
+				// 1.2x envoy_quic_...[NUL]1.28.7[NUL]
+				m.FileContentsVersionMatcher(`(?s)envoy_quic_.{0,1000}\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00`),
+				// 1.2x [NUL]1.20.7[NUL]Unable to
+				// 1.1x [NUL]1.18.6-dev[NUL]Unable to
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[12][0-9]\.[0-9]+(-dev)?)\x00.{0,1000}Unable to`),
+				// 1.2x [NUL]1.22.11[NUL]...ValidationError
+				// 1.1x [NUL]1.14.3[NUL]...ValidationError
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00.{0,580}ValidationError`),
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.1[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}ValidationError`),
+				// 1.1x [source...[NUL]1.11.0[NUL]/
+				m.FileContentsVersionMatcher(`(?s)\[source/.{0,200}\x00(?P<version>1\.1[0-9]\.[0-9]+(-dev)?)\x00`),
+				// 1.x [NUL]1.6.0[NUL]RELEASE
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[0-9]\.[0-9]+(-dev)?)\x00.{0,20}RELEASE`),
+			),
+			Package: "envoy",
+			PURL:    mustPURL("pkg:generic/envoy@version"),
+			CPEs:    singleCPE("cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)
