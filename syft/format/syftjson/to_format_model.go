@@ -43,6 +43,7 @@ func ToFormatModel(s sbom.SBOM, cfg EncoderConfig) model.Document {
 		Source:                toSourceModel(s.Source),
 		Distro:                toLinuxRelease(s.Artifacts.LinuxDistribution),
 		Descriptor:            toDescriptor(s.Descriptor),
+		Authors:               toAuthors(s.Authors),
 		Schema: model.Schema{
 			Version: internal.JSONSchemaVersion,
 			URL:     fmt.Sprintf("https://raw.githubusercontent.com/anchore/syft/main/schema/json/schema-%s.json", internal.JSONSchemaVersion),
@@ -83,6 +84,21 @@ func toDescriptor(d sbom.Descriptor) model.Descriptor {
 		Version:       d.Version,
 		Configuration: d.Configuration,
 	}
+}
+
+func toAuthors(authors []source.Actor) []model.Author {
+	if len(authors) == 0 {
+		return nil
+	}
+	result := make([]model.Author, 0, len(authors))
+	for _, author := range authors {
+		result = append(result, model.Author{
+			Type:  author.Type,
+			Name:  author.Name,
+			Email: author.Email,
+		})
+	}
+	return result
 }
 
 func toFile(s sbom.SBOM, coordinateSorter func(a, b file.Coordinates) int) []model.File {

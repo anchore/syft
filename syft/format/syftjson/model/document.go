@@ -14,6 +14,7 @@ type Document struct {
 	Distro                LinuxRelease   `json:"distro"`          // Distro represents the Linux distribution that was detected from the source
 	Descriptor            Descriptor     `json:"descriptor"`      // Descriptor is a block containing self-describing information about syft
 	Schema                Schema         `json:"schema"`          // Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape
+	Authors               []Author       `json:"authors,omitempty"`
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {
@@ -45,6 +46,18 @@ type Descriptor struct {
 
 	// Configuration contains the tool configuration used during SBOM generation.
 	Configuration interface{} `json:"configuration,omitempty"`
+}
+
+// Author represents a person, organization, or tool that participated in the creation of the SBOM.
+type Author struct {
+	// Type indicates whether the author is a person, organization, or tool
+	Type string `json:"type"`
+
+	// Name is the name of the author
+	Name string `json:"name"`
+
+	// Email is the optional email address of the author
+	Email string `json:"email,omitempty"`
 }
 
 // Schema specifies the JSON schema version and URL reference that defines the structure and validation rules for this document format.

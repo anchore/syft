@@ -36,6 +36,9 @@ type CreateSBOMConfig struct {
 	ToolVersion       string
 	ToolConfiguration interface{}
 
+	// SBOM metadata
+	Authors []source.Actor
+
 	packageTaskFactories       task.Factories
 	packageCatalogerReferences []pkgcataloging.CatalogerReference
 }
@@ -176,6 +179,12 @@ func (c *CreateSBOMConfig) WithCatalogers(catalogerRefs ...pkgcataloging.Catalog
 	}
 	c.packageCatalogerReferences = append(c.packageCatalogerReferences, catalogerRefs...)
 
+	return c
+}
+
+// WithAuthors allows for setting the SBOM authors
+func (c *CreateSBOMConfig) WithAuthors(authors []source.Actor) *CreateSBOMConfig {
+	c.Authors = authors
 	return c
 }
 

@@ -45,6 +45,7 @@ func toSyftModel(doc model.Document) *sbom.SBOM {
 		Source:        *toSyftSourceData(doc.Source),
 		Descriptor:    toSyftDescriptor(doc.Descriptor),
 		Relationships: warnConversionErrors(toSyftRelationships(&doc, catalog, doc.ArtifactRelationships, idAliases)),
+		Authors:       toSyftAuthors(doc.Authors),
 	}
 }
 
@@ -154,6 +155,21 @@ func safeFileModeConvert(val int) (fs.FileMode, error) {
 		return 0, err
 	}
 	return os.FileMode(mode), nil
+}
+
+func toSyftAuthors(authors []model.Author) []source.Actor {
+	if len(authors) == 0 {
+		return nil
+	}
+	result := make([]source.Actor, 0, len(authors))
+	for _, author := range authors {
+		result = append(result, source.Actor{
+			Type:  author.Type,
+			Name:  author.Name,
+			Email: author.Email,
+		})
+	}
+	return result
 }
 
 func toSyftLicenses(m []model.License) (p []pkg.License) {
