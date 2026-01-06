@@ -13,12 +13,11 @@ jobs:
 
   Publish:
     name: "Publish test fixture image cache"
-    # runs-on.com: memory-optimized instances for building test fixture cache
+    # runs-on.com: general purpose instances for building test fixture cache
     #   spot disabled: can run up to an hour, avoid interruptions
-    #   disk=large: need more storage for docker images and fixture cache
     #   s3-cache: faster actions cache
-    #   tmpfs: faster io-intensive workflows
-    runs-on: runs-on=${{ github.run_id }}/cpu=4+8/ram=64+128/family=r5+r6+r7+r8/spot=false/extras=s3-cache+tmpfs
+    #   family: note that m*d instances have local nvme storage which is beneficial for building large test fixture images
+    runs-on: "runs-on=${{ github.run_id }}/cpu=8+16/ram=32+64/family=m5d+m5ad+m5dn+m6gd+m6id+m6idn+m7gd+m8gd/spot=false/extras=s3-cache"
     if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       packages: write
