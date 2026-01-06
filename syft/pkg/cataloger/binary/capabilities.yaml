@@ -625,6 +625,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/envoy'
+        packages:
+          - class: envoy-binary
+            name: envoy
+            purl: pkg:generic/envoy
+            cpes:
+              - cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary
