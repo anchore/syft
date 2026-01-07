@@ -698,6 +698,37 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "istio-binary",
+			FileGlob: "**/pilot-discovery",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
+				// [NUL]1.3.7[NUL][NUL][NUL]1.3.8[NUL]
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				// Clean[NUL][NUL][NUL]1.8.0[NUL]
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				// 1.1.17[NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{1,100}S?=v<y5`),
+			),
+			Package: "pilot-discovery",
+			PURL:    mustPURL("pkg:generic/istio@version"),
+			CPEs:    singleCPE("cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "istio-binary",
+			FileGlob: "**/pilot-agent",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				// Clean[NUL][NUL][NUL]1.8.0[NUL]
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				// 1.1.17[NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{1,100}S?=v<y5`),
+			),
+			Package: "pilot-agent",
+			PURL:    mustPURL("pkg:generic/istio@version"),
+			CPEs:    singleCPE("cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "grafana-binary",
 			FileGlob: "**/grafana",
 			EvidenceMatcher: binutils.MatchAny(
