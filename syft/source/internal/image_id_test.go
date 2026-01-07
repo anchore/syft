@@ -69,7 +69,7 @@ func TestDeriveImageID(t *testing.T) {
 						Digest: "c",
 					},
 				}
-				return artifact.ID(strings.TrimPrefix(CalculateChainID(metadata), "sha256:"))
+				return artifact.ID(strings.TrimPrefix(calculateChainID(metadata), "sha256:"))
 			}(),
 		},
 		{
@@ -261,7 +261,7 @@ func TestCalculateChainID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, CalculateChainID(tt.layers))
+			assert.Equal(t, tt.want, calculateChainID(tt.layers))
 		})
 	}
 }
