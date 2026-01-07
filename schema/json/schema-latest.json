@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.2/document",
+  "$id": "anchore.io/schema/syft/json/16.1.3/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -747,6 +747,45 @@
         "version"
       ],
       "description": "DartPubspecLockEntry is a struct that represents a single entry found in the \"packages\" section in a Dart pubspec.lock file."
+    },
+    "DenoLockEntry": {
+      "properties": {
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is the crpto hash of the package content for verification"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies is the list of package specifiers that this package depends on"
+        }
+      },
+      "type": "object",
+      "required": [
+        "integrity",
+        "dependencies"
+      ],
+      "description": "DenoLockEntry is a struct that rep a single entry found in the \"packages\" section of a Deno deno.lock file"
+    },
+    "DenoRemoteLockEntry": {
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL is the remote URL from which the module fetcef"
+        },
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is the crpto hash of the package content for verification"
+        }
+      },
+      "type": "object",
+      "required": [
+        "url",
+        "integrity"
+      ],
+      "description": "DenoRemoteLockEntry is a struct that rep a single entry found in the \"remote\" section of a Deno deno.lock file"
     },
     "Descriptor": {
       "properties": {
@@ -2604,6 +2643,12 @@
             },
             {
               "$ref": "#/$defs/DartPubspecLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DenoLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DenoRemoteLockEntry"
             },
             {
               "$ref": "#/$defs/DotnetDepsEntry"
