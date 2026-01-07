@@ -34,11 +34,11 @@ type ociModelSource struct {
 	id        artifact.ID
 	reference string
 	alias     source.Alias
-	metadata  *OCIModelMetadata
+	metadata  source.OCIModelMetadata
 	tempDir   string
 	resolver  interface {
 		file.Resolver
-		file.OciLayerResolver
+		file.MediaTypeResolver
 	}
 	mutex *sync.Mutex
 }
@@ -46,18 +46,18 @@ type ociModelSource struct {
 // NewFromRegistry creates a new OCI model source by fetching the model artifact from a registry.
 func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 	client := newRegistryClient(cfg.RegistryOptions)
-	artifact, err := validateAndFetchArtifact(ctx, client, cfg.Reference)
+	art, err := validateAndFetchArtifact(ctx, client, cfg.Reference)
 	if err != nil {
 		return nil, err
 	}
 
-	metadata := buildMetadata(artifact)
-	tempDir, resolver, err := fetchAndStoreGGUFHeaders(ctx, client, artifact)
+	metadata := buildMetadata(art)
+	tempDir, resolver, err := fetchAndStoreGGUFHeaders(ctx, client, art)
 	if err != nil {
 		return nil, err
 	}
 
-	id := internal.DeriveImageID(cfg.Alias, metadata.ImageMetadata)
+	id := internal.DeriveImageID(cfg.Alias, source.ImageMetadata(metadata))
 	return &ociModelSource{
 		id:        id,
 		reference: cfg.Reference,
@@ -71,21 +71,21 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 
 // validateAndFetchArtifact fetches and validates a model artifact in a single registry call.
 func validateAndFetchArtifact(ctx context.Context, client *registryClient, reference string) (*modelArtifact, error) {
-	artifact, err := client.fetchModelArtifact(ctx, reference)
+	art, err := client.fetchModelArtifact(ctx, reference)
 	if err != nil {
 		// errNotModelArtifact is wrapped, so callers can use errors.Is() to check
 		return nil, err
 	}
 
-	if len(artifact.GGUFLayers) == 0 {
+	if len(art.GGUFLayers) == 0 {
 		return nil, fmt.Errorf("model artifact has no GGUF layers")
 	}
 
-	return artifact, nil
+	return art, nil
 }
 
 // fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
-func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, *fileresolver.OCIModelResolver, error) {
+func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, *fileresolver.ContainerImageModel, error) {
 	tempDir, err := os.MkdirTemp("", "syft-oci-gguf")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
@@ -97,14 +97,14 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artif
 		if err != nil {
 			osErr := os.RemoveAll(tempDir)
 			if osErr != nil {
-				log.Errorf("unable to remove temp directory (%s): %w", tempDir, err)
+				log.Errorf("unable to remove temp directory (%s): %v", tempDir, err)
 			}
 			return "", nil, err
 		}
 		layerFiles[layer.Digest.String()] = li
 	}
 
-	resolver := fileresolver.NewOCIModelResolver(tempDir, layerFiles)
+	resolver := fileresolver.NewContainerImageModel(tempDir, layerFiles)
 
 	return tempDir, resolver, nil
 }
@@ -130,7 +130,7 @@ func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name
 }
 
 // buildMetadata constructs OCIModelMetadata from a modelArtifact.
-func buildMetadata(artifact *modelArtifact) *OCIModelMetadata {
+func buildMetadata(artifact *modelArtifact) source.OCIModelMetadata {
 	// layers
 	layers := make([]source.LayerMetadata, len(artifact.Manifest.Layers))
 	for i, layer := range artifact.Manifest.Layers {
@@ -156,24 +156,22 @@ func buildMetadata(artifact *modelArtifact) *OCIModelMetadata {
 	}
 
 	// metadata
-	return &OCIModelMetadata{
-		ImageMetadata: source.ImageMetadata{
-			UserInput:      artifact.Reference.String(),
-			ID:             artifact.ManifestDigest,
-			ManifestDigest: artifact.ManifestDigest,
-			MediaType:      string(artifact.Manifest.MediaType),
-			Tags:           tags,
-			Size:           calculateTotalSize(layers),
-			Layers:         layers,
-			RawManifest:    artifact.RawManifest,
-			RawConfig:      artifact.RawConfig,
-			RepoDigests:    repoDigests,
-			Architecture:   artifact.Config.Architecture,
-			Variant:        artifact.Config.Variant,
-			OS:             artifact.Config.OS,
-			Labels:         artifact.Config.Config.Labels,
-		},
-		Annotations: extractManifestAnnotations(artifact.Manifest),
+	return source.OCIModelMetadata{
+		UserInput:      artifact.Reference.String(),
+		ID:             artifact.ManifestDigest,
+		ManifestDigest: artifact.ManifestDigest,
+		MediaType:      string(artifact.Manifest.MediaType),
+		Tags:           tags,
+		Size:           calculateTotalSize(layers),
+		Layers:         layers,
+		RawManifest:    artifact.RawManifest,
+		RawConfig:      artifact.RawConfig,
+		RepoDigests:    repoDigests,
+		Architecture:   artifact.Config.Architecture,
+		Variant:        artifact.Config.Variant,
+		OS:             artifact.Config.OS,
+		Labels:         artifact.Config.Config.Labels,
+		Annotations:    extractManifestAnnotations(artifact.Manifest),
 	}
 }
 

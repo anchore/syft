@@ -220,6 +220,17 @@ func TestDeriveImageID_CrossSourceConsistency(t *testing.T) {
 			// snapshot: alias must affect ID deterministically
 			wantID: "9eae41c0efc30023368c29089bac007f2c9d0b40a0ee034081a17c4c22f55ac6",
 		},
+		{
+			name: "annotations has no effect on ID",
+			metadata: source.ImageMetadata{
+				UserInput: "registry.example.com/org/model:v1.0",
+				Annotations: map[string]string{
+					"annotation1": "value1",
+				},
+			},
+			// snapshot: user input hash must remain stable
+			wantID: "a5a8733a3ba3eb99a8ebebcd40c4053f9b896ea6e2217ebc6e885573f20baccf",
+		},
 	}
 
 	for _, tt := range tests {

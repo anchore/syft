@@ -10,8 +10,8 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-var _ file.Resolver = (*OCIModelResolver)(nil)
-var _ file.OciLayerResolver = (*OCIModelResolver)(nil)
+var _ file.Resolver = (*ContainerImageModel)(nil)
+var _ file.MediaTypeResolver = (*ContainerImageModel)(nil)
 
 // LayerInfo holds information about an OCI model layer file stored on disk.
 type LayerInfo struct {
@@ -19,16 +19,17 @@ type LayerInfo struct {
 	MediaType string // OCI media type of the layer
 }
 
-// OCIModelResolver is a file.Resolver implementation that provides access to
+// ContainerImageModel is a file.Resolver implementation that provides access to
 // GGUF header data fetched from OCI model artifacts via range-GET requests.
-type OCIModelResolver struct {
+// This does not fetch the entire model from the registry, only a sliver of it.
+type ContainerImageModel struct {
 	tempDir    string                   // temp directory containing all layer files
 	layerFiles map[string]LayerInfo     // digest -> layer info (temp path + media type)
 	locations  map[string]file.Location // digest -> location
 }
 
-// NewOCIModelResolver creates a new resolver with the given temp directory and layer files.
-func NewOCIModelResolver(tempDir string, layerFiles map[string]LayerInfo) *OCIModelResolver {
+// NewContainerImageModel creates a new resolver with the given temp directory and layer files.
+func NewContainerImageModel(tempDir string, layerFiles map[string]LayerInfo) *ContainerImageModel {
 	// Create locations for all layer files
 	// Each location has RealPath="/", FileSystemID=digest, AccessPath="/"
 	locations := make(map[string]file.Location, len(layerFiles))
@@ -38,7 +39,7 @@ func NewOCIModelResolver(tempDir string, layerFiles map[string]LayerInfo) *OCIMo
 		locations[digest] = file.NewVirtualLocationFromCoordinates(coords, "/")
 	}
 
-	return &OCIModelResolver{
+	return &ContainerImageModel{
 		tempDir:    tempDir,
 		layerFiles: layerFiles,
 		locations:  locations,
@@ -47,7 +48,7 @@ func NewOCIModelResolver(tempDir string, layerFiles map[string]LayerInfo) *OCIMo
 
 // FilesByMediaType returns locations for layers matching the given media type patterns.
 // Patterns support glob-style matching (e.g., "application/vnd.docker.ai*").
-func (r *OCIModelResolver) FilesByMediaType(types ...string) ([]file.Location, error) {
+func (r *ContainerImageModel) FilesByMediaType(types ...string) ([]file.Location, error) {
 	var matches []file.Location
 
 	for digest, info := range r.layerFiles {
@@ -72,7 +73,7 @@ func (r *OCIModelResolver) FilesByMediaType(types ...string) ([]file.Location, e
 // The location's FileSystemID contains the layer digest, which is used to look up the temp file.
 // This method is used as part of the content selection in the generic cataloger when locations
 // are returned by searching for contents by media type.
-func (r *OCIModelResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+func (r *ContainerImageModel) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
 	// Look up the temp file path using the digest stored in FileSystemID
 	digest := location.FileSystemID
 	info, ok := r.layerFiles[digest]
@@ -83,12 +84,12 @@ func (r *OCIModelResolver) FileContentsByLocation(location file.Location) (io.Re
 }
 
 // FileMetadataByLocation returns metadata for the file at the given location.
-func (r *OCIModelResolver) FileMetadataByLocation(_ file.Location) (m file.Metadata, err error) {
+func (r *ContainerImageModel) FileMetadataByLocation(_ file.Location) (m file.Metadata, err error) {
 	return m, nil
 }
 
 // HasPath checks if the given path exists in the resolver.
-func (r *OCIModelResolver) HasPath(path string) bool {
+func (r *ContainerImageModel) HasPath(path string) bool {
 	// The virtual path is "/" for all files
 	if path == "/" && len(r.layerFiles) > 0 {
 		return true
@@ -97,31 +98,31 @@ func (r *OCIModelResolver) HasPath(path string) bool {
 }
 
 // FilesByPath returns locations for files matching the given paths.
-func (r *OCIModelResolver) FilesByPath(_ ...string) ([]file.Location, error) {
+func (r *ContainerImageModel) FilesByPath(_ ...string) ([]file.Location, error) {
 	return nil, nil
 }
 
 // FilesByGlob returns locations for files matching the given glob patterns.
-func (r *OCIModelResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
+func (r *ContainerImageModel) FilesByGlob(_ ...string) ([]file.Location, error) {
 	return nil, nil
 }
 
 // FilesByMIMEType returns locations for files with the given MIME types.
 // This is not implemented for OCI model artifacts as we don't have MIME type detection.
-func (r *OCIModelResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
+func (r *ContainerImageModel) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	// Not implemented - OCI model artifacts don't have MIME type detection
 	return nil, nil
 }
 
 // RelativeFileByPath returns a file at the given path relative to the reference location.
 // This is not applicable for OCI model artifacts.
-func (r *OCIModelResolver) RelativeFileByPath(_ file.Location, _ string) *file.Location {
+func (r *ContainerImageModel) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	// Not implemented - no layer hierarchy in OCI model artifacts
 	return nil
 }
 
 // AllLocations returns all file locations in the resolver.
-func (r *OCIModelResolver) AllLocations(ctx context.Context) <-chan file.Location {
+func (r *ContainerImageModel) AllLocations(ctx context.Context) <-chan file.Location {
 	ch := make(chan file.Location)
 
 	go func() {

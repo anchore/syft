@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
-	"github.com/anchore/syft/syft/source/ocimodelsource"
 )
 
 // CreateSBOMConfig specifies all parameters needed for creating an SBOM.
@@ -478,15 +477,12 @@ func (c *CreateSBOMConfig) Create(ctx context.Context, src source.Source) (*sbom
 
 func findDefaultTags(src source.Description) ([]string, error) {
 	switch m := src.Metadata.(type) {
-	case source.ImageMetadata:
+	case source.ImageMetadata, source.OCIModelMetadata:
 		return []string{pkgcataloging.ImageTag, filecataloging.FileTag}, nil
 	case source.FileMetadata, source.DirectoryMetadata:
 		return []string{pkgcataloging.DirectoryTag, filecataloging.FileTag}, nil
 	case source.SnapMetadata:
 		return []string{pkgcataloging.InstalledTag, filecataloging.FileTag}, nil
-	case *ocimodelsource.OCIModelMetadata:
-		// OCI model artifacts should use image-like catalogers since they provide files to scan
-		return []string{pkgcataloging.ImageTag, filecataloging.FileTag}, nil
 	default:
 		return nil, fmt.Errorf("unable to determine default cataloger tag for source type=%T", m)
 	}
