@@ -11,7 +11,7 @@ import (
 )
 
 var _ file.Resolver = (*ContainerImageModel)(nil)
-var _ file.MediaTypeResolver = (*ContainerImageModel)(nil)
+var _ file.OCIMediaTypeResolver = (*ContainerImageModel)(nil)
 
 // LayerInfo holds information about an OCI model layer file stored on disk.
 type LayerInfo struct {

@@ -119,7 +119,7 @@ func (c *Cataloger) WithParserByMediaType(parser Parser, types ...string) *Catal
 		func(resolver file.Resolver, _ Environment) []request {
 			var requests []request
 			log.WithFields("mediatypes", types).Trace("searching content matching mediatypes")
-			ociResolver, ok := resolver.(file.MediaTypeResolver)
+			ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
 			if !ok {
 				return nil
 			}

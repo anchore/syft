@@ -38,7 +38,7 @@ type ociModelSource struct {
 	tempDir   string
 	resolver  interface {
 		file.Resolver
-		file.MediaTypeResolver
+		file.OCIMediaTypeResolver
 	}
 	mutex *sync.Mutex
 }

@@ -52,7 +52,8 @@ type PathResolver interface {
 	RelativeFileByPath(_ Location, path string) *Location
 }
 
-type MediaTypeResolver interface {
+// OCIMediaTypeResolver resolves single files as a layer in an OCI artifact for a given media type.
+type OCIMediaTypeResolver interface {
 	// FilesByMediaType fetches a set of file references which the contents have been classified as one of the given Media Types.
 	// The implementation for this may vary, however, this was first implemented to classify ai globs stored in OCI images.
 	// The following considerations should be made when implementing:

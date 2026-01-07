@@ -94,25 +94,29 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 
 		// loop over all types declared in the type declaration
 		for _, typ := range spec.Specs {
-			// check if the type is a struct type
-			spec, ok := typ.(*ast.TypeSpec)
-			if !ok || spec.Type == nil {
+			typeSpec, ok := typ.(*ast.TypeSpec)
+			if !ok || typeSpec.Type == nil {
 				continue
 			}
 
-			structType, ok := spec.Type.(*ast.StructType)
-			if !ok {
-				continue
-			}
-
-			// check if the struct type ends with "Metadata"
-			name := spec.Name.String()
+			name := typeSpec.Name.String()
 
 			// only look for exported types that end with "Metadata"
-			if isMetadataTypeCandidate(name) {
-				// print the full declaration of the struct type
-				metadataDefinitions = append(metadataDefinitions, name)
+			if !isMetadataTypeCandidate(name) {
+				continue
+			}
+
+			metadataDefinitions = append(metadataDefinitions, name)
+
+			// handle struct types (e.g., "type FooMetadata struct {...}")
+			if structType, ok := typeSpec.Type.(*ast.StructType); ok {
 				usedTypeNames = append(usedTypeNames, typeNamesUsedInStruct(structType)...)
+				continue
+			}
+
+			// handle type definitions from another type (e.g., "type FooMetadata BarMetadata")
+			if ident, ok := typeSpec.Type.(*ast.Ident); ok {
+				usedTypeNames = append(usedTypeNames, ident.Name)
 			}
 		}
 	}
