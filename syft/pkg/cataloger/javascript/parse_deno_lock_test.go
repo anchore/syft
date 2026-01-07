@@ -1,4 +1,4 @@
-package deno
+package javascript
 
 import (
 	"testing"
@@ -10,16 +10,15 @@ import (
 )
 
 func TestParseDenoLock(t *testing.T) {
-	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/deno.lock"
+	fixture := "test-fixtures/deno/deno.lock"
 
 	expectedPkgs := []pkg.Package{
 		{
 			Name:     "@std/bytes",
 			Version:  "1.0.2",
-			PURL:     "pkg:jsr/%40std/bytes@1.0.2",
+			PURL:     "pkg:npm/%40std/bytes@1.0.2?repository_url=https%3A%2F%2Fjsr.io",
 			Language: pkg.JavaScript,
-			Type:     pkg.JsrPkg,
+			Type:     pkg.NpmPkg,
 			Metadata: pkg.DenoLockEntry{
 				Integrity: "fbdee322bbd8c599a6af186a1603b3355e59a5fb1baa139f8f4c3c9a1b3e3d57",
 			},
@@ -27,9 +26,9 @@ func TestParseDenoLock(t *testing.T) {
 		{
 			Name:     "@std/encoding",
 			Version:  "1.0.5",
-			PURL:     "pkg:jsr/%40std/encoding@1.0.5",
+			PURL:     "pkg:npm/%40std/encoding@1.0.5?repository_url=https%3A%2F%2Fjsr.io",
 			Language: pkg.JavaScript,
-			Type:     pkg.JsrPkg,
+			Type:     pkg.NpmPkg,
 			Metadata: pkg.DenoLockEntry{
 				Integrity:    "ecf363d4fc25bd85bd915ff6733a7e79b67e0e7806334af15f4645c569fefc04",
 				Dependencies: []string{"jsr:@std/bytes@^1.0.0"},
@@ -48,9 +47,9 @@ func TestParseDenoLock(t *testing.T) {
 		{
 			Name:     "deno.land/std",
 			Version:  "0.140.0",
-			PURL:     "pkg:deno/deno.land%2Fstd@0.140.0",
+			PURL:     "pkg:npm/deno.land%2Fstd@0.140.0?repository_url=https%3A%2F%2Fdeno.land",
 			Language: pkg.JavaScript,
-			Type:     pkg.JsrPkg,
+			Type:     pkg.NpmPkg,
 			Metadata: pkg.DenoRemoteLockEntry{
 				URL:       "https://deno.land/std@0.140.0/path/mod.ts",
 				Integrity: "d3e68d0abb393fb0bf94a6d07c46ec31dc755b544b13144dee931d8d5f06a52d",
@@ -62,12 +61,23 @@ func TestParseDenoLock(t *testing.T) {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseDenoLock, expectedPkgs, expectedRelationships)
+	// @std/encoding depends  => @std/bytes
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[0], // @std/bytes main
+			To:   expectedPkgs[1], // @std/encoding dep
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	adapter := newGenericDenoLockAdapter(DefaultCatalogerConfig())
+	pkgtest.TestFileParser(t, fixture, adapter.parseDenoLock, expectedPkgs, expectedRelationships)
 }
 
 func Test_corruptDenoLock(t *testing.T) {
+	adapter := newGenericDenoLockAdapter(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/deno.lock").
+		FromFile(t, "test-fixtures/deno/corrupt/deno.lock").
 		WithError().
-		TestParser(t, parseDenoLock)
+		TestParser(t, adapter.parseDenoLock)
 }

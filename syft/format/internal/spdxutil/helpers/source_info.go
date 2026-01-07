@@ -56,8 +56,6 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from cabal or stack manifest files"
 	case pkg.HexPkg:
 		answer = "acquired package info from rebar3 or mix manifest file"
-	case pkg.JsrPkg:
-		answer = "acquired package info from deno lock file"
 	case pkg.ErlangOTPPkg:
 		answer = "acquired package info from ErLang application resource file"
 	case pkg.LinuxKernelPkg:
