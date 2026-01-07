@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/opencontainers/go-digest"
 
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/artifact"
@@ -52,13 +51,12 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 	}
 
 	metadata := buildMetadata(artifact)
-	tempDir, layerFiles, err := fetchAndStoreGGUFHeaders(ctx, client, artifact)
+	tempDir, resolver, err := fetchAndStoreGGUFHeaders(ctx, client, artifact)
 	if err != nil {
 		return nil, err
 	}
 
-	resolver := fileresolver.NewOCIModelResolver(tempDir, layerFiles)
-	id := deriveID(cfg.Reference, cfg.Alias, metadata.ManifestDigest)
+	id := internal.DeriveImageID(cfg.Alias, metadata.ImageMetadata)
 	return &ociModelSource{
 		id:        id,
 		reference: cfg.Reference,
@@ -86,7 +84,7 @@ func validateAndFetchArtifact(ctx context.Context, client *registryClient, refer
 }
 
 // fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
-func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, map[string]fileresolver.LayerInfo, error) {
+func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, *fileresolver.OCIModelResolver, error) {
 	tempDir, err := os.MkdirTemp("", "syft-oci-gguf")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
@@ -102,7 +100,9 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artif
 		layerFiles[layer.Digest.String()] = li
 	}
 
-	return tempDir, layerFiles, nil
+	resolver := fileresolver.NewOCIModelResolver(tempDir, layerFiles)
+
+	return tempDir, resolver, nil
 }
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.
@@ -188,25 +188,6 @@ func calculateTotalSize(layers []source.LayerMetadata) int64 {
 		total += layer.Size
 	}
 	return total
-}
-
-// deriveID generates an artifact ID from the reference, alias, and manifest digest.
-func deriveID(reference string, alias source.Alias, manifestDigest string) artifact.ID {
-	var info string
-
-	switch {
-	case !alias.IsEmpty():
-		// Use alias for stable artifact ID
-		info = fmt.Sprintf("%s@%s", alias.Name, alias.Version)
-	case manifestDigest != "":
-		// Use manifest digest
-		info = manifestDigest
-	default:
-		// Fall back to reference
-		info = reference
-	}
-
-	return internal.ArtifactIDFromDigest(digest.SHA256.FromString(info).String())
 }
 
 // ID returns the artifact ID.

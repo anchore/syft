@@ -15,6 +15,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/internal/testutil"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/internal"
 )
 
 func Test_StereoscopeImage_Exclusions(t *testing.T) {
@@ -170,7 +171,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 						Digest: "c",
 					},
 				}
-				return artifact.ID(strings.TrimPrefix(calculateChainID(metadata), "sha256:"))
+				return artifact.ID(strings.TrimPrefix(internal.CalculateChainID(metadata), "sha256:"))
 			}(),
 		},
 		{
@@ -247,7 +248,7 @@ func Test_StereoscopeImageSource_ID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, deriveIDFromStereoscopeImage(tt.alias, tt.metadata))
+			assert.Equal(t, tt.want, internal.DeriveImageID(tt.alias, tt.metadata))
 		})
 	}
 }
