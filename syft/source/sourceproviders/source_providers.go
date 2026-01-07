@@ -42,11 +42,11 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 
 		// 3. try remote sources after everything else...
 
-		// --from oci-model (model artifacts with header-only fetching)
-		Join(tagProvider(ocimodelsource.NewSourceProvider(userInput, cfg.RegistryOptions, cfg.Alias), OCIModelTag)).
-
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select(PullTag)...).
+
+		// --from oci-model (model artifacts with header-only fetching)
+		Join(tagProvider(ocimodelsource.NewSourceProvider(userInput, cfg.RegistryOptions, cfg.Alias), "registry")).
 
 		// --from snap (remote only)
 		Join(tagProvider(snapsource.NewRemoteSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), SnapTag))
