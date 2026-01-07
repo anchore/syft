@@ -135,10 +135,6 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:generic/conda@1.2.3",
 			expected: CondaPkg,
 		},
-		{
-			purl:     "pkg:jsr/@std/bytes@1.0.2",
-			expected: JsrPkg,
-		},
 	}
 
 	var pkgTypes = strset.New()

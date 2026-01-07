@@ -241,14 +241,6 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
-				Type: pkg.JsrPkg,
-			},
-			expected: []string{
-				"from deno lock file",
-			},
-		},
-		{
-			input: pkg.Package{
 				Type: pkg.ErlangOTPPkg,
 			},
 			expected: []string{

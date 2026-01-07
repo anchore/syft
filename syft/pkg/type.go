@@ -39,7 +39,6 @@ const (
 	LinuxKernelModulePkg    Type = "linux-kernel-module"
 	NixPkg                  Type = "nix"
 	NpmPkg                  Type = "npm"
-	JsrPkg                  Type = "jsr"
 	OpamPkg                 Type = "opam"
 	PhpComposerPkg          Type = "php-composer"
 	PhpPeclPkg              Type = "php-pecl" // Deprecated: will be removed in syft v2.0
@@ -85,7 +84,6 @@ var AllPkgs = []Type{
 	LinuxKernelModulePkg,
 	NixPkg,
 	NpmPkg,
-	JsrPkg,
 	OpamPkg,
 	PhpComposerPkg,
 	PhpPeclPkg,
@@ -160,8 +158,6 @@ func (t Type) PackageURLType() string {
 		return "nix"
 	case NpmPkg:
 		return packageurl.TypeNPM
-	case JsrPkg:
-		return "jsr"
 	case OpamPkg:
 		return "opam"
 	case Rpkg:
@@ -240,8 +236,6 @@ func TypeByName(name string) Type {
 		return JavaPkg
 	case packageurl.TypeNPM:
 		return NpmPkg
-	case "jsr":
-		return JsrPkg
 	case packageurl.TypePyPi:
 		return PythonPkg
 	case "portage":
