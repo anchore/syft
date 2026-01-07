@@ -24,7 +24,7 @@ func DeriveImageID(alias source.Alias, metadata source.ImageMetadata) artifact.I
 	} else {
 		// calculate chain ID for image sources where manifestDigest is not available
 		// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
-		input = calculateChainID(metadata.Layers)
+		input = CalculateChainID(metadata.Layers)
 		if input == "" {
 			// TODO what happens here if image has no layers?
 			// is this case possible?
@@ -42,8 +42,9 @@ func DeriveImageID(alias source.Alias, metadata source.ImageMetadata) artifact.I
 	return ArtifactIDFromDigest(input)
 }
 
+// CalculateChainID computes the chain ID for a set of layers per the OCI image spec.
 // https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
-func calculateChainID(lm []source.LayerMetadata) string {
+func CalculateChainID(lm []source.LayerMetadata) string {
 	if len(lm) < 1 {
 		return ""
 	}
