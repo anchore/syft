@@ -12,6 +12,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -94,7 +95,10 @@ func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artif
 	for _, layer := range artifact.GGUFLayers {
 		li, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
 		if err != nil {
-			os.RemoveAll(tempDir)
+			osErr := os.RemoveAll(tempDir)
+			if osErr != nil {
+				log.Errorf("unable to remove temp directory (%s): %w", tempDir, err)
+			}
 			return "", nil, err
 		}
 		layerFiles[layer.Digest.String()] = li
