@@ -184,6 +184,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "mongodb/8.0.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "8.0.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@8.0.17",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/7.0.28/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "7.0.28",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@7.0.28",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/6.0.27/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "6.0.27",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@6.0.27",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/5.0.32/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "5.0.32",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@5.0.32",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/4.4.30/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "4.4.30",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@4.4.30",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "traefik/1.7.34/linux-amd64",
 			expected: pkg.Package{
 				Name:      "traefik",
