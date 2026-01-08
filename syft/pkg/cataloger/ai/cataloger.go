@@ -20,5 +20,6 @@ const (
 func NewGGUFCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseGGUFModel, "**/*.gguf").
-		WithParserByMediaType(parseGGUFModel, ggufLayerMediaType)
+		WithParserByMediaType(parseGGUFModel, ggufLayerMediaType).
+		WithProcessors(ggufMergeProcessor)
 }
