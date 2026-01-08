@@ -635,6 +635,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/mongod'
+        packages:
+          - class: mongodb-binary
+            name: mongodb
+            purl: pkg:generic/mongodb
+            cpes:
+              - cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary
