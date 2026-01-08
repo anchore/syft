@@ -753,6 +753,24 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/envoy@version"),
 			CPEs:    singleCPE("cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "mongodb-binary",
+			FileGlob: "**/mongod",
+			EvidenceMatcher: binutils.MatchAny(
+				// mongodb 4.x, 5.x, 6.x: ber followed by tcmalloc
+				// e.g 6.0.27[NUL]tcmalloc
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00tcmalloc`),
+				// mongodb 7.x: ver followed by "heap_size"
+				// e.g 7.0.28[NUL]heap_size
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+heap_size`),
+				// mongodb 8.x: ber followed by "cppdefines"
+				// e.g 8.0.17[NUL]cppdefines
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+cppdefines`),
+			),
+			Package: "mongodb",
+			PURL:    mustPURL("pkg:generic/mongodb@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

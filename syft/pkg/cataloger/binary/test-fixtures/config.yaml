@@ -269,6 +269,46 @@ from-images:
 #    paths:
 #      - /usr/sbin/mysqld
 
+  - name: mongodb
+    version: 8.0.17
+    images:
+      - ref: mongo:8.0@sha256:48432a75b23f0883e9b631af3497cbf0d477124d33a67f217c71f6e9b40fde39
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 7.0.28
+    images:
+      - ref: mongo:7.0@sha256:32b5cbf6e1075ad0f5eb2b880ee61e985d5135519a7a34a7d81712af37f27913
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 6.0.27
+    images:
+      - ref: mongo:6.0@sha256:03cda579c8caad6573cb98c2b3d5ff5ead452a6450561129b89595b4b9c18de2
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 5.0.32
+    images:
+      - ref: mongo:5.0@sha256:5e3e87afd24d75e722884d777c5713d254f7e88ba65381b5d6484f75a21b73e3
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 4.4.30
+    images:
+      - ref: mongo:4.4@sha256:4be76f674fc4b27859816811b8baa3c51830eb1dbf4ca81a51e26b79edd662ef
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
   - version: 1.25.1
     images:
       - ref: nginx:1.25.1@sha256:73e957703f1266530db0aeac1fd6a3f87c1e59943f4c13eb340bb8521c6041d7
