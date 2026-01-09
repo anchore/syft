@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	spdx "github.com/spdx/tools-golang/spdx/v3/v3_0_1"
+	spdx "github.com/spdx/tools-golang/spdx/v3/v3_0"
 
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/format/internal/spdxutil"
@@ -45,7 +45,7 @@ func (s spdx3Decoder) Identify(reader io.Reader) (sbom.FormatID, string) {
 
 	switch doc.Context {
 	case "https://spdx.org/rdf/3.0.1/spdx-context.jsonld":
-		spdxVersion = spdxutil.V3_0_1
+		spdxVersion = spdxutil.V3_0
 	}
 
 	return spdxutil.JSONFormatID, spdxVersion

@@ -76,7 +76,7 @@ require (
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e
 	github.com/sergi/go-diff v1.4.0
 	github.com/spdx/gordf v0.0.0-20201111095634-7098f93598fb
-	github.com/spdx/tools-golang v0.5.5
+	github.com/spdx/tools-golang v0.5.7-0.20260109225645-a9d62f6be946
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
@@ -112,7 +112,7 @@ require (
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect; indirectt
 	github.com/anchore/go-lzo v0.1.0 // indirect
-	github.com/anchore/go-struct-converter v0.0.0-20251008145103-b79fc8ba4f45 // indirect
+	github.com/anchore/go-struct-converter v0.2.0-rc1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aquasecurity/go-version v0.0.1 // indirect
@@ -310,7 +310,6 @@ require (
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.65 // indirect
 	github.com/henvic/httpretty v0.1.4 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kzantow/go-ld v0.0.0-20251008235635-4379583bef45 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nwaples/rardecode/v2 v2.2.0 // indirect
@@ -328,5 +327,3 @@ retract (
 	v0.53.2
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
-
-replace github.com/spdx/tools-golang => github.com/kzantow-anchore/tools-golang v0.2.1-0.20251009001345-4a11143e0606

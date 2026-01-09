@@ -45,7 +45,7 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 		return nil, "", "", fmt.Errorf("unable to seek to start of SPDX JSON SBOM: %+v", err)
 	}
 
-	if version == spdxutil.V3_0_1 {
+	if version == spdxutil.V3_0 {
 		v3decoder := spdx3Decoder{}
 		return v3decoder.Decode(reader)
 	}

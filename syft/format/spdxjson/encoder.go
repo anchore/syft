@@ -9,7 +9,7 @@ import (
 	"github.com/spdx/tools-golang/spdx/v2/v2_1"
 	"github.com/spdx/tools-golang/spdx/v2/v2_2"
 	"github.com/spdx/tools-golang/spdx/v2/v2_3"
-	"github.com/spdx/tools-golang/spdx/v3/v3_0_1"
+	"github.com/spdx/tools-golang/spdx/v3/v3_0"
 
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
 	"github.com/anchore/syft/syft/format/internal/spdxutil"
@@ -80,8 +80,8 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 		err = convert.Document(latestDoc, &doc)
 		encodeDoc = doc
 
-	case "3.0.1":
-		doc := &v3_0_1.Document{}
+	case spdxutil.V3_0:
+		doc := &v3_0.Document{}
 		err = convert.Document(latestDoc, doc)
 		encodeDoc = doc
 	default:

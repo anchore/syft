@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
-	spdx "github.com/spdx/tools-golang/spdx/v3/v3_0_1"
+	spdx "github.com/spdx/tools-golang/spdx/v3/v3_0"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
