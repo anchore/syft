@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -23,11 +24,11 @@ var errNotModelArtifact = errors.New("not an OCI model artifact")
 const (
 	// Model artifact media types as per Docker's OCI artifacts for AI model packaging
 	// Reference: https://www.docker.com/blog/oci-artifacts-for-ai-model-packaging/
-	modelConfigMediaType = "application/vnd.docker.ai.model.config.v0.1+json"
-	ggufLayerMediaType   = "application/vnd.docker.ai.gguf.v3"
+	modelConfigMediaTypePrefix = "application/vnd.docker.ai.model.config."
+	ggufLayerMediaType         = "application/vnd.docker.ai.gguf.v3"
 
-	// Maximum bytes to fetch via range-GET for GGUF headers
-	maxHeaderBytes = 10 * 1024 * 1024 // 10 MB
+	// Maximum bytes to read/return for GGUF headers
+	maxHeaderBytes = 8 * 1024 * 1024 // 8 MB
 )
 
 // registryClient handles OCI registry interactions for model artifacts.
@@ -162,8 +163,7 @@ func (c *registryClient) fetchModelArtifact(_ context.Context, refStr string) (*
 
 // isModelArtifact checks if the manifest represents a model artifact.
 func isModelArtifact(manifest *v1.Manifest) bool {
-	// TODO: should this check be less specific
-	return manifest.Config.MediaType == modelConfigMediaType
+	return strings.HasPrefix(string(manifest.Config.MediaType), modelConfigMediaTypePrefix)
 }
 
 // extractGGUFLayers extracts GGUF layer descriptors from the manifest.
@@ -189,6 +189,14 @@ func (c *registryClient) fetchBlobRange(_ context.Context, ref name.Reference, d
 	if err != nil {
 		return nil, fmt.Errorf("failed to get layer reader: %w", err)
 	}
+	// this defer is what causes the download to stop
+	//   1. io.ReadFull(reader, data) reads exactly 8MB into the buffer
+	//   2. The function returns with data[:n]
+	//   3. defer reader.Close() executes, closing the HTTP response body
+	//   4. Closing the response body closes the underlying TCP connection
+	//   5. The server receives TCP FIN/RST and stops sending
+	//   note: some data is already in flight when we close so we will see > 8mb over the wire
+	//   the full image will not download given we terminate the reader early here
 	defer reader.Close()
 
 	// Note: this is not some arbitrary number picked out of the blue.
