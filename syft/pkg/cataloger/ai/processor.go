@@ -8,7 +8,7 @@ import (
 // ggufMergeProcessor consolidates multiple GGUF packages into a single package
 // representing the AI model. When scanning OCI images with multiple layers,
 // each layer may produce a separate package. This processor finds the package
-// with a name and merges metadata from nameless packages into its GGUFFileHeaders field.
+// with a name and merges metadata from nameless packages into its GGUFFileParts field.
 // Only packages with a non-empty name are returned in the final result.
 func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	if err != nil {
@@ -49,7 +49,7 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 	if len(namedPkgs) == 1 && len(namelessHeaders) > 0 {
 		winner := &namedPkgs[0]
 		if header, ok := winner.Metadata.(pkg.GGUFFileHeader); ok {
-			header.GGUFFileHeaders = namelessHeaders
+			header.GGUFFileParts = namelessHeaders
 			winner.Metadata = header
 		}
 	}

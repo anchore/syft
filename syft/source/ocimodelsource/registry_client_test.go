@@ -18,7 +18,7 @@ func TestIsModelArtifact(t *testing.T) {
 			name: "valid model artifact",
 			manifest: &v1.Manifest{
 				Config: v1.Descriptor{
-					MediaType: modelConfigMediaType,
+					MediaType: modelConfigMediaTypePrefix + "v1+json",
 				},
 			},
 			expected: true,
