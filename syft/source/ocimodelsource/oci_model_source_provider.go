@@ -23,7 +23,7 @@ func NewSourceProvider(reference string, registryOpts *image.RegistryOptions, al
 }
 
 func (p *ociModelSourceProvider) Name() string {
-	return "oci-model-artifact"
+	return "oci-model"
 }
 
 func (p *ociModelSourceProvider) Provide(ctx context.Context) (source.Source, error) {

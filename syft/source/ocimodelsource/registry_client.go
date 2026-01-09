@@ -113,13 +113,15 @@ type modelArtifact struct {
 	GGUFLayers     []v1.Descriptor
 }
 
-func (c *registryClient) fetchModelArtifact(_ context.Context, refStr string) (*modelArtifact, error) {
+func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) (*modelArtifact, error) {
 	ref, err := name.ParseReference(refStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse reference %q: %w", refStr, err)
 	}
 
-	desc, err := remote.Get(ref, c.options...)
+	opts := c.options
+	opts = append(opts, remote.WithContext(ctx))
+	desc, err := remote.Get(ref, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch descriptor: %w", err)
 	}
@@ -177,10 +179,12 @@ func extractGGUFLayers(manifest *v1.Manifest) []v1.Descriptor {
 	return ggufLayers
 }
 
-func (c *registryClient) fetchBlobRange(_ context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
+func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
 	repo := ref.Context()
 
-	layer, err := remote.Layer(repo.Digest(digest.String()), c.options...)
+	opts := c.options
+	opts = append(opts, remote.WithContext(ctx))
+	layer, err := remote.Layer(repo.Digest(digest.String()), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch layer: %w", err)
 	}

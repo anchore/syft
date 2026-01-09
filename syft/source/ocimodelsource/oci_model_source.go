@@ -229,11 +229,17 @@ func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
-// Close cleans up temporary files.
+// Close cleans up temporary files. Safe to call multiple times.
 func (s *ociModelSource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	defer func() { s.resolver = nil }()
 
-	return os.RemoveAll(s.tempDir)
+	if s.tempDir == "" {
+		return nil
+	}
+
+	err := os.RemoveAll(s.tempDir)
+	s.tempDir = ""
+	s.resolver = nil
+	return err
 }

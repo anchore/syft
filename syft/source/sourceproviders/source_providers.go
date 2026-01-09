@@ -13,11 +13,10 @@ import (
 )
 
 const (
-	FileTag     = stereoscope.FileTag
-	DirTag      = stereoscope.DirTag
-	PullTag     = stereoscope.PullTag
-	SnapTag     = "snap"
-	OCIModelTag = "oci-model"
+	FileTag = stereoscope.FileTag
+	DirTag  = stereoscope.DirTag
+	PullTag = stereoscope.PullTag
+	SnapTag = "snap"
 )
 
 // All returns all the configured source providers known to syft
@@ -45,7 +44,12 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 		// --from docker, registry, etc.
 		Join(stereoscopeProviders.Select(PullTag)...).
 
-		// --from oci-model (model artifacts with header-only fetching)
+		// --from oci-model, registry (for select cases only)
+		// OCI model artifacts with header-only fetching
+		// note: we don't want to use the "pull" tag since it's not actually pulling the full image,
+		// instead we want to match on registry since these models are stored in OCI registries.
+		// This does mean that this must be placed after the pull provider, which is ideal since we don't want to
+		// unnecessarily pull registry headers first if the more common case is the pull providers.
 		Join(tagProvider(ocimodelsource.NewSourceProvider(userInput, cfg.RegistryOptions, cfg.Alias), "registry")).
 
 		// --from snap (remote only)
