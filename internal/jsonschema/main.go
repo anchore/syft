@@ -82,6 +82,7 @@ func assembleTypeContainer(items []any) (any, map[string]string) {
 	return reflect.New(structType).Elem().Interface(), mapping
 }
 
+//nolint:funlen
 func build() *jsonschema.Schema {
 	// create metadata mapping first so we can use it in the Namer function for self-referential types
 	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
