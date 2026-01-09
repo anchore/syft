@@ -41,11 +41,10 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 	}
 
 	// merge nameless headers into a single named package;
-	// if there are multiple named packages, return them without merging
-	// we return multiple named packages with no merged headers since
+	// if there are multiple named packages, return them without trying to merge headers.
 	// we cannot determine which nameless headers belong to which package
-	// this is because the order we receive the headers in is not guaranteed
-	// to match the order of the layers in the image they appear in
+	// this is because the order we receive the gguf headers in is not guaranteed
+	// to match the layer order in the original oci image
 	if len(namedPkgs) == 1 && len(namelessHeaders) > 0 {
 		winner := &namedPkgs[0]
 		if header, ok := winner.Metadata.(pkg.GGUFFileHeader); ok {
