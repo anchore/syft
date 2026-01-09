@@ -191,6 +191,37 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "oci-model",
+			input: []byte(`{
+				"id": "foobar",
+				"type": "oci-model",
+				"metadata": {
+					"userInput": "model-repo/llama:latest",
+					"imageID": "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
+					"manifestDigest": "sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c",
+					"mediaType": "application/vnd.oci.image.manifest.v1+json",
+					"tags": [],
+					"imageSize": 5576169,
+					"layers": [],
+					"repoDigests": []
+				}
+			}`),
+			expected: &Source{
+				ID:   "foobar",
+				Type: "oci-model",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "model-repo/llama:latest",
+					ID:             "sha256:e7b300aee9f9bf3433d32bc9305bfdd22183beb59d933b48d77ab56ba53a197a",
+					ManifestDigest: "sha256:e515aad2ed234a5072c4d2ef86a1cb77d5bfe4b11aa865d9214875734c4eeb3c",
+					MediaType:      "application/vnd.oci.image.manifest.v1+json",
+					Tags:           []string{},
+					Size:           5576169,
+					Layers:         []source.LayerMetadata{},
+					RepoDigests:    []string{},
+				},
+			},
+		},
+		{
 			name: "unknown source type",
 			input: []byte(`{
 				"id": "foobar",

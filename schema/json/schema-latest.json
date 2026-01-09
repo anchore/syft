@@ -1481,7 +1481,7 @@
         },
         "parts": {
           "items": {
-            "$ref": "#/$defs/GGUFFileHeader"
+            "$ref": "#/$defs/GgufFileHeader"
           },
           "type": "array",
           "description": "Parts contains headers from additional GGUF files that were merged\ninto this package during post-processing (e.g., from OCI layers without model names)."
@@ -2568,34 +2568,10 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/AlpmDbEntry"
-            },
-            {
-              "$ref": "#/$defs/ApkDbEntry"
-            },
-            {
               "$ref": "#/$defs/BinarySignature"
             },
             {
-              "$ref": "#/$defs/BitnamiSbomEntry"
-            },
-            {
-              "$ref": "#/$defs/CConanFileEntry"
-            },
-            {
-              "$ref": "#/$defs/CConanInfoEntry"
-            },
-            {
-              "$ref": "#/$defs/CConanLockEntry"
-            },
-            {
-              "$ref": "#/$defs/CConanLockV2Entry"
-            },
-            {
               "$ref": "#/$defs/CocoaPodfileLockEntry"
-            },
-            {
-              "$ref": "#/$defs/CondaMetadataEntry"
             },
             {
               "$ref": "#/$defs/DartPubspec"
@@ -2616,37 +2592,10 @@
               "$ref": "#/$defs/DpkgArchiveEntry"
             },
             {
-              "$ref": "#/$defs/DpkgDbEntry"
-            },
-            {
-              "$ref": "#/$defs/ElfBinaryPackageNoteJsonPayload"
-            },
-            {
               "$ref": "#/$defs/ElixirMixLockEntry"
             },
             {
               "$ref": "#/$defs/ErlangRebarLockEntry"
-            },
-            {
-              "$ref": "#/$defs/GgufFileHeader"
-            },
-            {
-              "$ref": "#/$defs/GithubActionsUseStatement"
-            },
-            {
-              "$ref": "#/$defs/GoModuleBuildinfoEntry"
-            },
-            {
-              "$ref": "#/$defs/GoModuleEntry"
-            },
-            {
-              "$ref": "#/$defs/GoSourceEntry"
-            },
-            {
-              "$ref": "#/$defs/HaskellHackageStackEntry"
-            },
-            {
-              "$ref": "#/$defs/HaskellHackageStackLockEntry"
             },
             {
               "$ref": "#/$defs/HomebrewFormula"
@@ -2655,28 +2604,7 @@
               "$ref": "#/$defs/JavaArchive"
             },
             {
-              "$ref": "#/$defs/JavaJvmInstallation"
-            },
-            {
-              "$ref": "#/$defs/JavascriptNpmPackage"
-            },
-            {
-              "$ref": "#/$defs/JavascriptNpmPackageLockEntry"
-            },
-            {
-              "$ref": "#/$defs/JavascriptPnpmLockEntry"
-            },
-            {
-              "$ref": "#/$defs/JavascriptYarnLockEntry"
-            },
-            {
-              "$ref": "#/$defs/LinuxKernelArchive"
-            },
-            {
               "$ref": "#/$defs/LinuxKernelModule"
-            },
-            {
-              "$ref": "#/$defs/LuarocksPackage"
             },
             {
               "$ref": "#/$defs/MicrosoftKbPatch"
@@ -2686,9 +2614,6 @@
             },
             {
               "$ref": "#/$defs/OpamPackage"
-            },
-            {
-              "$ref": "#/$defs/PeBinary"
             },
             {
               "$ref": "#/$defs/PhpComposerInstalledEntry"
@@ -2703,16 +2628,10 @@
               "$ref": "#/$defs/PhpPeclEntry"
             },
             {
-              "$ref": "#/$defs/PortageDbEntry"
-            },
-            {
               "$ref": "#/$defs/PythonPackage"
             },
             {
               "$ref": "#/$defs/PythonPdmLockEntry"
-            },
-            {
-              "$ref": "#/$defs/PythonPipRequirementsEntry"
             },
             {
               "$ref": "#/$defs/PythonPipfileLockEntry"
@@ -2730,25 +2649,13 @@
               "$ref": "#/$defs/RpmArchive"
             },
             {
-              "$ref": "#/$defs/RpmDbEntry"
-            },
-            {
               "$ref": "#/$defs/RubyGemspec"
-            },
-            {
-              "$ref": "#/$defs/RustCargoAuditEntry"
             },
             {
               "$ref": "#/$defs/RustCargoLockEntry"
             },
             {
               "$ref": "#/$defs/SnapEntry"
-            },
-            {
-              "$ref": "#/$defs/SwiftPackageManagerLockEntry"
-            },
-            {
-              "$ref": "#/$defs/SwiplpackPackage"
             },
             {
               "$ref": "#/$defs/TerraformLockProviderEntry"

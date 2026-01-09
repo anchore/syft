@@ -56,7 +56,7 @@ func Test_ggufMergeProcessor(t *testing.T) {
 			if test.wantPkgCount == 1 && test.wantFilePartCount > 0 {
 				header, ok := got[0].Metadata.(pkg.GGUFFileHeader)
 				require.True(t, ok)
-				assert.Len(t, header.GGUFFileParts, test.wantFilePartCount)
+				assert.Len(t, header.Parts, test.wantFilePartCount)
 			}
 		})
 	}
