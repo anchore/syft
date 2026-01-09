@@ -13,7 +13,7 @@ inputs:
   cache-key-prefix:
     description: "Prefix all cache keys with this value"
     required: true
-    default: "181053ac82"
+    default: "53ac821810"
   download-test-fixture-cache:
     description: "Download test fixture cache from OCI and github actions"
     required: true
@@ -45,7 +45,10 @@ runs:
     - name: Install project tools
       shell: bash
       if: inputs.tools == 'true'
-      run: make tools
+      run: |
+        make tools
+        .tool/binny list
+        .tool/binny check
 
     - name: Install go dependencies
       if: inputs.go-dependencies == 'true'

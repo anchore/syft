@@ -73,6 +73,7 @@ tasks:
       - task: check-licenses
       - task: lint
       - task: check-json-schema-drift
+      - task: check-capability-drift
       - task: check-binary-fixture-size
 
   test:
@@ -190,6 +191,11 @@ tasks:
     cmds:
       - .github/scripts/json-schema-drift-check.sh
 
+  check-capability-drift:
+    desc: Ensure there is no drift between the capabilities data and the code
+    cmds:
+      - .github/scripts/capability-drift-check.sh
+
   check-binary-fixture-size:
     desc: Ensure that the binary test fixtures are not too large
     cmds:
@@ -218,6 +224,7 @@ tasks:
       # unit test coverage threshold (in % coverage)
       COVERAGE_THRESHOLD: 62
     cmds:
+      - task: clean-test-observations
       - "go test -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
       - cmd: ".github/scripts/coverage.py {{ .COVERAGE_THRESHOLD }} {{ .TMP_DIR }}/unit-coverage-details.txt"
         silent: true
@@ -366,6 +373,9 @@ tasks:
     # this will look for `test-fixtures/Makefile` and invoke the `fixtures` target to generate any and all test fixtures
     cmds:
       - |
+        # we want to stop on the first build error
+        set -e
+
         BOLD='\033[1m'
         YELLOW='\033[0;33m'
         RESET='\033[0m'
@@ -374,7 +384,7 @@ tasks:
         for dir in $(find . -type d -name 'test-fixtures'); do
           if [ -f "$dir/Makefile" ]; then
             echo -e "${YELLOW}${BOLD}generating fixtures in $dir${RESET}"
-            (make -C "$dir" fixtures)
+            make -C "$dir" fixtures
           fi
         done
         echo -e "${BOLD}generated all fixtures${RESET}"
@@ -500,6 +510,7 @@ tasks:
     desc: Add data generation tasks
     cmds:
       - task: generate-json-schema
+      - task: generate-capabilities
       - task: generate-license-list
       - task: generate-cpe-dictionary-index
 
@@ -520,6 +531,21 @@ tasks:
       - task: generate:cpe-index:cache:pull
       - task: generate:cpe-index:cache:update
       - task: generate:cpe-index:build
+
+  generate-capabilities:
+    desc: Generate the capabilities data file
+    deps:
+      - tmpdir
+      - fixtures
+    cmds:
+      # remove all test observations prior to regenerating
+      - task: clean-test-observations
+      # this is required to update test observations; such evidence is used to update the packages/*.yaml
+      - "go test ./syft/pkg/... -count=1"
+      - "go generate ./internal/capabilities/..."
+      - "gofmt -s -w ./internal/capabilities"
+      # now that we have the latest capabilities, run completeness tests to ensure this is self-consistent
+      - "SYFT_ENABLE_COMPLETENESS_TESTS=true go test ./internal/capabilities/... -count=1"
 
 
   ## Build-related targets #################################
@@ -646,3 +672,8 @@ tasks:
         done
         echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
       - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}
+
+  clean-test-observations:
+    desc: Remove all test observations (i.e. test-fixtures/test-observations.json)
+    cmds:
+      - find . -type f -wholename "**/test-fixtures/test-observations.json" | xargs rm -f

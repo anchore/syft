@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/iancoleman/orderedmap"
 	"github.com/invopop/jsonschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 // TestCopyAliasFieldComments verifies that field comments from source types are correctly copied to alias types.
@@ -373,8 +373,8 @@ func TestWarnMissingDescriptions(t *testing.T) {
 }
 
 // helper to create an ordered map from a regular map
-func newOrderedMap(m map[string]*jsonschema.Schema) *orderedmap.OrderedMap {
-	om := orderedmap.New()
+func newOrderedMap(m map[string]*jsonschema.Schema) *orderedmap.OrderedMap[string, *jsonschema.Schema] {
+	om := orderedmap.New[string, *jsonschema.Schema]()
 	for k, v := range m {
 		om.Set(k, v)
 	}

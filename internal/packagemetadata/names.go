@@ -167,3 +167,30 @@ func ReflectTypeFromJSONName(name string) reflect.Type {
 	name = strings.ToLower(name)
 	return jsonTypes.nameToType[name]
 }
+
+// JSONNameFromString converts a Go struct name string (e.g., "pkg.AlpmDBEntry" or "AlpmDBEntry")
+// to its JSON schema name (e.g., "alpm-db-entry"). Returns empty string if not found.
+func JSONNameFromString(typeName string) string {
+	// strip "pkg." prefix if present
+	typeName = strings.TrimPrefix(typeName, "pkg.")
+
+	// look through all types to find matching struct name
+	for typ, jsonName := range jsonTypes.typeToName {
+		if typ.Name() == typeName {
+			return jsonName
+		}
+	}
+	return ""
+}
+
+// ToUpperCamelCase converts kebab-case to UpperCamelCase
+// e.g., "alpm-db-entry" -> "AlpmDbEntry"
+func ToUpperCamelCase(kebab string) string {
+	parts := strings.Split(kebab, "-")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[0:1]) + part[1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
