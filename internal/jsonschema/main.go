@@ -87,6 +87,13 @@ func build() *jsonschema.Schema {
 	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
 	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
 
+	// create a set of valid metadata display names for lookup
+	// (since Namer now returns display names, the schema definitions use display names as keys)
+	pkgMetadataDisplayNames := make(map[string]struct{}, len(pkgMetadataMapping))
+	for _, displayName := range pkgMetadataMapping {
+		pkgMetadataDisplayNames[displayName] = struct{}{}
+	}
+
 	reflector := &jsonschema.Reflector{
 		BaseSchemaID:              schemaID(),
 		AllowAdditionalProperties: true,
@@ -150,11 +157,10 @@ func build() *jsonschema.Schema {
 			continue
 		}
 
-		displayName, ok := pkgMetadataMapping[typeName]
-		if ok {
-			// this is a package metadata type...
-			documentSchema.Definitions[displayName] = definition
-			metadataNames = append(metadataNames, displayName)
+		if _, ok := pkgMetadataDisplayNames[typeName]; ok {
+			// this is a package metadata type (typeName is already the display name from Namer)
+			documentSchema.Definitions[typeName] = definition
+			metadataNames = append(metadataNames, typeName)
 		} else {
 			// this is a type that the metadata type uses (e.g. DpkgFileRecord)
 			documentSchema.Definitions[typeName] = definition
