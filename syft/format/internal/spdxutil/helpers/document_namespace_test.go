@@ -61,6 +61,18 @@ func Test_DocumentNamespace(t *testing.T) {
 			},
 			expected: "https://anchore.com/syft/snap/my-name-",
 		},
+		{
+			name:      "oci-model",
+			inputName: "my-name",
+			src: source.Description{
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "model-repo/name:tag",
+					ID:             "id",
+					ManifestDigest: "digest",
+				},
+			},
+			expected: "https://anchore.com/syft/oci-model/my-name-",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

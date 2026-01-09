@@ -122,6 +122,10 @@ func extractVersion(kvs gguf_parser.GGUFMetadataKVs) string {
 
 // extractModelNameFromPath extracts the model name from the file path
 func extractModelNameFromPath(path string) string {
+	// we do not want to return a name from filepath if it's not a distinct gguf file
+	if !strings.Contains(path, ".gguf") {
+		return ""
+	}
 	// Get the base filename
 	base := filepath.Base(path)
 

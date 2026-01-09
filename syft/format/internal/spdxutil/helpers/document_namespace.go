@@ -14,6 +14,7 @@ import (
 
 const (
 	InputImage     = "image"
+	InputOCIModel  = "oci-model"
 	InputDirectory = "dir"
 	InputFile      = "file"
 	InputSnap      = "snap"
@@ -30,6 +31,8 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 	switch src.Metadata.(type) {
 	case source.ImageMetadata:
 		input = InputImage
+	case source.OCIModelMetadata:
+		input = InputOCIModel
 	case source.DirectoryMetadata:
 		input = InputDirectory
 	case source.FileMetadata:

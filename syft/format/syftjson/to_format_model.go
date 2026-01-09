@@ -325,7 +325,17 @@ func toSourceModel(src source.Description) model.Source {
 		Metadata: src.Metadata,
 	}
 
-	if metadata, ok := src.Metadata.(source.ImageMetadata); ok {
+	switch metadata := src.Metadata.(type) {
+	case source.ImageMetadata:
+		// ensure that empty collections are not shown as null
+		if metadata.RepoDigests == nil {
+			metadata.RepoDigests = []string{}
+		}
+		if metadata.Tags == nil {
+			metadata.Tags = []string{}
+		}
+		m.Metadata = metadata
+	case source.OCIModelMetadata:
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
 			metadata.RepoDigests = []string{}

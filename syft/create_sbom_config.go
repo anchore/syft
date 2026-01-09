@@ -477,7 +477,7 @@ func (c *CreateSBOMConfig) Create(ctx context.Context, src source.Source) (*sbom
 
 func findDefaultTags(src source.Description) ([]string, error) {
 	switch m := src.Metadata.(type) {
-	case source.ImageMetadata:
+	case source.ImageMetadata, source.OCIModelMetadata:
 		return []string{pkgcataloging.ImageTag, filecataloging.FileTag}, nil
 	case source.FileMetadata, source.DirectoryMetadata:
 		return []string{pkgcataloging.DirectoryTag, filecataloging.FileTag}, nil
