@@ -1479,12 +1479,12 @@
           "type": "string",
           "description": "MetadataKeyValuesHash is a xx64 hash of all key-value pairs from the GGUF header metadata.\nThis hash is computed over the complete header metadata (including the fields extracted\ninto typed fields above) and provides a stable identifier for the model configuration\nacross different file locations or remotes. It allows matching identical models even\nwhen stored in different repositories or with different filenames."
         },
-        "ggufFileParts": {
+        "parts": {
           "items": {
             "$ref": "#/$defs/GGUFFileHeader"
           },
           "type": "array",
-          "description": "GGUFFileHeaders contains headers from additional GGUF files that were merged\ninto this package during post-processing (e.g., from OCI layers without model names)."
+          "description": "Parts contains headers from additional GGUF files that were merged\ninto this package during post-processing (e.g., from OCI layers without model names)."
         }
       },
       "type": "object",

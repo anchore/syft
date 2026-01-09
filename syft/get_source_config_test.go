@@ -31,6 +31,7 @@ func TestGetProviders_Sources(t *testing.T) {
 		t.Errorf("Expected no error for Sources parameter, got: %v", err)
 	}
 
+	// Registry tag has two providers: OCIModel and Image
 	if len(providers) != 2 {
 		t.Errorf("Expected 2 providers, got %d", len(providers))
 	}

@@ -48,7 +48,7 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 	if len(namedPkgs) == 1 && len(namelessHeaders) > 0 {
 		winner := &namedPkgs[0]
 		if header, ok := winner.Metadata.(pkg.GGUFFileHeader); ok {
-			header.GGUFFileParts = namelessHeaders
+			header.Parts = namelessHeaders
 			winner.Metadata = header
 		}
 	}
