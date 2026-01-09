@@ -83,11 +83,20 @@ func assembleTypeContainer(items []any) (any, map[string]string) {
 }
 
 func build() *jsonschema.Schema {
+	// create metadata mapping first so we can use it in the Namer function for self-referential types
+	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
+	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
+
 	reflector := &jsonschema.Reflector{
 		BaseSchemaID:              schemaID(),
 		AllowAdditionalProperties: true,
 		Namer: func(r reflect.Type) string {
-			return strings.TrimPrefix(r.Name(), "JSON")
+			name := strings.TrimPrefix(r.Name(), "JSON")
+			// if this is a metadata type, use the mapped name for consistent references
+			if mappedName, ok := pkgMetadataMapping[name]; ok {
+				return mappedName
+			}
+			return name
 		},
 		CommentMap: make(map[string]string),
 	}
@@ -122,9 +131,6 @@ func build() *jsonschema.Schema {
 		// copy field comments for type aliases (e.g., type RpmArchive RpmDBEntry)
 		copyAliasFieldComments(reflector.CommentMap, repoRoot)
 	}
-
-	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
-	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
 
 	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
 	// srcMetadataContainerType := reflect.TypeOf(srcMetadataContainer)
