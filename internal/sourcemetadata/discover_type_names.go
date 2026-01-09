@@ -115,10 +115,13 @@ func findMetadataDefinitionNamesInFile(path string) ([]string, []string, error) 
 			}
 
 			// handle type definitions from another type (e.g., "type FooMetadata BarMetadata")
-			// only add to usedTypeNames if the base type is NOT a metadata candidate itself
-			// (e.g: we want both OCIModelMetadata and ImageMetadata to be top-level types)
+			// if the base type IS a metadata candidate, then this is an alias and should be excluded
+			// (e.g., we only want ImageMetadata, not OCIModelMetadata which is an alias to it)
 			if ident, ok := typeSpec.Type.(*ast.Ident); ok {
-				if !isMetadataTypeCandidate(ident.Name) {
+				if isMetadataTypeCandidate(ident.Name) {
+					// this type is an alias to another metadata type, exclude it
+					usedTypeNames = append(usedTypeNames, name)
+				} else {
 					usedTypeNames = append(usedTypeNames, ident.Name)
 				}
 			}
