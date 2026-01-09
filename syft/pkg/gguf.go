@@ -37,5 +37,5 @@ type GGUFFileHeader struct {
 
 	// GGUFFileHeaders contains headers from additional GGUF files that were merged
 	// into this package during post-processing (e.g., from OCI layers without model names).
-	GGUFFileHeaders []GGUFFileHeader `json:"ggufFileHeaders,omitempty" cyclonedx:"ggufFileHeaders"`
+	GGUFFileParts []GGUFFileHeader `json:"ggufFileParts,omitempty" cyclonedx:"ggufFileParts"`
 }
