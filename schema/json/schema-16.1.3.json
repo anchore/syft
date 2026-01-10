@@ -793,8 +793,7 @@
           "items": {
             "$ref": "#/$defs/Package"
           },
-          "type": "array",
-          "description": "Artifacts is the list of packages discovered and placed into the catalog"
+          "type": "array"
         },
         "artifactRelationships": {
           "items": {
@@ -806,24 +805,19 @@
           "items": {
             "$ref": "#/$defs/File"
           },
-          "type": "array",
-          "description": "note: must have omitempty"
+          "type": "array"
         },
         "source": {
-          "$ref": "#/$defs/Source",
-          "description": "Source represents the original object that was cataloged"
+          "$ref": "#/$defs/Source"
         },
         "distro": {
-          "$ref": "#/$defs/LinuxRelease",
-          "description": "Distro represents the Linux distribution that was detected from the source"
+          "$ref": "#/$defs/LinuxRelease"
         },
         "descriptor": {
-          "$ref": "#/$defs/Descriptor",
-          "description": "Descriptor is a block containing self-describing information about syft"
+          "$ref": "#/$defs/Descriptor"
         },
         "schema": {
-          "$ref": "#/$defs/Schema",
-          "description": "Schema is a block reserved for defining the version for the shape of this JSON document and where to find the schema document to validate the shape"
+          "$ref": "#/$defs/Schema"
         }
       },
       "type": "object",
@@ -864,8 +858,10 @@
           "description": "Type is type of entry could be package or project for internal refs"
         },
         "executables": {
-          "additionalProperties": {
-            "$ref": "#/$defs/DotnetPortableExecutableEntry"
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/DotnetPortableExecutableEntry"
+            }
           },
           "type": "object",
           "description": "Executables are the map of .NET Portable Executable files within this package with their version resources"
@@ -1815,8 +1811,10 @@
           "description": "Scope is dependency scope determining when dependency is available (compile=default all phases, test=test compilation/execution only, runtime=runtime and test not compile, provided=expected from JDK or container)"
         },
         "extraFields": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Extra is additional custom properties not in standard Maven coordinates"
@@ -1979,8 +1977,10 @@
           "description": "Integrity is Subresource Integrity hash for verification using standard SRI format (sha512-... or sha1-...). npm changed from SHA-1 to SHA-512 in newer versions. For registry sources this is the integrity from registry, for remote tarballs it's SHA-512 of the file. npm verifies tarball matches this hash before unpacking, throwing EINTEGRITY error if mismatch detected."
         },
         "dependencies": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Dependencies is a map of dependencies and their version markers, i.e. \"lodash\": \"^1.0.0\""
@@ -2001,8 +2001,10 @@
           "description": "Resolution is the resolution information for the package"
         },
         "dependencies": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Dependencies is a map of dependencies and their versions"
@@ -2026,8 +2028,10 @@
           "description": "Integrity is Subresource Integrity hash for verification (SRI format)"
         },
         "dependencies": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Dependencies is a map of dependencies and their versions"
@@ -2203,8 +2207,10 @@
           "description": "VersionMagic is version magic string for compatibility checking (includes kernel version, SMP status, module loading capabilities like \"3.17.4-302.fc21.x86_64 SMP mod_unload modversions\"). Module will NOT load if vermagic doesn't match running kernel."
         },
         "parameters": {
-          "additionalProperties": {
-            "$ref": "#/$defs/LinuxKernelModuleParameter"
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/LinuxKernelModuleParameter"
+            }
           },
           "type": "object",
           "description": "Parameters are the module parameters that can be configured at load time (user-settable values like module options)"
@@ -2324,11 +2330,12 @@
           "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)"
         },
         "annotations": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
-          "type": "object",
-          "description": "Arbitrary key-value pairs that can be used to annotate a location"
+          "type": "object"
         }
       },
       "type": "object",
@@ -2365,8 +2372,10 @@
           "description": "URL is the source download URL"
         },
         "dependencies": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Dependencies are the map of dependency names to version constraints"
@@ -2861,29 +2870,37 @@
           "description": "Dist is distribution archive information for production (typically zip/tar, default install method). Packaged version of released code."
         },
         "require": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Require is runtime dependencies with version constraints (package will not install unless these requirements can be met)"
         },
         "provide": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Provide is virtual packages/functionality provided by this package (allows other packages to depend on capabilities)"
         },
         "require-dev": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "RequireDev is development-only dependencies (not installed in production, only when developing this package or running tests)"
         },
         "suggest": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Suggest is optional but recommended dependencies (suggestions for packages that would extend functionality)"
@@ -2965,29 +2982,37 @@
           "description": "Dist is distribution archive information for production (typically zip/tar, default install method). Packaged version of released code."
         },
         "require": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Require is runtime dependencies with version constraints (package will not install unless these requirements can be met)"
         },
         "provide": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Provide is virtual packages/functionality provided by this package (allows other packages to depend on capabilities)"
         },
         "require-dev": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "RequireDev is development-only dependencies (not installed in production, only when developing this package or running tests)"
         },
         "suggest": {
-          "additionalProperties": {
-            "type": "string"
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
           },
           "type": "object",
           "description": "Suggest is optional but recommended dependencies (suggestions for packages that would extend functionality)"
