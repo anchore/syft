@@ -1,14 +1,14 @@
 package spdxhelpers
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/scylladb/go-set/strset"
 	spdx "github.com/spdx/tools-golang/spdx/v3/v3_0"
 
 	"github.com/anchore/packageurl-go"
@@ -17,7 +17,8 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal"
-	"github.com/anchore/syft/syft/format/internal/spdx3/helpers"
+	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -29,10 +30,10 @@ func ToSyftModelV3(doc *spdx.Document) (*sbom.SBOM, error) {
 		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
 	}
 
-	spdxIDMap := make(map[string]any)
+	spdxMap := ptrMap[any]{}
 
 	s := &sbom.SBOM{
-		Source: v3extractSource(spdxIDMap, doc),
+		Source: v3extractSource(spdxMap, doc),
 		Artifacts: sbom.Artifacts{
 			Packages:          pkg.NewCollection(),
 			FileMetadata:      map[file.Coordinates]file.Metadata{},
@@ -41,11 +42,13 @@ func ToSyftModelV3(doc *spdx.Document) (*sbom.SBOM, error) {
 		},
 	}
 
-	v3collectSyftPackages(s, spdxIDMap, doc)
+	relationships := v3relationshipMap(doc)
 
-	v3collectSyftFiles(s, spdxIDMap, doc)
+	v3collectSyftPackages(s, spdxMap, relationships, doc)
 
-	s.Relationships = v3toSyftRelationships(spdxIDMap, doc)
+	v3collectSyftFiles(s, spdxMap, doc)
+
+	s.Relationships = v3toSyftRelationships(spdxMap, doc)
 
 	return s, nil
 }
@@ -90,36 +93,20 @@ func v3removeRelationships(elements spdx.ElementList, element spdx.AnyElement) (
 }
 
 func v3findRootPackages(doc spdx.AnyElementCollection) (out spdx.PackageList) {
-	for _, s := range doc.GetElements().ElementCollections() {
-		root := v3findRootPackages(s)
-		if root != nil {
-			return root
-		}
-	}
-	for _, s := range doc.GetRootElements().ElementCollections() {
-		root := v3findRootPackages(s)
-		if root != nil {
-			return root
-		}
-	}
 	for _, p := range doc.GetRootElements().Packages() {
-		if p.GetPrimaryPurpose() != spdx.SoftwarePurpose_Container {
-			continue
-		}
 		out = append(out, p)
 	}
-	for _, p := range doc.GetElements().Packages() {
-		if p.GetPrimaryPurpose() != spdx.SoftwarePurpose_Container {
-			continue
+	for _, s := range doc.GetRootElements().SBOMs() {
+		for _, p := range s.GetRootElements().Packages() {
+			out = append(out, p)
 		}
-		out = append(out, p)
 	}
 	return
 }
 
-func v3extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Description {
-	namespace := doc.Name
-	if len(doc.NamespaceMaps) > 0 {
+func v3extractSource(spdxMap ptrMap[any], doc *spdx.Document) source.Description {
+	namespace := doc.ID
+	if namespace == "" && len(doc.NamespaceMaps) > 0 {
 		namespace = string(doc.NamespaceMaps[0].GetNamespace())
 	}
 	src := extractSourceFromNamespace(namespace)
@@ -141,7 +128,7 @@ func v3extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descri
 		return src
 	}
 
-	spdxIDMap[p.GetID()] = src
+	panicIfErr(spdxMap.Set(p, src))
 
 	doc.Elements = v3removePackage(doc.Elements, p)
 	doc.Elements = v3removeRelationships(doc.Elements, p)
@@ -157,13 +144,13 @@ func v3containerSource(p spdx.AnyPackage) source.Description {
 	}
 
 	digest := ""
-	if len(p.GetVerifiedUsing().IntegrityMethods()) > 0 {
-		c := p.GetVerifiedUsing().IntegrityMethods()[0]
-		h, _ := c.(spdx.AnyHash)
+	if len(p.GetVerifiedUsing().Hashes()) > 0 {
+		h := p.GetVerifiedUsing().Hashes()[0]
 		if h != nil {
 			digest = fmt.Sprintf("%s:%s", v3fromChecksumAlgorithm(h.GetAlgorithm()), h.GetValue())
 		}
 	}
+
 	return source.Description{
 		ID:      p.GetID(),
 		Name:    p.GetName(),
@@ -178,7 +165,7 @@ func v3containerSource(p spdx.AnyPackage) source.Description {
 }
 
 func v3fileSource(p spdx.AnyPackage) source.Description {
-	typeRegex := regexp.MustCompile("^DocumentRoot-([^-]+)-.*$")
+	typeRegex := regexp.MustCompile("DocumentRoot-([^-]+)-.*$")
 	typeName := typeRegex.ReplaceAllString(p.GetID(), "$1")
 
 	var version string
@@ -198,10 +185,16 @@ func v3fileSource(p spdx.AnyPackage) source.Description {
 		metadata, version = v3fileSourceMetadata(p)
 	}
 
+	supplier := ""
+	if p.GetSuppliedBy() != nil {
+		supplier = p.GetSuppliedBy().GetName()
+	}
+
 	return source.Description{
 		ID:       p.GetID(),
 		Name:     p.GetName(),
 		Version:  version,
+		Supplier: supplier,
 		Metadata: metadata,
 	}
 }
@@ -214,11 +207,7 @@ func v3fileSourceMetadata(p spdx.AnyPackage) (any, string) {
 	}
 	// if this is a Syft SBOM, we might have output a digest as the version
 	checksum := v3toChecksum(p.GetVersion())
-	for _, i := range p.GetVerifiedUsing() {
-		d, _ := i.(spdx.AnyHash)
-		if d == nil {
-			continue
-		}
+	for _, d := range p.GetVerifiedUsing().Hashes() {
 		if checksum != nil && checksum.GetValue() == d.GetValue() {
 			version = ""
 		}
@@ -231,68 +220,11 @@ func v3fileSourceMetadata(p spdx.AnyPackage) (any, string) {
 	return m, version
 }
 
-// toChecksum takes a checksum in the format <algorithm>:<hash> and returns an spdx.Checksum or nil if the string is invalid
-func v3toChecksum(algorithmHash string) spdx.AnyHash {
-	parts := strings.Split(algorithmHash, ":")
-	if len(parts) < 2 {
-		return nil
-	}
-	return &spdx.Hash{
-		Algorithm: v3toChecksumAlgorithm(parts[0]),
-		Value:     parts[1],
-	}
-}
-
-func v3toChecksumAlgorithm(algorithm string) spdx.HashAlgorithm {
-	// this needs to be an uppercase version of our algorithm
-	switch strings.ToLower(algorithm) {
-	case "sha1":
-		return spdx.HashAlgorithm_Sha1
-	case "sha256":
-		return spdx.HashAlgorithm_Sha256
-	case "sha384":
-		return spdx.HashAlgorithm_Sha384
-	case "sha512":
-		return spdx.HashAlgorithm_Sha512
-	case "md5":
-		return spdx.HashAlgorithm_Md5
-	}
-	return spdx.HashAlgorithm{}
-}
-
 func v3directorySourceMetadata(p spdx.AnyPackage) (any, string) {
 	return source.DirectoryMetadata{
 		Path: p.GetName(),
 		Base: "",
 	}, p.GetVersion()
-}
-
-func v3extractSourceFromNamespace(ns string) source.Description {
-	u, err := url.Parse(ns)
-	if err != nil {
-		return source.Description{
-			Metadata: nil,
-		}
-	}
-
-	parts := strings.Split(u.Path, "/")
-	for _, p := range parts {
-		switch p {
-		case helpers.InputFile:
-			return source.Description{
-				Metadata: source.FileMetadata{},
-			}
-		case helpers.InputImage:
-			return source.Description{
-				Metadata: source.ImageMetadata{},
-			}
-		case helpers.InputDirectory:
-			return source.Description{
-				Metadata: source.DirectoryMetadata{},
-			}
-		}
-	}
-	return source.Description{}
 }
 
 func v3findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
@@ -328,25 +260,32 @@ func v3findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 	return nil
 }
 
-func v3collectSyftPackages(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrMap[[]spdx.AnyRelationship], doc *spdx.Document) {
 	skipIDs := v3packageIDsToSkip(doc)
+	found := ptrMap[struct{}]{}
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
 		for _, p := range elementList.Packages() {
-			if p == nil || skipIDs.Has(p.GetID()) {
+			if p == nil || skipIDs.Has(p.GetID()) || found.Has(p.GetID()) {
 				continue
 			}
-			syftPkg := v3toSyftPackage(p)
-			spdxIDMap[p.GetID()] = syftPkg
+			panicIfErr(found.Set(p, struct{}{}))
+			syftPkg := v3toSyftPackage(relationships, p)
+			panicIfErr(spdxMap.Set(p, syftPkg))
 			s.Artifacts.Packages.Add(syftPkg)
 		}
 	}
 }
 
-func v3collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Document) {
+func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
+	found := ptrMap[struct{}]{}
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
 		for _, f := range elementList.Files() {
+			if found.Has(f) {
+				continue
+			}
+			panicIfErr(found.Set(f, struct{}{}))
 			l := v3toSyftLocation(f)
-			spdxIDMap[f.GetID()] = l
+			panicIfErr(spdxMap.Set(f, l))
 
 			s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)
 			s.Artifacts.FileDigests[l.Coordinates] = v3toFileDigests(f)
@@ -355,11 +294,7 @@ func v3collectSyftFiles(s *sbom.SBOM, spdxIDMap map[string]any, doc *spdx.Docume
 }
 
 func v3toFileDigests(f spdx.AnyFile) (digests []file.Digest) {
-	for _, digest := range f.GetVerifiedUsing() {
-		h, _ := digest.(spdx.AnyHash)
-		if h == nil {
-			continue
-		}
+	for _, h := range f.GetVerifiedUsing().Hashes() {
 		digests = append(digests, file.Digest{
 			Algorithm: v3fromChecksumAlgorithm(h.GetAlgorithm()),
 			Value:     h.GetValue(),
@@ -369,7 +304,7 @@ func v3toFileDigests(f spdx.AnyFile) (digests []file.Digest) {
 }
 
 func v3fromChecksumAlgorithm(algorithm spdx.HashAlgorithm) string {
-	// FIXME case statement with real mappings using type constants
+	// it might be better to have a specific case statement with constants
 	parts := strings.Split(algorithm.GetID(), "/")
 	return strings.ToLower(parts[len(parts)-1])
 }
@@ -382,26 +317,26 @@ func v3toFileMetadata(f spdx.AnyFile) (meta file.Metadata) {
 	return meta
 }
 
-func v3toSyftRelationships(spdxIDMap map[string]any, doc *spdx.Document) []artifact.Relationship {
-	out := v3collectDocRelationships(spdxIDMap, doc)
+func v3toSyftRelationships(spdxMap ptrMap[any], doc *spdx.Document) []artifact.Relationship {
+	out := v3collectDocRelationships(spdxMap, doc)
+
 	return out
 }
 
-func v3collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
+//nolint:gocognit
+func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []artifact.Relationship) {
 	for _, r := range doc.Elements.Relationships() {
-		// FIXME what to do with r.RefA.DocumentRefID and r.RefA.SpecialID
 		from := r.GetFrom()
-		if from == nil {
-			continue
-		}
-		if from.GetID() != "" { // && requireAndTrimPrefix(fromID, "DocumentRef-") != string(doc.SPDXIdentifier) {
+		if from == nil || from.GetID() == "" {
 			log.Debugf("ignoring relationship to external document: %+v", r)
 			continue
 		}
-		a := spdxIDMap[from.GetID()]
+		a, err := spdxMap.Get(from)
+		panicIfErr(err)
 
 		for _, to := range r.GetTo() {
-			b := spdxIDMap[to.GetID()]
+			b, err := spdxMap.Get(to)
+			panicIfErr(err)
 			from, fromOk := a.(pkg.Package)
 			toPackage, toPackageOk := b.(pkg.Package)
 			toLocation, toLocationOk := b.(file.Location)
@@ -453,42 +388,14 @@ func v3collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (ou
 	return out
 }
 
-// collectPackageFileRelationships add relationships for direct files
-// func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out []artifact.Relationship) {
-//	for _, p := range doc.Elements.Packages() {
-//		packageID := getID(p)
-//
-//		a := spdxIDMap[string(packageID)]
-//		from, fromOk := a.(pkg.Package)
-//		if !fromOk {
-//			continue
-//		}
-//		for _, f := range p.Files {
-//			fileID := getID(f)
-//
-//			b := spdxIDMap[string(fileID)]
-//			to, toLocationOk := b.(file.Location)
-//			if !toLocationOk {
-//				continue
-//			}
-//			out = append(out, artifact.Relationship{
-//				From: from,
-//				To:   to,
-//				Type: artifact.ContainsRelationship,
-//			})
-//		}
-//	}
-//	return out
-//}
-
 func v3toSyftCoordinates(f spdx.AnyFile) file.Coordinates {
 	const layerIDPrefix = "layerID: "
 	var fileSystemID string
 	if strings.Index(f.GetComment(), layerIDPrefix) == 0 {
 		fileSystemID = strings.TrimPrefix(f.GetComment(), layerIDPrefix)
 	}
-	if strings.Index(string(f.GetID()), layerIDPrefix) == 0 {
-		fileSystemID = strings.TrimPrefix(string(f.GetID()), layerIDPrefix)
+	if strings.Index(f.GetID(), layerIDPrefix) == 0 {
+		fileSystemID = strings.TrimPrefix(f.GetID(), layerIDPrefix)
 	}
 	return file.Coordinates{
 		RealPath:     f.GetName(),
@@ -499,25 +406,6 @@ func v3toSyftCoordinates(f spdx.AnyFile) file.Coordinates {
 func v3toSyftLocation(f spdx.AnyFile) file.Location {
 	l := file.NewVirtualLocationFromCoordinates(v3toSyftCoordinates(f), f.GetName())
 	return l
-}
-
-func v3requireAndTrimPrefix(val interface{}, prefix string) string {
-	if v, ok := val.(string); ok {
-		if i := strings.Index(v, prefix); i == 0 {
-			return strings.Replace(v, prefix, "", 1)
-		}
-	}
-	return ""
-}
-
-type v3pkgInfo struct {
-	purl packageurl.PackageURL
-	typ  pkg.Type
-	lang pkg.Language
-}
-
-func (p *v3pkgInfo) v3qualifierValue(name string) string {
-	return findQualifierValue(p.purl, name)
 }
 
 func v3findQualifierValue(purl packageurl.PackageURL, qualifier string) string {
@@ -542,13 +430,13 @@ func v3extractPkgInfo(p spdx.AnyPackage) pkgInfo {
 	}
 }
 
-func v3toSyftPackage(p spdx.AnyPackage) pkg.Package {
+func v3toSyftPackage(relationships ptrMap[[]spdx.AnyRelationship], p spdx.AnyPackage) pkg.Package {
 	info := v3extractPkgInfo(p)
 	sP := &pkg.Package{
 		Type:     info.typ,
 		Name:     p.GetName(),
 		Version:  p.GetVersion(),
-		Licenses: pkg.NewLicenseSet(v3parseSPDXLicenses(p)...),
+		Licenses: pkg.NewLicenseSet(v3parseSPDXLicenses(relationships, p)...),
 		CPEs:     v3extractCPEs(p),
 		PURL:     v3purlValue(info.purl),
 		Language: info.lang,
@@ -575,29 +463,46 @@ func v3purlValue(purl packageurl.PackageURL) string {
 	return val
 }
 
-func v3parseSPDXLicenses(p spdx.AnyPackage) []pkg.License {
+func v3parseSPDXLicenses(relationships ptrMap[[]spdx.AnyRelationship], p spdx.AnyPackage) []pkg.License {
 	licenses := make([]pkg.License, 0)
 
-	// FIXME -- where do licenses come from?
-	//// concluded
-	// if p.PackageLicenseConcluded != helpers.NOASSERTION && p.PackageLicenseConcluded != helpers.NONE && p.PackageLicenseConcluded != "" {
-	//	l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseConcluded))
-	//	l.Type = license.Concluded
-	//	licenses = append(licenses, l)
-	//}
-	//
-	//// declared
-	//if p.LicenseDeclared != helpers.NOASSERTION && p.PackageLicenseDeclared != helpers.NONE && p.PackageLicenseDeclared != "" {
-	//	l := pkg.NewLicenseWithContext(context.TODO(), cleanSPDXID(p.PackageLicenseDeclared))
-	//	l.Type = license.Declared
-	//	licenses = append(licenses, l)
-	//}
+	// licenses are defined with relationships in SPDX 3, see:
+	// https://github.com/spdx/tools-golang/blob/spdx3/spdx/v3/v3_0/convert.go#L536
+	rels, err := relationships.Get(p)
+	panicIfErr(err)
+	for _, r := range rels {
+		if r.GetType() == spdx.RelationshipType_HasConcludedLicense {
+			licenses = append(licenses, v3toSyftLicenses(license.Concluded, r.GetTo().Licenses()...)...)
+		}
+		if r.GetType() == spdx.RelationshipType_HasDeclaredLicense {
+			licenses = append(licenses, v3toSyftLicenses(license.Declared, r.GetTo().Licenses()...)...)
+		}
+	}
 
 	return licenses
 }
 
-func v3cleanSPDXID(id string) string {
-	return strings.TrimPrefix(id, helpers.LicenseRefPrefix)
+func v3toSyftLicenses(licenseType license.Type, licenses ...spdx.AnyLicense) []pkg.License {
+	var out []pkg.License
+	for _, lic := range licenses {
+		switch li := lic.(type) {
+		case spdx.AnyLicenseExpression:
+			l := pkg.NewLicenseWithContext(context.TODO(), li.GetLicenseExpression())
+			l.Type = licenseType
+			out = append(out, l)
+		case spdx.AnyListedLicense:
+			l := pkg.NewLicenseWithContext(context.TODO(), li.GetName())
+			l.Type = licenseType
+			out = append(out, l)
+		case spdx.AnyCustomLicense:
+			l := pkg.NewLicenseWithContext(context.TODO(), li.GetText())
+			l.Type = licenseType
+			out = append(out, l)
+		default:
+			log.Debugf("skipping SPDX license during import: %#v", lic)
+		}
+	}
+	return out
 }
 
 //nolint:funlen
@@ -727,12 +632,105 @@ func v3extractCPEs(p spdx.AnyPackage) (cpes []cpe.CPE) {
 }
 
 // v3packageIDsToSkip returns a set of packageIDs that should not be imported
-func v3packageIDsToSkip(doc *spdx.Document) *strset.Set {
-	skipIDs := strset.New()
+func v3packageIDsToSkip(doc *spdx.Document) ptrMap[struct{}] {
+	skipIDs := ptrMap[struct{}]{}
 	for _, r := range doc.Elements.Relationships() {
 		if r != nil && r.GetFrom() != nil && r.GetType() == spdx.RelationshipType_Generates {
-			skipIDs.Add(r.GetFrom().GetID()) // flipped from GENERATED_FROM
+			panicIfErr(skipIDs.Set(r.GetFrom(), struct{}{})) // flipped from GENERATED_FROM
 		}
 	}
 	return skipIDs
+}
+
+// toChecksum takes a checksum in the format <algorithm>:<hash> and returns an spdx.Checksum or nil if the string is invalid
+func v3toChecksum(algorithmHash string) spdx.AnyHash {
+	parts := strings.Split(algorithmHash, ":")
+	if len(parts) < 2 {
+		return nil
+	}
+	return &spdx.Hash{
+		Algorithm: v3toChecksumAlgorithm(parts[0]),
+		Value:     parts[1],
+	}
+}
+
+func v3toChecksumAlgorithm(algorithm string) spdx.HashAlgorithm {
+	// this needs to be an uppercase version of our algorithm
+	switch strings.ToLower(algorithm) {
+	case "sha1":
+		return spdx.HashAlgorithm_Sha1
+	case "sha256":
+		return spdx.HashAlgorithm_Sha256
+	case "sha384":
+		return spdx.HashAlgorithm_Sha384
+	case "sha512":
+		return spdx.HashAlgorithm_Sha512
+	case "md5":
+		return spdx.HashAlgorithm_Md5
+	}
+	return spdx.HashAlgorithm{}
+}
+
+func v3relationshipMap(doc *spdx.Document) ptrMap[[]spdx.AnyRelationship] {
+	relationships := ptrMap[[]spdx.AnyRelationship]{}
+	for _, r := range doc.Elements.Relationships() {
+		rels, err := relationships.Get(r.GetFrom())
+		panicIfErr(err)
+		panicIfErr(relationships.Set(r.GetFrom(), append(rels, r)))
+	}
+	return relationships
+}
+
+// SPDX 3 values are stored as pointers and there is a distinct possibility that IDs will be blank if they were blank node IDs in the document
+
+type ptrMap[T any] map[reflect.Value]T
+
+func (s ptrMap[T]) Set(k any, v T) error {
+	ptr, err := ptrTo(k)
+	if err != nil {
+		return err
+	}
+	s[ptr] = v
+	return nil
+}
+
+func (s ptrMap[T]) Get(k any) (T, error) {
+	ptr, err := ptrTo(k)
+	if err != nil {
+		var t T
+		return t, err
+	}
+	return s[ptr], nil
+}
+
+func (s ptrMap[T]) Remove(k any) error {
+	ptr, err := ptrTo(k)
+	if err != nil {
+		return err
+	}
+	delete(s, ptr)
+	return nil
+}
+
+func (s ptrMap[T]) Has(k any) bool {
+	ptr, err := ptrTo(k)
+	if err != nil {
+		return false
+	}
+	_, ok := s[ptr]
+	return ok
+}
+
+func ptrTo(k any) (reflect.Value, error) {
+	rv := reflect.ValueOf(k)
+	if rv.Kind() != reflect.Pointer {
+		return rv, fmt.Errorf("value is not a pointer: %#v", k)
+	}
+	return rv, nil
+}
+
+func panicIfErr(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
