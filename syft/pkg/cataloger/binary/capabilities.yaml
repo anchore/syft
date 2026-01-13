@@ -435,6 +435,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/libQt*Core.so*'
+        packages:
+          - class: qt-binary-lib
+            name: qt
+            purl: pkg:generic/qt
+            cpes:
+              - cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/gcc'
         packages:
           - class: gcc-binary
