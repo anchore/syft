@@ -1217,6 +1217,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "qt/4.8.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "qt",
+				Version:   "4.8.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/qt@4.8.7",
+				Locations: locations("libQtCore.so"),
+				Metadata:  metadata("qt-binary-lib"),
+			},
+		},
+		{
+			logicalFixture: "qt/5.15.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "qt",
+				Version:   "5.15.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/qt@5.15.2",
+				Locations: locations("libQt5Core.so"),
+				Metadata:  metadata("qt-binary-lib"),
+			},
+		},
+		{
+			logicalFixture: "qt/6.5.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "qt",
+				Version:   "6.5.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/qt@6.5.0",
+				Locations: locations("libQt6Core.so"),
+				Metadata:  metadata("qt-binary-lib"),
+			},
+		},
+		{
 			logicalFixture: "gcc/12.3.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "gcc",
