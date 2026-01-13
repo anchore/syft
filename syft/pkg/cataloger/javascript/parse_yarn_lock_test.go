@@ -739,6 +739,143 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 	}
 }
 
+func TestParseYarnLock_IncludeDevDependencies(t *testing.T) {
+	fixtureDir := "test-fixtures/yarn-dev-deps"
+	fixture := "test-fixtures/yarn-dev-deps/yarn.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "dev-only-transitive",
+			Version:   "1.0.0",
+			Locations: locations,
+			PURL:      "pkg:npm/dev-only-transitive@1.0.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/dev-only-transitive/-/dev-only-transitive-1.0.0.tgz#abc123",
+				Integrity:    "sha512-devonlytransitive==",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "dev-pkg",
+			Version:   "1.0.0",
+			Locations: locations,
+			PURL:      "pkg:npm/dev-pkg@1.0.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/dev-pkg/-/dev-pkg-1.0.0.tgz#def456",
+				Integrity: "sha512-devpkg==",
+				Dependencies: map[string]string{
+					"dev-only-transitive": "^1.0.0",
+				},
+			},
+		},
+		{
+			Name:      "prod-pkg",
+			Version:   "1.0.0",
+			Locations: locations,
+			PURL:      "pkg:npm/prod-pkg@1.0.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/prod-pkg/-/prod-pkg-1.0.0.tgz#ghi789",
+				Integrity: "sha512-prodpkg==",
+				Dependencies: map[string]string{
+					"shared-pkg": "^1.0.0",
+				},
+			},
+		},
+		{
+			Name:      "shared-pkg",
+			Version:   "1.0.0",
+			Locations: locations,
+			PURL:      "pkg:npm/shared-pkg@1.0.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/shared-pkg/-/shared-pkg-1.0.0.tgz#jkl012",
+				Integrity:    "sha512-sharedpkg==",
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[0], // dev only transitive
+			To:   expectedPkgs[1], // dev pkg
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[3], // shared pkg
+			To:   expectedPkgs[2], // prod pkg
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, fixtureDir).
+		FromFile(t, fixture).
+		Expects(expectedPkgs, expectedRelationships).
+		TestParser(t, adapter.parseYarnLock)
+}
+
+func TestParseYarnLock_ExcludeDevDependencies(t *testing.T) {
+	fixtureDir := "test-fixtures/yarn-dev-deps"
+	fixture := "test-fixtures/yarn-dev-deps/yarn.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "prod-pkg",
+			Version:   "1.0.0",
+			Locations: locations,
+			PURL:      "pkg:npm/prod-pkg@1.0.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "https://registry.yarnpkg.com/prod-pkg/-/prod-pkg-1.0.0.tgz#ghi789",
+				Integrity: "sha512-prodpkg==",
+				Dependencies: map[string]string{
+					"shared-pkg": "^1.0.0",
+				},
+			},
+		},
+		{
+			Name:      "shared-pkg",
+			Version:   "1.0.0",
+			Locations: locations,
+			PURL:      "pkg:npm/shared-pkg@1.0.0",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "https://registry.yarnpkg.com/shared-pkg/-/shared-pkg-1.0.0.tgz#jkl012",
+				Integrity:    "sha512-sharedpkg==",
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[1], // shared pkg
+			To:   expectedPkgs[0], // prod pkg
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, fixtureDir).
+		FromFile(t, fixture).
+		Expects(expectedPkgs, expectedRelationships).
+		TestParser(t, adapter.parseYarnLock)
+}
+
 func generateMockYarnRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
