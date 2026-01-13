@@ -2,7 +2,9 @@ package spdxjson
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/spdx/tools-golang/spdx/v3/v3_0"
 
@@ -11,24 +13,22 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-type spdx3Decoder struct{}
-
-func (s spdx3Decoder) Decode(reader io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
-	doc := v3_0.NewDocument(v3_0.ProfileIdentifierType_Software, "imported-sbom", &v3_0.SoftwareAgent{
-		Name: "syft", // FIXME from config
-	}, &v3_0.Tool{
-		Name: "syft",
-	})
-	err := doc.FromJSON(reader)
-	if err != nil {
-		return nil, "", "", err
+func decodeSpdx3(version string, reader io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
+	switch version {
+	case spdxutil.V3_0:
+		doc := v3_0.NewDocument(v3_0.ProfileIdentifierType_Software, "", nil, nil)
+		err := doc.FromJSON(reader)
+		if err != nil {
+			return nil, "", "", err
+		}
+		sb, err := spdxhelpers.ToSyftModelV3(doc)
+		return sb, spdxutil.JSONFormatID, spdxutil.V3_0, err
+	default:
+		return nil, "", "", fmt.Errorf("unsupported version: %v", version)
 	}
-
-	sb, err := spdxhelpers.ToSyftModelV3(doc)
-	return sb, spdxutil.JSONFormatID, "", err
 }
 
-func (s spdx3Decoder) Identify(reader io.Reader) (sbom.FormatID, string) {
+func identifySpdx3(reader io.Reader) (sbom.FormatID, string) {
 	type Document struct {
 		Context string `json:"@context"`
 	}
@@ -43,11 +43,16 @@ func (s spdx3Decoder) Identify(reader io.Reader) (sbom.FormatID, string) {
 
 	spdxVersion := ""
 
-	switch doc.Context {
-	case "https://spdx.org/rdf/3.0.1/spdx-context.jsonld":
+	switch {
+	case doc.Context == "":
+	case spdxContextRegex(spdxutil.V3_0).MatchString(doc.Context):
 		spdxVersion = spdxutil.V3_0
 	default:
 	}
 
 	return spdxutil.JSONFormatID, spdxVersion
+}
+
+func spdxContextRegex(minorVersion string) *regexp.Regexp {
+	return regexp.MustCompile(regexp.QuoteMeta("https://spdx.org/rdf/") + minorVersion + `\.\d+` + regexp.QuoteMeta("/spdx-context.jsonld"))
 }
