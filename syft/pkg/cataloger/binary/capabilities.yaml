@@ -437,11 +437,11 @@ catalogers:
         criteria:
           - '**/libQt*Core.so*'
         packages:
-          - class: qt-binary-lib
-            name: qt
-            purl: pkg:generic/qt
+          - class: qt-qtbase-lib
+            name: qtbase
+            purl: pkg:generic/qtbase
             cpes:
-              - cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:

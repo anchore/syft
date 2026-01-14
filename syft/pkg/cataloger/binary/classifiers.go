@@ -514,7 +514,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
-			Class:    "qt-binary-lib",
+			Class:    "qt-qtbase-lib",
 			FileGlob: "**/libQt*Core.so*",
 			EvidenceMatcher: binutils.MatchAny(
 				// Qt 5.x and Qt 6.x pattern [NUL][NUL]Qt 6.5.0 (x86_64-little_endian-...
@@ -522,9 +522,9 @@ func DefaultClassifiers() []binutils.Classifier {
 				// Qt 4.x pattern QtCore lib ver 4.8.7
 				m.FileContentsVersionMatcher(`QtCore library version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			),
-			Package: "qt",
-			PURL:    mustPURL("pkg:generic/qt@version"),
-			CPEs:    singleCPE("cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			Package: "qtbase",
+			PURL:    mustPURL("pkg:generic/qtbase@version"),
+			CPEs:    singleCPE("cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "gcc-binary",
