@@ -128,7 +128,7 @@
    "name": "some/path",
    "namespaceMap": [
     {
-     "namespace": "https://anchore.com/syft/dir/some/path-195b9538-c101-40a1-b96f-9717399d71bd#",
+     "namespace":"https://redacted/",
      "prefix": "SPDXRef",
      "type": "NamespaceMap"
     }
@@ -140,7 +140,7 @@
    "rootElement": [
     "SPDXRef:SBOM-1"
    ],
-   "spdxId": "https://anchore.com/syft/dir/some/path-195b9538-c101-40a1-b96f-9717399d71bd#",
+   "spdxId":"https://redacted",
    "type": "SpdxDocument"
   }
  ]

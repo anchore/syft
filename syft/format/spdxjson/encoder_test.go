@@ -262,6 +262,10 @@ func redactor(values ...string) testutil.Redactor {
 				// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
 				`"documentNamespace":\s+"[^"]*"`: `"documentNamespace":"redacted"`,
 
+				// spdx3 IDs are URI with the documentnamespace spdxId containing a UID; namespace is the equivalent documentNamespace with the same value
+				`"spdxId":\s+"https://[^"]*"`: `"spdxId":"https://redacted"`,
+				`"namespace":\s+"[^"]*"`:      `"namespace":"https://redacted/"`,
+
 				// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
 				`"licenseListVersion":\s+"[^"]*"`: `"licenseListVersion":"redacted"`,
 			},
