@@ -27,10 +27,6 @@ jobs:
         uses: ./.github/actions/bootstrap
         id: bootstrap
 
-      # TODO: remove this step after testing slack notification
-      - name: Force failure to test Slack notification
-        run: exit 1
-
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | .tool/oras login ghcr.io -u "$ACTOR" --password-stdin
         env:
