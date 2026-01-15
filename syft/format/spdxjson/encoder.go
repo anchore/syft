@@ -23,8 +23,9 @@ func SupportedVersions() []string {
 }
 
 type EncoderConfig struct {
-	Version string
-	Pretty  bool // don't include spaces and newlines; same as jq -c
+	Version        string
+	Pretty         bool // don't include spaces and newlines; same as jq -c
+	DefaultVersion string
 }
 
 type encoder struct {
@@ -39,8 +40,9 @@ func NewFormatEncoderWithConfig(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 
 func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
-		Version: spdxutil.DefaultVersion,
-		Pretty:  false,
+		DefaultVersion: spdxutil.DefaultVersion,
+		Version:        spdxutil.DefaultVersion,
+		Pretty:         false,
 	}
 }
 
@@ -101,4 +103,8 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	}
 
 	return enc.Encode(encodeDoc)
+}
+
+func (e encoder) DefaultVersion() bool {
+	return e.cfg.DefaultVersion == e.cfg.Version
 }

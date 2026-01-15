@@ -17,8 +17,8 @@ func (o FormatSPDXJSON) config(v string) spdxjson.EncoderConfig {
 	if o.Pretty != nil {
 		pretty = *o.Pretty
 	}
-	return spdxjson.EncoderConfig{
-		Version: v,
-		Pretty:  pretty,
-	}
+	c := spdxjson.DefaultEncoderConfig()
+	c.Version = v
+	c.Pretty = pretty
+	return c
 }
