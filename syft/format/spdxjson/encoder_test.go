@@ -97,6 +97,27 @@ func TestSPDXJSONDirectoryEncoder(t *testing.T) {
 	)
 }
 
+func TestSPDX3JSONDirectoryEncoder(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	cfg.Version = "3.0"
+
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	testutil.AssertEncoderAgainstGoldenSnapshot(t,
+		testutil.EncoderSnapshotTestConfig{
+			Subject:                     testutil.DirectoryInput(t, dir),
+			Format:                      enc,
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(dir),
+		},
+	)
+}
+
 func TestSPDXJSONImageEncoder(t *testing.T) {
 	testImage := "image-simple"
 	testutil.AssertEncoderAgainstGoldenImageSnapshot(t,
@@ -107,6 +128,31 @@ func TestSPDXJSONImageEncoder(t *testing.T) {
 		testutil.EncoderSnapshotTestConfig{
 			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
 			Format:                      getEncoder(t),
+			UpdateSnapshot:              *updateSnapshot,
+			PersistRedactionsInSnapshot: true,
+			IsJSON:                      true,
+			Redactor:                    redactor(),
+		},
+	)
+}
+
+func TestSPDX3JSONImageEncoder(t *testing.T) {
+	cfg := DefaultEncoderConfig()
+	cfg.Pretty = true
+	cfg.Version = "3.0"
+
+	enc, err := NewFormatEncoderWithConfig(cfg)
+	require.NoError(t, err)
+
+	testImage := "image-simple"
+	testutil.AssertEncoderAgainstGoldenImageSnapshot(t,
+		testutil.ImageSnapshotTestConfig{
+			Image:               testImage,
+			UpdateImageSnapshot: *updateImage,
+		},
+		testutil.EncoderSnapshotTestConfig{
+			Subject:                     testutil.ImageInput(t, testImage, testutil.FromSnapshot()),
+			Format:                      enc,
 			UpdateSnapshot:              *updateSnapshot,
 			PersistRedactionsInSnapshot: true,
 			IsJSON:                      true,
