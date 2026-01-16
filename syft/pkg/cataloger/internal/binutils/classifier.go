@@ -33,6 +33,10 @@ type Classifier struct {
 	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
 	FileGlob string `json:"fileGlob"`
 
+	// EvidenceType is an annotation for classifiers to optionally specify evidence annotations
+	// other than the default, of PrimaryEvidenceAnnotation, which will be used if this is not set
+	EvidenceType string
+
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
 	EvidenceMatcher EvidenceMatcher `json:"-"`
