@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -19,18 +20,21 @@ import (
 const catalogerName = "binary-classifier-cataloger"
 
 type ClassifierCatalogerConfig struct {
-	Classifiers []binutils.Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
+	RequirePrimaryEvidence bool
+	Classifiers            []binutils.Classifier `yaml:"classifiers" json:"classifiers" mapstructure:"classifiers"`
 }
 
 func DefaultClassifierCatalogerConfig() ClassifierCatalogerConfig {
 	return ClassifierCatalogerConfig{
-		Classifiers: DefaultClassifiers(),
+		RequirePrimaryEvidence: true,
+		Classifiers:            DefaultClassifiers(),
 	}
 }
 
 func NewClassifierCataloger(cfg ClassifierCatalogerConfig) pkg.Cataloger {
 	return &cataloger{
-		classifiers: cfg.Classifiers,
+		requirePrimaryEvidence: cfg.RequirePrimaryEvidence,
+		classifiers:            cfg.Classifiers,
 	}
 }
 
@@ -49,7 +53,8 @@ func (cfg ClassifierCatalogerConfig) MarshalJSON() ([]byte, error) {
 // related runtimes like Python, Go, Java, or Node. Some exceptions can be made for widely-used binaries such
 // as busybox.
 type cataloger struct {
-	classifiers []binutils.Classifier
+	requirePrimaryEvidence bool
+	classifiers            []binutils.Classifier
 }
 
 // Name returns a string that uniquely describes the cataloger
@@ -91,6 +96,18 @@ func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Pac
 			}
 			packages = append(packages, *newPkg)
 		}
+	}
+
+	if c.requirePrimaryEvidence {
+		// only include packages with some primary evidence
+		packages = slices.DeleteFunc(packages, func(p pkg.Package) bool {
+			for _, loc := range p.Locations.ToUnorderedSlice() {
+				if loc.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
+					return false
+				}
+			}
+			return true
+		})
 	}
 
 	return packages, relationships, errs

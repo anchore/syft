@@ -2181,3 +2181,55 @@ func TestCatalogerConfig_MarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func Test_RequirePrimaryEvidence(t *testing.T) {
+	tests := []struct {
+		name           string
+		path           string
+		requirePrimary bool
+		expected       []string
+	}{
+		{
+			name:           "include with primary evidence",
+			path:           "test-fixtures/evidence-types/primary",
+			requirePrimary: true,
+			expected:       []string{"go"},
+		},
+		{
+			name:           "exclude with only supporting evidence",
+			path:           "test-fixtures/evidence-types/supporting",
+			requirePrimary: true,
+			expected:       nil,
+		},
+		{
+			name:           "include with only supporting evidence when not required primary evidence",
+			path:           "test-fixtures/evidence-types/supporting",
+			requirePrimary: false,
+			expected:       []string{"go"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := directorysource.NewFromPath(tt.path)
+			require.NoError(t, err)
+
+			r, err := s.FileResolver(source.AllLayersScope)
+			require.NoError(t, err)
+
+			cfg := DefaultClassifierCatalogerConfig()
+			cfg.RequirePrimaryEvidence = tt.requirePrimary
+
+			c := NewClassifierCataloger(cfg)
+			pkgs, _, err := c.Catalog(context.TODO(), r)
+			require.NoError(t, err)
+
+			var names []string
+			for _, p := range pkgs {
+				names = append(names, p.Name)
+			}
+
+			assert.ElementsMatch(t, tt.expected, names)
+		})
+	}
+}

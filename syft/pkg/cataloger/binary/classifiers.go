@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
@@ -78,6 +79,16 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:        "go-binary-hint",
+			FileGlob:     "**/VERSION*",
+			EvidenceType: pkg.SupportingEvidenceAnnotation,
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
+			Package: "go",
+			PURL:    mustPURL("pkg:generic/go@version"),
+			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "julia-binary",
 			FileGlob: "**/libjulia-internal.so",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
@@ -141,15 +152,6 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "node",
 			PURL:    mustPURL("pkg:generic/node@version"),
 			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "go-binary-hint",
-			FileGlob: "**/VERSION*",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
-			Package: "go",
-			PURL:    mustPURL("pkg:generic/go@version"),
-			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "busybox-binary",
