@@ -17,7 +17,9 @@ import (
 func TestSpdxValidationTooling(t *testing.T) {
 	// note: the external tooling requires that the daemon explicitly has the image loaded, not just that
 	// we can get the image from a cache tar.
-	imgTag := imagetest.LoadFixtureImageIntoDocker(t, "image-java-spdx-tools")
+	javaToolsImg := imagetest.LoadFixtureImageIntoDocker(t, "image-java-spdx-tools")
+
+	javaToolsSpdx3Img := imagetest.LoadFixtureImageIntoDocker(t, "image-java-spdx3-tools")
 
 	images := []string{
 		"alpine:3.17.3@sha256:b6ca290b6b4cdcca5b3db3ffa338ee0285c11744b4a6abaa9627746ee3291d8d",
@@ -32,32 +34,40 @@ func TestSpdxValidationTooling(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		syftArgs []string
-		images   []string
-		setup    func(t *testing.T)
-		env      map[string]string
+		name      string
+		syftArgs  []string
+		validator string
+		images    []string
+		setup     func(t *testing.T)
+		env       map[string]string
 	}{
 		{
-			name:     "spdx validation tooling tag value",
+			name:     "spdx 2.3 validation tooling tag value",
 			syftArgs: []string{"scan", "-o", "spdx"},
 			images:   images,
 			env:      env,
 		},
 		{
-			name:     "spdx validation tooling json",
+			name:     "spdx 2.3 validation tooling json",
 			syftArgs: []string{"scan", "-o", "spdx-json"},
 			images:   images,
 			env:      env,
 		},
 		{
-			name:     "spdx validation tooling tag value",
+			name:      "spdx 3.0 validation tooling json",
+			syftArgs:  []string{"scan", "-o", "spdx-json@3.0"},
+			images:    images,
+			env:       env,
+			validator: javaToolsSpdx3Img,
+		},
+		{
+			name:     "spdx 2.2 validation tooling tag value",
 			syftArgs: []string{"scan", "-o", "spdx@2.2"},
 			images:   images,
 			env:      env,
 		},
 		{
-			name:     "spdx validation tooling json",
+			name:     "spdx 2.2 validation tooling json",
 			syftArgs: []string{"scan", "-o", "spdx-json@2.2"},
 			images:   images,
 			env:      env,
@@ -90,10 +100,14 @@ func TestSpdxValidationTooling(t *testing.T) {
 				cwd, err := os.Getwd()
 				require.NoError(t, err)
 
+				if test.validator == "" {
+					test.validator = javaToolsImg
+				}
+
 				// validate against spdx java tooling
 				fileArg := fmt.Sprintf("DIR=%s", dir)
 				mountArg := fmt.Sprintf("BASE=%s", path.Base(sbomPath))
-				imageArg := fmt.Sprintf("IMAGE=%s", imgTag)
+				imageArg := fmt.Sprintf("IMAGE=%s", test.validator)
 
 				validateCmd := exec.Command("make", "validate", fileArg, mountArg, imageArg)
 				validateCmd.Dir = filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
