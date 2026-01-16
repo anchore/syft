@@ -9,8 +9,17 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const (
+	catalogerName      = "gguf-cataloger"
+	ggufLayerMediaType = "application/vnd.docker.ai*"
+)
+
 // NewGGUFCataloger returns a new cataloger instance for GGUF model files.
+// It supports both traditional file-based discovery and OCI layer-aware discovery
+// when the source for the SBOM is the oci model source
 func NewGGUFCataloger() pkg.Cataloger {
-	return generic.NewCataloger("gguf-cataloger").
-		WithParserByGlobs(parseGGUFModel, "**/*.gguf")
+	return generic.NewCataloger(catalogerName).
+		WithParserByGlobs(parseGGUFModel, "**/*.gguf").
+		WithParserByMediaType(parseGGUFModel, ggufLayerMediaType).
+		WithProcessors(ggufMergeProcessor)
 }

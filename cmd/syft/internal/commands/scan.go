@@ -59,7 +59,9 @@ const (
 	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                  read directly from a path on disk (any directory)
     {{.appName}} {{.command}} file:path/to/yourproject/file            read directly from a path on disk (any single file)
 `
-	scanSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp + nonImageSchemeHelp
+	modelSchemeHelp = `    {{.appName}} {{.command}} oci-model-registry:ai/llama3.2           scan an OCI model artifact from a registry (e.g. Docker Hub AI models)
+`
+	scanSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp + modelSchemeHelp + nonImageSchemeHelp
 
 	scanHelp = scanExample + scanSchemeHelp
 )

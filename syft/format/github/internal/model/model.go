@@ -122,6 +122,9 @@ func toPath(s source.Description, p pkg.Package) string {
 		case source.ImageMetadata:
 			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
 			return fmt.Sprintf("%s:/%s", image, packagePath)
+		case source.OCIModelMetadata:
+			image := strings.ReplaceAll(metadata.UserInput, ":/", "//")
+			return fmt.Sprintf("%s:/%s", image, packagePath)
 		case source.FileMetadata:
 			path := trimRelative(metadata.Path)
 			if isArchive(metadata.Path) {

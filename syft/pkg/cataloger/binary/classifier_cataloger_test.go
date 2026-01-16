@@ -2113,6 +2113,11 @@ func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
 	return nil, errors.New("not implemented")
 }
 
+func (p *panicyResolver) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	p.searchCalled = true
+	return nil, errors.New("not implemented")
+}
+
 func (p *panicyResolver) RelativeFileByPath(_ file.Location, _ string) *file.Location {
 	return nil
 }

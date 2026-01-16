@@ -12,6 +12,8 @@ func DocumentName(src source.Description) string {
 	switch metadata := src.Metadata.(type) {
 	case source.ImageMetadata:
 		return metadata.UserInput
+	case source.OCIModelMetadata:
+		return metadata.UserInput
 	case source.DirectoryMetadata:
 		return metadata.Path
 	case source.FileMetadata:
