@@ -55,6 +55,7 @@ const (
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
 	ModelPkg                Type = "model"
+	OperatingSystemPkg      Type = "operating-system"
 )
 
 // AllPkgs represents all supported package types
@@ -100,6 +101,7 @@ var AllPkgs = []Type{
 	WordpressPluginPkg,
 	HomebrewPkg,
 	ModelPkg,
+	OperatingSystemPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -176,6 +178,8 @@ func (t Type) PackageURLType() string {
 		return "wordpress-plugin"
 	case HomebrewPkg:
 		return "homebrew"
+	case OperatingSystemPkg:
+		return packageurl.TypeGeneric
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -264,6 +268,8 @@ func TypeByName(name string) Type {
 		return WordpressPluginPkg
 	case "homebrew":
 		return HomebrewPkg
+	case "operating-system":
+		return OperatingSystemPkg
 	default:
 		return UnknownPkg
 	}
