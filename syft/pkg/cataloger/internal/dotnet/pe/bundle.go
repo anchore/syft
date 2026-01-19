@@ -18,34 +18,6 @@ var dotNetBundleSignature = []byte{
 	0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae,
 }
 
-// dotNetBundleHeader represents the fixed portion of the bundle header (version 1+)
-type dotNetBundleHeader struct {
-	MajorVersion     uint32
-	MinorVersion     uint32
-	NumEmbeddedFiles int32
-}
-
-// dotNetBundleHeaderV2 represents additional fields in V2+ bundles (.NET 5+)
-type dotNetBundleHeaderV2 struct {
-	DepsJSONOffset          int64
-	DepsJSONSize            int64
-	RuntimeConfigJSONOffset int64
-	RuntimeConfigJSONSize   int64
-	Flags                   uint64
-}
-
-// dotNetFileType represents the type of bundled file in the manifest
-type dotNetFileType uint8
-
-const (
-	dotNetFileTypeUnknown dotNetFileType = iota
-	dotNetFileTypeAssembly
-	dotNetFileTypeNativeBinary
-	dotNetFileTypeDepsJSON
-	dotNetFileTypeRuntimeConfigJSON
-	dotNetFileTypeSymbols
-)
-
 // ExtractDepsJSONFromBundle searches for an embedded deps.json file in a .NET single-file bundle.
 // When built with PublishSingleFile=true, .NET embeds the application and all dependencies into
 // the AppHost executable. The bundle marker (8-byte header offset + 32-byte signature) is placed
