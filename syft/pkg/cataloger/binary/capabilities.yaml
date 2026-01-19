@@ -441,6 +441,7 @@ catalogers:
             name: qtbase
             purl: pkg:generic/qtbase
             cpes:
+              - cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*
               - cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob

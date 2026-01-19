@@ -524,7 +524,10 @@ func DefaultClassifiers() []binutils.Classifier {
 			),
 			Package: "qtbase",
 			PURL:    mustPURL("pkg:generic/qtbase@version"),
-			CPEs:    singleCPE("cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
 		},
 		{
 			Class:    "gcc-binary",
