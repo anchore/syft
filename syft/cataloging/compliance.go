@@ -43,7 +43,7 @@ func (c ComplianceAction) Parse() ComplianceAction {
 		return ComplianceActionDrop
 	case string(ComplianceActionStub), "replace":
 		return ComplianceActionStub
-	case string(ComplianceActionFail):
+	case string(ComplianceActionFail), "error":
 		return ComplianceActionFail
 	}
 	return ComplianceActionKeep
