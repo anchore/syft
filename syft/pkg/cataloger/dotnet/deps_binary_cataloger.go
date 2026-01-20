@@ -550,16 +550,20 @@ func readELFBundledDepsJSON(resolver file.Resolver, loc file.Location) (*logical
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
 
+	uReader, err := unionreader.GetUnionReader(reader)
+	if err != nil {
+		return nil, err
+	}
+
 	header := make([]byte, 4)
-	if _, err := io.ReadFull(reader, header); err != nil {
+	if _, err := io.ReadFull(uReader, header); err != nil {
 		return nil, nil
 	}
 	if !bytes.Equal(header, elfMagic) {
 		return nil, nil
 	}
 
-	uReader, err := unionreader.GetUnionReader(reader)
-	if err != nil {
+	if _, err := uReader.Seek(0, io.SeekStart); err != nil {
 		return nil, err
 	}
 
