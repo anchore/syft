@@ -2202,8 +2202,14 @@ func Test_RequirePrimaryEvidence(t *testing.T) {
 			expected:       nil,
 		},
 		{
-			name:           "include with only supporting evidence when not required primary evidence",
-			path:           "test-fixtures/evidence-types/supporting",
+			name:           "include with relative primary and supporting evidence",
+			path:           "test-fixtures/evidence-types/has-relative",
+			requirePrimary: true,
+			expected:       []string{"go"},
+		},
+		{
+			name:           "include with glob match",
+			path:           "test-fixtures/evidence-types/go-dev",
 			requirePrimary: false,
 			expected:       []string{"go"},
 		},

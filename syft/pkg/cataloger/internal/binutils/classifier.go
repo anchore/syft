@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -129,6 +130,26 @@ type ContextualEvidenceMatchers struct {
 
 func (c ContextualEvidenceMatchers) FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
 	return FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, c.CatalogerName)
+}
+
+func (c ContextualEvidenceMatchers) RelativeFileEvidenceMatcher(relativePathGlob string, evidenceMatcher EvidenceMatcher) EvidenceMatcher {
+	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
+		f := path.Dir(context.Location.RealPath)
+		f = path.Join(f, relativePathGlob)
+		f = path.Clean(f)
+		// this would ideally be RelativeFileByPath but with a glob search:
+		relativeFiles, err := context.Resolver.FilesByGlob(f)
+		if err != nil {
+			return nil, err
+		}
+		for _, relativeFile := range relativeFiles {
+			evidence, err := collectRelativeFileEvidence(classifier, context, relativeFile, evidenceMatcher)
+			if evidence != nil || err != nil {
+				return evidence, err
+			}
+		}
+		return nil, nil
+	}
 }
 
 func (c ContextualEvidenceMatchers) FileContentsVersionMatcher(patterns ...string) EvidenceMatcher {
@@ -371,4 +392,38 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	}
 
 	return nil, nil
+}
+
+func collectRelativeFileEvidence(classifier Classifier, context MatcherContext, relativeFile file.Location, evidenceMatcher EvidenceMatcher) ([]pkg.Package, error) {
+	rdr, err := context.Resolver.FileContentsByLocation(relativeFile)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(rdr, relativeFile.Path())
+	ur, err := unionreader.GetUnionReader(rdr)
+	if err != nil {
+		return nil, err
+	}
+	newContext := MatcherContext{
+		Resolver: context.Resolver,
+		Location: relativeFile,
+		GetReader: func(_ MatcherContext) (unionreader.UnionReader, error) {
+			return ur, nil
+		},
+	}
+	evidence, err := evidenceMatcher(classifier, newContext)
+	if err != nil {
+		return nil, err
+	}
+	for i := range evidence {
+		e := &(evidence[i])
+		locs := e.Locations.ToUnorderedSlice()
+		for l := range locs {
+			loc := &(locs[l])
+			loc.Annotations[pkg.EvidenceAnnotationKey] = pkg.SupportingEvidenceAnnotation
+		}
+		locs = append(locs, context.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+		e.Locations = file.NewLocationSet(locs...)
+	}
+	return evidence, nil
 }
