@@ -108,7 +108,7 @@ func read7BitEncodedInt(r io.Reader) (int, error) {
 
 // readDepsJSONAtOffset reads deps.json content at a specific offset using seeks (avoiding loading entire file)
 func readDepsJSONAtOffset(r io.ReadSeeker, offset, size int64) (string, error) {
-	if size <= 0 || size > 3*1024*1024 { // 3MB max dep json size in bundle
+	if size <= 0 || size > 3*1024*1024 { // 3MB max deps.json size in dotnet bundle
 		return "", nil
 	}
 	if _, err := r.Seek(offset, io.SeekStart); err != nil {
