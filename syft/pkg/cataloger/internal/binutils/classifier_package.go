@@ -29,16 +29,11 @@ func NewClassifierPackage(classifier Classifier, location file.Location, matchMe
 		cpes = append(cpes, c)
 	}
 
-	evidenceType := pkg.PrimaryEvidenceAnnotation
-	if classifier.EvidenceType != "" {
-		evidenceType = classifier.EvidenceType
-	}
-
 	p := pkg.Package{
 		Name:    classifier.Package,
 		Version: version,
 		Locations: file.NewLocationSet(
-			location.WithAnnotation(pkg.EvidenceAnnotationKey, evidenceType),
+			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
 		Type:    pkg.BinaryPkg,
 		CPEs:    cpes,

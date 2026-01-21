@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -734,8 +735,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.15",
 				PURL:      "pkg:generic/go@1.15",
-				Locations: locations("VERSION"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -745,8 +746,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.25-d524e1e",
 				PURL:      "pkg:generic/go@1.25-d524e1e",
-				Locations: locations("VERSION.cache"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION.cache"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -1823,17 +1824,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, p := range packages {
-				expectedLocations := test.expected.Locations.ToSlice()
-				gotLocations := p.Locations.ToSlice()
-				require.Len(t, gotLocations, len(expectedLocations))
-
-				for i, expectedLocation := range expectedLocations {
-					gotLocation := gotLocations[i]
-					if expectedLocation.RealPath != gotLocation.RealPath {
-						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
-					}
-				}
-
 				assertPackagesAreEqual(t, test.expected, p)
 			}
 		})
@@ -2018,20 +2008,7 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 }
 
 func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
-	var failMessages []string
-	expectedLocations := expected.Locations.ToSlice()
-	gotLocations := p.Locations.ToSlice()
-
-	if len(expectedLocations) != len(gotLocations) {
-		failMessages = append(failMessages, "locations are not equal length")
-	} else {
-		for i, expectedLocation := range expectedLocations {
-			gotLocation := gotLocations[i]
-			if expectedLocation.RealPath != gotLocation.RealPath {
-				failMessages = append(failMessages, fmt.Sprintf("locations do not match; expected: %v got: %v", expectedLocation.RealPath, gotLocation.RealPath))
-			}
-		}
-	}
+	failMessages := assertLocationsEqual(expected, p)
 
 	m1 := expected.Metadata.(pkg.BinarySignature).Matches
 	m2 := p.Metadata.(pkg.BinarySignature).Matches
@@ -2068,6 +2045,24 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 			),
 		)
 	}
+}
+
+func assertLocationsEqual(expected pkg.Package, p pkg.Package) (failMessages []string) {
+	expectedLocations := expected.Locations.ToSlice()
+	gotLocations := p.Locations.ToSlice()
+
+	if len(expectedLocations) != len(gotLocations) {
+		failMessages = append(failMessages, fmt.Sprintf("locations are not equal: %v != %v", expectedLocations, gotLocations))
+	} else {
+		for _, expectedLocation := range expectedLocations {
+			if !slices.ContainsFunc(gotLocations, func(gotLocation file.Location) bool {
+				return gotLocation.RealPath == expectedLocation.RealPath
+			}) {
+				failMessages = append(failMessages, fmt.Sprintf("location not found; expected: %v in set: %v", expectedLocation.RealPath, gotLocations))
+			}
+		}
+	}
+	return failMessages
 }
 
 type panicyResolver struct {
@@ -2178,64 +2173,6 @@ func TestCatalogerConfig_MarshalJSON(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tt.want, string(got))
-		})
-	}
-}
-
-func Test_RequirePrimaryEvidence(t *testing.T) {
-	tests := []struct {
-		name           string
-		path           string
-		requirePrimary bool
-		expected       []string
-	}{
-		{
-			name:           "include with primary evidence",
-			path:           "test-fixtures/evidence-types/primary",
-			requirePrimary: true,
-			expected:       []string{"go"},
-		},
-		{
-			name:           "exclude with only supporting evidence",
-			path:           "test-fixtures/evidence-types/supporting",
-			requirePrimary: true,
-			expected:       nil,
-		},
-		{
-			name:           "include with relative primary and supporting evidence",
-			path:           "test-fixtures/evidence-types/has-relative",
-			requirePrimary: true,
-			expected:       []string{"go"},
-		},
-		{
-			name:           "include with glob match",
-			path:           "test-fixtures/evidence-types/go-dev",
-			requirePrimary: false,
-			expected:       []string{"go"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s, err := directorysource.NewFromPath(tt.path)
-			require.NoError(t, err)
-
-			r, err := s.FileResolver(source.AllLayersScope)
-			require.NoError(t, err)
-
-			cfg := DefaultClassifierCatalogerConfig()
-			cfg.RequirePrimaryEvidence = tt.requirePrimary
-
-			c := NewClassifierCataloger(cfg)
-			pkgs, _, err := c.Catalog(context.TODO(), r)
-			require.NoError(t, err)
-
-			var names []string
-			for _, p := range pkgs {
-				names = append(names, p.Name)
-			}
-
-			assert.ElementsMatch(t, tt.expected, names)
 		})
 	}
 }

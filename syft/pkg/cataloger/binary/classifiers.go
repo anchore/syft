@@ -74,7 +74,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
 					`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
-				m.RelativeFileEvidenceMatcher("../VERSION*",
+				binutils.SupportingEvidenceMatcher("../VERSION*",
 					m.FileContentsVersionMatcher(
 						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)\s`),
 				),

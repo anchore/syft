@@ -34,10 +34,6 @@ type Classifier struct {
 	// FileGlob is a selector to narrow down file inspection using the **/glob* syntax
 	FileGlob string `json:"fileGlob"`
 
-	// EvidenceType is an annotation for classifiers to optionally specify evidence annotations
-	// other than the default, of PrimaryEvidenceAnnotation, which will be used if this is not set
-	EvidenceType string
-
 	// EvidenceMatcher is what will be used to match against the file in the source
 	// location. If the matcher returns a package, the file will be considered a candidate.
 	EvidenceMatcher EvidenceMatcher `json:"-"`
@@ -130,26 +126,6 @@ type ContextualEvidenceMatchers struct {
 
 func (c ContextualEvidenceMatchers) FileNameTemplateVersionMatcher(fileNamePattern string, contentTemplate string) EvidenceMatcher {
 	return FileNameTemplateVersionMatcher(fileNamePattern, contentTemplate, c.CatalogerName)
-}
-
-func (c ContextualEvidenceMatchers) RelativeFileEvidenceMatcher(relativePathGlob string, evidenceMatcher EvidenceMatcher) EvidenceMatcher {
-	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
-		f := path.Dir(context.Location.RealPath)
-		f = path.Join(f, relativePathGlob)
-		f = path.Clean(f)
-		// this would ideally be RelativeFileByPath but with a glob search:
-		relativeFiles, err := context.Resolver.FilesByGlob(f)
-		if err != nil {
-			return nil, err
-		}
-		for _, relativeFile := range relativeFiles {
-			evidence, err := collectRelativeFileEvidence(classifier, context, relativeFile, evidenceMatcher)
-			if evidence != nil || err != nil {
-				return evidence, err
-			}
-		}
-		return nil, nil
-	}
 }
 
 func (c ContextualEvidenceMatchers) FileContentsVersionMatcher(patterns ...string) EvidenceMatcher {
@@ -334,6 +310,28 @@ func MatchPath(path string) EvidenceMatcher {
 	}
 }
 
+// SupportingEvidenceMatcher defines an evidence matcher that searches for secondary evidence with path globs
+// relative to a primary file, for example: a VERSION file in the same or a parent directory to another binary
+func SupportingEvidenceMatcher(relativePathGlob string, evidenceMatcher EvidenceMatcher) EvidenceMatcher {
+	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
+		f := path.Dir(context.Location.RealPath)
+		f = path.Join(f, relativePathGlob)
+		f = path.Clean(f)
+		// this would ideally be RelativeFileByPath but with a glob search:
+		relativeFiles, err := context.Resolver.FilesByGlob(f)
+		if err != nil {
+			return nil, err
+		}
+		for _, relativeFile := range relativeFiles {
+			evidence, err := collectSupportingEvidence(classifier, context, relativeFile, evidenceMatcher)
+			if evidence != nil || err != nil {
+				return evidence, err
+			}
+		}
+		return nil, nil
+	}
+}
+
 func getReader(context MatcherContext) (unionreader.UnionReader, error) {
 	if context.GetReader != nil {
 		return context.GetReader(context)
@@ -394,7 +392,7 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	return nil, nil
 }
 
-func collectRelativeFileEvidence(classifier Classifier, context MatcherContext, relativeFile file.Location, evidenceMatcher EvidenceMatcher) ([]pkg.Package, error) {
+func collectSupportingEvidence(classifier Classifier, context MatcherContext, relativeFile file.Location, evidenceMatcher EvidenceMatcher) ([]pkg.Package, error) {
 	rdr, err := context.Resolver.FileContentsByLocation(relativeFile)
 	if err != nil {
 		return nil, err
@@ -416,12 +414,18 @@ func collectRelativeFileEvidence(classifier Classifier, context MatcherContext, 
 		return nil, err
 	}
 	for i := range evidence {
+		_, err = ur.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil, err
+		}
 		e := &(evidence[i])
+		// relative files are supporting evidence, like a VERSION file near a go binary, mark the results as supporting
 		locs := e.Locations.ToUnorderedSlice()
 		for l := range locs {
 			loc := &(locs[l])
 			loc.Annotations[pkg.EvidenceAnnotationKey] = pkg.SupportingEvidenceAnnotation
 		}
+		// add our primary evidence, which is typically the binary that we were unable to find a version in
 		locs = append(locs, context.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		e.Locations = file.NewLocationSet(locs...)
 	}
