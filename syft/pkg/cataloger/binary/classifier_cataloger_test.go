@@ -2008,7 +2008,21 @@ func match(classifier string, paths ...string) pkg.ClassifierMatch {
 }
 
 func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
-	failMessages := assertLocationsEqual(expected, p)
+	var failMessages []string
+	expectedLocations := expected.Locations.ToSlice()
+	gotLocations := p.Locations.ToSlice()
+
+	if len(expectedLocations) != len(gotLocations) {
+		failMessages = append(failMessages, fmt.Sprintf("locations are not equal: %v != %v", expectedLocations, gotLocations))
+	} else {
+		for _, expectedLocation := range expectedLocations {
+			if !slices.ContainsFunc(gotLocations, func(gotLocation file.Location) bool {
+				return gotLocation.RealPath == expectedLocation.RealPath
+			}) {
+				failMessages = append(failMessages, fmt.Sprintf("location not found; expected: %v in set: %v", expectedLocation.RealPath, gotLocations))
+			}
+		}
+	}
 
 	m1 := expected.Metadata.(pkg.BinarySignature).Matches
 	m2 := p.Metadata.(pkg.BinarySignature).Matches
@@ -2045,24 +2059,6 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 			),
 		)
 	}
-}
-
-func assertLocationsEqual(expected pkg.Package, p pkg.Package) (failMessages []string) {
-	expectedLocations := expected.Locations.ToSlice()
-	gotLocations := p.Locations.ToSlice()
-
-	if len(expectedLocations) != len(gotLocations) {
-		failMessages = append(failMessages, fmt.Sprintf("locations are not equal: %v != %v", expectedLocations, gotLocations))
-	} else {
-		for _, expectedLocation := range expectedLocations {
-			if !slices.ContainsFunc(gotLocations, func(gotLocation file.Location) bool {
-				return gotLocation.RealPath == expectedLocation.RealPath
-			}) {
-				failMessages = append(failMessages, fmt.Sprintf("location not found; expected: %v in set: %v", expectedLocation.RealPath, gotLocations))
-			}
-		}
-	}
-	return failMessages
 }
 
 type panicyResolver struct {
