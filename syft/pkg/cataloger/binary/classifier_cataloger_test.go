@@ -548,6 +548,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// no python binary, but we find libpython, which is surfaced as primary evidence
 			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
@@ -557,7 +558,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("python-binary-lib"),
 			},
 		},
-
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "python-slim-shared-libs/3.11/linux-amd64",
@@ -570,7 +570,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.11"),
 						match("python-binary", "libpython3.11.so.1.0"),
-						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
 				},
 			},
@@ -587,7 +586,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 						match("python-binary", "libpython3.9.so.1.0"),
-						match("python-binary-lib", "libpython3.9.so.1.0"),
 					},
 				},
 			},
@@ -619,7 +617,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.4"),
 						match("python-binary", "libpython3.4m.so.1.0"),
-						match("python-binary-lib", "libpython3.4m.so.1.0"),
 					},
 				},
 			},

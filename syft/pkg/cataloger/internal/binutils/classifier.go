@@ -274,9 +274,7 @@ func SharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher Evide
 				}
 				for _, p := range pkgs {
 					// set the source binary as the first location
-					locationSet := file.NewLocationSet(context.Location)
-					locationSet.Add(p.Locations.ToSlice()...)
-					p.Locations = locationSet
+					makePrimaryLocation(&p, context.Location)
 					meta, _ := p.Metadata.(pkg.BinarySignature)
 					p.Metadata = pkg.BinarySignature{
 						Matches: append([]pkg.ClassifierMatch{
@@ -392,6 +390,17 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	return nil, nil
 }
 
+func makePrimaryLocation(p *pkg.Package, primaryLocation file.Location) {
+	locationSet := file.NewLocationSet(primaryLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	for _, l := range p.Locations.ToSlice() {
+		if locationSet.Contains(l) { // no need for duplicate locations
+			continue
+		}
+		locationSet.Add(l.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	}
+	p.Locations = locationSet
+}
+
 func collectSupportingEvidence(classifier Classifier, context MatcherContext, relativeFile file.Location, evidenceMatcher EvidenceMatcher) ([]pkg.Package, error) {
 	rdr, err := context.Resolver.FileContentsByLocation(relativeFile)
 	if err != nil {
@@ -409,25 +418,14 @@ func collectSupportingEvidence(classifier Classifier, context MatcherContext, re
 			return ur, nil
 		},
 	}
-	evidence, err := evidenceMatcher(classifier, newContext)
+	packages, err := evidenceMatcher(classifier, newContext)
 	if err != nil {
 		return nil, err
 	}
-	for i := range evidence {
-		_, err = ur.Seek(0, io.SeekStart)
-		if err != nil {
-			return nil, err
-		}
-		e := &(evidence[i])
+	for i := range packages {
+		p := &(packages[i])
 		// relative files are supporting evidence, like a VERSION file near a go binary, mark the results as supporting
-		locs := e.Locations.ToUnorderedSlice()
-		for l := range locs {
-			loc := &(locs[l])
-			loc.Annotations[pkg.EvidenceAnnotationKey] = pkg.SupportingEvidenceAnnotation
-		}
-		// add our primary evidence, which is typically the binary that we were unable to find a version in
-		locs = append(locs, context.Location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
-		e.Locations = file.NewLocationSet(locs...)
+		makePrimaryLocation(p, context.Location)
 	}
-	return evidence, nil
+	return packages, nil
 }
