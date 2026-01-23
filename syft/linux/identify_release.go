@@ -54,6 +54,12 @@ var identityFiles = []parseEntry{
 	// /////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
+// after a parser function returns a Release, it may have incomplete information; supplementers can be used to
+// fill in missing details based on other files present in the filesystem
+var supplementers = []func(file.Resolver, *Release) error{
+	supplementDebianVersion,
+}
+
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
 func IdentifyRelease(resolver file.Resolver) *Release {
 	logger := log.Nested("operation", "identify-release")
@@ -67,7 +73,13 @@ func IdentifyRelease(resolver file.Resolver) *Release {
 		for _, location := range locations {
 			release := tryParseReleaseInfo(resolver, location, logger, entry)
 			if release != nil {
-				return release
+				for _, supplementer := range supplementers {
+					err = supplementer(resolver, release)
+					if err != nil {
+						log.Debugf("error supplementing release %#v: %v", release, err)
+					}
+					return release
+				}
 			}
 		}
 	}
