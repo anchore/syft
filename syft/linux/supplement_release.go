@@ -44,7 +44,7 @@ func readDebianVersionFile(resolver file.Resolver, location file.Location) strin
 		return ""
 	}
 	version := strings.TrimSpace(string(contents))
-	if regexp.MustCompile(`\d+(?:\.\d+)?`).MatchString(version) {
+	if regexp.MustCompile(`^\d+(?:\.\d+)?$`).MatchString(version) {
 		return version
 	}
 	return ""
