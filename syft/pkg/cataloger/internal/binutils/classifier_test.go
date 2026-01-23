@@ -12,6 +12,8 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
+	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 func Test_ClassifierCPEs(t *testing.T) {
@@ -27,7 +29,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -38,7 +40,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 				},
@@ -53,7 +55,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
@@ -179,6 +181,64 @@ func TestFileContentsVersionMatcher(t *testing.T) {
 
 			if p[0].Version != tt.expected {
 				t.Errorf("Versions don't match.\ngot\n%q\n\nexpected\n%q", p[0].Version, tt.expected)
+			}
+		})
+	}
+}
+
+func Test_SupportingEvidenceMatcher(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		classifier Classifier
+		expected   string
+	}{
+		{
+			name: "simple version string regexp",
+			classifier: Classifier{
+				FileGlob: "**/some-binary",
+				EvidenceMatcher: SupportingEvidenceMatcher("../version.txt",
+					FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`)),
+				Package: "some-binary",
+			},
+			expected: "1.8",
+		},
+		{
+			name: "not matching version string regexp",
+			classifier: Classifier{
+				FileGlob: "**/some-binary",
+				EvidenceMatcher: SupportingEvidenceMatcher("../version.txt",
+					FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>abdd)`)),
+				Package: "some-binary",
+			},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := directorysource.NewFromPath("test-fixtures")
+			require.NoError(t, err)
+			r, err := s.FileResolver(source.AllLayersScope)
+			require.NoError(t, err)
+
+			results, err := r.FilesByGlob(tt.classifier.FileGlob)
+			require.NoError(t, err)
+			for _, result := range results {
+				got, err := tt.classifier.EvidenceMatcher(tt.classifier, MatcherContext{
+					Resolver: r,
+					Location: result,
+					GetReader: func(ctx MatcherContext) (unionreader.UnionReader, error) {
+						return getReader(ctx)
+					},
+				})
+				require.NoError(t, err)
+				if tt.expected != "" {
+					require.NotEmpty(t, got)
+					require.Equal(t, tt.expected, got[0].Version)
+				} else {
+					require.Empty(t, got)
+				}
 			}
 		})
 	}

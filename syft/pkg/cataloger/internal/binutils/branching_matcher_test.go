@@ -10,7 +10,7 @@ import (
 )
 
 func Test_BranchingMatcher(t *testing.T) {
-	matchingTest := FileContentsVersionMatcher("", `my-verison:(?<version>\d+\.\d+)`)
+	matchingTest := FileContentsVersionMatcher("", `my-version:(?<version>\d+\.\d+)`)
 	notMatchingTest := MatchPath("**/not-version*")
 
 	tests := []struct {

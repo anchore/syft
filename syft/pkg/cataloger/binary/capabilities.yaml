@@ -111,16 +111,6 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
-          - '**/VERSION*'
-        packages:
-          - class: go-binary-hint
-            name: go
-            purl: pkg:generic/go
-            cpes:
-              - cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*
-            type: BinaryPkg
-      - method: glob
-        criteria:
           - '**/busybox'
         packages:
           - class: busybox-binary
