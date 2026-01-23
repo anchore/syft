@@ -1,1 +1,1 @@
-my-verison:1.8
+my-version:1.8

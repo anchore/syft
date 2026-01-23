@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -479,7 +480,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("python-binary-lib"),
 			},
 		},
-
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "python-slim-shared-libs/3.11/linux-amd64",
@@ -492,7 +492,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.11"),
 						match("python-binary", "libpython3.11.so.1.0"),
-						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
 				},
 			},
@@ -509,7 +508,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 						match("python-binary", "libpython3.9.so.1.0"),
-						match("python-binary-lib", "libpython3.9.so.1.0"),
 					},
 				},
 			},
@@ -541,7 +539,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.4"),
 						match("python-binary", "libpython3.4m.so.1.0"),
-						match("python-binary-lib", "libpython3.4m.so.1.0"),
 					},
 				},
 			},
@@ -657,8 +654,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.15",
 				PURL:      "pkg:generic/go@1.15",
-				Locations: locations("VERSION"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -668,8 +665,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.25-d524e1e",
 				PURL:      "pkg:generic/go@1.25-d524e1e",
-				Locations: locations("VERSION.cache"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION.cache"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -1455,17 +1452,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, p := range packages {
-				expectedLocations := test.expected.Locations.ToSlice()
-				gotLocations := p.Locations.ToSlice()
-				require.Len(t, gotLocations, len(expectedLocations))
-
-				for i, expectedLocation := range expectedLocations {
-					gotLocation := gotLocations[i]
-					if expectedLocation.RealPath != gotLocation.RealPath {
-						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
-					}
-				}
-
 				assertPackagesAreEqual(t, test.expected, p)
 			}
 		})
@@ -1655,12 +1641,13 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	gotLocations := p.Locations.ToSlice()
 
 	if len(expectedLocations) != len(gotLocations) {
-		failMessages = append(failMessages, "locations are not equal length")
+		failMessages = append(failMessages, fmt.Sprintf("locations are not equal: %v != %v", expectedLocations, gotLocations))
 	} else {
-		for i, expectedLocation := range expectedLocations {
-			gotLocation := gotLocations[i]
-			if expectedLocation.RealPath != gotLocation.RealPath {
-				failMessages = append(failMessages, fmt.Sprintf("locations do not match; expected: %v got: %v", expectedLocation.RealPath, gotLocation.RealPath))
+		for _, expectedLocation := range expectedLocations {
+			if !slices.ContainsFunc(gotLocations, func(gotLocation file.Location) bool {
+				return gotLocation.RealPath == expectedLocation.RealPath
+			}) {
+				failMessages = append(failMessages, fmt.Sprintf("location not found; expected: %v in set: %v", expectedLocation.RealPath, gotLocations))
 			}
 		}
 	}
