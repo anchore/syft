@@ -29,7 +29,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`),
 				CPEs:            []cpe.CPE{},
 			},
 			cpes: nil,
@@ -40,7 +40,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 				},
@@ -55,7 +55,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
-				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`),
+				EvidenceMatcher: FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`),
 				CPEs: []cpe.CPE{
 					cpe.Must("cpe:2.3:a:some:app:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
 					cpe.Must("cpe:2.3:a:some:apps:*:*:*:*:*:*:*:*", cpe.GeneratedSource),
@@ -198,7 +198,7 @@ func Test_SupportingEvidenceMatcher(t *testing.T) {
 			classifier: Classifier{
 				FileGlob: "**/some-binary",
 				EvidenceMatcher: SupportingEvidenceMatcher("../version.txt",
-					FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>[0-9.]+)`)),
+					FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>[0-9.]+)`)),
 				Package: "some-binary",
 			},
 			expected: "1.8",
@@ -208,7 +208,7 @@ func Test_SupportingEvidenceMatcher(t *testing.T) {
 			classifier: Classifier{
 				FileGlob: "**/some-binary",
 				EvidenceMatcher: SupportingEvidenceMatcher("../version.txt",
-					FileContentsVersionMatcher("cataloger-name", `(?m)my-verison:(?P<version>abdd)`)),
+					FileContentsVersionMatcher("cataloger-name", `(?m)my-version:(?P<version>abdd)`)),
 				Package: "some-binary",
 			},
 			expected: "",
