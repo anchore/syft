@@ -35,14 +35,16 @@ func readDebianVersionFile(resolver file.Resolver, location file.Location) strin
 	rdr, err := resolver.FileContentsByLocation(location)
 	if err != nil {
 		log.Debugf("error getting contents for %s: %v", location.RealPath, err)
+		return ""
 	}
 	defer internal.CloseAndLogError(rdr, location.RealPath)
 	contents, err := io.ReadAll(rdr)
 	if err != nil {
 		log.Debugf("error reading %s: %v", location.RealPath, err)
+		return ""
 	}
 	version := strings.TrimSpace(string(contents))
-	if regexp.MustCompile(`\d+(:?.\d+)?`).MatchString(version) {
+	if regexp.MustCompile(`\d+(?:\.\d+)?`).MatchString(version) {
 		return version
 	}
 	return ""
