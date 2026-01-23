@@ -15,6 +15,8 @@ updates:
 
   - package-ecosystem: gomod
     directory: "/"
+    cooldown:
+      default-days: 7
     schedule:
       interval: "weekly"
       day: "friday"
@@ -34,6 +36,8 @@ updates:
     directories:
       - "/"
       - "/.github/actions/bootstrap"
+    cooldown:
+      default-days: 7
     schedule:
       interval: "weekly"
       day: "friday"

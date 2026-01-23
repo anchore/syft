@@ -19,7 +19,7 @@ jobs:
       packages: write
     if: github.repository == 'anchore/syft' # only run for main repo
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -64,11 +64,21 @@ jobs:
             Update CPE dictionary index based on the latest available CPE dictionary
           token: ${{ steps.generate-token.outputs.token }}
 
-      - uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e #v3.19.0
+      - name: Notify Slack on failure
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a #v2.1.1
         with:
-          status: ${{ job.status }}
-          fields: workflow,eventName,job
-          text: Syft CPE dictionary index update failed
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "Syft CPE dictionary index update failed"
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: |
+                    *Syft CPE dictionary index update failed*
+                    • Workflow: `${{ github.workflow }}`
+                    • Event: `${{ github.event_name }}`
+                    • Job Status: `${{ job.status }}`
+                    • <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>
         if: ${{ failure() && env.SLACK_NOTIFICATIONS == 'true' }}
