@@ -635,6 +635,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 				"jinja2 @ 3.1.4 (.) [dependency-of] fastapi @ 0.111.0 (.)",
 				"jinja2 @ 3.1.4 (.) [dependency-of] starlette @ 0.37.2 (.)",
 				"markdown-it-py @ 3.0.0 (.) [dependency-of] rich @ 13.7.1 (.)",
+				"markupsafe @ 2.1.5 (.) [dependency-of] jinja2 @ 3.1.4 (.)", // MarkupSafe (mixed case) -> markupsafe
 				"mdurl @ 0.1.2 (.) [dependency-of] markdown-it-py @ 3.0.0 (.)",
 				"orjson @ 3.10.3 (.) [dependency-of] fastapi @ 0.111.0 (.)",
 				"pydantic @ 2.7.1 (.) [dependency-of] fastapi @ 0.111.0 (.)",
