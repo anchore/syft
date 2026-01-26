@@ -182,7 +182,7 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 			},
 		},
 		{
-			name: "dependency names with mixed case should be normalized (issue #4562)",
+			name: "dependency names with mixed case should be normalized",
 			p: pkg.Package{
 				Name: "dj-rest-auth",
 				Metadata: pkg.PythonPoetryLockEntry{
