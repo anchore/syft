@@ -1,6 +1,7 @@
 package dotnet
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -16,7 +17,9 @@ import (
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/bundle"
 )
 
 const (
@@ -24,6 +27,8 @@ const (
 	dllGlob      = "**/*.dll"
 	exeGlob      = "**/*.exe"
 )
+
+var elfMagic = []byte{0x7f, 'E', 'L', 'F'}
 
 // depsBinaryCataloger will search for both deps.json evidence and PE file evidence to create packages. All packages
 // from both sources are raised up, but with one merge operation applied; If a deps.json package reference can be
@@ -37,10 +42,15 @@ func (c depsBinaryCataloger) Name() string {
 }
 
 func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) { //nolint:funlen
+	elfDepsJSONs, elfUnknowns := findELFBundledDepsJSON(resolver)
+
 	depJSONDocs, unknowns, err := findDepsJSON(resolver)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	depJSONDocs = append(depJSONDocs, elfDepsJSONs...)
+	unknowns = unknown.Join(unknowns, elfUnknowns)
 
 	peFiles, ldpeUnknownErr, err := findPEFiles(resolver)
 	if err != nil {
@@ -509,6 +519,68 @@ func readPEFile(resolver file.Resolver, loc file.Location) (*logicalPE, error) {
 	}
 
 	return ldpe, nil
+}
+
+func findELFBundledDepsJSON(resolver file.Resolver) ([]logicalDepsJSON, error) {
+	locs, err := resolver.FilesByMIMEType("application/x-executable", "application/x-sharedlib")
+	if err != nil {
+		return nil, nil
+	}
+
+	var depsJSONs []logicalDepsJSON
+	var unknownErr error
+	for _, loc := range locs {
+		doc, err := readELFBundledDepsJSON(resolver, loc)
+		if err != nil {
+			unknownErr = unknown.Append(unknownErr, loc, err)
+			continue
+		}
+		if doc != nil {
+			depsJSONs = append(depsJSONs, *doc)
+		}
+	}
+
+	return depsJSONs, unknownErr
+}
+
+func readELFBundledDepsJSON(resolver file.Resolver, loc file.Location) (*logicalDepsJSON, error) {
+	reader, err := resolver.FileContentsByLocation(loc)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(reader, loc.RealPath)
+
+	header := make([]byte, 4)
+	if _, err := io.ReadFull(reader, header); err != nil {
+		return nil, nil
+	}
+	if !bytes.Equal(header, elfMagic) {
+		return nil, nil
+	}
+
+	uReader, err := unionreader.GetUnionReader(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	depsJSON, err := bundle.ExtractDepsJSONFromELFBundle(uReader)
+	if err != nil {
+		return nil, err
+	}
+
+	if depsJSON == "" {
+		return nil, nil
+	}
+
+	doc, err := newDepsJSON(file.NewLocationReadCloser(loc, io.NopCloser(strings.NewReader(depsJSON))))
+	if err != nil || doc == nil {
+		return nil, nil
+	}
+
+	doc.Location = loc
+	lDoc := getLogicalDepsJSON(*doc, nil)
+
+	return &lDoc, nil
 }
 
 func extractEmbeddedDeps(pe logicalPE) *logicalDepsJSON {

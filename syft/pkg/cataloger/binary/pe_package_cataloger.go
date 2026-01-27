@@ -9,7 +9,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/pe"
 )
 
 // NewPEPackageCataloger returns a cataloger that interprets packages from DLL and EXE files.
