@@ -799,6 +799,15 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "cups-binary",
+			FileGlob: "**/cupsd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`\x00CUPS/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`, ),
+			Package: "cups",
+			PURL:    mustPURL("pkg:generic/cups@version"),
+			CPEs:    singleCPE("cpe:2.3:a:openprinting:cups:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

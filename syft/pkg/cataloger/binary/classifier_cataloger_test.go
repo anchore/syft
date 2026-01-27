@@ -1758,6 +1758,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("envoy-binary"),
 			},
 		},
+		{
+			logicalFixture: "cups/2.2.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "cups",
+				Version:   "2.2.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/cups@2.2.10",
+				Locations: locations("cups"),
+				Metadata:  metadata("cups-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
