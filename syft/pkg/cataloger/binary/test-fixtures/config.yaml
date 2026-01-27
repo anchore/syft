@@ -1082,3 +1082,11 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/envoy
+
+  - name: cups
+    version: 2.2.10
+    images:
+      - ref: ydkn/cups:latest-amd64@sha256:7358b38c6399ba3185a855c89c1d3050cb8125dc3861d9929f9c5b28592751c1
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/cupsd
