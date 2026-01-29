@@ -41,14 +41,21 @@ type LicenseInfo struct {
 	ID string
 }
 
-// LicenseByURL returns the license ID and name for a given URL from the SPDX license list
-// The URL should match one of the URLs in the seeAlso field of an SPDX license
+// LicenseByURL returns the license ID for a given URL.
+// It first checks supplemental mappings (user-contributed URLs not in the official
+// SPDX list), then the auto-generated SPDX license list mappings.
 func LicenseByURL(url string) (LicenseInfo, bool) {
 	url = strings.TrimSpace(url)
-	if id, exists := urlToLicense[url]; exists {
-		return LicenseInfo{
-			ID: id,
-		}, true
+
+	// Check supplemental mappings first (user-contributed URLs)
+	if id, exists := supplementalURLToLicense[url]; exists {
+		return LicenseInfo{ID: id}, true
 	}
+
+	// Fall back to auto-generated SPDX mappings
+	if id, exists := urlToLicense[url]; exists {
+		return LicenseInfo{ID: id}, true
+	}
+
 	return LicenseInfo{}, false
 }

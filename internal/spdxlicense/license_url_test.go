@@ -88,6 +88,40 @@ func TestLicenseByURL(t *testing.T) {
 	}
 }
 
+func TestLicenseByURL_SupplementalURLs(t *testing.T) {
+	// Test that supplemental URLs (not in the official SPDX list) are resolved correctly
+	// These URLs are defined in supplemental_license_urls.go
+
+	tests := []struct {
+		name   string
+		url    string
+		wantID string
+	}{
+		{
+			name:   "LGPL-2.1 http variant (supplemental)",
+			url:    "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
+			wantID: "LGPL-2.1-only",
+		},
+		{
+			name:   "EDL/BSD-3-Clause http variant (supplemental)",
+			url:    "http://www.eclipse.org/org/documents/edl-v10.php",
+			wantID: "BSD-3-Clause",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info, found := LicenseByURL(tt.url)
+			if !found {
+				t.Fatalf("LicenseByURL(%q) not found, expected %s", tt.url, tt.wantID)
+			}
+			if info.ID != tt.wantID {
+				t.Errorf("LicenseByURL(%q) = %s, want %s", tt.url, info.ID, tt.wantID)
+			}
+		})
+	}
+}
+
 func TestLicenseByURL_DeprecatedLicenses(t *testing.T) {
 	// Test that deprecated license URLs map to their replacement licenses
 	// For example, GPL-2.0+ should map to GPL-2.0-or-later
