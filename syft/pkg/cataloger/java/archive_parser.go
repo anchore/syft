@@ -890,19 +890,25 @@ func isValidMultiReleaseVersion(s string) bool {
 		return false
 	}
 
-	if s == "9" {
-		return true
-	}
-
-	// 0 is not allowed
+	// Must start with 1-9 (format: {1-9}{0-9}*)
 	if s[0] < '1' || s[0] > '9' {
 		return false
 	}
 
-	// Ony digits are allowed
-	return strings.IndexFunc(s, func(r rune) bool {
+	// Only digits are allowed
+	if strings.IndexFunc(s, func(r rune) bool {
 		return r < '0' || r > '9'
-	}) != -1
+	}) != -1 {
+		return false
+	}
+
+	// Per spec: "Any versioned directory with N < 9 is ignored"
+	// Single digit must be 9; multi-digit (10+) is always >= 9
+	if len(s) == 1 && s[0] < '9' {
+		return false
+	}
+
+	return true
 }
 
 func (j *archiveParser) discoverContainedPackages() []string {

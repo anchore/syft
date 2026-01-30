@@ -115,7 +115,7 @@ type JavaArchive struct {
 	ArchiveDigests []file.Digest `hash:"ignore" json:"digest,omitempty"`
 
 	// ContainedPackages is a list of all package names contained in the jar
-	ContainedPackages []string `mapstructure:"ContainedPackages" json:"containedPackages"`
+	ContainedPackages []string `mapstructure:"ContainedPackages" json:"containedPackages,omitempty"`
 
 	// Parent is reference to parent package (for nested archives)
 	Parent *Package `hash:"ignore" json:"-"`

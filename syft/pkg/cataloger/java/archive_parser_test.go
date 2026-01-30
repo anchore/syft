@@ -1817,3 +1817,44 @@ func Test_jarPomPropertyResolutionDoesNotPanic(t *testing.T) {
 	_, _, err = ap.parse(ctx, nil)
 	require.NoError(t, err)
 }
+
+func Test_isValidMultiReleaseVersion(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		// Valid versions (multi-release JARs require version >= 9)
+		{"9", true},
+		{"10", true},
+		{"11", true},
+		{"17", true},
+		{"21", true},
+		{"100", true},
+
+		// Invalid versions - less than 9 (per spec: "Any versioned directory with N < 9 is ignored")
+		{"1", false},
+		{"2", false},
+		{"8", false},
+
+		// Invalid versions - format errors
+		{"", false},          // empty string
+		{"0", false},         // zero not allowed (first digit must be 1-9)
+		{"01", false},        // leading zero
+		{"9a", false},        // contains non-digit
+		{"a9", false},        // starts with non-digit
+		{"abc", false},       // all non-digits
+		{"-1", false},        // negative (starts with non-digit)
+		{"9.0", false},       // contains non-digit (period)
+		{"11-ea", false},     // contains non-digit (dash and letters)
+		{" 9", false},        // leading space
+		{"9 ", false},        // trailing space
+		{"1.8", false},       // old-style version format
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("input=%q", tt.input), func(t *testing.T) {
+			result := isValidMultiReleaseVersion(tt.input)
+			assert.Equal(t, tt.expected, result, "isValidMultiReleaseVersion(%q)", tt.input)
+		})
+	}
+}

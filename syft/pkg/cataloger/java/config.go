@@ -36,7 +36,7 @@ type ArchiveCatalogerConfig struct {
 
 	// DetectContainedPackages enables collecting all package names contained in a jar.
 	// app-config: java.detect-contained-packages
-	DetectContainedPackages bool `yaml:"detect-contained-packages" json:"detect-contained-packages"  mapstructure:"detect-contained-packages"`
+	DetectContainedPackages bool `yaml:"detect-contained-packages" json:"detect-contained-packages" mapstructure:"detect-contained-packages"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
