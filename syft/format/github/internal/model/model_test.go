@@ -178,6 +178,11 @@ func Test_toGithubModel(t *testing.T) {
 			metadata: source.SnapMetadata{},
 			testPath: "name:/etc",
 		},
+		{
+			name:     "oci-model",
+			metadata: source.OCIModelMetadata{UserInput: "model-repo/llama:latest"},
+			testPath: "model-repo/llama:latest:/etc",
+		},
 	}
 
 	for _, test := range tests {

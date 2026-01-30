@@ -130,6 +130,32 @@ func Test_toSyftSourceData(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "oci-model",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "oci-model",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -185,6 +211,28 @@ func Test_toSyftSourceData(t *testing.T) {
 			expected: &source.Description{
 				ID: "the-id",
 				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+		},
+		{
+			name: "oci-model - no name/version",
+			src: model.Source{
+				ID:   "the-id",
+				Type: "oci-model",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.OCIModelMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
