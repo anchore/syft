@@ -33,16 +33,15 @@ func TestContextLicenseScanner(t *testing.T) {
 		scanner := testScanner()
 		ctx := SetContextLicenseScanner(context.Background(), scanner)
 		s, err := ContextLicenseScanner(ctx)
-		if err != nil || s != scanner {
-			t.Fatal("expected scanner from context")
-		}
+		require.NoError(t, err)
+		require.Equal(t, scanner, s)
 	})
 
 	t.Run("without scanner", func(t *testing.T) {
 		ctx := context.Background()
 		s, err := ContextLicenseScanner(ctx)
-		if err != nil || s == nil {
-			t.Fatal("expected default scanner")
-		}
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNoLicenseScanner)
+		require.Nil(t, s)
 	})
 }

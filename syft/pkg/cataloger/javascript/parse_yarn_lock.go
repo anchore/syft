@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -71,20 +72,26 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	}
 }
 
-func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
-	content, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read yarn.lock file: %w", err)
+// isYarnV1Lockfile checks if the reader contains a v1 yarn lockfile by peeking at the first few bytes
+func isYarnV1Lockfile(reader *bufio.Reader) (bool, error) {
+	// Peek at first 100 bytes to check for v1 marker
+	peek, err := reader.Peek(100)
+	if err != nil && err != io.EOF {
+		return false, err
 	}
+	return bytes.Contains(peek, []byte("# yarn lockfile v1")), nil
+}
 
-	re := regexp.MustCompile(`\r?\n`)
-	lines := re.Split(string(content), -1)
+// parseYarnV1LockFile parses a v1 yarn.lock file using line-by-line scanning
+func parseYarnV1LockFile(reader io.Reader) ([]yarnPackage, error) {
+	scanner := bufio.NewScanner(reader)
 	var pkgs []yarnPackage
 	var pkg = yarnPackage{}
 	var seenPkgs = strset.New()
 	dependencies := make(map[string]string)
 
-	for _, line := range lines {
+	for scanner.Scan() {
+		line := scanner.Text()
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -101,8 +108,7 @@ func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
 		// The first line of a package entry is the name of the package with no
 		// leading spaces
 		if !strings.HasPrefix(line, " ") {
-			name := line
-			pkg.Name = findPackageName(name)
+			pkg.Name = findPackageName(line)
 			continue
 		}
 		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "    ") {
@@ -133,6 +139,11 @@ func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
 			dependencies[dependencyName] = dependencyVersion
 		}
 	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("failed to read yarn.lock file: %w", err)
+	}
+
 	// If the last package in the list is not the same as the current package, add the current package
 	// to the list. In case there was no trailing new line before we hit EOF.
 	if len(pkg.Name) > 0 && !seenPkgs.Has(pkg.Name+"@"+pkg.Version) {
@@ -171,21 +182,34 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		return nil, nil, nil
 	}
 
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load yarn.lock file: %w", err)
-	}
-	// Reset the reader to the beginning of the file
-	reader.ReadCloser = io.NopCloser(bytes.NewBuffer(data))
+	// Wrap reader in bufio.Reader for peeking at the lockfile version
+	bufReader := bufio.NewReader(reader)
 
 	var yarnPkgs []yarnPackage
-	// v1 Yarn lockfiles are not YAML, so we need to parse them as a special case. They typically
-	// include a comment line that indicates the version. I.e. "# yarn lockfile v1"
-	if strings.Contains(string(data), "# yarn lockfile v1") {
-		yarnPkgs, err = parseYarnV1LockFile(reader)
+	var err error
+
+	// v1 Yarn lockfiles are not YAML, so we parse them line-by-line for memory efficiency.
+	// v2+ lockfiles are YAML and require loading the entire file.
+	// We peek at the first few bytes to determine the version.
+	isV1, err := isYarnV1Lockfile(bufReader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to determine yarn.lock version: %w", err)
+	}
+
+	if isV1 {
+		// For v1, parse line-by-line without loading entire file into memory
+		yarnPkgs, err = parseYarnV1LockFile(bufReader)
 	} else {
+		// For v2+, we need to load the entire file as YAML
+		data, err := io.ReadAll(bufReader)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to load yarn.lock file: %w", err)
+		}
+		// Reset the reader to the beginning of the file
+		reader.ReadCloser = io.NopCloser(bytes.NewBuffer(data))
 		yarnPkgs, err = parseYarnLockYaml(reader)
 	}
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
 	}
