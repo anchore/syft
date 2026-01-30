@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -223,6 +224,353 @@ func Test_elfHasExports(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, elfHasExports(f))
 			require.NoError(t, err)
+		})
+	}
+}
+
+func Test_elfGoToolchainDetection(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name        string
+		fixture     string
+		wantPresent bool
+	}{
+		{
+			name:        "go binary has toolchain",
+			fixture:     "bin/hello_linux",
+			wantPresent: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := readerForFixture(t, tt.fixture)
+			f, err := elf.NewFile(reader)
+			require.NoError(t, err)
+
+			toolchains := elfToolchains(reader, f)
+			assert.Equal(t, tt.wantPresent, isGoToolchainPresent(toolchains))
+
+			if tt.wantPresent {
+				require.NotEmpty(t, toolchains)
+				assert.Equal(t, "go", toolchains[0].Name)
+				assert.NotEmpty(t, toolchains[0].Version)
+				assert.Equal(t, file.ToolchainKindCompiler, toolchains[0].Kind)
+			}
+		})
+	}
+}
+
+func Test_elfCgoToolchainDetection(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	t.Run("cgo binary has both go and c toolchains", func(t *testing.T) {
+		reader := readerForFixture(t, "bin/hello_linux_cgo")
+		f, err := elf.NewFile(reader)
+		require.NoError(t, err)
+
+		toolchains := elfToolchains(reader, f)
+
+		// versions are dynamic based on Docker image, so we ignore them in comparison
+		want := []file.Toolchain{
+			{Name: "go", Kind: file.ToolchainKindCompiler},
+			{Name: "gcc", Kind: file.ToolchainKindCompiler},
+		}
+
+		if d := cmp.Diff(want, toolchains, cmpopts.IgnoreFields(file.Toolchain{}, "Version")); d != "" {
+			t.Errorf("elfToolchains() mismatch (-want +got):\n%s", d)
+		}
+
+		// verify versions are populated
+		for _, tc := range toolchains {
+			assert.NotEmpty(t, tc.Version, "expected version to be set for %s toolchain", tc.Name)
+		}
+	})
+}
+
+func Test_elfGoSymbolCapture(t *testing.T) {
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	tests := []struct {
+		name               string
+		fixture            string
+		cfg                SymbolConfig
+		wantSymbols        []string // exact symbol names that must be present
+		wantMinSymbolCount int
+	}{
+		{
+			name:    "capture all symbol types",
+			fixture: "bin/hello_linux",
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					StandardLibrary:         true,
+					ExtendedStandardLibrary: true,
+					ThirdPartyModules:       true,
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+				},
+			},
+			wantSymbols: []string{
+				// stdlib - fmt package (used via fmt.Println)
+				"fmt.(*fmt).fmtInteger",
+				"fmt.(*pp).doPrintf",
+				// stdlib - strings package (used via strings.ToUpper)
+				"strings.ToUpper",
+				"strings.Map",
+				// stdlib - encoding/json package (used via json.Marshal)
+				"encoding/json.Marshal",
+				// extended stdlib - golang.org/x/text (used via language.English)
+				"golang.org/x/text/internal/language.Tag.String",
+				"golang.org/x/text/internal/language.Language.String",
+				// third-party - go-spew (used via spew.Dump)
+				"github.com/davecgh/go-spew/spew.(*dumpState).dump",
+				"github.com/davecgh/go-spew/spew.fdump",
+			},
+			wantMinSymbolCount: 50,
+		},
+		{
+			name:    "capture only third-party symbols",
+			fixture: "bin/hello_linux",
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ThirdPartyModules: true,
+					ExportedSymbols:   true,
+					UnexportedSymbols: true,
+				},
+			},
+			wantSymbols: []string{
+				"github.com/davecgh/go-spew/spew.(*dumpState).dump",
+				"github.com/davecgh/go-spew/spew.(*formatState).Format",
+				"github.com/davecgh/go-spew/spew.fdump",
+			},
+		},
+		{
+			name:    "capture only extended stdlib symbols",
+			fixture: "bin/hello_linux",
+			cfg: SymbolConfig{
+				Go: GoSymbolConfig{
+					ExtendedStandardLibrary: true,
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+				},
+			},
+			wantSymbols: []string{
+				"golang.org/x/text/internal/language.Tag.String",
+				"golang.org/x/text/internal/language.Parse",
+			},
+		},
+		{
+			name:    "capture with text section types only",
+			fixture: "bin/hello_linux",
+			cfg: SymbolConfig{
+				Types: []string{"T", "t"}, // text section (code) symbols
+				Go: GoSymbolConfig{
+					StandardLibrary:         true,
+					ExtendedStandardLibrary: true,
+					ThirdPartyModules:       true,
+					ExportedSymbols:         true,
+					UnexportedSymbols:       true,
+				},
+			},
+			wantSymbols: []string{
+				"encoding/json.Marshal",
+				"strings.ToUpper",
+			},
+			wantMinSymbolCount: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reader := readerForFixture(t, tt.fixture)
+			f, err := elf.NewFile(reader)
+			require.NoError(t, err)
+
+			symbols := captureElfGoSymbols(f, tt.cfg)
+			symbolSet := make(map[string]struct{}, len(symbols))
+			for _, sym := range symbols {
+				symbolSet[sym] = struct{}{}
+			}
+
+			if tt.wantMinSymbolCount > 0 {
+				assert.GreaterOrEqual(t, len(symbols), tt.wantMinSymbolCount,
+					"expected at least %d symbols, got %d", tt.wantMinSymbolCount, len(symbols))
+			}
+
+			for _, want := range tt.wantSymbols {
+				_, found := symbolSet[want]
+				assert.True(t, found, "expected symbol %q to be present", want)
+			}
+		})
+	}
+}
+
+func Test_elfNMSymbols_goReturnsSymbols(t *testing.T) {
+	// for Go binaries, elfNMSymbols should return symbols when Go toolchain is present
+	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
+		t.Helper()
+		f, err := os.Open(filepath.Join("test-fixtures/golang", fixture))
+		require.NoError(t, err)
+		return f
+	}
+
+	reader := readerForFixture(t, "bin/hello_linux")
+	f, err := elf.NewFile(reader)
+	require.NoError(t, err)
+
+	toolchains := []file.Toolchain{
+		{Name: "go", Version: "1.24", Kind: file.ToolchainKindCompiler},
+	}
+	cfg := SymbolConfig{
+		Types: []string{"T", "t"},
+		Go: GoSymbolConfig{
+			StandardLibrary:         true,
+			ExtendedStandardLibrary: true,
+			ThirdPartyModules:       true,
+			ExportedSymbols:         true,
+		},
+	}
+
+	symbols := elfNMSymbols(f, cfg, toolchains)
+	assert.NotNil(t, symbols, "expected symbols for Go binary")
+	assert.NotEmpty(t, symbols, "expected non-empty symbols for Go binary")
+}
+
+func Test_elfSymbolType(t *testing.T) {
+	tests := []struct {
+		name     string
+		sym      elf.Symbol
+		sections []*elf.Section
+		want     string
+	}{
+		{
+			name: "undefined symbol",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_NOTYPE),
+				Section: elf.SHN_UNDEF,
+			},
+			want: "U",
+		},
+		{
+			name: "absolute symbol global",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_NOTYPE),
+				Section: elf.SHN_ABS,
+			},
+			want: "A",
+		},
+		{
+			name: "absolute symbol local",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_LOCAL)<<4 | byte(elf.STT_NOTYPE),
+				Section: elf.SHN_ABS,
+			},
+			want: "a",
+		},
+		{
+			name: "common symbol",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_OBJECT),
+				Section: elf.SHN_COMMON,
+			},
+			want: "C",
+		},
+		{
+			name: "weak undefined symbol",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_WEAK)<<4 | byte(elf.STT_NOTYPE),
+				Section: elf.SHN_UNDEF,
+			},
+			want: "w",
+		},
+		{
+			name: "weak undefined object",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_WEAK)<<4 | byte(elf.STT_OBJECT),
+				Section: elf.SHN_UNDEF,
+			},
+			want: "v",
+		},
+		{
+			name: "text section global",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_FUNC),
+				Section: 1,
+			},
+			sections: []*elf.Section{
+				{SectionHeader: elf.SectionHeader{Type: elf.SHT_NULL}},                       // index 0: NULL section
+				{SectionHeader: elf.SectionHeader{Flags: elf.SHF_ALLOC | elf.SHF_EXECINSTR}}, // index 1: .text
+			},
+			want: "T",
+		},
+		{
+			name: "text section local",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_LOCAL)<<4 | byte(elf.STT_FUNC),
+				Section: 1,
+			},
+			sections: []*elf.Section{
+				{SectionHeader: elf.SectionHeader{Type: elf.SHT_NULL}},                       // index 0: NULL section
+				{SectionHeader: elf.SectionHeader{Flags: elf.SHF_ALLOC | elf.SHF_EXECINSTR}}, // index 1: .text
+			},
+			want: "t",
+		},
+		{
+			name: "data section global",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_OBJECT),
+				Section: 1,
+			},
+			sections: []*elf.Section{
+				{SectionHeader: elf.SectionHeader{Type: elf.SHT_NULL}},                   // index 0: NULL section
+				{SectionHeader: elf.SectionHeader{Flags: elf.SHF_ALLOC | elf.SHF_WRITE}}, // index 1: .data
+			},
+			want: "D",
+		},
+		{
+			name: "bss section global",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_OBJECT),
+				Section: 1,
+			},
+			sections: []*elf.Section{
+				{SectionHeader: elf.SectionHeader{Type: elf.SHT_NULL}},                                         // index 0: NULL section
+				{SectionHeader: elf.SectionHeader{Type: elf.SHT_NOBITS, Flags: elf.SHF_ALLOC | elf.SHF_WRITE}}, // index 1: .bss
+			},
+			want: "B",
+		},
+		{
+			name: "rodata section global",
+			sym: elf.Symbol{
+				Info:    byte(elf.STB_GLOBAL)<<4 | byte(elf.STT_OBJECT),
+				Section: 1,
+			},
+			sections: []*elf.Section{
+				{SectionHeader: elf.SectionHeader{Type: elf.SHT_NULL}},   // index 0: NULL section
+				{SectionHeader: elf.SectionHeader{Flags: elf.SHF_ALLOC}}, // index 1: .rodata (no write flag = read-only)
+			},
+			want: "R",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := elfSymbolType(tt.sym, tt.sections)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
