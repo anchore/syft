@@ -1169,7 +1169,11 @@
         },
         "osCPE": {
           "type": "string",
-          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)\n\nDeprecated: in Syft 2.0 the struct tag will be corrected to `osCpe` to match the systemd spec casing."
+        },
+        "appCpe": {
+          "type": "string",
+          "description": "AppCpe is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)"
         },
         "os": {
           "type": "string",
@@ -1648,19 +1652,11 @@
           },
           "type": "array",
           "description": "ArchiveDigests is cryptographic hashes of the archive file"
-        },
-        "containedPackages": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "ContainedPackages is a list of all package names contained in the jar"
         }
       },
       "type": "object",
       "required": [
-        "virtualPath",
-        "containedPackages"
+        "virtualPath"
       ],
       "description": "JavaArchive encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship."
     },
