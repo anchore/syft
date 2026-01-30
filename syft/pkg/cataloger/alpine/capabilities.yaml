@@ -1,0 +1,54 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: alpine # MANUAL
+    name: apk-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/alpine/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - alpine
+      - apk
+      - directory
+      - image
+      - installed
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseApkDB
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/lib/apk/db/installed'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ApkDBEntry
+        package_types: # AUTO-GENERATED
+          - apk
+        json_schema_types: # AUTO-GENERATED
+          - ApkDbEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - ApkDBEntry.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - ApkDBEntry.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - ApkDBEntry.Checksum

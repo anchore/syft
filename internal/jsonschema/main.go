@@ -158,20 +158,18 @@ func build() *jsonschema.Schema {
 	// ensure the generated list of names is stable between runs
 	sort.Strings(metadataNames)
 
-	metadataTypes := []map[string]string{
+	metadataTypes := []*jsonschema.Schema{
 		// allow for no metadata to be provided
-		{"type": "null"},
+		{Type: "null"},
 	}
 	for _, name := range metadataNames {
-		metadataTypes = append(metadataTypes, map[string]string{
-			"$ref": fmt.Sprintf("#/$defs/%s", name),
+		metadataTypes = append(metadataTypes, &jsonschema.Schema{
+			Ref: fmt.Sprintf("#/$defs/%s", name),
 		})
 	}
 
 	// set the "anyOf" field for Package.Metadata to be a conjunction of several types
-	documentSchema.Definitions["Package"].Properties.Set("metadata", map[string][]map[string]string{
-		"anyOf": metadataTypes,
-	})
+	documentSchema.Definitions["Package"].Properties.Set("metadata", &jsonschema.Schema{AnyOf: metadataTypes})
 
 	// warn about missing descriptions
 	warnMissingDescriptions(documentSchema, metadataNames)

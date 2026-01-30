@@ -1,0 +1,75 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: bitnami # MANUAL
+    name: bitnami-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/bitnami/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - bitnami
+      - image
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseComponentsJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - /opt/bitnami/.bitnami_components.json
+        metadata_types: # AUTO-GENERATED
+          - pkg.BitnamiSBOMEntry
+        package_types: # AUTO-GENERATED
+          - bitnami
+        json_schema_types: # AUTO-GENERATED
+          - BitnamiSbomEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+            comment: legacy components.json format does not include license information
+          - name: dependency.depth
+            default: []
+            comment: legacy format has no dependency relationships
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+            comment: digest field exists but is not captured in metadata
+      - function: parseSBOM
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - /opt/bitnami/**/.spdx-*.spdx
+        metadata_types: # AUTO-GENERATED
+          - pkg.BitnamiSBOMEntry
+        package_types: # AUTO-GENERATED
+          - bitnami
+        json_schema_types: # AUTO-GENERATED
+          - BitnamiSbomEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - BitnamiSBOMEntry.Files
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

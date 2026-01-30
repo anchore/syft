@@ -1,0 +1,43 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: r # MANUAL
+    name: r-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/r/cataloger.go
+      function: NewPackageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - r
+    parsers: # AUTO-GENERATED structure
+      - function: parseDescriptionFile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/DESCRIPTION'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RDescription
+        package_types: # AUTO-GENERATED
+          - R-package
+        json_schema_types: # AUTO-GENERATED
+          - RDescription
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

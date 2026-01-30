@@ -1,0 +1,255 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  python.CatalogerConfig:
+    fields:
+      - key: GuessUnpinnedRequirements
+        description: GuessUnpinnedRequirements attempts to infer package versions from version constraints when no explicit version is specified in requirements files.
+        app_key: python.guess-unpinned-requirements
+      - key: SearchRemoteLicenses
+        description: SearchRemoteLicenses enables querying the PyPI registry API to retrieve license information for packages that are missing license data in their local metadata.
+        app_key: python.search-remote-licenses
+      - key: PypiBaseURL
+        description: PypiBaseURL specifies the base URL for the Pypi registry API used when searching for remote license information.
+        app_key: python.pypi-base-url
+catalogers:
+  - ecosystem: python # MANUAL
+    name: python-installed-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/python/cataloger.go
+      function: NewInstalledPackageCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - package
+      - python
+    parsers: # AUTO-GENERATED structure
+      - function: parseWheelOrEgg
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.egg-info'
+            - '**/*dist-info/METADATA'
+            - '**/*egg-info/PKG-INFO'
+            - '**/*DIST-INFO/METADATA'
+            - '**/*EGG-INFO/PKG-INFO'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPackage
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - PythonPackage.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - PythonPackage.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: python # MANUAL
+    name: python-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/python/cataloger.go
+      function: NewPackageCataloger
+    config: python.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - package
+      - python
+    parsers: # AUTO-GENERATED structure
+      - function: parsePdmLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pdm.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPdmLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPdmLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+              - optional
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseUvLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/uv.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonUvLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonUvLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+              - optional
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseSetupFile
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/setup.py'
+        package_types: # AUTO-GENERATED
+          - python
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - any
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parsePipfileLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Pipfile.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPipfileLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPipfileLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - PythonPipfileLockEntry.Hashes
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parsePoetryLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/poetry.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonPoetryLockEntry
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPoetryLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+              - optional
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+      - function: parseRequirementsTxt
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*requirements*.txt'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PythonRequirementsEntry
+        package_types: # AUTO-GENERATED
+          - python
+        json_schema_types: # AUTO-GENERATED
+          - PythonPipRequirementsEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - any
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

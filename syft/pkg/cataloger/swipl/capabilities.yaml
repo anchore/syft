@@ -1,0 +1,43 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: prolog # MANUAL
+    name: swipl-pack-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/swipl/cataloger.go
+      function: NewSwiplPackCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - language
+      - pack
+      - package
+      - swipl
+    parsers: # AUTO-GENERATED structure
+      - function: parsePackPackage
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pack.pl'
+        metadata_types: # AUTO-GENERATED
+          - pkg.SwiplPackEntry
+        package_types: # AUTO-GENERATED
+          - swiplpack
+        json_schema_types: # AUTO-GENERATED
+          - SwiplpackPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

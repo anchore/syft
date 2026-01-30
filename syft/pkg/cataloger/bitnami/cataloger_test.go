@@ -448,6 +448,109 @@ func TestBitnamiCataloger(t *testing.T) {
 		},
 	}
 
+	mongodbComponentsPkgs := []pkg.Package{
+		{
+			Name:      "gosu",
+			Version:   "1.14.0-1",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/.bitnami_components.json")),
+			FoundBy:   catalogerName,
+			PURL:      "pkg:bitnami/gosu@1.14.0-1?arch=amd64&distro=debian-10",
+			Metadata: &pkg.BitnamiSBOMEntry{
+				Name:         "gosu",
+				Version:      "1.14.0",
+				Revision:     "1",
+				Architecture: "amd64",
+				Distro:       "debian-10",
+				Path:         "opt/bitnami/gosu",
+			},
+		},
+		{
+			Name:      "mongodb",
+			Version:   "4.4.11-2",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/.bitnami_components.json")),
+			FoundBy:   catalogerName,
+			PURL:      "pkg:bitnami/mongodb@4.4.11-2?arch=amd64&distro=debian-10",
+			Metadata: &pkg.BitnamiSBOMEntry{
+				Name:         "mongodb",
+				Version:      "4.4.11",
+				Revision:     "2",
+				Architecture: "amd64",
+				Distro:       "debian-10",
+				Path:         "opt/bitnami/mongodb",
+			},
+		},
+		{
+			Name:      "render-template",
+			Version:   "1.0.1-5",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/.bitnami_components.json")),
+			FoundBy:   catalogerName,
+			PURL:      "pkg:bitnami/render-template@1.0.1-5?arch=amd64&distro=debian-10",
+			Metadata: &pkg.BitnamiSBOMEntry{
+				Name:         "render-template",
+				Version:      "1.0.1",
+				Revision:     "5",
+				Architecture: "amd64",
+				Distro:       "debian-10",
+				Path:         "opt/bitnami/render-template",
+			},
+		},
+		{
+			Name:      "wait-for-port",
+			Version:   "1.0.1-5",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/.bitnami_components.json")),
+			FoundBy:   catalogerName,
+			PURL:      "pkg:bitnami/wait-for-port@1.0.1-5?arch=amd64&distro=debian-10",
+			Metadata: &pkg.BitnamiSBOMEntry{
+				Name:         "wait-for-port",
+				Version:      "1.0.1",
+				Revision:     "5",
+				Architecture: "amd64",
+				Distro:       "debian-10",
+				Path:         "opt/bitnami/wait-for-port",
+			},
+		},
+		{
+			Name:      "yq",
+			Version:   "4.16.2-2",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/.bitnami_components.json")),
+			FoundBy:   catalogerName,
+			PURL:      "pkg:bitnami/yq@4.16.2-2?arch=amd64&distro=debian-10",
+			Metadata: &pkg.BitnamiSBOMEntry{
+				Name:         "yq",
+				Version:      "4.16.2",
+				Revision:     "2",
+				Architecture: "amd64",
+				Distro:       "debian-10",
+				Path:         "opt/bitnami/yq",
+			},
+		},
+	}
+	pkg.Sort(mongodbComponentsPkgs)
+
+	postgresqlComponentsPkgs := []pkg.Package{
+		{
+			Name:      "postgresql",
+			Version:   "11.22.0-4",
+			Type:      pkg.BitnamiPkg,
+			Locations: file.NewLocationSet(file.NewLocation("opt/bitnami/.bitnami_components.json")),
+			FoundBy:   catalogerName,
+			PURL:      "pkg:bitnami/postgresql@11.22.0-4?arch=amd64&distro=debian-11",
+			Metadata: &pkg.BitnamiSBOMEntry{
+				Name:         "postgresql",
+				Version:      "11.22.0",
+				Revision:     "4",
+				Architecture: "amd64",
+				Distro:       "debian-11",
+				Path:         "opt/bitnami/postgresql",
+			},
+		},
+	}
+
 	tests := []struct {
 		name              string
 		fixture           string
@@ -488,6 +591,20 @@ func TestBitnamiCataloger(t *testing.T) {
 			fixture:           "test-fixtures/no-rel",
 			wantPkgs:          []pkg.Package{redisMainPkg},
 			wantRelationships: nil,
+		},
+		{
+			name:              "parse legacy .bitnami_components.json (MongoDB with multiple components)",
+			fixture:           "test-fixtures/components-json-mongodb",
+			wantPkgs:          mongodbComponentsPkgs,
+			wantRelationships: nil,
+			wantErr:           require.NoError,
+		},
+		{
+			name:              "parse legacy .bitnami_components.json (PostgreSQL single component, no digest)",
+			fixture:           "test-fixtures/components-json-postgresql",
+			wantPkgs:          postgresqlComponentsPkgs,
+			wantRelationships: nil,
+			wantErr:           require.NoError,
 		},
 	}
 

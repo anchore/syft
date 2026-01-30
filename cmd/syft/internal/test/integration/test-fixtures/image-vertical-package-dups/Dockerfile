@@ -7,16 +7,16 @@ FROM --platform=linux/amd64 rockylinux:9.3.20231119@sha256:d644d203142cd5b54ad2a
 # copying the RPM DB from each stage to a final stage in separate layers. This will result in a much smaller image.
 
 FROM base AS stage1
-RUN dnf install -y wget-1.21.1-8.el9_4
+RUN dnf install -y wget
 
 FROM stage1 AS stage2
-RUN dnf update -y curl-minimal-7.76.1-31.el9_6.1
+RUN dnf update -y curl-minimal
 
 FROM stage2 AS stage3
-RUN dnf install -y vsftpd-3.0.5-6.el9
+RUN dnf install -y vsftpd
 
 FROM stage3 AS stage4
-RUN dnf install -y httpd-2.4.62-4.el9_6.4
+RUN dnf install -y httpd
 
 FROM scratch
 

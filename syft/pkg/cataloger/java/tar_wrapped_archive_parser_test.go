@@ -34,6 +34,13 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 				"byte-buddy",
 			},
 		},
+		{
+			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.tgz",
+			expected: []string{
+				"example-java-app-maven",
+				"joda-time",
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(path.Base(test.fixture), func(t *testing.T) {

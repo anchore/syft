@@ -11,7 +11,6 @@ function cleanup() {
 }
 
 trap cleanup EXIT
-set +e
 
 docker cp "$(pwd)/example-jenkins-plugin" "${CTRID}:/"
 docker start -a "${CTRID}"

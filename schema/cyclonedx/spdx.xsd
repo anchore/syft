@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified"
            targetNamespace="http://cyclonedx.org/schema/spdx"
-           version="1.0-3.26.0">
+           version="1.0-3.27.0">
 
     <xs:simpleType name="licenseId">
         <xs:restriction base="xs:string">
@@ -242,6 +242,16 @@
                     <xs:documentation>Artistic License 2.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="Artistic-dist">
+                <xs:annotation>
+                    <xs:documentation>Artistic License 1.0 (dist)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Aspell-RU">
+                <xs:annotation>
+                    <xs:documentation>Aspell Russian License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="ASWF-Digital-Assets-1.0">
                 <xs:annotation>
                     <xs:documentation>ASWF Digital Assets License version 1.0</xs:documentation>
@@ -365,6 +375,11 @@
             <xs:enumeration value="BSD-2-Clause-Patent">
                 <xs:annotation>
                     <xs:documentation>BSD-2-Clause Plus Patent License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="BSD-2-Clause-pkgconf-disclaimer">
+                <xs:annotation>
+                    <xs:documentation>BSD 2-Clause pkgconf disclaimer variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="BSD-2-Clause-Views">
@@ -1027,6 +1042,11 @@
                     <xs:documentation>Crossword License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="CryptoSwift">
+                <xs:annotation>
+                    <xs:documentation>CryptoSwift License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="CrystalStacker">
                 <xs:annotation>
                     <xs:documentation>CrystalStacker License</xs:documentation>
@@ -1080,6 +1100,11 @@
             <xs:enumeration value="DOC">
                 <xs:annotation>
                     <xs:documentation>DOC License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="DocBook-DTD">
+                <xs:annotation>
+                    <xs:documentation>DocBook DTD License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="DocBook-Schema">
@@ -1272,9 +1297,24 @@
                     <xs:documentation>FSF Unlimited License (with License Retention)</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="FSFULLRSD">
+                <xs:annotation>
+                    <xs:documentation>FSF Unlimited License (with License Retention and Short Disclaimer)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="FSFULLRWD">
                 <xs:annotation>
                     <xs:documentation>FSF Unlimited License (With License Retention and Warranty Disclaimer)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="FSL-1.1-ALv2">
+                <xs:annotation>
+                    <xs:documentation>Functional Source License, Version 1.1, ALv2 Future License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="FSL-1.1-MIT">
+                <xs:annotation>
+                    <xs:documentation>Functional Source License, Version 1.1, MIT Future License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="FTL">
@@ -1290,6 +1330,11 @@
             <xs:enumeration value="fwlw">
                 <xs:annotation>
                     <xs:documentation>fwlw License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Game-Programming-Gems">
+                <xs:annotation>
+                    <xs:documentation>Game Programming Gems License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="GCR-docs">
@@ -1562,6 +1607,11 @@
                     <xs:documentation>Haskell Language Report License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="HDF5">
+                <xs:annotation>
+                    <xs:documentation>HDF5 License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="hdparm">
                 <xs:annotation>
                     <xs:documentation>hdparm License</xs:documentation>
@@ -1812,6 +1862,11 @@
                     <xs:documentation>JasPer License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="jove">
+                <xs:annotation>
+                    <xs:documentation>Jove License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="JPL-image">
                 <xs:annotation>
                     <xs:documentation>JPL Image Use Policy</xs:documentation>
@@ -1935,6 +1990,11 @@
             <xs:enumeration value="Libpng">
                 <xs:annotation>
                     <xs:documentation>libpng License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="libpng-1.6.35">
+                <xs:annotation>
+                    <xs:documentation>PNG Reference Library License v1 (for libpng 0.5 through 1.6.35)</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="libpng-2.0">
@@ -2085,6 +2145,11 @@
             <xs:enumeration value="MakeIndex">
                 <xs:annotation>
                     <xs:documentation>MakeIndex License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="man2html">
+                <xs:annotation>
+                    <xs:documentation>man2html License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Martin-Birgmeier">
@@ -2337,6 +2402,11 @@
                     <xs:documentation>Nethack General Public License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="ngrep">
+                <xs:annotation>
+                    <xs:documentation>ngrep License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="NICTA-1.0">
                 <xs:annotation>
                     <xs:documentation>NICTA Public Software License, Version 1.0</xs:documentation>
@@ -2405,6 +2475,11 @@
             <xs:enumeration value="NRL">
                 <xs:annotation>
                     <xs:documentation>NRL License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="NTIA-PD">
+                <xs:annotation>
+                    <xs:documentation>NTIA Public Domain Notice</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="NTP">
@@ -2967,6 +3042,11 @@
                     <xs:documentation>snprintf License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="SOFA">
+                <xs:annotation>
+                    <xs:documentation>SOFA Software License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="softSurfer">
                 <xs:annotation>
                     <xs:documentation>softSurfer License</xs:documentation>
@@ -3030,6 +3110,11 @@
             <xs:enumeration value="SugarCRM-1.1.3">
                 <xs:annotation>
                     <xs:documentation>SugarCRM Public License v1.1.3</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="SUL-1.0">
+                <xs:annotation>
+                    <xs:documentation>Sustainable Use License v1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Sun-PPP">
@@ -3200,6 +3285,16 @@
             <xs:enumeration value="Unlicense">
                 <xs:annotation>
                     <xs:documentation>The Unlicense</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Unlicense-libtelnet">
+                <xs:annotation>
+                    <xs:documentation>Unlicense - libtelnet variant</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Unlicense-libwhirlpool">
+                <xs:annotation>
+                    <xs:documentation>Unlicense - libwhirlpool variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="UPL-1.0">
@@ -3483,6 +3578,11 @@
                     <xs:documentation>cryptsetup OpenSSL exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="Digia-Qt-LGPL-exception-1.1">
+                <xs:annotation>
+                    <xs:documentation>Digia Qt LGPL Exception version 1.1</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="DigiRule-FOSS-exception">
                 <xs:annotation>
                     <xs:documentation>DigiRule FOSS License Exception</xs:documentation>
@@ -3691,6 +3791,11 @@
             <xs:enumeration value="PCRE2-exception">
                 <xs:annotation>
                     <xs:documentation>PCRE2 exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="polyparse-exception">
+                <xs:annotation>
+                    <xs:documentation>Polyparse Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="PS-or-PDF-font-exception-20170817">

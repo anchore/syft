@@ -1,0 +1,167 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  javascript.CatalogerConfig:
+    fields:
+      - key: SearchRemoteLicenses
+        description: SearchRemoteLicenses enables querying the NPM registry API to retrieve license information for packages that are missing license data in their local metadata.
+        app_key: javascript.search-remote-licenses
+      - key: NPMBaseURL
+        description: NPMBaseURL specifies the base URL for the NPM registry API used when searching for remote license information.
+        app_key: javascript.npm-base-url
+      - key: IncludeDevDependencies
+        description: IncludeDevDependencies controls whether development dependencies should be included in the catalog results, in addition to production dependencies.
+        app_key: javascript.include-dev-dependencies
+catalogers:
+  - ecosystem: javascript # MANUAL
+    name: javascript-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/javascript/cataloger.go
+      function: NewLockCataloger
+    config: javascript.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - javascript
+      - language
+      - node
+      - npm
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePnpmLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/pnpm-lock.yaml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PnpmLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptPnpmLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+      - function: parseYarnLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/yarn.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.YarnLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptYarnLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - YarnLockEntry.Integrity
+      - function: parsePackageLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/package-lock.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmPackageLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmPackageLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - NpmPackageLockEntry.Integrity
+  - ecosystem: javascript # MANUAL
+    name: javascript-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/javascript/cataloger.go
+      function: NewPackageCataloger
+    selectors: # AUTO-GENERATED
+      - image
+      - installed
+      - javascript
+      - language
+      - node
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePackageJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/package.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmPackage
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

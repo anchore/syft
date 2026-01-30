@@ -13,13 +13,16 @@ jobs:
 
   Publish:
     name: "Publish test fixture image cache"
-    # we use this runner to get enough storage space for docker images and fixture cache
-    runs-on: ubuntu-22.04-4core-16gb
+    # runs-on.com: general purpose instances for building test fixture cache
+    #   spot disabled: can run up to an hour, avoid interruptions
+    #   s3-cache: faster actions cache
+    #   family: note that m*d instances have local nvme storage which is beneficial for building large test fixture images
+    runs-on: "runs-on=${{ github.run_id }}/cpu=8+16/ram=32+64/family=m5d+m5ad+m5dn+m6gd+m6id+m6idn+m7gd+m8gd/spot=false/extras=s3-cache"
     if: github.repository == 'anchore/syft' # only run for main repo
     permissions:
       packages: write
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -30,7 +33,8 @@ jobs:
           download-test-fixture-cache: false
 
       - name: Run all tests
-        run: make test
+        run: |
+          make test
         env:
           # we want to rebuild the cache with no previous state
           DOWNLOAD_TEST_FIXTURE_CACHE: "false"

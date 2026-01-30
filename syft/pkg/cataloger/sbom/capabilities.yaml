@@ -1,0 +1,49 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: sbom # MANUAL
+    name: sbom-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/sbom/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - package
+      - sbom
+    parsers: # AUTO-GENERATED structure
+      - function: parseSBOM
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.syft.json'
+            - '**/*.bom.*'
+            - '**/*.bom'
+            - '**/bom'
+            - '**/*.sbom.*'
+            - '**/*.sbom'
+            - '**/sbom'
+            - '**/*.cdx.*'
+            - '**/*.cdx'
+            - '**/*.spdx.*'
+            - '**/*.spdx'
+        metadata_types: # AUTO-GENERATED
+          - pkg.ApkDBEntry
+        package_types: # AUTO-GENERATED
+          - apk
+        json_schema_types: # AUTO-GENERATED
+          - ApkDbEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

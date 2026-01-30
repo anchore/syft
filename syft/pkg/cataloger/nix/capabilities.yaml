@@ -1,0 +1,101 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  nix.Config:
+    fields:
+      - key: CaptureOwnedFiles
+        description: CaptureOwnedFiles determines whether to record the list of files owned by each Nix package discovered in the store. Recording owned files provides more detailed information but increases processing time and memory usage.
+        app_key: nix.capture-owned-files
+catalogers:
+  - ecosystem: nix # MANUAL
+    name: nix-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - installed
+      - language
+      - nix
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/nix/var/nix/db/db.sqlite'
+          - '**/nix/store/*'
+          - '**/nix/store/*.drv'
+    metadata_types: # AUTO-GENERATED
+      - pkg.NixStoreEntry
+    package_types: # AUTO-GENERATED
+      - nix
+    json_schema_types: # AUTO-GENERATED
+      - NixStoreEntry
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default:
+          - direct
+          - indirect
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+      - name: package_manager.files.listing
+        default: true
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: true
+        evidence:
+          - NixStoreEntry.OutputHash
+  - ecosystem: nix # MANUAL
+    name: nix-store-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    config: nix.Config # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/nix/store/*'
+          - '**/nix/store/*.drv'
+    metadata_types: # AUTO-GENERATED
+      - pkg.NixStoreEntry
+    package_types: # AUTO-GENERATED
+      - nix
+    json_schema_types: # AUTO-GENERATED
+      - NixStoreEntry
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default:
+          - direct
+          - indirect
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+      - name: package_manager.files.listing
+        default: false
+        conditions:
+          - when:
+              CaptureOwnedFiles: true
+            value: true
+        evidence:
+          - NixStoreEntry.Files
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: true
+        evidence:
+          - NixStoreEntry.OutputHash
