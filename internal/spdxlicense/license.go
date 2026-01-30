@@ -41,40 +41,24 @@ type LicenseInfo struct {
 	ID string
 }
 
-// LicenseByURL returns the license ID and name for a given URL from the SPDX license list
+// LicenseByURL returns the license ID and name for a given URL from the SPDX license list.
 // The URL should match one of the URLs in the seeAlso field of an SPDX license.
-// If the exact URL is not found, it will also try the alternate scheme (http ↔ https)
-// since URLs in the wild may use either scheme regardless of what's in the SPDX list.
+// The scheme (http:// or https://) is stripped before lookup, so both schemes match.
 func LicenseByURL(url string) (LicenseInfo, bool) {
 	url = strings.TrimSpace(url)
+	url = stripScheme(url)
 	if id, exists := urlToLicense[url]; exists {
 		return LicenseInfo{
 			ID: id,
 		}, true
 	}
-
-	// try alternate scheme (http ↔ https)
-	altURL := alternateScheme(url)
-	if altURL != "" {
-		if id, exists := urlToLicense[altURL]; exists {
-			return LicenseInfo{
-				ID: id,
-			}, true
-		}
-	}
-
 	return LicenseInfo{}, false
 }
 
-// alternateScheme returns the URL with the alternate scheme (http ↔ https).
-// Returns empty string if the URL doesn't start with http:// or https://.
-func alternateScheme(url string) string {
-	switch {
-	case strings.HasPrefix(url, "https://"):
-		return "http://" + strings.TrimPrefix(url, "https://")
-	case strings.HasPrefix(url, "http://"):
-		return "https://" + strings.TrimPrefix(url, "http://")
-	default:
-		return ""
-	}
+// stripScheme removes http:// or https:// prefix from a URL.
+// This allows a single map entry to match both schemes.
+func stripScheme(url string) string {
+	url = strings.TrimPrefix(url, "https://")
+	url = strings.TrimPrefix(url, "http://")
+	return url
 }

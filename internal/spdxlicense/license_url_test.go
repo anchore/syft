@@ -123,34 +123,34 @@ func TestLicenseByURL_AlternateScheme(t *testing.T) {
 	}
 }
 
-func TestAlternateScheme(t *testing.T) {
+func TestStripScheme(t *testing.T) {
 	tests := []struct {
 		name string
 		url  string
 		want string
 	}{
 		{
-			name: "https to http",
+			name: "https scheme stripped",
 			url:  "https://example.com/license",
-			want: "http://example.com/license",
+			want: "example.com/license",
 		},
 		{
-			name: "http to https",
+			name: "http scheme stripped",
 			url:  "http://example.com/license",
-			want: "https://example.com/license",
+			want: "example.com/license",
 		},
 		{
-			name: "ftp scheme returns empty",
+			name: "ftp scheme not stripped",
 			url:  "ftp://example.com/license",
-			want: "",
+			want: "ftp://example.com/license",
 		},
 		{
-			name: "no scheme returns empty",
+			name: "no scheme unchanged",
 			url:  "example.com/license",
-			want: "",
+			want: "example.com/license",
 		},
 		{
-			name: "empty string returns empty",
+			name: "empty string unchanged",
 			url:  "",
 			want: "",
 		},
@@ -158,9 +158,9 @@ func TestAlternateScheme(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := alternateScheme(tt.url)
+			got := stripScheme(tt.url)
 			if got != tt.want {
-				t.Errorf("alternateScheme() = %v, want %v", got, tt.want)
+				t.Errorf("stripScheme() = %v, want %v", got, tt.want)
 			}
 		})
 	}
