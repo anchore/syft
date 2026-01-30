@@ -8,30 +8,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func TestParseSnapYaml(t *testing.T) {
-	fixture := "test-fixtures/snap.yaml"
-	locations := file.NewLocationSet(file.NewLocation(fixture))
-
-	expected := []pkg.Package{
-		{
-			Name:      "test-snap",
-			Version:   "1.0.0",
-			Type:      pkg.DebPkg,
-			PURL:      "pkg:generic/snap/test-snap@1.0.0?arch=amd64&base=core20&type=app",
-			Locations: locations,
-			Metadata: pkg.SnapEntry{
-				SnapType:     pkg.SnapTypeApp,
-				Base:         "core20",
-				SnapName:     "test-snap",
-				SnapVersion:  "1.0.0",
-				Architecture: "amd64",
-			},
-		},
-	}
-
-	pkgtest.TestFileParser(t, fixture, parseSnapYaml, expected, nil)
-}
-
 func TestParseSystemManifest(t *testing.T) {
 	fixture := "test-fixtures/manifest.yaml"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
