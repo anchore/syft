@@ -25,6 +25,7 @@ type pnpmPackage struct {
 	Version      string
 	Integrity    string
 	Dependencies map[string]string
+	Dev          bool
 }
 
 // pnpmLockfileParser defines the interface for parsing different versions of pnpm lockfiles.
@@ -35,6 +36,7 @@ type pnpmLockfileParser interface {
 type pnpmV6PackageEntry struct {
 	Resolution   map[string]string `yaml:"resolution"`
 	Dependencies map[string]string `yaml:"dependencies"`
+	Dev          bool              `yaml:"dev"`
 }
 
 // pnpmV6LockYaml represents the structure of pnpm lockfiles for versions < 9.0.
@@ -53,6 +55,7 @@ type pnpmV9SnapshotEntry struct {
 type pnpmV9PackageEntry struct {
 	Resolution       map[string]string `yaml:"resolution"`
 	PeerDependencies map[string]string `yaml:"peerDependencies"`
+	Dev              bool              `yaml:"dev"`
 }
 
 // pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
@@ -117,7 +120,7 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 			dependencies[depName] = normalizedVersion
 		}
 
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrity, Dependencies: dependencies}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrity, Dependencies: dependencies, Dev: pkgInfo.Dev}
 	}
 
 	return toSortedSlice(packages), nil
@@ -141,7 +144,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"]}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
 	}
 
 	for key, snapshotInfo := range p.Snapshots {
@@ -199,9 +202,12 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
 	}
 
-	packages := make([]pkg.Package, len(pnpmPkgs))
-	for i, p := range pnpmPkgs {
-		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies)
+	packages := make([]pkg.Package, 0, len(pnpmPkgs))
+	for _, p := range pnpmPkgs {
+		if p.Dev && !a.cfg.IncludeDevDependencies {
+			continue
+		}
+		packages = append(packages, newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
 	}
 
 	return packages, dependency.Resolve(pnpmLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")

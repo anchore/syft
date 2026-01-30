@@ -373,6 +373,9 @@ tasks:
     # this will look for `test-fixtures/Makefile` and invoke the `fixtures` target to generate any and all test fixtures
     cmds:
       - |
+        # we want to stop on the first build error
+        set -e
+
         BOLD='\033[1m'
         YELLOW='\033[0;33m'
         RESET='\033[0m'
@@ -381,7 +384,7 @@ tasks:
         for dir in $(find . -type d -name 'test-fixtures'); do
           if [ -f "$dir/Makefile" ]; then
             echo -e "${YELLOW}${BOLD}generating fixtures in $dir${RESET}"
-            (make -C "$dir" fixtures)
+            make -C "$dir" fixtures
           fi
         done
         echo -e "${BOLD}generated all fixtures${RESET}"

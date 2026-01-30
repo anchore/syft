@@ -11,7 +11,6 @@ function cleanup() {
 }
 
 trap cleanup EXIT
-set +e
 
 docker cp "$(pwd)/example-java-app" "${CTRID}:/"
 docker start -a "${CTRID}"

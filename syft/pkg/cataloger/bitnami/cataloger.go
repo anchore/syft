@@ -23,6 +23,9 @@ func NewCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseSBOM,
 			"/opt/bitnami/**/.spdx-*.spdx",
+		).
+		WithParserByGlobs(parseComponentsJSON,
+			"/opt/bitnami/.bitnami_components.json",
 		)
 }
 

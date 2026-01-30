@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -181,6 +182,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/mariadb@10.6.15",
 				Locations: locations("mariadb"),
 				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/8.0.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "8.0.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@8.0.17",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/7.0.28/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "7.0.28",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@7.0.28",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/6.0.27/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "6.0.27",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@6.0.27",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/5.0.32/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "5.0.32",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@5.0.32",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/4.4.30/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "4.4.30",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@4.4.30",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
 			},
 		},
 		{
@@ -492,6 +548,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// no python binary, but we find libpython, which is surfaced as primary evidence
 			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
@@ -501,7 +558,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("python-binary-lib"),
 			},
 		},
-
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "python-slim-shared-libs/3.11/linux-amd64",
@@ -514,7 +570,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.11"),
 						match("python-binary", "libpython3.11.so.1.0"),
-						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
 				},
 			},
@@ -531,7 +586,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 						match("python-binary", "libpython3.9.so.1.0"),
-						match("python-binary-lib", "libpython3.9.so.1.0"),
 					},
 				},
 			},
@@ -563,7 +617,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.4"),
 						match("python-binary", "libpython3.4m.so.1.0"),
-						match("python-binary-lib", "libpython3.4m.so.1.0"),
 					},
 				},
 			},
@@ -679,8 +732,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.15",
 				PURL:      "pkg:generic/go@1.15",
-				Locations: locations("VERSION"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -690,8 +743,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.25-d524e1e",
 				PURL:      "pkg:generic/go@1.25-d524e1e",
-				Locations: locations("VERSION.cache"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION.cache"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -1475,6 +1528,83 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.26.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.26.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.8.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.3.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.3.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.3.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.26.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.26.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.8.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "grafana/12.3.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "grafana",
@@ -1562,6 +1692,105 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("grafana-binary"),
 			},
 		},
+		{
+			logicalFixture: "envoy/1.36.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.36.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.36.4",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.34.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.34.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.34.5",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.28.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.28.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.28.7",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.22.11/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.22.11",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.22.11",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.20.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.20.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.20.7",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.18.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.18.6-dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.18.6-dev",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.14.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.14.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.14.3",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.11.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.11.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.11.0",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.6.0",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -1625,17 +1854,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, p := range packages {
-				expectedLocations := test.expected.Locations.ToSlice()
-				gotLocations := p.Locations.ToSlice()
-				require.Len(t, gotLocations, len(expectedLocations))
-
-				for i, expectedLocation := range expectedLocations {
-					gotLocation := gotLocations[i]
-					if expectedLocation.RealPath != gotLocation.RealPath {
-						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
-					}
-				}
-
 				assertPackagesAreEqual(t, test.expected, p)
 			}
 		})
@@ -1825,12 +2043,13 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	gotLocations := p.Locations.ToSlice()
 
 	if len(expectedLocations) != len(gotLocations) {
-		failMessages = append(failMessages, "locations are not equal length")
+		failMessages = append(failMessages, fmt.Sprintf("locations are not equal: %v != %v", expectedLocations, gotLocations))
 	} else {
-		for i, expectedLocation := range expectedLocations {
-			gotLocation := gotLocations[i]
-			if expectedLocation.RealPath != gotLocation.RealPath {
-				failMessages = append(failMessages, fmt.Sprintf("locations do not match; expected: %v got: %v", expectedLocation.RealPath, gotLocation.RealPath))
+		for _, expectedLocation := range expectedLocations {
+			if !slices.ContainsFunc(gotLocations, func(gotLocation file.Location) bool {
+				return gotLocation.RealPath == expectedLocation.RealPath
+			}) {
+				failMessages = append(failMessages, fmt.Sprintf("location not found; expected: %v in set: %v", expectedLocation.RealPath, gotLocations))
 			}
 		}
 	}
