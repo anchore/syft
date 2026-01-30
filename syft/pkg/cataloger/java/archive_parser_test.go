@@ -1837,18 +1837,18 @@ func Test_isValidMultiReleaseVersion(t *testing.T) {
 		{"8", false},
 
 		// Invalid versions - format errors
-		{"", false},          // empty string
-		{"0", false},         // zero not allowed (first digit must be 1-9)
-		{"01", false},        // leading zero
-		{"9a", false},        // contains non-digit
-		{"a9", false},        // starts with non-digit
-		{"abc", false},       // all non-digits
-		{"-1", false},        // negative (starts with non-digit)
-		{"9.0", false},       // contains non-digit (period)
-		{"11-ea", false},     // contains non-digit (dash and letters)
-		{" 9", false},        // leading space
-		{"9 ", false},        // trailing space
-		{"1.8", false},       // old-style version format
+		{"", false},      // empty string
+		{"0", false},     // zero not allowed (first digit must be 1-9)
+		{"01", false},    // leading zero
+		{"9a", false},    // contains non-digit
+		{"a9", false},    // starts with non-digit
+		{"abc", false},   // all non-digits
+		{"-1", false},    // negative (starts with non-digit)
+		{"9.0", false},   // contains non-digit (period)
+		{"11-ea", false}, // contains non-digit (dash and letters)
+		{" 9", false},    // leading space
+		{"9 ", false},    // trailing space
+		{"1.8", false},   // old-style version format
 	}
 
 	for _, tt := range tests {
