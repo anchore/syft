@@ -1671,8 +1671,7 @@
       },
       "type": "object",
       "required": [
-        "virtualPath",
-        "containedPackages"
+        "virtualPath"
       ],
       "description": "JavaArchive encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship."
     },
