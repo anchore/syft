@@ -425,6 +425,17 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/libQt*Core.so*'
+        packages:
+          - class: qt-qtbase-lib
+            name: qtbase
+            purl: pkg:generic/qtbase
+            cpes:
+              - cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/gcc'
         packages:
           - class: gcc-binary
