@@ -163,7 +163,8 @@ func cleanLicenseID(id string) string {
 	return strings.ReplaceAll(cleanID, "-", "")
 }
 
-// buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs
+// buildURLToLicenseMap creates a mapping from license URLs (from seeAlso fields) to license IDs.
+// URLs are stored without scheme (http:// or https://) so that a single lookup covers both.
 func buildURLToLicenseMap(result LicenseList) map[string]string {
 	urlMap := make(map[string]string)
 
@@ -175,7 +176,7 @@ func buildURLToLicenseMap(result LicenseList) map[string]string {
 			if replacement != nil {
 				// Map deprecated license URLs to the replacement license
 				for _, url := range l.SeeAlso {
-					urlMap[url] = replacement.ID
+					urlMap[stripScheme(url)] = replacement.ID
 				}
 			}
 			continue
@@ -183,9 +184,17 @@ func buildURLToLicenseMap(result LicenseList) map[string]string {
 
 		// Add URLs from non-deprecated licenses
 		for _, url := range l.SeeAlso {
-			urlMap[url] = l.ID
+			urlMap[stripScheme(url)] = l.ID
 		}
 	}
 
 	return urlMap
+}
+
+// stripScheme removes http:// or https:// prefix from a URL.
+// This allows a single map entry to match both schemes.
+func stripScheme(url string) string {
+	url = strings.TrimPrefix(url, "https://")
+	url = strings.TrimPrefix(url, "http://")
+	return url
 }
