@@ -8,18 +8,6 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func TestParseSnapYaml(t *testing.T) {
-	fixture := "test-fixtures/snap.yaml"
-
-	// snap.yaml contains metadata about the snap container itself, not about
-	// packages inside the snap. No packages should be created from this file -
-	// the actual contents (binaries, debs) are cataloged by their respective
-	// catalogers.
-	var expected []pkg.Package
-
-	pkgtest.TestFileParser(t, fixture, parseSnapYaml, expected, nil)
-}
-
 func TestParseSystemManifest(t *testing.T) {
 	fixture := "test-fixtures/manifest.yaml"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
