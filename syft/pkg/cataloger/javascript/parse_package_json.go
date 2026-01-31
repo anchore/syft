@@ -23,20 +23,21 @@ var _ generic.Parser = parsePackageJSON
 
 // packageJSON represents a JavaScript package.json file
 type packageJSON struct {
-	Version      string            `json:"version"`
-	Latest       []string          `json:"latest"`
-	Author       person            `json:"author"`
-	Authors      people            `json:"authors"`
-	Contributors people            `json:"contributors"`
-	Maintainers  people            `json:"maintainers"`
-	License      json.RawMessage   `json:"license"`
-	Licenses     json.RawMessage   `json:"licenses"`
-	Name         string            `json:"name"`
-	Homepage     string            `json:"homepage"`
-	Description  string            `json:"description"`
-	Dependencies map[string]string `json:"dependencies"`
-	Repository   repository        `json:"repository"`
-	Private      bool              `json:"private"`
+	Version         string            `json:"version"`
+	Latest          []string          `json:"latest"`
+	Author          person            `json:"author"`
+	Authors         people            `json:"authors"`
+	Contributors    people            `json:"contributors"`
+	Maintainers     people            `json:"maintainers"`
+	License         json.RawMessage   `json:"license"`
+	Licenses        json.RawMessage   `json:"licenses"`
+	Name            string            `json:"name"`
+	Homepage        string            `json:"homepage"`
+	Description     string            `json:"description"`
+	Dependencies    map[string]string `json:"dependencies"`
+	DevDependencies map[string]string `json:"devDependencies"`
+	Repository      repository        `json:"repository"`
+	Private         bool              `json:"private"`
 }
 
 type person struct {
