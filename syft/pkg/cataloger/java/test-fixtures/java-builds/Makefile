@@ -1,4 +1,4 @@
-PKGSDIR=packages 
+PKGSDIR=packages
 FINGERPRINT_FILE=$(PKGSDIR).fingerprint
 
 ifndef PKGSDIR
