@@ -737,6 +737,26 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "go-version-hint/1.15w/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
+				Locations: locations("bin/go.exe", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
+			logicalFixture: "go-version-hint/1.21/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.21",
+				PURL:      "pkg:generic/go@1.21",
+				Locations: locations("go", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			// note: this is for compatability with dev version of golang tip image, which resolves the issue #3681
 			logicalFixture: "go-version-hint/1.25/any",
 			expected: pkg.Package{
@@ -744,6 +764,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.25-d524e1e",
 				PURL:      "pkg:generic/go@1.25-d524e1e",
 				Locations: locations("bin/go", "VERSION.cache"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
+			logicalFixture: "go-version-hint/1.25w/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.25-d524e1e",
+				PURL:      "pkg:generic/go@1.25-d524e1e",
+				Locations: locations("go.exe", "VERSION"),
 				Metadata:  metadata("go-binary"),
 			},
 		},
