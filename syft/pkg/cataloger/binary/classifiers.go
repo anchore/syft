@@ -70,14 +70,16 @@ func DefaultClassifiers() []binutils.Classifier {
 		},
 		{
 			Class:    "go-binary",
-			FileGlob: "**/go",
+			FileGlob: "**/{go,go.exe}",
 			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
 					`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+				binutils.SupportingEvidenceMatcher("VERSION*",
+					m.FileContentsVersionMatcher(
+						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)\s`)),
 				binutils.SupportingEvidenceMatcher("../VERSION*",
 					m.FileContentsVersionMatcher(
-						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)\s`),
-				),
+						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)\s`)),
 			),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
