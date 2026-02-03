@@ -48,7 +48,7 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
-          - '**/go'
+          - '**/{go,go.exe}'
         packages:
           - class: go-binary
             name: go
