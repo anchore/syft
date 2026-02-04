@@ -41,14 +41,24 @@ type LicenseInfo struct {
 	ID string
 }
 
-// LicenseByURL returns the license ID and name for a given URL from the SPDX license list
-// The URL should match one of the URLs in the seeAlso field of an SPDX license
+// LicenseByURL returns the license ID and name for a given URL from the SPDX license list.
+// The URL should match one of the URLs in the seeAlso field of an SPDX license.
+// The scheme (http:// or https://) is stripped before lookup, so both schemes match.
 func LicenseByURL(url string) (LicenseInfo, bool) {
 	url = strings.TrimSpace(url)
+	url = stripScheme(url)
 	if id, exists := urlToLicense[url]; exists {
 		return LicenseInfo{
 			ID: id,
 		}, true
 	}
 	return LicenseInfo{}, false
+}
+
+// stripScheme removes http:// or https:// prefix from a URL.
+// This allows a single map entry to match both schemes.
+func stripScheme(url string) string {
+	url = strings.TrimPrefix(url, "https://")
+	url = strings.TrimPrefix(url, "http://")
+	return url
 }

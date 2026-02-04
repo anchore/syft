@@ -32,7 +32,7 @@ func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extend
 
 	var builds []*extendedBuildInfo
 	for _, r := range readers {
-		bi, err := getBuildInfo(r)
+		bi, err := getBuildInfo(r, location)
 		if err != nil {
 			log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang buildinfo")
 
@@ -89,7 +89,7 @@ func getCryptoSettingsFromVersion(v version.Version) []string {
 	return cryptoSettings
 }
 
-func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
+func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// this can happen in cases where a malformed binary is passed in can be initially parsed, but not
@@ -98,7 +98,25 @@ func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
 			err = fmt.Errorf("recovered from panic: %v", r)
 		}
 	}()
+
+	// try to read buildinfo from the binary directly
 	bi, err = buildinfo.Read(r)
+	if err == nil {
+		return bi, nil
+	}
+
+	// if direct read fails and this looks like a UPX-compressed binary,
+	// try to decompress and read the buildinfo from the decompressed data
+	if isUPXCompressed(r) {
+		log.WithFields("path", location.RealPath).Trace("detected UPX-compressed Go binary, attempting decompression to read the build info")
+		decompressed, decompErr := decompressUPX(r)
+		if decompErr == nil {
+			bi, err = buildinfo.Read(decompressed)
+			if err == nil {
+				return bi, nil
+			}
+		}
+	}
 
 	// note: the stdlib does not export the error we need to check for
 	if err != nil {
@@ -106,11 +124,11 @@ func getBuildInfo(r io.ReaderAt) (bi *debug.BuildInfo, err error) {
 			// since the cataloger can only select executables and not distinguish if they are a go-compiled
 			// binary, we should not show warnings/logs in this case. For this reason we nil-out err here.
 			err = nil
-			return
+			return bi, err
 		}
 		// in this case we could not read the or parse the file, but not explicitly because it is not a
 		// go-compiled binary (though it still might be).
-		return
+		return bi, err
 	}
-	return
+	return bi, err
 }

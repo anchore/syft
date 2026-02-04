@@ -1,6 +1,9 @@
 package options
 
-import "github.com/anchore/clio"
+import (
+	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/pkg/cataloger/python"
+)
 
 type pythonConfig struct {
 	SearchRemoteLicenses      *bool  `json:"search-remote-licenses" yaml:"search-remote-licenses" mapstructure:"search-remote-licenses"`
@@ -11,6 +14,13 @@ type pythonConfig struct {
 var _ interface {
 	clio.FieldDescriber
 } = (*pythonConfig)(nil)
+
+func defaultPythonConfig() pythonConfig {
+	def := python.DefaultCatalogerConfig()
+	return pythonConfig{
+		GuessUnpinnedRequirements: &def.GuessUnpinnedRequirements,
+	}
+}
 
 func (o *pythonConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchRemoteLicenses, `enables Syft to use the network to fill in more detailed license information`)

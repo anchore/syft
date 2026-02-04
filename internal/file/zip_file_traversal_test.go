@@ -317,7 +317,7 @@ func TestSafeJoin(t *testing.T) {
 	}
 }
 
-// TestSymlinkProtection demonstrates that SafeJoin protects against symlink-based
+// TestSafeJoin_SymlinkProtection demonstrates that SafeJoin protects against
 // directory traversal attacks by validating that archive entry paths cannot escape
 // the extraction directory.
 func TestSafeJoin_SymlinkProtection(t *testing.T) {

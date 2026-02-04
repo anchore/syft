@@ -110,12 +110,9 @@ func warnMissingDescriptions(schema *jsonschema.Schema, metadataNames []string) 
 
 		// check if fields have descriptions
 		if def.Properties != nil {
-			for _, fieldName := range def.Properties.Keys() {
-				fieldSchemaRaw, _ := def.Properties.Get(fieldName)
-				fieldSchema, ok := fieldSchemaRaw.(*jsonschema.Schema)
-				if !ok {
-					continue
-				}
+			for pair := def.Properties.Newest(); pair != nil; pair = pair.Prev() {
+				fieldName := pair.Key
+				fieldSchema := pair.Value
 
 				// skip if field has a description
 				if fieldSchema.Description != "" {

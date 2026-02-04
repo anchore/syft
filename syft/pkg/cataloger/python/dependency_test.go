@@ -181,6 +181,30 @@ func Test_poetryLockDependencySpecifier(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "dependency names with mixed case should be normalized",
+			p: pkg.Package{
+				Name: "dj-rest-auth",
+				Metadata: pkg.PythonPoetryLockEntry{
+					Dependencies: []pkg.PythonPoetryLockDependencyEntry{
+						{
+							Name:    "Django", // note: capital D
+							Version: ">=4.2,<6.0",
+						},
+						{
+							Name:    "djangorestframework",
+							Version: ">=3.13.0",
+						},
+					},
+				},
+			},
+			want: dependency.Specification{
+				ProvidesRequires: dependency.ProvidesRequires{
+					Provides: []string{"dj-rest-auth"},
+					Requires: []string{"django", "djangorestframework"}, // "Django" should be normalized to "django"
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -195,6 +219,38 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 		fixture string
 		want    []dependency.Specification
 	}{
+		{
+			name:    "case-insensitive dependency resolution",
+			fixture: "test-fixtures/poetry/case-sensitivity/poetry.lock",
+			want: []dependency.Specification{
+				// packages are in the order they appear in the lock file
+				{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"django"},
+						Requires: []string{"asgiref", "sqlparse"},
+					},
+				},
+				{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"djangorestframework"},
+						Requires: []string{"django"},
+					},
+				},
+				{
+					// dj-rest-auth depends on Django (capital D) which should resolve to django
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"dj-rest-auth"},
+						Requires: []string{"django", "djangorestframework"}, // Django normalized to django
+					},
+					Variants: []dependency.ProvidesRequires{
+						{
+							Provides: []string{"dj-rest-auth[with-social]"},
+							Requires: []string{"django-allauth"},
+						},
+					},
+				},
+			},
+		},
 		{
 			name:    "simple dependencies with extras",
 			fixture: "test-fixtures/poetry/simple-deps/poetry.lock",
@@ -272,6 +328,64 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 			if d := cmp.Diff(tt.want, got); d != "" {
 				t.Errorf("wrong result (-want +got):\n%s", d)
 			}
+		})
+	}
+}
+
+// Test_packageRef verifies that package references are normalized according to
+// the Python Packaging specification for names and extras:
+// https://packaging.python.org/en/latest/specifications/name-normalization/
+func Test_packageRef(t *testing.T) {
+	tests := []struct {
+		name  string
+		pkg   string
+		extra string
+		want  string
+	}{
+		{
+			name: "simple package name",
+			pkg:  "requests",
+			want: "requests",
+		},
+		{
+			name:  "package with extra",
+			pkg:   "requests",
+			extra: "security",
+			want:  "requests[security]",
+		},
+		{
+			name: "package name with mixed case",
+			pkg:  "Django",
+			want: "django",
+		},
+		{
+			name: "package name with underscores",
+			pkg:  "some_package",
+			want: "some-package",
+		},
+		{
+			name:  "package name with mixed case and extra",
+			pkg:   "Django",
+			extra: "argon2",
+			want:  "django[argon2]",
+		},
+		{
+			name:  "extra with mixed case",
+			pkg:   "package",
+			extra: "Security",
+			want:  "package[security]",
+		},
+		{
+			name:  "both with mixed case and separators",
+			pkg:   "Some_Package",
+			extra: "Dev_Extra",
+			want:  "some-package[dev-extra]",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := packageRef(tt.pkg, tt.extra)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

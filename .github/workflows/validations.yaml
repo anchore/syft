@@ -1,5 +1,7 @@
 name: "Validations"
 
+# we should cancel any in-progress runs for the same workflow + PR/ref
+# so that we can avoid redundant work / save on CI minutes
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -12,33 +14,39 @@ on:
       - main
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
-
   Static-Analysis:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Static analysis"
-    runs-on: ubuntu-24.04
+    # runs-on.com: memory & general purpose instances for testing
+    #   spot enabled: ok to interrupt non-production workloads
+    #   s3-cache: faster actions cache
+    #   tmpfs: faster io-intensive workflows
+    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/extras=s3-cache+tmpfs"
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
       - name: Bootstrap environment
         uses: ./.github/actions/bootstrap
+        with:
+          # the self-consistency tests for the output of the capabilities code generation depends on unit test
+          # output from  ./syft/pkg/... packages. Therefore we need to download the test fixture cache here
+          # so that running the few unit tests as part of static analysis works correctly.
+          download-test-fixture-cache: true
 
       - name: Run static analysis
         run: make static-analysis
 
-
   Unit-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
-    # we need more storage than what's on the default runner
-    runs-on: ubuntu-22.04-4core-16gb
+    runs-on: *test-runner
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -50,13 +58,12 @@ jobs:
       - name: Run unit tests
         run: make unit
 
-
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
-    runs-on: ubuntu-24.04
+    runs-on: *test-runner
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -71,12 +78,19 @@ jobs:
       - name: Run integration tests
         run: make integration
 
-
   Build-Snapshot-Artifacts:
     name: "Build snapshot artifacts"
-    runs-on: ubuntu-24.04
+    # runs-on.com: compute instances for parallel builds
+    #   spot disabled: reliability for build workflows (used for releases too)
+    #   goreleaser uses parallelism of 12, so we need more CPUs
+    #   s3-cache: faster actions cache
+    #   tmpfs: faster io-intensive workflows
+    runs-on: "runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs"
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
+      - uses: runs-on/action@cd2b598b0515d39d78c38a02d529db87d2196d1e  # v2.0.3
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -91,84 +105,23 @@ jobs:
       - name: Smoke test snapshot build
         run: make snapshot-smoke-test
 
-      # why not use actions/upload-artifact? It is very slow (3 minutes to upload ~600MB of data, vs 10 seconds with this approach).
-      # see https://github.com/actions/upload-artifact/issues/199 for more info
       - name: Upload snapshot artifacts
-        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb #v5.0.1
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6.0.0
         with:
-          # we need to preserve the snapshot data itself as well as the task data that confirms if the
-          # snapshot build is stale or not. Otherwise the downstream jobs will attempt to rebuild the snapshot
-          # even though it already exists.
-          path: |
-            snapshot
-            .task
-          key: snapshot-build-${{ github.run_id }}
-
-
-  Upload-Snapshot-Artifacts:
-    # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
-    name: "Upload snapshot artifacts"
-    needs: [Build-Snapshot-Artifacts]
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
-        with:
-          persist-credentials: false
-
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
-        with:
-          download-test-fixture-cache: true
-
-      - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb #v5.0.1
-        with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
-
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
-
-      - run: npm install @actions/artifact@2.2.2
-
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const { readdirSync } = require('fs')
-            const { DefaultArtifactClient } = require('@actions/artifact')
-            const artifact = new DefaultArtifactClient()
-            const ls = d => readdirSync(d, { withFileTypes: true })
-            const baseDir = "./snapshot"
-            const dirs = ls(baseDir).filter(f => f.isDirectory()).map(f => f.name)
-            const uploads = []
-            for (const dir of dirs) {
-              // uploadArtifact returns Promise<{id, size}>
-              uploads.push(artifact.uploadArtifact(
-                // name of the archive:
-                `${dir}`,
-                // array of all files to include:
-                ls(`${baseDir}/${dir}`).map(f => `${baseDir}/${dir}/${f.name}`),
-                // base directory to trim from entries:
-                `${baseDir}/${dir}`,
-                { retentionDays: 30 }
-              ))
-            }
-            // wait for all uploads to finish
-            Promise.all(uploads)
+          name: snapshot
+          path: snapshot/
+          retention-days: 30
 
   Acceptance-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
-    runs-on: ubuntu-24.04
+    runs-on: *test-runner
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
+      - uses: runs-on/action@cd2b598b0515d39d78c38a02d529db87d2196d1e  # v2.0.3
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -177,20 +130,14 @@ jobs:
         with:
           download-test-fixture-cache: true
 
-      - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb #v5.0.1
+      - name: Download snapshot artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
+          name: snapshot
+          path: snapshot
 
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+      - name: Restore binary permissions
+        run: chmod +x snapshot/*/syft snapshot/*/*.exe 2>/dev/null || true
 
       - name: Run comparison tests (Linux)
         run: make compare-linux
@@ -206,17 +153,17 @@ jobs:
         if: steps.install-test-image-cache.outputs.cache-hit != 'true'
         run: make install-test-cache-save
 
-
   Acceptance-Mac:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Mac)"
     needs: [Build-Snapshot-Artifacts]
+    # note: macos runners aren't supported yet for runs-on managed runners.
     runs-on: macos-latest
     steps:
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -227,20 +174,14 @@ jobs:
           go-dependencies: false
           download-test-fixture-cache: true
 
-      - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb #v5.0.1
+      - name: Download snapshot artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
+          name: snapshot
+          path: snapshot
 
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+      - name: Restore binary permissions
+        run: chmod +x snapshot/*/syft 2>/dev/null || true
 
       - name: Run comparison tests (Mac)
         run: make compare-mac
@@ -248,14 +189,16 @@ jobs:
       - name: Run install.sh tests (Mac)
         run: make install-test-ci-mac
 
-
   Cli-Linux:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "CLI tests (Linux)"
     needs: [Build-Snapshot-Artifacts]
-    runs-on: ubuntu-24.04
+    runs-on: *test-runner
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
+      # required for magic-cache from runs-on to function with artifact upload/download (see https://runs-on.com/caching/magic-cache/#actionsupload-artifact-compatibility)
+      - uses: runs-on/action@cd2b598b0515d39d78c38a02d529db87d2196d1e  # v2.0.3
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
 
@@ -264,42 +207,14 @@ jobs:
         with:
           download-test-fixture-cache: true
 
-      - name: Download snapshot build
-        id: snapshot-cache
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb #v5.0.1
+      - name: Download snapshot artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
         with:
-          path: |
-            snapshot
-            .task
-          fail-on-cache-miss: true
-          key: snapshot-build-${{ github.run_id }}
+          name: snapshot
+          path: snapshot
 
-      # workaround for https://github.com/actions/cache/issues/1265
-      - name: (cache-miss) Snapshot build missing
-        if: steps.snapshot-cache.outputs.cache-hit != 'true'
-        run: echo "unable to download snapshots from previous job" && false
+      - name: Restore binary permissions
+        run: chmod +x snapshot/*/syft snapshot/*/*.exe 2>/dev/null || true
 
       - name: Run CLI Tests (Linux)
         run: make cli
-
-
-  Cleanup-Cache:
-    name: "Cleanup snapshot cache"
-    if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04
-    permissions:
-      actions: write
-    needs:
-      - Acceptance-Linux
-      - Acceptance-Mac
-      - Cli-Linux
-      - Upload-Snapshot-Artifacts
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 #v6.0.1
-        with:
-          persist-credentials: false
-
-      - name: Delete snapshot cache
-        run: gh cache delete "snapshot-build-${{ github.run_id }}"
-        env:
-          GH_TOKEN: ${{ github.token }}
