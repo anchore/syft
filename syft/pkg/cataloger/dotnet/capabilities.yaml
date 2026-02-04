@@ -1,0 +1,189 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  dotnet.CatalogerConfig:
+    fields:
+      - key: DepPackagesMustHaveDLL
+        description: DepPackagesMustHaveDLL allows for deps.json packages to be included only if there is a DLL on disk for that package.
+        app_key: dotnet.dep-packages-must-have-dll
+      - key: DepPackagesMustClaimDLL
+        description: DepPackagesMustClaimDLL allows for deps.json packages to be included only if there is a runtime/resource DLL claimed in the deps.json targets section. This does not require such claimed DLLs to exist on disk. The behavior of this
+        app_key: dotnet.dep-packages-must-claim-dll
+      - key: PropagateDLLClaimsToParents
+        description: PropagateDLLClaimsToParents allows for deps.json packages to be included if any child (transitive) package claims a DLL. This applies to both the claims configuration and evidence-on-disk configurations.
+        app_key: dotnet.propagate-dll-claims-to-parents
+      - key: RelaxDLLClaimsWhenBundlingDetected
+        description: RelaxDLLClaimsWhenBundlingDetected will look for indications of IL bundle tooling via deps.json package names and, if found (and this config option is enabled), will relax the DepPackagesMustClaimDLL value to `false` only in those cases.
+        app_key: dotnet.relax-dll-claims-when-bundling-detected
+      - key: ExcludeProjectReferences
+        description: ExcludeProjectReferences excludes packages with type "project" from deps.json output. These are internal project references, not external NuGet packages.
+        app_key: dotnet.exclude-project-references
+catalogers:
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-deps-binary-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - c#
+      - directory
+      - dotnet
+      - image
+      - installed
+      - language
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.deps.json'
+          - '**/*.dll'
+          - '**/*.exe'
+    metadata_types: # AUTO-GENERATED
+      - pkg.DotnetDepsEntry
+      - pkg.DotnetPortableExecutableEntry
+    package_types: # AUTO-GENERATED
+      - dotnet
+      - npm
+    json_schema_types: # AUTO-GENERATED
+      - DotnetDepsEntry
+      - DotnetPortableExecutableEntry
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default:
+          - direct
+          - indirect
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-deps-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.deps.json'
+    metadata_types: # AUTO-GENERATED
+      - pkg.DotnetDepsEntry
+    package_types: # AUTO-GENERATED
+      - dotnet
+    json_schema_types: # AUTO-GENERATED
+      - DotnetDepsEntry
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default:
+          - direct
+          - indirect
+      - name: dependency.edges
+        default: complete
+      - name: dependency.kinds
+        default:
+          - runtime
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-packages-lock-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/dotnet/cataloger.go
+      function: NewDotnetPackagesLockCataloger
+    selectors: # AUTO-GENERATED
+      - c#
+      - declared
+      - directory
+      - dotnet
+      - image
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDotnetPackagesLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/packages.lock.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DotnetPackagesLockEntry
+        package_types: # AUTO-GENERATED
+          - dotnet
+        json_schema_types: # AUTO-GENERATED
+          - DotnetPackagesLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+              - build
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - DotnetPackagesLockEntry.ContentHash
+  - ecosystem: dotnet # MANUAL
+    name: dotnet-portable-executable-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    config: dotnet.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - deprecated
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: glob
+        criteria:
+          - '**/*.dll'
+          - '**/*.exe'
+    metadata_types: # AUTO-GENERATED
+      - pkg.DotnetPortableExecutableEntry
+    package_types: # AUTO-GENERATED
+      - dotnet
+    json_schema_types: # AUTO-GENERATED
+      - DotnetPortableExecutableEntry
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default: []
+      - name: dependency.edges
+        default: ""
+      - name: dependency.kinds
+        default: []
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false

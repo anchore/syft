@@ -76,6 +76,96 @@ func TestLicenseByURL(t *testing.T) {
 	}
 }
 
+func TestLicenseByURL_AlternateScheme(t *testing.T) {
+	// Test that URLs work with alternate schemes (http ↔ https) even if only one is in the SPDX list
+	tests := []struct {
+		name      string
+		url       string
+		wantID    string
+		wantFound bool
+	}{
+		{
+			name:      "Apache URL with http when https is in list",
+			url:       "http://www.apache.org/licenses/LICENSE-2.0",
+			wantID:    "Apache-2.0",
+			wantFound: true,
+		},
+		{
+			name:      "BSD-3-Clause with http when https is in list",
+			url:       "http://opensource.org/licenses/BSD-3-Clause",
+			wantID:    "BSD-3-Clause",
+			wantFound: true,
+		},
+		{
+			name:      "Unknown URL with http still not found",
+			url:       "http://example.com/not-a-real-license",
+			wantID:    "",
+			wantFound: false,
+		},
+		{
+			name:      "Unknown URL with https still not found",
+			url:       "https://example.com/not-a-real-license",
+			wantID:    "",
+			wantFound: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info, found := LicenseByURL(tt.url)
+			if found != tt.wantFound {
+				t.Errorf("LicenseByURL() found = %v, want %v", found, tt.wantFound)
+			}
+			if found && info.ID != tt.wantID {
+				t.Errorf("LicenseByURL() ID = %v, want %v", info.ID, tt.wantID)
+			}
+		})
+	}
+}
+
+func TestStripScheme(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{
+			name: "https scheme stripped",
+			url:  "https://example.com/license",
+			want: "example.com/license",
+		},
+		{
+			name: "http scheme stripped",
+			url:  "http://example.com/license",
+			want: "example.com/license",
+		},
+		{
+			name: "ftp scheme not stripped",
+			url:  "ftp://example.com/license",
+			want: "ftp://example.com/license",
+		},
+		{
+			name: "no scheme unchanged",
+			url:  "example.com/license",
+			want: "example.com/license",
+		},
+		{
+			name: "empty string unchanged",
+			url:  "",
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := stripScheme(tt.url)
+			if got != tt.want {
+				t.Errorf("stripScheme() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLicenseByURL_DeprecatedLicenses(t *testing.T) {
 	// Test that deprecated license URLs map to their replacement licenses
 	// For example, GPL-2.0+ should map to GPL-2.0-or-later

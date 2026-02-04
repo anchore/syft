@@ -1,0 +1,133 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: ruby # MANUAL
+    name: ruby-gemfile-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ruby/cataloger.go
+      function: NewGemFileLockCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - gem
+      - language
+      - package
+      - ruby
+    parsers: # AUTO-GENERATED structure
+      - function: parseGemFileLockEntries
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Gemfile.lock'
+            - '**/Gemfile.next.lock'
+        package_types: # AUTO-GENERATED
+          - gem
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: ruby # MANUAL
+    name: ruby-gemspec-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ruby/cataloger.go
+      function: NewGemSpecCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - gem
+      - gemspec
+      - language
+      - package
+      - ruby
+    parsers: # AUTO-GENERATED structure
+      - function: parseGemSpecEntries
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.gemspec'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RubyGemspec
+        package_types: # AUTO-GENERATED
+          - gem
+        json_schema_types: # AUTO-GENERATED
+          - RubyGemspec
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - RubyGemspec.Files
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: ruby # MANUAL
+    name: ruby-installed-gemspec-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/ruby/cataloger.go
+      function: NewInstalledGemSpecCataloger
+    selectors: # AUTO-GENERATED
+      - gem
+      - gemspec
+      - image
+      - installed
+      - language
+      - package
+      - ruby
+    parsers: # AUTO-GENERATED structure
+      - function: parseGemSpecEntries
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/specifications/**/*.gemspec'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RubyGemspec
+        package_types: # AUTO-GENERATED
+          - gem
+        json_schema_types: # AUTO-GENERATED
+          - RubyGemspec
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - RubyGemspec.Files
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

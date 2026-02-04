@@ -1,0 +1,874 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: binary # MANUAL
+    name: binary-classifier-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/binary/classifier_cataloger.go
+      function: NewClassifierCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - image
+      - installed
+      - package
+    detectors: # AUTO-GENERATED
+      - method: glob
+        criteria:
+          - '**/python*'
+        packages:
+          - class: python-binary
+            name: python
+            purl: pkg:generic/python
+            cpes:
+              - cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:python:python:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libpython*.so*'
+        packages:
+          - class: python-binary-lib
+            name: python
+            purl: pkg:generic/python
+            cpes:
+              - cpe:2.3:a:python_software_foundation:python:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:python:python:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libpypy*.so*'
+        packages:
+          - class: pypy-binary-lib
+            name: pypy
+            purl: pkg:generic/pypy
+            cpes: []
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/{go,go.exe}'
+        packages:
+          - class: go-binary
+            name: go
+            purl: pkg:generic/go
+            cpes:
+              - cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libjulia-internal.so'
+        packages:
+          - class: julia-binary
+            name: julia
+            purl: pkg:generic/julia
+            cpes:
+              - cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/helm'
+        packages:
+          - class: helm
+            name: helm
+            purl: pkg:golang/helm.sh/helm
+            cpes:
+              - cpe:2.3:a:helm:helm:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/redis-server'
+        packages:
+          - class: redis-binary
+            name: redis
+            purl: pkg:generic/redis
+            cpes:
+              - cpe:2.3:a:redislabs:redis:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:redis:redis:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/valkey-server'
+        packages:
+          - class: valkey-binary
+            name: valkey
+            purl: pkg:generic/valkey
+            cpes:
+              - cpe:2.3:a:lfprojects:valkey:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:linuxfoundation:valkey:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:valkey-io:valkey:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/node'
+        packages:
+          - class: nodejs-binary
+            name: node
+            purl: pkg:generic/node
+            cpes:
+              - cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/busybox'
+        packages:
+          - class: busybox-binary
+            name: busybox
+            purl: pkg:generic/busybox
+            cpes:
+              - cpe:2.3:a:busybox:busybox:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/getopt'
+        packages:
+          - class: util-linux-binary
+            name: util-linux
+            purl: pkg:generic/util-linux
+            cpes:
+              - cpe:2.3:a:kernel:util-linux:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/haproxy'
+        packages:
+          - class: haproxy-binary
+            name: haproxy
+            purl: pkg:generic/haproxy
+            cpes:
+              - cpe:2.3:a:haproxy:haproxy:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/perl'
+        packages:
+          - class: perl-binary
+            name: perl
+            purl: pkg:generic/perl
+            cpes:
+              - cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/composer*'
+        packages:
+          - class: php-composer-binary
+            name: composer
+            purl: pkg:generic/composer
+            cpes:
+              - cpe:2.3:a:getcomposer:composer:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/httpd'
+        packages:
+          - class: httpd-binary
+            name: httpd
+            purl: pkg:generic/httpd
+            cpes:
+              - cpe:2.3:a:apache:http_server:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/memcached'
+        packages:
+          - class: memcached-binary
+            name: memcached
+            purl: pkg:generic/memcached
+            cpes:
+              - cpe:2.3:a:memcached:memcached:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/traefik'
+        packages:
+          - class: traefik-binary
+            name: traefik
+            purl: pkg:generic/traefik
+            cpes:
+              - cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/arangosh'
+        packages:
+          - class: arangodb-binary
+            name: arangodb
+            purl: pkg:generic/arangodb
+            cpes:
+              - cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/postgres'
+        packages:
+          - class: postgresql-binary
+            name: postgresql
+            purl: pkg:generic/postgresql
+            cpes:
+              - cpe:2.3:a:postgresql:postgresql:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/mysql'
+        packages:
+          - class: mysql-binary
+            name: mysql
+            purl: pkg:generic/mysql
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/mysql'
+        packages:
+          - class: mysql-binary
+            name: percona-server
+            purl: pkg:generic/percona-server
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/mysql'
+        packages:
+          - class: mysql-binary
+            name: percona-xtradb-cluster
+            purl: pkg:generic/percona-xtradb-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:percona:percona_server:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:percona:xtradb_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/xtrabackup'
+        packages:
+          - class: xtrabackup-binary
+            name: percona-xtrabackup
+            purl: pkg:generic/percona-xtrabackup
+            cpes:
+              - cpe:2.3:a:percona:xtrabackup:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/{mariadb,mysql}'
+        packages:
+          - class: mariadb-binary
+            name: mariadb
+            purl: pkg:generic/mariadb
+            cpes:
+              - cpe:2.3:a:mariadb:mariadb:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libstd-????????????????.so'
+        packages:
+          - class: rust-standard-library-linux
+            name: rust
+            purl: pkg:generic/rust
+            cpes:
+              - cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libstd-????????????????.dylib'
+        packages:
+          - class: rust-standard-library-macos
+            name: rust
+            purl: pkg:generic/rust
+            cpes:
+              - cpe:2.3:a:rust-lang:rust:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ruby'
+        packages:
+          - class: ruby-binary
+            name: ruby
+            purl: pkg:generic/ruby
+            cpes:
+              - cpe:2.3:a:ruby-lang:ruby:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/erlexec'
+        packages:
+          - class: erlang-binary
+            name: erlang
+            purl: pkg:generic/erlang
+            cpes:
+              - cpe:2.3:a:erlang:erlang/otp:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/beam.smp'
+        packages:
+          - class: erlang-alpine-binary
+            name: erlang
+            purl: pkg:generic/erlang
+            cpes:
+              - cpe:2.3:a:erlang:erlang/otp:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/liberts_internal.a'
+        packages:
+          - class: erlang-library
+            name: erlang
+            purl: pkg:generic/erlang
+            cpes:
+              - cpe:2.3:a:erlang:erlang/otp:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/swipl'
+        packages:
+          - class: swipl-binary
+            name: swipl
+            purl: pkg:generic/swipl
+            cpes:
+              - cpe:2.3:a:erlang:erlang/otp:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/dart'
+        packages:
+          - class: dart-binary
+            name: dart
+            purl: pkg:generic/dart
+            cpes:
+              - cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ghc*'
+        packages:
+          - class: haskell-ghc-binary
+            name: haskell/ghc
+            purl: pkg:generic/haskell/ghc
+            cpes:
+              - cpe:2.3:a:haskell:ghc:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/cabal'
+        packages:
+          - class: haskell-cabal-binary
+            name: haskell/cabal
+            purl: pkg:generic/haskell/cabal
+            cpes:
+              - cpe:2.3:a:haskell:cabal:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/stack'
+        packages:
+          - class: haskell-stack-binary
+            name: haskell/stack
+            purl: pkg:generic/haskell/stack
+            cpes:
+              - cpe:2.3:a:haskell:stack:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/consul'
+        packages:
+          - class: consul-binary
+            name: consul
+            purl: pkg:golang/github.com/hashicorp/consul
+            cpes:
+              - cpe:2.3:a:hashicorp:consul:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/vault'
+        packages:
+          - class: hashicorp-vault-binary
+            name: github.com/hashicorp/vault
+            purl: pkg:golang/github.com/hashicorp/vault
+            cpes:
+              - cpe:2.3:a:hashicorp:vault:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/nginx'
+        packages:
+          - class: nginx-binary
+            name: nginx
+            purl: pkg:generic/nginx
+            cpes:
+              - cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:nginx:nginx:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/bash'
+        packages:
+          - class: bash-binary
+            name: bash
+            purl: pkg:generic/bash
+            cpes:
+              - cpe:2.3:a:gnu:bash:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/openssl'
+        packages:
+          - class: openssl-binary
+            name: openssl
+            purl: pkg:generic/openssl
+            cpes:
+              - cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libQt*Core.so*'
+        packages:
+          - class: qt-qtbase-lib
+            name: qtbase
+            purl: pkg:generic/qtbase
+            cpes:
+              - cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/gcc'
+        packages:
+          - class: gcc-binary
+            name: gcc
+            purl: pkg:generic/gcc
+            cpes:
+              - cpe:2.3:a:gnu:gcc:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/fluent-bit'
+        packages:
+          - class: fluent-bit-binary
+            name: fluent-bit
+            purl: pkg:github/fluent/fluent-bit
+            cpes:
+              - cpe:2.3:a:treasuredata:fluent_bit:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/wp'
+        packages:
+          - class: wordpress-cli-binary
+            name: wp-cli
+            purl: pkg:generic/wp-cli
+            cpes:
+              - cpe:2.3:a:wp-cli:wp-cli:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/curl'
+        packages:
+          - class: curl-binary
+            name: curl
+            purl: pkg:generic/curl
+            cpes:
+              - cpe:2.3:a:haxx:curl:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/lighttpd'
+        packages:
+          - class: lighttpd-binary
+            name: lighttpd
+            purl: pkg:generic/lighttpd
+            cpes:
+              - cpe:2.3:a:lighttpd:lighttpd:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/proftpd'
+        packages:
+          - class: proftpd-binary
+            name: proftpd
+            purl: pkg:generic/proftpd
+            cpes:
+              - cpe:2.3:a:proftpd:proftpd:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/zstd'
+        packages:
+          - class: zstd-binary
+            name: zstd
+            purl: pkg:generic/zstd
+            cpes:
+              - cpe:2.3:a:facebook:zstandard:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/xz'
+        packages:
+          - class: xz-binary
+            name: xz
+            purl: pkg:generic/xz
+            cpes:
+              - cpe:2.3:a:tukaani:xz:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/gzip'
+        packages:
+          - class: gzip-binary
+            name: gzip
+            purl: pkg:generic/gzip
+            cpes:
+              - cpe:2.3:a:gnu:gzip:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/sqlcipher'
+        packages:
+          - class: sqlcipher-binary
+            name: sqlcipher
+            purl: pkg:generic/sqlcipher
+            cpes:
+              - cpe:2.3:a:zetetic:sqlcipher:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/jq'
+        packages:
+          - class: jq-binary
+            name: jq
+            purl: pkg:generic/jq
+            cpes:
+              - cpe:2.3:a:jqlang:jq:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/chrome'
+        packages:
+          - class: chrome-binary
+            name: chrome
+            purl: pkg:generic/chrome
+            cpes:
+              - cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ffmpeg'
+        packages:
+          - class: ffmpeg-binary
+            name: ffmpeg
+            purl: pkg:generic/ffmpeg
+            cpes:
+              - cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libav*'
+        packages:
+          - class: ffmpeg-library
+            name: ffmpeg
+            purl: pkg:generic/ffmpeg
+            cpes:
+              - cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libswresample*'
+        packages:
+          - class: ffmpeg-library
+            name: ffmpeg
+            purl: pkg:generic/ffmpeg
+            cpes:
+              - cpe:2.3:a:ffmpeg:ffmpeg:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/elixir'
+        packages:
+          - class: elixir-binary
+            name: elixir
+            purl: pkg:generic/elixir
+            cpes:
+              - cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/elixir/ebin/elixir.app'
+        packages:
+          - class: elixir-library
+            name: elixir
+            purl: pkg:generic/elixir
+            cpes:
+              - cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/pilot-discovery'
+        packages:
+          - class: istio-binary
+            name: pilot-discovery
+            purl: pkg:generic/istio
+            cpes:
+              - cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/pilot-agent'
+        packages:
+          - class: istio-binary
+            name: pilot-agent
+            purl: pkg:generic/istio
+            cpes:
+              - cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/grafana'
+        packages:
+          - class: grafana-binary
+            name: grafana
+            purl: pkg:generic/grafana
+            cpes:
+              - cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/grafana-server'
+        packages:
+          - class: grafana-binary
+            name: grafana
+            purl: pkg:generic/grafana
+            cpes:
+              - cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/envoy'
+        packages:
+          - class: envoy-binary
+            name: envoy
+            purl: pkg:generic/envoy
+            cpes:
+              - cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/mongod'
+        packages:
+          - class: mongodb-binary
+            name: mongodb
+            purl: pkg:generic/mongodb
+            cpes:
+              - cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/java'
+        packages:
+          - class: java-binary
+            name: ""
+            purl: pkg:/
+            cpes: []
+            type: BinaryPkg
+          - class: java-binary-graalvm
+            name: graalvm
+            purl: pkg:generic/oracle/graalvm
+            cpes:
+              - cpe:2.3:a:oracle:graalvm:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-openjdk-zulu
+            name: zulu
+            purl: pkg:generic/azul/zulu
+            cpes:
+              - cpe:2.3:a:azul:zulu:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-openjdk-with-update
+            name: openjdk
+            purl: pkg:generic/oracle/openjdk
+            cpes:
+              - cpe:2.3:a:oracle:openjdk:{{.primary}}:update{{.update}}:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-openjdk
+            name: openjdk
+            purl: pkg:generic/oracle/openjdk
+            cpes:
+              - cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-ibm
+            name: java
+            purl: pkg:generic/ibm/java
+            cpes:
+              - cpe:2.3:a:ibm:java:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-openjdk-fallthrough
+            name: jre
+            purl: pkg:generic/oracle/jre
+            cpes:
+              - cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-oracle
+            name: jre
+            purl: pkg:generic/oracle/jre
+            cpes:
+              - cpe:2.3:a:oracle:jre:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/jdb'
+        packages:
+          - class: java-jdb-binary
+            name: ""
+            purl: pkg:/
+            cpes: []
+            type: BinaryPkg
+          - class: java-binary-graalvm
+            name: graalvm
+            purl: pkg:generic/oracle/graalvm
+            cpes:
+              - cpe:2.3:a:oracle:graalvm_for_jdk:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: jdb-binary-openjdk-zulu
+            name: zulu
+            purl: pkg:generic/azul/zulu
+            cpes:
+              - cpe:2.3:a:azul:zulu:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-jdb-binary-openjdk
+            name: openjdk
+            purl: pkg:generic/oracle/openjdk
+            cpes:
+              - cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-sdk-binary-ibm
+            name: java_sdk
+            purl: pkg:generic/ibm/java_sdk
+            cpes:
+              - cpe:2.3:a:ibm:java_sdk:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-openjdk-fallthrough
+            name: openjdk
+            purl: pkg:generic/oracle/openjdk
+            cpes:
+              - cpe:2.3:a:oracle:openjdk:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: java-binary-jdk
+            name: jdk
+            purl: pkg:generic/oracle/jdk
+            cpes:
+              - cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+    metadata_types: # AUTO-GENERATED
+      - pkg.BinarySignature
+    package_types: # AUTO-GENERATED
+      - binary
+    json_schema_types: # AUTO-GENERATED
+      - BinarySignature
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: false
+      - name: dependency.depth
+        default: []
+      - name: dependency.edges
+        default: ""
+      - name: dependency.kinds
+        default: []
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
+  - ecosystem: binary # MANUAL
+    name: elf-binary-package-cataloger # AUTO-GENERATED
+    type: custom # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: ""
+      function: ""
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - elf
+      - elf-package
+      - image
+      - installed
+      - package
+    detectors: # MANUAL - edit detectors here
+      - method: mimetype
+        criteria:
+          - application/x-executable
+          - application/x-mach-binary
+          - application/x-elf
+          - application/x-sharedlib
+          - application/vnd.microsoft.portable-executable
+    metadata_types: # AUTO-GENERATED
+      - pkg.ELFBinaryPackageNoteJSONPayload
+    package_types: # AUTO-GENERATED
+      - apk
+      - binary
+      - rpm
+    json_schema_types: # AUTO-GENERATED
+      - ElfBinaryPackageNoteJsonPayload
+    capabilities: # MANUAL - edit capabilities here
+      - name: license
+        default: true
+      - name: dependency.depth
+        default: []
+      - name: dependency.edges
+        default: ""
+      - name: dependency.kinds
+        default: []
+      - name: package_manager.files.listing
+        default: false
+      - name: package_manager.files.digests
+        default: false
+      - name: package_manager.package_integrity_hash
+        default: false
+  - ecosystem: binary # MANUAL
+    name: pe-binary-package-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/binary/pe_package_cataloger.go
+      function: NewPEPackageCataloger
+    selectors: # AUTO-GENERATED
+      - binary
+      - declared
+      - directory
+      - dll
+      - exe
+      - image
+      - installed
+      - package
+      - pe
+      - pe-package
+    parsers: # AUTO-GENERATED structure
+      - function: parsePE
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.dll'
+            - '**/*.exe'
+        metadata_types: # AUTO-GENERATED
+          - pkg.PEBinary
+        package_types: # AUTO-GENERATED
+          - binary
+        json_schema_types: # AUTO-GENERATED
+          - PeBinary
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

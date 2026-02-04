@@ -1,0 +1,100 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: dpkg # MANUAL
+    name: dpkg-db-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/debian/cataloger.go
+      function: NewDBCataloger
+    selectors: # AUTO-GENERATED
+      - debian
+      - directory
+      - dpkg
+      - image
+      - installed
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDpkgDB
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/lib/dpkg/status'
+            - '**/lib/dpkg/status.d/*'
+            - '**/lib/opkg/info/*.control'
+            - '**/lib/opkg/status'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DpkgDBEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - DpkgDbEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - DpkgDBEntry.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - DpkgDBEntry.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: dpkg # MANUAL
+    name: deb-archive-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/debian/cataloger.go
+      function: NewArchiveCataloger
+    selectors: # AUTO-GENERATED
+      - deb
+      - debian
+      - declared
+      - directory
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseDebArchive
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.deb'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DpkgArchiveEntry
+        package_types: # AUTO-GENERATED
+          - deb
+        json_schema_types: # AUTO-GENERATED
+          - DpkgArchiveEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - DpkgArchiveEntry.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - DpkgArchiveEntry.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false

@@ -1,0 +1,64 @@
+# Application-level configuration. See README.md for documentation.
+# This file is partially auto-generated. Run 'go generate ./internal/capabilities' to regenerate.
+
+application: # AUTO-GENERATED - application-level config keys
+  - key: dotnet.dep-packages-must-claim-dll
+    description: only keep dep.json packages which have a runtime/resource DLL claimed in the deps.json targets section (but not necessarily found on disk). The package is also included if any child package claims a DLL, even if the package itself does not claim a DLL.
+  - key: dotnet.dep-packages-must-have-dll
+    description: only keep dep.json packages which an executable on disk is found. The package is also included if a DLL is found for any child package, even if the package itself does not have a DLL.
+  - key: dotnet.exclude-project-references
+    description: exclude packages with type "project" from deps.json output (these are internal project references, not NuGet packages)
+  - key: dotnet.propagate-dll-claims-to-parents
+    description: treat DLL claims or on-disk evidence for child packages as DLL claims or on-disk evidence for any parent package
+  - key: dotnet.relax-dll-claims-when-bundling-detected
+    description: show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)
+  - key: golang.local-mod-cache-dir
+    description: specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
+  - key: golang.local-vendor-dir
+    description: specify an explicit go vendor directory, if unset this defaults to ./vendor
+  - key: golang.main-module-version.from-build-settings
+    description: use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version (e.g. v0.0.0-20220308212642-53e6d0aaf6fb) when a more accurate version cannot be found otherwise
+  - key: golang.main-module-version.from-contents
+    description: search for semver-like strings in the binary contents
+  - key: golang.main-module-version.from-ld-flags
+    description: look for LD flags that appear to be setting a version (e.g. -X main.version=1.0.0)
+  - key: golang.no-proxy
+    description: specifies packages which should not be fetched by proxy if unset this defaults to $GONOPROXY
+  - key: golang.proxy
+    description: remote proxy to use when retrieving go packages from the network, if unset this defaults to $GOPROXY followed by https://proxy.golang.org
+  - key: golang.search-local-mod-cache-licenses
+    description: search for go package licences in the GOPATH of the system running Syft, note that this is outside the container filesystem and potentially outside the root of a local directory scan
+  - key: golang.search-local-vendor-licenses
+    description: search for go package licences in the vendor folder on the system running Syft, note that this is outside the container filesystem and potentially outside the root of a local directory scan
+  - key: golang.search-remote-licenses
+    description: search for go package licences by retrieving the package from a network proxy
+  - key: golang.use-packages-lib
+    description: use the golang.org/x/tools/go/packages library, which executes golang tooling found on the path in addition to potential network access to get the most accurate results
+  - key: java.maven-local-repository-dir
+    description: override the default location of the local Maven repository. the default is the subdirectory '.m2/repository' in your home directory
+  - key: java.maven-url
+    description: maven repository to use, defaults to Maven central
+  - key: java.max-parent-recursive-depth
+    description: depth to recursively resolve parent POMs, no limit if <= 0
+  - key: java.resolve-transitive-dependencies
+    description: resolve transient dependencies such as those defined in a dependency's POM on Maven central
+  - key: java.use-maven-local-repository
+    description: 'use the local Maven repository to retrieve pom files. When Maven is installed and was previously used for building the software that is being scanned, then most pom files will be available in this repository on the local file system. this greatly speeds up scans. when all pom files are available in the local repository, then ''use-network'' is not needed. TIP: If you want to download all required pom files to the local repository without running a full build, run ''mvn help:effective-pom'' before performing the scan with syft.'
+  - key: java.use-network
+    description: enables Syft to use the network to fetch version and license information for packages when a parent or imported pom file is not found in the local maven repository. the pom files are downloaded from the remote Maven repository at 'maven-url'
+  - key: javascript.include-dev-dependencies
+    description: include development-scoped dependencies
+  - key: javascript.npm-base-url
+    description: base NPM url to use
+  - key: javascript.search-remote-licenses
+    description: enables Syft to use the network to fill in more detailed license information
+  - key: linux-kernel.catalog-modules
+    description: whether to catalog linux kernel modules found within lib/modules/** directories
+  - key: nix.capture-owned-files
+    description: enumerate all files owned by packages found within Nix store paths
+  - key: python.guess-unpinned-requirements
+    description: when running across entries in requirements.txt that do not specify a specific version (e.g. "sqlalchemy >= 1.0.0, <= 2.0.0, != 3.0.0, <= 3.0.0"), attempt to guess what the version could be based on the version requirements specified (e.g. "1.0.0"). When enabled the lowest expressible version when given an arbitrary constraint will be used (even if that version may not be available/published).
+  - key: python.pypi-base-url
+    description: base Pypi url to use
+  - key: python.search-remote-licenses
+    description: enables Syft to use the network to fill in more detailed license information

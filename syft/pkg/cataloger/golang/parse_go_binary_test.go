@@ -278,7 +278,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				{
 					Name:     "github.com/a/b/c",
 					Version:  "", // this was (devel) but we cleared it explicitly
-					PURL:     "pkg:golang/github.com/a/b#c",
+					PURL:     "pkg:golang/github.com/a/b/c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(

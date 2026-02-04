@@ -11,7 +11,7 @@ from-images:
 
   - name: busybox
     version: 1.36.1
-    images: 
+    images:
       - ref: busybox:1.36.1@sha256:058f0df5310fbbbfea7e81a3a3e2b4bf3452438ec841138d170e170adbbd27a4
         platform: linux/amd64
     paths:
@@ -269,6 +269,46 @@ from-images:
 #    paths:
 #      - /usr/sbin/mysqld
 
+  - name: mongodb
+    version: 8.0.17
+    images:
+      - ref: mongo:8.0@sha256:48432a75b23f0883e9b631af3497cbf0d477124d33a67f217c71f6e9b40fde39
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 7.0.28
+    images:
+      - ref: mongo:7.0@sha256:32b5cbf6e1075ad0f5eb2b880ee61e985d5135519a7a34a7d81712af37f27913
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 6.0.27
+    images:
+      - ref: mongo:6.0@sha256:03cda579c8caad6573cb98c2b3d5ff5ead452a6450561129b89595b4b9c18de2
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 5.0.32
+    images:
+      - ref: mongo:5.0@sha256:5e3e87afd24d75e722884d777c5713d254f7e88ba65381b5d6484f75a21b73e3
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
+  - name: mongodb
+    version: 4.4.30
+    images:
+      - ref: mongo:4.4@sha256:4be76f674fc4b27859816811b8baa3c51830eb1dbf4ca81a51e26b79edd662ef
+        platform: linux/amd64
+    paths:
+      - /usr/bin/mongod
+
   - version: 1.25.1
     images:
       - ref: nginx:1.25.1@sha256:73e957703f1266530db0aeac1fd6a3f87c1e59943f4c13eb340bb8521c6041d7
@@ -513,6 +553,13 @@ from-images:
     paths:
       - /usr/local/bin/redis-server
 
+  - version: 9.0.0
+    images:
+      - ref: valkey/valkey:9.0.0@sha256:42ea97850708540d4e05f6241cfbd241c1ba502e64d9a42efb2c2e277a8ca9d6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/valkey-server
+
   - version: 2.9.0
     images:
       - ref: wordpress:cli-2.9.0-php8.3@sha256:3a008aafccc6a8d2d7ec2b069722cb43b3569b61cd833f9f2f13d74a9284746e
@@ -577,6 +624,13 @@ from-images:
     images:
       - ref: traefik:3.0.4@sha256:12a7cc4232b5b7fe027673da8c096144525f59a8eabc87e52260aac0ec5a1219
         platform: linux/riscv64
+    paths:
+      - /usr/local/bin/traefik
+
+  - version: 3.6.5
+    images:
+      - ref: traefik:v3.6.5@sha256:d944e3693bbf5a361ddd2e411bb713049cfb4f5ff3da200b30ee7a347dbd6abd
+        platform: linux/amd64
     paths:
       - /usr/local/bin/traefik
 
@@ -839,3 +893,215 @@ from-images:
     paths:
       - /usr/local/lib/python3.11/site-packages/opencv_contrib_python.libs/libavcodec-9aae324f.so.59.37.100
 
+  - name: istio_pilot-discovery
+    version: 1.26.8
+    images:
+      - ref: istio/pilot:1.26.8@sha256:977d7941743cde8eb4868a00d8493ea3c18bb92622d5e6d9003c5d4f95780e69
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.8.0
+    images:
+      - ref: istio/pilot:1.8.0@sha256:2a11b6eab182a62ba44686c6cee35a6fceae782c4aa5532f4ade023c8c177bd0
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.3.8
+    images:
+      - ref: istio/pilot:1.3.8@sha256:e86394d237e1626f117cadea3588c5182d63b6a8712f9763ee419d4c72e7669b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.1.17
+    images:
+      - ref: istio/pilot:1.1.17@sha256:79a39ea04dbf7f9e36be80439d44f82968073eea307a58a6b073b551063ec629
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-agent
+    version: 1.26.8
+    images:
+      - ref: istio/proxyv2:1.26.8@sha256:a5ef82f7954bb4137244b7dbc1b4bd30382673c9425d74933da6f2de2c3a345b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
+    version: 1.8.0
+    images:
+      - ref: istio/proxyv2:1.8.0@sha256:8721ddb5acf86dbe9d4c68993947c27d4b98a6d23ecde80246c74bf8bebd163f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
+    version: 1.1.17
+    images:
+      - ref: istio/proxyv2:1.1.17@sha256:f97470c9b3124c19069ce9b773198da0efddbeea85dd33f88e2fb4f3b0c55e31
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+  - name: grafana
+    version: 12.3.1
+    images:
+      - ref: grafana/grafana:12.3.1@sha256:7c064e627d9cb50c3485c9ded5ca0222de89a08e41403322a0c3ca6f1777a8d1
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.0.0
+    images:
+      - ref: grafana/grafana:12.0.0@sha256:884f0f140669a5b9dccee1baece011a3fa5dd1951f1ba158b03de8ad1d178380
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 11.0.0
+    images:
+      - ref: grafana/grafana:11.0.0@sha256:a80bc3848cf5d4b2958ea25dbeb36fa9442ef4be8c73fe4bff11340307c32919
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 10.4.19
+    images:
+      - ref: grafana/grafana:10.4.19@sha256:388cb75aa7ab40af6766f7a8db73c90abfbfb646bf8208e86f7198d2c9530793
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 9.5.21
+    images:
+      - ref: grafana/grafana:9.5.21@sha256:439f57822d2daa899c0a04420488fd7c638c1d41d5db417563692ed0bbbfbb9c
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 9.4.0
+    images:
+      - ref: grafana/grafana:9.4.0-beta1@sha256:d0060bcf84f0a0897e7c6c7e1b8740d89d10bf55b2dd45ba45942d36e40cdcc7
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 9.0.0
+    images:
+      - ref: grafana/grafana:9.0.0@sha256:1fdfc1f6feb47c0007ab59abdc5310493649367d9de1be27cf0e18ff529ca463
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 7.5.17
+    images:
+      - ref: grafana/grafana:7.5.17@sha256:6d4ab5ab5031f2725635522c28aa9917c6e614c49513a3f5c864900b868ea79a
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 6.7.6
+    images:
+      - ref: grafana/grafana:6.7.6@sha256:7ee99c7f0835f1023b3a56c275da8bb37068ab9fcd5e33378c65435928d54dd0
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: qt
+    version: 6.5.0
+    images:
+      - ref: stateoftheartio/qt6:6.5-gcc-aqt@sha256:c0dfd1cd174d855f0157ce0455270b2ee49f5eea4c7a40ffe0e848d41ae4d074
+        platform: linux/amd64
+    paths:
+      - /opt/Qt/6.5.0/gcc_64/lib/libQt6Core.so.6.5.0
+
+  - name: qt
+    version: 5.15.2
+    images:
+      - ref: rabits/qt:5.15-desktop@sha256:8dd10b4fcdece7e329dd2b9db52dafcd6590940954bc36d5018567e850d9599c
+        platform: linux/amd64
+    paths:
+      - /opt/Qt/5.15.2/gcc_64/lib/libQt5Core.so.5.15.2
+
+  - name: qt
+    version: 4.8.6
+    images:
+      - ref: uvatbc/qt:qt4@sha256:9d6f18e000df14077f4c96e487fc84e02f1cef19c27f2a8f66f161b8a1ef6b06
+        platform: linux/amd64
+    paths:
+      - /usr/lib/x86_64-linux-gnu/libQtCore.so.4.8.6
+  - version: 1.36.4
+    images:
+      - ref: envoyproxy/envoy:v1.36.4@sha256:ae31562b8cede20913a2d3d6a4f44c8479a50551e033cb8ef7bb8e38cec4b573
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.34.5
+    images:
+      - ref: envoyproxy/envoy:v1.34.5@sha256:8ed42378a045901df417eaf8dbaba8b24aead1e995bf1b0277d907ed6320322c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.28.7
+    images:
+      - ref: envoyproxy/envoy:v1.28.7@sha256:c62d3ccc883457d5403a0f77b31cf2f6d35572f3f9c1c0dd93498c39a281dcfc
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.22.11
+    images:
+      - ref: envoyproxy/envoy:v1.22.1@sha256:1385b1f75e74aef47b2cb1bafdffa43b171cf32b70e8e97d9f5d7cbf161a390a
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.20.7
+    images:
+      - ref: envoyproxy/envoy:v1.20.7@sha256:ca581c36093f2b78d371bff49198cd2cf06753a3ae6d91699788772842e67e3c
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.18.6
+    images:
+      - ref: envoyproxy/envoy:v1.18.6@sha256:a49240deca44017155b880172f3b2919fc26d554ad301a6f9941421849337c08
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.14.3
+    images:
+      - ref: envoyproxy/envoy:v1.14.3@sha256:295522f90150dc787cc7fd4b104402c43ae53ffec82b2afcb1767cfdbfce2306
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.11.0
+    images:
+      - ref: envoyproxy/envoy:v1.11.0@sha256:3b3eb76bc74c8e36e0ed3507844b6c12f69e9efa7588a7e35a29f90ee3e90067
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.6.0
+    images:
+      - ref: envoyproxy/envoy:v1.6.0@sha256:6d02409028d76b69bc348650e080e68fd81b863e68aa16e96c95d74ab0f16f24
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
