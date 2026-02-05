@@ -56,6 +56,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.YarnLockEntry{},
 		pkg.TerraformLockProviderEntry{},
 		pkg.GGUFFileHeader{},
+		pkg.DenoLockEntry{},
+		pkg.DenoRemoteLockEntry{},
 	)
 	tests := []struct {
 		name       string
