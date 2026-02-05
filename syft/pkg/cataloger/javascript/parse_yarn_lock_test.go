@@ -739,141 +739,272 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 	}
 }
 
-func TestParseYarnLock_IncludeDevDependencies(t *testing.T) {
-	fixtureDir := "test-fixtures/yarn-dev-deps"
-	fixture := "test-fixtures/yarn-dev-deps/yarn.lock"
-	locations := file.NewLocationSet(file.NewLocation(fixture))
-
-	expectedPkgs := []pkg.Package{
+func TestParseYarnLock_DevDependencies(t *testing.T) {
+	tests := []struct {
+		name       string
+		fixtureDir string
+		includeDev bool
+		expected   func(file.LocationSet) ([]pkg.Package, []artifact.Relationship)
+	}{
 		{
-			Name:      "dev-only-transitive",
-			Version:   "1.0.0",
-			Locations: locations,
-			PURL:      "pkg:npm/dev-only-transitive@1.0.0",
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Metadata: pkg.YarnLockEntry{
-				Resolved:     "https://registry.yarnpkg.com/dev-only-transitive/-/dev-only-transitive-1.0.0.tgz#abc123",
-				Integrity:    "sha512-devonlytransitive==",
-				Dependencies: map[string]string{},
+			name:       "v1 include dev dependencies",
+			fixtureDir: "test-fixtures/yarn-dev-deps",
+			includeDev: true,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "dev-only-transitive",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/dev-only-transitive@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:     "https://registry.yarnpkg.com/dev-only-transitive/-/dev-only-transitive-1.0.0.tgz#abc123",
+							Integrity:    "sha512-devonlytransitive==",
+							Dependencies: map[string]string{},
+						},
+					},
+					{
+						Name:      "dev-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/dev-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "https://registry.yarnpkg.com/dev-pkg/-/dev-pkg-1.0.0.tgz#def456",
+							Integrity: "sha512-devpkg==",
+							Dependencies: map[string]string{
+								"dev-only-transitive": "^1.0.0",
+							},
+						},
+					},
+					{
+						Name:      "prod-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/prod-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "https://registry.yarnpkg.com/prod-pkg/-/prod-pkg-1.0.0.tgz#ghi789",
+							Integrity: "sha512-prodpkg==",
+							Dependencies: map[string]string{
+								"shared-pkg": "^1.0.0",
+							},
+						},
+					},
+					{
+						Name:      "shared-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/shared-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:     "https://registry.yarnpkg.com/shared-pkg/-/shared-pkg-1.0.0.tgz#jkl012",
+							Integrity:    "sha512-sharedpkg==",
+							Dependencies: map[string]string{},
+						},
+					},
+				}
+				rels := []artifact.Relationship{
+					{
+						From: pkgs[0], // dev-only-transitive
+						To:   pkgs[1], // dev-pkg
+						Type: artifact.DependencyOfRelationship,
+					},
+					{
+						From: pkgs[3], // shared-pkg
+						To:   pkgs[2], // prod-pkg
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+				return pkgs, rels
 			},
 		},
 		{
-			Name:      "dev-pkg",
-			Version:   "1.0.0",
-			Locations: locations,
-			PURL:      "pkg:npm/dev-pkg@1.0.0",
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/dev-pkg/-/dev-pkg-1.0.0.tgz#def456",
-				Integrity: "sha512-devpkg==",
-				Dependencies: map[string]string{
-					"dev-only-transitive": "^1.0.0",
-				},
+			name:       "v1 exclude dev dependencies",
+			fixtureDir: "test-fixtures/yarn-dev-deps",
+			includeDev: false,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "prod-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/prod-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "https://registry.yarnpkg.com/prod-pkg/-/prod-pkg-1.0.0.tgz#ghi789",
+							Integrity: "sha512-prodpkg==",
+							Dependencies: map[string]string{
+								"shared-pkg": "^1.0.0",
+							},
+						},
+					},
+					{
+						Name:      "shared-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/shared-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:     "https://registry.yarnpkg.com/shared-pkg/-/shared-pkg-1.0.0.tgz#jkl012",
+							Integrity:    "sha512-sharedpkg==",
+							Dependencies: map[string]string{},
+						},
+					},
+				}
+				rels := []artifact.Relationship{
+					{
+						From: pkgs[1], // shared-pkg
+						To:   pkgs[0], // prod-pkg
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+				return pkgs, rels
 			},
 		},
 		{
-			Name:      "prod-pkg",
-			Version:   "1.0.0",
-			Locations: locations,
-			PURL:      "pkg:npm/prod-pkg@1.0.0",
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/prod-pkg/-/prod-pkg-1.0.0.tgz#ghi789",
-				Integrity: "sha512-prodpkg==",
-				Dependencies: map[string]string{
-					"shared-pkg": "^1.0.0",
-				},
+			name:       "v2 (berry) include dev dependencies",
+			fixtureDir: "test-fixtures/yarn-berry-dev-deps",
+			includeDev: true,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "dev-only-transitive",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/dev-only-transitive@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "dev-only-transitive@npm:1.0.0",
+							Integrity: "abc123",
+						},
+					},
+					{
+						Name:      "dev-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/dev-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "dev-pkg@npm:1.0.0",
+							Integrity: "def456",
+							Dependencies: map[string]string{
+								"dev-only-transitive": "^1.0.0",
+							},
+						},
+					},
+					{
+						Name:      "prod-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/prod-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "prod-pkg@npm:1.0.0",
+							Integrity: "ghi789",
+							Dependencies: map[string]string{
+								"shared-pkg": "^1.0.0",
+							},
+						},
+					},
+					{
+						Name:      "shared-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/shared-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "shared-pkg@npm:1.0.0",
+							Integrity: "jkl012",
+						},
+					},
+				}
+				rels := []artifact.Relationship{
+					{
+						From: pkgs[0], // dev-only-transitive
+						To:   pkgs[1], // dev-pkg
+						Type: artifact.DependencyOfRelationship,
+					},
+					{
+						From: pkgs[3], // shared-pkg
+						To:   pkgs[2], // prod-pkg
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+				return pkgs, rels
 			},
 		},
 		{
-			Name:      "shared-pkg",
-			Version:   "1.0.0",
-			Locations: locations,
-			PURL:      "pkg:npm/shared-pkg@1.0.0",
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Metadata: pkg.YarnLockEntry{
-				Resolved:     "https://registry.yarnpkg.com/shared-pkg/-/shared-pkg-1.0.0.tgz#jkl012",
-				Integrity:    "sha512-sharedpkg==",
-				Dependencies: map[string]string{},
+			name:       "v2 (berry) exclude dev dependencies",
+			fixtureDir: "test-fixtures/yarn-berry-dev-deps",
+			includeDev: false,
+			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
+				pkgs := []pkg.Package{
+					{
+						Name:      "prod-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/prod-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "prod-pkg@npm:1.0.0",
+							Integrity: "ghi789",
+							Dependencies: map[string]string{
+								"shared-pkg": "^1.0.0",
+							},
+						},
+					},
+					{
+						Name:      "shared-pkg",
+						Version:   "1.0.0",
+						Locations: locations,
+						PURL:      "pkg:npm/shared-pkg@1.0.0",
+						Language:  pkg.JavaScript,
+						Type:      pkg.NpmPkg,
+						Metadata: pkg.YarnLockEntry{
+							Resolved:  "shared-pkg@npm:1.0.0",
+							Integrity: "jkl012",
+						},
+					},
+				}
+				rels := []artifact.Relationship{
+					{
+						From: pkgs[1], // shared-pkg
+						To:   pkgs[0], // prod-pkg
+						Type: artifact.DependencyOfRelationship,
+					},
+				}
+				return pkgs, rels
 			},
 		},
 	}
 
-	expectedRelationships := []artifact.Relationship{
-		{
-			From: expectedPkgs[0], // dev only transitive
-			To:   expectedPkgs[1], // dev pkg
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: expectedPkgs[3], // shared pkg
-			To:   expectedPkgs[2], // prod pkg
-			Type: artifact.DependencyOfRelationship,
-		},
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixture := tt.fixtureDir + "/yarn.lock"
+			locations := file.NewLocationSet(file.NewLocation(fixture))
+			expectedPkgs, expectedRels := tt.expected(locations)
+
+			adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: tt.includeDev})
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, tt.fixtureDir).
+				FromFile(t, fixture).
+				Expects(expectedPkgs, expectedRels).
+				TestParser(t, adapter.parseYarnLock)
+		})
 	}
-
-	adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, fixtureDir).
-		FromFile(t, fixture).
-		Expects(expectedPkgs, expectedRelationships).
-		TestParser(t, adapter.parseYarnLock)
-}
-
-func TestParseYarnLock_ExcludeDevDependencies(t *testing.T) {
-	fixtureDir := "test-fixtures/yarn-dev-deps"
-	fixture := "test-fixtures/yarn-dev-deps/yarn.lock"
-	locations := file.NewLocationSet(file.NewLocation(fixture))
-
-	expectedPkgs := []pkg.Package{
-		{
-			Name:      "prod-pkg",
-			Version:   "1.0.0",
-			Locations: locations,
-			PURL:      "pkg:npm/prod-pkg@1.0.0",
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Metadata: pkg.YarnLockEntry{
-				Resolved:  "https://registry.yarnpkg.com/prod-pkg/-/prod-pkg-1.0.0.tgz#ghi789",
-				Integrity: "sha512-prodpkg==",
-				Dependencies: map[string]string{
-					"shared-pkg": "^1.0.0",
-				},
-			},
-		},
-		{
-			Name:      "shared-pkg",
-			Version:   "1.0.0",
-			Locations: locations,
-			PURL:      "pkg:npm/shared-pkg@1.0.0",
-			Language:  pkg.JavaScript,
-			Type:      pkg.NpmPkg,
-			Metadata: pkg.YarnLockEntry{
-				Resolved:     "https://registry.yarnpkg.com/shared-pkg/-/shared-pkg-1.0.0.tgz#jkl012",
-				Integrity:    "sha512-sharedpkg==",
-				Dependencies: map[string]string{},
-			},
-		},
-	}
-
-	expectedRelationships := []artifact.Relationship{
-		{
-			From: expectedPkgs[1], // shared pkg
-			To:   expectedPkgs[0], // prod pkg
-			Type: artifact.DependencyOfRelationship,
-		},
-	}
-
-	adapter := newGenericYarnLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, fixtureDir).
-		FromFile(t, fixture).
-		Expects(expectedPkgs, expectedRelationships).
-		TestParser(t, adapter.parseYarnLock)
 }
 
 func generateMockYarnRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {

@@ -53,7 +53,7 @@ type yarnPackage struct {
 	Version      string
 	Resolved     string
 	Integrity    string
-	Dependencies map[string]string // We don't currently support dependencies for yarn v1 lock files
+	Dependencies map[string]string
 }
 
 type yarnV2PackageEntry struct {
@@ -73,6 +73,11 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	}
 }
 
+// readPackageJSONDeps reads the package.json adjacent to the given lockfile location.
+// NOTE: in yarn workspaces, only the root package.json is consulted. Packages declared
+// as devDependencies only in a workspace package.json (not the root) will not be detected
+// as dev-only. This is a safe degradation — those packages will be included in the SBOM
+// rather than incorrectly filtered out.
 func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location) (prod, dev map[string]string) {
 	prod = make(map[string]string)
 	dev = make(map[string]string)
@@ -110,7 +115,9 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 	return prod, dev
 }
 
-func findTransitive(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
+// findReachable returns all package names reachable from the given roots via BFS
+// through the dependency graph.
+func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
 	visited := make(map[string]bool)
 	queue := make([]string, 0, len(roots))
 
@@ -145,8 +152,8 @@ func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string
 		pkgByName[p.Name] = p
 	}
 
-	prodTransitive := findTransitive(prodDeps, pkgByName)
-	devTransitive := findTransitive(devDeps, pkgByName)
+	prodTransitive := findReachable(prodDeps, pkgByName)
+	devTransitive := findReachable(devDeps, pkgByName)
 
 	devOnly := make(map[string]bool)
 	for name := range devTransitive {
@@ -277,7 +284,7 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
 	}
 
-	// Get dep frm sibling package.json for dev dep detection
+	// get dependencies from sibling package.json for dev dependency detection
 	prodDeps, devDeps := readPackageJSONDeps(resolver, reader.Location)
 
 	devOnlyPkgs := findDevOnlyPkgs(yarnPkgs, prodDeps, devDeps)
