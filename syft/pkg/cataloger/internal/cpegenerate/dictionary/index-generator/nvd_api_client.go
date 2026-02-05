@@ -112,19 +112,14 @@ func NewNVDAPIClient() *NVDAPIClient {
 	}
 }
 
-// PageCallback is called after each page is successfully fetched
-// it receives the startIndex and the response for that page
-type PageCallback func(startIndex int, response NVDProductsResponse) error
-
-// FetchProductsSince fetches all products modified since the given date
-// if lastModStartDate is zero, fetches all products (no date filter)
-// if lastModStartDate is set, fetches in 120-day chunks (NVD API limit) from that date to now
-// calls onPageFetched callback after each successful page fetch for incremental saving
-// if resumeFromIndex > 0, starts fetching from that index (only applies to first chunk)
-func (c *NVDAPIClient) FetchProductsSince(ctx context.Context, lastModStartDate time.Time, resumeFromIndex int, onPageFetched PageCallback) error {
+// FetchProductsSince fetches all products modified since the given date.
+// If lastModStartDate is zero, fetches all products (no date filter).
+// If lastModStartDate is set, fetches in 120-day chunks (NVD API limit) from that date to now.
+// Returns partial results on error so progress can be saved.
+func (c *NVDAPIClient) FetchProductsSince(ctx context.Context, lastModStartDate time.Time) ([]NVDProduct, error) {
 	// if no date filter, fetch all products in a single pass
 	if lastModStartDate.IsZero() {
-		return c.fetchDateRange(ctx, time.Time{}, time.Time{}, resumeFromIndex, onPageFetched)
+		return c.fetchDateRange(ctx, time.Time{}, time.Time{})
 	}
 
 	// fetch in 120-day chunks from lastModStartDate to now
@@ -133,42 +128,27 @@ func (c *NVDAPIClient) FetchProductsSince(ctx context.Context, lastModStartDate 
 		fmt.Printf("Date range spans %d chunks of up to %d days each\n", len(chunks), maxDateRangeDays)
 	}
 
-	var totalFetched int
+	var allProducts []NVDProduct
 	for i, chunk := range chunks {
 		if len(chunks) > 1 {
 			fmt.Printf("Fetching chunk %d/%d: %s to %s\n", i+1, len(chunks),
 				chunk.start.Format("2006-01-02"), chunk.end.Format("2006-01-02"))
 		}
 
-		// only use resumeFromIndex for the first chunk
-		startIdx := 0
-		if i == 0 {
-			startIdx = resumeFromIndex
+		products, err := c.fetchDateRange(ctx, chunk.start, chunk.end)
+		if err != nil {
+			// return partial results so caller can save progress
+			return allProducts, err
 		}
 
-		// wrap callback to track and log progress
-		chunkProducts := 0
-		wrappedCallback := func(startIndex int, response NVDProductsResponse) error {
-			chunkProducts += len(response.Products)
-			fmt.Printf("  Fetched %d/%d products...\n", chunkProducts, response.TotalResults)
-			if onPageFetched != nil {
-				return onPageFetched(startIndex, response)
-			}
-			return nil
-		}
-
-		if err := c.fetchDateRange(ctx, chunk.start, chunk.end, startIdx, wrappedCallback); err != nil {
-			return err
-		}
-
-		totalFetched += chunkProducts
+		allProducts = append(allProducts, products...)
 		if len(chunks) > 1 {
-			fmt.Printf("Chunk %d complete: %d products (total so far: %d)\n", i+1, chunkProducts, totalFetched)
+			fmt.Printf("Chunk %d complete: %d products (total so far: %d)\n", i+1, len(products), len(allProducts))
 		}
 	}
 
-	fmt.Printf("Fetched %d products total\n", totalFetched)
-	return nil
+	fmt.Printf("Fetched %d products total\n", len(allProducts))
+	return allProducts, nil
 }
 
 // dateChunk represents a date range for fetching
@@ -194,23 +174,20 @@ func buildDateChunks(start, end time.Time) []dateChunk {
 	return chunks
 }
 
-// fetchDateRange fetches all products within a single date range (must be <= 120 days)
-// if start and end are both zero, fetches all products without date filtering
-func (c *NVDAPIClient) fetchDateRange(ctx context.Context, start, end time.Time, resumeFromIndex int, onPageFetched PageCallback) error {
-	startIndex := resumeFromIndex
+// fetchDateRange fetches all products within a single date range (must be <= 120 days).
+// If start and end are both zero, fetches all products without date filtering.
+func (c *NVDAPIClient) fetchDateRange(ctx context.Context, start, end time.Time) ([]NVDProduct, error) {
+	var products []NVDProduct
+	startIndex := 0
 
 	for {
 		resp, err := c.fetchPage(ctx, startIndex, start, end)
 		if err != nil {
-			return fmt.Errorf("failed to fetch page at index %d: %w", startIndex, err)
+			return products, fmt.Errorf("failed to fetch page at index %d: %w", startIndex, err)
 		}
 
-		// call callback to save progress immediately
-		if onPageFetched != nil {
-			if err := onPageFetched(startIndex, resp); err != nil {
-				return fmt.Errorf("callback failed at index %d: %w", startIndex, err)
-			}
-		}
+		products = append(products, resp.Products...)
+		fmt.Printf("  Fetched %d/%d products...\n", len(products), resp.TotalResults)
 
 		// check if we've fetched all results
 		if startIndex+resp.ResultsPerPage >= resp.TotalResults {
@@ -220,7 +197,7 @@ func (c *NVDAPIClient) fetchDateRange(ctx context.Context, start, end time.Time,
 		startIndex += resp.ResultsPerPage
 	}
 
-	return nil
+	return products, nil
 }
 
 // fetchPage fetches a single page of results from the NVD API with retry logic for rate limiting
