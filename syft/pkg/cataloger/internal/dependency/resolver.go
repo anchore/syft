@@ -3,13 +3,16 @@ package dependency
 import (
 	"sort"
 
-	"github.com/scylladb/go-set/strset"
-
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
+
+// pairKey is a struct used to track seen relationship pairs without string concatenation
+type pairKey struct {
+	from, to artifact.ID
+}
 
 // Specification holds strings that indicate abstract resources that a package provides for other packages and
 // requires for itself. These strings can represent anything from file paths, package names, or any other concept
@@ -64,15 +67,15 @@ func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.
 		specsByPkg[id] = allProvides(pkgsProvidingResource, id, specifier(p))
 	}
 
-	seen := strset.New()
+	seen := make(map[pairKey]struct{})
 	for _, dependantPkg := range pkgs {
 		specs := specsByPkg[dependantPkg.ID()]
 		for _, spec := range specs {
 			for _, resource := range deduplicate(spec.Requires) {
 				for providingPkgID := range pkgsProvidingResource[resource] {
-					// prevent creating duplicate relationships
-					pairKey := string(providingPkgID) + "-" + string(dependantPkg.ID())
-					if seen.Has(pairKey) {
+					// prevent creating duplicate relationships using struct key instead of string concatenation
+					key := pairKey{from: providingPkgID, to: dependantPkg.ID()}
+					if _, exists := seen[key]; exists {
 						continue
 					}
 
@@ -86,7 +89,7 @@ func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.
 						},
 					)
 
-					seen.Add(pairKey)
+					seen[key] = struct{}{}
 				}
 			}
 		}
@@ -112,8 +115,16 @@ func allProvides(pkgsProvidingResource map[string]internal.Set[artifact.ID], id 
 
 func deduplicate(ss []string) []string {
 	// note: we sort the set such that multiple invocations of this function will be deterministic
-	set := strset.New(ss...)
-	list := set.List()
-	sort.Strings(list)
-	return list
+	// use map for O(1) lookups without strset overhead
+	unique := make(map[string]struct{}, len(ss))
+	result := make([]string, 0, len(unique))
+
+	for _, s := range ss {
+		if _, exists := unique[s]; !exists {
+			unique[s] = struct{}{}
+			result = append(result, s)
+		}
+	}
+	sort.Strings(result)
+	return result
 }

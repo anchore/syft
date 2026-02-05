@@ -107,17 +107,21 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
-		pkgKey := name + "@" + ver
+		pkgKey := strings.Join([]string{name, ver}, "@")
 
 		integrity := ""
 		if value, ok := pkgInfo.Resolution["integrity"]; ok {
 			integrity = value
 		}
 
-		dependencies := make(map[string]string)
+		dependencies := make(map[string]string, len(pkgInfo.Dependencies))
 		for depName, depVersion := range pkgInfo.Dependencies {
-			var normalizedVersion = strings.SplitN(depVersion, "(", 2)[0]
-			dependencies[depName] = normalizedVersion
+			// Use strings.Cut for more efficient splitting
+			if normalizedVersion, _, ok := strings.Cut(depVersion, "("); ok {
+				dependencies[depName] = normalizedVersion
+			} else {
+				dependencies[depName] = depVersion
+			}
 		}
 
 		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrity, Dependencies: dependencies, Dev: pkgInfo.Dev}
@@ -143,7 +147,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			log.WithFields("key", key).Trace("unable to parse pnpm v9 package key")
 			continue
 		}
-		pkgKey := name + "@" + ver
+		pkgKey := strings.Join([]string{name, ver}, "@")
 		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
 	}
 
@@ -153,12 +157,16 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			log.WithFields("key", key).Trace("unable to parse pnpm v9 package snapshot key")
 			continue
 		}
-		pkgKey := name + "@" + ver
+		pkgKey := strings.Join([]string{name, ver}, "@")
 		if pkg, ok := packages[pkgKey]; ok {
-			pkg.Dependencies = make(map[string]string)
+			pkg.Dependencies = make(map[string]string, len(snapshotInfo.Dependencies))
 			for name, versionSpecifier := range snapshotInfo.Dependencies {
-				var normalizedVersion = strings.SplitN(versionSpecifier, "(", 2)[0]
-				pkg.Dependencies[name] = normalizedVersion
+				// Use strings.Cut for more efficient splitting
+				if normalizedVersion, _, ok := strings.Cut(versionSpecifier, "("); ok {
+					pkg.Dependencies[name] = normalizedVersion
+				} else {
+					pkg.Dependencies[name] = versionSpecifier
+				}
 			}
 			packages[pkgKey] = pkg
 		} else {
