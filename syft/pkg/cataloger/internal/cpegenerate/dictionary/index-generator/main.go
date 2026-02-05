@@ -99,17 +99,14 @@ func fetchProducts(ctx context.Context, lastModStartDate time.Time, resumeFromIn
 	fmt.Println("Fetching CPE data from NVD Products API...")
 
 	var allProducts []NVDProduct
-	var totalResults int
 	var firstStartIndex, lastEndIndex int
 
 	onPageFetched := func(startIndex int, response NVDProductsResponse) error {
-		if totalResults == 0 {
-			totalResults = response.TotalResults
+		if firstStartIndex == 0 && startIndex == 0 {
 			firstStartIndex = startIndex
 		}
 		lastEndIndex = startIndex + response.ResultsPerPage
 		allProducts = append(allProducts, response.Products...)
-		fmt.Printf("Fetched %d/%d products...\n", len(allProducts), totalResults)
 		return nil
 	}
 

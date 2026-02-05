@@ -24,6 +24,9 @@ const (
 	// retry configuration for rate limiting
 	maxRetries     = 5
 	baseRetryDelay = 30 * time.Second // NVD uses 30-second rolling windows
+
+	// NVD API has a maximum date range of 120 days for queries with date filters
+	maxDateRangeDays = 120
 )
 
 // NVDAPIClient handles communication with the NVD Products API
@@ -114,14 +117,90 @@ func NewNVDAPIClient() *NVDAPIClient {
 type PageCallback func(startIndex int, response NVDProductsResponse) error
 
 // FetchProductsSince fetches all products modified since the given date
-// if lastModStartDate is zero, fetches all products
+// if lastModStartDate is zero, fetches all products (no date filter)
+// if lastModStartDate is set, fetches in 120-day chunks (NVD API limit) from that date to now
 // calls onPageFetched callback after each successful page fetch for incremental saving
-// if resumeFromIndex > 0, starts fetching from that index
+// if resumeFromIndex > 0, starts fetching from that index (only applies to first chunk)
 func (c *NVDAPIClient) FetchProductsSince(ctx context.Context, lastModStartDate time.Time, resumeFromIndex int, onPageFetched PageCallback) error {
+	// if no date filter, fetch all products in a single pass
+	if lastModStartDate.IsZero() {
+		return c.fetchDateRange(ctx, time.Time{}, time.Time{}, resumeFromIndex, onPageFetched)
+	}
+
+	// fetch in 120-day chunks from lastModStartDate to now
+	chunks := buildDateChunks(lastModStartDate, time.Now().UTC())
+	if len(chunks) > 1 {
+		fmt.Printf("Date range spans %d chunks of up to %d days each\n", len(chunks), maxDateRangeDays)
+	}
+
+	var totalFetched int
+	for i, chunk := range chunks {
+		if len(chunks) > 1 {
+			fmt.Printf("Fetching chunk %d/%d: %s to %s\n", i+1, len(chunks),
+				chunk.start.Format("2006-01-02"), chunk.end.Format("2006-01-02"))
+		}
+
+		// only use resumeFromIndex for the first chunk
+		startIdx := 0
+		if i == 0 {
+			startIdx = resumeFromIndex
+		}
+
+		// wrap callback to track and log progress
+		chunkProducts := 0
+		wrappedCallback := func(startIndex int, response NVDProductsResponse) error {
+			chunkProducts += len(response.Products)
+			fmt.Printf("  Fetched %d/%d products...\n", chunkProducts, response.TotalResults)
+			if onPageFetched != nil {
+				return onPageFetched(startIndex, response)
+			}
+			return nil
+		}
+
+		if err := c.fetchDateRange(ctx, chunk.start, chunk.end, startIdx, wrappedCallback); err != nil {
+			return err
+		}
+
+		totalFetched += chunkProducts
+		if len(chunks) > 1 {
+			fmt.Printf("Chunk %d complete: %d products (total so far: %d)\n", i+1, chunkProducts, totalFetched)
+		}
+	}
+
+	fmt.Printf("Fetched %d products total\n", totalFetched)
+	return nil
+}
+
+// dateChunk represents a date range for fetching
+type dateChunk struct {
+	start time.Time
+	end   time.Time
+}
+
+// buildDateChunks splits a date range into chunks of maxDateRangeDays
+func buildDateChunks(start, end time.Time) []dateChunk {
+	var chunks []dateChunk
+	chunkStart := start
+
+	for chunkStart.Before(end) {
+		chunkEnd := chunkStart.AddDate(0, 0, maxDateRangeDays)
+		if chunkEnd.After(end) {
+			chunkEnd = end
+		}
+		chunks = append(chunks, dateChunk{start: chunkStart, end: chunkEnd})
+		chunkStart = chunkEnd
+	}
+
+	return chunks
+}
+
+// fetchDateRange fetches all products within a single date range (must be <= 120 days)
+// if start and end are both zero, fetches all products without date filtering
+func (c *NVDAPIClient) fetchDateRange(ctx context.Context, start, end time.Time, resumeFromIndex int, onPageFetched PageCallback) error {
 	startIndex := resumeFromIndex
 
 	for {
-		resp, err := c.fetchPage(ctx, startIndex, lastModStartDate)
+		resp, err := c.fetchPage(ctx, startIndex, start, end)
 		if err != nil {
 			return fmt.Errorf("failed to fetch page at index %d: %w", startIndex, err)
 		}
@@ -135,19 +214,19 @@ func (c *NVDAPIClient) FetchProductsSince(ctx context.Context, lastModStartDate 
 
 		// check if we've fetched all results
 		if startIndex+resp.ResultsPerPage >= resp.TotalResults {
-			fmt.Printf("Fetched %d/%d products (complete)\n", resp.TotalResults, resp.TotalResults)
 			break
 		}
 
 		startIndex += resp.ResultsPerPage
-		fmt.Printf("Fetched %d/%d products...\n", startIndex, resp.TotalResults)
 	}
 
 	return nil
 }
 
 // fetchPage fetches a single page of results from the NVD API with retry logic for rate limiting
-func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, lastModStartDate time.Time) (NVDProductsResponse, error) {
+// if both start and end are zero, fetches without date filtering
+// if start and end are set, they must form a range <= 120 days (enforced by caller)
+func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, start, end time.Time) (NVDProductsResponse, error) {
 	var lastErr error
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
@@ -160,10 +239,12 @@ func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, lastModSta
 		url := fmt.Sprintf("%s?resultsPerPage=%d&startIndex=%d", nvdProductsAPIURL, resultsPerPage, startIndex)
 
 		// add date range if specified (incremental update)
-		if !lastModStartDate.IsZero() {
-			// NVD API requires RFC3339 format: 2024-01-01T00:00:00.000
-			lastModStartStr := lastModStartDate.Format("2006-01-02T15:04:05.000")
-			url += fmt.Sprintf("&lastModStartDate=%s", lastModStartStr)
+		// NVD API requires both lastModStartDate and lastModEndDate when either is present
+		if !start.IsZero() && !end.IsZero() {
+			// NVD API requires this format: 2024-01-01T00:00:00.000
+			startStr := start.Format("2006-01-02T15:04:05.000")
+			endStr := end.Format("2006-01-02T15:04:05.000")
+			url += fmt.Sprintf("&lastModStartDate=%s&lastModEndDate=%s", startStr, endStr)
 		}
 
 		// create request
@@ -191,14 +272,12 @@ func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, lastModSta
 			continue // retry
 		}
 
-		// handle HTTP status codes
-		statusResponse, handled, err := c.handleHTTPStatus(httpResp, startIndex)
-		if handled {
-			// either error or special case (404 with empty results)
-			return statusResponse, err
+		// check for error status codes
+		if err := checkHTTPStatus(httpResp); err != nil {
+			return NVDProductsResponse{}, err
 		}
 
-		// success - parse response
+		// parse response
 		var response NVDProductsResponse
 		if err := json.NewDecoder(httpResp.Body).Decode(&response); err != nil {
 			httpResp.Body.Close()
@@ -235,31 +314,16 @@ func (c *NVDAPIClient) handleRateLimit(ctx context.Context, httpResp *http.Respo
 	}
 }
 
-// handleHTTPStatus handles non-429 HTTP status codes
-// returns (response, handled, error) where:
-//   - handled=true means the status was processed (either success case like 404 or error)
-//   - handled=false means continue to normal response parsing
-func (c *NVDAPIClient) handleHTTPStatus(httpResp *http.Response, startIndex int) (NVDProductsResponse, bool, error) {
-	// handle 404 as "no results found" (common when querying recent dates with no updates)
-	if httpResp.StatusCode == http.StatusNotFound {
-		httpResp.Body.Close()
-		return NVDProductsResponse{
-			ResultsPerPage: 0,
-			StartIndex:     startIndex,
-			TotalResults:   0,
-			Products:       []NVDProduct{},
-		}, true, nil
+// checkHTTPStatus returns an error for non-200 status codes.
+// NVD API returns 200 with TotalResults=0 when there are no results,
+// so any non-200 status (including 404) indicates an actual error.
+func checkHTTPStatus(httpResp *http.Response) error {
+	if httpResp.StatusCode == http.StatusOK {
+		return nil
 	}
-
-	// check for other non-200 status codes
-	if httpResp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(httpResp.Body)
-		httpResp.Body.Close()
-		return NVDProductsResponse{}, true, fmt.Errorf("unexpected status code %d: %s", httpResp.StatusCode, string(body))
-	}
-
-	// status OK - let caller parse response
-	return NVDProductsResponse{}, false, nil
+	body, _ := io.ReadAll(httpResp.Body)
+	httpResp.Body.Close()
+	return fmt.Errorf("NVD API error (status %d): %s", httpResp.StatusCode, string(body))
 }
 
 // parseRetryAfter parses the Retry-After header from HTTP 429 responses
