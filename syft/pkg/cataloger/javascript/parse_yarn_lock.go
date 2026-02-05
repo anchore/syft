@@ -3,6 +3,7 @@ package javascript
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -13,6 +14,7 @@ import (
 	"github.com/goccy/go-yaml"
 	"github.com/scylladb/go-set/strset"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -51,7 +53,7 @@ type yarnPackage struct {
 	Version      string
 	Resolved     string
 	Integrity    string
-	Dependencies map[string]string // We don't currently support dependencies for yarn v1 lock files
+	Dependencies map[string]string
 }
 
 type yarnV2PackageEntry struct {
@@ -69,6 +71,98 @@ func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	return genericYarnLockAdapter{
 		cfg: cfg,
 	}
+}
+
+// readPackageJSONDeps reads the package.json adjacent to the given lockfile location.
+// NOTE: in yarn workspaces, only the root package.json is consulted. Packages declared
+// as devDependencies only in a workspace package.json (not the root) will not be detected
+// as dev-only. This is a safe degradation — those packages will be included in the SBOM
+// rather than incorrectly filtered out.
+func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location) (prod, dev map[string]string) {
+	prod = make(map[string]string)
+	dev = make(map[string]string)
+
+	if resolver == nil {
+		return prod, dev
+	}
+
+	pkgJSONLocation := resolver.RelativeFileByPath(lockfileLocation, "package.json")
+	if pkgJSONLocation == nil {
+		log.WithFields("lockfile", lockfileLocation.RealPath).Debug("could not find package.json for dev dependency detection")
+		return prod, dev
+	}
+
+	reader, err := resolver.FileContentsByLocation(*pkgJSONLocation)
+	if err != nil {
+		log.WithFields("location", pkgJSONLocation.RealPath, "error", err).Debug("could not read package.json for dev dependency detection")
+		return prod, dev
+	}
+	defer internal.CloseAndLogError(reader, pkgJSONLocation.RealPath)
+
+	var pkgJSON packageJSON
+	if err := json.NewDecoder(reader).Decode(&pkgJSON); err != nil {
+		log.WithFields("location", pkgJSONLocation.RealPath, "error", err).Debug("could not parse package.json for dev dependency detection")
+		return prod, dev
+	}
+
+	if pkgJSON.Dependencies != nil {
+		prod = pkgJSON.Dependencies
+	}
+	if pkgJSON.DevDependencies != nil {
+		dev = pkgJSON.DevDependencies
+	}
+
+	return prod, dev
+}
+
+// findReachable returns all package names reachable from the given roots via BFS
+// through the dependency graph.
+func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
+	visited := make(map[string]bool)
+	queue := make([]string, 0, len(roots))
+
+	for name := range roots {
+		queue = append(queue, name)
+	}
+
+	for len(queue) > 0 {
+		name := queue[0]
+		queue = queue[1:]
+
+		if visited[name] {
+			continue
+		}
+		visited[name] = true
+
+		if pkg, exists := pkgByName[name]; exists {
+			for depName := range pkg.Dependencies {
+				if !visited[depName] {
+					queue = append(queue, depName)
+				}
+			}
+		}
+	}
+
+	return visited
+}
+
+func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string) map[string]bool {
+	pkgByName := make(map[string]yarnPackage)
+	for _, p := range yarnPkgs {
+		pkgByName[p.Name] = p
+	}
+
+	prodTransitive := findReachable(prodDeps, pkgByName)
+	devTransitive := findReachable(devDeps, pkgByName)
+
+	devOnly := make(map[string]bool)
+	for name := range devTransitive {
+		if !prodTransitive[name] {
+			devOnly[name] = true
+		}
+	}
+
+	return devOnly
 }
 
 func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
@@ -190,9 +284,17 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to parse yarn.lock file: %w", err)
 	}
 
-	packages := make([]pkg.Package, len(yarnPkgs))
-	for i, p := range yarnPkgs {
-		packages[i] = newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies)
+	// get dependencies from sibling package.json for dev dependency detection
+	prodDeps, devDeps := readPackageJSONDeps(resolver, reader.Location)
+
+	devOnlyPkgs := findDevOnlyPkgs(yarnPkgs, prodDeps, devDeps)
+
+	packages := make([]pkg.Package, 0, len(yarnPkgs))
+	for _, p := range yarnPkgs {
+		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
+			continue
+		}
+		packages = append(packages, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies))
 	}
 
 	pkg.Sort(packages)
