@@ -545,7 +545,8 @@ tasks:
       - "go generate ./internal/capabilities/..."
       - "gofmt -s -w ./internal/capabilities"
       # now that we have the latest capabilities, run completeness tests to ensure this is self-consistent
-      - "SYFT_ENABLE_COMPLETENESS_TESTS=true go test ./internal/capabilities/... -count=1"
+      # note: -p 1 forces sequential package execution to avoid race between generate (writes) and internal (reads)
+      - "SYFT_ENABLE_COMPLETENESS_TESTS=true go test -p 1 ./internal/capabilities/... -count=1"
 
 
   ## Build-related targets #################################
