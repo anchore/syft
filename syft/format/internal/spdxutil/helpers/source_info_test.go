@@ -345,6 +345,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.MacOSAppPkg,
+			},
+			expected: []string{
+				"acquired package info from macOS application Info.plist",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.TerraformPkg,
 			},
 			expected: []string{
