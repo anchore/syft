@@ -80,6 +80,10 @@ func (r *rpmdbTestFileResolverMock) FilesByMIMEType(...string) ([]file.Location,
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (r *rpmdbTestFileResolverMock) FilesByMediaType(...string) ([]file.Location, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func TestParseRpmDB(t *testing.T) {
 	ctx := context.TODO()
 	packagesLocation := file.NewLocation("test-fixtures/Packages")

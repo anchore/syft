@@ -26,6 +26,7 @@ var knownNonMetadataTypeNames = strset.New(
 // known to be metadata types themselves. Adding to this list will prevent the removal of the type from the schema.
 var knownMetadataTypeNames = strset.New(
 	"DotnetPortableExecutableEntry",
+	"GGUFFileHeader",
 )
 
 func DiscoverTypeNames() ([]string, error) {
