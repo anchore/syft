@@ -1105,3 +1105,81 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/envoy
+
+  # contrib builds
+  - version: 1.22.10
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.22.10@sha256:2c479dd69aaaf555ab48ab9142b5970b74ee472e50f08d2b85caa1460c19f689
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.24.5
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.24.5@sha256:9a32eaff6798dd62a7d6662a02226d47df694406d1698f000ad25dd1a3355952
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.30.2
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.30.2@sha256:8878516ce3c8f099300243fadacb2e3d869d447dfd276ac2661c6c06c92bcd45
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.31.2
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.31.2@sha256:ebdf98ff3b26d5fa70276fb43f0dbca168f49aa5aa1fe5f18382d391f482aa3e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.34.12
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.34.12@sha256:50da8a5221c9afc84df79f384aa9ee9c7000f8509d3f2562a58d84cb2fd39645
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.23.7
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.23.7@sha256:4589b08900e41de763d19ac3c854c280796a575f58c218c5e8b2f2a6e4765dda
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.24.9
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.24.9@sha256:e6cdba2e747f2c024821cec58d2e2833cd0e6512c61d1dbe7200f8046235a026
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.30.1
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.30.1@sha256:92d50d25c28d68979a20607736e401e4c05c717109fc0d07d688aaa3db35bd94
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.30.6
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.30.6@sha256:58bd1cb68eea4ffd5b4d41112bc31299057f17e72c6cacaf7431fd0ee6b5222b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.35.4
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.35.4@sha256:07378820f9669a3c7eac5d0a88fda78ccb8dfdd4100388db1110b2038f8d5d21
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.36.1
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.36.1@sha256:f2001f6f72abc22e7ac9cebe940e48570ee5970703ada61bca6919c687b2accf
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
