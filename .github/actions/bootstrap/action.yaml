@@ -13,7 +13,7 @@ inputs:
   cache-key-prefix:
     description: "Prefix all cache keys with this value"
     required: true
-    default: "53ac821810"
+    default: "53ac821811"
   download-test-fixture-cache:
     description: "Download test fixture cache from OCI and github actions"
     required: true

@@ -204,6 +204,90 @@ func TestParseJar(t *testing.T) {
 								},
 							},
 						},
+						ContainedPackages: []string{
+							"hello",
+							"net.bytebuddy",
+							"net.bytebuddy.agent.builder",
+							"net.bytebuddy.asm",
+							"net.bytebuddy.build",
+							"net.bytebuddy.description",
+							"net.bytebuddy.description.annotation",
+							"net.bytebuddy.description.enumeration",
+							"net.bytebuddy.description.field",
+							"net.bytebuddy.description.method",
+							"net.bytebuddy.description.modifier",
+							"net.bytebuddy.description.type",
+							"net.bytebuddy.dynamic",
+							"net.bytebuddy.dynamic.loading",
+							"net.bytebuddy.dynamic.scaffold",
+							"net.bytebuddy.dynamic.scaffold.inline",
+							"net.bytebuddy.dynamic.scaffold.subclass",
+							"net.bytebuddy.implementation",
+							"net.bytebuddy.implementation.attribute",
+							"net.bytebuddy.implementation.auxiliary",
+							"net.bytebuddy.implementation.bind",
+							"net.bytebuddy.implementation.bind.annotation",
+							"net.bytebuddy.implementation.bytecode",
+							"net.bytebuddy.implementation.bytecode.assign",
+							"net.bytebuddy.implementation.bytecode.assign.primitive",
+							"net.bytebuddy.implementation.bytecode.assign.reference",
+							"net.bytebuddy.implementation.bytecode.collection",
+							"net.bytebuddy.implementation.bytecode.constant",
+							"net.bytebuddy.implementation.bytecode.member",
+							"net.bytebuddy.jar.asm",
+							"net.bytebuddy.jar.asm.commons",
+							"net.bytebuddy.jar.asm.signature",
+							"net.bytebuddy.jar.asmjdkbridge",
+							"net.bytebuddy.matcher",
+							"net.bytebuddy.pool",
+							"net.bytebuddy.utility",
+							"net.bytebuddy.utility.dispatcher",
+							"net.bytebuddy.utility.nullability",
+							"net.bytebuddy.utility.privilege",
+							"net.bytebuddy.utility.visitor",
+							"org.joda.time",
+							"org.joda.time.base",
+							"org.joda.time.chrono",
+							"org.joda.time.convert",
+							"org.joda.time.field",
+							"org.joda.time.format",
+							"org.joda.time.tz",
+						},
+					},
+				},
+				"byte-buddy": {
+					Name:     "byte-buddy",
+					Version:  "1.17.5",
+					PURL:     "pkg:maven/net.bytebuddy/byte-buddy@1.17.5",
+					Licenses: pkg.NewLicenseSet(),
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
+					Metadata: pkg.JavaArchive{
+						// ensure that nested packages with different names than that of the parent are appended as
+						// a suffix on the virtual path
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-gradle-0.1.0.jar:net.bytebuddy:byte-buddy",
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/net.bytebuddy/byte-buddy/pom.properties",
+							GroupID:    "net.bytebuddy",
+							ArtifactID: "byte-buddy",
+							Version:    "1.17.5",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path: "META-INF/maven/net.bytebuddy/byte-buddy/pom.xml",
+							Parent: &pkg.JavaPomParent{
+								GroupID:    "net.bytebuddy",
+								ArtifactID: "byte-buddy-parent",
+								Version:    "1.17.5",
+							},
+							GroupID:    "net.bytebuddy",
+							ArtifactID: "byte-buddy",
+							Version:    "1.17.5",
+							Name:       "Byte Buddy (without dependencies)",
+							Description: "Byte Buddy is a Java library for creating Java classes at run time. " +
+								"This artifact is a build of Byte Buddy with all ASM dependencies repackaged " +
+								"into its own name space.",
+							URL: "",
+						},
 						// PomProject: &pkg.JavaPomProject{
 						// 	Path:       "META-INF/maven/io.jenkins.plugins/example-jenkins-plugin/pom.xml",
 						// 	Parent:     &pkg.JavaPomParent{GroupID: "org.jenkins-ci.plugins", ArtifactID: "plugin", Version: "4.46"},
@@ -315,6 +399,90 @@ func TestParseJar(t *testing.T) {
 							ArtifactID: "example-java-app-maven",
 							Version:    "0.1.0",
 						},
+						ContainedPackages: []string{
+							"hello",
+							"net.bytebuddy",
+							"net.bytebuddy.agent.builder",
+							"net.bytebuddy.asm",
+							"net.bytebuddy.build",
+							"net.bytebuddy.description",
+							"net.bytebuddy.description.annotation",
+							"net.bytebuddy.description.enumeration",
+							"net.bytebuddy.description.field",
+							"net.bytebuddy.description.method",
+							"net.bytebuddy.description.modifier",
+							"net.bytebuddy.description.type",
+							"net.bytebuddy.dynamic",
+							"net.bytebuddy.dynamic.loading",
+							"net.bytebuddy.dynamic.scaffold",
+							"net.bytebuddy.dynamic.scaffold.inline",
+							"net.bytebuddy.dynamic.scaffold.subclass",
+							"net.bytebuddy.implementation",
+							"net.bytebuddy.implementation.attribute",
+							"net.bytebuddy.implementation.auxiliary",
+							"net.bytebuddy.implementation.bind",
+							"net.bytebuddy.implementation.bind.annotation",
+							"net.bytebuddy.implementation.bytecode",
+							"net.bytebuddy.implementation.bytecode.assign",
+							"net.bytebuddy.implementation.bytecode.assign.primitive",
+							"net.bytebuddy.implementation.bytecode.assign.reference",
+							"net.bytebuddy.implementation.bytecode.collection",
+							"net.bytebuddy.implementation.bytecode.constant",
+							"net.bytebuddy.implementation.bytecode.member",
+							"net.bytebuddy.jar.asm",
+							"net.bytebuddy.jar.asm.commons",
+							"net.bytebuddy.jar.asm.signature",
+							"net.bytebuddy.jar.asmjdkbridge",
+							"net.bytebuddy.matcher",
+							"net.bytebuddy.pool",
+							"net.bytebuddy.utility",
+							"net.bytebuddy.utility.dispatcher",
+							"net.bytebuddy.utility.nullability",
+							"net.bytebuddy.utility.privilege",
+							"net.bytebuddy.utility.visitor",
+							"org.joda.time",
+							"org.joda.time.base",
+							"org.joda.time.chrono",
+							"org.joda.time.convert",
+							"org.joda.time.field",
+							"org.joda.time.format",
+							"org.joda.time.tz",
+						},
+					},
+				},
+				"byte-buddy": {
+					Name:     "byte-buddy",
+					Version:  "1.17.5",
+					PURL:     "pkg:maven/net.bytebuddy/byte-buddy@1.17.5",
+					Licenses: pkg.NewLicenseSet(),
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
+					Metadata: pkg.JavaArchive{
+						// ensure that nested packages with different names than that of the parent are appended as
+						// a suffix on the virtual path
+						VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar:net.bytebuddy:byte-buddy",
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/net.bytebuddy/byte-buddy/pom.properties",
+							GroupID:    "net.bytebuddy",
+							ArtifactID: "byte-buddy",
+							Version:    "1.17.5",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path: "META-INF/maven/net.bytebuddy/byte-buddy/pom.xml",
+							Parent: &pkg.JavaPomParent{
+								GroupID:    "net.bytebuddy",
+								ArtifactID: "byte-buddy-parent",
+								Version:    "1.17.5",
+							},
+							GroupID:    "net.bytebuddy",
+							ArtifactID: "byte-buddy",
+							Version:    "1.17.5",
+							Name:       "Byte Buddy (without dependencies)",
+							Description: "Byte Buddy is a Java library for creating Java classes at run time. " +
+								"This artifact is a build of Byte Buddy with all ASM dependencies repackaged " +
+								"into its own name space.",
+							URL: "",
+						},
 					},
 				},
 				"joda-time": {
@@ -371,6 +539,7 @@ func TestParseJar(t *testing.T) {
 			cfg := ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
+				DetectContainedPackages: true,
 			}
 			parser, cleanupFn, err := newJavaArchiveParser(context.Background(),
 				file.LocationReadCloser{
@@ -1649,4 +1818,45 @@ func Test_jarPomPropertyResolutionDoesNotPanic(t *testing.T) {
 
 	_, _, err = ap.parse(ctx, nil)
 	require.NoError(t, err)
+}
+
+func Test_isValidMultiReleaseVersion(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		// Valid versions (multi-release JARs require version >= 9)
+		{"9", true},
+		{"10", true},
+		{"11", true},
+		{"17", true},
+		{"21", true},
+		{"100", true},
+
+		// Invalid versions - less than 9 (per spec: "Any versioned directory with N < 9 is ignored")
+		{"1", false},
+		{"2", false},
+		{"8", false},
+
+		// Invalid versions - format errors
+		{"", false},      // empty string
+		{"0", false},     // zero not allowed (first digit must be 1-9)
+		{"01", false},    // leading zero
+		{"9a", false},    // contains non-digit
+		{"a9", false},    // starts with non-digit
+		{"abc", false},   // all non-digits
+		{"-1", false},    // negative (starts with non-digit)
+		{"9.0", false},   // contains non-digit (period)
+		{"11-ea", false}, // contains non-digit (dash and letters)
+		{" 9", false},    // leading space
+		{"9 ", false},    // trailing space
+		{"1.8", false},   // old-style version format
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("input=%q", tt.input), func(t *testing.T) {
+			result := isValidMultiReleaseVersion(tt.input)
+			assert.Equal(t, tt.expected, result, "isValidMultiReleaseVersion(%q)", tt.input)
+		})
+	}
 }

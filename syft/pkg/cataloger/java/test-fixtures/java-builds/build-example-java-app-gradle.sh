@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -uxe
+set -uxe 
 
 # note: this can be easily done in a 1-liner, however circle CI does NOT allow volume mounts from the host in docker executors (since they are on remote hosts, where the host files are inaccessible)
 

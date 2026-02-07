@@ -25,6 +25,9 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: ResolveTransitiveDependencies
         description: ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
         app_key: java.resolve-transitive-dependencies
+      - key: DetectContainedPackages
+        description: DetectContainedPackages enables collecting all package names contained in a jar.
+        app_key: java.detect-contained-packages
 catalogers:
   - ecosystem: java # MANUAL
     name: java-archive-cataloger # AUTO-GENERATED

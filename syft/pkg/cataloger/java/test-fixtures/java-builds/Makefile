@@ -81,7 +81,7 @@ $(FINGERPRINT_FILE):
 	@find example-* build-* Makefile -type f -exec sha256sum {} \; | sort -k2 > $(FINGERPRINT_FILE)
 	@#cat $(FINGERPRINT_FILE) | sha256sum | awk '{print $$1}'
 
-# requirement 4: 'clean' goal to remove all generated test fixtures
+# requirement 4: 'clean' goal to remove all generated test fixtures...
 clean: clean-examples
 	rm -rf $(PKGSDIR) $(FINGERPRINT_FILE)
 
