@@ -54,6 +54,7 @@ const (
 	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	MacOSAppPkg             Type = "macos-app"
 	ModelPkg                Type = "model"
 )
 
@@ -99,6 +100,7 @@ var AllPkgs = []Type{
 	TerraformPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	MacOSAppPkg,
 	ModelPkg,
 }
 
@@ -176,6 +178,8 @@ func (t Type) PackageURLType() string {
 		return "wordpress-plugin"
 	case HomebrewPkg:
 		return "homebrew"
+	case MacOSAppPkg:
+		return "macos-app"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -264,6 +268,8 @@ func TypeByName(name string) Type {
 		return WordpressPluginPkg
 	case "homebrew":
 		return HomebrewPkg
+	case "macos-app":
+		return MacOSAppPkg
 	default:
 		return UnknownPkg
 	}

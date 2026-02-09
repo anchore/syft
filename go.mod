@@ -275,8 +275,10 @@ require (
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
+	howett.net/plist v1.0.1
 	github.com/gpustack/gguf-parser-go v0.23.1
 	github.com/wk8/go-ordered-map/v2 v2.1.8
+
 )
 
 require (
