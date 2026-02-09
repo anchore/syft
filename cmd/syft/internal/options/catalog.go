@@ -16,8 +16,6 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
-	"github.com/anchore/syft/syft/file/cataloger/executable"
-	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
@@ -143,18 +141,21 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 		log.WithFields("error", err).Warn("unable to configure file hashers")
 	}
 
-	return filecataloging.Config{
-		Selection: cfg.File.Metadata.Selection,
-		Hashers:   hashers,
-		Content: filecontent.Config{
-			Globs:              cfg.File.Content.Globs,
-			SkipFilesAboveSize: cfg.File.Content.SkipFilesAboveSize,
-		},
-		Executable: executable.Config{
-			MIMETypes: executable.DefaultConfig().MIMETypes,
-			Globs:     cfg.File.Executable.Globs,
-		},
-	}
+	c := filecataloging.DefaultConfig()
+	c.Selection = cfg.File.Metadata.Selection
+	c.Hashers = hashers
+	c.Content.Globs = cfg.File.Content.Globs
+	c.Content.SkipFilesAboveSize = cfg.File.Content.SkipFilesAboveSize
+	c.Executable.Globs = cfg.File.Executable.Globs
+
+	// symbol capture configuration
+	c.Executable.Symbols.CaptureScope = cfg.File.Executable.Symbols.CaptureScope
+	c.Executable.Symbols.Types = cfg.File.Executable.Symbols.Types
+	c.Executable.Symbols.Go.StandardLibrary = cfg.File.Executable.Symbols.Go.StandardLibrary
+	c.Executable.Symbols.Go.ExtendedStandardLibrary = cfg.File.Executable.Symbols.Go.ExtendedStandardLibrary
+	c.Executable.Symbols.Go.ThirdPartyModules = cfg.File.Executable.Symbols.Go.ThirdPartyModules
+
+	return c
 }
 
 func (cfg Catalog) ToLicenseConfig() cataloging.LicenseConfig {
@@ -271,6 +272,11 @@ func (cfg *Catalog) PostLoad() error {
 	// the binary package exclusion code depends on the file overlap relationships being created upstream in processing
 	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeBinaryOverlapByOwnership {
 		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
+	}
+
+	// validate file executable options
+	if err := cfg.ToFilesConfig().Executable.Validate(); err != nil {
+		return fmt.Errorf("invalid file executable configuration: %w", err)
 	}
 
 	return nil

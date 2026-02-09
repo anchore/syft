@@ -2,6 +2,7 @@ package executable
 
 import (
 	"debug/pe"
+	"strings"
 
 	"github.com/scylladb/go-set/strset"
 
@@ -9,7 +10,23 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
-func findPEFeatures(data *file.Executable, reader unionreader.UnionReader) error {
+// PE symbol storage class constants
+const (
+	peSymClassExternal = 2 // IMAGE_SYM_CLASS_EXTERNAL - external symbol
+	peSymClassStatic   = 3 // IMAGE_SYM_CLASS_STATIC - static symbol
+)
+
+// PE section characteristic flags
+const (
+	peSectionCntCode              = 0x00000020 // IMAGE_SCN_CNT_CODE
+	peSectionCntInitializedData   = 0x00000040 // IMAGE_SCN_CNT_INITIALIZED_DATA
+	peSectionCntUninitializedData = 0x00000080 // IMAGE_SCN_CNT_UNINITIALIZED_DATA
+	peSectionMemExecute           = 0x20000000 // IMAGE_SCN_MEM_EXECUTE
+	peSectionMemRead              = 0x40000000 // IMAGE_SCN_MEM_READ
+	peSectionMemWrite             = 0x80000000 // IMAGE_SCN_MEM_WRITE
+)
+
+func findPEFeatures(data *file.Executable, reader unionreader.UnionReader, cfg SymbolConfig) error {
 	// TODO: support security features
 
 	f, err := pe.NewFile(reader)
@@ -25,6 +42,10 @@ func findPEFeatures(data *file.Executable, reader unionreader.UnionReader) error
 	data.ImportedLibraries = libs
 	data.HasEntrypoint = peHasEntrypoint(f)
 	data.HasExports = peHasExports(f)
+	data.Toolchains = peToolchains(reader)
+	if shouldCaptureSymbols(data, cfg) {
+		data.SymbolNames = peNMSymbols(f, cfg, data.Toolchains)
+	}
 
 	return nil
 }
@@ -81,4 +102,105 @@ func peHasExports(f *pe.File) bool {
 	}
 
 	return false
+}
+
+func peToolchains(reader unionreader.UnionReader) []file.Toolchain {
+	return includeNoneNil(
+		golangToolchainEvidence(reader),
+	)
+}
+
+func peNMSymbols(f *pe.File, cfg SymbolConfig, toolchains []file.Toolchain) []string {
+	if isGoToolchainPresent(toolchains) {
+		return capturePeGoSymbols(f, cfg)
+	}
+
+	// include all symbols for non-Go binaries
+	if f.Symbols == nil {
+		return nil
+	}
+	var symbols []string
+	for _, sym := range f.Symbols {
+		symbols = append(symbols, sym.Name)
+	}
+	return symbols
+}
+
+func capturePeGoSymbols(f *pe.File, cfg SymbolConfig) []string {
+	if f.Symbols == nil {
+		return nil
+	}
+
+	var symbols []string
+	filter := createGoSymbolFilter(cfg)
+	for _, sym := range f.Symbols {
+		name, include := filter(sym.Name, peSymbolType(sym, f.Sections))
+		if include {
+			symbols = append(symbols, name)
+		}
+	}
+	return symbols
+}
+
+// peSymbolType returns the nm-style single character representing the symbol type.
+// This mimics the output of `nm` for PE/COFF binaries.
+func peSymbolType(sym *pe.Symbol, sections []*pe.Section) string {
+	// handle special section numbers first
+	switch sym.SectionNumber {
+	case 0:
+		// IMAGE_SYM_UNDEFINED - undefined symbol
+		return "U"
+	case -1:
+		// IMAGE_SYM_ABSOLUTE - absolute symbol
+		if sym.StorageClass == peSymClassExternal {
+			return "A"
+		}
+		return "a"
+	case -2:
+		// IMAGE_SYM_DEBUG - debugging symbol
+		return "-"
+	}
+
+	// for defined symbols, determine type based on section characteristics
+	typeChar := peSectionTypeChar(sym.SectionNumber, sections)
+
+	// lowercase for static (local) symbols, uppercase for external (global)
+	if sym.StorageClass != peSymClassExternal && typeChar != '-' && typeChar != '?' {
+		return strings.ToLower(string(typeChar))
+	}
+	return string(typeChar)
+}
+
+// peSectionTypeChar returns the nm-style character based on section characteristics.
+// Section numbers are 1-based.
+func peSectionTypeChar(sectNum int16, sections []*pe.Section) byte {
+	idx := int(sectNum) - 1 // convert to 0-based index
+	if idx < 0 || idx >= len(sections) {
+		return '?'
+	}
+
+	section := sections[idx]
+	chars := section.Characteristics
+
+	// determine symbol type based on section characteristics
+	switch {
+	case chars&peSectionMemExecute != 0 || chars&peSectionCntCode != 0:
+		// executable section -> text
+		return 'T'
+
+	case chars&peSectionCntUninitializedData != 0:
+		// uninitialized data section -> BSS
+		return 'B'
+
+	case chars&peSectionMemWrite == 0 && chars&peSectionCntInitializedData != 0:
+		// read-only initialized data -> rodata
+		return 'R'
+
+	case chars&peSectionCntInitializedData != 0:
+		// writable initialized data -> data
+		return 'D'
+
+	default:
+		return 'D'
+	}
 }

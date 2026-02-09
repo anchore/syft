@@ -13,7 +13,7 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
-func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) error {
+func findELFFeatures(data *file.Executable, reader unionreader.UnionReader, cfg SymbolConfig) error {
 	f, err := elf.NewFile(reader)
 	if err != nil {
 		return err
@@ -34,8 +34,166 @@ func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) erro
 	data.ELFSecurityFeatures = findELFSecurityFeatures(f)
 	data.HasEntrypoint = elfHasEntrypoint(f)
 	data.HasExports = elfHasExports(f)
+	data.Toolchains = elfToolchains(reader, f)
+	if shouldCaptureSymbols(data, cfg) {
+		data.SymbolNames = elfNMSymbols(f, cfg, data.Toolchains)
+	}
 
 	return err
+}
+
+func elfToolchains(reader unionreader.UnionReader, f *elf.File) []file.Toolchain {
+	return includeNoneNil(
+		golangToolchainEvidence(reader),
+		cToolchainEvidence(f),
+	)
+}
+
+func includeNoneNil(evidence ...*file.Toolchain) []file.Toolchain {
+	var toolchains []file.Toolchain
+	for _, e := range evidence {
+		if e != nil {
+			toolchains = append(toolchains, *e)
+		}
+	}
+	return toolchains
+}
+
+func elfNMSymbols(f *elf.File, cfg SymbolConfig, toolchains []file.Toolchain) []string {
+	if isGoToolchainPresent(toolchains) {
+		return captureElfGoSymbols(f, cfg)
+	}
+
+	// include all symbols
+	syms, err := f.Symbols()
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read symbols from elf file")
+		return nil
+	}
+
+	var symbols []string
+	for _, sym := range syms {
+		symbols = append(symbols, sym.Name)
+	}
+	return symbols
+}
+
+func captureElfGoSymbols(f *elf.File, cfg SymbolConfig) []string {
+	syms, err := f.Symbols()
+	if err != nil {
+		log.WithFields("error", err).Trace("unable to read symbols from elf file")
+		return nil
+	}
+
+	var symbols []string
+	filter := createGoSymbolFilter(cfg)
+	for _, sym := range syms {
+		name, include := filter(sym.Name, elfSymbolType(sym, f.Sections))
+		if include {
+			symbols = append(symbols, name)
+		}
+	}
+	return symbols
+}
+
+// elfSymbolType returns the nm-style single character representing the symbol type.
+// This mimics the output of `nm` for ELF binaries.
+func elfSymbolType(sym elf.Symbol, sections []*elf.Section) string {
+	binding := elf.ST_BIND(sym.Info)
+	symType := elf.ST_TYPE(sym.Info)
+
+	// handle special section indices first
+	switch sym.Section {
+	case elf.SHN_UNDEF:
+		// undefined symbols
+		if binding == elf.STB_WEAK {
+			if symType == elf.STT_OBJECT {
+				return "v" // weak object
+			}
+			return "w" // weak symbol
+		}
+		return "U" // undefined (always uppercase)
+
+	case elf.SHN_ABS:
+		// absolute symbols
+		if binding == elf.STB_LOCAL {
+			return "a"
+		}
+		return "A"
+
+	case elf.SHN_COMMON:
+		// common symbols (uninitialized data)
+		return "C" // always uppercase per nm convention
+	}
+
+	// for defined symbols, determine type based on section characteristics
+	typeChar := elfSectionTypeChar(sym.Section, sections)
+
+	// handle weak symbols
+	if binding == elf.STB_WEAK {
+		if typeChar == 'U' || typeChar == 'u' {
+			if symType == elf.STT_OBJECT {
+				return "v"
+			}
+			return "w"
+		}
+		// weak defined symbol
+		if binding == elf.STB_LOCAL {
+			return strings.ToLower(string(typeChar))
+		}
+		// use 'W' for weak defined, or 'V' for weak object
+		if symType == elf.STT_OBJECT {
+			return "V"
+		}
+		return "W"
+	}
+
+	// local symbols are lowercase, global symbols are uppercase
+	if binding == elf.STB_LOCAL {
+		return strings.ToLower(string(typeChar))
+	}
+	return string(typeChar)
+}
+
+// elfSectionTypeChar returns the nm-style character based on section flags and type.
+func elfSectionTypeChar(sectIdx elf.SectionIndex, sections []*elf.Section) byte {
+	idx := int(sectIdx)
+	// the sections slice from debug/elf includes the NULL section at index 0, so we use idx directly
+	if idx < 0 || idx >= len(sections) {
+		return '?'
+	}
+
+	section := sections[idx]
+	flags := section.Flags
+	stype := section.Type
+
+	// check section characteristics to determine symbol type
+	switch {
+	case flags&elf.SHF_EXECINSTR != 0:
+		// executable section -> text
+		return 'T'
+
+	case stype == elf.SHT_NOBITS:
+		// uninitialized data section -> BSS
+		return 'B'
+
+	case flags&elf.SHF_WRITE == 0 && flags&elf.SHF_ALLOC != 0:
+		// read-only allocated section -> rodata
+		return 'R'
+
+	case flags&elf.SHF_WRITE != 0 && flags&elf.SHF_ALLOC != 0:
+		// writable allocated section -> data
+		return 'D'
+
+	case flags&elf.SHF_ALLOC != 0:
+		// other allocated section
+		return 'D'
+
+	default:
+		// non-allocated sections (debug info, etc.)
+		// nm typically shows 'n' for debug, but we'll use 'N' for consistency
+		return 'N'
+	}
 }
 
 func findELFSecurityFeatures(f *elf.File) *file.ELFSecurityFeatures {

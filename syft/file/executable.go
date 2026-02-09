@@ -6,9 +6,15 @@ type (
 
 	// RelocationReadOnly indicates the RELRO security protection level applied to an ELF binary.
 	RelocationReadOnly string
+
+	// ToolchainKind represents the type of toolchain used to build the executable. Today only "compiler" is supported,
+	// however, this can be expanded in the future to include linkers, runtimes, etc.
+	ToolchainKind string
 )
 
 const (
+	ToolchainKindCompiler ToolchainKind = "compiler"
+
 	ELF   ExecutableFormat = "elf"   // Executable and Linkable Format used on Unix-like systems
 	MachO ExecutableFormat = "macho" // Mach object file format used on macOS and iOS
 	PE    ExecutableFormat = "pe"    // Portable Executable format used on Windows
@@ -34,6 +40,23 @@ type Executable struct {
 
 	// ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF.
 	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
+
+	// Symbols captures the selection from the symbol table found in the binary.
+	SymbolNames []string `json:"symbolNames,omitempty" yaml:"symbolNames" mapstructure:"symbolNames"`
+
+	// Toolchains captures information about the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
+	Toolchains []Toolchain `json:"toolchains,omitempty" yaml:"toolchains" mapstructure:"toolchains"`
+}
+
+type Toolchain struct {
+	// Name is the name of the toolchain (e.g., "gcc", "clang", "ld", etc.).
+	Name string `json:"name" yaml:"name" mapstructure:"name"`
+
+	// Version is the version of the toolchain.
+	Version string `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version"`
+
+	// Kind indicates the type of toolchain (e.g., compiler, linker, runtime).
+	Kind ToolchainKind `json:"kind" yaml:"kind" mapstructure:"kind"`
 }
 
 // ELFSecurityFeatures captures security hardening and protection mechanisms in ELF binaries.
