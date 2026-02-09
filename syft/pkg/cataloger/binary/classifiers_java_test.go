@@ -1,6 +1,7 @@
 package binary
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -8,8 +9,9 @@ import (
 
 func Test_JavaBinaryImage(t *testing.T) {
 	tests := []struct {
-		image    string
-		expected []string
+		image      string
+		expected   []string
+		skipOnArch string // skip test when running on this architecture (e.g., "arm64")
 	}{
 		{
 			image: "image-java-binary",
@@ -25,12 +27,14 @@ func Test_JavaBinaryImage(t *testing.T) {
 			expected: []string{
 				"zulu @ 1.8.0_462-b08 (/usr/lib/jvm/zulu8-ca-amd64/bin/jdb)",
 			},
+			skipOnArch: "arm64", // image uses amd64-specific paths
 		},
 		{
 			image: "image-java-zulu-21",
 			expected: []string{
 				"zulu @ 21.0.8+9-LTS (/usr/lib/jvm/zulu21-ca-amd64/bin/java)",
 			},
+			skipOnArch: "arm64", // image uses amd64-specific paths
 		},
 		{
 			image: "image-java-ibm-8",
@@ -43,6 +47,7 @@ func Test_JavaBinaryImage(t *testing.T) {
 			expected: []string{
 				"java @ 1.8.0-_2025_04_14_02_37-b00 (/opt/ibm/java/jre/bin/java)",
 			},
+			skipOnArch: "arm64", // base image has no arm64 manifest
 		},
 		{
 			image: "image-java-ibm-sdk-8",
@@ -54,6 +59,9 @@ func Test_JavaBinaryImage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.image, func(t *testing.T) {
+			if tt.skipOnArch != "" && runtime.GOARCH == tt.skipOnArch {
+				t.Skipf("skipping test on %s architecture", tt.skipOnArch)
+			}
 			c := NewClassifierCataloger(ClassifierCatalogerConfig{
 				Classifiers: defaultJavaClassifiers(),
 			})

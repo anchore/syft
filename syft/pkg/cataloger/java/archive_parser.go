@@ -258,6 +258,12 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		pkgPomProject = newPomProject(ctx, j.maven, parsedPom.path, parsedPom.project)
 	}
 
+	var containedPackages []string
+
+	if j.cfg.DetectContainedPackages {
+		containedPackages = j.discoverContainedPackages()
+	}
+
 	return &pkg.Package{
 		// TODO: maybe select name should just have a pom properties in it?
 		Name:     name,
@@ -269,10 +275,11 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 		),
 		Type: j.fileInfo.pkgType(),
 		Metadata: pkg.JavaArchive{
-			VirtualPath:    j.location.Path(),
-			Manifest:       manifest,
-			PomProject:     pkgPomProject,
-			ArchiveDigests: digests,
+			VirtualPath:       j.location.Path(),
+			Manifest:          manifest,
+			PomProject:        pkgPomProject,
+			ArchiveDigests:    digests,
+			ContainedPackages: containedPackages,
 		},
 	}, nil
 }
@@ -874,4 +881,70 @@ func sortedIter[K cmp.Ordered, V any](values map[K]V) iter.Seq2[K, V] {
 			}
 		}
 	}
+}
+
+// Tests if the given string is a valid multi-release version as specified by
+// https://docs.oracle.com/en/java/javase/11/docs/specs/jar/jar.html#multi-release-jar-files
+func isValidMultiReleaseVersion(s string) bool {
+	if s == "" {
+		return false
+	}
+
+	// Must start with 1-9 (format: {1-9}{0-9}*)
+	if s[0] < '1' || s[0] > '9' {
+		return false
+	}
+
+	// Only digits are allowed
+	if strings.IndexFunc(s, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) != -1 {
+		return false
+	}
+
+	// Per spec: "Any versioned directory with N < 9 is ignored"
+	// Single digit must be 9; multi-digit (10+) is always >= 9
+	if len(s) == 1 && s[0] < '9' {
+		return false
+	}
+
+	return true
+}
+
+func (j *archiveParser) discoverContainedPackages() []string {
+	pkgSet := strset.New()
+
+	classes := j.fileManifest.GlobMatch(false, "**/*.class")
+
+	for _, c := range classes {
+		parts := strings.Split(c, "/")
+
+		if len(parts) > 3 && parts[0] == "META-INF" && parts[1] == "versions" && isValidMultiReleaseVersion(parts[2]) {
+			// Strip the version specific prefix, as we are interested in all packages in the JAR.
+			parts = parts[3:]
+		}
+
+		// Ignore any unnamed packages.
+		if len(parts) <= 1 {
+			continue
+		}
+
+		// Skip any non version specific classes in META-INF and ignore WEB-INF.
+		if parts[0] == "META-INF" || parts[0] == "WEB-INF" {
+			continue
+		}
+
+		pkgName := strings.Join(parts[:len(parts)-1], ".")
+
+		pkgSet.Add(pkgName)
+	}
+
+	if pkgSet.Size() == 0 {
+		return nil
+	}
+
+	pkgs := pkgSet.List()
+	slices.Sort(pkgs)
+
+	return pkgs
 }

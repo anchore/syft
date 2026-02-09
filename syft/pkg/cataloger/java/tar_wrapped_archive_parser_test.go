@@ -23,6 +23,7 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
+				"byte-buddy",
 			},
 		},
 		{
@@ -30,6 +31,7 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
+				"byte-buddy",
 			},
 		},
 		{
@@ -37,6 +39,7 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
+				"byte-buddy",
 			},
 		},
 	}

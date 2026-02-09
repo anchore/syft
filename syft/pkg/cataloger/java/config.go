@@ -33,6 +33,10 @@ type ArchiveCatalogerConfig struct {
 	// ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
 	// app-config: java.resolve-transitive-dependencies
 	ResolveTransitiveDependencies bool `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+
+	// DetectContainedPackages enables collecting all package names contained in a jar.
+	// app-config: java.detect-contained-packages
+	DetectContainedPackages bool `yaml:"detect-contained-packages" json:"detect-contained-packages" mapstructure:"detect-contained-packages"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -45,6 +49,7 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		MavenBaseURL:                  strings.Join(mavenCfg.Repositories, ","),
 		MaxParentRecursiveDepth:       mavenCfg.MaxParentRecursiveDepth,
 		ResolveTransitiveDependencies: false,
+		DetectContainedPackages:       false,
 	}
 }
 
@@ -78,6 +83,11 @@ func (j ArchiveCatalogerConfig) WithResolveTransitiveDependencies(resolveTransit
 func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSearchConfig, maxDepth int) ArchiveCatalogerConfig {
 	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithDetectContainedPackages(detectContainedPackages bool) ArchiveCatalogerConfig {
+	j.DetectContainedPackages = detectContainedPackages
 	return j
 }
 
