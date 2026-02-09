@@ -65,6 +65,8 @@ func validateSourcePlatform(src source.Source, cfg *GetSourceConfig) error {
 	switch meta.(type) {
 	case *source.ImageMetadata, source.ImageMetadata:
 		return nil
+	case *source.OCIModelMetadata, source.OCIModelMetadata:
+		return nil
 	case *source.SnapMetadata, source.SnapMetadata:
 		return nil
 	default:

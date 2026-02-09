@@ -35,6 +35,7 @@ const (
 	spdxPrimaryPurposeOther     = "OTHER"
 
 	prefixImage     = "Image"
+	prefixOCIModel  = "OCIModel"
 	prefixDirectory = "Directory"
 	prefixFile      = "File"
 	prefixSnap      = "Snap"
@@ -187,6 +188,36 @@ func toRootPackage(s source.Description) *spdx.Package {
 	switch m := s.Metadata.(type) {
 	case source.ImageMetadata:
 		prefix = prefixImage
+		purpose = spdxPrimaryPurposeContainer
+
+		qualifiers := packageurl.Qualifiers{
+			{
+				Key:   "arch",
+				Value: m.Architecture,
+			},
+		}
+
+		ref, _ := reference.Parse(m.UserInput)
+		if ref, ok := ref.(reference.NamedTagged); ok {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "tag",
+				Value: ref.Tag(),
+			})
+		}
+
+		c := toChecksum(m.ManifestDigest)
+		if c != nil {
+			checksums = append(checksums, *c)
+			purl = &packageurl.PackageURL{
+				Type:       "oci",
+				Name:       s.Name,
+				Version:    m.ManifestDigest,
+				Qualifiers: qualifiers,
+			}
+		}
+
+	case source.OCIModelMetadata:
+		prefix = prefixOCIModel
 		purpose = spdxPrimaryPurposeContainer
 
 		qualifiers := packageurl.Qualifiers{
