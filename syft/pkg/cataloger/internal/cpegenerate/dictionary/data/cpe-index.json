@@ -2386,6 +2386,9 @@
       "@perfood/couch-auth": [
         "cpe:2.3:a:perfood:couchauth:*:*:*:*:*:node.js:*:*"
       ],
+      "@pkgr/core": [
+        "cpe:2.3:a:un-ts:pkgr\\/core:*:*:*:*:*:node.js:*:*"
+      ],
       "@podium/layout": [
         "cpe:2.3:a:finn:podium_layout:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:finn:podium_proxy:*:*:*:*:*:node.js:*:*"
@@ -3182,8 +3185,14 @@
       "es6-crawler-detect": [
         "cpe:2.3:a:crawlerdetect_project:crawlerdetect:*:*:*:*:*:node.js:*:*"
       ],
+      "eslint-config-prettier": [
+        "cpe:2.3:a:prettier:eslint-config-prettier:*:*:*:*:*:node.js:*:*"
+      ],
       "eslint-fixer": [
         "cpe:2.3:a:eslint-fixer_project:eslint-fixer:*:*:*:*:*:node.js:*:*"
+      ],
+      "eslint-plugin-prettier": [
+        "cpe:2.3:a:prettier:eslint-plugin-prettier:*:*:*:*:*:node.js:*:*"
       ],
       "eslint-utils": [
         "cpe:2.3:a:eslint-utils_project:eslint-utils:*:*:*:*:*:node.js:*:*"
@@ -4334,6 +4343,9 @@
       "nanoid": [
         "cpe:2.3:a:nanoid_project:nanoid:*:*:*:*:*:node.js:*:*"
       ],
+      "napi-postinstall": [
+        "cpe:2.3:a:un-ts:napi-postinstall:*:*:*:*:*:node.js:*:*"
+      ],
       "native-opencv": [
         "cpe:2.3:a:native-opencv_project:native-opencv:*:*:*:*:*:node.js:*:*"
       ],
@@ -4656,6 +4668,9 @@
       ],
       "osm-static-maps": [
         "cpe:2.3:a:osm-static-maps_project:osm-static-maps:*:*:*:*:*:node.js:*:*"
+      ],
+      "outray": [
+        "cpe:2.3:a:outray:outray:*:*:*:*:*:node.js:*:*"
       ],
       "p4": [
         "cpe:2.3:a:p4_project:p4:*:*:*:*:*:node.js:*:*"
@@ -5357,6 +5372,9 @@
       "sync-exec": [
         "cpe:2.3:a:sync-exec_project:sync-exec:*:*:*:*:*:node.js:*:*"
       ],
+      "synckit": [
+        "cpe:2.3:a:un-ts:synckit:*:*:*:*:*:node.js:*:*"
+      ],
       "systeminformation": [
         "cpe:2.3:a:systeminformation:systeminformation:*:*:*:*:*:node.js:*:*"
       ],
@@ -5877,6 +5895,9 @@
       ],
       "autobahn": [
         "cpe:2.3:a:crossbar:autobahn:*:*:*:*:*:*:*:*"
+      ],
+      "azure-core": [
+        "cpe:2.3:a:microsoft:azure_core_shared_client_library:*:*:*:*:*:python:*:*"
       ],
       "b2sdk": [
         "cpe:2.3:a:backblaze:b2-sdk-python:*:*:*:*:*:*:*:*"
