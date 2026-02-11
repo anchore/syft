@@ -794,6 +794,20 @@ func DefaultClassifiers() []binutils.Classifier {
 				m.FileContentsVersionMatcher(`(?s)\[source/.{0,200}\x00(?P<version>1\.1[0-9]\.[0-9]+(-dev)?)\x00`),
 				// 1.x [NUL]1.6.0[NUL]RELEASE
 				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[0-9]\.[0-9]+(-dev)?)\x00.{0,20}RELEASE`),
+				// contrib 1.3x [NUL]1.34.12[NUL]envoy_quiche... or [NUL]1.30.2[NUL]envoy/extensions... or [NUL]1.30.8[NUL]envoy://
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00envoy[/._:]`),
+				// contrib 1.3x [NUL]1.30.7[NUL]...envoy.service or [NUL]1.30.6[NUL]...envoy.data
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,200}envoy[./]`),
+				// contrib1.3x [NUL]1.31.2[NUL]...envoy_quic or [NUL]1.36.x[NUL]...envoy_quic
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_quic`),
+				// contrib 1.3x [NUL]1.30.1[NUL]TLS client
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00TLS `),
+				// contrib 1.2x [NUL]1.24.9[NUL]envoy/extensions...
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00envoy[/._]`),
+				// contrib 1.2x [NUL]1.22.10[NUL]...envoy. or [NUL]1.24.5[NUL]...envoy.
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00.{0,500}envoy\.`),
+				// contrib 1.2x [NUL]1.23.7[NUL]...envoy_internal
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00.{0,300}envoy_`),
 			),
 			Package: "envoy",
 			PURL:    mustPURL("pkg:generic/envoy@version"),
