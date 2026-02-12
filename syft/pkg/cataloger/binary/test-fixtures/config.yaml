@@ -11,7 +11,7 @@ from-images:
 
   - name: busybox
     version: 1.36.1
-    images: 
+    images:
       - ref: busybox:1.36.1@sha256:058f0df5310fbbbfea7e81a3a3e2b4bf3452438ec841138d170e170adbbd27a4
         platform: linux/amd64
     paths:
@@ -1020,6 +1020,29 @@ from-images:
     paths:
       - /usr/share/grafana/bin/grafana-server
 
+  - name: qt
+    version: 6.5.0
+    images:
+      - ref: stateoftheartio/qt6:6.5-gcc-aqt@sha256:c0dfd1cd174d855f0157ce0455270b2ee49f5eea4c7a40ffe0e848d41ae4d074
+        platform: linux/amd64
+    paths:
+      - /opt/Qt/6.5.0/gcc_64/lib/libQt6Core.so.6.5.0
+
+  - name: qt
+    version: 5.15.2
+    images:
+      - ref: rabits/qt:5.15-desktop@sha256:8dd10b4fcdece7e329dd2b9db52dafcd6590940954bc36d5018567e850d9599c
+        platform: linux/amd64
+    paths:
+      - /opt/Qt/5.15.2/gcc_64/lib/libQt5Core.so.5.15.2
+
+  - name: qt
+    version: 4.8.6
+    images:
+      - ref: uvatbc/qt:qt4@sha256:9d6f18e000df14077f4c96e487fc84e02f1cef19c27f2a8f66f161b8a1ef6b06
+        platform: linux/amd64
+    paths:
+      - /usr/lib/x86_64-linux-gnu/libQtCore.so.4.8.6
   - version: 1.36.4
     images:
       - ref: envoyproxy/envoy:v1.36.4@sha256:ae31562b8cede20913a2d3d6a4f44c8479a50551e033cb8ef7bb8e38cec4b573

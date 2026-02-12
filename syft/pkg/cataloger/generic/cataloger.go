@@ -114,6 +114,26 @@ func (c *Cataloger) WithParserByPath(parser Parser, paths ...string) *Cataloger 
 	return c
 }
 
+func (c *Cataloger) WithParserByMediaType(parser Parser, types ...string) *Cataloger {
+	c.requesters = append(c.requesters,
+		func(resolver file.Resolver, _ Environment) []request {
+			var requests []request
+			log.WithFields("mediatypes", types).Trace("searching content matching mediatypes")
+			ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
+			if !ok {
+				return nil
+			}
+			matches, err := ociResolver.FilesByMediaType(types...)
+			if err != nil {
+				return nil
+			}
+			requests = append(requests, makeRequests(parser, matches)...)
+			return requests
+		},
+	)
+	return c
+}
+
 func (c *Cataloger) WithProcessors(processors ...Processor) *Cataloger {
 	for _, p := range processors {
 		c.processors = append(c.processors, processorWrapper{Processor: p})

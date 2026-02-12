@@ -48,7 +48,7 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
-          - '**/go'
+          - '**/{go,go.exe}'
         packages:
           - class: go-binary
             name: go
@@ -108,16 +108,6 @@ catalogers:
             purl: pkg:generic/node
             cpes:
               - cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*
-            type: BinaryPkg
-      - method: glob
-        criteria:
-          - '**/VERSION*'
-        packages:
-          - class: go-binary-hint
-            name: go
-            purl: pkg:generic/go
-            cpes:
-              - cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:
@@ -432,6 +422,17 @@ catalogers:
             purl: pkg:generic/openssl
             cpes:
               - cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libQt*Core.so*'
+        packages:
+          - class: qt-qtbase-lib
+            name: qtbase
+            purl: pkg:generic/qtbase
+            cpes:
+              - cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:

@@ -55,6 +55,17 @@ func Test_DocumentName(t *testing.T) {
 			expected: "some/name",
 		},
 		{
+			name: "oci-model",
+			srcMetadata: source.Description{
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "model-repo/name:tag",
+					ID:             "id",
+					ManifestDigest: "digest",
+				},
+			},
+			expected: "model-repo/name:tag",
+		},
+		{
 			name: "named",
 			srcMetadata: source.Description{
 				Name:     "some/name",

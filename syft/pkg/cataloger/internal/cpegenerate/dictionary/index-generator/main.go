@@ -53,33 +53,26 @@ func updateCache(ctx context.Context, cacheManager *CacheManager, forceFullRefre
 
 	lastModStartDate, isFullRefresh := determineUpdateMode(metadata, forceFullRefresh)
 
-	// use resume index if available
-	resumeFromIndex := 0
-	if !isFullRefresh && metadata.LastStartIndex > 0 {
-		resumeFromIndex = metadata.LastStartIndex
-		fmt.Printf("Resuming from index %d...\n", resumeFromIndex)
-	}
-
-	allProducts, increment, err := fetchProducts(ctx, lastModStartDate, resumeFromIndex)
+	products, increment, err := fetchProducts(ctx, lastModStartDate)
 	if err != nil {
 		// if we have partial products, save them before returning error
-		if len(allProducts) > 0 {
-			fmt.Printf("\nError occurred but saving %d products fetched so far...\n", len(allProducts))
-			if saveErr := saveAndReportResults(cacheManager, allProducts, isFullRefresh, metadata, increment); saveErr != nil {
+		if len(products) > 0 {
+			fmt.Printf("\nError occurred but saving %d products fetched so far...\n", len(products))
+			if saveErr := saveAndReportResults(cacheManager, products, isFullRefresh, metadata, increment); saveErr != nil {
 				fmt.Printf("WARNING: Failed to save partial progress: %v\n", saveErr)
 			} else {
-				fmt.Println("Partial progress saved successfully. Run again to resume from this point.")
+				fmt.Println("Partial progress saved successfully.")
 			}
 		}
 		return err
 	}
 
-	if len(allProducts) == 0 {
+	if len(products) == 0 {
 		fmt.Println("No products fetched (already up to date)")
 		return nil
 	}
 
-	return saveAndReportResults(cacheManager, allProducts, isFullRefresh, metadata, increment)
+	return saveAndReportResults(cacheManager, products, isFullRefresh, metadata, increment)
 }
 
 // determineUpdateMode decides whether to do a full refresh or incremental update
@@ -94,48 +87,25 @@ func determineUpdateMode(metadata *CacheMetadata, forceFullRefresh bool) (time.T
 }
 
 // fetchProducts fetches products from the NVD API
-func fetchProducts(ctx context.Context, lastModStartDate time.Time, resumeFromIndex int) ([]NVDProduct, IncrementMetadata, error) {
+func fetchProducts(ctx context.Context, lastModStartDate time.Time) ([]NVDProduct, IncrementMetadata, error) {
 	apiClient := NewNVDAPIClient()
 	fmt.Println("Fetching CPE data from NVD Products API...")
 
-	var allProducts []NVDProduct
-	var totalResults int
-	var firstStartIndex, lastEndIndex int
-
-	onPageFetched := func(startIndex int, response NVDProductsResponse) error {
-		if totalResults == 0 {
-			totalResults = response.TotalResults
-			firstStartIndex = startIndex
-		}
-		lastEndIndex = startIndex + response.ResultsPerPage
-		allProducts = append(allProducts, response.Products...)
-		fmt.Printf("Fetched %d/%d products...\n", len(allProducts), totalResults)
-		return nil
-	}
-
-	if err := apiClient.FetchProductsSince(ctx, lastModStartDate, resumeFromIndex, onPageFetched); err != nil {
-		// return partial products with increment metadata so they can be saved
-		increment := IncrementMetadata{
-			FetchedAt:        time.Now(),
-			LastModStartDate: lastModStartDate,
-			LastModEndDate:   time.Now(),
-			Products:         len(allProducts),
-			StartIndex:       firstStartIndex,
-			EndIndex:         lastEndIndex,
-		}
-		return allProducts, increment, fmt.Errorf("failed to fetch products from NVD API: %w", err)
-	}
+	products, err := apiClient.FetchProductsSince(ctx, lastModStartDate)
 
 	increment := IncrementMetadata{
 		FetchedAt:        time.Now(),
 		LastModStartDate: lastModStartDate,
 		LastModEndDate:   time.Now(),
-		Products:         len(allProducts),
-		StartIndex:       firstStartIndex,
-		EndIndex:         lastEndIndex,
+		Products:         len(products),
 	}
 
-	return allProducts, increment, nil
+	if err != nil {
+		// return partial products so they can be saved
+		return products, increment, fmt.Errorf("failed to fetch products from NVD API: %w", err)
+	}
+
+	return products, increment, nil
 }
 
 // saveAndReportResults saves products and metadata, then reports success

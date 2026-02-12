@@ -70,9 +70,17 @@ func DefaultClassifiers() []binutils.Classifier {
 		},
 		{
 			Class:    "go-binary",
-			FileGlob: "**/go",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+			FileGlob: "**/{go,go.exe}",
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+				binutils.SupportingEvidenceMatcher("VERSION*",
+					m.FileContentsVersionMatcher(
+						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)\s`)),
+				binutils.SupportingEvidenceMatcher("../VERSION*",
+					m.FileContentsVersionMatcher(
+						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)\s`)),
+			),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
 			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -141,15 +149,6 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "node",
 			PURL:    mustPURL("pkg:generic/node@version"),
 			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "go-binary-hint",
-			FileGlob: "**/VERSION*",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
-			Package: "go",
-			PURL:    mustPURL("pkg:generic/go@version"),
-			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "busybox-binary",
@@ -512,6 +511,22 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "qt-qtbase-lib",
+			FileGlob: "**/libQt*Core.so*",
+			EvidenceMatcher: binutils.MatchAny(
+				// Qt 5.x and Qt 6.x pattern [NUL][NUL]Qt 6.5.0 (x86_64-little_endian-...
+				m.FileContentsVersionMatcher(`\x00\x00Qt (?P<version>[0-9]+\.[0-9]+\.[0-9]+) \(`),
+				// Qt 4.x pattern QtCore lib ver 4.8.7
+				m.FileContentsVersionMatcher(`QtCore library version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			),
+			Package: "qtbase",
+			PURL:    mustPURL("pkg:generic/qtbase@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
 		},
 		{
 			Class:    "gcc-binary",

@@ -34,4 +34,8 @@ type GGUFFileHeader struct {
 	// across different file locations or remotes. It allows matching identical models even
 	// when stored in different repositories or with different filenames.
 	MetadataKeyValuesHash string `json:"metadataHash,omitempty" cyclonedx:"metadataHash"`
+
+	// Parts contains headers from additional GGUF files that were merged
+	// into this package during post-processing (e.g., from OCI layers without model names).
+	Parts []GGUFFileHeader `json:"parts,omitempty" cyclonedx:"parts"`
 }

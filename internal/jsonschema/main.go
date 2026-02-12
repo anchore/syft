@@ -82,12 +82,29 @@ func assembleTypeContainer(items []any) (any, map[string]string) {
 	return reflect.New(structType).Elem().Interface(), mapping
 }
 
+//nolint:funlen
 func build() *jsonschema.Schema {
+	// create metadata mapping first so we can use it in the Namer function for self-referential types
+	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
+	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
+
+	// create a set of valid metadata display names for lookup
+	// (since Namer now returns display names, the schema definitions use display names as keys)
+	pkgMetadataDisplayNames := make(map[string]struct{}, len(pkgMetadataMapping))
+	for _, displayName := range pkgMetadataMapping {
+		pkgMetadataDisplayNames[displayName] = struct{}{}
+	}
+
 	reflector := &jsonschema.Reflector{
 		BaseSchemaID:              schemaID(),
 		AllowAdditionalProperties: true,
 		Namer: func(r reflect.Type) string {
-			return strings.TrimPrefix(r.Name(), "JSON")
+			name := strings.TrimPrefix(r.Name(), "JSON")
+			// if this is a metadata type, use the mapped name for consistent references
+			if mappedName, ok := pkgMetadataMapping[name]; ok {
+				return mappedName
+			}
+			return name
 		},
 		CommentMap: make(map[string]string),
 	}
@@ -123,9 +140,6 @@ func build() *jsonschema.Schema {
 		copyAliasFieldComments(reflector.CommentMap, repoRoot)
 	}
 
-	pkgMetadataContainer, pkgMetadataMapping := assembleTypeContainer(packagemetadata.AllTypes())
-	pkgMetadataContainerType := reflect.TypeOf(pkgMetadataContainer)
-
 	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
 	// srcMetadataContainerType := reflect.TypeOf(srcMetadataContainer)
 
@@ -144,11 +158,10 @@ func build() *jsonschema.Schema {
 			continue
 		}
 
-		displayName, ok := pkgMetadataMapping[typeName]
-		if ok {
-			// this is a package metadata type...
-			documentSchema.Definitions[displayName] = definition
-			metadataNames = append(metadataNames, displayName)
+		if _, ok := pkgMetadataDisplayNames[typeName]; ok {
+			// this is a package metadata type (typeName is already the display name from Namer)
+			documentSchema.Definitions[typeName] = definition
+			metadataNames = append(metadataNames, typeName)
 		} else {
 			// this is a type that the metadata type uses (e.g. DpkgFileRecord)
 			documentSchema.Definitions[typeName] = definition

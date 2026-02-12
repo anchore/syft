@@ -74,7 +74,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/debian",
+			fixture: "test-fixtures/os/debian/from-os-release",
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
 				Name:         "Debian GNU/Linux",
@@ -85,6 +85,20 @@ func TestIdentifyRelease(t *testing.T) {
 				HomeURL:      "http://www.debian.org/",
 				SupportURL:   "http://www.debian.org/support",
 				BugReportURL: "https://bugs.debian.org/",
+			},
+		},
+		{
+			fixture: "test-fixtures/os/debian/from-debian_version",
+			release: &Release{
+				PrettyName:   "Distroless",
+				Name:         "Debian GNU/Linux",
+				ID:           "debian",
+				IDLike:       nil,
+				Version:      "10.8",
+				VersionID:    "10.8",
+				HomeURL:      "https://github.com/GoogleContainerTools/distroless",
+				SupportURL:   "https://github.com/GoogleContainerTools/distroless/blob/master/README.md",
+				BugReportURL: "https://github.com/GoogleContainerTools/distroless/issues/new",
 			},
 		},
 		{

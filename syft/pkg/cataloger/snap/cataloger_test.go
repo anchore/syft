@@ -19,17 +19,13 @@ func TestCataloger_Globs(t *testing.T) {
 			name:    "system snap with manifest.yaml",
 			fixture: "test-fixtures/glob-paths/system",
 		},
-		{
-			name:    "snap with meta/snap.yaml",
-			fixture: "test-fixtures/glob-paths/meta",
-		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
-				IgnoreUnfulfilledPathResponses("**/meta/snap.yaml", "**/usr/share/snappy/dpkg.yaml", "**/doc/linux-modules-*/changelog.Debian.gz", "**/snap/manifest.yaml", "**/snap/snapcraft.yaml").
+				IgnoreUnfulfilledPathResponses("**/usr/share/snappy/dpkg.yaml", "**/doc/linux-modules-*/changelog.Debian.gz", "**/snap/manifest.yaml", "**/snap/snapcraft.yaml").
 				TestCataloger(t, NewCataloger())
 		})
 	}
