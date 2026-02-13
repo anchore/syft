@@ -34,12 +34,7 @@ func testDigests(t testing.TB, root string, files []string, hashes ...crypto.Has
 			t.Fatalf("could not read %q : %+v", f, err)
 		}
 
-		if len(b) == 0 {
-			// we don't keep digests for empty files
-			digests[file.NewLocation(f).Coordinates] = []file.Digest{}
-			continue
-		}
-
+		// Calculate digests for all files, including empty files
 		for _, hash := range hashes {
 			h := hash.New()
 			h.Write(b)
@@ -65,13 +60,13 @@ func TestDigestsCataloger(t *testing.T) {
 			name:     "md5",
 			digests:  []crypto.Hash{crypto.MD5},
 			files:    []string{"test-fixtures/last/empty/empty", "test-fixtures/last/path.txt"},
-			expected: testDigests(t, "test-fixtures/last", []string{"path.txt"}, crypto.MD5),
+			expected: testDigests(t, "test-fixtures/last", []string{"empty/empty", "path.txt"}, crypto.MD5),
 		},
 		{
 			name:     "md5-sha1-sha256",
 			digests:  []crypto.Hash{crypto.MD5, crypto.SHA1, crypto.SHA256},
 			files:    []string{"test-fixtures/last/empty/empty", "test-fixtures/last/path.txt"},
-			expected: testDigests(t, "test-fixtures/last", []string{"path.txt"}, crypto.MD5, crypto.SHA1, crypto.SHA256),
+			expected: testDigests(t, "test-fixtures/last", []string{"empty/empty", "path.txt"}, crypto.MD5, crypto.SHA1, crypto.SHA256),
 		},
 	}
 

@@ -34,19 +34,16 @@ func NewDigestsFromFile(ctx context.Context, closer io.ReadCloser, hashes []cryp
 		writers[idx] = hashers[idx]
 	}
 
-	size, err := io.Copy(sync.ParallelWriter(ctx, cataloging.ExecutorCPU, writers...), closer)
+	_, err := io.Copy(sync.ParallelWriter(ctx, cataloging.ExecutorCPU, writers...), closer)
 	if err != nil {
 		return nil, err
 	}
 
-	if size == 0 {
-		return make([]file.Digest, 0), nil
-	}
-
 	result := make([]file.Digest, len(hashes))
-	// only capture digests when there is content. It is important to do this based on SIZE and not
-	// FILE TYPE. The reasoning is that it is possible for a tar to be crafted with a header-only
-	// file type but a body is still allowed.
+	// Capture digests for all files, including empty files. Empty files have valid hashes
+	// (e.g., SHA-1 of empty file is da39a3ee5e6b4b0d3255bfef95601890afd80709).
+	// It is important to base this on actual content rather than FILE TYPE, as it is possible
+	// for a tar to be crafted with a header-only file type but a body is still allowed.
 	for idx, hasher := range hashers {
 		result[idx] = file.Digest{
 			Algorithm: CleanDigestAlgorithmName(hashes[idx].String()),
