@@ -106,13 +106,19 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
-			EvidenceMatcher: binutils.MatchAny(
-				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
-				m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
-				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
-				m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
-				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
-				m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAll(
+				// Negative Matchers to exclude valkey-server
+				binutils.MatchNone(
+					binutils.MatchPath("**/valkey-server"),
+				),
+				binutils.MatchAny(
+					// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
+					m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+					// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
+					m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+					// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
+					m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
