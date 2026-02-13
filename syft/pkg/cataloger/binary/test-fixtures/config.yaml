@@ -553,12 +553,14 @@ from-images:
     paths:
       - /usr/local/bin/redis-server
 
-  - version: 9.0.0
+  - name: valkey-server
+    version: 9.0.0
     images:
       - ref: valkey/valkey:9.0.0@sha256:42ea97850708540d4e05f6241cfbd241c1ba502e64d9a42efb2c2e277a8ca9d6
         platform: linux/amd64
     paths:
       - /usr/local/bin/valkey-server
+      - /usr/local/bin/redis-server
 
   - version: 2.9.0
     images:
