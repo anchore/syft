@@ -7,6 +7,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -413,6 +414,165 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	}
 	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
 	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParseHiddenPackageLock(t *testing.T) {
+	fixture := "test-fixtures/pkg-lock-hidden/node_modules/.package-lock.json"
+	var expectedRelationships []artifact.Relationship
+	expectedPkgs := []pkg.Package{
+		{
+			Name:     "lock-v3-fixture",
+			Version:  "1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/lock-v3-fixture@1.0.0",
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"@types/react": "^18.0.9"}},
+		},
+		{
+			Name:     "@types/prop-types",
+			Version:  "15.7.5",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
+		},
+		{
+			Name:     "@types/react",
+			Version:  "18.0.20",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/react@18.0.20",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA==", Dependencies: map[string]string{"@types/prop-types": "*", "@types/scheduler": "*", "csstype": "^3.0.2"}},
+		},
+		{
+			Name:     "@types/scheduler",
+			Version:  "0.16.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="},
+		},
+		{
+			Name:     "csstype",
+			Version:  "3.1.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/csstype@3.1.1",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz", Integrity: "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="},
+		},
+	}
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
+	}
+	expectedRelationships = []artifact.Relationship{
+		{
+			From: expectedPkgs[1],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[3],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[4],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[2],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseHiddenPackageLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParseHiddenPackageLockDedup(t *testing.T) {
+	// when both package-lock.json and node_modules/.package-lock.json exist,
+	// the lock cataloger should only produce one set of packages (from the root lockfile)
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	cataloger := generic.NewCataloger("test-javascript-lock-cataloger").
+		WithParserByGlobs(adapter.parsePackageLock, "**/package-lock.json").
+		WithParserByGlobs(adapter.parseHiddenPackageLock, "**/node_modules/.package-lock.json")
+
+	// the fixture dir has both package-lock.json and node_modules/.package-lock.json with identical content
+	// when using FromDirectory, the resolver returns paths relative to the fixture root
+	fixture := "package-lock.json"
+	expectedPkgs := []pkg.Package{
+		{
+			Name:     "lock-v3-fixture",
+			Version:  "1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/lock-v3-fixture@1.0.0",
+			Metadata: pkg.NpmPackageLockEntry{Dependencies: map[string]string{"@types/react": "^18.0.9"}},
+		},
+		{
+			Name:     "@types/prop-types",
+			Version:  "15.7.5",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/prop-types@15.7.5",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz", Integrity: "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="},
+		},
+		{
+			Name:     "@types/react",
+			Version:  "18.0.20",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/react@18.0.20",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz", Integrity: "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA==", Dependencies: map[string]string{"@types/prop-types": "*", "@types/scheduler": "*", "csstype": "^3.0.2"}},
+		},
+		{
+			Name:     "@types/scheduler",
+			Version:  "0.16.2",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/%40types/scheduler@0.16.2",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz", Integrity: "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="},
+		},
+		{
+			Name:     "csstype",
+			Version:  "3.1.1",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			PURL:     "pkg:npm/csstype@3.1.1",
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz", Integrity: "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="},
+		},
+	}
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[1],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[3],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[4],
+			To:   expectedPkgs[2],
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[2],
+			To:   expectedPkgs[0],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "test-fixtures/pkg-lock-dedup").
+		Expects(expectedPkgs, expectedRelationships).
+		TestCataloger(t, cataloger)
 }
 
 func Test_corruptPackageLock(t *testing.T) {
