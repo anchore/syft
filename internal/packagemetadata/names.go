@@ -96,6 +96,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.NpmPackageLockEntry{}, "javascript-npm-package-lock-entry", "NpmPackageLockJsonMetadata"),
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
 	jsonNames(pkg.PnpmLockEntry{}, "javascript-pnpm-lock-entry"),
+	jsonNames(pkg.BunLockEntry{}, "java-script-bun-lock-entry"),
 	jsonNames(pkg.PEBinary{}, "pe-binary"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
