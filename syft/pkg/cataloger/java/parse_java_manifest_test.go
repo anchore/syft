@@ -1,8 +1,11 @@
 package java
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -454,4 +457,50 @@ func TestSelectVersion(t *testing.T) {
 			assert.Equal(t, test.expected, result)
 		})
 	}
+}
+
+func BenchmarkParseJavaManifest_WorstCase(b *testing.B) {
+	data := generateWorstCaseManifest(
+		20000, // sections
+		1,     // continuation lines per value
+		100,   // chars per line
+	)
+
+	b.ReportAllocs()
+	b.SetBytes(int64(len(data)))
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := parseJavaManifest("worst-case", bytes.NewReader(data))
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func generateWorstCaseManifest(numSections, linesPerValue, lineLen int) []byte {
+	var b strings.Builder
+
+	b.WriteString("Manifest-Version: 1.0\n")
+
+	longChunk := strings.Repeat("A", lineLen)
+
+	for i := 0; i < numSections; i++ {
+		b.WriteString(fmt.Sprintf("Name: section-%d\n", i))
+
+		// create a long multi-line continuation value
+		b.WriteString("Implementation-Version: ")
+		b.WriteString(longChunk)
+		b.WriteString("\n")
+
+		for j := 0; j < linesPerValue; j++ {
+			b.WriteString(" ")
+			b.WriteString(longChunk)
+			b.WriteString("\n")
+		}
+
+		b.WriteString("\n")
+	}
+
+	return []byte(b.String())
 }

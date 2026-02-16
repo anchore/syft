@@ -19,45 +19,77 @@ const manifestGlob = "/META-INF/MANIFEST.MF"
 //nolint:funlen
 func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error) {
 	var manifest pkg.JavaManifest
-	sections := make([]pkg.KeyValues, 0)
-
-	currentSection := func() int {
-		return len(sections) - 1
-	}
+	sections := make([]pkg.KeyValues, 0, 8) // pre-allocate with reasonable capacity
 
 	var lastKey string
+	var continuationBuf []byte // collect original value + continuation bytes to minimize allocations
+	var hasContinuation bool   // track if we have pending continuations
+	var lastKVIdx int          // track the index of the last key-value pair for continuations
+	var sectionIdx int         // track current section index
 	scanner := bufio.NewScanner(reader)
 
+	// trim leading spaces from bytes without converting to string
+	trimLeadingSpace := func(b []byte) []byte {
+		start := 0
+		for start < len(b) && b[start] == ' ' {
+			start++
+		}
+		return b[start:]
+	}
+
+	finaliseContinuation := func() {
+		if hasContinuation && continuationBuf != nil {
+			sections[sectionIdx][lastKVIdx].Value = string(continuationBuf)
+			continuationBuf = continuationBuf[:0]
+			hasContinuation = false
+		}
+	}
+
 	for scanner.Scan() {
-		line := scanner.Text()
-
-		// empty lines denote section separators
-		if line == "" {
-			// we don't want to allocate a new section map that won't necessarily be used, do that once there is
-			// a non-empty line to process
-
+		lineBytes := scanner.Bytes()
+		if len(lineBytes) == 0 {
+			// empty lines denote section separators
+			finaliseContinuation()
 			// do not process line continuations after this
 			lastKey = ""
-
 			continue
 		}
 
-		if line[0] == ' ' {
+		if lineBytes[0] == ' ' {
 			// this is a continuation
-
 			if lastKey == "" {
-				log.Debugf("java manifest %q: found continuation with no previous key: %q", path, line)
+				log.Debugf("java manifest %q: found continuation with no previous key: %q", path, string(lineBytes))
 				continue
 			}
 
-			lastSection := sections[currentSection()]
+			sectionIdx = len(sections) - 1
+			if sectionIdx < 0 {
+				log.Debugf("java manifest %q: found continuation with no section: %q", path, string(lineBytes))
+				continue
+			}
 
-			sections[currentSection()][len(lastSection)-1].Value += strings.TrimSpace(line)
+			lastKVIdx = len(sections[sectionIdx]) - 1
+			if lastKVIdx < 0 {
+				log.Debugf("java manifest %q: found continuation with no key-value pair: %q", path, string(lineBytes))
+				continue
+			}
+
+			if !hasContinuation {
+				currentValue := sections[sectionIdx][lastKVIdx].Value
+				continuationBuf = append(continuationBuf[:0], currentValue...)
+				hasContinuation = true
+			}
+
+			trimmed := trimLeadingSpace(lineBytes)
+			continuationBuf = append(continuationBuf, trimmed...)
 
 			continue
 		}
 
+		finaliseContinuation()
+
 		// this is a new key-value pair
+		line := string(lineBytes)
 		idx := strings.Index(line, ":")
 		if idx == -1 {
 			log.Debugf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
@@ -74,18 +106,21 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 
 		if lastKey == "" {
 			// we're entering a new section
-			sections = append(sections, make(pkg.KeyValues, 0))
+			sections = append(sections, make(pkg.KeyValues, 0, 4)) // pre-allocate with reasonable capacity
 		}
 
-		sections[currentSection()] = append(sections[currentSection()], pkg.KeyValue{
+		sectionIdx = len(sections) - 1
+		sections[sectionIdx] = append(sections[sectionIdx], pkg.KeyValue{
 			Key:   key,
 			Value: value,
 		})
 
 		// keep track of key for potential future continuations
 		lastKey = key
+		lastKVIdx = len(sections[sectionIdx]) - 1
 	}
 
+	finaliseContinuation()
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("unable to read java manifest: %w", err)
 	}
