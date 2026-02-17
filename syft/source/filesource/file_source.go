@@ -76,6 +76,9 @@ func New(cfg Config) (source.Source, error) {
 
 	analysisPath, cleanupFn, err := fileAnalysisPath(cfg.Path, cfg.SkipExtractArchive)
 	if err != nil {
+		if cleanupFn != nil {
+			cleanupFn()
+		}
 		return nil, fmt.Errorf("unable to extract file analysis path=%q: %w", cfg.Path, err)
 	}
 
@@ -211,7 +214,7 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
-			return "", nil, fmt.Errorf("unable to unarchive source file: %w", err)
+			return "", cleanupFn, fmt.Errorf("unable to unarchive source file: %w", err)
 		}
 
 		log.Debugf("source path is an archive")
