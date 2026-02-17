@@ -5,7 +5,7 @@ inputs:
   go-version:
     description: "Go version to install"
     required: true
-    default: ">= 1.25"
+    default: "1.25.x"
   go-dependencies:
     description: "Download go dependencies"
     required: true
