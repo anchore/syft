@@ -33,6 +33,7 @@ runs:
       if: inputs.go-version != ''
       with:
         go-version: ${{ inputs.go-version }}
+        check-latest: true
 
     - name: Restore tool cache
       if: inputs.tools == 'true'
