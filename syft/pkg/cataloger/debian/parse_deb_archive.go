@@ -21,6 +21,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+const maxDebReadSize = 100 * 1024 * 1024 // 100 MB
+
 // parseDebArchive parses a Debian package archive (.deb) file and returns the packages it contains.
 // A .deb file is an ar archive containing three main files:
 // - debian-binary: Version of the .deb format (usually "2.0")
@@ -180,17 +182,17 @@ func readControlFiles(tarReader *tar.Reader) (controlFile, md5sums, conffiles []
 
 		switch filepath.Base(header.Name) {
 		case "control":
-			controlFile, err = io.ReadAll(tarReader)
+			controlFile, err = io.ReadAll(io.LimitReader(tarReader, maxDebReadSize))
 			if err != nil {
 				return nil, nil, nil, err
 			}
 		case "md5sums":
-			md5sums, err = io.ReadAll(tarReader)
+			md5sums, err = io.ReadAll(io.LimitReader(tarReader, maxDebReadSize))
 			if err != nil {
 				return nil, nil, nil, err
 			}
 		case "conffiles":
-			conffiles, err = io.ReadAll(tarReader)
+			conffiles, err = io.ReadAll(io.LimitReader(tarReader, maxDebReadSize))
 			if err != nil {
 				return nil, nil, nil, err
 			}

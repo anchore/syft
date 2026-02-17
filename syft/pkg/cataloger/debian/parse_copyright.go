@@ -22,7 +22,7 @@ var (
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(io.LimitReader(reader, maxDebReadSize))
 	if err != nil {
 		// Fail-safe: return nothing if unable to read
 		return []string{}
