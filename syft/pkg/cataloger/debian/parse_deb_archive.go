@@ -2,7 +2,6 @@ package debian
 
 import (
 	"archive/tar"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -20,8 +19,6 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
-
-const maxDebReadSize = 100 * 1024 * 1024 // 100 MB
 
 // parseDebArchive parses a Debian package archive (.deb) file and returns the packages it contains.
 // A .deb file is an ar archive containing three main files:
@@ -109,41 +106,56 @@ func processDataTar(dcReader io.ReadCloser) ([]string, error) {
 func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	defer internal.CloseAndLogError(dcReader, "")
 
-	// Extract control, md5sums, and conffiles files from control.tar
 	tarReader := tar.NewReader(dcReader)
-	controlFileContent, md5Content, confContent, err := readControlFiles(tarReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read control files: %w", err)
+
+	var metadata *pkg.DpkgArchiveEntry
+	var files []pkg.DpkgFileRecord
+	var confFileRecords []pkg.DpkgFileRecord
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read control tar: %w", err)
+		}
+
+		switch filepath.Base(header.Name) {
+		case "control":
+			// parseDpkgStatus already streams via bufio.Reader
+			entries, err := parseDpkgStatus(tarReader)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse control file: %w", err)
+			}
+			if len(entries) == 0 {
+				return nil, fmt.Errorf("no package entries found in control file")
+			}
+			entry := pkg.DpkgArchiveEntry(entries[0])
+			metadata = &entry
+		case "md5sums":
+			// parseDpkgMD5Info already streams via bufio.Scanner
+			files = parseDpkgMD5Info(tarReader)
+		case "conffiles":
+			// parseDpkgConffileInfo already streams via bufio.Scanner
+			confFileRecords = parseDpkgConffileInfo(tarReader)
+		}
 	}
 
-	if controlFileContent == nil {
+	if metadata == nil {
 		return nil, fmt.Errorf("control file not found in archive")
 	}
 
-	metadata, err := newDpkgArchiveMetadata(controlFileContent, md5Content, confContent)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create package metadata: %w", err)
-	}
-
-	return &metadata, nil
-}
-
-func newDpkgArchiveMetadata(controlFile, md5sums, confFiles []byte) (pkg.DpkgArchiveEntry, error) {
-	// parse the control file to get package metadata
-	metadata, err := parseControlFile(string(controlFile))
-	if err != nil {
-		return pkg.DpkgArchiveEntry{}, fmt.Errorf("failed to parse control file: %w", err)
-	}
-
-	// parse MD5 sums to get file records
-	var files []pkg.DpkgFileRecord
-	if len(md5sums) > 0 {
-		files = parseDpkgMD5Info(bytes.NewReader(md5sums))
-	}
-
-	// mark config files
-	if len(confFiles) > 0 {
-		markConfigFiles(confFiles, files)
+	if len(confFileRecords) > 0 && len(files) > 0 {
+		configPaths := make(map[string]struct{}, len(confFileRecords))
+		for _, cf := range confFileRecords {
+			configPaths[cf.Path] = struct{}{}
+		}
+		for i, f := range files {
+			if _, isConfig := configPaths[f.Path]; isConfig {
+				files[i].IsConfigFile = true
+			}
+		}
 	}
 
 	metadata.Files = files
@@ -167,74 +179,4 @@ func decompressionStream(ctx context.Context, r io.Reader, filePath string) (io.
 	}
 
 	return rc, nil
-}
-
-// readControlFiles extracts important files from the control.tar archive
-func readControlFiles(tarReader *tar.Reader) (controlFile, md5sums, conffiles []byte, err error) {
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		switch filepath.Base(header.Name) {
-		case "control":
-			controlFile, err = io.ReadAll(io.LimitReader(tarReader, maxDebReadSize))
-			if err != nil {
-				return nil, nil, nil, err
-			}
-		case "md5sums":
-			md5sums, err = io.ReadAll(io.LimitReader(tarReader, maxDebReadSize))
-			if err != nil {
-				return nil, nil, nil, err
-			}
-		case "conffiles":
-			conffiles, err = io.ReadAll(io.LimitReader(tarReader, maxDebReadSize))
-			if err != nil {
-				return nil, nil, nil, err
-			}
-		}
-	}
-
-	return controlFile, md5sums, conffiles, nil
-}
-
-// parseControlFile parses the content of a debian control file into package metadata
-func parseControlFile(controlFileContent string) (pkg.DpkgArchiveEntry, error) {
-	// Reuse the existing dpkg status file parsing logic
-	reader := strings.NewReader(controlFileContent)
-
-	entries, err := parseDpkgStatus(reader)
-	if err != nil {
-		return pkg.DpkgArchiveEntry{}, fmt.Errorf("failed to parse control file: %w", err)
-	}
-
-	if len(entries) == 0 {
-		return pkg.DpkgArchiveEntry{}, fmt.Errorf("no package entries found in control file")
-	}
-
-	// We expect only one entry from a .deb control file
-	return pkg.DpkgArchiveEntry(entries[0]), nil
-}
-
-// markConfigFiles marks files that are listed in conffiles as configuration files
-func markConfigFiles(conffilesContent []byte, files []pkg.DpkgFileRecord) {
-	// Parse the conffiles content into DpkgFileRecord entries
-	confFiles := parseDpkgConffileInfo(bytes.NewReader(conffilesContent))
-
-	// Create a map for quick lookup of config files by path
-	configPathMap := make(map[string]struct{})
-	for _, confFile := range confFiles {
-		configPathMap[confFile.Path] = struct{}{}
-	}
-
-	// Mark files as config files if they're in the conffiles list
-	for i := range files {
-		if _, exists := configPathMap[files[i].Path]; exists {
-			files[i].IsConfigFile = true
-		}
-	}
 }

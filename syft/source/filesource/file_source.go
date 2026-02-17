@@ -77,7 +77,9 @@ func New(cfg Config) (source.Source, error) {
 	analysisPath, cleanupFn, err := fileAnalysisPath(cfg.Path, cfg.SkipExtractArchive)
 	if err != nil {
 		if cleanupFn != nil {
-			cleanupFn()
+			if cleanupErr := cleanupFn(); cleanupErr != nil {
+				log.Warnf("failed to cleanup temporary directory: %v", cleanupErr)
+			}
 		}
 		return nil, fmt.Errorf("unable to extract file analysis path=%q: %w", cfg.Path, err)
 	}
