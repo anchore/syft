@@ -5,7 +5,7 @@ inputs:
   go-version:
     description: "Go version to install"
     required: true
-    default: ">= 1.24"
+    default: "1.25.x"
   go-dependencies:
     description: "Download go dependencies"
     required: true
@@ -33,6 +33,7 @@ runs:
       if: inputs.go-version != ''
       with:
         go-version: ${{ inputs.go-version }}
+        check-latest: true
 
     - name: Restore tool cache
       if: inputs.tools == 'true'
