@@ -151,10 +151,16 @@ func v3containerSource(p spdx.AnyPackage) source.Description {
 		}
 	}
 
+	supplier := ""
+	if p.GetSuppliedBy() != nil {
+		supplier = v3agentString(p.GetSuppliedBy())
+	}
+
 	return source.Description{
-		ID:      p.GetID(),
-		Name:    p.GetName(),
-		Version: p.GetVersion(),
+		ID:       p.GetID(),
+		Name:     p.GetName(),
+		Version:  p.GetVersion(),
+		Supplier: supplier,
 		Metadata: source.ImageMetadata{
 			UserInput:      container,
 			ID:             p.GetID(),
@@ -518,7 +524,7 @@ func v3extractMetadata(p spdx.AnyPackage, info pkgInfo) any {
 	}
 	originator := ""
 	if len(p.GetOriginatedBy()) > 0 {
-		// FIXME multiple
+		// FIXME there could be multiple
 		originator = v3agentString(p.GetOriginatedBy()[0])
 	}
 	switch info.typ {
@@ -591,13 +597,17 @@ func v3extractMetadata(p spdx.AnyPackage, info pkgInfo) any {
 }
 
 func v3agentString(agent spdx.AnyAgent) string {
+	out := ""
 	switch o := agent.(type) {
 	case spdx.AnyOrganization:
-		return o.GetName()
+		out = o.GetName()
 	case spdx.AnyPerson:
-		return o.GetName()
+		out = o.GetName()
 	}
-	return ""
+	if out == helpers.NOASSERTION {
+		return ""
+	}
+	return out
 }
 
 func v3findPURLValue(p spdx.AnyPackage) string {
