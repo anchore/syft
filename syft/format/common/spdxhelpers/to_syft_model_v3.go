@@ -128,7 +128,7 @@ func v3extractSource(spdxMap ptrMap[any], doc *spdx.Document) source.Description
 		return src
 	}
 
-	panicIfErr(spdxMap.Set(p, src))
+	spdxMap.Set(p, src)
 
 	doc.Elements = v3removePackage(doc.Elements, p)
 	doc.Elements = v3removeRelationships(doc.Elements, p)
@@ -268,9 +268,9 @@ func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrM
 			if p == nil || skipIDs.Has(p.GetID()) || found.Has(p.GetID()) {
 				continue
 			}
-			panicIfErr(found.Set(p, struct{}{}))
+			found.Set(p, struct{}{})
 			syftPkg := v3toSyftPackage(relationships, p)
-			panicIfErr(spdxMap.Set(p, syftPkg))
+			spdxMap.Set(p, syftPkg)
 			s.Artifacts.Packages.Add(syftPkg)
 		}
 	}
@@ -283,9 +283,9 @@ func v3collectSyftFiles(s *sbom.SBOM, spdxMap ptrMap[any], doc *spdx.Document) {
 			if found.Has(f) {
 				continue
 			}
-			panicIfErr(found.Set(f, struct{}{}))
+			found.Set(f, struct{}{})
 			l := v3toSyftLocation(f)
-			panicIfErr(spdxMap.Set(f, l))
+			spdxMap.Set(f, l)
 
 			s.Artifacts.FileMetadata[l.Coordinates] = v3toFileMetadata(f)
 			s.Artifacts.FileDigests[l.Coordinates] = v3toFileDigests(f)
@@ -331,12 +331,10 @@ func v3collectDocRelationships(spdxMap ptrMap[any], doc *spdx.Document) (out []a
 			log.Debugf("ignoring relationship to external document: %+v", r)
 			continue
 		}
-		a, err := spdxMap.Get(from)
-		panicIfErr(err)
+		a := spdxMap.Get(from)
 
 		for _, to := range r.GetTo() {
-			b, err := spdxMap.Get(to)
-			panicIfErr(err)
+			b := spdxMap.Get(to)
 			from, fromOk := a.(pkg.Package)
 			toPackage, toPackageOk := b.(pkg.Package)
 			toLocation, toLocationOk := b.(file.Location)
@@ -468,8 +466,7 @@ func v3parseSPDXLicenses(relationships ptrMap[[]spdx.AnyRelationship], p spdx.An
 
 	// licenses are defined with relationships in SPDX 3, see:
 	// https://github.com/spdx/tools-golang/blob/spdx3/spdx/v3/v3_0/convert.go#L536
-	rels, err := relationships.Get(p)
-	panicIfErr(err)
+	rels := relationships.Get(p)
 	for _, r := range rels {
 		if r.GetType() == spdx.RelationshipType_HasConcludedLicense {
 			licenses = append(licenses, v3toSyftLicenses(license.Concluded, r.GetTo().Licenses()...)...)
@@ -636,7 +633,7 @@ func v3packageIDsToSkip(doc *spdx.Document) ptrMap[struct{}] {
 	skipIDs := ptrMap[struct{}]{}
 	for _, r := range doc.Elements.Relationships() {
 		if r != nil && r.GetFrom() != nil && r.GetType() == spdx.RelationshipType_Generates {
-			panicIfErr(skipIDs.Set(r.GetFrom(), struct{}{})) // flipped from GENERATED_FROM
+			skipIDs.Set(r.GetFrom(), struct{}{}) // flipped from GENERATED_FROM
 		}
 	}
 	return skipIDs
@@ -674,63 +671,40 @@ func v3toChecksumAlgorithm(algorithm string) spdx.HashAlgorithm {
 func v3relationshipMap(doc *spdx.Document) ptrMap[[]spdx.AnyRelationship] {
 	relationships := ptrMap[[]spdx.AnyRelationship]{}
 	for _, r := range doc.Elements.Relationships() {
-		rels, err := relationships.Get(r.GetFrom())
-		panicIfErr(err)
-		panicIfErr(relationships.Set(r.GetFrom(), append(rels, r)))
+		existing := relationships.Get(r.GetFrom())
+		relationships.Set(r.GetFrom(), append(existing, r))
 	}
 	return relationships
 }
 
-// SPDX 3 values are stored as pointers and there is a distinct possibility that IDs will be blank if they were blank node IDs in the document
+// SPDX 3 values are stored as pointers, and there is a distinct possibility that an ID
+// will be blank if it was a JSON-LD blank node in the document, as these IDs are not persisted
+// nor should they be persisted from decoding
 
 type ptrMap[T any] map[reflect.Value]T
 
-func (s ptrMap[T]) Set(k any, v T) error {
-	ptr, err := ptrTo(k)
-	if err != nil {
-		return err
-	}
-	s[ptr] = v
-	return nil
+func (s ptrMap[T]) Set(k any, v T) {
+	s[ptrTo(k)] = v
 }
 
-func (s ptrMap[T]) Get(k any) (T, error) {
-	ptr, err := ptrTo(k)
-	if err != nil {
-		var t T
-		return t, err
-	}
-	return s[ptr], nil
+func (s ptrMap[T]) Get(k any) T {
+	return s[ptrTo(k)]
 }
 
-func (s ptrMap[T]) Remove(k any) error {
-	ptr, err := ptrTo(k)
-	if err != nil {
-		return err
-	}
-	delete(s, ptr)
-	return nil
+func (s ptrMap[T]) Remove(k any) {
+	delete(s, ptrTo(k))
 }
 
 func (s ptrMap[T]) Has(k any) bool {
-	ptr, err := ptrTo(k)
-	if err != nil {
-		return false
-	}
-	_, ok := s[ptr]
+	_, ok := s[ptrTo(k)]
 	return ok
 }
 
-func ptrTo(k any) (reflect.Value, error) {
+func ptrTo(k any) reflect.Value {
 	rv := reflect.ValueOf(k)
 	if rv.Kind() != reflect.Pointer {
-		return rv, fmt.Errorf("value is not a pointer: %#v", k)
+		// this case is a programming problem -- all objects in the SPDX 3 model are pointers and may not have IDs set
+		panic(fmt.Errorf("value is not a pointer; comparable SPDX 3 elements are pointers, this is probably an implementation issue: %#v", k))
 	}
-	return rv, nil
-}
-
-func panicIfErr(e error) {
-	if e != nil {
-		panic(e)
-	}
+	return rv
 }
