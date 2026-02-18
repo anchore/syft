@@ -265,7 +265,7 @@ func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrM
 	found := ptrMap[struct{}]{}
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
 		for _, p := range elementList.Packages() {
-			if p == nil || skipIDs.Has(p.GetID()) || found.Has(p.GetID()) {
+			if p == nil || skipIDs.Has(p) || found.Has(p) {
 				continue
 			}
 			found.Set(p, struct{}{})
