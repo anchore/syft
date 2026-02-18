@@ -13,6 +13,8 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+var spdx3_0contextRegex = spdxContextRegex(spdxutil.V3_0)
+
 func decodeSpdx3(version string, reader io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) {
 	switch version {
 	case spdxutil.V3_0:
@@ -45,7 +47,7 @@ func identifySpdx3(reader io.Reader) (sbom.FormatID, string) {
 
 	switch {
 	case doc.Context == "":
-	case spdxContextRegex(spdxutil.V3_0).MatchString(doc.Context):
+	case spdx3_0contextRegex.MatchString(doc.Context):
 		spdxVersion = spdxutil.V3_0
 	default:
 	}
@@ -54,5 +56,6 @@ func identifySpdx3(reader io.Reader) (sbom.FormatID, string) {
 }
 
 func spdxContextRegex(minorVersion string) *regexp.Regexp {
-	return regexp.MustCompile(regexp.QuoteMeta("https://spdx.org/rdf/") + minorVersion + `\.\d+` + regexp.QuoteMeta("/spdx-context.jsonld"))
+	// today this is "3.0.1", but is likely to be changed to only include the minor version "3.0"
+	return regexp.MustCompile(regexp.QuoteMeta("https://spdx.org/rdf/") + minorVersion + `(\.\d+)?` + regexp.QuoteMeta("/spdx-context.jsonld"))
 }
