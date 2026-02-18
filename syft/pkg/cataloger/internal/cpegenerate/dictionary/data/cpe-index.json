@@ -4,6 +4,9 @@
       "aahframe.work": [
         "cpe:2.3:a:aahframework:aah:*:*:*:*:*:go:*:*"
       ],
+      "chainguard.dev/apko": [
+        "cpe:2.3:a:chainguard:apko:*:*:*:*:*:go:*:*"
+      ],
       "github.com/ClickHouse/ch-go": [
         "cpe:2.3:a:clickhouse:ch:*:*:*:*:*:go:*:*"
       ],
@@ -164,6 +167,9 @@
       ],
       "golang.org/x/net": [
         "cpe:2.3:a:golang:networking:*:*:*:*:*:go:*:*"
+      ],
+      "golang.org/x/net/html": [
+        "cpe:2.3:a:go:html:*:*:*:*:*:go:*:*"
       ],
       "golang.org/x/net/http2": [
         "cpe:2.3:a:golang:http2:*:*:*:*:*:*:*:*",
@@ -2370,6 +2376,9 @@
       ],
       "@nuxt/devalue": [
         "cpe:2.3:a:nuxtjs:\\@nuxt\\/devalue:*:*:*:*:*:node.js:*:*"
+      ],
+      "@nyariv/sandboxjs": [
+        "cpe:2.3:a:nyariv:sandboxjs:*:*:*:*:*:node.js:*:*"
       ],
       "@octokit/webhooks": [
         "cpe:2.3:a:octokit:webhooks:*:*:*:*:*:node.js:*:*"
@@ -6014,6 +6023,9 @@
       "fonttools": [
         "cpe:2.3:a:fonttools:fonttools:*:*:*:*:*:python:*:*"
       ],
+      "geopandas": [
+        "cpe:2.3:a:geopandas:geopandas:*:*:*:*:*:python:*:*"
+      ],
       "global-workqueue": [
         "cpe:2.3:a:global-workqueue_project:global-workqueue:*:*:*:*:*:python:*:*"
       ],
@@ -8807,7 +8819,8 @@
         "cpe:2.3:a:solidwp:solid_security:*:*:*:*:*:wordpress:*:*"
       ],
       "betterdocs": [
-        "cpe:2.3:a:wpdeveloper:betterdocs:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:wpdeveloper:betterdocs:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:wpdeveloper:betterdocs:*:*:*:*:free:wordpress:*:*"
       ],
       "betterlinks": [
         "cpe:2.3:a:wpdeveloper:betterlinks:*:*:*:*:free:wordpress:*:*"
@@ -15061,7 +15074,8 @@
         "cpe:2.3:a:andreamarinucci:notification_for_telegram:*:*:*:*:*:wordpress:*:*"
       ],
       "notificationx": [
-        "cpe:2.3:a:wpdeveloper:notificationx:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:wpdeveloper:notificationx:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:wpdeveloper:notificationx:*:*:*:*:free:wordpress:*:*"
       ],
       "notifier": [
         "cpe:2.3:a:wanotifier:wanotifier:*:*:*:*:*:wordpress:*:*"
