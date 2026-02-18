@@ -43,16 +43,18 @@ func identifySpdx3(reader io.Reader) (sbom.FormatID, string) {
 		return "", ""
 	}
 
+	formatID := sbom.FormatID("")
 	spdxVersion := ""
 
 	switch {
 	case doc.Context == "":
 	case spdx3_0contextRegex.MatchString(doc.Context):
+		formatID = spdxutil.JSONFormatID
 		spdxVersion = spdxutil.V3_0
 	default:
 	}
 
-	return spdxutil.JSONFormatID, spdxVersion
+	return formatID, spdxVersion
 }
 
 func spdxContextRegex(minorVersion string) *regexp.Regexp {
