@@ -54,6 +54,14 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 
 	artifacts := s.Artifacts
 
+	// if the source under analysis is a single file (e.g., a lockfile like conan.lock),
+	// do not add that source file itself as a component entry in the SBOM components list.
+	// This keeps behavior consistent across OSes and avoids listing the input document as a component.
+	var srcFilePath string
+	if fm, ok := s.Source.Metadata.(source.FileMetadata); ok {
+		srcFilePath = fm.Path
+	}
+
 	for _, coordinate := range coordinates {
 		var metadata *file.Metadata
 		// File Info
@@ -71,6 +79,11 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 			continue
 		}
 		metadata = &fileMetadata
+
+		// Skip adding the source file itself as a component (e.g., conan.lock when scanned directly)
+		if srcFilePath != "" && metadata.Path == srcFilePath {
+			continue
+		}
 
 		// Digests
 		var digests []file.Digest
