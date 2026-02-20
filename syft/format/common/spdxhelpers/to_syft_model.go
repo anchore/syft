@@ -399,7 +399,7 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 				to = toLocation
 			case helpers.OtherRelationship:
 				// Encoding uses a specifically formatted comment...
-				if strings.Index(r.RelationshipComment, string(artifact.EvidentByRelationship)) == 0 {
+				if strings.HasPrefix(r.RelationshipComment, string(artifact.EvidentByRelationship)) {
 					typ = artifact.EvidentByRelationship
 					to = toLocation
 				}
@@ -418,7 +418,7 @@ func collectDocRelationships(spdxIDMap map[string]any, doc *spdx.Document) (out 
 				to = toPackage
 			case helpers.OtherRelationship:
 				// Encoding uses a specifically formatted comment...
-				if strings.Index(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) == 0 {
+				if strings.HasPrefix(r.RelationshipComment, string(artifact.OwnershipByFileOverlapRelationship)) {
 					typ = artifact.OwnershipByFileOverlapRelationship
 					to = toPackage
 				}
@@ -462,10 +462,10 @@ func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Documen
 func toSyftCoordinates(f *spdx.File) file.Coordinates {
 	const layerIDPrefix = "layerID: "
 	var fileSystemID string
-	if strings.Index(f.FileComment, layerIDPrefix) == 0 {
+	if strings.HasPrefix(f.FileComment, layerIDPrefix) {
 		fileSystemID = strings.TrimPrefix(f.FileComment, layerIDPrefix)
 	}
-	if strings.Index(string(f.FileSPDXIdentifier), layerIDPrefix) == 0 {
+	if strings.HasPrefix(string(f.FileSPDXIdentifier), layerIDPrefix) {
 		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIDPrefix)
 	}
 	return file.Coordinates{
@@ -481,8 +481,8 @@ func toSyftLocation(f *spdx.File) file.Location {
 
 func requireAndTrimPrefix(val interface{}, prefix string) string {
 	if v, ok := val.(string); ok {
-		if i := strings.Index(v, prefix); i == 0 {
-			return strings.Replace(v, prefix, "", 1)
+		if strings.HasPrefix(v, prefix) {
+			return strings.TrimPrefix(v, prefix)
 		}
 	}
 	return ""

@@ -2,23 +2,20 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+)
 
-	"github.com/anchore/stereoscope/pkg/imagetest"
+const (
+	validatorV2 = "ghcr.io/spdx/tools-java/tools-java:v1.1.8@sha256:c3b9e848083132e03b30302576b9b51adffd454f43c786f1708cc37c0861a2aa"
+	validatorV3 = "ghcr.io/spdx/tools-java/tools-java:v2.0.4@sha256:15062f85b4be9688c7bf42df34ad6b84e084ed46e262e1f2dc1603795de9f7b4"
 )
 
 func TestSpdxValidationTooling(t *testing.T) {
-	// note: the external tooling requires that the daemon explicitly has the image loaded, not just that
-	// we can get the image from a cache tar.
-	imgTag := imagetest.LoadFixtureImageIntoDocker(t, "image-java-spdx-tools")
-
 	images := []string{
 		"alpine:3.17.3@sha256:b6ca290b6b4cdcca5b3db3ffa338ee0285c11744b4a6abaa9627746ee3291d8d",
 		"photon:3.0@sha256:888675e193418d924feea262cf639c46532b63c2027a39fd3ac75383b3c1130e",
@@ -32,43 +29,44 @@ func TestSpdxValidationTooling(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		syftArgs []string
-		images   []string
-		setup    func(t *testing.T)
-		env      map[string]string
+		name      string
+		format    string
+		validator string
 	}{
 		{
-			name:     "spdx validation tooling tag value",
-			syftArgs: []string{"scan", "-o", "spdx"},
-			images:   images,
-			env:      env,
+			name:   "spdx 2.3 validation tooling tag value",
+			format: "spdx",
 		},
 		{
-			name:     "spdx validation tooling json",
-			syftArgs: []string{"scan", "-o", "spdx-json"},
-			images:   images,
-			env:      env,
+			name:   "spdx 2.3 validation tooling json",
+			format: "spdx-json",
 		},
 		{
-			name:     "spdx validation tooling tag value",
-			syftArgs: []string{"scan", "-o", "spdx@2.2"},
-			images:   images,
-			env:      env,
+			name:      "spdx 3.0 validation tooling json",
+			format:    "spdx-json@3.0",
+			validator: validatorV3,
 		},
 		{
-			name:     "spdx validation tooling json",
-			syftArgs: []string{"scan", "-o", "spdx-json@2.2"},
-			images:   images,
-			env:      env,
+			name:   "spdx 2.2 validation tooling tag value",
+			format: "spdx@2.2",
+		},
+		{
+			name:   "spdx 2.2 validation tooling json",
+			format: "spdx-json@2.2",
 		},
 	}
 
-	for _, test := range tests {
-		for _, image := range test.images {
-			t.Run(test.name+"_"+image, func(t *testing.T) {
+	for _, image := range images {
+		syftJsonFile := filepath.Join(t.TempDir(), "sbom.syft.json")
 
-				args := append(test.syftArgs, image)
+		cmd, _, stderr := runSyft(t, env, "-o", "syft-json", "--file", syftJsonFile, image)
+		if cmd.ProcessState.ExitCode() != 0 {
+			t.Fatalf("failed to run syft: %s", stderr)
+		}
+
+		for _, test := range tests {
+			t.Run(test.name+"_"+image, func(t *testing.T) {
+				t.Parallel()
 
 				var suffix string
 				if strings.Contains(test.name, "json") {
@@ -78,30 +76,27 @@ func TestSpdxValidationTooling(t *testing.T) {
 				}
 
 				dir := t.TempDir()
-				sbomPath := filepath.Join(dir, fmt.Sprintf("sbom%s", suffix))
+				sbomFile := fmt.Sprintf("sbom%s", suffix)
+				sbomPath := filepath.Join(dir, sbomFile)
 
-				args = append(args, "--file", sbomPath)
-
-				cmd, _, stderr := runSyft(t, test.env, args...)
+				cmd, _, stderr = runSyft(t, nil, "convert", syftJsonFile, "-o", test.format, "--file", sbomPath)
 				if cmd.ProcessState.ExitCode() != 0 {
-					t.Fatalf("failed to run syft: %s", stderr)
+					t.Fatalf("failed to run syft convert: %s", stderr)
 				}
 
-				cwd, err := os.Getwd()
-				require.NoError(t, err)
+				if test.validator == "" {
+					test.validator = validatorV2
+				}
 
 				// validate against spdx java tooling
-				fileArg := fmt.Sprintf("DIR=%s", dir)
-				mountArg := fmt.Sprintf("BASE=%s", path.Base(sbomPath))
-				imageArg := fmt.Sprintf("IMAGE=%s", imgTag)
-
-				validateCmd := exec.Command("make", "validate", fileArg, mountArg, imageArg)
-				validateCmd.Dir = filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
+				validateCmd := exec.Command("docker", "run", "--rm", "-i",
+					"-v", dir+":/data", test.validator, "Verify", "/data/"+sbomFile)
 
 				stdout, stderr, err := runCommand(validateCmd, map[string]string{})
 				if err != nil {
 					t.Fatalf("invalid SPDX document:%v\nSTDOUT:\n%s\nSTDERR:\n%s", err, stdout, stderr)
 				}
+				require.Contains(t, stdout, "SPDX Document is valid")
 			})
 		}
 	}
