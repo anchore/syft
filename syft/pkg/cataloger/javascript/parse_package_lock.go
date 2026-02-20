@@ -64,6 +64,25 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 		return nil, nil, nil
 	}
 
+	return a.doParsePackageLock(ctx, resolver, reader)
+}
+
+// parseHiddenPackageLock parses a node_modules/.package-lock.json file (created by npm v7+).
+// If a root package-lock.json exists alongside it, this file is skipped to avoid duplicate packages.
+func (a genericPackageLockAdapter) parseHiddenPackageLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// derive the root lockfile path from the hidden lockfile path
+	rootLockPath := strings.TrimSuffix(reader.Path(), "node_modules/.package-lock.json") + "package-lock.json"
+
+	// if the root lockfile exists, skip the hidden one to avoid duplicates
+	if resolver.HasPath(rootLockPath) {
+		return nil, nil, nil
+	}
+
+	return a.doParsePackageLock(ctx, resolver, reader)
+}
+
+// doParsePackageLock contains the shared parsing logic for package-lock.json files.
+func (a genericPackageLockAdapter) doParsePackageLock(ctx context.Context, resolver file.Resolver, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
