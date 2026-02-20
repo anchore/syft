@@ -29,7 +29,7 @@ require (
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/bmatcuk/doublestar/v4 v4.10.0
-	github.com/charmbracelet/bubbles v0.21.1
+	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dave/jennifer v1.7.1
@@ -123,7 +123,7 @@ require (
 	github.com/bodgit/windows v1.0.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.11.5 // indirect
+	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
