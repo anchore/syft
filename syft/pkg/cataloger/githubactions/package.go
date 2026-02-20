@@ -73,7 +73,6 @@ func parseStepUsageStatement(use, comment string) (string, string) {
 
 	// if version looks like a commit hash and we have a comment, try to extract version from comment
 	if version != "" && regexp.MustCompile(`^[0-9a-f]{7,}$`).MatchString(version) && comment != "" {
-		versionRegex := regexp.MustCompile(`v?\d+\.\d+\.\d+`)
 		matches := versionRegex.FindStringSubmatch(comment)
 
 		if len(matches) >= 1 {
