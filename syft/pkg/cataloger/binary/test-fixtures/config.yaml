@@ -948,6 +948,7 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/pilot-agent
+
   - name: grafana
     version: 12.3.1
     images:
@@ -957,9 +958,41 @@ from-images:
       - /usr/share/grafana/bin/grafana
 
   - name: grafana
+    version: 12.4.0-22081664032
+    images:
+      - ref: grafana/grafana:12.4.0-22081664032@sha256:8650c85610349a76072bc861bf2b5d2afba81c5f8e79e549b97698a3f6d088c3
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.3.2-security-01
+    images:
+      - ref: grafana/grafana:12.3.2-security-01@sha256:5683be4319a6da1d6ab28c3443b3739683e367f8d72d800638390a04a2680c1c
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.2.0-258092
+    images:
+      - ref: grafana/grafana-oss-dev:12.2.0-258092@sha256:b76f1efbd96da374567c6ee65b3d0de11351bca4cf84afce2e28ee44ac99ea47
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
     version: 12.0.0
     images:
       - ref: grafana/grafana:12.0.0@sha256:884f0f140669a5b9dccee1baece011a3fa5dd1951f1ba158b03de8ad1d178380
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 11.0.0-preview
+    images:
+      - ref: grafana/grafana:11.0.0-preview@sha256:efb8bf67a99ac9afc2aaca58a01ec0dff82ac0b1499de1ecf714fcdeab83c23e
         platform: linux/amd64
     paths:
       - /usr/share/grafana/bin/grafana
@@ -981,6 +1014,14 @@ from-images:
       - /usr/share/grafana/bin/grafana
 
   - name: grafana
+    version: 10.3.12
+    images:
+      - ref: grafana/grafana:10.3.12@sha256:0b9a007bcf831c0d9840b28588f6bcfa12d79fbf4defa8412f9f78329abe211c
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
     version: 9.5.21
     images:
       - ref: grafana/grafana:9.5.21@sha256:439f57822d2daa899c0a04420488fd7c638c1d41d5db417563692ed0bbbfbb9c
@@ -989,12 +1030,36 @@ from-images:
       - /usr/share/grafana/bin/grafana
 
   - name: grafana
-    version: 9.4.0
+    version: 9.4.0-beta1
     images:
       - ref: grafana/grafana:9.4.0-beta1@sha256:d0060bcf84f0a0897e7c6c7e1b8740d89d10bf55b2dd45ba45942d36e40cdcc7
         platform: linux/amd64
     paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 9.3.0-beta1
+    images:
+      - ref: grafana/grafana:9.3.0-beta1@sha256:a70d516522f4a379f3fdd906417086c173f1d123f5ca43e27c382ab30d84da90
+        platform: linux/amd64
+    paths:
       - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 9.2.20
+    images:
+      - ref: grafana/grafana:9.2.20@sha256:7ac4a4edbd1f4664ab3451a575ee39b2af26b3d6528feecf99b47052e37a1094
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 9.2.13
+    images:
+      - ref: grafana/grafana:9.2.13@sha256:4f218199a2431783a87f35e0ffa631e070f2302935c19f856b7efae8cc117e9e
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
 
   - name: grafana
     version: 9.0.0
@@ -1016,6 +1081,22 @@ from-images:
     version: 6.7.6
     images:
       - ref: grafana/grafana:6.7.6@sha256:7ee99c7f0835f1023b3a56c275da8bb37068ab9fcd5e33378c65435928d54dd0
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 6.7.0-test
+    images:
+      - ref: grafana/grafana:6.7.0-test@sha256:04f5417aadbb4998ad919fc991856030418be02bc660a7b35909f13903a67caf
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana-server
+
+  - name: grafana
+    version: 6.0.0-beta1
+    images:
+      - ref: grafana/grafana:6.0.0-beta1@sha256:375e736fded8e07d696a2aa446cc0aecced9963dbd77e40be1a8dd820575a17a
         platform: linux/amd64
     paths:
       - /usr/share/grafana/bin/grafana-server
