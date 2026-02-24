@@ -58,6 +58,9 @@
       "github.com/ginuerzh/gost": [
         "cpe:2.3:a:go_simple_tunnel_project:go_simple_tunnel:*:*:*:*:*:go:*:*"
       ],
+      "github.com/go-git/go-git": [
+        "cpe:2.3:a:go-git_project:go-git:*:*:*:*:*:go:*:*"
+      ],
       "github.com/go-resty/resty/v2": [
         "cpe:2.3:a:resty_project:resty:*:*:*:*:*:go:*:*"
       ],
@@ -100,6 +103,9 @@
       "github.com/mholt/archiver": [
         "cpe:2.3:a:mholt:archiver:*:*:*:*:*:go:*:*"
       ],
+      "github.com/mholt/archives": [
+        "cpe:2.3:a:mholt:archives:*:*:*:*:*:go:*:*"
+      ],
       "github.com/mindersec/minder": [
         "cpe:2.3:a:lfprojects:minder:*:*:*:*:*:go:*:*"
       ],
@@ -123,6 +129,9 @@
       ],
       "github.com/proglottis/gpgme": [
         "cpe:2.3:a:gpgme_project:gpgme:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/quic-go/webtransport-go#section-readme": [
+        "cpe:2.3:a:quic-go:webtransport-go:*:*:*:*:*:go:*:*"
       ],
       "github.com/sap/cloud-security-client-go": [
         "cpe:2.3:a:sap:cloud-security-client-go:*:*:*:*:*:go:*:*"
@@ -2266,6 +2275,9 @@
       "@builder.io/qwik": [
         "cpe:2.3:a:qwik:qwik:*:*:*:*:*:node.js:*:*"
       ],
+      "@canva/cli": [
+        "cpe:2.3:a:canva:canva_cli:*:*:*:*:*:node.js:*:*"
+      ],
       "@chainsafe/libp2p-noise": [
         "cpe:2.3:a:chainsafe:js-libp2p-noise:*:*:*:*:*:node.js:*:*"
       ],
@@ -2319,6 +2331,9 @@
       ],
       "@firebase/util": [
         "cpe:2.3:a:google:firebase\\/util:*:*:*:*:*:node.js:*:*"
+      ],
+      "@flourish/sdk": [
+        "cpe:2.3:a:canva:flourish_sdk:*:*:*:*:*:node.js:*:*"
       ],
       "@github/paste-markdown": [
         "cpe:2.3:a:paste-markdown_project:paste-markdown:*:*:*:*:*:node.js:*:*"
@@ -3967,6 +3982,9 @@
       "knightjs": [
         "cpe:2.3:a:knight_project:knight:*:*:*:*:*:node.js:*:*"
       ],
+      "koa": [
+        "cpe:2.3:a:koajs:koa:*:*:*:*:*:node.js:*:*"
+      ],
       "koa-remove-trailing-slashes": [
         "cpe:2.3:a:koa-remove-trailing-slashes_project:koa-remove-trailing-slashes:*:*:*:*:*:node.js:*:*"
       ],
@@ -5214,6 +5232,9 @@
       "shout": [
         "cpe:2.3:a:shout_project:shout:*:*:*:*:*:node.js:*:*"
       ],
+      "sillytavern": [
+        "cpe:2.3:a:sillytavern:sillytavern:*:*:*:*:*:node.js:*:*"
+      ],
       "simple-get": [
         "cpe:2.3:a:simple-get_project:simple-get:*:*:*:*:*:node.js:*:*"
       ],
@@ -6194,6 +6215,9 @@
       ],
       "pycryptodomex": [
         "cpe:2.3:a:pycryptodome:pycryptodomex:*:*:*:*:*:python:*:*"
+      ],
+      "pydantic-ai": [
+        "cpe:2.3:a:pydantic:pydantic_ai:*:*:*:*:*:python:*:*"
       ],
       "pydash": [
         "cpe:2.3:a:derrickgilland:pydash:*:*:*:*:*:python:*:*"
@@ -7649,7 +7673,7 @@
         "cpe:2.3:a:acf_to_rest_api_project:acf_to_rest_api:*:*:*:*:*:wordpress:*:*"
       ],
       "acl-floating-cart-for-woocommerce": [
-        "cpe:2.3:a:amadercodelab:acl_floating_cart_for_woocommerce:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:amadercode:acl_floating_cart_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "acnoo-flutter-api": [
         "cpe:2.3:a:acnoo:flutter_api:*:*:*:*:*:wordpress:*:*"
@@ -8433,8 +8457,7 @@
         "cpe:2.3:a:brainstormforce:astra_widgets:*:*:*:*:*:wordpress:*:*"
       ],
       "atarim-visual-collaboration": [
-        "cpe:2.3:a:atarim:atarim:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:atarim:visual_website_collaboration\\,_feedback_\\\u0026_project_management:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:atarim:atarim:*:*:*:*:*:wordpress:*:*"
       ],
       "athemes-addons-for-elementor-lite": [
         "cpe:2.3:a:athemes:athemes_addons_for_elementor:*:*:*:*:free:wordpress:*:*"
@@ -12413,7 +12436,6 @@
         "cpe:2.3:a:codemenschen:gift_vouchers:*:*:*:*:*:wordpress:*:*"
       ],
       "gigpress": [
-        "cpe:2.3:a:liquidweb:gigpress:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:tri:gigpress:*:*:*:*:*:wordpress:*:*"
       ],
       "give": [
@@ -19629,7 +19651,7 @@
         "cpe:2.3:a:villatheme:cart_all_in_one_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
       "woo-checkout-field-editor-pro": [
-        "cpe:2.3:a:themehigh:checkout_field_editor_for_woocommerce:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:themehigh:checkout_field_editor_for_woocommerce:*:*:*:*:-:wordpress:*:*",
         "cpe:2.3:a:themehigh:checkout_field_editor_for_woocommerce:*:*:*:*:pro:wordpress:*:*"
       ],
       "woo-checkout-for-digital-goods": [
@@ -19923,7 +19945,7 @@
         "cpe:2.3:a:asepbagjapriandana:woostagram_connect:*:*:*:*:*:wordpress:*:*"
       ],
       "woostify-sites-library": [
-        "cpe:2.3:a:wootsify:sites_library:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:woostify:sites_library:*:*:*:*:*:wordpress:*:*"
       ],
       "woosupply": [
         "cpe:2.3:a:longwatchstudio:woosupply:*:*:*:*:*:wordpress:*:*"
@@ -21114,6 +21136,9 @@
       ],
       "wp-shieldon": [
         "cpe:2.3:a:terryl:wp_shieldon:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wp-shopify": [
+        "cpe:2.3:a:fahadmahmood:external_store_for_shopify:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-shortcode": [
         "cpe:2.3:a:mythemeshop:wp_shortcode:*:*:*:*:*:wordpress:*:*"
@@ -22450,6 +22475,9 @@
       ],
       "vilva": [
         "cpe:2.3:a:blossomthemes:vilva:*:*:*:*:*:wordpress:*:*"
+      ],
+      "vireo": [
+        "cpe:2.3:a:extendthemes:vireo:*:*:*:*:*:wordpress:*:*"
       ],
       "weaver-xtreme": [
         "cpe:2.3:a:weavertheme:weaver_xtreme_theme:*:*:*:*:*:wordpress:*:*",
