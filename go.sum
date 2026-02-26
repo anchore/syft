@@ -152,8 +152,6 @@ github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b h1:e1bmaoJfZV
 github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b/go.mod h1:Bkc+JYWjMCF8OyZ340IMSIi2Ebf3uwByOk6ho4wne1E=
 github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115 h1:ZyRCmiEjnoGJZ1+Ah0ZZ/mKKqNhGcUZBl0s7PTTDzvY=
 github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115/go.mod h1:KoYIv7tdP5+CC9VGkeZV4/vGCKsY55VvoG+5dadg4YI=
-github.com/anchore/stereoscope v0.1.20 h1:32720yZ/YtvzF5tvsoRL/ibdAJzOdIaR444fDXW4arQ=
-github.com/anchore/stereoscope v0.1.20/go.mod h1:6Ef0xQAuN2Ito7eV9A9pYjD1x/0cX5fy56MwgEGyrB4=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
 github.com/andybalholm/brotli v1.2.0/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
@@ -693,6 +691,8 @@ github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/maruel/natural v1.1.1 h1:Hja7XhhmvEFhcByqDoHz9QZbkWey+COd9xWfCfn1ioo=
 github.com/maruel/natural v1.1.1/go.mod h1:v+Rfd79xlw1AgVBjbO0BEQmptqb5HvL/k9GRHB7ZKEg=
+github.com/matthyx/stereoscope v0.0.0-20260220135155-81dc3dd86379 h1:LBnZU1GEax4op+mROrwzKlktyAZgaiQ7rxDhII/qEk4=
+github.com/matthyx/stereoscope v0.0.0-20260220135155-81dc3dd86379/go.mod h1:6Ef0xQAuN2Ito7eV9A9pYjD1x/0cX5fy56MwgEGyrB4=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.4/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=
 github.com/mattn/go-colorable v0.1.6/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
