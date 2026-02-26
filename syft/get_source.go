@@ -69,6 +69,8 @@ func validateSourcePlatform(src source.Source, cfg *GetSourceConfig) error {
 		return nil
 	case *source.SnapMetadata, source.SnapMetadata:
 		return nil
+	case *source.AppImageMetadata, source.AppImageMetadata:
+		return nil
 	default:
 		return fmt.Errorf("platform is not supported for this source type")
 	}

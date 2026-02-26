@@ -179,6 +179,11 @@ func Test_toGithubModel(t *testing.T) {
 			testPath: "name:/etc",
 		},
 		{
+			name:     "appimage",
+			metadata: source.AppImageMetadata{},
+			testPath: "name:/etc",
+		},
+		{
 			name:     "oci-model",
 			metadata: source.OCIModelMetadata{UserInput: "model-repo/llama:latest"},
 			testPath: "model-repo/llama:latest:/etc",

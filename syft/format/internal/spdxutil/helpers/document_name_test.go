@@ -55,6 +55,15 @@ func Test_DocumentName(t *testing.T) {
 			expected: "some/name",
 		},
 		{
+			name: "appimage",
+			srcMetadata: source.Description{
+				Name: "some/name",
+				// name comes from Description.Name (populated from .desktop file at source construction time)
+				Metadata: source.AppImageMetadata{},
+			},
+			expected: "some/name",
+		},
+		{
 			name: "oci-model",
 			srcMetadata: source.Description{
 				Metadata: source.OCIModelMetadata{

@@ -230,6 +230,10 @@ func (s *appImageSource) discoverMetadata() error {
 	return nil
 }
 
+type linker interface {
+	Readlink() (string, error)
+}
+
 func (s *appImageSource) Close() error {
 	if s.appImageFileCloser != nil {
 		if err := s.appImageFileCloser(); err != nil {
@@ -238,9 +242,6 @@ func (s *appImageSource) Close() error {
 		s.appImageFileCloser = nil
 	}
 	s.resolver = nil
-	if s.fs != nil {
-		// diskfs doesn't have a Close on the filesystem itself usually, but let's check
-	}
 	if s.closer != nil {
 		if err := s.closer(); err != nil {
 			return fmt.Errorf("unable to close appimage source: %w", err)
@@ -357,7 +358,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 		default:
 			ty = stereoFile.TypeFromMode(d.Mode())
 			if ty == stereoFile.TypeSymLink && f != nil {
-				if l, ok := f.(interface{ Readlink() (string, error) }); ok {
+				if l, ok := f.(linker); ok {
 					linkPath, _ = l.Readlink()
 				}
 			}
@@ -420,12 +421,6 @@ func findSquashFSOffset(r io.ReaderAt) (int64, error) {
 			maxOffset = end
 		}
 	}
-
-	// ELF section header table might be at the end
-	// Note: debug/elf doesn't expose Shoff directly in FileHeader,
-	// but it uses it internally. We can assume maxOffset covers it if we use sections.
-	// Actually, let's be careful. The section header table itself is not a section.
-	// We might need to read the ELF header manually if we want to be 100% sure.
 
 	// Check for SquashFS magic at this offset
 	magic := make([]byte, 4)

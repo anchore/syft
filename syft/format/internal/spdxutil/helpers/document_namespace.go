@@ -18,6 +18,7 @@ const (
 	InputDirectory = "dir"
 	InputFile      = "file"
 	InputSnap      = "snap"
+	InputAppImage  = "appimage"
 )
 
 func DocumentNameAndNamespace(src source.Description, desc sbom.Descriptor) (string, string) {
@@ -39,6 +40,8 @@ func DocumentNamespace(name string, src source.Description, desc sbom.Descriptor
 		input = InputFile
 	case source.SnapMetadata:
 		input = InputSnap
+	case source.AppImageMetadata:
+		input = InputAppImage
 	}
 
 	uniqueID := uuid.Must(uuid.NewRandom())
