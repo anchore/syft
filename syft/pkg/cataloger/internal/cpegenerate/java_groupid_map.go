@@ -1,5 +1,9 @@
 package cpegenerate
 
+var GroupIDCorrections = map[string]string{
+	"org.lz4.java": "org.lz4",
+}
+
 var DefaultArtifactIDToGroupID = map[string]string{
 	"ant":                                         "org.apache.ant",
 	"ant-antlr":                                   "org.apache.ant",
