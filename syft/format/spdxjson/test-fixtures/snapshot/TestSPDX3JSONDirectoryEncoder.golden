@@ -1,0 +1,147 @@
+{
+ "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+ "@graph": [
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "Anchore, Inc",
+   "spdxId": "SPDXRef:Organization-1",
+   "type": "Organization"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "syft-v0.42.0-bogus",
+   "spdxId": "SPDXRef:Tool-1",
+   "type": "Tool"
+  },
+  {
+   "@id": "_:CreationInfo-1",
+   "created":"redacted",
+   "createdBy": [
+    "SPDXRef:Organization-1"
+   ],
+   "createdUsing": [
+    "SPDXRef:Tool-1"
+   ],
+   "specVersion": "3.0.1",
+   "type": "CreationInfo"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "some/path",
+   "software_copyrightText": "NOASSERTION",
+   "software_downloadLocation": "NOASSERTION",
+   "software_primaryPurpose": "file",
+   "spdxId": "SPDXRef:DocumentRoot-Directory-some-path",
+   "type": "software_Package"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "externalIdentifier": [
+    {
+     "externalIdentifierType": "cpe23",
+     "identifier": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "type": "ExternalIdentifier"
+    }
+   ],
+   "name": "package-1",
+   "software_copyrightText": "NOASSERTION",
+   "software_downloadLocation": "NOASSERTION",
+   "software_packageUrl": "a-purl-2",
+   "software_packageVersion": "1.0.1",
+   "software_sourceInfo": "acquired package info from installed python package manifest file: /some/path/pkg1",
+   "spdxId": "SPDXRef:Package-python-package-1-f04d218ff5ff50db",
+   "type": "software_Package"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "externalIdentifier": [
+    {
+     "externalIdentifierType": "cpe23",
+     "identifier": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "type": "ExternalIdentifier"
+    }
+   ],
+   "name": "package-2",
+   "software_copyrightText": "NOASSERTION",
+   "software_downloadLocation": "NOASSERTION",
+   "software_packageUrl": "pkg:deb/debian/package-2@2.0.1",
+   "software_packageVersion": "2.0.1",
+   "software_sourceInfo": "acquired package info from DPKG DB: /some/path/pkg1",
+   "spdxId": "SPDXRef:Package-deb-package-2-39392bb5e270f669",
+   "type": "software_Package"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "from": "SPDXRef:DocumentRoot-Directory-some-path",
+   "relationshipType": "contains",
+   "spdxId": "SPDXRef:Relationship-1",
+   "to": [
+    "SPDXRef:Package-python-package-1-f04d218ff5ff50db",
+    "SPDXRef:Package-deb-package-2-39392bb5e270f669"
+   ],
+   "type": "Relationship"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "from": "SPDXRef:DocumentRoot-Directory-some-path",
+   "relationshipType": "contains",
+   "spdxId": "SPDXRef:Relationship-2",
+   "to": [
+    "SPDXRef:Package-deb-package-2-39392bb5e270f669"
+   ],
+   "type": "Relationship"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "element": [
+    "SPDXRef:Relationship-1",
+    "SPDXRef:Relationship-2",
+    "SPDXRef:Relationship-2"
+   ],
+   "rootElement": [
+    "SPDXRef:DocumentRoot-Directory-some-path"
+   ],
+   "spdxId": "SPDXRef:SBOM-1",
+   "type": "software_Sbom"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "CC0-1.0",
+   "simplelicensing_licenseText": "",
+   "spdxId": "SPDXRef:ListedLicense-1",
+   "type": "expandedlicensing_ListedLicense"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "dataLicense": "SPDXRef:ListedLicense-1",
+   "element": [
+    "SPDXRef:Organization-1",
+    "SPDXRef:Tool-1",
+    "SPDXRef:SBOM-1",
+    "SPDXRef:Relationship-1",
+    "SPDXRef:DocumentRoot-Directory-some-path",
+    "SPDXRef:Package-python-package-1-f04d218ff5ff50db",
+    "SPDXRef:Package-deb-package-2-39392bb5e270f669",
+    "SPDXRef:Relationship-2",
+    "SPDXRef:ListedLicense-1"
+   ],
+   "name": "some/path",
+   "namespaceMap": [
+    {
+     "namespace":"https://redacted/",
+     "prefix": "SPDXRef",
+     "type": "NamespaceMap"
+    }
+   ],
+   "profileConformance": [
+    "core",
+    "software"
+   ],
+   "rootElement": [
+    "SPDXRef:SBOM-1"
+   ],
+   "spdxId":"https://redacted",
+   "type": "SpdxDocument"
+  }
+ ]
+}
