@@ -1,5 +1,9 @@
 package cpegenerate
 
+var GroupIDCorrections = map[string]string{
+	"org.lz4.java": "org.lz4",
+}
+
 var DefaultArtifactIDToGroupID = map[string]string{
 	"ant":                                         "org.apache.ant",
 	"ant-antlr":                                   "org.apache.ant",
@@ -1910,5 +1914,4 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"kafka_2.8.2":                                              "org.apache.kafka",
 	"kafka_2.9.1":                                              "org.apache.kafka",
 	"kafka_2.9.2":                                              "org.apache.kafka",
-	"lz4-java":                                                 "org.lz4",
 }
