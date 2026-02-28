@@ -221,6 +221,35 @@ func newYarnLockPackage(ctx context.Context, cfg CatalogerConfig, resolver file.
 	)
 }
 
+func newBunPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, integrity string, dependencies map[string]pkg.BunLockPackageDependencies) pkg.Package {
+	var licenseSet pkg.LicenseSet
+
+	if cfg.SearchRemoteLicenses {
+		license, err := getLicenseFromNpmRegistry(cfg.NPMBaseURL, name, version)
+		if err == nil && license != "" {
+			licenseSet = pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, license)...)
+		}
+		if err != nil {
+			log.Debugf("unable to extract licenses from javascript bun.lock for package %s:%s: %+v", name, version, err)
+		}
+	}
+	return finalizeLockPkg(
+		ctx,
+		resolver,
+		location,
+		pkg.Package{
+			Name:      name,
+			Version:   version,
+			Licenses:  licenseSet,
+			Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
+			PURL:      packageURL(name, version),
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.BunLockEntry{Identifier: name + "@" + version, Integrity: integrity, Dependencies: dependencies},
+		},
+	)
+}
+
 func formatNpmRegistryURL(baseURL, packageName, version string) (requestURL string, err error) {
 	urlPath := []string{packageName, version}
 	requestURL, err = url.JoinPath(baseURL, urlPath...)
