@@ -33,7 +33,13 @@ type encoder struct {
 func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	// TODO: revisit this... should no template file be an error or simply render an empty result? or render the json output?
 	// Note: do not check for the existence of the template file here, as the default encoder cannot provide one.
-	f := sprig.HermeticTxtFuncMap()
+
+	// Use the full sprig function map (includes date/time functions like "now", "date", etc.)
+	// but exclude security-sensitive environment variable functions.
+	f := sprig.TxtFuncMap()
+	delete(f, "env")
+	delete(f, "expandenv")
+
 	f["getLastIndex"] = func(collection interface{}) int {
 		if v := reflect.ValueOf(collection); v.Kind() == reflect.Slice {
 			return v.Len() - 1
