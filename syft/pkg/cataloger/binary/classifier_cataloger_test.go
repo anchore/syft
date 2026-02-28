@@ -1942,6 +1942,127 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("envoy-binary"),
 			},
 		},
+		{
+			logicalFixture: "envoy/1.22.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.22.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.22.10",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.24.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.24.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.24.5",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.30.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.30.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.30.2",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.31.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.31.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.31.2",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.34.12/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.34.12",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.34.12",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.35.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.35.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.35.4",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.23.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.23.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.23.7",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.24.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.24.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.24.9",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.30.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.30.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.30.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.30.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.30.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.30.6",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.36.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.36.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.36.1",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
