@@ -135,6 +135,11 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:generic/conda@1.2.3",
 			expected: CondaPkg,
 		},
+		{
+			name:     "operating-system",
+			purl:     "pkg:generic/operating-system@11",
+			expected: OperatingSystemPkg,
+		},
 	}
 
 	var pkgTypes = strset.New()
