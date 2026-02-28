@@ -62,6 +62,14 @@ func Test_DocumentNamespace(t *testing.T) {
 			expected: "https://anchore.com/syft/snap/my-name-",
 		},
 		{
+			name:      "appimage",
+			inputName: "my-name",
+			src: source.Description{
+				Metadata: source.AppImageMetadata{},
+			},
+			expected: "https://anchore.com/syft/appimage/my-name-",
+		},
+		{
 			name:      "oci-model",
 			inputName: "my-name",
 			src: source.Description{
