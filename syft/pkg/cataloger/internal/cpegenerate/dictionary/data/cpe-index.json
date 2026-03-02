@@ -2326,6 +2326,9 @@
       "@fastly/js-compute": [
         "cpe:2.3:a:fastly:js-compute:*:*:*:*:*:node.js:*:*"
       ],
+      "@feathersjs/feathers": [
+        "cpe:2.3:a:feathersjs:feathers:*:*:*:*:*:node.js:*:*"
+      ],
       "@finastra/ssr-pages": [
         "cpe:2.3:a:finastra:ssr-pages:*:*:*:*:*:node.js:*:*"
       ],
@@ -2602,6 +2605,9 @@
       "asciitable.js": [
         "cpe:2.3:a:asciitable.js_project:asciitable.js:*:*:*:*:*:node.js:*:*"
       ],
+      "asn1-ts": [
+        "cpe:2.3:a:jonathanwilbur:asn1-ts:*:*:*:*:*:node.js:*:*"
+      ],
       "assign-deep": [
         "cpe:2.3:a:assign-deep_project:assign-deep:*:*:*:*:*:node.js:*:*"
       ],
@@ -2864,6 +2870,9 @@
       ],
       "component-flatten": [
         "cpe:2.3:a:component-flatten_project:component-flatten:*:*:*:*:*:node.js:*:*"
+      ],
+      "compressing": [
+        "cpe:2.3:a:node-modules:compressing:*:*:*:*:*:node.js:*:*"
       ],
       "conf-cfg-ini": [
         "cpe:2.3:a:conf-cfg-ini_project:conf-cfg-ini:*:*:*:*:*:node.js:*:*"
@@ -3276,6 +3285,9 @@
       "f2e-server": [
         "cpe:2.3:a:f2e-server_project:f2e-server:*:*:*:*:*:node.js:*:*"
       ],
+      "fabric": [
+        "cpe:2.3:a:fabricjs:fabric.js:*:*:*:*:*:node.js:*:*"
+      ],
       "fabric-js": [
         "cpe:2.3:a:fabric-js_project:fabric-js:*:*:*:*:*:node.js:*:*"
       ],
@@ -3295,7 +3307,8 @@
         "cpe:2.3:a:fast_string_search_project:fast_string_search:*:*:*:*:*:node.js:*:*"
       ],
       "fast-xml-parser": [
-        "cpe:2.3:a:fast-xml-parser_project:fast-xml-parser:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:fast-xml-parser_project:fast-xml-parser:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:naturalintelligence:fast-xml-parser:*:*:*:*:*:*:*:*"
       ],
       "fastest-json-copy": [
         "cpe:2.3:a:fastest-json-copy_project:fastest-json-copy:*:*:*:*:*:node.js:*:*"
@@ -4009,6 +4022,9 @@
       "lessindex": [
         "cpe:2.3:a:lessindex_project:lessindex:*:*:*:*:*:node.js:*:*"
       ],
+      "lettermint": [
+        "cpe:2.3:a:lettermint:lettermint:*:*:*:*:*:node.js:*:*"
+      ],
       "lettersanitizer": [
         "cpe:2.3:a:lettersanitizer_project:lettersanitizer:*:*:*:*:*:node.js:*:*"
       ],
@@ -4693,6 +4709,9 @@
       "orejime": [
         "cpe:2.3:a:boscop:orejime:*:*:*:*:*:node.js:*:*"
       ],
+      "orval": [
+        "cpe:2.3:a:orval:orval:*:*:*:*:*:*:*:*"
+      ],
       "osm-static-maps": [
         "cpe:2.3:a:osm-static-maps_project:osm-static-maps:*:*:*:*:*:node.js:*:*"
       ],
@@ -4960,6 +4979,9 @@
       ],
       "react-native-mmkv": [
         "cpe:2.3:a:mrousavy:react-native-mmkv:*:*:*:*:*:node.js:*:*"
+      ],
+      "react-router": [
+        "cpe:2.3:a:shopify:react-router:*:*:*:*:*:node.js:*:*"
       ],
       "realms-shim": [
         "cpe:2.3:a:agoric:realms-shim:*:*:*:*:*:node.js:*:*"
@@ -10825,8 +10847,7 @@
         "cpe:2.3:a:apasionados:dofollow_case_by_case:*:*:*:*:*:wordpress:*:*"
       ],
       "dokan-lite": [
-        "cpe:2.3:a:dokan:dokan:*:*:*:*:lite:wordpress:*:*",
-        "cpe:2.3:a:wedevs:dokan:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:dokan:dokan:*:*:*:*:lite:wordpress:*:*"
       ],
       "dokan-pro": [
         "cpe:2.3:a:dokan:dokan:*:*:*:*:pro:wordpress:*:*"
@@ -10897,7 +10918,8 @@
       "drag-and-drop-multiple-file-upload-contact-form-7": [
         "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:pro:wordpress:*:*",
-        "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:standard:wordpress:*:*"
+        "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:standard:wordpress:*:*",
+        "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_for_contact_form_7:*:*:*:*:free:wordpress:*:*"
       ],
       "drag-and-drop-multiple-file-upload-for-woocommerce": [
         "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -17074,6 +17096,9 @@
       "shapepress-dsgvo": [
         "cpe:2.3:a:legalweb:wp_dsgvo_tools:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:shapepress:wp_dsgvo_tools:*:*:*:*:*:wordpress:*:*"
+      ],
+      "sharable-password-protected-posts": [
+        "cpe:2.3:a:fabiantodt:private_post_share:*:*:*:*:*:wordpress:*:*"
       ],
       "share-buttons": [
         "cpe:2.3:a:artlosk:social_share_buttons:*:*:*:*:*:wordpress:*:*"
