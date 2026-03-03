@@ -68,11 +68,11 @@ func Test_decodePomXML_surviveNonUtf8Encoding(t *testing.T) {
 	}{
 		{
 			name:    "undeclared encoding",
-			fixture: "test-fixtures/undeclared-iso-8859-encoded-pom.xml.base64",
+			fixture: "testdata/undeclared-iso-8859-encoded-pom.xml.base64",
 		},
 		{
 			name:    "declared encoding",
-			fixture: "test-fixtures/declared-iso-8859-encoded-pom.xml.base64",
+			fixture: "testdata/declared-iso-8859-encoded-pom.xml.base64",
 		},
 	}
 

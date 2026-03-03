@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/go-testutils"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/sbom"
 )
 

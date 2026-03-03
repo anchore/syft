@@ -18,7 +18,7 @@ import (
 )
 
 func TestNewFromDirectory(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc         string
@@ -36,19 +36,19 @@ func TestNewFromDirectory(t *testing.T) {
 		},
 		{
 			desc:         "path detected",
-			input:        "test-fixtures",
+			input:        "testdata",
 			inputPaths:   []string{"path-detected/.vimrc"},
 			expectedRefs: 1,
 		},
 		{
 			desc:         "directory ignored",
-			input:        "test-fixtures",
+			input:        "testdata",
 			inputPaths:   []string{"path-detected"},
 			expectedRefs: 0,
 		},
 		{
 			desc:         "no files-by-path detected",
-			input:        "test-fixtures",
+			input:        "testdata",
 			inputPaths:   []string{"no-path-detected"},
 			expectedRefs: 0,
 		},
@@ -86,7 +86,7 @@ func TestNewFromDirectory(t *testing.T) {
 }
 
 func Test_DirectorySource_FilesByGlob(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc     string
@@ -95,19 +95,19 @@ func Test_DirectorySource_FilesByGlob(t *testing.T) {
 		expected int
 	}{
 		{
-			input:    "test-fixtures",
+			input:    "testdata",
 			desc:     "no matches",
 			glob:     "bar/foo",
 			expected: 0,
 		},
 		{
-			input:    "test-fixtures/path-detected",
+			input:    "testdata/path-detected",
 			desc:     "a single match",
 			glob:     "**/*vimrc",
 			expected: 1,
 		},
 		{
-			input:    "test-fixtures/path-detected",
+			input:    "testdata/path-detected",
 			desc:     "multiple matches",
 			glob:     "**",
 			expected: 2,
@@ -135,7 +135,7 @@ func Test_DirectorySource_FilesByGlob(t *testing.T) {
 }
 
 func Test_DirectorySource_Exclusions(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc       string
@@ -146,14 +146,14 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 		err        bool
 	}{
 		{
-			input:      "test-fixtures/system_paths",
+			input:      "testdata/system_paths",
 			desc:       "exclude everything",
 			glob:       "**",
 			expected:   nil,
 			exclusions: []string{"**/*"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "a single path excluded",
 			glob:  "**",
 			expected: []string{
@@ -164,7 +164,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"**/target/**"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "exclude explicit directory relative to the root",
 			glob:  "**",
 			expected: []string{
@@ -176,7 +176,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"./target"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "exclude explicit file relative to the root",
 			glob:  "**",
 			expected: []string{
@@ -188,7 +188,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"./file-1.txt"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "exclude wildcard relative to the root",
 			glob:  "**",
 			expected: []string{
@@ -200,7 +200,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"./*.txt"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "exclude files deeper",
 			glob:  "**",
 			expected: []string{
@@ -212,7 +212,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"**/really/**"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "files excluded with extension",
 			glob:  "**",
 			expected: []string{
@@ -224,7 +224,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"**/*.txt"},
 		},
 		{
-			input: "test-fixtures/image-simple",
+			input: "testdata/image-simple",
 			desc:  "keep files with different extensions",
 			glob:  "**",
 			expected: []string{
@@ -236,7 +236,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"**/target/**/*.jar"},
 		},
 		{
-			input: "test-fixtures/path-detected",
+			input: "testdata/path-detected",
 			desc:  "file directly excluded",
 			glob:  "**",
 			expected: []string{
@@ -245,7 +245,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			exclusions: []string{"**/empty"},
 		},
 		{
-			input: "test-fixtures/path-detected",
+			input: "testdata/path-detected",
 			desc:  "pattern error containing **/",
 			glob:  "**",
 			expected: []string{
@@ -255,7 +255,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			err:        true,
 		},
 		{
-			input: "test-fixtures/path-detected",
+			input: "testdata/path-detected",
 			desc:  "pattern error incorrect start",
 			glob:  "**",
 			expected: []string{
@@ -265,7 +265,7 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 			err:        true,
 		},
 		{
-			input: "test-fixtures/path-detected",
+			input: "testdata/path-detected",
 			desc:  "pattern error starting with /",
 			glob:  "**",
 			expected: []string{
@@ -408,7 +408,7 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 }
 
 func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc     string
@@ -417,7 +417,7 @@ func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
 		expected string
 	}{
 		{
-			input: "test-fixtures/path-detected",
+			input: "testdata/path-detected",
 			desc:  "path does not exist",
 			path:  "foo",
 		},
@@ -442,7 +442,7 @@ func Test_DirectorySource_FilesByPathDoesNotExist(t *testing.T) {
 }
 
 func Test_DirectorySource_ID(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	tests := []struct {
 		name    string
@@ -458,26 +458,26 @@ func Test_DirectorySource_ID(t *testing.T) {
 		{
 			name: "to a non-existent directory",
 			cfg: Config{
-				Path: "./test-fixtures/does-not-exist",
+				Path: "./testdata/does-not-exist",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name:    "with odd unclean path through non-existent directory",
-			cfg:     Config{Path: "test-fixtures/does-not-exist/../"},
+			cfg:     Config{Path: "testdata/does-not-exist/../"},
 			wantErr: require.Error,
 		},
 		{
 			name: "to a file (not a directory)",
 			cfg: Config{
-				Path: "./test-fixtures/image-simple/Dockerfile",
+				Path: "./testdata/image-simple/Dockerfile",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name: "to dir with name and version and supplier",
 			cfg: Config{
-				Path: "./test-fixtures",
+				Path: "./testdata",
 				Alias: source.Alias{
 					Name:     "name-me-that!",
 					Version:  "version-me-this!",
@@ -489,7 +489,7 @@ func Test_DirectorySource_ID(t *testing.T) {
 		{
 			name: "to different dir with name and version",
 			cfg: Config{
-				Path: "./test-fixtures/image-simple",
+				Path: "./testdata/image-simple",
 				Alias: source.Alias{
 					Name:     "name-me-that!",
 					Version:  "version-me-this!",
@@ -501,24 +501,24 @@ func Test_DirectorySource_ID(t *testing.T) {
 		},
 		{
 			name: "with path",
-			cfg:  Config{Path: "./test-fixtures"},
-			want: artifact.ID("c2f936b0054dc6114fc02a3446bf8916bde8fdf87166a23aee22ea011b443522"),
+			cfg:  Config{Path: "./testdata"},
+			want: artifact.ID("810ff2fb242a5dee4220f2cb0e6a519891fb67f2f828a6cab4ef8894633b1f50"),
 		},
 		{
 			name: "with unclean path",
-			cfg:  Config{Path: "test-fixtures/image-simple/../"},
-			want: artifact.ID("c2f936b0054dc6114fc02a3446bf8916bde8fdf87166a23aee22ea011b443522"),
+			cfg:  Config{Path: "testdata/image-simple/../"},
+			want: artifact.ID("810ff2fb242a5dee4220f2cb0e6a519891fb67f2f828a6cab4ef8894633b1f50"),
 		},
 		{
 			name: "other fields do not affect ID",
 			cfg: Config{
-				Path: "test-fixtures",
+				Path: "testdata",
 				Base: "a-base!",
 				Exclude: source.ExcludeConfig{
 					Paths: []string{"a", "b"},
 				},
 			},
-			want: artifact.ID("c2f936b0054dc6114fc02a3446bf8916bde8fdf87166a23aee22ea011b443522"),
+			want: artifact.ID("810ff2fb242a5dee4220f2cb0e6a519891fb67f2f828a6cab4ef8894633b1f50"),
 		},
 	}
 	for _, tt := range tests {
@@ -537,9 +537,9 @@ func Test_DirectorySource_ID(t *testing.T) {
 }
 
 func Test_cleanDirPath(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
-	abs, err := filepath.Abs("test-fixtures")
+	abs, err := filepath.Abs("testdata")
 	require.NoError(t, err)
 
 	tests := []struct {

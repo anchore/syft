@@ -23,7 +23,7 @@ func TestArchiveScan(t *testing.T) {
 				"scan",
 				"-o",
 				"json",
-				"file:" + createArchive(t, "test-fixtures/archive", t.TempDir()),
+				"file:" + createArchive(t, "testdata/archive", t.TempDir()),
 			},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,

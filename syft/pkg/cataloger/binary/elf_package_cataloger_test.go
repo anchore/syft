@@ -21,7 +21,7 @@ func Test_ELFPackageCataloger(t *testing.T) {
 	}{
 		{
 			name:    "go case",
-			fixture: "elf-test-fixtures",
+			fixture: "elf-testdata",
 			expected: []pkg.Package{
 				{
 					Name:    "libhello_world.so",

@@ -21,7 +21,7 @@ func TestIdentify(t *testing.T) {
 		version string
 	}{
 		{
-			fixture: "test-fixtures/alpine-syft.json",
+			fixture: "testdata/alpine-syft.json",
 			id:      syftjson.ID,
 			version: "1.1.0",
 		},
@@ -40,7 +40,7 @@ func TestIdentify(t *testing.T) {
 }
 
 func TestDecodeUnseekable(t *testing.T) {
-	reader, err := os.Open("spdxjson/test-fixtures/spdx/example7-go-module.spdx.json")
+	reader, err := os.Open("spdxjson/testdata/spdx/example7-go-module.spdx.json")
 	assert.NoError(t, err)
 
 	// io.NopCloser wraps the reader in a non-seekable type

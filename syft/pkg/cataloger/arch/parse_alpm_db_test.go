@@ -21,7 +21,7 @@ func TestDatabaseParser(t *testing.T) {
 	}{
 		{
 			name:    "simple desc parsing",
-			fixture: "test-fixtures/files",
+			fixture: "testdata/files",
 			expected: &parsedData{
 				AlpmDBEntry: pkg.AlpmDBEntry{
 					Backup: []pkg.AlpmFileRecord{
@@ -92,7 +92,7 @@ func TestDatabaseParser(t *testing.T) {
 		},
 		{
 			name:    "with dependencies",
-			fixture: "test-fixtures/installed/var/lib/pacman/local/gmp-6.2.1-2/desc",
+			fixture: "testdata/installed/var/lib/pacman/local/gmp-6.2.1-2/desc",
 			expected: &parsedData{
 				Licenses: "LGPL3\nGPL",
 				AlpmDBEntry: pkg.AlpmDBEntry{
@@ -114,7 +114,7 @@ func TestDatabaseParser(t *testing.T) {
 		},
 		{
 			name:    "with provides",
-			fixture: "test-fixtures/installed/var/lib/pacman/local/tree-sitter-0.22.6-1/desc",
+			fixture: "testdata/installed/var/lib/pacman/local/tree-sitter-0.22.6-1/desc",
 			expected: &parsedData{
 				Licenses: "MIT",
 				AlpmDBEntry: pkg.AlpmDBEntry{
@@ -201,7 +201,7 @@ func TestMtreeParse(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			f, err := os.Open("test-fixtures/mtree")
+			f, err := os.Open("testdata/mtree")
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, f.Close()) })
 

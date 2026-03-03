@@ -10,7 +10,7 @@ import (
 )
 
 func TestParsePodfileLock(t *testing.T) {
-	fixture := "test-fixtures/Podfile.lock"
+	fixture := "testdata/Podfile.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -276,7 +276,7 @@ func TestParsePodfileLock(t *testing.T) {
 
 func Test_corruptPodfile(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/Podfile.lock").
+		FromFile(t, "testdata/glob-paths/src/Podfile.lock").
 		WithError().
 		TestParser(t, parsePodfileLock)
 }

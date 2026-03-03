@@ -19,21 +19,21 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 		expected []string
 	}{
 		{
-			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.tar",
+			fixture: "testdata/java-builds/packages/example-java-app-maven-0.1.0.tar",
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
 			},
 		},
 		{
-			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.tar.gz",
+			fixture: "testdata/java-builds/packages/example-java-app-maven-0.1.0.tar.gz",
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
 			},
 		},
 		{
-			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.tgz",
+			fixture: "testdata/java-builds/packages/example-java-app-maven-0.1.0.tgz",
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
@@ -69,7 +69,7 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 func Test_corruptTarArchive(t *testing.T) {
 	ap := newGenericTarWrappedJavaArchiveParser(DefaultArchiveCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/example.tar").
+		FromFile(t, "testdata/corrupt/example.tar").
 		WithError().
 		TestParser(t, ap.parseTarWrappedJavaArchive)
 }

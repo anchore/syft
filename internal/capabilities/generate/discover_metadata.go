@@ -83,7 +83,7 @@ func (idx *TestObservationIndex) extractCustomCatalogerData() (map[string][]stri
 // discoverMetadataTypes searches for test-observations.json files and merges metadata type information
 // into the discovered catalogers. Returns maps of custom cataloger metadata types and package types.
 func discoverMetadataTypes(repoRoot string, discovered map[string]DiscoveredCataloger) (map[string][]string, map[string][]string, error) {
-	testFixtureDirs, err := internal.FindTestFixtureDirs(repoRoot)
+	testDataDirs, err := internal.FindTestDataDirs(repoRoot)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,7 +92,7 @@ func discoverMetadataTypes(repoRoot string, discovered map[string]DiscoveredCata
 	index := newTestObservationIndex()
 
 	// read all test-observations files and merge into index
-	for _, dir := range testFixtureDirs {
+	for _, dir := range testDataDirs {
 		observationsFile := filepath.Join(dir, "test-observations.json")
 		if observations, err := internal.ReadTestObservations(observationsFile); err == nil {
 			mergeTestObservations(observations, index)

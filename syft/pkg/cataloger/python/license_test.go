@@ -78,7 +78,7 @@ func TestGetLicenseFromPypiRegistry(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expected: "MPL-2.0",
@@ -101,7 +101,7 @@ func TestGetLicenseFromPypiRegistry(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/package/2.0/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response_bad.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response_bad.json"),
 				},
 			},
 			expected:      "",

@@ -24,7 +24,7 @@ func Test_CondaCataloger(t *testing.T) {
 	}{
 		{
 			name:    "multiple packages in conda meta (python, c binaries, ...)",
-			fixture: "test-fixtures/conda-meta-python-c-etc",
+			fixture: "testdata/conda-meta-python-c-etc",
 			wantErr: require.NoError,
 			expectedPackages: []pkg.Package{
 				{
@@ -193,7 +193,7 @@ func Test_CondaCataloger(t *testing.T) {
 		},
 		{
 			name:             "badly formatted conda meta json file",
-			fixture:          "test-fixtures/conda-meta-bad-json",
+			fixture:          "testdata/conda-meta-bad-json",
 			expectedPackages: nil,
 			wantErr: func(t require.TestingT, err error, msgAndArgs ...interface{}) {
 				require.Error(t, err)

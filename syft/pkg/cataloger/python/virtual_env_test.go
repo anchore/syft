@@ -21,7 +21,7 @@ func Test_parsePyvenvCfgReader(t *testing.T) {
 	}{
 		{
 			name:    "parse basic pyenv file",
-			fixture: "test-fixtures/pyenv/good-config",
+			fixture: "testdata/pyenv/good-config",
 			want: &virtualEnvInfo{
 				Location:                  location,
 				Version:                   "3.9.5",
@@ -30,7 +30,7 @@ func Test_parsePyvenvCfgReader(t *testing.T) {
 		},
 		{
 			name:    "trixy config cases",
-			fixture: "test-fixtures/pyenv/trixy-config",
+			fixture: "testdata/pyenv/trixy-config",
 			want: &virtualEnvInfo{
 				Location:                  location,
 				Version:                   "3.3.3",

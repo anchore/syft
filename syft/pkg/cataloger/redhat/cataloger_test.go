@@ -199,7 +199,7 @@ func Test_DBCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain DB files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"usr/share/rpm/Packages",
 				"usr/share/rpm/Packages.db",
@@ -233,7 +233,7 @@ func Test_RPMFileCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain rpm files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"dive-0.10.0.rpm",
 			},

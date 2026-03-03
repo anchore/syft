@@ -18,7 +18,7 @@ func TestGGUFCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain gguf files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"models/model.gguf",
 			},

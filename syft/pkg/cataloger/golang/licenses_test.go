@@ -40,7 +40,7 @@ func Test_LicenseSearch(t *testing.T) {
 
 		wd, err := os.Getwd()
 		require.NoError(t, err)
-		testDir := filepath.Join(wd, "test-fixtures", "licenses", "pkg", "mod", processCaps(modPath)+"@"+modVersion)
+		testDir := filepath.Join(wd, "testdata", "licenses", "pkg", "mod", processCaps(modPath)+"@"+modVersion)
 
 		archive := zip.NewWriter(buf)
 
@@ -70,7 +70,7 @@ func Test_LicenseSearch(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 
-	localVendorDir := filepath.Join(wd, "test-fixtures", "licenses-vendor")
+	localVendorDir := filepath.Join(wd, "testdata", "licenses-vendor")
 
 	tests := []struct {
 		name     string
@@ -83,7 +83,7 @@ func Test_LicenseSearch(t *testing.T) {
 			version: "v0.3.2",
 			config: CatalogerConfig{
 				SearchLocalModCacheLicenses: true,
-				LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				LocalModCacheDir:            filepath.Join(wd, "testdata", "licenses", "pkg", "mod"),
 			},
 			expected: []pkg.License{{
 				Value:          "Apache-2.0",
@@ -99,7 +99,7 @@ func Test_LicenseSearch(t *testing.T) {
 			version: "v4.111.5",
 			config: CatalogerConfig{
 				SearchLocalModCacheLicenses: true,
-				LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				LocalModCacheDir:            filepath.Join(wd, "testdata", "licenses", "pkg", "mod"),
 			},
 			expected: []pkg.License{{
 				Value:          "MIT",
@@ -115,7 +115,7 @@ func Test_LicenseSearch(t *testing.T) {
 			version: "v1.2.3",
 			config: CatalogerConfig{
 				SearchLocalModCacheLicenses: true,
-				LocalModCacheDir:            filepath.Join(wd, "test-fixtures", "licenses", "pkg", "mod"),
+				LocalModCacheDir:            filepath.Join(wd, "testdata", "licenses", "pkg", "mod"),
 			},
 			expected: []pkg.License{{
 				Value:          "Apache-2.0",
@@ -163,7 +163,7 @@ func Test_LicenseSearch(t *testing.T) {
 			version: "v4.111.5",
 			config: CatalogerConfig{
 				SearchLocalModCacheLicenses: true,
-				LocalModCacheDir:            filepath.Join(wd, "test-fixtures"), // valid dir but does not find modules
+				LocalModCacheDir:            filepath.Join(wd, "testdata"), // valid dir but does not find modules
 				SearchRemoteLicenses:        true,
 				Proxies:                     []string{server.URL},
 			},
@@ -297,7 +297,7 @@ func Test_remotesForModule(t *testing.T) {
 }
 
 func Test_findVersionPath(t *testing.T) {
-	f := os.DirFS("test-fixtures/zip-fs")
+	f := os.DirFS("testdata/zip-fs")
 	vp := findVersionPath(f, ".")
 	require.Equal(t, "github.com/someorg/somepkg@version", vp)
 }
@@ -364,7 +364,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 func mustContentsFromLocation(t *testing.T, loc file.Location, offset ...int) string {
 	t.Helper()
 
-	contentsPath := "test-fixtures/licenses/pkg/mod/" + loc.RealPath
+	contentsPath := "testdata/licenses/pkg/mod/" + loc.RealPath
 	contents, err := os.ReadFile(contentsPath)
 	require.NoErrorf(t, err, "could not open contents for fixture at %s", contentsPath)
 

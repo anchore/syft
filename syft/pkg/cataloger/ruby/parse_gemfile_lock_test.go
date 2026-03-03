@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseGemfileLockEntries(t *testing.T) {
-	fixture := "test-fixtures/Gemfile.lock"
+	fixture := "testdata/Gemfile.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	var expectedPkgs = []pkg.Package{
 		{Name: "actionmailer", Version: "4.1.1", PURL: "pkg:gem/actionmailer@4.1.1", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},

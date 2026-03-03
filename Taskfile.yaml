@@ -199,7 +199,7 @@ tasks:
   check-binary-fixture-size:
     desc: Ensure that the binary test fixtures are not too large
     cmds:
-      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/test-fixtures/classifiers/snippets
+      - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/testdata/classifiers/snippets
 
 
   ## Testing tasks #################################
@@ -266,9 +266,9 @@ tasks:
   fingerprints:
     desc: Generate fingerprints for all non-docker test fixture
     silent: true
-    # this will look for `test-fixtures/Makefile` and invoke the `fingerprint` target to calculate all cache input fingerprint files
+    # this will look for `testdata/Makefile` and invoke the `fingerprint` target to calculate all cache input fingerprint files
     generates:
-      - '**/test-fixtures/**/*.fingerprint'
+      - '**/testdata/**/*.fingerprint'
       - test/install/cache.fingerprint
     cmds:
       - |
@@ -277,7 +277,7 @@ tasks:
         RESET='\033[0m'
 
         echo -e "${YELLOW}creating fingerprint files for non-docker fixtures...${RESET}"
-        for dir in $(find . -type d -name 'test-fixtures'); do
+        for dir in $(find . -type d -name 'testdata'); do
           if [ -f "$dir/Makefile" ]; then
             # for debugging...
             #echo -e "${YELLOW}• calculating fingerprints in $dir... ${RESET}"
@@ -370,7 +370,7 @@ tasks:
   build-fixtures:
     desc: Generate all non-docker test fixtures
     silent: true
-    # this will look for `test-fixtures/Makefile` and invoke the `fixtures` target to generate any and all test fixtures
+    # this will look for `testdata/Makefile` and invoke the `fixtures` target to generate any and all test fixtures
     cmds:
       - |
         # we want to stop on the first build error
@@ -381,7 +381,7 @@ tasks:
         RESET='\033[0m'
 
         # Use a for loop with command substitution to avoid subshell issues
-        for dir in $(find . -type d -name 'test-fixtures'); do
+        for dir in $(find . -type d -name 'testdata'); do
           if [ -f "$dir/Makefile" ]; then
             echo -e "${YELLOW}${BOLD}generating fixtures in $dir${RESET}"
             make -C "$dir" fixtures
@@ -435,7 +435,7 @@ tasks:
       - "echo 'Docker daemon cache:'"
       - "docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}:{{`{{.Tag}}`}}' | grep stereoscope-fixture- | sort"
       - "echo '\nTar cache:'"
-      - 'find . -type f -wholename "**/test-fixtures/cache/stereoscope-fixture-*.tar" | sort'
+      - 'find . -type f -wholename "**/testdata/cache/stereoscope-fixture-*.tar" | sort'
 
   check-docker-cache:
     desc: Ensure docker caches aren't using too much disk space
@@ -469,7 +469,7 @@ tasks:
       - "cd test/install && make ci-test-mac"
 
   generate-compare-file:
-    cmd: "go run ./cmd/syft {{ .COMPARE_TEST_IMAGE }} -o json > {{ .COMPARE_DIR }}/test-fixtures/acceptance-{{ .COMPARE_TEST_IMAGE }}.json"
+    cmd: "go run ./cmd/syft {{ .COMPARE_TEST_IMAGE }} -o json > {{ .COMPARE_DIR }}/testdata/acceptance-{{ .COMPARE_TEST_IMAGE }}.json"
 
   compare-mac:
     deps: [tmpdir]
@@ -639,6 +639,15 @@ tasks:
 
   ## Cleanup targets #################################
 
+  clean:
+    desc: Remove all cache files and old builds
+    cmds:
+      - task: clean-snapshot
+      - task: clean-cache
+      - task: clean-test-observations
+      - task: clean-docker-cache
+      - task: clean-oras-cache
+
   clean-snapshot:
     desc: Remove any snapshot builds
     cmds:
@@ -648,7 +657,7 @@ tasks:
   clean-docker-cache:
     desc: Remove all docker cache tars and images from the daemon
     cmds:
-      - find . -type d -wholename "**/test-fixtures/cache" | xargs rm -rf
+      - find . -type d -wholename "**/testdata/cache" | xargs rm -rf
       - docker images --format '{{`{{.ID}}`}} {{`{{.Repository}}`}}' | grep stereoscope-fixture- | awk '{print $1}' | uniq | xargs -r docker rmi --force
 
   clean-oras-cache:
@@ -665,7 +674,7 @@ tasks:
         RESET='\033[0m'
 
         # Use a for loop with command substitution to avoid subshell issues
-        for dir in $(find . -type d -name 'test-fixtures'); do
+        for dir in $(find . -type d -name 'testdata'); do
         if [ -f "$dir/Makefile" ]; then
           echo -e "${YELLOW}${BOLD}deleting ephemeral test fixtures in $dir${RESET}"
           (make -C "$dir" clean)
@@ -675,6 +684,6 @@ tasks:
       - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}
 
   clean-test-observations:
-    desc: Remove all test observations (i.e. test-fixtures/test-observations.json)
+    desc: Remove all test observations (i.e. testdata/test-observations.json)
     cmds:
-      - find . -type f -wholename "**/test-fixtures/test-observations.json" | xargs rm -f
+      - find . -type f -wholename "**/testdata/test-observations.json" | xargs rm -f

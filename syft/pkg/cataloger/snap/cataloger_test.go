@@ -13,11 +13,11 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "base snap with dpkg.yaml",
-			fixture: "test-fixtures/glob-paths/base",
+			fixture: "testdata/glob-paths/base",
 		},
 		{
 			name:    "system snap with manifest.yaml",
-			fixture: "test-fixtures/glob-paths/system",
+			fixture: "testdata/glob-paths/system",
 		},
 	}
 

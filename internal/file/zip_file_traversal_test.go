@@ -47,7 +47,7 @@ func TestUnzipToDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	goldenRootDir := filepath.Join(cwd, "test-fixtures")
+	goldenRootDir := filepath.Join(cwd, "testdata")
 	sourceDirPath := path.Join(goldenRootDir, "zip-source")
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 

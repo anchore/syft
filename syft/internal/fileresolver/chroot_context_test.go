@@ -26,7 +26,7 @@ func Test_ChrootContext_RequestResponse(t *testing.T) {
 
 	testDir, err := os.Getwd()
 	require.NoError(t, err)
-	relative := filepath.Join("test-fixtures", "req-resp")
+	relative := filepath.Join("testdata", "req-resp")
 	absolute := filepath.Join(testDir, relative)
 
 	absPathToTheFile := filepath.Join(absolute, "path", "to", "the", "file.txt")
@@ -503,7 +503,7 @@ func TestNewChrootContext_BaseValidation(t *testing.T) {
 	testDir, err := os.Getwd()
 	require.NoError(t, err)
 
-	relative := filepath.Join("test-fixtures", "req-resp")
+	relative := filepath.Join("testdata", "req-resp")
 	absolute := filepath.Join(testDir, relative)
 
 	tests := []struct {

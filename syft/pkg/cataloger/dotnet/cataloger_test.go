@@ -21,7 +21,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:      "obtain deps.json files",
-			fixture:   "test-fixtures/glob-paths",
+			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetDepsCataloger(),
 			expected: []string{
 				"src/something.deps.json",
@@ -29,7 +29,7 @@ func TestCataloger_Globs(t *testing.T) {
 		},
 		{
 			name:      "obtain portable executable files",
-			fixture:   "test-fixtures/glob-paths",
+			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetPortableExecutableCataloger(),
 			expected: []string{
 				"src/something.dll",
@@ -38,7 +38,7 @@ func TestCataloger_Globs(t *testing.T) {
 		},
 		{
 			name:      "obtain combined files",
-			fixture:   "test-fixtures/glob-paths",
+			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			expected: []string{
 				"src/something.deps.json",
@@ -1365,20 +1365,20 @@ func TestDotnetDepsCataloger_regressions(t *testing.T) {
 
 func Test_corruptDotnetPE(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/glob-paths/src").
+		FromDirectory(t, "testdata/glob-paths/src").
 		Expects(nil, nil). // we shouldn't find packages nor error out
 		TestCataloger(t, NewDotnetPortableExecutableCataloger())
 }
 
 func Test_corruptDotnetDeps(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/glob-paths/src").
+		FromDirectory(t, "testdata/glob-paths/src").
 		Expects(nil, nil). // we shouldn't find packages nor error out
 		TestCataloger(t, NewDotnetDepsCataloger())
 }
 
 func TestParseDotnetDeps(t *testing.T) {
-	fixture := "test-fixtures/dir-example-1"
+	fixture := "testdata/dir-example-1"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation("TestLibrary.deps.json"))
 	rootPkg := pkg.Package{
 		Name:      "TestLibrary",

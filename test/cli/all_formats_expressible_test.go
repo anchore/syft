@@ -26,9 +26,9 @@ func TestAllFormatsExpressible(t *testing.T) {
 	require.NotEmpty(t, formatIDs)
 	for _, o := range formatIDs {
 		t.Run(fmt.Sprintf("format:%s", o), func(t *testing.T) {
-			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", string(o)}
+			args := []string{"dir:./testdata/image-pkg-coverage", "-o", string(o)}
 			if o == template.ID {
-				args = append(args, "-t", "test-fixtures/csv.template")
+				args = append(args, "-t", "testdata/csv.template")
 			}
 
 			cmd, stdout, stderr := runSyft(t, nil, args...)
@@ -69,7 +69,7 @@ func Test_formatVersionsExpressible(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.format, func(t *testing.T) {
-			args := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.format}
+			args := []string{"dir:./testdata/image-pkg-coverage", "-o", test.format}
 			cmd, stdout, stderr := runSyft(t, nil, args...)
 			test.assertion(t, stdout, stderr, cmd.ProcessState.ExitCode())
 			logOutputOnFailure(t, cmd, stdout, stderr)

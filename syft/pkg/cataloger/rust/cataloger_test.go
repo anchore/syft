@@ -268,7 +268,7 @@ func Test_CargoLockCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain Cargo.lock files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/Cargo.lock",
 			},
@@ -293,7 +293,7 @@ func Test_AuditBinaryCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain audit binary files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"partial-binary",
 			},
@@ -312,7 +312,7 @@ func Test_AuditBinaryCataloger_Globs(t *testing.T) {
 
 func Test_corruptAuditBinary(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/partial-binary").
+		FromFile(t, "testdata/glob-paths/partial-binary").
 		WithError().
 		TestParser(t, parseAuditBinary)
 }

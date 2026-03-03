@@ -43,7 +43,7 @@ func TestNewDigestsFromFile(t *testing.T) {
 	}{
 		{
 			name:    "check supported hash algorithms",
-			fixture: "test-fixtures/digest.txt",
+			fixture: "testdata/digest.txt",
 			hashes:  supportedHashAlgorithms(),
 			want: []file.Digest{
 				{
@@ -74,7 +74,7 @@ func TestNewDigestsFromFile(t *testing.T) {
 		},
 		{
 			name:    "empty file has valid checksums",
-			fixture: "test-fixtures/empty.txt",
+			fixture: "testdata/empty.txt",
 			hashes:  supportedHashAlgorithms(),
 			want: []file.Digest{
 				{

@@ -66,7 +66,7 @@ func TestParseLicenseGroups(t *testing.T) {
 	}{
 		{
 			name:  "basic nesting example",
-			input: "test-fixtures/license-groups/example1",
+			input: "testdata/license-groups/example1",
 			expected: map[string][]string{
 				"FSF-APPROVED": {
 					"Apache-2.0", "BSD", "BSD-2", "GPL-2", "GPL-3", "LGPL-2.1", "LGPL-3", "X11", "ZLIB",
@@ -79,17 +79,17 @@ func TestParseLicenseGroups(t *testing.T) {
 		},
 		{
 			name:        "error on cycles",
-			input:       "test-fixtures/license-groups/cycle",
+			input:       "testdata/license-groups/cycle",
 			expectError: require.Error,
 		},
 		{
 			name:        "error on self references",
-			input:       "test-fixtures/license-groups/self",
+			input:       "testdata/license-groups/self",
 			expectError: require.Error,
 		},
 		{
 			name:        "error on missing reference",
-			input:       "test-fixtures/license-groups/missing",
+			input:       "testdata/license-groups/missing",
 			expectError: require.Error,
 		},
 	}

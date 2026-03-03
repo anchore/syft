@@ -2,7 +2,7 @@
 
 > [!TIP]
 > **TL;DR** to add a test for a new classifier:
->  1. head to the correct directory: `cd test-fixtures`
+>  1. head to the correct directory: `cd testdata`
 >  2. add a new entry to `config.yaml` to track where to get the binary from (verify the entry with `make list`)
 >  3. run `make download` to get the binary
 >  4. run `make add-snippet` and follow the prompts (use `/` to search)
@@ -20,7 +20,7 @@ The upside with full binaries is that they are the "Real McCoy" and allows the b
 
 You can find the test fixtures at the following locations:
 ```
-syft/pkg/cataloger/binary/test-fixtures/
+syft/pkg/cataloger/binary/testdata/
 └── classifiers/
     ├── bin/        # full binaries
     ├── ...
@@ -77,7 +77,7 @@ The test cases have been setup to allow testing against full binaries or a mix o
 To force running only against full binaries run with:
 
 ```bash
-go test -must-use-full-binaries ./syft/pkg/cataloger/binary/test-fixtures/...
+go test -must-use-full-binaries ./syft/pkg/cataloger/binary/testdata/...
 ```
 
 ## Adding a new test fixture

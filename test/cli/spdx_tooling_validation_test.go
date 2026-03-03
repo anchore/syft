@@ -96,7 +96,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 				imageArg := fmt.Sprintf("IMAGE=%s", imgTag)
 
 				validateCmd := exec.Command("make", "validate", fileArg, mountArg, imageArg)
-				validateCmd.Dir = filepath.Join(cwd, "test-fixtures", "image-java-spdx-tools")
+				validateCmd.Dir = filepath.Join(cwd, "testdata", "image-java-spdx-tools")
 
 				stdout, stderr, err := runCommand(validateCmd, map[string]string{})
 				if err != nil {

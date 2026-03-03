@@ -16,7 +16,7 @@ import (
 )
 
 func Test_Read_DotNetDetection(t *testing.T) {
-	singleFileDepsJSON, err := os.ReadFile("test-fixtures/net8-app-single-file.deps.json")
+	singleFileDepsJSON, err := os.ReadFile("testdata/net8-app-single-file.deps.json")
 	require.NoError(t, err)
 
 	tests := []struct {

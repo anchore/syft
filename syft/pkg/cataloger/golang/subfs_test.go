@@ -9,7 +9,7 @@ import (
 )
 
 func Test_NewSubFS(t *testing.T) {
-	f := os.DirFS("test-fixtures/zip-fs")
+	f := os.DirFS("testdata/zip-fs")
 	f = newSubFS(f, "github.com/someorg/somepkg@version")
 	var names []string
 	err := fs.WalkDir(f, ".", func(path string, d fs.DirEntry, err error) error {
