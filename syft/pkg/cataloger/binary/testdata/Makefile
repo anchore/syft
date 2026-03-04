@@ -32,7 +32,7 @@ clean:  ## clean up all downloaded binaries
 	rm -rf $(BIN)
 
 clean-fingerprint: ## clean up all legacy fingerprint files
-	@find $(BIN) -name '*.fingerprint' -delete
+	@if [ -d $(BIN) ]; then find $(BIN) -name '*.fingerprint' -delete; fi
 
 
 ## Halp! #################################
