@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/config"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/ui"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/ui"
 )
 
 const digestFileSuffix = ".xxh64"

@@ -271,6 +271,7 @@ require (
 )
 
 require (
+	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/gpustack/gguf-parser-go v0.24.0
 	github.com/wk8/go-ordered-map/v2 v2.1.8
@@ -283,7 +284,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.54.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.54.0 // indirect
-	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.6 // indirect

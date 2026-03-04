@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/cli"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/ui"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/cli"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/ui"
 )
 
 func main() {

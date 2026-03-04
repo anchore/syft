@@ -20,7 +20,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/testutil"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/testutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"

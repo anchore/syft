@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
 )
 
 type Entries map[LogicalEntryKey]EntryInfo

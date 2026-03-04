@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
 )
 
 func Download(appConfig config.Application) *cobra.Command {

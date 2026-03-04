@@ -11,16 +11,16 @@ fixtures: download
 fingerprint: clean-fingerprint $(FINGERPRINT_FILE)
 
 list: ## list all managed binaries and snippets
-	go run ./manager list
+	go run ../internal/manager list
 
 download: ## download only binaries that are not covered by a snippet
-	go run ./manager download $(name) --skip-if-covered-by-snippet
+	go run ../internal/manager download $(name) --skip-if-covered-by-snippet
 
 download-all: ## download all managed binaries
-	go run ./manager download
+	go run ../internal/manager download
 
 add-snippet: ## add a new snippet from an existing binary
-	go run ./manager add-snippet
+	go run ../internal/manager add-snippet
 
 # requirement 3: we always need to recalculate the fingerprint based on source regardless of any existing fingerprint
 .PHONY: $(FINGERPRINT_FILE)

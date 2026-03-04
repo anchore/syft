@@ -3,8 +3,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/cli/commands"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/cli/commands"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
 )
 
 // list all managed binaries (in ./bin, organized by 'name-version/platform/binary')

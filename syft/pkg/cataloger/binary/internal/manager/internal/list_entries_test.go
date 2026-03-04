@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
 )
 
 func TestSortingLogicalEntryKeys(t *testing.T) {

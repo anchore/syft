@@ -9,9 +9,9 @@ import (
 	"github.com/anmitsu/go-shlex"
 	"github.com/spf13/cobra"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/config"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/testdata/manager/internal/ui"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/ui"
 )
 
 func AddSnippet(appConfig config.Application) *cobra.Command {
