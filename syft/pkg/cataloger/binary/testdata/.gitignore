@@ -5,5 +5,7 @@ classifiers/bin
 !lib*.so
 !lib*.dylib
 
-# allow for go-hint file
+# allow for go-hint files and binaries
 !VERSION*
+!classifiers/snippets/**/bin/
+!*.exe

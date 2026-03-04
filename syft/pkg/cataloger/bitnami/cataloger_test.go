@@ -444,7 +444,11 @@ func TestBitnamiCataloger(t *testing.T) {
 			Architecture: "arm64",
 			Distro:       "debian-12",
 			Path:         "opt/bitnami/redis",
-			Files:        []string{"opt/bitnami/redis/bin/redis-server"},
+			Files: []string{
+				"opt/bitnami/redis/.gitignore",
+				"opt/bitnami/redis/bin/.gitignore",
+				"opt/bitnami/redis/bin/redis-server",
+			},
 		},
 	}
 
