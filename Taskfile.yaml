@@ -8,7 +8,9 @@ vars:
   OWNER: anchore
   PROJECT: syft
 
-  CACHE_IMAGE: ghcr.io/{{ .OWNER }}/{{ .PROJECT }}/test-fixture-cache:latest
+  # v1: when fixtures were located at test-fixtures dirs
+  # v2: migration to testdata dirs
+  CACHE_IMAGE: ghcr.io/{{ .OWNER }}/{{ .PROJECT }}/test-fixture-cache:v2
 
   # static file dirs
   TOOL_DIR: .tool
