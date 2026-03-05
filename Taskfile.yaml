@@ -544,6 +544,7 @@ tasks:
     cmds:
       # remove all test observations prior to regenerating
       - task: clean-test-observations
+        if: '{{ eq .REFRESH "true" }}'
       # this is required to update test observations; such evidence is used to update the packages/*.yaml
       - cmd: "go test ./syft/pkg/... -count=1"
         if: '{{ eq .REFRESH "true" }}'
