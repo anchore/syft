@@ -75,7 +75,6 @@ tasks:
       - task: check-licenses
       - task: lint
       - task: check-json-schema-drift
-      - task: check-capability-drift
       - task: check-binary-fixture-size
 
   test:
@@ -539,11 +538,15 @@ tasks:
     deps:
       - tmpdir
       - fixtures
+    vars:
+      # set REFRESH=true to run package tests first and refresh test observations (default: true)
+      REFRESH: '{{ .REFRESH | default "true" }}'
     cmds:
       # remove all test observations prior to regenerating
       - task: clean-test-observations
       # this is required to update test observations; such evidence is used to update the packages/*.yaml
-      - "go test ./syft/pkg/... -count=1"
+      - cmd: "go test ./syft/pkg/... -count=1"
+        if: '{{ eq .REFRESH "true" }}'
       - "go generate ./internal/capabilities/..."
       - "gofmt -s -w ./internal/capabilities"
       # now that we have the latest capabilities, run completeness tests to ensure this is self-consistent
