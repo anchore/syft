@@ -14,7 +14,7 @@ fixtures: jars archives native-image
 # requirement 2: 'fingerprint' goal to determine if the fixture input that indicates any existing cache should be busted
 fingerprint: $(FINGERPRINT_FILE)
 
-jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar $(PKGSDIR)/example-zapp-addon-gradle-0.1.0.zap
+jars: $(PKGSDIR)/example-java-app-maven-0.1.0.jar $(PKGSDIR)/example-java-app-gradle-0.1.0.jar $(PKGSDIR)/example-jenkins-plugin.hpi $(PKGSDIR)/spring-boot-0.0.1-SNAPSHOT.jar $(PKGSDIR)/example-zap-addon-0.1.0.zap
 
 archives: $(PKGSDIR)/example-java-app-maven-0.1.0.zip $(PKGSDIR)/example-java-app-maven-0.1.0.tar $(PKGSDIR)/example-java-app-maven-0.1.0.tar.gz $(PKGSDIR)/example-java-app-maven-0.1.0.tgz
 
