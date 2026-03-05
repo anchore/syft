@@ -119,8 +119,8 @@ func Test_ELFPackageCataloger(t *testing.T) {
 			expected: []pkg.Package{
 				{
 					Name:    "glibc",
-					Version: "2.43-r1",
-					PURL:    "pkg:apk/wolfi/glibc@2.43-r1?distro=wolfi",
+					Version: "2.43-r2",
+					PURL:    "pkg:apk/wolfi/glibc@2.43-r2?distro=wolfi",
 					Locations: file.NewLocationSet(
 						file.NewLocationFromDirectory("/lib/libBrokenLocale.so.1",
 							"sha256:559eaef4e501b8e7a150661a94ee8b9ebc63bfca3256953a703f9f82053346f2",
