@@ -25,7 +25,7 @@ func TestAllFormatsConvertable(t *testing.T) {
 		{to: "syft-json", from: "spdx-json"},
 		{to: "syft-json", from: "cyclonedx-json"},
 		{to: "spdx-json", from: "syft-json"},
-		{to: "template", from: "syft-json", template: "test-fixtures/csv.template"},
+		{to: "template", from: "syft-json", template: "testdata/csv.template"},
 		{to: "spdx-json", from: "cyclonedx-json"},
 		{to: "cyclonedx-json", from: "syft-json"},
 		{to: "cyclonedx-json", from: "spdx-json"},
@@ -33,7 +33,7 @@ func TestAllFormatsConvertable(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("from %s to %s", test.from, test.to), func(t *testing.T) {
-			sbomArgs := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.from}
+			sbomArgs := []string{"dir:./testdata/image-pkg-coverage", "-o", test.from}
 			cmd, stdout, stderr := runSyft(t, test.env, sbomArgs...)
 			if cmd.ProcessState.ExitCode() != 0 {
 				t.Log("STDOUT:\n", stdout)

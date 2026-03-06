@@ -20,7 +20,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/testutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
@@ -32,8 +32,8 @@ var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "fo
 func Test_Cataloger_PositiveCases(t *testing.T) {
 	tests := []struct {
 		name string
-		// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
-		// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+		// logicalFixture is the logical path to the full binary or snippet. This is relative to the testdata/classifiers/snippets
+		// or testdata/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
 		// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
 		// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 		logicalFixture string
@@ -1948,8 +1948,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		t.Run(test.logicalFixture, func(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-			// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
-			// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+			// logicalFixture is the logical path to the full binary or snippet. This is relative to the testdata/classifiers/snippets
+			// or testdata/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
 			// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
 			// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
@@ -2014,7 +2014,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-	src, err := directorysource.NewFromPath("test-fixtures/classifiers/negative")
+	src, err := directorysource.NewFromPath("testdata/classifiers/negative")
 	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
@@ -2065,7 +2065,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 				Classifiers: []binutils.Classifier{},
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   nil,
 		},
 		{
@@ -2073,7 +2073,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 				Classifiers: defaultClassifers,
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   &golangExpected,
 		},
 		{
@@ -2081,7 +2081,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 				Classifiers: []binutils.Classifier{fooClassifier},
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   nil,
 		},
 		{
@@ -2092,7 +2092,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 					fooClassifier,
 				),
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   &golangExpected,
 		},
 		{
@@ -2111,7 +2111,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 					},
 				),
 			},
-			fixtureDir: "test-fixtures/custom/extra",
+			fixtureDir: "testdata/custom/extra",
 			expected:   nil,
 		},
 		{
@@ -2122,7 +2122,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 					fooClassifier,
 				),
 			},
-			fixtureDir: "test-fixtures/custom/extra",
+			fixtureDir: "testdata/custom/extra",
 			expected:   &customExpected,
 		},
 	}

@@ -470,7 +470,7 @@ func contains(slice []string, item string) bool {
 
 // ===== Result Writing =====
 
-// WriteResults writes the collected observation data to test-fixtures/test-observations.json.
+// WriteResults writes the collected observation data to testdata/test-observations.json.
 func (t *MetadataTracker) WriteResults() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -481,7 +481,7 @@ func (t *MetadataTracker) WriteResults() error {
 	}
 
 	// create output directory
-	outDir := "test-fixtures"
+	outDir := "testdata"
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}

@@ -28,7 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 	}{
 		{
 			name:       "go case",
-			fixtureDir: "test-fixtures/rpms",
+			fixtureDir: "testdata/rpms",
 			expected: []pkg.Package{
 				{
 					Name:      "abc",
@@ -110,7 +110,7 @@ func TestParseRpmFiles(t *testing.T) {
 		},
 		{
 			name:       "bad rpms",
-			fixtureDir: "test-fixtures/bad",
+			fixtureDir: "testdata/bad",
 		},
 		{
 			name:         "rpms with signatures from RSA header",
@@ -233,7 +233,7 @@ func ref[T any](v T) *T {
 
 func Test_corruptRpmArchive(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/bad/bad.rpm").
+		FromFile(t, "testdata/bad/bad.rpm").
 		WithError().
 		TestParser(t, parseRpmArchive)
 }

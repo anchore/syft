@@ -25,7 +25,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 	}{
 		{
 			name:    "no CPEs",
-			fixture: "test-fixtures/version.txt",
+			fixture: "testdata/version.txt",
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
@@ -36,7 +36,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 		},
 		{
 			name:    "one Attributes",
-			fixture: "test-fixtures/version.txt",
+			fixture: "testdata/version.txt",
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
@@ -51,7 +51,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 		},
 		{
 			name:    "multiple CPEs",
-			fixture: "test-fixtures/version.txt",
+			fixture: "testdata/version.txt",
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version.txt",
@@ -68,7 +68,7 @@ func Test_ClassifierCPEs(t *testing.T) {
 		},
 		{
 			name:    "version in parts",
-			fixture: "test-fixtures/version-parts.txt",
+			fixture: "testdata/version-parts.txt",
 			classifier: Classifier{
 				Package:         "some-app",
 				FileGlob:        "**/version-parts.txt",
@@ -217,7 +217,7 @@ func Test_SupportingEvidenceMatcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := directorysource.NewFromPath("test-fixtures")
+			s, err := directorysource.NewFromPath("testdata")
 			require.NoError(t, err)
 			r, err := s.FileResolver(source.AllLayersScope)
 			require.NoError(t, err)

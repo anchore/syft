@@ -18,7 +18,7 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 		expected []string
 	}{
 		{
-			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.zip",
+			fixture: "testdata/java-builds/packages/example-java-app-maven-0.1.0.zip",
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",

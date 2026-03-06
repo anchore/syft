@@ -59,14 +59,14 @@ func TestDigestsCataloger(t *testing.T) {
 		{
 			name:     "md5",
 			digests:  []crypto.Hash{crypto.MD5},
-			files:    []string{"test-fixtures/last/empty/empty", "test-fixtures/last/path.txt"},
-			expected: testDigests(t, "test-fixtures/last", []string{"empty/empty", "path.txt"}, crypto.MD5),
+			files:    []string{"testdata/last/empty/empty", "testdata/last/path.txt"},
+			expected: testDigests(t, "testdata/last", []string{"empty/empty", "path.txt"}, crypto.MD5),
 		},
 		{
 			name:     "md5-sha1-sha256",
 			digests:  []crypto.Hash{crypto.MD5, crypto.SHA1, crypto.SHA256},
-			files:    []string{"test-fixtures/last/empty/empty", "test-fixtures/last/path.txt"},
-			expected: testDigests(t, "test-fixtures/last", []string{"empty/empty", "path.txt"}, crypto.MD5, crypto.SHA1, crypto.SHA256),
+			files:    []string{"testdata/last/empty/empty", "testdata/last/path.txt"},
+			expected: testDigests(t, "testdata/last", []string{"empty/empty", "path.txt"}, crypto.MD5, crypto.SHA1, crypto.SHA256),
 		},
 	}
 
@@ -74,7 +74,7 @@ func TestDigestsCataloger(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewCataloger(test.digests)
 
-			src, err := directorysource.NewFromPath("test-fixtures/last/")
+			src, err := directorysource.NewFromPath("testdata/last/")
 			require.NoError(t, err)
 
 			resolver, err := src.FileResolver(source.SquashedScope)

@@ -15,7 +15,7 @@ func TestParseRebarLock(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			fixture: "test-fixtures/rebar.lock",
+			fixture: "testdata/rebar.lock",
 			expected: []pkg.Package{
 				{
 					Name:     "certifi",
@@ -111,7 +111,7 @@ func TestParseRebarLock(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/rebar-2.lock",
+			fixture: "testdata/rebar-2.lock",
 			expected: []pkg.Package{
 				//[{<<"bcrypt">>,{pkg,<<"bcrypt">>,<<"1.1.5">>},0},
 				// {<<"bcrypt">>, <<"A6763BD4E1AF46D34776F85B7995E63A02978DE110C077E9570ED17006E03386">>},
@@ -258,7 +258,7 @@ func TestParseRebarLock(t *testing.T) {
 
 func Test_corruptRebarLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/rebar.lock").
+		FromFile(t, "testdata/corrupt/rebar.lock").
 		WithError().
 		TestParser(t, parseRebarLock)
 }

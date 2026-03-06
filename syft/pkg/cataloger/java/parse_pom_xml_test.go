@@ -82,7 +82,7 @@ func Test_parsePomXML(t *testing.T) {
 		expectedRelationships []artifact.Relationship
 	}{
 		{
-			dir: "test-fixtures/pom/example-java-app-maven",
+			dir: "testdata/pom/example-java-app-maven",
 			expected: []pkg.Package{
 				exampleJavaAppMaven,
 				jodaTime,
@@ -122,8 +122,8 @@ func Test_parsePomXML(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProject(t *testing.T) {
-	mavenLocalRepoDir := "internal/maven/test-fixtures/maven-repo"
-	mavenBaseURL := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
+	mavenLocalRepoDir := "internal/maven/testdata/maven-repo"
+	mavenBaseURL := maventest.MockRepo(t, "internal/maven/testdata/maven-repo")
 
 	tests := []struct {
 		name     string
@@ -133,7 +133,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	}{
 		{
 			name: "no resolution",
-			dir:  "test-fixtures/pom/commons-text-1.10.0",
+			dir:  "testdata/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
@@ -142,7 +142,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 		},
 		{
 			name: "use network",
-			dir:  "test-fixtures/pom/commons-text-1.10.0",
+			dir:  "testdata/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
 				MavenBaseURL:            mavenBaseURL,
@@ -152,7 +152,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 		},
 		{
 			name: "use local repository",
-			dir:  "test-fixtures/pom/commons-text-1.10.0",
+			dir:  "testdata/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: true,
@@ -162,7 +162,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 		},
 		{
 			name: "transitive dependencies",
-			dir:  "test-fixtures/pom/transitive-top-level",
+			dir:  "testdata/pom/transitive-top-level",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:                    false,
 				UseMavenLocalRepository:       true,
@@ -203,7 +203,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 		{
 			name: "no license info",
 			project: &pkg.JavaPomProject{
-				Path: "test-fixtures/pom/commons-codec.pom.xml",
+				Path: "testdata/pom/commons-codec.pom.xml",
 				Parent: &pkg.JavaPomParent{
 					GroupID:    "org.apache.commons",
 					ArtifactID: "commons-parent",
@@ -220,7 +220,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 		{
 			name: "with license data",
 			project: &pkg.JavaPomProject{
-				Path: "test-fixtures/pom/neo4j-license-maven-plugin.pom.xml",
+				Path: "testdata/pom/neo4j-license-maven-plugin.pom.xml",
 				Parent: &pkg.JavaPomParent{
 					GroupID:    "org.sonatype.oss",
 					ArtifactID: "oss-parent",
@@ -360,10 +360,10 @@ func Test_cleanDescription(t *testing.T) {
 }
 
 func Test_resolveLicenses(t *testing.T) {
-	mavenURL := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-	localM2 := "internal/maven/test-fixtures/maven-repo"
-	localDir := "internal/maven/test-fixtures/local"
-	containingDir := "internal/maven/test-fixtures/local/contains-child-1"
+	mavenURL := maventest.MockRepo(t, "internal/maven/testdata/maven-repo")
+	localM2 := "internal/maven/testdata/maven-repo"
+	localDir := "internal/maven/testdata/local"
+	containingDir := "internal/maven/testdata/local/contains-child-1"
 
 	expectedLicenses := []pkg.License{
 		{
@@ -459,7 +459,7 @@ func Test_resolveLicenses(t *testing.T) {
 func Test_corruptPomXml(t *testing.T) {
 	c := NewPomCataloger(DefaultArchiveCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/corrupt").
+		FromDirectory(t, "testdata/corrupt").
 		WithError().
 		TestCataloger(t, c)
 }

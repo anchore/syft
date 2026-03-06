@@ -17,7 +17,7 @@ func Test_machoHasEntrypoint(t *testing.T) {
 
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}
@@ -50,7 +50,7 @@ func Test_machoHasEntrypoint(t *testing.T) {
 func Test_machoHasExports(t *testing.T) {
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}
@@ -88,7 +88,7 @@ func Test_machoHasExports(t *testing.T) {
 func Test_machoUniversal(t *testing.T) {
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}

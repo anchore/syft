@@ -6,7 +6,7 @@ if [ "$(git status --porcelain | wc -l)" -ne "0" ]; then
   exit 1
 fi
 
-if ! make generate-capabilities; then
+if ! make generate-capabilities REFRESH=false; then
   echo "Generating capability descriptions failed"
   exit 1
 fi

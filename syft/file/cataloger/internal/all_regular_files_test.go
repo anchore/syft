@@ -45,7 +45,7 @@ func Test_allRegularFiles(t *testing.T) {
 		{
 			name: "directory",
 			setup: func() file.Resolver {
-				s, err := directorysource.NewFromPath("test-fixtures/symlinked-root/nested/link-root")
+				s, err := directorysource.NewFromPath("testdata/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(source.SquashedScope)
 				require.NoError(t, err)

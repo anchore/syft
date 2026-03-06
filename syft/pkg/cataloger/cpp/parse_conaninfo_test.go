@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseConaninfo(t *testing.T) {
-	fixture := "test-fixtures/conaninfo/mfast/1.2.2/my_user/my_channel/package/9d1f076b471417647c2022a78d5e2c1f834289ac/conaninfo.txt"
+	fixture := "testdata/conaninfo/mfast/1.2.2/my_user/my_channel/package/9d1f076b471417647c2022a78d5e2c1f834289ac/conaninfo.txt"
 	expected := []pkg.Package{
 		{
 			Name:      "mfast",

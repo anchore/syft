@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseStackYaml(t *testing.T) {
-	fixture := "test-fixtures/stack.yaml"
+	fixture := "testdata/stack.yaml"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
@@ -113,7 +113,7 @@ func TestParseStackYaml(t *testing.T) {
 
 func Test_corruptStackYaml(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/stack.yaml").
+		FromFile(t, "testdata/corrupt/stack.yaml").
 		WithError().
 		TestParser(t, parseStackYaml)
 }

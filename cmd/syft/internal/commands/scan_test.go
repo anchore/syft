@@ -19,30 +19,30 @@ func Test_scanOptions_validateLegacyOptionsNotUsed(t *testing.T) {
 		},
 		{
 			name: "config file with no legacy options",
-			cfg:  "test-fixtures/scan-configs/no-legacy-options.yaml",
+			cfg:  "testdata/scan-configs/no-legacy-options.yaml",
 		},
 		{
 			name:    "config file with default image pull source legacy option",
-			cfg:     "test-fixtures/scan-configs/with-default-pull-source.yaml",
+			cfg:     "testdata/scan-configs/with-default-pull-source.yaml",
 			wantErr: assertErrorContains("source.image.default-pull-source"),
 		},
 		{
 			name:    "config file with exclude-binary-overlap-by-ownership legacy option",
-			cfg:     "test-fixtures/scan-configs/with-exclude-binary-overlap-by-ownership.yaml",
+			cfg:     "testdata/scan-configs/with-exclude-binary-overlap-by-ownership.yaml",
 			wantErr: assertErrorContains("package.exclude-binary-overlap-by-ownership"),
 		},
 		{
 			name:    "config file with file string legacy option",
-			cfg:     "test-fixtures/scan-configs/with-file-string.yaml",
+			cfg:     "testdata/scan-configs/with-file-string.yaml",
 			wantErr: assertErrorContains("outputs"),
 		},
 		{
 			name: "config file with file section",
-			cfg:  "test-fixtures/scan-configs/with-file-section.yaml",
+			cfg:  "testdata/scan-configs/with-file-section.yaml",
 		},
 		{
 			name:    "config file with base-path legacy option",
-			cfg:     "test-fixtures/scan-configs/with-base-path.yaml",
+			cfg:     "testdata/scan-configs/with-base-path.yaml",
 			wantErr: assertErrorContains("source.base-path"),
 		},
 	}

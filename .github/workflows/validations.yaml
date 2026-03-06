@@ -58,6 +58,9 @@ jobs:
       - name: Run unit tests
         run: make unit
 
+      - name: Check for capability drift
+        run: make check-capability-drift
+
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"

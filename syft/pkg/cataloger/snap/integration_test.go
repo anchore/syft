@@ -14,7 +14,7 @@ import (
 )
 
 func TestRealDpkgYamlParsing(t *testing.T) {
-	fixture := "test-fixtures/real-dpkg.yaml"
+	fixture := "testdata/real-dpkg.yaml"
 
 	// Open the file
 	f, err := os.Open(fixture)

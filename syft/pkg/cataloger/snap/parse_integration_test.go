@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseSystemManifest(t *testing.T) {
-	fixture := "test-fixtures/manifest.yaml"
+	fixture := "testdata/manifest.yaml"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expected := []pkg.Package{

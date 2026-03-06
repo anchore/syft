@@ -14,7 +14,7 @@ func TestCatalogerRebar_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain rebar.lock files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/rebar.lock",
 			},
@@ -39,7 +39,7 @@ func TestCatalogerOTP_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain OTP resource files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/rabbitmq.app",
 			},

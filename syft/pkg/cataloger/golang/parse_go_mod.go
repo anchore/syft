@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -109,6 +110,9 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
 		Dir:   modDir,
 		Tests: true,
+		// disable workspace mode so that we only use the go.mod in the target directory,
+		// not any parent go.work file that may exist
+		Env: append(os.Environ(), "GOWORK=off"),
 	}
 
 	// From Go documentation: "all" expands to all packages in the main module

@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseBaseDpkgYaml(t *testing.T) {
-	fixture := "test-fixtures/dpkg.yaml"
+	fixture := "testdata/dpkg.yaml"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expected := []pkg.Package{

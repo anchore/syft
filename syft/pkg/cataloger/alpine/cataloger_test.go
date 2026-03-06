@@ -184,7 +184,7 @@ func TestApkDBCataloger(t *testing.T) {
 	}
 
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/multiple-1").
+		FromDirectory(t, "testdata/multiple-1").
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.ApkDBEntry{}, "Files", "GitCommit", "Checksum")).
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewDBCataloger())
@@ -193,7 +193,7 @@ func TestApkDBCataloger(t *testing.T) {
 
 func Test_corruptDb(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/corrupt").
+		FromDirectory(t, "testdata/corrupt").
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.ApkDBEntry{}, "Files", "GitCommit", "Checksum")).
 		WithError().
 		TestCataloger(t, NewDBCataloger())
@@ -239,7 +239,7 @@ func TestCatalogerDependencyTree(t *testing.T) {
 	}
 
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/multiple-2").
+		FromDirectory(t, "testdata/multiple-2").
 		ExpectsAssertion(assertion).
 		TestCataloger(t, NewDBCataloger())
 
@@ -253,7 +253,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:     "obtain DB files",
-			fixture:  "test-fixtures/glob-paths",
+			fixture:  "testdata/glob-paths",
 			expected: []string{"lib/apk/db/installed"},
 		},
 	}

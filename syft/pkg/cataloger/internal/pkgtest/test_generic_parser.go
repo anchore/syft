@@ -240,12 +240,14 @@ func (p *CatalogTester) WithPackageStringer(fn func(pkg.Package) string) *Catalo
 
 func (p *CatalogTester) ExpectsPackageStrings(expected []string) *CatalogTester {
 	return p.ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+		t.Helper()
 		diffPackages(t, expected, pkgs, p.packageStringer)
 	})
 }
 
 func (p *CatalogTester) ExpectsRelationshipStrings(expected []string) *CatalogTester {
 	return p.ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+		t.Helper()
 		diffRelationships(t, expected, relationships, pkgs, p.packageStringer)
 	})
 }

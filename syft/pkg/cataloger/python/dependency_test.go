@@ -221,7 +221,7 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 	}{
 		{
 			name:    "case-insensitive dependency resolution",
-			fixture: "test-fixtures/poetry/case-sensitivity/poetry.lock",
+			fixture: "testdata/poetry/case-sensitivity/poetry.lock",
 			want: []dependency.Specification{
 				// packages are in the order they appear in the lock file
 				{
@@ -253,7 +253,7 @@ func Test_poetryLockDependencySpecifier_againstPoetryLock(t *testing.T) {
 		},
 		{
 			name:    "simple dependencies with extras",
-			fixture: "test-fixtures/poetry/simple-deps/poetry.lock",
+			fixture: "testdata/poetry/simple-deps/poetry.lock",
 			want: []dependency.Specification{
 				{
 					ProvidesRequires: dependency.ProvidesRequires{

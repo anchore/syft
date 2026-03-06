@@ -133,7 +133,7 @@ func Test_Mod_Cataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain go.mod files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/go.mod",
 			},
@@ -159,7 +159,7 @@ func Test_Binary_Cataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain binary files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"partial-binary",
 			},

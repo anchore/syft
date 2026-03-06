@@ -35,7 +35,7 @@ func TestParseNativeImage(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			f, err := os.Open("test-fixtures/java-builds/packages/" + test.fixture)
+			f, err := os.Open("testdata/java-builds/packages/" + test.fixture)
 			require.NoError(t, err)
 			readerCloser := io.NopCloser(f)
 			reader, err := unionreader.GetUnionReader(readerCloser)
@@ -140,7 +140,7 @@ func TestParseNativeImageSbom(t *testing.T) {
 		expectedRelations []artifact.Relationship
 	}{
 		{
-			fixture:          "test-fixtures/graalvm-sbom/micronaut.json",
+			fixture:          "testdata/graalvm-sbom/micronaut.json",
 			expectedPackages: []pkg.Package{nettyPkg, micronautPkg, basicPkg, mainAppPkg},
 			expectedRelations: []artifact.Relationship{
 				{

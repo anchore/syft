@@ -29,7 +29,7 @@ func gzipContent(t *testing.T, content string) []byte {
 func locationReadCloser(t *testing.T, data []byte) file.LocationReadCloser {
 	t.Helper()
 	return file.LocationReadCloser{
-		Location:   file.NewLocation("test-fixtures/changelog.Debian.gz"),
+		Location:   file.NewLocation("testdata/changelog.Debian.gz"),
 		ReadCloser: io.NopCloser(bytes.NewReader(data)),
 	}
 }
@@ -106,7 +106,7 @@ func TestExtractKernelVersion(t *testing.T) {
 }
 
 func TestCreateMainKernelPackage(t *testing.T) {
-	location := file.NewLocation("test-fixtures/changelog.Debian.gz")
+	location := file.NewLocation("testdata/changelog.Debian.gz")
 	versionInfo := &kernelVersionInfo{
 		baseVersion:    "5.4.0-195",
 		releaseVersion: "215",
@@ -131,7 +131,7 @@ func TestCreateMainKernelPackage(t *testing.T) {
 }
 
 func TestParseBaseKernelLine(t *testing.T) {
-	location := file.NewLocation("test-fixtures/changelog.Debian.gz")
+	location := file.NewLocation("testdata/changelog.Debian.gz")
 	snapMetadata := pkg.SnapEntry{
 		SnapType: pkg.SnapTypeKernel,
 	}

@@ -13,10 +13,10 @@ import (
 )
 
 func TestParseOpamPackage(t *testing.T) {
-	fixture1 := "test-fixtures/ocaml-base-compiler.4.14.0/opam"
+	fixture1 := "testdata/ocaml-base-compiler.4.14.0/opam"
 	location1 := file.NewLocation(fixture1)
 
-	fixture2 := "test-fixtures/alcotest.opam"
+	fixture2 := "testdata/alcotest.opam"
 	location2 := file.NewLocation(fixture2)
 	ctx := context.TODO()
 	tests := []struct {

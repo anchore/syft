@@ -11,7 +11,7 @@ import (
 
 func TestParseStackLock(t *testing.T) {
 	url := "https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/14.yaml"
-	fixture := "test-fixtures/stack.yaml.lock"
+	fixture := "testdata/stack.yaml.lock"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
@@ -133,7 +133,7 @@ func TestParseStackLock(t *testing.T) {
 
 func Test_corruptStackLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/stack.yaml.lock").
+		FromFile(t, "testdata/corrupt/stack.yaml.lock").
 		WithError().
 		TestParser(t, parseStackLock)
 }
