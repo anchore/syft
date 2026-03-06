@@ -1,1 +1,1 @@
-See the syft/cataloger/java/test-fixtures/java-builds dir to generate test fixtures and copy to here manually.
+See the syft/cataloger/java/testdata/java-builds dir to generate test fixtures and copy to here manually.

@@ -1,7 +1,7 @@
 ## Summary
 This image illustrates a few examples of how ELF executables can be assembled and illustrated in an SBOM.
 
-### Example 1: elf-test-fixtures/elfbinwithsisterlib
+### Example 1: elf-testdata/elfbinwithsisterlib
 This example builds two binaries with srcs found in elfsrc1 and elfsrc2.
 
 
