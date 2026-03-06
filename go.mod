@@ -37,10 +37,10 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
-	github.com/github/go-spdx/v2 v2.3.6
+	github.com/github/go-spdx/v2 v2.4.0
 	github.com/gkampitakis/go-snaps v0.5.20
-	github.com/go-git/go-billy/v5 v5.7.0
-	github.com/go-git/go-git/v5 v5.16.5
+	github.com/go-git/go-billy/v5 v5.8.0
+	github.com/go-git/go-git/v5 v5.17.0
 	github.com/go-test/deep v1.1.1
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/gohugoio/hashstructure v0.6.0
@@ -88,8 +88,8 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/mod v0.33.0
-	golang.org/x/net v0.50.0
-	modernc.org/sqlite v1.45.0
+	golang.org/x/net v0.51.0
+	modernc.org/sqlite v1.46.1
 )
 
 require (
