@@ -509,7 +509,7 @@ func decompressLZMA(compressedData []byte, uncompressedSize uint32) ([]byte, err
 
 	// construct standard 13-byte LZMA header
 	header := make([]byte, 13)
-	header[0] = props //nolint:gosec
+	header[0] = props
 	binary.LittleEndian.PutUint32(header[1:5], dictSize)
 	binary.LittleEndian.PutUint64(header[5:13], uint64(uncompressedSize))
 

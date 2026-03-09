@@ -44,7 +44,8 @@ func sbomReader() io.Reader {
 		reader = strings.NewReader(sbomContents)
 	} else {
 		var err error
-		reader, err = os.Open(os.Args[1])
+		// suppress gosec error: reads from local file system by design
+		reader, err = os.Open(os.Args[1]) //nolint:gosec
 		if err != nil {
 			panic(err)
 		}
