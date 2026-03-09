@@ -219,7 +219,7 @@ func (l attestLogFrame) View() string {
 	sb := strings.Builder{}
 
 	for _, line := range l.lines {
-		sb.WriteString(fmt.Sprintf("     %s %s\n", l.borderStype.Render("░░"), line))
+		fmt.Fprintf(&sb, "     %s %s\n", l.borderStype.Render("░░"), line)
 	}
 
 	return sb.String()
