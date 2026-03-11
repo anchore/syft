@@ -1,10 +1,9 @@
 # syntax=docker/dockerfile:1
 
 ARG OSXCROSS_VERSION=13.1
-ARG BUILDPLATFORM=linux/amd64
-FROM --platform=$BUILDPLATFORM crazymax/osxcross:${OSXCROSS_VERSION}-ubuntu AS osxcross
+FROM --platform=linux/amd64 crazymax/osxcross:${OSXCROSS_VERSION}-ubuntu AS osxcross
 
-FROM --platform=$BUILDPLATFORM ubuntu:22.04
+FROM --platform=linux/amd64 ubuntu:22.04
 
 RUN apt update -y && apt install -y \
     curl wget \

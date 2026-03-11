@@ -127,23 +127,83 @@ func pullDockerImage(imageReference, platform string) error {
 }
 
 func checkArchitecturesMatch(imageReference, platform string) (bool, string, error) {
+	// first check if the image exists locally
 	cmd := exec.Command("docker", "image", "inspect", imageReference)
-	out, err := cmd.CombinedOutput()
+	if err := cmd.Run(); err != nil {
+		return false, "", err
+	}
+
+	// prefer the manifest list for platform info — with Docker's containerd image store,
+	// platform metadata lives on the manifest list entry, not in the image config.
+	if found, err := platformInManifest(imageReference, platform); err == nil {
+		return found, platform, nil
+	}
+
+	// fall back to image config for older Docker daemons that don't support "docker manifest inspect"
+	gotPlatform, err := platformFromImageInspect(imageReference)
 	if err != nil {
 		return false, "", err
 	}
 
+	return gotPlatform == platform, gotPlatform, nil
+}
+
+func platformFromImageInspect(imageReference string) (string, error) {
+	cmd := exec.Command("docker", "image", "inspect", imageReference)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
 	var inspect []imageInspect
 	if err := json.Unmarshal(out, &inspect); err != nil {
-		return false, "", fmt.Errorf("unable to unmarshal image inspect: %w", err)
+		return "", fmt.Errorf("unable to unmarshal image inspect: %w", err)
 	}
 
 	if len(inspect) != 1 {
-		return false, "", fmt.Errorf("expected 1 image inspect, got %d", len(inspect))
+		return "", fmt.Errorf("expected 1 image inspect, got %d", len(inspect))
 	}
-	gotPlatform := inspect[0].Platform()
 
-	return gotPlatform == platform, gotPlatform, nil
+	return inspect[0].Platform(), nil
+}
+
+type manifestList struct {
+	Manifests []manifestEntry `json:"manifests"`
+}
+
+type manifestEntry struct {
+	Platform manifestPlatform `json:"platform"`
+}
+
+type manifestPlatform struct {
+	Architecture string `json:"architecture"`
+	OS           string `json:"os"`
+}
+
+// platformInManifest checks whether the wanted platform is available in the image's manifest list.
+// With Docker's containerd image store, all images are distributed via manifest lists (indexes),
+// and platform metadata may only be on the index entry — not in the image config that
+// "docker image inspect" reads. "docker manifest inspect" reads the index directly.
+func platformInManifest(imageReference, wantPlatform string) (bool, error) {
+	cmd := exec.Command("docker", "manifest", "inspect", imageReference)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("manifest inspect failed: %w", err)
+	}
+
+	var ml manifestList
+	if err := json.Unmarshal(out, &ml); err != nil {
+		return false, fmt.Errorf("unable to unmarshal manifest: %w", err)
+	}
+
+	for _, m := range ml.Manifests {
+		p := fmt.Sprintf("%s/%s", m.Platform.OS, m.Platform.Architecture)
+		if p == wantPlatform {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func copyBinariesFromDockerImages(config config.BinaryFromImage, destination string) (err error) {
