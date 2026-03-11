@@ -102,6 +102,10 @@ func TestValidateSourcePlatform_SupportedMetadataTypes(t *testing.T) {
 			metadata: source.SnapMetadata{},
 		},
 		{
+			name:     "appimage",
+			metadata: source.AppImageMetadata{},
+		},
+		{
 			name:     "dir",
 			metadata: source.DirectoryMetadata{},
 			wantErr:  require.Error,

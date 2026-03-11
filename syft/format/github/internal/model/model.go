@@ -142,6 +142,11 @@ func toPath(s source.Description, p pkg.Package) string {
 				return fmt.Sprintf("%s:/%s", inputPath, packagePath)
 			}
 			return packagePath
+		case source.AppImageMetadata:
+			if inputPath != "" {
+				return fmt.Sprintf("%s:/%s", inputPath, packagePath)
+			}
+			return packagePath
 		}
 	}
 	return inputPath

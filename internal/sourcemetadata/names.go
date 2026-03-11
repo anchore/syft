@@ -13,6 +13,7 @@ var jsonNameFromType = map[reflect.Type][]string{
 	reflect.TypeOf(source.ImageMetadata{}):     {"image"},
 	reflect.TypeOf(source.SnapMetadata{}):      {"snap"},
 	reflect.TypeOf(source.OCIModelMetadata{}):  {"oci-model"},
+	reflect.TypeOf(source.AppImageMetadata{}):  {"appimage"},
 }
 
 func AllTypeNames() []string {

@@ -317,6 +317,78 @@ func Test_toFormatModel(t *testing.T) {
 			},
 		},
 		{
+			name: "appimage",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:    "MyApp",
+					Version: "1.0.0",
+					Metadata: source.AppImageMetadata{
+						Name:        "MyApp",
+						Version:     "1.0.0",
+						DesktopPath: "/MyApp.desktop",
+						Digests: []file.Digest{
+							{
+								Algorithm: "sha256",
+								Value:     "d34db33f",
+							},
+						},
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "MyApp",
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-AppImage-MyApp",
+						PackageName:           "MyApp",
+						PackageVersion:        "1.0.0",
+						PrimaryPackagePurpose: "CONTAINER",
+						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+						PackageSupplier: &spdx.Supplier{
+							Supplier: "NOASSERTION",
+						},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-AppImage-MyApp",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-AppImage-MyApp",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
+		{
 			name: "oci-model",
 			in: sbom.SBOM{
 				Source: source.Description{
