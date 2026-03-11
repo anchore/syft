@@ -22,7 +22,7 @@ tools-check:
 # docker buildx build --platform linux/amd64 -t $(TOOL_IMAGE) .
 
 tools:
-	@(docker inspect $(TOOL_IMAGE) > /dev/null && make tools-check) || (docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
+	@(docker image inspect $(TOOL_IMAGE) > /dev/null 2>&1 && make tools-check) || (docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
 
 build: tools
 	mkdir -p $(BIN)
@@ -31,7 +31,7 @@ build: tools
 verify: tools
 	@rm -f $(VERIFY_FILE)
 	docker run -i -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) make verify > $(VERIFY_FILE)
-	@python ./differ expected_verify $(VERIFY_FILE)
+	@python3 ./differ expected_verify $(VERIFY_FILE)
 
 debug:
 	docker run -i --rm -v $(shell pwd):/mount -w /mount/project $(TOOL_IMAGE) bash

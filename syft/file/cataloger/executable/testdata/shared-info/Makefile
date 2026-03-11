@@ -19,7 +19,7 @@ tools-check:
 	@sha256sum -c Dockerfile.sha256 || (echo "Tools Dockerfile has changed" && exit 1)
 
 tools:
-	@(docker inspect $(TOOL_IMAGE) > /dev/null && make tools-check) || (docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
+	@(docker image inspect $(TOOL_IMAGE) > /dev/null 2>&1 && make tools-check) || (docker build --platform linux/amd64 -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
 
 build: tools
 	@mkdir -p $(BIN)
