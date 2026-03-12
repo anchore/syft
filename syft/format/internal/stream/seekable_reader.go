@@ -20,7 +20,7 @@ func SeekableReader(reader io.Reader) (io.ReadSeeker, error) {
 		return getOffsetReadSeeker(r)
 	}
 
-	content, err := io.ReadAll(reader)
+	content, err := io.ReadAll(reader) //nolint:gocritic // buffering non-seekable to seekable reader
 	if err != nil {
 		return nil, err
 	}

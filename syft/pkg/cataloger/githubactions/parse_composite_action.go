@@ -3,7 +3,6 @@ package githubactions
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"go.yaml.in/yaml/v3"
 
@@ -25,13 +24,9 @@ type compositeActionRunsDef struct {
 }
 
 func parseCompositeActionForActionUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contents, errs := io.ReadAll(reader)
-	if errs != nil {
-		return nil, nil, fmt.Errorf("unable to read yaml composite action file: %w", errs)
-	}
-
 	var ca compositeActionDef
-	if errs = yaml.Unmarshal(contents, &ca); errs != nil {
+	var errs error
+	if errs = yaml.NewDecoder(reader).Decode(&ca); errs != nil {
 		return nil, nil, fmt.Errorf("unable to parse yaml composite action file: %w", errs)
 	}
 

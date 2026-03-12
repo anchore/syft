@@ -2,7 +2,6 @@ package java
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -30,7 +29,7 @@ import (
 
 func TestSearchMavenForLicenses(t *testing.T) {
 	url := maventest.MockRepo(t, "internal/maven/testdata/maven-repo")
-	ctx := pkgtest.Context()
+	ctx := pkgtest.Context(t)
 
 	tests := []struct {
 		name             string
@@ -72,7 +71,7 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			require.NoError(t, err)
 
 			// setup parser
-			ap, cleanupFn, err := newJavaArchiveParser(context.Background(),
+			ap, cleanupFn, err := newJavaArchiveParser(pkgtest.Context(t),
 				file.LocationReadCloser{
 					Location:   file.NewLocation(fixture.Name()),
 					ReadCloser: fixture,
@@ -81,17 +80,17 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			require.NoError(t, err)
 
 			// assert licenses are discovered from upstream
-			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(context.Background())
+			_, _, _, parsedPom := ap.discoverMainPackageFromPomInfo(pkgtest.Context(t))
 			require.NotNil(t, parsedPom, "expected to find pom information in the fixture")
 			require.NotNil(t, parsedPom.project, "expected parsedPom to have a project")
-			resolvedLicenses, _ := ap.maven.ResolveLicenses(context.Background(), parsedPom.project)
+			resolvedLicenses, _ := ap.maven.ResolveLicenses(pkgtest.Context(t), parsedPom.project)
 			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(ctx, nil, resolvedLicenses))
 		})
 	}
 }
 
 func TestParseJar(t *testing.T) {
-	ctx := pkgtest.Context()
+	ctx := pkgtest.Context(t)
 	tests := []struct {
 		name         string
 		fixture      string
@@ -372,7 +371,7 @@ func TestParseJar(t *testing.T) {
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
 			}
-			parser, cleanupFn, err := newJavaArchiveParser(context.Background(),
+			parser, cleanupFn, err := newJavaArchiveParser(pkgtest.Context(t),
 				file.LocationReadCloser{
 					Location:   file.NewLocation(fixture.Name()),
 					ReadCloser: fixture,
@@ -662,7 +661,7 @@ func TestParseNestedJar(t *testing.T) {
 			require.NoError(t, err)
 			gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
 
-			actual, _, err := gap.processJavaArchive(context.Background(), file.LocationReadCloser{
+			actual, _, err := gap.processJavaArchive(pkgtest.Context(t), file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
 			}, nil)
@@ -1080,7 +1079,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			test.expectedParent.Locations = locations
 
 			r := maven.NewResolver(nil, maven.DefaultConfig())
-			actualPackage := newPackageFromMavenData(context.Background(), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(pkgtest.Context(t), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {
@@ -1120,7 +1119,7 @@ func Test_artifactIDMatchesFilename(t *testing.T) {
 }
 
 func Test_parseJavaArchive_regressions(t *testing.T) {
-	ctx := context.TODO()
+	ctx := pkgtest.Context(t)
 	apiAll := pkg.Package{
 		Name:      "api-all",
 		Version:   "2.0.0",
@@ -1499,7 +1498,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					fixture, err := os.Open(fixturePath)
 					require.NoError(t, err)
 
-					parser, cleanupFn, err := newJavaArchiveParser(context.Background(),
+					parser, cleanupFn, err := newJavaArchiveParser(pkgtest.Context(t),
 						file.LocationReadCloser{
 							Location:   file.NewLocation(fixture.Name()),
 							ReadCloser: fixture,
@@ -1507,7 +1506,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 					defer cleanupFn()
 					require.NoError(t, err)
 
-					groupID, artifactID, version, _ := parser.discoverMainPackageFromPomInfo(context.TODO())
+					groupID, artifactID, version, _ := parser.discoverMainPackageFromPomInfo(pkgtest.Context(t))
 					require.Equal(t, test.expected, maven.NewID(groupID, artifactID, version))
 				}()
 			}
@@ -1634,9 +1633,9 @@ func Test_jarPomPropertyResolutionDoesNotPanic(t *testing.T) {
 	fixture, err := os.Open(jarName)
 	require.NoError(t, err)
 
-	ctx := context.TODO()
+	ctx := pkgtest.Context(t)
 	// setup parser
-	ap, cleanupFn, err := newJavaArchiveParser(context.Background(),
+	ap, cleanupFn, err := newJavaArchiveParser(pkgtest.Context(t),
 		file.LocationReadCloser{
 			Location:   file.NewLocation(fixture.Name()),
 			ReadCloser: fixture,

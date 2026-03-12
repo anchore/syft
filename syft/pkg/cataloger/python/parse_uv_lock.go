@@ -143,7 +143,7 @@ func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.Location
 	var parsedLockFileVersion uvLockFileVersion
 
 	// we cannot use the reader twice, so we read the contents first --uv.lock files tend to be small enough
-	contents, err := io.ReadAll(reader)
+	contents, err := io.ReadAll(reader) //nolint:gocritic // multi-pass parse requires []byte
 	if err != nil {
 		return nil, unknown.New(reader.Location, fmt.Errorf("failed to read uv lock file: %w", err))
 	}

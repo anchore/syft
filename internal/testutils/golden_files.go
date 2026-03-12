@@ -31,7 +31,7 @@ func UpdateGoldenFileContents(t *testing.T, contents []byte) {
 
 	t.Log(dangerText("!!! UPDATING GOLDEN FILE !!!"), goldenFilePath)
 
-	err := os.WriteFile(goldenFilePath, contents, 0600)
+	err := os.WriteFile(goldenFilePath, contents, 0o600)
 	if err != nil {
 		t.Fatalf("could not update golden file (%s): %+v", goldenFilePath, err)
 	}
@@ -50,7 +50,9 @@ func GetGoldenFileContents(t *testing.T) []byte {
 	}
 	defer f.Close()
 
-	bytes, err := io.ReadAll(f)
+	// suppress lint prohibiting ReadAll since golden files are source files in Syft's repository
+	// and not user provided artifacts.
+	bytes, err := io.ReadAll(f) //nolint:gocritic // golden files are trusted source files, not user artifacts
 	if err != nil {
 		t.Fatalf("could not read file (%s): %+v", goldenPath, err)
 	}

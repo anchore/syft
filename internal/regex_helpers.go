@@ -101,17 +101,21 @@ func processReaderInChunks(rdr io.Reader, chunkSize int, handler func(data []byt
 			copy(buf[start:], buf[half+offset:half+lastRead])
 		}
 		n, err := rdr.Read(buf[half:])
-		if err != nil {
-			break
+
+		// process any data returned before checking the error, since
+		// io.Reader is allowed to return n > 0 alongside io.EOF
+		if n > 0 {
+			matched, handlerErr := handler(buf[start : half+n])
+			if handlerErr != nil {
+				return false, handlerErr
+			}
+			if matched {
+				return true, nil
+			}
 		}
 
-		// process the combined data with the handler
-		matched, handlerErr := handler(buf[start : half+n])
-		if handlerErr != nil {
-			return false, handlerErr
-		}
-		if matched {
-			return true, nil
+		if err != nil {
+			break
 		}
 
 		lastRead = n

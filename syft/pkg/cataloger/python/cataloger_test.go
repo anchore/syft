@@ -473,7 +473,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, _, err := NewInstalledPackageCataloger().Catalog(pkgtest.Context(), resolver)
+			actual, _, err := NewInstalledPackageCataloger().Catalog(pkgtest.Context(t), resolver)
 			require.NoError(t, err)
 
 			if len(actual) != 0 {

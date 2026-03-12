@@ -411,7 +411,7 @@ func (b *licenseBuilder) licenseFromContentHash(content string) License {
 }
 
 func contentFromReader(r io.Reader) (string, error) {
-	bytes, err := io.ReadAll(r)
+	bytes, err := io.ReadAll(r) //nolint:gocritic // reading license content for storage
 	if err != nil {
 		return "", err
 	}

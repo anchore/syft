@@ -1,7 +1,7 @@
 package linux
 
 import (
-	"io"
+	"bufio"
 	"regexp"
 	"strings"
 
@@ -38,12 +38,14 @@ func readDebianVersionFile(resolver file.Resolver, location file.Location) strin
 		return ""
 	}
 	defer internal.CloseAndLogError(rdr, location.RealPath)
-	contents, err := io.ReadAll(rdr)
-	if err != nil {
-		log.Debugf("error reading %s: %v", location.RealPath, err)
+	scanner := bufio.NewScanner(rdr)
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			log.Debugf("error reading %s: %v", location.RealPath, err)
+		}
 		return ""
 	}
-	version := strings.TrimSpace(string(contents))
+	version := strings.TrimSpace(scanner.Text())
 	if regexp.MustCompile(`^\d+(?:\.\d+)?$`).MatchString(version) {
 		return version
 	}

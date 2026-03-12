@@ -24,7 +24,7 @@ import (
 )
 
 func Test_LicenseSearch(t *testing.T) {
-	ctx := pkgtest.Context()
+	ctx := pkgtest.Context(t)
 
 	loc1 := file.NewLocation("github.com/someorg/somename@v0.3.2/LICENSE")
 	loc2 := file.NewLocation("github.com/!cap!o!r!g/!cap!project@v4.111.5/LICENSE.txt")
@@ -321,7 +321,7 @@ func Test_noLocalGoModDir(t *testing.T) {
 
 	validTmp := t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(validTmp, "mod@ver"), 0700|os.ModeDir))
-	ctx := pkgtest.Context()
+	ctx := pkgtest.Context(t)
 	tests := []struct {
 		name    string
 		dir     string
