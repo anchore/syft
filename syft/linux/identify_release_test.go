@@ -1,8 +1,8 @@
 package linux
 
 import (
-	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -471,8 +471,8 @@ func TestParseOsRelease(t *testing.T) {
 		t.Run(test.fixture,
 			func(t *testing.T) {
 				release,
-					err := parseOsRelease(retrieveFixtureContentsAsString(test.fixture,
-					t))
+					err := parseOsRelease(strings.NewReader(retrieveFixtureContentsAsString(test.fixture,
+					t)))
 				require.NoError(t,
 					err)
 				assert.Equal(t,
@@ -508,8 +508,7 @@ func TestParseSystemReleaseCPE(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			contents := retrieveFixtureContentsAsString(test.fixture, t)
-			release, err := parseSystemReleaseCPE(contents)
+			release, err := parseSystemReleaseCPE(strings.NewReader(retrieveFixtureContentsAsString(test.fixture, t)))
 			require.NoError(t, err)
 			if test.release == nil {
 				assert.Nil(t, release)
@@ -548,7 +547,7 @@ func TestParseRedhatRelease(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			release, err := parseRedhatRelease(retrieveFixtureContentsAsString(test.fixture, t))
+			release, err := parseRedhatRelease(strings.NewReader(retrieveFixtureContentsAsString(test.fixture, t)))
 			require.NoError(t, err)
 			if test.release == nil {
 				assert.Nil(t, release)
@@ -560,17 +559,50 @@ func TestParseRedhatRelease(t *testing.T) {
 	}
 }
 
+func TestParseOsReleaseLine(t *testing.T) {
+	tests := []struct {
+		name      string
+		line      string
+		wantKey   string
+		wantValue string
+		wantOK    bool
+	}{
+		{name: "simple unquoted", line: `ID=ubuntu`, wantKey: "ID", wantValue: "ubuntu", wantOK: true},
+		{name: "double quoted", line: `NAME="Ubuntu"`, wantKey: "NAME", wantValue: "Ubuntu", wantOK: true},
+		{name: "single quoted", line: `NAME='Ubuntu'`, wantKey: "NAME", wantValue: "Ubuntu", wantOK: true},
+		{name: "empty value", line: `BUG_REPORT_URL=`, wantKey: "BUG_REPORT_URL", wantValue: "", wantOK: true},
+		{name: "empty double quoted", line: `BUG_REPORT_URL=""`, wantKey: "BUG_REPORT_URL", wantValue: "", wantOK: true},
+		{name: "value with equals", line: `PRETTY_NAME="foo=bar"`, wantKey: "PRETTY_NAME", wantValue: "foo=bar", wantOK: true},
+		{name: "escaped double quote", line: `NAME="foo\"bar"`, wantKey: "NAME", wantValue: `foo"bar`, wantOK: true},
+		{name: "escaped backslash", line: `NAME="foo\\bar"`, wantKey: "NAME", wantValue: `foo\bar`, wantOK: true},
+		{name: "escaped dollar", line: `NAME="foo\$bar"`, wantKey: "NAME", wantValue: "foo$bar", wantOK: true},
+		{name: "escaped backtick", line: "NAME=\"foo\\`bar\"", wantKey: "NAME", wantValue: "foo`bar", wantOK: true},
+		{name: "single quoted backslash - escapes still applied for backward compat", line: `NAME='foo\"bar'`, wantKey: "NAME", wantValue: `foo"bar`, wantOK: true},
+		{name: "single quoted dollar - escapes still applied for backward compat", line: `NAME='foo\$bar'`, wantKey: "NAME", wantValue: `foo$bar`, wantOK: true},
+		{name: "unquoted with escaped quote - backward compat", line: `NAME=foo\"bar`, wantKey: "NAME", wantValue: `foo"bar`, wantOK: true},
+		{name: "escaped backslash before quote", line: `NAME="foo\\"`, wantKey: "NAME", wantValue: `foo\`, wantOK: true},
+		{name: "escaped backslash then escaped quote", line: `NAME="foo\\\"bar"`, wantKey: "NAME", wantValue: `foo\"bar`, wantOK: true},
+		{name: "no equals sign", line: "just some text", wantKey: "", wantValue: "", wantOK: false},
+		{name: "whitespace around key and value", line: ` ID = ubuntu `, wantKey: "ID", wantValue: "ubuntu", wantOK: true},
+		{name: "spaces in quoted value", line: `PRETTY_NAME="Ubuntu 20.04 LTS"`, wantKey: "PRETTY_NAME", wantValue: "Ubuntu 20.04 LTS", wantOK: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key, value, ok := parseOsReleaseLine(tt.line)
+			assert.Equal(t, tt.wantOK, ok)
+			if ok {
+				assert.Equal(t, tt.wantKey, key)
+				assert.Equal(t, tt.wantValue, value)
+			}
+		})
+	}
+}
+
 func retrieveFixtureContentsAsString(fixturePath string, t *testing.T) string {
-	fixture, err := os.Open(fixturePath)
+	b, err := os.ReadFile(fixturePath)
 	if err != nil {
-		t.Fatalf("could not open test fixture=%s: %+v", fixturePath, err)
+		t.Fatalf("could not read test fixture=%s: %+v", fixturePath, err)
 	}
-	defer fixture.Close()
-
-	b, err := io.ReadAll(fixture)
-	if err != nil {
-		t.Fatalf("unable to read fixture file: %+v", err)
-	}
-
 	return string(b)
 }

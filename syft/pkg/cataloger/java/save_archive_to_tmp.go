@@ -6,21 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/tmpdir"
 )
 
-func saveArchiveToTmp(archiveVirtualPath string, reader io.Reader) (string, string, func(), error) {
+func saveArchiveToTmp(td *tmpdir.TempDir, archiveVirtualPath string, reader io.Reader) (string, string, func(), error) {
 	name := filepath.Base(archiveVirtualPath)
-	tempDir, err := os.MkdirTemp("", "syft-archive-contents-")
+	tempDir, cleanupFn, err := td.NewChild("archive-contents") //nolint:gocritic // cleanup is returned to caller, not deferred here
 	if err != nil {
 		return "", "", func() {}, fmt.Errorf("unable to create tempdir for archive processing: %w", err)
-	}
-
-	cleanupFn := func() {
-		err = os.RemoveAll(tempDir)
-		if err != nil {
-			log.Errorf("unable to cleanup archive tempdir: %+v", err)
-		}
 	}
 
 	archivePath := filepath.Join(tempDir, "archive-"+name)
@@ -37,6 +30,9 @@ func saveArchiveToTmp(archiveVirtualPath string, reader io.Reader) (string, stri
 	}
 	defer archiveFile.Close()
 
+	// note: no size limit here — the reader comes from a file already enumerated by the
+	// resolver, not from an untrusted network source. The file size is bounded by the
+	// source image/directory being scanned.
 	_, err = io.Copy(archiveFile, reader)
 	if err != nil {
 		return contentDir, archivePath, cleanupFn, fmt.Errorf("unable to copy archive: %w", err)

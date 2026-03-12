@@ -463,7 +463,7 @@ func (r *Resolver) cacheResolveReader(key string, resolve func() (io.ReadCloser,
 	defer internal.CloseAndLogError(contentReader, key)
 
 	// store the contents to return a new reader with the same content
-	contents, err := io.ReadAll(contentReader)
+	contents, err := io.ReadAll(contentReader) //nolint:gocritic // caching requires full buffer
 	if err != nil {
 		return nil, err
 	}
