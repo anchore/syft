@@ -1,11 +1,12 @@
 package linux
 
 import (
-	"bufio"
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
 
+	"github.com/acobaugh/osrelease"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/anchore/go-logger"
@@ -15,7 +16,7 @@ import (
 )
 
 // returns a distro or nil
-type parseFunc func(io.Reader) (*Release, error)
+type parseFunc func(string) (*Release, error)
 
 type parseEntry struct {
 	path string
@@ -91,7 +92,13 @@ func tryParseReleaseInfo(resolver file.Resolver, location file.Location, logger 
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
-	release, err := entry.fn(contentReader)
+	content, err := io.ReadAll(io.LimitReader(contentReader, 5*1024*1024))
+	if err != nil {
+		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
+		return nil
+	}
+
+	release, err := entry.fn(string(content))
 	if err != nil {
 		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to parse contents")
 		return nil
@@ -100,21 +107,10 @@ func tryParseReleaseInfo(resolver file.Resolver, location file.Location, logger 
 	return release
 }
 
-func parseOsRelease(r io.Reader) (*Release, error) {
-	values := make(map[string]string)
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) == 0 || line[0] == '#' {
-			continue
-		}
-		key, value, ok := parseOsReleaseLine(line)
-		if ok {
-			values[key] = value
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
+func parseOsRelease(contents string) (*Release, error) {
+	values, err := osrelease.ReadString(contents)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read os-release file: %w", err)
 	}
 
 	var idLike []string
@@ -126,7 +122,7 @@ func parseOsRelease(r io.Reader) (*Release, error) {
 		idLike = append(idLike, s)
 	}
 
-	rel := Release{
+	r := Release{
 		PrettyName:       values["PRETTY_NAME"],
 		Name:             values["NAME"],
 		ID:               values["ID"],
@@ -148,116 +144,72 @@ func parseOsRelease(r io.Reader) (*Release, error) {
 	}
 
 	// don't allow for empty contents to result in a Release object being created
-	if cmp.Equal(rel, Release{}) {
+	if cmp.Equal(r, Release{}) {
 		return nil, nil
 	}
 
-	return &rel, nil
+	return &r, nil
 }
 
-func parseOsReleaseLine(line string) (string, string, bool) {
-	parts := strings.SplitN(line, "=", 2)
-	if len(parts) != 2 {
-		return "", "", false
-	}
-	key := strings.TrimSpace(parts[0])
-	value := strings.TrimSpace(parts[1])
-	// unquote
-	if len(value) >= 2 {
-		first, last := value[0], value[len(value)-1]
-		if first == last && (first == '"' || first == '\'') {
-			value = value[1 : len(value)-1]
-		}
-	}
-	// NOTE: per POSIX shell quoting rules, only double-quoted values should have escape
-	// sequences interpreted, and single-quoted values should be literal. However, the
-	// previous library (acobaugh/osrelease) applied escape replacement unconditionally
-	// to all values regardless of quoting style. We preserve that behavior here for
-	// backward compatibility.
-	// replace \\ first so that e.g. \\" is not misinterpreted as \" + trailing char
-	value = strings.ReplaceAll(value, `\\`, "\x00")
-	value = strings.ReplaceAll(value, `\"`, `"`)
-	value = strings.ReplaceAll(value, `\$`, `$`)
-	value = strings.ReplaceAll(value, "\\`", "`")
-	value = strings.ReplaceAll(value, "\x00", `\`)
-	return key, value, true
-}
+var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v[\d.]+`)
 
-var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v(?P<version>[\d.]+)`)
+func parseBusyBox(contents string) (*Release, error) {
+	matches := busyboxVersionMatcher.FindAllString(contents, -1)
+	for _, match := range matches {
+		parts := strings.Split(match, " ")
+		version := strings.ReplaceAll(parts[1], "v", "")
 
-func parseBusyBox(r io.Reader) (*Release, error) {
-	results, err := internal.MatchNamedCaptureGroupsFromReader(busyboxVersionMatcher, r)
-	if err != nil {
-		return nil, err
+		return simpleRelease(match, "busybox", version, ""), nil
 	}
-	if results == nil {
-		return nil, nil
-	}
-	version := results["version"]
-	if version == "" {
-		return nil, nil
-	}
-	return simpleRelease("BusyBox v"+version, "busybox", version, ""), nil
+	return nil, nil
 }
 
 // example CPE: cpe:/o:centos:linux:6:GA
 var systemReleaseCpeMatcher = regexp.MustCompile(`cpe:\/o:(.*?):.*?:(.*?):.*?$`)
 
-// parseSystemReleaseCPE parses the older centos (6) file to determine distro metadata.
-// Returns the first matching CPE line found in the file.
-func parseSystemReleaseCPE(r io.Reader) (*Release, error) {
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
+// parseSystemReleaseCPE parses the older centos (6) file to determine distro metadata
+func parseSystemReleaseCPE(contents string) (*Release, error) {
+	matches := systemReleaseCpeMatcher.FindAllStringSubmatch(contents, -1)
+	for _, match := range matches {
+		if len(match) < 3 {
 			continue
 		}
-		match := systemReleaseCpeMatcher.FindStringSubmatch(line)
-		if len(match) >= 3 {
-			return simpleRelease(match[1], strings.ToLower(match[1]), match[2], match[0]), nil
-		}
+		return simpleRelease(match[1], strings.ToLower(match[1]), match[2], match[0]), nil
 	}
-	return nil, scanner.Err()
+	return nil, nil
 }
 
 // example: "CentOS release 6.10 (Final)"
 var redhatReleaseMatcher = regexp.MustCompile(`(?P<name>.*?)\srelease\s(?P<version>(?P<versionid>\d\.\d+).*)`)
 
-// parseRedhatRelease is a fallback parsing method for determining distro information in older redhat versions.
-// Returns the first matching release line found in the file.
-func parseRedhatRelease(r io.Reader) (*Release, error) {
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		matches := internal.MatchNamedCaptureGroups(redhatReleaseMatcher, line)
-		name := matches["name"]
-		version := matches["version"]
-		versionID := matches["versionid"]
-		if name == "" || versionID == "" {
-			continue
-		}
-
-		id := strings.ToLower(name)
-		switch {
-		case strings.HasPrefix(id, "red hat enterprise linux"):
-			id = "rhel"
-		case strings.HasPrefix(id, "centos"):
-			version = versionID
-		}
-
-		return &Release{
-			PrettyName: line,
-			Name:       name,
-			ID:         id,
-			IDLike:     []string{id},
-			Version:    version,
-			VersionID:  versionID,
-		}, nil
+// parseRedhatRelease is a fallback parsing method for determining distro information in older redhat versions
+func parseRedhatRelease(contents string) (*Release, error) {
+	contents = strings.TrimSpace(contents)
+	matches := internal.MatchNamedCaptureGroups(redhatReleaseMatcher, contents)
+	name := matches["name"]
+	version := matches["version"]
+	versionID := matches["versionid"]
+	if name == "" || versionID == "" {
+		return nil, nil
 	}
-	return nil, scanner.Err()
+
+	id := strings.ToLower(name)
+	switch {
+	case strings.HasPrefix(id, "red hat enterprise linux"):
+		id = "rhel"
+	case strings.HasPrefix(id, "centos"):
+		// ignore the parenthetical version information
+		version = versionID
+	}
+
+	return &Release{
+		PrettyName: contents,
+		Name:       name,
+		ID:         id,
+		IDLike:     []string{id},
+		Version:    version,
+		VersionID:  versionID,
+	}, nil
 }
 
 func simpleRelease(prettyName, name, version, cpe string) *Release {
