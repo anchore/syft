@@ -269,6 +269,7 @@ require (
 )
 
 require (
+	github.com/acobaugh/osrelease v0.1.0
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/gpustack/gguf-parser-go v0.24.0
