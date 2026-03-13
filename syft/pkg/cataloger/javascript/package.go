@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -257,19 +256,12 @@ func getLicenseFromNpmRegistry(baseURL, packageName, version string) (string, er
 		}
 	}()
 
-	bytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("unable to parse package from npm registry: %w", err)
-	}
-
-	dec := json.NewDecoder(strings.NewReader(string(bytes)))
-
 	// Read "license" from the response
 	var license struct {
 		License string `json:"license"`
 	}
 
-	if err := dec.Decode(&license); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&license); err != nil {
 		return "", fmt.Errorf("unable to parse license from npm registry: %w", err)
 	}
 
@@ -324,14 +316,8 @@ func parseLicensesFromLocation(l file.Location, resolver file.Resolver, pkgFile 
 	}
 	defer internal.CloseAndLogError(contentReader, l.RealPath)
 
-	contents, err := io.ReadAll(contentReader)
-	if err != nil {
-		log.Debugf("error reading file contents for %s: %v", pkgFile, err)
-		return nil, err
-	}
-
 	var pkgJSON packageJSON
-	err = json.Unmarshal(contents, &pkgJSON)
+	err = json.NewDecoder(contentReader).Decode(&pkgJSON)
 	if err != nil {
 		log.Debugf("error parsing %s: %v", pkgFile, err)
 		return nil, err

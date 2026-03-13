@@ -3,7 +3,6 @@ package swift
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -28,12 +27,8 @@ type podfileLock struct {
 
 // parsePodfileLock is a parser function for Podfile.lock contents, returning all cocoapods pods discovered.
 func parsePodfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	bytes, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to read file: %w", err)
-	}
 	var podfile podfileLock
-	if err = yaml.Unmarshal(bytes, &podfile); err != nil {
+	if err := yaml.NewDecoder(reader).Decode(&podfile); err != nil {
 		return nil, nil, fmt.Errorf("unable to parse yaml: %w", err)
 	}
 

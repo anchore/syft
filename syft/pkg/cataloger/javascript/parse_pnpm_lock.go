@@ -179,7 +179,7 @@ func newPnpmLockfileParser(version float64) pnpmLockfileParser {
 
 // parsePnpmLock is the main parser function for pnpm-lock.yaml files.
 func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // multi-pass parse requires []byte
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
 	}

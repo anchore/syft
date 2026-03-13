@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
@@ -62,7 +63,7 @@ type CatalogTester struct {
 	skipTestObservations           bool
 }
 
-func Context() context.Context {
+func initLicenseScanner() {
 	once.Do(func() {
 		// most of the time in testing is initializing the scanner. Let's do that just once
 		sc := &licenses.ScannerConfig{Scanner: licensecheck.Scan, CoverageThreshold: 75}
@@ -72,13 +73,20 @@ func Context() context.Context {
 		}
 		licenseScanner = &scanner
 	})
+}
 
-	return licenses.SetContextLicenseScanner(context.Background(), *licenseScanner)
+// Context returns a context with a shared license scanner and a TempDir backed by t.TempDir(),
+// so cleanup is handled automatically when the test finishes.
+func Context(t *testing.T) context.Context {
+	t.Helper()
+	initLicenseScanner()
+	td := tmpdir.FromPath(t.TempDir())
+	ctx := tmpdir.WithValue(context.Background(), td)
+	return licenses.SetContextLicenseScanner(ctx, *licenseScanner)
 }
 
 func NewCatalogTester() *CatalogTester {
 	return &CatalogTester{
-		context:          Context(),
 		locationComparer: cmptest.DefaultLocationComparer,
 		licenseComparer:  cmptest.DefaultLicenseComparer,
 		packageStringer:  stringPackage,
@@ -272,9 +280,18 @@ func (p *CatalogTester) WithoutTestObserver() *CatalogTester {
 	return p
 }
 
+func (p *CatalogTester) ensureContext(t *testing.T) context.Context {
+	t.Helper()
+	if p.context != nil {
+		return p.context
+	}
+	return Context(t)
+}
+
 func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 	t.Helper()
-	pkgs, relationships, err := parser(p.context, p.resolver, p.env, p.reader)
+	ctx := p.ensureContext(t)
+	pkgs, relationships, err := parser(ctx, p.resolver, p.env, p.reader)
 
 	// only test for errors if explicitly requested
 	if p.wantErr != nil {
@@ -289,10 +306,11 @@ func (p *CatalogTester) TestParser(t *testing.T, parser generic.Parser) {
 
 func (p *CatalogTester) TestCataloger(t *testing.T, cataloger pkg.Cataloger) {
 	t.Helper()
+	ctx := p.ensureContext(t)
 
 	resolver := NewObservingResolver(p.resolver)
 
-	pkgs, relationships, err := cataloger.Catalog(p.context, resolver)
+	pkgs, relationships, err := cataloger.Catalog(ctx, resolver)
 
 	// this is a minimum set, the resolver may return more that just this list
 	for _, path := range p.expectedPathResponses {

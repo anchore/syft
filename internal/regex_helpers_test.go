@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"io"
 	"regexp"
 	"strings"
 	"testing"
@@ -164,6 +165,34 @@ func TestMatchAnyFromReader(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// eofWithDataReader returns all data in a single Read call alongside io.EOF,
+// simulating readers like bytes.Reader on small inputs.
+type eofWithDataReader struct {
+	data []byte
+	done bool
+}
+
+func (r *eofWithDataReader) Read(p []byte) (int, error) {
+	if r.done {
+		return 0, io.EOF
+	}
+	r.done = true
+	n := copy(p, r.data)
+	return n, io.EOF
+}
+
+func TestProcessReaderInChunks_DataWithEOF(t *testing.T) {
+	// This tests that data returned alongside io.EOF is not dropped.
+	// Before the fix, processReaderInChunks would break on err != nil
+	// without processing the final n bytes.
+	re := regexp.MustCompile(`(?P<version>[\d.]+)`)
+	reader := &eofWithDataReader{data: []byte("BusyBox v1.31.1")}
+	results, err := MatchNamedCaptureGroupsFromReader(re, reader)
+	require.NoError(t, err)
+	require.NotNil(t, results, "expected match on data returned with EOF")
+	assert.Equal(t, "1.31.1", results["version"])
 }
 
 func TestProcessReaderInChunks_ChunkBoundaries(t *testing.T) {

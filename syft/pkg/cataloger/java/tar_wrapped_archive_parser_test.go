@@ -1,7 +1,6 @@
 package java
 
 import (
-	"context"
 	"os"
 	"path"
 	"testing"
@@ -50,7 +49,7 @@ func Test_parseTarWrappedJavaArchive(t *testing.T) {
 			}
 
 			gtp := newGenericTarWrappedJavaArchiveParser(ArchiveCatalogerConfig{})
-			actualPkgs, _, err := gtp.parseTarWrappedJavaArchive(context.Background(), nil, nil, file.LocationReadCloser{
+			actualPkgs, _, err := gtp.parseTarWrappedJavaArchive(pkgtest.Context(t), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: fixture,
 			})

@@ -324,7 +324,7 @@ func buildModuleRelationships(
 }
 
 func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*modfile.File, error) {
-	contents, err := io.ReadAll(reader)
+	contents, err := io.ReadAll(reader) //nolint:gocritic // modfile.Parse requires []byte
 	if err != nil {
 		return nil, fmt.Errorf("failed to read go module: %w", err)
 	}
