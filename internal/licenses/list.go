@@ -27,6 +27,7 @@ func FileNames() []string {
 		"LICENCE-APACHE",
 		"LICENSE-APACHE-2.0.txt",
 		"LICENCE-APACHE-2.0.txt",
+		"LICENSE_APACHE2",
 		"LICENSE-MIT",
 		"LICENCE-MIT",
 		"LICENSE.MIT",
