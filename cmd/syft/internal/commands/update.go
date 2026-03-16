@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -107,15 +107,12 @@ func fetchLatestApplicationVersion(id clio.Identification) (*hashiVersion.Versio
 		return nil, fmt.Errorf("HTTP %d on fetching latest version: %s", resp.StatusCode, resp.Status)
 	}
 
-	scanner := bufio.NewScanner(resp.Body)
-	if !scanner.Scan() {
-		if err := scanner.Err(); err != nil {
-			return nil, fmt.Errorf("failed to read latest version: %w", err)
-		}
-		return nil, fmt.Errorf("empty response for latest version")
+	versionBytes, err := io.ReadAll(io.LimitReader(resp.Body, 500))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read latest version: %w", err)
 	}
 
-	versionStr := strings.TrimSpace(scanner.Text())
+	versionStr := strings.TrimSuffix(string(versionBytes), "\n")
 	if len(versionStr) > 50 {
 		return nil, fmt.Errorf("version too long: %q", versionStr[:50])
 	}
