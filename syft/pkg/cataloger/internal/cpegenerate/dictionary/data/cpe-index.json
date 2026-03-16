@@ -136,6 +136,9 @@
       "github.com/quic-go/webtransport-go#section-readme": [
         "cpe:2.3:a:quic-go:webtransport-go:*:*:*:*:*:go:*:*"
       ],
+      "github.com/rezmoss/axios4go": [
+        "cpe:2.3:a:rezmoss:axios4go:*:*:*:*:*:go:*:*"
+      ],
       "github.com/sap/cloud-security-client-go": [
         "cpe:2.3:a:sap:cloud-security-client-go:*:*:*:*:*:go:*:*"
       ],
@@ -2350,6 +2353,9 @@
       "@google-cloud/firestore": [
         "cpe:2.3:a:google:cloud_firestore:*:*:*:*:*:node.js:*:*"
       ],
+      "@graphprotocol/contracts": [
+        "cpe:2.3:a:thegraph:graph_protocol_contracts:*:*:*:*:*:node.js:*:*"
+      ],
       "@grpc/grpc-js": [
         "cpe:2.3:a:grpc:grpc:*:*:*:*:*:node.js:*:*"
       ],
@@ -3319,7 +3325,6 @@
         "cpe:2.3:a:fast_string_search_project:fast_string_search:*:*:*:*:*:node.js:*:*"
       ],
       "fast-xml-parser": [
-        "cpe:2.3:a:fast-xml-parser_project:fast-xml-parser:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:naturalintelligence:fast-xml-parser:*:*:*:*:*:*:*:*"
       ],
       "fastest-json-copy": [
@@ -5402,6 +5407,9 @@
       "stimulsoft-dashboards-js": [
         "cpe:2.3:a:stimulsoft:dashboard.js:*:*:*:*:*:node.js:*:*"
       ],
+      "storybook": [
+        "cpe:2.3:a:storybook:storybook:*:*:*:*:*:node.js:*:*"
+      ],
       "strapi": [
         "cpe:2.3:a:strapi:strapi:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:strapi:strapi:*:*:*:*:*:node.js:*:*"
@@ -6162,6 +6170,9 @@
       ],
       "lxml-html-clean": [
         "cpe:2.3:a:fedoralovespython:lxml_html_clean:*:*:*:*:*:python:*:*"
+      ],
+      "mad-proxy": [
+        "cpe:2.3:a:machphy:mad-proxy:*:*:*:*:*:python:*:*"
       ],
       "mage-ai": [
         "cpe:2.3:a:mage:mage-ai:*:*:*:*:*:python:*:*"
@@ -6993,6 +7004,9 @@
       ],
       "autorand": [
         "cpe:2.3:a:autorand_project:autorand:*:*:*:*:*:rust:*:*"
+      ],
+      "aws-lc-fips-sys": [
+        "cpe:2.3:a:amazon:aws-lc-fips-sys:*:*:*:*:*:rust:*:*"
       ],
       "axum-core": [
         "cpe:2.3:a:axum-core_project:axum-core:*:*:*:*:*:rust:*:*"
@@ -9410,8 +9424,7 @@
         "cpe:2.3:a:kieranoshea:calendar:*:*:*:*:*:wordpress:*:*"
       ],
       "calendar-booking": [
-        "cpe:2.3:a:startbooking:scheduling_plugin:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:startbooking:scheduling_plugin_-_online_booking:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:startbooking:scheduling_plugin:*:*:*:*:*:wordpress:*:*"
       ],
       "calendar-plugin": [
         "cpe:2.3:a:calendar_plugin_project:calendar_plugin:*:*:*:*:*:wordpress:*:*"
@@ -13449,7 +13462,7 @@
         "cpe:2.3:a:brijeshk89:ip_based_login:*:*:*:*:*:wordpress:*:*"
       ],
       "ip-blacklist-cloud": [
-        "cpe:2.3:a:ip_blacklist_cloud_project:ip_blacklist_cloud:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:ad33lx:ip_blacklist_cloud:*:*:*:*:*:wordpress:*:*"
       ],
       "ip-vault-wp-firewall": [
         "cpe:2.3:a:youtag:two-factor_authentication:*:*:*:*:*:wordpress:*:*"
