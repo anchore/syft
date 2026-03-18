@@ -166,7 +166,8 @@ func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string
 }
 
 func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
-	content, err := io.ReadAll(reader)
+	// TODO: refactor to use bufio.Scanner for streaming line-by-line parsing instead of reading the entire file
+	content, err := io.ReadAll(reader) //nolint:gocritic // stateful multi-line parser; candidate for streaming refactor
 	if err != nil {
 		return nil, fmt.Errorf("failed to read yarn.lock file: %w", err)
 	}
@@ -265,7 +266,8 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		return nil, nil, nil
 	}
 
-	data, err := io.ReadAll(reader)
+	// TODO: refactor to detect version from the first line via bufio.Scanner, then dispatch to a streaming parser
+	data, err := io.ReadAll(reader) //nolint:gocritic // two-pass parse: version detection then format-specific parsing
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load yarn.lock file: %w", err)
 	}

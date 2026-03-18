@@ -3,7 +3,6 @@ package haskell
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"go.yaml.in/yaml/v3"
 
@@ -23,16 +22,11 @@ type stackYaml struct {
 
 // parseStackYaml is a parser function for stack.yaml contents, returning all packages discovered.
 func parseStackYaml(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	bytes, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load stack.yaml file: %w", err)
-	}
-
 	var stackFile stackYaml
 
-	if err := yaml.Unmarshal(bytes, &stackFile); err != nil {
+	if err := yaml.NewDecoder(reader).Decode(&stackFile); err != nil {
 		log.WithFields("error", err, "path", reader.RealPath).Trace("failed to parse stack.yaml")
-		return nil, nil, fmt.Errorf("failed to parse stack.yaml file")
+		return nil, nil, fmt.Errorf("failed to parse stack.yaml file: %w", err)
 	}
 
 	var pkgs []pkg.Package

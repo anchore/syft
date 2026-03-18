@@ -215,7 +215,7 @@ func write(schema []byte) {
 			panic(err)
 		}
 
-		existingSchemaBytes, err := io.ReadAll(existingFh)
+		existingSchemaBytes, err := io.ReadAll(existingFh) //nolint:gocritic // offline code generator
 		if err != nil {
 			panic(err)
 		}

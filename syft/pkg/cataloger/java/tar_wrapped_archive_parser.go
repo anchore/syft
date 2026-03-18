@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -58,7 +59,11 @@ func newGenericTarWrappedJavaArchiveParser(cfg ArchiveCatalogerConfig) genericTa
 }
 
 func (gtp genericTarWrappedJavaArchiveParser) parseTarWrappedJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(reader.Path(), reader)
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return nil, nil, fmt.Errorf("no temp dir factory in context")
+	}
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(td, reader.Path(), reader)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {

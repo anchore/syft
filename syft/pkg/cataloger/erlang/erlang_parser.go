@@ -47,7 +47,7 @@ func node(value interface{}) erlangNode {
 
 // parseErlang basic parser for erlang, used by rebar.lock
 func parseErlang(reader io.Reader) (erlangNode, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // custom parser requires []byte
 	if err != nil {
 		return node(nil), err
 	}

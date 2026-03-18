@@ -1,7 +1,6 @@
 package java
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -194,7 +193,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 func Test_parsePomXMLProject(t *testing.T) {
 	// TODO: ideally we would have the path to the contained pom.xml, not the jar
 	jarLocation := file.NewLocation("path/to/archive.jar")
-	ctx := context.TODO()
+	ctx := pkgtest.Context(t)
 	tests := []struct {
 		name     string
 		project  *pkg.JavaPomProject
@@ -265,11 +264,11 @@ func Test_parsePomXMLProject(t *testing.T) {
 			pom, err := maven.ParsePomXML(fixture)
 			require.NoError(t, err)
 
-			actual := newPomProject(context.Background(), r, fixture.Name(), pom)
+			actual := newPomProject(pkgtest.Context(t), r, fixture.Name(), pom)
 			assert.NoError(t, err)
 			assert.Equal(t, test.project, actual)
 
-			licenses, err := r.ResolveLicenses(context.Background(), pom)
+			licenses, err := r.ResolveLicenses(pkgtest.Context(t), pom)
 			//assert.NoError(t, err)
 			assert.Equal(t, test.licenses, toPkgLicenses(ctx, &jarLocation, licenses))
 		})
@@ -331,7 +330,7 @@ func Test_pomParent(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := maven.NewResolver(nil, maven.DefaultConfig())
-			assert.Equal(t, test.expected, pomParent(context.Background(), r, &maven.Project{Parent: test.input}))
+			assert.Equal(t, test.expected, pomParent(pkgtest.Context(t), r, &maven.Project{Parent: test.input}))
 		})
 	}
 }
@@ -433,7 +432,7 @@ func Test_resolveLicenses(t *testing.T) {
 			fr, err := ds.FileResolver(source.AllLayersScope)
 			require.NoError(t, err)
 
-			ctx := context.TODO()
+			ctx := pkgtest.Context(t)
 			pkgs, _, err := cat.Catalog(ctx, fr)
 			require.NoError(t, err)
 
