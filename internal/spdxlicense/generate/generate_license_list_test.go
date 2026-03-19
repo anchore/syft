@@ -55,7 +55,7 @@ func Test_processSPDXLicense(t *testing.T) {
 		want    map[string]string
 	}{
 		{
-			fixture: "test-fixtures/licenses.json",
+			fixture: "testdata/licenses.json",
 			want: map[string]string{
 				"0bsd":                                  "0BSD",
 				"aal":                                   "AAL",

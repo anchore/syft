@@ -2,7 +2,7 @@
 
 # search for an asset in a release checksums file
 test_search_for_asset_release() {
-  fixture=./test-fixtures/syft_0.36.0_checksums.txt
+  fixture=./testdata/syft_0.36.0_checksums.txt
 
   # search_for_asset [checksums-file-path] [name] [os] [arch] [format]
 
@@ -24,7 +24,7 @@ run_test_case test_search_for_asset_release
 
 # search for an asset in a snapshot checksums file
 test_search_for_asset_snapshot() {
-  fixture=./test-fixtures/syft_0.35.1-SNAPSHOT-d461f63_checksums.txt
+  fixture=./testdata/syft_0.35.1-SNAPSHOT-d461f63_checksums.txt
 
   # search_for_asset [checksums-file-path] [name] [os] [arch] [format]
 
@@ -42,7 +42,7 @@ run_test_case test_search_for_asset_snapshot
 
 # verify 256 digest of a file
 test_hash_sha256() {
-  target=./test-fixtures/assets/valid/syft_1.5.0_linux_arm64.tar.gz
+  target=./testdata/assets/valid/syft_1.5.0_linux_arm64.tar.gz
 
   # hash_sha256 [target]
 
@@ -61,8 +61,8 @@ test_hash_sha256_verify() {
 
   # positive case
 
-  checksums=./test-fixtures/assets/valid/checksums.txt
-  target=./test-fixtures/assets/valid/syft_1.5.0_linux_arm64.tar.gz
+  checksums=./testdata/assets/valid/checksums.txt
+  target=./testdata/assets/valid/syft_1.5.0_linux_arm64.tar.gz
 
   hash_sha256_verify "${target}" "${checksums}"
   assertEquals "0" "$?" "mismatched checksum"
@@ -73,8 +73,8 @@ test_hash_sha256_verify() {
   # we are expecting error messages, which is confusing to look at in passing tests... disable logging for now
   log_set_priority -1
 
-  checksums=./test-fixtures/assets/invalid/checksums.txt
-  target=./test-fixtures/assets/invalid/syft_1.5.0_linux_arm64.tar.gz
+  checksums=./testdata/assets/invalid/checksums.txt
+  target=./testdata/assets/invalid/syft_1.5.0_linux_arm64.tar.gz
 
   hash_sha256_verify "${target}" "${checksums}"
   assertEquals "1" "$?" "verification did not catch mismatched checksum"

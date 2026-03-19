@@ -58,6 +58,9 @@ jobs:
       - name: Run unit tests
         run: make unit
 
+      - name: Check for capability drift
+        run: make check-capability-drift
+
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Integration tests"
@@ -106,7 +109,7 @@ jobs:
         run: make snapshot-smoke-test
 
       - name: Upload snapshot artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f #v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f #v7.0.0
         with:
           name: snapshot
           path: snapshot/
@@ -131,7 +134,7 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #v8.0.0
         with:
           name: snapshot
           path: snapshot
@@ -175,7 +178,7 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #v8.0.0
         with:
           name: snapshot
           path: snapshot
@@ -208,7 +211,7 @@ jobs:
           download-test-fixture-cache: true
 
       - name: Download snapshot artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 #v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 #v8.0.0
         with:
           name: snapshot
           path: snapshot

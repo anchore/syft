@@ -49,7 +49,7 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 			},
 		).
 		WithPostRuns(func(_ *clio.State, _ error) {
-			stereoscope.Cleanup()
+			stereoscope.Cleanup() //nolint:staticcheck // we don't have access to the image object here
 		})
 	return clioCfg
 }

@@ -89,7 +89,7 @@ func TestDecoder_Decode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			reader, err := os.Open(filepath.Join("test-fixtures", "spdx", test.name))
+			reader, err := os.Open(filepath.Join("testdata", "spdx", test.name))
 			require.NoError(t, err)
 
 			reset := func() { _, err = reader.Seek(0, io.SeekStart); require.NoError(t, err) }
@@ -164,7 +164,7 @@ func TestDecoder_Identify(t *testing.T) {
 	for _, version := range SupportedVersions() {
 		cases = append(cases, testCase{
 			name:    fmt.Sprintf("v%s schema", version),
-			file:    fmt.Sprintf("test-fixtures/identify/%s.json", version),
+			file:    fmt.Sprintf("testdata/identify/%s.json", version),
 			id:      ID,
 			version: version,
 		})

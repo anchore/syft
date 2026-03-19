@@ -11,7 +11,7 @@ import (
 )
 
 func TestNpmPackageLockDirectory(t *testing.T) {
-	sbom, _ := catalogDirectory(t, "test-fixtures/npm-lock")
+	sbom, _ := catalogDirectory(t, "testdata/npm-lock")
 
 	foundPackages := strset.New()
 
@@ -32,7 +32,7 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 }
 
 func TestYarnPackageLockDirectory(t *testing.T) {
-	sbom, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
+	sbom, _ := catalogDirectory(t, "testdata/yarn-lock")
 
 	foundPackages := strset.New()
 	// merge-objects and should-type are devDependencies in package.json and are excluded by default

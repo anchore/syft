@@ -18,7 +18,7 @@ func TestPortageCataloger(t *testing.T) {
 	}{
 		{
 			name:    "standard skopeo package",
-			fixture: "test-fixtures/layout",
+			fixture: "testdata/layout",
 			expectedPackages: []pkg.Package{
 				{
 					Name:    "app-containers/skopeo",
@@ -77,7 +77,7 @@ func TestPortageCataloger(t *testing.T) {
 		},
 		{
 			name:    "standard skopeo package with license groups",
-			fixture: "test-fixtures/layout-license-groups",
+			fixture: "testdata/layout-license-groups",
 			expectedPackages: []pkg.Package{
 				{
 					Name:    "app-containers/skopeo",
@@ -154,7 +154,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain portage contents file",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"var/db/pkg/x/y/CONTENTS",
 			},

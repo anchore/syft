@@ -86,14 +86,14 @@ func (r *rpmdbTestFileResolverMock) FilesByMediaType(...string) ([]file.Location
 
 func TestParseRpmDB(t *testing.T) {
 	ctx := context.TODO()
-	packagesLocation := file.NewLocation("test-fixtures/Packages")
+	packagesLocation := file.NewLocation("testdata/Packages")
 	tests := []struct {
 		fixture     string
 		expected    []pkg.Package
 		ignorePaths bool
 	}{
 		{
-			fixture: "test-fixtures/Packages",
+			fixture: "testdata/Packages",
 			// we only surface package paths for files that exist (here we DO NOT expect a path)
 			ignorePaths: true,
 			expected: []pkg.Package{
@@ -101,7 +101,7 @@ func TestParseRpmDB(t *testing.T) {
 					Name:      "dive",
 					Version:   "0.9.2-1",
 					PURL:      "pkg:rpm/dive@0.9.2-1?arch=x86_64&upstream=dive-0.9.2-1.src.rpm",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/Packages")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/Packages")),
 					Type:      pkg.RpmPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", packagesLocation),
@@ -123,7 +123,7 @@ func TestParseRpmDB(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/Packages",
+			fixture: "testdata/Packages",
 			// we only surface package paths for files that exist (here we expect a path)
 			ignorePaths: false,
 			expected: []pkg.Package{
@@ -222,7 +222,7 @@ func TestToElVersion(t *testing.T) {
 
 func Test_corruptRpmDbEntry(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/usr/lib/sysimage/rpm/Packages.db").
+		FromFile(t, "testdata/glob-paths/usr/lib/sysimage/rpm/Packages.db").
 		WithError().
 		TestParser(t, parseRpmDB)
 }

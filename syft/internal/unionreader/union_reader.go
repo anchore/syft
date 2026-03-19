@@ -62,7 +62,7 @@ func GetUnionReader(readerCloser io.ReadCloser) (UnionReader, error) {
 		return newReaderAtAdapter(r), nil
 	}
 
-	b, err := io.ReadAll(readerCloser)
+	b, err := io.ReadAll(readerCloser) //nolint:gocritic // buffering non-seekable to ReaderAt
 	if err != nil {
 		return nil, fmt.Errorf("unable to read contents from binary: %w", err)
 	}

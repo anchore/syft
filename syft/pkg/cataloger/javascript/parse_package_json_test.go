@@ -18,7 +18,7 @@ func TestParsePackageJSON(t *testing.T) {
 		ExpectedPkg pkg.Package
 	}{
 		{
-			Fixture: "test-fixtures/pkg-json/package.json",
+			Fixture: "testdata/pkg-json/package.json",
 			ExpectedPkg: pkg.Package{
 				Name:     "npm",
 				Version:  "6.14.6",
@@ -26,7 +26,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package.json")),
 				),
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -39,7 +39,7 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-license-object.json",
+			Fixture: "testdata/pkg-json/package-license-object.json",
 			ExpectedPkg: pkg.Package{
 				Name:     "npm",
 				Version:  "6.14.6",
@@ -47,7 +47,7 @@ func TestParsePackageJSON(t *testing.T) {
 				Type:     pkg.NpmPkg,
 				Language: pkg.JavaScript,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation("test-fixtures/pkg-json/package-license-object.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "ISC", file.NewLocation("testdata/pkg-json/package-license-object.json")),
 				),
 				Metadata: pkg.NpmPackage{
 					Name:        "npm",
@@ -60,15 +60,15 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-license-objects.json",
+			Fixture: "testdata/pkg-json/package-license-objects.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Apache-2.0", file.NewLocation("test-fixtures/pkg-json/package-license-objects.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("testdata/pkg-json/package-license-objects.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Apache-2.0", file.NewLocation("testdata/pkg-json/package-license-objects.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -82,7 +82,7 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-malformed-license.json",
+			Fixture: "testdata/pkg-json/package-malformed-license.json",
 			ExpectedPkg: pkg.Package{
 				Name:     "npm",
 				Version:  "6.14.6",
@@ -100,7 +100,7 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-no-license.json",
+			Fixture: "testdata/pkg-json/package-no-license.json",
 			ExpectedPkg: pkg.Package{
 				Name:     "npm",
 				Version:  "6.14.6",
@@ -118,14 +118,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-nested-author.json",
+			Fixture: "testdata/pkg-json/package-nested-author.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-nested-author.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-nested-author.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -139,14 +139,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-repo-string.json",
+			Fixture: "testdata/pkg-json/package-repo-string.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "function-bind",
 				Version: "1.1.1",
 				PURL:    "pkg:npm/function-bind@1.1.1",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("test-fixtures/pkg-json/package-repo-string.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation("testdata/pkg-json/package-repo-string.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -160,14 +160,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-private.json",
+			Fixture: "testdata/pkg-json/package-private.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-private.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-private.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -182,14 +182,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-author-non-standard.json",
+			Fixture: "testdata/pkg-json/package-author-non-standard.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-author-non-standard.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-author-non-standard.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -203,14 +203,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-authors-array.json",
+			Fixture: "testdata/pkg-json/package-authors-array.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-authors-array.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-authors-array.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -224,14 +224,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-authors-objects.json",
+			Fixture: "testdata/pkg-json/package-authors-objects.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-authors-objects.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-authors-objects.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -245,14 +245,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-both-author-and-authors.json",
+			Fixture: "testdata/pkg-json/package-both-author-and-authors.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-both-author-and-authors.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-both-author-and-authors.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -266,14 +266,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-contributors.json",
+			Fixture: "testdata/pkg-json/package-contributors.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-contributors.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-contributors.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -287,14 +287,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-maintainers.json",
+			Fixture: "testdata/pkg-json/package-maintainers.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-maintainers.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-maintainers.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -308,14 +308,14 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/pkg-json/package-all-author-fields.json",
+			Fixture: "testdata/pkg-json/package-all-author-fields.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
 				Version: "6.14.6",
 				PURL:    "pkg:npm/npm@6.14.6",
 				Type:    pkg.NpmPkg,
 				Licenses: pkg.NewLicenseSet(
-					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("test-fixtures/pkg-json/package-all-author-fields.json")),
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-all-author-fields.json")),
 				),
 				Language: pkg.JavaScript,
 				Metadata: pkg.NpmPackage{
@@ -340,13 +340,13 @@ func TestParsePackageJSON(t *testing.T) {
 
 func Test_corruptPackageJSON(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/package.json").
+		FromFile(t, "testdata/corrupt/package.json").
 		WithError().
 		TestParser(t, parsePackageJSON)
 }
 
 func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anchore/syft/issues/311
-	const fixtureFile = "test-fixtures/pkg-json/package-partial.json"
+	const fixtureFile = "testdata/pkg-json/package-partial.json"
 
 	// raise package.json files as packages with any information we find, these will be filtered out
 	// according to compliance rules later

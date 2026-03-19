@@ -89,7 +89,7 @@ func TestSpdxValidationTooling(t *testing.T) {
 				}
 
 				// validate against spdx java tooling
-				validateCmd := exec.Command("docker", "run", "--rm", "-i",
+				validateCmd := exec.Command("docker", "run", "--rm", "-i", "--platform", "linux/amd64",
 					"-v", dir+":/data", test.validator, "Verify", "/data/"+sbomFile)
 
 				stdout, stderr, err := runCommand(validateCmd, map[string]string{})

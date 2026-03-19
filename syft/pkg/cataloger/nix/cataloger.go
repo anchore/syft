@@ -46,7 +46,7 @@ func (c cataloger) Name() string {
 
 func (c cataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	// always try the DB cataloger first (based off of information recorded by actions taken by nix tooling)
-	pkgs, rels, err := c.dbParser.catalog(resolver)
+	pkgs, rels, err := c.dbParser.catalog(ctx, resolver)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to catalog nix packages from database: %w", err)
 	}

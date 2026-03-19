@@ -23,7 +23,7 @@ func Test_parseDescriptionFile(t *testing.T) {
 	}{
 		{
 			name:    "no package is returned if no version found",
-			fixture: filepath.Join("test-fixtures", "map-parse", "no-version"),
+			fixture: filepath.Join("testdata", "map-parse", "no-version"),
 			assertions: packageAssertions{
 				func(t *testing.T, p []pkg.Package) {
 					assert.Empty(t, p)
@@ -32,7 +32,7 @@ func Test_parseDescriptionFile(t *testing.T) {
 		},
 		{
 			name:    "no package is returned if no package name found",
-			fixture: filepath.Join("test-fixtures", "map-parse", "no-name"),
+			fixture: filepath.Join("testdata", "map-parse", "no-name"),
 			assertions: packageAssertions{
 				func(t *testing.T, p []pkg.Package) {
 					assert.Empty(t, p)
@@ -41,7 +41,7 @@ func Test_parseDescriptionFile(t *testing.T) {
 		},
 		{
 			name:    "package return if both name and version found",
-			fixture: filepath.Join("test-fixtures", "map-parse", "simple"),
+			fixture: filepath.Join("testdata", "map-parse", "simple"),
 			assertions: packageAssertions{
 				func(t *testing.T, p []pkg.Package) {
 					assert.Equal(t, 1, len(p))
@@ -76,7 +76,7 @@ func Test_extractFieldsFromDescriptionFile(t *testing.T) {
 	}{
 		{
 			name:    "go case",
-			fixture: "test-fixtures/map-parse/simple",
+			fixture: "testdata/map-parse/simple",
 			want: map[string]string{
 				"Package":  "base",
 				"Version":  "4.3.0",
@@ -86,7 +86,7 @@ func Test_extractFieldsFromDescriptionFile(t *testing.T) {
 		},
 		{
 			name:    "bad cases",
-			fixture: "test-fixtures/map-parse/bad",
+			fixture: "testdata/map-parse/bad",
 			want: map[string]string{
 				"Key":        "",
 				"Whitespace": "",
@@ -94,7 +94,7 @@ func Test_extractFieldsFromDescriptionFile(t *testing.T) {
 		},
 		{
 			name:    "multiline key-value",
-			fixture: "test-fixtures/map-parse/multiline",
+			fixture: "testdata/map-parse/multiline",
 			want: map[string]string{
 				"Description": `A consistent, simple and easy to use set of wrappers around
 the fantastic 'stringi' package. All function and argument names (and
@@ -107,7 +107,7 @@ easy to feed into the input of another.`,
 		},
 		{
 			name:    "eof multiline",
-			fixture: "test-fixtures/map-parse/eof-multiline",
+			fixture: "testdata/map-parse/eof-multiline",
 			want: map[string]string{
 				"License": "MIT + file LICENSE",
 				"Description": `A consistent, simple and easy to use set of wrappers around

@@ -26,7 +26,7 @@ func TestBinaryElfRelationships(t *testing.T) {
 	}
 
 	// run the test...
-	sbom, _ := catalogFixtureImage(t, "elf-test-fixtures", source.SquashedScope)
+	sbom, _ := catalogFixtureImage(t, "elf-testdata", source.SquashedScope)
 
 	// get a mapping of package names to their IDs
 	nameToId := map[string]artifact.ID{}

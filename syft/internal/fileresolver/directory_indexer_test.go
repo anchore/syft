@@ -176,7 +176,7 @@ func TestDirectoryIndexer_indexPath_skipsNilFileInfo(t *testing.T) {
 
 func TestDirectoryIndexer_index(t *testing.T) {
 	// note: this test is testing the effects from NewFromDirectory, indexTree, and addPathToIndex
-	indexer := newDirectoryIndexer("test-fixtures/system_paths/target", "")
+	indexer := newDirectoryIndexer("testdata/system_paths/target", "")
 	tree, index, err := indexer.build()
 	require.NoError(t, err)
 
@@ -186,19 +186,19 @@ func TestDirectoryIndexer_index(t *testing.T) {
 	}{
 		{
 			name: "has dir",
-			path: "test-fixtures/system_paths/target/home",
+			path: "testdata/system_paths/target/home",
 		},
 		{
 			name: "has path",
-			path: "test-fixtures/system_paths/target/home/place",
+			path: "testdata/system_paths/target/home/place",
 		},
 		{
 			name: "has symlink",
-			path: "test-fixtures/system_paths/target/link/a-symlink",
+			path: "testdata/system_paths/target/link/a-symlink",
 		},
 		{
 			name: "has symlink target",
-			path: "test-fixtures/system_paths/outside_root/link_target/place",
+			path: "testdata/system_paths/outside_root/link_target/place",
 		},
 	}
 	for _, test := range tests {
@@ -238,18 +238,18 @@ func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
 	}{
 		{
 			name:          "the parent directory has symlink target",
-			path:          "test-fixtures/system_paths/target/symlinks-to-dev",
-			relative_base: "test-fixtures/system_paths/target/symlinks-to-dev",
+			path:          "testdata/system_paths/target/symlinks-to-dev",
+			relative_base: "testdata/system_paths/target/symlinks-to-dev",
 		},
 		{
 			name:          "the ancestor directory has symlink target",
-			path:          "test-fixtures/system_paths/target/symlinks-to-hierarchical-dev",
-			relative_base: "test-fixtures/system_paths/target/symlinks-to-hierarchical-dev/module_1/module_1_1",
+			path:          "testdata/system_paths/target/symlinks-to-hierarchical-dev",
+			relative_base: "testdata/system_paths/target/symlinks-to-hierarchical-dev/module_1/module_1_1",
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			indexer := newDirectoryIndexer("test-fixtures/system_paths/target",
+			indexer := newDirectoryIndexer("testdata/system_paths/target",
 				fmt.Sprintf("%v/%v", dir, test.relative_base))
 			tree, index, err := indexer.build()
 			require.NoError(t, err)
@@ -275,13 +275,13 @@ func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
 	}
 }
 func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
-	// test-fixtures/bad-symlinks
+	// testdata/bad-symlinks
 	// ├── root
 	// │   ├── place
 	// │   │   └── fd -> ../somewhere/self/fd
 	// │   └── somewhere
 	// ...
-	indexer := newDirectoryIndexer("test-fixtures/bad-symlinks/root/place/fd", "test-fixtures/bad-symlinks/root/place/fd")
+	indexer := newDirectoryIndexer("testdata/bad-symlinks/root/place/fd", "testdata/bad-symlinks/root/place/fd")
 	_, _, err := indexer.build()
 	require.NoError(t, err)
 }
@@ -289,7 +289,7 @@ func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	var observedPaths []string
 	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {
-		fields := strings.Split(p, "test-fixtures/symlinks-prune-indexing")
+		fields := strings.Split(p, "testdata/symlinks-prune-indexing")
 		if len(fields) < 2 {
 			return nil
 		}
@@ -299,7 +299,7 @@ func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 		}
 		return nil
 	}
-	resolver := newDirectoryIndexer("./test-fixtures/symlinks-prune-indexing", "")
+	resolver := newDirectoryIndexer("./testdata/symlinks-prune-indexing", "")
 	// we want to cut ahead of any possible filters to see what paths are considered for indexing (closest to walking)
 	resolver.pathIndexVisitors = append([]PathIndexVisitor{pathObserver}, resolver.pathIndexVisitors...)
 
@@ -337,7 +337,7 @@ func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 }
 
 func TestDirectoryIndexer_IndexesAllTypes(t *testing.T) {
-	indexer := newDirectoryIndexer("./test-fixtures/symlinks-prune-indexing", "")
+	indexer := newDirectoryIndexer("./testdata/symlinks-prune-indexing", "")
 
 	tree, index, err := indexer.build()
 	require.NoError(t, err)
@@ -346,7 +346,7 @@ func TestDirectoryIndexer_IndexesAllTypes(t *testing.T) {
 	var pathRefs []file.Reference
 	paths := strset.New()
 	for _, ref := range allRefs {
-		fields := strings.Split(string(ref.RealPath), "test-fixtures/symlinks-prune-indexing")
+		fields := strings.Split(string(ref.RealPath), "testdata/symlinks-prune-indexing")
 		if len(fields) != 2 {
 			continue
 		}

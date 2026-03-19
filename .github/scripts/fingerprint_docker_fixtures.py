@@ -33,9 +33,9 @@ def is_git_tracked_or_untracked(directory):
 
 
 def find_test_fixture_dirs_with_images(base_dir):
-    """Find directories that contain 'test-fixtures' and at least one 'image-*' directory."""
+    """Find directories that contain 'testdata' and at least one 'image-*' directory."""
     for root, dirs, files in os.walk(base_dir):
-        if 'test-fixtures' in root:
+        if 'testdata' in root:
             image_dirs = [d for d in dirs if d.startswith('image-')]
             if image_dirs:
                 yield os.path.realpath(root)

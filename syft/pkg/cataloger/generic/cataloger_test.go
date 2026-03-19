@@ -42,10 +42,10 @@ func Test_Cataloger(t *testing.T) {
 
 	upstream := "some-other-cataloger"
 
-	expectedSelection := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt", "test-fixtures/empty.txt"}
+	expectedSelection := []string{"testdata/last/path.txt", "testdata/another-path.txt", "testdata/a-path.txt", "testdata/empty.txt"}
 	resolver := file.NewMockResolverForPaths(expectedSelection...)
 	cataloger := NewCataloger(upstream).
-		WithParserByPath(parser, "test-fixtures/another-path.txt", "test-fixtures/last/path.txt").
+		WithParserByPath(parser, "testdata/another-path.txt", "testdata/last/path.txt").
 		WithParserByGlobs(parser, "**/a-path.txt", "**/empty.txt")
 
 	actualPkgs, relationships, err := cataloger.Catalog(context.Background(), resolver)
@@ -54,7 +54,7 @@ func Test_Cataloger(t *testing.T) {
 	expectedPkgs := make(map[string]pkg.Package)
 	for _, path := range expectedSelection {
 		require.True(t, allParsedPaths[path])
-		if path == "test-fixtures/empty.txt" {
+		if path == "testdata/empty.txt" {
 			continue // note: empty.txt won't become a package
 		}
 		expectedPkgs[path] = pkg.Package{
@@ -161,7 +161,7 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 	spy := spyingIoReadCloser{
 		rc: rc,
 	}
-	resolver := newSpyReturningFileResolver(&spy, "test-fixtures/another-path.txt")
+	resolver := newSpyReturningFileResolver(&spy, "testdata/another-path.txt")
 	ctx := context.TODO()
 
 	processors := []requester{
@@ -215,8 +215,8 @@ func Test_CatalogerWithParserByMediaType(t *testing.T) {
 	upstream := "media-type-cataloger"
 
 	// Create locations with test fixtures that exist on disk
-	loc1 := file.NewLocation("test-fixtures/a-path.txt")
-	loc2 := file.NewLocation("test-fixtures/another-path.txt")
+	loc1 := file.NewLocation("testdata/a-path.txt")
+	loc2 := file.NewLocation("testdata/another-path.txt")
 
 	// Create a mock resolver that maps media types to locations
 	resolver := file.NewMockResolverForMediaTypes(map[string][]file.Location{
@@ -230,8 +230,8 @@ func Test_CatalogerWithParserByMediaType(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify both files were parsed
-	assert.True(t, allParsedPaths["test-fixtures/a-path.txt"], "expected a-path.txt to be parsed")
-	assert.True(t, allParsedPaths["test-fixtures/another-path.txt"], "expected another-path.txt to be parsed")
+	assert.True(t, allParsedPaths["testdata/a-path.txt"], "expected a-path.txt to be parsed")
+	assert.True(t, allParsedPaths["testdata/another-path.txt"], "expected another-path.txt to be parsed")
 
 	// Verify packages were created
 	assert.Len(t, actualPkgs, 2)
@@ -252,8 +252,8 @@ func Test_genericCatalogerReturnsErrors(t *testing.T) {
 	}, "**/*")
 
 	m := file.NewMockResolverForPaths(
-		"test-fixtures/a-path.txt",
-		"test-fixtures/empty.txt",
+		"testdata/a-path.txt",
+		"testdata/empty.txt",
 	)
 
 	got, _, errs := genericErrorReturning.Catalog(context.TODO(), m)

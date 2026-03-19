@@ -15,7 +15,7 @@ import (
 )
 
 func Test_StereoscopeImage_Exclusions(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc       string

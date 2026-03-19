@@ -52,6 +52,9 @@
       "github.com/ecnepsnai/web": [
         "cpe:2.3:a:web_project:web:*:*:*:*:*:go:*:*"
       ],
+      "github.com/free5gc/smf": [
+        "cpe:2.3:a:free5gc:smf:*:*:*:*:*:go:*:*"
+      ],
       "github.com/free5gc/udm": [
         "cpe:2.3:a:free5gc:udm:*:*:*:*:*:go:*:*"
       ],
@@ -132,6 +135,9 @@
       ],
       "github.com/quic-go/webtransport-go#section-readme": [
         "cpe:2.3:a:quic-go:webtransport-go:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/rezmoss/axios4go": [
+        "cpe:2.3:a:rezmoss:axios4go:*:*:*:*:*:go:*:*"
       ],
       "github.com/sap/cloud-security-client-go": [
         "cpe:2.3:a:sap:cloud-security-client-go:*:*:*:*:*:go:*:*"
@@ -2239,6 +2245,9 @@
       "@astrojs/cloudflare": [
         "cpe:2.3:a:astro:\\@astrojs\\/cloudflare:*:*:*:*:*:node.js:*:*"
       ],
+      "@astrojs/node": [
+        "cpe:2.3:a:astro:\\@astrojs\\/node:*:*:*:*:*:node.js:*:*"
+      ],
       "@asyncapi/java-spring-cloud-stream-template": [
         "cpe:2.3:a:asyncapi:java-spring-cloud-stream-template:*:*:*:*:*:node.js:*:*"
       ],
@@ -2326,6 +2335,9 @@
       "@fastly/js-compute": [
         "cpe:2.3:a:fastly:js-compute:*:*:*:*:*:node.js:*:*"
       ],
+      "@feathersjs/feathers": [
+        "cpe:2.3:a:feathersjs:feathers:*:*:*:*:*:node.js:*:*"
+      ],
       "@finastra/ssr-pages": [
         "cpe:2.3:a:finastra:ssr-pages:*:*:*:*:*:node.js:*:*"
       ],
@@ -2340,6 +2352,9 @@
       ],
       "@google-cloud/firestore": [
         "cpe:2.3:a:google:cloud_firestore:*:*:*:*:*:node.js:*:*"
+      ],
+      "@graphprotocol/contracts": [
+        "cpe:2.3:a:thegraph:graph_protocol_contracts:*:*:*:*:*:node.js:*:*"
       ],
       "@grpc/grpc-js": [
         "cpe:2.3:a:grpc:grpc:*:*:*:*:*:node.js:*:*"
@@ -2602,6 +2617,9 @@
       "asciitable.js": [
         "cpe:2.3:a:asciitable.js_project:asciitable.js:*:*:*:*:*:node.js:*:*"
       ],
+      "asn1-ts": [
+        "cpe:2.3:a:jonathanwilbur:asn1-ts:*:*:*:*:*:node.js:*:*"
+      ],
       "assign-deep": [
         "cpe:2.3:a:assign-deep_project:assign-deep:*:*:*:*:*:node.js:*:*"
       ],
@@ -2652,6 +2670,9 @@
       ],
       "baryton-saxophone": [
         "cpe:2.3:a:baryton-saxophone_project:baryton-saxophone:*:*:*:*:*:node.js:*:*"
+      ],
+      "basic-ftp": [
+        "cpe:2.3:a:patrickjuchli:basic-ftp:*:*:*:*:*:node.js:*:*"
       ],
       "bassmaster": [
         "cpe:2.3:a:bassmaster_project:bassmaster:*:*:*:*:*:*:*:*"
@@ -2865,6 +2886,9 @@
       "component-flatten": [
         "cpe:2.3:a:component-flatten_project:component-flatten:*:*:*:*:*:node.js:*:*"
       ],
+      "compressing": [
+        "cpe:2.3:a:node-modules:compressing:*:*:*:*:*:node.js:*:*"
+      ],
       "conf-cfg-ini": [
         "cpe:2.3:a:conf-cfg-ini_project:conf-cfg-ini:*:*:*:*:*:node.js:*:*"
       ],
@@ -3067,6 +3091,9 @@
       ],
       "dicer": [
         "cpe:2.3:a:dicer_project:dicer:*:*:*:*:*:node.js:*:*"
+      ],
+      "diff": [
+        "cpe:2.3:a:kpdecker:jsdiff:*:*:*:*:*:node.js:*:*"
       ],
       "directus": [
         "cpe:2.3:a:monospace:directus:*:*:*:*:*:node.js:*:*"
@@ -3276,6 +3303,9 @@
       "f2e-server": [
         "cpe:2.3:a:f2e-server_project:f2e-server:*:*:*:*:*:node.js:*:*"
       ],
+      "fabric": [
+        "cpe:2.3:a:fabricjs:fabric.js:*:*:*:*:*:node.js:*:*"
+      ],
       "fabric-js": [
         "cpe:2.3:a:fabric-js_project:fabric-js:*:*:*:*:*:node.js:*:*"
       ],
@@ -3295,7 +3325,7 @@
         "cpe:2.3:a:fast_string_search_project:fast_string_search:*:*:*:*:*:node.js:*:*"
       ],
       "fast-xml-parser": [
-        "cpe:2.3:a:fast-xml-parser_project:fast-xml-parser:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:naturalintelligence:fast-xml-parser:*:*:*:*:*:*:*:*"
       ],
       "fastest-json-copy": [
         "cpe:2.3:a:fastest-json-copy_project:fastest-json-copy:*:*:*:*:*:node.js:*:*"
@@ -4009,6 +4039,9 @@
       "lessindex": [
         "cpe:2.3:a:lessindex_project:lessindex:*:*:*:*:*:node.js:*:*"
       ],
+      "lettermint": [
+        "cpe:2.3:a:lettermint:lettermint:*:*:*:*:*:node.js:*:*"
+      ],
       "lettersanitizer": [
         "cpe:2.3:a:lettersanitizer_project:lettersanitizer:*:*:*:*:*:node.js:*:*"
       ],
@@ -4678,6 +4711,9 @@
       "openframe-image": [
         "cpe:2.3:a:openframe-image_project:openframe-image:*:*:*:*:*:node.js:*:*"
       ],
+      "openlit": [
+        "cpe:2.3:a:openlit:openlit_software_development_kit:*:*:*:*:*:node.js:*:*"
+      ],
       "openssl.js": [
         "cpe:2.3:a:openssl.js_project:openssl.js:*:*:*:*:*:node.js:*:*"
       ],
@@ -4693,6 +4729,9 @@
       "orejime": [
         "cpe:2.3:a:boscop:orejime:*:*:*:*:*:node.js:*:*"
       ],
+      "orval": [
+        "cpe:2.3:a:orval:orval:*:*:*:*:*:*:*:*"
+      ],
       "osm-static-maps": [
         "cpe:2.3:a:osm-static-maps_project:osm-static-maps:*:*:*:*:*:node.js:*:*"
       ],
@@ -4707,6 +4746,9 @@
       ],
       "pandora-doomsday": [
         "cpe:2.3:a:pandora-doomsday_project:pandora-doomsday:*:*:*:*:*:node.js:*:*"
+      ],
+      "parse-dashboard": [
+        "cpe:2.3:a:parseplatform:parse_dashboard:*:*:*:*:*:node.js:*:*"
       ],
       "parse-link-header": [
         "cpe:2.3:a:parse-link-header_project:parse-link-header:*:*:*:*:*:node.js:*:*"
@@ -4960,6 +5002,9 @@
       ],
       "react-native-mmkv": [
         "cpe:2.3:a:mrousavy:react-native-mmkv:*:*:*:*:*:node.js:*:*"
+      ],
+      "react-router": [
+        "cpe:2.3:a:shopify:react-router:*:*:*:*:*:node.js:*:*"
       ],
       "realms-shim": [
         "cpe:2.3:a:agoric:realms-shim:*:*:*:*:*:node.js:*:*"
@@ -5361,6 +5406,9 @@
       ],
       "stimulsoft-dashboards-js": [
         "cpe:2.3:a:stimulsoft:dashboard.js:*:*:*:*:*:node.js:*:*"
+      ],
+      "storybook": [
+        "cpe:2.3:a:storybook:storybook:*:*:*:*:*:node.js:*:*"
       ],
       "strapi": [
         "cpe:2.3:a:strapi:strapi:*:*:*:*:*:*:*:*",
@@ -5968,6 +6016,9 @@
       "copier": [
         "cpe:2.3:a:copier-org:copier:*:*:*:*:*:python:*:*"
       ],
+      "copyparty": [
+        "cpe:2.3:a:9001:copyparty:*:*:*:*:*:*:*:*"
+      ],
       "cryptidy": [
         "cpe:2.3:a:netinvent:cryptidy:*:*:*:*:*:python:*:*"
       ],
@@ -5992,6 +6043,9 @@
       ],
       "d8s-uuids": [
         "cpe:2.3:a:democritus_uuids_project:democritus_uuids:*:*:*:*:*:python:*:*"
+      ],
+      "datapizza-ai": [
+        "cpe:2.3:a:datapizza:datapizza_ai:*:*:*:*:*:*:*:*"
       ],
       "decorator": [
         "cpe:2.3:a:python:decorator:*:*:*:*:*:*:*:*"
@@ -6028,6 +6082,9 @@
       ],
       "exotel": [
         "cpe:2.3:a:exotel_project:exotel:*:*:*:*:*:python:*:*"
+      ],
+      "fastapi-api-key": [
+        "cpe:2.3:a:athroniaeth:fastapi_api_key:*:*:*:*:*:python:*:*"
       ],
       "feedgen": [
         "cpe:2.3:a:feedgen_project:feedgen:*:*:*:*:*:python:*:*"
@@ -6114,6 +6171,9 @@
       "lxml-html-clean": [
         "cpe:2.3:a:fedoralovespython:lxml_html_clean:*:*:*:*:*:python:*:*"
       ],
+      "mad-proxy": [
+        "cpe:2.3:a:machphy:mad-proxy:*:*:*:*:*:python:*:*"
+      ],
       "mage-ai": [
         "cpe:2.3:a:mage:mage-ai:*:*:*:*:*:python:*:*"
       ],
@@ -6144,11 +6204,17 @@
       "openapi-python-client": [
         "cpe:2.3:a:openapi-python-client_project:openapi-python-client:*:*:*:*:*:*:*:*"
       ],
+      "openlit": [
+        "cpe:2.3:a:openlit:openlit_software_development_kit:*:*:*:*:*:python:*:*"
+      ],
       "openpyxl": [
         "cpe:2.3:a:python:openpyxl:*:*:*:*:*:*:*:*"
       ],
       "openssh-key-parser": [
         "cpe:2.3:a:openssh_key_parser_project:openssh_key_parser:*:*:*:*:*:python:*:*"
+      ],
+      "ormar": [
+        "cpe:2.3:a:collerek:ormar:*:*:*:*:*:python:*:*"
       ],
       "ovirt-engine-sdk-python": [
         "cpe:2.3:a:ovirt-engine-sdk-python_project:ovirt-engine-sdk-python:*:*:*:*:*:*:*:*"
@@ -6164,6 +6230,9 @@
       ],
       "pdm": [
         "cpe:2.3:a:frostming:pdm:*:*:*:*:*:python:*:*"
+      ],
+      "pillow-heif": [
+        "cpe:2.3:a:bigcat88:pillow-heif:*:*:*:*:*:python:*:*"
       ],
       "pipreqs": [
         "cpe:2.3:a:pipreqs_project:pipreqs:*:*:*:*:*:python:*:*"
@@ -6936,6 +7005,9 @@
       "autorand": [
         "cpe:2.3:a:autorand_project:autorand:*:*:*:*:*:rust:*:*"
       ],
+      "aws-lc-fips-sys": [
+        "cpe:2.3:a:amazon:aws-lc-fips-sys:*:*:*:*:*:rust:*:*"
+      ],
       "axum-core": [
         "cpe:2.3:a:axum-core_project:axum-core:*:*:*:*:*:rust:*:*"
       ],
@@ -7301,6 +7373,9 @@
       ],
       "rust-embed": [
         "cpe:2.3:a:rust-embed_project:rust-embed:*:*:*:*:*:rust:*:*"
+      ],
+      "salvo": [
+        "cpe:2.3:a:salvo:salvo:*:*:*:*:*:rust:*:*"
       ],
       "scratchpad": [
         "cpe:2.3:a:scratchpad_project:scratchpad:*:*:*:*:*:rust:*:*"
@@ -9349,8 +9424,7 @@
         "cpe:2.3:a:kieranoshea:calendar:*:*:*:*:*:wordpress:*:*"
       ],
       "calendar-booking": [
-        "cpe:2.3:a:startbooking:scheduling_plugin:*:*:*:*:*:wordpress:*:*",
-        "cpe:2.3:a:startbooking:scheduling_plugin_-_online_booking:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:startbooking:scheduling_plugin:*:*:*:*:*:wordpress:*:*"
       ],
       "calendar-plugin": [
         "cpe:2.3:a:calendar_plugin_project:calendar_plugin:*:*:*:*:*:wordpress:*:*"
@@ -10021,7 +10095,8 @@
         "cpe:2.3:a:bestwebsoft:contact_form_multi:*:*:*:*:*:wordpress:*:*"
       ],
       "contact-form-plugin": [
-        "cpe:2.3:a:bestwebsoft:contact_form:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:bestwebsoft:contact_form:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:bestwebsoft:contact_form_with_captcha:*:*:*:*:*:wordpress:*:*"
       ],
       "contact-form-ready": [
         "cpe:2.3:a:nickduncan:contact_form:*:*:*:*:*:wordpress:*:*"
@@ -10825,8 +10900,7 @@
         "cpe:2.3:a:apasionados:dofollow_case_by_case:*:*:*:*:*:wordpress:*:*"
       ],
       "dokan-lite": [
-        "cpe:2.3:a:dokan:dokan:*:*:*:*:lite:wordpress:*:*",
-        "cpe:2.3:a:wedevs:dokan:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:dokan:dokan:*:*:*:*:lite:wordpress:*:*"
       ],
       "dokan-pro": [
         "cpe:2.3:a:dokan:dokan:*:*:*:*:pro:wordpress:*:*"
@@ -10897,7 +10971,8 @@
       "drag-and-drop-multiple-file-upload-contact-form-7": [
         "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:pro:wordpress:*:*",
-        "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:standard:wordpress:*:*"
+        "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_-_contact_form_7:*:*:*:*:standard:wordpress:*:*",
+        "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_for_contact_form_7:*:*:*:*:free:wordpress:*:*"
       ],
       "drag-and-drop-multiple-file-upload-for-woocommerce": [
         "cpe:2.3:a:codedropz:drag_and_drop_multiple_file_upload_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -13387,7 +13462,7 @@
         "cpe:2.3:a:brijeshk89:ip_based_login:*:*:*:*:*:wordpress:*:*"
       ],
       "ip-blacklist-cloud": [
-        "cpe:2.3:a:ip_blacklist_cloud_project:ip_blacklist_cloud:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:ad33lx:ip_blacklist_cloud:*:*:*:*:*:wordpress:*:*"
       ],
       "ip-vault-wp-firewall": [
         "cpe:2.3:a:youtag:two-factor_authentication:*:*:*:*:*:wordpress:*:*"
@@ -14607,7 +14682,7 @@
         "cpe:2.3:a:freshlightlab:wp_mobile_menu:*:*:*:*:*:wordpress:*:*"
       ],
       "modal-dialog": [
-        "cpe:2.3:a:modal_dialog_project:modal_dialog:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:ylefebvre:modal_dialog:*:*:*:*:*:wordpress:*:*"
       ],
       "modal-portfolio": [
         "cpe:2.3:a:internet-formation:modal_portfolio:*:*:*:*:*:wordpress:*:*"
@@ -17074,6 +17149,9 @@
       "shapepress-dsgvo": [
         "cpe:2.3:a:legalweb:wp_dsgvo_tools:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:shapepress:wp_dsgvo_tools:*:*:*:*:*:wordpress:*:*"
+      ],
+      "sharable-password-protected-posts": [
+        "cpe:2.3:a:fabiantodt:private_post_share:*:*:*:*:*:wordpress:*:*"
       ],
       "share-buttons": [
         "cpe:2.3:a:artlosk:social_share_buttons:*:*:*:*:*:wordpress:*:*"
@@ -21255,7 +21333,7 @@
         "cpe:2.3:a:trivetechnology:wp-stats-dashboard:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-stats-manager": [
-        "cpe:2.3:a:plugins-market:wp_visitor_statistics:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:codepress:visitor_statistics:*:*:*:*:-:wordpress:*:*",
         "cpe:2.3:a:wp_visitor_statistics_\\(real_time_traffic\\)_project:wp_visitor_statistics_\\(real_time_traffic\\):*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:wp_visitor_statistics_project:wp_visitor_statistics:*:*:*:*:*:wordpress:*:*"
       ],

@@ -1,6 +1,7 @@
 package nix
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -15,26 +17,33 @@ import (
 
 var _ dbProcessor = processV10DB
 
-func processV10DB(config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error) {
+func processV10DB(ctx context.Context, config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error) {
 	dbContents, err := resolver.FileContentsByLocation(dbLocation)
 	defer internal.CloseAndLogError(dbContents, dbLocation.RealPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read Nix database: %w", err)
 	}
 
-	tempDB, err := createTempDB(dbContents)
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return nil, nil, fmt.Errorf("no temp dir factory in context")
+	}
+	tempDB, cleanupDB, err := createTempDB(td, dbContents)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temporary database: %w", err)
 	}
-	defer os.RemoveAll(tempDB.Name())
+	// defer order is LIFO: cleanupDB (remove file) must run after db.Close and tempDB.Close
+	defer cleanupDB()
+
+	// close order is LIFO: db.Close() (SQLite conn) → tempDB.Close() (file handle) → cleanupDB (remove file)
+	defer tempDB.Close()
 
 	db, err := sql.Open("sqlite", tempDB.Name())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)
 	}
-
-	db.SetConnMaxLifetime(0)
 	defer db.Close()
+	db.SetConnMaxLifetime(0)
 
 	packageEntries, err := extractV10DBPackages(config, db, dbLocation, resolver)
 	if err != nil {
@@ -232,18 +241,20 @@ func finalizeV10DBResults(db *sql.DB, packageEntries map[int]*dbPackageEntry, ca
 	return pkgs, relationships, nil
 }
 
-func createTempDB(content io.ReadCloser) (*os.File, error) {
-	tempFile, err := os.CreateTemp("", "nix-db-*.sqlite")
+func createTempDB(td *tmpdir.TempDir, content io.ReadCloser) (*os.File, func(), error) {
+	noop := func() {}
+
+	tempFile, cleanup, err := td.NewFile("nix-db-*.sqlite") //nolint:gocritic // cleanup is returned to caller, not deferred here
 	if err != nil {
-		return nil, err
+		return nil, noop, err
 	}
 
 	_, err = io.Copy(tempFile, content)
 	if err != nil {
 		tempFile.Close()
-		os.Remove(tempFile.Name())
-		return nil, err
+		cleanup()
+		return nil, noop, err
 	}
 
-	return tempFile, nil
+	return tempFile, cleanup, nil
 }

@@ -39,7 +39,7 @@ var noReturn = rockspec{
 
 // parseRockspec basic parser for rockspec
 func parseRockspecData(reader io.Reader) (rockspec, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // custom parser requires []byte
 	if err != nil {
 		return noReturn, err
 	}
@@ -376,7 +376,7 @@ out:
 			if c != ']' {
 				return "", fmt.Errorf("unterminated literal at %d", *i)
 			}
-			buf.WriteString(fmt.Sprintf("[\"%s\"]", nested.String()))
+			fmt.Fprintf(&buf, "[\"%s\"]", nested.String())
 		case isLiteral(c):
 			buf.WriteByte(c)
 		default:

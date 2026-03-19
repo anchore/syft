@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"io"
 	"path"
 	"path/filepath"
 	"strings"
@@ -174,13 +173,8 @@ func fetchDirectURLData(resolver file.Resolver, metadataLocation file.Location) 
 	}
 	defer internal.CloseAndLogError(directURLContents, directURLLocation.AccessPath)
 
-	buffer, err := io.ReadAll(directURLContents)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	var directURLJson directURLOrigin
-	if err := json.Unmarshal(buffer, &directURLJson); err != nil {
+	if err := json.NewDecoder(directURLContents).Decode(&directURLJson); err != nil {
 		return nil, nil, err
 	}
 

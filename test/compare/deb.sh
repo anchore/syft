@@ -11,7 +11,7 @@ TEST_TYPE=deb
 WORK_DIR=`mktemp -d -t "syft-acceptance-test-${TEST_TYPE}-XXXXXX"`
 NORMAL_TEST_IMAGE=$(echo ${TEST_IMAGE} | tr ':' '-' )
 REPORT=${WORK_DIR}/acceptance-${TEST_TYPE}-${NORMAL_TEST_IMAGE}.json
-GOLDEN_REPORT=${ACC_DIR}/test-fixtures/acceptance-${NORMAL_TEST_IMAGE}.json
+GOLDEN_REPORT=${ACC_DIR}/testdata/acceptance-${NORMAL_TEST_IMAGE}.json
 
 # check if tmp dir was created
 if [[ ! "${WORK_DIR}" || ! -d "${WORK_DIR}" ]]; then

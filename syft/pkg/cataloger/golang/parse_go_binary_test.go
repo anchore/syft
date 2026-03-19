@@ -29,7 +29,7 @@ import (
 func runMakeTarget(t *testing.T, fixtureName string) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
-	fixtureDir := filepath.Join(cwd, "test-fixtures/", fixtureName)
+	fixtureDir := filepath.Join(cwd, "testdata/", fixtureName)
 
 	t.Logf("Generating Fixture in %q", fixtureDir)
 
@@ -84,23 +84,23 @@ func Test_getGOARCHFromBin(t *testing.T) {
 	}{
 		{
 			name:     "pe",
-			filepath: "test-fixtures/archs/binaries/hello-win-amd64",
+			filepath: "testdata/archs/binaries/hello-win-amd64",
 			// see: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 			expected: strconv.Itoa(0x8664),
 		},
 		{
 			name:     "elf-ppc64",
-			filepath: "test-fixtures/archs/binaries/hello-linux-ppc64le",
+			filepath: "testdata/archs/binaries/hello-linux-ppc64le",
 			expected: "ppc64",
 		},
 		{
 			name:     "mach-o-arm64",
-			filepath: "test-fixtures/archs/binaries/hello-mach-o-arm64",
+			filepath: "testdata/archs/binaries/hello-mach-o-arm64",
 			expected: "arm64",
 		},
 		{
 			name:     "linux-arm",
-			filepath: "test-fixtures/archs/binaries/hello-linux-arm",
+			filepath: "testdata/archs/binaries/hello-linux-arm",
 			expected: "arm",
 		},
 		{

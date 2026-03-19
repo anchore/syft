@@ -9,17 +9,17 @@ import (
 	"github.com/anchore/syft/internal/capabilities/pkgtestobservation"
 )
 
-// FindTestFixtureDirs walks the cataloger directory tree and returns all test-fixtures directories
-func FindTestFixtureDirs(repoRoot string) ([]string, error) {
+// FindTestDataDirs walks the cataloger directory tree and returns all testdata directories
+func FindTestDataDirs(repoRoot string) ([]string, error) {
 	catalogerRoot := filepath.Join(repoRoot, "syft", "pkg", "cataloger")
-	var testFixtureDirs []string
+	var testDataDirs []string
 
 	err := filepath.Walk(catalogerRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() && info.Name() == "test-fixtures" {
-			testFixtureDirs = append(testFixtureDirs, path)
+		if info.IsDir() && info.Name() == "testdata" {
+			testDataDirs = append(testDataDirs, path)
 		}
 		return nil
 	})
@@ -27,7 +27,7 @@ func FindTestFixtureDirs(repoRoot string) ([]string, error) {
 		return nil, fmt.Errorf("failed to walk cataloger directory: %w", err)
 	}
 
-	return testFixtureDirs, nil
+	return testDataDirs, nil
 }
 
 // ReadTestObservations reads and parses a test-observations.json file

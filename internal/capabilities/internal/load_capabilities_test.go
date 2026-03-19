@@ -1233,7 +1233,7 @@ func TestCatalogerDataQuality(t *testing.T) {
 }
 
 // TestCatalogersHaveTestObservations ensures that all custom catalogers (and optionally parsers) have
-// test observations recorded in test-fixtures/test-observations.json, which proves they are using the
+// test observations recorded in testdata/test-observations.json, which proves they are using the
 // pkgtest.CatalogTester helpers and have test coverage.
 func TestCatalogersHaveTestObservations(t *testing.T) {
 	checkCompletenessTestsEnabled(t)
@@ -1249,11 +1249,11 @@ func TestCatalogersHaveTestObservations(t *testing.T) {
 	observedCatalogers := strset.New()
 	observedParsers := make(map[string]*strset.Set) // package -> parser set
 
-	// walk test-fixtures directories to find test-observations.json files
-	testFixtureDirs, err := FindTestFixtureDirs(repoRoot)
+	// walk testdata directories to find test-observations.json files
+	testDataDirs, err := FindTestDataDirs(repoRoot)
 	require.NoError(t, err)
 
-	for _, dir := range testFixtureDirs {
+	for _, dir := range testDataDirs {
 		observationsFile := filepath.Join(dir, "test-observations.json")
 		if _, err := os.Stat(observationsFile); os.IsNotExist(err) {
 			continue
