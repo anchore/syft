@@ -111,6 +111,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/bun'
+        packages:
+          - class: bun-binary
+            name: bun
+            purl: pkg:generic/bun
+            cpes:
+              - cpe:2.3:a:oven-sh:bun:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/VERSION*'
         packages:
           - class: go-binary-hint

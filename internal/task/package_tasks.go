@@ -8,6 +8,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	bitnamiSbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/bitnami"
+	"github.com/anchore/syft/syft/pkg/cataloger/bun"
 	"github.com/anchore/syft/syft/pkg/cataloger/conda"
 	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
@@ -53,6 +54,7 @@ const (
 	JavaScript = "javascript"
 	Node       = "node"
 	NPM        = "npm"
+	Bun        = "bun"
 
 	// Python ecosystem labels
 	Python = "python"
@@ -107,6 +109,7 @@ func DefaultPackageTaskFactories() Factories {
 			},
 			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Node, NPM,
 		),
+		newSimplePackageTaskFactory(bun.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Bun),
 		newSimplePackageTaskFactory(php.NewComposerLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "php", "composer"),
 		newSimplePackageTaskFactory(php.NewPearCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, pkgcataloging.ImageTag, "php", "pear"),
 		newPackageTaskFactory(

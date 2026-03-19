@@ -671,6 +671,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("nodejs-binary"),
 			},
 		},
+		// Bun runtime tests - early version
+		{
+			logicalFixture: "bun/0.5.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "0.5.9",
+				PURL:      "pkg:generic/bun@0.5.9",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		// Bun runtime tests - major 1.0 release
+		{
+			logicalFixture: "bun/1.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.0.0",
+				PURL:      "pkg:generic/bun@1.0.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		// Bun runtime tests - mid version
+		{
+			logicalFixture: "bun/1.1.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.1.0",
+				PURL:      "pkg:generic/bun@1.1.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		// Bun runtime tests - recent version
+		{
+			logicalFixture: "bun/1.3.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.3.5",
+				PURL:      "pkg:generic/bun@1.3.5",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
 		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
