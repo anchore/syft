@@ -2,6 +2,8 @@ package options
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormatSPDXJSON_buildConfig(t *testing.T) {
@@ -11,5 +13,7 @@ func TestFormatSPDXJSON_buildConfig(t *testing.T) {
 	ft = setAllToNonZero(t, ft).(*FormatSPDXJSON)
 
 	subject := ft.config("Version")
-	assertExpectedValue(t, subject)
+	require.Equal(t, "Version", subject.Version)
+	require.Equal(t, "2.3", subject.DefaultVersion)
+	require.True(t, subject.Pretty)
 }

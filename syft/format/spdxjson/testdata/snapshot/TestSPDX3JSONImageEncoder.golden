@@ -1,0 +1,157 @@
+{
+ "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+ "@graph": [
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "Anchore, Inc",
+   "spdxId": "SPDXRef:Organization-1",
+   "type": "Organization"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "syft-v0.42.0-bogus",
+   "spdxId": "SPDXRef:Tool-1",
+   "type": "Tool"
+  },
+  {
+   "@id": "_:CreationInfo-1",
+   "created":"redacted",
+   "createdBy": [
+    "SPDXRef:Organization-1"
+   ],
+   "createdUsing": [
+    "SPDXRef:Tool-1"
+   ],
+   "specVersion": "3.0.1",
+   "type": "CreationInfo"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "externalIdentifier": [],
+   "name": "user-image-input",
+   "software_copyrightText": "NOASSERTION",
+   "software_downloadLocation": "NOASSERTION",
+   "software_packageUrl": "pkg:oci/user-image-input@sha256%3A2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368?arch=",
+   "software_packageVersion": "sha256:2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+   "software_primaryPurpose": "container",
+   "spdxId": "SPDXRef:DocumentRoot-Image-user-image-input",
+   "type": "software_Package",
+   "verifiedUsing": [
+    {
+     "algorithm": "sha256",
+     "hashValue": "2731251dc34951c0e50fcc643b4c5f74922dad1a5d98f302b504cf46cd5d9368",
+     "type": "Hash"
+    }
+   ]
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "externalIdentifier": [
+    {
+     "externalIdentifierType": "cpe23",
+     "identifier": "cpe:2.3:*:some:package:1:*:*:*:*:*:*:*",
+     "type": "ExternalIdentifier"
+    }
+   ],
+   "name": "package-1",
+   "software_copyrightText": "NOASSERTION",
+   "software_downloadLocation": "NOASSERTION",
+   "software_packageUrl": "a-purl-1",
+   "software_packageVersion": "1.0.1",
+   "software_sourceInfo": "acquired package info from installed python package manifest file: /somefile-1.txt",
+   "spdxId": "SPDXRef:Package-python-package-1-2f52f617f1548337",
+   "type": "software_Package"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "externalIdentifier": [
+    {
+     "externalIdentifierType": "cpe23",
+     "identifier": "cpe:2.3:*:some:package:2:*:*:*:*:*:*:*",
+     "type": "ExternalIdentifier"
+    }
+   ],
+   "name": "package-2",
+   "software_copyrightText": "NOASSERTION",
+   "software_downloadLocation": "NOASSERTION",
+   "software_packageUrl": "pkg:deb/debian/package-2@2.0.1",
+   "software_packageVersion": "2.0.1",
+   "software_sourceInfo": "acquired package info from DPKG DB: /somefile-2.txt",
+   "spdxId": "SPDXRef:Package-deb-package-2-4b756c6f6fb127a3",
+   "type": "software_Package"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "from": "SPDXRef:DocumentRoot-Image-user-image-input",
+   "relationshipType": "contains",
+   "spdxId": "SPDXRef:Relationship-1",
+   "to": [
+    "SPDXRef:Package-python-package-1-2f52f617f1548337",
+    "SPDXRef:Package-deb-package-2-4b756c6f6fb127a3"
+   ],
+   "type": "Relationship"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "from": "SPDXRef:DocumentRoot-Image-user-image-input",
+   "relationshipType": "contains",
+   "spdxId": "SPDXRef:Relationship-2",
+   "to": [
+    "SPDXRef:Package-deb-package-2-4b756c6f6fb127a3"
+   ],
+   "type": "Relationship"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "element": [
+    "SPDXRef:Relationship-1",
+    "SPDXRef:Relationship-2",
+    "SPDXRef:Relationship-2"
+   ],
+   "rootElement": [
+    "SPDXRef:DocumentRoot-Image-user-image-input"
+   ],
+   "spdxId": "SPDXRef:SBOM-1",
+   "type": "software_Sbom"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "name": "CC0-1.0",
+   "simplelicensing_licenseText": "",
+   "spdxId": "SPDXRef:ListedLicense-1",
+   "type": "expandedlicensing_ListedLicense"
+  },
+  {
+   "creationInfo": "_:CreationInfo-1",
+   "dataLicense": "SPDXRef:ListedLicense-1",
+   "element": [
+    "SPDXRef:Organization-1",
+    "SPDXRef:Tool-1",
+    "SPDXRef:SBOM-1",
+    "SPDXRef:Relationship-1",
+    "SPDXRef:DocumentRoot-Image-user-image-input",
+    "SPDXRef:Package-python-package-1-2f52f617f1548337",
+    "SPDXRef:Package-deb-package-2-4b756c6f6fb127a3",
+    "SPDXRef:Relationship-2",
+    "SPDXRef:ListedLicense-1"
+   ],
+   "name": "user-image-input",
+   "namespaceMap": [
+    {
+     "namespace":"https://redacted/",
+     "prefix": "SPDXRef",
+     "type": "NamespaceMap"
+    }
+   ],
+   "profileConformance": [
+    "core",
+    "software"
+   ],
+   "rootElement": [
+    "SPDXRef:SBOM-1"
+   ],
+   "spdxId":"https://redacted",
+   "type": "SpdxDocument"
+  }
+ ]
+}
