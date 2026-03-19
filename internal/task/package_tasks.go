@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dart"
 	"github.com/anchore/syft/syft/pkg/cataloger/debian"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
+	"github.com/anchore/syft/syft/pkg/cataloger/electron"
 	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
 	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
 	"github.com/anchore/syft/syft/pkg/cataloger/gentoo"
@@ -180,12 +181,14 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
 		newSimplePackageTaskFactory(snap.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "snap"),
 		newSimplePackageTaskFactory(ai.NewGGUFCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "gguf", "ml"),
+		newSimplePackageTaskFactory(electron.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "electron", JavaScript, "asar"),
 
 		// deprecated catalogers ////////////////////////////////////////
 		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)
 		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeprecatedTag),               //nolint:staticcheck // TODO: remove in syft v2.0
 		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DeprecatedTag), //nolint:staticcheck // TODO: remove in syft v2.0
 		newSimplePackageTaskFactory(php.NewPeclCataloger, pkgcataloging.DeprecatedTag),                        //nolint:staticcheck // TODO: remove in syft v2.0
-		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag),                       //nolint:staticcheck // TODO: remove in syft v2.0
+		//nolint:staticcheck // TODO: remove in syft v2.0
+		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag),
 	}
 }
