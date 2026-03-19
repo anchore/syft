@@ -1,0 +1,52 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: javascript # MANUAL
+    name: electron-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/electron/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - image
+      - javascript
+      - electron
+      - asar
+      - language
+    parsers: # AUTO-GENERATED structure
+      - function: parseAsarArchive
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/app.asar'
+            - '**/Contents/Resources/app.asar'
+            - '**/Contents/Resources/electron.asar'
+            - '**/Contents/Resources/app/node_modules.asar'
+            - '**/resources/app.asar'
+            - '**/resources/electron.asar'
+            - '**/resources/app/node_modules.asar'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmPackage
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmPackage
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
