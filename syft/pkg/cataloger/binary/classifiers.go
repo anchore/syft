@@ -232,7 +232,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "arangodb-binary",
 			FileGlob: "**/arangosh",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s\[linux\]`),
+				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s(enterprise\s)?\[linux\]`),
 			Package: "arangodb",
 			PURL:    mustPURL("pkg:generic/arangodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
