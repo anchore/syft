@@ -23,6 +23,7 @@ const (
 	depsJSONGlob = "**/*.deps.json"
 	dllGlob      = "**/*.dll"
 	exeGlob      = "**/*.exe"
+	bplGlob      = "**/*.bpl"
 )
 
 // depsBinaryCataloger will search for both deps.json evidence and PE file evidence to create packages. All packages
@@ -464,7 +465,7 @@ func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) 
 
 // findPEFiles locates and parses all PE files (dll/exe).
 func findPEFiles(resolver file.Resolver) ([]logicalPE, error, error) {
-	peLocs, err := resolver.FilesByGlob(dllGlob, exeGlob)
+	peLocs, err := resolver.FilesByGlob(dllGlob, exeGlob, bplGlob)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to find PE files: %w", err)
 	}
