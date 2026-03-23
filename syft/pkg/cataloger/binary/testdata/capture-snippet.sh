@@ -151,4 +151,4 @@ while $CONTINUE_LOOP; do
 
 done
 
-go run ./manager write-snippet "$BINARY_FILE" --offset "$OFFSET" --length "$LENGTH" --name "$GROUP_NAME" --version "$VERSION"
+go run ../internal/manager write-snippet "$BINARY_FILE" --offset "$OFFSET" --length "$LENGTH" --name "$GROUP_NAME" --version "$VERSION"

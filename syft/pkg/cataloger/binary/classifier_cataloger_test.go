@@ -62,6 +62,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "arangodb/3.12.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.5",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "arangodb/3.12.5-2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.5-2",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.5-2",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
