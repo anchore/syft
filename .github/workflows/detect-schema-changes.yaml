@@ -37,6 +37,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
           persist-credentials: false
+          ref: main # IMPORTANT!  It is CRITICAL that this only ever considers the code from main and NEVER EVER from a fork.
 
       - run: python .github/scripts/labeler.py
         env:
