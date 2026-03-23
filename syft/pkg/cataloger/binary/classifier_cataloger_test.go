@@ -727,6 +727,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "go-version-hint/1.15-dev/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			logicalFixture: "go-version-hint/1.15/any",
 			expected: pkg.Package{
 				Name:      "go",
