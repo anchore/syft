@@ -219,6 +219,16 @@ func Test_RoundTrip(t *testing.T) {
 				Version: "3.2",
 			},
 		},
+		{
+			name: "escaped colon",
+			cpe:  "cpe:2.3:a:test_vendor:name\\:\\:module:3.2:*:*:*:*:*:*:*",
+			parsedCPE: Attributes{
+				Part:    "a",
+				Vendor:  "test_vendor",
+				Product: "name::module",
+				Version: "3.2",
+			},
+		},
 	}
 
 	for _, test := range tests {
