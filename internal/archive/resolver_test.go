@@ -412,6 +412,161 @@ func TestCompositeResolver_MultipleChildren(t *testing.T) {
 	assert.Contains(t, accessPaths[1], "archive2.zip:")
 }
 
+func TestCompositeResolver_NestedChildren_ChildInChild(t *testing.T) {
+	// Simulates: base filesystem -> archive1.tar.gz -> archive2.zip -> inner file
+	// In practice the orchestrator adds children at different depths, but the resolver
+	// itself just has a flat list of children. The nesting is encoded in the AccessPath.
+	parent := newMockResolver(map[string]string{
+		"/base.txt": "base",
+	})
+
+	// First level: contents of archive1.tar.gz
+	child1 := newMockResolver(map[string]string{
+		"/inner-archive.zip": "zipdata", // this is an archive inside archive1
+		"/readme.txt":        "readme from archive1",
+	})
+
+	// Second level: contents of inner-archive.zip (which was inside archive1.tar.gz)
+	child2 := newMockResolver(map[string]string{
+		"/deep-file.txt": "deeply nested content",
+	})
+
+	composite := NewCompositeResolver(parent)
+
+	// Add child1 as extracted from archive1.tar.gz (depth 1)
+	archive1Loc := file.NewLocation("/archive1.tar.gz")
+	fsID1 := composite.AddChild(child1, archive1Loc, 1)
+
+	// Add child2 as extracted from inner-archive.zip which was in archive1 (depth 2)
+	// The archive location for child2 refers to the inner-archive.zip as it appears in child1
+	innerArchiveLoc := file.Location{
+		LocationData: file.LocationData{
+			Coordinates: file.Coordinates{
+				RealPath:     "/inner-archive.zip",
+				FileSystemID: fsID1,
+			},
+			AccessPath: "/archive1.tar.gz:/inner-archive.zip",
+		},
+	}
+	fsID2 := composite.AddChild(child2, innerArchiveLoc, 2)
+
+	assert.Equal(t, 2, composite.ChildCount())
+	assert.NotEqual(t, fsID1, fsID2)
+
+	// Should find base file
+	locs, err := composite.FilesByPath("/base.txt")
+	require.NoError(t, err)
+	assert.Len(t, locs, 1)
+	assert.Equal(t, "/base.txt", locs[0].AccessPath)
+
+	// Should find readme from archive1
+	locs, err = composite.FilesByPath("/readme.txt")
+	require.NoError(t, err)
+	require.Len(t, locs, 1)
+	assert.Equal(t, "/archive1.tar.gz:/readme.txt", locs[0].AccessPath)
+	assert.Equal(t, fsID1, locs[0].FileSystemID)
+
+	// Should find deeply nested file
+	locs, err = composite.FilesByPath("/deep-file.txt")
+	require.NoError(t, err)
+	require.Len(t, locs, 1)
+	// The access path shows the full chain: outer-archive:inner-archive:file
+	assert.Equal(t, "/archive1.tar.gz:/inner-archive.zip:/deep-file.txt", locs[0].AccessPath)
+	assert.Equal(t, fsID2, locs[0].FileSystemID)
+
+	// Should be able to read the deeply nested content
+	reader, err := composite.FileContentsByLocation(locs[0])
+	require.NoError(t, err)
+	defer reader.Close()
+	content, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	assert.Equal(t, "deeply nested content", string(content))
+}
+
+func TestCompositeResolver_EmptyChild(t *testing.T) {
+	parent := newMockResolver(map[string]string{
+		"/file.txt": "content",
+	})
+	child := newMockResolver(map[string]string{})
+
+	composite := NewCompositeResolver(parent)
+	composite.AddChild(child, file.NewLocation("/empty.zip"), 1)
+
+	// should still find parent files
+	locs, err := composite.FilesByPath("/file.txt")
+	require.NoError(t, err)
+	assert.Len(t, locs, 1)
+
+	// no extra locations from empty child
+	ctx := context.Background()
+	var all []file.Location
+	for loc := range composite.AllLocations(ctx) {
+		all = append(all, loc)
+	}
+	assert.Len(t, all, 1)
+}
+
+func TestCompositeResolver_SameFileInParentAndChild(t *testing.T) {
+	// File with the same path exists in both parent and child
+	parent := newMockResolver(map[string]string{
+		"/config.yaml": "parent version",
+	})
+	child := newMockResolver(map[string]string{
+		"/config.yaml": "child version",
+	})
+
+	composite := NewCompositeResolver(parent)
+	fsID := composite.AddChild(child, file.NewLocation("/archive.zip"), 1)
+
+	locs, err := composite.FilesByPath("/config.yaml")
+	require.NoError(t, err)
+	// Should find both versions
+	assert.Len(t, locs, 2)
+
+	// parent version has no archive prefix
+	parentLoc := locs[0]
+	assert.Equal(t, "/config.yaml", parentLoc.AccessPath)
+	assert.Empty(t, parentLoc.FileSystemID)
+
+	// child version has archive prefix
+	childLoc := locs[1]
+	assert.Equal(t, "/archive.zip:/config.yaml", childLoc.AccessPath)
+	assert.Equal(t, fsID, childLoc.FileSystemID)
+
+	// can read both
+	r1, err := composite.FileContentsByLocation(parentLoc)
+	require.NoError(t, err)
+	c1, _ := io.ReadAll(r1)
+	r1.Close()
+	assert.Equal(t, "parent version", string(c1))
+
+	r2, err := composite.FileContentsByLocation(childLoc)
+	require.NoError(t, err)
+	c2, _ := io.ReadAll(r2)
+	r2.Close()
+	assert.Equal(t, "child version", string(c2))
+}
+
+func TestCompositeResolver_AllLocations_ContextCancellation(t *testing.T) {
+	parent := newMockResolver(map[string]string{
+		"/a.txt": "a",
+		"/b.txt": "b",
+		"/c.txt": "c",
+	})
+
+	composite := NewCompositeResolver(parent)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	var count int
+	for range composite.AllLocations(ctx) {
+		count++
+	}
+	// with cancelled context, we may get 0 or some locations, but shouldn't hang
+	assert.True(t, count <= 3)
+}
+
 func TestCompositeResolver_NoChildren_BehavesLikeParent(t *testing.T) {
 	parent := newMockResolver(map[string]string{
 		"/file.txt": "content",
