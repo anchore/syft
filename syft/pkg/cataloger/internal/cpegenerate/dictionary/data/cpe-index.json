@@ -52,6 +52,12 @@
       "github.com/ecnepsnai/web": [
         "cpe:2.3:a:web_project:web:*:*:*:*:*:go:*:*"
       ],
+      "github.com/free5gc/amf": [
+        "cpe:2.3:a:free5gc:amf:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/free5gc/go-upf": [
+        "cpe:2.3:a:free5gc:go-upf:*:*:*:*:*:go:*:*"
+      ],
       "github.com/free5gc/smf": [
         "cpe:2.3:a:free5gc:smf:*:*:*:*:*:go:*:*"
       ],
@@ -2314,6 +2320,9 @@
       "@ckeditor/ckeditor5-widget": [
         "cpe:2.3:a:ckeditor:ckeditor5-widget:*:*:*:*:*:node.js:*:*"
       ],
+      "@coding-solo/godot-mcp": [
+        "cpe:2.3:a:coding-solo:godot_mcp:*:*:*:*:*:*:*:*"
+      ],
       "@cookiex/deep": [
         "cpe:2.3:a:cookiex-deep_project:cookiex-deep:*:*:*:*:*:node.js:*:*"
       ],
@@ -2476,6 +2485,12 @@
       ],
       "@thi.ng/egf": [
         "cpe:2.3:a:\\@thi.ng\\/egf_project:\\@thi.ng\\/egf:*:*:*:*:*:node.js:*:*"
+      ],
+      "@tinacms/cli": [
+        "cpe:2.3:a:ssw:tinacms\\/cli:*:*:*:*:*:node.js:*:*"
+      ],
+      "@tinacms/graphql": [
+        "cpe:2.3:a:ssw:tinacms\\/graphql:*:*:*:*:*:node.js:*:*"
       ],
       "@tiptap/extension-link": [
         "cpe:2.3:a:tiptap:tiptap\\/extension-link:*:*:*:*:*:node.js:*:*"
@@ -3076,6 +3091,9 @@
       "defaults-deep": [
         "cpe:2.3:a:defaults-deep_project:defaults-deep:*:*:*:*:*:node.js:*:*"
       ],
+      "defuddle": [
+        "cpe:2.3:a:kepano:defuddle:*:*:*:*:*:node.js:*:*"
+      ],
       "desafio": [
         "cpe:2.3:a:desafio_project:desafio:*:*:*:*:*:node.js:*:*"
       ],
@@ -3279,6 +3297,9 @@
       "express-openid-connect": [
         "cpe:2.3:a:auth0:express_openid_connect:*:*:*:*:*:node.js:*:*"
       ],
+      "express-rate-limit": [
+        "cpe:2.3:a:express-rate-limit:express-rate-limit:*:*:*:*:*:node.js:*:*"
+      ],
       "express-restify-mongoose": [
         "cpe:2.3:a:express-restify-mongoose_project:express-restify-mongoose:*:*:*:*:*:node.js:*:*"
       ],
@@ -3361,7 +3382,7 @@
         "cpe:2.3:a:fibjs_project:fibjs:*:*:*:*:*:node.js:*:*"
       ],
       "file-type": [
-        "cpe:2.3:a:file-type_project:file-type:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:sindresorhus:file-type:*:*:*:*:*:node.js:*:*"
       ],
       "file-upload-with-preview": [
         "cpe:2.3:a:johndatserakis:file-upload-with-preview:*:*:*:*:*:node.js:*:*"
@@ -5476,6 +5497,9 @@
       "terminal-kit": [
         "cpe:2.3:a:terminal-kit_project:terminal-kit:*:*:*:*:*:node.js:*:*"
       ],
+      "terriajs-server": [
+        "cpe:2.3:a:terria:terriajs-server:*:*:*:*:*:node.js:*:*"
+      ],
       "terser": [
         "cpe:2.3:a:terser:terser:*:*:*:*:*:node.js:*:*"
       ],
@@ -5490,6 +5514,9 @@
       ],
       "timespan": [
         "cpe:2.3:a:timespan_project:timespan:*:*:*:*:*:node.js:*:*"
+      ],
+      "tinacms": [
+        "cpe:2.3:a:ssw:tinacms:*:*:*:*:*:node.js:*:*"
       ],
       "tiny-conf": [
         "cpe:2.3:a:tiny-conf_project:tiny-conf:*:*:*:*:*:node.js:*:*"
@@ -5598,6 +5625,9 @@
       ],
       "ungit": [
         "cpe:2.3:a:ungit_project:ungit:*:*:*:*:*:node.js:*:*"
+      ],
+      "unhead": [
+        "cpe:2.3:a:unjs:unhead:*:*:*:*:*:node.js:*:*"
       ],
       "unicode": [
         "cpe:2.3:a:unicode_project:unicode:*:*:*:*:*:node.js:*:*"
@@ -5980,6 +6010,9 @@
       "b2sdk": [
         "cpe:2.3:a:backblaze:b2-sdk-python:*:*:*:*:*:*:*:*"
       ],
+      "black": [
+        "cpe:2.3:a:python:black:*:*:*:*:*:python:*:*"
+      ],
       "blackduck": [
         "cpe:2.3:a:synopsys:hub-rest-api-python:*:*:*:*:*:*:*:*"
       ],
@@ -6046,6 +6079,9 @@
       ],
       "datapizza-ai": [
         "cpe:2.3:a:datapizza:datapizza_ai:*:*:*:*:*:*:*:*"
+      ],
+      "dbt-common": [
+        "cpe:2.3:a:getdbt:dbt-common:*:*:*:*:*:*:*:*"
       ],
       "decorator": [
         "cpe:2.3:a:python:decorator:*:*:*:*:*:*:*:*"
@@ -6179,6 +6215,9 @@
       ],
       "marshmallow": [
         "cpe:2.3:a:marshmallow_project:marshmallow:*:*:*:*:*:python:*:*"
+      ],
+      "mcp-memory-service": [
+        "cpe:2.3:a:doobidoo:mcp-memory-service:*:*:*:*:*:*:*:*"
       ],
       "mltable": [
         "cpe:2.3:a:microsoft:azure_machine_learning_software_development_kit:*:*:*:*:*:*:*:*"
@@ -7007,6 +7046,12 @@
       ],
       "aws-lc-fips-sys": [
         "cpe:2.3:a:amazon:aws-lc-fips-sys:*:*:*:*:*:rust:*:*"
+      ],
+      "aws-lc-rs": [
+        "cpe:2.3:a:amazon:aws-lc-rs:*:*:*:*:*:rust:*:*"
+      ],
+      "aws-lc-sys": [
+        "cpe:2.3:a:amazon:aws-lc-sys:*:*:*:*:*:rust:*:*"
       ],
       "axum-core": [
         "cpe:2.3:a:axum-core_project:axum-core:*:*:*:*:*:rust:*:*"
@@ -9186,6 +9231,9 @@
       "bravo-translate": [
         "cpe:2.3:a:guelbetech:bravo_translate:*:*:*:*:*:wordpress:*:*"
       ],
+      "bread-butter": [
+        "cpe:2.3:a:breadbutter:bread_\\\u0026_butter:*:*:*:*:*:wordpress:*:*"
+      ],
       "breadcrumbs-by-menu": [
         "cpe:2.3:a:holest:breadcrumbs_by_menu:*:*:*:*:*:wordpress:*:*"
       ],
@@ -10038,6 +10086,9 @@
       ],
       "contact-form-7-paypal-add-on": [
         "cpe:2.3:a:wpplugin:paypal_\\\u0026_stripe_add-on:*:*:*:*:*:wordpress:*:*"
+      ],
+      "contact-form-7-recaptcha": [
+        "cpe:2.3:a:iambriansreed:contact_form_7_recaptcha:*:*:*:*:*:wordpress:*:*"
       ],
       "contact-form-7-simple-recaptcha": [
         "cpe:2.3:a:contact_form_7_captcha_project:contact_form_7_captcha:*:*:*:*:*:wordpress:*:*"
