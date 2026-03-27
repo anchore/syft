@@ -1,0 +1,12 @@
+name = "MissingExtra"
+uuid = "12345678-1234-1234-1234-123456789abc"
+version = "0.1.0"
+
+[deps]
+Example = "7876af07-990d-54b4-ab0e-23690620f79a"
+
+[extras]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+
+[targets]
+test = ["CSV"]

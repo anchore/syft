@@ -1,0 +1,82 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+configs: # AUTO-GENERATED - config structs and their fields
+  julia.CatalogerConfig:
+    fields:
+      - key: IncludeExtras
+        description: IncludeExtras enables including extra dependencies (such as test dependencies) in the catalog results.
+        app_key: julia.include-extras
+      - key: IncludeWeakDeps
+        description: IncludeWeakDeps enables including weak dependencies (dependency extensions) in the catalog results.
+        app_key: julia.include-weakdeps
+catalogers:
+  - ecosystem: julia # MANUAL
+    name: julia-manifest-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/julia/cataloger.go
+      function: NewPackageCataloger
+    config: julia.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - julia
+      - language
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseManifest
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/Manifest.toml'
+            - '**/Manifest-v*.toml'
+        metadata_types: # AUTO-GENERATED
+          - pkg.JuliaManifestEntry
+        package_types: # AUTO-GENERATED
+          - julia-pkg
+        json_schema_types: # AUTO-GENERATED
+          - JuliaManifestEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+            evidence:
+              - JuliaManifestEntry.Deps
+          - name: dependency.edges
+            default: complete
+            evidence:
+              - JuliaManifestEntry.Deps
+          - name: dependency.kinds
+            default:
+              - runtime
+            conditions:
+              - when:
+                  IncludeExtras: true
+                  IncludeWeakDeps: true
+                value:
+                  - runtime
+                  - test
+                  - optional
+                comment: extras in [targets].test are test dependencies; other extras and weakdeps are optional
+              - when:
+                  IncludeExtras: true
+                value:
+                  - runtime
+                  - test
+                  - optional
+                comment: extras in [targets].test are test; other extras are optional
+              - when:
+                  IncludeWeakDeps: true
+                value:
+                  - runtime
+                  - optional
+                comment: weakdeps are optional dependencies via dependency extensions
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

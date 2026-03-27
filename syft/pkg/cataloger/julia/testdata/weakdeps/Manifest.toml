@@ -1,0 +1,13 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.9.0"
+manifest_format = "2.0"
+project_hash = "abc123def456"
+
+[[deps.A]]
+uuid = "11111111-1111-1111-1111-111111111111"
+version = "0.1.0"
+
+[[deps.WeakDep]]
+uuid = "00000000-0000-0000-0000-000000000000"
+version = "1.0.0"

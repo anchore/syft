@@ -135,6 +135,11 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:generic/conda@1.2.3",
 			expected: CondaPkg,
 		},
+		{
+			name:     "julia",
+			purl:     "pkg:julia/JSON3@0.21.4?uuid=682c06a0-de6a-54ab-a142-c8b1cf79cde6",
+			expected: JuliaPkg,
+		},
 	}
 
 	var pkgTypes = strset.New()
