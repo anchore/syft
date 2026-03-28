@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="th" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birthday Invite</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,400&amp;display=swap" rel="stylesheet">
+  <style>
+  html, body { height: 100%; margin: 0; }
+  .sparkle { position: absolute; border-radius: 50%; pointer-events: none; animation: sparkleFloat 3s ease-out forwards; }
+  @keyframes sparkleFloat {
+    0% { opacity: 1; transform: scale(0) translateY(0); }
+    30% { opacity: 1; transform: scale(1) translateY(-30px); }
+    100% { opacity: 0; transform: scale(0.5) translateY(-120px); }
+  }
+  .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; pointer-events: none; animation: confettiFall linear forwards; }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(800px) rotate(720deg); opacity: 0; }
+  }
+  .card-glow { box-shadow: 0 0 60px rgba(250,204,21,0.08), 0 0 120px rgba(250,204,21,0.04); }
+  .invite-card { animation: cardEntry 1s cubic-bezier(0.16,1,0.3,1) both; }
+  @keyframes cardEntry {
+    from { opacity: 0; transform: translateY(40px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .stagger-1 { animation: fadeUp 0.7s 0.3s both; }
+  .stagger-2 { animation: fadeUp 0.7s 0.5s both; }
+  .stagger-3 { animation: fadeUp 0.7s 0.7s both; }
+  .stagger-4 { animation: fadeUp 0.7s 0.9s both; }
+  .stagger-5 { animation: fadeUp 0.7s 1.1s both; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .btn-celebrate {
+    position: relative; overflow: hidden; transition: all 0.3s;
+  }
+  .btn-celebrate::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+    transform: translateX(-100%); transition: transform 0.6s;
+  }
+  .btn-celebrate:hover::after { transform: translateX(100%); }
+  .divider-line {
+    width: 60px; height: 1px; margin: 0 auto;
+    background: linear-gradient(90deg, transparent, rgba(250,204,21,0.5), transparent);
+  }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full flex items-center justify-center relative overflow-auto" style="background: linear-gradient(160deg, #0c0f1a 0%, #141831 40%, #1a1230 70%, #0f0a1e 100%);"><!-- Subtle background dots -->
+   <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(rgba(250,204,21,0.3) 1px, transparent 1px); background-size: 40px 40px;"></div>
+   <div class="invite-card card-glow relative z-10 text-center px-8 py-10 mx-4 rounded-3xl" style="background: linear-gradient(170deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); max-width: 420px; width: 100%;">
+    <div id="el-title" class="stagger-1" style="font-family: 'Playfair Display', serif; font-size: 38px; font-weight: 700; color: #fff; letter-spacing: -0.5px;">
+     Birthday Party 🎉
+    </div>
+    <div class="divider-line mt-4 mb-4 stagger-1"></div>
+    <div id="el-name" class="stagger-2" style="font-family: 'Playfair Display', serif; font-size: 24px; font-style: italic; color: #facc15;">
+     เพื่อนสนิทของฉัน
+    </div>
+    <p id="el-message" class="stagger-3 mt-5 leading-relaxed" style="font-family: 'Noto Sans Thai', sans-serif; font-size: 15px; color: rgba(255,255,255,0.8);">วันเกิดปีนี้ อยากให้มีแต่คนที่ "ใช่" อยู่ด้วยกัน<br>
+     มานั่งชิล กิน ดื่ม และหัวเราะไปด้วยกัน</p>
+    <div id="el-location" class="stagger-4 mt-5 py-3 px-4 rounded-xl" style="font-family: 'Noto Sans Thai', sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+     📍 โฟล์คพระนคร รัชดา กรุงเทพฯ<br>
+     📅 8 เมษายน 2569
+    </div><button class="btn-celebrate stagger-5 mt-7 px-8 py-3 rounded-full font-semibold tracking-wide" style="font-family: 'Noto Sans Thai', sans-serif; background: linear-gradient(135deg, #facc15, #f59e0b); color: #1a1230; font-size: 15px; border: none; cursor: pointer;" onclick="celebrate()"> <span class="flex items-center justify-center gap-2"> <i data-lucide="party-popper" style="width:18px;height:18px;"></i> Celebrate! </span> </button>
+    <div id="el-tagline" class="stagger-5 mt-6" style="font-family: 'Playfair Display', serif; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: rgba(250,204,21,0.5);">
+     Only good vibes &amp; real friends
+    </div>
+   </div>
+  </div>
+  <script>
+  const defaultConfig = {
+    background_color: '#141831',
+    surface_color: 'rgba(255,255,255,0.07)',
+    text_color: '#ffffff',
+    primary_action_color: '#facc15',
+    secondary_action_color: '#f59e0b',
+    font_family: 'Playfair Display',
+    font_size: 16,
+    party_title: 'Birthday Party 🎉',
+    guest_name: 'เพื่อนสนิทของฉัน',
+    invite_message: 'วันเกิดปีนี้ อยากให้มีแต่คนที่ "ใช่" อยู่ด้วยกัน\nมานั่งชิล กิน ดื่ม และหัวเราะไปด้วยกัน',
+    location_info: '📍 โฟล์คพระนคร รัชดา กรุงเทพฯ\n📅 8 เมษายน 2569',
+    tagline_text: 'Only good vibes & real friends'
+  };
+
+  function applyConfig(config) {
+    const c = { ...defaultConfig, ...config };
+    const base = c.font_size || defaultConfig.font_size;
+    const font = c.font_family || defaultConfig.font_family;
+    const thaiStack = `'Noto Sans Thai', sans-serif`;
+    const displayStack = `'${font}', serif`;
+
+    // Background
+    document.getElementById('app').style.background = `linear-gradient(160deg, ${c.background_color} 0%, ${c.background_color} 100%)`;
+
+    // Title
+    const titleEl = document.getElementById('el-title');
+    titleEl.textContent = c.party_title;
+    titleEl.style.fontFamily = displayStack;
+    titleEl.style.fontSize = `${base * 2.375}px`;
+    titleEl.style.color = c.text_color;
+
+    // Name
+    const nameEl = document.getElementById('el-name');
+    nameEl.textContent = c.guest_name;
+    nameEl.style.fontFamily = displayStack;
+    nameEl.style.fontSize = `${base * 1.5}px`;
+    nameEl.style.color = c.primary_action_color;
+
+    // Message
+    const msgEl = document.getElementById('el-message');
+    msgEl.innerHTML = (c.invite_message || '').replace(/\n/g, '<br>');
+    msgEl.style.fontFamily = thaiStack;
+    msgEl.style.fontSize = `${base * 0.9375}px`;
+    msgEl.style.color = `${c.text_color}cc`;
+
+    // Location
+    const locEl = document.getElementById('el-location');
+    locEl.innerHTML = (c.location_info || '').replace(/\n/g, '<br>');
+    locEl.style.fontFamily = thaiStack;
+    locEl.style.fontSize = `${base * 0.875}px`;
+    locEl.style.color = `${c.text_color}b3`;
+
+    // Button
+    const btn = document.querySelector('.btn-celebrate');
+    btn.style.background = `linear-gradient(135deg, ${c.primary_action_color}, ${c.secondary_action_color})`;
+    btn.style.fontFamily = thaiStack;
+    btn.style.fontSize = `${base * 0.9375}px`;
+
+    // Tagline
+    const tagEl = document.getElementById('el-tagline');
+    tagEl.textContent = c.tagline_text;
+    tagEl.style.fontFamily = displayStack;
+    tagEl.style.fontSize = `${base * 0.75}px`;
+    tagEl.style.color = `${c.primary_action_color}80`;
+  }
+
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => applyConfig(config),
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
+        { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
+        { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
+        { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
+        { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } },
+      ],
+      borderables: [],
+      fontEditable: {
+        get: () => config.font_family || defaultConfig.font_family,
+        set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); }
+      },
+      fontSizeable: {
+        get: () => config.font_size || defaultConfig.font_size,
+        set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); }
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['party_title', config.party_title || defaultConfig.party_title],
+      ['guest_name', config.guest_name || defaultConfig.guest_name],
+      ['invite_message', config.invite_message || defaultConfig.invite_message],
+      ['location_info', config.location_info || defaultConfig.location_info],
+      ['tagline_text', config.tagline_text || defaultConfig.tagline_text],
+    ])
+  });
+
+  function celebrate() {
+    const colors = ['#facc15','#f59e0b','#fff','#ec4899','#a78bfa','#34d399'];
+    for (let i = 0; i < 50; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + '%';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      el.style.animationDelay = (Math.random() * 0.5) + 's';
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      el.style.width = (Math.random() * 6 + 6) + 'px';
+      el.style.height = (Math.random() * 6 + 6) + 'px';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }
+  }
+
+  lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e379ca8558455a1',t:'MTc3NDcxMTE1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
