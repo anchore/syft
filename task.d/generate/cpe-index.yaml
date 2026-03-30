@@ -2,18 +2,18 @@ version: "3"
 
 vars:
   CPE_CACHE_DIR: "syft/pkg/cataloger/internal/cpegenerate/dictionary/index-generator/.cpe-cache"
-  CPE_CACHE_REGISTRY: "ghcr.io/anchore/syft/cpe-cache:latest"
+  CPE_CACHE_REGISTRY: '{{env "CPE_CACHE_REGISTRY" | default "ghcr.io/anchore/syft/cpe-cache:latest"}}'
   CPE_INDEX_OUTPUT: "syft/pkg/cataloger/internal/cpegenerate/dictionary/data/cpe-index.json"
   CPE_GENERATOR_DIR: "syft/pkg/cataloger/internal/cpegenerate/dictionary/index-generator"
 
 tasks:
   cache:pull:
-    desc: Pull CPE cache from ORAS registry (ghcr.io/anchore/syft/cpe-cache:latest)
+    desc: Pull CPE cache from ORAS registry
     # deps: [tools]
     cmds:
       - cmd: |
           set -eu
-          echo "Pulling CPE cache from ORAS registry..."
+          echo "Pulling CPE cache from {{ .CPE_CACHE_REGISTRY }}..."
           mkdir -p {{ .CPE_CACHE_DIR }}
 
           # pull compressed files from ORAS
