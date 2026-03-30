@@ -14,17 +14,21 @@ type WalkDiskDirFunc func(fsys filesystem.FileSystem, path string, d os.FileInfo
 // WalkDiskDir walks the file tree within the go-diskfs filesystem at root, calling fn for each file or directory in the tree, including root.
 // This is meant to mimic the behavior of fs.WalkDir in the standard library.
 func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) error {
-	infos, err := fsys.ReadDir(root)
+	entries, err := fsys.ReadDir(root)
 
 	if err != nil {
 		return err
 	}
 
-	if len(infos) == 0 {
+	if len(entries) == 0 {
 		return nil
 	}
 
-	for _, info := range infos {
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
 		p := filepath.Join(root, info.Name())
 		err = walkDiskDir(fsys, p, info, fn)
 		if err != nil {
@@ -75,7 +79,11 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 
 	for _, d1 := range dirs {
 		name1 := filepath.Join(name, d1.Name())
-		if err := walkDiskDir(fsys, name1, d1, walkDirFn); err != nil {
+		info1, err := d1.Info()
+		if err != nil {
+			return err
+		}
+		if err := walkDiskDir(fsys, name1, info1, walkDirFn); err != nil {
 			if errors.Is(err, fs.SkipDir) {
 				break
 			}
