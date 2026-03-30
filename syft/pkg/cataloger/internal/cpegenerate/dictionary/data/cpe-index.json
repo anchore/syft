@@ -22,6 +22,9 @@
       "github.com/apptainer/apptainer": [
         "cpe:2.3:a:lfprojects:apptainer:*:*:*:*:*:go:*:*"
       ],
+      "github.com/aquasecurity/trivy/pkg/types": [
+        "cpe:2.3:a:aquasec:trivy:*:*:*:*:*:go:*:*"
+      ],
       "github.com/argoproj/argo-workflows/v3": [
         "cpe:2.3:a:argoproj:argo_workflows:*:*:*:*:*:go:*:*"
       ],
@@ -1270,6 +1273,9 @@
       ],
       "literate": [
         "cpe:2.3:a:jenkins:literate:*:*:*:*:*:jenkins:*:*"
+      ],
+      "loadninja": [
+        "cpe:2.3:a:jenkins:loadninja:*:*:*:*:*:jenkins:*:*"
       ],
       "lockable-resources": [
         "cpe:2.3:a:jenkins:lockable_resources:*:*:*:*:*:jenkins:*:*"
@@ -5338,6 +5344,9 @@
       "sly07": [
         "cpe:2.3:a:sly07_project:sly07:*:*:*:*:*:node.js:*:*"
       ],
+      "sm-crypto": [
+        "cpe:2.3:a:juneandgreen:sm-crypto:*:*:*:*:*:node.js:*:*"
+      ],
       "smb": [
         "cpe:2.3:a:smb_project:smb:*:*:*:*:*:node.js:*:*"
       ],
@@ -6665,6 +6674,9 @@
       ],
       "gon": [
         "cpe:2.3:a:gon_project:gon:*:*:*:*:*:ruby:*:*"
+      ],
+      "graphiti": [
+        "cpe:2.3:a:graphiti:graphiti:*:*:*:*:*:ruby:*:*"
       ],
       "gyazo": [
         "cpe:2.3:a:gyazo_project:gyazo:*:*:*:*:*:ruby:*:*"
