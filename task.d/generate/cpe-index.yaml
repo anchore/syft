@@ -10,7 +10,7 @@ vars:
 tasks:
   cache:pull:
     desc: Pull CPE cache from ORAS registry (ghcr.io/anchore/oss-cache/cpe-cache:latest)
-    # deps: [tools]
+    deps: [':tools']
     cmds:
       - cmd: |
           set -eu
