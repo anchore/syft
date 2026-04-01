@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"maps"
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -245,7 +243,8 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 		return nil, fmt.Errorf("failed to unmarshal yarn v2 lockfile: %w", err)
 	}
 
-	packages := make(map[string]yarnPackage)
+	var packages []yarnPackage
+	seenPkgs := strset.New()
 	for key, value := range lockfile {
 		packageName := findPackageName(key)
 		if packageName == "" {
@@ -253,10 +252,19 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 			continue
 		}
 
-		packages[packageName] = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+		// Deduplicate by name@version, similar to the Yarn v1 parser.
+		// This allows multiple versions of the same package (e.g., async@0.9.2 and async@3.2.6)
+		// but prevents duplicates from the same version appearing multiple times in the lockfile.
+		pkgKey := packageName + "@" + value.Version
+		if seenPkgs.Has(pkgKey) {
+			continue
+		}
+		seenPkgs.Add(pkgKey)
+
+		packages = append(packages, yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies})
 	}
 
-	return slices.Collect(maps.Values(packages)), nil
+	return packages, nil
 }
 
 func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
