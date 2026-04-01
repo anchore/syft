@@ -60,8 +60,22 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 
 func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]interface{}) {
 	switch component.Type {
-	case cyclonedx.ComponentTypeOS:
 	case cyclonedx.ComponentTypeContainer:
+		// skip container components - they are handled separately as source metadata
+	case cyclonedx.ComponentTypeOS:
+		p := decodeOSComponent(component)
+		idMap[component.BOMRef] = p
+		if component.BOMRef != "" {
+			// always prefer the IDs from the SBOM over derived IDs
+			p.OverrideID(artifact.ID(component.BOMRef))
+		} else {
+			p.SetID()
+		}
+		syftID := p.ID()
+		if syftID != "" {
+			idMap[string(syftID)] = p
+		}
+		s.Artifacts.Packages.Add(*p)
 	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary, cyclonedx.ComponentTypeMachineLearningModel:
 		p := decodeComponent(component)
 		idMap[component.BOMRef] = p
@@ -83,6 +97,32 @@ func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[str
 			collectPackages(&(*component.Components)[i], s, idMap)
 		}
 	}
+}
+
+func decodeOSComponent(component *cyclonedx.Component) *pkg.Package {
+	var name string
+	var version string
+	if component.SWID != nil {
+		name = component.SWID.Name
+		version = component.SWID.Version
+	}
+	if name == "" {
+		name = component.Name
+	}
+	if version == "" {
+		version = component.Version
+	}
+
+	p := &pkg.Package{
+		Name:     name,
+		Version:  version,
+		Type:     pkg.OperatingSystemPkg,
+		CPEs:     decodeCPEs(component),
+		Licenses: pkg.NewLicenseSet(decodeLicenses(component)...),
+	}
+
+	p.SetID()
+	return p
 }
 
 func linuxReleaseFromComponents(components []cyclonedx.Component) *linux.Release {
