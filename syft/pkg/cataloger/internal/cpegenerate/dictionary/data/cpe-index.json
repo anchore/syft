@@ -3638,6 +3638,9 @@
       "hapi-auth-jwt2": [
         "cpe:2.3:a:hapi-auth-jwt2_project:hapi-auth-jwt2:*:*:*:*:*:node.js:*:*"
       ],
+      "happy-dom": [
+        "cpe:2.3:a:capricorn86:happy_dom:*:*:*:*:*:nodejs:*:*"
+      ],
       "harp": [
         "cpe:2.3:a:npmjs:harp:*:*:*:*:*:*:*:*"
       ],
@@ -4184,6 +4187,9 @@
       "madlib-object-utils": [
         "cpe:2.3:a:springtree:madlib-object-utils:*:*:*:*:*:node.js:*:*"
       ],
+      "mailparser": [
+        "cpe:2.3:a:nodemailer:mailparser:*:*:*:*:*:node.js:*:*"
+      ],
       "makerjs": [
         "cpe:2.3:a:microsoft:maker.js:*:*:*:*:*:node.js:*:*"
       ],
@@ -4425,7 +4431,8 @@
         "cpe:2.3:a:mystem3_project:mystem3:*:*:*:*:*:node.js:*:*"
       ],
       "n8n": [
-        "cpe:2.3:a:n8n:n8n:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:n8n:n8n:*:*:*:*:community:node.js:*:*",
+        "cpe:2.3:a:n8n:n8n:*:*:*:*:enterprise:node.js:*:*"
       ],
       "nanoid": [
         "cpe:2.3:a:nanoid_project:nanoid:*:*:*:*:*:node.js:*:*"
@@ -6425,6 +6432,9 @@
       ],
       "scoptrial": [
         "cpe:2.3:a:scoptrial_project:scoptrial:*:*:*:*:*:pypi:*:*"
+      ],
+      "semantic-kernel": [
+        "cpe:2.3:a:microsoft:semantic_kernel:*:*:*:*:*:python:*:*"
       ],
       "sentry-sdk": [
         "cpe:2.3:a:sentry:sentry_software_development_kit:*:*:*:*:*:python:*:*"
