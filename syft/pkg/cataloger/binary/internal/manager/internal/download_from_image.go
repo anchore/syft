@@ -196,6 +196,11 @@ func platformInManifest(imageReference, wantPlatform string) (bool, error) {
 		return false, fmt.Errorf("unable to unmarshal manifest: %w", err)
 	}
 
+	// if no manifests are found, this is a single manifest; return an error to trigger fallback
+	if len(ml.Manifests) == 0 {
+		return false, fmt.Errorf("no manifests found in manifest list")
+	}
+
 	for _, m := range ml.Manifests {
 		p := fmt.Sprintf("%s/%s", m.Platform.OS, m.Platform.Architecture)
 		if p == wantPlatform {
