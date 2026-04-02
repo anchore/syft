@@ -40,7 +40,7 @@ updates:
   - package-ecosystem: "github-actions"
     directories:
       - "/"
-      - "/.github/actions/bootstrap"
+      - "/.github/actions/*"
     cooldown:
       default-days: 7
     schedule:

@@ -1,3 +1,5 @@
+# Note: this workflow has been disabled manually in the UI and will be replaced in short order
+
 name: "Detect schema changes"
 
 on:
