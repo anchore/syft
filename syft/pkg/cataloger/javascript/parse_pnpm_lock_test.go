@@ -463,6 +463,28 @@ func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePnpmLockV9WithDevDependencies(t *testing.T) {
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	fixture := "test-fixtures/pnpm-v9-devDeps/pnpm-lock.yaml"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "yaml",
+			Version:   "2.8.3",
+			PURL:      "pkg:npm/yaml@2.8.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution: pkg.PnpmLockResolution{Integrity: "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+	var expectedRelationships []artifact.Relationship
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
 func TestSearchPnpmForLicenses(t *testing.T) {
 	ctx := context.TODO()
 	fixture := "testdata/pnpm-remote/pnpm-lock.yaml"

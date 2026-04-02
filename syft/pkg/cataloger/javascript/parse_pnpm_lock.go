@@ -58,10 +58,20 @@ type pnpmV9PackageEntry struct {
 	Dev              bool              `yaml:"dev"`
 }
 
+type pnpmV9ImporterDep struct {
+	Specifier string `yaml:"specifier"`
+	Version   string `yaml:"version"`
+}
+
+type pnpmV9Importer struct {
+	Dependencies    map[string]pnpmV9ImporterDep `yaml:"dependencies"`
+	DevDependencies map[string]pnpmV9ImporterDep `yaml:"devDependencies"`
+}
+
 // pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
 type pnpmV9LockYaml struct {
 	LockfileVersion string                         `yaml:"lockfileVersion"`
-	Importers       map[string]interface{}         `yaml:"importers"` // Using interface{} for forward compatibility
+	Importers       map[string]pnpmV9Importer      `yaml:"importers"`
 	Packages        map[string]pnpmV9PackageEntry  `yaml:"packages"`
 	Snapshots       map[string]pnpmV9SnapshotEntry `yaml:"snapshots"`
 }
@@ -132,6 +142,26 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 		return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
 	}
 
+	// Build sets of non-dev and dev-only direct dependencies from importers.
+	// A package is dev-only if it appears in devDependencies but never in dependencies.
+	nonDevPkgs := make(map[string]bool)
+	for _, importer := range p.Importers {
+		for name, dep := range importer.Dependencies {
+			ver := strings.SplitN(dep.Version, "(", 2)[0]
+			nonDevPkgs[name+"@"+ver] = true
+		}
+	}
+	devOnlyPkgs := make(map[string]bool)
+	for _, importer := range p.Importers {
+		for name, dep := range importer.DevDependencies {
+			ver := strings.SplitN(dep.Version, "(", 2)[0]
+			key := name + "@" + ver
+			if !nonDevPkgs[key] {
+				devOnlyPkgs[key] = true
+			}
+		}
+	}
+
 	packages := make(map[string]pnpmPackage)
 
 	// In v9, all resolved dependencies are listed in the top-level "packages" field.
@@ -144,7 +174,8 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
+		isDev := entry.Dev || devOnlyPkgs[pkgKey]
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: isDev}
 	}
 
 	for key, snapshotInfo := range p.Snapshots {
