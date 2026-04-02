@@ -55,15 +55,29 @@ type pnpmV9SnapshotEntry struct {
 type pnpmV9PackageEntry struct {
 	Resolution       map[string]string `yaml:"resolution"`
 	PeerDependencies map[string]string `yaml:"peerDependencies"`
-	Dev              bool              `yaml:"dev"`
+	Dev              *bool             `yaml:"dev"`
+}
+
+// pnpmV9ImporterEntry represents a single importer (workspace root or workspace package)
+// in a v9+ pnpm lockfile.
+type pnpmV9ImporterEntry struct {
+	Dependencies         map[string]pnpmV9ImporterDep `yaml:"dependencies"`
+	DevDependencies      map[string]pnpmV9ImporterDep `yaml:"devDependencies"`
+	OptionalDependencies map[string]pnpmV9ImporterDep `yaml:"optionalDependencies"`
+}
+
+// pnpmV9ImporterDep represents a dependency entry inside an importer block.
+type pnpmV9ImporterDep struct {
+	Specifier string `yaml:"specifier"`
+	Version   string `yaml:"version"`
 }
 
 // pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
 type pnpmV9LockYaml struct {
-	LockfileVersion string                         `yaml:"lockfileVersion"`
-	Importers       map[string]interface{}         `yaml:"importers"` // Using interface{} for forward compatibility
-	Packages        map[string]pnpmV9PackageEntry  `yaml:"packages"`
-	Snapshots       map[string]pnpmV9SnapshotEntry `yaml:"snapshots"`
+	LockfileVersion string                            `yaml:"lockfileVersion"`
+	Importers       map[string]pnpmV9ImporterEntry    `yaml:"importers"`
+	Packages        map[string]pnpmV9PackageEntry     `yaml:"packages"`
+	Snapshots       map[string]pnpmV9SnapshotEntry    `yaml:"snapshots"`
 }
 
 type genericPnpmLockAdapter struct {
@@ -144,7 +158,11 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
+		pp := pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"]}
+		if entry.Dev != nil {
+			pp.Dev = *entry.Dev
+		}
+		packages[pkgKey] = pp
 	}
 
 	for key, snapshotInfo := range p.Snapshots {
@@ -166,7 +184,102 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 		}
 	}
 
+	// When explicit dev flags are absent, use the importers section to determine
+	// which packages are dev-only via reachability analysis.
+	if p.hasImporterDevDeps() && !p.hasExplicitDevFlags() {
+		devOnly := p.findDevOnlyPackages(packages)
+		for key, pp := range packages {
+			if devOnly[pp.Name] {
+				pp.Dev = true
+				packages[key] = pp
+			}
+		}
+	}
+
 	return toSortedSlice(packages), nil
+}
+
+// hasExplicitDevFlags returns true if any package entry in the lockfile has an
+// explicit "dev" field (true or false). Modern pnpm v9 lockfiles omit this
+// field entirely and rely on the importers section instead.
+func (p *pnpmV9LockYaml) hasExplicitDevFlags() bool {
+	for _, entry := range p.Packages {
+		if entry.Dev != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// hasImporterDevDeps returns true if any importer declares devDependencies.
+func (p *pnpmV9LockYaml) hasImporterDevDeps() bool {
+	for _, imp := range p.Importers {
+		if len(imp.DevDependencies) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// findDevOnlyPackages performs a BFS from production and dev dependency roots
+// (extracted from the importers section) and returns the set of package names
+// reachable only through dev roots.
+func (p *pnpmV9LockYaml) findDevOnlyPackages(packages map[string]pnpmPackage) map[string]bool {
+	prodRoots := make(map[string]bool)
+	devRoots := make(map[string]bool)
+
+	for _, imp := range p.Importers {
+		for name := range imp.Dependencies {
+			prodRoots[name] = true
+		}
+		for name := range imp.OptionalDependencies {
+			prodRoots[name] = true
+		}
+		for name := range imp.DevDependencies {
+			devRoots[name] = true
+		}
+	}
+
+	pkgByName := make(map[string]pnpmPackage)
+	for _, pp := range packages {
+		pkgByName[pp.Name] = pp
+	}
+
+	reachable := func(roots map[string]bool) map[string]bool {
+		visited := make(map[string]bool)
+		queue := make([]string, 0, len(roots))
+		for name := range roots {
+			queue = append(queue, name)
+		}
+		for len(queue) > 0 {
+			name := queue[0]
+			queue = queue[1:]
+			if visited[name] {
+				continue
+			}
+			visited[name] = true
+			if pp, ok := pkgByName[name]; ok {
+				for dep := range pp.Dependencies {
+					if !visited[dep] {
+						queue = append(queue, dep)
+					}
+				}
+			}
+		}
+		return visited
+	}
+
+	prodReachable := reachable(prodRoots)
+	devReachable := reachable(devRoots)
+
+	devOnly := make(map[string]bool)
+	for name := range devReachable {
+		if !prodReachable[name] {
+			devOnly[name] = true
+		}
+	}
+
+	return devOnly
 }
 
 // newPnpmLockfileParser is a factory function that returns the correct parser for the given lockfile version.
