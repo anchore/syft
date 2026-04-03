@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/format/internal/spdxutil"
 	"github.com/anchore/syft/syft/sbom"
 )
 
@@ -106,6 +108,79 @@ func Test_versionMatches(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			matches := versionMatches(test.version, test.match)
 			assert.Equal(t, test.matches, matches)
+		})
+	}
+}
+
+func Test_EncoderCollection_Get(t *testing.T) {
+	tests := []struct {
+		name            string
+		searchName      string
+		searchVersion   string
+		expectedID      sbom.FormatID
+		expectedVersion string
+	}{
+		{
+			name:            "explicit name and version",
+			searchName:      "spdx-json",
+			searchVersion:   "2.3",
+			expectedID:      spdxutil.JSONFormatID,
+			expectedVersion: "2.3",
+		},
+		{
+			name:            "explicit name without version gets default",
+			searchName:      "spdx-json",
+			searchVersion:   "",
+			expectedID:      spdxutil.JSONFormatID,
+			expectedVersion: "2.3",
+		},
+		{
+			name:            "alias name with version",
+			searchName:      "spdx",
+			searchVersion:   "2.2",
+			expectedID:      spdxutil.TagValueFormatID,
+			expectedVersion: "2.2",
+		},
+		{
+			name:            "alias name without version gets default",
+			searchName:      "spdx",
+			searchVersion:   "",
+			expectedID:      spdxutil.TagValueFormatID,
+			expectedVersion: "2.3",
+		},
+		{
+			name:          "invalid name gets nothing",
+			searchName:    "json-spdx",
+			searchVersion: "2.3",
+			expectedID:    "",
+		},
+		{
+			name:          "invalid version gets nothing",
+			searchName:    "spdx-json",
+			searchVersion: "2.0",
+			expectedID:    "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			config := DefaultEncodersConfig()
+			// ensure SPDX default is 2.3 for test
+			config.SPDXJSON.DefaultVersion = "2.3"
+			encoders, err := config.Encoders()
+			require.NoError(t, err)
+			collection := NewEncoderCollection(encoders...)
+			result := collection.Get(test.searchName, test.searchVersion)
+
+			if test.expectedID != "" {
+				require.NotNil(t, result, "expected to find encoder but got nil")
+				if result != nil {
+					require.Equal(t, test.expectedID, result.ID())
+					require.Equal(t, test.expectedVersion, result.Version())
+				}
+			} else {
+				require.Nil(t, result, "expected nil but found encoder")
+			}
 		})
 	}
 }
