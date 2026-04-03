@@ -5,6 +5,7 @@ import (
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/syft/syft/source"
+	"github.com/anchore/syft/syft/source/appimagesource"
 	"github.com/anchore/syft/syft/source/directorysource"
 	"github.com/anchore/syft/syft/source/filesource"
 	"github.com/anchore/syft/syft/source/ocimodelsource"
@@ -34,6 +35,9 @@ func All(userInput string, cfg *Config) []collections.TaggedValue[source.Provide
 
 		// --from snap (local only)
 		Join(tagProvider(snapsource.NewLocalSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), SnapTag)).
+
+		// --from appimage (local only)
+		Join(tagProvider(appimagesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), "appimage")).
 
 		// 2. try unspecific, local sources after other local sources last...
 		Join(tagProvider(filesource.NewSourceProvider(userInput, cfg.Exclude, cfg.DigestAlgorithms, cfg.Alias), FileTag)).
