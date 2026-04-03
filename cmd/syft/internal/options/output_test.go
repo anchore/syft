@@ -201,3 +201,59 @@ func Test_OutputHonorsAllowFile(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func Test_normalizeOutputs(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "config file appends to default",
+			input:    []string{"syft-table", "cyclonedx-json"},
+			expected: []string{"cyclonedx-json"},
+		},
+		{
+			name:     "single default unchanged",
+			input:    []string{"syft-table"},
+			expected: []string{"syft-table"},
+		},
+		{
+			name:     "single non-default unchanged",
+			input:    []string{"cyclonedx-json"},
+			expected: []string{"cyclonedx-json"},
+		},
+		{
+			name:     "duplicates removed",
+			input:    []string{"cyclonedx-json", "cyclonedx-json"},
+			expected: []string{"cyclonedx-json"},
+		},
+		{
+			name:     "multiple non-default outputs preserved",
+			input:    []string{"cyclonedx-json", "spdx-json"},
+			expected: []string{"cyclonedx-json", "spdx-json"},
+		},
+		{
+			name:     "default appended to multiple non-default outputs",
+			input:    []string{"syft-table", "cyclonedx-json", "spdx-json"},
+			expected: []string{"cyclonedx-json", "spdx-json"},
+		},
+		{
+			name:     "whitespace trimmed",
+			input:    []string{"syft-table", " cyclonedx-json "},
+			expected: []string{"cyclonedx-json"},
+		},
+		{
+			name:     "output with file path preserved",
+			input:    []string{"syft-table", "cyclonedx-json=/tmp/out.json"},
+			expected: []string{"cyclonedx-json=/tmp/out.json"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := normalizeOutputs(tt.input)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
