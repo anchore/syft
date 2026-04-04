@@ -4,7 +4,7 @@ configs: # AUTO-GENERATED - config structs and their fields
   kernel.LinuxKernelCatalogerConfig:
     fields:
       - key: CatalogModules
-        description: CatalogModules enables cataloging linux kernel modules (`*.ko` files) in addition to the kernel itself.
+        description: CatalogModules enables cataloging linux kernel modules (`*.ko` and compressed `*.ko.gz`, `*.ko.xz`, `*.ko.zst` files) in addition to the kernel itself.
         app_key: linux-kernel.catalog-modules
 catalogers:
   - ecosystem: linux # MANUAL
@@ -32,6 +32,9 @@ catalogers:
           - '**/vmlinuz'
           - '**/vmlinuz-*'
           - '**/lib/modules/**/*.ko'
+          - '**/lib/modules/**/*.ko.gz'
+          - '**/lib/modules/**/*.ko.xz'
+          - '**/lib/modules/**/*.ko.zst'
     metadata_types: # AUTO-GENERATED
       - pkg.LinuxKernel
       - pkg.LinuxKernelModule
