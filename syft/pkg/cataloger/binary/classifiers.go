@@ -464,9 +464,26 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "hashicorp-vault-binary",
 			FileGlob: "**/vault",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// revoke1.18.0
-				`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// revoke1.18.0
+					`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// secondsindex_state1.20.0-rc1
+					`state(?P<version>[0-9]+\.[0-9]+\.[0-9]+\-rc[0-9])`,
+				),
+				m.FileContentsVersionMatcher(
+					// %s0.0.0.00x%016x1.14.101.49.22123-abc19531252.5.4.32.5.4.52.5.4.62.5.4.72.5.4.82.5.4.92
+					// %s0.0.0.00x%016x1.14.3
+					// txn0.0.0.00x%016x1.13.13123-abc19531252.5.4.32.5.4.52.5.4.62.5.4.72.5.4.82.5.4.92006-019765625: type ::1/128::ffff::method:
+					`016x(?P<version>1.1[1,3,4].[0-9]{1,2})`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]1.11.6[NUL][NUL][NUL]
+					`\x00+(?P<version>1\.[0-9][0,1]?\.[0-9]+)\x00+`,
+				),
+			),
 			Package: "github.com/hashicorp/vault",
 			PURL:    mustPURL("pkg:golang/github.com/hashicorp/vault@version"),
 			CPEs:    singleCPE("cpe:2.3:a:hashicorp:vault:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
