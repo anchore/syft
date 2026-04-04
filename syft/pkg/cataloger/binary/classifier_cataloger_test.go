@@ -1112,6 +1112,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "vault/1.21.0-rc1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.21.0-rc1",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.21.0-rc1",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
 			logicalFixture: "vault/1.20.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "github.com/hashicorp/vault",
@@ -1129,6 +1140,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.19.4",
 				Type:      "golang",
 				PURL:      "pkg:golang/github.com/hashicorp/vault@1.19.4",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.14.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.14.10",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.14.10",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.14.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.14.3",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.14.3",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.13.13/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.13.13",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.13.13",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.11.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.11.6",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.11.6",
 				Locations: locations("vault"),
 				Metadata:  metadata("hashicorp-vault-binary"),
 			},
