@@ -730,7 +730,10 @@ func TestCataloger(t *testing.T) {
 			if len(p.CPEs) == 0 {
 				continue
 			}
-			assert.Contains(t, p.Name, "Microsoft.NETCore.App")
+			if runtimeFamilyFromName(p.Name) != netRuntimeFamily {
+				continue
+			}
+			assert.Equal(t, runtimeCPEs(p.Name, p.Version), p.CPEs)
 			return
 		}
 		t.Error("expected at least one runtime package with a CPE")
