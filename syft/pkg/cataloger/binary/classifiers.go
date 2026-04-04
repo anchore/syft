@@ -453,9 +453,19 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "consul-binary",
 			FileGlob: "**/consul",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// NOTE: This is brittle and may not work for past or future versions
-				`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// NOTE: This is brittle and may not work for past or future versions
+					`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// GitDescribe=1.12.9"
+					`GitDescribe=(?P<version>\d+\.\d+\.\d+)\"`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]v1.7.14[NUL][NUL][NUL]
+					`\x00+v(?P<version>\d+\.\d+\.\d+)\x00+`,
+				),
 			),
 			Package: "consul",
 			PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
