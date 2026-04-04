@@ -29,6 +29,38 @@ catalogers:
       - npm
       - package
     parsers: # AUTO-GENERATED structure
+      - function: parseBunLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/bun.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.BunLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavaScriptBunLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - BunLockEntry.Integrity
       - function: parsePnpmLock
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
