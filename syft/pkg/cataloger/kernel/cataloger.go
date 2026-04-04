@@ -17,7 +17,7 @@ import (
 var _ pkg.Cataloger = (*linuxKernelCataloger)(nil)
 
 type LinuxKernelCatalogerConfig struct {
-	// CatalogModules enables cataloging linux kernel modules (`*.ko` files) in addition to the kernel itself.
+	// CatalogModules enables cataloging linux kernel modules (`*.ko` and compressed `*.ko.gz`, `*.ko.xz`, `*.ko.zst` files) in addition to the kernel itself.
 	// app-config: linux-kernel.catalog-modules
 	CatalogModules bool `yaml:"catalog-modules" json:"catalog-modules" mapstructure:"catalog-modules"`
 }
@@ -43,6 +43,9 @@ var kernelArchiveGlobs = []string{
 
 var kernelModuleGlobs = []string{
 	"**/lib/modules/**/*.ko",
+	"**/lib/modules/**/*.ko.gz",
+	"**/lib/modules/**/*.ko.xz",
+	"**/lib/modules/**/*.ko.zst",
 }
 
 // NewLinuxKernelCataloger returns a new kernel files cataloger object.
