@@ -58,37 +58,7 @@ func (o *Output) PostLoad() error {
 		}
 	}
 
-	o.Outputs = normalizeOutputs(o.Outputs)
-
 	return errs
-}
-
-func normalizeOutputs(outputs []string) []string {
-	seen := strset.New()
-	var deduped []string
-	for _, o := range outputs {
-		trimmed := strings.TrimSpace(o)
-		if !seen.Has(trimmed) {
-			seen.Add(trimmed)
-			deduped = append(deduped, trimmed)
-		}
-	}
-
-	if len(deduped) <= 1 {
-		return deduped
-	}
-
-	var filtered []string
-	for _, o := range deduped {
-		name := strings.SplitN(o, "=", 2)[0]
-		if strings.TrimSpace(name) != string(table.ID) {
-			filtered = append(filtered, o)
-		}
-	}
-	if len(filtered) > 0 {
-		return filtered
-	}
-	return deduped
 }
 
 func (o *Output) AddFlags(flags clio.FlagSet) {

@@ -77,7 +77,32 @@ func parseSBOMOutputFlags(outputs []string, defaultFile string, encoders []sbom.
 
 		out = append(out, newSBOMWriterDescription(enc, file))
 	}
+
+	out = deduplicateStdoutOutputs(out)
+
 	return out, errs
+}
+
+func deduplicateStdoutOutputs(outputs []sbomWriterDescription) []sbomWriterDescription {
+	var stdoutOutputs, fileOutputs []sbomWriterDescription
+	for _, o := range outputs {
+		if o.Path == "" {
+			stdoutOutputs = append(stdoutOutputs, o)
+		} else {
+			fileOutputs = append(fileOutputs, o)
+		}
+	}
+
+	if len(stdoutOutputs) > 1 {
+		var names []string
+		for _, o := range stdoutOutputs {
+			names = append(names, o.Format.ID().String())
+		}
+		log.Warnf("multiple output formats configured for stdout (%s), only the last will be used; append =<file> to a format to write it to a file instead", strings.Join(names, ", "))
+		stdoutOutputs = stdoutOutputs[len(stdoutOutputs)-1:]
+	}
+
+	return append(fileOutputs, stdoutOutputs...)
 }
 
 // formatVersionOptions takes a list like ["github-json", "syft-json@11.0.0", "cyclonedx-xml@1.0", "cyclondx-xml@1.1"...]
