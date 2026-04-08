@@ -851,6 +851,7 @@ catalogers:
           criteria: # AUTO-GENERATED
             - '**/*.dll'
             - '**/*.exe'
+            - '**/*.bpl'
         metadata_types: # AUTO-GENERATED
           - pkg.PEBinary
         package_types: # AUTO-GENERATED
