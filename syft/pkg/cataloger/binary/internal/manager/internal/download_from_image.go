@@ -135,11 +135,17 @@ func checkArchitecturesMatch(imageReference, platform string) (bool, string, err
 
 	// prefer the manifest list for platform info — with Docker's containerd image store,
 	// platform metadata lives on the manifest list entry, not in the image config.
-	if found, err := platformInManifest(imageReference, platform); err == nil {
-		return found, platform, nil
+	// Only return early on a positive match; otherwise fall through to image inspect
+	// to get the actual platform (needed for accurate error messages and single-arch images
+	// that don't have a manifest list).
+	if found, err := platformInManifest(imageReference, platform); err == nil && found {
+		return true, platform, nil
 	}
 
-	// fall back to image config for older Docker daemons that don't support "docker manifest inspect"
+	// fall back to image config when:
+	// - manifest inspect failed (older Docker daemons)
+	// - image has no manifest list (single-arch images)
+	// - platform not found in manifest list (get actual platform for error message)
 	gotPlatform, err := platformFromImageInspect(imageReference)
 	if err != nil {
 		return false, "", err
