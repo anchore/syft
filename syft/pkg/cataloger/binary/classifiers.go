@@ -513,6 +513,17 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "openldap-search-binary",
+			FileGlob: "**/ldapsearch",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// $OpenLDAP: ldapsearch 2.4.45'
+				`\$OpenLDAP:\sldapsearch\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "openldap",
+			PURL:    mustPURL("pkg:generic/openldap@version"),
+			CPEs:    singleCPE("cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "qt-qtbase-lib",
 			FileGlob: "**/libQt*Core.so*",
 			EvidenceMatcher: binutils.MatchAny(
