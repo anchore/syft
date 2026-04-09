@@ -18,11 +18,28 @@ var (
 	licensePattern                 = regexp.MustCompile(`^License: (?P<license>\S*)`)
 	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
 	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
+	formatHeaderPattern            = regexp.MustCompile(`^Format:\s*https?://www\.debian\.org/doc/packaging-manuals/copyright-format/`)
 )
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
+	// Read the entire content so we can check for the Format header
+	// and still use it for parsing if it is machine-readable.
+	allBytes, err := io.ReadAll(reader)
+	if err != nil {
+		return nil
+	}
+	content := string(allBytes)
+
+	// Per the DEP-5 spec, machine-readable copyright files MUST have a
+	// Format field whose value is a URI for the specification. Only files
+	// with this header should be parsed as machine-readable.
+	// See: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+	if !hasFormatHeader(content) {
+		return nil
+	}
+
 	findings := strset.New()
-	scanner := bufio.NewScanner(reader)
+	scanner := bufio.NewScanner(strings.NewReader(content))
 
 	// State machine replacing licenseFirstSentenceAfterHeadingPattern.
 	// That regex only matched at the start of the file: a non-empty heading,
@@ -89,6 +106,21 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 	sort.Strings(results)
 
 	return results
+}
+
+// hasFormatHeader checks whether the content starts with the mandatory Format
+// header field that identifies it as a DEP-5 machine-readable copyright file.
+func hasFormatHeader(content string) bool {
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) == "" {
+			// blank lines before header paragraphs are allowed
+			continue
+		}
+		return formatHeaderPattern.MatchString(line)
+	}
+	return false
 }
 
 // extractUpToFirstPeriod returns the license text up to the first period,

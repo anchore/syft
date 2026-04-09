@@ -2,6 +2,7 @@ package debian
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,13 +15,14 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 		expected []string
 	}{
 		{
-			fixture: "testdata/copyright/libc6",
-			// note: there are other licenses in this file that are not matched --we don't do full text license identification yet
-			expected: []string{"GPL-2", "LGPL-2.1"},
+			// no Format header; not machine-readable, returns nil
+			fixture:  "testdata/copyright/libc6",
+			expected: nil,
 		},
 		{
+			// no Format header; not machine-readable, returns nil
 			fixture:  "testdata/copyright/trilicense",
-			expected: []string{"GPL-2", "LGPL-2.1", "MPL-1.1"},
+			expected: nil,
 		},
 		{
 			fixture:  "testdata/copyright/liblzma5",
@@ -31,21 +33,25 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			expected: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
 		},
 		{
-			fixture: "testdata/copyright/python",
-			// note: this should not capture #, Permission, This, see ... however it's not clear how to fix this (this is probably good enough)
-			expected: []string{"#", "Apache", "Apache-2", "Apache-2.0", "Expat", "GPL-2", "ISC", "LGPL-2.1+", "PSF-2", "Permission", "Python", "This", "see"},
+			// no Format header; not machine-readable, returns nil
+			// previously this captured nonsensical values like "#", "Permission", "This", "see"
+			fixture:  "testdata/copyright/python",
+			expected: nil,
 		},
 		{
+			// no Format header; not machine-readable, returns nil
 			fixture:  "testdata/copyright/cuda",
-			expected: []string{"NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement"},
+			expected: nil,
 		},
 		{
+			// no Format header; not machine-readable, returns nil
 			fixture:  "testdata/copyright/dev-kit",
-			expected: []string{"LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS"},
+			expected: nil,
 		},
 		{
+			// no Format header; not machine-readable, returns nil
 			fixture:  "testdata/copyright/microsoft",
-			expected: []string{"LICENSE AGREEMENT FOR MICROSOFT PRODUCTS"},
+			expected: nil,
 		},
 	}
 
@@ -61,5 +67,69 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 				t.Errorf("unexpected package licenses (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestHasFormatHeader(t *testing.T) {
+	tests := []struct {
+		name     string
+		content  string
+		expected bool
+	}{
+		{
+			name:     "valid http Format header",
+			content:  "Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			expected: true,
+		},
+		{
+			name:     "valid https Format header",
+			content:  "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			expected: true,
+		},
+		{
+			name:     "blank lines before Format header",
+			content:  "\n\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			expected: true,
+		},
+		{
+			name:     "no Format header",
+			content:  "This is the Debian prepackaged version of foo.\n",
+			expected: false,
+		},
+		{
+			name:     "Format header is not first non-blank line",
+			content:  "Some-Field: value\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			expected: false,
+		},
+		{
+			name:     "empty content",
+			content:  "",
+			expected: false,
+		},
+		{
+			name:     "only blank lines",
+			content:  "\n\n\n",
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := hasFormatHeader(test.content)
+			if actual != test.expected {
+				t.Errorf("hasFormatHeader(%q) = %v, want %v", test.content, actual, test.expected)
+			}
+		})
+	}
+}
+
+func TestParseLicensesFromCopyrightInline(t *testing.T) {
+	// verify that a file with License: fields but no Format header returns nil
+	content := `License: GPL-2
+License: LGPL-2.1
+`
+	actual := parseLicensesFromCopyright(strings.NewReader(content))
+	if actual != nil {
+		t.Errorf("expected nil for non-machine-readable file, got %v", actual)
 	}
 }
