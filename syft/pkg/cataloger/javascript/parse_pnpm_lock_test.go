@@ -463,6 +463,67 @@ func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePnpmLockV9_ExcludeDevDependencies(t *testing.T) {
+	// Regression test for https://github.com/anchore/syft/issues/4734
+	// Modern pnpm v9 lockfiles do not set "dev: true" on package entries; instead
+	// the importers section distinguishes dependencies from devDependencies.
+	fixture := "testdata/pnpm-v9-dev-deps/pnpm-lock.yaml"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "yaml",
+			Version:   "2.8.3",
+			PURL:      "pkg:npm/yaml@2.8.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+	var expectedRelationships []artifact.Relationship
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParsePnpmLockV9_IncludeDevDependencies(t *testing.T) {
+	fixture := "testdata/pnpm-v9-dev-deps/pnpm-lock.yaml"
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "husky",
+			Version:   "9.1.7",
+			PURL:      "pkg:npm/husky@9.1.7",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "yaml",
+			Version:   "2.8.3",
+			PURL:      "pkg:npm/yaml@2.8.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+	var expectedRelationships []artifact.Relationship
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
 func TestSearchPnpmForLicenses(t *testing.T) {
 	ctx := context.TODO()
 	fixture := "testdata/pnpm-remote/pnpm-lock.yaml"
