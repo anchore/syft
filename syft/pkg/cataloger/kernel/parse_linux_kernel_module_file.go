@@ -1,10 +1,16 @@
 package kernel
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"debug/elf"
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/klauspost/compress/zstd"
+	"github.com/ulikunitz/xz"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -20,7 +26,13 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
-	metadata, err := parseLinuxKernelModuleMetadata(unionReader)
+
+	moduleReader, err := decompressedModuleReader(reader.RealPath, unionReader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to decompress kernel module %q: %w", reader.RealPath, err)
+	}
+
+	metadata, err := parseLinuxKernelModuleMetadata(moduleReader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
 	}
@@ -37,6 +49,61 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 			reader.Location,
 		),
 	}, nil, nil
+}
+
+// decompressedModuleReader returns a UnionReader over the decompressed contents of the kernel module
+// if the path indicates it is compressed (.ko.gz, .ko.xz, .ko.zst). For plain .ko files, the
+// original reader is returned unchanged.
+func decompressedModuleReader(path string, r unionreader.UnionReader) (unionreader.UnionReader, error) {
+	var decompressed []byte
+
+	switch {
+	case strings.HasSuffix(path, ".ko.gz"):
+		gz, err := gzip.NewReader(r)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create gzip reader: %w", err)
+		}
+		defer gz.Close()
+		decompressed, err = io.ReadAll(gz)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decompress gzip stream: %w", err)
+		}
+
+	case strings.HasSuffix(path, ".ko.xz"):
+		xzr, err := xz.NewReader(r)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create xz reader: %w", err)
+		}
+		decompressed, err = io.ReadAll(xzr)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decompress xz stream: %w", err)
+		}
+
+	case strings.HasSuffix(path, ".ko.zst"):
+		zstdr, err := zstd.NewReader(r)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create zstd reader: %w", err)
+		}
+		defer zstdr.Close()
+		decompressed, err = io.ReadAll(zstdr)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decompress zstd stream: %w", err)
+		}
+
+	default:
+		return r, nil
+	}
+
+	br := bytes.NewReader(decompressed)
+	return struct {
+		io.ReadCloser
+		io.ReaderAt
+		io.Seeker
+	}{
+		ReadCloser: io.NopCloser(br),
+		ReaderAt:   br,
+		Seeker:     br,
+	}, nil
 }
 
 func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModule, err error) {

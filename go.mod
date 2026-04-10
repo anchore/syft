@@ -57,6 +57,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.7.8
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
+	github.com/klauspost/compress v1.18.4
 	github.com/magiconair/properties v1.8.10
 	github.com/mholt/archives v0.1.5
 	github.com/moby/sys/mountinfo v0.7.2
@@ -168,7 +169,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
