@@ -605,6 +605,44 @@ func TestParseYarnLockWithDuplicates(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParseYarnBerryLockWithDuplicates(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/yarn-berry-dups/yarn.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "async",
+			Version:   "0.9.2",
+			Locations: locations,
+			PURL:      "pkg:npm/async@0.9.2",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "async@npm:0.9.2",
+				Integrity:    "10c0/22ac816db119a9b84ac7182fa969b2cceacfcfa278c3efb0ac6a94d1210a4429e42c8cf6e704039aa7662e4ba62f26cecf039c91d41ceb91355dc9672c9b9ac1",
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "async",
+			Version:   "3.2.6",
+			Locations: locations,
+			PURL:      "pkg:npm/async@3.2.6",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:     "async@npm:3.2.6",
+				Integrity:    "10c0/36484bb15ceddf07078688d95e27076379cc2f87b10c03b6dd8a83e89475a3c8df5848859dd06a4c95af1e4c16fc973de0171a77f18ea00be899aca2a4f85e70",
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
+}
+
 type handlerPath struct {
 	path    string
 	handler func(w http.ResponseWriter, r *http.Request)
