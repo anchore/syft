@@ -108,7 +108,7 @@ func (c depsBinaryCataloger) Catalog(_ context.Context, resolver file.Resolver) 
 			Name:      "Microsoft.NETCore.App",
 			Version:   version,
 			Type:      pkg.DotnetPkg,
-			CPEs:      runtimeCPEs(version),
+			CPEs:      runtimeCPEs("Microsoft.NETCore.App", version),
 			Locations: file.NewLocationSet(locs...),
 		}
 		pkgs = append(pkgs, rtp)
