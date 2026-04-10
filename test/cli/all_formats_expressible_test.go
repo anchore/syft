@@ -65,6 +65,10 @@ func Test_formatVersionsExpressible(t *testing.T) {
 			format:    "spdx-json@2.3",
 			assertion: assertInOutput(`"spdxVersion":"SPDX-2.3"`),
 		},
+		{
+			format:    "spdx-json@3.0",
+			assertion: assertInOutput(`https://spdx.org/rdf/3.0`),
+		},
 	}
 
 	for _, test := range tests {
