@@ -303,6 +303,99 @@ func TestZipExtractor_Extract_ZipSlipPrevented(t *testing.T) {
 	assert.True(t, os.IsNotExist(statErr))
 }
 
+func TestZipExtractor_Extract_ReadOnlyDirectoryPermissions(t *testing.T) {
+	// JARs may contain directory entries with read-only permissions (e.g., META-INF/ with mode 0o555).
+	// The extractor must still be able to write files into those directories.
+	dir := t.TempDir()
+	ctx := context.Background()
+
+	zipPath := filepath.Join(dir, "readonly-dirs.zip")
+	f, err := os.Create(zipPath)
+	require.NoError(t, err)
+
+	w := zip.NewWriter(f)
+
+	// create a directory entry with read-only permissions (0o555)
+	dirHeader := &zip.FileHeader{
+		Name: "META-INF/",
+	}
+	dirHeader.SetMode(0o555)
+	_, err = w.CreateHeader(dirHeader)
+	require.NoError(t, err)
+
+	// create a file inside that directory
+	fileHeader := &zip.FileHeader{
+		Name: "META-INF/MANIFEST.MF",
+	}
+	fileHeader.SetMode(0o644)
+	fw, err := w.CreateHeader(fileHeader)
+	require.NoError(t, err)
+	_, err = fw.Write([]byte("Manifest-Version: 1.0"))
+	require.NoError(t, err)
+
+	require.NoError(t, w.Close())
+	require.NoError(t, f.Close())
+
+	ext := &ZipExtractor{}
+	destDir := filepath.Join(dir, "extracted")
+	require.NoError(t, os.MkdirAll(destDir, 0o755))
+
+	result, err := ext.Extract(ctx, zipPath, destDir, ExtractionLimits{})
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.FilesExtracted)
+
+	content, err := os.ReadFile(filepath.Join(destDir, "META-INF", "MANIFEST.MF"))
+	require.NoError(t, err)
+	assert.Equal(t, "Manifest-Version: 1.0", string(content))
+}
+
+func TestTarExtractor_Extract_ReadOnlyDirectoryPermissions(t *testing.T) {
+	// Tar archives may contain directory entries with read-only permissions.
+	// The extractor must still be able to write files into those directories.
+	dir := t.TempDir()
+	ctx := context.Background()
+
+	tarPath := filepath.Join(dir, "readonly-dirs.tar.gz")
+	f, err := os.Create(tarPath)
+	require.NoError(t, err)
+
+	gw := gzip.NewWriter(f)
+	tw := tar.NewWriter(gw)
+
+	// write a directory entry with read-only permissions
+	require.NoError(t, tw.WriteHeader(&tar.Header{
+		Name:     "META-INF/",
+		Typeflag: tar.TypeDir,
+		Mode:     0o555,
+	}))
+
+	// write a file inside that directory
+	content := []byte("Manifest-Version: 1.0")
+	require.NoError(t, tw.WriteHeader(&tar.Header{
+		Name: "META-INF/MANIFEST.MF",
+		Mode: 0o644,
+		Size: int64(len(content)),
+	}))
+	_, err = tw.Write(content)
+	require.NoError(t, err)
+
+	require.NoError(t, tw.Close())
+	require.NoError(t, gw.Close())
+	require.NoError(t, f.Close())
+
+	ext := &TarExtractor{}
+	destDir := filepath.Join(dir, "extracted")
+	require.NoError(t, os.MkdirAll(destDir, 0o755))
+
+	result, err := ext.Extract(ctx, tarPath, destDir, ExtractionLimits{})
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.FilesExtracted)
+
+	extracted, err := os.ReadFile(filepath.Join(destDir, "META-INF", "MANIFEST.MF"))
+	require.NoError(t, err)
+	assert.Equal(t, "Manifest-Version: 1.0", string(extracted))
+}
+
 // verifyExtractedFile is a helper to check extracted file content
 func verifyExtractedFile(t *testing.T, path, expectedContent string) {
 	t.Helper()
