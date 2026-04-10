@@ -765,6 +765,13 @@ from-images:
     paths:
       - /bin/consul
 
+  - version: 1.21.0-rc1
+    images:
+      - ref: hashicorp/vault:1.21.0-rc1@sha256:67523b1e97acc26b050bb74abd251effe728bc3c1d7e80af19d251a511aa68ad
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
   - version: 1.20.2
     images:
       - ref: hashicorp/vault@sha256:5cd2003247e0a574a66c66aee1916b1e9e7f99640298f2e61271a8842d2d2a19
@@ -776,6 +783,34 @@ from-images:
     images:
       - ref: hashicorp/vault@sha256:b5f675b0bf681568cd7354c697fe4ce953024312d6d23ee7216deda60c192bad
         platform: linux/arm64
+    paths:
+      - /bin/vault
+
+  - version: 1.14.10
+    images:
+      - ref: hashicorp/vault:1.14.10@sha256:cf826411f1172c4109da38d9ad90ff83026ef30caae9312aeb77fde868fc7dc8
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
+  - version: 1.14.3
+    images:
+      - ref: hashicorp/vault:1.14.3@sha256:e95f46376b39654f4be020c7be91ac88b6729b6b506e48516bef3b140a901bd5
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
+  - version: 1.13.13
+    images:
+      - ref: hashicorp/vault:1.13.13@sha256:d278cb438626eef0d40de35917b13f032955671b3a15983a7fb336a720bebef4
+        platform: linux/amd64
+    paths:
+      - /bin/vault
+
+  - version: 1.11.6
+    images:
+      - ref: hashicorp/vault:1.11.6@sha256:8366b2e6ad9d0eea9019fda45ccc2551fc67cd0afa0c6e9217ee29f390fa4108
+        platform: linux/amd64
     paths:
       - /bin/vault
 
