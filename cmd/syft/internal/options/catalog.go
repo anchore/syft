@@ -36,6 +36,7 @@ type Catalog struct {
 	Package       packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
 	License       licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
 	File          fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
+	Archive       archiveConfig       `yaml:"archive" json:"archive" mapstructure:"archive"`
 	Scope         string              `yaml:"scope" json:"scope" mapstructure:"scope"`
 	Parallelism   int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
 	Relationships relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
@@ -75,6 +76,7 @@ func DefaultCatalog() Catalog {
 		Scope:         source.SquashedScope.String(),
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
+		Archive:       defaultArchiveConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		JavaScript:    defaultJavaScriptConfig(),
 		Python:        defaultPythonConfig(),
@@ -101,11 +103,24 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
+		WithArchiveConfig(cfg.ToArchiveConfig()).
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().
 				WithDefaults(cfg.DefaultCatalogers...).
 				WithExpression(cfg.SelectCatalogers...),
 		)
+}
+
+func (cfg Catalog) ToArchiveConfig() cataloging.ArchiveSearchConfig {
+	return cataloging.ArchiveSearchConfig{
+		IncludeIndexedArchives:   cfg.Package.SearchIndexedArchives,
+		IncludeUnindexedArchives: cfg.Package.SearchUnindexedArchives,
+		MaxDepth:                 cfg.Archive.MaxDepth,
+		MaxExtractionSizeBytes:   cfg.Archive.MaxExtractionSizeBytes,
+		MaxFileCount:             cfg.Archive.MaxFileCount,
+		MaxTotalExtractionBytes:  cfg.Archive.MaxTotalExtractionBytes,
+		ExcludeExtensions:        cfg.Archive.ExcludeExtensions,
+	}
 }
 
 func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
