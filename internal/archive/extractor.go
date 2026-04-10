@@ -113,7 +113,7 @@ func (z *ZipExtractor) Extract(ctx context.Context, path string, destDir string,
 			if err != nil {
 				return err
 			}
-			return os.MkdirAll(joinedPath, file.Mode())
+			return os.MkdirAll(joinedPath, 0o755)
 		}
 
 		if limits.MaxFileCount > 0 && result.FilesExtracted >= limits.MaxFileCount {
@@ -180,7 +180,7 @@ func (t *TarExtractor) Extract(ctx context.Context, path string, destDir string,
 			if err != nil {
 				return err
 			}
-			return os.MkdirAll(joinedPath, file.Mode())
+			return os.MkdirAll(joinedPath, 0o755)
 		}
 
 		if limits.MaxFileCount > 0 && result.FilesExtracted >= limits.MaxFileCount {
