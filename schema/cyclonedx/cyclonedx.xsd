@@ -6471,6 +6471,7 @@ limitations under the License.
                                     <xs:enumeration value="armv9-a"/>
                                     <xs:enumeration value="armv9-m"/>
                                     <xs:enumeration value="s390x"/>
+                                    <xs:enumeration value="riscv64"/>
                                     <xs:enumeration value="ppc64"/>
                                     <xs:enumeration value="ppc64le"/>
                                     <xs:enumeration value="other"/>
