@@ -463,11 +463,47 @@ func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
-func TestParsePnpmLockV9WithDevDependencies(t *testing.T) {
+func TestParsePnpmLockV10(t *testing.T) {
 	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
-	fixture := "test-fixtures/pnpm-v9-devDeps/pnpm-lock.yaml"
+	fixture := "test-fixtures/pnpm-v10/pnpm-lock.yaml"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
+		{
+			Name:      "prelude-ls",
+			Version:   "1.2.1",
+			PURL:      "pkg:npm/prelude-ls@1.2.1",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "rulespec",
+			Version:   "0.7.0",
+			PURL:      "pkg:npm/rulespec@0.7.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-sCRcZ5vHyF4alO//f2R50+1EHMPImMX9QpRKSXAVP1FkHz/dAqw9vWkEMPxt108T3RrWIZc70GBX7MsBGIxPfA=="},
+				Dependencies: map[string]string{"yaml": "2.8.3"},
+			},
+		},
+		{
+			Name:      "type-check",
+			Version:   "0.4.0",
+			PURL:      "pkg:npm/type-check@0.4.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew=="},
+				Dependencies: map[string]string{"prelude-ls": "1.2.1"},
+			},
+		},
 		{
 			Name:      "yaml",
 			Version:   "2.8.3",
@@ -476,12 +512,23 @@ func TestParsePnpmLockV9WithDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.PnpmLockEntry{
-				Resolution: pkg.PnpmLockResolution{Integrity: "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="},
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="},
 				Dependencies: map[string]string{},
 			},
 		},
 	}
-	var expectedRelationships []artifact.Relationship
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[0], // prelude-ls
+			To:   expectedPkgs[2], // type-check
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: expectedPkgs[3], // yaml
+			To:   expectedPkgs[1], // rulespec
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
