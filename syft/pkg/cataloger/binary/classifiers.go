@@ -374,6 +374,10 @@ func DefaultClassifiers() []binutils.Classifier {
 					// [NUL][NUL]26.1.2[NUL][NUL][NUL][NUL][NUL][NUL][NUL]NUL[NUL][NUL]Erlang/OTP
 					`\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+Erlang/OTP`,
 				),
+				m.FileContentsVersionMatcher(
+					// Erlang/OTP 17%s [erts-6.4.1.6] [source] [64-bit] [smp:%beu:%beu] [async-threads:%d] [hipe] [kernel-poll:%s][NUL]17.5.6.9[NUL][NUL][NUL]
+					`(?s)Erlang/OTP.{1,150}\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+`,
+				),
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),
