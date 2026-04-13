@@ -1,7 +1,6 @@
 package spdxhelpers
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -269,6 +268,7 @@ func v3findLinuxReleaseByPURL(doc *spdx.Document) *linux.Release {
 func v3collectSyftPackages(s *sbom.SBOM, spdxMap ptrMap[any], relationships ptrMap[[]spdx.AnyRelationship], doc *spdx.Document) {
 	skipIDs := v3packageIDsToSkip(doc)
 	found := ptrMap[struct{}]{}
+	// tools-golang collects all elements from the JSON LD @graph to the root SpdxDocument.Elements property
 	for _, elementList := range []spdx.ElementList{doc.Elements, doc.RootElements} {
 		for _, p := range elementList.Packages() {
 			if p == nil || skipIDs.Has(p) || found.Has(p) {
@@ -475,37 +475,81 @@ func v3parseSPDXLicenses(relationships ptrMap[[]spdx.AnyRelationship], p spdx.An
 	rels := relationships.Get(p)
 	for _, r := range rels {
 		if r.GetType() == spdx.RelationshipType_HasConcludedLicense {
-			licenses = append(licenses, v3toSyftLicenses(license.Concluded, r.GetTo().Licenses()...)...)
+			licenses = append(licenses, v3toSyftLicenses(license.Concluded, r.GetTo().LicenseInfos()...)...)
 		}
 		if r.GetType() == spdx.RelationshipType_HasDeclaredLicense {
-			licenses = append(licenses, v3toSyftLicenses(license.Declared, r.GetTo().Licenses()...)...)
+			licenses = append(licenses, v3toSyftLicenses(license.Declared, r.GetTo().LicenseInfos()...)...)
 		}
 	}
 
 	return licenses
 }
 
-func v3toSyftLicenses(licenseType license.Type, licenses ...spdx.AnyLicense) []pkg.License {
+func v3toSyftLicenses(licenseType license.Type, licenses ...spdx.AnyLicenseInfo) []pkg.License {
 	var out []pkg.License
 	for _, lic := range licenses {
-		switch li := lic.(type) {
-		case spdx.AnyLicenseExpression:
-			l := pkg.NewLicenseWithContext(context.TODO(), li.GetLicenseExpression())
-			l.Type = licenseType
-			out = append(out, l)
-		case spdx.AnyListedLicense:
-			l := pkg.NewLicenseWithContext(context.TODO(), li.GetName())
-			l.Type = licenseType
-			out = append(out, l)
-		case spdx.AnyCustomLicense:
-			l := pkg.NewLicenseWithContext(context.TODO(), li.GetText())
-			l.Type = licenseType
-			out = append(out, l)
-		default:
+		if lic == nil {
+			continue
+		}
+		value := v3licenseInfoToExpression(lic)
+		if value == "" {
 			log.Debugf("skipping SPDX license during import: %#v", lic)
+			continue
+		}
+		l := pkg.NewLicense(value)
+		if l.Value != "" {
+			l.Type = licenseType
+			out = append(out, l)
 		}
 	}
 	return out
+}
+
+// v3licenseInfoToExpression recursively converts an SPDX 3.0 license info object to an SPDX expression string.
+func v3licenseInfoToExpression(info spdx.AnyLicenseInfo) string {
+	switch li := info.(type) {
+	case spdx.AnyLicenseExpression:
+		return li.GetLicenseExpression()
+	case spdx.AnyOrLaterOperator:
+		subject := v3licenseInfoToExpression(li.GetSubjectLicense())
+		if subject != "" && !strings.HasSuffix(subject, "+") {
+			return subject + "+"
+		}
+	case spdx.AnyWithAdditionOperator:
+		subject := v3licenseInfoToExpression(li.GetSubjectExtendableLicense())
+		addition := li.GetSubjectAddition()
+		if subject != "" && addition != nil {
+			return subject + " WITH " + addition.GetName()
+		}
+	case spdx.AnyConjunctiveLicenseSet:
+		var parts []string
+		for _, m := range li.GetMembers() {
+			if e := v3licenseInfoToExpression(m); e != "" {
+				parts = append(parts, e)
+			}
+		}
+		if len(parts) > 0 {
+			return strings.Join(parts, " AND ")
+		}
+	case spdx.AnyDisjunctiveLicenseSet:
+		var parts []string
+		for _, m := range li.GetMembers() {
+			if e := v3licenseInfoToExpression(m); e != "" {
+				parts = append(parts, e)
+			}
+		}
+		if len(parts) > 0 {
+			return "(" + strings.Join(parts, " OR ") + ")"
+		}
+	case spdx.AnyListedLicense:
+		return li.GetName()
+	case spdx.AnyCustomLicense:
+		if li.GetID() != "" {
+			return li.GetID()
+		}
+		return li.GetName()
+	}
+	return ""
 }
 
 //nolint:funlen
