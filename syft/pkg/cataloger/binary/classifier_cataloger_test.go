@@ -62,6 +62,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "arangodb/3.12.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.5",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "arangodb/3.12.5-2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.5-2",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.5-2",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "postgres/15beta4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "postgresql",
@@ -727,6 +749,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "go-version-hint/1.15-dev/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			logicalFixture: "go-version-hint/1.15/any",
 			expected: pkg.Package{
 				Name:      "go",
@@ -1157,6 +1189,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "erlang/17.5.6.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "17.5.6.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@17.5.6.9",
+				Locations: locations("beam.smp"),
+				Metadata:  metadata("erlang-alpine-binary"),
+			},
+		},
+		{
 			logicalFixture: "swipl/9.3.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "swipl",
@@ -1297,6 +1340,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/openssl@1.1.1zb",
 				Locations: locations("openssl"),
 				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
+			logicalFixture: "openldap/2.6.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openldap",
+				Version:   "2.6.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/openldap@2.6.10",
+				Locations: locations("ldapsearch"),
+				Metadata:  metadata("openldap-search-binary"),
 			},
 		},
 		{
@@ -1558,12 +1612,56 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.29.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.29.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-alpha.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.29.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.29.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-beta.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.29.0-rc.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.29.0-rc.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-rc.3",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-discovery/1.26.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-discovery",
 				Version:   "1.26.8",
 				Type:      "binary",
 				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.10-dev/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.10-dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.10-dev",
 				Locations: locations("pilot-discovery"),
 				Metadata:  metadata("istio-binary"),
 			},
@@ -1602,12 +1700,56 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-agent/1.29.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.29.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-alpha.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.29.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.29.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-beta.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.29.0-rc.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.29.0-rc.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-rc.3",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-agent/1.26.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-agent",
 				Version:   "1.26.8",
 				Type:      "binary",
 				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.10-dev/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.10-dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.10-dev",
 				Locations: locations("pilot-agent"),
 				Metadata:  metadata("istio-binary"),
 			},

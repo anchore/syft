@@ -10,7 +10,8 @@ vars:
 
   # v1: when fixtures were located at test-fixtures dirs
   # v2: migration to testdata dirs
-  CACHE_IMAGE: ghcr.io/{{ .OWNER }}/{{ .PROJECT }}/test-fixture-cache:v2
+  CACHE_REPO: oss-cache
+  CACHE_IMAGE: ghcr.io/{{ .OWNER }}/{{ .CACHE_REPO }}/syft-test-fixture-cache:v2
 
   # static file dirs
   TOOL_DIR: .tool
@@ -424,7 +425,7 @@ tasks:
       done
       oras_command+=" {{ .CACHE_PATHS_FILE }}"
 
-      oras_command+=" --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .PROJECT }}"
+      oras_command+=" --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .CACHE_REPO }}"
       oras_command+=" --annotation fingerprint=$(cat {{ .CACHE_PATHS_FILE }} | {{ .YQ }} -r '.digest')"
 
       echo "Executing: $oras_command"

@@ -23,6 +23,11 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
+    ignore:
+      - dependency-name: "github.com/aquasecurity/go-pep440-version"
+      - dependency-name: "github.com/aquasecurity/go-version"
+      - dependency-name: "github.com/knqyf263/go-apk-version"
+      - dependency-name: "github.com/knqyf263/go-deb-version"
     groups:
       go-minor-patch:
         applies-to: version-updates  # security updates get individual PRs
@@ -35,7 +40,7 @@ updates:
   - package-ecosystem: "github-actions"
     directories:
       - "/"
-      - "/.github/actions/bootstrap"
+      - "/.github/actions/*"
     cooldown:
       default-days: 7
     schedule:
