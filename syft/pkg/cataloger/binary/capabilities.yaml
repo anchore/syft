@@ -425,6 +425,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/ldapsearch'
+        packages:
+          - class: openldap-search-binary
+            name: openldap
+            purl: pkg:generic/openldap
+            cpes:
+              - cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/libQt*Core.so*'
         packages:
           - class: qt-qtbase-lib
