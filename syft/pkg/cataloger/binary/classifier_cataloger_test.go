@@ -1343,6 +1343,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "openldap/2.6.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openldap",
+				Version:   "2.6.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/openldap@2.6.10",
+				Locations: locations("ldapsearch"),
+				Metadata:  metadata("openldap-search-binary"),
+			},
+		},
+		{
 			logicalFixture: "qt/4.8.6/linux-amd64",
 			expected: pkg.Package{
 				Name:      "qtbase",

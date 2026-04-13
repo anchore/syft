@@ -823,6 +823,14 @@ from-images:
     paths:
       - /usr/local/openresty/openssl/bin/openssl
 
+  - name: openldap
+    version: 2.6.10
+    images:
+      - ref: bitnamilegacy/openldap:2.6.10-debian-12-r4@sha256:966fd39ed25813890e9bd57dac56def163bbcfe64967e0bae59ab018d505bd93
+        platform: linux/amd64
+    paths:
+      - /opt/bitnami/openldap/bin/ldapsearch
+
   - name: curl
     version: 8.9.1
     images:
