@@ -79,6 +79,14 @@ from-images:
     paths:
       - /usr/local/lib/erlang/erts-14.1.1/bin/beam.smp
 
+  - name: erlang
+    version: 17.5.6.9
+    images:
+      - ref: erlang:17.5.6.9@sha256:b4c39d943dfbe0351db06ac50097e4981dce4e3a01c66a1e6a19e6865e6fcb20
+        platform: linux/amd64
+    paths:
+      - /usr/local/lib/erlang/erts-6.4.1.6/bin/beam.smp
+
   - version: 9.3.8
     images:
       - ref: swipl:9.3.8@sha256:6a15e6a03afe943228924a5502ba763e653ff28d9b3391e2b3e1fc3e991f37d4

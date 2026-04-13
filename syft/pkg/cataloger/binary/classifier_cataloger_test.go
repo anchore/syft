@@ -1189,6 +1189,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "erlang/17.5.6.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "17.5.6.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@17.5.6.9",
+				Locations: locations("beam.smp"),
+				Metadata:  metadata("erlang-alpine-binary"),
+			},
+		},
+		{
 			logicalFixture: "swipl/9.3.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "swipl",
