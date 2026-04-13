@@ -1138,6 +1138,23 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/lib/x86_64-linux-gnu/libQtCore.so.4.8.6
+
+  - name: krb5
+    version: 1.18.4
+    images:
+      - ref: apache/ozone-testkrb5:20230318-1@sha256:6a7eeac1ebd12e8968e34ab93fb8d21f2b92ae52bc0a85b662a2d41065f05d3a
+        platform: linux/amd64
+    paths:
+      - /usr/lib/libkrb5.so.3.3
+
+  - name: heimdal-krb5
+    version: 7.8.0
+    images:
+      - ref: nadimz/heimdal-krb5:7.8.0@sha256:23a5046493f3e97669353c18abcba6bd57fc9ddf53faa63b91b1a94f52f590e5
+        platform: linux/amd64
+    paths:
+      - /usr/lib/x86_64-linux-gnu/libkrb5.so.26.0.0
+
   - version: 1.36.4
     images:
       - ref: envoyproxy/envoy:v1.36.4@sha256:ae31562b8cede20913a2d3d6a4f44c8479a50551e033cb8ef7bb8e38cec4b573
