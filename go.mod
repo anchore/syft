@@ -10,7 +10,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
+	github.com/anchore/bubbly v0.2.0
 	github.com/anchore/clio v0.0.0-20250319180342-2cfe4b0cb716
 	github.com/anchore/fangs v0.0.0-20250319222917-446a1e748ec2
 	github.com/anchore/go-collections v0.0.0-20251016125210-a3c352120e8c
@@ -31,7 +31,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dave/jennifer v1.7.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/diskfs/go-diskfs v1.7.0
+	github.com/diskfs/go-diskfs v1.9.1
 	github.com/distribution/reference v0.6.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elliotchance/phpserialize v1.4.0
@@ -39,12 +39,12 @@ require (
 	github.com/github/go-spdx/v2 v2.4.0
 	github.com/gkampitakis/go-snaps v0.5.21
 	github.com/go-git/go-billy/v5 v5.8.0
-	github.com/go-git/go-git/v5 v5.17.0
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/go-test/deep v1.1.1
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/gohugoio/hashstructure v0.6.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-containerregistry v0.21.2
+	github.com/google/go-containerregistry v0.21.4
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.0
@@ -54,7 +54,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.13.0
-	github.com/jedib0t/go-pretty/v6 v6.7.8
+	github.com/jedib0t/go-pretty/v6 v6.7.9
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/magiconair/properties v1.8.10
@@ -88,7 +88,7 @@ require (
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
 	golang.org/x/mod v0.34.0
 	golang.org/x/net v0.52.0
-	modernc.org/sqlite v1.46.2
+	modernc.org/sqlite v1.48.1
 )
 
 require (
@@ -136,8 +136,7 @@ require (
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/cli v29.3.0+incompatible // indirect
-	github.com/docker/distribution v2.8.3+incompatible // indirect
+	github.com/docker/cli v29.3.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.5 // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
@@ -204,7 +203,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
-	github.com/pkg/xattr v0.4.9 // indirect
+	github.com/pkg/xattr v0.4.12 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
