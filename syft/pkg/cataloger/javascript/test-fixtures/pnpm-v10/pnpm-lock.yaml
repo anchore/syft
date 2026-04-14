@@ -1,0 +1,81 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      rulespec:
+        specifier: ^0.7.0
+        version: 0.7.0
+    devDependencies:
+      brace-expansion:
+        specifier: ^5.0.5
+        version: 5.0.5
+    optionalDependencies:
+      type-check:
+        specifier: ^0.4.0
+        version: 0.4.0
+
+packages:
+
+  balanced-match@4.0.4:
+    resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
+    engines: {node: 18 || 20 || >=22}
+
+  brace-expansion@5.0.5:
+    resolution: {integrity: sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==}
+    engines: {node: 18 || 20 || >=22}
+
+  prelude-ls@1.2.1:
+    resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
+    engines: {node: '>= 0.8.0'}
+
+  rulespec@0.7.0:
+    resolution: {integrity: sha512-sCRcZ5vHyF4alO//f2R50+1EHMPImMX9QpRKSXAVP1FkHz/dAqw9vWkEMPxt108T3RrWIZc70GBX7MsBGIxPfA==}
+    hasBin: true
+    peerDependencies:
+      '@ai-sdk/anthropic': '>=1.0.0'
+      '@ai-sdk/openai': '>=1.0.0'
+      ai: '>=4.0.0'
+    peerDependenciesMeta:
+      '@ai-sdk/anthropic':
+        optional: true
+      '@ai-sdk/openai':
+        optional: true
+      ai:
+        optional: true
+
+  type-check@0.4.0:
+    resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
+    engines: {node: '>= 0.8.0'}
+
+  yaml@2.8.3:
+    resolution: {integrity: sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
+snapshots:
+
+  balanced-match@4.0.4: {}
+
+  brace-expansion@5.0.5:
+    dependencies:
+      balanced-match: 4.0.4
+
+  prelude-ls@1.2.1:
+    optional: true
+
+  rulespec@0.7.0:
+    dependencies:
+      yaml: 2.8.3
+
+  type-check@0.4.0:
+    dependencies:
+      prelude-ls: 1.2.1
+    optional: true
+
+  yaml@2.8.3: {}
