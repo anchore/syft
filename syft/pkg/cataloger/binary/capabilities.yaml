@@ -344,6 +344,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/deno'
+        packages:
+          - class: deno-binary
+            name: deno
+            purl: pkg:generic/deno
+            cpes:
+              - cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ghc*'
         packages:
           - class: haskell-ghc-binary
