@@ -26,5 +26,5 @@ type SearchResult struct {
 }
 
 func (s SearchResult) String() string {
-	return fmt.Sprintf("SearchResult(classification=%q seek=%q length=%q)", s.Classification, s.SeekPosition, s.Length)
+	return fmt.Sprintf("SearchResult(classification=%q seek=%d length=%d)", s.Classification, s.SeekPosition, s.Length)
 }
