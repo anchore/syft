@@ -1,11 +1,10 @@
 name: "Bootstrap"
-
 description: "Bootstrap all tools and dependencies"
 inputs:
   go-version:
     description: "Go version to install"
     required: true
-    default: "1.26.x"
+    default: "1.26.2"
   go-dependencies:
     description: "Download go dependencies"
     required: true
@@ -24,7 +23,6 @@ inputs:
   bootstrap-apt-packages:
     description: "Space delimited list of tools to install via apt"
     default: "libxml2-utils"
-
 runs:
   using: "composite"
   steps:
@@ -34,7 +32,6 @@ runs:
       with:
         go-version: ${{ inputs.go-version }}
         check-latest: true
-
     - name: Restore tool cache
       if: inputs.tools == 'true'
       id: tool-cache
@@ -42,7 +39,6 @@ runs:
       with:
         path: ${{ github.workspace }}/.tool
         key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-tool-${{ hashFiles('.binny.yaml') }}
-
     - name: Install project tools
       shell: bash
       if: inputs.tools == 'true'
@@ -50,12 +46,10 @@ runs:
         make tools
         .tool/binny list
         .tool/binny check
-
     - name: Install go dependencies
       if: inputs.go-dependencies == 'true'
       shell: bash
       run: make ci-bootstrap-go
-
     - name: Install apt packages
       if: inputs.bootstrap-apt-packages != ''
       shell: bash
@@ -64,14 +58,12 @@ runs:
       run: |
         IFS=' ' read -ra packages <<< "$APT_PACKAGES"
         DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${packages[@]}"
-
     - name: Restore ORAS cache from github actions
       if: inputs.download-test-fixture-cache == 'true'
       uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         path: ${{ github.workspace }}/.tmp/oras-cache
         key: ${{ inputs.cache-key-prefix }}-oras-cache
-
     - name: Download test fixture cache
       if: inputs.download-test-fixture-cache == 'true'
       shell: bash

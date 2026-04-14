@@ -18,7 +18,7 @@ func encodePublisher(p pkg.Package) string {
 	return ""
 }
 
-func decodePublisher(publisher string, metadata interface{}) {
+func decodePublisher(publisher string, metadata any) {
 	switch meta := metadata.(type) {
 	case *pkg.ApkDBEntry:
 		meta.Maintainer = publisher

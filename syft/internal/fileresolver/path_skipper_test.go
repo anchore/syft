@@ -426,7 +426,7 @@ func assertSkipErr() assert.ErrorAssertionFunc {
 }
 
 func assertErrorIs(want error) assert.ErrorAssertionFunc {
-	return func(t assert.TestingT, got error, msgAndArgs ...interface{}) bool {
+	return func(t assert.TestingT, got error, msgAndArgs ...any) bool {
 		return assert.ErrorIs(t, got, want, msgAndArgs...)
 	}
 }

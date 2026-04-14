@@ -59,7 +59,7 @@ func Attest(app clio.Application) *cobra.Command {
 		Use:   "attest --output [FORMAT] <IMAGE>",
 		Short: "Generate an SBOM as an attestation for the given [SOURCE] container image",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image as the predicate of an in-toto attestation that will be uploaded to the image registry",
-		Example: internal.Tprintf(attestHelp, map[string]interface{}{
+		Example: internal.Tprintf(attestHelp, map[string]any{
 			"appName": id.Name,
 			"command": "attest",
 		}),

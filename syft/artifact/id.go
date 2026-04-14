@@ -13,7 +13,7 @@ type Identifiable interface {
 	ID() ID
 }
 
-func IDByHash(obj interface{}) (ID, error) {
+func IDByHash(obj any) (ID, error) {
 	f, err := hashstructure.Hash(obj, &hashstructure.HashOptions{
 		ZeroNil:      true,
 		SlicesAsSets: true,

@@ -26,9 +26,9 @@ var (
 		pkg.BitnamiPkg,
 	}
 	binaryMetadataTypes = []string{
-		reflect.TypeOf(pkg.ELFBinaryPackageNoteJSONPayload{}).Name(),
-		reflect.TypeOf(pkg.BinarySignature{}).Name(),
-		reflect.TypeOf(pkg.JavaVMInstallation{}).Name(),
+		reflect.TypeFor[pkg.ELFBinaryPackageNoteJSONPayload]().Name(),
+		reflect.TypeFor[pkg.BinarySignature]().Name(),
+		reflect.TypeFor[pkg.JavaVMInstallation]().Name(),
 	}
 )
 

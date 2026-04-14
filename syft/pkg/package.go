@@ -105,17 +105,13 @@ func IsValid(p *Package) bool {
 	return p != nil && p.Name != ""
 }
 
-//nolint:gocognit
 func Less(i, j Package) bool {
 	if i.Name == j.Name {
 		if i.Version == j.Version {
 			iLocations := i.Locations.ToSlice()
 			jLocations := j.Locations.ToSlice()
 			if i.Type == j.Type {
-				maxLen := len(iLocations)
-				if len(jLocations) > maxLen {
-					maxLen = len(jLocations)
-				}
+				maxLen := max(len(jLocations), len(iLocations))
 				for l := 0; l < maxLen; l++ {
 					if len(iLocations) < l+1 || len(jLocations) < l+1 {
 						if len(iLocations) == len(jLocations) {

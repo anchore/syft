@@ -94,7 +94,7 @@ func parseWordpressPluginFiles(ctx context.Context, resolver file.Resolver, _ *g
 }
 
 func extractFields(in string) map[string]any {
-	var fields = make(map[string]interface{})
+	var fields = make(map[string]any)
 
 	for field, pattern := range patterns {
 		matchMap := internal.MatchNamedCaptureGroups(pattern, in)

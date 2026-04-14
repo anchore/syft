@@ -567,8 +567,8 @@ func resolveImportedConstant(pkgName, constName string, ctx *parseContext) strin
 // resolveImportPath converts an import path to a file system path
 func resolveImportPath(importPath, repoRoot string) string {
 	// for github.com/anchore/syft/... imports, convert to repo-relative path
-	if strings.HasPrefix(importPath, "github.com/anchore/syft/") {
-		relPath := strings.TrimPrefix(importPath, "github.com/anchore/syft/")
+	if after, ok := strings.CutPrefix(importPath, "github.com/anchore/syft/"); ok {
+		relPath := after
 		return filepath.Join(repoRoot, relPath)
 	}
 

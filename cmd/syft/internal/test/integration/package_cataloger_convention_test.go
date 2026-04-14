@@ -329,7 +329,7 @@ func packageCatalogerExports(t *testing.T) map[string]exportTokenSet {
 					}
 					exportsPerPackage[pkg].Add(exportToken{
 						Name:            decl.Name.Name,
-						Type:            reflect.TypeOf(decl.Type).String(),
+						Type:            reflect.TypeFor[*ast.FuncType]().String(),
 						SignatureSize:   len(decl.Type.Params.List),
 						ReturnTypeNames: returnTypes,
 					})
