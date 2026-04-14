@@ -14,7 +14,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain mix.lock files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/mix.lock",
 			},

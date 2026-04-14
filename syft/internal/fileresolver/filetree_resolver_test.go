@@ -42,7 +42,7 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 
 	testDir, err := os.Getwd()
 	require.NoError(t, err)
-	relative := filepath.Join("test-fixtures", "req-resp")
+	relative := filepath.Join("testdata", "req-resp")
 	absolute := filepath.Join(testDir, relative)
 
 	absInsidePath := filepath.Join(absolute, "path", "to", "abs-inside.txt")
@@ -532,7 +532,7 @@ func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 	}{
 		{
 			name:         "should find a file from an absolute input",
-			relativeRoot: "./test-fixtures/",
+			relativeRoot: "./testdata/",
 			input:        "/image-symlinks/file-1.txt",
 			expected: []string{
 				"image-symlinks/file-1.txt",
@@ -540,7 +540,7 @@ func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 		},
 		{
 			name:         "should find a file from a relative path",
-			relativeRoot: "./test-fixtures/",
+			relativeRoot: "./testdata/",
 			input:        "image-symlinks/file-1.txt",
 			expected: []string{
 				"image-symlinks/file-1.txt",
@@ -582,7 +582,7 @@ func TestDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 	}{
 		{
 			name:         "should find a file from an absolute input",
-			relativeRoot: "./test-fixtures/",
+			relativeRoot: "./testdata/",
 			input:        "/image-symlinks/file-1.txt",
 			expected: []string{
 				"image-symlinks/file-1.txt",
@@ -590,7 +590,7 @@ func TestDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 		},
 		{
 			name:         "should find a file from a relative path",
-			relativeRoot: "./test-fixtures/",
+			relativeRoot: "./testdata/",
 			input:        "image-symlinks/file-1.txt",
 			expected: []string{
 				"image-symlinks/file-1.txt",
@@ -639,34 +639,34 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	}{
 		{
 			name:     "finds a file (relative)",
-			root:     "./test-fixtures/",
+			root:     "./testdata/",
 			input:    "image-symlinks/file-1.txt",
 			expected: "image-symlinks/file-1.txt",
 			refCount: 1,
 		},
 		{
 			name:     "finds a file with relative indirection",
-			root:     "./test-fixtures/../test-fixtures",
+			root:     "./testdata/../testdata",
 			input:    "image-symlinks/file-1.txt",
 			expected: "image-symlinks/file-1.txt",
 			refCount: 1,
 		},
 		{
 			name:     "managed non-existing files (relative)",
-			root:     "./test-fixtures/",
-			input:    "test-fixtures/image-symlinks/bogus.txt",
+			root:     "./testdata/",
+			input:    "testdata/image-symlinks/bogus.txt",
 			refCount: 0,
 		},
 		{
 			name:     "finds a file (absolute)",
-			root:     "./test-fixtures/",
+			root:     "./testdata/",
 			input:    "/image-symlinks/file-1.txt",
 			expected: "image-symlinks/file-1.txt",
 			refCount: 1,
 		},
 		{
 			name:                 "directories ignored",
-			root:                 "./test-fixtures/",
+			root:                 "./testdata/",
 			input:                "/image-symlinks",
 			refCount:             0,
 			forcePositiveHasPath: true,
@@ -722,7 +722,7 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, err := NewFromDirectory("./test-fixtures", "")
+			resolver, err := NewFromDirectory("./testdata", "")
 			assert.NoError(t, err)
 			refs, err := resolver.FilesByPath(c.input...)
 			assert.NoError(t, err)
@@ -735,7 +735,7 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures", "")
+	resolver, err := NewFromDirectory("./testdata", "")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
 	assert.NoError(t, err)
@@ -744,7 +744,7 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures/image-symlinks", "")
+	resolver, err := NewFromDirectory("./testdata/image-symlinks", "")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
@@ -752,7 +752,7 @@ func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures", "")
+	resolver, err := NewFromDirectory("./testdata", "")
 	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
 	assert.NoError(t, err)
@@ -779,7 +779,7 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver, err := NewFromDirectory("./test-fixtures/symlinks-simple", "")
+			resolver, err := NewFromDirectory("./testdata/symlinks-simple", "")
 			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(test.fixture)
@@ -792,7 +792,7 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 			actual, err := io.ReadAll(reader)
 			require.NoError(t, err)
 
-			expected, err := os.ReadFile("test-fixtures/symlinks-simple/readme")
+			expected, err := os.ReadFile("testdata/symlinks-simple/readme")
 			require.NoError(t, err)
 
 			assert.Equal(t, string(expected), string(actual))
@@ -802,7 +802,7 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 
 func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
-	resolver, err := NewFromDirectory("test-fixtures/system_paths/target", "")
+	resolver, err := NewFromDirectory("testdata/system_paths/target", "")
 	assert.NoError(t, err)
 
 	// all paths should be found (non filtering matches a path)
@@ -814,7 +814,7 @@ func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	assert.Len(t, locations, 6)
 
 	// ensure that symlink indexing outside of root worked
-	testLocation := "test-fixtures/system_paths/outside_root/link_target/place"
+	testLocation := "testdata/system_paths/outside_root/link_target/place"
 	ok := false
 	for _, location := range locations {
 		if strings.HasSuffix(location.RealPath, testLocation) {
@@ -834,7 +834,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 		expectedPaths *strset.Set
 	}{
 		{
-			fixturePath:   "./test-fixtures/image-simple",
+			fixturePath:   "./testdata/image-simple",
 			mimeType:      "text/plain",
 			expectedPaths: strset.New("file-1.txt", "file-2.txt", "target/really/nested/file-3.txt", "Dockerfile"),
 		},
@@ -854,7 +854,7 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures/symlinks-simple", "")
+	resolver, err := NewFromDirectory("./testdata/symlinks-simple", "")
 	require.NoError(t, err)
 
 	// check that we can get the real path
@@ -910,7 +910,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 		return nil
 	}
 
-	resolver, err := NewFromDirectory("./test-fixtures/symlinks-simple", "", filterFn)
+	resolver, err := NewFromDirectory("./testdata/symlinks-simple", "", filterFn)
 	require.NoError(t, err)
 
 	// the path to the real file is PRUNED from the index, so we should NOT expect a location returned
@@ -930,7 +930,7 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures/symlinks-multiple-roots/root", "")
+	resolver, err := NewFromDirectory("./testdata/symlinks-multiple-roots/root", "")
 	require.NoError(t, err)
 
 	// check that we can get the real path
@@ -948,7 +948,7 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 }
 
 func Test_RootViaSymlink(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures/symlinked-root/nested/link-root", "")
+	resolver, err := NewFromDirectory("./testdata/symlinked-root/nested/link-root", "")
 	require.NoError(t, err)
 
 	locations, err := resolver.FilesByPath("./file1.txt")
@@ -971,7 +971,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	r, err := NewFromDirectory(".", "")
 	require.NoError(t, err)
 
-	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "testdata/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1014,7 +1014,7 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 
 func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 	test := func(t *testing.T) {
-		resolver, err := NewFromDirectory("./test-fixtures/symlinks-loop", "")
+		resolver, err := NewFromDirectory("./testdata/symlinks-loop", "")
 		require.NoError(t, err)
 
 		locations, err := resolver.FilesByGlob("**/file.target")
@@ -1036,7 +1036,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 	}{
 		{
 			name:  "should find the base file",
-			root:  "./test-fixtures/symlinks-base/",
+			root:  "./testdata/symlinks-base/",
 			input: "./base",
 			expected: []string{
 				"/base",
@@ -1044,7 +1044,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 		},
 		{
 			name:  "should follow a link with a pivoted root",
-			root:  "./test-fixtures/symlinks-base/",
+			root:  "./testdata/symlinks-base/",
 			input: "./foo",
 			expected: []string{
 				"/base",
@@ -1052,7 +1052,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 		},
 		{
 			name:  "should follow a relative link with extra parents",
-			root:  "./test-fixtures/symlinks-base/",
+			root:  "./testdata/symlinks-base/",
 			input: "./bar",
 			expected: []string{
 				"/base",
@@ -1060,7 +1060,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 		},
 		{
 			name:  "should follow an absolute link with extra parents",
-			root:  "./test-fixtures/symlinks-base/",
+			root:  "./testdata/symlinks-base/",
 			input: "./baz",
 			expected: []string{
 				"/base",
@@ -1068,7 +1068,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 		},
 		{
 			name:  "should follow an absolute link with extra parents",
-			root:  "./test-fixtures/symlinks-base/",
+			root:  "./testdata/symlinks-base/",
 			input: "./sub/link",
 			expected: []string{
 				"/sub/item",
@@ -1076,7 +1076,7 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 		},
 		{
 			name:  "should follow chained pivoted link",
-			root:  "./test-fixtures/symlinks-base/",
+			root:  "./testdata/symlinks-base/",
 			input: "./chain",
 			expected: []string{
 				"/base",
@@ -1229,7 +1229,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver, err := NewFromDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
+			resolver, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "")
 			require.NoError(t, err)
 			assert.NoError(t, err)
 
@@ -1241,7 +1241,7 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 }
 
 func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures/symlinks-prune-indexing", "")
+	resolver, err := NewFromDirectory("./testdata/symlinks-prune-indexing", "")
 	require.NoError(t, err)
 
 	var allRealPaths []stereoscopeFile.Path
@@ -1264,7 +1264,7 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 
 func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	defer goleak.VerifyNone(t)
-	resolver, err := NewFromDirectory("./test-fixtures/system_paths", "")
+	resolver, err := NewFromDirectory("./testdata/system_paths", "")
 	assert.NoError(t, err)
 
 	var dirLoc *file.Location
@@ -1287,7 +1287,7 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 }
 
 func TestDirectoryResolver_AllLocations(t *testing.T) {
-	resolver, err := NewFromDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
+	resolver, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "")
 	assert.NoError(t, err)
 
 	paths := strset.New()
@@ -1320,7 +1320,7 @@ func TestDirectoryResolver_AllLocations(t *testing.T) {
 
 func TestAllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 	defer goleak.VerifyNone(t)
-	resolver, err := NewFromDirectory("./test-fixtures/symlinks-from-image-symlinks-fixture", "")
+	resolver, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "")
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
 	for range resolver.AllLocations(ctx) {
@@ -1371,7 +1371,7 @@ func TestFileResolver_FilesByPath(t *testing.T) {
 	}{
 		{
 			description:        "Finds file if searched by filepath",
-			filePath:           "./test-fixtures/req-resp/path/to/the/file.txt",
+			filePath:           "./testdata/req-resp/path/to/the/file.txt",
 			fileByPathInput:    "file.txt",
 			expectedRealPath:   "/file.txt",
 			expectedAccessPath: "/file.txt",
@@ -1427,7 +1427,7 @@ func TestFileResolver_MultipleFilesByPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			filePath := "./test-fixtures/req-resp/path/to/the/file.txt"
+			filePath := "./testdata/req-resp/path/to/the/file.txt"
 			parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 			require.NoError(t, err)
 			require.NotNil(t, parentPath)
@@ -1448,7 +1448,7 @@ func TestFileResolver_MultipleFilesByPath(t *testing.T) {
 }
 
 func TestFileResolver_FilesByGlob(t *testing.T) {
-	filePath := "./test-fixtures/req-resp/path/to/the/file.txt"
+	filePath := "./testdata/req-resp/path/to/the/file.txt"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
@@ -1471,14 +1471,14 @@ func Test_fileResolver_FilesByMIMEType(t *testing.T) {
 		expectedPaths *strset.Set
 	}{
 		{
-			fixturePath:   "./test-fixtures/image-simple/file-1.txt",
+			fixturePath:   "./testdata/image-simple/file-1.txt",
 			mimeType:      "text/plain",
 			expectedPaths: strset.New("/file-1.txt"),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.fixturePath, func(t *testing.T) {
-			filePath := "./test-fixtures/image-simple/file-1.txt"
+			filePath := "./testdata/image-simple/file-1.txt"
 			parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 			require.NoError(t, err)
 			require.NotNil(t, parentPath)
@@ -1502,7 +1502,7 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 
-	filePath := "./test-fixtures/image-simple/file-1.txt"
+	filePath := "./testdata/image-simple/file-1.txt"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
@@ -1512,7 +1512,7 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 	require.NotNil(t, resolver)
 	assert.Equal(t, resolver.Chroot.Base(), parentPath)
 
-	exists, existingPath, err := resolver.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "test-fixtures/image-simple/file-1.txt")))
+	exists, existingPath, err := resolver.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "testdata/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1554,7 +1554,7 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 }
 
 func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
-	filePath := "./test-fixtures/system_paths/target/home/place"
+	filePath := "./testdata/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
@@ -1586,7 +1586,7 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 
 func TestFileResolver_AllLocations(t *testing.T) {
 	// Verify both the parent and the file itself are indexed
-	filePath := "./test-fixtures/system_paths/target/home/place"
+	filePath := "./testdata/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)
@@ -1614,7 +1614,7 @@ func TestFileResolver_AllLocations(t *testing.T) {
 }
 
 func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
-	filePath := "./test-fixtures/system_paths/target/home/place"
+	filePath := "./testdata/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
 	require.NotNil(t, parentPath)

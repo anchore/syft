@@ -13,6 +13,35 @@ catalogers:
       - installed
       - package
     parsers: # AUTO-GENERATED structure
+      - function: parseComponentsJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - /opt/bitnami/.bitnami_components.json
+        metadata_types: # AUTO-GENERATED
+          - pkg.BitnamiSBOMEntry
+        package_types: # AUTO-GENERATED
+          - bitnami
+        json_schema_types: # AUTO-GENERATED
+          - BitnamiSbomEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+            comment: legacy components.json format does not include license information
+          - name: dependency.depth
+            default: []
+            comment: legacy format has no dependency relationships
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+            comment: digest field exists but is not captured in metadata
       - function: parseSBOM
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED

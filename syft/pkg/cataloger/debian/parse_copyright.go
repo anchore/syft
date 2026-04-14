@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"bufio"
 	"io"
 	"regexp"
 	"sort"
@@ -14,23 +15,32 @@ import (
 // For more information see: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-syntax
 
 var (
-	licensePattern                          = regexp.MustCompile(`^License: (?P<license>\S*)`)
-	commonLicensePathPattern                = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
-	licenseFirstSentenceAfterHeadingPattern = regexp.MustCompile(`(?is)^[^\n]+?\n[-]+?\n+(?P<license>.*?\.)`)
-	licenseAgreementHeadingPattern          = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
+	licensePattern                 = regexp.MustCompile(`^License: (?P<license>\S*)`)
+	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
+	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
 )
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		// Fail-safe: return nothing if unable to read
-		return []string{}
-	}
+	scanner := bufio.NewScanner(reader)
 
-	content := string(data)
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
+	// State machine replacing licenseFirstSentenceAfterHeadingPattern.
+	// That regex only matched at the start of the file: a non-empty heading,
+	// a line of dashes, blank lines, then text up to the first period.
+	const (
+		expectHeading = iota
+		expectDashes
+		skipBlanks
+		captureLicense
+		headingDone // matched or impossible — stop checking
+	)
+	headingState := expectHeading
+	var licenseText strings.Builder
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// per-line regex checks (applied to every line)
 		if value := findLicenseClause(licensePattern, line); value != "" {
 			findings.Add(value)
 		}
@@ -40,19 +50,54 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 		if value := findLicenseClause(licenseAgreementHeadingPattern, line); value != "" {
 			findings.Add(value)
 		}
-	}
 
-	// some copyright files have a license declaration after the heading ex:
-	// End User License Agreement\n--------------------------
-	// we want to try and find these multi-line license declarations and make exceptions for them
-	if value := findLicenseClause(licenseFirstSentenceAfterHeadingPattern, content); value != "" {
-		findings.Add(value)
+		// multi-line heading detection (only at start of file)
+		switch headingState {
+		case expectHeading:
+			if strings.TrimSpace(line) != "" {
+				headingState = expectDashes
+			} else {
+				headingState = headingDone
+			}
+		case expectDashes:
+			trimmed := strings.TrimSpace(line)
+			if len(trimmed) > 0 && strings.Trim(trimmed, "-") == "" {
+				headingState = skipBlanks
+			} else {
+				headingState = headingDone
+			}
+		case skipBlanks:
+			if strings.TrimSpace(line) != "" {
+				headingState = captureLicense
+				licenseText.WriteString(line)
+				if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+					findings.Add(value)
+					headingState = headingDone
+				}
+			}
+		case captureLicense:
+			licenseText.WriteString(" ")
+			licenseText.WriteString(line)
+			if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+				findings.Add(value)
+				headingState = headingDone
+			}
+		}
 	}
 
 	results := findings.List()
 	sort.Strings(results)
 
 	return results
+}
+
+// extractUpToFirstPeriod returns the license text up to the first period,
+// processed through ensureIsSingleLicense, or "" if no period found yet.
+func extractUpToFirstPeriod(s string) string {
+	if idx := strings.Index(s, "."); idx >= 0 {
+		return ensureIsSingleLicense(s[:idx+1])
+	}
+	return ""
 }
 
 func findLicenseClause(pattern *regexp.Regexp, line string) string {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -109,6 +110,9 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
 		Dir:   modDir,
 		Tests: true,
+		// disable workspace mode so that we only use the go.mod in the target directory,
+		// not any parent go.work file that may exist
+		Env: append(os.Environ(), "GOWORK=off"),
 	}
 
 	// From Go documentation: "all" expands to all packages in the main module
@@ -320,7 +324,7 @@ func buildModuleRelationships(
 }
 
 func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*modfile.File, error) {
-	contents, err := io.ReadAll(reader)
+	contents, err := io.ReadAll(reader) //nolint:gocritic // modfile.Parse requires []byte
 	if err != nil {
 		return nil, fmt.Errorf("failed to read go module: %w", err)
 	}

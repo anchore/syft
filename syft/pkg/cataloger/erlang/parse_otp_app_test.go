@@ -15,7 +15,7 @@ func TestParseOTPApplication(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			fixture: "test-fixtures/rabbitmq.app",
+			fixture: "testdata/rabbitmq.app",
 			expected: []pkg.Package{
 				{
 					Name:     "rabbit",
@@ -44,7 +44,7 @@ func TestParseOTPApplication(t *testing.T) {
 
 func Test_corruptOtpApp(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/rabbitmq.app").
+		FromFile(t, "testdata/corrupt/rabbitmq.app").
 		WithError().
 		TestParser(t, parseOTPApp)
 }

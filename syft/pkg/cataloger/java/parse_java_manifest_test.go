@@ -17,7 +17,7 @@ func TestParseJavaManifest(t *testing.T) {
 		expected pkg.JavaManifest
 	}{
 		{
-			fixture: "test-fixtures/manifest/small",
+			fixture: "testdata/manifest/small",
 			expected: pkg.JavaManifest{
 				Main: pkg.KeyValues{
 					{Key: "Manifest-Version", Value: "1.0"},
@@ -25,7 +25,7 @@ func TestParseJavaManifest(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/manifest/standard-info",
+			fixture: "testdata/manifest/standard-info",
 			expected: pkg.JavaManifest{
 				Main: pkg.KeyValues{
 					{Key: "Manifest-Version", Value: "1.0"},
@@ -40,7 +40,7 @@ func TestParseJavaManifest(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/manifest/extra-info",
+			fixture: "testdata/manifest/extra-info",
 			expected: pkg.JavaManifest{
 				Main: []pkg.KeyValue{
 					{
@@ -81,7 +81,7 @@ func TestParseJavaManifest(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/manifest/extra-empty-lines",
+			fixture: "testdata/manifest/extra-empty-lines",
 			expected: pkg.JavaManifest{
 				Main: pkg.KeyValues{
 					{
@@ -116,7 +116,7 @@ func TestParseJavaManifest(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/manifest/continuation",
+			fixture: "testdata/manifest/continuation",
 			expected: pkg.JavaManifest{
 				Main: pkg.KeyValues{
 					{
@@ -132,7 +132,7 @@ func TestParseJavaManifest(t *testing.T) {
 		},
 		{
 			// regression test, we should always keep the full version
-			fixture: "test-fixtures/manifest/version-with-date",
+			fixture: "testdata/manifest/version-with-date",
 			expected: pkg.JavaManifest{
 				Main: []pkg.KeyValue{
 					{
@@ -149,7 +149,7 @@ func TestParseJavaManifest(t *testing.T) {
 		{
 			// regression test, we should not trim space and choke of empty space
 			// https://github.com/anchore/syft/issues/2179
-			fixture: "test-fixtures/manifest/leading-space",
+			fixture: "testdata/manifest/leading-space",
 			expected: pkg.JavaManifest{
 				Main: []pkg.KeyValue{
 					{

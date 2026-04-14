@@ -11,7 +11,7 @@ import (
 )
 
 func TestParseUvLock(t *testing.T) {
-	fixture := "test-fixtures/uv/simple-deps/uv.lock"
+	fixture := "testdata/uv/simple-deps/uv.lock"
 
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
@@ -131,7 +131,7 @@ func TestParseUvLock(t *testing.T) {
 
 func TestParseUvLockWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pypi-remote/uv.lock"
+	fixture := "testdata/pypi-remote/uv.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupPypiRegistry()
 	defer teardown()
@@ -148,7 +148,7 @@ func TestParseUvLockWithLicenseEnrichment(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{

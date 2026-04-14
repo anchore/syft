@@ -20,7 +20,7 @@ type terraformLockFile struct {
 func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var lockFile terraformLockFile
 
-	contents, err := io.ReadAll(reader)
+	contents, err := io.ReadAll(reader) //nolint:gocritic // hclsimple.Decode requires []byte
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read terraform lock file: %w", err)
 	}

@@ -316,6 +316,81 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "oci-model",
+			in: sbom.SBOM{
+				Source: source.Description{
+					Name:     "llama",
+					Version:  "sha256:d34db33f",
+					Supplier: "Model Provider",
+					Metadata: source.OCIModelMetadata{
+						UserInput:      "model-repo/llama:latest",
+						ManifestDigest: "sha256:d34db33f",
+					},
+				},
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(pkg.Package{
+						Name:    "pkg-1",
+						Version: "version-1",
+					}),
+				},
+			},
+			expected: &spdx.Document{
+				SPDXIdentifier: "DOCUMENT",
+				SPDXVersion:    spdx.Version,
+				DataLicense:    spdx.DataLicense,
+				DocumentName:   "llama",
+				Packages: []*spdx.Package{
+					{
+						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
+						PackageName:           "pkg-1",
+						PackageVersion:        "version-1",
+						PackageSupplier: &spdx.Supplier{
+							Supplier:     "Model Provider",
+							SupplierType: "Organization",
+						},
+					},
+					{
+						PackageSPDXIdentifier: "DocumentRoot-OCIModel-llama",
+						PackageName:           "llama",
+						PackageVersion:        "sha256:d34db33f",
+						PrimaryPackagePurpose: "CONTAINER",
+						PackageChecksums:      []spdx.Checksum{{Algorithm: "SHA256", Value: "d34db33f"}},
+						PackageExternalReferences: []*v2_3.PackageExternalReference{
+							{
+								Category: "PACKAGE-MANAGER",
+								RefType:  "purl",
+								Locator:  "pkg:oci/llama@sha256%3Ad34db33f?arch=&tag=latest",
+							},
+						},
+						PackageSupplier: &spdx.Supplier{
+							Supplier:     "Model Provider",
+							SupplierType: "Organization",
+						},
+					},
+				},
+				Relationships: []*spdx.Relationship{
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-OCIModel-llama",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "Package-pkg-1-pkg-1",
+						},
+						Relationship: spdx.RelationshipContains,
+					},
+					{
+						RefA: spdx.DocElementID{
+							ElementRefID: "DOCUMENT",
+						},
+						RefB: spdx.DocElementID{
+							ElementRefID: "DocumentRoot-OCIModel-llama",
+						},
+						Relationship: spdx.RelationshipDescribes,
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

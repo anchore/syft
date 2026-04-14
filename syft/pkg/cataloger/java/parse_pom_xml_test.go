@@ -1,7 +1,6 @@
 package java
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -82,7 +81,7 @@ func Test_parsePomXML(t *testing.T) {
 		expectedRelationships []artifact.Relationship
 	}{
 		{
-			dir: "test-fixtures/pom/example-java-app-maven",
+			dir: "testdata/pom/example-java-app-maven",
 			expected: []pkg.Package{
 				exampleJavaAppMaven,
 				jodaTime,
@@ -122,8 +121,8 @@ func Test_parsePomXML(t *testing.T) {
 }
 
 func Test_parseCommonsTextPomXMLProject(t *testing.T) {
-	mavenLocalRepoDir := "internal/maven/test-fixtures/maven-repo"
-	mavenBaseURL := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
+	mavenLocalRepoDir := "internal/maven/testdata/maven-repo"
+	mavenBaseURL := maventest.MockRepo(t, "internal/maven/testdata/maven-repo")
 
 	tests := []struct {
 		name     string
@@ -133,7 +132,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 	}{
 		{
 			name: "no resolution",
-			dir:  "test-fixtures/pom/commons-text-1.10.0",
+			dir:  "testdata/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: false,
@@ -142,7 +141,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 		},
 		{
 			name: "use network",
-			dir:  "test-fixtures/pom/commons-text-1.10.0",
+			dir:  "testdata/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              true,
 				MavenBaseURL:            mavenBaseURL,
@@ -152,7 +151,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 		},
 		{
 			name: "use local repository",
-			dir:  "test-fixtures/pom/commons-text-1.10.0",
+			dir:  "testdata/pom/commons-text-1.10.0",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:              false,
 				UseMavenLocalRepository: true,
@@ -162,7 +161,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 		},
 		{
 			name: "transitive dependencies",
-			dir:  "test-fixtures/pom/transitive-top-level",
+			dir:  "testdata/pom/transitive-top-level",
 			config: ArchiveCatalogerConfig{
 				UseNetwork:                    false,
 				UseMavenLocalRepository:       true,
@@ -194,7 +193,7 @@ func Test_parseCommonsTextPomXMLProject(t *testing.T) {
 func Test_parsePomXMLProject(t *testing.T) {
 	// TODO: ideally we would have the path to the contained pom.xml, not the jar
 	jarLocation := file.NewLocation("path/to/archive.jar")
-	ctx := context.TODO()
+	ctx := pkgtest.Context(t)
 	tests := []struct {
 		name     string
 		project  *pkg.JavaPomProject
@@ -203,7 +202,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 		{
 			name: "no license info",
 			project: &pkg.JavaPomProject{
-				Path: "test-fixtures/pom/commons-codec.pom.xml",
+				Path: "testdata/pom/commons-codec.pom.xml",
 				Parent: &pkg.JavaPomParent{
 					GroupID:    "org.apache.commons",
 					ArtifactID: "commons-parent",
@@ -220,7 +219,7 @@ func Test_parsePomXMLProject(t *testing.T) {
 		{
 			name: "with license data",
 			project: &pkg.JavaPomProject{
-				Path: "test-fixtures/pom/neo4j-license-maven-plugin.pom.xml",
+				Path: "testdata/pom/neo4j-license-maven-plugin.pom.xml",
 				Parent: &pkg.JavaPomParent{
 					GroupID:    "org.sonatype.oss",
 					ArtifactID: "oss-parent",
@@ -265,11 +264,11 @@ func Test_parsePomXMLProject(t *testing.T) {
 			pom, err := maven.ParsePomXML(fixture)
 			require.NoError(t, err)
 
-			actual := newPomProject(context.Background(), r, fixture.Name(), pom)
+			actual := newPomProject(pkgtest.Context(t), r, fixture.Name(), pom)
 			assert.NoError(t, err)
 			assert.Equal(t, test.project, actual)
 
-			licenses, err := r.ResolveLicenses(context.Background(), pom)
+			licenses, err := r.ResolveLicenses(pkgtest.Context(t), pom)
 			//assert.NoError(t, err)
 			assert.Equal(t, test.licenses, toPkgLicenses(ctx, &jarLocation, licenses))
 		})
@@ -331,7 +330,7 @@ func Test_pomParent(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := maven.NewResolver(nil, maven.DefaultConfig())
-			assert.Equal(t, test.expected, pomParent(context.Background(), r, &maven.Project{Parent: test.input}))
+			assert.Equal(t, test.expected, pomParent(pkgtest.Context(t), r, &maven.Project{Parent: test.input}))
 		})
 	}
 }
@@ -360,10 +359,10 @@ func Test_cleanDescription(t *testing.T) {
 }
 
 func Test_resolveLicenses(t *testing.T) {
-	mavenURL := maventest.MockRepo(t, "internal/maven/test-fixtures/maven-repo")
-	localM2 := "internal/maven/test-fixtures/maven-repo"
-	localDir := "internal/maven/test-fixtures/local"
-	containingDir := "internal/maven/test-fixtures/local/contains-child-1"
+	mavenURL := maventest.MockRepo(t, "internal/maven/testdata/maven-repo")
+	localM2 := "internal/maven/testdata/maven-repo"
+	localDir := "internal/maven/testdata/local"
+	containingDir := "internal/maven/testdata/local/contains-child-1"
 
 	expectedLicenses := []pkg.License{
 		{
@@ -433,7 +432,7 @@ func Test_resolveLicenses(t *testing.T) {
 			fr, err := ds.FileResolver(source.AllLayersScope)
 			require.NoError(t, err)
 
-			ctx := context.TODO()
+			ctx := pkgtest.Context(t)
 			pkgs, _, err := cat.Catalog(ctx, fr)
 			require.NoError(t, err)
 
@@ -459,7 +458,7 @@ func Test_resolveLicenses(t *testing.T) {
 func Test_corruptPomXml(t *testing.T) {
 	c := NewPomCataloger(DefaultArchiveCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/corrupt").
+		FromDirectory(t, "testdata/corrupt").
 		WithError().
 		TestCataloger(t, c)
 }

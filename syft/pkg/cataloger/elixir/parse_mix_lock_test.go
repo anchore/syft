@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseMixLock(t *testing.T) {
-	locations := file.NewLocationSet(file.NewLocation("test-fixtures/mix.lock"))
+	locations := file.NewLocationSet(file.NewLocation("testdata/mix.lock"))
 	expected := []pkg.Package{
 		{
 			Name:      "castore",
@@ -224,7 +224,7 @@ func TestParseMixLock(t *testing.T) {
 		},
 	}
 
-	fixture := "test-fixtures/mix.lock"
+	fixture := "testdata/mix.lock"
 
 	// TODO: relationships are not under test
 	var expectedRelationships []artifact.Relationship

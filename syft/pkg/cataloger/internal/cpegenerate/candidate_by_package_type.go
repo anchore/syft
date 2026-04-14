@@ -412,6 +412,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		},
 		{
 			pkg.ApkPkg,
+			candidateKey{PkgName: "libavif"},
+			candidateAddition{AdditionalVendors: []string{"aomedia"}},
+		},
+		{
+			pkg.ApkPkg,
 			candidateKey{PkgName: "bind"},
 			candidateAddition{AdditionalVendors: []string{"isc"}},
 		},

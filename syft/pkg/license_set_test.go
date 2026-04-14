@@ -137,20 +137,20 @@ func TestLicenseSet_Add(t *testing.T) {
 		{
 			name: "licenses that are unknown with different contents can exist in the same set",
 			licenses: []License{
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/nvidia-software-and-cuda-supplement")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/apache-license-2.0")),
 			},
 			want: []License{
 				{
 					SPDXExpression: "Apache-2.0",
 					Value:          "Apache-2.0",
 					Type:           license.Declared,
-					Contents:       readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0"),
+					Contents:       readFileAsString("../../internal/licenses/testdata/apache-license-2.0"),
 					Locations:      file.NewLocationSet(),
 				},
 				{
 					Value:    "sha256:eebcea3ab1d1a28e671de90119ffcfb35fe86951e4af1b17af52b7a82fcf7d0a",
-					Contents: readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement"),
+					Contents: readFileAsString("../../internal/licenses/testdata/nvidia-software-and-cuda-supplement"),
 					Type:     license.Declared,
 				},
 			},

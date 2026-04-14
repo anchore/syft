@@ -84,13 +84,13 @@ func newMetadataFromManifestLine(entry string) (*pkg.RpmDBEntry, error) {
 	}, nil
 }
 
-// packageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
+// packageURL returns the PURL for the specific RHEL or Hummingbird package (see https://github.com/package-url/purl-spec)
 func packageURL(name, arch string, epoch *int, srpm string, version, release string, distro *linux.Release) string {
 	var namespace string
 	if distro != nil {
 		namespace = distro.ID
 	}
-	if namespace == "rhel" {
+	if namespace == "rhel" || namespace == "hummingbird" {
 		namespace = "redhat"
 	}
 	if strings.HasPrefix(namespace, "opensuse") {

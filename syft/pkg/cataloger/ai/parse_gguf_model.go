@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -24,17 +24,19 @@ import (
 
 // parseGGUFModel parses a GGUF model file and returns the discovered package.
 // This implementation only reads the header portion of the file, not the entire model.
-func parseGGUFModel(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
-	// Create a temporary file for the library to parse
-	// The library requires a file path, so we create a temp file
-	tempFile, err := os.CreateTemp("", "syft-gguf-*.gguf")
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return nil, nil, fmt.Errorf("no temp dir factory in context")
+	}
+	tempFile, cleanup, err := td.NewFile("syft-gguf-*.gguf")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
+	defer cleanup()
 	tempPath := tempFile.Name()
-	defer os.Remove(tempPath)
 
 	// Copy and validate the GGUF file header using LimitedReader to prevent OOM
 	// We use LimitedReader to cap reads at maxHeaderSize (50MB)
@@ -122,6 +124,10 @@ func extractVersion(kvs gguf_parser.GGUFMetadataKVs) string {
 
 // extractModelNameFromPath extracts the model name from the file path
 func extractModelNameFromPath(path string) string {
+	// we do not want to return a name from filepath if it's not a distinct gguf file
+	if !strings.Contains(path, ".gguf") {
+		return ""
+	}
 	// Get the base filename
 	base := filepath.Base(path)
 

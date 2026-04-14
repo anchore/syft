@@ -14,7 +14,7 @@ var updateSnapshot = flag.Bool("update-template", false, "update the *.golden fi
 
 func TestFormatWithOption_Legacy(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
-		TemplatePath: "test-fixtures/legacy/csv.template",
+		TemplatePath: "testdata/legacy/csv.template",
 		Legacy:       true,
 	})
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestFormatWithOption_Legacy(t *testing.T) {
 
 func TestFormatWithOptionAndHasField_Legacy(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
-		TemplatePath: "test-fixtures/legacy/csv-hasField.template",
+		TemplatePath: "testdata/legacy/csv-hasField.template",
 		Legacy:       true,
 	})
 	require.NoError(t, err)
@@ -50,7 +50,7 @@ func TestFormatWithOptionAndHasField_Legacy(t *testing.T) {
 
 func TestFormatWithOption(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
-		TemplatePath: "test-fixtures/csv.template",
+		TemplatePath: "testdata/csv.template",
 	})
 	require.NoError(t, err)
 
@@ -67,7 +67,7 @@ func TestFormatWithOption(t *testing.T) {
 
 func TestFormatWithOptionAndHasField(t *testing.T) {
 	f, err := NewFormatEncoder(EncoderConfig{
-		TemplatePath: "test-fixtures/csv-hasField.template",
+		TemplatePath: "testdata/csv-hasField.template",
 	})
 	require.NoError(t, err)
 

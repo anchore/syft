@@ -74,8 +74,10 @@ func isDependencyForExtra(dep pkg.PythonPoetryLockDependencyEntry) bool {
 }
 
 func packageRef(name, extra string) string {
-	cleanExtra := strings.TrimSpace(extra)
-	cleanName := strings.TrimSpace(name)
+	// normalize both package name and extra to ensure case-insensitive matching per Python packaging spec
+	// https://packaging.python.org/en/latest/specifications/name-normalization/
+	cleanName := normalize(strings.TrimSpace(name))
+	cleanExtra := normalize(strings.TrimSpace(extra))
 	if cleanExtra == "" {
 		return cleanName
 	}

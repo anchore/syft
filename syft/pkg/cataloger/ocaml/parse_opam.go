@@ -25,7 +25,7 @@ func parseOpamPackage(ctx context.Context, _ file.Resolver, _ *generic.Environme
 	homepageRe := regexp.MustCompile(`(?m)homepage:\s*"(?P<url>[^"]+)"`)
 	urlRe := regexp.MustCompile(`(?m)url\s*{(?P<url>[^}]+)}`)
 
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // regex matching requires full buffer
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to read opam package")
 		return nil, nil, nil

@@ -70,9 +70,17 @@ func DefaultClassifiers() []binutils.Classifier {
 		},
 		{
 			Class:    "go-binary",
-			FileGlob: "**/go",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+			FileGlob: "**/{go,go.exe}",
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+				binutils.SupportingEvidenceMatcher("VERSION*",
+					m.FileContentsVersionMatcher(
+						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)`)),
+				binutils.SupportingEvidenceMatcher("../VERSION*",
+					m.FileContentsVersionMatcher(
+						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)`)),
+			),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
 			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -114,6 +122,20 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
+			Class:    "valkey-binary",
+			FileGlob: "**/valkey-server",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// valkey9.0.0buildkitsandbox-1764887574000000000
+				`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+			Package: "valkey",
+			PURL:    mustPURL("pkg:generic/valkey@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:lfprojects:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:linuxfoundation:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:valkey-io:valkey:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
 			Class:    "nodejs-binary",
 			FileGlob: "**/node",
 			EvidenceMatcher: binutils.MatchAny(
@@ -127,15 +149,6 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "node",
 			PURL:    mustPURL("pkg:generic/node@version"),
 			CPEs:    singleCPE("cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			Class:    "go-binary-hint",
-			FileGlob: "**/VERSION*",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?(-[0-9a-f]{7})?)`),
-			Package: "go",
-			PURL:    mustPURL("pkg:generic/go@version"),
-			CPEs:    singleCPE("cpe:2.3:a:golang:go:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "busybox-binary",
@@ -210,7 +223,7 @@ func DefaultClassifiers() []binutils.Classifier {
 				// [NUL]v1.7.34[NUL]
 				// [NUL]2.9.6[NUL]
 				// 3.0.4[NUL]
-				`(?m)(\x00|\x{FFFD})?v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+				`(?m)(\x00v?|\x{FFFD}.?)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
 			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -219,7 +232,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "arangodb-binary",
 			FileGlob: "**/arangosh",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s\[linux\]`),
+				`(?m)\x00*(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?)\s(enterprise\s)?\[linux\]`),
 			Package: "arangodb",
 			PURL:    mustPURL("pkg:generic/arangodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:arangodb:arangodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -360,6 +373,10 @@ func DefaultClassifiers() []binutils.Classifier {
 				m.FileContentsVersionMatcher(
 					// [NUL][NUL]26.1.2[NUL][NUL][NUL][NUL][NUL][NUL][NUL]NUL[NUL][NUL]Erlang/OTP
 					`\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+Erlang/OTP`,
+				),
+				m.FileContentsVersionMatcher(
+					// Erlang/OTP 17%s [erts-6.4.1.6] [source] [64-bit] [smp:%beu:%beu] [async-threads:%d] [hipe] [kernel-poll:%s][NUL]17.5.6.9[NUL][NUL][NUL]
+					`(?s)Erlang/OTP.{1,150}\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+`,
 				),
 			),
 			Package: "erlang",
@@ -509,6 +526,33 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "openldap-search-binary",
+			FileGlob: "**/ldapsearch",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// $OpenLDAP: ldapsearch 2.4.45'
+				`\$OpenLDAP:\sldapsearch\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "openldap",
+			PURL:    mustPURL("pkg:generic/openldap@version"),
+			CPEs:    singleCPE("cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "qt-qtbase-lib",
+			FileGlob: "**/libQt*Core.so*",
+			EvidenceMatcher: binutils.MatchAny(
+				// Qt 5.x and Qt 6.x pattern [NUL][NUL]Qt 6.5.0 (x86_64-little_endian-...
+				m.FileContentsVersionMatcher(`\x00\x00Qt (?P<version>[0-9]+\.[0-9]+\.[0-9]+) \(`),
+				// Qt 4.x pattern QtCore lib ver 4.8.7
+				m.FileContentsVersionMatcher(`QtCore library version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			),
+			Package: "qtbase",
+			PURL:    mustPURL("pkg:generic/qtbase@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:qt:qt:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:qt:qtbase:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
 		},
 		{
 			Class:    "gcc-binary",
@@ -693,6 +737,133 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "istio-binary",
+			FileGlob: "**/pilot-discovery",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
+				// [NUL]1.3.7[NUL][NUL][NUL]1.3.8[NUL]
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// Clean[NUL][NUL][NUL]1.8.0[NUL]
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// Modified[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]1.10-dev[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`Modified\x00+(?P<version>[0-9]+\.[0-9]+-dev)\x00+`),
+				// 1.1.17[NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
+			),
+			Package: "pilot-discovery",
+			PURL:    mustPURL("pkg:generic/istio@version"),
+			CPEs:    singleCPE("cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "istio-binary",
+			FileGlob: "**/pilot-agent",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// Clean[NUL][NUL][NUL]1.8.0[NUL]
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// Modified[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]1.10-dev[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`Modified\x00+(?P<version>[0-9]+\.[0-9]+-dev)\x00+`),
+				// 1.1.17[NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
+			),
+			Package: "pilot-agent",
+			PURL:    mustPURL("pkg:generic/istio@version"),
+			CPEs:    singleCPE("cpe:2.3:a:istio:istio:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "grafana-binary",
+			FileGlob: "**/grafana",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL][NUL][NUL][NUL]12.2.0-258092[NUL][NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+\-[0-9]{6,})\x00+`),
+				// [NUL][NUL][NUL][NUL]release-12.3.2+security-01[NUL][NUL][NUL][NUL]
+				// [NUL][NUL][NUL][NUL]release-12.3.1[NUL][NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+release-(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+`),
+				// [NUL][NUL][NUL][NUL]go1.21.8[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]11.0.0-preview[NUL][NUL]...+DT
+				m.FileContentsVersionMatcher(`(?s)\x00+go1\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+.{1,500}\+DT`),
+				// HEAD[NUL][NUL][NUL][NUL]12.0.0[NUL][NUL]$a
+				// 11.0.0[NUL][NUL]$a
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+\$a`),
+				// [NUL]0xDC0xBF10.4.19[NUL]
+				m.FileContentsVersionMatcher(`\x00.(?P<version>10\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00`),
+				// 10.3.12[NUL]...[NUL]go1.22.7[NUL][NUL][NUL][NUL]...+DT
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+.{1,100}\x00go1\.[0-9]+\.[0-9]+\x00.{1,100}\+DT`),
+				// 9.5.21[NUL][NUL]v9.5.x[NUL][NUL][NUL][NUL][NUL][NUL]$a
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+v[0-9]+\.[0-9]+\.x\x00+`),
+				// HEAD[NUL][NUL][NUL][NUL]9.2.20[NUL][NUL][NUL][NUL]
+				// HEAD[NUL][NUL]:[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]9.2.13[NUL][NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`HEAD\x00+.*\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+`),
+				// 1b0f5f0a81[NUL][NUL][NUL][NUL][NUL][NUL]9.4.0-beta1[NUL][NUL][NUL][NUL][NUL]/usr/local/go
+				m.FileContentsVersionMatcher(`[a-z0-9]+\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+\/usr\/local\/go`),
+			),
+			Package: "grafana",
+			PURL:    mustPURL("pkg:generic/grafana@version"),
+			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "grafana-binary",
+			FileGlob: "**/grafana-server",
+			EvidenceMatcher: binutils.MatchAny(
+				// 78f0340031[NUL][NUL][NUL][NUL][NUL][NUL]9.3.0-beta1[NUL][NUL][NUL][NUL][NUL]/usr/local/go
+				m.FileContentsVersionMatcher(`[a-z0-9]+\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+(-beta[0-9]|-test)?)\x00+\/usr\/local\/go`),
+				// HEAD[NUL][NUL][NUL][NUL]9.0.0[NUL]:[NUL]
+				// HEAD[NUL][NUL][NUL][NUL]:[NUL][NUL][NUL][NUL][NUL][NUL][NUL]7.5.17[NUL][NUL][NUL][NUL]
+				// HEAD[NUL][NUL][NUL][NUL]m[NUL]...[NUL][NUL]6.7.6[NUL][NUL][NUL].[NUL][NUL][NUL][NUL][NUL][NUL][NUL]:
+				m.FileContentsVersionMatcher(`HEAD\x00+.*\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+(-beta[0-9]|-test)?)\x00+`),
+				// [NUL][NUL][NUL][NUL][NUL]6.7.0-test[NUL][NUL][NUL]...[NUL][NUL][NUL][NUL]/usr/local/go
+				// [NUL][NUL][NUL][NUL][NUL]6.0.0-beta1[NUL][NUL][NUL]...[NUL][NUL][NUL][NUL]/usr/local/go
+				m.FileContentsVersionMatcher(`(?s)\x00+(?P<version>[0-9]\.[0-9]+\.[0-9]+(-beta[0-9]|-test)?)\x00+.*\x00+.{1,1000}\x00+\/u`),
+			),
+			Package: "grafana",
+			PURL:    mustPURL("pkg:generic/grafana@version"),
+			CPEs:    singleCPE("cpe:2.3:a:grafana:grafana:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "envoy-binary",
+			FileGlob: "**/envoy",
+			EvidenceMatcher: binutils.MatchAny(
+				// 1.3x [NUL]1.36.4[NUL]...envoy_reloadable_features
+				// 1.34.5 [NUL]1.34.5[NUL]...envoy.reloadable_features
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_reloadable_features`),
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.34\.5)\x00.{0,200}envoy\.reloadable_features`),
+				// 1.2x envoy_quic_...[NUL]1.28.7[NUL]
+				m.FileContentsVersionMatcher(`(?s)envoy_quic_.{0,1000}\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00`),
+				// 1.2x [NUL]1.20.7[NUL]Unable to
+				// 1.1x [NUL]1.18.6-dev[NUL]Unable to
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[12][0-9]\.[0-9]+(-dev)?)\x00.{0,1000}Unable to`),
+				// 1.2x [NUL]1.22.11[NUL]...ValidationError
+				// 1.1x [NUL]1.14.3[NUL]...ValidationError
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00.{0,580}ValidationError`),
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.1[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}ValidationError`),
+				// 1.1x [source...[NUL]1.11.0[NUL]/
+				m.FileContentsVersionMatcher(`(?s)\[source/.{0,200}\x00(?P<version>1\.1[0-9]\.[0-9]+(-dev)?)\x00`),
+				// 1.x [NUL]1.6.0[NUL]RELEASE
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[0-9]\.[0-9]+(-dev)?)\x00.{0,20}RELEASE`),
+			),
+			Package: "envoy",
+			PURL:    mustPURL("pkg:generic/envoy@version"),
+			CPEs:    singleCPE("cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "mongodb-binary",
+			FileGlob: "**/mongod",
+			EvidenceMatcher: binutils.MatchAny(
+				// mongodb 4.x, 5.x, 6.x: ber followed by tcmalloc
+				// e.g 6.0.27[NUL]tcmalloc
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00tcmalloc`),
+				// mongodb 7.x: ver followed by "heap_size"
+				// e.g 7.0.28[NUL]heap_size
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+heap_size`),
+				// mongodb 8.x: ber followed by "cppdefines"
+				// e.g 8.0.17[NUL]cppdefines
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+cppdefines`),
+			),
+			Package: "mongodb",
+			PURL:    mustPURL("pkg:generic/mongodb@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 

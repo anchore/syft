@@ -16,7 +16,7 @@ import (
 
 func TestParsePnpmLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm/pnpm-lock.yaml"
+	fixture := "testdata/pnpm/pnpm-lock.yaml"
 
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
@@ -62,13 +62,53 @@ func TestParsePnpmLock(t *testing.T) {
 		},
 	}
 
-	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParsePnpmLock_ExcludeDevDependencies(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/pnpm/pnpm-lock.yaml"
+
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "nanoid",
+			Version:   "3.3.4",
+			PURL:      "pkg:npm/nanoid@3.3.4",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.PnpmLockEntry{Resolution: pkg.PnpmLockResolution{}},
+		},
+		{
+			Name:      "picocolors",
+			Version:   "1.0.0",
+			PURL:      "pkg:npm/picocolors@1.0.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.PnpmLockEntry{Resolution: pkg.PnpmLockResolution{}},
+		},
+		{
+			Name:      "source-map-js",
+			Version:   "1.0.2",
+			PURL:      "pkg:npm/source-map-js@1.0.2",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata:  pkg.PnpmLockEntry{Resolution: pkg.PnpmLockResolution{}},
+		},
+	}
+
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
 func TestParsePnpmV6Lock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm-v6/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-v6/pnpm-lock.yaml"
 
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
@@ -266,7 +306,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 
 func TestParsePnpmLockV9(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm-v9/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-v9/pnpm-lock.yaml"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expected := []pkg.Package{
@@ -314,7 +354,7 @@ func TestParsePnpmLockV9(t *testing.T) {
 
 func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
-	fixture := "test-fixtures/pnpm-v9-snapshots/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-v9-snapshots/pnpm-lock.yaml"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -425,7 +465,7 @@ func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 
 func TestSearchPnpmForLicenses(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pnpm-remote/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-remote/pnpm-lock.yaml"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupNpmRegistry()
 	defer teardown()
@@ -443,7 +483,7 @@ func TestSearchPnpmForLicenses(t *testing.T) {
 				{
 					// https://registry.npmjs.org/nanoid/3.3.4
 					path:    "/nanoid/3.3.4",
-					handler: generateMockNpmRegistryHandler("test-fixtures/pnpm-remote/registry_response.json"),
+					handler: generateMockNpmRegistryHandler("testdata/pnpm-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -479,7 +519,7 @@ func TestSearchPnpmForLicenses(t *testing.T) {
 func Test_corruptPnpmLock(t *testing.T) {
 	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/pnpm-lock.yaml").
+		FromFile(t, "testdata/corrupt/pnpm-lock.yaml").
 		WithError().
 		TestParser(t, adapter.parsePnpmLock)
 }

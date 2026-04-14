@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseGemspec(t *testing.T) {
-	fixture := "test-fixtures/bundler.gemspec"
+	fixture := "testdata/bundler.gemspec"
 	ctx := context.TODO()
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 

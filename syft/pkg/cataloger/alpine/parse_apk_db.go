@@ -171,7 +171,7 @@ func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
 func parseReleasesFromAPKRepository(reader file.LocationReadCloser) []linux.Release {
 	var releases []linux.Release
 
-	reposB, err := io.ReadAll(reader)
+	reposB, err := io.ReadAll(reader) //nolint:gocritic // regex matching requires full buffer
 	if err != nil {
 		log.Tracef("unable to read APK repositories file %q: %+v", reader.RealPath, err)
 		return nil

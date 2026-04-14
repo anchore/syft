@@ -50,10 +50,9 @@ linters:
       - legacy
       - std-error-handling
     rules:
-      # internal/os contains OS feature detection logic; the name reflects its purpose
+      # we have multiple packages in syft that might overlap with the stblib; their names reflect their purpose
       - linters:
           - revive
-        path: internal/os/
         text: "var-naming: avoid package names that conflict"
     paths:
       - third_party$

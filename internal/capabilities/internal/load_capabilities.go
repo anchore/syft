@@ -45,6 +45,9 @@ func LoadCapabilities(catalogerDir, repoRoot string) (*capabilities.Document, ma
 			Catalogers []capabilities.CatalogerEntry                `yaml:"catalogers"`
 		}
 		if err := yaml.Unmarshal(data, &doc); err != nil {
+			fmt.Printf("\n=== DEBUG: YAML Parse Error in %s ===\n", file)
+			fmt.Printf("Error: %v\n\n", err)
+			fmt.Printf("=== FULL FILE CONTENT ===\n%s\n=== END FILE ===\n", string(data))
 			return nil, nil, fmt.Errorf("failed to parse %s into struct: %w", file, err)
 		}
 

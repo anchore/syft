@@ -10,7 +10,7 @@ import (
 )
 
 func Test_parseCompositeActionForActionUsage(t *testing.T) {
-	fixture := "test-fixtures/composite-action.yaml"
+	fixture := "testdata/composite-action.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
 	expected := []pkg.Package{
@@ -38,7 +38,7 @@ func Test_parseCompositeActionForActionUsage(t *testing.T) {
 
 func Test_corruptCompositeAction(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/composite-action.yaml").
+		FromFile(t, "testdata/corrupt/composite-action.yaml").
 		WithError().
 		TestParser(t, parseCompositeActionForActionUsage)
 }

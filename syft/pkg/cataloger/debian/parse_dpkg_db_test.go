@@ -26,7 +26,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 	}{
 		{
 			name:        "single package",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/single",
+			fixturePath: "testdata/var/lib/dpkg/status.d/single",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
@@ -100,7 +100,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "single package with installed size",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/installed-size-4KB",
+			fixturePath: "testdata/var/lib/dpkg/status.d/installed-size-4KB",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
@@ -141,7 +141,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "multiple entries",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/multiple",
+			fixturePath: "testdata/var/lib/dpkg/status.d/multiple",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package: "no-version",
@@ -239,7 +239,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "deinstall status packages are ignored",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/deinstall",
+			fixturePath: "testdata/var/lib/dpkg/status.d/deinstall",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "linux-image-6.14.0-1012-aws",
@@ -289,7 +289,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 }
 
 func Test_corruptEntry(t *testing.T) {
-	f, err := os.Open("test-fixtures/var/lib/dpkg/status.d/corrupt")
+	f, err := os.Open("testdata/var/lib/dpkg/status.d/corrupt")
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, f.Close()) })
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -273,9 +274,7 @@ func SharedLibraryLookup(sharedLibraryPattern string, sharedLibraryMatcher Evide
 				}
 				for _, p := range pkgs {
 					// set the source binary as the first location
-					locationSet := file.NewLocationSet(context.Location)
-					locationSet.Add(p.Locations.ToSlice()...)
-					p.Locations = locationSet
+					makePrimaryLocation(&p, context.Location)
 					meta, _ := p.Metadata.(pkg.BinarySignature)
 					p.Metadata = pkg.BinarySignature{
 						Matches: append([]pkg.ClassifierMatch{
@@ -304,6 +303,28 @@ func MatchPath(path string) EvidenceMatcher {
 	return func(_ Classifier, context MatcherContext) ([]pkg.Package, error) {
 		if doublestar.MatchUnvalidated(path, context.Location.RealPath) {
 			return []pkg.Package{}, nil // return non-nil
+		}
+		return nil, nil
+	}
+}
+
+// SupportingEvidenceMatcher defines an evidence matcher that searches for secondary evidence with path globs
+// relative to a primary file, for example: a VERSION file in the same or a parent directory to another binary
+func SupportingEvidenceMatcher(relativePathGlob string, evidenceMatcher EvidenceMatcher) EvidenceMatcher {
+	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
+		f := path.Dir(context.Location.RealPath)
+		f = path.Join(f, relativePathGlob)
+		f = path.Clean(f)
+		// this would ideally be RelativeFileByPath but with a glob search:
+		relativeFiles, err := context.Resolver.FilesByGlob(f)
+		if err != nil {
+			return nil, err
+		}
+		for _, relativeFile := range relativeFiles {
+			evidence, err := collectSupportingEvidence(classifier, context, relativeFile, evidenceMatcher)
+			if evidence != nil || err != nil {
+				return evidence, err
+			}
 		}
 		return nil, nil
 	}
@@ -367,4 +388,44 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	}
 
 	return nil, nil
+}
+
+func makePrimaryLocation(p *pkg.Package, primaryLocation file.Location) {
+	locationSet := file.NewLocationSet(primaryLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	for _, l := range p.Locations.ToSlice() {
+		if locationSet.Contains(l) { // no need for duplicate locations
+			continue
+		}
+		locationSet.Add(l.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	}
+	p.Locations = locationSet
+}
+
+func collectSupportingEvidence(classifier Classifier, context MatcherContext, relativeFile file.Location, evidenceMatcher EvidenceMatcher) ([]pkg.Package, error) {
+	rdr, err := context.Resolver.FileContentsByLocation(relativeFile)
+	if err != nil {
+		return nil, err
+	}
+	defer internal.CloseAndLogError(rdr, relativeFile.Path())
+	ur, err := unionreader.GetUnionReader(rdr)
+	if err != nil {
+		return nil, err
+	}
+	newContext := MatcherContext{
+		Resolver: context.Resolver,
+		Location: relativeFile,
+		GetReader: func(_ MatcherContext) (unionreader.UnionReader, error) {
+			return ur, nil
+		},
+	}
+	packages, err := evidenceMatcher(classifier, newContext)
+	if err != nil {
+		return nil, err
+	}
+	for i := range packages {
+		p := &(packages[i])
+		// relative files are supporting evidence, like a VERSION file near a go binary, mark the results as supporting
+		makePrimaryLocation(p, context.Location)
+	}
+	return packages, nil
 }

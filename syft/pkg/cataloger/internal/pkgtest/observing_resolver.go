@@ -208,6 +208,11 @@ func (r *ObservingResolver) FilesByMIMEType(types ...string) ([]file.Location, e
 	return locs, err
 }
 
+// FilesByMediaType returns files matching the given media types.
+func (r *ObservingResolver) FilesByMediaType(_ ...string) ([]file.Location, error) {
+	return nil, nil
+}
+
 // RelativeFileByPath returns a file at a path relative to the given location.
 func (r *ObservingResolver) RelativeFileByPath(location file.Location, path string) *file.Location {
 	const methodName = "RelativeFileByPath"

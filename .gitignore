@@ -19,6 +19,7 @@ bin/
 /.task
 /generate
 /specs
+mise.toml
 
 # changelog generation
 CHANGELOG.md
@@ -36,6 +37,7 @@ VERSION
 coverage.txt
 *.log
 **/test-fixtures/test-observations.json
+**/testdata/test-observations.json
 
 # probable archives
 .images

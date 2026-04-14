@@ -10,6 +10,23 @@ import (
 
 const cacheDir = ".cpe-cache"
 
+// parseNVDTimestamp parses timestamps from NVD API which may or may not include timezone
+func parseNVDTimestamp(ts string) (time.Time, error) {
+	// try RFC3339 first (with timezone)
+	if t, err := time.Parse(time.RFC3339, ts); err == nil {
+		return t, nil
+	}
+	// try without timezone (NVD sometimes returns this format)
+	if t, err := time.Parse("2006-01-02T15:04:05.000", ts); err == nil {
+		return t, nil
+	}
+	// try without milliseconds
+	if t, err := time.Parse("2006-01-02T15:04:05", ts); err == nil {
+		return t, nil
+	}
+	return time.Time{}, fmt.Errorf("unable to parse timestamp: %s", ts)
+}
+
 // IncrementMetadata tracks a single fetch increment for a monthly batch
 type IncrementMetadata struct {
 	FetchedAt        time.Time `json:"fetchedAt"`
@@ -215,7 +232,7 @@ func groupProductsByMonth(products []NVDProduct) (map[string][]NVDProduct, error
 	productsByMonth := make(map[string][]NVDProduct)
 
 	for _, product := range products {
-		lastMod, err := time.Parse(time.RFC3339, product.CPE.LastModified)
+		lastMod, err := parseNVDTimestamp(product.CPE.LastModified)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse lastModified for %s: %w", product.CPE.CPENameID, err)
 		}
@@ -342,8 +359,8 @@ func (m *CacheManager) LoadAllProducts() ([]NVDProduct, error) {
 			}
 
 			// compare lastModified timestamps to keep the newer one
-			newMod, _ := time.Parse(time.RFC3339, p.CPE.LastModified)
-			existingMod, _ := time.Parse(time.RFC3339, existing.CPE.LastModified)
+			newMod, _ := parseNVDTimestamp(p.CPE.LastModified)
+			existingMod, _ := parseNVDTimestamp(existing.CPE.LastModified)
 
 			if newMod.After(existingMod) {
 				productMap[p.CPE.CPENameID] = p

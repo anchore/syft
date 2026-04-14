@@ -14,7 +14,7 @@ import (
 )
 
 func TestParsePackageResolved(t *testing.T) {
-	fixture := "test-fixtures/Package.resolved"
+	fixture := "testdata/Package.resolved"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -81,7 +81,7 @@ func TestParsePackageResolved(t *testing.T) {
 }
 
 func TestParsePackageResolvedV3(t *testing.T) {
-	fixture := "test-fixtures/PackageV3.resolved"
+	fixture := "testdata/PackageV3.resolved"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -116,7 +116,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 
 func TestParsePackageResolved_empty(t *testing.T) {
 	// regression for https://github.com/anchore/syft/issues/2225
-	fixture := "test-fixtures/empty-packages.resolved"
+	fixture := "testdata/empty-packages.resolved"
 
 	pkgtest.TestFileParser(t, fixture, parsePackageResolved, nil, nil)
 
@@ -130,14 +130,14 @@ func TestParsePackageResolved_empty(t *testing.T) {
 
 func TestParsePackageResolved_versionNotANumber(t *testing.T) {
 	// regression for https://github.com/anchore/syft/issues/2225
-	fixture := "test-fixtures/bad-version-packages.resolved"
+	fixture := "testdata/bad-version-packages.resolved"
 
 	pkgtest.NewCatalogTester().FromFile(t, fixture).WithError().TestParser(t, parsePackageResolved)
 }
 
 func Test_corruptPackageResolved(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/bad-version-packages.resolved").
+		FromFile(t, "testdata/bad-version-packages.resolved").
 		WithError().
 		TestParser(t, parsePackageResolved)
 }

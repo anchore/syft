@@ -11,13 +11,13 @@ import (
 
 func Test_corruptDotnetPackagesLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/packages.lock.json").
+		FromFile(t, "testdata/glob-paths/src/packages.lock.json").
 		WithError().
 		TestParser(t, parseDotnetPackagesLock)
 }
 
 func TestParseDotnetPackagesLock(t *testing.T) {
-	fixture := "test-fixtures/packages.lock.json"
+	fixture := "testdata/packages.lock.json"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	autoMapperPkg := pkg.Package{

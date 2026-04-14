@@ -1,9 +1,9 @@
 rules:
   unpinned-uses:
-    ignore:
-      # Allow unpinned uses of trusted internal anchore/workflows actions
-      - update-anchore-dependencies.yml
-
+    config:
+      policies:
+        # anchore/workflows is an internal repository; using @main is acceptable
+        anchore/*: any
   dangerous-triggers:
     ignore:
       # Safe use of pull_request_target - only runs trusted scripts from base repo,

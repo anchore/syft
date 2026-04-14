@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -19,7 +20,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/syft/pkg/cataloger/binary/test-fixtures/manager/testutil"
+	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/testutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
@@ -31,8 +32,8 @@ var mustUseOriginalBinaries = flag.Bool("must-use-original-binaries", false, "fo
 func Test_Cataloger_PositiveCases(t *testing.T) {
 	tests := []struct {
 		name string
-		// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
-		// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+		// logicalFixture is the logical path to the full binary or snippet. This is relative to the testdata/classifiers/snippets
+		// or testdata/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
 		// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
 		// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 		logicalFixture string
@@ -56,6 +57,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "3.12.0-2",
 				Type:      "binary",
 				PURL:      "pkg:generic/arangodb@3.12.0-2",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "arangodb/3.12.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.5",
+				Locations: locations("arangosh"),
+				Metadata:  metadata("arangodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "arangodb/3.12.5-2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "arangodb",
+				Version:   "3.12.5-2",
+				Type:      "binary",
+				PURL:      "pkg:generic/arangodb@3.12.5-2",
 				Locations: locations("arangosh"),
 				Metadata:  metadata("arangodb-binary"),
 			},
@@ -184,6 +207,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "mongodb/8.0.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "8.0.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@8.0.17",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/7.0.28/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "7.0.28",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@7.0.28",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/6.0.27/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "6.0.27",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@6.0.27",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/5.0.32/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "5.0.32",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@5.0.32",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mongodb/4.4.30/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mongodb",
+				Version:   "4.4.30",
+				Type:      "binary",
+				PURL:      "pkg:generic/mongodb@4.4.30",
+				Locations: locations("mongod"),
+				Metadata:  metadata("mongodb-binary"),
+			},
+		},
+		{
 			logicalFixture: "traefik/1.7.34/linux-amd64",
 			expected: pkg.Package{
 				Name:      "traefik",
@@ -223,6 +301,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "3.0.4",
 				Type:      "binary",
 				PURL:      "pkg:generic/traefik@3.0.4",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/3.6.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "3.6.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@3.6.5",
 				Locations: locations("traefik"),
 				Metadata:  metadata("traefik-binary"),
 			},
@@ -470,6 +559,18 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "valkey-server/9.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "valkey",
+				Version:   "9.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/valkey@9.0.0",
+				Locations: locations("valkey-server"),
+				Metadata:  metadata("valkey-binary"),
+			},
+		},
+		{
+			// no python binary, but we find libpython, which is surfaced as primary evidence
 			logicalFixture: "python-shared-lib/3.7.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "python",
@@ -479,7 +580,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("python-binary-lib"),
 			},
 		},
-
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "python-slim-shared-libs/3.11/linux-amd64",
@@ -492,7 +592,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.11"),
 						match("python-binary", "libpython3.11.so.1.0"),
-						match("python-binary-lib", "libpython3.11.so.1.0"),
 					},
 				},
 			},
@@ -509,7 +608,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.9"),
 						match("python-binary", "libpython3.9.so.1.0"),
-						match("python-binary-lib", "libpython3.9.so.1.0"),
 					},
 				},
 			},
@@ -541,7 +639,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 					Matches: []pkg.ClassifierMatch{
 						match("python-binary", "python3.4"),
 						match("python-binary", "libpython3.4m.so.1.0"),
-						match("python-binary-lib", "libpython3.4m.so.1.0"),
 					},
 				},
 			},
@@ -652,13 +749,43 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		{
 			// TODO: find original binary...
 			// note: cannot find the original binary, using a custom snippet based on the original snippet in the repo
+			logicalFixture: "go-version-hint/1.15-dev/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			logicalFixture: "go-version-hint/1.15/any",
 			expected: pkg.Package{
 				Name:      "go",
 				Version:   "1.15",
 				PURL:      "pkg:generic/go@1.15",
-				Locations: locations("VERSION"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
+			logicalFixture: "go-version-hint/1.15w/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.15",
+				PURL:      "pkg:generic/go@1.15",
+				Locations: locations("bin/go.exe", "VERSION"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
+			logicalFixture: "go-version-hint/1.21/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.21",
+				PURL:      "pkg:generic/go@1.21",
+				Locations: locations("go", "VERSION"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -668,8 +795,18 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Name:      "go",
 				Version:   "1.25-d524e1e",
 				PURL:      "pkg:generic/go@1.25-d524e1e",
-				Locations: locations("VERSION.cache"),
-				Metadata:  metadata("go-binary-hint"),
+				Locations: locations("bin/go", "VERSION.cache"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
+			logicalFixture: "go-version-hint/1.25w/any",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.25-d524e1e",
+				PURL:      "pkg:generic/go@1.25-d524e1e",
+				Locations: locations("go.exe", "VERSION"),
+				Metadata:  metadata("go-binary"),
 			},
 		},
 		{
@@ -1052,6 +1189,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "erlang/17.5.6.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "erlang",
+				Version:   "17.5.6.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/erlang@17.5.6.9",
+				Locations: locations("beam.smp"),
+				Metadata:  metadata("erlang-alpine-binary"),
+			},
+		},
+		{
 			logicalFixture: "swipl/9.3.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "swipl",
@@ -1225,6 +1373,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/openssl@1.1.1zb",
 				Locations: locations("openssl"),
 				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
+			logicalFixture: "openldap/2.6.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openldap",
+				Version:   "2.6.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/openldap@2.6.10",
+				Locations: locations("ldapsearch"),
+				Metadata:  metadata("openldap-search-binary"),
+			},
+		},
+		{
+			logicalFixture: "qt/4.8.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "qtbase",
+				Version:   "4.8.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/qtbase@4.8.6",
+				Locations: locations("libQtCore.so.4.8.6"),
+				Metadata:  metadata("qt-qtbase-lib"),
+			},
+		},
+		{
+			logicalFixture: "qt/5.15.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "qtbase",
+				Version:   "5.15.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/qtbase@5.15.2",
+				Locations: locations("libQt5Core.so.5.15.2"),
+				Metadata:  metadata("qt-qtbase-lib"),
+			},
+		},
+		{
+			logicalFixture: "qt/6.5.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "qtbase",
+				Version:   "6.5.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/qtbase@6.5.0",
+				Locations: locations("libQt6Core.so.6.5.0"),
+				Metadata:  metadata("qt-qtbase-lib"),
 			},
 		},
 		{
@@ -1452,14 +1644,487 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				},
 			},
 		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.29.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.29.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-alpha.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.29.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.29.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-beta.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.29.0-rc.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.29.0-rc.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-rc.3",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.26.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.26.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.10-dev/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.10-dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.10-dev",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.8.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.3.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.3.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.3.8",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.29.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.29.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-alpha.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.29.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.29.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-beta.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.29.0-rc.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.29.0-rc.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.29.0-rc.3",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.26.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.26.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.26.8",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.10-dev/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.10-dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.10-dev",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.8.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.4.0-22081664032/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.4.0-22081664032",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.4.0-22081664032",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.3.2-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.3.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.3.2",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.3.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.3.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.3.1",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.2.0-258092/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.2.0-258092",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.2.0-258092",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.0.0",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/11.0.0-preview/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "11.0.0-preview",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@11.0.0-preview",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/11.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "11.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@11.0.0",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/10.4.19/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "10.4.19",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@10.4.19",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/10.3.12/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "10.3.12",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@10.3.12",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/9.5.21/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "9.5.21",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@9.5.21",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/9.4.0-beta1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "9.4.0-beta1",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@9.4.0-beta1",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/9.3.0-beta1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "9.3.0-beta1",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@9.3.0-beta1",
+				Locations: locations("grafana-server"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/9.2.20/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "9.2.20",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@9.2.20",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/9.2.13/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "9.2.13",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@9.2.13",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/9.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "9.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@9.0.0",
+				Locations: locations("grafana-server"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/7.5.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "7.5.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@7.5.17",
+				Locations: locations("grafana-server"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/6.7.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "6.7.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@6.7.6",
+				Locations: locations("grafana-server"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/6.7.0-test/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "6.7.0-test",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@6.7.0-test",
+				Locations: locations("grafana-server"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/6.0.0-beta1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "6.0.0-beta1",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@6.0.0-beta1",
+				Locations: locations("grafana-server"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.36.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.36.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.36.4",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.34.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.34.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.34.5",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.28.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.28.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.28.7",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.22.11/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.22.11",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.22.11",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.20.7/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.20.7",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.20.7",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.18.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.18.6-dev",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.18.6-dev",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.14.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.14.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.14.3",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.11.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.11.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.11.0",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "envoy/1.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "envoy",
+				Version:   "1.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/envoy@1.6.0",
+				Locations: locations("envoy"),
+				Metadata:  metadata("envoy-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.logicalFixture, func(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-			// logicalFixture is the logical path to the full binary or snippet. This is relative to the test-fixtures/classifiers/snippets
-			// or test-fixtures/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
+			// logicalFixture is the logical path to the full binary or snippet. This is relative to the testdata/classifiers/snippets
+			// or testdata/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
 			// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
 			// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
 			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
@@ -1515,17 +2180,6 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, p := range packages {
-				expectedLocations := test.expected.Locations.ToSlice()
-				gotLocations := p.Locations.ToSlice()
-				require.Len(t, gotLocations, len(expectedLocations))
-
-				for i, expectedLocation := range expectedLocations {
-					gotLocation := gotLocations[i]
-					if expectedLocation.RealPath != gotLocation.RealPath {
-						t.Fatalf("locations do not match; expected: %v got: %v", expectedLocations, gotLocations)
-					}
-				}
-
 				assertPackagesAreEqual(t, test.expected, p)
 			}
 		})
@@ -1535,7 +2189,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {
 	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
-	src, err := directorysource.NewFromPath("test-fixtures/classifiers/negative")
+	src, err := directorysource.NewFromPath("testdata/classifiers/negative")
 	assert.NoError(t, err)
 
 	resolver, err := src.FileResolver(source.SquashedScope)
@@ -1586,7 +2240,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 				Classifiers: []binutils.Classifier{},
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   nil,
 		},
 		{
@@ -1594,7 +2248,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 				Classifiers: defaultClassifers,
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   &golangExpected,
 		},
 		{
@@ -1602,7 +2256,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 			config: ClassifierCatalogerConfig{
 				Classifiers: []binutils.Classifier{fooClassifier},
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   nil,
 		},
 		{
@@ -1613,7 +2267,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 					fooClassifier,
 				),
 			},
-			fixtureDir: "test-fixtures/custom/go-1.14",
+			fixtureDir: "testdata/custom/go-1.14",
 			expected:   &golangExpected,
 		},
 		{
@@ -1632,7 +2286,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 					},
 				),
 			},
-			fixtureDir: "test-fixtures/custom/extra",
+			fixtureDir: "testdata/custom/extra",
 			expected:   nil,
 		},
 		{
@@ -1643,7 +2297,7 @@ func Test_Cataloger_CustomClassifiers(t *testing.T) {
 					fooClassifier,
 				),
 			},
-			fixtureDir: "test-fixtures/custom/extra",
+			fixtureDir: "testdata/custom/extra",
 			expected:   &customExpected,
 		},
 	}
@@ -1715,12 +2369,13 @@ func assertPackagesAreEqual(t *testing.T, expected pkg.Package, p pkg.Package) {
 	gotLocations := p.Locations.ToSlice()
 
 	if len(expectedLocations) != len(gotLocations) {
-		failMessages = append(failMessages, "locations are not equal length")
+		failMessages = append(failMessages, fmt.Sprintf("locations are not equal: %v != %v", expectedLocations, gotLocations))
 	} else {
-		for i, expectedLocation := range expectedLocations {
-			gotLocation := gotLocations[i]
-			if expectedLocation.RealPath != gotLocation.RealPath {
-				failMessages = append(failMessages, fmt.Sprintf("locations do not match; expected: %v got: %v", expectedLocation.RealPath, gotLocation.RealPath))
+		for _, expectedLocation := range expectedLocations {
+			if !slices.ContainsFunc(gotLocations, func(gotLocation file.Location) bool {
+				return gotLocation.RealPath == expectedLocation.RealPath
+			}) {
+				failMessages = append(failMessages, fmt.Sprintf("location not found; expected: %v in set: %v", expectedLocation.RealPath, gotLocations))
 			}
 		}
 	}
@@ -1801,6 +2456,11 @@ func (p *panicyResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 }
 
 func (p *panicyResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
+	p.searchCalled = true
+	return nil, errors.New("not implemented")
+}
+
+func (p *panicyResolver) FilesByMediaType(_ ...string) ([]file.Location, error) {
 	p.searchCalled = true
 	return nil, errors.New("not implemented")
 }

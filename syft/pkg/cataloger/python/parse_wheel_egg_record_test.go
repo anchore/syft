@@ -17,7 +17,7 @@ func TestParseWheelEggRecord(t *testing.T) {
 		ExpectedMetadata []pkg.PythonFileRecord
 	}{
 		{
-			Fixture: "test-fixtures/site-packages/nested/egg-name/egg-info/RECORD",
+			Fixture: "testdata/site-packages/nested/egg-name/egg-info/RECORD",
 			ExpectedMetadata: []pkg.PythonFileRecord{
 				{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
 				{Path: "requests/__init__.py", Digest: &pkg.PythonFileDigest{"sha256", "PnKCgjcTq44LaAMzB-7--B2FdewRrE8F_vjZeaG9NhA"}, Size: "3921"},
@@ -28,7 +28,7 @@ func TestParseWheelEggRecord(t *testing.T) {
 			},
 		},
 		{
-			Fixture: "test-fixtures/site-packages/nested/dist-name/dist-info/RECORD",
+			Fixture: "testdata/site-packages/nested/dist-name/dist-info/RECORD",
 			ExpectedMetadata: []pkg.PythonFileRecord{
 				{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
 				{Path: "Pygments-2.6.1.dist-info/AUTHORS", Digest: &pkg.PythonFileDigest{"sha256", "PVpa2_Oku6BGuiUvutvuPnWGpzxqFy2I8-NIrqCvqUY"}, Size: "8449"},
@@ -64,7 +64,7 @@ func TestParseInstalledFiles(t *testing.T) {
 		ExpectedMetadata []pkg.PythonFileRecord
 	}{
 		{
-			Fixture: "test-fixtures/installed-files/installed-files.txt",
+			Fixture: "testdata/installed-files/installed-files.txt",
 			ExpectedMetadata: []pkg.PythonFileRecord{
 				{Path: "../__pycache__/dicttoxml.cpython-36.pyc"},
 				{Path: "../dicttoxml.py"},

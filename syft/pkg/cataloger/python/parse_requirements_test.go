@@ -13,7 +13,7 @@ import (
 )
 
 func TestParseRequirementsTxt(t *testing.T) {
-	fixture := "test-fixtures/requires/requirements.txt"
+	fixture := "testdata/requires/requirements.txt"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	pinnedPkgs := []pkg.Package{
@@ -229,7 +229,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 
 func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pypi-remote/requirements.txt"
+	fixture := "testdata/pypi-remote/requirements.txt"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupPypiRegistry()
 	defer teardown()
@@ -246,7 +246,7 @@ func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -410,7 +410,7 @@ func Test_parseVersion(t *testing.T) {
 func Test_corruptRequirementsTxt(t *testing.T) {
 	rp := newRequirementsParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/requirements.txt").
+		FromFile(t, "testdata/glob-paths/src/requirements.txt").
 		WithError().
 		TestParser(t, rp.parseRequirementsTxt)
 }

@@ -43,7 +43,7 @@ func TestDecoder_Decode(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.file, func(t *testing.T) {
-			reader, err := os.Open(filepath.Join("test-fixtures", test.file))
+			reader, err := os.Open(filepath.Join("testdata", test.file))
 			require.NoError(t, err)
 
 			dec := NewFormatDecoder()
@@ -151,7 +151,7 @@ func TestDecoder_Identify(t *testing.T) {
 	for _, version := range SupportedVersions() {
 		cases = append(cases, testCase{
 			name:    fmt.Sprintf("v%s schema", version),
-			file:    fmt.Sprintf("test-fixtures/identify/%s.sbom", version),
+			file:    fmt.Sprintf("testdata/identify/%s.sbom", version),
 			id:      ID,
 			version: version,
 		})

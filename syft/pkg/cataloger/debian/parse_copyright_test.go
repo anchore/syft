@@ -14,37 +14,37 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 		expected []string
 	}{
 		{
-			fixture: "test-fixtures/copyright/libc6",
+			fixture: "testdata/copyright/libc6",
 			// note: there are other licenses in this file that are not matched --we don't do full text license identification yet
 			expected: []string{"GPL-2", "LGPL-2.1"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/trilicense",
+			fixture:  "testdata/copyright/trilicense",
 			expected: []string{"GPL-2", "LGPL-2.1", "MPL-1.1"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/liblzma5",
+			fixture:  "testdata/copyright/liblzma5",
 			expected: []string{"Autoconf", "GPL-2", "GPL-2+", "GPL-3", "LGPL-2", "LGPL-2.1", "LGPL-2.1+", "PD", "PD-debian", "config-h", "noderivs", "permissive-fsf", "permissive-nowarranty", "probably-PD"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/libaudit-common",
+			fixture:  "testdata/copyright/libaudit-common",
 			expected: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
 		},
 		{
-			fixture: "test-fixtures/copyright/python",
+			fixture: "testdata/copyright/python",
 			// note: this should not capture #, Permission, This, see ... however it's not clear how to fix this (this is probably good enough)
 			expected: []string{"#", "Apache", "Apache-2", "Apache-2.0", "Expat", "GPL-2", "ISC", "LGPL-2.1+", "PSF-2", "Permission", "Python", "This", "see"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/cuda",
+			fixture:  "testdata/copyright/cuda",
 			expected: []string{"NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/dev-kit",
+			fixture:  "testdata/copyright/dev-kit",
 			expected: []string{"LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/microsoft",
+			fixture:  "testdata/copyright/microsoft",
 			expected: []string{"LICENSE AGREEMENT FOR MICROSOFT PRODUCTS"},
 		},
 	}

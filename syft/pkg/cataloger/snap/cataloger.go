@@ -15,8 +15,6 @@ const catalogerName = "snap-cataloger"
 // NewCataloger returns a new Snap cataloger object that can parse snap package metadata.
 func NewCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
-		// Look for snap.yaml to identify snap type and base snap info
-		WithParserByGlobs(parseSnapYaml, "**/meta/snap.yaml").
 		// Base snaps: dpkg.yaml files containing package manifests
 		WithParserByGlobs(parseBaseDpkgYaml, "**/usr/share/snappy/dpkg.yaml").
 		// Kernel snaps: changelog files for kernel version info

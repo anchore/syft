@@ -31,6 +31,13 @@ func writeYAMLToFile(path string, rootNode *yaml.Node) error {
 		return fmt.Errorf("failed to close encoder: %w", err)
 	}
 
+	// Sync to ensure data is flushed to disk before subsequent reads.
+	// This prevents flaky test failures on tmpfs where file contents
+	// may not be immediately visible after Close() returns.
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("failed to sync file: %w", err)
+	}
+
 	return nil
 }
 

@@ -10,7 +10,7 @@ import (
 )
 
 func TestParsePackPackage(t *testing.T) {
-	fixture := "test-fixtures/pack.pl"
+	fixture := "testdata/pack.pl"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{

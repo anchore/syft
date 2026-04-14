@@ -317,3 +317,59 @@ func TestCacheManager_SaveProducts(t *testing.T) {
 		assert.Equal(t, 1, metadata.MonthlyBatches["2024-12"].TotalProducts)
 	})
 }
+
+func TestParseNVDTimestamp(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		expectError bool
+		expectedStr string // expected time formatted as 2006-01-02T15:04:05
+	}{
+		{
+			name:        "RFC3339 with Z timezone",
+			input:       "2024-11-15T10:00:00.000Z",
+			expectError: false,
+			expectedStr: "2024-11-15T10:00:00",
+		},
+		{
+			name:        "RFC3339 with offset timezone",
+			input:       "2024-11-15T10:00:00+00:00",
+			expectError: false,
+			expectedStr: "2024-11-15T10:00:00",
+		},
+		{
+			name:        "without timezone (NVD format)",
+			input:       "2026-01-27T15:53:34.823",
+			expectError: false,
+			expectedStr: "2026-01-27T15:53:34",
+		},
+		{
+			name:        "without timezone or milliseconds",
+			input:       "2024-11-15T10:00:00",
+			expectError: false,
+			expectedStr: "2024-11-15T10:00:00",
+		},
+		{
+			name:        "invalid format",
+			input:       "not-a-timestamp",
+			expectError: true,
+		},
+		{
+			name:        "empty string",
+			input:       "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parseNVDTimestamp(tt.input)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedStr, result.Format("2006-01-02T15:04:05"))
+			}
+		})
+	}
+}

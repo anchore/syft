@@ -12,7 +12,7 @@ import (
 
 func TestParsePipFileLock(t *testing.T) {
 
-	fixture := "test-fixtures/pipfile-lock/Pipfile.lock"
+	fixture := "testdata/pipfile-lock/Pipfile.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -85,7 +85,7 @@ func TestParsePipFileLock(t *testing.T) {
 
 func TestParsePipfileLockWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pypi-remote/Pipfile.lock"
+	fixture := "testdata/pypi-remote/Pipfile.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupPypiRegistry()
 	defer teardown()
@@ -102,7 +102,7 @@ func TestParsePipfileLockWithLicenseEnrichment(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -141,7 +141,7 @@ func TestParsePipfileLockWithLicenseEnrichment(t *testing.T) {
 func Test_corruptPipfileLock(t *testing.T) {
 	pipfileLockParser := newPipfileLockParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/Pipfile.lock").
+		FromFile(t, "testdata/glob-paths/src/Pipfile.lock").
 		WithError().
 		TestParser(t, pipfileLockParser.parsePipfileLock)
 }
