@@ -425,6 +425,17 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "deno-binary",
+			FileGlob: "**/deno",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// Deno/2.6.3
+				// Deno/1.41.0
+				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "deno",
+			PURL:    mustPURL("pkg:generic/deno@version"),
+			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
 			EvidenceMatcher: m.FileContentsVersionMatcher(

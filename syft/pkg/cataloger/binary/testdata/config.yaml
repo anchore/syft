@@ -123,6 +123,30 @@ from-images:
     paths:
       - /usr/lib/dart/bin/dart
 
+  - name: deno
+    version: 1.41.0
+    images:
+      - ref: denoland/deno:1.41.0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 2.0.0
+    images:
+      - ref: denoland/deno:2.0.0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 2.6.3
+    images:
+      - ref: denoland/deno:2.6.3
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
   - name: haskell-ghc
     version: 9.6.5
     images:

@@ -1255,6 +1255,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.41.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.41.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.41.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.0.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.6.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.6.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.6.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
