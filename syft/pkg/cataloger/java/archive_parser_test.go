@@ -355,7 +355,7 @@ func TestParseJar(t *testing.T) {
 		{
 			// Dupicate the example-java-app-gradle test and the Makefile is adjusted to copy its jar to example-zap-addon-0.1.0.zap
 			name:    "example-zap-addon",
-			fixture: "test-fixtures/java-builds/packages/example-zap-addon-0.1.0.zap",
+			fixture: "testdata/java-builds/packages/example-zap-addon-0.1.0.zap",
 			wantErr: require.NoError, // no nested jars
 			expected: map[string]pkg.Package{
 				"example-zap-addon": {
@@ -369,11 +369,11 @@ func TestParseJar(t *testing.T) {
 							Value:          "Apache-2.0",
 							SPDXExpression: "Apache-2.0",
 							Type:           license.Concluded,
-							Locations:      file.NewLocationSet(file.NewLocation("test-fixtures/java-builds/packages/example-zap-addon-0.1.0.zap")),
+							Locations:      file.NewLocationSet(file.NewLocation("testdata/java-builds/packages/example-zap-addon-0.1.0.zap")),
 						},
 					),
 					Metadata: pkg.JavaArchive{
-						VirtualPath: "test-fixtures/java-builds/packages/example-zap-addon-0.1.0.zap",
+						VirtualPath: "testdata/java-builds/packages/example-zap-addon-0.1.0.zap",
 						Manifest: &pkg.JavaManifest{
 							Main: []pkg.KeyValue{
 								{
@@ -404,14 +404,14 @@ func TestParseJar(t *testing.T) {
 					Type:     pkg.JavaPkg,
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromFieldsWithContext(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
-							l := file.NewLocation("test-fixtures/java-builds/packages/example-zap-addon-0.1.0.zap")
+							l := file.NewLocation("testdata/java-builds/packages/example-zap-addon-0.1.0.zap")
 							return &l
 						}()),
 					),
 					Metadata: pkg.JavaArchive{
 						// ensure that nested packages with different names than that of the parent are appended as
 						// a suffix on the virtual path with a colon separator between group name and artifact name
-						VirtualPath: "test-fixtures/java-builds/packages/example-zap-addon-0.1.0.zap:joda-time:joda-time",
+						VirtualPath: "testdata/java-builds/packages/example-zap-addon-0.1.0.zap:joda-time:joda-time",
 						PomProperties: &pkg.JavaPomProperties{
 							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
 							GroupID:    "joda-time",
