@@ -1,9 +1,13 @@
 package javascript
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
+	"iter"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -84,8 +88,8 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 
 	packages := make(map[string]pnpmPackage)
 
-	// Direct dependencies
-	for name, info := range p.Dependencies {
+	// Direct dependencies — use sorted keys for deterministic output
+	for name, info := range sortedIter(p.Dependencies) {
 		ver, err := parseVersionField(name, info)
 		if err != nil {
 			log.WithFields("package", name, "error", err).Trace("unable to parse pnpm dependency")
@@ -100,8 +104,8 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 		splitChar = "@"
 	}
 
-	// All transitive dependencies
-	for key, pkgInfo := range p.Packages {
+	// All transitive dependencies — use sorted keys for deterministic output
+	for key, pkgInfo := range sortedIter(p.Packages) {
 		name, ver, ok := parsePnpmPackageKey(key, splitChar)
 		if !ok {
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
@@ -115,7 +119,7 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 		}
 
 		dependencies := make(map[string]string)
-		for depName, depVersion := range pkgInfo.Dependencies {
+		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
 			var normalizedVersion = strings.SplitN(depVersion, "(", 2)[0]
 			dependencies[depName] = normalizedVersion
 		}
@@ -136,7 +140,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 
 	// In v9, all resolved dependencies are listed in the top-level "packages" field.
 	// The key format is like /<name>@<version> or /<name>@<version>(<peer-deps>).
-	for key, entry := range p.Packages {
+	for key, entry := range sortedIter(p.Packages) {
 		// The separator for name and version is consistently '@' in v9+ keys.
 		name, ver, ok := parsePnpmPackageKey(key, "@")
 		if !ok {
@@ -147,7 +151,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
 	}
 
-	for key, snapshotInfo := range p.Snapshots {
+	for key, snapshotInfo := range sortedIter(p.Snapshots) {
 		name, ver, ok := parsePnpmPackageKey(key, "@")
 		if !ok {
 			log.WithFields("key", key).Trace("unable to parse pnpm v9 package snapshot key")
@@ -156,7 +160,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 		pkgKey := name + "@" + ver
 		if pkg, ok := packages[pkgKey]; ok {
 			pkg.Dependencies = make(map[string]string)
-			for name, versionSpecifier := range snapshotInfo.Dependencies {
+			for name, versionSpecifier := range sortedIter(snapshotInfo.Dependencies) {
 				var normalizedVersion = strings.SplitN(versionSpecifier, "(", 2)[0]
 				pkg.Dependencies[name] = normalizedVersion
 			}
@@ -251,6 +255,19 @@ func parsePnpmPackageKey(key, separator string) (name, version string, ok bool) 
 	name = strings.Join(parts[:len(parts)-1], separator)
 
 	return name, version, true
+}
+
+// sortedIter returns an iterator over the map entries sorted by key, ensuring deterministic iteration order.
+func sortedIter[K cmp.Ordered, V any](values map[K]V) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		keys := slices.Collect(maps.Keys(values))
+		slices.Sort(keys)
+		for _, key := range keys {
+			if !yield(key, values[key]) {
+				return
+			}
+		}
+	}
 }
 
 // toSortedSlice converts the map of packages to a sorted slice for deterministic output.
