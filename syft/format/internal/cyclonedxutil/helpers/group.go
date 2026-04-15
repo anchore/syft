@@ -11,7 +11,7 @@ func encodeGroup(p pkg.Package) string {
 	return ""
 }
 
-func decodeGroup(group string, metadata interface{}) {
+func decodeGroup(group string, metadata any) {
 	if meta, ok := metadata.(*pkg.JavaArchive); ok {
 		if meta.PomProperties == nil {
 			meta.PomProperties = &pkg.JavaPomProperties{}

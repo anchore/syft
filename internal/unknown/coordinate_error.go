@@ -3,6 +3,7 @@ package unknown
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -155,12 +156,7 @@ func containsErr(out []error, err error) bool {
 			log.Tracef("error comparing errors: %v", err)
 		}
 	}()
-	for _, e := range out {
-		if e == err {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(out, err)
 }
 
 // visitErrors visits every wrapped error. the returned error replaces the provided error, null errors are omitted from

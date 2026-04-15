@@ -40,28 +40,28 @@ func TestReflectTypeFromJSONName(t *testing.T) {
 		{
 			name:       "exact match on ID",
 			lookup:     "rust-cargo-lock-entry",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeFor[pkg.RustCargoLockEntry](),
 		},
 		{
 			name:       "exact match on former name",
 			lookup:     "RustCargoPackageMetadata",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeFor[pkg.RustCargoLockEntry](),
 		},
 		{
 			name:       "case insensitive on ID",
 			lookup:     "RUST-CARGO-lock-entrY",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeFor[pkg.RustCargoLockEntry](),
 		},
 		{
 			name:       "case insensitive on alias",
 			lookup:     "rusTcArgopacKagEmEtadATa",
-			wantRecord: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			wantRecord: reflect.TypeFor[pkg.RustCargoLockEntry](),
 		},
 		{
 			name: "consistent override",
 			// there are two correct answers for this -- we should always get the same answer.
 			lookup:     "HackageMetadataType",
-			wantRecord: reflect.TypeOf(pkg.HackageStackYamlLockEntry{}),
+			wantRecord: reflect.TypeFor[pkg.HackageStackYamlLockEntry](),
 		},
 	}
 	for _, tt := range tests {
@@ -83,142 +83,142 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 		{
 			name:     "map pkg.AlpmDBEntry struct type",
 			input:    "AlpmMetadata",
-			expected: reflect.TypeOf(pkg.AlpmDBEntry{}),
+			expected: reflect.TypeFor[pkg.AlpmDBEntry](),
 		},
 		{
 			name:     "map pkg.ApkDBEntry struct type",
 			input:    "ApkMetadata",
-			expected: reflect.TypeOf(pkg.ApkDBEntry{}),
+			expected: reflect.TypeFor[pkg.ApkDBEntry](),
 		},
 		{
 			name:     "map pkg.BinarySignature struct type",
 			input:    "BinaryMetadata",
-			expected: reflect.TypeOf(pkg.BinarySignature{}),
+			expected: reflect.TypeFor[pkg.BinarySignature](),
 		},
 		{
 			name:     "map pkg.CocoaPodfileLockEntry struct type",
 			input:    "CocoapodsMetadataType",
-			expected: reflect.TypeOf(pkg.CocoaPodfileLockEntry{}),
+			expected: reflect.TypeFor[pkg.CocoaPodfileLockEntry](),
 		},
 		{
 			name:     "map pkg.ConanLockEntry struct type",
 			input:    "ConanLockMetadataType",
-			expected: reflect.TypeOf(pkg.ConanV1LockEntry{}),
+			expected: reflect.TypeFor[pkg.ConanV1LockEntry](),
 		},
 		{
 			name:     "map pkg.ConanfileEntry struct type",
 			input:    "ConanMetadataType",
-			expected: reflect.TypeOf(pkg.ConanfileEntry{}),
+			expected: reflect.TypeFor[pkg.ConanfileEntry](),
 		},
 		{
 			name:     "map pkg.DartPubspecLockEntry struct type",
 			input:    "DartPubMetadata",
-			expected: reflect.TypeOf(pkg.DartPubspecLockEntry{}),
+			expected: reflect.TypeFor[pkg.DartPubspecLockEntry](),
 		},
 		{
 			name:     "map pkg.DotnetDepsEntry struct type",
 			input:    "DotnetDepsMetadata",
-			expected: reflect.TypeOf(pkg.DotnetDepsEntry{}),
+			expected: reflect.TypeFor[pkg.DotnetDepsEntry](),
 		},
 		{
 			name:     "map pkg.DpkgDBEntry struct type",
 			input:    "DpkgMetadata",
-			expected: reflect.TypeOf(pkg.DpkgDBEntry{}),
+			expected: reflect.TypeFor[pkg.DpkgDBEntry](),
 		},
 		{
 			name:     "map pkg.RubyGemspec struct type",
 			input:    "GemMetadata",
-			expected: reflect.TypeOf(pkg.RubyGemspec{}),
+			expected: reflect.TypeFor[pkg.RubyGemspec](),
 		},
 		{
 			name:     "map pkg.GolangBinaryBuildinfoEntry struct type",
 			input:    "GolangBinMetadata",
-			expected: reflect.TypeOf(pkg.GolangBinaryBuildinfoEntry{}),
+			expected: reflect.TypeFor[pkg.GolangBinaryBuildinfoEntry](),
 		},
 		{
 			name:     "map pkg.GolangModuleEntry struct type",
 			input:    "GolangModMetadata",
-			expected: reflect.TypeOf(pkg.GolangModuleEntry{}),
+			expected: reflect.TypeFor[pkg.GolangModuleEntry](),
 		},
 		{
 			name:     "map pkg.JavaArchive struct type",
 			input:    "JavaMetadata",
-			expected: reflect.TypeOf(pkg.JavaArchive{}),
+			expected: reflect.TypeFor[pkg.JavaArchive](),
 		},
 		{
 			name:     "map pkg.MicrosoftKbPatch struct type",
 			input:    "KbPatchMetadata",
-			expected: reflect.TypeOf(pkg.MicrosoftKbPatch{}),
+			expected: reflect.TypeFor[pkg.MicrosoftKbPatch](),
 		},
 		{
 			name:     "map pkg.LinuxKernel struct type",
 			input:    "LinuxKernel",
-			expected: reflect.TypeOf(pkg.LinuxKernel{}),
+			expected: reflect.TypeFor[pkg.LinuxKernel](),
 		},
 		{
 			name:     "map pkg.LinuxKernelModule struct type",
 			input:    "LinuxKernelModule",
-			expected: reflect.TypeOf(pkg.LinuxKernelModule{}),
+			expected: reflect.TypeFor[pkg.LinuxKernelModule](),
 		},
 		{
 			name:     "map pkg.ElixirMixLockEntry struct type",
 			input:    "MixLockMetadataType",
-			expected: reflect.TypeOf(pkg.ElixirMixLockEntry{}),
+			expected: reflect.TypeFor[pkg.ElixirMixLockEntry](),
 		},
 		{
 			name:     "map pkg.NixStoreEntry struct type",
 			input:    "NixStoreMetadata",
-			expected: reflect.TypeOf(pkg.NixStoreEntry{}),
+			expected: reflect.TypeFor[pkg.NixStoreEntry](),
 		},
 		{
 			name:     "map pkg.NpmPackage struct type",
 			input:    "NpmPackageJsonMetadata",
-			expected: reflect.TypeOf(pkg.NpmPackage{}),
+			expected: reflect.TypeFor[pkg.NpmPackage](),
 		},
 		{
 			name:     "map pkg.NpmPackageLockEntry struct type",
 			input:    "NpmPackageLockJsonMetadata",
-			expected: reflect.TypeOf(pkg.NpmPackageLockEntry{}),
+			expected: reflect.TypeFor[pkg.NpmPackageLockEntry](),
 		},
 		{
 			name:     "map pkg.PortageEntry struct type",
 			input:    "PortageMetadata",
-			expected: reflect.TypeOf(pkg.PortageEntry{}),
+			expected: reflect.TypeFor[pkg.PortageEntry](),
 		},
 		{
 			name:     "map pkg.PythonPackage struct type",
 			input:    "PythonPackageMetadata",
-			expected: reflect.TypeOf(pkg.PythonPackage{}),
+			expected: reflect.TypeFor[pkg.PythonPackage](),
 		},
 		{
 			name:     "map pkg.PythonPipfileLockEntry struct type",
 			input:    "PythonPipfileLockMetadata",
-			expected: reflect.TypeOf(pkg.PythonPipfileLockEntry{}),
+			expected: reflect.TypeFor[pkg.PythonPipfileLockEntry](),
 		},
 		{
 			name:     "map pkg.PythonRequirementsEntry struct type",
 			input:    "PythonRequirementsMetadata",
-			expected: reflect.TypeOf(pkg.PythonRequirementsEntry{}),
+			expected: reflect.TypeFor[pkg.PythonRequirementsEntry](),
 		},
 		{
 			name:     "map pkg.PhpPeclEntry struct type",
 			input:    "PhpPeclMetadata",
-			expected: reflect.TypeOf(pkg.PhpPeclEntry{}),
+			expected: reflect.TypeFor[pkg.PhpPeclEntry](),
 		},
 		{
 			name:     "map pkg.ErlangRebarLockEntry struct type",
 			input:    "RebarLockMetadataType",
-			expected: reflect.TypeOf(pkg.ErlangRebarLockEntry{}),
+			expected: reflect.TypeFor[pkg.ErlangRebarLockEntry](),
 		},
 		{
 			name:     "map pkg.RDescription struct type",
 			input:    "RDescriptionFileMetadataType",
-			expected: reflect.TypeOf(pkg.RDescription{}),
+			expected: reflect.TypeFor[pkg.RDescription](),
 		},
 		{
 			name:     "map pkg.RpmDBEntry struct type",
 			input:    "RpmdbMetadata",
-			expected: reflect.TypeOf(pkg.RpmDBEntry{}),
+			expected: reflect.TypeFor[pkg.RpmDBEntry](),
 		},
 		// these cases are 1:many
 		{
@@ -228,28 +228,28 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			// from a data-shape perspective either would be equally correct
 			// however, the RPMDBMetadata has been around longer and may have been more widely used
 			// so we'll map to that type for backwards compatibility.
-			expected: reflect.TypeOf(pkg.RpmDBEntry{}),
+			expected: reflect.TypeFor[pkg.RpmDBEntry](),
 		},
 		{
 			name:  "map pkg.HackageStackYamlLockEntry struct type - overlap with HackageStack*Metadata",
 			input: "HackageMetadataType",
 			// this used to be shared as a use case for both HackageStackYamlLockEntry and HackageStackYamlEntry
 			// but the HackageStackYamlLockEntry maps most closely to the original data shape.
-			expected: reflect.TypeOf(pkg.HackageStackYamlLockEntry{}),
+			expected: reflect.TypeFor[pkg.HackageStackYamlLockEntry](),
 		},
 		{
 			name:  "map pkg.PhpComposerLockEntry struct type",
 			input: "PhpComposerJsonMetadata",
 			// this used to be shared as a use case for both PhpComposerLockEntry and PhpComposerInstalledEntry
 			// neither of these is more correct over the other. These parsers were also introduced at the same time.
-			expected: reflect.TypeOf(pkg.PhpComposerLockEntry{}),
+			expected: reflect.TypeFor[pkg.PhpComposerLockEntry](),
 		},
 		{
 			name:  "map pkg.RustCargoLockEntry struct type",
 			input: "RustCargoPackageMetadata",
 			// this used to be shared as a use case for both RustCargoLockEntry and RustBinaryAuditEntry
 			// neither of these is more correct over the other.
-			expected: reflect.TypeOf(pkg.RustCargoLockEntry{}),
+			expected: reflect.TypeFor[pkg.RustCargoLockEntry](),
 		},
 	}
 

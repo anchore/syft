@@ -25,7 +25,7 @@ RUN mkdir -p /app/project1 /app/project2
 WORKDIR /app/project1
 RUN python3.9 -m venv --system-site-packages venv
 RUN /app/project1/venv/bin/pip install pyyaml==5.4.1 beautifulsoup4==4.10.0 soupsieve==2.3.0 requests # note: use requests from global site packages, but use the rest from the virtual environment
-RUN /app/project1/venv/bin/pip install inquirer==3.0.0 # note: should use dependencies from global site packages
+RUN /app/project1/venv/bin/pip install readchar==4.2.1 inquirer==3.0.0 # note: should use dependencies from global site packages
 
 # set up the second project with a virtual environment using Python 3.8
 WORKDIR /app/project2

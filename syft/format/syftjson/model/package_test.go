@@ -207,7 +207,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 `),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.RpmPkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RpmDBEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeFor[pkg.RpmDBEntry]().Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -248,7 +248,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 `),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.RpmPkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RpmArchive{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeFor[pkg.RpmArchive]().Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -287,7 +287,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeFor[pkg.HackageStackYamlEntry]().Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -327,7 +327,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.HackageStackYamlLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeFor[pkg.HackageStackYamlLockEntry]().Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -355,7 +355,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RustCargoLockEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeFor[pkg.RustCargoLockEntry]().Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -383,7 +383,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 }`),
 			assert: func(p *Package) {
 				assert.Equal(t, pkg.HackagePkg, p.Type)
-				assert.Equal(t, reflect.TypeOf(pkg.RustBinaryAuditEntry{}).Name(), reflect.TypeOf(p.Metadata).Name())
+				assert.Equal(t, reflect.TypeFor[pkg.RustBinaryAuditEntry]().Name(), reflect.TypeOf(p.Metadata).Name())
 			},
 		},
 		{
@@ -654,7 +654,7 @@ func Test_unpackMetadata(t *testing.T) {
 				}
 			}`),
 			wantErr: require.Error,
-			wantMetadata: map[string]interface{}{
+			wantMetadata: map[string]any{
 				"thing": "thing-1",
 			},
 		},

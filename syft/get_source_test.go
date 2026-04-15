@@ -148,7 +148,7 @@ func TestValidateSourcePlatform_UnsupportedMetadataTypes(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		metadata interface{}
+		metadata any
 	}{
 		{
 			name:     "string metadata",

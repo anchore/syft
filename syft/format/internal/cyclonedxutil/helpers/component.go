@@ -202,7 +202,7 @@ func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 }
 
 func decodeLocations(vals map[string]string) file.LocationSet {
-	v := Decode(reflect.TypeOf([]file.Location{}), vals, "syft:location", CycloneDXFields)
+	v := Decode(reflect.TypeFor[[]file.Location](), vals, "syft:location", CycloneDXFields)
 	out, ok := v.([]file.Location)
 	if !ok {
 		out = nil
@@ -210,7 +210,7 @@ func decodeLocations(vals map[string]string) file.LocationSet {
 	return file.NewLocationSet(out...)
 }
 
-func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) interface{} {
+func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) any {
 	if typeName != "" && c.Properties != nil {
 		metadataType := packagemetadata.ReflectTypeFromJSONName(typeName)
 		if metadataType == nil {

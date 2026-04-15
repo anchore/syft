@@ -195,7 +195,7 @@ func Test_CondaCataloger(t *testing.T) {
 			name:             "badly formatted conda meta json file",
 			fixture:          "testdata/conda-meta-bad-json",
 			expectedPackages: nil,
-			wantErr: func(t require.TestingT, err error, msgAndArgs ...interface{}) {
+			wantErr: func(t require.TestingT, err error, msgAndArgs ...any) {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), "failed to parse conda-meta package file at conda-meta/package-1.2.3-pyhd8ed1ab_0.json")
 				require.Contains(t, err.Error(), "invalid character")

@@ -14,7 +14,7 @@ type rockspec struct {
 
 type rockspecNode struct {
 	key   string
-	value interface{}
+	value any
 }
 
 func (r rockspecNode) Slice() []rockspecNode {
