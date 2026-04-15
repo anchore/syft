@@ -260,7 +260,8 @@ func parsePnpmPackageKey(key, separator string) (name, version string, ok bool) 
 // sortedIter returns an iterator over the map entries sorted by key, ensuring deterministic iteration order.
 func sortedIter[K cmp.Ordered, V any](values map[K]V) iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
-		keys := slices.Sorted(maps.Keys(values))
+		keys := slices.Collect(maps.Keys(values))
+		slices.Sort(keys)
 		for _, key := range keys {
 			if !yield(key, values[key]) {
 				return
