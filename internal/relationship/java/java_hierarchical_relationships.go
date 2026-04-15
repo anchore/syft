@@ -16,12 +16,10 @@ import (
 // deferred parent IDs in Java dependency relationships and enriches depth/scope from
 // the Maven dependency tree when available.
 func ResolveHierarchicalDependencies(accessor sbomsync.Accessor, cfg cataloging.RelationshipsConfig) {
-	if cfg.JavaMavenDependencyTreeFile == "" {
-		// No tree file configured — nothing to resolve or enrich.
-		// Deferred parent IDs (IntendedParentID) are only set when a dependency graph
-		// was built during cataloging, which requires either a tree file or embedded POMs.
-		// Even if embedded POMs were used, the enrichment in Phase 3 has already occurred.
-		// This post-processor only adds value when a tree file is available for global enrichment.
+	hasTreeFile := cfg.JavaMavenDependencyTreeFile != ""
+	hasEmbeddedPOMs := cfg.JavaUseEmbeddedPOMDependencies
+
+	if !hasTreeFile && !hasEmbeddedPOMs {
 		return
 	}
 
@@ -31,8 +29,11 @@ func ResolveHierarchicalDependencies(accessor sbomsync.Accessor, cfg cataloging.
 		return
 	}
 
-	// Step 2: Build dependency graph from Maven tree file
-	depGraph := buildGraphFromTreeFile(cfg.JavaMavenDependencyTreeFile)
+	// Step 2: Build dependency graph from Maven tree file (nil when only embedded POMs used)
+	var depGraph *javaCataloger.DependencyGraph
+	if hasTreeFile {
+		depGraph = buildGraphFromTreeFile(cfg.JavaMavenDependencyTreeFile)
+	}
 
 	// Step 3: Process relationships
 	var updatedRelationships []artifact.Relationship
