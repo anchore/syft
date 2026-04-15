@@ -57,7 +57,7 @@ func TestNewFromLocal(t *testing.T) {
 			setup: func(fs afero.Fs) {
 				require.NoError(t, createMockSquashfsFile(fs, "/test/local.snap"))
 			},
-			wantErr: func(t assert.TestingT, err error, msgAndArgs ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, msgAndArgs ...any) bool {
 				return assert.Error(t, err, msgAndArgs...) && assert.Contains(t, err.Error(), "architecture cannot be specified for local snap files", msgAndArgs...)
 			},
 			wantRequest: "/test/local.snap",

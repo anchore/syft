@@ -119,7 +119,7 @@ func Test_extractMetadata(t *testing.T) {
 	oneTwoThreeFour := 1234
 	tests := []struct {
 		pkg  spdx.Package
-		meta interface{}
+		meta any
 	}{
 		{
 			pkg: spdx.Package{

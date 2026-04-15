@@ -73,6 +73,6 @@ type DependencyGraph map[string]DependencyNode
 
 type ISO8601Date = string
 
-type Scalar interface{} // should be: null | boolean | string | number
+type Scalar any // should be: null | boolean | string | number
 
 type Metadata map[string]Scalar

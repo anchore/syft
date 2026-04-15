@@ -46,7 +46,7 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		value interface{}
+		value any
 	}{
 		{
 			name: "all values",

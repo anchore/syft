@@ -344,6 +344,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/deno'
+        packages:
+          - class: deno-binary
+            name: deno
+            purl: pkg:generic/deno
+            cpes:
+              - cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ghc*'
         packages:
           - class: haskell-ghc-binary
@@ -422,6 +432,16 @@ catalogers:
             purl: pkg:generic/openssl
             cpes:
               - cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ldapsearch'
+        packages:
+          - class: openldap-search-binary
+            name: openldap
+            purl: pkg:generic/openldap
+            cpes:
+              - cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:

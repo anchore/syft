@@ -58,14 +58,14 @@ func parseJavaManifest(path string, reader io.Reader) (*pkg.JavaManifest, error)
 		}
 
 		// this is a new key-value pair
-		idx := strings.Index(line, ":")
-		if idx == -1 {
+		before, after, ok := strings.Cut(line, ":")
+		if !ok {
 			log.Debugf("java manifest %q: unable to split java manifest key-value pairs: %q", path, line)
 			continue
 		}
 
-		key := strings.TrimSpace(line[0:idx])
-		value := strings.TrimSpace(line[idx+1:])
+		key := strings.TrimSpace(before)
+		value := strings.TrimSpace(after)
 
 		if key == "" {
 			// don't attempt to add new keys or sections unless there is a non-empty key

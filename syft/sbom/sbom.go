@@ -33,7 +33,7 @@ type Artifacts struct {
 type Descriptor struct {
 	Name          string
 	Version       string
-	Configuration interface{}
+	Configuration any
 }
 
 // RelationshipsSorted returns a sorted slice of all relationships

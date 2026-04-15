@@ -34,7 +34,7 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	// TODO: revisit this... should no template file be an error or simply render an empty result? or render the json output?
 	// Note: do not check for the existence of the template file here, as the default encoder cannot provide one.
 	f := sprig.HermeticTxtFuncMap()
-	f["getLastIndex"] = func(collection interface{}) int {
+	f["getLastIndex"] = func(collection any) int {
 		if v := reflect.ValueOf(collection); v.Kind() == reflect.Slice {
 			return v.Len() - 1
 		}
@@ -42,7 +42,7 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 		return 0
 	}
 	// Checks if a field is defined
-	f["hasField"] = func(obj interface{}, field string) bool {
+	f["hasField"] = func(obj any, field string) bool {
 		t := reflect.TypeOf(obj)
 		_, ok := t.FieldByName(field)
 		return ok

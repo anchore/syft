@@ -44,7 +44,7 @@ type Descriptor struct {
 	Version string `json:"version"`
 
 	// Configuration contains the tool configuration used during SBOM generation.
-	Configuration interface{} `json:"configuration,omitempty"`
+	Configuration any `json:"configuration,omitempty"`
 }
 
 // Schema specifies the JSON schema version and URL reference that defines the structure and validation rules for this document format.

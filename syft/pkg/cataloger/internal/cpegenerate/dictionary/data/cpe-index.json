@@ -52,6 +52,9 @@
       "github.com/disintegration/imaging": [
         "cpe:2.3:a:disintegration:imaging:*:*:*:*:*:go:*:*"
       ],
+      "github.com/distribution/distribution/v3": [
+        "cpe:2.3:a:distribution:distribution:*:*:*:*:*:*:*:*"
+      ],
       "github.com/ecnepsnai/web": [
         "cpe:2.3:a:web_project:web:*:*:*:*:*:go:*:*"
       ],
@@ -6046,6 +6049,9 @@
       ],
       "bottle": [
         "cpe:2.3:a:bottlepy:bottle:*:*:*:*:*:*:*:*"
+      ],
+      "briefcase": [
+        "cpe:2.3:a:beeware:briefcase:*:*:*:*:*:python:*:*"
       ],
       "case-utils": [
         "cpe:2.3:a:lfprojects:case_python_utilities:*:*:*:*:*:python:*:*"

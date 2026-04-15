@@ -143,7 +143,7 @@ func build() *jsonschema.Schema {
 	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
 	// srcMetadataContainerType := reflect.TypeOf(srcMetadataContainer)
 
-	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftJsonModel.Document{}))
+	documentSchema := reflector.ReflectFromType(reflect.TypeFor[*syftJsonModel.Document]())
 	pkgMetadataSchema := reflector.ReflectFromType(reflect.TypeOf(pkgMetadataContainer))
 	// srcMetadataSchema := reflector.ReflectFromType(reflect.TypeOf(srcMetadataContainer))
 

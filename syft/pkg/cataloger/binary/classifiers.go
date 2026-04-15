@@ -374,6 +374,10 @@ func DefaultClassifiers() []binutils.Classifier {
 					// [NUL][NUL]26.1.2[NUL][NUL][NUL][NUL][NUL][NUL][NUL]NUL[NUL][NUL]Erlang/OTP
 					`\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+Erlang/OTP`,
 				),
+				m.FileContentsVersionMatcher(
+					// Erlang/OTP 17%s [erts-6.4.1.6] [source] [64-bit] [smp:%beu:%beu] [async-threads:%d] [hipe] [kernel-poll:%s][NUL]17.5.6.9[NUL][NUL][NUL]
+					`(?s)Erlang/OTP.{1,150}\x00+(?P<version>[0-9]+\.[0-9]+(\.[0-9]+){0,2}(-rc[0-9])?)\x00+`,
+				),
 			),
 			Package: "erlang",
 			PURL:    mustPURL("pkg:generic/erlang@version"),
@@ -419,6 +423,17 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "dart",
 			PURL:    mustPURL("pkg:generic/dart@version"),
 			CPEs:    singleCPE("cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "deno-binary",
+			FileGlob: "**/deno",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// Deno/2.6.3
+				// Deno/1.41.0
+				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "deno",
+			PURL:    mustPURL("pkg:generic/deno@version"),
+			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "haskell-ghc-binary",
@@ -511,6 +526,17 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "openldap-search-binary",
+			FileGlob: "**/ldapsearch",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// $OpenLDAP: ldapsearch 2.4.45'
+				`\$OpenLDAP:\sldapsearch\s(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
+			Package: "openldap",
+			PURL:    mustPURL("pkg:generic/openldap@version"),
+			CPEs:    singleCPE("cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "qt-qtbase-lib",
@@ -718,11 +744,13 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: binutils.MatchAny(
 				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
 				// [NUL]1.3.7[NUL][NUL][NUL]1.3.8[NUL]
-				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
 				// Clean[NUL][NUL][NUL]1.8.0[NUL]
-				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// Modified[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]1.10-dev[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`Modified\x00+(?P<version>[0-9]+\.[0-9]+-dev)\x00+`),
 				// 1.1.17[NUL]...S=v<y5
-				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{1,100}S?=v<y5`),
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
 			),
 			Package: "pilot-discovery",
 			PURL:    mustPURL("pkg:generic/istio@version"),
@@ -733,11 +761,13 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/pilot-agent",
 			EvidenceMatcher: binutils.MatchAny(
 				// [NUL]1.26.8[NUL][NUL]1.26.8[NUL]
-				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				m.FileContentsVersionMatcher(`[0-9]+\.[0-9]+\.[0-9]+\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
 				// Clean[NUL][NUL][NUL]1.8.0[NUL]
-				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+`),
+				m.FileContentsVersionMatcher(`Clean\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+`),
+				// Modified[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]1.10-dev[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`Modified\x00+(?P<version>[0-9]+\.[0-9]+-dev)\x00+`),
 				// 1.1.17[NUL]...S=v<y5
-				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{1,100}S?=v<y5`),
+				m.FileContentsVersionMatcher(`(?s)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+|-beta\.[0-9]+|-rc\.[0-9]+|-dev)?)\x00+.{1,100}S?=v<y5`),
 			),
 			Package: "pilot-agent",
 			PURL:    mustPURL("pkg:generic/istio@version"),

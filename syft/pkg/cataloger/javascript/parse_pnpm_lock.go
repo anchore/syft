@@ -45,7 +45,7 @@ type pnpmV6PackageEntry struct {
 
 // pnpmV6LockYaml represents the structure of pnpm lockfiles for versions < 9.0.
 type pnpmV6LockYaml struct {
-	Dependencies map[string]interface{}        `yaml:"dependencies"`
+	Dependencies map[string]any                `yaml:"dependencies"`
 	Packages     map[string]pnpmV6PackageEntry `yaml:"packages"`
 }
 
@@ -65,7 +65,7 @@ type pnpmV9PackageEntry struct {
 // pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
 type pnpmV9LockYaml struct {
 	LockfileVersion string                         `yaml:"lockfileVersion"`
-	Importers       map[string]interface{}         `yaml:"importers"` // Using interface{} for forward compatibility
+	Importers       map[string]any                 `yaml:"importers"` // Using interface{} for forward compatibility
 	Packages        map[string]pnpmV9PackageEntry  `yaml:"packages"`
 	Snapshots       map[string]pnpmV9SnapshotEntry `yaml:"snapshots"`
 }
@@ -218,11 +218,11 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 }
 
 // parseVersionField extracts the version string from a dependency entry.
-func parseVersionField(name string, info interface{}) (string, error) {
+func parseVersionField(name string, info any) (string, error) {
 	switch v := info.(type) {
 	case string:
 		return v, nil
-	case map[string]interface{}:
+	case map[string]any:
 		if ver, ok := v["version"].(string); ok {
 			// e.g., "1.2.3(react@17.0.0)" -> "1.2.3"
 			return strings.SplitN(ver, "(", 2)[0], nil
