@@ -342,7 +342,7 @@ func TestFindNearestAncestorInSBOM(t *testing.T) {
 	}
 
 	t.Run("returns root when node is nil", func(t *testing.T) {
-		ancestor := findNearestAncestorInSBOM(nil, nil, pkgIndex, &root)
+		ancestor := findNearestAncestorInSBOM(nil, pkgIndex, &root)
 		require.NotNil(t, ancestor)
 		assert.Equal(t, root.ID(), ancestor.ID())
 	})
@@ -360,7 +360,7 @@ func TestFindNearestAncestorInSBOM(t *testing.T) {
 			},
 		}
 
-		ancestor := findNearestAncestorInSBOM(nil, missingNode, pkgIndex, &root)
+		ancestor := findNearestAncestorInSBOM(missingNode, pkgIndex, &root)
 		require.NotNil(t, ancestor)
 		assert.Equal(t, root.ID(), ancestor.ID())
 	})
