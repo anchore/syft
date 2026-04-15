@@ -120,6 +120,7 @@ func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 		PackageFileOwnershipOverlap: cfg.Relationships.PackageFileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
 		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
+		JavaMavenDependencyTreeFile:                   cfg.Java.MavenDependencyTree,
 	}
 }
 

@@ -13,6 +13,10 @@ type RelationshipsConfig struct {
 	// For example, if a binary package representing the /bin/python binary is discovered and there is a python RPM package installed which claims to
 	// orn /bin/python, then the binary package will be excluded from the catalog altogether if this configuration is set to true.
 	ExcludeBinaryPackagesWithFileOwnershipOverlap bool `yaml:"exclude-binary-packages-with-file-ownership-overlap" json:"exclude-binary-packages-with-file-ownership-overlap" mapstructure:"exclude-binary-packages-with-file-ownership-overlap"`
+
+	// JavaMavenDependencyTreeFile is the path to a pre-generated Maven dependency tree file.
+	// When provided, Java dependency relationships are enriched with accurate depth and scope during post-processing.
+	JavaMavenDependencyTreeFile string `yaml:"java-maven-dependency-tree-file" json:"java-maven-dependency-tree-file" mapstructure:"java-maven-dependency-tree-file"`
 }
 
 func DefaultRelationshipsConfig() RelationshipsConfig {
