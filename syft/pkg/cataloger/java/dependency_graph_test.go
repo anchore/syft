@@ -2,6 +2,7 @@ package java
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -324,3 +325,28 @@ func strPtr(s string) *string {
 	return &s
 }
 
+func BenchmarkFindNodeFlexible(b *testing.B) {
+	g := NewDependencyGraph()
+	root := g.SetRoot(maven.NewID("com.example", "root", "1.0"))
+	for i := 0; i < 50; i++ {
+		directNode := g.AddNode(maven.NewID("org.dep", fmt.Sprintf("direct-%d", i), fmt.Sprintf("%d.0", i)), "compile", root)
+		for j := 0; j < 5; j++ {
+			g.AddNode(maven.NewID("org.dep", fmt.Sprintf("trans-%d-%d", i, j), fmt.Sprintf("%d.%d", i, j)), "compile", directNode)
+		}
+	}
+
+	lookups := make([]maven.ID, 0, 300)
+	for i := 0; i < 50; i++ {
+		for j := 0; j < 5; j++ {
+			lookups = append(lookups, maven.NewID("org.dep", fmt.Sprintf("trans-%d-%d", i, j), fmt.Sprintf("%d.%d", i, j)))
+		}
+		lookups = append(lookups, maven.NewID("org.dep", fmt.Sprintf("direct-%d", i), fmt.Sprintf("%d.0", i)))
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		for _, id := range lookups {
+			g.FindNodeFlexible(id)
+		}
+	}
+}

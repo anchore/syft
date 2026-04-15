@@ -1,6 +1,7 @@
 package java
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -447,3 +448,166 @@ func TestParseMavenID(t *testing.T) {
 	assert.False(t, empty.Valid())
 }
 
+// TestEndToEnd_FullPipeline exercises the complete post-processing pipeline with the
+// Maven tree fixture. It creates a realistic SBOM with packages at various depths and
+// flat relationships (all pointing to root), then verifies the post-processor correctly
+// enriches depth/scope and re-parents transitive dependencies.
+func TestEndToEnd_FullPipeline(t *testing.T) {
+	treeFile := "../../../syft/pkg/cataloger/java/testdata/maven-dependency-tree.txt"
+
+	// Create packages matching the fixture tree:
+	// com.example:my-app:1.0.0 (root)
+	//   +- jackson-databind (depth=1, direct)
+	//   |  +- jackson-core (depth=2, transitive)
+	//   |  \- jackson-annotations (depth=2, transitive)
+	//   +- spring-core (depth=1, direct)
+	//   |  \- spring-jcl (depth=2, transitive)
+	//   +- micrometer-core (depth=1, direct)
+	//   |  +- HdrHistogram (depth=2, transitive, runtime)
+	//   \- junit-jupiter (depth=1, test)
+	//      +- junit-jupiter-api (depth=2, test)
+	//      \- junit-jupiter-engine (depth=2, test)
+	//         \- junit-platform-engine (depth=3, test)
+	root := javaPkg("com.example", "my-app", "1.0.0")
+	jacksonDatabind := javaPkg("com.fasterxml.jackson.core", "jackson-databind", "2.19.4")
+	jacksonCore := javaPkg("com.fasterxml.jackson.core", "jackson-core", "2.19.4")
+	jacksonAnnotations := javaPkg("com.fasterxml.jackson.core", "jackson-annotations", "2.19.4")
+	springCore := javaPkg("org.springframework", "spring-core", "6.2.15")
+	springJcl := javaPkg("org.springframework", "spring-jcl", "6.2.15")
+	micrometerCore := javaPkg("io.micrometer", "micrometer-core", "1.15.7")
+	hdrHistogram := javaPkg("org.hdrhistogram", "HdrHistogram", "2.2.2")
+	junitJupiter := javaPkg("org.junit.jupiter", "junit-jupiter", "5.11.6")
+	junitApi := javaPkg("org.junit.jupiter", "junit-jupiter-api", "5.11.6")
+	junitEngine := javaPkg("org.junit.jupiter", "junit-jupiter-engine", "5.11.6")
+	junitPlatform := javaPkg("org.junit.platform", "junit-platform-engine", "1.11.6")
+
+	// Also add a package NOT in the tree (should be unchanged)
+	extraPkg := javaPkg("com.custom", "shaded-extra", "1.0")
+
+	allPkgs := []pkg.Package{
+		root, jacksonDatabind, jacksonCore, jacksonAnnotations,
+		springCore, springJcl, micrometerCore, hdrHistogram,
+		junitJupiter, junitApi, junitEngine, junitPlatform, extraPkg,
+	}
+
+	// All relationships start flat: everything points to root (simulating pre-fix behavior)
+	var flatRels []artifact.Relationship
+	for _, p := range allPkgs[1:] { // skip root
+		flatRels = append(flatRels, depOfRel(p, root, nil))
+	}
+
+	s := newTestSBOM(allPkgs, flatRels)
+	builder := sbomsync.NewBuilder(s)
+	accessor := builder.(sbomsync.Accessor)
+
+	ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{
+		JavaMavenDependencyTreeFile: treeFile,
+	})
+
+	require.Len(t, s.Relationships, len(allPkgs)-1) // 12 relationships (one per non-root package)
+
+	// Build a lookup: from-package-name → relationship data
+	type relInfo struct {
+		depth    int
+		isDirect bool
+		scope    string
+	}
+	relMap := make(map[string]relInfo)
+	for _, rel := range s.Relationships {
+		fromPkg := rel.From.(pkg.Package)
+		data, ok := rel.Data.(javaCataloger.DependencyRelationshipData)
+		if ok {
+			relMap[fromPkg.Name] = relInfo{depth: data.Depth, isDirect: data.IsDirectDependency, scope: data.Scope}
+		} else {
+			relMap[fromPkg.Name] = relInfo{depth: -1} // sentinel for unenriched
+		}
+	}
+
+	// Direct dependencies (depth=0)
+	for _, name := range []string{"jackson-databind", "spring-core", "micrometer-core", "junit-jupiter"} {
+		info, ok := relMap[name]
+		require.True(t, ok, "expected relationship for %s", name)
+		assert.Equal(t, 0, info.depth, "%s should be depth=0", name)
+		assert.True(t, info.isDirect, "%s should be direct", name)
+	}
+
+	// Compile scope
+	assert.Equal(t, "compile", relMap["jackson-databind"].scope)
+	assert.Equal(t, "compile", relMap["spring-core"].scope)
+	assert.Equal(t, "compile", relMap["micrometer-core"].scope)
+
+	// Test scope
+	assert.Equal(t, "test", relMap["junit-jupiter"].scope)
+
+	// Transitive dependencies (depth=1)
+	for _, name := range []string{"jackson-core", "jackson-annotations", "spring-jcl", "HdrHistogram", "junit-jupiter-api", "junit-jupiter-engine"} {
+		info, ok := relMap[name]
+		require.True(t, ok, "expected relationship for %s", name)
+		assert.Equal(t, 1, info.depth, "%s should be depth=1", name)
+		assert.False(t, info.isDirect, "%s should be transitive", name)
+	}
+
+	// Runtime scope for HdrHistogram
+	assert.Equal(t, "runtime", relMap["HdrHistogram"].scope)
+
+	// Depth=2 transitive (junit-platform-engine is 3 levels deep in tree → relDepth=2)
+	info, ok := relMap["junit-platform-engine"]
+	require.True(t, ok)
+	assert.Equal(t, 2, info.depth)
+	assert.False(t, info.isDirect)
+	assert.Equal(t, "test", info.scope)
+
+	// Package not in tree should be unchanged (no enrichment data)
+	assert.Equal(t, -1, relMap["shaded-extra"].depth, "package not in tree should have no enrichment")
+}
+
+func BenchmarkPostProcessingPipeline(b *testing.B) {
+	treeFile := "../../../syft/pkg/cataloger/java/testdata/maven-dependency-tree.txt"
+
+	// Build a realistic SBOM with 300 packages
+	allPkgs := []pkg.Package{javaPkg("com.example", "root", "1.0.0")}
+	for i := 0; i < 50; i++ {
+		allPkgs = append(allPkgs, javaPkg("org.dep", fmt.Sprintf("direct-%d", i), fmt.Sprintf("%d.0", i)))
+		for j := 0; j < 5; j++ {
+			allPkgs = append(allPkgs, javaPkg("org.dep", fmt.Sprintf("trans-%d-%d", i, j), fmt.Sprintf("%d.%d", i, j)))
+		}
+	}
+
+	var flatRels []artifact.Relationship
+	root := allPkgs[0]
+	for _, p := range allPkgs[1:] {
+		flatRels = append(flatRels, depOfRel(p, root, nil))
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		s := newTestSBOM(allPkgs, flatRels)
+		builder := sbomsync.NewBuilder(s)
+		accessor := builder.(sbomsync.Accessor)
+		ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{
+			JavaMavenDependencyTreeFile: treeFile,
+		})
+	}
+}
+
+func BenchmarkPostProcessingPipeline_Disabled(b *testing.B) {
+	// Verify minimal overhead when feature is disabled
+	allPkgs := []pkg.Package{javaPkg("com.example", "root", "1.0.0")}
+	for i := 0; i < 300; i++ {
+		allPkgs = append(allPkgs, javaPkg("org.dep", fmt.Sprintf("lib-%d", i), fmt.Sprintf("%d.0", i)))
+	}
+
+	var flatRels []artifact.Relationship
+	root := allPkgs[0]
+	for _, p := range allPkgs[1:] {
+		flatRels = append(flatRels, depOfRel(p, root, nil))
+	}
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		s := newTestSBOM(allPkgs, flatRels)
+		builder := sbomsync.NewBuilder(s)
+		accessor := builder.(sbomsync.Accessor)
+		ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{})
+	}
+}
