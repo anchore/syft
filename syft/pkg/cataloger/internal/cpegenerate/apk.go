@@ -42,8 +42,8 @@ func upstreamCandidates(m pkg.ApkDBEntry) (candidates []upstreamCandidate) {
 	}
 
 	for prefix, typ := range prefixesToPackageType {
-		if strings.HasPrefix(name, prefix) {
-			t := strings.TrimPrefix(name, prefix)
+		if after, ok0 := strings.CutPrefix(name, prefix); ok0 {
+			t := after
 			if t != "" {
 				candidates = append(candidates, upstreamCandidate{Name: t, Type: typ})
 				return candidates

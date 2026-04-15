@@ -100,7 +100,7 @@ func toCycloneDXAlgorithm(algorithm string) cyclonedx.HashAlgorithm {
 	return validMap[strings.ToLower(algorithm)]
 }
 
-func decodeExternalReferences(c *cyclonedx.Component, metadata interface{}) {
+func decodeExternalReferences(c *cyclonedx.Component, metadata any) {
 	if c.ExternalReferences == nil {
 		return
 	}

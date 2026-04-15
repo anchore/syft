@@ -41,7 +41,7 @@ func (cfg configurationAuditTrail) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	var dataMap map[string]interface{}
+	var dataMap map[string]any
 	if err := json.Unmarshal(initialJSON, &dataMap); err != nil {
 		return nil, err
 	}
@@ -55,13 +55,13 @@ func (cfg configurationAuditTrail) MarshalJSON() ([]byte, error) {
 }
 
 // marshalSorted recursively marshals a map with sorted keys
-func marshalSorted(m interface{}) ([]byte, error) {
+func marshalSorted(m any) ([]byte, error) {
 	if reflect.TypeOf(m).Kind() != reflect.Map {
 		return json.Marshal(m)
 	}
 
 	val := reflect.ValueOf(m)
-	sortedMap := make(map[string]interface{})
+	sortedMap := make(map[string]any)
 
 	for _, key := range val.MapKeys() {
 		value := val.MapIndex(key).Interface()

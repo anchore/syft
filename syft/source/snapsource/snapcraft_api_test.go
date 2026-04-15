@@ -609,7 +609,7 @@ func TestSnapcraftClient_GetSnapDownloadURL_DoesntExist(t *testing.T) {
 				},
 			},
 			expectedURL: "https://api.snapcraft.io/api/v1/snaps/download/TKebVGcPeDKoOqAmNmczU2oWLtsojKD5_249.snap",
-			expectError: func(t require.TestingT, err error, msgAndArgs ...interface{}) {
+			expectError: func(t require.TestingT, err error, msgAndArgs ...any) {
 				require.EqualError(t, err, "no matching snap found for etcd:248")
 			},
 		},

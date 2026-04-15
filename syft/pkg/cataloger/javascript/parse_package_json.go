@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -95,7 +96,7 @@ func (p *person) UnmarshalJSON(b []byte) error {
 		}
 	} else {
 		// it's a map that may contain fields of various data types (not just strings)
-		var fields map[string]interface{}
+		var fields map[string]any
 		if err := json.Unmarshal(b, &fields); err != nil {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
@@ -210,12 +211,7 @@ func licensesFromJSON(b []byte) ([]npmPackageLicense, error) {
 var filepathSeparator = regexp.MustCompile(`[\\/]`)
 
 func pathContainsNodeModulesDirectory(p string) bool {
-	for _, subPath := range filepathSeparator.Split(p, -1) {
-		if subPath == "node_modules" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(filepathSeparator.Split(p, -1), "node_modules")
 }
 
 func (p *people) UnmarshalJSON(b []byte) error {
@@ -242,7 +238,7 @@ func (p *people) UnmarshalJSON(b []byte) error {
 	}
 
 	// Try to unmarshal as an array of objects
-	var authorObjs []map[string]interface{}
+	var authorObjs []map[string]any
 	if err := json.Unmarshal(b, &authorObjs); err == nil {
 		// Successfully parsed as an array of objects
 		auths := make([]person, len(authorObjs))

@@ -15,7 +15,6 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.BitnamiPkg}
 	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
-		p := p
 		p.SetID()
 	}
 

@@ -15,9 +15,9 @@ import (
 
 // AppConfigField represents an application-level configuration field for catalogers
 type AppConfigField struct {
-	Key          string      // e.g., "golang.search-local-mod-cache-licenses"
-	Description  string      // extracted from DescribeFields() method
-	DefaultValue interface{} // extracted from Default*() functions
+	Key          string // e.g., "golang.search-local-mod-cache-licenses"
+	Description  string // extracted from DescribeFields() method
+	DefaultValue any    // extracted from Default*() functions
 }
 
 // extractEcosystemConfigFieldsFromCatalog parses catalog.go and extracts the ecosystem-specific
@@ -390,7 +390,7 @@ func extractDescriptionsFromDescribeFields(f *ast.File) map[string]string {
 }
 
 // extractNestedAppConfigs handles nested config structs like golang.MainModuleVersion
-func extractNestedAppConfigs(f *ast.File, parentKey, parentFieldName string, fieldType ast.Expr, descriptions map[string]string, defaults map[string]interface{}) []AppConfigField {
+func extractNestedAppConfigs(f *ast.File, parentKey, parentFieldName string, fieldType ast.Expr, descriptions map[string]string, defaults map[string]any) []AppConfigField {
 	var configs []AppConfigField
 
 	// find the nested struct type
@@ -449,8 +449,8 @@ func extractNestedAppConfigs(f *ast.File, parentKey, parentFieldName string, fie
 		description := descriptions[nestedPath]
 
 		// try to get default value from nested defaults
-		var defaultValue interface{}
-		if nestedDefaults, ok := defaults[parentFieldName].(map[string]interface{}); ok {
+		var defaultValue any
+		if nestedDefaults, ok := defaults[parentFieldName].(map[string]any); ok {
 			defaultValue = nestedDefaults[fieldName]
 		}
 
@@ -465,8 +465,8 @@ func extractNestedAppConfigs(f *ast.File, parentKey, parentFieldName string, fie
 }
 
 // extractAppDefaultValues extracts default values from the default*Config function
-func extractAppDefaultValues(f *ast.File) map[string]interface{} {
-	defaults := make(map[string]interface{})
+func extractAppDefaultValues(f *ast.File) map[string]any {
+	defaults := make(map[string]any)
 
 	for _, decl := range f.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
@@ -518,7 +518,7 @@ func extractAppDefaultValues(f *ast.File) map[string]interface{} {
 }
 
 // extractAppValue extracts a Go value from an AST expression
-func extractAppValue(expr ast.Expr) interface{} {
+func extractAppValue(expr ast.Expr) any {
 	switch v := expr.(type) {
 	case *ast.BasicLit:
 		// string, int, bool literals
@@ -543,7 +543,7 @@ func extractAppValue(expr ast.Expr) interface{} {
 		}
 	case *ast.CompositeLit:
 		// nested struct literal
-		nested := make(map[string]interface{})
+		nested := make(map[string]any)
 		for _, elt := range v.Elts {
 			kvExpr, ok := elt.(*ast.KeyValueExpr)
 			if !ok {

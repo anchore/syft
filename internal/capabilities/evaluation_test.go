@@ -10,8 +10,8 @@ import (
 func Test_valuesEqual(t *testing.T) {
 	tests := []struct {
 		name string
-		a    interface{}
-		b    interface{}
+		a    any
+		b    any
 		want bool
 	}{
 		{
@@ -123,47 +123,47 @@ func Test_valuesEqual(t *testing.T) {
 func TestConditionMatches(t *testing.T) {
 	tests := []struct {
 		name   string
-		when   map[string]interface{}
-		config map[string]interface{}
+		when   map[string]any
+		config map[string]any
 		want   bool
 	}{
 		{
 			name:   "empty when clause matches anything",
-			when:   map[string]interface{}{},
-			config: map[string]interface{}{"key": "value"},
+			when:   map[string]any{},
+			config: map[string]any{"key": "value"},
 			want:   true,
 		},
 		{
 			name:   "empty when clause with empty config",
-			when:   map[string]interface{}{},
-			config: map[string]interface{}{},
+			when:   map[string]any{},
+			config: map[string]any{},
 			want:   true,
 		},
 		{
 			name:   "single key match",
-			when:   map[string]interface{}{"SearchLocalModCacheLicenses": true},
-			config: map[string]interface{}{"SearchLocalModCacheLicenses": true},
+			when:   map[string]any{"SearchLocalModCacheLicenses": true},
+			config: map[string]any{"SearchLocalModCacheLicenses": true},
 			want:   true,
 		},
 		{
 			name:   "single key mismatch",
-			when:   map[string]interface{}{"SearchLocalModCacheLicenses": true},
-			config: map[string]interface{}{"SearchLocalModCacheLicenses": false},
+			when:   map[string]any{"SearchLocalModCacheLicenses": true},
+			config: map[string]any{"SearchLocalModCacheLicenses": false},
 			want:   false,
 		},
 		{
 			name:   "key missing from config",
-			when:   map[string]interface{}{"SearchLocalModCacheLicenses": true},
-			config: map[string]interface{}{},
+			when:   map[string]any{"SearchLocalModCacheLicenses": true},
+			config: map[string]any{},
 			want:   false,
 		},
 		{
 			name: "multiple keys all match",
-			when: map[string]interface{}{
+			when: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 				"UseNetwork":                  true,
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 				"UseNetwork":                  true,
 				"ExtraKey":                    "ignored",
@@ -172,11 +172,11 @@ func TestConditionMatches(t *testing.T) {
 		},
 		{
 			name: "multiple keys one mismatch",
-			when: map[string]interface{}{
+			when: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 				"UseNetwork":                  true,
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 				"UseNetwork":                  false,
 			},
@@ -184,31 +184,31 @@ func TestConditionMatches(t *testing.T) {
 		},
 		{
 			name: "multiple keys one missing",
-			when: map[string]interface{}{
+			when: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 				"UseNetwork":                  true,
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 			},
 			want: false,
 		},
 		{
 			name:   "string value match",
-			when:   map[string]interface{}{"mode": "fast"},
-			config: map[string]interface{}{"mode": "fast"},
+			when:   map[string]any{"mode": "fast"},
+			config: map[string]any{"mode": "fast"},
 			want:   true,
 		},
 		{
 			name:   "slice value match",
-			when:   map[string]interface{}{"formats": []string{"json", "yaml"}},
-			config: map[string]interface{}{"formats": []string{"json", "yaml"}},
+			when:   map[string]any{"formats": []string{"json", "yaml"}},
+			config: map[string]any{"formats": []string{"json", "yaml"}},
 			want:   true,
 		},
 		{
 			name:   "slice value mismatch",
-			when:   map[string]interface{}{"formats": []string{"json", "yaml"}},
-			config: map[string]interface{}{"formats": []string{"json", "xml"}},
+			when:   map[string]any{"formats": []string{"json", "yaml"}},
+			config: map[string]any{"formats": []string{"json", "xml"}},
 			want:   false,
 		},
 	}
@@ -225,8 +225,8 @@ func TestEvaluateField(t *testing.T) {
 	tests := []struct {
 		name     string
 		capField CapabilityField
-		config   map[string]interface{}
-		want     interface{}
+		config   map[string]any
+		want     any
 	}{
 		{
 			name: "no conditions returns default",
@@ -235,7 +235,7 @@ func TestEvaluateField(t *testing.T) {
 				Default:    false,
 				Conditions: nil,
 			},
-			config: map[string]interface{}{},
+			config: map[string]any{},
 			want:   false,
 		},
 		{
@@ -245,7 +245,7 @@ func TestEvaluateField(t *testing.T) {
 				Default:    false,
 				Conditions: []CapabilityCondition{},
 			},
-			config: map[string]interface{}{},
+			config: map[string]any{},
 			want:   false,
 		},
 		{
@@ -260,7 +260,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{"SearchLocalModCacheLicenses": true},
+			config: map[string]any{"SearchLocalModCacheLicenses": true},
 			want:   true,
 		},
 		{
@@ -275,7 +275,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{"SearchLocalModCacheLicenses": false},
+			config: map[string]any{"SearchLocalModCacheLicenses": false},
 			want:   false,
 		},
 		{
@@ -294,7 +294,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": true,
 				"SearchRemoteLicenses":        true,
 			},
@@ -316,7 +316,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": false,
 				"SearchRemoteLicenses":        true,
 			},
@@ -338,7 +338,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": false,
 				"SearchRemoteLicenses":        false,
 			},
@@ -351,7 +351,7 @@ func TestEvaluateField(t *testing.T) {
 				Default:    []string{"direct", "indirect"},
 				Conditions: nil,
 			},
-			config: map[string]interface{}{},
+			config: map[string]any{},
 			want:   []string{"direct", "indirect"},
 		},
 		{
@@ -369,7 +369,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"EnableFeatureA": true,
 				"EnableFeatureB": true,
 			},
@@ -390,7 +390,7 @@ func TestEvaluateField(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"EnableFeatureA": true,
 				"EnableFeatureB": false,
 			},
@@ -412,14 +412,14 @@ func TestEvaluateCapabilities(t *testing.T) {
 	tests := []struct {
 		name   string
 		caps   CapabilitySet
-		config map[string]interface{}
-		want   map[string]interface{}
+		config map[string]any
+		want   map[string]any
 	}{
 		{
 			name:   "empty capability set",
 			caps:   CapabilitySet{},
-			config: map[string]interface{}{},
-			want:   map[string]interface{}{},
+			config: map[string]any{},
+			want:   map[string]any{},
 		},
 		{
 			name: "single capability no conditions",
@@ -429,8 +429,8 @@ func TestEvaluateCapabilities(t *testing.T) {
 					Default: false,
 				},
 			},
-			config: map[string]interface{}{},
-			want: map[string]interface{}{
+			config: map[string]any{},
+			want: map[string]any{
 				"license": false,
 			},
 		},
@@ -448,8 +448,8 @@ func TestEvaluateCapabilities(t *testing.T) {
 					},
 				},
 			},
-			config: map[string]interface{}{"SearchLocalModCacheLicenses": true},
-			want: map[string]interface{}{
+			config: map[string]any{"SearchLocalModCacheLicenses": true},
+			want: map[string]any{
 				"license": true,
 			},
 		},
@@ -475,8 +475,8 @@ func TestEvaluateCapabilities(t *testing.T) {
 					Default: "flat",
 				},
 			},
-			config: map[string]interface{}{"SearchLocalModCacheLicenses": true},
-			want: map[string]interface{}{
+			config: map[string]any{"SearchLocalModCacheLicenses": true},
+			want: map[string]any{
 				"license":          true,
 				"dependency.depth": []string{"direct", "indirect"},
 				"dependency.edges": "flat",
@@ -512,11 +512,11 @@ func TestEvaluateCapabilities(t *testing.T) {
 					Default: false,
 				},
 			},
-			config: map[string]interface{}{
+			config: map[string]any{
 				"SearchLocalModCacheLicenses": false,
 				"SearchRemoteLicenses":        true,
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"license":                       true,
 				"dependency.depth":              []string{"direct", "indirect"},
 				"dependency.edges":              "flat",
@@ -526,10 +526,10 @@ func TestEvaluateCapabilities(t *testing.T) {
 		{
 			name: "nil capability set",
 			caps: nil,
-			config: map[string]interface{}{
+			config: map[string]any{
 				"anything": true,
 			},
-			want: map[string]interface{}{},
+			want: map[string]any{},
 		},
 	}
 

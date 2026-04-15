@@ -37,7 +37,7 @@ func newPackageForIndex(ctx context.Context, lr pythonLicenseResolver, name, ver
 	return p
 }
 
-func newPackageForIndexWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata any, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 	licenseSet := lr.getLicenses(ctx, name, version)
 
