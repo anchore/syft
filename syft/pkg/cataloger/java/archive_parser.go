@@ -149,9 +149,8 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		return nil, nil, fmt.Errorf("could not generate package from %s: %w", j.location, err)
 	}
 
-	// find aux packages from pom.properties/pom.xml and potentially modify the existing parentPkg
-	// NOTE: we cannot generate sha1 digests from packages discovered via pom.properties/pom.xml
-	// IMPORTANT!: discoverPkgsFromAllMavenFiles may change mainPkg information, so needs to be called before SetID and before copying for relationships, etc.
+	// find aux packages from pom.properties/pom.xml and potentially modify the existing mainPkg.
+	// NOTE: cannot generate sha1 digests from these. Must be called before SetID and before copying.
 	auxPkgs, err := j.discoverPkgsFromAllMavenFiles(ctx, mainPkg)
 	if err != nil {
 		return nil, nil, err

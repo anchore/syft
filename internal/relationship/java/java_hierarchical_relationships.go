@@ -136,7 +136,7 @@ func processRelationship(
 
 	// Case 1: Has IntendedParentID — resolve deferred parent
 	if hasRelData && relData.IntendedParentID != "" {
-		return resolveIntendedParent(rel, relData, fromPkg, packages, pkgIndex, depGraph, rootPkg)
+		return resolveIntendedParent(rel, relData, fromPkg, pkgIndex, depGraph, rootPkg)
 	}
 
 	// Case 2: No IntendedParentID, but depGraph exists — enrich from tree
@@ -153,7 +153,6 @@ func resolveIntendedParent(
 	rel artifact.Relationship,
 	relData javaCataloger.DependencyRelationshipData,
 	fromPkg *pkg.Package,
-	packages *pkg.Collection,
 	pkgIndex map[string]*pkg.Package,
 	depGraph *javaCataloger.DependencyGraph,
 	rootPkg *pkg.Package,
@@ -185,7 +184,7 @@ func resolveIntendedParent(
 	if depGraph != nil {
 		parentMavenID := parseMavenID(relData.IntendedParentID)
 		parentNode := depGraph.FindNodeByMavenID(parentMavenID)
-		if ancestorPkg := findNearestAncestorInSBOM(depGraph, parentNode, pkgIndex, rootPkg); ancestorPkg != nil {
+		if ancestorPkg := findNearestAncestorInSBOM(parentNode, pkgIndex, rootPkg); ancestorPkg != nil {
 			rel.To = *ancestorPkg
 		}
 	}
@@ -225,7 +224,6 @@ func enrichFromGraph(
 // findNearestAncestorInSBOM walks up the Maven tree from a missing parent node
 // until finding an ancestor whose package IS in the SBOM.
 func findNearestAncestorInSBOM(
-	depGraph *javaCataloger.DependencyGraph,
 	missingNode *javaCataloger.DependencyNode,
 	pkgIndex map[string]*pkg.Package,
 	rootPkg *pkg.Package,
