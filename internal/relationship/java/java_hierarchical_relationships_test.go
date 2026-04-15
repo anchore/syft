@@ -70,6 +70,93 @@ func TestResolveHierarchicalDependencies_NoTreeFile(t *testing.T) {
 	assert.Nil(t, s.Relationships[0].Data)
 }
 
+func TestResolveHierarchicalDependencies_EmbeddedPOMsResolveDeferredParent(t *testing.T) {
+	root := javaPkg("com.example", "root", "1.0")
+	parent := javaPkg("org.dep", "parent-lib", "2.0")
+	child := javaPkg("org.dep", "child-lib", "3.0")
+
+	// child has IntendedParentID set by the archive parser during embedded POM graph building
+	relData := javaCataloger.NewDependencyRelationshipDataWithParent(1, "compile", "org.dep:parent-lib:2.0")
+	rel := depOfRel(child, root, relData) // currently points to root (wrong)
+
+	s := newTestSBOM(
+		[]pkg.Package{root, parent, child},
+		[]artifact.Relationship{rel},
+	)
+
+	builder := sbomsync.NewBuilder(s)
+	accessor := builder.(sbomsync.Accessor)
+
+	// No tree file — only embedded POMs enabled
+	ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{
+		JavaUseEmbeddedPOMDependencies: true,
+	})
+
+	require.Len(t, s.Relationships, 1)
+	// Relationship should now point to parent, not root
+	assert.Equal(t, parent.ID(), s.Relationships[0].To.ID())
+
+	data, ok := s.Relationships[0].Data.(javaCataloger.DependencyRelationshipData)
+	require.True(t, ok)
+	assert.Empty(t, data.IntendedParentID)
+	assert.Equal(t, 1, data.Depth)
+	assert.Equal(t, "compile", data.Scope)
+}
+
+func TestResolveHierarchicalDependencies_EmbeddedPOMsParentNotFound(t *testing.T) {
+	root := javaPkg("com.example", "root", "1.0")
+	child := javaPkg("org.dep", "child-lib", "3.0")
+
+	// child's intended parent is NOT in the SBOM
+	relData := javaCataloger.NewDependencyRelationshipDataWithParent(1, "test", "org.dep:missing-parent:2.0")
+	rel := depOfRel(child, root, relData)
+
+	s := newTestSBOM(
+		[]pkg.Package{root, child},
+		[]artifact.Relationship{rel},
+	)
+
+	builder := sbomsync.NewBuilder(s)
+	accessor := builder.(sbomsync.Accessor)
+
+	// No tree file — only embedded POMs enabled
+	ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{
+		JavaUseEmbeddedPOMDependencies: true,
+	})
+
+	require.Len(t, s.Relationships, 1)
+	// Parent not found and no graph to walk — stays pointing to root
+	assert.Equal(t, root.ID(), s.Relationships[0].To.ID())
+
+	data, ok := s.Relationships[0].Data.(javaCataloger.DependencyRelationshipData)
+	require.True(t, ok)
+	assert.Empty(t, data.IntendedParentID) // cleared after resolution attempt
+	assert.Equal(t, 1, data.Depth)
+	assert.Equal(t, "test", data.Scope)
+}
+
+func TestResolveHierarchicalDependencies_NeitherFeatureEnabled(t *testing.T) {
+	root := javaPkg("com.example", "root", "1.0")
+	child := javaPkg("org.dep", "child", "2.0")
+
+	// Even if a relationship happens to have IntendedParentID, the post-processor
+	// should not run when neither feature is enabled
+	relData := javaCataloger.NewDependencyRelationshipDataWithParent(1, "compile", "org.dep:some-parent:1.0")
+	rel := depOfRel(child, root, relData)
+	s := newTestSBOM([]pkg.Package{root, child}, []artifact.Relationship{rel})
+
+	builder := sbomsync.NewBuilder(s)
+	accessor := builder.(sbomsync.Accessor)
+
+	ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{})
+
+	// Should be completely unchanged — post-processor didn't run
+	assert.Len(t, s.Relationships, 1)
+	data, ok := s.Relationships[0].Data.(javaCataloger.DependencyRelationshipData)
+	require.True(t, ok)
+	assert.Equal(t, "org.dep:some-parent:1.0", data.IntendedParentID)
+}
+
 func TestResolveHierarchicalDependencies_WithTreeFile(t *testing.T) {
 	root := javaPkg("com.example", "my-app", "1.0.0")
 	springCore := javaPkg("org.springframework", "spring-core", "6.2.15")
