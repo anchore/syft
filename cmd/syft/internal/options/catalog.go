@@ -211,7 +211,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth).
-			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies),
+			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies).
+			WithUseEmbeddedPOMDependencies(cfg.Java.UseEmbeddedPOMDependencies).
+			WithMavenDependencyTreeFile(cfg.Java.MavenDependencyTree),
 	}
 }
 
