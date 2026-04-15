@@ -664,7 +664,7 @@ func TestParseNestedJar(t *testing.T) {
 			actual, _, err := gap.processJavaArchive(pkgtest.Context(t), file.LocationReadCloser{
 				Location:   file.NewLocation(fixture.Name()),
 				ReadCloser: fixture,
-			}, nil)
+			}, nil, 0, nil)
 			require.NoError(t, err)
 
 			expectedNameVersionPairSet := strset.New()
