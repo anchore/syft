@@ -28,6 +28,7 @@ type CreateSBOMConfig struct {
 	Packages           pkgcataloging.Config
 	Licenses           cataloging.LicenseConfig
 	Files              filecataloging.Config
+	Archive            cataloging.ArchiveSearchConfig
 	Parallelism        int
 	CatalogerSelection cataloging.SelectionRequest
 
@@ -49,6 +50,7 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Packages:             pkgcataloging.DefaultConfig(),
 		Licenses:             cataloging.DefaultLicenseConfig(),
 		Files:                filecataloging.DefaultConfig(),
+		Archive:              cataloging.DefaultArchiveSearchConfig(),
 		Parallelism:          0, // use default: run in parallel based on number of CPUs
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
 
@@ -150,6 +152,12 @@ func (c *CreateSBOMConfig) WithoutFiles() *CreateSBOMConfig {
 		Selection: file.NoFilesSelection,
 		Hashers:   nil,
 	}
+	return c
+}
+
+// WithArchiveConfig allows for defining archive extraction and recursive cataloging parameters.
+func (c *CreateSBOMConfig) WithArchiveConfig(cfg cataloging.ArchiveSearchConfig) *CreateSBOMConfig {
+	c.Archive = cfg
 	return c
 }
 
