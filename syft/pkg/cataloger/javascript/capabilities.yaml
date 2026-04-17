@@ -23,12 +23,44 @@ catalogers:
     selectors: # AUTO-GENERATED
       - declared
       - directory
+      - image
       - javascript
       - language
       - node
       - npm
       - package
     parsers: # AUTO-GENERATED structure
+      - function: parseHiddenPackageLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/node_modules/.package-lock.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmPackageLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmPackageLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - NpmPackageLockEntry.Integrity
       - function: parsePnpmLock
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
