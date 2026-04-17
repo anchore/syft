@@ -1112,6 +1112,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "consul/1.12.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.12.9",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.12.9",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+		{
+			logicalFixture: "consul/1.7.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.7.14",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.7.14",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+		{
 			logicalFixture: "vault/1.21.0-rc1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "github.com/hashicorp/vault",
