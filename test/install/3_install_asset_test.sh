@@ -43,6 +43,11 @@ test_positive_snapshot_install_asset() {
     local_suffix="_power8"
   fi
 
+  # note: this is a change made in goreleaser v2.4.0
+  if [ "${arch}" == "riscv64" ]; then
+    local_suffix="_rva20u64"
+  fi
+
 
   assertFilesEqual \
     "$(snapshot_dir)/${os}-build_${os}_${arch}${local_suffix}/${binary}" \
@@ -95,6 +100,7 @@ trap 'teardown_snapshot_server ${worker_pid}' EXIT
 run_test_case test_positive_snapshot_install_asset "linux" "amd64" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "linux" "arm64" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "linux" "ppc64le" "tar.gz"
+run_test_case test_positive_snapshot_install_asset "linux" "riscv64" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "linux" "s390x" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "darwin" "amd64" "tar.gz"
 run_test_case test_positive_snapshot_install_asset "darwin" "arm64" "tar.gz"
