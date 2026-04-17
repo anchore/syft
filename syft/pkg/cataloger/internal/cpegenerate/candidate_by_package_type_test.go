@@ -232,3 +232,25 @@ func Test_findProductsToRemove(t *testing.T) {
 		})
 	}
 }
+
+// Regression test for https://github.com/anchore/syft/issues/4653:
+// NVD records React under the facebook vendor, so the default npm-derived
+// CPE (cpe:2.3:a:react:react:*) misses every React CVE. The candidate
+// table must add "facebook" to the list of candidate vendors for react
+// (and react-dom, which is tied to the same CVE stream).
+func Test_npmCandidateAdditions_react(t *testing.T) {
+	tests := []struct {
+		pkgName         string
+		expectedVendors []string
+	}{
+		{pkgName: "react", expectedVendors: []string{"facebook"}},
+		{pkgName: "react-dom", expectedVendors: []string{"facebook"}},
+	}
+	for _, test := range tests {
+		t.Run(test.pkgName, func(t *testing.T) {
+			got := findAdditionalVendors(defaultCandidateAdditions, pkg.NpmPkg, test.pkgName, "")
+			assert.ElementsMatch(t, test.expectedVendors, got,
+				"npm package %q should map to vendors %v", test.pkgName, test.expectedVendors)
+		})
+	}
+}
