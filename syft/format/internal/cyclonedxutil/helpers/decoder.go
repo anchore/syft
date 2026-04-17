@@ -60,9 +60,18 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]any) 
 
 func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]any) {
 	switch component.Type {
-	case cyclonedx.ComponentTypeOS:
+	// ComponentTypeContainer describes the image itself, not a package
+	// inside it, so we still skip it here. For everything that is a
+	// real piece of software (including an operating-system component,
+	// which carries a CPE that vulnerability matchers key off of, see
+	// anchore/syft#4414 and anchore/grype#3062) we decode it into a
+	// Package so downstream matchers can find it.
 	case cyclonedx.ComponentTypeContainer:
-	case cyclonedx.ComponentTypeApplication, cyclonedx.ComponentTypeFramework, cyclonedx.ComponentTypeLibrary, cyclonedx.ComponentTypeMachineLearningModel:
+	case cyclonedx.ComponentTypeOS,
+		cyclonedx.ComponentTypeApplication,
+		cyclonedx.ComponentTypeFramework,
+		cyclonedx.ComponentTypeLibrary,
+		cyclonedx.ComponentTypeMachineLearningModel:
 		p := decodeComponent(component)
 		idMap[component.BOMRef] = p
 		if component.BOMRef != "" {
