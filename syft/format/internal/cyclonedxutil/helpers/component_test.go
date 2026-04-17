@@ -428,9 +428,9 @@ func Test_setPackageName(t *testing.T) {
 			wantName: "wget",
 		},
 		{
-			name: "java group stored in metadata not name",
-			pkg:  pkg.Package{Type: pkg.JavaPkg},
-			comp: cyclonedx.Component{Name: "log4j", Group: "org.apache.logging.log4j"},
+			name:     "java group stored in metadata not name",
+			pkg:      pkg.Package{Type: pkg.JavaPkg},
+			comp:     cyclonedx.Component{Name: "log4j", Group: "org.apache.logging.log4j"},
 			wantName: "log4j",
 		},
 	}
