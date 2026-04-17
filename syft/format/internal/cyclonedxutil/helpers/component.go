@@ -195,7 +195,9 @@ func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 				}
 			}
 		default:
-			name = fmt.Sprintf("%s/%s", c.Group, name)
+			if !internal.NameExcludesPurlNamespace(string(p.Type.PackageURLType())) {
+				name = fmt.Sprintf("%s/%s", c.Group, name)
+			}
 		}
 	}
 	p.Name = name
