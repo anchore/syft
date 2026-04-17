@@ -797,20 +797,6 @@ from-images:
     paths:
       - /bin/consul
 
-  - version: 1.12.9
-    images:
-      - ref: hashicorp/consul:1.12.9@sha256:609cce8f5e22953c89e284ca3a763e1dfff0bae6a6169e4e0a0ce23dce82faa2
-        platform: linux/amd64
-    paths:
-      - /bin/consul
-
-  - version: 1.7.14
-    images:
-      - ref: hashicorp/consul:1.7.14@sha256:882bbcef624bd9b7d37228d891a5d9b2698be2a55b5a658fd1c4ffb643d1f30d
-        platform: linux/amd64
-    paths:
-      - /bin/consul
-
   - version: 1.21.0-rc1
     images:
       - ref: hashicorp/vault:1.21.0-rc1@sha256:67523b1e97acc26b050bb74abd251effe728bc3c1d7e80af19d251a511aa68ad
