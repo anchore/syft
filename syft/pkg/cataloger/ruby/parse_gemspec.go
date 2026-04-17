@@ -96,6 +96,8 @@ func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic
 		}
 	}
 
+	resolveRubyInterpolationsInFields(fields)
+
 	if fields["name"] != "" && fields["version"] != "" {
 		var metadata gemData
 		if err := mapstructure.Decode(fields, &metadata); err != nil {
@@ -114,6 +116,60 @@ func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic
 	}
 
 	return pkgs, nil, nil
+}
+
+// resolveRubyInterpolationsInFields substitutes a handful of well-known
+// Ruby string interpolation placeholders (#{s.name}, #{s.version}, and
+// the equivalent #{gem.*} forms) in captured gemspec string fields using
+// values already captured from the same file. Gemspec authors routinely
+// write things like
+//
+//	s.homepage = "https://github.com/foo/#{s.name}"
+//
+// which Ruby evaluates before loading the gem. Syft reads the gemspec as
+// plain text, so without this pass the literal #{s.name} would leak into
+// the SBOM and in particular break CycloneDX schema validation because
+// '{' and '}' are not valid IRI characters (see anchore/syft#4720).
+//
+// We only resolve fields for which syft has already captured a concrete
+// value, and only the simple interpolation forms pointing at those same
+// fields. Any remaining unresolved interpolation in a URL-like field
+// (homepage) is dropped so the output BOM is always schema-valid.
+func resolveRubyInterpolationsInFields(fields map[string]any) {
+	replaceIn := func(key string, placeholders []string, with string) {
+		v, ok := fields[key].(string)
+		if !ok || v == "" || with == "" {
+			return
+		}
+		for _, p := range placeholders {
+			v = strings.ReplaceAll(v, p, with)
+		}
+		fields[key] = v
+	}
+
+	// Expand known placeholders in every captured string field. We could
+	// restrict this to URL-like fields, but the substitution is
+	// well-scoped and any future addition of a new string field gets the
+	// same behaviour for free.
+	stringFields := []string{"homepage"}
+	if name, ok := fields["name"].(string); ok {
+		for _, k := range stringFields {
+			replaceIn(k, []string{"#{s.name}", "#{gem.name}", "#{name}"}, name)
+		}
+	}
+	if version, ok := fields["version"].(string); ok {
+		for _, k := range stringFields {
+			replaceIn(k, []string{"#{s.version}", "#{gem.version}", "#{version}"}, version)
+		}
+	}
+
+	// Anything still containing a '#{' after best-effort substitution is
+	// an unresolvable Ruby expression. Dropping URL-like fields keeps
+	// the SBOM schema-valid; we would rather lose the homepage URL than
+	// emit one that breaks downstream consumers.
+	if v, ok := fields["homepage"].(string); ok && strings.Contains(v, "#{") {
+		delete(fields, "homepage")
+	}
 }
 
 // renderUtf8 takes any string escaped string subsections from the ruby string and replaces those sections with the UTF8 runes.
