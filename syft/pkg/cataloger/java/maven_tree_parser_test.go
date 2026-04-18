@@ -116,6 +116,9 @@ func TestIsMavenOutputNoise(t *testing.T) {
 		"Progress (1): some-artifact.pom",
 		"BUILD SUCCESS",
 		"BUILD FAILURE",
+		"Finished at: 2026-04-18T13:19:27-04:00",
+		"Total time:  1.430 s",
+		"Building my-app 1.0.0-SNAPSHOT",
 	}
 	for _, line := range noiseLines {
 		assert.True(t, isMavenOutputNoise(line), "expected noise: %s", line)
@@ -354,6 +357,43 @@ func TestParseMavenDependencyTreeFile(t *testing.T) {
 
 	// total nodes in fixture
 	assert.Len(t, tree.NodeMap, 16)
+}
+
+func TestParseMavenDependencyTree_FullMavenOutputWithBannerAndFooter(t *testing.T) {
+	// Simulates raw `mvn dependency:tree` output with banner, [INFO] prefixes, and footer.
+	// This reproduces a bug where "Finished at: <timestamp>" was parsed as a depth=0 node
+	// because the timestamp's colons matched the groupId:artifactId:packaging:version:scope format.
+	input := `[INFO] -------------< com.example:my-app >-------------
+[INFO] Building my-app 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- dependency:3.7.0:tree (default-cli) @ my-app ---
+[INFO] com.example:my-app:jar:1.0.0
+[INFO] +- org.springframework:spring-core:jar:5.3.0:compile
+[INFO] |  \- org.springframework:spring-jcl:jar:5.3.0:compile
+[INFO] \- com.fasterxml.jackson.core:jackson-databind:jar:2.13.0:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.430 s
+[INFO] Finished at: 2026-04-18T13:19:27-04:00
+[INFO] ------------------------------------------------------------------------
+`
+
+	tree, err := ParseMavenDependencyTree(strings.NewReader(input))
+	require.NoError(t, err)
+	require.NotNil(t, tree.Root)
+
+	assert.Equal(t, "my-app", tree.Root.ArtifactID)
+	assert.Equal(t, "com.example", tree.Root.GroupID)
+	assert.Equal(t, "1.0.0", tree.Root.Version)
+	assert.Len(t, tree.Root.Children, 2)
+	assert.Len(t, tree.NodeMap, 4)
+
+	springCore := tree.Root.Children[0]
+	assert.Equal(t, "spring-core", springCore.ArtifactID)
+	assert.Len(t, springCore.Children, 1)
 }
 
 func TestParseMavenDependencyTreeFile_NotFound(t *testing.T) {
