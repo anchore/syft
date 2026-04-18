@@ -173,14 +173,32 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		}
 	}
 
+	// Build a package index for looking up packages by Maven ID.
+	// Used when the dependency graph provides hierarchical parent information.
+	pkgIndex := make(map[string]*pkg.Package)
+	if mainPkg != nil && j.dependencyGraph != nil {
+		mainID := extractMavenIDFromPackage(mainPkg)
+		if mainID.Valid() {
+			pkgIndex[mavenIDKey(mainID)] = &pkgs[0]
+		}
+	}
+
 	for i := range auxPkgs {
 		auxPkg := &auxPkgs[i]
 
 		finalizePackage(auxPkg)
 		pkgs = append(pkgs, *auxPkg)
 
+		// Index each aux package for parent resolution of subsequent packages
+		if j.dependencyGraph != nil {
+			auxID := extractMavenIDFromPackage(auxPkg)
+			if auxID.Valid() {
+				pkgIndex[mavenIDKey(auxID)] = &pkgs[len(pkgs)-1]
+			}
+		}
+
 		if mainPkg != nil {
-			rel := j.createAuxPkgRelationship(auxPkg, mainPkg)
+			rel := j.createAuxPkgRelationship(auxPkg, mainPkg, pkgIndex)
 			relationships = append(relationships, rel)
 		}
 	}
@@ -248,9 +266,12 @@ func (j *archiveParser) createMainPkgRelationship(mainPkg, parentPkg *pkg.Packag
 	return rel
 }
 
-// createAuxPkgRelationship creates a relationship between an auxiliary package and the main package.
-// When a dependency graph is available, it enriches the relationship with depth, scope, and intended parent.
-func (j *archiveParser) createAuxPkgRelationship(auxPkg, mainPkg *pkg.Package) artifact.Relationship {
+// createAuxPkgRelationship creates a relationship between an auxiliary package and its parent.
+// When a dependency graph is available, it uses the graph to determine the actual hierarchical
+// parent (which may be an intermediate dependency, not the root). When the parent is found in
+// pkgIndex, the relationship is wired directly. Otherwise, the relationship falls back to
+// mainPkg and stores intendedParentID for post-processor resolution.
+func (j *archiveParser) createAuxPkgRelationship(auxPkg, mainPkg *pkg.Package, pkgIndex map[string]*pkg.Package) artifact.Relationship {
 	rel := artifact.Relationship{
 		From: *auxPkg,
 		To:   *mainPkg,
@@ -277,12 +298,30 @@ func (j *archiveParser) createAuxPkgRelationship(auxPkg, mainPkg *pkg.Package) a
 	}
 	scope := node.Scope
 
-	var intendedParentID string
 	if node.Parent != nil {
-		intendedParentID = mavenIDKey(node.Parent.ID)
+		parentKey := mavenIDKey(node.Parent.ID)
+		parentGA := node.Parent.ID.GroupID + ":" + node.Parent.ID.ArtifactID
+
+		// Try exact match first, then groupId:artifactId prefix match
+		if parentFromIndex := pkgIndex[parentKey]; parentFromIndex != nil {
+			rel.To = *parentFromIndex
+			rel.Data = NewDependencyRelationshipData(relDepth, scope)
+			return rel
+		}
+		for key, p := range pkgIndex {
+			if strings.HasPrefix(key, parentGA+":") {
+				rel.To = *p
+				rel.Data = NewDependencyRelationshipData(relDepth, scope)
+				return rel
+			}
+		}
+
+		// Parent not in local index — store for post-processor resolution
+		rel.Data = NewDependencyRelationshipDataWithParent(relDepth, scope, parentKey)
+		return rel
 	}
 
-	rel.Data = NewDependencyRelationshipDataWithParent(relDepth, scope, intendedParentID)
+	rel.Data = NewDependencyRelationshipData(relDepth, scope)
 	return rel
 }
 
