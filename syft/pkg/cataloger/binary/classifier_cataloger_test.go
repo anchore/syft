@@ -1387,6 +1387,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "krb5/1.18.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "krb5",
+				Version:   "1.18.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/krb5@1.18.4",
+				Locations: locations("libkrb5.so.3.3"),
+				Metadata:  metadata("krb5-library"),
+			},
+		},
+		{
+			logicalFixture: "heimdal-krb5/7.8.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "heimdal-krb5",
+				Version:   "7.8.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/heimdal-krb5@7.8.0",
+				Locations: locations("libkrb5.so.26.0.0"),
+				Metadata:  metadata("heimdal-krb5-library"),
+			},
+		},
+		{
 			logicalFixture: "nginx/1.25.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx",

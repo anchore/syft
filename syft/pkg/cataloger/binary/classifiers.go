@@ -892,6 +892,31 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "krb5-library",
+			FileGlob: "**/libkrb5.so*",
+			// [NUL]KRB5_BRAND: krb5-1.18.4-final 1.18.4 20210722
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`\x00KRB5_BRAND:\s+krb5-[^\s]+\s+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)(?:\s|$)`,
+			),
+			Package: "krb5",
+			PURL:    mustPURL("pkg:generic/krb5@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mit:kerberos_5:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "heimdal-krb5-library",
+			FileGlob: "**/libkrb5.so*",
+			// $Version: Heimdal 7.5.0
+			// $Version: Heimdal 7.8.0
+			// $Version: Heimdal 7.1
+			// $Version: Heimdal 7.0.3
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`(?m)\$Version:\s+Heimdal\s+(?P<version>[0-9]+(?:\.[0-9]+){1,2})(?:\s|$)`,
+			),
+			Package: "heimdal-krb5",
+			PURL:    mustPURL("pkg:generic/heimdal-krb5@version"),
+			CPEs:    singleCPE("cpe:2.3:a:heimdal_project:heimdal:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)
