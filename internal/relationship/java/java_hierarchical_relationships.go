@@ -17,11 +17,6 @@ import (
 // the Maven dependency tree when available.
 func ResolveHierarchicalDependencies(accessor sbomsync.Accessor, cfg cataloging.RelationshipsConfig) {
 	hasTreeFile := cfg.JavaMavenDependencyTreeFile != ""
-	hasEmbeddedPOMs := cfg.JavaUseEmbeddedPOMDependencies
-
-	if !hasTreeFile && !hasEmbeddedPOMs {
-		return
-	}
 
 	// Step 1: Build package index from ALL Java packages
 	pkgIndex := buildPackageIndex(accessor)
