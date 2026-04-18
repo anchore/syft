@@ -237,17 +237,21 @@ func (j *archiveParser) createMainPkgRelationship(mainPkg, parentPkg *pkg.Packag
 		Type: artifact.DependencyOfRelationship,
 	}
 
+	// No graph or root-level archive — no enrichment possible
 	if j.dependencyGraph == nil || j.depth == 0 {
 		return rel
 	}
 
+	// Graph exists but lookup may fail — attach fallback Data for graph-miss cases
 	mainID := extractMavenIDFromPackage(mainPkg)
 	if !mainID.Valid() {
+		rel.Data = NewDependencyRelationshipData(0, "")
 		return rel
 	}
 
 	node := j.dependencyGraph.FindNodeFlexible(mainID)
 	if node == nil {
+		rel.Data = NewDependencyRelationshipData(0, "")
 		return rel
 	}
 
@@ -278,17 +282,21 @@ func (j *archiveParser) createAuxPkgRelationship(auxPkg, mainPkg *pkg.Package, p
 		Type: artifact.DependencyOfRelationship,
 	}
 
+	// No graph — no enrichment possible
 	if j.dependencyGraph == nil {
 		return rel
 	}
 
+	// Graph exists but lookup may fail — attach fallback Data for graph-miss cases
 	auxID := extractMavenIDFromPackage(auxPkg)
 	if !auxID.Valid() {
+		rel.Data = NewDependencyRelationshipData(0, "")
 		return rel
 	}
 
 	node := j.dependencyGraph.FindNodeFlexible(auxID)
 	if node == nil {
+		rel.Data = NewDependencyRelationshipData(0, "")
 		return rel
 	}
 

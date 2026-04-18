@@ -189,7 +189,7 @@ func TestCreateMainPkgRelationship_WithGraph(t *testing.T) {
 		assert.Equal(t, "com.example:direct:2.0", data.IntendedParentID)
 	})
 
-	// Test package not found in graph — no enrichment
+	// Test package not found in graph — fallback Data attached
 	t.Run("not found in graph", func(t *testing.T) {
 		mainPkg := &pkg.Package{
 			Name:    "unknown",
@@ -205,7 +205,11 @@ func TestCreateMainPkgRelationship_WithGraph(t *testing.T) {
 		parentPkg := &pkg.Package{Name: "root", Version: "1.0"}
 
 		rel := parser.createMainPkgRelationship(mainPkg, parentPkg)
-		assert.Nil(t, rel.Data)
+		require.NotNil(t, rel.Data)
+		data := rel.Data.(DependencyRelationshipData)
+		assert.Equal(t, 0, data.Depth)
+		assert.True(t, data.IsDirectDependency)
+		assert.Empty(t, data.Scope)
 	})
 }
 
@@ -338,7 +342,11 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		mainPkg := &pkg.Package{Name: "root", Version: "1.0"}
 
 		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg, pkgIndex)
-		assert.Nil(t, rel.Data)
+		require.NotNil(t, rel.Data)
+		data := rel.Data.(DependencyRelationshipData)
+		assert.Equal(t, 0, data.Depth)
+		assert.True(t, data.IsDirectDependency)
+		assert.Empty(t, data.Scope)
 	})
 }
 
