@@ -233,6 +233,9 @@ func isMavenOutputNoise(line string) bool {
 		"Downloading",
 		"Progress",
 		"BUILD",
+		"Finished",
+		"Total time",
+		"Building ",
 	}
 	for _, p := range prefixes {
 		if strings.HasPrefix(trimmed, p) {
