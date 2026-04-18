@@ -438,8 +438,15 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL]libHSghc-7.10.3-0AG9TOjDEtx4Ji3wSwHOBe-ghc7.10.3.so[NUL]
+					// [NUL]libHSghc-8.10.4-ghc8.10.4.so[NUL]
+					`\x00libHSghc\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\-([a-zA-Z0-9]+\-)?ghc[0-9]+\.[0-9]+\.[0-9]+\.so\x00`,
+				),
 			),
 			Package: "haskell/ghc",
 			PURL:    mustPURL("pkg:generic/haskell/ghc@version"),
@@ -448,8 +455,14 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "haskell-cabal-binary",
 			FileGlob: "**/cabal",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]/opt/cabal/1.22/lib/x86_64-linux-ghc-7.10.2/cabal-install-1.22.6.0-AfxbHivcmw40BMGrAXG3jJ[NUL][NUL][NUL]
+					`cabal\-install\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)\-[a-zA-Z0-9]+\x00+`,
+				),
 			),
 			Package: "haskell/cabal",
 			PURL:    mustPURL("pkg:generic/haskell/cabal@version"),

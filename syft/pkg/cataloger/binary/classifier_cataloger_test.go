@@ -1365,6 +1365,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "haskell-ghc/7.10.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "7.10.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@7.10.3",
+				Locations: locations("ghc"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/8.10.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "8.10.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@8.10.4",
+				Locations: locations("ghc"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
@@ -1373,6 +1395,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/haskell/ghc@9.6.5",
 				Locations: locations("ghc-9.6.5"),
 				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/1.22.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "1.22.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@1.22.6.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
 			},
 		},
 		{
