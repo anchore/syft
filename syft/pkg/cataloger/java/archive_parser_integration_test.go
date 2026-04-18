@@ -215,7 +215,7 @@ func TestCreateAuxPkgRelationship_NoGraph(t *testing.T) {
 	auxPkg := &pkg.Package{Name: "aux", Version: "1.0"}
 	mainPkg := &pkg.Package{Name: "main", Version: "2.0"}
 
-	rel := parser.createAuxPkgRelationship(auxPkg, mainPkg)
+	rel := parser.createAuxPkgRelationship(auxPkg, mainPkg, nil)
 
 	assert.Equal(t, artifact.DependencyOfRelationship, rel.Type)
 	assert.Nil(t, rel.Data)
@@ -231,7 +231,16 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		dependencyGraph: graph,
 	}
 
-	t.Run("aux package found in graph as direct", func(t *testing.T) {
+	rootPkg := &pkg.Package{Name: "root", Version: "1.0"}
+	libAPkg := &pkg.Package{Name: "lib-a", Version: "2.0"}
+
+	// Build a pkgIndex that contains both root and lib-a
+	pkgIndex := map[string]*pkg.Package{
+		"com.example:root:1.0": rootPkg,
+		"org.dep:lib-a:2.0":   libAPkg,
+	}
+
+	t.Run("aux package found in graph as direct - parent resolved", func(t *testing.T) {
 		auxPkg := &pkg.Package{
 			Name:    "lib-a",
 			Version: "2.0",
@@ -245,17 +254,20 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		}
 		mainPkg := &pkg.Package{Name: "root", Version: "1.0"}
 
-		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg)
+		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg, pkgIndex)
 
 		require.NotNil(t, rel.Data)
 		data := rel.Data.(DependencyRelationshipData)
 		assert.Equal(t, 0, data.Depth)
 		assert.True(t, data.IsDirectDependency)
 		assert.Equal(t, "compile", data.Scope)
-		assert.Equal(t, "com.example:root:1.0", data.IntendedParentID)
+		// Parent resolved from pkgIndex -- no IntendedParentID needed
+		assert.Empty(t, data.IntendedParentID)
+		// rel.To should be the root package (parent in graph)
+		assert.Equal(t, rootPkg.Name, rel.To.(pkg.Package).Name)
 	})
 
-	t.Run("aux package found in graph as transitive", func(t *testing.T) {
+	t.Run("aux package found in graph as transitive - parent resolved", func(t *testing.T) {
 		auxPkg := &pkg.Package{
 			Name:    "lib-b",
 			Version: "3.0",
@@ -269,14 +281,46 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		}
 		mainPkg := &pkg.Package{Name: "root", Version: "1.0"}
 
-		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg)
+		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg, pkgIndex)
 
 		require.NotNil(t, rel.Data)
 		data := rel.Data.(DependencyRelationshipData)
 		assert.Equal(t, 1, data.Depth)
 		assert.False(t, data.IsDirectDependency)
 		assert.Equal(t, "runtime", data.Scope)
-		assert.Equal(t, "org.dep:lib-a:2.0", data.IntendedParentID)
+		// Parent resolved from pkgIndex -- no IntendedParentID needed
+		assert.Empty(t, data.IntendedParentID)
+		// rel.To should be lib-a (the actual parent in the graph)
+		assert.Equal(t, libAPkg.Name, rel.To.(pkg.Package).Name)
+	})
+
+	t.Run("aux package found in graph but parent not in index - deferred", func(t *testing.T) {
+		auxPkg := &pkg.Package{
+			Name:    "lib-a",
+			Version: "2.0",
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.dep",
+					ArtifactID: "lib-a",
+					Version:    "2.0",
+				},
+			},
+		}
+		mainPkg := &pkg.Package{Name: "root", Version: "1.0"}
+
+		// Empty pkgIndex -- parent can't be resolved locally
+		emptyIndex := map[string]*pkg.Package{}
+
+		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg, emptyIndex)
+
+		require.NotNil(t, rel.Data)
+		data := rel.Data.(DependencyRelationshipData)
+		assert.Equal(t, 0, data.Depth)
+		assert.Equal(t, "compile", data.Scope)
+		// Parent not found -- stored for post-processor
+		assert.Equal(t, "com.example:root:1.0", data.IntendedParentID)
+		// rel.To remains mainPkg (fallback)
+		assert.Equal(t, mainPkg.Name, rel.To.(pkg.Package).Name)
 	})
 
 	t.Run("aux package not in graph", func(t *testing.T) {
@@ -293,7 +337,7 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		}
 		mainPkg := &pkg.Package{Name: "root", Version: "1.0"}
 
-		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg)
+		rel := parser.createAuxPkgRelationship(auxPkg, mainPkg, pkgIndex)
 		assert.Nil(t, rel.Data)
 	})
 }
