@@ -139,8 +139,10 @@ func TestResolveHierarchicalDependencies_NeitherFeatureEnabled(t *testing.T) {
 	root := javaPkg("com.example", "root", "1.0")
 	child := javaPkg("org.dep", "child", "2.0")
 
-	// Even if a relationship happens to have IntendedParentID, the post-processor
-	// should not run when neither feature is enabled
+	// Even when neither feature is explicitly enabled, the post-processor still runs
+	// but relies on per-relationship checks. Since there's an IntendedParentID and the
+	// parent ("some-parent") is NOT in the SBOM, it falls through Case 1b with no graph
+	// — the parent stays as root and IntendedParentID gets cleared.
 	relData := javaCataloger.NewDependencyRelationshipDataWithParent(1, "compile", "org.dep:some-parent:1.0")
 	rel := depOfRel(child, root, relData)
 	s := newTestSBOM([]pkg.Package{root, child}, []artifact.Relationship{rel})
@@ -150,11 +152,14 @@ func TestResolveHierarchicalDependencies_NeitherFeatureEnabled(t *testing.T) {
 
 	ResolveHierarchicalDependencies(accessor, cataloging.RelationshipsConfig{})
 
-	// Should be completely unchanged — post-processor didn't run
+	// Post-processor ran — IntendedParentID cleared, parent stays as root (not found)
 	assert.Len(t, s.Relationships, 1)
 	data, ok := s.Relationships[0].Data.(javaCataloger.DependencyRelationshipData)
 	require.True(t, ok)
-	assert.Equal(t, "org.dep:some-parent:1.0", data.IntendedParentID)
+	assert.Empty(t, data.IntendedParentID)
+	assert.Equal(t, 1, data.Depth)
+	assert.Equal(t, "compile", data.Scope)
+	assert.Equal(t, root.ID(), s.Relationships[0].To.ID())
 }
 
 func TestResolveHierarchicalDependencies_WithTreeFile(t *testing.T) {
