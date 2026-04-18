@@ -56,7 +56,7 @@ func ParseMavenDependencyTree(reader io.Reader) (*MavenTree, error) {
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := stripMavenLogPrefix(scanner.Text())
 
 		if strings.TrimSpace(line) == "" {
 			continue
@@ -211,18 +211,28 @@ func extractDepthAndCoordinates(line string) (int, string) {
 	return depth, ""
 }
 
+// stripMavenLogPrefix removes a leading Maven log-level prefix such as "[INFO] "
+// from a line so the remaining content can be parsed as tree data.
+func stripMavenLogPrefix(line string) string {
+	trimmed := strings.TrimSpace(line)
+	for _, prefix := range []string{"[INFO] ", "[WARNING] ", "[ERROR] ", "[DEBUG] "} {
+		if strings.HasPrefix(trimmed, prefix) {
+			return trimmed[len(prefix):]
+		}
+	}
+	return line
+}
+
 // isMavenOutputNoise returns true for lines that are Maven console output, not tree data.
+// It expects the log-level prefix (e.g. "[INFO] ") to already be stripped.
 func isMavenOutputNoise(line string) bool {
 	trimmed := strings.TrimSpace(line)
 	prefixes := []string{
-		"[INFO]",
-		"[WARNING]",
-		"[ERROR]",
-		"[DEBUG]",
 		"---",
 		"Downloaded",
 		"Downloading",
 		"Progress",
+		"BUILD",
 	}
 	for _, p := range prefixes {
 		if strings.HasPrefix(trimmed, p) {
