@@ -108,15 +108,14 @@ func TestParseMavenTreeLine_Malformed(t *testing.T) {
 }
 
 func TestIsMavenOutputNoise(t *testing.T) {
+	// isMavenOutputNoise expects log-level prefixes to already be stripped
 	noiseLines := []string{
-		"[INFO] --- dependency:3.6.0:tree (default-cli) @ my-app ---",
-		"[WARNING] Some warning",
-		"[ERROR] Some error",
-		"[DEBUG] Debug output",
-		"--- maven-dependency-plugin:3.6.0:tree ---",
+		"--- dependency:3.6.0:tree (default-cli) @ my-app ---",
 		"Downloaded from central: https://repo.maven.apache.org/...",
 		"Downloading from central: https://repo.maven.apache.org/...",
 		"Progress (1): some-artifact.pom",
+		"BUILD SUCCESS",
+		"BUILD FAILURE",
 	}
 	for _, line := range noiseLines {
 		assert.True(t, isMavenOutputNoise(line), "expected noise: %s", line)
@@ -247,7 +246,6 @@ func TestParseMavenDependencyTree_OnlyNoise(t *testing.T) {
 	_, err := ParseMavenDependencyTree(strings.NewReader(input))
 	assert.Error(t, err)
 }
-
 func TestParseMavenDependencyTree_WithNoiseLines(t *testing.T) {
 	input := `[INFO] --- dependency:3.6.0:tree ---
 com.example:my-app:jar:1.0.0
@@ -259,6 +257,81 @@ com.example:my-app:jar:1.0.0
 	require.NoError(t, err)
 	assert.Equal(t, "my-app", tree.Root.ArtifactID)
 	assert.Len(t, tree.Root.Children, 1)
+}
+
+func TestParseMavenDependencyTree_WithInfoPrefix(t *testing.T) {
+	input := `[INFO] com.example:my-app:jar:1.0.0
+[INFO] +- org.springframework:spring-core:jar:5.3.0:compile
+[INFO] |  \- org.springframework:spring-jcl:jar:5.3.0:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-databind:jar:2.13.0:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.13.0:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.13.0:compile
+[INFO] \- org.junit.jupiter:junit-jupiter:jar:5.8.0:test
+[INFO]    \- org.junit.jupiter:junit-jupiter-api:jar:5.8.0:test
+`
+
+	tree, err := ParseMavenDependencyTree(strings.NewReader(input))
+	require.NoError(t, err)
+	require.NotNil(t, tree.Root)
+
+	assert.Equal(t, "my-app", tree.Root.ArtifactID)
+	assert.Equal(t, "com.example", tree.Root.GroupID)
+	assert.Len(t, tree.Root.Children, 3)
+
+	springCore := tree.Root.Children[0]
+	assert.Equal(t, "spring-core", springCore.ArtifactID)
+	assert.Equal(t, 1, springCore.Depth)
+	assert.Len(t, springCore.Children, 1)
+
+	springJcl := springCore.Children[0]
+	assert.Equal(t, "spring-jcl", springJcl.ArtifactID)
+	assert.Equal(t, 2, springJcl.Depth)
+
+	junit := tree.Root.Children[2]
+	assert.Equal(t, "junit-jupiter", junit.ArtifactID)
+	assert.Equal(t, "test", junit.Scope)
+	assert.Len(t, junit.Children, 1)
+
+	assert.Len(t, tree.NodeMap, 8)
+}
+
+func TestParseMavenDependencyTree_WithInfoPrefixAndNoise(t *testing.T) {
+	input := `[INFO] --- dependency:3.6.0:tree (default-cli) @ my-app ---
+[INFO] com.example:my-app:jar:1.0.0
+[INFO] +- org.dep:child-a:jar:2.0:compile
+[INFO] |  \- org.dep:transitive-b:jar:3.0:runtime
+[INFO] \- org.dep:child-c:jar:4.0:test
+[INFO] BUILD SUCCESS
+`
+
+	tree, err := ParseMavenDependencyTree(strings.NewReader(input))
+	require.NoError(t, err)
+	require.NotNil(t, tree.Root)
+
+	assert.Equal(t, "my-app", tree.Root.ArtifactID)
+	assert.Len(t, tree.Root.Children, 2)
+	assert.Len(t, tree.NodeMap, 4)
+}
+
+func TestStripMavenLogPrefix(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"[INFO] com.example:my-app:jar:1.0.0", "com.example:my-app:jar:1.0.0"},
+		{"[INFO] +- org.dep:child:jar:2.0:compile", "+- org.dep:child:jar:2.0:compile"},
+		{"[INFO] |  \\- org.dep:grandchild:jar:3.0:runtime", "|  \\- org.dep:grandchild:jar:3.0:runtime"},
+		{"[WARNING] Some warning", "Some warning"},
+		{"[ERROR] Some error", "Some error"},
+		{"[DEBUG] Debug output", "Debug output"},
+		{"com.example:my-app:jar:1.0.0", "com.example:my-app:jar:1.0.0"},
+		{"+- org.dep:child:jar:2.0:compile", "+- org.dep:child:jar:2.0:compile"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, stripMavenLogPrefix(tt.input))
+		})
+	}
 }
 
 func TestParseMavenDependencyTreeFile(t *testing.T) {
