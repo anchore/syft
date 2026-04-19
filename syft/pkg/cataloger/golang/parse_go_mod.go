@@ -27,12 +27,14 @@ import (
 
 type goModCataloger struct {
 	usePackagesLib  bool
+	excludeIndirect bool
 	licenseResolver goLicenseResolver
 }
 
 func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 	return &goModCataloger{
 		usePackagesLib:  opts.UsePackagesLib,
+		excludeIndirect: opts.ExcludeIndirect,
 		licenseResolver: newGoLicenseResolver(modFileCatalogerName, opts),
 	}
 }
@@ -255,6 +257,10 @@ func (c *goModCataloger) catalogModules(
 	moduleToPackage := make(map[string]artifact.Identifiable)
 
 	for _, m := range modules {
+		if c.excludeIndirect && m.Indirect {
+			continue
+		}
+
 		if isRelativeImportOrMain(m.Path) {
 			// relativeImport modules are already accounted for by their full module paths at other portions of syft's cataloging
 			// example: something like ../../ found as a module for go.mod b, which is sub to go.mod a is accounted for
@@ -324,7 +330,7 @@ func buildModuleRelationships(
 }
 
 func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*modfile.File, error) {
-	contents, err := io.ReadAll(reader) //nolint:gocritic // modfile.Parse requires []byte
+	contents, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read go module: %w", err)
 	}
@@ -342,6 +348,10 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 	goModPackages := make(map[string]pkg.Package)
 
 	for _, m := range modFile.Require {
+		if c.excludeIndirect && m.Indirect {
+			continue
+		}
+
 		if sourceModules == nil || sourceModules[m.Mod.Path] == nil {
 			lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
 			goModPkg := pkg.Package{
@@ -367,6 +377,10 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 // applyReplaceDirectives processes replace directives from go.mod
 func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver file.Resolver, modFile *modfile.File, goModPackages map[string]pkg.Package, reader file.LocationReadCloser, digests map[string]string) {
 	for _, m := range modFile.Replace {
+		if _, isContains := goModPackages[m.Old.Path]; c.excludeIndirect && !isContains {
+			continue
+		}
+
 		lics := c.licenseResolver.getLicenses(ctx, resolver, m.New.Path, m.New.Version)
 		var finalPath string
 		if !strings.HasPrefix(m.New.Path, ".") && !strings.HasPrefix(m.New.Path, "/") {
