@@ -147,6 +147,23 @@ from-images:
     paths:
       - /usr/bin/deno
 
+  # haskell:7.10.3 detail information is missing. 
+  - name: haskell-ghc
+    version: 7.10.3
+    images:
+      - ref: haskell:7.10.3
+        platform: linux/amd64
+    paths:
+      - /opt/ghc/7.10.3/lib/ghc-7.10.3/bin/ghc
+
+  - name: haskell-ghc
+    version: 8.10.4
+    images:
+      - ref: haskell:8.10.4@sha256:30ecdaee0fd59cdcddf004a68c2d8995ba4212a64106abc3e411742c606e59ac
+        platform: linux/amd64
+    paths:
+      - /opt/ghc/8.10.4/lib/ghc-8.10.4/bin/ghc
+
   - name: haskell-ghc
     version: 9.6.5
     images:
@@ -154,6 +171,15 @@ from-images:
         platform: linux/amd64
     paths:
       - /opt/ghc/9.6.5/lib/ghc-9.6.5/bin/ghc-9.6.5
+
+  # haskell:7.10.3 detail information is missing. 
+  - name: haskell-cabal
+    version: 1.22.6.0
+    images:
+      - ref: haskell:7.10.3
+        platform: linux/amd64
+    paths:
+      - /opt/cabal/1.22/bin/cabal
 
   - name: haskell-cabal
     version: 3.10.3.0
