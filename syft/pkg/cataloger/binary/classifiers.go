@@ -461,7 +461,7 @@ func DefaultClassifiers() []binutils.Classifier {
 				),
 				m.FileContentsVersionMatcher(
 					// [NUL][NUL][NUL]/opt/cabal/1.22/lib/x86_64-linux-ghc-7.10.2/cabal-install-1.22.6.0-AfxbHivcmw40BMGrAXG3jJ[NUL][NUL][NUL]
-					`cabal\-install\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)\-[a-zA-Z0-9]+\x00+`,
+					`\x00.{0,50}cabal\-install\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)\-[a-zA-Z0-9]+\x00+`,
 				),
 			),
 			Package: "haskell/cabal",
