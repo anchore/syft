@@ -775,7 +775,7 @@ func findAdditionalVendors(allAdditions map[pkg.Type]map[candidateKey]candidateA
 		vendors = append(vendors, addition.AdditionalVendors...)
 	}
 
-	return vendors
+	return dedup(vendors)
 }
 
 // findAdditionalProducts searches all possible product additions that could be added during the CPE generation process (given package info)
@@ -824,4 +824,20 @@ func findProductsToRemove(allRemovals map[pkg.Type]map[candidateKey]candidateRem
 	}
 
 	return products
+}
+
+// dedup removes duplicate strings while preserving the original order of first occurrence.
+func dedup(s []string) []string {
+	if len(s) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(s))
+	result := make([]string, 0, len(s))
+	for _, v := range s {
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
+			result = append(result, v)
+		}
+	}
+	return result
 }
