@@ -1,6 +1,11 @@
 module github.com/anchore/syft
 
-go 1.26.2
+// The go directive declares the minimum Go version required for this module.
+//
+// DO NOT change this version unless support for older Go versions is dropped
+// or the module requires newer Go features. To update the version used for CI
+// and releases, update the ".go-version" file at the root of this repository.
+go 1.25.8
 
 require (
 	github.com/BurntSushi/toml v1.6.0
