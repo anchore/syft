@@ -10,18 +10,18 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/bubbly v0.0.0-20231115134915-def0aba654a9
-	github.com/anchore/clio v0.0.0-20250319180342-2cfe4b0cb716
-	github.com/anchore/fangs v0.0.0-20250319222917-446a1e748ec2
-	github.com/anchore/go-collections v0.0.0-20251016125210-a3c352120e8c
-	github.com/anchore/go-homedir v0.0.0-20250319154043-c29668562e4d
-	github.com/anchore/go-logger v0.0.0-20250318195838-07ae343dd722
-	github.com/anchore/go-macholibre v0.0.0-20220308212642-53e6d0aaf6fb
-	github.com/anchore/go-rpmdb v0.0.0-20250516171929-f77691e1faec
-	github.com/anchore/go-sync v0.0.0-20250326131806-4eda43a485b6
+	github.com/anchore/bubbly v0.2.1-0.20260421185418-fee7830c481c
+	github.com/anchore/clio v0.1.1-0.20260421190722-794b9b055b72
+	github.com/anchore/fangs v0.1.1-0.20260421185343-df607d667563
+	github.com/anchore/go-collections v0.1.1-0.20260421185544-35c7122ceefc
+	github.com/anchore/go-homedir v0.1.0
+	github.com/anchore/go-logger v0.1.1-0.20260421185257-01c4e7fbebe1
+	github.com/anchore/go-macholibre v0.1.1-0.20260421185616-edb2920dc270
+	github.com/anchore/go-rpmdb v0.1.0
+	github.com/anchore/go-sync v0.1.1-0.20260421185704-75942aade249
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115
-	github.com/anchore/stereoscope v0.1.22
+	github.com/anchore/packageurl-go v0.2.0
+	github.com/anchore/stereoscope v0.1.23-0.20260421185823-1d6159426237
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
@@ -106,7 +106,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.4.0 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect; indirectt
-	github.com/anchore/go-lzo v0.1.0 // indirect
+	github.com/anchore/go-lzo v0.1.1-0.20260421185732-22facca29fc6 // indirect
 	github.com/anchore/go-struct-converter v0.1.0 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -209,16 +209,16 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/sagikazarmark/locafero v0.7.0 // indirect
+	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/sorairolake/lzip-go v0.3.8 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/spf13/cast v1.7.1 // indirect
+	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
+	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/spf13/viper v1.20.0 // indirect
+	github.com/spf13/viper v1.21.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/sylabs/sif/v2 v2.24.0 // indirect
@@ -243,14 +243,12 @@ require (
 	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.9.0 // indirect
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0
 	golang.org/x/tools v0.43.0
