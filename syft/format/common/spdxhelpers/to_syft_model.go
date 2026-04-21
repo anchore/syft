@@ -685,8 +685,13 @@ func packageIDsToSkip(doc *spdx.Document) *strset.Set {
 	skipIDs := strset.New()
 	for i := 0; i < len(doc.Relationships); i++ {
 		r := doc.Relationships[i]
-		if r != nil && r.Relationship == spdx.RelationshipGeneratedFrom {
-			skipIDs.Add(string(r.RefB.ElementRefID))
+		if r != nil {
+			switch r.Relationship {
+			case spdx.RelationshipGenerates, spdx.RelationshipDescribes:
+				skipIDs.Add(string(r.RefA.ElementRefID))
+			case spdx.RelationshipGeneratedFrom, spdx.RelationshipDescribedBy:
+				skipIDs.Add(string(r.RefB.ElementRefID))
+			}
 		}
 	}
 	return skipIDs
