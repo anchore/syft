@@ -21,11 +21,11 @@ import (
 )
 
 // MetadataType infers the metadata type value based on the pkg.Metadata payload.
-func MetadataType(metadata interface{}) string {
+func MetadataType(metadata any) string {
 	return metadataType(metadata, false)
 }
 
-func metadataType(metadata interface{}, legacy bool) string {
+func metadataType(metadata any, legacy bool) string {
 	if legacy {
 		return packagemetadata.JSONLegacyName(metadata)
 	}

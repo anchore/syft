@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -95,7 +96,7 @@ func (p *person) UnmarshalJSON(b []byte) error {
 		}
 	} else {
 		// it's a map that may contain fields of various data types (not just strings)
-		var fields map[string]interface{}
+		var fields map[string]any
 		if err := json.Unmarshal(b, &fields); err != nil {
 			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
@@ -210,55 +211,27 @@ func licensesFromJSON(b []byte) ([]npmPackageLicense, error) {
 var filepathSeparator = regexp.MustCompile(`[\\/]`)
 
 func pathContainsNodeModulesDirectory(p string) bool {
-	for _, subPath := range filepathSeparator.Split(p, -1) {
-		if subPath == "node_modules" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(filepathSeparator.Split(p, -1), "node_modules")
 }
 
 func (p *people) UnmarshalJSON(b []byte) error {
-	// Try to unmarshal as an array of strings
-	var authorStrings []string
-	if err := json.Unmarshal(b, &authorStrings); err == nil {
-		// Successfully parsed as an array of strings
-		auths := make([]person, len(authorStrings))
-		for i, authorStr := range authorStrings {
-			// Parse each string into author fields
-			fields := internal.MatchNamedCaptureGroups(authorPattern, authorStr)
-			var auth person
-			if err := mapstructure.Decode(fields, &auth); err != nil {
-				return fmt.Errorf("unable to decode package.json author: %w", err)
-			}
-			// Trim whitespace from name if it was parsed
-			if auth.Name != "" {
-				auth.Name = strings.TrimSpace(auth.Name)
-			}
-			auths[i] = auth
-		}
-		*p = auths
-		return nil
+	// Accept either a JSON array of authors, or a single author as a string or
+	// object — the latter is used in the wild (e.g. ghost@5.98.1) and dropping
+	// the whole package.json on those was https://github.com/anchore/syft/issues/4778.
+	var elements []json.RawMessage
+	if err := json.Unmarshal(b, &elements); err != nil {
+		// not an array — treat the whole payload as a single element
+		elements = []json.RawMessage{b}
 	}
 
-	// Try to unmarshal as an array of objects
-	var authorObjs []map[string]interface{}
-	if err := json.Unmarshal(b, &authorObjs); err == nil {
-		// Successfully parsed as an array of objects
-		auths := make([]person, len(authorObjs))
-		for i, fields := range authorObjs {
-			var auth person
-			if err := mapstructure.Decode(fields, &auth); err != nil {
-				return fmt.Errorf("unable to decode package.json author object: %w", err)
-			}
-			auths[i] = auth
+	auths := make([]person, len(elements))
+	for i, e := range elements {
+		if err := json.Unmarshal(e, &auths[i]); err != nil {
+			return fmt.Errorf("unable to parse package.json author: %w", err)
 		}
-		*p = auths
-		return nil
 	}
-
-	// If we get here, it means neither format matched
-	return fmt.Errorf("unable to parse package.json authors field: expected array of strings or array of objects")
+	*p = auths
+	return nil
 }
 
 func (p people) String() string {

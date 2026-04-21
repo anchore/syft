@@ -68,7 +68,7 @@ func processList(s string) []string {
 // parseGemSpecEntries parses the gemspec file and returns the packages and relationships found.
 func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-	var fields = make(map[string]interface{})
+	var fields = make(map[string]any)
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {

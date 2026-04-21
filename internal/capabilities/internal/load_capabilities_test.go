@@ -30,7 +30,7 @@ const requireParserObservations = false
 
 // metadataTypeCoverageExceptions lists metadata types that are allowed to not be represented in any cataloger
 var metadataTypeCoverageExceptions = strset.New(
-	reflect.TypeOf(pkg.MicrosoftKbPatch{}).Name(),
+	reflect.TypeFor[pkg.MicrosoftKbPatch]().Name(),
 )
 
 // packageTypeCoverageExceptions lists package types that are allowed to not be represented in any cataloger
@@ -408,7 +408,7 @@ func TestCapabilityValueTypes(t *testing.T) {
 }
 
 // validateCapabilityValueType checks if a value matches the expected type for a capability field
-func validateCapabilityValueType(fieldPath string, value interface{}) error {
+func validateCapabilityValueType(fieldPath string, value any) error {
 	if value == nil {
 		return nil // nil is acceptable
 	}
@@ -428,7 +428,7 @@ func validateCapabilityValueType(fieldPath string, value interface{}) error {
 		switch v := value.(type) {
 		case []string:
 			// ok
-		case []interface{}:
+		case []any:
 			// check each element is a string
 			for i, elem := range v {
 				if _, ok := elem.(string); !ok {
@@ -829,7 +829,6 @@ func TestCapabilityEvidenceFieldReferences(t *testing.T) {
 
 	// validate each evidence reference
 	for _, ref := range allReferences {
-		ref := ref // capture for subtest
 
 		// create test name
 		testName := ref.catalogerName
@@ -989,7 +988,6 @@ func validateCapabilitiesFilled(t *testing.T, catalogers []capabilities.Cataloge
 	checkCompletenessTestsEnabled(t)
 
 	for _, c := range catalogers {
-		c := c // capture loop variable for subtest
 
 		t.Run(c.Name, func(t *testing.T) {
 			if c.Type == "generic" {
@@ -997,7 +995,6 @@ func validateCapabilitiesFilled(t *testing.T, catalogers []capabilities.Cataloge
 				require.NotEmpty(t, c.Parsers, "generic cataloger must have at least one parser")
 
 				for _, p := range c.Parsers {
-					p := p // capture loop variable for subtest
 
 					t.Run(p.ParserFunction, func(t *testing.T) {
 						require.NotEmpty(t, p.Capabilities, "parser must have at least one capability field defined")
@@ -1120,7 +1117,6 @@ func TestCatalogerStructure(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, c := range catalogerEntries {
-		c := c // capture loop variable for subtest
 
 		t.Run(c.Name, func(t *testing.T) {
 			// ecosystem must always be set (it's MANUAL)

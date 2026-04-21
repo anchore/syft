@@ -1112,6 +1112,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "consul/1.12.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.12.9",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.12.9",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+		{
+			logicalFixture: "consul/1.7.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.7.14",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.7.14",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.21.0-rc1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.21.0-rc1",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.21.0-rc1",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
 			logicalFixture: "vault/1.20.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "github.com/hashicorp/vault",
@@ -1129,6 +1162,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.19.4",
 				Type:      "golang",
 				PURL:      "pkg:golang/github.com/hashicorp/vault@1.19.4",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.14.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.14.10",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.14.10",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.14.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.14.3",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.14.3",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.13.13/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.13.13",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.13.13",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.11.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.11.6",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.11.6",
 				Locations: locations("vault"),
 				Metadata:  metadata("hashicorp-vault-binary"),
 			},
@@ -1255,6 +1332,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.41.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.41.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.41.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.0.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.6.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.6.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.6.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/7.10.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "7.10.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@7.10.3",
+				Locations: locations("ghc"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/8.10.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "8.10.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@8.10.4",
+				Locations: locations("ghc"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
@@ -1263,6 +1395,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/haskell/ghc@9.6.5",
 				Locations: locations("ghc-9.6.5"),
 				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/1.22.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "1.22.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@1.22.6.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
 			},
 		},
 		{
@@ -1340,6 +1483,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/openssl@1.1.1zb",
 				Locations: locations("openssl"),
 				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
+			logicalFixture: "openldap/2.6.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "openldap",
+				Version:   "2.6.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/openldap@2.6.10",
+				Locations: locations("ldapsearch"),
+				Metadata:  metadata("openldap-search-binary"),
 			},
 		},
 		{

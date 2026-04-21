@@ -46,8 +46,8 @@ func copyHeader(w io.Writer, r io.Reader) error {
 }
 
 // Helper to convert gguf_parser metadata to simpler types
-func convertGGUFMetadataKVs(kvs gguf_parser.GGUFMetadataKVs) map[string]interface{} {
-	result := make(map[string]interface{})
+func convertGGUFMetadataKVs(kvs gguf_parser.GGUFMetadataKVs) map[string]any {
+	result := make(map[string]any)
 
 	for _, kv := range kvs {
 		// Skip standard fields that are extracted separately

@@ -92,7 +92,7 @@ func Scan(app clio.Application) *cobra.Command {
 		Use:   "scan [SOURCE]",
 		Short: "Generate an SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
-		Example: internal.Tprintf(scanHelp, map[string]interface{}{
+		Example: internal.Tprintf(scanHelp, map[string]any{
 			"appName": id.Name,
 			"command": "scan",
 		}),

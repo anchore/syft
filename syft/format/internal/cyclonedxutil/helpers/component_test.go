@@ -384,6 +384,65 @@ func Test_decodeComponent(t *testing.T) {
 	}
 }
 
+func Test_setPackageName(t *testing.T) {
+	tests := []struct {
+		name     string
+		pkg      pkg.Package
+		comp     cyclonedx.Component
+		wantName string
+	}{
+		{
+			name:     "debian group excluded from name",
+			pkg:      pkg.Package{Type: pkg.DebPkg},
+			comp:     cyclonedx.Component{Name: "wget", Group: "debian"},
+			wantName: "wget",
+		},
+		{
+			name:     "rpm group excluded from name",
+			pkg:      pkg.Package{Type: pkg.RpmPkg},
+			comp:     cyclonedx.Component{Name: "acl", Group: "centos"},
+			wantName: "acl",
+		},
+		{
+			name:     "apk group excluded from name",
+			pkg:      pkg.Package{Type: pkg.ApkPkg},
+			comp:     cyclonedx.Component{Name: "musl", Group: "alpine"},
+			wantName: "musl",
+		},
+		{
+			name:     "npm group included in name",
+			pkg:      pkg.Package{Type: pkg.NpmPkg},
+			comp:     cyclonedx.Component{Name: "node", Group: "@types"},
+			wantName: "@types/node",
+		},
+		{
+			name:     "go module group included in name",
+			pkg:      pkg.Package{Type: pkg.GoModulePkg},
+			comp:     cyclonedx.Component{Name: "net", Group: "golang.org/x"},
+			wantName: "golang.org/x/net",
+		},
+		{
+			name:     "no group leaves name unchanged",
+			pkg:      pkg.Package{Type: pkg.DebPkg},
+			comp:     cyclonedx.Component{Name: "wget"},
+			wantName: "wget",
+		},
+		{
+			name:     "java group stored in metadata not name",
+			pkg:      pkg.Package{Type: pkg.JavaPkg},
+			comp:     cyclonedx.Component{Name: "log4j", Group: "org.apache.logging.log4j"},
+			wantName: "log4j",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := tt.pkg
+			setPackageName(&p, &tt.comp)
+			assert.Equal(t, tt.wantName, p.Name)
+		})
+	}
+}
+
 func TestGetPURL(t *testing.T) {
 	tests := []struct {
 		name      string

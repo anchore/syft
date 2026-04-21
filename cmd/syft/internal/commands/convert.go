@@ -40,7 +40,7 @@ func Convert(app clio.Application) *cobra.Command {
 		Use:   "convert [SOURCE-SBOM] -o [FORMAT]",
 		Short: "Convert between SBOM formats",
 		Long:  "[Experimental] Convert SBOM files to, and from, SPDX, CycloneDX and Syft's format. For more info about data loss between formats see https://github.com/anchore/syft/wiki/format-conversion",
-		Example: internal.Tprintf(convertExample, map[string]interface{}{
+		Example: internal.Tprintf(convertExample, map[string]any{
 			"appName": id.Name,
 			"command": "convert",
 		}),

@@ -34,7 +34,7 @@ type CreateSBOMConfig struct {
 	// audit what tool is being used to generate the SBOM
 	ToolName          string
 	ToolVersion       string
-	ToolConfiguration interface{}
+	ToolConfiguration any
 
 	packageTaskFactories       task.Factories
 	packageCatalogerReferences []pkgcataloging.CatalogerReference

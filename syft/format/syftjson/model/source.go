@@ -30,7 +30,7 @@ type Source struct {
 	Type string `json:"type"`
 
 	// Metadata contains additional source-specific metadata.
-	Metadata interface{} `json:"metadata"`
+	Metadata any `json:"metadata"`
 }
 
 // sourceUnpacker is used to unmarshal Source objects
@@ -97,7 +97,7 @@ func cleanPreSchemaV9MetadataType(t string) string {
 	return t
 }
 
-func extractPreSchemaV9Metadata(t string, target []byte) (interface{}, error) {
+func extractPreSchemaV9Metadata(t string, target []byte) (any, error) {
 	switch t {
 	case "directory", "dir":
 		cleanTarget, err := strconv.Unquote(string(target))
