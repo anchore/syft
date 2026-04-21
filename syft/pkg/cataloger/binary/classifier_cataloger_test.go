@@ -1706,6 +1706,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "electron/28.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "electron",
+				Version:   "28.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/electron@28.0.0",
+				Locations: locations("electron"),
+				Metadata:  metadata("electron-binary"),
+			},
+		},
+		{
+			logicalFixture: "electron-framework/28.0.0/darwin-arm64",
+			expected: pkg.Package{
+				Name:      "electron",
+				Version:   "28.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/electron@28.0.0",
+				Locations: locations("Electron Framework"),
+				Metadata:  metadata("electron-binary-macos"),
+			},
+		},
+		{
 			logicalFixture: "ffmpeg/7.1.1/darwin-arm64",
 			expected: pkg.Package{
 				Name:      "ffmpeg",
