@@ -18,7 +18,27 @@ var (
 	licensePattern                 = regexp.MustCompile(`^License: (?P<license>\S*)`)
 	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
 	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
+	formatPattern                  = regexp.MustCompile(`^Format:\s*https?://`)
 )
+
+// isMachineReadableFormat checks if the copyright file declares itself as machine-readable
+// according to https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+// A file is machine-readable if it contains a "Format:" field with a valid URL.
+func isMachineReadableFormat(reader io.Reader) bool {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		if formatPattern.MatchString(scanner.Text()) {
+			return true
+		}
+	}
+	return false
+}
+
+// IsMachineReadableFormat returns true if the copyright file declares itself as
+// machine-readable format (contains a "Format:" field with a valid URL).
+func IsMachineReadableFormat(data []byte) bool {
+	return formatPattern.Match(data)
+}
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
