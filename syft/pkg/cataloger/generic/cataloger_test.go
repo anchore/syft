@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -187,9 +188,11 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 		upstreamCataloger: "unit-test-cataloger",
 	}
 
-	assert.PanicsWithValue(t, "panic!", func() {
-		_, _, _ = c.Catalog(ctx, resolver)
-	})
+	_, _, err := c.Catalog(ctx, resolver)
+	require.Error(t, err)
+	var panicErr sync.PanicError
+	require.ErrorAs(t, err, &panicErr)
+	assert.Equal(t, "panic!", panicErr.Value)
 	require.True(t, spy.closed)
 }
 
