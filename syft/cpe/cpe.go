@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/facebookincubator/nvdtools/wfn"
+	"github.com/anchore/syft/syft/internal/wfn"
 )
 
 // CPE contains the attributes of an NVD Attributes and a string
