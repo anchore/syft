@@ -302,6 +302,24 @@ func Test_NewDotnetBinaryPackage(t *testing.T) {
 				Version: "3.0.0.0",
 			},
 		},
+		{
+			name: "Microsoft assembly with CI-stamped FileVersion prefers ProductVersion",
+			versionResources: map[string]string{
+				"CompanyName":    "Microsoft Corporation",
+				"ProductName":    "Microsoft ASP.NET Core",
+				"FileVersion":    "10.0.726.21808",
+				"ProductVersion": "10.0.7+b16286c2284fecf303dbc12a0bb152476d662e44",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Microsoft ASP.NET Core",
+				Version: "10.0.7",
+				Metadata: pkg.DotnetPortableExecutableEntry{
+					CompanyName:    "Microsoft Corporation",
+					ProductName:    "Microsoft ASP.NET Core",
+					ProductVersion: "10.0.7+b16286c2284fecf303dbc12a0bb152476d662e44",
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {

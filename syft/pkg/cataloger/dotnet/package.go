@@ -323,6 +323,13 @@ func findVersionFromVersionResources(versionResources map[string]string) string 
 	productVersion := extractVersionFromResourcesValue(versionResources["ProductVersion"])
 	fileVersion := extractVersionFromResourcesValue(versionResources["FileVersion"])
 
+	// ms file ver is a ci build stamp (major.minor.<buildfate>.<buildyime>) we'll match with fewer segments
+	if isMicrosoftVersionResource(versionResources) {
+		if v := preferShorterMajorMinorMatch(productVersion, fileVersion); v != "" {
+			return v
+		}
+	}
+
 	semanticVersionCompareResult := keepGreaterSemanticVersion(productVersion, fileVersion)
 	if semanticVersionCompareResult != "" {
 		return semanticVersionCompareResult
@@ -361,6 +368,33 @@ func extractVersionFromResourcesValue(version string) string {
 		}
 	}
 	return out
+}
+
+// preferShorterMajorMinorMatch returns productVersion when it shares major.minor
+// with fileversion and has fewer segments "" otherwise
+func preferShorterMajorMinorMatch(productVersion, fileVersion string) string {
+	semanticProductVersion, err := version.NewVersion(productVersion)
+	if err != nil || semanticProductVersion == nil {
+		return ""
+	}
+	semanticFileVersion, err := version.NewVersion(fileVersion)
+	if err != nil || semanticFileVersion == nil {
+		return ""
+	}
+	productSegments := semanticProductVersion.Segments()
+	fileSegments := semanticFileVersion.Segments()
+	if len(productSegments) < 2 || len(fileSegments) < 2 {
+		return ""
+	}
+	if productSegments[0] != fileSegments[0] || productSegments[1] != fileSegments[1] {
+		return ""
+	}
+	if len(productSegments) >= len(fileSegments) {
+		return ""
+	}
+	// 1.0.7+sha -> 1.0.7
+	v, _, _ := strings.Cut(productVersion, "+")
+	return v
 }
 
 func keepGreaterSemanticVersion(productVersion string, fileVersion string) string {
