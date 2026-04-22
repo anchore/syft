@@ -294,7 +294,7 @@ func TestIdentifyRelease(t *testing.T) {
 				PrettyName: "CentOS release 5.7 (Final)",
 				Name:       "CentOS",
 				ID:         "centos",
-				IDLike:     []string{"centos"},
+				IDLike:     []string{"centos", "rhel"},
 				Version:    "5.7",
 				VersionID:  "5.7",
 			},
@@ -314,7 +314,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "testdata/os/rockylinux",
+			fixture: "testdata/os/rockylinux/from-os-release",
 			release: &Release{
 				PrettyName: "Rocky Linux 8.4 (Green Obsidian)",
 				Name:       "Rocky Linux",
@@ -331,7 +331,21 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "testdata/os/almalinux",
+			fixture: "testdata/os/rockylinux/from-redhat-release",
+			release: &Release{
+				PrettyName: "Rocky Linux release 8.10 (Green Obsidian)",
+				Name:       "Rocky Linux",
+				ID:         "rocky",
+				IDLike: []string{
+					"rocky",
+					"rhel",
+				},
+				Version:   "8.10 (Green Obsidian)",
+				VersionID: "8.10",
+			},
+		},
+		{
+			fixture: "testdata/os/almalinux/from-os-release",
 			release: &Release{
 				PrettyName: "AlmaLinux 8.4 (Electric Cheetah)",
 				Name:       "AlmaLinux",
@@ -346,6 +360,52 @@ func TestIdentifyRelease(t *testing.T) {
 				HomeURL:      "https://almalinux.org/",
 				BugReportURL: "https://bugs.almalinux.org/",
 				CPEName:      "cpe:/o:almalinux:almalinux:8.4:GA",
+			},
+		},
+		{
+			fixture: "testdata/os/almalinux/from-redhat-release",
+			release: &Release{
+				PrettyName: "AlmaLinux release 8.10 (Cerulean Leopard)",
+				Name:       "AlmaLinux",
+				ID:         "almalinux",
+				IDLike: []string{
+					"almalinux",
+					"rhel",
+				},
+				Version:   "8.10 (Cerulean Leopard)",
+				VersionID: "8.10",
+			},
+		},
+		{
+			fixture: "testdata/os/scientific/from-os-release",
+			release: &Release{
+				PrettyName: "Scientific Linux 7.5 (Nitrogen)",
+				Name:       "Scientific Linux",
+				ID:         "scientific",
+				IDLike: []string{
+					"rhel",
+					"centos",
+					"fedora",
+				},
+				Version:      "7.5 (Nitrogen)",
+				VersionID:    "7.5",
+				HomeURL:      "http://www.scientificlinux.org//",
+				BugReportURL: "mailto:scientific-linux-devel@listserv.fnal.gov",
+				CPEName:      "cpe:/o:scientificlinux:scientificlinux:7.5:GA",
+			},
+		},
+		{
+			fixture: "testdata/os/scientific/from-redhat-release",
+			release: &Release{
+				PrettyName: "Scientific Linux release 7.9 (Nitrogen)",
+				Name:       "Scientific Linux",
+				ID:         "scientific",
+				IDLike: []string{
+					"scientific",
+					"rhel",
+				},
+				Version:   "7.9 (Nitrogen)",
+				VersionID: "7.9",
 			},
 		},
 		{
@@ -534,7 +594,7 @@ func TestParseRedhatRelease(t *testing.T) {
 				PrettyName: "CentOS release 5.7 (Final)",
 				Name:       "CentOS",
 				ID:         "centos",
-				IDLike:     []string{"centos"},
+				IDLike:     []string{"centos", "rhel"},
 				Version:    "5.7",
 				VersionID:  "5.7",
 			},
