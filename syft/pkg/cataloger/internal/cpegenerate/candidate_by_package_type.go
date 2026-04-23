@@ -221,6 +221,23 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "mustache"},
 			candidateAddition{AdditionalProducts: []string{"mustache.js"}},
 		},
+		{
+			// NVD records react under the facebook vendor, e.g.
+			// cpe:2.3:a:facebook:react:*, but the npm package.json
+			// names neither the vendor nor the author. Without
+			// this hint syft emits cpe:2.3:a:react:react:* and
+			// grype/DependencyTrack miss every React CVE. See #4653.
+			pkg.NpmPkg,
+			candidateKey{PkgName: "react"},
+			candidateAddition{AdditionalVendors: []string{"facebook"}},
+		},
+		{
+			// Same story for react-dom, which NVD also records under
+			// facebook (and ties to react CVEs).
+			pkg.NpmPkg,
+			candidateKey{PkgName: "react-dom"},
+			candidateAddition{AdditionalVendors: []string{"facebook"}},
+		},
 
 		// Gem packages
 		{
@@ -329,6 +346,17 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ApkPkg,
 			candidateKey{PkgName: "curl"},
 			candidateAddition{AdditionalVendors: []string{"haxx"}},
+		},
+		{
+			// libpcap is maintained by the tcpdump project and NVD
+			// records the CVEs under vendor "tcpdump", e.g.
+			// cpe:2.3:a:tcpdump:libpcap:*. Without this hint syft
+			// generates cpe:2.3:a:libpcap:libpcap:* from the Alpine
+			// package name, which NVD does not match, so grype
+			// reports zero vulnerabilities for libpcap (see #4712).
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libpcap"},
+			candidateAddition{AdditionalVendors: []string{"tcpdump"}},
 		},
 		{
 			pkg.ApkPkg,
@@ -507,6 +535,19 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ConanPkg,
 			candidateKey{PkgName: "poco"},
 			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
+		},
+		{
+			// NVD records expat CVEs (e.g. CVE-2024-45492) under the
+			// libexpat product name, cpe:2.3:a:libexpat:libexpat:*.
+			// Without this hint the conan-derived CPE
+			// cpe:2.3:a:expat:expat:* misses every expat CVE, see
+			// anchore/syft#4771.
+			pkg.ConanPkg,
+			candidateKey{PkgName: "expat"},
+			candidateAddition{
+				AdditionalVendors:  []string{"libexpat"},
+				AdditionalProducts: []string{"libexpat"},
+			},
 		},
 	})
 
