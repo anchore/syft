@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/go-sync"
+	intArchive "github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -19,6 +20,8 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
+	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
@@ -60,6 +63,7 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 				Packages:       cfg.Packages,
 				Files:          cfg.Files,
 				Licenses:       cfg.Licenses,
+				Archive:        cfg.Archive,
 				Catalogers:     *audit,
 				ExtraConfigs:   cfg.ToolConfiguration,
 			},
@@ -92,9 +96,17 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 	packageCatalogingProgress := monitorPackageCatalogingTask()
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
+
+	// determine the effective resolver: if recursive archive extraction is enabled,
+	// wrap the resolver with the archive orchestrator
+	effectiveResolver, archiveCleanup, archiveRelationships := setupArchiveOrchestration(ctx, resolver, cfg)
+	if archiveCleanup != nil {
+		defer archiveCleanup()
+	}
+
 	for i := range taskGroups {
 		err = sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(taskGroups[i]), func(t task.Task) (any, error) {
-			return nil, task.RunTask(ctx, t, resolver, builder, catalogingProgress)
+			return nil, task.RunTask(ctx, t, effectiveResolver, builder, catalogingProgress)
 		}, nil)
 		if err != nil {
 			// TODO: tie this to the open progress monitors...
@@ -102,10 +114,58 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		}
 	}
 
+	// add archive containment relationships to the SBOM
+	if len(archiveRelationships) > 0 {
+		builder.AddRelationships(archiveRelationships...)
+	}
+
 	packageCatalogingProgress.SetCompleted()
 	catalogingProgress.SetCompleted()
 
 	return &s, nil
+}
+
+// setupArchiveOrchestration wraps the resolver with an archive orchestrator when recursive
+// archive extraction is enabled (MaxDepth > 0). It performs the iterative extract loop
+// and returns the effective resolver, a cleanup function, and any archive relationships.
+func setupArchiveOrchestration(ctx context.Context, baseResolver file.Resolver, cfg *CreateSBOMConfig) (file.Resolver, func(), []artifact.Relationship) {
+	if cfg.Archive.MaxDepth <= 0 {
+		return baseResolver, nil, nil
+	}
+
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		log.Warn("archive orchestration requested but no temp dir available")
+		return baseResolver, nil, nil
+	}
+
+	archiveTmpDir, archiveTmpCleanup, err := td.NewChild("archive-extraction")
+	if err != nil {
+		log.WithFields("error", err).Warn("unable to create temp dir for archive extraction")
+		return baseResolver, nil, nil
+	}
+
+	resolverFactory := func(root string) (file.Resolver, error) {
+		return fileresolver.NewFromDirectory(root, "")
+	}
+
+	orch := intArchive.NewOrchestrator(baseResolver, cfg.Archive, archiveTmpDir, resolverFactory)
+
+	// iteratively discover and extract archives up to the configured max depth
+	for depth := 0; depth < cfg.Archive.MaxDepth; depth++ {
+		newArchives := orch.DiscoverAndExtract(ctx, depth)
+		if newArchives == 0 {
+			break
+		}
+		log.WithFields("depth", depth+1, "archives", newArchives).Debug("extracted archives for recursive cataloging")
+	}
+
+	cleanup := func() {
+		orch.Cleanup()
+		archiveTmpCleanup()
+	}
+
+	return orch.Resolver(), cleanup, orch.Relationships()
 }
 
 func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
