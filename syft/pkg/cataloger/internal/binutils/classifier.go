@@ -120,6 +120,22 @@ func MatchAll(matchers ...EvidenceMatcher) EvidenceMatcher {
 	}
 }
 
+// MatchNone returns a matcher that succeeds (returns non-nil) only when none of the provided matchers produce a result.
+func MatchNone(matchers ...EvidenceMatcher) EvidenceMatcher {
+	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
+		for _, matcher := range matchers {
+			match, err := matcher(classifier, context)
+			if err != nil {
+				return nil, err
+			}
+			if match != nil {
+				return nil, nil
+			}
+		}
+		return []pkg.Package{}, nil
+	}
+}
+
 type ContextualEvidenceMatchers struct {
 	CatalogerName string
 }
@@ -301,7 +317,8 @@ func MatchPath(path string) EvidenceMatcher {
 		panic("invalid pattern")
 	}
 	return func(_ Classifier, context MatcherContext) ([]pkg.Package, error) {
-		if doublestar.MatchUnvalidated(path, context.Location.RealPath) {
+		if doublestar.MatchUnvalidated(path, context.Location.RealPath) ||
+			doublestar.MatchUnvalidated(path, context.Location.AccessPath) {
 			return []pkg.Package{}, nil // return non-nil
 		}
 		return nil, nil
