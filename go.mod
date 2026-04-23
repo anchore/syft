@@ -34,12 +34,12 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/dave/jennifer v1.7.1
 	github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da
-	github.com/diskfs/go-diskfs v1.7.0
+	github.com/diskfs/go-diskfs v1.9.1
 	github.com/distribution/reference v0.6.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elliotchance/phpserialize v1.4.0
 	github.com/facebookincubator/nvdtools v0.1.5
-	github.com/github/go-spdx/v2 v2.4.0
+	github.com/github/go-spdx/v2 v2.5.0
 	github.com/gkampitakis/go-snaps v0.5.21
 	github.com/go-git/go-billy/v5 v5.8.0
 	github.com/go-git/go-git/v5 v5.18.0
@@ -59,7 +59,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.13.0
-	github.com/jedib0t/go-pretty/v6 v6.7.8
+	github.com/jedib0t/go-pretty/v6 v6.7.9
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
 	github.com/magiconair/properties v1.8.10
@@ -98,7 +98,7 @@ require (
 	golang.org/x/time v0.15.0
 	golang.org/x/tools v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.46.2
+	modernc.org/sqlite v1.48.2
 )
 
 require (
@@ -260,7 +260,7 @@ require (
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
-	github.com/pkg/xattr v0.4.9 // indirect
+	github.com/pkg/xattr v0.4.12 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
