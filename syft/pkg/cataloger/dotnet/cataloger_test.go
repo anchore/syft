@@ -32,6 +32,7 @@ func TestCataloger_Globs(t *testing.T) {
 			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetPortableExecutableCataloger(),
 			expected: []string{
+				"src/something.bpl",
 				"src/something.dll",
 				"src/something.exe",
 			},
@@ -41,6 +42,7 @@ func TestCataloger_Globs(t *testing.T) {
 			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetDepsBinaryCataloger(DefaultCatalogerConfig()),
 			expected: []string{
+				"src/something.bpl",
 				"src/something.deps.json",
 				"src/something.dll",
 				"src/something.exe",
