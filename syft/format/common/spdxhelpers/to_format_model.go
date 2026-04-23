@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/distribution/reference"
+	"github.com/google/uuid"
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
@@ -46,9 +47,7 @@ const (
 // spec from the given SBOM model.
 //
 //nolint:funlen
-func ToFormatModel(s sbom.SBOM) *spdx.Document {
-	name, namespace := helpers.DocumentNameAndNamespace(s.Source, s.Descriptor)
-
+func ToFormatModel(s sbom.SBOM, deterministicUUID bool, createdTime *time.Time) *spdx.Document {
 	rels := relationship.NewIndex(s.Relationships...)
 	packages, otherLicenses := toPackages(rels, s.Artifacts.Packages, s)
 
@@ -81,6 +80,43 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 
 	// add the root document relationship
 	allRelationships = append(allRelationships, documentDescribesRelationship)
+
+	spdxFiles := toFiles(s)
+	spdxOtherLicenses := convertOtherLicense(otherLicenses)
+
+	uniqueID := uuid.New()
+
+	if deterministicUUID {
+		data := []byte(s.Source.ID)
+
+		for _, p := range s.Artifacts.Packages.Sorted() {
+			data = append(data, []byte(p.ID())...)
+		}
+
+		for _, f := range spdxFiles {
+			data = append(data, []byte(f.FileSPDXIdentifier)...)
+		}
+
+		for _, r := range allRelationships {
+			data = append(data, []byte(r.RefA.ElementRefID)...)
+			data = append(data, []byte(r.RefB.ElementRefID)...)
+			data = append(data, []byte(r.Relationship)...)
+		}
+
+		for _, ol := range spdxOtherLicenses {
+			data = append(data, []byte(ol.LicenseIdentifier)...)
+		}
+
+		uniqueID = uuid.NewSHA1(uuid.NameSpaceOID, data)
+	}
+
+	name := helpers.DocumentName(s.Source)
+	namespace := helpers.DocumentNamespace(name, s.Source, s.Descriptor, uniqueID)
+
+	currentTime := time.Now()
+	if createdTime == nil {
+		createdTime = &currentTime
+	}
 
 	return &spdx.Document{
 		// 6.1: SPDX Version; should be in the format "SPDX-x.x"
@@ -147,16 +183,16 @@ func ToFormatModel(s sbom.SBOM) *spdx.Document {
 
 			// 6.9: Created: data format YYYY-MM-DDThh:mm:ssZ
 			// Cardinality: mandatory, one
-			Created: time.Now().UTC().Format(time.RFC3339),
+			Created: createdTime.UTC().Format(time.RFC3339),
 
 			// 6.10: Creator Comment
 			// Cardinality: optional, one
 			CreatorComment: "",
 		},
 		Packages:      packages,
-		Files:         toFiles(s),
+		Files:         spdxFiles,
 		Relationships: allRelationships,
-		OtherLicenses: convertOtherLicense(otherLicenses),
+		OtherLicenses: spdxOtherLicenses,
 	}
 }
 
