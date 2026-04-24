@@ -242,6 +242,14 @@ test = hello
 		`,
 		},
 		{
+			name:    "empty content",
+			content: "",
+		},
+		{
+			name:    "whitespace only",
+			content: "   \n\t\n",
+		},
+		{
 			name:    "unterminated concatenation",
 			wantErr: require.Error,
 			content: `
