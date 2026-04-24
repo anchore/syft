@@ -1,6 +1,7 @@
 package debian
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -121,15 +122,27 @@ func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Lo
 	var licenseStrs []string
 	if copyrightReader != nil && copyrightLocation != nil {
 		defer internal.CloseAndLogError(copyrightReader, copyrightLocation.AccessPath)
-		// attach the licenses
-		licenseStrs = parseLicensesFromCopyright(copyrightReader)
-		for _, licenseStr := range licenseStrs {
-			p.Licenses.Add(pkg.NewLicenseFromLocationsWithContext(ctx, licenseStr, copyrightLocation.WithoutAnnotations()))
+		
+		// Read the entire copyright file content
+		data, err := io.ReadAll(copyrightReader)
+		if err != nil {
+			log.Tracef("failed to read copyright file (package=%s): %s", metadata.Package, err)
+			return
 		}
-		// keep a record of the file where this was discovered
-		p.Locations.Add(*copyrightLocation)
+		
+		// Only parse as machine-readable format if the file declares itself as such
+		// according to https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+		if IsMachineReadableFormat(data) {
+			// attach the licenses
+			licenseStrs = parseLicensesFromCopyright(bytes.NewReader(data))
+			for _, licenseStr := range licenseStrs {
+				p.Licenses.Add(pkg.NewLicenseFromLocationsWithContext(ctx, licenseStr, copyrightLocation.WithoutAnnotations()))
+			}
+			// keep a record of the file where this was discovered
+			p.Locations.Add(*copyrightLocation)
+		}
 	}
-	// try to use the license classifier if parsing the copyright file failed
+	// try to use the license classifier if parsing the copyright file failed or file was not machine-readable
 	if len(licenseStrs) == 0 {
 		sr, sl := fetchCopyrightContents(resolver, dbLocation, metadata)
 		if sr != nil && sl != nil {
