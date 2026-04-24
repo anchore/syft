@@ -16,8 +16,9 @@ import (
 
 func TestParseGoMod(t *testing.T) {
 	tests := []struct {
-		fixture  string
-		expected []pkg.Package
+		fixture         string
+		expected        []pkg.Package
+		excludeIndirect bool
 	}{
 		{
 			fixture: "testdata/go-mod-fixtures/one-package/go.mod",
@@ -107,11 +108,72 @@ func TestParseGoMod(t *testing.T) {
 				},
 			},
 		},
+		{
+
+			fixture: "testdata/go-mod-fixtures/many-packages-with-indirect/go.mod",
+			expected: []pkg.Package{
+				{
+					Name:      "github.com/adrg/xdg",
+					Version:   "v0.2.1",
+					PURL:      "pkg:golang/github.com/adrg/xdg@v0.2.1",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages-with-indirect/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+				{
+					Name:      "github.com/anchore/archiver/v3",
+					Version:   "v3.5.1",
+					PURL:      "pkg:golang/github.com/anchore/archiver/v3@v3.5.1",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages-with-indirect/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+				{
+					Name:      "github.com/anchore/go-testutils",
+					Version:   "v0.0.0-20200624184116-66aa578126db",
+					PURL:      "pkg:golang/github.com/anchore/go-testutils@v0.0.0-20200624184116-66aa578126db",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages-with-indirect/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+				{
+					Name:      "github.com/anchore/go-version",
+					Version:   "v1.2.2-0.20200701162849-18adb9c92b9b",
+					PURL:      "pkg:golang/github.com/anchore/go-version@v1.2.2-0.20200701162849-18adb9c92b9b",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages-with-indirect/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+				{
+					Name:      "github.com/anchore/stereoscope",
+					Version:   "v0.0.0-20200706164556-7cf39d7f4639",
+					PURL:      "pkg:golang/github.com/anchore/stereoscope@v0.0.0-20200706164556-7cf39d7f4639",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages-with-indirect/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+				{
+					Name:      "github.com/go-test/deep",
+					Version:   "v1.0.6",
+					PURL:      "pkg:golang/github.com/go-test/deep@v1.0.6",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/go-mod-fixtures/many-packages-with-indirect/go.mod")),
+					Language:  pkg.Go,
+					Type:      pkg.GoModulePkg,
+					Metadata:  pkg.GolangModuleEntry{},
+				},
+			},
+			excludeIndirect: true,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false))
+			c := newGoModCataloger(DefaultCatalogerConfig().WithUsePackagesLib(false).WithExcludeIndirect(test.excludeIndirect))
 			pkgtest.NewCatalogTester().
 				FromFile(t, test.fixture).
 				Expects(test.expected, nil).
