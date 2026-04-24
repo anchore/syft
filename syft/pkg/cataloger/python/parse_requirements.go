@@ -137,12 +137,6 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 		name := removeExtras(req.Name)
 		version := parseVersion(req.VersionConstraint, rp.cfg.GuessUnpinnedRequirements)
 
-		if version == "" {
-			log.WithFields("path", reader.RealPath, "line", line).Trace("unable to determine package version in requirements.txt line")
-			errs = unknown.Appendf(errs, reader, "unable to determine package version in requirements.txt line: %q", line)
-			continue
-		}
-
 		packages = append(
 			packages,
 			newPackageForRequirementsWithMetadata(
