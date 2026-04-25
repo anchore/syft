@@ -70,7 +70,6 @@ linters:
 #    - godot
 #    - godox
 #    - goerr113
-#    - goimports   # we're using gosimports now instead to account for extra whitespaces (see https://github.com/golang/go/issues/20818)
 #    - golint      # deprecated
 #    - gomnd       # this is too aggressive
 #    - interfacer  # this is a good idea, but is no longer supported and is prone to false positives
@@ -96,11 +95,18 @@ issues:
 
 formatters:
   enable:
+    - gci
     - gofmt
-    - goimports
   exclusions:
     generated: lax
     paths:
       - third_party$
       - builtin$
       - examples$
+  settings:
+    gci:
+      # See https://golangci-lint.run/docs/formatters/configuration/#gci
+      sections:
+        - standard # Standard section: captures all standard packages.
+        - default  # Default section: contains all imports that could not be matched to another section type.
+        - prefix(github.com/anchore)

@@ -148,7 +148,6 @@ tasks:
     deps: [tools]
     cmds:
       - gofmt -w -s .
-      - "{{ .TOOL_DIR }}/gosimports -local github.com/anchore -w ."
       - go mod tidy
 
   lint-fix:
