@@ -154,6 +154,7 @@ uname_arch_check() (
     mipsle) return 0 ;;
     mips64) return 0 ;;
     mips64le) return 0 ;;
+    riscv64) return 0 ;;
     s390x) return 0 ;;
     amd64p32) return 0 ;;
   esac
