@@ -709,6 +709,18 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 			expected: "color-convert",
 		},
 		{
+			line:     `"old-async@npm:async@0.9.2":`,
+			expected: "async",
+		},
+		{
+			line:     `"old-foo@npm:@scope/foo@1.2.3":`,
+			expected: "@scope/foo",
+		},
+		{
+			line:     `"@scope/old-foo@npm:@scope/foo@1.2.3":`,
+			expected: "@scope/foo",
+		},
+		{
 			line:     `"@npmcorp/code-frame@^7.1.0", "@npmcorp/code-frame@^7.10.4":`,
 			expected: "@npmcorp/code-frame",
 		},
