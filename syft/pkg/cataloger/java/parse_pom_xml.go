@@ -3,6 +3,7 @@ package java
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -40,6 +41,9 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	var poms []*maven.Project
 	pomLocations := map[*maven.Project]file.Location{}
 	for _, pomLocation := range locations {
+		if isArchiveMetaPom(pomLocation) {
+			continue
+		}
 		pom, err := readPomFromLocation(fileResolver, pomLocation)
 		if err != nil || pom == nil {
 			log.WithFields("error", err, "pomLocation", pomLocation).Debug("error while reading pom")
@@ -297,6 +301,22 @@ func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.
 		ArtifactID: artifactID,
 		Version:    version,
 	}
+}
+
+// isArchiveMetaPom returns true if the pom.xml location is inside a META-INF/maven directory,
+// indicating it is archive metadata embedded by the Maven build process rather than a project
+// pom.xml. These embedded pom.xml files are verbatim copies of the original build POM with
+// potentially unresolved ${property} references and dependency versions inherited from parent
+// POMs that are not available inside the archive. The java-archive-cataloger already uses
+// pom.properties (which always contains resolved values) to identify these archives, so the
+// pom cataloger should skip them to avoid creating phantom dependency packages.
+//
+// Match on a directory boundary ("/META-INF/maven/" or a "META-INF/maven/" prefix) to avoid
+// catching paths that happen to contain the substring elsewhere (e.g. a file literally named
+// "X-META-INF/maven/").
+func isArchiveMetaPom(location file.Location) bool {
+	p := filepath.ToSlash(location.Path())
+	return strings.Contains(p, "/META-INF/maven/") || strings.HasPrefix(p, "META-INF/maven/")
 }
 
 func cleanDescription(original string) (cleaned string) {
