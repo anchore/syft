@@ -2227,6 +2227,127 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("envoy-binary"),
 			},
 		},
+		{
+			logicalFixture: "syft/0.90.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "0.90.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@0.90.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/0.95.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "0.95.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@0.95.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/0.100.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "0.100.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@0.100.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.0.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.0.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.0.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.5.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.5.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.5.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.10.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.10.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.10.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.15.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.15.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.15.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.20.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.20.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.20.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.30.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.30.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.30.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.40.0/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.40.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.40.0",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
+		{
+			logicalFixture: "syft/1.40.1/linux-arm64",
+			expected: pkg.Package{
+				Name:      "syft",
+				Version:   "1.40.1",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/anchore/syft@1.40.1",
+				Locations: locations("syft"),
+				Metadata:  metadata("syft-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
