@@ -25,6 +25,11 @@ import (
 )
 
 var (
+	// packageAliasExp matches aliased yarn dependencies and captures the
+	// underlying npm package name instead of the local alias.
+	// For example: "old-async@npm:async@0.9.2" returns "async".
+	packageAliasExp = regexp.MustCompile(`^"?(?:@\w[\w-_.]*\/)?\w[\w-_.]*@npm:((?:@\w[\w-_.]*\/)?\w[\w-_.]*)@`)
+
 	// packageNameExp matches the name of the dependency in yarn.lock
 	// including scope/namespace prefix if found.
 	// For example: "aws-sdk@2.706.0" returns "aws-sdk"
@@ -305,6 +310,9 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 }
 
 func findPackageName(line string) string {
+	if matches := packageAliasExp.FindStringSubmatch(line); len(matches) >= 2 {
+		return matches[1]
+	}
 	if matches := packageNameExp.FindStringSubmatch(line); len(matches) >= 2 {
 		return matches[1]
 	}
