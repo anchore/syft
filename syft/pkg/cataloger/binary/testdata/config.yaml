@@ -1379,3 +1379,90 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/envoy
+  - name: syft
+    version: 0.90.0
+    images:
+      - ref: anchore/syft:v0.90.0@sha256:69d84e41b7efd62c0fa6978e01cde25464fa41bdad36068e1a53046e8c590588
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 0.95.0
+    images:
+      - ref: anchore/syft:v0.95.0@sha256:1b01bd140e0e72090a3707397b0d6db582b72697b79a167e5bc405845c561ae0
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 0.100.0
+    images:
+      - ref: anchore/syft:v0.100.0@sha256:df7b07bfadff45e0135d74f22478f47b16ac6aff4e8dbd93133fcae3bbbb790d
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.0.0
+    images:
+      - ref: anchore/syft:v1.0.0@sha256:e3e918dcd6bf1610335d614428fe4444511f0f29c219ff54a02d3dd4501f91db
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.5.0
+    images:
+      - ref: anchore/syft:v1.5.0@sha256:7e622b5d92a6ec0727fb4bd48046b644f459c33b54e9ea9025a764d324177cd2
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.10.0
+    images:
+      - ref: anchore/syft:v1.10.0@sha256:4243162c3ac33d107a8d9981e2d41b7888b66f12d9bd547124644391be796763
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.15.0
+    images:
+      - ref: anchore/syft:v1.15.0@sha256:92b229ac1d84cd9627624a951e26a78333b26a5f34c9999629ba96e90751c971
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.20.0
+    images:
+      - ref: anchore/syft:v1.20.0@sha256:b46e597614ddc78621e560af3fabf9346e35462ea1c886a38b30bcc7ca601a73
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.30.0
+    images:
+      - ref: anchore/syft:v1.30.0@sha256:bd5357d2cd087f03af748dac24df48bfbc1723080d78f75f69aca1f2d429060e
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.40.0
+    images:
+      - ref: anchore/syft:v1.40.0@sha256:11a68ff5cd49a1579e1f05b061a96edf0a5add161ea5f38d62fc979704c46918
+        platform: linux/arm64
+    paths:
+      - /syft
+
+  - name: syft
+    version: 1.40.1
+    images:
+      - ref: anchore/syft:v1.40.1@sha256:fba42bf6d51cfb2411618f8fe645f2cf4f6ffdedd69fd7ef12fdfb064a409f70
+        platform: linux/arm64
+    paths:
+      - /syft

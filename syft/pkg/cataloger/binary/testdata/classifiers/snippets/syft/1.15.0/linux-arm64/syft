@@ -1,0 +1,8 @@
+name: syft
+offset: 27874483
+length: 120
+snippetSha256: 9eb7c7847b0ac73518f3c82f1ed1d54f507ed084bb473b6d24540c89b7d4b58f
+fileSha256: 3458f61d39ccf9772c12c5184adb3ccdf0f6cdc173b96d75d1008db83848d7ed
+
+### byte snippet to follow ###
+dflags '-static' -X main.version=1.15.0 -X main.gitCommit=55cc1877ef246d8cabfd9bbeb0a8747b59c03431 -X main.buildDate=202

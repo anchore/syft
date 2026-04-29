@@ -905,6 +905,15 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "syft-binary",
+			FileGlob: "**/{syft,syft.exe}",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`main\.version=(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.+-]+)?) -X main\.gitCommit=`),
+			Package: "syft",
+			PURL:    mustPURL("pkg:golang/github.com/anchore/syft@version"),
+			CPEs:    singleCPE("cpe:2.3:a:anchore:syft:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},		
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)
