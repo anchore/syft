@@ -524,4 +524,12 @@ var commonTestCases = []testCase{
 			"kong": "3.7.0-0",
 		},
 	},
+	{
+		name:        "find Julia packages",
+		pkgType:     pkg.JuliaPkg,
+		pkgLanguage: pkg.Julia,
+		pkgInfo: map[string]string{
+			"Unicode": "1.11.0",
+		},
+	},
 }
