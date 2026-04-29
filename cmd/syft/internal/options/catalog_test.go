@@ -1,7 +1,6 @@
 package options
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +27,7 @@ func TestCatalog_PostLoad(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = assert.NoError
 			}
-			tt.wantErr(t, tt.options.PostLoad(), fmt.Sprintf("PostLoad()"))
+			tt.wantErr(t, tt.options.PostLoad(), "PostLoad()")
 			if tt.assert != nil {
 				tt.assert(t, tt.options)
 			}

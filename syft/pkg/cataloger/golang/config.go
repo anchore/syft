@@ -51,6 +51,8 @@ type CatalogerConfig struct {
 
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
+
+	ExcludeIndirect bool `json:"exclude-indirect" yaml:"exclude-indirect" mapstructure:"exclude-indirect"`
 }
 
 type MainModuleVersionConfig struct {
@@ -201,5 +203,10 @@ func (g MainModuleVersionConfig) WithFromContents(input bool) MainModuleVersionC
 
 func (g MainModuleVersionConfig) WithFromBuildSettings(input bool) MainModuleVersionConfig {
 	g.FromBuildSettings = input
+	return g
+}
+
+func (g CatalogerConfig) WithExcludeIndirect(excludeIndirect bool) CatalogerConfig {
+	g.ExcludeIndirect = excludeIndirect
 	return g
 }
