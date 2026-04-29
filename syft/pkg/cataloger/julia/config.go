@@ -1,10 +1,10 @@
 package julia
 
 type CatalogerConfig struct {
-	// IncludeExtras enables including extra dependencies (such as test dependencies) in the catalog results.
+	// IncludeExtras enables including extra dependencies (such as test dependencies) in the catalog results even if they are not installed.
 	// app-config: julia.include-extras
 	IncludeExtras bool `yaml:"include-extras" json:"include-extras" mapstructure:"include-extras"`
-	// IncludeWeakDeps enables including weak dependencies (dependency extensions) in the catalog results.
+	// IncludeWeakDeps enables including weak dependencies (dependency extensions) in the catalog results even if they are not installed.
 	// app-config: julia.include-weakdeps
 	IncludeWeakDeps bool `yaml:"include-weakdeps" json:"include-weakdeps" mapstructure:"include-weakdeps"`
 }

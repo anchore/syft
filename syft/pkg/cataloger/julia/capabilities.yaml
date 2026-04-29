@@ -4,10 +4,10 @@ configs: # AUTO-GENERATED - config structs and their fields
   julia.CatalogerConfig:
     fields:
       - key: IncludeExtras
-        description: IncludeExtras enables including extra dependencies (such as test dependencies) in the catalog results.
+        description: IncludeExtras enables including extra dependencies (such as test dependencies) in the catalog results even if they are not installed.
         app_key: julia.include-extras
       - key: IncludeWeakDeps
-        description: IncludeWeakDeps enables including weak dependencies (dependency extensions) in the catalog results.
+        description: IncludeWeakDeps enables including weak dependencies (dependency extensions) in the catalog results even if they are not installed.
         app_key: julia.include-weakdeps
 catalogers:
   - ecosystem: julia # MANUAL
