@@ -267,6 +267,7 @@ func (p *manifestParser) analyzePackages(idx manifestIndex, proj *projectFile) m
 			visitWithKind(uuid, runtimeKind)
 		}
 	} else {
+		// without a project we don't know what deps might be for extras, etc. so assume they are all runtime
 		for _, e := range idx.entries {
 			visitWithKind(e.uuid, runtimeKind)
 		}
