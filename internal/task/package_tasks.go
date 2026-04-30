@@ -180,6 +180,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
 		newSimplePackageTaskFactory(snap.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "snap"),
 		newSimplePackageTaskFactory(ai.NewGGUFCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "gguf", "ml"),
+		newSimplePackageTaskFactory(ai.NewSafeTensorsCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "safetensors", "ml"),
 
 		// deprecated catalogers ////////////////////////////////////////
 		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)

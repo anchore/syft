@@ -2800,6 +2800,9 @@
               "$ref": "#/$defs/RustCargoLockEntry"
             },
             {
+              "$ref": "#/$defs/SafetensorsMetadata"
+            },
+            {
               "$ref": "#/$defs/SnapEntry"
             },
             {
@@ -4086,6 +4089,66 @@
         "dependencies"
       ],
       "description": "RustCargoLockEntry represents a locked dependency from a Cargo.lock file with precise version and checksum information."
+    },
+    "SafetensorsMetadata": {
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Format is the source format label (always \"safetensors\" for this metadata type).\nPresent because the Docker AI model config blob carries an explicit format field\nthat can also be \"gguf\", and recording it here makes the origin explicit."
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the model architecture (e.g., \"LlamaForCausalLM\",\n\"Qwen3MoeForConditionalGeneration\"), sourced from the Hugging Face config.json\n\"architectures\" array."
+        },
+        "quantization": {
+          "type": "string",
+          "description": "Quantization describes tensor precision (e.g., \"BF16\", \"F16\", \"F32\", \"INT8\")."
+        },
+        "parameters": {
+          "type": "string",
+          "description": "Parameters is the parameter count as reported by upstream. Stored as a string\nbecause Docker AI and Hugging Face labels use notation like \"2.68B\" or \"35B-A3B\"."
+        },
+        "tensorCount": {
+          "type": "integer",
+          "description": "TensorCount is the number of tensor entries in the file header."
+        },
+        "totalSize": {
+          "type": "string",
+          "description": "TotalSize is the total byte size of tensor data across all shards when known\n(from the Docker AI model config \"size\" field or the sharded index \"total_size\")."
+        },
+        "torchDtype": {
+          "type": "string",
+          "description": "TorchDtype is the Hugging Face torch_dtype (e.g., \"bfloat16\", \"float16\")."
+        },
+        "transformersVersion": {
+          "type": "string",
+          "description": "TransformersVersion is the transformers library version recorded in config.json."
+        },
+        "shardCount": {
+          "type": "integer",
+          "description": "ShardCount is the number of .safetensors shards for a sharded model (1 for a\nsingle-file model)."
+        },
+        "userMetadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "UserMetadata is the optional \"__metadata__\" map from a .safetensors file header\n(string-to-string key/values set by the producer)."
+        },
+        "metadataHash": {
+          "type": "string",
+          "description": "MetadataHash is an xxhash of the normalized header metadata, providing a stable\nidentifier for identical model content across repositories or filenames."
+        },
+        "parts": {
+          "items": {
+            "$ref": "#/$defs/SafetensorsMetadata"
+          },
+          "type": "array",
+          "description": "Parts contains metadata from additional SafeTensors shards or OCI layers that\nwere merged into this package during post-processing."
+        }
+      },
+      "type": "object",
+      "description": "SafeTensorsMetadata represents metadata extracted from a SafeTensors model."
     },
     "Schema": {
       "properties": {

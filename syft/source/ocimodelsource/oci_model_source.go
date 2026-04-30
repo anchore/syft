@@ -52,7 +52,7 @@ func NewFromRegistry(ctx context.Context, cfg Config) (source.Source, error) {
 	}
 
 	metadata := buildMetadata(art)
-	tempDir, resolver, err := fetchAndStoreGGUFHeaders(ctx, client, art)
+	tempDir, resolver, err := fetchAndStoreModelHeaders(ctx, client, art)
 	if err != nil {
 		return nil, err
 	}
@@ -77,36 +77,109 @@ func validateAndFetchArtifact(ctx context.Context, client *registryClient, refer
 		return nil, err
 	}
 
-	if len(art.GGUFLayers) == 0 {
-		return nil, fmt.Errorf("model artifact has no GGUF layers")
+	if art.Format == "" {
+		return nil, fmt.Errorf("model artifact has no GGUF or SafeTensors weight layers")
 	}
 
 	return art, nil
 }
 
-// fetchAndStoreGGUFHeaders fetches GGUF layer headers and stores them in temp files.
-func fetchAndStoreGGUFHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, *fileresolver.ContainerImageModel, error) {
-	tempDir, err := os.MkdirTemp("", "syft-oci-gguf")
+// fetchAndStoreModelHeaders fetches the blobs needed to catalog a Docker AI
+// model artifact and stores them on disk so the ContainerImageModel resolver
+// can serve them by media type:
+//
+//   - For GGUF: the first maxHeaderBytes of each weight layer (existing behavior).
+//   - For SafeTensors: the model-config blob (already in memory as RawConfig)
+//     plus each companion layer in full. We deliberately skip the multi-GB
+//     safetensors weight layers — the config blob carries aggregate metadata
+//     (format, quantization, parameter count, tensor count, total size) that
+//     the cataloger needs, and individual shard headers are not yet used.
+func fetchAndStoreModelHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, *fileresolver.ContainerImageModel, error) {
+	tempDir, err := os.MkdirTemp("", "syft-oci-model")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
+	cleanup := func() {
+		if osErr := os.RemoveAll(tempDir); osErr != nil {
+			log.Errorf("unable to remove temp directory (%s): %v", tempDir, osErr)
+		}
+	}
+
 	layerFiles := make(map[string]fileresolver.LayerInfo)
+
+	// GGUF weight-layer headers (unchanged).
 	for _, layer := range artifact.GGUFLayers {
 		li, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
 		if err != nil {
-			osErr := os.RemoveAll(tempDir)
-			if osErr != nil {
-				log.Errorf("unable to remove temp directory (%s): %v", tempDir, err)
-			}
+			cleanup()
 			return "", nil, err
 		}
 		layerFiles[layer.Digest.String()] = li
 	}
 
+	// For SafeTensors artifacts, expose the model-config blob to the resolver
+	// so parseSafeTensorsOCIConfig can match it by media type. RawConfig was
+	// already fetched as part of the manifest walk.
+	if artifact.Format == modelFormatSafeTensors && len(artifact.RawConfig) > 0 {
+		li, err := storeConfigBlobAsLayer(artifact, tempDir)
+		if err != nil {
+			cleanup()
+			return "", nil, err
+		}
+		layerFiles[artifact.Manifest.Config.Digest.String()] = li
+	}
+
+	// Companion layers (README, config.json, tokenizer.json, LICENSE). Small by
+	// convention; fetched in full up to maxCompanionBytes.
+	if artifact.Format == modelFormatSafeTensors {
+		for _, layer := range artifact.CompanionLayers {
+			li, err := fetchCompanionLayer(ctx, client, artifact.Reference, layer, tempDir)
+			if err != nil {
+				cleanup()
+				return "", nil, err
+			}
+			layerFiles[layer.Digest.String()] = li
+		}
+	}
+
 	resolver := fileresolver.NewContainerImageModel(tempDir, layerFiles)
 
 	return tempDir, resolver, nil
+}
+
+// storeConfigBlobAsLayer writes the already-fetched raw config bytes to a temp
+// file so the resolver can serve them via media type.
+func storeConfigBlobAsLayer(artifact *modelArtifact, tempDir string) (fileresolver.LayerInfo, error) {
+	digest := artifact.Manifest.Config.Digest.String()
+	safeDigest := strings.ReplaceAll(digest, ":", "-")
+	tempPath := filepath.Join(tempDir, safeDigest+".config.json")
+	if err := os.WriteFile(tempPath, artifact.RawConfig, 0600); err != nil {
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to write config blob: %w", err)
+	}
+	return fileresolver.LayerInfo{
+		TempPath:  tempPath,
+		MediaType: string(artifact.Manifest.Config.MediaType),
+	}, nil
+}
+
+// fetchCompanionLayer downloads a companion (non-weight) layer to a temp file.
+// Unlike weight layers we fetch up to maxCompanionBytes, which comfortably
+// covers READMEs, HF config.json, tokenizer.json, and LICENSE text.
+func fetchCompanionLayer(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (fileresolver.LayerInfo, error) {
+	data, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxCompanionBytes)
+	if err != nil {
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to fetch companion layer: %w", err)
+	}
+	safeDigest := strings.ReplaceAll(layer.Digest.String(), ":", "-")
+	tempPath := filepath.Join(tempDir, safeDigest+".blob")
+	if err := os.WriteFile(tempPath, data, 0600); err != nil {
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to write companion temp file: %w", err)
+	}
+	return fileresolver.LayerInfo{
+		TempPath:  tempPath,
+		MediaType: string(layer.MediaType),
+	}, nil
 }
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file.

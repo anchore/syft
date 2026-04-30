@@ -26,9 +26,22 @@ const (
 	// Reference: https://www.docker.com/blog/oci-artifacts-for-ai-model-packaging/
 	modelConfigMediaTypePrefix = "application/vnd.docker.ai.model.config."
 	ggufLayerMediaType         = "application/vnd.docker.ai.gguf.v3"
+	safetensorsLayerMediaType  = "application/vnd.docker.ai.safetensors"
 
-	// Maximum bytes to read/return for GGUF headers
+	// Companion metadata layers packaged alongside the weight tensors.
+	// model.file covers README.md / config.json / tokenizer.json / generation_config.json.
+	modelFileMediaType = "application/vnd.docker.ai.model.file"
+	licenseMediaType   = "application/vnd.docker.ai.license"
+
+	// Weight format labels surfaced on modelArtifact.Format.
+	modelFormatGGUF        = "gguf"
+	modelFormatSafeTensors = "safetensors"
+
+	// Maximum bytes to read/return for weight-layer headers (GGUF + safetensors).
 	maxHeaderBytes = 8 * 1024 * 1024 // 8 MB
+	// Maximum bytes to fetch for a companion metadata layer (README, config.json, license).
+	// These blobs are small by convention; cap well below a safetensors header.
+	maxCompanionBytes = 4 * 1024 * 1024 // 4 MB
 )
 
 // registryClient handles OCI registry interactions for model artifacts.
@@ -110,7 +123,25 @@ type modelArtifact struct {
 	RawManifest    []byte
 	RawConfig      []byte
 	ManifestDigest string
-	GGUFLayers     []v1.Descriptor
+
+	// Format identifies the weight storage format advertised by the manifest's
+	// layer media types. Empty means no recognized weight layers were found.
+	Format string
+
+	// GGUFLayers are descriptors for layers carrying GGUF-format weights.
+	// We fetch the first few MB of each to read the header.
+	GGUFLayers []v1.Descriptor
+
+	// SafeTensorsLayers are descriptors for layers carrying SafeTensors-format weights.
+	// For safetensors we do NOT fetch these layers — the model-config blob already
+	// contains the aggregate metadata we need — but we record them here for counting
+	// and for future per-shard parsing.
+	SafeTensorsLayers []v1.Descriptor
+
+	// CompanionLayers are non-weight layers (README, config.json, license) that
+	// we do fetch (in full, given their small size) so companion-file parsing
+	// in the safetensors cataloger can find them via media type.
+	CompanionLayers []v1.Descriptor
 }
 
 func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) (*modelArtifact, error) {
@@ -151,16 +182,37 @@ func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) 
 	}
 
 	ggufLayers := extractGGUFLayers(manifest)
+	safetensorsLayers := extractSafeTensorsLayers(manifest)
+	companionLayers := extractCompanionLayers(manifest)
 
 	return &modelArtifact{
-		Reference:      ref,
-		Manifest:       manifest,
-		Config:         configFile,
-		RawManifest:    desc.Manifest,
-		RawConfig:      rawConfig,
-		ManifestDigest: desc.Digest.String(),
-		GGUFLayers:     ggufLayers,
+		Reference:         ref,
+		Manifest:          manifest,
+		Config:            configFile,
+		RawManifest:       desc.Manifest,
+		RawConfig:         rawConfig,
+		ManifestDigest:    desc.Digest.String(),
+		Format:            detectModelFormat(len(ggufLayers), len(safetensorsLayers)),
+		GGUFLayers:        ggufLayers,
+		SafeTensorsLayers: safetensorsLayers,
+		CompanionLayers:   companionLayers,
 	}, nil
+}
+
+// detectModelFormat returns a single format string when either GGUF or
+// SafeTensors weight layers are present. When both appear (not expected in
+// practice for Docker Model Runner artifacts), GGUF wins because the GGUF
+// cataloger is the more established path. Empty result means the manifest has
+// no recognized weight layers.
+func detectModelFormat(ggufCount, safetensorsCount int) string {
+	switch {
+	case ggufCount > 0:
+		return modelFormatGGUF
+	case safetensorsCount > 0:
+		return modelFormatSafeTensors
+	default:
+		return ""
+	}
 }
 
 // isModelArtifact checks if the manifest represents a model artifact.
@@ -177,6 +229,33 @@ func extractGGUFLayers(manifest *v1.Manifest) []v1.Descriptor {
 		}
 	}
 	return ggufLayers
+}
+
+// extractSafeTensorsLayers extracts SafeTensors weight-layer descriptors from
+// the manifest.
+func extractSafeTensorsLayers(manifest *v1.Manifest) []v1.Descriptor {
+	var out []v1.Descriptor
+	for _, layer := range manifest.Layers {
+		if string(layer.MediaType) == safetensorsLayerMediaType {
+			out = append(out, layer)
+		}
+	}
+	return out
+}
+
+// extractCompanionLayers extracts small, non-weight layers that carry
+// cataloger-relevant metadata: README.md / config.json / tokenizer.json /
+// generation_config.json under vnd.docker.ai.model.file, and the LICENSE under
+// vnd.docker.ai.license.
+func extractCompanionLayers(manifest *v1.Manifest) []v1.Descriptor {
+	var out []v1.Descriptor
+	for _, layer := range manifest.Layers {
+		switch string(layer.MediaType) {
+		case modelFileMediaType, licenseMediaType:
+			out = append(out, layer)
+		}
+	}
+	return out
 }
 
 func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {

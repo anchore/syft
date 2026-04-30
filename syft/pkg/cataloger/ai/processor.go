@@ -57,3 +57,44 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 
 	return namedPkgs, rels, err
 }
+
+// safeTensorsMergeProcessor mirrors ggufMergeProcessor for SafeTensors packages.
+// When scanning an OCI AI artifact, the model-config blob produces one named
+// package and individual .safetensors shard layers (if we ever decide to parse
+// them directly) would produce nameless packages. Any nameless SafeTensors
+// packages are collapsed into the named one's Parts slice.
+func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	if err != nil {
+		return pkgs, rels, err
+	}
+	if len(pkgs) == 0 {
+		return pkgs, rels, err
+	}
+
+	var namedPkgs []pkg.Package
+	var namelessParts []pkg.SafeTensorsMetadata
+	for _, p := range pkgs {
+		if p.Name != "" {
+			namedPkgs = append(namedPkgs, p)
+			continue
+		}
+		if md, ok := p.Metadata.(pkg.SafeTensorsMetadata); ok {
+			md.MetadataHash = ""
+			namelessParts = append(namelessParts, md)
+		}
+	}
+
+	if len(namedPkgs) == 0 {
+		return nil, rels, err
+	}
+
+	if len(namedPkgs) == 1 && len(namelessParts) > 0 {
+		winner := &namedPkgs[0]
+		if md, ok := winner.Metadata.(pkg.SafeTensorsMetadata); ok {
+			md.Parts = namelessParts
+			winner.Metadata = md
+		}
+	}
+
+	return namedPkgs, rels, err
+}
