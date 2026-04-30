@@ -25,9 +25,7 @@ func newJuliaPackage(name, version string, m pkg.JuliaManifestEntry, location fi
 func juliaPackageURL(name, version, uuid string) string {
 	var qualifiers packageurl.Qualifiers
 	if uuid != "" {
-		qualifiers = packageurl.QualifiersFromMap(map[string]string{
-			"uuid": uuid,
-		})
+		qualifiers = packageurl.Qualifiers{{Key: "uuid", Value: uuid}}
 	}
 
 	return packageurl.NewPackageURL(
