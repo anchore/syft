@@ -46,6 +46,56 @@ func Test_getDepsJSONFilePrefix(t *testing.T) {
 	}
 }
 
+func Test_newDotnetDepsPackage_AssignsRuntimeCPEs(t *testing.T) {
+	tests := []struct {
+		name        string
+		nameVersion string
+		expected    []cpe.CPE
+	}{
+		{
+			name:        ".NET runtime package",
+			nameVersion: "runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.4",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "10.0.4",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:        "ASP.NET Core runtime package",
+			nameVersion: "runtimepack.Microsoft.AspNetCore.App.Runtime.win-x64/10.0.4",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "asp.net_core",
+						Version: "10.0.4",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := newDotnetDepsPackage(
+				logicalDepsJSONPackage{NameVersion: tc.nameVersion},
+				file.NewLocation("/app/test.deps.json"),
+			)
+
+			assert.Equal(t, tc.expected, actual.CPEs)
+		})
+	}
+}
+
 func Test_NewDotnetBinaryPackage(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -400,19 +450,21 @@ func Test_spaceNormalize(t *testing.T) {
 
 func TestRuntimeCPEs(t *testing.T) {
 	tests := []struct {
-		name     string
-		version  string
-		expected []cpe.CPE
+		name        string
+		packageName string
+		version     string
+		expected    []cpe.CPE
 	}{
 		{
-			name:    ".NET Core 1.0",
-			version: "1.0",
+			name:        ".NET Core 1.0",
+			packageName: "Microsoft.NETCore.App",
+			version:     "1.0",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet_core",
+						Product: ".net_core",
 						Version: "1.0",
 					},
 					Source: cpe.DeclaredSource,
@@ -420,14 +472,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET Core 2.1",
-			version: "2.1",
+			name:        ".NET Core 2.1",
+			packageName: "Microsoft.NETCore.App",
+			version:     "2.1",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet_core",
+						Product: ".net_core",
 						Version: "2.1",
 					},
 					Source: cpe.DeclaredSource,
@@ -435,14 +488,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET Core 3.1",
-			version: "3.1",
+			name:        ".NET Core 3.1",
+			packageName: "Microsoft.NETCore.App",
+			version:     "3.1",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet_core",
+						Product: ".net_core",
 						Version: "3.1",
 					},
 					Source: cpe.DeclaredSource,
@@ -450,14 +504,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET Core 4.9 (hypothetical)",
-			version: "4.9",
+			name:        ".NET Core 4.9 (hypothetical)",
+			packageName: "Microsoft.NETCore.App",
+			version:     "4.9",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet_core",
+						Product: ".net_core",
 						Version: "4.9",
 					},
 					Source: cpe.DeclaredSource,
@@ -465,14 +520,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET 5.0",
-			version: "5.0",
+			name:        ".NET 5.0",
+			packageName: "Microsoft.NETCore.App",
+			version:     "5.0",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet",
+						Product: ".net",
 						Version: "5.0",
 					},
 					Source: cpe.DeclaredSource,
@@ -480,14 +536,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET 6.0",
-			version: "6.0",
+			name:        ".NET 6.0",
+			packageName: "Microsoft.NETCore.App",
+			version:     "6.0",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet",
+						Product: ".net",
 						Version: "6.0",
 					},
 					Source: cpe.DeclaredSource,
@@ -495,14 +552,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET 8.0",
-			version: "8.0",
+			name:        ".NET 8.0",
+			packageName: "Microsoft.NETCore.App",
+			version:     "8.0",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet",
+						Product: ".net",
 						Version: "8.0",
 					},
 					Source: cpe.DeclaredSource,
@@ -510,14 +568,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    ".NET 10.0 (future version)",
-			version: "10.0",
+			name:        ".NET 10.0 (future version)",
+			packageName: "Microsoft.NETCore.App",
+			version:     "10.0",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet",
+						Product: ".net",
 						Version: "10.0",
 					},
 					Source: cpe.DeclaredSource,
@@ -525,14 +584,47 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    "Patch version should not be included",
-			version: "6.0.21",
+			name:        "Patch version should be preserved",
+			packageName: "Microsoft.NETCore.App",
+			version:     "6.0.21",
 			expected: []cpe.CPE{
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
-						Product: "dotnet",
+						Product: ".net",
+						Version: "6.0.21",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:        "ASP.NET Core runtime",
+			packageName: "runtimepack.Microsoft.AspNetCore.App.Runtime.win-x64",
+			version:     "9.0.10",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: "asp.net_core",
+						Version: "9.0.10",
+					},
+					Source: cpe.DeclaredSource,
+				},
+			},
+		},
+		{
+			name:        "Assumed minor version",
+			packageName: "Microsoft.NETCore.App",
+			version:     "6",
+			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: ".net",
 						Version: "6.0",
 					},
 					Source: cpe.DeclaredSource,
@@ -540,39 +632,26 @@ func TestRuntimeCPEs(t *testing.T) {
 			},
 		},
 		{
-			name:    "Assumed minor version",
-			version: "6",
-			expected: []cpe.CPE{
-				{
-					Attributes: cpe.Attributes{
-						Part:    "a",
-						Vendor:  "microsoft",
-						Product: "dotnet",
-						Version: "6.0",
-					},
-					Source: cpe.DeclaredSource,
-				},
-			},
+			name:        "Invalid version format",
+			packageName: "Microsoft.NETCore.App",
+			version:     "invalid",
+			expected:    nil,
 		},
 		{
-			name:     "Invalid version format",
-			version:  "invalid",
-			expected: nil,
-		},
-		{
-			name:     "Empty version",
-			version:  "",
-			expected: nil,
+			name:        "Empty version",
+			packageName: "Microsoft.NETCore.App",
+			version:     "",
+			expected:    nil,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result := runtimeCPEs(tc.version)
+			result := runtimeCPEs(tc.packageName, tc.version)
 
 			if !reflect.DeepEqual(result, tc.expected) {
-				t.Errorf("runtimeCPEs(%q) = %+v; want %+v",
-					tc.version, result, tc.expected)
+				t.Errorf("runtimeCPEs(%q, %q) = %+v; want %+v",
+					tc.packageName, tc.version, result, tc.expected)
 			}
 		})
 	}
