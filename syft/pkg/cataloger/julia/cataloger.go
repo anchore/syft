@@ -13,18 +13,24 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
-	parser := newManifestParser(cfg)
-	return generic.NewCataloger("julia-manifest-cataloger").
-		WithParserByGlobs(parser.parseManifest, "**/Manifest.toml", "**/Manifest-v*.toml").
-		WithProcessors(deduplicateJuliaManifestPackages)
-}
+const (
+	runtimeKind  = "runtime"
+	testKind     = "test"
+	optionalKind = "optional"
+)
 
 type juliaPackageKey struct {
 	projectDir string
 	name       string
 	uuid       string
 	version    string
+}
+
+func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
+	parser := newManifestParser(cfg)
+	return generic.NewCataloger("julia-manifest-cataloger").
+		WithParserByGlobs(parser.parseManifest, "**/Manifest.toml", "**/Manifest-v*.toml").
+		WithProcessors(deduplicateJuliaManifestPackages)
 }
 
 func deduplicateJuliaManifestPackages(pkgs []pkg.Package, _ []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
@@ -109,11 +115,11 @@ func mergeDependencyKind(a, b string) string {
 
 func dependencyKindRank(kind string) int {
 	switch kind {
-	case "runtime":
+	case runtimeKind:
 		return 3
-	case "test":
+	case testKind:
 		return 2
-	case "optional":
+	case optionalKind:
 		return 1
 	default:
 		return 0

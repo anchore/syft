@@ -73,7 +73,7 @@ func newManifestParser(cfg CatalogerConfig) *manifestParser {
 	return &manifestParser{cfg: cfg}
 }
 
-func (p *manifestParser) parseManifest(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (p *manifestParser) parseManifest(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	tree, err := toml.LoadReader(reader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load Manifest.toml for parsing: %w", err)
@@ -195,12 +195,12 @@ func (p *manifestParser) buildIndex(m manifestFile) manifestIndex {
 	}
 	sort.Strings(names)
 
-	nameToUuid := make(map[string]string)
-	existingUuid := make(map[string]struct{})
+	nameToUUID := make(map[string]string)
+	existingUUID := make(map[string]struct{})
 	for name, deps := range m.Deps {
 		for _, dep := range deps {
-			nameToUuid[name] = dep.UUID
-			existingUuid[dep.UUID] = struct{}{}
+			nameToUUID[name] = dep.UUID
+			existingUUID[dep.UUID] = struct{}{}
 		}
 	}
 
@@ -209,8 +209,8 @@ func (p *manifestParser) buildIndex(m manifestFile) manifestIndex {
 
 	for _, name := range names {
 		for _, dep := range m.Deps[name] {
-			depUUIDs := extractDeps(dep.Deps, nameToUuid, existingUuid)
-			weakDeps := extractWeakDeps(dep.WeakDeps, nameToUuid)
+			depUUIDs := extractDeps(dep.Deps, nameToUUID, existingUUID)
+			weakDeps := extractWeakDeps(dep.WeakDeps, nameToUUID)
 			uuidToDeps[dep.UUID] = depUUIDs
 
 			entries = append(entries, depEntry{
@@ -249,26 +249,26 @@ func (p *manifestParser) analyzePackages(idx manifestIndex, proj *projectFile) m
 
 		if p.cfg.IncludeWeakDeps {
 			for _, uuid := range proj.WeakDeps {
-				visitWithKind(uuid, "optional")
+				visitWithKind(uuid, optionalKind)
 			}
 		}
 
 		if p.cfg.IncludeExtras {
 			for name, uuid := range proj.Extras {
 				if _, isTest := testExtras[name]; isTest {
-					visitWithKind(uuid, "test")
+					visitWithKind(uuid, testKind)
 				} else {
-					visitWithKind(uuid, "optional")
+					visitWithKind(uuid, optionalKind)
 				}
 			}
 		}
 
 		for _, uuid := range proj.Deps {
-			visitWithKind(uuid, "runtime")
+			visitWithKind(uuid, runtimeKind)
 		}
 	} else {
 		for _, e := range idx.entries {
-			visitWithKind(e.uuid, "runtime")
+			visitWithKind(e.uuid, runtimeKind)
 		}
 	}
 
@@ -279,7 +279,7 @@ func (p *manifestParser) analyzePackages(idx manifestIndex, proj *projectFile) m
 			}
 			for _, uuid := range e.weakDeps {
 				if _, seen := pkgsToKinds[uuid]; !seen {
-					pkgsToKinds[uuid] = "optional"
+					pkgsToKinds[uuid] = optionalKind
 				}
 			}
 		}
@@ -364,9 +364,9 @@ func (p *manifestParser) createMissingProjectPackages(proj *projectFile, pkgsToK
 				continue
 			}
 			seen[uuid] = struct{}{}
-			kind := "optional"
+			kind := optionalKind
 			if _, ok := testExtras[name]; ok {
-				kind = "test"
+				kind = testKind
 			}
 			pkgs = append(pkgs, newJuliaPackage(name, "", pkg.JuliaManifestEntry{
 				UUID:           uuid,
@@ -407,7 +407,7 @@ func sortedValues(m map[string]string) []string {
 }
 
 // weakdeps can be an array of package names in early manifest formats, or an inline table of package name to UUID
-func extractWeakDeps(deps any, nameToUuid map[string]string) map[string]string {
+func extractWeakDeps(deps any, nameToUUID map[string]string) map[string]string {
 	out := make(map[string]string)
 
 	switch d := deps.(type) {
@@ -423,7 +423,7 @@ func extractWeakDeps(deps any, nameToUuid map[string]string) map[string]string {
 			if !ok {
 				continue
 			}
-			if uuid, ok := nameToUuid[name]; ok {
+			if uuid, ok := nameToUUID[name]; ok {
 				out[name] = uuid
 			}
 		}
@@ -438,7 +438,7 @@ func extractWeakDeps(deps any, nameToUuid map[string]string) map[string]string {
 // extractDeps handles the different TOML formats Julia uses for dependencies.
 // deps can either be an array (names) or an inline table (uuids)
 // Returns an array of UUIDs
-func extractDeps(deps any, nameToUuid map[string]string, existingUuid map[string]struct{}) []string {
+func extractDeps(deps any, nameToUUID map[string]string, existingUUID map[string]struct{}) []string {
 	if deps == nil {
 		return nil
 	}
@@ -469,9 +469,9 @@ func extractDeps(deps any, nameToUuid map[string]string, existingUuid map[string
 
 	var uuids []string
 	for _, d := range depNamesAndUuids {
-		if _, isUUID := existingUuid[d]; isUUID {
+		if _, isUUID := existingUUID[d]; isUUID {
 			uuids = append(uuids, d)
-		} else if uuid, ok := nameToUuid[d]; ok {
+		} else if uuid, ok := nameToUUID[d]; ok {
 			uuids = append(uuids, uuid)
 		}
 	}

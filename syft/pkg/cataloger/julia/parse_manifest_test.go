@@ -30,7 +30,7 @@ func TestParseManifestHappyPath(t *testing.T) {
 					t.Errorf("expected JuliaManifestEntry metadata for %s", p.Name)
 					continue
 				}
-				if meta.DependencyKind != "runtime" {
+				if meta.DependencyKind != runtimeKind {
 					t.Errorf("expected runtime dependency kind for %s, got %s", p.Name, meta.DependencyKind)
 				}
 			}
@@ -50,7 +50,7 @@ func TestParseManifestHappyPathWithExtras(t *testing.T) {
 				t.Errorf("expected 16 packages (including extras), got %d", len(pkgs))
 			}
 
-			kindCounts := map[string]int{"runtime": 0, "test": 0, "optional": 0}
+			kindCounts := map[string]int{runtimeKind: 0, testKind: 0, optionalKind: 0}
 			for _, p := range pkgs {
 				meta, ok := p.Metadata.(pkg.JuliaManifestEntry)
 				if !ok {
@@ -62,25 +62,25 @@ func TestParseManifestHappyPathWithExtras(t *testing.T) {
 
 				switch p.Name {
 				case "DevDep", "IndirectDevDep":
-					if meta.DependencyKind != "test" {
+					if meta.DependencyKind != testKind {
 						t.Errorf("expected test dependency kind for %s, got %s", p.Name, meta.DependencyKind)
 					}
 				case "OptionalDep":
-					if meta.DependencyKind != "optional" {
+					if meta.DependencyKind != optionalKind {
 						t.Errorf("expected optional dependency kind for %s, got %s", p.Name, meta.DependencyKind)
 					}
 				default:
-					if meta.DependencyKind != "runtime" {
+					if meta.DependencyKind != runtimeKind {
 						t.Errorf("expected runtime dependency kind for %s, got %s", p.Name, meta.DependencyKind)
 					}
 				}
 			}
 
-			if kindCounts["test"] != 2 {
-				t.Errorf("expected 2 test dependencies (DevDep, IndirectDevDep), got %d", kindCounts["test"])
+			if kindCounts[testKind] != 2 {
+				t.Errorf("expected 2 test dependencies (DevDep, IndirectDevDep), got %d", kindCounts[testKind])
 			}
-			if kindCounts["optional"] != 1 {
-				t.Errorf("expected 1 optional dependency (OptionalDep), got %d", kindCounts["optional"])
+			if kindCounts[optionalKind] != 1 {
+				t.Errorf("expected 1 optional dependency (OptionalDep), got %d", kindCounts[optionalKind])
 			}
 		}).
 		TestCataloger(t, cataloger)
@@ -121,7 +121,7 @@ func TestParseManifestIncludesProjectExtraMissingFromManifest(t *testing.T) {
 				if meta.UUID != "336ed68f-0bac-5ca0-87d4-7b16caf5d00b" {
 					t.Errorf("unexpected UUID for missing extra: %s", meta.UUID)
 				}
-				if meta.DependencyKind != "test" {
+				if meta.DependencyKind != testKind {
 					t.Errorf("expected missing extra to be a test dependency, got %s", meta.DependencyKind)
 				}
 				if len(meta.Deps) != 0 {
@@ -185,7 +185,7 @@ func TestParseManifestShadowedDepv19(t *testing.T) {
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "ead4f63c-334e-11e9-00e6-e7f0a5f21b60",
 			Deps:           []string{"f41f7b98-334e-11e9-1257-49272045fb24"},
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -198,7 +198,7 @@ func TestParseManifestShadowedDepv19(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "f41f7b98-334e-11e9-1257-49272045fb24",
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -211,7 +211,7 @@ func TestParseManifestShadowedDepv19(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "edca9bc6-334e-11e9-3554-9595dbb4349c",
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -247,7 +247,7 @@ func TestParseManifestTwoPkgsSameName(t *testing.T) {
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "ead4f63c-334e-11e9-00e6-e7f0a5f21b60",
 			Deps:           []string{"f41f7b98-334e-11e9-1257-49272045fb24"},
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -260,7 +260,7 @@ func TestParseManifestTwoPkgsSameName(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "f41f7b98-334e-11e9-1257-49272045fb24",
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -273,7 +273,7 @@ func TestParseManifestTwoPkgsSameName(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "edca9bc6-334e-11e9-3554-9595dbb4349c",
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -315,11 +315,11 @@ func TestParseManifestWeakDeps(t *testing.T) {
 
 				switch p.Name {
 				case "A":
-					if meta.DependencyKind != "runtime" {
+					if meta.DependencyKind != runtimeKind {
 						t.Errorf("expected runtime dependency kind for A, got %s", meta.DependencyKind)
 					}
 				case "WeakDep":
-					if meta.DependencyKind != "optional" {
+					if meta.DependencyKind != optionalKind {
 						t.Errorf("expected optional dependency kind for WeakDep, got %s", meta.DependencyKind)
 					}
 				default:
@@ -346,7 +346,7 @@ func TestParseManifestWeakDepsArray(t *testing.T) {
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "11111111-1111-1111-1111-111111111111",
 			Deps:           []string{"00000000-0000-0000-0000-000000000000"},
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -359,7 +359,7 @@ func TestParseManifestWeakDepsArray(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "00000000-0000-0000-0000-000000000000",
-			DependencyKind: "optional",
+			DependencyKind: optionalKind,
 		},
 	}
 
@@ -414,7 +414,7 @@ func TestParseManifestLegacyPkgdocsFormat(t *testing.T) {
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "ead4f63c-334e-11e9-00e6-e7f0a5f21b60",
 			Deps:           []string{"f41f7b98-334e-11e9-1257-49272045fb24"},
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -427,7 +427,7 @@ func TestParseManifestLegacyPkgdocsFormat(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "f41f7b98-334e-11e9-1257-49272045fb24",
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -440,7 +440,7 @@ func TestParseManifestLegacyPkgdocsFormat(t *testing.T) {
 		Type:      pkg.JuliaPkg,
 		Metadata: pkg.JuliaManifestEntry{
 			UUID:           "edca9bc6-334e-11e9-3554-9595dbb4349c",
-			DependencyKind: "runtime",
+			DependencyKind: runtimeKind,
 		},
 	}
 
@@ -480,7 +480,7 @@ func TestParseManifestWeakDepsTransitive(t *testing.T) {
 				Metadata: pkg.JuliaManifestEntry{
 					UUID:           "621f4979-c628-5d54-868e-fcf4e3e8185c",
 					Deps:           []string{"d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"},
-					DependencyKind: "runtime",
+					DependencyKind: runtimeKind,
 				},
 			}
 			chainRulesCore := pkg.Package{
@@ -492,7 +492,7 @@ func TestParseManifestWeakDepsTransitive(t *testing.T) {
 				PURL:      "pkg:julia/ChainRulesCore?uuid=d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4",
 				Metadata: pkg.JuliaManifestEntry{
 					UUID:           "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4",
-					DependencyKind: "optional",
+					DependencyKind: optionalKind,
 				},
 			}
 
@@ -533,7 +533,7 @@ func TestParseManifestSharedRuntimeWeakdep(t *testing.T) {
 				PURL:      "pkg:julia/A?uuid=11111111-1111-1111-1111-111111111111",
 				Metadata: pkg.JuliaManifestEntry{
 					UUID:           "11111111-1111-1111-1111-111111111111",
-					DependencyKind: "runtime",
+					DependencyKind: runtimeKind,
 				},
 			}
 
