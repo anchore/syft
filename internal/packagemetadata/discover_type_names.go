@@ -27,6 +27,7 @@ var knownNonMetadataTypeNames = strset.New(
 var knownMetadataTypeNames = strset.New(
 	"DotnetPortableExecutableEntry",
 	"GGUFFileHeader",
+	"SafeTensorsMetadata",
 )
 
 func DiscoverTypeNames() ([]string, error) {

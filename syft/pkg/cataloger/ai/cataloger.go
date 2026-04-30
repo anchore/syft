@@ -1,6 +1,6 @@
 /*
 Package ai provides concrete Cataloger implementations for AI artifacts and machine learning models,
-including support for GGUF (GPT-Generated Unified Format) model files.
+including support for GGUF (GPT-Generated Unified Format) and SafeTensors model files.
 */
 package ai
 
@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	catalogerName      = "gguf-cataloger"
-	ggufLayerMediaType = "application/vnd.docker.ai*"
+	catalogerName             = "gguf-cataloger"
+	ggufLayerMediaType        = "application/vnd.docker.ai*"
+	safeTensorsCatalogerName  = "safetensors-cataloger"
 )
 
 // NewGGUFCataloger returns a new cataloger instance for GGUF model files.
@@ -22,4 +23,18 @@ func NewGGUFCataloger() pkg.Cataloger {
 		WithParserByGlobs(parseGGUFModel, "**/*.gguf").
 		WithParserByMediaType(parseGGUFModel, ggufLayerMediaType).
 		WithProcessors(ggufMergeProcessor)
+}
+
+// NewSafeTensorsCataloger returns a cataloger for SafeTensors model files,
+// covering three discovery paths:
+//   - **/*.safetensors files (single-file models; header-only parse)
+//   - **/model.safetensors.index.json files (sharded models)
+//   - application/vnd.docker.ai.model.config.v0.1+json OCI layers (Docker Model
+//     Runner artifacts whose config advertises format=="safetensors")
+func NewSafeTensorsCataloger() pkg.Cataloger {
+	return generic.NewCataloger(safeTensorsCatalogerName).
+		WithParserByGlobs(parseSafeTensorsFile, "**/*.safetensors").
+		WithParserByGlobs(parseSafeTensorsIndex, "**/*.safetensors.index.json").
+		WithParserByMediaType(parseSafeTensorsOCIConfig, dockerAIModelConfigMediaType).
+		WithProcessors(safeTensorsMergeProcessor)
 }
