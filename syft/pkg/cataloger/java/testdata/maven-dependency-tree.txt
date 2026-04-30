@@ -1,0 +1,16 @@
+com.example:my-app:jar:1.0.0
++- org.springframework.boot:spring-boot-starter:pom:3.5.9:compile
+|  +- org.springframework.boot:spring-boot:jar:3.5.9:compile
+|  \- jakarta.annotation:jakarta.annotation-api:jar:2.1.1:compile
++- com.fasterxml.jackson.core:jackson-databind:jar:2.19.4:compile
+|  +- com.fasterxml.jackson.core:jackson-core:jar:2.19.4:compile
+|  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.19.4:compile
++- org.springframework:spring-core:jar:6.2.15:compile
+|  \- org.springframework:spring-jcl:jar:6.2.15:compile
++- io.micrometer:micrometer-core:jar:1.15.7:compile
+|  +- org.hdrhistogram:HdrHistogram:jar:2.2.2:runtime
+|  \- org.latencyutils:LatencyUtils:jar:2.0.3:runtime
+\- org.junit.jupiter:junit-jupiter:jar:5.11.6:test
+   +- org.junit.jupiter:junit-jupiter-api:jar:5.11.6:test
+   \- org.junit.jupiter:junit-jupiter-engine:jar:5.11.6:test
+      \- org.junit.platform:junit-platform-engine:jar:1.11.6:test

@@ -121,6 +121,8 @@ func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 		PackageFileOwnershipOverlap: cfg.Relationships.PackageFileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
 		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
+		JavaMavenDependencyTreeFile:                   cfg.Java.MavenDependencyTree,
+		JavaUseEmbeddedPOMDependencies:                cfg.Java.UseEmbeddedPOMDependencies,
 	}
 }
 
@@ -211,7 +213,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithUseNetwork(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseNetwork)).
 			WithMavenBaseURL(cfg.Java.MavenURL).
 			WithArchiveTraversal(archiveSearch, cfg.Java.MaxParentRecursiveDepth).
-			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies),
+			WithResolveTransitiveDependencies(cfg.Java.ResolveTransitiveDependencies).
+			WithUseEmbeddedPOMDependencies(cfg.Java.UseEmbeddedPOMDependencies).
+			WithMavenDependencyTreeFile(cfg.Java.MavenDependencyTree),
 	}
 }
 

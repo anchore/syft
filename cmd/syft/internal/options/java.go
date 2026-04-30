@@ -12,6 +12,8 @@ type javaConfig struct {
 	MavenURL                      string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
 	MaxParentRecursiveDepth       int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
 	ResolveTransitiveDependencies bool   `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+	UseEmbeddedPOMDependencies    bool   `yaml:"use-embedded-pom-dependencies" json:"use-embedded-pom-dependencies" mapstructure:"use-embedded-pom-dependencies"`
+	MavenDependencyTree           string `yaml:"maven-dependency-tree" json:"maven-dependency-tree" mapstructure:"maven-dependency-tree"`
 }
 
 func defaultJavaConfig() javaConfig {
@@ -46,4 +48,8 @@ build, run 'mvn help:effective-pom' before performing the scan with syft.`)
 	descriptions.Add(&o.MavenLocalRepositoryDir, `override the default location of the local Maven repository. 
 the default is the subdirectory '.m2/repository' in your home directory`)
 	descriptions.Add(&o.ResolveTransitiveDependencies, `resolve transient dependencies such as those defined in a dependency's POM on Maven central`)
+	descriptions.Add(&o.UseEmbeddedPOMDependencies, `build a dependency graph from embedded pom.xml files within JARs to determine hierarchical
+parent-child relationships instead of treating all dependencies as direct`)
+	descriptions.Add(&o.MavenDependencyTree, `path to a pre-generated Maven dependency tree file (from 'mvn dependency:tree -DoutputFile=deps.txt').
+when provided, this takes priority over embedded POM analysis for building the dependency graph`)
 }
