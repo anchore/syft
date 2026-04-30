@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 )
@@ -181,6 +182,54 @@ func TestFileContentsVersionMatcher(t *testing.T) {
 
 			if p[0].Version != tt.expected {
 				t.Errorf("Versions don't match.\ngot\n%q\n\nexpected\n%q", p[0].Version, tt.expected)
+			}
+		})
+	}
+}
+
+func TestMatchNone(t *testing.T) {
+	alwaysMatch := func(_ Classifier, _ MatcherContext) ([]pkg.Package, error) {
+		return []pkg.Package{{}}, nil
+	}
+	neverMatch := func(_ Classifier, _ MatcherContext) ([]pkg.Package, error) {
+		return nil, nil
+	}
+
+	tests := []struct {
+		name     string
+		matchers []EvidenceMatcher
+		wantNil  bool
+	}{
+		{
+			name:     "no matchers — always passes",
+			matchers: nil,
+			wantNil:  false,
+		},
+		{
+			name:     "none of the matchers match — passes",
+			matchers: []EvidenceMatcher{neverMatch, neverMatch},
+			wantNil:  false,
+		},
+		{
+			name:     "one matcher matches — blocked",
+			matchers: []EvidenceMatcher{neverMatch, alwaysMatch},
+			wantNil:  true,
+		},
+		{
+			name:     "all matchers match — blocked",
+			matchers: []EvidenceMatcher{alwaysMatch, alwaysMatch},
+			wantNil:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := MatchNone(tt.matchers...)(Classifier{}, MatcherContext{})
+			require.NoError(t, err)
+			if tt.wantNil {
+				assert.Nil(t, result)
+			} else {
+				assert.NotNil(t, result)
 			}
 		})
 	}
