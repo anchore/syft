@@ -78,14 +78,6 @@ tools:
     with:
       repo: goreleaser/goreleaser
 
-  # used for organizing imports during static analysis
-  - name: gosimports
-    version:
-      want: v0.3.8
-    method: github-release
-    with:
-      repo: rinchsan/gosimports
-
   # used during static analysis for license compliance
   - name: bouncer
     version:
