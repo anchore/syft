@@ -45,6 +45,8 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 		componentType = cyclonedx.ComponentTypeApplication
 	case pkg.ModelPkg:
 		componentType = cyclonedx.ComponentTypeMachineLearningModel
+	case pkg.OperatingSystemPkg:
+		componentType = cyclonedx.ComponentTypeOS
 	}
 
 	return cyclonedx.Component{
