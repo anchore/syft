@@ -120,6 +120,20 @@ func MatchAll(matchers ...EvidenceMatcher) EvidenceMatcher {
 	}
 }
 
+// MatchNone succeeds only if the matcher returns no results.
+func MatchNone(matcher EvidenceMatcher) EvidenceMatcher {
+	return func(classifier Classifier, context MatcherContext) ([]pkg.Package, error) {
+		match, err := matcher(classifier, context)
+		if err != nil {
+			return nil, err
+		}
+		if match != nil {
+			return nil, nil
+		}
+		return []pkg.Package{}, nil
+	}
+}
+
 type ContextualEvidenceMatchers struct {
 	CatalogerName string
 }
