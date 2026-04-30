@@ -228,7 +228,7 @@ func (p *manifestParser) buildIndex(m manifestFile) manifestIndex {
 }
 
 // Determine what packages are reachable from the project (or manifest if there is no project) and set its dep kind
-func (p *manifestParser) analyzePackages(idx manifestIndex, proj *projectFile) map[string]string {
+func (p *manifestParser) analyzePackages(idx manifestIndex, proj *projectFile) map[string]string { //nolint:gocognit
 	pkgsToKinds := make(map[string]string)
 
 	var visitWithKind func(uuid, kind string)
