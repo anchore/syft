@@ -76,6 +76,9 @@
       "github.com/go-git/go-git": [
         "cpe:2.3:a:go-git_project:go-git:*:*:*:*:*:go:*:*"
       ],
+      "github.com/go-jose/go-jose/v4#pkg-constants": [
+        "cpe:2.3:a:go-jose_project:go-jose:*:*:*:*:*:*:*:*"
+      ],
       "github.com/go-resty/resty/v2": [
         "cpe:2.3:a:resty_project:resty:*:*:*:*:*:go:*:*"
       ],
@@ -151,6 +154,9 @@
       "github.com/rezmoss/axios4go": [
         "cpe:2.3:a:rezmoss:axios4go:*:*:*:*:*:go:*:*"
       ],
+      "github.com/russellhaering/goxmldsig": [
+        "cpe:2.3:a:goxmldsig_project:goxmldsig:*:*:*:*:*:*:*:*"
+      ],
       "github.com/sap/cloud-security-client-go": [
         "cpe:2.3:a:sap:cloud-security-client-go:*:*:*:*:*:go:*:*"
       ],
@@ -174,6 +180,9 @@
       ],
       "github.com/whilp/git-urls": [
         "cpe:2.3:a:git-urls_project:git-urls:*:*:*:*:*:go:*:*"
+      ],
+      "go.opentelemetry.io/otel": [
+        "cpe:2.3:a:opentelemetry:opentelemetry:*:*:*:*:*:go:*:*"
       ],
       "golang.org/x/crypto": [
         "cpe:2.3:a:go:ssh:*:*:*:*:*:go:*:*"
@@ -2222,6 +2231,9 @@
       "626": [
         "cpe:2.3:a:626_project:626:*:*:*:*:*:node.js:*:*"
       ],
+      "@aborruso/ckan-mcp-server": [
+        "cpe:2.3:a:ondata:ckan_mcp_server:*:*:*:*:*:node.js:*:*"
+      ],
       "@actions/artifact": [
         "cpe:2.3:a:github:actions\\/artifact:*:*:*:*:*:node.js:*:*"
       ],
@@ -2247,6 +2259,9 @@
       ],
       "@anthropic-ai/claude-code": [
         "cpe:2.3:a:anthropic:claude_code:*:*:*:*:*:node.js:*:*"
+      ],
+      "@anthropic-ai/sdk": [
+        "cpe:2.3:a:anthropic:claude_sdk_for_typescript:*:*:*:*:*:*:*:*"
       ],
       "@apollo/gateway": [
         "cpe:2.3:a:apollographql:apollo_gateway:*:*:*:*:*:node.js:*:*"
@@ -2284,11 +2299,20 @@
       "@backstage/backend-common": [
         "cpe:2.3:a:linuxfoundation:backstage_backend-common:*:*:*:*:*:node.js:*:*"
       ],
+      "@backstage/integration": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/integration:*:*:*:*:*:node.js:*:*"
+      ],
       "@backstage/plugin-auth-backend": [
         "cpe:2.3:a:linuxfoundation:auth_backend:*:*:*:*:*:node.js:*:*"
       ],
+      "@backstage/plugin-scaffolder-backend": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/plugin-scaffolder-backend:*:*:*:*:*:*:*:*"
+      ],
       "@backstage/plugin-techdocs": [
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/plugin-techdocs:*:*:*:*:*:node.js:*:*"
+      ],
+      "@backstage/plugin-techdocs-node": [
+        "cpe:2.3:a:linuxfoundation:backstage_plugin-techdocs-node:*:*:*:*:*:*:*:*"
       ],
       "@backstage/techdocs-common": [
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/techdocs-common:*:*:*:*:*:node.js:*:*"
@@ -2365,6 +2389,12 @@
       "@flourish/sdk": [
         "cpe:2.3:a:canva:flourish_sdk:*:*:*:*:*:node.js:*:*"
       ],
+      "@frontmcp/adapters": [
+        "cpe:2.3:a:agentfront:\\@frontmcp\\/adapters:*:*:*:*:*:node.js:*:*"
+      ],
+      "@frontmcp/sdk": [
+        "cpe:2.3:a:agentfront:\\@frontmcp\\/sdk:*:*:*:*:*:node.js:*:*"
+      ],
       "@github/paste-markdown": [
         "cpe:2.3:a:paste-markdown_project:paste-markdown:*:*:*:*:*:node.js:*:*"
       ],
@@ -2406,6 +2436,9 @@
       ],
       "@misskey-dev/summaly": [
         "cpe:2.3:a:misskey:summaly:*:*:*:*:*:node.js:*:*"
+      ],
+      "@mobilenext/mobile-mcp": [
+        "cpe:2.3:a:mobilenexthq:mobile_mcp:*:*:*:*:*:node.js:*:*"
       ],
       "@nestjs/core": [
         "cpe:2.3:a:nestjs:nest:*:*:*:*:*:node.js:*:*"
@@ -2748,6 +2781,9 @@
       ],
       "box2d-native": [
         "cpe:2.3:a:box2d-native_project:box2d-native:*:*:*:*:*:node.js:*:*"
+      ],
+      "brace-expansion": [
+        "cpe:2.3:a:juliangruber:brace-expansion:*:*:*:*:*:node.js:*:*"
       ],
       "braces": [
         "cpe:2.3:a:braces_project:braces:*:*:*:*:*:node.js:*:*",
@@ -3100,6 +3136,9 @@
       "defaults-deep": [
         "cpe:2.3:a:defaults-deep_project:defaults-deep:*:*:*:*:*:node.js:*:*"
       ],
+      "defu": [
+        "cpe:2.3:a:unjs:defu:*:*:*:*:*:node.js:*:*"
+      ],
       "defuddle": [
         "cpe:2.3:a:kepano:defuddle:*:*:*:*:*:node.js:*:*"
       ],
@@ -3182,6 +3221,9 @@
       "dotty": [
         "cpe:2.3:a:dotty_project:dotty:*:*:*:*:*:*:*:*"
       ],
+      "drizzle-orm": [
+        "cpe:2.3:a:drizzle:drizzle:*:*:*:*:*:node.js:*:*"
+      ],
       "droppy": [
         "cpe:2.3:a:droppy_project:droppy:*:*:*:*:*:node.js:*:*"
       ],
@@ -3216,7 +3258,8 @@
         "cpe:2.3:a:adonisjs:edge:*:*:*:*:*:node.js:*:*"
       ],
       "effect": [
-        "cpe:2.3:a:effect_project:effect:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:effect_project:effect:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:effectful:effect:*:*:*:*:*:node.js:*:*"
       ],
       "egg-scripts": [
         "cpe:2.3:a:eggjs:egg-scripts:*:*:*:*:*:node.js:*:*"
@@ -4069,6 +4112,9 @@
       "launchpad": [
         "cpe:2.3:a:bitovi:launchpad:*:*:*:*:*:node.js:*:*"
       ],
+      "leaflet": [
+        "cpe:2.3:a:leafletjs:leaflet:*:*:*:*:*:node.js:*:*"
+      ],
       "less-openui5": [
         "cpe:2.3:a:less-openui5_project:less-openui5:*:*:*:*:*:node.js:*:*"
       ],
@@ -4146,6 +4192,18 @@
       ],
       "lodash": [
         "cpe:2.3:a:lodash:lodash:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash-amd": [
+        "cpe:2.3:a:lodash:lodash-amd:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash-es": [
+        "cpe:2.3:a:lodash:lodash-es:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash.template": [
+        "cpe:2.3:a:lodash:lodash.template:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash.unset": [
+        "cpe:2.3:a:lodash:lodash.unset:*:*:*:*:*:node.js:*:*"
       ],
       "log4js": [
         "cpe:2.3:a:log4js_project:log4js:*:*:*:*:*:node.js:*:*"
@@ -4442,6 +4500,9 @@
       ],
       "nanoid": [
         "cpe:2.3:a:nanoid_project:nanoid:*:*:*:*:*:node.js:*:*"
+      ],
+      "nanotar": [
+        "cpe:2.3:a:unjs:nanotar:*:*:*:*:*:node.js:*:*"
       ],
       "napi-postinstall": [
         "cpe:2.3:a:un-ts:napi-postinstall:*:*:*:*:*:node.js:*:*"
@@ -5981,6 +6042,9 @@
       "Flask-Caching": [
         "cpe:2.3:a:flask-caching_project:flask-caching:*:*:*:*:*:flask:*:*"
       ],
+      "Flask-HTTPAuth": [
+        "cpe:2.3:a:miguelgrinberg:flask-httpauth:*:*:*:*:*:python:*:*"
+      ],
       "Flask-Security-Too": [
         "cpe:2.3:a:flask-security-too_project:flask-security-too:*:*:*:*:*:*:*:*"
       ],
@@ -6019,6 +6083,9 @@
       ],
       "aiohttp-session": [
         "cpe:2.3:a:aio-libs:aiohttp_session:*:*:*:*:*:*:*:*"
+      ],
+      "ajenti.plugin.core": [
+        "cpe:2.3:a:ajenti:ajenti_plugin_core:*:*:*:*:*:*:*:*"
       ],
       "aniso8601": [
         "cpe:2.3:a:aniso8601_project:aniso8601:*:*:*:*:*:*:*:*"
@@ -6093,6 +6160,9 @@
         "cpe:2.3:a:cryptography.io:cryptography:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:cryptography.io:cryptography:*:*:*:*:*:python:*:*"
       ],
+      "curl-cffi": [
+        "cpe:2.3:a:lexiforest:curl_cffi:*:*:*:*:*:python:*:*"
+      ],
       "cvxopt": [
         "cpe:2.3:a:cvxopt_project:cvxopt:*:*:*:*:*:python:*:*"
       ],
@@ -6126,6 +6196,9 @@
       "django-user-sessions": [
         "cpe:2.3:a:django-user-sessions_project:django-user-sessions:*:*:*:*:*:*:*:*"
       ],
+      "docling-core": [
+        "cpe:2.3:a:docling:docling-core:*:*:*:*:*:python:*:*"
+      ],
       "drf-jwt": [
         "cpe:2.3:a:styria:django-rest-framework-json_web_tokens:*:*:*:*:*:*:*:*"
       ],
@@ -6144,6 +6217,9 @@
       "ecdsa": [
         "cpe:2.3:a:tlsfuzzer:ecdsa:*:*:*:*:*:python:*:*"
       ],
+      "emmett": [
+        "cpe:2.3:a:emmett:emmett:*:*:*:*:*:*:*:*"
+      ],
       "enum34": [
         "cpe:2.3:a:python:enum34:*:*:*:*:*:*:*:*"
       ],
@@ -6155,6 +6231,9 @@
       ],
       "fastapi-api-key": [
         "cpe:2.3:a:athroniaeth:fastapi_api_key:*:*:*:*:*:python:*:*"
+      ],
+      "fastfeedparser": [
+        "cpe:2.3:a:kagi:fastfeedparser:*:*:*:*:*:python:*:*"
       ],
       "feedgen": [
         "cpe:2.3:a:feedgen_project:feedgen:*:*:*:*:*:python:*:*"
@@ -6217,6 +6296,9 @@
       "jwcrypto": [
         "cpe:2.3:a:latchset:jwcrypto:*:*:*:*:*:*:*:*"
       ],
+      "kedro": [
+        "cpe:2.3:a:linuxfoundation:kedro:*:*:*:*:*:python:*:*"
+      ],
       "keep": [
         "cpe:2.3:a:keep_project:keep:*:*:*:*:*:*:*:*"
       ],
@@ -6247,6 +6329,12 @@
       "mage-ai": [
         "cpe:2.3:a:mage:mage-ai:*:*:*:*:*:python:*:*"
       ],
+      "magic-wormhole": [
+        "cpe:2.3:a:magic_wormhole_project:magic_wormhole:*:*:*:*:*:python:*:*"
+      ],
+      "marimo": [
+        "cpe:2.3:a:coreweave:marimo:*:*:*:*:*:python:*:*"
+      ],
       "marshmallow": [
         "cpe:2.3:a:marshmallow_project:marshmallow:*:*:*:*:*:python:*:*"
       ],
@@ -6273,6 +6361,9 @@
       ],
       "oncall": [
         "cpe:2.3:a:linkedin:oncall:*:*:*:*:*:*:*:*"
+      ],
+      "onnx": [
+        "cpe:2.3:a:linuxfoundation:onnx:*:*:*:*:*:*:*:*"
       ],
       "openapi-python-client": [
         "cpe:2.3:a:openapi-python-client_project:openapi-python-client:*:*:*:*:*:*:*:*"
@@ -6318,6 +6409,9 @@
       ],
       "poetry": [
         "cpe:2.3:a:python-poetry:poetry:*:*:*:*:*:python:*:*"
+      ],
+      "praisonaiagents": [
+        "cpe:2.3:a:praison:praisonaiagents:*:*:*:*:*:python:*:*"
       ],
       "pretix": [
         "cpe:2.3:a:rami:pretix:*:*:*:*:*:*:*:*"
@@ -6463,6 +6557,9 @@
       "setuptools": [
         "cpe:2.3:a:python:setuptools:*:*:*:*:*:*:*:*"
       ],
+      "sigstore": [
+        "cpe:2.3:a:linuxfoundation:sigstore-python:*:*:*:*:*:*:*:*"
+      ],
       "simiki": [
         "cpe:2.3:a:simiki_project:simiki:*:*:*:*:*:*:*:*"
       ],
@@ -6584,6 +6681,12 @@
       ],
       "bson": [
         "cpe:2.3:a:bson_project:bson:*:*:*:*:*:ruby:*:*"
+      ],
+      "bsv-sdk": [
+        "cpe:2.3:a:sgbett:bsv_ruby_sdk:*:*:*:*:*:ruby:*:*"
+      ],
+      "bsv-wallet": [
+        "cpe:2.3:a:sgbett:bsv-wallet:*:*:*:*:*:ruby:*:*"
       ],
       "cap-strap": [
         "cpe:2.3:a:cap-strap_project:cap-strap:*:*:*:*:*:ruby:*:*"
@@ -6718,6 +6821,9 @@
       "httparty": [
         "cpe:2.3:a:jnunemaker:httparty:*:*:*:*:*:ruby:*:*"
       ],
+      "icalendar": [
+        "cpe:2.3:a:icalendar_project:icalendar:*:*:*:*:*:ruby:*:*"
+      ],
       "iodine": [
         "cpe:2.3:a:boazsegev:iodine:*:*:*:*:*:ruby:*:*"
       ],
@@ -6754,11 +6860,17 @@
       "lean-ruport": [
         "cpe:2.3:a:lean-ruport_project:lean-ruport:*:*:*:*:*:ruby:*:*"
       ],
+      "lodash-rails": [
+        "cpe:2.3:a:lodash:lodash-rails:*:*:*:*:*:ruby:*:*"
+      ],
       "loofah": [
         "cpe:2.3:a:loofah_project:loofah:*:*:*:*:*:ruby:*:*"
       ],
       "lynx": [
         "cpe:2.3:a:lynx_project:lynx:*:*:*:*:*:ruby:*:*"
+      ],
+      "mcp": [
+        "cpe:2.3:a:lfprojects:mcp_ruby_sdk:*:*:*:*:*:*:*:*"
       ],
       "mechanize": [
         "cpe:2.3:a:mechanize_project:mechanize:*:*:*:*:*:ruby:*:*"
@@ -14098,6 +14210,10 @@
       "link-to-bible": [
         "cpe:2.3:a:bibleserver:link_to_bible:*:*:*:*:*:wordpress:*:*"
       ],
+      "link-whisper": [
+        "cpe:2.3:a:linkwhisper:link_whisper:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:linkwhisper:link_whisper:*:*:*:*:free:wordpress:*:*"
+      ],
       "linked-variation": [
         "cpe:2.3:a:multidots:advanced_linked_variations_for_woocommerce:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18170,6 +18286,9 @@
       ],
       "sprout-invoices": [
         "cpe:2.3:a:webventures:client_invoicing_by_sprout_invoices:*:*:*:*:*:wordpress:*:*"
+      ],
+      "sql-chart-builder": [
+        "cpe:2.3:a:guaven:sql_chart_builder:*:*:*:*:*:wordpress:*:*"
       ],
       "squeeze": [
         "cpe:2.3:a:squeeze_project:squeeze:*:*:*:*:*:wordpress:*:*"
