@@ -59,6 +59,11 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: DotnetPkg,
 		},
 		{
+			// nuget is the PURL type for .NET packages used in SPDX SBOMs
+			purl:     "pkg:nuget/Newtonsoft.Json@13.0.3",
+			expected: DotnetPkg,
+		},
+		{
 			purl:     "pkg:composer/laravel/laravel@5.5.0",
 			expected: PhpComposerPkg,
 		},
