@@ -59,6 +59,10 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: DotnetPkg,
 		},
 		{
+			purl:     "pkg:nuget/Minio@7.0.0",
+			expected: DotnetPkg,
+		},
+		{
 			purl:     "pkg:composer/laravel/laravel@5.5.0",
 			expected: PhpComposerPkg,
 		},
