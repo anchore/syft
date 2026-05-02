@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
+	"github.com/anchore/syft/syft/pkg/cataloger/julia"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
@@ -17,6 +18,7 @@ type Config struct {
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
 	JavaScript  javascript.CatalogerConfig        `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
+	Julia       julia.CatalogerConfig             `yaml:"julia" json:"julia" mapstructure:"julia"`
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Nix         nix.Config                        `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      python.CatalogerConfig            `yaml:"python" json:"python" mapstructure:"python"`
@@ -28,6 +30,7 @@ func DefaultConfig() Config {
 		Dotnet:      dotnet.DefaultCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),
+		Julia:       julia.DefaultCatalogerConfig(),
 		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
 		Nix:         nix.DefaultConfig(),
 		Python:      python.DefaultCatalogerConfig(),
@@ -56,6 +59,11 @@ func (c Config) WithGolangConfig(cfg golang.CatalogerConfig) Config {
 
 func (c Config) WithJavascriptConfig(cfg javascript.CatalogerConfig) Config {
 	c.JavaScript = cfg
+	return c
+}
+
+func (c Config) WithJuliaConfig(cfg julia.CatalogerConfig) Config {
+	c.Julia = cfg
 	return c
 }
 

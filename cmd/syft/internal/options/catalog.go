@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
+	"github.com/anchore/syft/syft/pkg/cataloger/julia"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
@@ -48,6 +49,7 @@ type Catalog struct {
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
 	JavaScript  javaScriptConfig  `yaml:"javascript" json:"javascript" mapstructure:"javascript"`
+	Julia       juliaConfig       `yaml:"julia" json:"julia" mapstructure:"julia"`
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Nix         nixConfig         `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
@@ -78,6 +80,7 @@ func DefaultCatalog() Catalog {
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
 		JavaScript:    defaultJavaScriptConfig(),
+		Julia:         defaultJuliaConfig(),
 		Python:        defaultPythonConfig(),
 		Nix:           defaultNixConfig(),
 		Dotnet:        defaultDotnetConfig(),
@@ -196,6 +199,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
 			WithNpmBaseURL(cfg.JavaScript.NpmBaseURL),
+		Julia: julia.DefaultCatalogerConfig().
+			WithIncludeExtras(cfg.Julia.IncludeExtras).
+			WithIncludeWeakDeps(cfg.Julia.IncludeWeakDeps),
 		LinuxKernel: kernel.LinuxKernelCatalogerConfig{
 			CatalogModules: cfg.LinuxKernel.CatalogModules,
 		},

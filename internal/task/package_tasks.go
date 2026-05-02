@@ -22,6 +22,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/homebrew"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/pkg/cataloger/javascript"
+	"github.com/anchore/syft/syft/pkg/cataloger/julia"
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/lua"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
@@ -152,6 +153,12 @@ func DefaultPackageTaskFactories() Factories {
 			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "nix",
 		),
 		newSimplePackageTaskFactory(lua.NewPackageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "lua"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return julia.NewPackageCataloger(cfg.PackagesConfig.Julia)
+			},
+			pkgcataloging.DeclaredTag, pkgcataloging.ImageTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "julia",
+		),
 
 		// other package catalogers ///////////////////////////////////////////////////////////////////////////
 		newPackageTaskFactory(

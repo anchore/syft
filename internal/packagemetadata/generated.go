@@ -37,6 +37,7 @@ func AllTypes() []any {
 		pkg.HomebrewFormula{},
 		pkg.JavaArchive{},
 		pkg.JavaVMInstallation{},
+		pkg.JuliaManifestEntry{},
 		pkg.LinuxKernel{},
 		pkg.LinuxKernelModule{},
 		pkg.LuaRocksPackage{},
