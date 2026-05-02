@@ -1379,3 +1379,74 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/envoy
+
+  - version: 1.15.1
+    images:
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.15.1@sha256:594ceea76b01c592858f803f9ff4d2cb40542cae2060410b2c95f75907d659e1
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.11.8
+    images:
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.11.8@sha256:695d79381ee6af00c7f5c9fd434f50851d7d32838ad5b2c507e416cf2084fc79
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.9.6
+    images:
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:1405cc613bd95b2c6edd8b2a152510ae91c7e62aea4698500d23b2145960ab9c
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.8.4
+    images:
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.8.4@sha256:8d8ddf32b83ca3e74bd5f66369fa60d85353e18ff55fa7691b321aa4716f5ba9
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.7.1
+    images:
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.7.1@sha256:7244b95ea47bddcb8267c1e625fb163fc183ef55448855e3ac52a7b260a60407
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.12.0-beta.0
+    images:
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.12.0-beta.0@sha256:9724476b928967173d501040631b23ba07f47073999e80e34b120e8db5f234d5
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.2.0-beta.1
+    images:
+      - ref: k8s.gcr.io/ingress-nginx/controller:v1.2.0-beta.1@sha256:7059739637c30865f74cae403fffa55c2cb6d9779cd15654480dd0e4f850d536
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 1.0.0-alpha.2
+    images:
+      - ref: k8s.gcr.io/ingress-nginx/controller:v1.0.0-alpha.2@sha256:04a0ad3a1279c2a58898e789eed767eafa138ee1e5b9b23a988c6e8485cf958d
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 0.34.0
+    images:
+      - ref: k8s.gcr.io/ingress-nginx/controller:v0.34.0@sha256:5e0dcdc3ddb076f9ad988c624b8c459b53235ace26b9b18c192dedd3a038173c
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+
+  - version: 0.33.0
+    images:
+      - ref: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0@sha256:ad8a1e9e44b4deb6ded8d677e9f0014178294e579d0710a48bca1e05838f2473
+        platform: linux/amd64
+    paths:
+      - /nginx-ingress-controller
+

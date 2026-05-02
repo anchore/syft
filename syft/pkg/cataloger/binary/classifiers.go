@@ -905,6 +905,29 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "ingress-nginx-binary",
+			FileGlob: "**/nginx-ingress-controller",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL][NUL]v1.15.1[NUL][NUL]@e[ETX][NUL][NUL][NUL][NUL]go1.26.1[NUL][NUL][NUL]
+				// �v1.15.1[NUL][NUL]�z[ETX][NUL][NUL][NUL][NUL]go1.24.4[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{0,50}go[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?\.[0-9]+\x00+`),
+				// �Lv1.9.6[NUL][NUL]$a�c[SOH][NUL][NUL][NUL]
+				// [NUL][NUL]v0.34.0[NUL]......�$a�...[NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+.{0,800}\$a.{0,10}\x00+`),
+				// [NUL][NUL]v1.7.1[NUL][NUL][NUL]...S=v<y5...
+				// [NUL]0.33.0[NUL][NUL]...[NUL][NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`\x00+v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+.{0,100}S=v<y5`),
+				// [NUL][NUL]go1.22.8[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]v1.12.0-beta.0[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+go[0-9]+\.[0-9]+\.[0-9]+\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+`),
+				// [NUL][NUL]v1.2.0-beta.1[NUL][NUL]
+				// [NUL][NUL]v1.0.0-alpha.2[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+\-(alpha|beta)\.[0-9])\x00+`),
+			),
+			Package: "nginx-ingress-controller",
+			PURL:    mustPURL("pkg:generic/nginx-ingress-controller@version"),
+			CPEs:    singleCPE("cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

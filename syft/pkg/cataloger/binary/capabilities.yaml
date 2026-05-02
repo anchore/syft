@@ -686,6 +686,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/nginx-ingress-controller'
+        packages:
+          - class: ingress-nginx-binary
+            name: nginx-ingress-controller
+            purl: pkg:generic/nginx-ingress-controller
+            cpes:
+              - cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary
