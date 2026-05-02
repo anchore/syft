@@ -21,7 +21,6 @@ const (
 
 type juliaPackageKey struct {
 	projectDir string
-	name       string
 	uuid       string
 	version    string
 }
@@ -46,7 +45,6 @@ func deduplicateJuliaManifestPackages(pkgs []pkg.Package, _ []artifact.Relations
 
 		key := juliaPackageKey{
 			projectDir: packageProjectDir(p),
-			name:       p.Name,
 			uuid:       meta.UUID,
 			version:    p.Version,
 		}
