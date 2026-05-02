@@ -397,6 +397,12 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		},
 		{
 			pkg.ApkPkg,
+			// libpcap CVEs in NVD use vendor "tcpdump" (issue #4712).
+			candidateKey{PkgName: "libpcap"},
+			candidateAddition{AdditionalVendors: []string{"tcpdump"}},
+		},
+		{
+			pkg.ApkPkg,
 			candidateKey{PkgName: "alsa"},
 			candidateAddition{AdditionalVendors: []string{"alsa-project"}},
 		},
