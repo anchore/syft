@@ -135,6 +135,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:generic/conda@1.2.3",
 			expected: CondaPkg,
 		},
+		{
+			purl:     "pkg:vscode-extension/github/copilot-chat@0.44.1",
+			expected: VscodeExtensionPkg,
+		},
 	}
 
 	var pkgTypes = strset.New()

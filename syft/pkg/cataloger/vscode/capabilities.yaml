@@ -1,0 +1,47 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: vscode # MANUAL
+    name: vscode-extensions-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/vscode/cataloger.go
+      function: NewExtensionsCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - editor
+      - image
+      - installed
+      - package
+      - vscode
+      - vscode-extension
+    parsers: # AUTO-GENERATED structure
+      - function: parseExtensionsJSON
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/.vscode/extensions/extensions.json'
+            - '**/.vscode-server/extensions/extensions.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.VscodeExtensionEntry
+        package_types: # AUTO-GENERATED
+          - vscode-extension
+        json_schema_types: # AUTO-GENERATED
+          - VscodeExtensionEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
