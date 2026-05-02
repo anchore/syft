@@ -1,0 +1,20 @@
+// top-of-file line comment
+{
+  "lockfileVersion": 1, // line comment after value
+  /* block comment between fields */
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "test-jsonc",
+      "dependencies": {
+        "foo": "^1.0.0",
+      },
+    },
+  },
+  "packages": {
+    /* multi
+     * line
+     * block comment */
+    "foo": ["foo@1.0.0", "", {}, "sha512-foo=="], // trailing comma below
+  },
+}

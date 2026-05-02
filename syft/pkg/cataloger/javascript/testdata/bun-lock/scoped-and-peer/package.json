@@ -1,0 +1,10 @@
+{
+  "name": "test-scoped",
+  "version": "1.0.0",
+  "dependencies": {
+    "@types/node": "^20.10.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  }
+}

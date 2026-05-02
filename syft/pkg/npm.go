@@ -62,3 +62,17 @@ type PnpmLockEntry struct {
 	// Dependencies is a map of dependencies and their versions
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
+
+// BunLockEntry represents a single entry in the "packages" section of a bun.lock file.
+// See https://bun.sh/docs/install/lockfile for the format.
+type BunLockEntry struct {
+	// Resolved is the registry URL or other source identifier where this package was downloaded from.
+	// For default-registry installs the source field is empty in bun.lock; this field will then be empty.
+	Resolved string `mapstructure:"resolved" json:"resolved"`
+
+	// Integrity is the Subresource Integrity hash for verification (SRI format, e.g. sha512-...).
+	Integrity string `mapstructure:"integrity" json:"integrity"`
+
+	// Dependencies is a map of direct dependency name to version specifier.
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
+}
