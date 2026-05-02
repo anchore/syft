@@ -259,6 +259,30 @@ func Test_decode(t *testing.T) {
 	}
 }
 
+func Test_decode_includesFirmwareComponents(t *testing.T) {
+	// CycloneDX BOMs that describe firmware (e.g. u-boot) use
+	// component type "firmware". Prior to issue #2537 the decoder skipped
+	// these and downstream tools (e.g. grype) reported zero matches.
+	bom := cyclonedx.BOM{
+		Components: &[]cyclonedx.Component{
+			{
+				BOMRef:     "u-boot",
+				Type:       cyclonedx.ComponentTypeFirmware,
+				Name:       "u-boot",
+				Version:    "2024.04",
+				PackageURL: "pkg:generic/u-boot@2024.04",
+			},
+		},
+	}
+	model, err := ToSyftModel(&bom)
+	require.NoError(t, err)
+
+	pkgs := model.Artifacts.Packages.Sorted()
+	require.Len(t, pkgs, 1, "firmware component should be imported as a package")
+	assert.Equal(t, "u-boot", pkgs[0].Name)
+	assert.Equal(t, "2024.04", pkgs[0].Version)
+}
+
 func Test_relationshipDirection(t *testing.T) {
 	cyclonedx_bom := cyclonedx.BOM{Metadata: nil,
 		Components: &[]cyclonedx.Component{
