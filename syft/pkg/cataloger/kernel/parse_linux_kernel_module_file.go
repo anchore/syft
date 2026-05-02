@@ -1,10 +1,15 @@
 package kernel
 
 import (
+	"compress/gzip"
 	"context"
 	"debug/elf"
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/klauspost/compress/zstd"
+	"github.com/ulikunitz/xz"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -16,7 +21,18 @@ import (
 const modinfoName = ".modinfo"
 
 func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	unionReader, err := unionreader.GetUnionReader(reader)
+	// Distros built with CONFIG_MODULE_COMPRESS install kernel modules as
+	// .ko.xz / .ko.gz / .ko.zst (issue #4721). Detect compression from the
+	// file extension and decompress before handing the bytes to the ELF
+	// parser. The unionreader fallback below buffers the decompressed bytes
+	// so the ELF reader gets the io.ReaderAt + io.Seeker it needs.
+	rc, err := openMaybeCompressedModule(reader.RealPath, reader.ReadCloser)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to open kernel module: %w", err)
+	}
+	defer rc.Close()
+
+	unionReader, err := unionreader.GetUnionReader(rc)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
@@ -38,6 +54,69 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 		),
 	}, nil, nil
 }
+
+// openMaybeCompressedModule wraps src in a decompressing reader when the
+// path ends in a known compressed-module extension (.ko.xz / .ko.gz /
+// .ko.zst). For plain .ko files src is returned unchanged. The returned
+// io.ReadCloser owns both the decompressor (if any) and the original src.
+func openMaybeCompressedModule(path string, src io.ReadCloser) (io.ReadCloser, error) {
+	switch {
+	case strings.HasSuffix(path, ".ko.xz"):
+		zr, err := xz.NewReader(src)
+		if err != nil {
+			src.Close()
+			return nil, fmt.Errorf("xz: %w", err)
+		}
+		return wrapDecompressed(zr, src), nil
+	case strings.HasSuffix(path, ".ko.gz"):
+		zr, err := gzip.NewReader(src)
+		if err != nil {
+			src.Close()
+			return nil, fmt.Errorf("gzip: %w", err)
+		}
+		return wrapDecompressed(zr, src), nil
+	case strings.HasSuffix(path, ".ko.zst"):
+		zr, err := zstd.NewReader(src)
+		if err != nil {
+			src.Close()
+			return nil, fmt.Errorf("zstd: %w", err)
+		}
+		return wrapDecompressed(zstdReadCloser{zr}, src), nil
+	default:
+		return src, nil
+	}
+}
+
+// wrapDecompressed combines a decompressing reader with the underlying
+// closer so closing the returned ReadCloser closes both.
+func wrapDecompressed(dec io.Reader, underlying io.Closer) io.ReadCloser {
+	if c, ok := dec.(io.Closer); ok {
+		return &chainCloser{Reader: dec, closers: []io.Closer{c, underlying}}
+	}
+	return &chainCloser{Reader: dec, closers: []io.Closer{underlying}}
+}
+
+type chainCloser struct {
+	io.Reader
+	closers []io.Closer
+}
+
+func (c *chainCloser) Close() error {
+	var firstErr error
+	for _, cl := range c.closers {
+		if err := cl.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
+}
+
+// zstdReadCloser turns a *zstd.Decoder into an io.ReadCloser. The decoder
+// has Close() but not the standard io.Closer signature (no error return);
+// adapt it.
+type zstdReadCloser struct{ *zstd.Decoder }
+
+func (z zstdReadCloser) Close() error { z.Decoder.Close(); return nil }
 
 func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModule, err error) {
 	// filename:       /lib/modules/5.15.0-1031-aws/kernel/zfs/zzstd.ko
