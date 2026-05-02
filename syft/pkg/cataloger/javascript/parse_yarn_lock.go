@@ -250,6 +250,11 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 		return nil, fmt.Errorf("failed to unmarshal yarn v2 lockfile: %w", err)
 	}
 
+	// dedupe by name+version: in Node it is allowed and normal to resolve a single package to
+	// multiple versions when transitive dependencies require different ranges, so we must keep
+	// every (name, version) tuple. Yarn already aggregates entries that share a resolution under
+	// a comma-separated key, so duplicates of the same (name, version) only appear when the YAML
+	// has two distinct keys for the same package version — collapsing those is still desirable.
 	packages := make(map[string]yarnPackage)
 	for key, value := range lockfile {
 		packageName := findPackageName(key)
@@ -258,7 +263,7 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 			continue
 		}
 
-		packages[packageName] = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+		packages[packageName+"@"+value.Version] = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
 	}
 
 	return slices.Collect(maps.Values(packages)), nil
