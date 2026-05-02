@@ -472,6 +472,15 @@ func TestRuntimeCPEs(t *testing.T) {
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "5.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
 						Product: "dotnet",
 						Version: "5.0",
 					},
@@ -483,6 +492,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			name:    ".NET 6.0",
 			version: "6.0",
 			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "6.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
@@ -502,6 +520,15 @@ func TestRuntimeCPEs(t *testing.T) {
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "8.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
 						Product: "dotnet",
 						Version: "8.0",
 					},
@@ -513,6 +540,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			name:    ".NET 10.0 (future version)",
 			version: "10.0",
 			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "10.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",
@@ -532,6 +568,15 @@ func TestRuntimeCPEs(t *testing.T) {
 					Attributes: cpe.Attributes{
 						Part:    "a",
 						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "6.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
 						Product: "dotnet",
 						Version: "6.0",
 					},
@@ -543,6 +588,15 @@ func TestRuntimeCPEs(t *testing.T) {
 			name:    "Assumed minor version",
 			version: "6",
 			expected: []cpe.CPE{
+				{
+					Attributes: cpe.Attributes{
+						Part:    "a",
+						Vendor:  "microsoft",
+						Product: ".net",
+						Version: "6.0",
+					},
+					Source: cpe.DeclaredSource,
+				},
 				{
 					Attributes: cpe.Attributes{
 						Part:    "a",

@@ -99,20 +99,46 @@ func runtimeCPEs(ver string) []cpe.CPE {
 		}
 	}
 
-	productName := "dotnet"
+	version := fmt.Sprintf("%d.%d", majorVersion, minorVersion)
+
 	if majorVersion < 5 {
-		productName = "dotnet_core"
+		// .NET Core 1.x – 3.x: NVD's canonical CPE is "microsoft:dotnet_core".
+		return []cpe.CPE{
+			{
+				Attributes: cpe.Attributes{
+					Part:    "a",
+					Vendor:  "microsoft",
+					Product: "dotnet_core",
+					Version: version,
+				},
+				// we didn't find this in the underlying material, but this is the convention in NVD and we are certain this is a runtime package
+				Source: cpe.DeclaredSource,
+			},
+		}
 	}
 
+	// Unified .NET (5+): NVD has settled on "microsoft:.net" (issue #4738);
+	// e.g. CVE-2025-21171 uses cpe:2.3:a:microsoft:.net:9.0.0:*:*:*:*:*:*:*.
+	// Emit "microsoft:.net" first so it is preferred for matching, and keep
+	// "microsoft:dotnet" as well for backwards compatibility with consumers
+	// that historically matched against the old form.
 	return []cpe.CPE{
 		{
 			Attributes: cpe.Attributes{
 				Part:    "a",
 				Vendor:  "microsoft",
-				Product: productName,
-				Version: fmt.Sprintf("%d.%d", majorVersion, minorVersion),
+				Product: ".net",
+				Version: version,
 			},
-			// we didn't find this in the underlying material, but this is the convention in NVD and we are certain this is a runtime package
+			Source: cpe.DeclaredSource,
+		},
+		{
+			Attributes: cpe.Attributes{
+				Part:    "a",
+				Vendor:  "microsoft",
+				Product: "dotnet",
+				Version: version,
+			},
 			Source: cpe.DeclaredSource,
 		},
 	}
