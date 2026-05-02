@@ -1755,6 +1755,25 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// release-candidate elixir image — pre-fix the matchers stripped the
+			// "-rc.1" suffix from the elixir-library result and missed the
+			// elixir-binary entirely (#4819).
+			logicalFixture: "elixir/1.12.0-rc.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elixir",
+				Version:   "1.12.0-rc.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/elixir@1.12.0-rc.1",
+				Locations: locations("elixir", "lib/elixir/ebin/elixir.app"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("elixir-binary", "elixir"),
+						match("elixir-library", "lib/elixir/ebin/elixir.app"),
+					},
+				},
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-discovery/1.29.0-alpha.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-discovery",
