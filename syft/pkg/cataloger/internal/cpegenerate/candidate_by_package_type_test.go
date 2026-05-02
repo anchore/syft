@@ -232,3 +232,49 @@ func Test_findProductsToRemove(t *testing.T) {
 		})
 	}
 }
+
+// Regression test for https://github.com/anchore/syft/issues/4653:
+// NVD records React under the facebook vendor, so the default npm-derived
+// CPE (cpe:2.3:a:react:react:*) misses every React CVE. The candidate
+// table must add "facebook" to the list of candidate vendors for react
+// (and react-dom, which is tied to the same CVE stream).
+func Test_npmCandidateAdditions_react(t *testing.T) {
+	tests := []struct {
+		pkgName         string
+		expectedVendors []string
+	}{
+		{pkgName: "react", expectedVendors: []string{"facebook"}},
+		{pkgName: "react-dom", expectedVendors: []string{"facebook"}},
+	}
+	for _, test := range tests {
+		t.Run(test.pkgName, func(t *testing.T) {
+			got := findAdditionalVendors(defaultCandidateAdditions, pkg.NpmPkg, test.pkgName, "")
+			assert.ElementsMatch(t, test.expectedVendors, got,
+				"npm package %q should map to vendors %v", test.pkgName, test.expectedVendors)
+		})
+	}
+}
+
+// Regression test for https://github.com/anchore/syft/issues/4712:
+// libpcap is maintained by the tcpdump project and NVD records the CVEs
+// under vendor "tcpdump". Without this hint the APK-derived CPE
+// (cpe:2.3:a:libpcap:libpcap:*) fails to match any NVD entry and grype
+// reports zero vulnerabilities for a known-vulnerable libpcap version.
+func Test_apkCandidateAdditions_libpcap(t *testing.T) {
+	got := findAdditionalVendors(defaultCandidateAdditions, pkg.ApkPkg, "libpcap", "")
+	assert.Contains(t, got, "tcpdump",
+		"apk package libpcap should map to the tcpdump vendor for NVD matching")
+}
+
+// Regression test for https://github.com/anchore/syft/issues/4771:
+// NVD records expat CVEs under product "libexpat" (vendor "libexpat"),
+// so without a hint the conan-derived cpe:2.3:a:expat:expat:* fails
+// to match every recent expat CVE like CVE-2024-45492.
+func Test_conanCandidateAdditions_expat(t *testing.T) {
+	vendors := findAdditionalVendors(defaultCandidateAdditions, pkg.ConanPkg, "expat", "")
+	assert.Contains(t, vendors, "libexpat",
+		"conan package expat should map to the libexpat vendor for NVD matching")
+	products := findAdditionalProducts(defaultCandidateAdditions, pkg.ConanPkg, "expat")
+	assert.Contains(t, products, "libexpat",
+		"conan package expat should also emit libexpat as a candidate product")
+}
