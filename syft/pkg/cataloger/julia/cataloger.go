@@ -4,7 +4,7 @@ Package julia provides a concrete Cataloger implementation for packages relating
 package julia
 
 import (
-	"path/filepath"
+	"path"
 	"sort"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -66,7 +66,7 @@ func packageProjectDir(p pkg.Package) string {
 	if len(locations) == 0 {
 		return ""
 	}
-	return filepath.Dir(locations[0].RealPath)
+	return path.Dir(locations[0].RealPath)
 }
 
 func mergeJuliaManifestPackage(dst *pkg.Package, src pkg.Package) {

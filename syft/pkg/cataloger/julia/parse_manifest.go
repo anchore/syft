@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
+	"path"
 	"sort"
 
 	"github.com/pelletier/go-toml"
@@ -98,7 +98,7 @@ func parseProjectFile(resolver file.Resolver, reader file.LocationReadCloser) (*
 		return nil, fmt.Errorf("no resolver provided")
 	}
 
-	projectPath := filepath.Join(filepath.Dir(reader.RealPath), "Project.toml")
+	projectPath := path.Join(path.Dir(reader.RealPath), "Project.toml")
 
 	projectLocation := resolver.RelativeFileByPath(reader.Location, projectPath)
 	if projectLocation == nil {
