@@ -177,6 +177,18 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 		},
 		{
 			input: "testdata/image-simple",
+			desc:  "trailing slash on directory exclusion behaves like no slash (issue #4839)",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				"file-1.txt",
+				"file-2.txt",
+				//"target/really/nested/file-3.txt", // explicitly skipped
+			},
+			exclusions: []string{"./target/"},
+		},
+		{
+			input: "testdata/image-simple",
 			desc:  "exclude explicit file relative to the root",
 			glob:  "**",
 			expected: []string{

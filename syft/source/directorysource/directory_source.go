@@ -145,6 +145,12 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		// check exclusions for supported paths, these are all relative to the "scan root"
 		if strings.HasPrefix(exclusion, "./") || strings.HasPrefix(exclusion, "*/") || strings.HasPrefix(exclusion, "**/") {
 			exclusion = strings.TrimPrefix(exclusion, "./")
+			// A trailing slash on the exclusion is intuitively read as "exclude
+			// the directory itself", but doublestar.Match does not treat
+			// "<root>/lib/" as matching "<root>/lib" (the path the walker sees
+			// for a directory), so the exclusion silently does nothing
+			// (issue #4839). Trim it so "./lib/" behaves the same as "./lib".
+			exclusion = strings.TrimSuffix(exclusion, "/")
 			exclusions[idx] = root + exclusion
 		} else {
 			errors = append(errors, exclusion)
