@@ -47,6 +47,9 @@ var kernelArchiveGlobs = []string{
 
 var kernelModuleGlobs = []string{
 	"**/lib/modules/**/*.ko",
+	"**/lib/modules/**/*.ko.xz",
+	"**/lib/modules/**/*.ko.gz",
+	"**/lib/modules/**/*.ko.zst",
 }
 
 // NewLinuxKernelCataloger returns a new kernel files cataloger object.
