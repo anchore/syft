@@ -173,6 +173,7 @@ func Test_LockCataloger_Globs(t *testing.T) {
 			name:    "obtain package files",
 			fixture: "testdata/glob-paths",
 			expected: []string{
+				"src/bun.lock",
 				"src/package-lock.json",
 				"src/pnpm-lock.yaml",
 				"src/yarn.lock",
