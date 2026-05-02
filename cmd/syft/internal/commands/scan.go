@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
@@ -171,6 +172,11 @@ func validateArgs(cmd *cobra.Command, args []string, err string) error {
 }
 
 func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
+	scanStart := time.Now()
+	defer func() {
+		log.Infof("scan completed in %s", time.Since(scanStart).Round(time.Millisecond))
+	}()
+
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
