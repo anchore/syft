@@ -855,6 +855,15 @@ func updateParentPackage(p pkg.Package, parentPkg *pkg.Package) {
 	// we may have learned more about the type via data in the pom properties
 	parentPkg.Type = p.Type
 
+	// merge in licenses discovered from the pom.xml / maven central. The parent package already has
+	// licenses from MANIFEST.MF (Bundle-License); pom-derived licenses are typically more precise and
+	// can encode multi-license projects more cleanly, so additive merge is the right move here.
+	// LicenseSet.Add deduplicates so re-adding a license that came from MANIFEST is a no-op.
+	// See https://github.com/anchore/syft/issues/4747.
+	for _, lic := range p.Licenses.ToSlice() {
+		parentPkg.Licenses.Add(lic)
+	}
+
 	metadata, ok := p.Metadata.(pkg.JavaArchive)
 	if !ok {
 		return

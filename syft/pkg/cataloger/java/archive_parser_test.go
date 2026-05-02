@@ -1088,6 +1088,65 @@ func Test_newPackageFromMavenData(t *testing.T) {
 	}
 }
 
+func Test_updateParentPackage_mergesLicenses(t *testing.T) {
+	// Regression test for https://github.com/anchore/syft/issues/4747:
+	// when MANIFEST.MF contributes a Bundle-License the parent package already has a
+	// LicenseSet populated. The pom-derived candidate that matches the parent later
+	// gets discarded via updateParentPackage(), so its licenses must be folded in
+	// rather than dropped — pom.xml license info is typically richer than MANIFEST.
+	ctx := pkgtest.Context(t)
+	loc := file.NewLocation("testdata/something.jar")
+
+	parentPkg := &pkg.Package{
+		Name:    "logback-core",
+		Version: "1.5.18",
+		Type:    pkg.JavaPkg,
+		// license discovered from MANIFEST.MF Bundle-License
+		Licenses: pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "EPL-1.0", loc)),
+		Metadata: pkg.JavaArchive{
+			VirtualPath: loc.Path(),
+		},
+	}
+
+	// p is the pom-derived candidate that matched parentPkg (so updateParentPackage will merge it)
+	p := pkg.Package{
+		Name:    "logback-core",
+		Version: "1.5.18",
+		Type:    pkg.JavaPkg,
+		// licenses discovered from pom.xml — multi-license, more precise
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocationsWithContext(ctx, "LGPL-2.1", loc),
+			pkg.NewLicenseFromLocationsWithContext(ctx, "EPL-1.0", loc), // duplicate of MANIFEST — should be deduped
+		),
+		Metadata: pkg.JavaArchive{
+			VirtualPath: loc.Path(),
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "ch.qos.logback",
+				ArtifactID: "logback-core",
+				Version:    "1.5.18",
+			},
+		},
+	}
+
+	updateParentPackage(p, parentPkg)
+
+	// parentPkg should now carry both licenses (deduped — EPL-1.0 only appears once)
+	got := make(map[string]bool)
+	for _, lic := range parentPkg.Licenses.ToSlice() {
+		got[lic.Value] = true
+	}
+
+	wantLicenses := []string{"EPL-1.0", "LGPL-2.1"}
+	for _, w := range wantLicenses {
+		if !got[w] {
+			t.Errorf("expected merged license %q to be present on parentPkg, got: %v", w, got)
+		}
+	}
+	if len(got) != len(wantLicenses) {
+		t.Errorf("expected exactly %d licenses, got %d: %v", len(wantLicenses), len(got), got)
+	}
+}
+
 func Test_artifactIDMatchesFilename(t *testing.T) {
 	tests := []struct {
 		name       string
