@@ -1,39 +1,63 @@
-package debian
+// Fix for syft #4708
+// Only parse debian/copyright files as machine-readable if they have Format: header.
+// Otherwise, only extract per-line patterns (License:, common-licenses paths, license agreement headings).
+// Machine-readable files should still use the state machine for multi-line license headings.
 
-import (
-	"bufio"
-	"io"
-	"regexp"
-	"sort"
-	"strings"
-
-	"github.com/scylladb/go-set/strset"
-
-	"github.com/anchore/syft/internal"
+const (
+	expectHeading = iota
+	expectDashes
+	skipBlanks
+	captureLicense
+	headingDone // matched or impossible -- stop checking
 )
 
-// For more information see: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-syntax
-
-var (
-	licensePattern                 = regexp.MustCompile(`^License: (?P<license>\S*)`)
-	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
-	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
-)
-
+// parseLicensesFromCopyright parses copyright file content.
+// If the file starts with "Format:" (machine-readable format per Debian spec),
+// all parsing including the state machine is applied.
+// If no Format: is found, only per-line patterns are matched:
+//   - License: fields
+//   - /usr/share/common-licenses/ paths
+//   - License agreement headings
+// This prevents false positives from non-machine-readable copyright files.
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
 	scanner := bufio.NewScanner(reader)
 
-	// State machine replacing licenseFirstSentenceAfterHeadingPattern.
-	// That regex only matched at the start of the file: a non-empty heading,
-	// a line of dashes, blank lines, then text up to the first period.
-	const (
-		expectHeading = iota
-		expectDashes
-		skipBlanks
-		captureLicense
-		headingDone // matched or impossible — stop checking
-	)
+	// Detect machine-readable format by looking for Format: as the first non-empty line
+	isMachineReadable := false
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if strings.HasPrefix(trimmed, "Format:") {
+			isMachineReadable = true
+		}
+		break
+	}
+
+	// If not machine-readable, reset scanner and only apply per-line checks
+	if !isMachineReadable {
+		scanner = bufio.NewScanner(reader)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if value := findLicenseClause(licensePattern, line); value != "" {
+				findings.Add(value)
+			}
+			if value := findLicenseClause(commonLicensePathPattern, line); value != "" {
+				findings.Add(value)
+			}
+			if value := findLicenseClause(licenseAgreementHeadingPattern, line); value != "" {
+				findings.Add(value)
+			}
+		}
+		results := findings.List()
+		sort.Strings(results)
+		return results
+	}
+
+	// Machine-readable format: apply full parsing including state machine
 	headingState := expectHeading
 	var licenseText strings.Builder
 
