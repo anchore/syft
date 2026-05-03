@@ -13,15 +13,34 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 		fixture  string
 		expected []string
 	}{
+		// Non-machine-readable files (no Format: header):
+		// Only common-licenses paths are extracted; full text goes to classifier fallback.
 		{
-			fixture: "testdata/copyright/libc6",
-			// note: there are other licenses in this file that are not matched --we don't do full text license identification yet
+			fixture:  "testdata/copyright/libc6",
 			expected: []string{"GPL-2", "LGPL-2.1"},
 		},
 		{
 			fixture:  "testdata/copyright/trilicense",
 			expected: []string{"GPL-2", "LGPL-2.1", "MPL-1.1"},
 		},
+		{
+			fixture:  "testdata/copyright/python",
+			expected: nil,
+		},
+		{
+			fixture:  "testdata/copyright/cuda",
+			expected: nil,
+		},
+		{
+			fixture:  "testdata/copyright/dev-kit",
+			expected: nil,
+		},
+		{
+			fixture:  "testdata/copyright/microsoft",
+			expected: nil,
+		},
+		// Machine-readable files (with Format: header):
+		// Full machine-readable parsing including multi-line license headings.
 		{
 			fixture:  "testdata/copyright/liblzma5",
 			expected: []string{"Autoconf", "GPL-2", "GPL-2+", "GPL-3", "LGPL-2", "LGPL-2.1", "LGPL-2.1+", "PD", "PD-debian", "config-h", "noderivs", "permissive-fsf", "permissive-nowarranty", "probably-PD"},
@@ -31,21 +50,8 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			expected: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
 		},
 		{
-			fixture: "testdata/copyright/python",
-			// note: this should not capture #, Permission, This, see ... however it's not clear how to fix this (this is probably good enough)
-			expected: []string{"#", "Apache", "Apache-2", "Apache-2.0", "Expat", "GPL-2", "ISC", "LGPL-2.1+", "PSF-2", "Permission", "Python", "This", "see"},
-		},
-		{
-			fixture:  "testdata/copyright/cuda",
-			expected: []string{"NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement"},
-		},
-		{
-			fixture:  "testdata/copyright/dev-kit",
-			expected: []string{"LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS"},
-		},
-		{
-			fixture:  "testdata/copyright/microsoft",
-			expected: []string{"LICENSE AGREEMENT FOR MICROSOFT PRODUCTS"},
+			fixture:  "testdata/copyright/non-machine-readable",
+			expected: nil,
 		},
 	}
 
@@ -58,7 +64,8 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			actual := parseLicensesFromCopyright(f)
 
 			if diff := cmp.Diff(test.expected, actual); diff != "" {
-				t.Errorf("unexpected package licenses (-want +got):\n%s", diff)
+				t.Errorf("unexpected package licenses (-want +got):
+%s", diff)
 			}
 		})
 	}
