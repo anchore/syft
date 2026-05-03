@@ -59,6 +59,7 @@ func TestTypeFromPURL(t *testing.T) {
 			expected: DotnetPkg,
 		},
 		{
+			name:     "nuget",
 			purl:     "pkg:nuget/Minio@7.0.0",
 			expected: DotnetPkg,
 		},
@@ -163,7 +164,11 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(PhpPeclPkg)) // we should always consider this a pear package
 
 	for _, test := range tests {
-		t.Run(string(test.expected), func(t *testing.T) {
+		name := test.name
+		if name == "" {
+			name = string(test.expected)
+		}
+		t.Run(name, func(t *testing.T) {
 			actual := TypeFromPURL(test.purl)
 
 			if actual != "" {
