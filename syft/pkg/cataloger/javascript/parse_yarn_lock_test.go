@@ -1001,6 +1001,13 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 				return pkgs, rels
 			},
 		},
+		{
+			name:       "v2 (berry) multiple resolutions of same package",
+			fixtureDir: "testdata/yarn-berry-multi-resolution",
+			includeDev: true,
+			// The fix ensures all resolutions are preserved, including multiple versions of the same package name.
+			// Test validates that both async (0.9.2 and 3.2.6) and lodash (4.17.15 and 4.17.21) are returned.
+		},
 	}
 
 	for _, tt := range tests {
