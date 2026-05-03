@@ -166,7 +166,11 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(VcpkgPkg))
 
 	for _, test := range tests {
-		t.Run(string(test.expected), func(t *testing.T) {
+		name := test.name
+		if name == "" {
+			name = string(test.expected)
+		}
+		t.Run(name, func(t *testing.T) {
 			actual := TypeFromPURL(test.purl)
 
 			if actual != "" {
