@@ -3,6 +3,7 @@ package pkg
 import (
 	"testing"
 
+	"github.com/anchore/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 )
@@ -180,4 +181,8 @@ func TestTypeFromPURL(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, expectedTypes.List(), pkgTypes.List(), "missing one or more package types to test against (maybe a package type was added?)")
+}
+
+func TestPackageURLType(t *testing.T) {
+	assert.Equal(t, packageurl.TypeNuget, DotnetPkg.PackageURLType())
 }
