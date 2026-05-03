@@ -337,6 +337,14 @@ func Test_newRequirement(t *testing.T) {
 				Markers:           "sys_platform == 'win32'",
 			},
 		},
+		{
+			name: "arbitrary equality (===)",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -398,6 +406,18 @@ func Test_parseVersion(t *testing.T) {
 			version: "~=1.2b,<=1.3a,!=1.1,!=1.2",
 			guess:   true,
 			want:    "1.3a0", // note: 1.3a == 1.3a0
+		},
+		{
+			name:    "arbitrary equality pinned",
+			version: "urllib3===1.26.20",
+			guess:   false,
+			want:    "1.26.20",
+		},
+		{
+			name:    "arbitrary equality with spaces",
+			version: "=== 1.26.20",
+			guess:   false,
+			want:    "1.26.20",
 		},
 	}
 	for _, tt := range tests {
