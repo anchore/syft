@@ -18,21 +18,44 @@ var (
 	licensePattern                 = regexp.MustCompile(`^License: (?P<license>\S*)`)
 	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
 	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
+	formatPattern                  = regexp.MustCompile(`^Format:\s*`)
 )
+
+// parseLicensesFromCopyright extracts license information from Debian copyright files.
+//
+// Machine-readable format detection:
+//   - Files with "Format:" as the first non-empty line are parsed using the full
+//     machine-readable syntax (per Debian spec), including multi-line license headings.
+//   - Files without "Format:" return no extracted licenses, allowing the raw content
+//     to be used by the license classifier as .text.content fallback.
+//
+// This prevents false positives from non-machine-readable copyright files.
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
 	scanner := bufio.NewScanner(reader)
 
-	// State machine replacing licenseFirstSentenceAfterHeadingPattern.
-	// That regex only matched at the start of the file: a non-empty heading,
-	// a line of dashes, blank lines, then text up to the first period.
+	// Detect machine-readable format by looking for Format: as the first non-empty line
+	isMachineReadable := false
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if formatPattern.MatchString(trimmed) {
+			isMachineReadable = true
+		}
+		break
+	}
+
+	// State machine for multi-line license headings (machine-readable format only)
 	const (
 		expectHeading = iota
 		expectDashes
 		skipBlanks
 		captureLicense
-		headingDone // matched or impossible — stop checking
+		headingDone // matched or impossible -- stop checking
 	)
 	headingState := expectHeading
 	var licenseText strings.Builder
@@ -40,47 +63,55 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// per-line regex checks (applied to every line)
-		if value := findLicenseClause(licensePattern, line); value != "" {
-			findings.Add(value)
-		}
-		if value := findLicenseClause(commonLicensePathPattern, line); value != "" {
-			findings.Add(value)
-		}
-		if value := findLicenseClause(licenseAgreementHeadingPattern, line); value != "" {
-			findings.Add(value)
-		}
+		// per-line regex checks (applied to every line for machine-readable files)
+		if isMachineReadable {
+			if value := findLicenseClause(licensePattern, line); value != "" {
+				findings.Add(value)
+			}
+			if value := findLicenseClause(commonLicensePathPattern, line); value != "" {
+				findings.Add(value)
+			}
+			if value := findLicenseClause(licenseAgreementHeadingPattern, line); value != "" {
+				findings.Add(value)
+			}
 
-		// multi-line heading detection (only at start of file)
-		switch headingState {
-		case expectHeading:
-			if strings.TrimSpace(line) != "" {
-				headingState = expectDashes
-			} else {
-				headingState = headingDone
-			}
-		case expectDashes:
-			trimmed := strings.TrimSpace(line)
-			if len(trimmed) > 0 && strings.Trim(trimmed, "-") == "" {
-				headingState = skipBlanks
-			} else {
-				headingState = headingDone
-			}
-		case skipBlanks:
-			if strings.TrimSpace(line) != "" {
-				headingState = captureLicense
+			// multi-line heading detection (only at start of file, machine-readable only)
+			switch headingState {
+			case expectHeading:
+				if strings.TrimSpace(line) != "" {
+					headingState = expectDashes
+				} else {
+					headingState = headingDone
+				}
+			case expectDashes:
+				trimmed := strings.TrimSpace(line)
+				if len(trimmed) > 0 && strings.Trim(trimmed, "-") == "" {
+					headingState = skipBlanks
+				} else {
+					headingState = headingDone
+				}
+			case skipBlanks:
+				if strings.TrimSpace(line) != "" {
+					headingState = captureLicense
+					licenseText.WriteString(line)
+					if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+						findings.Add(value)
+						headingState = headingDone
+					}
+				}
+			case captureLicense:
+				licenseText.WriteString(" ")
 				licenseText.WriteString(line)
 				if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
 					findings.Add(value)
 					headingState = headingDone
 				}
 			}
-		case captureLicense:
-			licenseText.WriteString(" ")
-			licenseText.WriteString(line)
-			if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+		} else {
+			// Non-machine-readable: only extract common-licenses paths (backward compat)
+			// For other content, use license classifier's .text.content fallback
+			if value := findLicenseClause(commonLicensePathPattern, line); value != "" {
 				findings.Add(value)
-				headingState = headingDone
 			}
 		}
 	}
