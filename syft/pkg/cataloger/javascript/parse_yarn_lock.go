@@ -255,7 +255,7 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 
 		var pkg = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
 		var nameVersion = pkg.Name + "@" + pkg.Version
-		
+
 		if !seenPkgs.Has(nameVersion) {
 			seenPkgs.Add(nameVersion)
 			pkgs = append(pkgs, pkg)
