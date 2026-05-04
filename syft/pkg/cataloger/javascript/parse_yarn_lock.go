@@ -250,7 +250,11 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 		return nil, fmt.Errorf("failed to unmarshal yarn v2 lockfile: %w", err)
 	}
 
-	packages := make(map[string]yarnPackage)
+	// Use a slice, not a map, to preserve all entries including packages
+	// that have multiple resolutions (e.g., same package name with different versions).
+	// Previously this used a map keyed by packageName which caused arbitrary
+	// deduplication when the same package had multiple resolutions (issue #4691).
+	var packages []yarnPackage
 	for key, value := range lockfile {
 		packageName := findPackageName(key)
 		if packageName == "" {
@@ -258,10 +262,16 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 			continue
 		}
 
-		packages[packageName] = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+		packages = append(packages, yarnPackage{
+			Name:         packageName,
+			Version:      value.Version,
+			Resolved:     value.Resolution,
+			Integrity:    value.Checksum,
+			Dependencies: value.Dependencies,
+		})
 	}
 
-	return slices.Collect(maps.Values(packages)), nil
+	return packages, nil
 }
 
 func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
