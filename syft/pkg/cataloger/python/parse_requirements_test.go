@@ -225,6 +225,14 @@ func TestParseRequirementsTxt(t *testing.T) {
 			pkgtest.TestFileParser(t, tc.fixture, parser.parseRequirementsTxt, tc.expectedPkgs, tc.expectedRelationships)
 		})
 	}
+
+		{
+			name:  "arbitrary equality urllib3",
+			input: "urllib3===1.26.20",
+			guess: false,
+			want:  "1.26.20",
+		},
+	}
 }
 
 func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
@@ -276,6 +284,14 @@ func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
 			requirementsParser := newRequirementsParser(tc.config)
 			pkgtest.TestFileParser(t, fixture, requirementsParser.parseRequirementsTxt, tc.expectedPackages, nil)
 		})
+	}
+
+		{
+			name:  "arbitrary equality urllib3",
+			input: "urllib3===1.26.20",
+			guess: false,
+			want:  "1.26.20",
+		},
 	}
 }
 
@@ -337,11 +353,28 @@ func Test_newRequirement(t *testing.T) {
 				Markers:           "sys_platform == 'win32'",
 			},
 		},
+
+		{
+			name: "arbitrary equality (===)",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, newRequirement(tt.raw))
 		})
+	}
+
+		{
+			name:  "arbitrary equality urllib3",
+			input: "urllib3===1.26.20",
+			guess: false,
+			want:  "1.26.20",
+		},
 	}
 }
 
@@ -399,11 +432,28 @@ func Test_parseVersion(t *testing.T) {
 			guess:   true,
 			want:    "1.3a0", // note: 1.3a == 1.3a0
 		},
+
+		{
+			name: "arbitrary equality (===)",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, parseVersion(tt.version, tt.guess))
 		})
+	}
+
+		{
+			name:  "arbitrary equality urllib3",
+			input: "urllib3===1.26.20",
+			guess: false,
+			want:  "1.26.20",
+		},
 	}
 }
 
