@@ -35,7 +35,7 @@ runs:
     - name: Restore tool cache
       if: inputs.tools == 'true'
       id: tool-cache
-      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ${{ github.workspace }}/.tool
         key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-tool-${{ hashFiles('.binny.yaml') }}
@@ -60,7 +60,7 @@ runs:
         DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${packages[@]}"
     - name: Restore ORAS cache from github actions
       if: inputs.download-test-fixture-cache == 'true'
-      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: ${{ github.workspace }}/.tmp/oras-cache
         key: ${{ inputs.cache-key-prefix }}-oras-cache
