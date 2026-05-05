@@ -70,54 +70,58 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 	}
 }
 
-func TestHasFormatHeader(t *testing.T) {
+func TestParseLicensesFromCopyright_FormatHeader(t *testing.T) {
 	tests := []struct {
-		name     string
-		content  string
-		expected bool
+		name            string
+		content         string
+		machineReadable bool
 	}{
 		{
-			name:     "valid http Format header",
-			content:  "Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
-			expected: true,
+			name:            "valid http Format header",
+			content:         "Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: true,
 		},
 		{
-			name:     "valid https Format header",
-			content:  "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
-			expected: true,
+			name:            "valid https Format header",
+			content:         "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: true,
 		},
 		{
-			name:     "blank lines before Format header",
-			content:  "\n\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
-			expected: true,
+			name:            "blank lines before Format header",
+			content:         "\n\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: true,
 		},
 		{
-			name:     "no Format header",
-			content:  "This is the Debian prepackaged version of foo.\n",
-			expected: false,
+			name:            "no Format header",
+			content:         "This is the Debian prepackaged version of foo.\n",
+			machineReadable: false,
 		},
 		{
-			name:     "Format header is not first non-blank line",
-			content:  "Some-Field: value\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
-			expected: false,
+			name:            "Format header is not first non-blank line",
+			content:         "Some-Field: value\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: false,
 		},
 		{
-			name:     "empty content",
-			content:  "",
-			expected: false,
+			name:            "empty content",
+			content:         "",
+			machineReadable: false,
 		},
 		{
-			name:     "only blank lines",
-			content:  "\n\n\n",
-			expected: false,
+			name:            "only blank lines",
+			content:         "\n\n\n",
+			machineReadable: false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := hasFormatHeader(test.content)
-			if actual != test.expected {
-				t.Errorf("hasFormatHeader(%q) = %v, want %v", test.content, actual, test.expected)
+			actual := parseLicensesFromCopyright(strings.NewReader(test.content))
+			// parseLicensesFromCopyright returns nil for non-machine-readable
+			// files and a (possibly empty) slice otherwise.
+			if test.machineReadable {
+				require.NotNil(t, actual)
+			} else {
+				require.Nil(t, actual)
 			}
 		})
 	}
