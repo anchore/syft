@@ -80,6 +80,9 @@ func DefaultClassifiers() []binutils.Classifier {
 				binutils.SupportingEvidenceMatcher("../VERSION*",
 					m.FileContentsVersionMatcher(
 						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)`)),
+				binutils.SupportingEvidenceMatcher("go-version",
+					m.FileContentsVersionMatcher(
+						`(?m)\x00go(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`)),
 			),
 			Package: "go",
 			PURL:    mustPURL("pkg:generic/go@version"),
