@@ -30,6 +30,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 			},
 		},
 		{
+			Name:      "urllib3",
+			Version:   "1.26.20",
+			PURL:      "pkg:pypi/urllib3@1.26.20",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
+		{
 			Name:      "foo",
 			Version:   "1.0.0",
 			PURL:      "pkg:pypi/foo@1.0.0",
@@ -295,6 +307,14 @@ func Test_newRequirement(t *testing.T) {
 			},
 		},
 		{
+			name: "arbitrary equality",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
+		{
 			name: "comment + constraint",
 			raw:  "Mopidy-Dirble ~= 1.1 # Compatible release. Same as >= 1.1, == 1.*",
 			want: &unprocessedRequirement{
@@ -362,6 +382,11 @@ func Test_parseVersion(t *testing.T) {
 			name:    "exact constraint",
 			version: " == 1.0.0 ",
 			want:    "1.0.0",
+		},
+		{
+			name:    "arbitrary equality constraint",
+			version: " === 1.26.20 ",
+			want:    "1.26.20",
 		},
 		{
 			name:    "resolve lowest, simple constraint",
