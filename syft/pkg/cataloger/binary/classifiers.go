@@ -564,14 +564,31 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "openssl-binary",
 			FileGlob: "**/openssl",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// [NUL]OpenSSL 3.1.4'
-				// [NUL]OpenSSL 1.1.1w'
-				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+			EvidenceMatcher: binutils.MatchAll(
+				// Negative Matchers to exclude aws-lc
+				binutils.MatchNone(
+					m.FileContentsVersionMatcher(`AWS-LC`),
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL]OpenSSL 3.1.4'
+					// [NUL]OpenSSL 1.1.1w'
+					`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+				),
 			),
 			Package: "openssl",
 			PURL:    mustPURL("pkg:generic/openssl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "aws-lc-binary",
+			FileGlob: "**/openssl",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// [NUL]OpenSSL 1.1.1 (compatible; AWS-LC 1.69.0)[NUL]
+				`AWS-LC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\)\x00`,
+			),
+			Package: "aws-lc",
+			PURL:    mustPURL("pkg:generic/aws-lc@version"),
+			CPEs:    singleCPE("cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
 			Class:    "openldap-search-binary",

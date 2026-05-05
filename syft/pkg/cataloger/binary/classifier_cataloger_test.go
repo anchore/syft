@@ -1486,6 +1486,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "aws-lc/1.69.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "aws-lc",
+				Version:   "1.69.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/aws-lc@1.69.0",
+				Locations: locations("openssl"),
+				Metadata:  metadata("aws-lc-binary"),
+			},
+		},
+		{
 			logicalFixture: "openldap/2.6.10/linux-amd64",
 			expected: pkg.Package{
 				Name:      "openldap",
