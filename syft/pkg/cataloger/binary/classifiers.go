@@ -910,7 +910,7 @@ func DefaultClassifiers() []binutils.Classifier {
 				// e.g mongo:8.2.4 docker image stores "db version v8.2.4" in mongod binary
 				m.FileContentsVersionMatcher(`(?m)db version v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 				// mongodb with bare v prefix (e.g. "v8.0.0" stored in binary)
-				m.FileContentsVersionMatcher(`(?P<version>v[0-9]+\.[0-9]+\.[0-9]+)`),
+				m.FileContentsVersionMatcher(`(?P<version>v[0-9]+\.[0-9]+\.[0-9]+)(?![0-9])`),
 			),
 			Package: "mongodb",
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
