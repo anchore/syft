@@ -894,6 +894,18 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:envoyproxy:envoy:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+		{
+			Class:    "ingress-nginx-binary",
+			FileGlob: "**/nginx-ingress-controller",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// v1.15.1 (newer), 0.30.0 (older), Release:       v1.15.1
+				// Also matches v0.34.0 and other versions
+				`(?m)(?:Release:\s*)?v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "ingress-nginx",
+			PURL:    mustPURL("pkg:generic/ingress-nginx@version"),
+			CPEs:    singleCPE("cpe:2.3:a:nginx:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "mongodb-binary",
 			FileGlob: "**/mongod",
 			EvidenceMatcher: binutils.MatchAny(
