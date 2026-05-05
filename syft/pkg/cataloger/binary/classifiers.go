@@ -768,7 +768,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "elixir-binary",
 			FileGlob: "**/elixir",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// ELIXIR_VERSION=1.12.0-rc.1
+				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?)`),
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs: []cpe.CPE{
@@ -779,7 +780,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "elixir-library",
 			FileGlob: "**/elixir/ebin/elixir.app",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?)"\}`),
+				// {vsn,"1.12.0-rc.1"} - the dot in "rc.1" requires [a-z0-9.] not [a-z0-9]
+				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?)"\}`),
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
