@@ -1,0 +1,22 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: example-tool
+Upstream-Contact: maintainer@example.com
+Source: https://example.com/example-tool
+
+Files: *
+Copyright: 2024 Example Maintainers
+License: MIT
+
+Files: vendor/foo/*
+Copyright: 2023 Foo Authors
+License: Apache-2.0
+ The full text of the Apache 2.0 license is available at
+ http://www.apache.org/licenses/LICENSE-2.0
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files.
+
+License: Apache-2.0
+ Licensed under the Apache License, Version 2.0; see
+ http://www.apache.org/licenses/LICENSE-2.0
