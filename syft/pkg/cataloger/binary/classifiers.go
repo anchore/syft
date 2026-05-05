@@ -98,7 +98,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "helm",
 			FileGlob: "**/helm",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+				// v2.0.0-beta.2, v3.15.2, v3.15.0-rc.1, v3.15.0-alpha.1
+				`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)[0-9]*(\.[0-9]+)?)?)\x00`),
 			Package: "helm",
 			PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
 			CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
