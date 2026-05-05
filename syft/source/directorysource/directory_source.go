@@ -160,7 +160,14 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 			for _, exclusion := range exclusions {
 				// this is required to handle Windows filepaths
 				path = filepath.ToSlash(path)
-				matches, err := doublestar.Match(exclusion, path)
+				// doublestar.Match treats trailing slashes as significant (a/b/ only matches directory a/b/,
+				// not nested paths a/b/c). Normalize by stripping trailing slash so --exclude ./folder/
+				// correctly matches both the directory ./folder/ and all nested paths ./folder/...
+				exclusionPattern := exclusion
+				if strings.HasSuffix(exclusionPattern, "/") {
+					exclusionPattern = strings.TrimSuffix(exclusionPattern, "/")
+				}
+				matches, err := doublestar.Match(exclusionPattern, path)
 				if err != nil {
 					return nil
 				}
