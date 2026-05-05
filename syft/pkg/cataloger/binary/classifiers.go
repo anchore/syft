@@ -436,7 +436,13 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				// Deno/2.6.3
 				// Deno/1.41.0
-				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// Deno/X.Y.Z in binary string table
+				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				// Deno 1.32.x and earlier: Rust embedded version string
+				// e.g., "deno::tools::standalone" or "cli/tools/standalone.rs" with version suffix
+				// Pattern: "deno" followed by path segment containing version
+				`deno[\s\-]*(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+			),
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
