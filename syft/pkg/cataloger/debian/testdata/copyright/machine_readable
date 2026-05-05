@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: example-package
+Source: https://example.com/source
+
+Files: *
+Copyright: 2024 Example Author <author@example.com>
+License: MIT
+
+Files: src/*.c
+Copyright: 2024 Example Author <author@example.com>
+License: Apache-2.0
