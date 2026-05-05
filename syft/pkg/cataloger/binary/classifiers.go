@@ -89,7 +89,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "julia-binary",
 			FileGlob: "**/libjulia-internal.so",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
+				// julia 1.9.0-alpha1, 1.9.0-beta4, 1.9.0-rc1 etc.
+				// Also matches 1.9.0, 1.10.0, etc.
+				`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]+|-beta[0-9]+|-rc[0-9]+)?)\x00verify`),
 			Package: "julia",
 			PURL:    mustPURL("pkg:generic/julia@version"),
 			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
