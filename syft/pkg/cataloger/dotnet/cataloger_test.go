@@ -730,7 +730,10 @@ func TestCataloger(t *testing.T) {
 			if len(p.CPEs) == 0 {
 				continue
 			}
-			assert.Contains(t, p.Name, "Microsoft.NETCore.App")
+			if runtimeFamilyFromName(p.Name) != netRuntimeFamily {
+				continue
+			}
+			assert.Equal(t, runtimeCPEs(p.Name, p.Version), p.CPEs)
 			return
 		}
 		t.Error("expected at least one runtime package with a CPE")
@@ -1186,6 +1189,7 @@ func TestCataloger(t *testing.T) {
 				"runtime.linux-x64.Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)", // a compile target reference
 			},
 			expectedRels: []string{
+				"Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
 				"Microsoft.NETCore.DotNetHostPolicy @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json) [dependency-of] Microsoft.NETCore.App @ 2.2.8 (/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/Microsoft.NETCore.App.deps.json)",
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] Serilog.Sinks.Console @ 4.0.1 (/app/helloworld.deps.json)",
 				"Serilog @ 2.10.0 (/app/helloworld.deps.json) [dependency-of] helloworld @ 1.0.0 (/app/helloworld.deps.json)",
