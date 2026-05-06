@@ -1,0 +1,12 @@
+name: deno
+offset: 100
+length: 100
+snippetSha256: test123
+fileSha256: test456
+
+### byte snippet to follow ###
+t recognize flag ''.
+deno 1.10.3cli/
+worker.rsmain_mo
+dule deno::worke
+r[ext:cli/worker
