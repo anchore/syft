@@ -810,6 +810,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "go-version-hint/1.8.7/s390x",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.8.7",
+				PURL:      "pkg:generic/go@1.8.7",
+				Locations: locations("go"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			// note: this is testing BUSYBOX which is typically through a link to "[" (in this case a symlink but in
 			// practice this is often a hard link).
 			logicalFixture: `busybox/1.36.1/linux-amd64`,

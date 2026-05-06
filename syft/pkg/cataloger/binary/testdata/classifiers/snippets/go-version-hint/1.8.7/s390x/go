@@ -1,0 +1,10 @@
+name: go
+offset: 0
+length: 100
+snippetSha256: test
+fileSha256: test
+
+### byte snippet to follow ###
+go1.8.7
+some rust text
+more text here
