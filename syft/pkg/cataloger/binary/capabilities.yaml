@@ -428,20 +428,9 @@ catalogers:
           - '**/openssl'
         packages:
           - class: openssl-binary
-            name: openssl
-            purl: pkg:generic/openssl
-            cpes:
-              - cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*
-            type: BinaryPkg
-      - method: glob
-        criteria:
-          - '**/openssl'
-        packages:
-          - class: aws-lc-binary
-            name: aws-lc
-            purl: pkg:generic/aws-lc
-            cpes:
-              - cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*
+            name: ""
+            purl: pkg:/
+            cpes: []
             type: BinaryPkg
       - method: glob
         criteria:
