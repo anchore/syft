@@ -67,7 +67,6 @@ func isRuntime(name string) bool {
 	return runtimeFamilyFromName(name) != unknownRuntimeFamily
 }
 
-
 func runtimeFamilyFromName(name string) runtimeFamily {
 	normalizedName := strings.ToLower(name)
 
