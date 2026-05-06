@@ -576,7 +576,7 @@ func DefaultClassifiers() []binutils.Classifier {
 					CPEs:    singleCPE("cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 				},
 				{
-					Class: "openssl-binary-openssl",
+					Class: "openssl-binary",
 					EvidenceMatcher: m.FileContentsVersionMatcher(
 						// [NUL]OpenSSL 3.1.4'
 						// [NUL]OpenSSL 1.1.1w'

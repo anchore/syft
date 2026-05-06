@@ -1460,7 +1460,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/openssl@3.1.4",
 				Locations: locations("openssl"),
-				Metadata:  metadata("openssl-binary-openssl"),
+				Metadata:  metadata("openssl-binary"),
 			},
 		},
 		{
@@ -1471,7 +1471,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/openssl@1.1.1w",
 				Locations: locations("openssl"),
-				Metadata:  metadata("openssl-binary-openssl"),
+				Metadata:  metadata("openssl-binary"),
 			},
 		},
 		{
@@ -1482,7 +1482,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Type:      "binary",
 				PURL:      "pkg:generic/openssl@1.1.1zb",
 				Locations: locations("openssl"),
-				Metadata:  metadata("openssl-binary-openssl"),
+				Metadata:  metadata("openssl-binary"),
 			},
 		},
 		{
