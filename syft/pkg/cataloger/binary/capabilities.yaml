@@ -428,6 +428,17 @@ catalogers:
           - '**/openssl'
         packages:
           - class: openssl-binary
+            name: ""
+            purl: pkg:/
+            cpes: []
+            type: BinaryPkg
+          - class: openssl-binary-aws-lc
+            name: aws-lc
+            purl: pkg:generic/aws-lc
+            cpes:
+              - cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: openssl-binary
             name: openssl
             purl: pkg:generic/openssl
             cpes:
