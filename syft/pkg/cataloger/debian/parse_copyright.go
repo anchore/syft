@@ -18,77 +18,100 @@ var (
 	licensePattern                 = regexp.MustCompile(`^License: (?P<license>\S*)`)
 	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
 	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
+	formatHeaderPattern            = regexp.MustCompile(`^Format:\s*https?://www\.debian\.org/doc/packaging-manuals/copyright-format/`)
+)
+
+// heading-detection states. Replaces licenseFirstSentenceAfterHeadingPattern,
+// which only matched at the start of the file: a non-empty heading, a line
+// of dashes, blank lines, then text up to the first period.
+const (
+	expectHeading = iota
+	expectDashes
+	skipBlanks
+	captureLicense
+	headingDone // matched or impossible — stop checking
 )
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
 	scanner := bufio.NewScanner(reader)
 
-	// State machine replacing licenseFirstSentenceAfterHeadingPattern.
-	// That regex only matched at the start of the file: a non-empty heading,
-	// a line of dashes, blank lines, then text up to the first period.
-	const (
-		expectHeading = iota
-		expectDashes
-		skipBlanks
-		captureLicense
-		headingDone // matched or impossible — stop checking
-	)
+	// per the DEP-5 spec, machine-readable copyright files MUST have a
+	// Format field whose value is a URI for the specification. Only files
+	// with this header should be parsed as machine-readable.
+	// See: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+	formatVerified := false
 	headingState := expectHeading
 	var licenseText strings.Builder
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// per-line regex checks (applied to every line)
-		if value := findLicenseClause(licensePattern, line); value != "" {
-			findings.Add(value)
-		}
-		if value := findLicenseClause(commonLicensePathPattern, line); value != "" {
-			findings.Add(value)
-		}
-		if value := findLicenseClause(licenseAgreementHeadingPattern, line); value != "" {
-			findings.Add(value)
+		if !formatVerified {
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			if !formatHeaderPattern.MatchString(line) {
+				return nil
+			}
+			formatVerified = true
 		}
 
-		// multi-line heading detection (only at start of file)
-		switch headingState {
-		case expectHeading:
-			if strings.TrimSpace(line) != "" {
-				headingState = expectDashes
-			} else {
-				headingState = headingDone
-			}
-		case expectDashes:
-			trimmed := strings.TrimSpace(line)
-			if len(trimmed) > 0 && strings.Trim(trimmed, "-") == "" {
-				headingState = skipBlanks
-			} else {
-				headingState = headingDone
-			}
-		case skipBlanks:
-			if strings.TrimSpace(line) != "" {
-				headingState = captureLicense
-				licenseText.WriteString(line)
-				if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
-					findings.Add(value)
-					headingState = headingDone
-				}
-			}
-		case captureLicense:
-			licenseText.WriteString(" ")
-			licenseText.WriteString(line)
-			if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+		for _, p := range []*regexp.Regexp{licensePattern, commonLicensePathPattern, licenseAgreementHeadingPattern} {
+			if value := findLicenseClause(p, line); value != "" {
 				findings.Add(value)
-				headingState = headingDone
 			}
 		}
+
+		var found string
+		headingState, found = advanceHeadingState(headingState, line, &licenseText)
+		if found != "" {
+			findings.Add(found)
+		}
+	}
+
+	if !formatVerified {
+		return nil
 	}
 
 	results := findings.List()
 	sort.Strings(results)
 
 	return results
+}
+
+func advanceHeadingState(state int, line string, licenseText *strings.Builder) (int, string) {
+	switch state {
+	case expectHeading:
+		if strings.TrimSpace(line) != "" {
+			return expectDashes, ""
+		}
+		return headingDone, ""
+	case expectDashes:
+		trimmed := strings.TrimSpace(line)
+		if len(trimmed) > 0 && strings.Trim(trimmed, "-") == "" {
+			return skipBlanks, ""
+		}
+		return headingDone, ""
+	case skipBlanks:
+		if strings.TrimSpace(line) == "" {
+			return state, ""
+		}
+		licenseText.WriteString(line)
+		if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+			return headingDone, value
+		}
+		return captureLicense, ""
+	case captureLicense:
+		licenseText.WriteString(" ")
+		licenseText.WriteString(line)
+		if value := extractUpToFirstPeriod(licenseText.String()); value != "" {
+			return headingDone, value
+		}
+		return state, ""
+	case headingDone:
+	}
+	return state, ""
 }
 
 // extractUpToFirstPeriod returns the license text up to the first period,
