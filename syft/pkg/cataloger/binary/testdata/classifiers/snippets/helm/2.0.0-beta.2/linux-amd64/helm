@@ -1,0 +1,9 @@
+name: helm
+offset: 100
+length: 100
+snippetSha256: test123
+fileSha256: test456
+
+### byte snippet to follow ###
+v2.0.0-beta.2
+some text here

@@ -454,7 +454,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("helm"),
 			},
 		},
-
+		{
+			logicalFixture: "helm/2.0.0-beta.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "2.0.0-beta.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@2.0.0-beta.2",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/2.8.23/linux-amd64",
