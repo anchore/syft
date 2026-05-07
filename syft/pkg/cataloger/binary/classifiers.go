@@ -74,6 +74,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
 					`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
+				// Match go version without null terminator (e.g., "go1.8.7" from s390x images)
+				m.FileContentsVersionMatcher(
+					`(?m)go(?P<version>[0-9]+\.[0-9]+\.[0-9]+)(?=\s|$|[^\x00])`),
 				binutils.SupportingEvidenceMatcher("VERSION*",
 					m.FileContentsVersionMatcher(
 						`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+|-[_0-9a-z]+)?)`)),

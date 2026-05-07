@@ -707,6 +707,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "go/1.8.7",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.8.7",
+				PURL:      "pkg:generic/go@1.8.7",
+				Locations: locations("go"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			logicalFixture: "node/0.10.48/linux-amd64",
 			expected: pkg.Package{
 				Name:      "node",
