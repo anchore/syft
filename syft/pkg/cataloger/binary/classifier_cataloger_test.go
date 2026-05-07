@@ -454,7 +454,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("helm"),
 			},
 		},
-
+		{
+			logicalFixture: "julia/1.9.0-alpha1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.9.0-alpha1",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.9.0-alpha1",
+				Locations: locations("libjulia-internal.so"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
 		{
 			// note: dynamic (non-snippet) test case
 			logicalFixture: "redis-server/2.8.23/linux-amd64",

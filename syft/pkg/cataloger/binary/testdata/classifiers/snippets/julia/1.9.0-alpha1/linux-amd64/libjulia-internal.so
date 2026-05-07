@@ -1,0 +1,10 @@
+name: julia
+offset: 100
+length: 100
+snippetSha256: test123
+fileSha256: test456
+
+### byte snippet to follow ###
+__init__
+1.9.0-alpha1
+verify
