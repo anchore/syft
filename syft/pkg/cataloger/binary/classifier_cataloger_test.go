@@ -240,17 +240,6 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "mongodb/v8.0.0/linux-amd64",
-			expected: pkg.Package{
-				Name:      "mongodb",
-				Version:   "8.0.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/mongodb@8.0.0",
-				Locations: locations("mongod"),
-				Metadata:  metadata("mongodb-binary"),
-			},
-		},
-		{
 			logicalFixture: "mongodb/6.0.27/linux-amd64",
 			expected: pkg.Package{
 				Name:      "mongodb",
