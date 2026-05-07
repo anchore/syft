@@ -433,10 +433,12 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "deno-binary",
 			FileGlob: "**/deno",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// Deno/2.6.3
-				// Deno/1.41.0
-				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAny(
+				// Deno/2.6.3, Deno/1.41.0 (newer versions)
+				m.FileContentsVersionMatcher(`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// deno::tools::standalone (older versions without "Deno/" prefix)
+				m.FileContentsVersionMatcher(
+					`deno::tools::standalonedeno-[a-f0-9]+release/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`)),
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),

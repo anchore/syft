@@ -1343,6 +1343,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.32.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.32.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.32.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
 			logicalFixture: "deno/2.0.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "deno",

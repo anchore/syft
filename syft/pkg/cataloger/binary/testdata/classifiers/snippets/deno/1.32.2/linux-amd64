@@ -1,0 +1,3 @@
+deno run --allow-read=. main.js
+console.log(cli/tools/standalone.rs
+Compiledeno::tools::standalonedeno-d06fdf6add1b3c55fc5f4a24956f17a363d513a4release/v1.32.0
