@@ -5,8 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/facebookincubator/nvdtools/wfn"
-
+	"github.com/anchore/syft/syft/internal/wfn"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/cpegenerate/dictionary"
 )
 
