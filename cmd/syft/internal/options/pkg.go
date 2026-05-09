@@ -6,9 +6,10 @@ import (
 )
 
 type packageConfig struct {
-	SearchUnindexedArchives         bool `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
-	SearchIndexedArchives           bool `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
-	ExcludeBinaryOverlapByOwnership bool `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"` // exclude synthetic binary packages owned by os package files
+	SearchUnindexedArchives          bool `yaml:"search-unindexed-archives" json:"search-unindexed-archives" mapstructure:"search-unindexed-archives"`
+	SearchIndexedArchives            bool `yaml:"search-indexed-archives" json:"search-indexed-archives" mapstructure:"search-indexed-archives"`
+	ExcludeBinaryOverlapByOwnership  bool `yaml:"exclude-binary-overlap-by-ownership" json:"exclude-binary-overlap-by-ownership" mapstructure:"exclude-binary-overlap-by-ownership"`     // exclude synthetic binary packages owned by os package files
+	ExcludeLanguageOverlapByOwnership bool `yaml:"exclude-language-overlap-by-ownership" json:"exclude-language-overlap-by-ownership" mapstructure:"exclude-language-overlap-by-ownership"` // exclude language packages owned by os package files
 }
 
 var _ interface {
@@ -23,13 +24,16 @@ note: enabling this may result in a performance impact since all discovered comp
 note: for now this only applies to the java package cataloger`)
 	descriptions.Add(&o.ExcludeBinaryOverlapByOwnership, `allows users to exclude synthetic binary packages from the sbom
 these packages are removed if an overlap with a non-synthetic package is found`)
+	descriptions.Add(&o.ExcludeLanguageOverlapByOwnership, `allows users to exclude language packages from the sbom when they overlap with OS packages
+these packages are removed if an overlap with an OS package is found, preventing duplicate entries for packages installed via system package managers`)
 }
 
 func defaultPackageConfig() packageConfig {
 	c := cataloging.DefaultArchiveSearchConfig()
 	return packageConfig{
-		SearchIndexedArchives:           c.IncludeIndexedArchives,
-		SearchUnindexedArchives:         c.IncludeUnindexedArchives,
-		ExcludeBinaryOverlapByOwnership: true,
+		SearchIndexedArchives:             c.IncludeIndexedArchives,
+		SearchUnindexedArchives:           c.IncludeUnindexedArchives,
+		ExcludeBinaryOverlapByOwnership:   true,
+		ExcludeLanguageOverlapByOwnership: false,
 	}
 }
