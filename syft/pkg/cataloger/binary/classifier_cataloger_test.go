@@ -36,8 +36,9 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		// or testdata/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
 		// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
 		// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
-		logicalFixture string
-		expected       pkg.Package
+		logicalFixture   string
+		expected         pkg.Package
+		expectedPackages []pkg.Package
 	}{
 		{
 			logicalFixture: "arangodb/3.11.8/linux-amd64",
@@ -204,6 +205,82 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/mariadb@10.6.15",
 				Locations: locations("mariadb"),
 				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysqld/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-server",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-server@9.7.0",
+				Locations: locations("mysqld"),
+				Metadata:  metadata("mysqld-mysql-server-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysql-cluster/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("mysqld"),
+				Metadata:  metadata("mysqld-mysql-cluster-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysql-cluster/7.6.17/linux-amd64",
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "mysql-server",
+					Version:   "5.7.33",
+					Type:      "binary",
+					PURL:      "pkg:generic/mysql-server@5.7.33",
+					Locations: locations("mysqld"),
+					Metadata:  metadata("mysqld-mysql-cluster-legacy-binary"),
+				},
+				{
+					Name:      "mysql-cluster",
+					Version:   "7.6.17",
+					Type:      "binary",
+					PURL:      "pkg:generic/mysql-cluster@7.6.17",
+					Locations: locations("mysqld"),
+					Metadata:  metadata("mysqld-mysql-cluster-legacy-binary"),
+				},
+			},
+		},
+		{
+			logicalFixture: "ndbd/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("ndbd"),
+				Metadata:  metadata("ndbd-binary"),
+			},
+		},
+		{
+			logicalFixture: "ndbmtd/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("ndbmtd"),
+				Metadata:  metadata("ndbmtd-binary"),
+			},
+		},
+		{
+			logicalFixture: "ndb_mgmd/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("ndb_mgmd"),
+				Metadata:  metadata("ndb_mgmd-binary"),
 			},
 		},
 		{
@@ -2377,9 +2454,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
-			require.Len(t, packages, 1, "mismatched package count")
+			expected := test.expectedPackages
+			if len(expected) == 0 {
+				expected = []pkg.Package{test.expected}
+			}
 
-			assertPackagesAreEqual(t, test.expected, packages[0])
+			require.Len(t, packages, len(expected), "mismatched package count")
+
+			for i := range expected {
+				assertPackagesAreEqual(t, expected[i], packages[i])
+			}
 		})
 	}
 }

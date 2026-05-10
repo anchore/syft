@@ -312,20 +312,52 @@ from-images:
     paths:
     - /usr/bin/mysql
 
-# TODO: add pattern for mysqld
-#  - version: 5.6.51
-#    images:
-#      - ref: mysql:5.6.51@sha256:897086d07d1efa876224b147397ea8d3147e61dd84dce963aace1d5e9dc2802d
-#        platform: linux/amd64
-#    paths:
-#      - /usr/sbin/mysqld
-#
-#  - version: 8.0.34
-#    images:
-#      - ref: mysql:8.0.34@sha256:8b8835a2c32cd7357a5d2ea4b49ad870ff519c8c1d4add362803feddf4a0a973
-#        platform: linux/amd64
-#    paths:
-#      - /usr/sbin/mysqld
+  - version: 9.7.0
+    images:
+      - ref: mysql:9.7.0@sha256:6e5e46e6aece0bc8edb5abecc6fd726653f36447860f7f4dbf3481c91b477f69
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/mysqld
+
+  - name: mysql-cluster
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/mysqld
+
+  - name: mysql-cluster
+    version: 7.6.17
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:7.6.17
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/mysqld
+
+  - name: ndbd
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/ndbd
+
+  - name: ndbmtd
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/ndbmtd
+
+  - name: ndb_mgmd
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/ndb_mgmd
 
   - name: mongodb
     version: 8.0.17

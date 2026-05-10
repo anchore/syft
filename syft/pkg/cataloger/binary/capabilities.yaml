@@ -244,6 +244,77 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/mysqld'
+        packages:
+          - class: mysqld-mysql-cluster-legacy-binary
+            name: mysql-server
+            purl: pkg:generic/mysql-server
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/mysqld'
+        packages:
+          - class: mysqld-binary
+            name: ""
+            purl: pkg:/
+            cpes: []
+            type: BinaryPkg
+          - class: mysqld-mysql-cluster-legacy-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: mysqld-mysql-cluster-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: mysqld-mysql-server-binary
+            name: mysql-server
+            purl: pkg:generic/mysql-server
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ndbd'
+        packages:
+          - class: ndbd-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ndbmtd'
+        packages:
+          - class: ndbmtd-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ndb_mgmd'
+        packages:
+          - class: ndb_mgmd-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/xtrabackup'
         packages:
           - class: xtrabackup-binary
