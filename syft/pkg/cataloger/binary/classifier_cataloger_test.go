@@ -707,6 +707,30 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// regression: go 1.8.x and 1.9.x s390x builds put the release-tag table
+			// (go1.1\x00go1.2\x00...go1.8\x00) just before the real build-version
+			// string, so the original 2-part-tolerant primary pattern reported
+			// "1.1" instead of the true patch version. see anchore/syft#4866.
+			logicalFixture: "go/1.8.7/linux-s390x",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.8.7",
+				PURL:      "pkg:generic/go@1.8.7",
+				Locations: locations("go"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
+			logicalFixture: "go/1.9.7/linux-s390x",
+			expected: pkg.Package{
+				Name:      "go",
+				Version:   "1.9.7",
+				PURL:      "pkg:generic/go@1.9.7",
+				Locations: locations("go"),
+				Metadata:  metadata("go-binary"),
+			},
+		},
+		{
 			logicalFixture: "node/0.10.48/linux-amd64",
 			expected: pkg.Package{
 				Name:      "node",

@@ -198,8 +198,10 @@ func getPlatform(binaryPath string) (string, error) {
 }
 
 const (
-	amd64 = "amd64"
-	arm64 = "arm64"
+	amd64   = "amd64"
+	arm64   = "arm64"
+	s390x   = "s390x"
+	ppc64le = "ppc64le"
 )
 
 func getPlatformElf(f *os.File) string {
@@ -214,6 +216,10 @@ func getPlatformElf(f *os.File) string {
 		arch = amd64
 	case elf.EM_AARCH64:
 		arch = arm64
+	case elf.EM_S390:
+		arch = s390x
+	case elf.EM_PPC64:
+		arch = ppc64le
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", elfFile.Machine)
