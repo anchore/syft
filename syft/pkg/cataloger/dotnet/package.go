@@ -324,7 +324,7 @@ func findVersionFromVersionResources(versionResources map[string]string) string 
 	fileVersion := extractVersionFromResourcesValue(versionResources["FileVersion"])
 
 	// For Microsoft PE files, ProductVersion is the authoritative release version.
-	// FileVersion is often a CI build stamp (major.minor.<buildfate>.<buildtime>)
+	// FileVersion is often a CI build stamp (major.minor.<builddate>.<buildtime>)
 	// which numerically compares greater than the true release version (e.g.
 	// 8.0.324 > 8.0.3). When ProductVersion contains semantic metadata (+),
 	// it is always the preferred version source for release identification.
