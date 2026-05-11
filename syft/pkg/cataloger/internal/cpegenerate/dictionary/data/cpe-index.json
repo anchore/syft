@@ -178,6 +178,15 @@
       "github.com/stacklok/minder": [
         "cpe:2.3:a:lfprojects:minder:*:*:*:*:*:go:*:*"
       ],
+      "github.com/tomwright/dasel": [
+        "cpe:2.3:a:tomwright:dasel:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/tomwright/dasel/v2": [
+        "cpe:2.3:a:tomwright:dasel:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/tomwright/dasel/v3": [
+        "cpe:2.3:a:tomwright:dasel:*:*:*:*:*:go:*:*"
+      ],
       "github.com/valyala/fasthttp": [
         "cpe:2.3:a:fasthttp_project:fasthttp:*:*:*:*:*:*:*:*"
       ],
@@ -2277,6 +2286,9 @@
       ],
       "@apollosproject/data-connector-rock": [
         "cpe:2.3:a:apollosapp:data-connector-rock:*:*:*:*:*:node.js:*:*"
+      ],
+      "@appium/support": [
+        "cpe:2.3:a:appium:appium\\/support:*:*:*:*:*:node.js:*:*"
       ],
       "@astrojs/cloudflare": [
         "cpe:2.3:a:astro:\\@astrojs\\/cloudflare:*:*:*:*:*:node.js:*:*"
@@ -4462,6 +4474,9 @@
       "mpath": [
         "cpe:2.3:a:mpath_project:mpath:*:*:*:*:*:node.js:*:*"
       ],
+      "mppx": [
+        "cpe:2.3:a:wevm:mppx:*:*:*:*:*:node.js:*:*"
+      ],
       "mqtt-packet": [
         "cpe:2.3:a:mqtt-packet_project:mqtt-packet:*:*:*:*:*:node.js:*:*"
       ],
@@ -4893,6 +4908,9 @@
       "parsejson": [
         "cpe:2.3:a:parsejson_project:parsejson:*:*:*:*:*:node.js:*:*"
       ],
+      "parsoid": [
+        "cpe:2.3:a:wikimedia:parsoid:*:*:*:*:*:node.js:*:*"
+      ],
       "passport": [
         "cpe:2.3:a:passport_project:passport:*:*:*:*:*:node.js:*:*"
       ],
@@ -5203,6 +5221,9 @@
       "robot-js": [
         "cpe:2.3:a:getrobot:robot-js:*:*:*:*:*:node.js:*:*"
       ],
+      "rollup": [
+        "cpe:2.3:a:rollupjs:rollup:*:*:*:*:*:node.js:*:*"
+      ],
       "rollup-plugin-dev-server": [
         "cpe:2.3:a:rollup-plugin-dev-server_project:rollup-plugin-dev-server:*:*:*:*:*:node.js:*:*"
       ],
@@ -5223,6 +5244,9 @@
       ],
       "rtcmulticonnection-client": [
         "cpe:2.3:a:rtcmulticonnection-client_project:rtcmulticonnection-client:*:*:*:*:*:node.js:*:*"
+      ],
+      "rwsdk": [
+        "cpe:2.3:a:redwoodjs:redwoodsdk:*:*:*:*:*:*:*:*"
       ],
       "s3-uploader": [
         "cpe:2.3:a:s3-uploader_project:s3-uploader:*:*:*:*:*:node.js:*:*"
@@ -5474,6 +5498,9 @@
       ],
       "sockjs": [
         "cpe:2.3:a:sockjs_project:sockjs:*:*:*:*:*:node.js:*:*"
+      ],
+      "spin.js": [
+        "cpe:2.3:a:spin.js:spin.js:*:*:*:*:*:node.js:*:*"
       ],
       "split-html-to-chars": [
         "cpe:2.3:a:split-html-to-chars_project:split-html-to-chars:*:*:*:*:*:node.js:*:*"
@@ -5795,6 +5822,9 @@
       ],
       "utils-extend": [
         "cpe:2.3:a:utils-extend_project:utils-extend:*:*:*:*:*:node.js:*:*"
+      ],
+      "uuid": [
+        "cpe:2.3:a:uuidjs:uuid:*:*:*:*:*:node.js:*:*"
       ],
       "uv-tj-demo": [
         "cpe:2.3:a:uv-tj-demo_project:uv-tj-demo:*:*:*:*:*:node.js:*:*"
@@ -6356,6 +6386,9 @@
       "loguru": [
         "cpe:2.3:a:loguru_project:loguru:*:*:*:*:*:python:*:*"
       ],
+      "lupa": [
+        "cpe:2.3:a:scoder:lupa:*:*:*:*:*:python:*:*"
+      ],
       "lxml": [
         "cpe:2.3:a:lxml:lxml:*:*:*:*:*:*:*:*"
       ],
@@ -6437,6 +6470,9 @@
       "pdm": [
         "cpe:2.3:a:frostming:pdm:*:*:*:*:*:python:*:*"
       ],
+      "picklescan": [
+        "cpe:2.3:a:mmaitre314:picklescan:*:*:*:*:*:*:*:*"
+      ],
       "pillow-heif": [
         "cpe:2.3:a:bigcat88:pillow-heif:*:*:*:*:*:python:*:*"
       ],
@@ -6502,6 +6538,9 @@
       ],
       "pydash": [
         "cpe:2.3:a:derrickgilland:pydash:*:*:*:*:*:python:*:*"
+      ],
+      "pydicom": [
+        "cpe:2.3:a:pydicom:pydicom:*:*:*:*:*:python:*:*"
       ],
       "pyesasky": [
         "cpe:2.3:a:esa:pyesasky:*:*:*:*:*:python:*:*"
@@ -6632,11 +6671,17 @@
       "starlette": [
         "cpe:2.3:a:encode:starlette:*:*:*:*:*:python:*:*"
       ],
+      "strawberry-graphql": [
+        "cpe:2.3:a:strawberry:strawberry_graphql:*:*:*:*:*:python:*:*"
+      ],
       "tablib": [
         "cpe:2.3:a:python:tablib:*:*:*:*:*:*:*:*"
       ],
       "taguette": [
         "cpe:2.3:a:taguette:taguette:*:*:*:*:*:*:*:*"
+      ],
+      "telnyx": [
+        "cpe:2.3:a:telnyx:telnyx:*:*:*:*:*:python:*:*"
       ],
       "tkvideoplayer": [
         "cpe:2.3:a:python:tkvideoplayer:*:*:*:*:*:*:*:*"
@@ -6652,6 +6697,9 @@
       ],
       "unearth": [
         "cpe:2.3:a:frostming:unearth:*:*:*:*:*:python:*:*"
+      ],
+      "unstructured": [
+        "cpe:2.3:a:unstructured:unstructured:*:*:*:*:*:python:*:*"
       ],
       "untangle": [
         "cpe:2.3:a:untangle_project:untangle:*:*:*:*:*:python:*:*"
@@ -6873,7 +6921,8 @@
         "cpe:2.3:a:boazsegev:iodine:*:*:*:*:*:ruby:*:*"
       ],
       "json": [
-        "cpe:2.3:a:json_project:json:*:*:*:*:*:ruby:*:*"
+        "cpe:2.3:a:json_project:json:*:*:*:*:*:ruby:*:*",
+        "cpe:2.3:a:ruby-lang:json:*:*:*:*:*:ruby:*:*"
       ],
       "json-jwt": [
         "cpe:2.3:a:json-jwt_project:json-jwt:*:*:*:*:*:ruby:*:*"
@@ -7346,6 +7395,9 @@
       "containers": [
         "cpe:2.3:a:containers_project:containers:*:*:*:*:*:rust:*:*"
       ],
+      "coreutils": [
+        "cpe:2.3:a:uutils:coreutils:*:*:*:*:*:rust:*:*"
+      ],
       "cranelift-codegen": [
         "cpe:2.3:a:bytecodealliance:cranelift-codegen:*:*:*:*:*:rust:*:*"
       ],
@@ -7501,6 +7553,9 @@
       ],
       "lucet-runtime-internals": [
         "cpe:2.3:a:lucet-runtime-internals_project:lucet-runtime-internals:*:*:*:*:*:rust:*:*"
+      ],
+      "lz4_flex": [
+        "cpe:2.3:a:pseitz:lz4_flex:*:*:*:*:*:rust:*:*"
       ],
       "magnetic": [
         "cpe:2.3:a:magnetic_project:magnetic:*:*:*:*:*:rust:*:*"
@@ -7771,6 +7826,18 @@
       ],
       "zebra-consensus": [
         "cpe:2.3:a:zfnd:zebra-consensus:*:*:*:*:*:rust:*:*"
+      ],
+      "zebra-rpc": [
+        "cpe:2.3:a:zfnd:zebra-rpc:*:*:*:*:*:rust:*:*"
+      ],
+      "zebra-script": [
+        "cpe:2.3:a:zfnd:zebra-script:*:*:*:*:*:rust:*:*"
+      ],
+      "zebrad": [
+        "cpe:2.3:a:zfnd:zebrad:*:*:*:*:*:rust:*:*"
+      ],
+      "zeptoclaw": [
+        "cpe:2.3:a:zeptoclaw:zeptoclaw:*:*:*:*:*:rust:*:*"
       ],
       "zeroize_derive": [
         "cpe:2.3:a:zeroize_derive_project:zeroize_derive:*:*:*:*:*:rust:*:*"
@@ -12521,6 +12588,9 @@
       ],
       "friends": [
         "cpe:2.3:a:alex.kirk:friends:*:*:*:*:*:wordpress:*:*"
+      ],
+      "front-end-editor": [
+        "cpe:2.3:a:scribu:front-end_editor:*:*:*:*:*:wordpress:*:*"
       ],
       "front-end-only-users": [
         "cpe:2.3:a:etoilewebdesign:front_end_users:*:*:*:*:*:wordpress:*:*"
@@ -17413,6 +17483,9 @@
       "sexy-contact-form": [
         "cpe:2.3:a:creative-solutions:creative_contact_form:*:*:*:*:*:wordpress:*:*"
       ],
+      "sg-cachepress": [
+        "cpe:2.3:a:siteground:speed_optimizer:*:*:*:*:*:wordpress:*:*"
+      ],
       "sg-security": [
         "cpe:2.3:a:siteground:security_optimizer:*:*:*:*:*:wordpress:*:*"
       ],
@@ -22036,6 +22109,9 @@
       ],
       "wpshopgermany-protectedshops": [
         "cpe:2.3:a:maennchen1:wpshopgermany_-_protected_shops:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wpshopify": [
+        "cpe:2.3:a:shopwp_project:shopwp:*:*:*:*:*:wordpress:*:*"
       ],
       "wpsimpletools-log-viewer": [
         "cpe:2.3:a:wpsimpletools:basic_log_viewer:*:*:*:*:*:wordpress:*:*"
