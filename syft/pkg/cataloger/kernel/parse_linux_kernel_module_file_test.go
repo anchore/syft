@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"debug/elf"
 	"encoding/binary"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/klauspost/compress/zstd"
@@ -13,112 +15,104 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/ulikunitz/xz"
 
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+func testContext(t *testing.T) context.Context {
+	t.Helper()
+	td := tmpdir.FromPath(t.TempDir())
+	return tmpdir.WithValue(context.Background(), td)
+}
+
 // minimalKOBytes constructs a minimal ELF64 LE relocatable object with a .modinfo
 // section containing the given null-terminated key=value entries.
 func minimalKOBytes(entries []string) []byte {
-	// Build .modinfo section data: each entry is key=value\0
-	var modinfo []byte
+	// .modinfo section: each entry is key=value\0
+	var modinfo bytes.Buffer
 	for _, e := range entries {
-		modinfo = append(modinfo, []byte(e)...)
-		modinfo = append(modinfo, 0)
+		modinfo.WriteString(e)
+		modinfo.WriteByte(0)
 	}
 
-	// Section name string table: \0 .modinfo\0 .shstrtab\0
+	// section header string table — embeds names of all sections back-to-back, leading null required.
+	// offsets below index into this blob.
 	shstrtab := []byte("\x00.modinfo\x00.shstrtab\x00")
-	modinfoNameOff := uint32(1)  // offset of ".modinfo" in shstrtab
-	shstrtabNameOff := uint32(10) // offset of ".shstrtab" in shstrtab
-
-	// ELF64 header is 64 bytes.
-	// We have 3 sections: null, .modinfo, .shstrtab
 	const (
-		elfHeaderSize  = 64
-		sectionHdrSize = 64
-		numSections    = 3
+		modinfoNameOff  uint32 = 1
+		shstrtabNameOff uint32 = 10
 	)
 
-	modinfoOff := uint64(elfHeaderSize)
-	modinfoSize := uint64(len(modinfo))
+	const (
+		ehdrSize    uint64 = 64
+		shdrSize    uint64 = 64
+		numSections uint16 = 3 // null + .modinfo + .shstrtab
+	)
 
-	shstrtabOff := modinfoOff + modinfoSize
-	shstrtabSize := uint64(len(shstrtab))
+	// layout: [ehdr][modinfo][shstrtab][pad to 8][section headers]
+	var (
+		modinfoOff   = ehdrSize
+		modinfoSize  = uint64(modinfo.Len())
+		shstrtabOff  = modinfoOff + modinfoSize
+		shstrtabSize = uint64(len(shstrtab))
+		shdrsOff     = alignUp(shstrtabOff+shstrtabSize, 8)
+	)
 
-	// Align section header table to 8 bytes
-	shdrsOff := shstrtabOff + shstrtabSize
-	if shdrsOff%8 != 0 {
-		shdrsOff += 8 - (shdrsOff % 8)
+	header := elf.Header64{
+		Ident: [16]byte{
+			0x7f, 'E', 'L', 'F',
+			byte(elf.ELFCLASS64),
+			byte(elf.ELFDATA2LSB),
+			byte(elf.EV_CURRENT),
+		},
+		Type:      uint16(elf.ET_REL),
+		Machine:   uint16(elf.EM_X86_64),
+		Version:   uint32(elf.EV_CURRENT),
+		Shoff:     shdrsOff,
+		Ehsize:    uint16(ehdrSize),
+		Shentsize: uint16(shdrSize),
+		Shnum:     numSections,
+		Shstrndx:  numSections - 1, // .shstrtab is last
 	}
 
-	buf := new(bytes.Buffer)
-	le := binary.LittleEndian
+	sections := []elf.Section64{
+		{}, // SHN_UNDEF
+		{
+			Name:      modinfoNameOff,
+			Type:      uint32(elf.SHT_PROGBITS),
+			Off:       modinfoOff,
+			Size:      modinfoSize,
+			Addralign: 1,
+		},
+		{
+			Name:      shstrtabNameOff,
+			Type:      uint32(elf.SHT_STRTAB),
+			Off:       shstrtabOff,
+			Size:      shstrtabSize,
+			Addralign: 1,
+		},
+	}
 
-	// ELF header
-	buf.Write([]byte{0x7f, 'E', 'L', 'F'}) // magic
-	buf.WriteByte(2)                         // EI_CLASS: ELFCLASS64
-	buf.WriteByte(1)                         // EI_DATA: ELFDATA2LSB
-	buf.WriteByte(1)                         // EI_VERSION: EV_CURRENT
-	buf.WriteByte(0)                         // EI_OSABI
-	buf.Write(make([]byte, 8))               // EI_ABIVERSION + padding
-
-	writeU16 := func(v uint16) { binary.Write(buf, le, v) } //nolint:errcheck
-	writeU32 := func(v uint32) { binary.Write(buf, le, v) } //nolint:errcheck
-	writeU64 := func(v uint64) { binary.Write(buf, le, v) } //nolint:errcheck
-
-	writeU16(1)               // e_type: ET_REL
-	writeU16(62)              // e_machine: EM_X86_64
-	writeU32(1)               // e_version: EV_CURRENT
-	writeU64(0)               // e_entry
-	writeU64(0)               // e_phoff (no program headers)
-	writeU64(shdrsOff)        // e_shoff
-	writeU32(0)               // e_flags
-	writeU16(elfHeaderSize)   // e_ehsize
-	writeU16(0)               // e_phentsize
-	writeU16(0)               // e_phnum
-	writeU16(sectionHdrSize)  // e_shentsize
-	writeU16(numSections)     // e_shnum
-	writeU16(numSections - 1) // e_shstrndx (.shstrtab is last)
-
-	// Write section data
-	buf.Write(modinfo)
+	var buf bytes.Buffer
+	_ = binary.Write(&buf, binary.LittleEndian, header)
+	buf.Write(modinfo.Bytes())
 	buf.Write(shstrtab)
-
-	// Pad to shdrsOff
 	for uint64(buf.Len()) < shdrsOff {
 		buf.WriteByte(0)
 	}
-
-	// Section header 0: null
-	buf.Write(make([]byte, sectionHdrSize))
-
-	// Section header 1: .modinfo  (SHT_PROGBITS=1)
-	writeU32(modinfoNameOff) // sh_name
-	writeU32(1)              // sh_type: SHT_PROGBITS
-	writeU64(0)              // sh_flags
-	writeU64(0)              // sh_addr
-	writeU64(modinfoOff)     // sh_offset
-	writeU64(modinfoSize)    // sh_size
-	writeU32(0)              // sh_link
-	writeU32(0)              // sh_info
-	writeU64(1)              // sh_addralign
-	writeU64(0)              // sh_entsize
-
-	// Section header 2: .shstrtab (SHT_STRTAB=3)
-	writeU32(shstrtabNameOff) // sh_name
-	writeU32(3)               // sh_type: SHT_STRTAB
-	writeU64(0)               // sh_flags
-	writeU64(0)               // sh_addr
-	writeU64(shstrtabOff)     // sh_offset
-	writeU64(shstrtabSize)    // sh_size
-	writeU32(0)               // sh_link
-	writeU32(0)               // sh_info
-	writeU64(1)               // sh_addralign
-	writeU64(0)               // sh_entsize
-
+	for _, s := range sections {
+		_ = binary.Write(&buf, binary.LittleEndian, s)
+	}
 	return buf.Bytes()
+}
+
+func alignUp(v, align uint64) uint64 {
+	if v%align == 0 {
+		return v
+	}
+	return v + (align - v%align)
 }
 
 func gzCompress(data []byte) []byte {
@@ -207,7 +201,7 @@ func TestParseLinuxKernelModuleFile_Compressed(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := makeLocationReadCloser(tt.path, tt.data)
-			pkgs, rels, err := parseLinuxKernelModuleFile(context.Background(), nil, &generic.Environment{}, reader)
+			pkgs, rels, err := parseLinuxKernelModuleFile(testContext(t), nil, &generic.Environment{}, reader)
 			require.NoError(t, err)
 			require.Len(t, pkgs, 1)
 			assert.Empty(t, rels)
@@ -237,22 +231,55 @@ func TestDecompressedModuleReader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			br := bytes.NewReader(tt.data)
 			wrapped := struct {
 				io.ReadCloser
 				io.ReaderAt
 				io.Seeker
 			}{
-				ReadCloser: io.NopCloser(bytes.NewReader(tt.data)),
-				ReaderAt:   bytes.NewReader(tt.data),
-				Seeker:     bytes.NewReader(tt.data),
+				ReadCloser: io.NopCloser(br),
+				ReaderAt:   br,
+				Seeker:     br,
 			}
-			got, err := decompressedModuleReader(tt.path, wrapped)
+			got, err := decompressedModuleReader(testContext(t), tt.path, wrapped)
 			require.NoError(t, err)
 			require.NotNil(t, got)
+			t.Cleanup(func() { _ = got.Close() })
 
 			b, err := io.ReadAll(got)
 			require.NoError(t, err)
 			assert.Equal(t, koBytes, b, "decompressed bytes should match original .ko bytes")
 		})
 	}
+}
+
+func TestDecompressedModuleReader_TempFileRemovedOnClose(t *testing.T) {
+	koBytes := minimalKOBytes([]string{"name=test", "vermagic=5.15.0 SMP"})
+	data := gzCompress(koBytes)
+
+	br := bytes.NewReader(data)
+	wrapped := struct {
+		io.ReadCloser
+		io.ReaderAt
+		io.Seeker
+	}{
+		ReadCloser: io.NopCloser(br),
+		ReaderAt:   br,
+		Seeker:     br,
+	}
+
+	got, err := decompressedModuleReader(testContext(t), "/test.ko.gz", wrapped)
+	require.NoError(t, err)
+
+	tfr, ok := got.(*tempFileUnionReader)
+	require.True(t, ok, "expected compressed path to spill to a temp file")
+	path := tfr.File.Name()
+
+	_, err = os.Stat(path)
+	require.NoError(t, err, "temp file should exist before Close")
+
+	require.NoError(t, got.Close())
+
+	_, err = os.Stat(path)
+	assert.True(t, os.IsNotExist(err), "temp file should be removed after Close, got err=%v", err)
 }
