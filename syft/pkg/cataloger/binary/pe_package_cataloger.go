@@ -15,7 +15,7 @@ import (
 // NewPEPackageCataloger returns a cataloger that interprets packages from DLL and EXE files.
 func NewPEPackageCataloger() pkg.Cataloger {
 	return generic.NewCataloger("pe-binary-package-cataloger").
-		WithParserByGlobs(parsePE, "**/*.dll", "**/*.exe")
+		WithParserByGlobs(parsePE, "**/*.dll", "**/*.exe", "**/*.bpl")
 }
 
 func parsePE(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
