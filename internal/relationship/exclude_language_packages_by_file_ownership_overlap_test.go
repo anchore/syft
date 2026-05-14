@@ -1,7 +1,6 @@
 package relationship
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,105 +12,82 @@ import (
 func Test_excludeLanguagePackageByFileOwnershipOverlap(t *testing.T) {
 	tests := []struct {
 		name         string
-		relationship artifact.Relationship
 		parent       *pkg.Package
 		child        *pkg.Package
-		expected     artifact.ID
+		shouldRemove bool
 	}{
 		{
 			name: "OS package owns Python package - should remove Python package",
-			relationship: artifact.Relationship{
-				From: pkg.Package{
-					Type: pkg.DebPkg,
-				},
-				To: pkg.Package{
-					Type: pkg.PythonPkg,
-				},
-				Type: artifact.OwnershipByFileOverlapRelationship,
-			},
 			parent: &pkg.Package{
+				Name: "python3-django-deb",
 				Type: pkg.DebPkg,
 			},
 			child: &pkg.Package{
+				Name: "django",
 				Type: pkg.PythonPkg,
 			},
-			expected: "", // will be child.ID() in actual implementation
+			shouldRemove: true,
 		},
 		{
 			name: "Binary to Python - should not remove",
-			relationship: artifact.Relationship{
-				From: pkg.Package{
-					Type: pkg.BinaryPkg,
-				},
-				To: pkg.Package{
-					Type: pkg.PythonPkg,
-				},
-				Type: artifact.OwnershipByFileOverlapRelationship,
-			},
 			parent: &pkg.Package{
+				Name: "python-binary",
 				Type: pkg.BinaryPkg,
 			},
 			child: &pkg.Package{
+				Name: "django-py",
 				Type: pkg.PythonPkg,
 			},
-			expected: "",
+			shouldRemove: false,
 		},
 		{
 			name: "APK package owns Ruby package - should remove Ruby package",
-			relationship: artifact.Relationship{
-				From: pkg.Package{
-					Type: pkg.ApkPkg,
-				},
-				To: pkg.Package{
-					Type: pkg.GemPkg,
-				},
-				Type: artifact.OwnershipByFileOverlapRelationship,
-			},
 			parent: &pkg.Package{
+				Name: "ruby-rails-apk",
 				Type: pkg.ApkPkg,
 			},
 			child: &pkg.Package{
+				Name: "rails",
 				Type: pkg.GemPkg,
 			},
-			expected: "", // will be child.ID() in actual implementation
+			shouldRemove: true,
 		},
 		{
 			name: "RPM package owns NPM package - should remove NPM package",
-			relationship: artifact.Relationship{
-				From: pkg.Package{
-					Type: pkg.RpmPkg,
-				},
-				To: pkg.Package{
-					Type: pkg.NpmPkg,
-				},
-				Type: artifact.OwnershipByFileOverlapRelationship,
-			},
 			parent: &pkg.Package{
+				Name: "nodejs-express-rpm",
 				Type: pkg.RpmPkg,
 			},
 			child: &pkg.Package{
+				Name: "express",
 				Type: pkg.NpmPkg,
 			},
-			expected: "", // will be child.ID() in actual implementation
+			shouldRemove: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.parent.SetID()
+			tt.child.SetID()
+
 			collection := pkg.NewCollection()
 			collection.Add(*tt.parent)
 			collection.Add(*tt.child)
 
-			tt.relationship.From = *tt.parent
-			tt.relationship.To = *tt.child
+			rel := artifact.Relationship{
+				From: *tt.parent,
+				To:   *tt.child,
+				Type: artifact.OwnershipByFileOverlapRelationship,
+			}
 
-			result := excludeLanguagePackageByFileOwnershipOverlap(tt.relationship, collection)
+			result := excludeLanguagePackageByFileOwnershipOverlap(rel, collection)
 
-			// For OS -> language package, we should get the child ID
-			if slices.Contains(osCatalogerTypes, tt.parent.Type) && slices.Contains(languageCatalogerTypes, tt.child.Type) {
-				assert.Equal(t, tt.child.ID(), result)
+			if tt.shouldRemove {
+				assert.Equal(t, tt.child.ID(), result, "should remove child package")
+				assert.NotEqual(t, artifact.ID(""), result, "child ID must not be empty for a real assertion")
 			} else {
-				assert.Equal(t, artifact.ID(""), result)
+				assert.Equal(t, artifact.ID(""), result, "should not remove any package")
 			}
 		})
 	}
@@ -119,11 +95,10 @@ func Test_excludeLanguagePackageByFileOwnershipOverlap(t *testing.T) {
 
 func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 	tests := []struct {
-		name           string
-		parent         *pkg.Package
-		child          *pkg.Package
-		shouldRemove   bool
-		expectedToKeep string
+		name         string
+		parent       *pkg.Package
+		child        *pkg.Package
+		shouldRemove bool
 	}{
 		{
 			name: "deb owns python - remove python",
