@@ -103,9 +103,11 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 		{
 			name: "deb owns python - remove python",
 			parent: &pkg.Package{
+				Name: "python3-django-deb",
 				Type: pkg.DebPkg,
 			},
 			child: &pkg.Package{
+				Name: "django",
 				Type: pkg.PythonPkg,
 			},
 			shouldRemove: true,
@@ -113,9 +115,11 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 		{
 			name: "apk owns npm - remove npm",
 			parent: &pkg.Package{
+				Name: "nodejs-express-apk",
 				Type: pkg.ApkPkg,
 			},
 			child: &pkg.Package{
+				Name: "express",
 				Type: pkg.NpmPkg,
 			},
 			shouldRemove: true,
@@ -123,9 +127,11 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 		{
 			name: "rpm owns ruby - remove ruby",
 			parent: &pkg.Package{
+				Name: "ruby-rails-rpm",
 				Type: pkg.RpmPkg,
 			},
 			child: &pkg.Package{
+				Name: "rails",
 				Type: pkg.GemPkg,
 			},
 			shouldRemove: true,
@@ -133,9 +139,11 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 		{
 			name: "binary owns python - keep both",
 			parent: &pkg.Package{
+				Name: "python-binary",
 				Type: pkg.BinaryPkg,
 			},
 			child: &pkg.Package{
+				Name: "django-py",
 				Type: pkg.PythonPkg,
 			},
 			shouldRemove: false,
@@ -143,9 +151,11 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 		{
 			name: "deb owns deb - keep both",
 			parent: &pkg.Package{
+				Name: "libfoo-deb",
 				Type: pkg.DebPkg,
 			},
 			child: &pkg.Package{
+				Name: "libbar-deb",
 				Type: pkg.DebPkg,
 			},
 			shouldRemove: false,
@@ -153,9 +163,11 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 		{
 			name: "python owns python - keep both",
 			parent: &pkg.Package{
+				Name: "django-parent",
 				Type: pkg.PythonPkg,
 			},
 			child: &pkg.Package{
+				Name: "django-child",
 				Type: pkg.PythonPkg,
 			},
 			shouldRemove: false,
@@ -164,10 +176,14 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.parent.SetID()
+			tt.child.SetID()
+
 			result := identifyOverlappingLanguageRelationship(tt.parent, tt.child)
 
 			if tt.shouldRemove {
 				assert.Equal(t, tt.child.ID(), result, "should remove child package")
+				assert.NotEqual(t, artifact.ID(""), result, "child ID must not be empty for a real assertion")
 			} else {
 				assert.Equal(t, artifact.ID(""), result, "should not remove any package")
 			}
