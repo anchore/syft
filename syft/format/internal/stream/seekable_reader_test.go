@@ -5,9 +5,30 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/stretchr/testify/require"
 )
+
+func utf8WithBOM(s string) []byte {
+	return append([]byte{0xEF, 0xBB, 0xBF}, []byte(s)...)
+}
+
+func utf16LEWithBOM(s string) []byte {
+	out := []byte{0xFF, 0xFE}
+	for _, r := range utf16.Encode([]rune(s)) {
+		out = append(out, byte(r&0xFF), byte(r>>8))
+	}
+	return out
+}
+
+func utf16BEWithBOM(s string) []byte {
+	out := []byte{0xFE, 0xFF}
+	for _, r := range utf16.Encode([]rune(s)) {
+		out = append(out, byte(r>>8), byte(r&0xFF))
+	}
+	return out
+}
 
 func TestSeekableReader(t *testing.T) {
 	tests := []struct {
@@ -97,6 +118,83 @@ func TestSeekableReader(t *testing.T) {
 				content, err := io.ReadAll(got)
 				require.NoError(t, err)
 				require.Equal(t, []byte{4, 5}, content)
+			},
+		},
+		{
+			name:  "utf-8 BOM is stripped (non-seekable input)",
+			input: bytes.NewBuffer(utf8WithBOM("hello world!")),
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader) // BOM path buffers, so result is *bytes.Reader
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "utf-8 BOM is stripped (seekable input)",
+			input: bytes.NewReader(utf8WithBOM("hello world!")),
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader)
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "utf-16LE is transcoded to utf-8 (non-seekable input)",
+			input: bytes.NewBuffer(utf16LEWithBOM("hello world!")),
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader)
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "utf-16LE is transcoded to utf-8 (seekable input)",
+			input: bytes.NewReader(utf16LEWithBOM("hello world!")),
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader)
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "utf-16BE is transcoded to utf-8 (non-seekable input)",
+			input: bytes.NewBuffer(utf16BEWithBOM("hello world!")),
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader)
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "utf-16BE is transcoded to utf-8 (seekable input)",
+			input: bytes.NewReader(utf16BEWithBOM("hello world!")),
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader)
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("hello world!"), content)
+			},
+		},
+		{
+			name:  "non-BOM input shorter than peek length",
+			input: bytes.NewBufferString("a"), // only 1 byte, can't even fill a BOM check
+			assert: func(input io.Reader, got io.ReadSeeker) {
+				_, ok := got.(*bytes.Reader)
+				require.True(t, ok)
+				content, err := io.ReadAll(got)
+				require.NoError(t, err)
+				require.Equal(t, []byte("a"), content)
 			},
 		},
 	}
@@ -223,4 +321,69 @@ func moveOffset(t *testing.T, reader io.ReadSeeker, offset int64) io.Reader {
 	require.NoError(t, err)
 	require.Equal(t, offset, pos)
 	return reader
+}
+
+func Test_hasBOM(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []byte
+		want bool
+	}{
+		{name: "empty", in: []byte{}, want: false},
+		{name: "short non-BOM", in: []byte{0xEF}, want: false},
+		{name: "utf-8 BOM", in: []byte{0xEF, 0xBB, 0xBF}, want: true},
+		{name: "utf-8 BOM with content", in: []byte{0xEF, 0xBB, 0xBF, 'a', 'b'}, want: true},
+		{name: "utf-16LE BOM", in: []byte{0xFF, 0xFE}, want: true},
+		{name: "utf-16BE BOM", in: []byte{0xFE, 0xFF}, want: true},
+		{name: "plain JSON {", in: []byte{'{'}, want: false},
+		{name: "plain ascii", in: []byte("hello"), want: false},
+		{name: "near-miss EF BB without BF", in: []byte{0xEF, 0xBB, 0xCC}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, hasBOM(tt.in))
+		})
+	}
+}
+
+func Test_peekHead_preservesReaderPosition(t *testing.T) {
+	t.Run("seekable reader, position restored", func(t *testing.T) {
+		r := bytes.NewReader([]byte("ABCDEFG"))
+		head, rest, err := peekHead(r, 3)
+		require.NoError(t, err)
+		require.Equal(t, []byte("ABC"), head)
+		// rest should yield the original content from the start
+		content, err := io.ReadAll(rest)
+		require.NoError(t, err)
+		require.Equal(t, []byte("ABCDEFG"), content)
+	})
+	t.Run("seekable reader with offset, position restored to that offset", func(t *testing.T) {
+		r := bytes.NewReader([]byte("ABCDEFG"))
+		_, err := r.Seek(2, io.SeekStart)
+		require.NoError(t, err)
+		head, rest, err := peekHead(r, 3)
+		require.NoError(t, err)
+		require.Equal(t, []byte("CDE"), head)
+		content, err := io.ReadAll(rest)
+		require.NoError(t, err)
+		require.Equal(t, []byte("CDEFG"), content)
+	})
+	t.Run("non-seekable reader, peeked bytes still available in rest", func(t *testing.T) {
+		r := bytes.NewBufferString("ABCDEFG")
+		head, rest, err := peekHead(r, 3)
+		require.NoError(t, err)
+		require.Equal(t, []byte("ABC"), head)
+		content, err := io.ReadAll(rest)
+		require.NoError(t, err)
+		require.Equal(t, []byte("ABCDEFG"), content)
+	})
+	t.Run("short input returns what is available", func(t *testing.T) {
+		r := bytes.NewBufferString("AB")
+		head, rest, err := peekHead(r, 3)
+		require.NoError(t, err)
+		require.Equal(t, []byte("AB"), head)
+		content, err := io.ReadAll(rest)
+		require.NoError(t, err)
+		require.Equal(t, []byte("AB"), content)
+	})
 }
