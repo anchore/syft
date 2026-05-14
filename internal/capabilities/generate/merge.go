@@ -490,11 +490,15 @@ func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry 
 			}
 
 			for _, o := range binaryClassifierOverrides[classifier.Class] {
+				cpeStrings := make([]string, len(o.CPEs))
+				for i, c := range o.CPEs {
+					cpeStrings[i] = c.Attributes.BindToFmtString()
+				}
 				packages = append(packages, capabilities.DetectorPackageInfo{
 					Class: o.Class,
 					Name:  o.Package,
 					PURL:  stripPURLVersion(o.PURL),
-					CPEs:  o.CPEs,
+					CPEs:  cpeStrings,
 					Type:  "BinaryPkg",
 				})
 			}

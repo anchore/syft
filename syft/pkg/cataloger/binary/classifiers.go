@@ -295,6 +295,96 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
+			// Legacy MySQL Cluster contains both MySQL Server and MySQL Cluster versions (Example: 5.7.33-ndb-7.5.21)
+			// This classifier identifies the MySQL Server version of the mysqld binary (5.7.33 in the example above).
+			Class:    "mysqld-mysql-cluster-legacy-binary",
+			FileGlob: "**/mysqld",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`cluster-gpl\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)\-ndb\-[0-9]+(\.[0-9]+)?(\.[0-9]+)?`),
+			Package: "mysql-server",
+			PURL:    mustPURL("pkg:generic/mysql-server@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "mysqld-binary",
+			FileGlob: "**/mysqld",
+			EvidenceMatcher: binutils.BranchingEvidenceMatcher([]binutils.Classifier{
+				{
+					// Legacy MySQL Cluster contains both MySQL Server and MySQL Cluster versions (Example: 5.7.33-ndb-7.5.21)
+					// This classifier identifies the MySQL Cluster version of the mysqld binary (7.5.21 in the example above).
+					Class: "mysqld-mysql-cluster-legacy-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`cluster-gpl\x00[0-9]+(\.[0-9]+)?(\.[0-9]+)?\-ndb\-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)`),
+					Package: "mysql-cluster",
+					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+				{
+					// mysqld from MySQL Cluster after versioning was aligned with MySQL Server
+					Class: "mysqld-mysql-cluster-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+					Package: "mysql-cluster",
+					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+				{
+					// mysqld from MySQL Server
+					Class: "mysqld-mysql-server-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+					Package: "mysql-server",
+					PURL:    mustPURL("pkg:generic/mysql-server@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+			}...),
+		},
+		{
+			Class:    "ndbd-binary",
+			FileGlob: "**/ndbd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "ndbmtd-binary",
+			FileGlob: "**/ndbmtd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "ndb_mgmd-binary",
+			FileGlob: "**/ndb_mgmd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
 			Class:    "xtrabackup-binary",
 			FileGlob: "**/xtrabackup",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
