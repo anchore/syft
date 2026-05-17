@@ -510,12 +510,78 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "helm/4.1.4/linux-s390x",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "4.1.4",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@4.1.4",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/3.15.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.15.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.15.2",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/3.12.0/linux-s390x",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.12.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.12.0",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
 			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.11.1",
 				Type:      "binary",
 				PURL:      "pkg:golang/helm.sh/helm@3.11.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/3.0.0-alpha.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.0.0-alpha.1",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.0.0-alpha.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/2.17.0-rc.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "2.17.0-rc.1",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@2.17.0-rc.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/2.0.0-beta.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "2.0.0-beta.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@2.0.0-beta.2",
 				Locations: locations("helm"),
 				Metadata:  metadata("helm"),
 			},

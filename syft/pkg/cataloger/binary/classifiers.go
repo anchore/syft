@@ -97,8 +97,17 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "helm",
 			FileGlob: "**/helm",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL]v1.21.2[NUL].......[NUL][NUL]v4.1.4[NUL][NUL][NUL]
+				// [NUL]v2.0.0-beta.2[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00{2,}`),
+				// [NUK]'[DLE]v3.12.0[NUL][NUL]...go1.20.3[NUL][NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00+.{1,500}go[0-9]+\.[0-9]+\.[0-9]+\x00+`),
+				// [NUL]v3.11.1[NUL]�[NUL]
+				m.FileContentsVersionMatcher(`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00`),
+				// [NUL]@�@v3.15.2[NUL][NUL]
+				m.FileContentsVersionMatcher(`@v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00`),
+			),
 			Package: "helm",
 			PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
 			CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),

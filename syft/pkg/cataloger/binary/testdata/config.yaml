@@ -836,6 +836,27 @@ from-images:
       - /usr/local/lib/libruby.so.2.6.10
       - /usr/local/lib/libruby.so.2.6
 
+  - version: 4.1.4
+    images:
+      - ref: alpine/helm:4.1.4@sha256:d69c97f71f38128c3ed4b8bcd70b4de65efad9e09494c85d158661e7ffd8b719
+        platform: linux/s390x
+    paths:
+      - /usr/bin/helm
+
+  - version: 3.15.2
+    images:
+      - ref: alpine/helm:3.15.2@sha256:61185768b41810085cb57a9bc8de9003bea78ac0dd417e5b0b16223a6a0aa812
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 3.12.0
+    images:
+      - ref: alpine/helm:3.12.0@sha256:6f6e18df0710af82188ab8b27d3890b6d519c501c0982f3a76f3fdbff39ff3c7
+        platform: linux/s390x
+    paths:
+      - /usr/bin/helm
+
   - version: 3.11.1
     images:
       - ref: alpine/helm:3.11.1@sha256:8628e3695fb743a8b9de89626f1b7a221280c2152c0e288c2504e59b68233e8b
@@ -849,6 +870,27 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/helm
+
+  - version: 3.0.0-alpha.1
+    images:
+      - ref: alpine/helm:3.0.0-alpha.1@sha256:95bd39add326ac58a333815666aace6d4a28606a79eef96d4e44287b11540b69
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 2.17.0-rc.1
+    images:
+      - ref: alpine/helm:2.17.0-rc.1@sha256:3938b9f291794fe88489dae2a87e0ad9d634464c686186d4a3ca33beef84278d
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 2.0.0-beta.2
+    images:
+      - ref: alpine/helm:2.0.0-beta.2@sha256:97d97b27a723b28c459d6c92e7b0591c553e88e483a248235fbdaa4dacb2e6d5
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
 
   - version: 1.15.2
     images:
