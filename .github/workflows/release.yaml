@@ -23,9 +23,10 @@ on:
           - "install-script-only"
 
 jobs:
-
   version-available:
     if: ${{ github.event.inputs.phase == 'all' }}
+    permissions:
+      contents: read # required for fetching tags
     uses: anchore/workflows/.github/workflows/check-version-available.yaml@8b2b1caf40e03933c6807e03b99e883e2ceb5ac8 # v0.4.0
     with:
       version: ${{ github.event.inputs.version }}
@@ -33,7 +34,7 @@ jobs:
   check-gate:
     if: ${{ github.event.inputs.phase == 'all' }}
     permissions:
-      checks: read   # required for getting the status of specific check names
+      checks: read # required for getting the status of specific check names
     uses: anchore/workflows/.github/workflows/check-gate.yaml@8b2b1caf40e03933c6807e03b99e883e2ceb5ac8 # v0.4.0
     with:
       # these are checks that should be run on pull-request and merges to main.
@@ -42,8 +43,9 @@ jobs:
       checks: '["Acceptance tests (Linux)", "Acceptance tests (Mac)", "Build snapshot artifacts", "CLI tests (Linux)", "Integration tests", "Static analysis", "Unit tests"]'
 
   release:
-    needs: [ check-gate, version-available ]
+    needs: [check-gate, version-available]
     if: ${{ github.event.inputs.phase == 'all' }}
+    environment: release
     # runs-on.com: compute instances for parallel builds
     #   spot disabled: reliability for build workflows (used for releases too)
     #   goreleaser uses parallelism of 12, so we need more CPUs
@@ -51,10 +53,9 @@ jobs:
     #   tmpfs: faster io-intensive workflows
     runs-on: runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs
     permissions:
-      contents: write
-      packages: write
-      # required for goreleaser signs section with cosign
-      id-token: write
+      contents: write # required for creating the GitHub release and pushing the version tag
+      packages: write # required for publishing release artifacts to GitHub packages
+      id-token: write # required for keyless signing (cosign/sigstore OIDC)
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
         with:
@@ -65,31 +66,24 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Login to Docker Hub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  #v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 #v4.1.0
         with:
           username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
           password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  #v4.1.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 #v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Tag release
-        run: |
-          git config --global user.name "anchoreci"
-          git config --global user.email "anchoreci@users.noreply.github.com"
-          git tag -a "$VERSION" -m "Release $VERSION"
-          git push origin --tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ github.event.inputs.version }}
-
       - name: Build & publish release artifacts
         run: make ci-release
         env:
+          # used for pushing tags
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
           # for mac signing and notarization...
           QUILL_SIGN_P12: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_CHAIN }}
           QUILL_SIGN_PASSWORD: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_PASS }}
@@ -128,9 +122,11 @@ jobs:
         if: ${{ success() }}
 
   release-install-script:
-    needs: [ release ]
+    needs: [release]
     if: ${{ always() && (needs.release.result == 'success' || github.event.inputs.phase == 'install-script-only') }}
-    uses: "anchore/workflows/.github/workflows/release-install-script.yaml@main"
+    permissions:
+      contents: read # required for the reusable workflow to check out the repo and publish the install script
+    uses: anchore/workflows/.github/workflows/release-install-script.yaml@8b2b1caf40e03933c6807e03b99e883e2ceb5ac8 # v0.4.0
     with:
       tag: ${{ github.event.inputs.version }}
     secrets:
