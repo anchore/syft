@@ -2335,6 +2335,9 @@
       "@backstage/techdocs-common": [
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/techdocs-common:*:*:*:*:*:node.js:*:*"
       ],
+      "@better-auth/oauth-provider": [
+        "cpe:2.3:a:better-auth:better-auth\\/oauth-provider:*:*:*:*:*:node.js:*:*"
+      ],
       "@braintree/sanitize-url": [
         "cpe:2.3:a:paypal:braintree\\/sanitize-url:*:*:*:*:*:node.js:*:*"
       ],
@@ -2374,6 +2377,9 @@
       "@coding-solo/godot-mcp": [
         "cpe:2.3:a:coding-solo:godot_mcp:*:*:*:*:*:*:*:*"
       ],
+      "@contentauth/c2pa-web": [
+        "cpe:2.3:a:adobe:c2pa-web:*:*:*:*:*:node.js:*:*"
+      ],
       "@cookiex/deep": [
         "cpe:2.3:a:cookiex-deep_project:cookiex-deep:*:*:*:*:*:node.js:*:*"
       ],
@@ -2393,7 +2399,7 @@
         "cpe:2.3:a:evershop:evershop:*:*:*:*:*:node.js:*:*"
       ],
       "@fastify/middie": [
-        "cpe:2.3:a:openjsf:\\@fastify\\/middie:*:*:*:*:*:fastify:*:*"
+        "cpe:2.3:a:fastify:fastify\\/middie:*:*:*:*:*:node.js:*:*"
       ],
       "@fastly/js-compute": [
         "cpe:2.3:a:fastly:js-compute:*:*:*:*:*:node.js:*:*"
@@ -3433,6 +3439,9 @@
       "fast-string-search": [
         "cpe:2.3:a:fast_string_search_project:fast_string_search:*:*:*:*:*:node.js:*:*"
       ],
+      "fast-uri": [
+        "cpe:2.3:a:openjsf:fast-uri:*:*:*:*:*:node.js:*:*"
+      ],
       "fast-xml-parser": [
         "cpe:2.3:a:naturalintelligence:fast-xml-parser:*:*:*:*:*:*:*:*"
       ],
@@ -3896,6 +3905,9 @@
       ],
       "iniparserjs": [
         "cpe:2.3:a:iniparserjs_project:iniparserjs:*:*:*:*:*:node.js:*:*"
+      ],
+      "inngest": [
+        "cpe:2.3:a:inngest:inngest:*:*:*:*:*:node.js:*:*"
       ],
       "install-g-test": [
         "cpe:2.3:a:install-g-test_project:install-g-test:*:*:*:*:*:node.js:*:*"
@@ -5346,7 +5358,8 @@
         "cpe:2.3:a:serc.js_project:serc.js:*:*:*:*:*:node.js:*:*"
       ],
       "serialize-javascript": [
-        "cpe:2.3:a:verizon:serialize-javascript:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:verizon:serialize-javascript:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:yahoo:serialize_javascript:*:*:*:*:*:node.js:*:*"
       ],
       "serialize-to-js": [
         "cpe:2.3:a:serialize-to-js_project:serialize-to-js:*:*:*:*:*:node.js:*:*"
@@ -5613,6 +5626,9 @@
       ],
       "svelte": [
         "cpe:2.3:a:svelte:svelte:*:*:*:*:*:node.js:*:*"
+      ],
+      "svgo": [
+        "cpe:2.3:a:svgo:svgo:*:*:*:*:*:node.js:*:*"
       ],
       "swagger-ui-dist": [
         "cpe:2.3:a:smartbear:swagger-ui-dist:*:*:*:*:*:node.js:*:*"
@@ -6144,6 +6160,9 @@
       "XML2Dict": [
         "cpe:2.3:a:xml2dict_project:xml2dict:*:*:*:*:*:python:*:*"
       ],
+      "agixt": [
+        "cpe:2.3:a:agixt:agixt:*:*:*:*:*:*:*:*"
+      ],
       "aiohttp-session": [
         "cpe:2.3:a:aio-libs:aiohttp_session:*:*:*:*:*:*:*:*"
       ],
@@ -6170,6 +6189,9 @@
       ],
       "b2sdk": [
         "cpe:2.3:a:backblaze:b2-sdk-python:*:*:*:*:*:*:*:*"
+      ],
+      "bedrock-agentcore-starter-toolkit": [
+        "cpe:2.3:a:amazon:bedrock_agentcore_starter_toolkit:*:*:*:*:*:python:*:*"
       ],
       "black": [
         "cpe:2.3:a:python:black:*:*:*:*:*:python:*:*"
@@ -6379,6 +6401,9 @@
       ],
       "langchain-experimental": [
         "cpe:2.3:a:langchain:langchain_experimental:*:*:*:*:*:python:*:*"
+      ],
+      "langflow-base": [
+        "cpe:2.3:a:langflow:langflow-base:*:*:*:*:*:python:*:*"
       ],
       "lerobot": [
         "cpe:2.3:a:huggingface:lerobot:*:*:*:*:*:python:*:*"
@@ -6682,6 +6707,9 @@
       ],
       "telnyx": [
         "cpe:2.3:a:telnyx:telnyx:*:*:*:*:*:python:*:*"
+      ],
+      "tinytag": [
+        "cpe:2.3:a:tinytag:tinytag:*:*:*:*:*:python:*:*"
       ],
       "tkvideoplayer": [
         "cpe:2.3:a:python:tkvideoplayer:*:*:*:*:*:*:*:*"
@@ -7101,6 +7129,9 @@
       ],
       "rbovirt": [
         "cpe:2.3:a:amos_benari:rbovirt:*:*:*:*:*:ruby:*:*"
+      ],
+      "rdiscount": [
+        "cpe:2.3:a:dafoster:rdiscount:*:*:*:*:*:ruby:*:*"
       ],
       "rdoc": [
         "cpe:2.3:a:ruby-lang:rdoc:*:*:*:*:*:ruby:*:*"
@@ -7784,6 +7815,9 @@
       ],
       "try-mutex": [
         "cpe:2.3:a:try-mutex_project:try-mutex:*:*:*:*:*:rust:*:*"
+      ],
+      "tuftool": [
+        "cpe:2.3:a:amazon:tuftool:*:*:*:*:*:rust:*:*"
       ],
       "tungstenite": [
         "cpe:2.3:a:snapview:tungstenite:*:*:*:*:*:rust:*:*"
