@@ -382,6 +382,7 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"spring-jmx":                                  "org.springframework",
 	"spring-jpa":                                  "org.springframework",
 	"spring-ldap":                                 "org.springframework",
+	"spring-ldap-core":                           "org.springframework.ldap",
 	"spring-messaging":                            "org.springframework",
 	"spring-mock":                                 "org.springframework",
 	"spring-ojb":                                  "org.springframework",
