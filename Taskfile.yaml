@@ -453,6 +453,7 @@ tasks:
     desc: Remove all image docker tar cache, images from the docker daemon, and ephemeral test fixtures
     cmds:
       - task: clean-docker-cache
+      - task: prune-orphan-fingerprints
       - |
         BOLD='\033[1m'
         YELLOW='\033[0;33m'
@@ -467,6 +468,12 @@ tasks:
         done
         echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
       - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}
+
+  prune-orphan-fingerprints:
+    desc: Remove *.fingerprint files left behind by moved/deleted catalogers
+    silent: true
+    cmds:
+      - .github/scripts/prune_orphan_fingerprints.py
 
   clean-test-observations:
     desc: Remove all test observations (i.e. testdata/test-observations.json)
