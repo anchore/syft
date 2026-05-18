@@ -11,10 +11,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// https://packaging.python.org/en/latest/specifications/name-normalization/
+var nameNormalizationPattern = regexp.MustCompile(`[-_.]+`)
+
 func normalize(name string) string {
-	// https://packaging.python.org/en/latest/specifications/name-normalization/
-	re := regexp.MustCompile(`[-_.]+`)
-	normalized := re.ReplaceAllString(name, "-")
+	normalized := nameNormalizationPattern.ReplaceAllString(name, "-")
 	return strings.ToLower(normalized)
 }
 
