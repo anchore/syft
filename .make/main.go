@@ -102,9 +102,12 @@ func main() {
 		// update commands
 		wrap("update-format-golden-files"),
 
-		// fixture cache plumbing (heavy ORAS logic, lives in Taskfile)
+		// fixture cache plumbing (heavy ORAS logic, lives in Taskfile).
+		// refresh-fixtures hooks into "unit" so `make unit` triggers the
+		// stale-cache detection + download just like `task unit` did on main
+		// (its `deps: [tmpdir, fixtures]` is what kept the fixture cache fresh).
 		wrap("fingerprints"),
-		wrap("refresh-fixtures"),
+		wrap("refresh-fixtures").RunOn("unit"),
 		wrap("fixtures"),
 		wrap("build-fixtures"),
 		wrap("download-test-fixture-cache"),
