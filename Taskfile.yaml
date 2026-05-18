@@ -1,5 +1,10 @@
-
 version: "3"
+
+# NOTE: most generic tasks (static-analysis, format, lint, unit, snapshot, release,
+# changelog, ci-release, etc.) are now provided natively by anchore/go-make and
+# defined in .make/main.go. This file holds the syft-specific tasks that go-make
+# wraps via `wrap("<name>")` calls — keep descriptions (`desc:`) populated so they
+# show up in `make help`.
 
 includes:
   generate:cpe-index: ./task.d/generate/cpe-index.yaml
@@ -25,11 +30,7 @@ vars:
   YQ: "{{ .TOOL_DIR }}/yq"
   TASK: "{{ .TOOL_DIR }}/task"
 
-  # used for changelog generation
-  CHANGELOG: CHANGELOG.md
-  NEXT_VERSION: VERSION
-
-  # used for snapshot builds
+  # used for snapshot bin discovery in compare/install tasks
   OS:
     sh: uname -s | tr '[:upper:]' '[:lower:]'
   ARCH:
@@ -42,11 +43,6 @@ vars:
   # e.g. when installing snapshot debs from a local path, ./ forces the deb to be installed in the current working directory instead of referencing a package name
   SNAPSHOT_DIR: ./snapshot
   SNAPSHOT_BIN: "{{ .PROJECT_ROOT }}/{{ .SNAPSHOT_DIR }}/{{ .OS }}-build_{{ .OS }}_{{ .ARCH }}/{{ .PROJECT }}"
-  SNAPSHOT_CMD: "{{ .TOOL_DIR }}/goreleaser release --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --skip=publish --skip=sign"
-  BUILD_CMD:    "{{ .TOOL_DIR }}/goreleaser build   --config {{ .TMP_DIR }}/goreleaser.yaml --clean --snapshot --single-target"
-  RELEASE_CMD:  "{{ .TOOL_DIR }}/goreleaser release --clean --release-notes {{ .CHANGELOG }}"
-  VERSION:
-    sh: git describe --dirty --always --tags
 
   # used for install and acceptance testing
   COMPARE_DIR: ./test/compare
@@ -57,43 +53,10 @@ env:
 
 tasks:
 
-  ## High-level tasks #################################
-
-  default:
-    desc: Run all validation tasks
-    aliases:
-      - pr-validations
-      - validations
-    cmds:
-      - task: static-analysis
-      - task: test
-      - task: install-test
-
-  static-analysis:
-    desc: Run all static analysis tasks
-    cmds:
-      - task: check-go-mod-tidy
-      - task: check-licenses
-      - task: lint
-      - task: check-json-schema-drift
-      - task: check-binary-fixture-size
-
-  test:
-    desc: Run all levels of test
-    cmds:
-      - task: unit
-      - task: integration
-      - task: validate-cyclonedx-schema
-      - task: test-utils
-      - task: snapshot
-      - task: cli
-      - task: check-docker-cache
-
-  ## Bootstrap tasks #################################
+  ## Bootstrap (internal helpers used by other Taskfile tasks) ###############
 
   binny:
     internal: true
-    # desc: Get the binny tool
     generates:
       - "{{ .TOOL_DIR }}/binny"
     status:
@@ -102,10 +65,8 @@ tasks:
     silent: true
 
   tools:
-    desc: Install all tools needed for CI and local development
+    internal: true
     deps: [binny]
-    aliases:
-      - bootstrap
     generates:
       - ".binny.yaml"
       - "{{ .TOOL_DIR }}/*"
@@ -114,79 +75,14 @@ tasks:
     cmd: "{{ .TOOL_DIR }}/binny install -v"
     silent: true
 
-  update-tools:
-    desc: Update pinned versions of all tools to their latest available versions
-    deps: [binny]
-    generates:
-      - ".binny.yaml"
-      - "{{ .TOOL_DIR }}/*"
-    cmd: "{{ .TOOL_DIR }}/binny update -v"
-    silent: true
-
-  list-tools:
-    desc: List all tools needed for CI and local development
-    deps: [binny]
-    cmd: "{{ .TOOL_DIR }}/binny list"
-    silent: true
-
-  list-tool-updates:
-    desc: List all tools that are not up to date relative to the binny config
-    deps: [binny]
-    cmd: "{{ .TOOL_DIR }}/binny list --updates"
-    silent: true
-
   tmpdir:
+    internal: true
     silent: true
     generates:
       - "{{ .TMP_DIR }}"
     cmd: "mkdir -p {{ .TMP_DIR }}"
 
-  ## Static analysis tasks #################################
-
-  format:
-    desc: Auto-format all source code
-    deps: [tools]
-    cmds:
-      - gofmt -w -s .
-      - "{{ .TOOL_DIR }}/gosimports -local github.com/anchore -w ."
-      - go mod tidy
-
-  lint-fix:
-    desc: Auto-format all source code + run golangci lint fixers
-    deps: [tools]
-    cmds:
-      - task: format
-      - "{{ .TOOL_DIR }}/golangci-lint run --tests=false --fix"
-
-  lint:
-    desc: Run gofmt + golangci lint checks
-    vars:
-      BAD_FMT_FILES:
-        sh: gofmt -l -s .
-      BAD_FILE_NAMES:
-        sh: "find . | grep -e ':' || true"
-    deps: [tools]
-    cmds:
-      # ensure there are no go fmt differences
-      - cmd: 'test -z "{{ .BAD_FMT_FILES }}" || (echo "files with gofmt issues: [{{ .BAD_FMT_FILES }}]"; exit 1)'
-        silent: true
-      # ensure there are no files with ":" in it (a known back case in the go ecosystem)
-      - cmd: 'test -z "{{ .BAD_FILE_NAMES }}" || (echo "files with bad names: [{{ .BAD_FILE_NAMES }}]"; exit 1)'
-        silent: true
-      # run linting
-      - "{{ .TOOL_DIR }}/golangci-lint run --tests=false"
-
-
-  check-licenses:
-    # desc: Ensure transitive dependencies are compliant with the current license policy
-    deps: [tools]
-    cmd: "{{ .TOOL_DIR }}/bouncer check ./..."
-
-  check-go-mod-tidy:
-    # desc: Ensure go.mod and go.sum are up to date
-    cmds:
-      - cmd: .github/scripts/go-mod-tidy-check.sh && echo "go.mod and go.sum are tidy!"
-        silent: true
+  ## Static analysis extras #################################################
 
   check-json-schema-drift:
     desc: Ensure there is no drift between the JSON schema and the code
@@ -203,8 +99,8 @@ tasks:
     cmds:
       - .github/scripts/check_binary_fixture_size.sh syft/pkg/cataloger/binary/testdata/classifiers/snippets
 
+  ## Test extras ############################################################
 
-  ## Testing tasks #################################
   update-format-golden-files:
     desc: "Update golden (i.e. snapshot) files used by unit tests"
     cmds:
@@ -214,59 +110,32 @@ tasks:
       - go test ./syft/format/cyclonedxjson -update-cyclonedx-json
       - go test ./syft/format/syftjson -update-json
 
-  unit:
-    desc: Run unit tests
-    deps:
-      - tmpdir
-      - fixtures
-    vars:
-      TEST_PKGS:
-        sh: "go list ./... | grep -v {{ .OWNER }}/{{ .PROJECT }}/test | grep -v {{ .OWNER }}/{{ .PROJECT }}/cmd/syft/internal/test | tr '\n' ' '"
-
-      # unit test coverage threshold (in % coverage)
-      COVERAGE_THRESHOLD: 62
-    cmds:
-      - task: clean-test-observations
-      - "go test -coverprofile {{ .TMP_DIR }}/unit-coverage-details.txt {{ .TEST_PKGS }}"
-      - cmd: ".github/scripts/coverage.py {{ .COVERAGE_THRESHOLD }} {{ .TMP_DIR }}/unit-coverage-details.txt"
-        silent: true
-
-  integration:
-    desc: Run integration tests
-    cmds:
-      - "go test -v ./cmd/syft/internal/test/integration"
-      # exercise most of the CLI with the data race detector
-      # we use a larger image to ensure we're using multiple catalogers at a time
-      - "go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2"
-
   validate-cyclonedx-schema:
     desc: Validate that Syft produces valid CycloneDX documents
     cmds:
       - "cd schema/cyclonedx && make"
-
-  cli:
-    desc: Run CLI tests
-    deps: [tools]
-    cmds:
-      - cmd: "echo 'testing binary: {{ .SNAPSHOT_BIN }}'"
-        silent: true
-      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found for {{ .SNAPSHOT_BIN }}' && false)"
-        silent: true
-
-      - "go test -count=1 -timeout=15m -v ./test/cli"
-    env:
-      SYFT_BINARY_LOCATION: "{{ .SNAPSHOT_BIN }}"
 
   test-utils:
     desc: Run tests for pipeline utils
     cmds:
       - cmd: .github/scripts/labeler_test.py
 
+  snapshot-smoke-test:
+    desc: Run a smoke test on the snapshot builds + docker images
+    cmds:
+      - cmd: "echo 'testing snapshot binary: {{ .SNAPSHOT_BIN }}'"
+        silent: true
+      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found for {{ .SNAPSHOT_BIN }}' && false)"
+        silent: true
+      - "{{ .SNAPSHOT_BIN }} version"
+      - "{{ .SNAPSHOT_BIN }} scan alpine:latest"
+      - docker run --rm anchore/syft:latest version
+      - docker run --rm anchore/syft:latest scan alpine:latest
 
-  ## Test-fixture-related targets #################################
+  ## Test-fixture-related targets ###########################################
 
   fingerprints:
-    desc: Generate fingerprints for all non-docker test fixture
+    desc: Generate fingerprints for all non-docker test fixtures
     silent: true
     # this will look for `testdata/Makefile` and invoke the `fingerprint` target to calculate all cache input fingerprint files
     generates:
@@ -281,15 +150,9 @@ tasks:
         echo -e "${YELLOW}creating fingerprint files for non-docker fixtures...${RESET}"
         for dir in $(find . -type d -name 'testdata'); do
           if [ -f "$dir/Makefile" ]; then
-            # for debugging...
-            #echo -e "${YELLOW}• calculating fingerprints in $dir... ${RESET}"
-
             (make -C "$dir" fingerprint)
           fi
         done
-
-        # for debugging...
-        # echo -e "generated all fixture fingerprints"
 
       - .github/scripts/fingerprint_docker_fixtures.py
       - |
@@ -432,6 +295,7 @@ tasks:
       eval $oras_command
 
   show-test-image-cache:
+    desc: Print the on-disk + docker daemon state of the stereoscope fixture image cache
     silent: true
     cmds:
       - "echo 'Docker daemon cache:'"
@@ -452,28 +316,36 @@ tasks:
         exit 1
       fi
 
-  ## install.sh testing targets #################################
+  ## install.sh testing targets #############################################
 
   install-test:
+    desc: Run install.sh test suite (delegates to test/install/Makefile)
     cmds:
       - "cd test/install && make"
 
   install-test-cache-save:
+    desc: Save the install.sh test image cache (delegates to test/install/Makefile)
     cmds:
       - "cd test/install && make save"
 
   install-test-cache-load:
+    desc: Load the install.sh test image cache (delegates to test/install/Makefile)
     cmds:
       - "cd test/install && make load"
 
   install-test-ci-mac:
+    desc: Run install.sh CI test suite on macOS (delegates to test/install/Makefile)
     cmds:
       - "cd test/install && make ci-test-mac"
 
+  ## Compare-test targets ###################################################
+
   generate-compare-file:
+    desc: Generate the acceptance comparison reference JSON for the current compare image
     cmd: "go run ./cmd/syft {{ .COMPARE_TEST_IMAGE }} -o json > {{ .COMPARE_DIR }}/testdata/acceptance-{{ .COMPARE_TEST_IMAGE }}.json"
 
   compare-mac:
+    desc: Run macOS install + acceptance comparison against the snapshot build
     deps: [tmpdir]
     cmd: |
       {{ .COMPARE_DIR }}/mac.sh \
@@ -483,11 +355,13 @@ tasks:
         {{ .TMP_DIR }}
 
   compare-linux:
+    desc: Run Linux install + acceptance comparison (deb + rpm) against the snapshot build
     cmds:
       - task: compare-test-deb-package-install
       - task: compare-test-rpm-package-install
 
   compare-test-deb-package-install:
+    desc: Run Linux .deb install + acceptance comparison against the snapshot build
     deps: [tmpdir]
     cmd: |
       {{ .COMPARE_DIR }}/deb.sh \
@@ -497,6 +371,7 @@ tasks:
         {{ .TMP_DIR }}
 
   compare-test-rpm-package-install:
+    desc: Run Linux .rpm install + acceptance comparison against the snapshot build
     deps: [tmpdir]
     cmd: |
       {{ .COMPARE_DIR }}/rpm.sh \
@@ -506,7 +381,7 @@ tasks:
         {{ .TMP_DIR }}
 
 
-  ## Code and data generation targets #################################
+  ## Code and data generation targets ######################################
 
   generate:
     desc: Add data generation tasks
@@ -556,104 +431,7 @@ tasks:
       - "SYFT_ENABLE_COMPLETENESS_TESTS=true go test -p 1 ./internal/capabilities/... -count=1"
 
 
-  ## Build-related targets #################################
-
-  build:
-    desc: Build the project
-    deps: [tools, tmpdir]
-    generates:
-      - "{{ .PROJECT }}"
-    cmds:
-      - silent: true
-        cmd: |
-          echo "dist: {{ .SNAPSHOT_DIR }}" > {{ .TMP_DIR }}/goreleaser.yaml
-          cat .goreleaser.yaml >> {{ .TMP_DIR }}/goreleaser.yaml
-
-      - "{{ .BUILD_CMD }}"
-
-  snapshot:
-    desc: Create a snapshot release
-    aliases:
-      - build
-    deps: [tools, tmpdir]
-    sources:
-      - cmd/**/*.go
-      - syft/**/*.go
-      - internal/**/*.go
-    method: checksum
-    generates:
-      - "{{ .SNAPSHOT_BIN }}"
-    cmds:
-      - silent: true
-        cmd: |
-          echo "dist: {{ .SNAPSHOT_DIR }}" > {{ .TMP_DIR }}/goreleaser.yaml
-          cat .goreleaser.yaml >> {{ .TMP_DIR }}/goreleaser.yaml
-
-      - "{{ .SNAPSHOT_CMD }}"
-
-  snapshot-smoke-test:
-    desc: Run a smoke test on the snapshot builds + docker images
-    cmds:
-      - cmd: "echo 'testing snapshot binary: {{ .SNAPSHOT_BIN }}'"
-        silent: true
-      - cmd: "test -f {{ .SNAPSHOT_BIN }} || (find {{ .SNAPSHOT_DIR }} && echo '\nno snapshot found for {{ .SNAPSHOT_BIN }}' && false)"
-        silent: true
-      - "{{ .SNAPSHOT_BIN }} version"
-      - "{{ .SNAPSHOT_BIN }} scan alpine:latest"
-      - docker run --rm anchore/syft:latest version
-      - docker run --rm anchore/syft:latest scan alpine:latest
-
-  changelog:
-    desc: Generate a changelog
-    deps: [tools]
-    generates:
-      - "{{ .CHANGELOG }}"
-      - "{{ .NEXT_VERSION }}"
-    cmds:
-      - "{{ .TOOL_DIR }}/chronicle -vv -n --version-file {{ .NEXT_VERSION }} > {{ .CHANGELOG }}"
-      - "{{ .TOOL_DIR }}/glow -w 0 {{ .CHANGELOG }}"
-
-
-  ## Release targets #################################
-
-  release:
-    desc: Create a release
-    interactive: true
-    deps: [tools]
-    cmds:
-      - cmd: .github/scripts/trigger-release.sh
-        silent: true
-
-
-  ## CI-only targets #################################
-
-  ci-check:
-    # desc: "[CI only] Are you in CI?"
-    cmds:
-      - cmd: .github/scripts/ci-check.sh
-        silent: true
-
-  ci-release:
-    # desc: "[CI only] Create a release"
-    deps: [tools]
-    cmds:
-      - task: ci-check
-      - "{{ .TOOL_DIR }}/chronicle -vvv > CHANGELOG.md"
-      - cmd: "cat CHANGELOG.md"
-        silent: true
-      - "{{ .RELEASE_CMD }}"
-
-
-  ## Cleanup targets #################################
-
-  clean:
-    desc: Remove all cache files and old builds
-    cmds:
-      - task: clean-snapshot
-      - task: clean-cache
-      - task: clean-test-observations
-      - task: clean-docker-cache
-      - task: clean-oras-cache
+  ## Cleanup targets ########################################################
 
   clean-snapshot:
     desc: Remove any snapshot builds
@@ -675,6 +453,7 @@ tasks:
     desc: Remove all image docker tar cache, images from the docker daemon, and ephemeral test fixtures
     cmds:
       - task: clean-docker-cache
+      - task: prune-orphan-fingerprints
       - |
         BOLD='\033[1m'
         YELLOW='\033[0;33m'
@@ -689,6 +468,12 @@ tasks:
         done
         echo -e "${BOLD}Deleted all ephemeral test fixtures${RESET}"
       - rm -f {{ .LAST_CACHE_PULL_FILE }} {{ .CACHE_PATHS_FILE }}
+
+  prune-orphan-fingerprints:
+    desc: Remove *.fingerprint files left behind by moved/deleted catalogers
+    silent: true
+    cmds:
+      - .github/scripts/prune_orphan_fingerprints.py
 
   clean-test-observations:
     desc: Remove all test observations (i.e. testdata/test-observations.json)
