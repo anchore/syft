@@ -48,6 +48,7 @@ var archiveFormatGlobs = []string{
 	// out of date, and they charge for their IDE. If you find an example
 	// project that we can build in CI feel free to include it
 	"**/*.rar", // Java Resource Adapter Archive
+	"**/*.zap", // ZAP add-ons https://github.com/zaproxy/zaproxy/wiki/ZapAddOns
 }
 
 // javaArchiveHashes are all the current hash algorithms used to calculate archive digests
