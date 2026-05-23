@@ -538,6 +538,10 @@ func DefaultClassifiers() []binutils.Classifier {
 					// cli/tools/standalone.rsdeno-ab286750a8c87215a9651efb11fcc620f29140051.16.4release/vdlwindows
 					`deno-[0-9a-z]{40}(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
 				),
+				m.FileContentsVersionMatcher(
+					// 1.10.31567c1013cc8ff12cf039137792da66a1d0015b5DENO_UNSTABLE_COVERAGE_DIRNo current directorycli/main
+					`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)[0-9a-z]{40}DENO`,
+				),
 			),
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
