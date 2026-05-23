@@ -523,10 +523,22 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "deno-binary",
 			FileGlob: "**/deno",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// Deno/2.6.3
-				// Deno/1.41.0
-				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// Deno/2.6.3
+					// Deno/1.41.0
+					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// deno::tools::standalonedeno-65db94feba9d4d51a09b74629f566dbc90484fbarelease/v1.29.4windows
+					// cli/tools/standalone.rsdeno-74064c9d8c222b33b2a552ea0af1054f57002a96release/v1.28.3windows
+					`deno-[0-9a-z]{40}release/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// cli/tools/standalone.rsdeno-ab286750a8c87215a9651efb11fcc620f29140051.16.4release/vdlwindows
+					`deno-[0-9a-z]{40}(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+			),
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
