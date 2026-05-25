@@ -124,6 +124,38 @@ from-images:
       - /usr/lib/dart/bin/dart
 
   - name: deno
+    version: 1.10.3
+    images:
+      - ref: denoland/deno:1.10.3@sha256:9687db39d68333fce31f371734a1b982092507606508289a5c7a24cfc5fe6ee2
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.16.4
+    images:
+      - ref: denoland/deno:1.16.4@sha256:027868eb6f079ef290957bcda05280a6b08ff86baf549bc6eff5c17467a44d41
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.28.3
+    images:
+      - ref: denoland/deno:1.28.3@sha256:8636e6ac55fbd4687c111eb4b798b1772d43874c53647ca4a2bad6d1962643f0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.29.4
+    images:
+      - ref: denoland/deno:1.29.4@sha256:f5b5a4678b18884724b277a4eb5490a978eab2da5a47461766df9fb59ebb08b6
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
     version: 1.41.0
     images:
       - ref: denoland/deno:1.41.0
