@@ -20,46 +20,45 @@ import (
 	"github.com/anchore/clio/cliotestutils"
 	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/options"
+	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
 
-func Test_writeSBOMToFormattedFile(t *testing.T) {
-	type args struct {
-		s    *sbom.SBOM
-		opts *attestOptions
+func Test_attestSingleFormat(t *testing.T) {
+	s := &sbom.SBOM{
+		Artifacts:     sbom.Artifacts{},
+		Relationships: nil,
+		Source: source.Description{
+			ID:      "source-id",
+			Name:    "source-name",
+			Version: "source-version",
+		},
+		Descriptor: sbom.Descriptor{
+			Name:    "syft-test",
+			Version: "non-version",
+		},
 	}
-	tests := []struct {
-		name         string
-		args         args
-		wantSbomFile string
-		wantErr      bool
-	}{
-		{
-			name: "go case",
-			args: args{
-				opts: &attestOptions{
-					Output: func() options.Output {
-						def := defaultAttestOutputOptions()
-						def.Outputs = []string{"syft-json"}
-						return def
-					}(),
-				},
-				s: &sbom.SBOM{
-					Artifacts:     sbom.Artifacts{},
-					Relationships: nil,
-					Source: source.Description{
-						ID:      "source-id",
-						Name:    "source-name",
-						Version: "source-version",
-					},
-					Descriptor: sbom.Descriptor{
-						Name:    "syft-test",
-						Version: "non-version",
-					},
-				},
-			},
-			wantSbomFile: `{
+
+	opts := &attestOptions{
+		Output: defaultAttestOutputOptions(),
+	}
+
+	encs, err := opts.Encoders()
+	require.NoError(t, err)
+
+	encoders := format.NewEncoderCollection(encs...)
+	encoder := encoders.GetByString("syft-json")
+	require.NotNil(t, encoder, "expected to find encoder for syft-json")
+
+	sbomFile := &bytes.Buffer{}
+	err = encoder.Encode(sbomFile, *s)
+	require.NoError(t, err)
+
+	re := regexp.MustCompile(`(?s)"schema":\W*\{.*?},?`)
+	subject := re.ReplaceAllString(sbomFile.String(), `"schema":{}`)
+
+	wantSbomFile := `{
  "artifacts": [],
  "artifactRelationships": [],
  "source": {
@@ -75,27 +74,9 @@ func Test_writeSBOMToFormattedFile(t *testing.T) {
   "version": "non-version"
  },
  "schema": {}
-}`,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			sbomFile := &bytes.Buffer{}
+}`
 
-			err := writeSBOMToFormattedFile(tt.args.s, sbomFile, tt.args.opts)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("writeSBOMToFormattedFile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			// redact the schema block
-			re := regexp.MustCompile(`(?s)"schema":\W*\{.*?},?`)
-			subject := re.ReplaceAllString(sbomFile.String(), `"schema":{}`)
-
-			assert.JSONEq(t, tt.wantSbomFile, subject)
-		})
-	}
+	assert.JSONEq(t, wantSbomFile, subject)
 }
 
 func Test_attestCommand(t *testing.T) {
@@ -111,6 +92,7 @@ func Test_attestCommand(t *testing.T) {
 
 	type args struct {
 		sbomFilepath string
+		outputName   string
 		opts         attestOptions
 		userInput    string
 	}
@@ -127,9 +109,9 @@ func Test_attestCommand(t *testing.T) {
 			args: args{
 				userInput:    "myimage",
 				sbomFilepath: "/tmp/sbom-filepath.json",
+				outputName:   "syft-json",
 				opts: func() attestOptions {
 					def := defaultAttestOptions()
-					def.Outputs = []string{"syft-json"}
 					def.Attest.Key = "key"
 					def.Attest.Password = "password"
 					return def
@@ -140,7 +122,7 @@ func Test_attestCommand(t *testing.T) {
 				"COSIGN_PASSWORD": "password",
 			},
 			notEnvVars: []string{
-				"COSIGN_EXPERIMENTAL", // only for keyless
+				"COSIGN_EXPERIMENTAL",
 			},
 		},
 		{
@@ -148,9 +130,9 @@ func Test_attestCommand(t *testing.T) {
 			args: args{
 				userInput:    "myimage",
 				sbomFilepath: "/tmp/sbom-filepath.json",
+				outputName:   "syft-json",
 				opts: func() attestOptions {
 					def := defaultAttestOptions()
-					def.Outputs = []string{"syft-json"}
 					return def
 				}(),
 			},
@@ -162,6 +144,42 @@ func Test_attestCommand(t *testing.T) {
 				"COSIGN_PASSWORD",
 			},
 		},
+		{
+			name: "spdx-json format",
+			args: args{
+				userInput:    "myimage",
+				sbomFilepath: "/tmp/sbom-filepath.json",
+				outputName:   "spdx-json",
+				opts: func() attestOptions {
+					def := defaultAttestOptions()
+					def.Attest.Key = "key"
+					def.Attest.Password = "password"
+					return def
+				}(),
+			},
+			wantCmd: fullCmd("attest myimage --predicate /tmp/sbom-filepath.json --type spdxjson -y --key key"),
+			wantEnvVars: map[string]string{
+				"COSIGN_PASSWORD": "password",
+			},
+		},
+		{
+			name: "cyclonedx-json format",
+			args: args{
+				userInput:    "myimage",
+				sbomFilepath: "/tmp/sbom-filepath.json",
+				outputName:   "cyclonedx-json",
+				opts: func() attestOptions {
+					def := defaultAttestOptions()
+					def.Attest.Key = "key"
+					def.Attest.Password = "password"
+					return def
+				}(),
+			},
+			wantCmd: fullCmd("attest myimage --predicate /tmp/sbom-filepath.json --type cyclonedx -y --key key"),
+			wantEnvVars: map[string]string{
+				"COSIGN_PASSWORD": "password",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -169,7 +187,7 @@ func Test_attestCommand(t *testing.T) {
 				tt.wantErr = require.NoError
 			}
 
-			got, err := attestCommand(tt.args.sbomFilepath, &tt.args.opts, tt.args.userInput)
+			got, err := attestCommand(tt.args.sbomFilepath, tt.args.outputName, &tt.args.opts, tt.args.userInput)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
