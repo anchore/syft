@@ -57,14 +57,16 @@ var javaArchiveHashes = []crypto.Hash{
 }
 
 type archiveParser struct {
-	fileManifest intFile.ZipFileManifest
-	location     file.Location
-	archivePath  string
-	contentPath  string
-	fileInfo     archiveFilename
-	detectNested bool
-	cfg          ArchiveCatalogerConfig
-	maven        *maven.Resolver
+	fileManifest    intFile.ZipFileManifest
+	location        file.Location
+	archivePath     string
+	contentPath     string
+	fileInfo        archiveFilename
+	detectNested    bool
+	cfg             ArchiveCatalogerConfig
+	maven           *maven.Resolver
+	dependencyGraph *DependencyGraph
+	depth           int
 }
 
 type genericArchiveParserAdapter struct {
@@ -77,17 +79,19 @@ func newGenericArchiveParserAdapter(cfg ArchiveCatalogerConfig) genericArchivePa
 
 // parseJavaArchive is a parser function for java archive contents, returning all Java libraries and nested archives
 func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	return gap.processJavaArchive(ctx, reader, nil)
+	return gap.processJavaArchive(ctx, reader, nil, 0, nil)
 }
 
 // processJavaArchive processes an archive for java contents, returning all Java libraries and nested archives
-func (gap genericArchiveParserAdapter) processJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+func (gap genericArchiveParserAdapter) processJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package, depth int, rootGraph *DependencyGraph) ([]pkg.Package, []artifact.Relationship, error) {
 	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, true, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
 		return nil, nil, err
 	}
+	parser.depth = depth
+	parser.dependencyGraph = rootGraph
 	return parser.parse(ctx, parentPkg)
 }
 
@@ -151,18 +155,22 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		return nil, nil, err
 	}
 
+	// build dependency graph from embedded POMs (only at top-level)
+	if j.cfg.UseEmbeddedPOMDependencies && mainPkg != nil && j.depth == 0 {
+		j.buildDependencyGraphFromEmbeddedPOMs(ctx, mainPkg)
+	}
+
 	if mainPkg != nil {
 		finalizePackage(mainPkg)
 		pkgs = append(pkgs, *mainPkg)
 
 		if parentPkg != nil {
-			relationships = append(relationships, artifact.Relationship{
-				From: *mainPkg,
-				To:   *parentPkg,
-				Type: artifact.DependencyOfRelationship,
-			})
+			relationships = append(relationships, j.createMainPkgRelationship(mainPkg, parentPkg))
 		}
 	}
+
+	// build package index for parent resolution when graph is available
+	pkgIndex := j.buildPkgIndex(mainPkg, auxPkgs)
 
 	for i := range auxPkgs {
 		auxPkg := &auxPkgs[i]
@@ -171,11 +179,7 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		pkgs = append(pkgs, *auxPkg)
 
 		if mainPkg != nil {
-			relationships = append(relationships, artifact.Relationship{
-				From: *auxPkg,
-				To:   *mainPkg,
-				Type: artifact.DependencyOfRelationship,
-			})
+			relationships = append(relationships, j.createAuxPkgRelationship(auxPkg, mainPkg, pkgIndex))
 		}
 	}
 
@@ -611,28 +615,28 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	// we know that all java archives are zip formatted files, so we can use the shared zip helper
-	return discoverPkgsFromZip(ctx, j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg, j.cfg)
+	return discoverPkgsFromZip(ctx, j.location, j.archivePath, j.contentPath, j.fileManifest, parentPkg, j.cfg, j.depth+1, j.dependencyGraph)
 }
 
 // discoverPkgsFromZip finds Java archives within Java archives, returning all listed Java packages found and
 // associating each discovered package to the given parent package.
-func discoverPkgsFromZip(ctx context.Context, location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromZip(ctx context.Context, location file.Location, archivePath, contentPath string, fileManifest intFile.ZipFileManifest, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig, depth int, graph *DependencyGraph) ([]pkg.Package, []artifact.Relationship, error) {
 	// search and parse pom.properties files & fetch the contents
 	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, archivePath, contentPath, fileManifest.GlobMatch(false, archiveFormatGlobs...)...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to extract files from zip: %w", err)
 	}
 
-	return discoverPkgsFromOpeners(ctx, location, openers, parentPkg, cfg)
+	return discoverPkgsFromOpeners(ctx, location, openers, parentPkg, cfg, depth, graph)
 }
 
 // discoverPkgsFromOpeners finds Java archives within the given files and associates them with the given parent package.
-func discoverPkgsFromOpeners(ctx context.Context, location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpeners(ctx context.Context, location file.Location, openers map[string]intFile.Opener, parentPkg *pkg.Package, cfg ArchiveCatalogerConfig, depth int, graph *DependencyGraph) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 
 	for pathWithinArchive, archiveOpener := range sortedIter(openers) {
-		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg, parentPkg)
+		nestedPkgs, nestedRelationships, err := discoverPkgsFromOpener(ctx, location, pathWithinArchive, archiveOpener, cfg, parentPkg, depth, graph)
 		if err != nil {
 			log.WithFields("location", location.Path(), "error", err).Debug("unable to discover java packages from opener")
 			continue
@@ -656,7 +660,7 @@ func discoverPkgsFromOpeners(ctx context.Context, location file.Location, opener
 }
 
 // discoverPkgsFromOpener finds Java archives within the given file.
-func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg ArchiveCatalogerConfig, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
+func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWithinArchive string, archiveOpener intFile.Opener, cfg ArchiveCatalogerConfig, parentPkg *pkg.Package, depth int, graph *DependencyGraph) ([]pkg.Package, []artifact.Relationship, error) {
 	archiveReadCloser, err := archiveOpener.Open()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open archived file from tempdir: %w", err)
@@ -674,7 +678,7 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	nestedPkgs, nestedRelationships, err := gap.processJavaArchive(ctx, file.LocationReadCloser{
 		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
-	}, parentPkg)
+	}, parentPkg, depth, graph)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to process nested java archive (%s): %w", pathWithinArchive, err)
 	}
@@ -880,4 +884,271 @@ func sortedIter[K cmp.Ordered, V any](values map[K]V) iter.Seq2[K, V] {
 			}
 		}
 	}
+}
+
+// buildDependencyGraphFromEmbeddedPOMs extracts all embedded POMs and builds a dependency graph.
+func (j *archiveParser) buildDependencyGraphFromEmbeddedPOMs(ctx context.Context, mainPkg *pkg.Package) {
+	poms := j.extractUnifiedPOMs(ctx)
+	if len(poms) == 0 {
+		return
+	}
+
+	rootID := extractMavenIDFromPackage(mainPkg)
+	if !rootID.Valid() {
+		return
+	}
+
+	j.dependencyGraph = NewDependencyGraph()
+	j.dependencyGraph.BuildFromPOMs(ctx, poms, j.maven, rootID, j.cfg.ResolveTransitiveDependencies, j.cfg.MaxParentRecursiveDepth)
+}
+
+// extractUnifiedPOMs collects all parsed POMs from the root archive and nested JARs.
+func (j *archiveParser) extractUnifiedPOMs(ctx context.Context) map[maven.ID]*maven.Project {
+	poms := j.extractAllPOMsByID(ctx)
+	nestedPoms := j.extractAllPOMsFromNestedJARs(ctx)
+	for id, pom := range nestedPoms {
+		if _, exists := poms[id]; !exists {
+			poms[id] = pom
+		}
+	}
+	return poms
+}
+
+// extractAllPOMsByID parses all pom.xml files in the root archive and indexes them by maven.ID.
+func (j *archiveParser) extractAllPOMsByID(ctx context.Context) map[maven.ID]*maven.Project {
+	result := make(map[maven.ID]*maven.Project)
+
+	extractPaths := j.fileManifest.GlobMatch(false, pomXMLGlob)
+	if len(extractPaths) == 0 {
+		return result
+	}
+
+	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, extractPaths...)
+	if err != nil {
+		log.WithFields("location", j.location.Path(), "error", err).Debug("unable to extract POM files for graph building")
+		return result
+	}
+
+	for filePath, fileContents := range contents {
+		pom, err := maven.ParsePomXML(strings.NewReader(fileContents))
+		if err != nil {
+			log.WithFields("contents-path", filePath, "error", err).Debug("failed to parse pom.xml for graph building")
+			continue
+		}
+		if pom == nil {
+			continue
+		}
+
+		id := j.maven.ResolveID(ctx, pom)
+		if id.GroupID == "" || id.ArtifactID == "" {
+			continue
+		}
+		result[id] = pom
+	}
+
+	return result
+}
+
+// extractAllPOMsFromNestedJARs opens nested archives and extracts their embedded POMs.
+func (j *archiveParser) extractAllPOMsFromNestedJARs(ctx context.Context) map[maven.ID]*maven.Project {
+	result := make(map[maven.ID]*maven.Project)
+
+	nestedArchivePaths := j.fileManifest.GlobMatch(false, archiveFormatGlobs...)
+	if len(nestedArchivePaths) == 0 {
+		return result
+	}
+
+	openers, err := intFile.ExtractFromZipToUniqueTempFile(ctx, j.archivePath, j.contentPath, nestedArchivePaths...)
+	if err != nil {
+		log.WithFields("location", j.location.Path(), "error", err).Debug("unable to extract nested archives for POM discovery")
+		return result
+	}
+
+	for _, opener := range openers {
+		readCloser, err := opener.Open()
+		if err != nil {
+			continue
+		}
+
+		nestedPoms := extractPOMsFromArchiveReader(ctx, readCloser, j.maven)
+		_ = readCloser.Close()
+
+		for id, pom := range nestedPoms {
+			if _, exists := result[id]; !exists {
+				result[id] = pom
+			}
+		}
+	}
+
+	return result
+}
+
+// extractPOMsFromArchiveReader extracts and indexes all pom.xml files from an archive reader.
+func extractPOMsFromArchiveReader(ctx context.Context, reader io.ReadCloser, resolver *maven.Resolver) map[maven.ID]*maven.Project {
+	result := make(map[maven.ID]*maven.Project)
+
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return result
+	}
+
+	tmpFile, cleanupFn, err := td.NewFile("nested-*.jar")
+	if err != nil {
+		return result
+	}
+	defer cleanupFn()
+
+	if _, err := io.Copy(tmpFile, reader); err != nil {
+		return result
+	}
+	_ = tmpFile.Close()
+
+	fileManifest, err := intFile.NewZipFileManifest(ctx, tmpFile.Name())
+	if err != nil {
+		return result
+	}
+
+	pomPaths := fileManifest.GlobMatch(false, pomXMLGlob)
+	if len(pomPaths) == 0 {
+		return result
+	}
+
+	contents, err := intFile.ContentsFromZip(ctx, tmpFile.Name(), pomPaths...)
+	if err != nil {
+		return result
+	}
+
+	for _, fileContents := range contents {
+		pom, err := maven.ParsePomXML(strings.NewReader(fileContents))
+		if err != nil || pom == nil {
+			continue
+		}
+		id := resolver.ResolveID(ctx, pom)
+		if id.GroupID == "" || id.ArtifactID == "" {
+			continue
+		}
+		result[id] = pom
+	}
+
+	return result
+}
+
+// extractMavenIDFromPackage extracts a maven.ID from a package's Java metadata.
+func extractMavenIDFromPackage(p *pkg.Package) maven.ID {
+	if p == nil {
+		return maven.ID{}
+	}
+
+	metadata, ok := p.Metadata.(pkg.JavaArchive)
+	if !ok {
+		return maven.ID{}
+	}
+
+	if metadata.PomProperties != nil {
+		return maven.NewID(
+			metadata.PomProperties.GroupID,
+			metadata.PomProperties.ArtifactID,
+			metadata.PomProperties.Version,
+		)
+	}
+
+	if metadata.PomProject != nil {
+		return maven.NewID(
+			metadata.PomProject.GroupID,
+			metadata.PomProject.ArtifactID,
+			metadata.PomProject.Version,
+		)
+	}
+
+	return maven.ID{}
+}
+
+// buildPkgIndex creates a lookup from maven.ID to package for all known packages.
+func (j *archiveParser) buildPkgIndex(mainPkg *pkg.Package, auxPkgs []pkg.Package) map[maven.ID]*pkg.Package {
+	index := make(map[maven.ID]*pkg.Package)
+
+	if mainPkg != nil {
+		id := extractMavenIDFromPackage(mainPkg)
+		if id.Valid() {
+			index[id] = mainPkg
+		}
+	}
+
+	for i := range auxPkgs {
+		id := extractMavenIDFromPackage(&auxPkgs[i])
+		if id.Valid() {
+			index[id] = &auxPkgs[i]
+		}
+	}
+
+	return index
+}
+
+// createAuxPkgRelationship creates a dependency relationship for an auxiliary package,
+// wiring it to its actual Maven parent when the dependency graph is available.
+func (j *archiveParser) createAuxPkgRelationship(auxPkg *pkg.Package, mainPkg *pkg.Package, pkgIndex map[maven.ID]*pkg.Package) artifact.Relationship {
+	if j.dependencyGraph == nil {
+		return artifact.Relationship{
+			From: *auxPkg,
+			To:   *mainPkg,
+			Type: artifact.DependencyOfRelationship,
+		}
+	}
+
+	auxID := extractMavenIDFromPackage(auxPkg)
+	node := j.dependencyGraph.FindNode(auxID)
+	if node == nil {
+		return artifact.Relationship{
+			From: *auxPkg,
+			To:   *mainPkg,
+			Type: artifact.DependencyOfRelationship,
+		}
+	}
+
+	if node.Parent != nil {
+		if parentPkg, exists := pkgIndex[node.Parent.ID]; exists {
+			return artifact.Relationship{
+				From: *auxPkg,
+				To:   *parentPkg,
+				Type: artifact.DependencyOfRelationship,
+				Data: NewDependencyRelationshipData(node.Depth()-1, node.Scope),
+			}
+		}
+		// parent not in this archive's packages — defer for post-processor
+		intendedParentID := fmt.Sprintf("%s:%s:%s", node.Parent.ID.GroupID, node.Parent.ID.ArtifactID, node.Parent.ID.Version)
+		return artifact.Relationship{
+			From: *auxPkg,
+			To:   *mainPkg,
+			Type: artifact.DependencyOfRelationship,
+			Data: NewDependencyRelationshipDataWithParent(node.Depth()-1, node.Scope, intendedParentID),
+		}
+	}
+
+	// node is direct child of root
+	return artifact.Relationship{
+		From: *auxPkg,
+		To:   *mainPkg,
+		Type: artifact.DependencyOfRelationship,
+		Data: NewDependencyRelationshipData(node.Depth()-1, node.Scope),
+	}
+}
+
+// createMainPkgRelationship creates a dependency relationship for the main package to its parent,
+// enriching with graph data when available.
+func (j *archiveParser) createMainPkgRelationship(mainPkg *pkg.Package, parentPkg *pkg.Package) artifact.Relationship {
+	rel := artifact.Relationship{
+		From: *mainPkg,
+		To:   *parentPkg,
+		Type: artifact.DependencyOfRelationship,
+	}
+
+	if j.dependencyGraph != nil && j.depth > 0 {
+		mainID := extractMavenIDFromPackage(mainPkg)
+		node := j.dependencyGraph.FindNode(mainID)
+		if node != nil {
+			rel.Data = NewDependencyRelationshipData(node.Depth()-1, node.Scope)
+		}
+	}
+
+	return rel
 }
