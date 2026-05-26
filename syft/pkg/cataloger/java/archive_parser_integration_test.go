@@ -322,3 +322,69 @@ func TestCreateMainPkgRelationship_WithGraph(t *testing.T) {
 		assert.Nil(t, rel.Data)
 	})
 }
+
+func TestMavenID_Coordinate(t *testing.T) {
+	id := maven.NewID("com.example", "my-lib", "1.0.0")
+	assert.Equal(t, "com.example:my-lib:1.0.0", id.Coordinate())
+
+	empty := maven.ID{}
+	assert.Equal(t, "::", empty.Coordinate())
+}
+
+func TestCreateAuxPkgRelationship_VersionMismatchFallback(t *testing.T) {
+	// Graph declares dep-a at version 2.0, but the actual embedded JAR has version 2.1
+	// (e.g. dependency management resolved a different version). FindNodeByGA should still match.
+	rootID := maven.NewID("com.example", "root", "1.0")
+	depAGraphID := maven.NewID("com.example", "dep-a", "2.0")
+
+	graph := NewDependencyGraph()
+	root := graph.SetRoot(rootID)
+	graph.AddNode(depAGraphID, "compile", root)
+
+	rootPkg := &pkg.Package{
+		Name:    "root",
+		Version: "1.0",
+		Type:    pkg.JavaPkg,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.example",
+				ArtifactID: "root",
+				Version:    "1.0",
+			},
+		},
+	}
+	rootPkg.SetID()
+
+	// auxPkg has version 2.1 — different from graph's 2.0
+	auxPkg := &pkg.Package{
+		Name:    "dep-a",
+		Version: "2.1",
+		Type:    pkg.JavaPkg,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.example",
+				ArtifactID: "dep-a",
+				Version:    "2.1",
+			},
+		},
+	}
+	auxPkg.SetID()
+
+	parser := &archiveParser{
+		dependencyGraph: graph,
+	}
+
+	pkgIndex := map[maven.ID]*pkg.Package{
+		rootID: rootPkg,
+	}
+
+	rel := parser.createAuxPkgRelationship(auxPkg, rootPkg, pkgIndex)
+	assert.Equal(t, artifact.DependencyOfRelationship, rel.Type)
+	assert.Equal(t, rootPkg.ID(), rel.To.(pkg.Package).ID())
+
+	data, ok := rel.Data.(DependencyRelationshipData)
+	require.True(t, ok)
+	assert.Equal(t, 0, data.Depth)
+	assert.True(t, data.IsDirectDependency)
+	assert.Equal(t, "compile", data.Scope)
+}

@@ -94,28 +94,3 @@ func TestNewDependencyRelationshipDataWithParent(t *testing.T) {
 		})
 	}
 }
-
-func TestDependencyRelationshipData_IntendedParentMavenID(t *testing.T) {
-	tests := []struct {
-		name     string
-		data     DependencyRelationshipData
-		expected string
-	}{
-		{
-			name:     "empty intended parent",
-			data:     NewDependencyRelationshipData(0, "compile"),
-			expected: "",
-		},
-		{
-			name:     "with intended parent",
-			data:     NewDependencyRelationshipDataWithParent(1, "runtime", "org.example:lib:1.0"),
-			expected: "intendedParent=org.example:lib:1.0",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.data.IntendedParentMavenID())
-		})
-	}
-}

@@ -43,6 +43,11 @@ func (m ID) String() string {
 	return fmt.Sprintf("(groupId: %s artifactId: %s version: %s)", m.GroupID, m.ArtifactID, m.Version)
 }
 
+// Coordinate returns the standard Maven coordinate format "groupId:artifactId:version".
+func (m ID) Coordinate() string {
+	return m.GroupID + ":" + m.ArtifactID + ":" + m.Version
+}
+
 // Valid indicates that the given maven ID has values for groupId, artifactId, and version
 func (m ID) Valid() bool {
 	return m.GroupID != "" && m.ArtifactID != "" && m.Version != ""

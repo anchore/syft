@@ -1,7 +1,5 @@
 package java
 
-import "fmt"
-
 // DependencyRelationshipData holds metadata about a dependency relationship that is
 // attached to artifact.Relationship.Data for enriched Syft JSON output.
 type DependencyRelationshipData struct {
@@ -29,12 +27,4 @@ func NewDependencyRelationshipDataWithParent(depth int, scope string, intendedPa
 		IsDirectDependency: depth == 0,
 		IntendedParentID:   intendedParentID,
 	}
-}
-
-// IntendedParentMavenID returns the formatted intended parent ID string for display/logging.
-func (d DependencyRelationshipData) IntendedParentMavenID() string {
-	if d.IntendedParentID == "" {
-		return ""
-	}
-	return fmt.Sprintf("intendedParent=%s", d.IntendedParentID)
 }

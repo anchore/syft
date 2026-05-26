@@ -69,6 +69,18 @@ func (g *DependencyGraph) FindNode(id maven.ID) *DependencyNode {
 	return g.NodeMap[id]
 }
 
+// FindNodeByGA looks up a node by groupId and artifactId only, ignoring version.
+// This handles version-mismatch scenarios where Maven dependency management resolves
+// a different version than what the POM declares.
+func (g *DependencyGraph) FindNodeByGA(groupID, artifactID string) *DependencyNode {
+	for id, node := range g.NodeMap {
+		if id.GroupID == groupID && id.ArtifactID == artifactID {
+			return node
+		}
+	}
+	return nil
+}
+
 // Size returns the number of nodes in the graph.
 func (g *DependencyGraph) Size() int {
 	return len(g.NodeMap)

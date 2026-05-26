@@ -286,3 +286,33 @@ func TestDependencyGraph_Size(t *testing.T) {
 	g.AddNode(maven.NewID("com.example", "b", "1.0"), "", root)
 	assert.Equal(t, 3, g.Size())
 }
+
+func TestDependencyGraph_FindNodeByGA(t *testing.T) {
+	g := NewDependencyGraph()
+
+	rootID := maven.NewID("com.example", "root", "1.0")
+	depID := maven.NewID("com.example", "dep", "2.0")
+
+	root := g.SetRoot(rootID)
+	g.AddNode(depID, "compile", root)
+
+	t.Run("matches regardless of version", func(t *testing.T) {
+		node := g.FindNodeByGA("com.example", "dep")
+		require.NotNil(t, node)
+		assert.Equal(t, depID, node.ID)
+	})
+
+	t.Run("different version still matches", func(t *testing.T) {
+		node := g.FindNodeByGA("com.example", "dep")
+		require.NotNil(t, node)
+		assert.Equal(t, "2.0", node.ID.Version)
+	})
+
+	t.Run("wrong groupID does not match", func(t *testing.T) {
+		assert.Nil(t, g.FindNodeByGA("org.other", "dep"))
+	})
+
+	t.Run("wrong artifactID does not match", func(t *testing.T) {
+		assert.Nil(t, g.FindNodeByGA("com.example", "missing"))
+	})
+}

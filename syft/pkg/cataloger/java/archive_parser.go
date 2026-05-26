@@ -1098,6 +1098,9 @@ func (j *archiveParser) createAuxPkgRelationship(auxPkg *pkg.Package, mainPkg *p
 	auxID := extractMavenIDFromPackage(auxPkg)
 	node := j.dependencyGraph.FindNode(auxID)
 	if node == nil {
+		node = j.dependencyGraph.FindNodeByGA(auxID.GroupID, auxID.ArtifactID)
+	}
+	if node == nil {
 		return artifact.Relationship{
 			From: *auxPkg,
 			To:   *mainPkg,
@@ -1115,7 +1118,7 @@ func (j *archiveParser) createAuxPkgRelationship(auxPkg *pkg.Package, mainPkg *p
 			}
 		}
 		// parent not in this archive's packages — defer for post-processor
-		intendedParentID := fmt.Sprintf("%s:%s:%s", node.Parent.ID.GroupID, node.Parent.ID.ArtifactID, node.Parent.ID.Version)
+		intendedParentID := node.Parent.ID.Coordinate()
 		return artifact.Relationship{
 			From: *auxPkg,
 			To:   *mainPkg,
@@ -1145,6 +1148,9 @@ func (j *archiveParser) createMainPkgRelationship(mainPkg *pkg.Package, parentPk
 	if j.dependencyGraph != nil && j.depth > 0 {
 		mainID := extractMavenIDFromPackage(mainPkg)
 		node := j.dependencyGraph.FindNode(mainID)
+		if node == nil {
+			node = j.dependencyGraph.FindNodeByGA(mainID.GroupID, mainID.ArtifactID)
+		}
 		if node != nil {
 			rel.Data = NewDependencyRelationshipData(node.Depth()-1, node.Scope)
 		}
