@@ -420,7 +420,7 @@ func (c *CreateSBOMConfig) scopeTasks() []task.Task {
 func (c *CreateSBOMConfig) relationshipTasks(src source.Description) []task.Task {
 	var tsks []task.Task
 
-	if t := task.NewRelationshipsTask(c.Relationships, src); t != nil {
+	if t := task.NewRelationshipsTask(c.Relationships, c.Packages.JavaArchive, src); t != nil {
 		tsks = append(tsks, t)
 	}
 	return tsks
