@@ -32,7 +32,7 @@ func parseSafeTensorsFile(_ context.Context, resolver file.Resolver, _ *generic.
 		return nil, nil, fmt.Errorf("failed to read safetensors header: %w", err)
 	}
 
-	md := pkg.SafeTensorsMetadata{
+	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		TensorCount:  uint64(len(header.tensors)),
 		Quantization: normalizeDType(header.dominantDType()),
@@ -82,7 +82,7 @@ func parseSafeTensorsIndex(_ context.Context, resolver file.Resolver, _ *generic
 		shards[shard] = struct{}{}
 	}
 
-	md := pkg.SafeTensorsMetadata{
+	md := pkg.SafeTensorsModelInfo{
 		Format:      "safetensors",
 		TensorCount: uint64(len(doc.WeightMap)),
 		ShardCount:  len(shards),
@@ -111,7 +111,7 @@ func parseSafeTensorsIndex(_ context.Context, resolver file.Resolver, _ *generic
 // safetensors artifact and folds their values into the metadata struct. It
 // returns a name and license derived from those sources, with the caller free
 // to fall back to a filename-derived default.
-func enrichFromSiblings(resolver file.Resolver, sourcePath string, md *pkg.SafeTensorsMetadata) (name, license string) {
+func enrichFromSiblings(resolver file.Resolver, sourcePath string, md *pkg.SafeTensorsModelInfo) (name, license string) {
 	if resolver == nil {
 		return "", ""
 	}

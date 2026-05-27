@@ -61,7 +61,7 @@ func parseSafeTensorsOCIConfig(_ context.Context, resolver file.Resolver, _ *gen
 		return nil, nil, nil
 	}
 
-	md := pkg.SafeTensorsMetadata{
+	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		Quantization: cfg.Config.Quantization,
 		Parameters:   cfg.Config.Parameters,
@@ -89,7 +89,7 @@ func parseSafeTensorsOCIConfig(_ context.Context, resolver file.Resolver, _ *gen
 // YAML frontmatter with license + base_model; HF config.json carries
 // architectures/torch_dtype/transformers_version; the vnd.docker.ai.license
 // blob is plain license text.
-func enrichFromDockerAILayers(resolver file.Resolver, md *pkg.SafeTensorsMetadata) (name, license string) {
+func enrichFromDockerAILayers(resolver file.Resolver, md *pkg.SafeTensorsModelInfo) (name, license string) {
 	ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
 	if !ok {
 		return "", ""
@@ -113,7 +113,7 @@ func enrichFromDockerAILayers(resolver file.Resolver, md *pkg.SafeTensorsMetadat
 // readAndClassifyDockerAILayer fetches a single Docker AI model-file layer and
 // passes its contents to classifyAndMerge. Split out from the calling loop so
 // the resolver handle is closed via defer on every iteration.
-func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsMetadata, name, license *string) {
+func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsModelInfo, name, license *string) {
 	rc, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
 		return
@@ -130,7 +130,7 @@ func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md 
 // classifyAndMerge sniffs a vnd.docker.ai.model.file blob (which can be README.md,
 // config.json, generation_config.json, tokenizer.json, etc.) and folds useful
 // fields into the metadata struct and out-parameters.
-func classifyAndMerge(buf []byte, md *pkg.SafeTensorsMetadata, name, license *string) {
+func classifyAndMerge(buf []byte, md *pkg.SafeTensorsModelInfo, name, license *string) {
 	trimmed := trimLeadingWhitespace(buf)
 	switch {
 	case hasPrefix(trimmed, "---"):

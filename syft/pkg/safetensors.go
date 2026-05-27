@@ -1,6 +1,6 @@
 package pkg
 
-// SafeTensorsMetadata represents metadata extracted from a SafeTensors model.
+// SafeTensorsModelInfo holds the model details extracted from SafeTensors content.
 // SafeTensors is a simple, safe serialization format for storing tensors, used
 // as the default weight format for Hugging Face transformer models. Syft may
 // populate this struct from three sources:
@@ -10,7 +10,7 @@ package pkg
 //
 // The Model Name, License, and Version fields have all been lifted up to be on
 // the syft Package.
-type SafeTensorsMetadata struct {
+type SafeTensorsModelInfo struct {
 	// Format is the source format label (always "safetensors" for this metadata type).
 	// Present because the Docker AI model config blob carries an explicit format field
 	// that can also be "gguf", and recording it here makes the origin explicit.
@@ -55,5 +55,5 @@ type SafeTensorsMetadata struct {
 
 	// Parts contains metadata from additional SafeTensors shards or OCI layers that
 	// were merged into this package during post-processing.
-	Parts []SafeTensorsMetadata `json:"parts,omitempty" cyclonedx:"parts"`
+	Parts []SafeTensorsModelInfo `json:"parts,omitempty" cyclonedx:"parts"`
 }

@@ -72,13 +72,13 @@ func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship,
 	}
 
 	var namedPkgs []pkg.Package
-	var namelessParts []pkg.SafeTensorsMetadata
+	var namelessParts []pkg.SafeTensorsModelInfo
 	for _, p := range pkgs {
 		if p.Name != "" {
 			namedPkgs = append(namedPkgs, p)
 			continue
 		}
-		if md, ok := p.Metadata.(pkg.SafeTensorsMetadata); ok {
+		if md, ok := p.Metadata.(pkg.SafeTensorsModelInfo); ok {
 			md.MetadataHash = ""
 			namelessParts = append(namelessParts, md)
 		}
@@ -90,7 +90,7 @@ func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship,
 
 	if len(namedPkgs) == 1 && len(namelessParts) > 0 {
 		winner := &namedPkgs[0]
-		if md, ok := winner.Metadata.(pkg.SafeTensorsMetadata); ok {
+		if md, ok := winner.Metadata.(pkg.SafeTensorsModelInfo); ok {
 			md.Parts = namelessParts
 			winner.Metadata = md
 		}

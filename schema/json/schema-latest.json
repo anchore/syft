@@ -2800,7 +2800,7 @@
               "$ref": "#/$defs/RustCargoLockEntry"
             },
             {
-              "$ref": "#/$defs/SafetensorsMetadata"
+              "$ref": "#/$defs/SafetensorsModelInfo"
             },
             {
               "$ref": "#/$defs/SnapEntry"
@@ -4090,7 +4090,7 @@
       ],
       "description": "RustCargoLockEntry represents a locked dependency from a Cargo.lock file with precise version and checksum information."
     },
-    "SafetensorsMetadata": {
+    "SafetensorsModelInfo": {
       "properties": {
         "format": {
           "type": "string",
@@ -4141,14 +4141,14 @@
         },
         "parts": {
           "items": {
-            "$ref": "#/$defs/SafetensorsMetadata"
+            "$ref": "#/$defs/SafetensorsModelInfo"
           },
           "type": "array",
           "description": "Parts contains metadata from additional SafeTensors shards or OCI layers that\nwere merged into this package during post-processing."
         }
       },
       "type": "object",
-      "description": "SafeTensorsMetadata represents metadata extracted from a SafeTensors model."
+      "description": "SafeTensorsModelInfo holds the model details extracted from SafeTensors content."
     },
     "Schema": {
       "properties": {

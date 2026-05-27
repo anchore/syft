@@ -21,7 +21,7 @@ func newGGUFPackage(metadata *pkg.GGUFFileHeader, modelName, version, license st
 	return p
 }
 
-func newSafeTensorsPackage(metadata *pkg.SafeTensorsMetadata, modelName, version, license string, locations ...file.Location) pkg.Package {
+func newSafeTensorsPackage(metadata *pkg.SafeTensorsModelInfo, modelName, version, license string, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      modelName,
 		Version:   version,

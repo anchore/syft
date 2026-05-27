@@ -11,6 +11,5 @@ const (
 	// 16.1.2 - placeholder for 16.1.2 changelog
 	// 16.1.3 - add GGUFFileParts to GGUFFileHeader metadata
 	// 16.1.4 - add BunLockEntry metadata type for bun.lock support
->>>>>>> c6e286cb (feat: safe tensors)
 
 )
