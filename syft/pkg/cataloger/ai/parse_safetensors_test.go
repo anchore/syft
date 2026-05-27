@@ -410,3 +410,26 @@ func TestModelNameFromPath(t *testing.T) {
 	assert.Equal(t, "my-model", modelNameFromIndexPath("/models/my-model/model.safetensors.index.json"))
 	assert.Equal(t, "safetensors-model", modelNameFromIndexPath("model.safetensors.index.json"))
 }
+
+func TestDockerAIModelConfigMediaTypes(t *testing.T) {
+	// supported mirrors how the resolver matches: filepath.Match each registered
+	// media type against a layer's media type.
+	supported := func(mt string) bool {
+		for _, p := range dockerAIModelConfigMediaTypes {
+			if ok, err := filepath.Match(p, mt); err == nil && ok {
+				return true
+			}
+		}
+		return false
+	}
+	// the known, verified schema versions are consumed
+	assert.True(t, supported("application/vnd.docker.ai.model.config.v0.1+json"))
+	assert.True(t, supported("application/vnd.docker.ai.model.config.v0.2+json"))
+	// unknown/future schema versions are intentionally NOT consumed, to avoid
+	// silently ingesting a potentially breaking config change
+	assert.False(t, supported("application/vnd.docker.ai.model.config.v0.3+json"))
+	assert.False(t, supported("application/vnd.docker.ai.model.config.v9.9+json"))
+	// sibling layer media types are not matched either
+	assert.False(t, supported("application/vnd.docker.ai.model.file"))
+	assert.False(t, supported("application/vnd.docker.ai.gguf.v3"))
+}

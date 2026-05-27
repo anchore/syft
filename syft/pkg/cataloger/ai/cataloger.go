@@ -29,12 +29,12 @@ func NewGGUFCataloger() pkg.Cataloger {
 // covering three discovery paths:
 //   - **/*.safetensors files (single-file models; header-only parse)
 //   - **/model.safetensors.index.json files (sharded models)
-//   - application/vnd.docker.ai.model.config.v0.1+json OCI layers (Docker Model
-//     Runner artifacts whose config advertises format=="safetensors")
+//   - application/vnd.docker.ai.model.config.v0.1+json / v0.2+json OCI layers
+//     (Docker Model Runner artifacts whose config advertises format=="safetensors")
 func NewSafeTensorsCataloger() pkg.Cataloger {
 	return generic.NewCataloger(safeTensorsCatalogerName).
 		WithParserByGlobs(parseSafeTensorsFile, "**/*.safetensors").
 		WithParserByGlobs(parseSafeTensorsIndex, "**/*.safetensors.index.json").
-		WithParserByMediaType(parseSafeTensorsOCIConfig, dockerAIModelConfigMediaType).
+		WithParserByMediaType(parseSafeTensorsOCIConfig, dockerAIModelConfigMediaTypes...).
 		WithProcessors(safeTensorsMergeProcessor)
 }

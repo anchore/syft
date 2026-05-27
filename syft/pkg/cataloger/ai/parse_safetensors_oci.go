@@ -18,10 +18,19 @@ import (
 
 // Docker AI OCI media types used by Docker Model Runner artifacts.
 const (
-	dockerAIModelConfigMediaType = "application/vnd.docker.ai.model.config.v0.1+json"
-	dockerAIModelFileMediaType   = "application/vnd.docker.ai.model.file"
-	dockerAILicenseMediaType     = "application/vnd.docker.ai.license"
+	dockerAIModelFileMediaType = "application/vnd.docker.ai.model.file"
+	dockerAILicenseMediaType   = "application/vnd.docker.ai.license"
 )
+
+// dockerAIModelConfigMediaTypes are the model-config schema versions this
+// cataloger understands. Versions are enumerated explicitly rather than matched
+// with a wildcard so that a future, potentially breaking, config schema is not
+// silently consumed; add a new version here only after confirming the fields we
+// parse still apply.
+var dockerAIModelConfigMediaTypes = []string{
+	"application/vnd.docker.ai.model.config.v0.1+json",
+	"application/vnd.docker.ai.model.config.v0.2+json",
+}
 
 // dockerAIModelConfig mirrors the JSON shape of the vnd.docker.ai.model.config
 // blob written by Docker Model Runner for AI artifacts. Only fields we use are
