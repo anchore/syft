@@ -8,6 +8,7 @@ import (
 	"io"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -213,26 +214,33 @@ func parseFrontmatter(buf []byte) *readmeFrontmatter {
 	if end < 0 {
 		return nil
 	}
-	var fm readmeFrontmatter
-	if err := yaml.Unmarshal(rest[:end], &fm); err != nil {
+
+	// base_model may be either a scalar ("org/model") or a sequence; decode it
+	// as a yaml.Node so a scalar value does not fail the whole block.
+	var raw struct {
+		License   string    `yaml:"license"`
+		BaseModel yaml.Node `yaml:"base_model"`
+	}
+	if err := yaml.Unmarshal(rest[:end], &raw); err != nil {
 		log.Debugf("failed to parse README frontmatter: %v", err)
 		return nil
 	}
-	// base_model may also appear as a scalar; yaml.Unmarshal will fail silently in that case.
-	if fm.License == "" && len(fm.BaseModel) == 0 {
-		var alt struct {
-			License   string `yaml:"license"`
-			BaseModel string `yaml:"base_model"`
+
+	fm := readmeFrontmatter{License: raw.License}
+	switch raw.BaseModel.Kind {
+	case yaml.ScalarNode:
+		if raw.BaseModel.Value != "" {
+			fm.BaseModel = []string{raw.BaseModel.Value}
 		}
-		if err := yaml.Unmarshal(rest[:end], &alt); err == nil {
-			fm.License = alt.License
-			if alt.BaseModel != "" {
-				fm.BaseModel = []string{alt.BaseModel}
-			}
-		}
+	case yaml.SequenceNode:
+		_ = raw.BaseModel.Decode(&fm.BaseModel)
 	}
 	return &fm
 }
+
+// defaultModelName is the fallback package name when no model name can be
+// derived from sibling files, the file path, or OCI companion layers.
+const defaultModelName = "safetensors-model"
 
 // modelNameFromPath turns "/models/foo/model.safetensors" into "foo".
 // For a bare filename "weights.safetensors" we return "weights".
@@ -252,7 +260,7 @@ func modelNameFromIndexPath(p string) string {
 	if dir != "" && dir != "." && dir != string(filepath.Separator) {
 		return dir
 	}
-	return "safetensors-model"
+	return defaultModelName
 }
 
 // formatParameterCount prints a count like 6_700_000_000 as "6.7B" using B/M/K
@@ -274,8 +282,8 @@ func formatParameterCount(n uint64) string {
 // "71.90GB". Non-numeric inputs are passed through unchanged so we never lose
 // producer-declared strings such as "71.90GB".
 func formatByteSize(s string) string {
-	var n uint64
-	if _, err := fmt.Sscanf(s, "%d", &n); err != nil || n == 0 {
+	n, err := strconv.ParseUint(s, 10, 64)
+	if err != nil || n == 0 {
 		return s
 	}
 	const (

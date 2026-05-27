@@ -72,6 +72,9 @@ func parseSafeTensorsOCIConfig(_ context.Context, resolver file.Resolver, _ *gen
 	}
 
 	name, license := enrichFromDockerAILayers(resolver, &md)
+	if name == "" {
+		name = defaultModelName
+	}
 
 	p := newSafeTensorsPackage(
 		&md,
@@ -99,8 +102,18 @@ func enrichFromDockerAILayers(resolver file.Resolver, md *pkg.SafeTensorsModelIn
 	if err != nil {
 		log.Debugf("failed to list docker AI model-file layers: %v", err)
 	}
+
+	// Collect name candidates separately so precedence does not depend on the
+	// order the resolver returns layers in. config.json's _name_or_path wins over
+	// a README base_model, matching enrichFromSiblings.
+	var configName, readmeName string
 	for _, loc := range modelFileLocations {
-		readAndClassifyDockerAILayer(resolver, loc, md, &name, &license)
+		readAndClassifyDockerAILayer(resolver, loc, md, &configName, &readmeName, &license)
+	}
+
+	name = configName
+	if name == "" {
+		name = readmeName
 	}
 
 	if license == "" {
@@ -113,7 +126,7 @@ func enrichFromDockerAILayers(resolver file.Resolver, md *pkg.SafeTensorsModelIn
 // readAndClassifyDockerAILayer fetches a single Docker AI model-file layer and
 // passes its contents to classifyAndMerge. Split out from the calling loop so
 // the resolver handle is closed via defer on every iteration.
-func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsModelInfo, name, license *string) {
+func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsModelInfo, configName, readmeName, license *string) {
 	rc, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
 		return
@@ -124,13 +137,13 @@ func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md 
 	if err != nil {
 		return
 	}
-	classifyAndMerge(buf, md, name, license)
+	classifyAndMerge(buf, md, configName, readmeName, license)
 }
 
 // classifyAndMerge sniffs a vnd.docker.ai.model.file blob (which can be README.md,
 // config.json, generation_config.json, tokenizer.json, etc.) and folds useful
 // fields into the metadata struct and out-parameters.
-func classifyAndMerge(buf []byte, md *pkg.SafeTensorsModelInfo, name, license *string) {
+func classifyAndMerge(buf []byte, md *pkg.SafeTensorsModelInfo, configName, readmeName, license *string) {
 	trimmed := trimLeadingWhitespace(buf)
 	switch {
 	case hasPrefix(trimmed, "---"):
@@ -138,8 +151,8 @@ func classifyAndMerge(buf []byte, md *pkg.SafeTensorsModelInfo, name, license *s
 			if *license == "" {
 				*license = fm.License
 			}
-			if *name == "" && len(fm.BaseModel) > 0 {
-				*name = lastPathSegment(fm.BaseModel[0])
+			if *readmeName == "" && len(fm.BaseModel) > 0 {
+				*readmeName = lastPathSegment(fm.BaseModel[0])
 			}
 		}
 	case hasPrefix(trimmed, "{"):
@@ -156,8 +169,8 @@ func classifyAndMerge(buf []byte, md *pkg.SafeTensorsModelInfo, name, license *s
 		if md.TransformersVersion == "" {
 			md.TransformersVersion = cfg.TransformersVersion
 		}
-		if *name == "" && cfg.NameOrPath != "" {
-			*name = lastPathSegment(cfg.NameOrPath)
+		if *configName == "" && cfg.NameOrPath != "" {
+			*configName = lastPathSegment(cfg.NameOrPath)
 		}
 	}
 }
