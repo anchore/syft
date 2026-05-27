@@ -24,8 +24,15 @@ func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) er
 		return nil
 	}
 
-	for _, info := range infos {
-		p := filepath.Join(root, info.Name())
+	for _, entry := range infos {
+		// fs.DirEntry no longer satisfies os.FileInfo in Go 1.26+
+		// (ModTime moved off of DirEntry), so materialize the FileInfo
+		// via Info() before passing it down.
+		info, err := dirEntryInfo(entry)
+		if err != nil {
+			return err
+		}
+		p := filepath.Join(root, entry.Name())
 		err = walkDiskDir(fsys, p, info, fn)
 		if err != nil {
 			if errors.Is(err, fs.SkipDir) {
@@ -73,9 +80,13 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 		}
 	}
 
-	for _, d1 := range dirs {
-		name1 := filepath.Join(name, d1.Name())
-		if err := walkDiskDir(fsys, name1, d1, walkDirFn); err != nil {
+	for _, entry := range dirs {
+		info, err := dirEntryInfo(entry)
+		if err != nil {
+			return err
+		}
+		name1 := filepath.Join(name, entry.Name())
+		if err := walkDiskDir(fsys, name1, info, walkDirFn); err != nil {
 			if errors.Is(err, fs.SkipDir) {
 				break
 			}
@@ -86,4 +97,19 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 		}
 	}
 	return nil
+}
+
+// dirEntryInfo returns an os.FileInfo for the given fs.DirEntry, preserving
+// the previous behavior where DirEntry values were passed where FileInfo
+// was expected. As of Go 1.26, fs.DirEntry no longer implements
+// os.FileInfo (ModTime was removed), so an explicit Info() call is
+// required.
+func dirEntryInfo(entry fs.DirEntry) (os.FileInfo, error) {
+	if entry == nil {
+		return nil, nil
+	}
+	if info, ok := entry.(os.FileInfo); ok {
+		return info, nil
+	}
+	return entry.Info()
 }
