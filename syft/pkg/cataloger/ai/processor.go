@@ -1,6 +1,8 @@
 package ai
 
 import (
+	"sort"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -89,9 +91,16 @@ func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship,
 	}
 
 	if len(namedPkgs) == 1 && len(namelessParts) > 0 {
+		// Sort by MetadataHash so OCI layer order (map iteration) doesn't leak
+		// into the SBOM output.
+		sort.Slice(namelessParts, func(i, j int) bool {
+			return namelessParts[i].MetadataHash < namelessParts[j].MetadataHash
+		})
 		winner := &namedPkgs[0]
 		if md, ok := winner.Metadata.(pkg.SafeTensorsModelInfo); ok {
 			md.Parts = namelessParts
+			// Trust per-shard headers over the producer-declared shard count.
+			md.ShardCount = len(namelessParts)
 			winner.Metadata = md
 		}
 	}

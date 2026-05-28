@@ -233,6 +233,27 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		md := out[0].Metadata.(pkg.SafeTensorsModelInfo)
 		require.Len(t, md.Parts, 1)
 		assert.Empty(t, md.Parts[0].MetadataHash, "nameless part hash should be cleared")
+		assert.Equal(t, 1, md.ShardCount)
+	})
+
+	t.Run("sets ShardCount from absorbed parts", func(t *testing.T) {
+		// Three nameless layer packages absorbed into one named config-derived package.
+		parts := []pkg.Package{
+			{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "cccc"}},
+			{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "aaaa"}},
+			{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "bbbb"}},
+		}
+		out, _, err := safeTensorsMergeProcessor(append([]pkg.Package{named}, parts...), nil, nil)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		md := out[0].Metadata.(pkg.SafeTensorsModelInfo)
+		assert.Equal(t, 3, md.ShardCount)
+		require.Len(t, md.Parts, 3)
+		// Hashes are cleared on absorbed parts, so sort order is deterministic ("" repeated).
+		// The non-deterministic resolver order should not surface here either way.
+		for _, p := range md.Parts {
+			assert.Empty(t, p.MetadataHash)
+		}
 	})
 
 	t.Run("drops result when no named package", func(t *testing.T) {
@@ -247,6 +268,106 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		assert.Equal(t, sentinel, err)
 		assert.Len(t, out, 1)
 	})
+}
+
+func TestParseSafeTensorsOCILayer(t *testing.T) {
+	tensors := map[string]safeTensorsEntry{
+		"layer.0.weight": {DType: "BF16", Shape: []int64{1024, 16}, DataOffsets: []int64{0, 32768}},
+		"layer.1.weight": {DType: "BF16", Shape: []int64{16, 16}, DataOffsets: []int64{32768, 33280}},
+	}
+	userMeta := map[string]string{"format": "pt"}
+	blob := buildSafeTensorsFile(t, userMeta, tensors)
+	wantHash := (&safeTensorsHeader{metadata: userMeta, tensors: tensors}).metadataHash()
+
+	t.Run("emits a nameless package with header-derived metadata", func(t *testing.T) {
+		reader := file.NewLocationReadCloser(file.NewLocation("/"), io.NopCloser(bytes.NewReader(blob)))
+		pkgs, _, err := parseSafeTensorsOCILayer(context.Background(), nil, nil, reader)
+		require.NoError(t, err)
+		require.Len(t, pkgs, 1)
+
+		p := pkgs[0]
+		assert.Empty(t, p.Name, "weight-layer parser must emit nameless; the merge processor names it")
+		md := p.Metadata.(pkg.SafeTensorsModelInfo)
+		assert.Equal(t, "safetensors", md.Format)
+		assert.Equal(t, uint64(2), md.TensorCount)
+		assert.Equal(t, "BF16", md.Quantization)
+		assert.Equal(t, userMeta, md.UserMetadata)
+		assert.Equal(t, wantHash, md.MetadataHash)
+	})
+
+	t.Run("merges with config-derived named package and lifts ShardCount", func(t *testing.T) {
+		// Synthesize what the OCI scan would produce: one config-derived named
+		// package + one weight-layer derived nameless package. Run them through
+		// the merge processor and assert the result looks like a complete model.
+		configMd := pkg.SafeTensorsModelInfo{
+			Format:       "safetensors",
+			Architecture: "Qwen3ForCausalLM",
+			Parameters:   "2.68B",
+			TotalSize:    "5.00GB",
+			Quantization: "Q4_K_M", // raw producer string
+		}
+		named := pkg.Package{Name: "qwen", Type: pkg.ModelPkg, Metadata: configMd}
+
+		reader := file.NewLocationReadCloser(file.NewLocation("/"), io.NopCloser(bytes.NewReader(blob)))
+		layerPkgs, _, err := parseSafeTensorsOCILayer(context.Background(), nil, nil, reader)
+		require.NoError(t, err)
+		require.Len(t, layerPkgs, 1)
+
+		out, _, err := safeTensorsMergeProcessor(append([]pkg.Package{named}, layerPkgs...), nil, nil)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+
+		md := out[0].Metadata.(pkg.SafeTensorsModelInfo)
+		assert.Equal(t, 1, md.ShardCount, "merge processor should set ShardCount from absorbed parts")
+		// Producer-declared top-level fields are preserved.
+		assert.Equal(t, "Qwen3ForCausalLM", md.Architecture)
+		assert.Equal(t, "Q4_K_M", md.Quantization)
+		// The header-derived hash lives in Parts so callers can compare against a dir scan.
+		require.Len(t, md.Parts, 1)
+		// MetadataHash is cleared on absorbed parts by the existing merge processor.
+		// What survives is the rest of the per-shard metadata (UserMetadata, TensorCount,
+		// header-derived Quantization). Confirm those are intact.
+		assert.Equal(t, userMeta, md.Parts[0].UserMetadata)
+		assert.Equal(t, uint64(2), md.Parts[0].TensorCount)
+		assert.Equal(t, "BF16", md.Parts[0].Quantization, "part keeps the normalized header dtype")
+	})
+}
+
+func TestSafeTensorsCrossSourceHashParity(t *testing.T) {
+	// Same content, two paths: a directory scan via parseSafeTensorsFile, and an
+	// OCI weight-layer scan via parseSafeTensorsOCILayer. The MetadataHash of
+	// the dir-scan package must equal the per-shard hash captured before the
+	// merge processor absorbs it. This is the convergence point that lets a
+	// caller correlate the two source types.
+	tensors := map[string]safeTensorsEntry{
+		"a.weight": {DType: "BF16", Shape: []int64{8, 8}, DataOffsets: []int64{0, 128}},
+		"b.weight": {DType: "BF16", Shape: []int64{4, 4}, DataOffsets: []int64{128, 160}},
+	}
+	userMeta := map[string]string{"format": "pt", "producer": "test"}
+	blob := buildSafeTensorsFile(t, userMeta, tensors)
+
+	// dir-scan path
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "model.safetensors"), blob, 0o644))
+	dirReader := func() file.LocationReadCloser {
+		f, err := os.Open(filepath.Join(dir, "model.safetensors"))
+		require.NoError(t, err)
+		return file.NewLocationReadCloser(file.NewLocation(filepath.Join(dir, "model.safetensors")), f)
+	}()
+	dirPkgs, _, err := parseSafeTensorsFile(context.Background(), nil, nil, dirReader)
+	require.NoError(t, err)
+	require.Len(t, dirPkgs, 1)
+	dirHash := dirPkgs[0].Metadata.(pkg.SafeTensorsModelInfo).MetadataHash
+	require.NotEmpty(t, dirHash)
+
+	// OCI weight-layer path
+	ociReader := file.NewLocationReadCloser(file.NewLocation("/"), io.NopCloser(bytes.NewReader(blob)))
+	ociPkgs, _, err := parseSafeTensorsOCILayer(context.Background(), nil, nil, ociReader)
+	require.NoError(t, err)
+	require.Len(t, ociPkgs, 1)
+	ociHash := ociPkgs[0].Metadata.(pkg.SafeTensorsModelInfo).MetadataHash
+
+	assert.Equal(t, dirHash, ociHash, "same content via dir scan and OCI weight-layer scan must hash equal")
 }
 
 func configReader(blob []byte) file.LocationReadCloser {

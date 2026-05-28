@@ -18,8 +18,9 @@ import (
 
 // Docker AI OCI media types used by Docker Model Runner artifacts.
 const (
-	dockerAIModelFileMediaType = "application/vnd.docker.ai.model.file"
-	dockerAILicenseMediaType   = "application/vnd.docker.ai.license"
+	dockerAIModelFileMediaType   = "application/vnd.docker.ai.model.file"
+	dockerAILicenseMediaType     = "application/vnd.docker.ai.license"
+	dockerAISafeTensorsMediaType = "application/vnd.docker.ai.safetensors"
 )
 
 // dockerAIModelConfigMediaTypes are the model-config schema versions this
@@ -241,5 +242,48 @@ func lastPathSegment(s string) string {
 	return s
 }
 
-// integrity check
-var _ generic.Parser = parseSafeTensorsOCIConfig
+// parseSafeTensorsOCILayer parses a SafeTensors weight layer from an OCI model
+// artifact by reading only its JSON header (the layer is fetched up to a small
+// byte cap by the source layer; tensor data is never downloaded). It emits a
+// nameless package so safeTensorsMergeProcessor folds the result into the
+// config-derived named package as a Part. The point of this parser is to give
+// OCI scans the same content-derived fields the directory-scan path produces:
+// real tensor count, normalized quantization, __metadata__, and MetadataHash.
+func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	defer internal.CloseAndLogError(reader, reader.Path())
+
+	header, _, err := readSafeTensorsHeader(&io.LimitedReader{R: reader, N: maxSafeTensorsHeaderSize + 8})
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read safetensors layer header: %w", err)
+	}
+
+	md := pkg.SafeTensorsModelInfo{
+		Format:       "safetensors",
+		TensorCount:  uint64(len(header.tensors)),
+		Quantization: normalizeDType(header.dominantDType()),
+		UserMetadata: header.metadata,
+		MetadataHash: header.metadataHash(),
+	}
+	if p := header.parameterCount(); p > 0 {
+		md.Parameters = formatParameterCount(p)
+	}
+
+	// Emit nameless; safeTensorsMergeProcessor will absorb this into the
+	// config-derived named package as a Part. The merge runs even when only
+	// nameless packages exist, in which case the result is dropped.
+	p := newSafeTensorsPackage(
+		&md,
+		"",
+		"",
+		"",
+		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+	)
+
+	return []pkg.Package{p}, nil, nil
+}
+
+// integrity checks
+var (
+	_ generic.Parser = parseSafeTensorsOCIConfig
+	_ generic.Parser = parseSafeTensorsOCILayer
+)

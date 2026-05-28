@@ -88,12 +88,12 @@ func validateAndFetchArtifact(ctx context.Context, client *registryClient, refer
 // model artifact and stores them on disk so the ContainerImageModel resolver
 // can serve them by media type:
 //
-//   - For GGUF: the first maxHeaderBytes of each weight layer (existing behavior).
-//   - For SafeTensors: the model-config blob (already in memory as RawConfig)
-//     plus each companion layer in full. We deliberately skip the multi-GB
-//     safetensors weight layers — the config blob carries aggregate metadata
-//     (format, quantization, parameter count, tensor count, total size) that
-//     the cataloger needs, and individual shard headers are not yet used.
+//   - For GGUF: the first maxHeaderBytes of each weight layer.
+//   - For SafeTensors: the model-config blob (already in memory as RawConfig),
+//     each companion layer in full, and the first maxHeaderBytes of each
+//     weight layer. The weight-layer prefix is enough to read the JSON header
+//     (tensor map + __metadata__), which is what the cataloger hashes for
+//     cross-source identity.
 func fetchAndStoreModelHeaders(ctx context.Context, client *registryClient, artifact *modelArtifact) (string, *fileresolver.ContainerImageModel, error) {
 	tempDir, err := os.MkdirTemp("", "syft-oci-model")
 	if err != nil {
@@ -108,7 +108,7 @@ func fetchAndStoreModelHeaders(ctx context.Context, client *registryClient, arti
 
 	layerFiles := make(map[string]fileresolver.LayerInfo)
 
-	// GGUF weight-layer headers (unchanged).
+	// GGUF weight-layer headers.
 	for _, layer := range artifact.GGUFLayers {
 		li, err := fetchSingleGGUFHeader(ctx, client, artifact.Reference, layer, tempDir)
 		if err != nil {
@@ -135,6 +135,21 @@ func fetchAndStoreModelHeaders(ctx context.Context, client *registryClient, arti
 	if artifact.Format == modelFormatSafeTensors {
 		for _, layer := range artifact.CompanionLayers {
 			li, err := fetchCompanionLayer(ctx, client, artifact.Reference, layer, tempDir)
+			if err != nil {
+				cleanup()
+				return "", nil, err
+			}
+			layerFiles[layer.Digest.String()] = li
+		}
+	}
+
+	// SafeTensors weight-layer headers. We only pull the leading prefix (same
+	// budget as a GGUF header) because the JSON header lives at the very start
+	// of the file — multi-GB tensor data that follows is intentionally not
+	// downloaded.
+	if artifact.Format == modelFormatSafeTensors {
+		for _, layer := range artifact.SafeTensorsLayers {
+			li, err := fetchSafeTensorsLayerHeader(ctx, client, artifact.Reference, layer, tempDir)
 			if err != nil {
 				cleanup()
 				return "", nil, err
@@ -192,6 +207,26 @@ func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name
 	digestStr := layer.Digest.String()
 	safeDigest := strings.ReplaceAll(digestStr, ":", "-")
 	tempPath := filepath.Join(tempDir, safeDigest+".gguf")
+	if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
+	}
+
+	return fileresolver.LayerInfo{
+		TempPath:  tempPath,
+		MediaType: string(layer.MediaType),
+	}, nil
+}
+
+// fetchSafeTensorsLayerHeader fetches the leading bytes of a SafeTensors weight
+// layer (enough to cover the JSON header) and writes them to a temp file.
+func fetchSafeTensorsLayerHeader(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (fileresolver.LayerInfo, error) {
+	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxHeaderBytes)
+	if err != nil {
+		return fileresolver.LayerInfo{}, fmt.Errorf("failed to fetch safetensors layer header: %w", err)
+	}
+
+	safeDigest := strings.ReplaceAll(layer.Digest.String(), ":", "-")
+	tempPath := filepath.Join(tempDir, safeDigest+".safetensors")
 	if err := os.WriteFile(tempPath, headerData, 0600); err != nil {
 		return fileresolver.LayerInfo{}, fmt.Errorf("failed to write temp file: %w", err)
 	}

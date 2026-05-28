@@ -133,9 +133,8 @@ type modelArtifact struct {
 	GGUFLayers []v1.Descriptor
 
 	// SafeTensorsLayers are descriptors for layers carrying SafeTensors-format weights.
-	// For safetensors we do NOT fetch these layers — the model-config blob already
-	// contains the aggregate metadata we need — but we record them here for counting
-	// and for future per-shard parsing.
+	// We fetch the first maxHeaderBytes of each so the cataloger can read the JSON
+	// header (tensor map + __metadata__) without pulling the multi-GB tensor data.
 	SafeTensorsLayers []v1.Descriptor
 
 	// CompanionLayers are non-weight layers (README, config.json, license) that
