@@ -333,6 +333,38 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 	})
 }
 
+// TestParseSafeTensorsOCILayer_realFixture grounds the OCI layer parser
+// against a real `[prefix + JSON header]` captured from a public Docker AI
+// model artifact (docker.io/ai/nomic-embed-text-v2-moe-safetensors:475M).
+// The fixture and the tool that produced it live in
+// testdata/safetensors/; see the README there to refresh.
+//
+// Locking in the field values guards against changes to the header parser
+// silently breaking on real-world content shape.
+func TestParseSafeTensorsOCILayer_realFixture(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("testdata", "safetensors", "nomic-embed-475M.header.safetensors"))
+	require.NoError(t, err)
+	require.Greater(t, len(data), 8, "fixture must include the 8-byte length prefix")
+
+	reader := file.NewLocationReadCloser(file.NewLocation("/"), io.NopCloser(bytes.NewReader(data)))
+	pkgs, _, err := parseSafeTensorsOCILayer(context.Background(), nil, nil, reader)
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Empty(t, pkgs[0].Name, "weight-layer packages are nameless before the merge processor runs")
+
+	md := pkgs[0].Metadata.(pkg.SafeTensorsModelInfo)
+	assert.Equal(t, "safetensors", md.Format)
+	assert.Equal(t, uint64(148), md.TensorCount, "nomic-embed-v2-moe 475M ships 148 tensor entries in this shard")
+	assert.Equal(t, "F32", md.Quantization, "every tensor in the captured shard is F32")
+	assert.Equal(t, "475.29M", md.Parameters)
+	assert.Equal(t, map[string]string{"format": "pt"}, md.UserMetadata)
+	// MetadataHash is locked to the exact value the parser produces for this
+	// captured input. The fixture is immutable on disk; if this value changes
+	// either the hash algorithm or the canonicalization changed, both of which
+	// callers may rely on for cross-source identity.
+	assert.Equal(t, "051a14e686673dea", md.MetadataHash)
+}
+
 func TestSafeTensorsCrossSourceHashParity(t *testing.T) {
 	// Same content, two paths: a directory scan via parseSafeTensorsFile, and an
 	// OCI weight-layer scan via parseSafeTensorsOCILayer. The MetadataHash of
