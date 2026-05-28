@@ -225,35 +225,53 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 	named := pkg.Package{Name: "model-a", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "aaaa"}}
 	nameless := pkg.Package{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "bbbb"}}
 
-	t.Run("merges nameless into named parts", func(t *testing.T) {
+	t.Run("preserves the part's MetadataHash when the named package already has one", func(t *testing.T) {
 		out, _, err := safeTensorsMergeProcessor([]pkg.Package{named, nameless}, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, out, 1)
 		assert.Equal(t, "model-a", out[0].Name)
 		md := out[0].Metadata.(pkg.SafeTensorsModelInfo)
 		require.Len(t, md.Parts, 1)
-		assert.Empty(t, md.Parts[0].MetadataHash, "nameless part hash should be cleared")
+		assert.Equal(t, "bbbb", md.Parts[0].MetadataHash, "part hash must survive: it is the cross-source fingerprint")
+		assert.Equal(t, "aaaa", md.MetadataHash, "named package's own hash is not overwritten")
 		assert.Equal(t, 1, md.ShardCount)
 	})
 
-	t.Run("sets ShardCount from absorbed parts", func(t *testing.T) {
+	t.Run("lifts the single part's MetadataHash to top-level when named has none", func(t *testing.T) {
+		// This is the OCI single-shard shape: the config-blob parser produces a
+		// named package with no hash; the weight-layer parser produces a nameless
+		// part with the real header hash. Top-level should land in the same field
+		// a dir-scan single-file would populate, so callers can correlate them.
+		namedNoHash := pkg.Package{Name: "model-b", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors"}}
+		part := pkg.Package{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "deadbeef"}}
+		out, _, err := safeTensorsMergeProcessor([]pkg.Package{namedNoHash, part}, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		md := out[0].Metadata.(pkg.SafeTensorsModelInfo)
+		assert.Equal(t, "deadbeef", md.MetadataHash, "single-shard lift makes OCI top-level match dir-scan top-level")
+		require.Len(t, md.Parts, 1)
+		assert.Equal(t, "deadbeef", md.Parts[0].MetadataHash, "part also retains its hash")
+	})
+
+	t.Run("multi-shard preserves per-part hashes and sorts deterministically", func(t *testing.T) {
 		// Three nameless layer packages absorbed into one named config-derived package.
+		// Top-level MetadataHash stays empty (no canonical single hash for a sharded
+		// model — callers must combine the per-shard hashes themselves).
+		namedNoHash := pkg.Package{Name: "model-c", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors"}}
 		parts := []pkg.Package{
 			{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "cccc"}},
 			{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "aaaa"}},
 			{Name: "", Type: pkg.ModelPkg, Metadata: pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "bbbb"}},
 		}
-		out, _, err := safeTensorsMergeProcessor(append([]pkg.Package{named}, parts...), nil, nil)
+		out, _, err := safeTensorsMergeProcessor(append([]pkg.Package{namedNoHash}, parts...), nil, nil)
 		require.NoError(t, err)
 		require.Len(t, out, 1)
 		md := out[0].Metadata.(pkg.SafeTensorsModelInfo)
 		assert.Equal(t, 3, md.ShardCount)
+		assert.Empty(t, md.MetadataHash, "multi-shard leaves top-level hash unset")
 		require.Len(t, md.Parts, 3)
-		// Hashes are cleared on absorbed parts, so sort order is deterministic ("" repeated).
-		// The non-deterministic resolver order should not surface here either way.
-		for _, p := range md.Parts {
-			assert.Empty(t, p.MetadataHash)
-		}
+		// Parts sorted by MetadataHash for deterministic SBOM output regardless of resolver order.
+		assert.Equal(t, []string{"aaaa", "bbbb", "cccc"}, []string{md.Parts[0].MetadataHash, md.Parts[1].MetadataHash, md.Parts[2].MetadataHash})
 	})
 
 	t.Run("drops result when no named package", func(t *testing.T) {
@@ -323,11 +341,12 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 		// Producer-declared top-level fields are preserved.
 		assert.Equal(t, "Qwen3ForCausalLM", md.Architecture)
 		assert.Equal(t, "Q4_K_M", md.Quantization)
-		// The header-derived hash lives in Parts so callers can compare against a dir scan.
+		// Single-shard: the header-derived MetadataHash is lifted to top-level so
+		// it matches the field a dir-scan would populate.
+		assert.Equal(t, wantHash, md.MetadataHash, "single-shard OCI scan must expose the hash at the same field as a dir scan")
+		// The full per-shard breakdown is also preserved under Parts.
 		require.Len(t, md.Parts, 1)
-		// MetadataHash is cleared on absorbed parts by the existing merge processor.
-		// What survives is the rest of the per-shard metadata (UserMetadata, TensorCount,
-		// header-derived Quantization). Confirm those are intact.
+		assert.Equal(t, wantHash, md.Parts[0].MetadataHash)
 		assert.Equal(t, wantUserMetadata, md.Parts[0].UserMetadata)
 		assert.Equal(t, uint64(2), md.Parts[0].TensorCount)
 		assert.Equal(t, "BF16", md.Parts[0].Quantization, "part keeps the normalized header dtype")

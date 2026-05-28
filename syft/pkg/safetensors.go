@@ -50,8 +50,11 @@ type SafeTensorsModelInfo struct {
 	// slice rather than a Go map so SBOM output is stable across runs.
 	UserMetadata KeyValues `json:"userMetadata,omitempty" cyclonedx:"userMetadata"`
 
-	// MetadataHash is an xxhash of the normalized header metadata, providing a stable
-	// identifier for identical model content across repositories or filenames.
+	// MetadataHash is an xxhash over the on-disk SafeTensors header (sorted tensor
+	// entries + __metadata__). It is derived ONLY from the safetensors file bytes —
+	// never from OCI manifest, layer descriptor, or config-blob fields — so the same
+	// model content scanned via a directory source and via an OCI image produces the
+	// same value. Treat this as the cross-source content fingerprint.
 	MetadataHash string `json:"metadataHash,omitempty" cyclonedx:"metadataHash"`
 
 	// Parts contains metadata from additional SafeTensors shards or OCI layers that

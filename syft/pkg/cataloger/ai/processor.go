@@ -62,9 +62,16 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 
 // safeTensorsMergeProcessor mirrors ggufMergeProcessor for SafeTensors packages.
 // When scanning an OCI AI artifact, the model-config blob produces one named
-// package and individual .safetensors shard layers (if we ever decide to parse
-// them directly) would produce nameless packages. Any nameless SafeTensors
-// packages are collapsed into the named one's Parts slice.
+// package and each safetensors weight layer produces a nameless package. The
+// nameless packages are absorbed into the named one's Parts slice.
+//
+// MetadataHash is intentionally preserved on absorbed parts: it is derived
+// purely from the on-disk safetensors header (see SafeTensorsModelInfo doc),
+// so it acts as the cross-source content fingerprint. For a single-shard
+// model we also copy it up to the named package's top-level MetadataHash so
+// that an OCI scan and a directory scan of the same single .safetensors file
+// expose the hash at the same field — `md.MetadataHash` — without callers
+// having to inspect Parts.
 func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	if err != nil {
 		return pkgs, rels, err
@@ -81,7 +88,6 @@ func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship,
 			continue
 		}
 		if md, ok := p.Metadata.(pkg.SafeTensorsModelInfo); ok {
-			md.MetadataHash = ""
 			namelessParts = append(namelessParts, md)
 		}
 	}
@@ -101,6 +107,14 @@ func safeTensorsMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship,
 			md.Parts = namelessParts
 			// Trust per-shard headers over the producer-declared shard count.
 			md.ShardCount = len(namelessParts)
+			// Single-shard: lift the part's content fingerprint to the top
+			// level so the field placement matches a dir-scan single file.
+			// Only lift when the named package has no hash of its own (the
+			// OCI config-blob parser never sets one; dir-scan paths never
+			// produce nameless parts, so they don't reach this branch).
+			if len(namelessParts) == 1 && md.MetadataHash == "" {
+				md.MetadataHash = namelessParts[0].MetadataHash
+			}
 			winner.Metadata = md
 		}
 	}
