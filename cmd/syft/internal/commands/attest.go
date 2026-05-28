@@ -150,10 +150,7 @@ func attestSingleFormat(s *sbom.SBOM, encoders *format.EncoderCollection, output
 }
 
 func createAttestation(sbomFilepath string, outputName string, opts *attestOptions, userInput string) error {
-	execCmd, err := attestCommand(sbomFilepath, outputName, opts, userInput)
-	if err != nil {
-		return fmt.Errorf("unable to craft attest command: %w", err)
-	}
+	execCmd := attestCommand(sbomFilepath, outputName, opts, userInput)
 
 	log.WithFields("cmd", strings.Join(execCmd.Args, " ")).Trace("creating attestation")
 
@@ -197,7 +194,7 @@ func createAttestation(sbomFilepath string, outputName string, opts *attestOptio
 	return nil
 }
 
-func attestCommand(sbomFilepath string, outputName string, opts *attestOptions, userInput string) (*exec.Cmd, error) {
+func attestCommand(sbomFilepath string, outputName string, opts *attestOptions, userInput string) *exec.Cmd {
 	args := []string{"attest", userInput, "--predicate", sbomFilepath, "--type", predicateType(outputName), "-y"}
 	if opts.Attest.Key != "" {
 		args = append(args, "--key", opts.Attest.Key.String())
@@ -211,7 +208,7 @@ func attestCommand(sbomFilepath string, outputName string, opts *attestOptions, 
 		execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
 	}
 
-	return execCmd, nil
+	return execCmd
 }
 
 func predicateType(outputName string) string {

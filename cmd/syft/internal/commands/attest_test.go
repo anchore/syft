@@ -102,7 +102,6 @@ func Test_attestCommand(t *testing.T) {
 		wantCmd     string
 		wantEnvVars map[string]string
 		notEnvVars  []string
-		wantErr     require.ErrorAssertionFunc
 	}{
 		{
 			name: "with key and password",
@@ -183,16 +182,7 @@ func Test_attestCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.wantErr == nil {
-				tt.wantErr = require.NoError
-			}
-
-			got, err := attestCommand(tt.args.sbomFilepath, tt.args.outputName, &tt.args.opts, tt.args.userInput)
-			tt.wantErr(t, err)
-			if err != nil {
-				return
-			}
-
+			got := attestCommand(tt.args.sbomFilepath, tt.args.outputName, &tt.args.opts, tt.args.userInput)
 			require.NotNil(t, got)
 			assert.Equal(t, tt.wantCmd, got.String())
 
