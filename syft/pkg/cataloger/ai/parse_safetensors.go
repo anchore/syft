@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/cespare/xxhash/v2"
+
+	"github.com/anchore/syft/syft/pkg"
 )
 
 // SafeTensors file format: [8 bytes u64 LE header size] [N bytes JSON header] [tensor data].
@@ -142,6 +144,27 @@ func (h *safeTensorsHeader) metadataHash() string {
 		return ""
 	}
 	return fmt.Sprintf("%016x", xxhash.Sum64(b))
+}
+
+// userMetadataKeyValues converts the safetensors __metadata__ map into a
+// KeyValues slice sorted by key. We do not use the convention of returning a
+// nil slice for an empty input — instead, an empty input maps to an empty
+// (length-0, non-nil) KeyValues — so downstream JSON serialization remains
+// stable: `omitempty` drops the field either way.
+func userMetadataKeyValues(m map[string]string) pkg.KeyValues {
+	if len(m) == 0 {
+		return nil
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := make(pkg.KeyValues, 0, len(keys))
+	for _, k := range keys {
+		out = append(out, pkg.KeyValue{Key: k, Value: m[k]})
+	}
+	return out
 }
 
 // normalizeDType maps a safetensors/torch dtype label to an uppercase quantization

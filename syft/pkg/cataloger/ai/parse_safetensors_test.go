@@ -74,7 +74,7 @@ func TestSafeTensorsCataloger_singleFile(t *testing.T) {
 				TorchDtype:          "bfloat16",
 				TransformersVersion: "4.40.0",
 				ShardCount:          1,
-				UserMetadata:        userMeta,
+				UserMetadata:        pkg.KeyValues{{Key: "format", Value: "pt"}},
 				MetadataHash:        wantHash,
 			},
 		},
@@ -276,6 +276,7 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 		"layer.1.weight": {DType: "BF16", Shape: []int64{16, 16}, DataOffsets: []int64{32768, 33280}},
 	}
 	userMeta := map[string]string{"format": "pt"}
+	wantUserMetadata := pkg.KeyValues{{Key: "format", Value: "pt"}}
 	blob := buildSafeTensorsFile(t, userMeta, tensors)
 	wantHash := (&safeTensorsHeader{metadata: userMeta, tensors: tensors}).metadataHash()
 
@@ -291,7 +292,7 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 		assert.Equal(t, "safetensors", md.Format)
 		assert.Equal(t, uint64(2), md.TensorCount)
 		assert.Equal(t, "BF16", md.Quantization)
-		assert.Equal(t, userMeta, md.UserMetadata)
+		assert.Equal(t, wantUserMetadata, md.UserMetadata)
 		assert.Equal(t, wantHash, md.MetadataHash)
 	})
 
@@ -327,7 +328,7 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 		// MetadataHash is cleared on absorbed parts by the existing merge processor.
 		// What survives is the rest of the per-shard metadata (UserMetadata, TensorCount,
 		// header-derived Quantization). Confirm those are intact.
-		assert.Equal(t, userMeta, md.Parts[0].UserMetadata)
+		assert.Equal(t, wantUserMetadata, md.Parts[0].UserMetadata)
 		assert.Equal(t, uint64(2), md.Parts[0].TensorCount)
 		assert.Equal(t, "BF16", md.Parts[0].Quantization, "part keeps the normalized header dtype")
 	})
@@ -357,7 +358,7 @@ func TestParseSafeTensorsOCILayer_realFixture(t *testing.T) {
 	assert.Equal(t, uint64(148), md.TensorCount, "nomic-embed-v2-moe 475M ships 148 tensor entries in this shard")
 	assert.Equal(t, "F32", md.Quantization, "every tensor in the captured shard is F32")
 	assert.Equal(t, "475.29M", md.Parameters)
-	assert.Equal(t, map[string]string{"format": "pt"}, md.UserMetadata)
+	assert.Equal(t, pkg.KeyValues{{Key: "format", Value: "pt"}}, md.UserMetadata)
 	// MetadataHash is locked to the exact value the parser produces for this
 	// captured input. The fixture is immutable on disk; if this value changes
 	// either the hash algorithm or the canonicalization changed, both of which

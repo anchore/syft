@@ -261,7 +261,7 @@ func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Env
 		Format:       "safetensors",
 		TensorCount:  uint64(len(header.tensors)),
 		Quantization: normalizeDType(header.dominantDType()),
-		UserMetadata: header.metadata,
+		UserMetadata: userMetadataKeyValues(header.metadata),
 		MetadataHash: header.metadataHash(),
 	}
 	if p := header.parameterCount(); p > 0 {

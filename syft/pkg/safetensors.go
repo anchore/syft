@@ -46,8 +46,9 @@ type SafeTensorsModelInfo struct {
 	ShardCount int `json:"shardCount,omitempty" cyclonedx:"shardCount"`
 
 	// UserMetadata is the optional "__metadata__" map from a .safetensors file header
-	// (string-to-string key/values set by the producer).
-	UserMetadata map[string]string `json:"userMetadata,omitempty" cyclonedx:"userMetadata"`
+	// (string-to-string key/values set by the producer). Stored as a sorted KeyValues
+	// slice rather than a Go map so SBOM output is stable across runs.
+	UserMetadata KeyValues `json:"userMetadata,omitempty" cyclonedx:"userMetadata"`
 
 	// MetadataHash is an xxhash of the normalized header metadata, providing a stable
 	// identifier for identical model content across repositories or filenames.

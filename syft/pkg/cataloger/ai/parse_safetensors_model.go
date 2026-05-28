@@ -38,7 +38,7 @@ func parseSafeTensorsFile(_ context.Context, resolver file.Resolver, _ *generic.
 		TensorCount:  uint64(len(header.tensors)),
 		Quantization: normalizeDType(header.dominantDType()),
 		ShardCount:   1,
-		UserMetadata: header.metadata,
+		UserMetadata: userMetadataKeyValues(header.metadata),
 		MetadataHash: header.metadataHash(),
 	}
 	if p := header.parameterCount(); p > 0 {

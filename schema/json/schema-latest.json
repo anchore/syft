@@ -4129,11 +4129,8 @@
           "description": "ShardCount is the number of .safetensors shards for a sharded model (1 for a\nsingle-file model)."
         },
         "userMetadata": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object",
-          "description": "UserMetadata is the optional \"__metadata__\" map from a .safetensors file header\n(string-to-string key/values set by the producer)."
+          "$ref": "#/$defs/KeyValues",
+          "description": "UserMetadata is the optional \"__metadata__\" map from a .safetensors file header\n(string-to-string key/values set by the producer). Stored as a sorted KeyValues\nslice rather than a Go map so SBOM output is stable across runs."
         },
         "metadataHash": {
           "type": "string",
