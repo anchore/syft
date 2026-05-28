@@ -1,0 +1,9 @@
+name: deno
+offset: 5116362
+length: 220
+snippetSha256: 786a6c5d8be76e3c6e628cd2400c6ed5a7a7cfc75b135e8e7f1375f55dc28787
+fileSha256: d9c8a385c3704e220b1722c642f22e32f8f267013742f9b44d68c67bb5f9232d
+
+### byte snippet to follow ###
+ument. For example:
+    deno run --allow-read=. main.js./$deno$eval.console.log(cli/tools/standalone.rsCompiledeno::tools::standalonedeno-65db94feba9d4d51a09b74629f566dbc90484fbarelease/v1.29.4windowshttps://dl.deno.land

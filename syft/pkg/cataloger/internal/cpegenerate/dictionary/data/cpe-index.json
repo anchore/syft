@@ -76,6 +76,9 @@
       "github.com/go-git/go-git": [
         "cpe:2.3:a:go-git_project:go-git:*:*:*:*:*:go:*:*"
       ],
+      "github.com/go-jose/go-jose/v4#pkg-constants": [
+        "cpe:2.3:a:go-jose_project:go-jose:*:*:*:*:*:*:*:*"
+      ],
       "github.com/go-resty/resty/v2": [
         "cpe:2.3:a:resty_project:resty:*:*:*:*:*:go:*:*"
       ],
@@ -151,6 +154,9 @@
       "github.com/rezmoss/axios4go": [
         "cpe:2.3:a:rezmoss:axios4go:*:*:*:*:*:go:*:*"
       ],
+      "github.com/russellhaering/goxmldsig": [
+        "cpe:2.3:a:goxmldsig_project:goxmldsig:*:*:*:*:*:*:*:*"
+      ],
       "github.com/sap/cloud-security-client-go": [
         "cpe:2.3:a:sap:cloud-security-client-go:*:*:*:*:*:go:*:*"
       ],
@@ -159,6 +165,9 @@
       ],
       "github.com/sigstore/gitsign": [
         "cpe:2.3:a:sigstore:gitsign:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/sipeed/picoclaw": [
+        "cpe:2.3:a:sipeed:picoclaw:*:*:*:*:*:go:*:*"
       ],
       "github.com/sirupsen/logrus": [
         "cpe:2.3:a:turbopuffer:logrus:*:*:*:*:*:go:*:*"
@@ -169,11 +178,26 @@
       "github.com/stacklok/minder": [
         "cpe:2.3:a:lfprojects:minder:*:*:*:*:*:go:*:*"
       ],
+      "github.com/tomwright/dasel": [
+        "cpe:2.3:a:tomwright:dasel:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/tomwright/dasel/v2": [
+        "cpe:2.3:a:tomwright:dasel:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/tomwright/dasel/v3": [
+        "cpe:2.3:a:tomwright:dasel:*:*:*:*:*:go:*:*"
+      ],
       "github.com/valyala/fasthttp": [
         "cpe:2.3:a:fasthttp_project:fasthttp:*:*:*:*:*:*:*:*"
       ],
       "github.com/whilp/git-urls": [
         "cpe:2.3:a:git-urls_project:git-urls:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/yuin/goldmark": [
+        "cpe:2.3:a:yuin:goldmark:*:*:*:*:*:go:*:*"
+      ],
+      "go.opentelemetry.io/otel": [
+        "cpe:2.3:a:opentelemetry:opentelemetry:*:*:*:*:*:go:*:*"
       ],
       "golang.org/x/crypto": [
         "cpe:2.3:a:go:ssh:*:*:*:*:*:go:*:*"
@@ -2222,6 +2246,9 @@
       "626": [
         "cpe:2.3:a:626_project:626:*:*:*:*:*:node.js:*:*"
       ],
+      "@aborruso/ckan-mcp-server": [
+        "cpe:2.3:a:ondata:ckan_mcp_server:*:*:*:*:*:node.js:*:*"
+      ],
       "@actions/artifact": [
         "cpe:2.3:a:github:actions\\/artifact:*:*:*:*:*:node.js:*:*"
       ],
@@ -2248,6 +2275,9 @@
       "@anthropic-ai/claude-code": [
         "cpe:2.3:a:anthropic:claude_code:*:*:*:*:*:node.js:*:*"
       ],
+      "@anthropic-ai/sdk": [
+        "cpe:2.3:a:anthropic:claude_sdk_for_typescript:*:*:*:*:*:*:*:*"
+      ],
       "@apollo/gateway": [
         "cpe:2.3:a:apollographql:apollo_gateway:*:*:*:*:*:node.js:*:*"
       ],
@@ -2256,6 +2286,9 @@
       ],
       "@apollosproject/data-connector-rock": [
         "cpe:2.3:a:apollosapp:data-connector-rock:*:*:*:*:*:node.js:*:*"
+      ],
+      "@appium/support": [
+        "cpe:2.3:a:appium:appium\\/support:*:*:*:*:*:node.js:*:*"
       ],
       "@astrojs/cloudflare": [
         "cpe:2.3:a:astro:\\@astrojs\\/cloudflare:*:*:*:*:*:node.js:*:*"
@@ -2284,14 +2317,26 @@
       "@backstage/backend-common": [
         "cpe:2.3:a:linuxfoundation:backstage_backend-common:*:*:*:*:*:node.js:*:*"
       ],
+      "@backstage/integration": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/integration:*:*:*:*:*:node.js:*:*"
+      ],
       "@backstage/plugin-auth-backend": [
         "cpe:2.3:a:linuxfoundation:auth_backend:*:*:*:*:*:node.js:*:*"
+      ],
+      "@backstage/plugin-scaffolder-backend": [
+        "cpe:2.3:a:linuxfoundation:backstage\\/plugin-scaffolder-backend:*:*:*:*:*:*:*:*"
       ],
       "@backstage/plugin-techdocs": [
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/plugin-techdocs:*:*:*:*:*:node.js:*:*"
       ],
+      "@backstage/plugin-techdocs-node": [
+        "cpe:2.3:a:linuxfoundation:backstage_plugin-techdocs-node:*:*:*:*:*:*:*:*"
+      ],
       "@backstage/techdocs-common": [
         "cpe:2.3:a:linuxfoundation:\\@backstage\\/techdocs-common:*:*:*:*:*:node.js:*:*"
+      ],
+      "@better-auth/oauth-provider": [
+        "cpe:2.3:a:better-auth:better-auth\\/oauth-provider:*:*:*:*:*:node.js:*:*"
       ],
       "@braintree/sanitize-url": [
         "cpe:2.3:a:paypal:braintree\\/sanitize-url:*:*:*:*:*:node.js:*:*"
@@ -2332,6 +2377,9 @@
       "@coding-solo/godot-mcp": [
         "cpe:2.3:a:coding-solo:godot_mcp:*:*:*:*:*:*:*:*"
       ],
+      "@contentauth/c2pa-web": [
+        "cpe:2.3:a:adobe:c2pa-web:*:*:*:*:*:node.js:*:*"
+      ],
       "@cookiex/deep": [
         "cpe:2.3:a:cookiex-deep_project:cookiex-deep:*:*:*:*:*:node.js:*:*"
       ],
@@ -2350,6 +2398,9 @@
       "@evershop/evershop": [
         "cpe:2.3:a:evershop:evershop:*:*:*:*:*:node.js:*:*"
       ],
+      "@fastify/middie": [
+        "cpe:2.3:a:fastify:fastify\\/middie:*:*:*:*:*:node.js:*:*"
+      ],
       "@fastly/js-compute": [
         "cpe:2.3:a:fastly:js-compute:*:*:*:*:*:node.js:*:*"
       ],
@@ -2364,6 +2415,12 @@
       ],
       "@flourish/sdk": [
         "cpe:2.3:a:canva:flourish_sdk:*:*:*:*:*:node.js:*:*"
+      ],
+      "@frontmcp/adapters": [
+        "cpe:2.3:a:agentfront:\\@frontmcp\\/adapters:*:*:*:*:*:node.js:*:*"
+      ],
+      "@frontmcp/sdk": [
+        "cpe:2.3:a:agentfront:\\@frontmcp\\/sdk:*:*:*:*:*:node.js:*:*"
       ],
       "@github/paste-markdown": [
         "cpe:2.3:a:paste-markdown_project:paste-markdown:*:*:*:*:*:node.js:*:*"
@@ -2389,6 +2446,9 @@
       "@joeattardi/emoji-button": [
         "cpe:2.3:a:emoji_button_project:emoji_button:*:*:*:*:*:node.js:*:*"
       ],
+      "@keystone-6/core": [
+        "cpe:2.3:a:keystonejs:keystone:*:*:*:*:*:node.js:*:*"
+      ],
       "@keystonejs/keystone": [
         "cpe:2.3:a:keystonejs:keystone:*:*:*:*:*:node.js:*:*"
       ],
@@ -2406,6 +2466,9 @@
       ],
       "@misskey-dev/summaly": [
         "cpe:2.3:a:misskey:summaly:*:*:*:*:*:node.js:*:*"
+      ],
+      "@mobilenext/mobile-mcp": [
+        "cpe:2.3:a:mobilenexthq:mobile_mcp:*:*:*:*:*:node.js:*:*"
       ],
       "@nestjs/core": [
         "cpe:2.3:a:nestjs:nest:*:*:*:*:*:node.js:*:*"
@@ -2431,6 +2494,12 @@
       "@octokit/webhooks": [
         "cpe:2.3:a:octokit:webhooks:*:*:*:*:*:node.js:*:*"
       ],
+      "@openclaw/voice-call": [
+        "cpe:2.3:a:openclaw:openclaw\\/voice-call:*:*:*:*:*:node.js:*:*"
+      ],
+      "@opennextjs/cloudflare": [
+        "cpe:2.3:a:opennextjs:opennext_for_cloudflare:*:*:*:*:*:node.js:*:*"
+      ],
       "@openzeppelin/contracts": [
         "cpe:2.3:a:openzeppelin:contracts:*:*:*:*:*:node.js:*:*"
       ],
@@ -2455,6 +2524,9 @@
       ],
       "@rkesters/gnuplot": [
         "cpe:2.3:a:gnuplot_project:gnuplot:*:*:*:*:*:node.js:*:*"
+      ],
+      "@saltcorn/server": [
+        "cpe:2.3:a:saltcorn:saltcorn:*:*:*:*:*:*:*:*"
       ],
       "@sap/xssec": [
         "cpe:2.3:a:sap:\\@sap\\/xssec:*:*:*:*:*:node.js:*:*"
@@ -2749,6 +2821,9 @@
       "box2d-native": [
         "cpe:2.3:a:box2d-native_project:box2d-native:*:*:*:*:*:node.js:*:*"
       ],
+      "brace-expansion": [
+        "cpe:2.3:a:juliangruber:brace-expansion:*:*:*:*:*:node.js:*:*"
+      ],
       "braces": [
         "cpe:2.3:a:braces_project:braces:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:jonschlinkert:braces:*:*:*:*:*:node.js:*:*"
@@ -2858,6 +2933,9 @@
       ],
       "class-transformer": [
         "cpe:2.3:a:class-transformer_project:class-transformer:*:*:*:*:*:node.js:*:*"
+      ],
+      "clawdbot": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*"
       ],
       "cli": [
         "cpe:2.3:a:cli_project:cli:*:*:*:*:*:node.js:*:*"
@@ -3100,6 +3178,9 @@
       "defaults-deep": [
         "cpe:2.3:a:defaults-deep_project:defaults-deep:*:*:*:*:*:node.js:*:*"
       ],
+      "defu": [
+        "cpe:2.3:a:unjs:defu:*:*:*:*:*:node.js:*:*"
+      ],
       "defuddle": [
         "cpe:2.3:a:kepano:defuddle:*:*:*:*:*:node.js:*:*"
       ],
@@ -3182,6 +3263,9 @@
       "dotty": [
         "cpe:2.3:a:dotty_project:dotty:*:*:*:*:*:*:*:*"
       ],
+      "drizzle-orm": [
+        "cpe:2.3:a:drizzle:drizzle:*:*:*:*:*:node.js:*:*"
+      ],
       "droppy": [
         "cpe:2.3:a:droppy_project:droppy:*:*:*:*:*:node.js:*:*"
       ],
@@ -3216,7 +3300,8 @@
         "cpe:2.3:a:adonisjs:edge:*:*:*:*:*:node.js:*:*"
       ],
       "effect": [
-        "cpe:2.3:a:effect_project:effect:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:effect_project:effect:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:effectful:effect:*:*:*:*:*:node.js:*:*"
       ],
       "egg-scripts": [
         "cpe:2.3:a:eggjs:egg-scripts:*:*:*:*:*:node.js:*:*"
@@ -3353,6 +3438,9 @@
       ],
       "fast-string-search": [
         "cpe:2.3:a:fast_string_search_project:fast_string_search:*:*:*:*:*:node.js:*:*"
+      ],
+      "fast-uri": [
+        "cpe:2.3:a:openjsf:fast-uri:*:*:*:*:*:node.js:*:*"
       ],
       "fast-xml-parser": [
         "cpe:2.3:a:naturalintelligence:fast-xml-parser:*:*:*:*:*:*:*:*"
@@ -3818,6 +3906,9 @@
       "iniparserjs": [
         "cpe:2.3:a:iniparserjs_project:iniparserjs:*:*:*:*:*:node.js:*:*"
       ],
+      "inngest": [
+        "cpe:2.3:a:inngest:inngest:*:*:*:*:*:node.js:*:*"
+      ],
       "install-g-test": [
         "cpe:2.3:a:install-g-test_project:install-g-test:*:*:*:*:*:node.js:*:*"
       ],
@@ -4069,6 +4160,9 @@
       "launchpad": [
         "cpe:2.3:a:bitovi:launchpad:*:*:*:*:*:node.js:*:*"
       ],
+      "leaflet": [
+        "cpe:2.3:a:leafletjs:leaflet:*:*:*:*:*:node.js:*:*"
+      ],
       "less-openui5": [
         "cpe:2.3:a:less-openui5_project:less-openui5:*:*:*:*:*:node.js:*:*"
       ],
@@ -4146,6 +4240,18 @@
       ],
       "lodash": [
         "cpe:2.3:a:lodash:lodash:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash-amd": [
+        "cpe:2.3:a:lodash:lodash-amd:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash-es": [
+        "cpe:2.3:a:lodash:lodash-es:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash.template": [
+        "cpe:2.3:a:lodash:lodash.template:*:*:*:*:*:node.js:*:*"
+      ],
+      "lodash.unset": [
+        "cpe:2.3:a:lodash:lodash.unset:*:*:*:*:*:node.js:*:*"
       ],
       "log4js": [
         "cpe:2.3:a:log4js_project:log4js:*:*:*:*:*:node.js:*:*"
@@ -4234,6 +4340,9 @@
       ],
       "materialize-css": [
         "cpe:2.3:a:materializecss:materialize:*:*:*:*:*:*:node.js:*"
+      ],
+      "mathjs": [
+        "cpe:2.3:a:mathjs:mathjs:*:*:*:*:*:node.js:*:*"
       ],
       "matrix-appservice-bridge": [
         "cpe:2.3:a:matrix:matrix-appservice-bridge:*:*:*:*:*:node.js:*:*"
@@ -4377,6 +4486,9 @@
       "mpath": [
         "cpe:2.3:a:mpath_project:mpath:*:*:*:*:*:node.js:*:*"
       ],
+      "mppx": [
+        "cpe:2.3:a:wevm:mppx:*:*:*:*:*:node.js:*:*"
+      ],
       "mqtt-packet": [
         "cpe:2.3:a:mqtt-packet_project:mqtt-packet:*:*:*:*:*:node.js:*:*"
       ],
@@ -4442,6 +4554,9 @@
       ],
       "nanoid": [
         "cpe:2.3:a:nanoid_project:nanoid:*:*:*:*:*:node.js:*:*"
+      ],
+      "nanotar": [
+        "cpe:2.3:a:unjs:nanotar:*:*:*:*:*:node.js:*:*"
       ],
       "napi-postinstall": [
         "cpe:2.3:a:un-ts:napi-postinstall:*:*:*:*:*:node.js:*:*"
@@ -4739,6 +4854,9 @@
       "open-graph": [
         "cpe:2.3:a:open-graph_project:open-graph:*:*:*:*:*:node.js:*:*"
       ],
+      "openclaw": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*"
+      ],
       "opencv": [
         "cpe:2.3:a:node-opencv_project:node-opencv:*:*:*:*:*:node.js:*:*"
       ],
@@ -4802,6 +4920,9 @@
       "parsejson": [
         "cpe:2.3:a:parsejson_project:parsejson:*:*:*:*:*:node.js:*:*"
       ],
+      "parsoid": [
+        "cpe:2.3:a:wikimedia:parsoid:*:*:*:*:*:node.js:*:*"
+      ],
       "passport": [
         "cpe:2.3:a:passport_project:passport:*:*:*:*:*:node.js:*:*"
       ],
@@ -4816,6 +4937,9 @@
       ],
       "path-parse": [
         "cpe:2.3:a:path-parse_project:path-parse:*:*:*:*:*:node.js:*:*"
+      ],
+      "path-to-regexp": [
+        "cpe:2.3:a:pillarjs:path-to-regexp:*:*:*:*:*:node.js:*:*"
       ],
       "pathval": [
         "cpe:2.3:a:chaijis:pathval:*:*:*:*:*:node.js:*:*"
@@ -5109,6 +5233,9 @@
       "robot-js": [
         "cpe:2.3:a:getrobot:robot-js:*:*:*:*:*:node.js:*:*"
       ],
+      "rollup": [
+        "cpe:2.3:a:rollupjs:rollup:*:*:*:*:*:node.js:*:*"
+      ],
       "rollup-plugin-dev-server": [
         "cpe:2.3:a:rollup-plugin-dev-server_project:rollup-plugin-dev-server:*:*:*:*:*:node.js:*:*"
       ],
@@ -5129,6 +5256,9 @@
       ],
       "rtcmulticonnection-client": [
         "cpe:2.3:a:rtcmulticonnection-client_project:rtcmulticonnection-client:*:*:*:*:*:node.js:*:*"
+      ],
+      "rwsdk": [
+        "cpe:2.3:a:redwoodjs:redwoodsdk:*:*:*:*:*:*:*:*"
       ],
       "s3-uploader": [
         "cpe:2.3:a:s3-uploader_project:s3-uploader:*:*:*:*:*:node.js:*:*"
@@ -5228,7 +5358,8 @@
         "cpe:2.3:a:serc.js_project:serc.js:*:*:*:*:*:node.js:*:*"
       ],
       "serialize-javascript": [
-        "cpe:2.3:a:verizon:serialize-javascript:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:verizon:serialize-javascript:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:yahoo:serialize_javascript:*:*:*:*:*:node.js:*:*"
       ],
       "serialize-to-js": [
         "cpe:2.3:a:serialize-to-js_project:serialize-to-js:*:*:*:*:*:node.js:*:*"
@@ -5381,6 +5512,9 @@
       "sockjs": [
         "cpe:2.3:a:sockjs_project:sockjs:*:*:*:*:*:node.js:*:*"
       ],
+      "spin.js": [
+        "cpe:2.3:a:spin.js:spin.js:*:*:*:*:*:node.js:*:*"
+      ],
       "split-html-to-chars": [
         "cpe:2.3:a:split-html-to-chars_project:split-html-to-chars:*:*:*:*:*:node.js:*:*"
       ],
@@ -5492,6 +5626,9 @@
       ],
       "svelte": [
         "cpe:2.3:a:svelte:svelte:*:*:*:*:*:node.js:*:*"
+      ],
+      "svgo": [
+        "cpe:2.3:a:svgo:svgo:*:*:*:*:*:node.js:*:*"
       ],
       "swagger-ui-dist": [
         "cpe:2.3:a:smartbear:swagger-ui-dist:*:*:*:*:*:node.js:*:*"
@@ -5701,6 +5838,9 @@
       ],
       "utils-extend": [
         "cpe:2.3:a:utils-extend_project:utils-extend:*:*:*:*:*:node.js:*:*"
+      ],
+      "uuid": [
+        "cpe:2.3:a:uuidjs:uuid:*:*:*:*:*:node.js:*:*"
       ],
       "uv-tj-demo": [
         "cpe:2.3:a:uv-tj-demo_project:uv-tj-demo:*:*:*:*:*:node.js:*:*"
@@ -5981,6 +6121,9 @@
       "Flask-Caching": [
         "cpe:2.3:a:flask-caching_project:flask-caching:*:*:*:*:*:flask:*:*"
       ],
+      "Flask-HTTPAuth": [
+        "cpe:2.3:a:miguelgrinberg:flask-httpauth:*:*:*:*:*:python:*:*"
+      ],
       "Flask-Security-Too": [
         "cpe:2.3:a:flask-security-too_project:flask-security-too:*:*:*:*:*:*:*:*"
       ],
@@ -6017,8 +6160,14 @@
       "XML2Dict": [
         "cpe:2.3:a:xml2dict_project:xml2dict:*:*:*:*:*:python:*:*"
       ],
+      "agixt": [
+        "cpe:2.3:a:agixt:agixt:*:*:*:*:*:*:*:*"
+      ],
       "aiohttp-session": [
         "cpe:2.3:a:aio-libs:aiohttp_session:*:*:*:*:*:*:*:*"
+      ],
+      "ajenti.plugin.core": [
+        "cpe:2.3:a:ajenti:ajenti_plugin_core:*:*:*:*:*:*:*:*"
       ],
       "aniso8601": [
         "cpe:2.3:a:aniso8601_project:aniso8601:*:*:*:*:*:*:*:*"
@@ -6040,6 +6189,9 @@
       ],
       "b2sdk": [
         "cpe:2.3:a:backblaze:b2-sdk-python:*:*:*:*:*:*:*:*"
+      ],
+      "bedrock-agentcore-starter-toolkit": [
+        "cpe:2.3:a:amazon:bedrock_agentcore_starter_toolkit:*:*:*:*:*:python:*:*"
       ],
       "black": [
         "cpe:2.3:a:python:black:*:*:*:*:*:python:*:*"
@@ -6068,6 +6220,9 @@
       "certifi": [
         "cpe:2.3:a:certifi:certifi:*:*:*:*:*:python:*:*"
       ],
+      "claude-agent-sdk": [
+        "cpe:2.3:a:anthropic:claude_agent_sdk:*:*:*:*:*:python:*:*"
+      ],
       "cleo": [
         "cpe:2.3:a:python-poetry:cleo:*:*:*:*:*:*:*:*"
       ],
@@ -6092,6 +6247,9 @@
       "cryptography": [
         "cpe:2.3:a:cryptography.io:cryptography:*:*:*:*:*:*:*:*",
         "cpe:2.3:a:cryptography.io:cryptography:*:*:*:*:*:python:*:*"
+      ],
+      "curl-cffi": [
+        "cpe:2.3:a:lexiforest:curl_cffi:*:*:*:*:*:python:*:*"
       ],
       "cvxopt": [
         "cpe:2.3:a:cvxopt_project:cvxopt:*:*:*:*:*:python:*:*"
@@ -6126,6 +6284,9 @@
       "django-user-sessions": [
         "cpe:2.3:a:django-user-sessions_project:django-user-sessions:*:*:*:*:*:*:*:*"
       ],
+      "docling-core": [
+        "cpe:2.3:a:docling:docling-core:*:*:*:*:*:python:*:*"
+      ],
       "drf-jwt": [
         "cpe:2.3:a:styria:django-rest-framework-json_web_tokens:*:*:*:*:*:*:*:*"
       ],
@@ -6144,6 +6305,9 @@
       "ecdsa": [
         "cpe:2.3:a:tlsfuzzer:ecdsa:*:*:*:*:*:python:*:*"
       ],
+      "emmett": [
+        "cpe:2.3:a:emmett:emmett:*:*:*:*:*:*:*:*"
+      ],
       "enum34": [
         "cpe:2.3:a:python:enum34:*:*:*:*:*:*:*:*"
       ],
@@ -6155,6 +6319,9 @@
       ],
       "fastapi-api-key": [
         "cpe:2.3:a:athroniaeth:fastapi_api_key:*:*:*:*:*:python:*:*"
+      ],
+      "fastfeedparser": [
+        "cpe:2.3:a:kagi:fastfeedparser:*:*:*:*:*:python:*:*"
       ],
       "feedgen": [
         "cpe:2.3:a:feedgen_project:feedgen:*:*:*:*:*:python:*:*"
@@ -6217,6 +6384,9 @@
       "jwcrypto": [
         "cpe:2.3:a:latchset:jwcrypto:*:*:*:*:*:*:*:*"
       ],
+      "kedro": [
+        "cpe:2.3:a:linuxfoundation:kedro:*:*:*:*:*:python:*:*"
+      ],
       "keep": [
         "cpe:2.3:a:keep_project:keep:*:*:*:*:*:*:*:*"
       ],
@@ -6232,8 +6402,17 @@
       "langchain-experimental": [
         "cpe:2.3:a:langchain:langchain_experimental:*:*:*:*:*:python:*:*"
       ],
+      "langflow-base": [
+        "cpe:2.3:a:langflow:langflow-base:*:*:*:*:*:python:*:*"
+      ],
+      "lerobot": [
+        "cpe:2.3:a:huggingface:lerobot:*:*:*:*:*:python:*:*"
+      ],
       "loguru": [
         "cpe:2.3:a:loguru_project:loguru:*:*:*:*:*:python:*:*"
+      ],
+      "lupa": [
+        "cpe:2.3:a:scoder:lupa:*:*:*:*:*:python:*:*"
       ],
       "lxml": [
         "cpe:2.3:a:lxml:lxml:*:*:*:*:*:*:*:*"
@@ -6246,6 +6425,12 @@
       ],
       "mage-ai": [
         "cpe:2.3:a:mage:mage-ai:*:*:*:*:*:python:*:*"
+      ],
+      "magic-wormhole": [
+        "cpe:2.3:a:magic_wormhole_project:magic_wormhole:*:*:*:*:*:python:*:*"
+      ],
+      "marimo": [
+        "cpe:2.3:a:coreweave:marimo:*:*:*:*:*:python:*:*"
       ],
       "marshmallow": [
         "cpe:2.3:a:marshmallow_project:marshmallow:*:*:*:*:*:python:*:*"
@@ -6273,6 +6458,9 @@
       ],
       "oncall": [
         "cpe:2.3:a:linkedin:oncall:*:*:*:*:*:*:*:*"
+      ],
+      "onnx": [
+        "cpe:2.3:a:linuxfoundation:onnx:*:*:*:*:*:*:*:*"
       ],
       "openapi-python-client": [
         "cpe:2.3:a:openapi-python-client_project:openapi-python-client:*:*:*:*:*:*:*:*"
@@ -6307,8 +6495,14 @@
       "pdm": [
         "cpe:2.3:a:frostming:pdm:*:*:*:*:*:python:*:*"
       ],
+      "picklescan": [
+        "cpe:2.3:a:mmaitre314:picklescan:*:*:*:*:*:*:*:*"
+      ],
       "pillow-heif": [
         "cpe:2.3:a:bigcat88:pillow-heif:*:*:*:*:*:python:*:*"
+      ],
+      "pipecat-ai": [
+        "cpe:2.3:a:pipecat:pipecat:*:*:*:*:*:python:*:*"
       ],
       "pipreqs": [
         "cpe:2.3:a:pipreqs_project:pipreqs:*:*:*:*:*:python:*:*"
@@ -6318,6 +6512,9 @@
       ],
       "poetry": [
         "cpe:2.3:a:python-poetry:poetry:*:*:*:*:*:python:*:*"
+      ],
+      "praisonaiagents": [
+        "cpe:2.3:a:praison:praisonaiagents:*:*:*:*:*:python:*:*"
       ],
       "pretix": [
         "cpe:2.3:a:rami:pretix:*:*:*:*:*:*:*:*"
@@ -6367,6 +6564,9 @@
       "pydash": [
         "cpe:2.3:a:derrickgilland:pydash:*:*:*:*:*:python:*:*"
       ],
+      "pydicom": [
+        "cpe:2.3:a:pydicom:pydicom:*:*:*:*:*:python:*:*"
+      ],
       "pyesasky": [
         "cpe:2.3:a:esa:pyesasky:*:*:*:*:*:python:*:*"
       ],
@@ -6390,6 +6590,9 @@
       ],
       "pypolicyd-spf": [
         "cpe:2.3:a:pypolicyd-spf_project:pypolicyd-spf:*:*:*:*:*:*:*:*"
+      ],
+      "python-dotenv": [
+        "cpe:2.3:a:saurabh-kumar:python-dotenv:*:*:*:*:*:python:*:*"
       ],
       "python-gnupg": [
         "cpe:2.3:a:python:python-gnupg:*:*:*:*:*:*:*:*"
@@ -6463,6 +6666,9 @@
       "setuptools": [
         "cpe:2.3:a:python:setuptools:*:*:*:*:*:*:*:*"
       ],
+      "sigstore": [
+        "cpe:2.3:a:linuxfoundation:sigstore-python:*:*:*:*:*:*:*:*"
+      ],
       "simiki": [
         "cpe:2.3:a:simiki_project:simiki:*:*:*:*:*:*:*:*"
       ],
@@ -6490,11 +6696,20 @@
       "starlette": [
         "cpe:2.3:a:encode:starlette:*:*:*:*:*:python:*:*"
       ],
+      "strawberry-graphql": [
+        "cpe:2.3:a:strawberry:strawberry_graphql:*:*:*:*:*:python:*:*"
+      ],
       "tablib": [
         "cpe:2.3:a:python:tablib:*:*:*:*:*:*:*:*"
       ],
       "taguette": [
         "cpe:2.3:a:taguette:taguette:*:*:*:*:*:*:*:*"
+      ],
+      "telnyx": [
+        "cpe:2.3:a:telnyx:telnyx:*:*:*:*:*:python:*:*"
+      ],
+      "tinytag": [
+        "cpe:2.3:a:tinytag:tinytag:*:*:*:*:*:python:*:*"
       ],
       "tkvideoplayer": [
         "cpe:2.3:a:python:tkvideoplayer:*:*:*:*:*:*:*:*"
@@ -6510,6 +6725,9 @@
       ],
       "unearth": [
         "cpe:2.3:a:frostming:unearth:*:*:*:*:*:python:*:*"
+      ],
+      "unstructured": [
+        "cpe:2.3:a:unstructured:unstructured:*:*:*:*:*:python:*:*"
       ],
       "untangle": [
         "cpe:2.3:a:untangle_project:untangle:*:*:*:*:*:python:*:*"
@@ -6584,6 +6802,12 @@
       ],
       "bson": [
         "cpe:2.3:a:bson_project:bson:*:*:*:*:*:ruby:*:*"
+      ],
+      "bsv-sdk": [
+        "cpe:2.3:a:sgbett:bsv_ruby_sdk:*:*:*:*:*:ruby:*:*"
+      ],
+      "bsv-wallet": [
+        "cpe:2.3:a:sgbett:bsv-wallet:*:*:*:*:*:ruby:*:*"
       ],
       "cap-strap": [
         "cpe:2.3:a:cap-strap_project:cap-strap:*:*:*:*:*:ruby:*:*"
@@ -6718,11 +6942,15 @@
       "httparty": [
         "cpe:2.3:a:jnunemaker:httparty:*:*:*:*:*:ruby:*:*"
       ],
+      "icalendar": [
+        "cpe:2.3:a:icalendar_project:icalendar:*:*:*:*:*:ruby:*:*"
+      ],
       "iodine": [
         "cpe:2.3:a:boazsegev:iodine:*:*:*:*:*:ruby:*:*"
       ],
       "json": [
-        "cpe:2.3:a:json_project:json:*:*:*:*:*:ruby:*:*"
+        "cpe:2.3:a:json_project:json:*:*:*:*:*:ruby:*:*",
+        "cpe:2.3:a:ruby-lang:json:*:*:*:*:*:ruby:*:*"
       ],
       "json-jwt": [
         "cpe:2.3:a:json-jwt_project:json-jwt:*:*:*:*:*:ruby:*:*"
@@ -6754,11 +6982,17 @@
       "lean-ruport": [
         "cpe:2.3:a:lean-ruport_project:lean-ruport:*:*:*:*:*:ruby:*:*"
       ],
+      "lodash-rails": [
+        "cpe:2.3:a:lodash:lodash-rails:*:*:*:*:*:ruby:*:*"
+      ],
       "loofah": [
         "cpe:2.3:a:loofah_project:loofah:*:*:*:*:*:ruby:*:*"
       ],
       "lynx": [
         "cpe:2.3:a:lynx_project:lynx:*:*:*:*:*:ruby:*:*"
+      ],
+      "mcp": [
+        "cpe:2.3:a:lfprojects:mcp_ruby_sdk:*:*:*:*:*:*:*:*"
       ],
       "mechanize": [
         "cpe:2.3:a:mechanize_project:mechanize:*:*:*:*:*:ruby:*:*"
@@ -6895,6 +7129,9 @@
       ],
       "rbovirt": [
         "cpe:2.3:a:amos_benari:rbovirt:*:*:*:*:*:ruby:*:*"
+      ],
+      "rdiscount": [
+        "cpe:2.3:a:dafoster:rdiscount:*:*:*:*:*:ruby:*:*"
       ],
       "rdoc": [
         "cpe:2.3:a:ruby-lang:rdoc:*:*:*:*:*:ruby:*:*"
@@ -7189,6 +7426,9 @@
       "containers": [
         "cpe:2.3:a:containers_project:containers:*:*:*:*:*:rust:*:*"
       ],
+      "coreutils": [
+        "cpe:2.3:a:uutils:coreutils:*:*:*:*:*:rust:*:*"
+      ],
       "cranelift-codegen": [
         "cpe:2.3:a:bytecodealliance:cranelift-codegen:*:*:*:*:*:rust:*:*"
       ],
@@ -7264,6 +7504,9 @@
       "heapless": [
         "cpe:2.3:a:heapless_project:heapless:*:*:*:*:*:rust:*:*"
       ],
+      "httpsig-hyper": [
+        "cpe:2.3:a:junkurihara:httpsig-hyper:*:*:*:*:*:rust:*:*"
+      ],
       "ic-stable-structures": [
         "cpe:2.3:a:dfinity:stable_structures:*:*:*:*:*:rust:*:*"
       ],
@@ -7309,6 +7552,9 @@
       "libp2p-deflate": [
         "cpe:2.3:a:libp2p:libp2p-deflate:*:*:*:*:*:rust:*:*"
       ],
+      "libp2p-gossipsub": [
+        "cpe:2.3:a:protocol:libp2p-gossipsub:*:*:*:*:*:rust:*:*"
+      ],
       "libpulse-binding": [
         "cpe:2.3:a:libpulse-binding_project:libpulse-binding:*:*:*:*:*:rust:*:*"
       ],
@@ -7338,6 +7584,9 @@
       ],
       "lucet-runtime-internals": [
         "cpe:2.3:a:lucet-runtime-internals_project:lucet-runtime-internals:*:*:*:*:*:rust:*:*"
+      ],
+      "lz4_flex": [
+        "cpe:2.3:a:pseitz:lz4_flex:*:*:*:*:*:rust:*:*"
       ],
       "magnetic": [
         "cpe:2.3:a:magnetic_project:magnetic:*:*:*:*:*:rust:*:*"
@@ -7480,6 +7729,9 @@
       "simple_asn1": [
         "cpe:2.3:a:simple_asn1_project:simple_asn1:*:*:*:*:*:rust:*:*"
       ],
+      "skim": [
+        "cpe:2.3:a:skim-rs:skim:*:*:*:*:*:rust:*:*"
+      ],
       "slack_morphism": [
         "cpe:2.3:a:slack_morphism_project:slack_morphism:*:*:*:*:*:rust:*:*"
       ],
@@ -7564,6 +7816,9 @@
       "try-mutex": [
         "cpe:2.3:a:try-mutex_project:try-mutex:*:*:*:*:*:rust:*:*"
       ],
+      "tuftool": [
+        "cpe:2.3:a:amazon:tuftool:*:*:*:*:*:rust:*:*"
+      ],
       "tungstenite": [
         "cpe:2.3:a:snapview:tungstenite:*:*:*:*:*:rust:*:*"
       ],
@@ -7605,6 +7860,18 @@
       ],
       "zebra-consensus": [
         "cpe:2.3:a:zfnd:zebra-consensus:*:*:*:*:*:rust:*:*"
+      ],
+      "zebra-rpc": [
+        "cpe:2.3:a:zfnd:zebra-rpc:*:*:*:*:*:rust:*:*"
+      ],
+      "zebra-script": [
+        "cpe:2.3:a:zfnd:zebra-script:*:*:*:*:*:rust:*:*"
+      ],
+      "zebrad": [
+        "cpe:2.3:a:zfnd:zebrad:*:*:*:*:*:rust:*:*"
+      ],
+      "zeptoclaw": [
+        "cpe:2.3:a:zeptoclaw:zeptoclaw:*:*:*:*:*:rust:*:*"
       ],
       "zeroize_derive": [
         "cpe:2.3:a:zeroize_derive_project:zeroize_derive:*:*:*:*:*:rust:*:*"
@@ -12356,6 +12623,9 @@
       "friends": [
         "cpe:2.3:a:alex.kirk:friends:*:*:*:*:*:wordpress:*:*"
       ],
+      "front-end-editor": [
+        "cpe:2.3:a:scribu:front-end_editor:*:*:*:*:*:wordpress:*:*"
+      ],
       "front-end-only-users": [
         "cpe:2.3:a:etoilewebdesign:front_end_users:*:*:*:*:*:wordpress:*:*"
       ],
@@ -14097,6 +14367,10 @@
       ],
       "link-to-bible": [
         "cpe:2.3:a:bibleserver:link_to_bible:*:*:*:*:*:wordpress:*:*"
+      ],
+      "link-whisper": [
+        "cpe:2.3:a:linkwhisper:link_whisper:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:linkwhisper:link_whisper:*:*:*:*:free:wordpress:*:*"
       ],
       "linked-variation": [
         "cpe:2.3:a:multidots:advanced_linked_variations_for_woocommerce:*:*:*:*:*:wordpress:*:*"
@@ -17243,6 +17517,9 @@
       "sexy-contact-form": [
         "cpe:2.3:a:creative-solutions:creative_contact_form:*:*:*:*:*:wordpress:*:*"
       ],
+      "sg-cachepress": [
+        "cpe:2.3:a:siteground:speed_optimizer:*:*:*:*:*:wordpress:*:*"
+      ],
       "sg-security": [
         "cpe:2.3:a:siteground:security_optimizer:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18170,6 +18447,9 @@
       ],
       "sprout-invoices": [
         "cpe:2.3:a:webventures:client_invoicing_by_sprout_invoices:*:*:*:*:*:wordpress:*:*"
+      ],
+      "sql-chart-builder": [
+        "cpe:2.3:a:guaven:sql_chart_builder:*:*:*:*:*:wordpress:*:*"
       ],
       "squeeze": [
         "cpe:2.3:a:squeeze_project:squeeze:*:*:*:*:*:wordpress:*:*"
@@ -21863,6 +22143,9 @@
       ],
       "wpshopgermany-protectedshops": [
         "cpe:2.3:a:maennchen1:wpshopgermany_-_protected_shops:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wpshopify": [
+        "cpe:2.3:a:shopwp_project:shopwp:*:*:*:*:*:wordpress:*:*"
       ],
       "wpsimpletools-log-viewer": [
         "cpe:2.3:a:wpsimpletools:basic_log_viewer:*:*:*:*:*:wordpress:*:*"

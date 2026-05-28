@@ -170,8 +170,8 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 }
 
 func parseVersion(version string, guessFromConstraint bool) string {
-	if isPinnedConstraint(version) {
-		return strings.TrimSpace(strings.ReplaceAll(version, "==", ""))
+	if version := parsePinnedVersion(version); version != "" {
+		return version
 	}
 
 	if guessFromConstraint {
@@ -181,15 +181,26 @@ func parseVersion(version string, guessFromConstraint bool) string {
 	return ""
 }
 
-func isPinnedConstraint(version string) bool {
-	return strings.Contains(version, "==") && !strings.ContainsAny(version, "*,<>!")
+func parsePinnedVersion(version string) string {
+	version = strings.TrimSpace(version)
+	if strings.ContainsAny(version, "*,<>!") {
+		return ""
+	}
+
+	for _, operator := range []string{"===", "=="} {
+		if strings.HasPrefix(version, operator) && !strings.HasPrefix(version, operator+"=") {
+			return strings.TrimSpace(strings.TrimPrefix(version, operator))
+		}
+	}
+
+	return ""
 }
 
 func guessVersion(constraint string) string {
 	// handle "2.8.*" -> "2.8.0"
 	constraint = strings.ReplaceAll(constraint, "*", "0")
-	if isPinnedConstraint(constraint) {
-		return strings.TrimSpace(strings.ReplaceAll(constraint, "==", ""))
+	if version := parsePinnedVersion(constraint); version != "" {
+		return version
 	}
 
 	constraints := strings.Split(constraint, ",")

@@ -106,13 +106,19 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
-			EvidenceMatcher: binutils.MatchAny(
-				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
-				m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
-				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
-				m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
-				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
-				m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAll(
+				// Negative Matchers to exclude valkey-server
+				binutils.MatchNone(
+					binutils.MatchPath("**/valkey-server"),
+				),
+				binutils.MatchAny(
+					// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
+					m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+					// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
+					m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+					// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
+					m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -289,6 +295,96 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
+			// Legacy MySQL Cluster contains both MySQL Server and MySQL Cluster versions (Example: 5.7.33-ndb-7.5.21)
+			// This classifier identifies the MySQL Server version of the mysqld binary (5.7.33 in the example above).
+			Class:    "mysqld-mysql-cluster-legacy-binary",
+			FileGlob: "**/mysqld",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`cluster-gpl\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)\-ndb\-[0-9]+(\.[0-9]+)?(\.[0-9]+)?`),
+			Package: "mysql-server",
+			PURL:    mustPURL("pkg:generic/mysql-server@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "mysqld-binary",
+			FileGlob: "**/mysqld",
+			EvidenceMatcher: binutils.BranchingEvidenceMatcher([]binutils.Classifier{
+				{
+					// Legacy MySQL Cluster contains both MySQL Server and MySQL Cluster versions (Example: 5.7.33-ndb-7.5.21)
+					// This classifier identifies the MySQL Cluster version of the mysqld binary (7.5.21 in the example above).
+					Class: "mysqld-mysql-cluster-legacy-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`cluster-gpl\x00[0-9]+(\.[0-9]+)?(\.[0-9]+)?\-ndb\-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)`),
+					Package: "mysql-cluster",
+					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+				{
+					// mysqld from MySQL Cluster after versioning was aligned with MySQL Server
+					Class: "mysqld-mysql-cluster-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+					Package: "mysql-cluster",
+					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+				{
+					// mysqld from MySQL Server
+					Class: "mysqld-mysql-server-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+					Package: "mysql-server",
+					PURL:    mustPURL("pkg:generic/mysql-server@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+			}...),
+		},
+		{
+			Class:    "ndbd-binary",
+			FileGlob: "**/ndbd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "ndbmtd-binary",
+			FileGlob: "**/ndbmtd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "ndb_mgmd-binary",
+			FileGlob: "**/ndb_mgmd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
 			Class:    "xtrabackup-binary",
 			FileGlob: "**/xtrabackup",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
@@ -427,10 +523,26 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "deno-binary",
 			FileGlob: "**/deno",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// Deno/2.6.3
-				// Deno/1.41.0
-				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// Deno/2.6.3
+					// Deno/1.41.0
+					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// deno::tools::standalonedeno-65db94feba9d4d51a09b74629f566dbc90484fbarelease/v1.29.4windows
+					// cli/tools/standalone.rsdeno-74064c9d8c222b33b2a552ea0af1054f57002a96release/v1.28.3windows
+					`deno-[0-9a-z]{40}release/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// cli/tools/standalone.rsdeno-ab286750a8c87215a9651efb11fcc620f29140051.16.4release/vdlwindows
+					`deno-[0-9a-z]{40}(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// 1.10.31567c1013cc8ff12cf039137792da66a1d0015b5DENO_UNSTABLE_COVERAGE_DIRNo current directorycli/main
+					`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)[0-9a-z]{40}DENO`,
+				),
+			),
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -438,8 +550,15 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL]libHSghc-7.10.3-0AG9TOjDEtx4Ji3wSwHOBe-ghc7.10.3.so[NUL]
+					// [NUL]libHSghc-8.10.4-ghc8.10.4.so[NUL]
+					`\x00libHSghc\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\-([a-zA-Z0-9]+\-)?ghc[0-9]+\.[0-9]+\.[0-9]+\.so\x00`,
+				),
 			),
 			Package: "haskell/ghc",
 			PURL:    mustPURL("pkg:generic/haskell/ghc@version"),
@@ -448,8 +567,14 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "haskell-cabal-binary",
 			FileGlob: "**/cabal",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]/opt/cabal/1.22/lib/x86_64-linux-ghc-7.10.2/cabal-install-1.22.6.0-AfxbHivcmw40BMGrAXG3jJ[NUL][NUL][NUL]
+					`\x00.{0,50}cabal\-install\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)\-[a-zA-Z0-9]+\x00+`,
+				),
 			),
 			Package: "haskell/cabal",
 			PURL:    mustPURL("pkg:generic/haskell/cabal@version"),
@@ -535,14 +660,29 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "openssl-binary",
 			FileGlob: "**/openssl",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// [NUL]OpenSSL 3.1.4'
-				// [NUL]OpenSSL 1.1.1w'
-				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
-			),
-			Package: "openssl",
-			PURL:    mustPURL("pkg:generic/openssl@version"),
-			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			EvidenceMatcher: binutils.BranchingEvidenceMatcher([]binutils.Classifier{
+				{
+					Class: "openssl-binary-aws-lc",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						// [NUL]OpenSSL 1.1.1 (compatible; AWS-LC 1.69.0)[NUL]
+						`AWS-LC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\)\x00`,
+					),
+					Package: "aws-lc",
+					PURL:    mustPURL("pkg:generic/aws-lc@version"),
+					CPEs:    singleCPE("cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				},
+				{
+					Class: "openssl-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						// [NUL]OpenSSL 3.1.4'
+						// [NUL]OpenSSL 1.1.1w'
+						`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+					),
+					Package: "openssl",
+					PURL:    mustPURL("pkg:generic/openssl@version"),
+					CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				},
+			}...),
 		},
 		{
 			Class:    "openldap-search-binary",
@@ -739,7 +879,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "elixir-binary",
 			FileGlob: "**/elixir",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// Capture optional pre-release suffix (-rc.1, -alpha.0, -beta.2,
+				// etc.) so release-candidate elixir images (#4819) match.
+				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9]+(?:\.[0-9]+)?)?)`),
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs: []cpe.CPE{
@@ -750,7 +892,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "elixir-library",
 			FileGlob: "**/elixir/ebin/elixir.app",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?)"\}`),
+				// Same pre-release extension as elixir-binary above.
+				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9]+(?:\.[0-9]+)?)?)"\}`),
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -881,6 +1024,29 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "mongodb",
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "ingress-nginx-binary",
+			FileGlob: "**/nginx-ingress-controller",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL][NUL]v1.15.1[NUL][NUL]@e[ETX][NUL][NUL][NUL][NUL]go1.26.1[NUL][NUL][NUL]
+				// �v1.15.1[NUL][NUL]�z[ETX][NUL][NUL][NUL][NUL]go1.24.4[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{0,50}go[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?\.[0-9]+\x00+`),
+				// �Lv1.9.6[NUL][NUL]$a�c[SOH][NUL][NUL][NUL]
+				// [NUL][NUL]v0.34.0[NUL]......�$a�...[NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+.{0,800}\$a.{0,10}\x00+`),
+				// [NUL][NUL]v1.7.1[NUL][NUL][NUL]...S=v<y5...
+				// [NUL]0.33.0[NUL][NUL]...[NUL][NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`\x00+v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+.{0,100}S=v<y5`),
+				// [NUL][NUL]go1.22.8[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]v1.12.0-beta.0[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+go[0-9]+\.[0-9]+\.[0-9]+\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+`),
+				// [NUL][NUL]v1.2.0-beta.1[NUL][NUL]
+				// [NUL][NUL]v1.0.0-alpha.2[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+\-(alpha|beta)\.[0-9])\x00+`),
+			),
+			Package: "nginx-ingress-controller",
+			PURL:    mustPURL("pkg:generic/nginx-ingress-controller@version"),
+			CPEs:    singleCPE("cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 

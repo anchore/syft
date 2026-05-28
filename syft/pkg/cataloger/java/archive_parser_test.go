@@ -351,6 +351,85 @@ func TestParseJar(t *testing.T) {
 				},
 			},
 		},
+		{
+			// Dupicate the example-java-app-gradle test and the Makefile is adjusted to copy its jar to example-zap-addon-0.1.0.zap
+			name:    "example-zap-addon",
+			fixture: "testdata/java-builds/packages/example-zap-addon-0.1.0.zap",
+			wantErr: require.NoError, // no nested jars
+			expected: map[string]pkg.Package{
+				"example-zap-addon": {
+					Name:     "example-zap-addon",
+					Version:  "0.1.0",
+					PURL:     "pkg:maven/example-zap-addon/example-zap-addon@0.1.0",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
+					Licenses: pkg.NewLicenseSet(
+						pkg.License{
+							Value:          "Apache-2.0",
+							SPDXExpression: "Apache-2.0",
+							Type:           license.Concluded,
+							Locations:      file.NewLocationSet(file.NewLocation("testdata/java-builds/packages/example-zap-addon-0.1.0.zap")),
+						},
+					),
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "testdata/java-builds/packages/example-zap-addon-0.1.0.zap",
+						Manifest: &pkg.JavaManifest{
+							Main: []pkg.KeyValue{
+								{
+									Key:   "Manifest-Version",
+									Value: "1.0",
+								},
+								{
+									Key:   "Main-Class",
+									Value: "hello.HelloWorld",
+								},
+							},
+						},
+						// PomProject: &pkg.JavaPomProject{
+						// 	Path:       "META-INF/maven/io.jenkins.plugins/example-jenkins-plugin/pom.xml",
+						// 	Parent:     &pkg.JavaPomParent{GroupID: "org.jenkins-ci.plugins", ArtifactID: "plugin", Version: "4.46"},
+						// 	GroupID:    "io.jenkins.plugins",
+						// 	ArtifactID: "example-jenkins-plugin",
+						// 	Version:    "1.0-SNAPSHOT",
+						// 	Name:       "Example Jenkins Plugin",
+						// },
+					},
+				},
+				"joda-time": {
+					Name:     "joda-time",
+					Version:  "2.2",
+					PURL:     "pkg:maven/joda-time/joda-time@2.2",
+					Language: pkg.Java,
+					Type:     pkg.JavaPkg,
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFieldsWithContext(ctx, "Apache 2", "http://www.apache.org/licenses/LICENSE-2.0.txt", func() *file.Location {
+							l := file.NewLocation("testdata/java-builds/packages/example-zap-addon-0.1.0.zap")
+							return &l
+						}()),
+					),
+					Metadata: pkg.JavaArchive{
+						// ensure that nested packages with different names than that of the parent are appended as
+						// a suffix on the virtual path with a colon separator between group name and artifact name
+						VirtualPath: "testdata/java-builds/packages/example-zap-addon-0.1.0.zap:joda-time:joda-time",
+						PomProperties: &pkg.JavaPomProperties{
+							Path:       "META-INF/maven/joda-time/joda-time/pom.properties",
+							GroupID:    "joda-time",
+							ArtifactID: "joda-time",
+							Version:    "2.2",
+						},
+						PomProject: &pkg.JavaPomProject{
+							Path:        "META-INF/maven/joda-time/joda-time/pom.xml",
+							GroupID:     "joda-time",
+							ArtifactID:  "joda-time",
+							Version:     "2.2",
+							Name:        "Joda time",
+							Description: "Date and time library to replace JDK date handling",
+							URL:         "http://joda-time.sourceforge.net",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

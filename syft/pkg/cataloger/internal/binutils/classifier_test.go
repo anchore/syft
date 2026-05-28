@@ -243,3 +243,40 @@ func Test_SupportingEvidenceMatcher(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchNone(t *testing.T) {
+	matchingMatcher := MatchPath("**")
+	notMatchingMatcher := MatchPath("will-not-match")
+
+	tests := []struct {
+		name     string
+		matcher  EvidenceMatcher
+		expected bool // true if MatchNone should succeed (inner failed)
+	}{
+		{
+			name:     "inner matches, MatchNone fails",
+			matcher:  MatchNone(matchingMatcher),
+			expected: false,
+		},
+		{
+			name:     "inner fails, MatchNone succeeds",
+			matcher:  MatchNone(notMatchingMatcher),
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgs, err := tt.matcher(Classifier{}, MatcherContext{
+				Location: file.NewLocation("some/path"),
+			})
+			require.NoError(t, err)
+			if tt.expected {
+				assert.NotNil(t, pkgs)
+				assert.Empty(t, pkgs)
+			} else {
+				assert.Nil(t, pkgs)
+			}
+		})
+	}
+}

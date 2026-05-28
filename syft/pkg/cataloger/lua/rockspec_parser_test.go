@@ -15,6 +15,17 @@ func Test_parseRockspecData(t *testing.T) {
 		wantErr require.ErrorAssertionFunc
 	}{
 		{
+			name:    "empty file",
+			content: ``,
+		},
+		{
+			name: "whitespace only",
+			content: `
+
+
+`,
+		},
+		{
 			name: "basic valid content",
 			content: `
 foo = "bar"

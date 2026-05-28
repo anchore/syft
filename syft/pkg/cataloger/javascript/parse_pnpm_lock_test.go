@@ -548,7 +548,7 @@ snapshots:
 `)
 
 	// run multiple times to catch nondeterminism
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		parser := &pnpmV9LockYaml{}
 		pkgs, err := parser.Parse(9.0, lockfileV9)
 		require.NoError(t, err)
@@ -570,7 +570,7 @@ packages:
     resolution: {integrity: sha512-AAA}
 `)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		parser := &pnpmV6LockYaml{}
 		pkgs, err := parser.Parse(6.0, lockfileV6)
 		require.NoError(t, err)

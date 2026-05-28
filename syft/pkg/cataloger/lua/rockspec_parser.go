@@ -63,8 +63,11 @@ func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rocksp
 
 	parsing.SkipWhitespace(data, i)
 
-	if *i >= len(data) && len(out) > 0 {
-		return nil, fmt.Errorf("unexpected end of block at %d", *i)
+	if *i >= len(data) {
+		if len(out) > 0 {
+			return nil, fmt.Errorf("unexpected end of block at %d", *i)
+		}
+		return out, nil
 	}
 
 	c := data[*i]

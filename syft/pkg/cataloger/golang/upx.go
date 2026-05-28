@@ -499,10 +499,7 @@ func decompressLZMA(compressedData []byte, uncompressedSize uint32) ([]byte, err
 	// it may be that the dictionary size was not considered properly in this code.
 	const minDictSize = 64 * 1024         // 64KB minimum
 	const maxDictSize = 128 * 1024 * 1024 // 128MB maximum
-	dictSize := max(nextPowerOf2(uncompressedSize), minDictSize)
-	if dictSize > maxDictSize {
-		dictSize = maxDictSize
-	}
+	dictSize := min(max(nextPowerOf2(uncompressedSize), minDictSize), maxDictSize)
 
 	// construct standard 13-byte LZMA header
 	header := make([]byte, 13)
