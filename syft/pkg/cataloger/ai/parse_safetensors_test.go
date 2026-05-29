@@ -351,6 +351,123 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 	})
 }
 
+// TestSafeTensorsNamingPrecedence codifies pickSafeTensorsName's documented
+// precedence chain. Each case sets exactly the inputs that should activate one
+// rung and asserts the expected outcome — including the drop case when every
+// rung is unavailable.
+//
+// Precedence (highest → lowest):
+//  1. config.json _name_or_path  (path.Base applied)
+//  2. OCI manifest title         (follow-up; covered today by an empty-string input)
+//  3. Architecture + Parameters  (both must be non-empty)
+//  4. parent directory           (dir-scan only; OCI groups skip this rung)
+//  → drop (empty name) when nothing matches
+func TestSafeTensorsNamingPrecedence(t *testing.T) {
+	const dirGroup = "/scan/parent-name"
+
+	cases := []struct {
+		name       string
+		groupKey   string
+		nameOrPath string
+		arch       string
+		params     string
+		want       string
+	}{
+		// rung 1
+		{
+			name:       "rung 1: _name_or_path beats Arch+Params and parent-dir",
+			groupKey:   dirGroup,
+			nameOrPath: "org/MyModel",
+			arch:       "LlamaForCausalLM",
+			params:     "7B",
+			want:       "MyModel",
+		},
+		{
+			name:       "rung 1: applies path.Base to the raw value",
+			groupKey:   dirGroup,
+			nameOrPath: "very/deep/checkpoint/path/leaf-model",
+			want:       "leaf-model",
+		},
+		{
+			name:       "rung 1: works for OCI groups too",
+			groupKey:   ociGroupKey,
+			nameOrPath: "org/OciModel",
+			want:       "OciModel",
+		},
+
+		// rung 3
+		{
+			name:     "rung 3: Arch+Params wins when no _name_or_path",
+			groupKey: dirGroup,
+			arch:     "LlamaForCausalLM",
+			params:   "7B",
+			want:     "LlamaForCausalLM-7B",
+		},
+		{
+			name:     "rung 3: works for OCI groups (the only non-drop rung when no manifest title)",
+			groupKey: ociGroupKey,
+			arch:     "Qwen3ForCausalLM",
+			params:   "2.66B",
+			want:     "Qwen3ForCausalLM-2.66B",
+		},
+		{
+			name:     "rung 3 NOT taken when only Architecture is set: falls through to parent-dir",
+			groupKey: dirGroup,
+			arch:     "LlamaForCausalLM",
+			want:     "parent-name",
+		},
+		{
+			name:     "rung 3 NOT taken when only Parameters is set: falls through to parent-dir",
+			groupKey: dirGroup,
+			params:   "7B",
+			want:     "parent-name",
+		},
+
+		// rung 4
+		{
+			name:     "rung 4: parent-dir when no other rung populated",
+			groupKey: dirGroup,
+			want:     "parent-name",
+		},
+		{
+			name:     "rung 4 skipped for OCI groups: no usable parent path",
+			groupKey: ociGroupKey,
+			want:     "",
+		},
+
+		// drops
+		{
+			name:     "drop: dir group at filesystem root",
+			groupKey: "/",
+			want:     "",
+		},
+		{
+			name:     "drop: dir group with empty parent",
+			groupKey: ".",
+			want:     "",
+		},
+		{
+			name:     "drop: OCI group with nothing",
+			groupKey: ociGroupKey,
+			want:     "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			merged := pkg.Package{
+				Type: pkg.ModelPkg,
+				Metadata: pkg.SafeTensorsModelInfo{
+					Architecture: tc.arch,
+					Parameters:   tc.params,
+				},
+			}
+			got := pickSafeTensorsName(merged, tc.groupKey, tc.nameOrPath)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
 func TestParseSafeTensorsOCILayer(t *testing.T) {
 	tensors := map[string]safeTensorsEntry{
 		"layer.0.weight": {DType: "BF16", Shape: []int64{1024, 16}, DataOffsets: []int64{0, 32768}},
