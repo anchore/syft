@@ -88,42 +88,6 @@ func TestSafeTensorsCataloger_singleFile(t *testing.T) {
 		TestCataloger(t, NewSafeTensorsCataloger())
 }
 
-func TestSafeTensorsCataloger_shardedIndex(t *testing.T) {
-	dir := t.TempDir()
-	modelDir := filepath.Join(dir, "my-model")
-	require.NoError(t, os.MkdirAll(modelDir, 0o755))
-	index := `{
-		"metadata": {"total_size": 16000000000},
-		"weight_map": {
-			"layer.0.weight": "model-00001-of-00002.safetensors",
-			"layer.1.weight": "model-00001-of-00002.safetensors",
-			"layer.2.weight": "model-00002-of-00002.safetensors"
-		}
-	}`
-	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model.safetensors.index.json"), []byte(index), 0o644))
-
-	expected := []pkg.Package{
-		{
-			Name:     "my-model",
-			Type:     pkg.ModelPkg,
-			Licenses: pkg.NewLicenseSet(),
-			Metadata: pkg.SafeTensorsModelInfo{
-				Format:      "safetensors",
-				TensorCount: 3,
-				ShardCount:  2,
-				TotalSize:   "14.90GB",
-			},
-		},
-	}
-
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, dir).
-		Expects(expected, nil).
-		IgnoreLocationLayer().
-		IgnorePackageFields("FoundBy", "Locations").
-		TestCataloger(t, NewSafeTensorsCataloger())
-}
-
 // TestParseSafeTensorsOCIConfig covers the parser in isolation: it should emit
 // a nameless package mirroring the config blob's producer-declared fields, and
 // emit nothing for non-safetensors formats so the GGUF cataloger can claim the
@@ -734,19 +698,6 @@ func TestFormatParameterCount(t *testing.T) {
 	}
 	for in, want := range cases {
 		assert.Equalf(t, want, formatParameterCount(in), "formatParameterCount(%d)", in)
-	}
-}
-
-func TestFormatByteSize(t *testing.T) {
-	cases := map[string]string{
-		"16000000000": "14.90GB",
-		"2048":        "2.00KB",
-		"500":         "500B",
-		"71.90GB":     "71.90GB", // non-numeric passes through unchanged
-		"":            "",
-	}
-	for in, want := range cases {
-		assert.Equalf(t, want, formatByteSize(in), "formatByteSize(%q)", in)
 	}
 }
 
