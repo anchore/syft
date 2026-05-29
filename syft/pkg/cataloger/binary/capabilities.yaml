@@ -68,6 +68,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/julia'
+        packages:
+          - class: julia-binary
+            name: julia
+            purl: pkg:generic/julia
+            cpes:
+              - cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/helm'
         packages:
           - class: helm

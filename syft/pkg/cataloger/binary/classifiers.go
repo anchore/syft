@@ -88,8 +88,43 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "julia-binary",
 			FileGlob: "**/libjulia-internal.so",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
+			EvidenceMatcher: binutils.MatchAny(
+				// �1.13.0-beta3[NUL]branch
+				// [NUL]GIT_VERSION_INFO[NUL]jl_image_unpack[NUL]1.13.0-alpha2[NUL]branch
+				// [NUL]GIT_VERSION_INFO[NUL]__init__[NUL]1.12.6[NUL]branch[NUL]commit
+				// [NUL]GIT_VERSION_INFO[NUL]__init__[NUL]verify_methods[NUL]1.11.9[NUL]branch[NUL]commit
+				// [NUL][NUL]__init__[NUL]1.10.11[NUL]verify_methods[NUL]
+				m.FileContentsVersionMatcher(`\x00__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00(branch|verify_methods)`),
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00branch\x00`),
+				// [NUL]verify_methods[NUL]Task cannot be serialized[NUL]1.9.0-alpha1[NUL]BigInt[NUL]
+				m.FileContentsVersionMatcher(`\x00verify_methods\x00.{0,30}(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00BigInt`),
+				// unknown option `%s`[NUL]1.8.5[NUL]julia version %s
+				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00julia version`),
+			),
+			Package: "julia",
+			PURL:    mustPURL("pkg:generic/julia@version"),
+			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "julia-binary",
+			FileGlob: "**/julia",
+			EvidenceMatcher: binutils.SharedLibraryLookup(
+				// libjulia.so.1
+				// libjulia.so.0.6
+				// libjulia.so
+				`^libjulia\.so(\.[0-9])?(\.[0-9])?$`,
+				binutils.MatchAny(
+					// unknown option `%s`[NUL]1.5.4[NUL]julia version %s
+					m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00julia version`),
+					// [NUL]#kw#[NUL]1.3.1[NUL]BigInt
+					// [NUL]#kw#[NUL]0.7.0-beta2[NUL]_require_dependencies
+					m.FileContentsVersionMatcher(`\x00#kw#\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00(BigInt|_require_dependencies)`),
+					// [NUL]ObjectIdDict[NUL]0.6.4[NUL]jl_sysimg_cpu_target
+					m.FileContentsVersionMatcher(`\x00ObjectIdDict\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00jl_sysimg_cpu_target`),
+					// [NUL]require[NUL]0.4.6[NUL]core2
+					m.FileContentsVersionMatcher(`\x00require\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00core2`),
+				),
+			),
 			Package: "julia",
 			PURL:    mustPURL("pkg:generic/julia@version"),
 			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
