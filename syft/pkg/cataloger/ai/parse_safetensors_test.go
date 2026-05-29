@@ -641,23 +641,22 @@ func TestReadSafeTensorsHeader(t *testing.T) {
 		data := buildSafeTensorsFile(t, map[string]string{"format": "pt"}, map[string]safeTensorsEntry{
 			"w": {DType: "F32", Shape: []int64{2, 2}, DataOffsets: []int64{0, 16}},
 		})
-		h, n, err := readSafeTensorsHeader(bytes.NewReader(data))
+		h, err := readSafeTensorsHeader(bytes.NewReader(data))
 		require.NoError(t, err)
-		assert.Equal(t, uint64(len(data)-8), n)
 		assert.Len(t, h.tensors, 1)
 		assert.Equal(t, "pt", h.metadata["format"])
 	})
 
 	t.Run("zero-length header", func(t *testing.T) {
 		var buf [8]byte // length prefix of 0
-		_, _, err := readSafeTensorsHeader(bytes.NewReader(buf[:]))
+		_, err := readSafeTensorsHeader(bytes.NewReader(buf[:]))
 		require.Error(t, err)
 	})
 
 	t.Run("truncated body", func(t *testing.T) {
 		var buf [8]byte
 		binary.LittleEndian.PutUint64(buf[:], 100) // claims 100 bytes but supplies none
-		_, _, err := readSafeTensorsHeader(bytes.NewReader(buf[:]))
+		_, err := readSafeTensorsHeader(bytes.NewReader(buf[:]))
 		require.Error(t, err)
 	})
 }

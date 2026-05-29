@@ -35,36 +35,37 @@ type safeTensorsEntry struct {
 	DataOffsets []int64 `json:"data_offsets"`
 }
 
-// readSafeTensorsHeader reads and parses the JSON header from a .safetensors file.
-// It returns the decoded header plus the on-disk size of the header JSON in bytes.
-func readSafeTensorsHeader(r io.Reader) (*safeTensorsHeader, uint64, error) {
+// readSafeTensorsHeader reads and parses the JSON header from a .safetensors
+// file (the leading `[8-byte LE length] [length bytes of JSON]` block) and
+// returns the decoded header.
+func readSafeTensorsHeader(r io.Reader) (*safeTensorsHeader, error) {
 	var lenBuf [8]byte
 	if _, err := io.ReadFull(r, lenBuf[:]); err != nil {
-		return nil, 0, fmt.Errorf("failed to read header length: %w", err)
+		return nil, fmt.Errorf("failed to read header length: %w", err)
 	}
 	headerLen := binary.LittleEndian.Uint64(lenBuf[:])
 	if headerLen == 0 {
-		return nil, 0, fmt.Errorf("safetensors header length is zero")
+		return nil, fmt.Errorf("safetensors header length is zero")
 	}
 	if headerLen > maxSafeTensorsHeaderSize {
-		return nil, 0, fmt.Errorf("safetensors header size %d exceeds maximum %d", headerLen, maxSafeTensorsHeaderSize)
+		return nil, fmt.Errorf("safetensors header size %d exceeds maximum %d", headerLen, maxSafeTensorsHeaderSize)
 	}
 
 	body := make([]byte, headerLen)
 	if _, err := io.ReadFull(r, body); err != nil {
-		return nil, 0, fmt.Errorf("failed to read header body: %w", err)
+		return nil, fmt.Errorf("failed to read header body: %w", err)
 	}
 
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(body, &raw); err != nil {
-		return nil, 0, fmt.Errorf("failed to decode safetensors header JSON: %w", err)
+		return nil, fmt.Errorf("failed to decode safetensors header JSON: %w", err)
 	}
 
 	h := &safeTensorsHeader{tensors: make(map[string]safeTensorsEntry, len(raw))}
 	for key, val := range raw {
 		if key == "__metadata__" {
 			if err := json.Unmarshal(val, &h.metadata); err != nil {
-				return nil, 0, fmt.Errorf("failed to decode __metadata__: %w", err)
+				return nil, fmt.Errorf("failed to decode __metadata__: %w", err)
 			}
 			continue
 		}
@@ -76,7 +77,7 @@ func readSafeTensorsHeader(r io.Reader) (*safeTensorsHeader, uint64, error) {
 		h.tensors[key] = entry
 	}
 
-	return h, headerLen, nil
+	return h, nil
 }
 
 // parameterCount sums the element counts across all tensors in the header.
