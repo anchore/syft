@@ -1524,3 +1524,86 @@ from-images:
     paths:
       - /nginx-ingress-controller
 
+  - name: julia
+    version: 1.13.0-beta3
+    images:
+      - ref: library/julia:1.13.0-beta3@sha256:3b36013b071d9abc9bdedb66a4230a9445bc692aa2c49f85852b94e81c7f0a74
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.13.0
+
+  - name: julia
+    version: 1.13.0-alpha2
+    images:
+      - ref: library/julia:1.13.0-alpha2@sha256:f1b1cd24979025371be317353d0d9071e9b549583d2b13783cbafd40b8d4e319
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.13.0
+
+  - name: julia
+    version: 1.12.6
+    images:
+      - ref: library/julia:1.12.6@sha256:54d6a3f40bbd76021e6ca8fab2dd2af08cc5388b078223d3040eaf3567b4ccd3
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.12.6
+
+  - name: julia
+    version: 1.11.9
+    images:
+      - ref: library/julia:1.11.9@sha256:18e83baa9277c2ac94bef267d585634760b5adf9bc7343480161c7b09034b452
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.11.9
+
+  - name: julia
+    version: 1.10.11
+    images:
+      - ref: library/julia:1.10.11@sha256:2f27b44f3ecda0f941c1b475b8967fa933fbf52b5f877f69bfe4df959c56df66
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.10.11
+
+  - name: julia
+    version: 1.9.0-alpha1
+    images:
+      - ref: library/julia:1.9.0-alpha1@sha256:fb932603485d7cea435e85c073c04bdf4d0b90232c03013585aa0f65c8216111
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.9
+
+  - name: julia
+    version: 1.8.5
+    images:
+      - ref: library/julia:1.8.5@sha256:5edccd0ca0b5f00d78beca0bd8217d65b2c24ef051ad07e2b08ed67224ff905a
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.8
+
+  - name: julia
+    version: 1.5.4
+    images:
+      - ref: library/julia:1.5.4@sha256:39c3f721aa5ede195965e7f20575b1ee5949bdd2b42204e227d98114bcc94b83
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/bin/julia
+      - /usr/local/julia/lib/libjulia.so.1
+      - /usr/local/julia/lib/libjulia.so.1.5
+
+  - name: julia
+    version: 1.3.1
+    images:
+      - ref: library/julia:1.3.1@sha256:a14f56f9f2ed44559d9f435cc346ede09a7d61afcbac61ba037acd2b39b56171
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/bin/julia
+      - /usr/local/julia/lib/libjulia.so.1
+      - /usr/local/julia/lib/libjulia.so.1.3
+
