@@ -411,9 +411,9 @@ func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.S
 		nameOrPath = readmeName
 	}
 
-	// README license takes precedence; fall back to the license layer via the
-	// shared scanner (which understands SPDX text far better than a hand-rolled
-	// substring match).
+	// README license takes precedence; fall back to the license layer. For each
+	// license layer we first try a cheap YAML-frontmatter spdx-id read; layers
+	// without frontmatter fall through to the shared license scanner.
 	switch {
 	case readmeLicense != "":
 		lics = pkg.NewLicensesFromValuesWithContext(ctx, readmeLicense)
@@ -423,11 +423,52 @@ func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.S
 			log.Debugf("failed to list docker AI license layers: %v", lErr)
 		}
 		if len(licLocs) > 0 {
-			lics = licenses.FindAtLocations(ctx, resolver, licLocs...)
+			lics = identifyLicenseLayers(ctx, resolver, licLocs)
 			supporting = append(supporting, licLocs...)
 		}
 	}
 	return nameOrPath, lics, supporting
+}
+
+// identifyLicenseLayers turns Docker AI license-layer locations into
+// pkg.License values. It first attempts a cheap, exact SPDX-id read from the
+// layer's YAML frontmatter (the choosealicense.com shape Docker Model Runner
+// publishes for its AI artifacts); layers without frontmatter fall through to
+// the shared license scanner. Each returned license is tagged with the layer
+// location it came from so the SBOM cites its source.
+func identifyLicenseLayers(ctx context.Context, resolver file.Resolver, locs []file.Location) []pkg.License {
+	var out []pkg.License
+	var scanFallback []file.Location
+	for i := range locs {
+		loc := locs[i]
+		if spdx := readLicenseSPDXIDFromFrontmatter(resolver, loc); spdx != "" {
+			out = append(out, pkg.NewLicenseFromFieldsWithContext(ctx, spdx, "", &loc))
+			continue
+		}
+		scanFallback = append(scanFallback, loc)
+	}
+	if len(scanFallback) > 0 {
+		out = append(out, licenses.FindAtLocations(ctx, resolver, scanFallback...)...)
+	}
+	return out
+}
+
+// readLicenseSPDXIDFromFrontmatter reads a bounded prefix of a license-layer
+// blob and returns the spdx-id declared in its YAML frontmatter, if any. The
+// 64 KiB cap is well above any real choosealicense.com frontmatter block while
+// still bounding memory if the layer turns out to be huge.
+func readLicenseSPDXIDFromFrontmatter(resolver file.Resolver, loc file.Location) string {
+	rc, err := resolver.FileContentsByLocation(loc)
+	if err != nil {
+		return ""
+	}
+	defer internal.CloseAndLogError(rc, loc.RealPath)
+
+	buf, err := io.ReadAll(io.LimitReader(rc, 64*1024))
+	if err != nil {
+		return ""
+	}
+	return parseLicenseFrontmatter(buf)
 }
 
 // classifyOCIModelFileLayer reads up to 4 MiB of a model.file layer and
@@ -581,11 +622,11 @@ func readDirReadmeFrontmatter(resolver file.Resolver, p string) (*file.Location,
 	return &locations[0], fm
 }
 
-// parseFrontmatter pulls the YAML block between the first and second "---"
-// lines of a file (if present) and decodes the fields we care about. base_model
-// is decoded via yaml.Node so a scalar value ("org/model") doesn't fail the
-// whole block.
-func parseFrontmatter(buf []byte) *readmeFrontmatter {
+// extractFrontmatterBlock returns the YAML bytes between the first and second
+// "---" delimiters of a file (stripping a leading BOM and any leading
+// whitespace), or nil when no closed frontmatter block exists. Shared by every
+// YAML-frontmatter parser the cataloger needs.
+func extractFrontmatterBlock(buf []byte) []byte {
 	trimmed := bytes.TrimLeft(buf, "\xef\xbb\xbf \t\r\n")
 	if !bytes.HasPrefix(trimmed, []byte("---")) {
 		return nil
@@ -598,12 +639,23 @@ func parseFrontmatter(buf []byte) *readmeFrontmatter {
 	if end < 0 {
 		return nil
 	}
+	return rest[:end]
+}
+
+// parseFrontmatter decodes a Hugging Face model card YAML frontmatter block
+// and returns the license and base_model fields. base_model is decoded via
+// yaml.Node so a scalar value ("org/model") doesn't fail the whole block.
+func parseFrontmatter(buf []byte) *readmeFrontmatter {
+	block := extractFrontmatterBlock(buf)
+	if block == nil {
+		return nil
+	}
 
 	var raw struct {
 		License   string    `yaml:"license"`
 		BaseModel yaml.Node `yaml:"base_model"`
 	}
-	if err := yaml.Unmarshal(rest[:end], &raw); err != nil {
+	if err := yaml.Unmarshal(block, &raw); err != nil {
 		log.Debugf("failed to parse README frontmatter: %v", err)
 		return nil
 	}
@@ -618,6 +670,30 @@ func parseFrontmatter(buf []byte) *readmeFrontmatter {
 		_ = raw.BaseModel.Decode(&fm.BaseModel)
 	}
 	return &fm
+}
+
+// licenseFrontmatter holds the fields we lift from a choosealicense.com-style
+// YAML frontmatter block at the top of a license file (the LICENSE blobs Docker
+// Model Runner publishes for AI artifacts use this shape).
+type licenseFrontmatter struct {
+	SPDXID string `yaml:"spdx-id"`
+}
+
+// parseLicenseFrontmatter returns the producer-declared SPDX identifier from a
+// choosealicense.com-style YAML frontmatter block, or "" if the buffer has no
+// frontmatter or no spdx-id field — caller should fall back to a full license
+// scan in that case.
+func parseLicenseFrontmatter(buf []byte) string {
+	block := extractFrontmatterBlock(buf)
+	if block == nil {
+		return ""
+	}
+	var fm licenseFrontmatter
+	if err := yaml.Unmarshal(block, &fm); err != nil {
+		log.Debugf("failed to parse license frontmatter: %v", err)
+		return ""
+	}
+	return fm.SPDXID
 }
 
 func hasPrefix(b []byte, s string) bool {

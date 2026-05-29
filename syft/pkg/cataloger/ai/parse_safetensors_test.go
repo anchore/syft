@@ -306,6 +306,39 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		assert.Equal(t, md1.MetadataHash, md2.MetadataHash, "rollup hash must not depend on input order")
 	})
 
+	t.Run("OCI: license layer SPDX comes from choosealicense frontmatter", func(t *testing.T) {
+		// The license layer's content carries a choosealicense.com-style YAML
+		// frontmatter block. The processor should prefer the cheap spdx-id read
+		// over invoking the full license scanner.
+		dir := t.TempDir()
+		licensePath := filepath.Join(dir, "LICENSE")
+		require.NoError(t, os.WriteFile(licensePath, []byte(`---
+title: Apache License 2.0
+spdx-id: Apache-2.0
+---
+
+                                 Apache License
+                           Version 2.0, January 2004
+`), 0o644))
+		hfConfigPath := filepath.Join(dir, "config.json")
+		require.NoError(t, os.WriteFile(hfConfigPath,
+			[]byte(`{"_name_or_path":"org/with-license-fm"}`), 0o644))
+		resolver := file.NewMockResolverForMediaTypes(map[string][]file.Location{
+			dockerAIModelFileMediaType: {file.NewLocation(hfConfigPath)},
+			dockerAILicenseMediaType:   {file.NewLocation(licensePath)},
+		})
+
+		configMd := pkg.SafeTensorsModelInfo{Format: "safetensors", TensorCount: 1}
+		out, _, err := safeTensorsMergeProcessor(
+			context.Background(), resolver,
+			[]pkg.Package{ociPkg(configMd)}, nil, nil,
+		)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		assert.Equal(t, "with-license-fm", out[0].Name)
+		assertHasLicense(t, out[0], "Apache-2.0")
+	})
+
 	t.Run("passes through upstream error", func(t *testing.T) {
 		sentinel := assert.AnError
 		p := dirPkg("/models/x/y.safetensors", pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "h"})
@@ -728,6 +761,75 @@ func TestParseFrontmatter(t *testing.T) {
 
 	t.Run("unterminated frontmatter", func(t *testing.T) {
 		assert.Nil(t, parseFrontmatter([]byte("---\nlicense: mit\n")))
+	})
+}
+
+// TestParseLicenseFrontmatter covers the choosealicense.com-style YAML
+// frontmatter Docker Model Runner uses for its license layers. Only spdx-id
+// is consumed; everything else in the block is ignored.
+func TestParseLicenseFrontmatter(t *testing.T) {
+	t.Run("Apache-2.0 (the canonical choosealicense.com shape)", func(t *testing.T) {
+		// This is the exact frontmatter shape from
+		// https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/apache-2.0.txt
+		// Docker AI license layers ship a near-identical block.
+		buf := []byte(`---
+title: Apache License 2.0
+spdx-id: Apache-2.0
+redirect_from: /licenses/apache/
+featured: true
+hidden: false
+
+description: A permissive license whose main conditions require preservation of copyright and license notices.
+
+how: Create a text file (typically named LICENSE or LICENSE.txt) in the root of your source code and copy the text of the license into the file.
+
+using:
+  Kubernetes: https://github.com/kubernetes/kubernetes/blob/master/LICENSE
+  PDF.js: https://github.com/mozilla/pdf.js/blob/master/LICENSE
+  Swift: https://github.com/apple/swift/blob/main/LICENSE.txt
+
+permissions:
+  - commercial-use
+  - modifications
+  - distribution
+  - patent-use
+  - private-use
+
+conditions:
+  - include-copyright
+  - document-changes
+
+limitations:
+  - trademark-use
+  - liability
+  - warranty
+
+---
+
+                                 Apache License
+                           Version 2.0, January 2004
+`)
+		assert.Equal(t, "Apache-2.0", parseLicenseFrontmatter(buf))
+	})
+
+	t.Run("MIT with BOM prefix", func(t *testing.T) {
+		buf := []byte("\xef\xbb\xbf---\ntitle: MIT License\nspdx-id: MIT\n---\nThe MIT License...\n")
+		assert.Equal(t, "MIT", parseLicenseFrontmatter(buf))
+	})
+
+	t.Run("frontmatter without spdx-id falls through (returns empty)", func(t *testing.T) {
+		buf := []byte("---\ntitle: Something\ndescription: no spdx-id here\n---\nbody\n")
+		assert.Empty(t, parseLicenseFrontmatter(buf))
+	})
+
+	t.Run("plain license text without any frontmatter", func(t *testing.T) {
+		buf := []byte("                                 Apache License\n                           Version 2.0, January 2004\n")
+		assert.Empty(t, parseLicenseFrontmatter(buf))
+	})
+
+	t.Run("unterminated frontmatter block", func(t *testing.T) {
+		buf := []byte("---\nspdx-id: MIT\n(never closes)\n")
+		assert.Empty(t, parseLicenseFrontmatter(buf))
 	})
 }
 
