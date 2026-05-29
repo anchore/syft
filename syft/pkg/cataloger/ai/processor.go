@@ -77,12 +77,7 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 	return namedPkgs, rels, err
 }
 
-// safeTensorsMergeProcessor is the single owner of naming, license resolution,
-// HF config.json mining, cross-shard rollup, and supporting-evidence attachment
-// for safetensors packages. The parsers it processes are intentionally minimal
-// — they only decode the safetensors-specific format and emit nameless packages
-// with content-derived metadata. This function:
-//
+// safeTensorsMergeProcessor owns naming, license resolution, etc
 //  1. groups all nameless packages by parent directory (or a single sentinel
 //     for OCI artifacts, since the ContainerImageModel resolver puts every
 //     layer at virtual path "/");
@@ -143,6 +138,8 @@ func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs
 // groupSafeTensorsPackages buckets packages by the parent directory of their
 // primary-evidence location, or the OCI sentinel when the location lives at
 // the ContainerImageModel resolver's virtual "/" path.
+// TODO: assemble a test where there are cases for DIR ran into for a single scan
+// - safe tensors at the top level as well as sub directories
 func groupSafeTensorsPackages(pkgs []pkg.Package) map[string][]pkg.Package {
 	out := make(map[string][]pkg.Package)
 	for _, p := range pkgs {
