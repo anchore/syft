@@ -40,5 +40,5 @@ func NewSafeTensorsCataloger() pkg.Cataloger {
 		WithParserByGlobs(parseSafeTensorsIndex, "**/*.safetensors.index.json").
 		WithParserByMediaType(parseSafeTensorsOCIConfig, dockerAIModelConfigMediaTypes...).
 		WithParserByMediaType(parseSafeTensorsOCILayer, dockerAISafeTensorsMediaType).
-		WithProcessors(safeTensorsMergeProcessor)
+		WithResolvingProcessors(safeTensorsMergeProcessor)
 }

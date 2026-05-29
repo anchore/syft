@@ -21,13 +21,15 @@ func newGGUFPackage(metadata *pkg.GGUFFileHeader, modelName, version, license st
 	return p
 }
 
-func newSafeTensorsPackage(metadata *pkg.SafeTensorsModelInfo, modelName, version, license string, locations ...file.Location) pkg.Package {
+// newSafeTensorsPackage creates a SafeTensors package with the given metadata
+// and locations. Name and Licenses are intentionally not set here — the
+// safetensors cataloger emits nameless packages from every parser, and the
+// merge processor is the single owner of naming, license resolution, and
+// supporting-evidence attachment.
+func newSafeTensorsPackage(metadata *pkg.SafeTensorsModelInfo, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      modelName,
-		Version:   version,
 		Locations: file.NewLocationSet(locations...),
 		Type:      pkg.ModelPkg,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValues(license)...),
 		Metadata:  *metadata,
 		// PURL is intentionally not set: package-url has not yet finalized ML model support.
 	}

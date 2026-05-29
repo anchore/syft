@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -48,13 +47,13 @@ type dockerAIModelConfig struct {
 	} `json:"config"`
 }
 
-// parseSafeTensorsOCIConfig parses a Docker AI model-config blob. When the blob
-// advertises format=="safetensors" it emits a single named package whose
-// metadata is enriched by scanning sibling OCI layers (README.md for license +
-// base_model name, config.json for architecture, LICENSE text for a license
-// fallback). For any other format it emits nothing so the GGUF cataloger can
-// claim the image.
-func parseSafeTensorsOCIConfig(_ context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+// parseSafeTensorsOCIConfig decodes the Docker AI model-config blob and emits
+// a nameless package whose metadata mirrors the producer-declared aggregate
+// fields (Format, Quantization, Parameters, Size, TensorCount). For any
+// format other than "safetensors" it emits nothing so the GGUF cataloger can
+// claim the artifact. Naming, license, and HF-companion enrichment all run
+// once per group in safeTensorsMergeProcessor.
+func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
 	body, err := io.ReadAll(io.LimitReader(reader, 1024*1024))
@@ -81,174 +80,18 @@ func parseSafeTensorsOCIConfig(_ context.Context, resolver file.Resolver, _ *gen
 		md.TensorCount = uint64(n)
 	}
 
-	name, license := enrichFromDockerAILayers(resolver, &md)
-	if name == "" {
-		name = defaultModelName
-	}
-
 	p := newSafeTensorsPackage(
 		&md,
-		name,
-		"",
-		license,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-
 	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse docker AI safetensors config")
 }
 
-// enrichFromDockerAILayers walks sibling Docker AI layers via the OCI resolver
-// and mines them for a model name, architecture, and license. README.md carries
-// YAML frontmatter with license + base_model; HF config.json carries
-// architectures/torch_dtype/transformers_version; the vnd.docker.ai.license
-// blob is plain license text.
-func enrichFromDockerAILayers(resolver file.Resolver, md *pkg.SafeTensorsModelInfo) (name, license string) {
-	ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
-	if !ok {
-		return "", ""
-	}
-
-	modelFileLocations, err := ociResolver.FilesByMediaType(dockerAIModelFileMediaType)
-	if err != nil {
-		log.Debugf("failed to list docker AI model-file layers: %v", err)
-	}
-
-	// Collect name candidates separately so precedence does not depend on the
-	// order the resolver returns layers in. config.json's _name_or_path wins over
-	// a README base_model, matching enrichFromSiblings.
-	var configName, readmeName string
-	for _, loc := range modelFileLocations {
-		readAndClassifyDockerAILayer(resolver, loc, md, &configName, &readmeName, &license)
-	}
-
-	name = configName
-	if name == "" {
-		name = readmeName
-	}
-
-	if license == "" {
-		license = readDockerAILicense(resolver, ociResolver)
-	}
-
-	return name, license
-}
-
-// readAndClassifyDockerAILayer fetches a single Docker AI model-file layer and
-// passes its contents to classifyAndMerge. Split out from the calling loop so
-// the resolver handle is closed via defer on every iteration.
-func readAndClassifyDockerAILayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsModelInfo, configName, readmeName, license *string) {
-	rc, err := resolver.FileContentsByLocation(loc)
-	if err != nil {
-		return
-	}
-	defer internal.CloseAndLogError(rc, loc.RealPath)
-
-	buf, err := io.ReadAll(io.LimitReader(rc, 4*1024*1024))
-	if err != nil {
-		return
-	}
-	classifyAndMerge(buf, md, configName, readmeName, license)
-}
-
-// classifyAndMerge sniffs a vnd.docker.ai.model.file blob (which can be README.md,
-// config.json, generation_config.json, tokenizer.json, etc.) and folds useful
-// fields into the metadata struct and out-parameters.
-func classifyAndMerge(buf []byte, md *pkg.SafeTensorsModelInfo, configName, readmeName, license *string) {
-	trimmed := trimLeadingWhitespace(buf)
-	switch {
-	case hasPrefix(trimmed, "---"):
-		if fm := parseFrontmatter(buf); fm != nil {
-			if *license == "" {
-				*license = fm.License
-			}
-			if *readmeName == "" && len(fm.BaseModel) > 0 {
-				*readmeName = lastPathSegment(fm.BaseModel[0])
-			}
-		}
-	case hasPrefix(trimmed, "{"):
-		var cfg hfConfig
-		if err := json.Unmarshal(buf, &cfg); err != nil {
-			return
-		}
-		if md.Architecture == "" && len(cfg.Architectures) > 0 {
-			md.Architecture = cfg.Architectures[0]
-		}
-		if md.TorchDtype == "" {
-			md.TorchDtype = cfg.TorchDtype
-		}
-		if md.TransformersVersion == "" {
-			md.TransformersVersion = cfg.TransformersVersion
-		}
-		if *configName == "" && cfg.NameOrPath != "" {
-			*configName = lastPathSegment(cfg.NameOrPath)
-		}
-	}
-}
-
-// readDockerAILicense extracts a short license identifier from the first line
-// of a vnd.docker.ai.license layer. Docker packages the full license text, so
-// we only peek at a prefix looking for well-known titles like "Apache License".
-func readDockerAILicense(resolver file.Resolver, ociResolver file.OCIMediaTypeResolver) string {
-	locations, err := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
-	if err != nil || len(locations) == 0 {
-		return ""
-	}
-	rc, err := resolver.FileContentsByLocation(locations[0])
-	if err != nil {
-		return ""
-	}
-	defer internal.CloseAndLogError(rc, locations[0].RealPath)
-
-	buf, err := io.ReadAll(io.LimitReader(rc, 2048))
-	if err != nil {
-		return ""
-	}
-	text := strings.ToLower(string(buf))
-	switch {
-	case strings.Contains(text, "apache license") && strings.Contains(text, "version 2.0"):
-		return "Apache-2.0"
-	case strings.Contains(text, "mit license"):
-		return "MIT"
-	case strings.Contains(text, "bsd 3-clause"):
-		return "BSD-3-Clause"
-	case strings.Contains(text, "bsd 2-clause"):
-		return "BSD-2-Clause"
-	case strings.Contains(text, "gnu general public license") && strings.Contains(text, "version 3"):
-		return "GPL-3.0"
-	}
-	return ""
-}
-
-func hasPrefix(b []byte, s string) bool {
-	return len(b) >= len(s) && string(b[:len(s)]) == s
-}
-
-func trimLeadingWhitespace(b []byte) []byte {
-	i := 0
-	for i < len(b) && (b[i] == ' ' || b[i] == '\t' || b[i] == '\r' || b[i] == '\n') {
-		i++
-	}
-	// strip a leading UTF-8 BOM if present
-	if len(b)-i >= 3 && b[i] == 0xEF && b[i+1] == 0xBB && b[i+2] == 0xBF {
-		i += 3
-	}
-	return b[i:]
-}
-
-func lastPathSegment(s string) string {
-	if i := strings.LastIndexAny(s, "/\\"); i >= 0 {
-		return s[i+1:]
-	}
-	return s
-}
-
-// parseSafeTensorsOCILayer parses a SafeTensors weight layer from an OCI model
-// artifact by reading only its JSON header (the layer is fetched up to a small
-// byte cap by the source layer; tensor data is never downloaded). It emits a
-// nameless package so safeTensorsMergeProcessor folds the result into the
-// config-derived named package as a Part. The point of this parser is to give
-// OCI scans the same content-derived fields the directory-scan path produces:
-// real tensor count, normalized quantization, __metadata__, and MetadataHash.
+// parseSafeTensorsOCILayer decodes the JSON header of a SafeTensors weight
+// layer fetched from an OCI model artifact (the source layer caps each layer
+// at a small prefix; tensor data is never downloaded). It emits a nameless
+// package; safeTensorsMergeProcessor folds it into the artifact's group and
+// rolls per-shard fields up into the final merged package.
 func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
@@ -268,17 +111,10 @@ func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Env
 		md.Parameters = formatParameterCount(p)
 	}
 
-	// Emit nameless; safeTensorsMergeProcessor will absorb this into the
-	// config-derived named package as a Part. The merge runs even when only
-	// nameless packages exist, in which case the result is dropped.
 	p := newSafeTensorsPackage(
 		&md,
-		"",
-		"",
-		"",
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-
 	return []pkg.Package{p}, nil, nil
 }
 
