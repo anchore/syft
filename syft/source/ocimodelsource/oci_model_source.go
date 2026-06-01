@@ -39,6 +39,7 @@ type ociModelSource struct {
 	resolver  interface {
 		file.Resolver
 		file.OCIMediaTypeResolver
+		file.OCIArtifactResolver
 	}
 	mutex *sync.Mutex
 }
@@ -158,7 +159,11 @@ func fetchAndStoreModelHeaders(ctx context.Context, client *registryClient, arti
 		}
 	}
 
-	resolver := fileresolver.NewContainerImageModel(tempDir, layerFiles)
+	resolver := fileresolver.NewContainerImageModel(
+		tempDir,
+		layerFiles,
+		artifact.Reference.String(),
+	)
 
 	return tempDir, resolver, nil
 }

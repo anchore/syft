@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/cespare/xxhash/v2"
+	gcrname "github.com/google/go-containerregistry/pkg/name"
 	"gopkg.in/yaml.v3"
 
 	"github.com/anchore/syft/internal"
@@ -87,10 +88,13 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 //     sibling config.json + README.md for dir scans, the model-file companion
 //     layers + license layer for OCI — and attaches those locations as
 //     supporting evidence;
-//  4. picks a name via the precedence chain
-//     config.json _name_or_path → Architecture-Parameters → parent-dir
-//     and drops the group when none of those produced a name (no opaque
-//     fallback / no MetadataHash-as-name).
+//  4. picks a name via a two-rung precedence chain (see pickSafeTensorsName):
+//     config.json _name_or_path first (both sources), then the OCI image-ref
+//     last segment (OCI only). Drops the group when neither rung produces a
+//     name. There is no opaque fallback (no Architecture-Parameters synthetic,
+//     no parent-dir, no MetadataHash-as-name) — an unnameable model is
+//     intentionally absent from the SBOM rather than recorded under a
+//     misleading label.
 func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	if err != nil || len(pkgs) == 0 {
 		return pkgs, rels, err
@@ -123,8 +127,8 @@ func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs
 	out := other
 	for _, key := range keys {
 		merged := mergeSafeTensorsGroup(groups[key])
-		nameOrPath := enrichSafeTensorsGroup(ctx, resolver, key, &merged)
-		name := pickSafeTensorsName(merged, key, nameOrPath)
+		nameOrPath, imageRefName := enrichSafeTensorsGroup(ctx, resolver, key, &merged)
+		name := pickSafeTensorsName(nameOrPath, imageRefName)
 		if name == "" {
 			continue // drop unnameable groups, per design (no opaque fallback)
 		}
@@ -331,9 +335,11 @@ func rollupHash(hashes []string) string {
 // enrichSafeTensorsGroup reads the resolver once for the group to populate the
 // merged metadata's Architecture / TorchDtype / TransformersVersion, set the
 // licenses on the merged package, and attach the location of every consulted
-// supporting file as SupportingEvidence. Returns the raw _name_or_path so the
-// caller can apply path.Base in its naming step.
-func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKey string, merged *pkg.Package) (nameOrPath string) {
+// supporting file as SupportingEvidence. Returns two name candidates for the
+// merge processor: nameOrPath (raw _name_or_path from a config.json) and
+// imageRefName (the last path segment of the OCI image reference, empty for
+// dir-scan groups).
+func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKey string, merged *pkg.Package) (nameOrPath, imageRefName string) {
 	md := merged.Metadata.(pkg.SafeTensorsModelInfo)
 
 	var (
@@ -341,7 +347,7 @@ func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKe
 		supporting []file.Location
 	)
 	if groupKey == ociGroupKey {
-		nameOrPath, lics, supporting = enrichSafeTensorsOCI(ctx, resolver, &md)
+		nameOrPath, imageRefName, lics, supporting = enrichSafeTensorsOCI(ctx, resolver, &md)
 	} else {
 		nameOrPath, lics, supporting = enrichSafeTensorsDir(ctx, resolver, groupKey, &md)
 	}
@@ -353,7 +359,7 @@ func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKe
 	for _, loc := range supporting {
 		merged.Locations.Add(loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 	}
-	return nameOrPath
+	return nameOrPath, imageRefName
 }
 
 // enrichSafeTensorsDir handles the directory-scan case: look for sibling
@@ -380,11 +386,16 @@ func enrichSafeTensorsDir(ctx context.Context, resolver file.Resolver, dir strin
 // enrichSafeTensorsOCI handles the OCI-artifact case: walk the
 // vnd.docker.ai.model.file layers (READMEs and HF config.json all ride that
 // media type — we sniff content to tell them apart), then fall back to the
-// vnd.docker.ai.license layer through the shared license scanner.
-func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.SafeTensorsModelInfo) (nameOrPath string, lics []pkg.License, supporting []file.Location) {
+// vnd.docker.ai.license layer through the shared license scanner. It also
+// pulls the user-supplied image reference off the resolver (when the resolver
+// implements file.OCIArtifactResolver) and returns its last path segment as a
+// naming candidate — repacked artifacts like Docker AI vllm images frequently
+// strip name fields out of every embedded config, so the image ref is often
+// the only remaining identifier for the model.
+func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.SafeTensorsModelInfo) (nameOrPath, imageRefName string, lics []pkg.License, supporting []file.Location) {
 	ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
 	if !ok {
-		return "", nil, nil
+		return "", "", nil, nil
 	}
 
 	modelFileLocs, err := ociResolver.FilesByMediaType(dockerAIModelFileMediaType)
@@ -424,7 +435,30 @@ func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.S
 			supporting = append(supporting, licLocs...)
 		}
 	}
-	return nameOrPath, lics, supporting
+
+	imageRefName = ociImageRefBasename(resolver)
+	return nameOrPath, imageRefName, lics, supporting
+}
+
+// ociImageRefBasename returns the last path segment of the repository portion
+// of the OCI image reference exposed by the resolver, or "" when the resolver
+// does not implement OCIArtifactResolver or the reference fails to parse. For
+// "docker.io/ai/smollm2-vllm:360M" this returns "smollm2-vllm".
+func ociImageRefBasename(resolver file.Resolver) string {
+	info, ok := resolver.(file.OCIArtifactResolver)
+	if !ok {
+		return ""
+	}
+	ref := info.ImageReference()
+	if ref == "" {
+		return ""
+	}
+	parsed, err := gcrname.ParseReference(ref)
+	if err != nil {
+		log.Debugf("failed to parse OCI ref %q: %v", ref, err)
+		return ""
+	}
+	return path.Base(parsed.Context().RepositoryStr())
 }
 
 // identifyLicenseLayers turns Docker AI license-layer locations into
@@ -530,32 +564,21 @@ func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 
 // pickSafeTensorsName implements the documented naming precedence chain:
 //
-//  1. config.json _name_or_path             (path.Base, so "org/Model" → "Model")
-//  2. OCI manifest title                    (deferred to a follow-up; reserved here)
-//  3. Architecture-Parameters synthetic     (only when both are populated)
-//  4. parent directory of the group         (dir-scan only — OCI has no useful path)
+//  1. config.json _name_or_path  (path.Base, so "org/Model" → "Model";
+//     applies to both dir-scan and OCI groups)
+//  2. OCI image-ref last segment (OCI-only; the user-supplied artifact
+//     reference's repository basename, e.g.
+//     "docker.io/ai/smollm2-vllm:360M" → "smollm2-vllm")
 //
-// Returns "" to signal the merge processor should drop the group rather than
-// invent a name.
-func pickSafeTensorsName(merged pkg.Package, groupKey, nameOrPath string) string {
-	md, _ := merged.Metadata.(pkg.SafeTensorsModelInfo)
-
+// Returns "" to signal the merge processor should drop the group. There is
+// intentionally no Architecture-Parameters synthetic or parent-directory
+// fallback: an unnameable model is recorded as absent rather than under a
+// label the SBOM consumer would not recognize.
+func pickSafeTensorsName(nameOrPath, imageRefName string) string {
 	if nameOrPath != "" {
 		return path.Base(nameOrPath)
 	}
-	// 2. OCI manifest title — follow-up.
-
-	if md.Architecture != "" && md.Parameters != "" {
-		return md.Architecture + "-" + md.Parameters
-	}
-
-	if groupKey != ociGroupKey {
-		base := path.Base(groupKey)
-		if base != "" && base != "." && base != "/" {
-			return base
-		}
-	}
-	return ""
+	return imageRefName
 }
 
 // --- Relocated enrichment helpers ----------------------------------------
@@ -632,11 +655,11 @@ func extractFrontmatterBlock(buf []byte) []byte {
 	if i := bytes.IndexByte(rest, '\n'); i >= 0 {
 		rest = rest[i+1:]
 	}
-	end := bytes.Index(rest, []byte("\n---"))
-	if end < 0 {
+	block, _, found := bytes.Cut(rest, []byte("\n---"))
+	if !found {
 		return nil
 	}
-	return rest[:end]
+	return block
 }
 
 // parseFrontmatter decodes a Hugging Face model card YAML frontmatter block

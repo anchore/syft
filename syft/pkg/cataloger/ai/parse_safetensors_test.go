@@ -147,10 +147,10 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		}
 	}
 
-	t.Run("dir scan: parent-dir fallback names a bare safetensors with no siblings", func(t *testing.T) {
-		// case #1: model.safetensors in /models/tiny-llama/ with no config.json
-		// or README. The processor cannot derive a producer name and Architecture
-		// is empty, so it lands on the parent-dir rung.
+	t.Run("dir scan: dropped when no sibling config.json carries _name_or_path", func(t *testing.T) {
+		// Without a config.json the dir-scan path has no name source. There is
+		// intentionally no parent-dir fallback (or any opaque fallback), so the
+		// group is dropped rather than named after the filesystem layout.
 		p := dirPkg("/models/tiny-llama/weights.safetensors", pkg.SafeTensorsModelInfo{
 			Format:       "safetensors",
 			TensorCount:  4,
@@ -160,30 +160,15 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		resolver := file.NewMockResolverForPaths() // no config.json / README available
 		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, out, 1)
-		assert.Equal(t, "tiny-llama", out[0].Name)
+		assert.Empty(t, out, "dir-scan group with no config.json must be dropped")
 	})
 
-	t.Run("dir scan: parent-dir fallback rescues a metadata-only header", func(t *testing.T) {
-		// case #3: header carries only __metadata__, no tensors. Parameters and
-		// Architecture are both empty, so Arch-Parameters can't fire either —
-		// the parent-dir fallback is the only thing that names the package.
-		p := dirPkg("/scan/edge/headeronly/model.safetensors", pkg.SafeTensorsModelInfo{
-			Format:       "safetensors",
-			MetadataHash: "xyz",
-			UserMetadata: pkg.KeyValues{{Key: "producer", Value: "stgen"}},
-		})
-		resolver := file.NewMockResolverForPaths()
-		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, nil)
-		require.NoError(t, err)
-		require.Len(t, out, 1)
-		assert.Equal(t, "headeronly", out[0].Name)
-	})
-
-	t.Run("dir scan: Architecture-Parameters synthetic wins over parent-dir", func(t *testing.T) {
-		// Architecture and Parameters are both populated → synthetic wins over
-		// the parent-dir fallback. _name_or_path is not available (no sibling
-		// config.json mock).
+	t.Run("dir scan: Architecture-Parameters alone does not name the package", func(t *testing.T) {
+		// Even with rich content-derived metadata (Architecture + Parameters),
+		// the package must be dropped when there is no producer-declared name.
+		// The Arch-Params synthetic rung was removed because it produced labels
+		// like "LlamaForCausalLM-2.68B" that SBOM consumers couldn't trace back
+		// to a recognizable model.
 		p := dirPkg("/models/tiny/weights.safetensors", pkg.SafeTensorsModelInfo{
 			Format:       "safetensors",
 			Architecture: "LlamaForCausalLM",
@@ -194,15 +179,14 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		resolver := file.NewMockResolverForPaths()
 		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, out, 1)
-		assert.Equal(t, "LlamaForCausalLM-2.68B", out[0].Name)
+		assert.Empty(t, out, "Arch-Params alone is not a name source")
 	})
 
 	t.Run("OCI: dropped when no name source is available", func(t *testing.T) {
 		// The vllm-style shape: config-blob package + a weight-layer package,
-		// both at virtual path "/", no model.file companions on the resolver.
-		// With nothing to derive a name from, the group is dropped (no opaque
-		// fallback / no parent-dir option for OCI).
+		// both at virtual path "/", no model.file companions on the resolver
+		// AND no image ref. With nothing to derive a name from, the group is
+		// dropped — no opaque fallback.
 		configMd := pkg.SafeTensorsModelInfo{
 			Format:      "safetensors",
 			TensorCount: 5,
@@ -221,6 +205,57 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		)
 		require.NoError(t, err)
 		assert.Empty(t, out, "OCI group with no naming source must be dropped")
+	})
+
+	t.Run("OCI: image-ref last segment names the group when config.json is absent", func(t *testing.T) {
+		// vllm-style artifact: a repacked model whose embedded config.json has
+		// been stripped of _name_or_path. The merge processor falls through to
+		// the second rung — the image-reference last segment — so we still emit
+		// a recognizable model name instead of dropping it.
+		configMd := pkg.SafeTensorsModelInfo{
+			Format:      "safetensors",
+			TensorCount: 290,
+			TotalSize:   "723MB",
+		}
+		shardMd := pkg.SafeTensorsModelInfo{
+			Format:       "safetensors",
+			TensorCount:  290,
+			Quantization: "BF16",
+			MetadataHash: "deadbeef",
+		}
+		resolver := file.NewMockResolverForOCIArtifact(
+			"docker.io/ai/smollm2-vllm:360M", nil,
+		)
+		out, _, err := safeTensorsMergeProcessor(
+			context.Background(), resolver,
+			[]pkg.Package{ociPkg(configMd), ociPkg(shardMd)}, nil, nil,
+		)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		assert.Equal(t, "smollm2-vllm", out[0].Name, "rung 2: image-ref repository basename")
+	})
+
+	t.Run("OCI: config.json _name_or_path beats the image-ref fallback", func(t *testing.T) {
+		// When the embedded config.json carries _name_or_path, rung 1 wins over
+		// the image ref even if both are present.
+		dir := t.TempDir()
+		hfConfigPath := filepath.Join(dir, "config.json")
+		require.NoError(t, os.WriteFile(hfConfigPath,
+			[]byte(`{"_name_or_path":"org/preferred-name"}`), 0o644))
+		resolver := file.NewMockResolverForOCIArtifact(
+			"docker.io/ai/smollm2-vllm:360M",
+			map[string][]file.Location{
+				dockerAIModelFileMediaType: {file.NewLocation(hfConfigPath)},
+			},
+		)
+		configMd := pkg.SafeTensorsModelInfo{Format: "safetensors", TensorCount: 1}
+		out, _, err := safeTensorsMergeProcessor(
+			context.Background(), resolver,
+			[]pkg.Package{ociPkg(configMd)}, nil, nil,
+		)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		assert.Equal(t, "preferred-name", out[0].Name, "rung 1 (config.json) wins over rung 2 (image ref)")
 	})
 
 	t.Run("OCI: merges config + shard and names from companion config.json", func(t *testing.T) {
@@ -348,118 +383,56 @@ spdx-id: Apache-2.0
 	})
 }
 
-// TestSafeTensorsNamingPrecedence codifies pickSafeTensorsName's documented
-// precedence chain. Each case sets exactly the inputs that should activate one
-// rung and asserts the expected outcome — including the drop case when every
-// rung is unavailable.
+// TestSafeTensorsNamingPrecedence codifies pickSafeTensorsName's two-rung
+// precedence chain. Each case sets the inputs that should activate one rung
+// (or neither, asserting the drop path).
 //
 // Precedence (highest → lowest):
-//  1. config.json _name_or_path  (path.Base applied)
-//  2. OCI manifest title         (follow-up; covered today by an empty-string input)
-//  3. Architecture + Parameters  (both must be non-empty)
-//  4. parent directory           (dir-scan only; OCI groups skip this rung)
-//  → drop (empty name) when nothing matches
+//  1. config.json _name_or_path  (path.Base applied; both dir-scan and OCI)
+//  2. OCI image-ref last segment (OCI only — empty string for dir scans)
+//     → drop (empty name) when nothing matches
 func TestSafeTensorsNamingPrecedence(t *testing.T) {
-	const dirGroup = "/scan/parent-name"
-
 	cases := []struct {
-		name       string
-		groupKey   string
-		nameOrPath string
-		arch       string
-		params     string
-		want       string
+		name         string
+		nameOrPath   string
+		imageRefName string
+		want         string
 	}{
 		// rung 1
 		{
-			name:       "rung 1: _name_or_path beats Arch+Params and parent-dir",
-			groupKey:   dirGroup,
-			nameOrPath: "org/MyModel",
-			arch:       "LlamaForCausalLM",
-			params:     "7B",
-			want:       "MyModel",
+			name:         "rung 1: _name_or_path beats the image-ref fallback",
+			nameOrPath:   "org/MyModel",
+			imageRefName: "fallback-ref",
+			want:         "MyModel",
 		},
 		{
 			name:       "rung 1: applies path.Base to the raw value",
-			groupKey:   dirGroup,
 			nameOrPath: "very/deep/checkpoint/path/leaf-model",
 			want:       "leaf-model",
 		},
 		{
-			name:       "rung 1: works for OCI groups too",
-			groupKey:   ociGroupKey,
-			nameOrPath: "org/OciModel",
+			name:       "rung 1: bare name without slashes is preserved",
+			nameOrPath: "OciModel",
 			want:       "OciModel",
 		},
 
-		// rung 3
+		// rung 2
 		{
-			name:     "rung 3: Arch+Params wins when no _name_or_path",
-			groupKey: dirGroup,
-			arch:     "LlamaForCausalLM",
-			params:   "7B",
-			want:     "LlamaForCausalLM-7B",
-		},
-		{
-			name:     "rung 3: works for OCI groups (the only non-drop rung when no manifest title)",
-			groupKey: ociGroupKey,
-			arch:     "Qwen3ForCausalLM",
-			params:   "2.66B",
-			want:     "Qwen3ForCausalLM-2.66B",
-		},
-		{
-			name:     "rung 3 NOT taken when only Architecture is set: falls through to parent-dir",
-			groupKey: dirGroup,
-			arch:     "LlamaForCausalLM",
-			want:     "parent-name",
-		},
-		{
-			name:     "rung 3 NOT taken when only Parameters is set: falls through to parent-dir",
-			groupKey: dirGroup,
-			params:   "7B",
-			want:     "parent-name",
-		},
-
-		// rung 4
-		{
-			name:     "rung 4: parent-dir when no other rung populated",
-			groupKey: dirGroup,
-			want:     "parent-name",
-		},
-		{
-			name:     "rung 4 skipped for OCI groups: no usable parent path",
-			groupKey: ociGroupKey,
-			want:     "",
+			name:         "rung 2: image-ref last segment used when _name_or_path is empty",
+			imageRefName: "smollm2-vllm",
+			want:         "smollm2-vllm",
 		},
 
 		// drops
 		{
-			name:     "drop: dir group at filesystem root",
-			groupKey: "/",
-			want:     "",
-		},
-		{
-			name:     "drop: dir group with empty parent",
-			groupKey: ".",
-			want:     "",
-		},
-		{
-			name:     "drop: OCI group with nothing",
-			groupKey: ociGroupKey,
-			want:     "",
+			name: "drop: both rungs empty",
+			want: "",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			merged := pkg.Package{
-				Type: pkg.ModelPkg,
-				Metadata: pkg.SafeTensorsModelInfo{
-					Architecture: tc.arch,
-					Parameters:   tc.params,
-				},
-			}
-			got := pickSafeTensorsName(merged, tc.groupKey, tc.nameOrPath)
+			got := pickSafeTensorsName(tc.nameOrPath, tc.imageRefName)
 			assert.Equal(t, tc.want, got)
 		})
 	}

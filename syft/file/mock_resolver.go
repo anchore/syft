@@ -14,6 +14,7 @@ import (
 
 var _ Resolver = (*MockResolver)(nil)
 var _ OCIMediaTypeResolver = (*MockResolver)(nil)
+var _ OCIArtifactResolver = (*MockResolver)(nil)
 
 // MockResolver implements the FileResolver interface and is intended for use *only in test code*.
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file
@@ -25,6 +26,7 @@ type MockResolver struct {
 	mediaTypeIndex map[string][]Location
 	extension      map[string][]Location
 	basename       map[string][]Location
+	ociRef         string
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
@@ -74,6 +76,16 @@ func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]Metadata) *Moc
 	}
 }
 
+// NewMockResolverForOCIArtifact creates a MockResolver that can resolve files
+// by media type AND surfaces the given OCI ref via the OCIArtifactResolver
+// interface. Intended for tests that exercise the catalogers' OCI-artifact-aware
+// naming code paths.
+func NewMockResolverForOCIArtifact(ref string, mediaTypes map[string][]Location) *MockResolver {
+	r := NewMockResolverForMediaTypes(mediaTypes)
+	r.ociRef = ref
+	return r
+}
+
 // NewMockResolverForMediaTypes creates a MockResolver that can resolve files by media type.
 // The mediaTypes map specifies which locations should be returned for each media type.
 func NewMockResolverForMediaTypes(mediaTypes map[string][]Location) *MockResolver {
@@ -100,6 +112,11 @@ func NewMockResolverForMediaTypes(mediaTypes map[string][]Location) *MockResolve
 		extension:      extension,
 		basename:       basename,
 	}
+}
+
+// ImageReference returns the image reference associated with this mock, if any.
+func (r MockResolver) ImageReference() string {
+	return r.ociRef
 }
 
 // HasPath indicates if the given path exists in the underlying source.

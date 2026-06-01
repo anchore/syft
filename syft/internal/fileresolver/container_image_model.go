@@ -12,6 +12,7 @@ import (
 
 var _ file.Resolver = (*ContainerImageModel)(nil)
 var _ file.OCIMediaTypeResolver = (*ContainerImageModel)(nil)
+var _ file.OCIArtifactResolver = (*ContainerImageModel)(nil)
 
 // LayerInfo holds information about an OCI model layer file stored on disk.
 type LayerInfo struct {
@@ -26,10 +27,14 @@ type ContainerImageModel struct {
 	tempDir    string                   // temp directory containing all layer files
 	layerFiles map[string]LayerInfo     // digest -> layer info (temp path + media type)
 	locations  map[string]file.Location // digest -> location
+	ref        string                   // image reference the artifact was fetched with
 }
 
-// NewContainerImageModel creates a new resolver with the given temp directory and layer files.
-func NewContainerImageModel(tempDir string, layerFiles map[string]LayerInfo) *ContainerImageModel {
+// NewContainerImageModel creates a new resolver with the given temp directory
+// and layer files. The ref is surfaced through the file.OCIArtifactResolver
+// interface so catalogers can derive context-level naming hints from the
+// artifact reference when the layer contents don't carry one.
+func NewContainerImageModel(tempDir string, layerFiles map[string]LayerInfo, ref string) *ContainerImageModel {
 	// Create locations for all layer files
 	// Each location has RealPath="/", FileSystemID=digest, AccessPath="/"
 	locations := make(map[string]file.Location, len(layerFiles))
@@ -43,7 +48,13 @@ func NewContainerImageModel(tempDir string, layerFiles map[string]LayerInfo) *Co
 		tempDir:    tempDir,
 		layerFiles: layerFiles,
 		locations:  locations,
+		ref:        ref,
 	}
+}
+
+// ImageReference returns the image reference the artifact was fetched with.
+func (r *ContainerImageModel) ImageReference() string {
+	return r.ref
 }
 
 // FilesByMediaType returns locations for layers matching the given media type patterns.

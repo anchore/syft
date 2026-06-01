@@ -63,6 +63,17 @@ type OCIMediaTypeResolver interface {
 	FilesByMediaType(types ...string) ([]Location, error)
 }
 
+// OCIArtifactResolver exposes the user-supplied OCI image reference to
+// catalogers. Catalogers can type-assert a Resolver to this interface when they
+// need a naming or context hint that the layer contents alone don't carry — for
+// example, when a repacked AI model artifact has stripped name fields out of its
+// config.json and the only remaining identifier is the image reference itself.
+type OCIArtifactResolver interface {
+	// ImageReference returns the image reference the artifact was fetched with, e.g.
+	// "docker.io/ai/smollm2-vllm:360M". Returns "" when not known.
+	ImageReference() string
+}
+
 // LocationResolver provides iteration over all file locations in a source.
 type LocationResolver interface {
 	// AllLocations returns a channel of all file references from the underlying source.
