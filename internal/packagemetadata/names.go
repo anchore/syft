@@ -94,6 +94,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.NixStoreEntry{}, "nix-store-entry", "NixStoreMetadata"),
 	jsonNames(pkg.NpmPackage{}, "javascript-npm-package", "NpmPackageJsonMetadata"),
 	jsonNames(pkg.NpmPackageLockEntry{}, "javascript-npm-package-lock-entry", "NpmPackageLockJsonMetadata"),
+	jsonNames(pkg.NpmShrinkwrapEntry{}, "javascript-npm-shrinkwrap-entry"),
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
 	jsonNames(pkg.PnpmLockEntry{}, "javascript-pnpm-lock-entry"),
 	jsonNames(pkg.PEBinary{}, "pe-binary"),

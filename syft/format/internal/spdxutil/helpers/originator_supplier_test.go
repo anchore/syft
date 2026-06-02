@@ -37,6 +37,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
 		pkg.NpmPackageLockEntry{},
+		pkg.NpmShrinkwrapEntry{},
 		pkg.PhpComposerInstalledEntry{},
 		pkg.PhpPearEntry{},
 		pkg.PhpPeclEntry{},

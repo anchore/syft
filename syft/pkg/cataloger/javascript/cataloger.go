@@ -18,9 +18,11 @@ func NewPackageCataloger() pkg.Cataloger {
 func NewLockCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	yarnLockAdapter := newGenericYarnLockAdapter(cfg)
 	packageLockAdapter := newGenericPackageLockAdapter(cfg)
+	shrinkwrapAdapter := newGenericNpmShrinkwrapAdapter(cfg)
 	pnpmLockAdapter := newGenericPnpmLockAdapter(cfg)
 	return generic.NewCataloger("javascript-lock-cataloger").
 		WithParserByGlobs(packageLockAdapter.parsePackageLock, "**/package-lock.json").
+		WithParserByGlobs(shrinkwrapAdapter.parseNpmShrinkwrap, "**/npm-shrinkwrap.json").
 		WithParserByGlobs(yarnLockAdapter.parseYarnLock, "**/yarn.lock").
 		WithParserByGlobs(pnpmLockAdapter.parsePnpmLock, "**/pnpm-lock.yaml")
 }

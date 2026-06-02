@@ -36,6 +36,21 @@ type NpmPackageLockEntry struct {
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
 
+// NpmShrinkwrapEntry represents a single entry within the "packages" section of an npm-shrinkwrap.json file.
+// npm-shrinkwrap.json is structurally identical to package-lock.json; the only difference is that
+// npm-shrinkwrap.json is committed to source control and published with the package, allowing it to
+// lock dependency trees for installed tools. package-lock.json is not published by default.
+type NpmShrinkwrapEntry struct {
+	// Resolved is URL where this package was downloaded from (registry source)
+	Resolved string `mapstructure:"resolved" json:"resolved"`
+
+	// Integrity is Subresource Integrity hash for verification using standard SRI format (sha512-... or sha1-...). npm changed from SHA-1 to SHA-512 in newer versions. For registry sources this is the integrity from registry, for remote tarballs it's SHA-512 of the file. npm verifies tarball matches this hash before unpacking, throwing EINTEGRITY error if mismatch detected.
+	Integrity string `mapstructure:"integrity" json:"integrity"`
+
+	// Dependencies is a map of dependencies and their version markers, i.e. "lodash": "^1.0.0"
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
+}
+
 // YarnLockEntry represents a single entry section of a yarn.lock file.
 type YarnLockEntry struct {
 	// Resolved is URL where this package was downloaded from

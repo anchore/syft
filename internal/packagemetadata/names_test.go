@@ -181,6 +181,11 @@ func TestReflectTypeFromJSONName_LegacyValues(t *testing.T) {
 			expected: reflect.TypeFor[pkg.NpmPackageLockEntry](),
 		},
 		{
+			name:     "map pkg.NpmShrinkwrapEntry struct type",
+			input:    "javascript-npm-shrinkwrap-entry",
+			expected: reflect.TypeFor[pkg.NpmShrinkwrapEntry](),
+		},
+		{
 			name:     "map pkg.PortageEntry struct type",
 			input:    "PortageMetadata",
 			expected: reflect.TypeFor[pkg.PortageEntry](),
@@ -412,6 +417,13 @@ func Test_JSONName_JSONLegacyName(t *testing.T) {
 			metadata:           pkg.NpmPackageLockEntry{},
 			expectedJSONName:   "javascript-npm-package-lock-entry",
 			expectedLegacyName: "NpmPackageLockJsonMetadata",
+		},
+		{
+			name:             "NpmShrinkwrapMetadata",
+			metadata:         pkg.NpmShrinkwrapEntry{},
+			expectedJSONName: "javascript-npm-shrinkwrap-entry",
+			// note: the legacy name should never be blank if it didn't exist pre v11.x
+			expectedLegacyName: "javascript-npm-shrinkwrap-entry",
 		},
 		{
 			name:               "PhpComposerLockMetadata",

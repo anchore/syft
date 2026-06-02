@@ -31,6 +31,27 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 	}
 }
 
+func TestNpmShrinkwrapDirectory(t *testing.T) {
+	sbom, _ := catalogDirectory(t, "testdata/npm-shrinkwrap")
+
+	foundPackages := strset.New()
+
+	for actualPkg := range sbom.Artifacts.Packages.Enumerate(pkg.NpmPkg) {
+		for _, actualLocation := range actualPkg.Locations.ToSlice() {
+			if strings.Contains(actualLocation.RealPath, "node_modules") {
+				t.Errorf("found packages from npm-shrinkwrap.json in node_modules: %s", actualLocation)
+			}
+		}
+		foundPackages.Add(actualPkg.Name)
+	}
+
+	// ensure that integration test commonTestCases stay in sync with the available catalogers
+	const expectedPackageCount = 2
+	if foundPackages.Size() != expectedPackageCount {
+		t.Errorf("found the wrong set of npm-shrinkwrap.json packages (expected: %d, actual: %d)", expectedPackageCount, foundPackages.Size())
+	}
+}
+
 func TestYarnPackageLockDirectory(t *testing.T) {
 	sbom, _ := catalogDirectory(t, "testdata/yarn-lock")
 

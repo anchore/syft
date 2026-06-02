@@ -31,6 +31,8 @@ func DownloadLocation(p pkg.Package) string {
 			location = metadata.URL
 		case pkg.NpmPackageLockEntry:
 			location = metadata.Resolved
+		case pkg.NpmShrinkwrapEntry:
+			location = metadata.Resolved
 		case pkg.PhpComposerLockEntry:
 			location = metadata.Dist.URL
 		case pkg.PhpComposerInstalledEntry:
