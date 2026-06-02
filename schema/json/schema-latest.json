@@ -4098,7 +4098,7 @@
         },
         "architecture": {
           "type": "string",
-          "description": "Architecture is the model architecture (e.g., \"LlamaForCausalLM\",\n\"Qwen3MoeForConditionalGeneration\"), sourced from the Hugging Face config.json\n\"architectures\" array."
+          "description": "Architecture is the model architecture (e.g., \"LlamaForCausalLM\",\n\"Qwen3MoeForConditionalGeneration\"). It is not present in the SafeTensors\nheader itself; it is enriched from the companion Hugging Face config.json\n\"architectures\" array when one is found alongside the model."
         },
         "quantization": {
           "type": "string",
@@ -4116,14 +4116,6 @@
           "type": "string",
           "description": "TotalSize is the total byte size of tensor data across all shards when known\n(from the Docker AI model config \"size\" field or the sharded index \"total_size\")."
         },
-        "torchDtype": {
-          "type": "string",
-          "description": "TorchDtype is the Hugging Face torch_dtype (e.g., \"bfloat16\", \"float16\")."
-        },
-        "transformersVersion": {
-          "type": "string",
-          "description": "TransformersVersion is the transformers library version recorded in config.json."
-        },
         "shardCount": {
           "type": "integer",
           "description": "ShardCount is the number of .safetensors shards for a sharded model (1 for a\nsingle-file model)."
@@ -4134,7 +4126,7 @@
         },
         "metadataHash": {
           "type": "string",
-          "description": "MetadataHash is an xxhash of the normalized header metadata, providing a stable\nidentifier for identical model content across repositories or filenames."
+          "description": "MetadataHash is an xxhash over the on-disk SafeTensors header (sorted tensor\nentries + __metadata__). It is derived ONLY from the safetensors file bytes —\nnever from OCI manifest, layer descriptor, or config-blob fields — so the same\nmodel content scanned via a directory source and via an OCI image produces the\nsame value. Treat this as the cross-source content fingerprint."
         },
         "parts": {
           "items": {

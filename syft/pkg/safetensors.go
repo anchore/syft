@@ -18,8 +18,9 @@ type SafeTensorsModelInfo struct {
 	Format string `json:"format,omitempty" cyclonedx:"format"`
 
 	// Architecture is the model architecture (e.g., "LlamaForCausalLM",
-	// "Qwen3MoeForConditionalGeneration"), sourced from the Hugging Face config.json
-	// "architectures" array.
+	// "Qwen3MoeForConditionalGeneration"). It is not present in the SafeTensors
+	// header itself; it is enriched from the companion Hugging Face config.json
+	// "architectures" array when one is found alongside the model.
 	Architecture string `json:"architecture,omitempty" cyclonedx:"architecture"`
 
 	// Quantization describes tensor precision (e.g., "BF16", "F16", "F32", "INT8").
@@ -35,12 +36,6 @@ type SafeTensorsModelInfo struct {
 	// TotalSize is the total byte size of tensor data across all shards when known
 	// (from the Docker AI model config "size" field or the sharded index "total_size").
 	TotalSize string `json:"totalSize,omitempty" cyclonedx:"totalSize"`
-
-	// TorchDtype is the Hugging Face torch_dtype (e.g., "bfloat16", "float16").
-	TorchDtype string `json:"torchDtype,omitempty" cyclonedx:"torchDtype"`
-
-	// TransformersVersion is the transformers library version recorded in config.json.
-	TransformersVersion string `json:"transformersVersion,omitempty" cyclonedx:"transformersVersion"`
 
 	// ShardCount is the number of .safetensors shards for a sharded model (1 for a
 	// single-file model).

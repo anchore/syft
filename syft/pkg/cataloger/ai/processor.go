@@ -222,10 +222,7 @@ func mergeAggregatesInto(merged *pkg.SafeTensorsModelInfo, aggregates []pkg.Safe
 		}
 		firstNonEmpty(&merged.Parameters, a.Parameters)
 		firstNonEmpty(&merged.TotalSize, a.TotalSize)
-		firstNonEmpty(&merged.Architecture, a.Architecture)
 		firstNonEmpty(&merged.Quantization, a.Quantization)
-		firstNonEmpty(&merged.TorchDtype, a.TorchDtype)
-		firstNonEmpty(&merged.TransformersVersion, a.TransformersVersion)
 	}
 }
 
@@ -516,12 +513,6 @@ func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 	if md.Architecture == "" && len(cfg.Architectures) > 0 {
 		md.Architecture = cfg.Architectures[0]
 	}
-	if md.TorchDtype == "" {
-		md.TorchDtype = cfg.TorchDtype
-	}
-	if md.TransformersVersion == "" {
-		md.TransformersVersion = cfg.TransformersVersion
-	}
 }
 
 // pickSafeTensorsName implements the documented naming precedence chain:
@@ -537,10 +528,8 @@ func pickSafeTensorsName(nameOrPath, fallbackName string) string {
 
 // hfConfig is a minimal projection of Hugging Face config.json fields.
 type hfConfig struct {
-	Architectures       []string `json:"architectures"`
-	TorchDtype          string   `json:"torch_dtype"`
-	TransformersVersion string   `json:"transformers_version"`
-	NameOrPath          string   `json:"_name_or_path"`
+	Architectures []string `json:"architectures"`
+	NameOrPath    string   `json:"_name_or_path"`
 }
 
 // readmeFrontmatter holds the subset of YAML frontmatter fields we extract.
