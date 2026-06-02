@@ -3,13 +3,14 @@ package pkg
 // SafeTensorsModelInfo holds the model details extracted from SafeTensors content.
 // SafeTensors is a simple, safe serialization format for storing tensors, used
 // as the default weight format for Hugging Face transformer models. Syft may
-// populate this struct from three sources:
+// populate this struct from these sources:
 //   - a single .safetensors file (header-only parse)
-//   - a sharded model described by model.safetensors.index.json
-//   - a Docker AI OCI model artifact config blob (vnd.docker.ai.model.config.v0.1+json)
+//   - the per-shard headers of a multi-shard model, merged into one package
+//   - a Docker AI OCI model artifact: the config blob
+//     (vnd.docker.ai.model.config.v0.1+json) plus each weight layer's header
 //
-// The Model Name, License, and Version fields have all been lifted up to be on
-// the syft Package.
+// Model name, license, and version live on the enclosing syft Package rather
+// than in this struct.
 type SafeTensorsModelInfo struct {
 	// Format is the source format label (always "safetensors" for this metadata type).
 	// Present because the Docker AI model config blob carries an explicit format field

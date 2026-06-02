@@ -127,10 +127,10 @@ func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs
 	out := other
 	for _, key := range keys {
 		merged := mergeSafeTensorsGroup(groups[key])
-		nameOrPath, imageRefName := enrichSafeTensorsGroup(ctx, resolver, key, &merged)
-		name := pickSafeTensorsName(nameOrPath, imageRefName)
+		nameOrPath, fallbackName := enrichSafeTensorsGroup(ctx, resolver, key, &merged)
+		name := pickSafeTensorsName(nameOrPath, fallbackName)
 		if name == "" {
-			continue // drop unnameable groups, per design (no opaque fallback)
+			continue // drop groups with no name source and no usable fallback
 		}
 		merged.Name = name
 		merged.SetID()
@@ -142,8 +142,6 @@ func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs
 // groupSafeTensorsPackages buckets packages by the parent directory of their
 // primary-evidence location, or the OCI sentinel when the location lives at
 // the ContainerImageModel resolver's virtual "/" path.
-// TODO: assemble a test where there are cases for DIR ran into for a single scan
-// - safe tensors at the top level as well as sub directories
 func groupSafeTensorsPackages(pkgs []pkg.Package) map[string][]pkg.Package {
 	out := make(map[string][]pkg.Package)
 	for _, p := range pkgs {
@@ -253,19 +251,15 @@ func mergeAggregatesInto(merged *pkg.SafeTensorsModelInfo, aggregates []pkg.Safe
 
 // mergeShardsInto folds the per-shard header metadata into merged, returning
 // the summed shard TensorCount and the list of non-empty per-shard hashes for
-// the rollup. Architecture / TorchDtype / TransformersVersion are accepted as
-// fallbacks if a shard ever carries them (the current parsers don't, but the
-// resolver-backed enrichment runs afterwards and won't overwrite anything
-// already set, so it's safe to populate them earlier).
+// the rollup. Shards carry only the content-derived fields (Quantization,
+// Parameters, UserMetadata); producer-declared fields like Architecture come
+// from the resolver-backed enrichment that runs afterwards.
 func mergeShardsInto(merged *pkg.SafeTensorsModelInfo, shards []pkg.SafeTensorsModelInfo) (shardTensorTotal uint64, hashes []string) {
 	seenKV := map[string]bool{}
 	for _, s := range shards {
 		shardTensorTotal += s.TensorCount
 		firstNonEmpty(&merged.Quantization, s.Quantization)
 		firstNonEmpty(&merged.Parameters, s.Parameters)
-		firstNonEmpty(&merged.Architecture, s.Architecture)
-		firstNonEmpty(&merged.TorchDtype, s.TorchDtype)
-		firstNonEmpty(&merged.TransformersVersion, s.TransformersVersion)
 		for _, kv := range s.UserMetadata {
 			if seenKV[kv.Key] {
 				continue
@@ -336,10 +330,11 @@ func rollupHash(hashes []string) string {
 // merged metadata's Architecture / TorchDtype / TransformersVersion, set the
 // licenses on the merged package, and attach the location of every consulted
 // supporting file as SupportingEvidence. Returns two name candidates for the
-// merge processor: nameOrPath (raw _name_or_path from a config.json) and
-// imageRefName (the last path segment of the OCI image reference, empty for
-// dir-scan groups).
-func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKey string, merged *pkg.Package) (nameOrPath, imageRefName string) {
+// merge processor: nameOrPath (raw _name_or_path from a config.json) and a
+// fallbackName used when no _name_or_path is available — the last path segment
+// of the OCI image reference for OCI groups, or the parent directory's base
+// name for directory-scan groups.
+func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKey string, merged *pkg.Package) (nameOrPath, fallbackName string) {
 	md := merged.Metadata.(pkg.SafeTensorsModelInfo)
 
 	var (
@@ -347,9 +342,10 @@ func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKe
 		supporting []file.Location
 	)
 	if groupKey == ociGroupKey {
-		nameOrPath, imageRefName, lics, supporting = enrichSafeTensorsOCI(ctx, resolver, &md)
+		nameOrPath, fallbackName, lics, supporting = enrichSafeTensorsOCI(ctx, resolver, &md)
 	} else {
 		nameOrPath, lics, supporting = enrichSafeTensorsDir(ctx, resolver, groupKey, &md)
+		fallbackName = safeTensorsDirName(groupKey)
 	}
 
 	merged.Metadata = md
@@ -359,13 +355,28 @@ func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKe
 	for _, loc := range supporting {
 		merged.Locations.Add(loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 	}
-	return nameOrPath, imageRefName
+	return nameOrPath, fallbackName
 }
 
-// enrichSafeTensorsDir handles the directory-scan case: look for sibling
-// config.json and README.md next to the model files.
+// safeTensorsDirName returns the directory-scan naming fallback: the base name
+// of the group's parent directory (the group key is already that directory).
+// For "/models/tiny-llama" this returns "tiny-llama". Degenerate roots that
+// carry no meaningful model name ("/", ".", "") return "", so the group is
+// dropped rather than labeled with a filesystem artifact.
+func safeTensorsDirName(groupKey string) string {
+	base := path.Base(groupKey)
+	switch base {
+	case "/", ".", "":
+		return ""
+	}
+	return base
+}
+
+// enrichSafeTensorsDir handles the directory-scan case: look for a config.json
+// beside the model files (walking up parent directories to the scanned source
+// root if no sibling exists) and a sibling README.md.
 func enrichSafeTensorsDir(ctx context.Context, resolver file.Resolver, dir string, md *pkg.SafeTensorsModelInfo) (nameOrPath string, lics []pkg.License, supporting []file.Location) {
-	if loc, cfg := readDirHFConfig(resolver, path.Join(dir, "config.json")); cfg != nil {
+	if loc, cfg := findDirHFConfig(resolver, dir); cfg != nil {
 		applyHFConfig(md, cfg)
 		nameOrPath = cfg.NameOrPath
 		supporting = append(supporting, *loc)
@@ -518,9 +529,9 @@ func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location, md *pk
 	if err != nil {
 		return false
 	}
-	trimmed := trimLeadingWhitespace(buf)
+	trimmed := bytes.TrimLeft(buf, "\xef\xbb\xbf \t\r\n")
 	switch {
-	case hasPrefix(trimmed, "---"):
+	case bytes.HasPrefix(trimmed, []byte("---")):
 		fm := parseFrontmatter(buf)
 		if fm == nil {
 			return false
@@ -532,7 +543,7 @@ func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location, md *pk
 			*readmeName = fm.BaseModel[0]
 		}
 		return true
-	case hasPrefix(trimmed, "{"):
+	case bytes.HasPrefix(trimmed, []byte("{")):
 		var cfg hfConfig
 		if err := json.Unmarshal(buf, &cfg); err != nil {
 			return false
@@ -566,26 +577,29 @@ func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 //
 //  1. config.json _name_or_path  (path.Base, so "org/Model" → "Model";
 //     applies to both dir-scan and OCI groups)
-//  2. OCI image-ref last segment (OCI-only; the user-supplied artifact
-//     reference's repository basename, e.g.
-//     "docker.io/ai/smollm2-vllm:360M" → "smollm2-vllm")
+//  2. fallback name — the group's source-specific positional identifier:
+//     the OCI image-ref repository basename for OCI groups (e.g.
+//     "docker.io/ai/smollm2-vllm:360M" → "smollm2-vllm"), or the parent
+//     directory base name for directory-scan groups (e.g.
+//     "/models/tiny-llama/*.safetensors" → "tiny-llama")
 //
 // Returns "" to signal the merge processor should drop the group. There is
-// intentionally no Architecture-Parameters synthetic or parent-directory
-// fallback: an unnameable model is recorded as absent rather than under a
-// label the SBOM consumer would not recognize.
-func pickSafeTensorsName(nameOrPath, imageRefName string) string {
+// intentionally no Architecture-Parameters synthetic and no opaque hash label:
+// when neither a producer-declared name nor a positional fallback is available
+// the model is recorded as absent rather than under a label the SBOM consumer
+// would not recognize.
+func pickSafeTensorsName(nameOrPath, fallbackName string) string {
 	if nameOrPath != "" {
 		return path.Base(nameOrPath)
 	}
-	return imageRefName
+	return fallbackName
 }
 
-// --- Relocated enrichment helpers ----------------------------------------
+// --- Enrichment helpers ---------------------------------------------------
 //
-// These types and functions used to live in the parser files; they moved here
-// when the parsers shrank to "just decode the safetensors-specific format" and
-// every resolver-backed read centralized in the merge processor.
+// The parsers decode only the safetensors-specific format; every resolver-backed
+// read (config.json, README, license layers) is centralized here in the merge
+// processor, along with the types those reads decode into.
 
 // hfConfig is a minimal projection of Hugging Face config.json fields.
 type hfConfig struct {
@@ -599,6 +613,27 @@ type hfConfig struct {
 type readmeFrontmatter struct {
 	License   string   `yaml:"license"`
 	BaseModel []string `yaml:"base_model"`
+}
+
+// findDirHFConfig looks for a config.json beside the model files, walking up
+// parent directories until it reaches the scanned source root. The walk needs
+// no explicit depth bound: the resolver only resolves paths within the scanned
+// source, so an ancestor above the scan root simply yields no config, and
+// path.Dir converges on a fixed point ("/" or ".") that terminates the loop.
+// The first config.json found wins, so the closest one — a sibling, then the
+// nearest ancestor — supplies both the producer-declared name and the HF fields
+// applied to the model.
+func findDirHFConfig(resolver file.Resolver, dir string) (*file.Location, *hfConfig) {
+	for {
+		if loc, cfg := readDirHFConfig(resolver, path.Join(dir, "config.json")); cfg != nil {
+			return loc, cfg
+		}
+		parent := path.Dir(dir)
+		if parent == dir {
+			return nil, nil // reached the source root
+		}
+		dir = parent
+	}
 }
 
 func readDirHFConfig(resolver file.Resolver, p string) (*file.Location, *hfConfig) {
@@ -714,19 +749,4 @@ func parseLicenseFrontmatter(buf []byte) string {
 		return ""
 	}
 	return fm.SPDXID
-}
-
-func hasPrefix(b []byte, s string) bool {
-	return len(b) >= len(s) && string(b[:len(s)]) == s
-}
-
-func trimLeadingWhitespace(b []byte) []byte {
-	i := 0
-	for i < len(b) && (b[i] == ' ' || b[i] == '\t' || b[i] == '\r' || b[i] == '\n') {
-		i++
-	}
-	if len(b)-i >= 3 && b[i] == 0xEF && b[i+1] == 0xBB && b[i+2] == 0xBF {
-		i += 3
-	}
-	return b[i:]
 }

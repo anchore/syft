@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -39,7 +40,7 @@ func buildSafeTensorsFile(t *testing.T, metadata map[string]string, tensors map[
 	return out
 }
 
-func TestSafeTensorsCataloger_singleFile(t *testing.T) {
+func TestSafeTensorsCataloger(t *testing.T) {
 	userMeta := map[string]string{"format": "pt"}
 	tensors := map[string]safeTensorsEntry{
 		"model.embed.weight": {DType: "BF16", Shape: []int64{1000, 16}, DataOffsets: []int64{0, 32000}},
@@ -49,43 +50,61 @@ func TestSafeTensorsCataloger_singleFile(t *testing.T) {
 	// cataloger wires the header hash through to the package metadata.
 	wantHash := (&safeTensorsHeader{metadata: userMeta, tensors: tensors}).metadataHash()
 
-	dir := t.TempDir()
-	modelDir := filepath.Join(dir, "models")
-	require.NoError(t, os.MkdirAll(modelDir, 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model.safetensors"), buildSafeTensorsFile(t, userMeta, tensors), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "config.json"),
-		[]byte(`{"architectures":["LlamaForCausalLM"],"torch_dtype":"bfloat16","transformers_version":"4.40.0","_name_or_path":"meta-llama/Llama-3-8B"}`), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "README.md"),
-		[]byte("---\nlicense: Apache-2.0\nbase_model:\n  - meta-llama/Llama-3\n---\n# Llama 3\n"), 0o644))
-
-	expected := []pkg.Package{
+	tests := []struct {
+		name                  string
+		setup                 func(t *testing.T) string
+		expectedPackages      []pkg.Package
+		expectedRelationships []artifact.Relationship
+	}{
 		{
-			Name: "Llama-3-8B",
-			Type: pkg.ModelPkg,
-			Licenses: pkg.NewLicenseSet(
-				pkg.NewLicenseFromFields("Apache-2.0", "", nil),
-			),
-			Metadata: pkg.SafeTensorsModelInfo{
-				Format:              "safetensors",
-				Architecture:        "LlamaForCausalLM",
-				Quantization:        "BF16",
-				Parameters:          "16.26K",
-				TensorCount:         2,
-				TorchDtype:          "bfloat16",
-				TransformersVersion: "4.40.0",
-				ShardCount:          1,
-				UserMetadata:        pkg.KeyValues{{Key: "format", Value: "pt"}},
-				MetadataHash:        wantHash,
+			name: "single-file model directory with config.json and README",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				modelDir := filepath.Join(dir, "models")
+				require.NoError(t, os.MkdirAll(modelDir, 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model.safetensors"), buildSafeTensorsFile(t, userMeta, tensors), 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(modelDir, "config.json"),
+					[]byte(`{"architectures":["LlamaForCausalLM"],"torch_dtype":"bfloat16","transformers_version":"4.40.0","_name_or_path":"meta-llama/Llama-3-8B"}`), 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(modelDir, "README.md"),
+					[]byte("---\nlicense: Apache-2.0\nbase_model:\n  - meta-llama/Llama-3\n---\n# Llama 3\n"), 0o644))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name: "Llama-3-8B",
+					Type: pkg.ModelPkg,
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFields("Apache-2.0", "", nil),
+					),
+					Metadata: pkg.SafeTensorsModelInfo{
+						Format:              "safetensors",
+						Architecture:        "LlamaForCausalLM",
+						Quantization:        "BF16",
+						Parameters:          "16.26K",
+						TensorCount:         2,
+						TorchDtype:          "bfloat16",
+						TransformersVersion: "4.40.0",
+						ShardCount:          1,
+						UserMetadata:        pkg.KeyValues{{Key: "format", Value: "pt"}},
+						MetadataHash:        wantHash,
+					},
+				},
 			},
 		},
 	}
 
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, dir).
-		Expects(expected, nil).
-		IgnoreLocationLayer().
-		IgnorePackageFields("FoundBy", "Locations").
-		TestCataloger(t, NewSafeTensorsCataloger())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fixtureDir := tt.setup(t)
+
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, fixtureDir).
+				Expects(tt.expectedPackages, tt.expectedRelationships).
+				IgnoreLocationLayer().
+				IgnorePackageFields("FoundBy", "Locations").
+				TestCataloger(t, NewSafeTensorsCataloger())
+		})
+	}
 }
 
 // TestParseSafeTensorsOCIConfig covers the parser in isolation: it should emit
@@ -94,31 +113,48 @@ func TestSafeTensorsCataloger_singleFile(t *testing.T) {
 // artifact. Naming and license resolution happen in the merge processor and are
 // tested separately under TestSafeTensorsMergeProcessor.
 func TestParseSafeTensorsOCIConfig(t *testing.T) {
-	t.Run("emits a nameless package with config-blob fields", func(t *testing.T) {
-		blob := []byte(`{"config":{"format":"safetensors","quantization":"Q4_K_M","parameters":"8B","size":"16.00GB","safetensors":{"tensor_count":291}}}`)
+	tests := []struct {
+		name             string
+		blob             string
+		expectedPackages []pkg.Package // nil => parser must emit nothing
+	}{
+		{
+			name: "emits a nameless package with config-blob fields",
+			blob: `{"config":{"format":"safetensors","quantization":"Q4_K_M","parameters":"8B","size":"16.00GB","safetensors":{"tensor_count":291}}}`,
+			expectedPackages: []pkg.Package{
+				{
+					// nameless: the merge processor assigns the name and resolves
+					// licenses. Config blobs carry no header content, so
+					// MetadataHash stays empty.
+					Type: pkg.ModelPkg,
+					Metadata: pkg.SafeTensorsModelInfo{
+						Format:       "safetensors",
+						Quantization: "Q4_K_M",
+						Parameters:   "8B",
+						TotalSize:    "16.00GB",
+						TensorCount:  291,
+					},
+				},
+			},
+		},
+		{
+			// non-safetensors formats emit nothing so the GGUF cataloger can claim
+			// the artifact.
+			name:             "ignores non-safetensors format",
+			blob:             `{"config":{"format":"gguf","quantization":"Q4_K_M"}}`,
+			expectedPackages: nil,
+		},
+	}
 
-		pkgs, _, err := parseSafeTensorsOCIConfig(context.Background(), nil, nil, configReader(blob))
-		require.NoError(t, err)
-		require.Len(t, pkgs, 1)
-
-		p := pkgs[0]
-		assert.Empty(t, p.Name, "config-blob parser must emit nameless; the merge processor names it")
-		assert.Empty(t, p.Licenses.ToSlice(), "license resolution belongs to the merge processor")
-		md := p.Metadata.(pkg.SafeTensorsModelInfo)
-		assert.Equal(t, "safetensors", md.Format)
-		assert.Equal(t, "Q4_K_M", md.Quantization)
-		assert.Equal(t, "8B", md.Parameters)
-		assert.Equal(t, "16.00GB", md.TotalSize)
-		assert.Equal(t, uint64(291), md.TensorCount)
-		assert.Empty(t, md.MetadataHash, "config blobs have no header content to hash")
-	})
-
-	t.Run("ignores non-safetensors format", func(t *testing.T) {
-		ggufBlob := []byte(`{"config":{"format":"gguf","quantization":"Q4_K_M"}}`)
-		pkgs, _, err := parseSafeTensorsOCIConfig(context.Background(), nil, nil, configReader(ggufBlob))
-		require.NoError(t, err)
-		assert.Empty(t, pkgs)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromString("/config.json", tt.blob).
+				Expects(tt.expectedPackages, nil).
+				IgnorePackageFields("FoundBy", "Locations").
+				TestParser(t, parseSafeTensorsOCIConfig)
+		})
+	}
 }
 
 // TestSafeTensorsMergeProcessor exercises the merge processor directly with
@@ -147,10 +183,10 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		}
 	}
 
-	t.Run("dir scan: dropped when no sibling config.json carries _name_or_path", func(t *testing.T) {
-		// Without a config.json the dir-scan path has no name source. There is
-		// intentionally no parent-dir fallback (or any opaque fallback), so the
-		// group is dropped rather than named after the filesystem layout.
+	t.Run("dir scan: parent directory base name names the group when no config.json is present", func(t *testing.T) {
+		// Without a config.json the dir-scan path falls through to the
+		// parent directory base name. hugginface style model dir is named after the
+		// model, so "/models/tiny-llama/weights.safetensors" → "tiny-llama".
 		p := dirPkg("/models/tiny-llama/weights.safetensors", pkg.SafeTensorsModelInfo{
 			Format:       "safetensors",
 			TensorCount:  4,
@@ -160,33 +196,46 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		resolver := file.NewMockResolverForPaths() // no config.json / README available
 		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, nil)
 		require.NoError(t, err)
-		assert.Empty(t, out, "dir-scan group with no config.json must be dropped")
+		require.Len(t, out, 1)
+		assert.Equal(t, "tiny-llama", out[0].Name, "rung 2: parent directory base name")
 	})
 
-	t.Run("dir scan: Architecture-Parameters alone does not name the package", func(t *testing.T) {
-		// Even with rich content-derived metadata (Architecture + Parameters),
-		// the package must be dropped when there is no producer-declared name.
-		// The Arch-Params synthetic rung was removed because it produced labels
-		// like "LlamaForCausalLM-2.68B" that SBOM consumers couldn't trace back
-		// to a recognizable model.
-		p := dirPkg("/models/tiny/weights.safetensors", pkg.SafeTensorsModelInfo{
-			Format:       "safetensors",
-			Architecture: "LlamaForCausalLM",
-			Parameters:   "2.68B",
-			TensorCount:  4,
-			MetadataHash: "abc",
+	t.Run("dir scan: nested model dirs group and name by immediate parent", func(t *testing.T) {
+		top := dirPkg("/namea/1.safetensors", pkg.SafeTensorsModelInfo{
+			Format: "safetensors", TensorCount: 1, MetadataHash: "aaaa",
+		})
+		nested := dirPkg("/namea/nameb/2.safetensors", pkg.SafeTensorsModelInfo{
+			Format: "safetensors", TensorCount: 1, MetadataHash: "bbbb",
 		})
 		resolver := file.NewMockResolverForPaths()
+		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{top, nested}, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, out, 2)
+		names := []string{out[0].Name, out[1].Name}
+		assert.ElementsMatch(t, []string{"namea", "nameb"}, names)
+	})
+
+	t.Run("dir scan: config.json _name_or_path beats the parent directory fallback", func(t *testing.T) {
+		// When a sibling config.json carries _name_or_path
+		dir := t.TempDir()
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.json"),
+			[]byte(`{"_name_or_path":"org/preferred-name"}`), 0o644))
+		stPath := filepath.Join(dir, "weights.safetensors")
+		p := dirPkg(stPath, pkg.SafeTensorsModelInfo{
+			Format: "safetensors", TensorCount: 1, MetadataHash: "abc",
+		})
+		resolver := file.NewMockResolverForPaths(filepath.Join(dir, "config.json"))
 		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, nil)
 		require.NoError(t, err)
-		assert.Empty(t, out, "Arch-Params alone is not a name source")
+		require.Len(t, out, 1)
+		assert.Equal(t, "preferred-name", out[0].Name, "rung 1 (config.json) wins over rung 2 (parent dir)")
 	})
 
 	t.Run("OCI: dropped when no name source is available", func(t *testing.T) {
 		// The vllm-style shape: config-blob package + a weight-layer package,
 		// both at virtual path "/", no model.file companions on the resolver
-		// AND no image ref. With nothing to derive a name from, the group is
-		// dropped — no opaque fallback.
+		// AND no image ref. With nothing to derive a name from, the package is
+		// dropped
 		configMd := pkg.SafeTensorsModelInfo{
 			Format:      "safetensors",
 			TensorCount: 5,
@@ -209,9 +258,7 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 
 	t.Run("OCI: image-ref last segment names the group when config.json is absent", func(t *testing.T) {
 		// vllm-style artifact: a repacked model whose embedded config.json has
-		// been stripped of _name_or_path. The merge processor falls through to
-		// the second rung — the image-reference last segment — so we still emit
-		// a recognizable model name instead of dropping it.
+		// been stripped of _name_or_path.
 		configMd := pkg.SafeTensorsModelInfo{
 			Format:      "safetensors",
 			TensorCount: 290,
@@ -233,75 +280,6 @@ func TestSafeTensorsMergeProcessor(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, out, 1)
 		assert.Equal(t, "smollm2-vllm", out[0].Name, "rung 2: image-ref repository basename")
-	})
-
-	t.Run("OCI: config.json _name_or_path beats the image-ref fallback", func(t *testing.T) {
-		// When the embedded config.json carries _name_or_path, rung 1 wins over
-		// the image ref even if both are present.
-		dir := t.TempDir()
-		hfConfigPath := filepath.Join(dir, "config.json")
-		require.NoError(t, os.WriteFile(hfConfigPath,
-			[]byte(`{"_name_or_path":"org/preferred-name"}`), 0o644))
-		resolver := file.NewMockResolverForOCIArtifact(
-			"docker.io/ai/smollm2-vllm:360M",
-			map[string][]file.Location{
-				dockerAIModelFileMediaType: {file.NewLocation(hfConfigPath)},
-			},
-		)
-		configMd := pkg.SafeTensorsModelInfo{Format: "safetensors", TensorCount: 1}
-		out, _, err := safeTensorsMergeProcessor(
-			context.Background(), resolver,
-			[]pkg.Package{ociPkg(configMd)}, nil, nil,
-		)
-		require.NoError(t, err)
-		require.Len(t, out, 1)
-		assert.Equal(t, "preferred-name", out[0].Name, "rung 1 (config.json) wins over rung 2 (image ref)")
-	})
-
-	t.Run("OCI: merges config + shard and names from companion config.json", func(t *testing.T) {
-		// Write a single model.file companion blob containing HF config.json so
-		// the processor can derive _name_or_path and Architecture from it.
-		dir := t.TempDir()
-		hfConfigPath := filepath.Join(dir, "config.json")
-		require.NoError(t, os.WriteFile(hfConfigPath,
-			[]byte(`{"architectures":["Qwen3ForCausalLM"],"torch_dtype":"bfloat16","_name_or_path":"org/qwen-tiny"}`), 0o644))
-		resolver := file.NewMockResolverForMediaTypes(map[string][]file.Location{
-			dockerAIModelFileMediaType: {file.NewLocation(hfConfigPath)},
-		})
-
-		configMd := pkg.SafeTensorsModelInfo{
-			Format:       "safetensors",
-			Quantization: "Q4_K_M", // raw producer-declared value
-			Parameters:   "8B",
-			TotalSize:    "16.00GB",
-			TensorCount:  291,
-		}
-		shardMd := pkg.SafeTensorsModelInfo{
-			Format:       "safetensors",
-			TensorCount:  100, // per-shard count — must NOT be summed onto the aggregate's 291
-			Quantization: "BF16",
-			MetadataHash: "deadbeef",
-			UserMetadata: pkg.KeyValues{{Key: "format", Value: "pt"}},
-		}
-		out, _, err := safeTensorsMergeProcessor(
-			context.Background(), resolver,
-			[]pkg.Package{ociPkg(configMd), ociPkg(shardMd)}, nil, nil,
-		)
-		require.NoError(t, err)
-		require.Len(t, out, 1)
-
-		got := out[0]
-		assert.Equal(t, "qwen-tiny", got.Name, "name comes from path.Base(_name_or_path)")
-		md := got.Metadata.(pkg.SafeTensorsModelInfo)
-		assert.Equal(t, uint64(291), md.TensorCount, "aggregate TensorCount must win — never double-count by summing the shard")
-		assert.Equal(t, "16.00GB", md.TotalSize)
-		assert.Equal(t, "8B", md.Parameters)
-		assert.Equal(t, "Qwen3ForCausalLM", md.Architecture, "Architecture enriched from companion config.json")
-		assert.Equal(t, "bfloat16", md.TorchDtype)
-		assert.Equal(t, "Q4_K_M", md.Quantization, "aggregate Quantization wins over shard's normalized dtype when both present")
-		assert.Equal(t, "deadbeef", md.MetadataHash, "single-shard rollup is the lone shard's hash")
-		assert.Equal(t, pkg.KeyValues{{Key: "format", Value: "pt"}}, md.UserMetadata)
-		assert.Nil(t, md.Parts, "single-shard groups skip Parts; the outer view already exposes everything")
 	})
 
 	t.Run("OCI: multi-shard rollup hashes are stable and sorted", func(t *testing.T) {
@@ -389,20 +367,21 @@ spdx-id: Apache-2.0
 //
 // Precedence (highest → lowest):
 //  1. config.json _name_or_path  (path.Base applied; both dir-scan and OCI)
-//  2. OCI image-ref last segment (OCI only — empty string for dir scans)
+//  2. fallback name — OCI image-ref last segment, or dir-scan parent directory
+//     base name (the merge processor computes the right one per group)
 //     → drop (empty name) when nothing matches
 func TestSafeTensorsNamingPrecedence(t *testing.T) {
-	cases := []struct {
+	tests := []struct {
 		name         string
 		nameOrPath   string
-		imageRefName string
+		fallbackName string
 		want         string
 	}{
 		// rung 1
 		{
-			name:         "rung 1: _name_or_path beats the image-ref fallback",
+			name:         "rung 1: _name_or_path beats the fallback",
 			nameOrPath:   "org/MyModel",
-			imageRefName: "fallback-ref",
+			fallbackName: "fallback-name",
 			want:         "MyModel",
 		},
 		{
@@ -418,9 +397,14 @@ func TestSafeTensorsNamingPrecedence(t *testing.T) {
 
 		// rung 2
 		{
-			name:         "rung 2: image-ref last segment used when _name_or_path is empty",
-			imageRefName: "smollm2-vllm",
+			name:         "rung 2: OCI image-ref last segment used when _name_or_path is empty",
+			fallbackName: "smollm2-vllm",
 			want:         "smollm2-vllm",
+		},
+		{
+			name:         "rung 2: dir-scan parent directory name used when _name_or_path is empty",
+			fallbackName: "tiny-llama",
+			want:         "tiny-llama",
 		},
 
 		// drops
@@ -430,10 +414,31 @@ func TestSafeTensorsNamingPrecedence(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := pickSafeTensorsName(tc.nameOrPath, tc.imageRefName)
-			assert.Equal(t, tc.want, got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := pickSafeTensorsName(tt.nameOrPath, tt.fallbackName)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestSafeTensorsDirName covers the directory-scan fallback name derivation,
+// including the degenerate roots that must yield no name.
+func TestSafeTensorsDirName(t *testing.T) {
+	tests := []struct {
+		groupKey string
+		want     string
+	}{
+		{groupKey: "/models/tiny-llama", want: "tiny-llama"},
+		{groupKey: "/namea", want: "namea"},
+		{groupKey: "/namea/nameb", want: "nameb"},
+		{groupKey: "/", want: ""},
+		{groupKey: ".", want: ""},
+		{groupKey: "", want: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.groupKey, func(t *testing.T) {
+			assert.Equal(t, tt.want, safeTensorsDirName(tt.groupKey))
 		})
 	}
 }
@@ -449,19 +454,26 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 	wantHash := (&safeTensorsHeader{metadata: userMeta, tensors: tensors}).metadataHash()
 
 	t.Run("emits a nameless package with header-derived metadata", func(t *testing.T) {
-		reader := file.NewLocationReadCloser(file.NewLocation("/"), io.NopCloser(bytes.NewReader(blob)))
-		pkgs, _, err := parseSafeTensorsOCILayer(context.Background(), nil, nil, reader)
-		require.NoError(t, err)
-		require.Len(t, pkgs, 1)
-
-		p := pkgs[0]
-		assert.Empty(t, p.Name, "weight-layer parser must emit nameless; the merge processor names it")
-		md := p.Metadata.(pkg.SafeTensorsModelInfo)
-		assert.Equal(t, "safetensors", md.Format)
-		assert.Equal(t, uint64(2), md.TensorCount)
-		assert.Equal(t, "BF16", md.Quantization)
-		assert.Equal(t, wantUserMetadata, md.UserMetadata)
-		assert.Equal(t, wantHash, md.MetadataHash)
+		// nameless: the merge processor assigns the name. Parameters is the
+		// summed element count of the two tensors (1024*16 + 16*16 = 16640).
+		expected := []pkg.Package{
+			{
+				Type: pkg.ModelPkg,
+				Metadata: pkg.SafeTensorsModelInfo{
+					Format:       "safetensors",
+					Parameters:   "16.64K",
+					Quantization: "BF16",
+					TensorCount:  2,
+					UserMetadata: wantUserMetadata,
+					MetadataHash: wantHash,
+				},
+			},
+		}
+		pkgtest.NewCatalogTester().
+			FromString("/", string(blob)).
+			Expects(expected, nil).
+			IgnorePackageFields("FoundBy", "Locations").
+			TestParser(t, parseSafeTensorsOCILayer)
 	})
 
 	t.Run("merged via processor: aggregate fields preserved, hash lifted from single shard", func(t *testing.T) {
@@ -535,27 +547,30 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 // Locking in the field values guards against changes to the header parser
 // silently breaking on real-world content shape.
 func TestParseSafeTensorsOCILayer_realFixture(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("testdata", "safetensors", "nomic-embed-475M.header.safetensors"))
-	require.NoError(t, err)
-	require.Greater(t, len(data), 8, "fixture must include the 8-byte length prefix")
+	// nameless before the merge processor runs. The fixture is immutable on disk;
+	// the locked field values (notably MetadataHash) guard against the header
+	// parser silently breaking on real-world content shape — if MetadataHash
+	// changes, either the hash algorithm or the canonicalization changed, both of
+	// which callers may rely on for cross-source identity.
+	expected := []pkg.Package{
+		{
+			Type: pkg.ModelPkg,
+			Metadata: pkg.SafeTensorsModelInfo{
+				Format:       "safetensors",
+				Parameters:   "475.29M",
+				Quantization: "F32", // every tensor in the captured shard is F32
+				TensorCount:  148,   // nomic-embed-v2-moe 475M ships 148 tensor entries in this shard
+				UserMetadata: pkg.KeyValues{{Key: "format", Value: "pt"}},
+				MetadataHash: "051a14e686673dea",
+			},
+		},
+	}
 
-	reader := file.NewLocationReadCloser(file.NewLocation("/"), io.NopCloser(bytes.NewReader(data)))
-	pkgs, _, err := parseSafeTensorsOCILayer(context.Background(), nil, nil, reader)
-	require.NoError(t, err)
-	require.Len(t, pkgs, 1)
-	assert.Empty(t, pkgs[0].Name, "weight-layer packages are nameless before the merge processor runs")
-
-	md := pkgs[0].Metadata.(pkg.SafeTensorsModelInfo)
-	assert.Equal(t, "safetensors", md.Format)
-	assert.Equal(t, uint64(148), md.TensorCount, "nomic-embed-v2-moe 475M ships 148 tensor entries in this shard")
-	assert.Equal(t, "F32", md.Quantization, "every tensor in the captured shard is F32")
-	assert.Equal(t, "475.29M", md.Parameters)
-	assert.Equal(t, pkg.KeyValues{{Key: "format", Value: "pt"}}, md.UserMetadata)
-	// MetadataHash is locked to the exact value the parser produces for this
-	// captured input. The fixture is immutable on disk; if this value changes
-	// either the hash algorithm or the canonicalization changed, both of which
-	// callers may rely on for cross-source identity.
-	assert.Equal(t, "051a14e686673dea", md.MetadataHash)
+	pkgtest.NewCatalogTester().
+		FromFile(t, filepath.Join("testdata", "safetensors", "nomic-embed-475M.header.safetensors")).
+		Expects(expected, nil).
+		IgnorePackageFields("FoundBy", "Locations").
+		TestParser(t, parseSafeTensorsOCILayer)
 }
 
 func TestSafeTensorsCrossSourceHashParity(t *testing.T) {
@@ -595,10 +610,6 @@ func TestSafeTensorsCrossSourceHashParity(t *testing.T) {
 	assert.Equal(t, dirHash, ociHash, "same content via dir scan and OCI weight-layer scan must hash equal")
 }
 
-func configReader(blob []byte) file.LocationReadCloser {
-	return file.NewLocationReadCloser(file.NewLocation("/config.json"), io.NopCloser(bytes.NewReader(blob)))
-}
-
 func assertHasLicense(t *testing.T, p pkg.Package, value string) {
 	t.Helper()
 	for _, l := range p.Licenses.ToSlice() {
@@ -610,28 +621,50 @@ func assertHasLicense(t *testing.T, p pkg.Package, value string) {
 }
 
 func TestReadSafeTensorsHeader(t *testing.T) {
-	t.Run("valid header", func(t *testing.T) {
-		data := buildSafeTensorsFile(t, map[string]string{"format": "pt"}, map[string]safeTensorsEntry{
-			"w": {DType: "F32", Shape: []int64{2, 2}, DataOffsets: []int64{0, 16}},
+	zeroLength := make([]byte, 8) // length prefix of 0
+
+	truncatedBody := make([]byte, 8)
+	binary.LittleEndian.PutUint64(truncatedBody, 100) // claims 100 bytes but supplies none
+
+	tests := []struct {
+		name    string
+		data    []byte
+		wantErr bool
+		assert  func(t *testing.T, h *safeTensorsHeader)
+	}{
+		{
+			name: "valid header",
+			data: buildSafeTensorsFile(t, map[string]string{"format": "pt"}, map[string]safeTensorsEntry{
+				"w": {DType: "F32", Shape: []int64{2, 2}, DataOffsets: []int64{0, 16}},
+			}),
+			assert: func(t *testing.T, h *safeTensorsHeader) {
+				assert.Len(t, h.tensors, 1)
+				assert.Equal(t, "pt", h.metadata["format"])
+			},
+		},
+		{
+			name:    "zero-length header",
+			data:    zeroLength,
+			wantErr: true,
+		},
+		{
+			name:    "truncated body",
+			data:    truncatedBody,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h, err := readSafeTensorsHeader(bytes.NewReader(tt.data))
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			tt.assert(t, h)
 		})
-		h, err := readSafeTensorsHeader(bytes.NewReader(data))
-		require.NoError(t, err)
-		assert.Len(t, h.tensors, 1)
-		assert.Equal(t, "pt", h.metadata["format"])
-	})
-
-	t.Run("zero-length header", func(t *testing.T) {
-		var buf [8]byte // length prefix of 0
-		_, err := readSafeTensorsHeader(bytes.NewReader(buf[:]))
-		require.Error(t, err)
-	})
-
-	t.Run("truncated body", func(t *testing.T) {
-		var buf [8]byte
-		binary.LittleEndian.PutUint64(buf[:], 100) // claims 100 bytes but supplies none
-		_, err := readSafeTensorsHeader(bytes.NewReader(buf[:]))
-		require.Error(t, err)
-	})
+	}
 }
 
 func TestSafeTensorsHeader_metadataHash(t *testing.T) {
@@ -680,71 +713,112 @@ func TestSafeTensorsHeader_parameterCountAndDType(t *testing.T) {
 }
 
 func TestNormalizeDType(t *testing.T) {
-	cases := map[string]string{
-		"BF16":    "BF16",
-		"float16": "F16",
-		"FP32":    "F32",
-		"int8":    "I8",
-		"U8":      "U8",
-		"bool":    "BOOL",
-		"weird":   "WEIRD",
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{name: "already canonical BF16", in: "BF16", want: "BF16"},
+		{name: "float16 alias", in: "float16", want: "F16"},
+		{name: "FP32 alias", in: "FP32", want: "F32"},
+		{name: "int8 alias", in: "int8", want: "I8"},
+		{name: "U8 passthrough", in: "U8", want: "U8"},
+		{name: "bool", in: "bool", want: "BOOL"},
+		{name: "unknown value uppercased", in: "weird", want: "WEIRD"},
 	}
-	for in, want := range cases {
-		assert.Equalf(t, want, normalizeDType(in), "normalizeDType(%q)", in)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, normalizeDType(tt.in))
+		})
 	}
 }
 
 func TestFormatParameterCount(t *testing.T) {
-	cases := map[uint64]string{
-		512:           "512",
-		16256:         "16.26K",
-		2_680_000_000: "2.68B",
-		35_000_000:    "35.00M",
+	tests := []struct {
+		name string
+		in   uint64
+		want string
+	}{
+		{name: "raw count under 1K", in: 512, want: "512"},
+		{name: "thousands", in: 16256, want: "16.26K"},
+		{name: "billions", in: 2_680_000_000, want: "2.68B"},
+		{name: "millions", in: 35_000_000, want: "35.00M"},
 	}
-	for in, want := range cases {
-		assert.Equalf(t, want, formatParameterCount(in), "formatParameterCount(%d)", in)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, formatParameterCount(tt.in))
+		})
 	}
 }
 
 func TestParseFrontmatter(t *testing.T) {
-	t.Run("list base_model", func(t *testing.T) {
-		fm := parseFrontmatter([]byte("---\nlicense: mit\nbase_model:\n  - org/Model\n---\nbody"))
-		require.NotNil(t, fm)
-		assert.Equal(t, "mit", fm.License)
-		assert.Equal(t, []string{"org/Model"}, fm.BaseModel)
-	})
+	tests := []struct {
+		name          string
+		input         string
+		wantNil       bool
+		wantLicense   string
+		wantBaseModel []string
+	}{
+		{
+			name:          "list base_model",
+			input:         "---\nlicense: mit\nbase_model:\n  - org/Model\n---\nbody",
+			wantLicense:   "mit",
+			wantBaseModel: []string{"org/Model"},
+		},
+		{
+			name:          "scalar base_model",
+			input:         "---\nlicense: apache-2.0\nbase_model: org/Model\n---\n",
+			wantLicense:   "apache-2.0",
+			wantBaseModel: []string{"org/Model"},
+		},
+		{
+			name:        "leading BOM",
+			input:       "\xef\xbb\xbf---\nlicense: mit\n---\n",
+			wantLicense: "mit",
+		},
+		{
+			name:    "no frontmatter",
+			input:   "# just a heading\n",
+			wantNil: true,
+		},
+		{
+			name:    "unterminated frontmatter",
+			input:   "---\nlicense: mit\n",
+			wantNil: true,
+		},
+	}
 
-	t.Run("scalar base_model", func(t *testing.T) {
-		fm := parseFrontmatter([]byte("---\nlicense: apache-2.0\nbase_model: org/Model\n---\n"))
-		require.NotNil(t, fm)
-		assert.Equal(t, "apache-2.0", fm.License)
-		assert.Equal(t, []string{"org/Model"}, fm.BaseModel)
-	})
-
-	t.Run("leading BOM", func(t *testing.T) {
-		fm := parseFrontmatter([]byte("\xef\xbb\xbf---\nlicense: mit\n---\n"))
-		require.NotNil(t, fm)
-		assert.Equal(t, "mit", fm.License)
-	})
-
-	t.Run("no frontmatter", func(t *testing.T) {
-		assert.Nil(t, parseFrontmatter([]byte("# just a heading\n")))
-	})
-
-	t.Run("unterminated frontmatter", func(t *testing.T) {
-		assert.Nil(t, parseFrontmatter([]byte("---\nlicense: mit\n")))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fm := parseFrontmatter([]byte(tt.input))
+			if tt.wantNil {
+				assert.Nil(t, fm)
+				return
+			}
+			require.NotNil(t, fm)
+			assert.Equal(t, tt.wantLicense, fm.License)
+			if tt.wantBaseModel != nil {
+				assert.Equal(t, tt.wantBaseModel, fm.BaseModel)
+			}
+		})
+	}
 }
 
 // TestParseLicenseFrontmatter covers the choosealicense.com-style YAML
 // frontmatter Docker Model Runner uses for its license layers. Only spdx-id
 // is consumed; everything else in the block is ignored.
 func TestParseLicenseFrontmatter(t *testing.T) {
-	t.Run("Apache-2.0 (the canonical choosealicense.com shape)", func(t *testing.T) {
-		// This is the exact frontmatter shape from
-		// https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/apache-2.0.txt
-		// Docker AI license layers ship a near-identical block.
-		buf := []byte(`---
+	// The Apache-2.0 case is the exact frontmatter shape from
+	// https://github.com/github/choosealicense.com/blob/gh-pages/_licenses/apache-2.0.txt
+	// Docker AI license layers ship a near-identical block.
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name: "Apache-2.0 (the canonical choosealicense.com shape)",
+			input: `---
 title: Apache License 2.0
 spdx-id: Apache-2.0
 redirect_from: /licenses/apache/
@@ -780,29 +854,36 @@ limitations:
 
                                  Apache License
                            Version 2.0, January 2004
-`)
-		assert.Equal(t, "Apache-2.0", parseLicenseFrontmatter(buf))
-	})
+`,
+			want: "Apache-2.0",
+		},
+		{
+			name:  "MIT with BOM prefix",
+			input: "\xef\xbb\xbf---\ntitle: MIT License\nspdx-id: MIT\n---\nThe MIT License...\n",
+			want:  "MIT",
+		},
+		{
+			name:  "frontmatter without spdx-id falls through (returns empty)",
+			input: "---\ntitle: Something\ndescription: no spdx-id here\n---\nbody\n",
+			want:  "",
+		},
+		{
+			name:  "plain license text without any frontmatter",
+			input: "                                 Apache License\n                           Version 2.0, January 2004\n",
+			want:  "",
+		},
+		{
+			name:  "unterminated frontmatter block",
+			input: "---\nspdx-id: MIT\n(never closes)\n",
+			want:  "",
+		},
+	}
 
-	t.Run("MIT with BOM prefix", func(t *testing.T) {
-		buf := []byte("\xef\xbb\xbf---\ntitle: MIT License\nspdx-id: MIT\n---\nThe MIT License...\n")
-		assert.Equal(t, "MIT", parseLicenseFrontmatter(buf))
-	})
-
-	t.Run("frontmatter without spdx-id falls through (returns empty)", func(t *testing.T) {
-		buf := []byte("---\ntitle: Something\ndescription: no spdx-id here\n---\nbody\n")
-		assert.Empty(t, parseLicenseFrontmatter(buf))
-	})
-
-	t.Run("plain license text without any frontmatter", func(t *testing.T) {
-		buf := []byte("                                 Apache License\n                           Version 2.0, January 2004\n")
-		assert.Empty(t, parseLicenseFrontmatter(buf))
-	})
-
-	t.Run("unterminated frontmatter block", func(t *testing.T) {
-		buf := []byte("---\nspdx-id: MIT\n(never closes)\n")
-		assert.Empty(t, parseLicenseFrontmatter(buf))
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, parseLicenseFrontmatter([]byte(tt.input)))
+		})
+	}
 }
 
 func TestDockerAIModelConfigMediaTypes(t *testing.T) {
@@ -816,14 +897,27 @@ func TestDockerAIModelConfigMediaTypes(t *testing.T) {
 		}
 		return false
 	}
-	// the known, verified schema versions are consumed
-	assert.True(t, supported("application/vnd.docker.ai.model.config.v0.1+json"))
-	assert.True(t, supported("application/vnd.docker.ai.model.config.v0.2+json"))
-	// unknown/future schema versions are intentionally NOT consumed, to avoid
-	// silently ingesting a potentially breaking config change
-	assert.False(t, supported("application/vnd.docker.ai.model.config.v0.3+json"))
-	assert.False(t, supported("application/vnd.docker.ai.model.config.v9.9+json"))
-	// sibling layer media types are not matched either
-	assert.False(t, supported("application/vnd.docker.ai.model.file"))
-	assert.False(t, supported("application/vnd.docker.ai.gguf.v3"))
+
+	tests := []struct {
+		name      string
+		mediaType string
+		want      bool
+	}{
+		// the known, verified schema versions are consumed
+		{name: "known schema v0.1 is consumed", mediaType: "application/vnd.docker.ai.model.config.v0.1+json", want: true},
+		{name: "known schema v0.2 is consumed", mediaType: "application/vnd.docker.ai.model.config.v0.2+json", want: true},
+		// unknown/future schema versions are intentionally NOT consumed, to avoid
+		// silently ingesting a potentially breaking config change
+		{name: "unknown schema v0.3 is rejected", mediaType: "application/vnd.docker.ai.model.config.v0.3+json", want: false},
+		{name: "far-future schema v9.9 is rejected", mediaType: "application/vnd.docker.ai.model.config.v9.9+json", want: false},
+		// sibling layer media types are not matched either
+		{name: "sibling model.file layer is not matched", mediaType: "application/vnd.docker.ai.model.file", want: false},
+		{name: "sibling gguf layer is not matched", mediaType: "application/vnd.docker.ai.gguf.v3", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, supported(tt.mediaType))
+		})
+	}
 }

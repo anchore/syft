@@ -52,6 +52,11 @@ func (b *testGGUFBuilder) withVersion(v uint32) *testGGUFBuilder {
 	return b
 }
 
+func (b *testGGUFBuilder) withTensorCount(count uint64) *testGGUFBuilder {
+	b.tensorCount = count
+	return b
+}
+
 func (b *testGGUFBuilder) withStringKV(key, value string) *testGGUFBuilder {
 	b.kvPairs = append(b.kvPairs, testKVPair{key: key, valueType: ggufTypeString, value: value})
 	return b
@@ -113,4 +118,11 @@ func (b *testGGUFBuilder) build() []byte {
 	}
 
 	return b.buf.Bytes()
+}
+
+// buildInvalidMagic creates a file with invalid magic number
+func (b *testGGUFBuilder) buildInvalidMagic() []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, uint32(0x12345678))
+	return buf.Bytes()
 }
