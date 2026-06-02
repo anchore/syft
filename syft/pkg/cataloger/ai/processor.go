@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
@@ -417,7 +418,9 @@ func resolveSafeTensorsOCIIdentity(resolver file.Resolver, md *pkg.SafeTensorsMo
 }
 
 func ociImageRefBasename(resolver file.Resolver) string {
-	info, ok := resolver.(file.OCIArtifactResolver)
+	// TODO: we don't think this approach is generalizable quite yet, but we really do need this information.
+	// (Ideally we should be NOT be type asserting on the file resolver directly).
+	info, ok := resolver.(*fileresolver.ContainerImageModel)
 	if !ok {
 		return ""
 	}

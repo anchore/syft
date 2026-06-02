@@ -14,7 +14,6 @@ import (
 
 var _ Resolver = (*MockResolver)(nil)
 var _ OCIMediaTypeResolver = (*MockResolver)(nil)
-var _ OCIArtifactResolver = (*MockResolver)(nil)
 
 // MockResolver implements the FileResolver interface and is intended for use *only in test code*.
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file

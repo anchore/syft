@@ -39,7 +39,6 @@ type ociModelSource struct {
 	resolver  interface {
 		file.Resolver
 		file.OCIMediaTypeResolver
-		file.OCIArtifactResolver
 	}
 	mutex *sync.Mutex
 }
