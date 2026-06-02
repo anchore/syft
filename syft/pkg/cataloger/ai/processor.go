@@ -22,7 +22,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
-// ociGroupKey is the sentinel grouping key for every safetensors package that
+// ociGroupKey is the grouping key for every safetensors package that
 // originated from an OCI model artifact. The ContainerImageModel resolver gives
 // each layer the virtual RealPath "/" regardless of layer media type, so all
 // safetensors packages from a single OCI scan collapse into one group.
@@ -78,31 +78,17 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 	return namedPkgs, rels, err
 }
 
-// safeTensorsMergeProcessor owns naming, license resolution, etc
-//  1. groups all nameless packages by parent directory (or a single sentinel
-//     for OCI artifacts, since the ContainerImageModel resolver puts every
-//     layer at virtual path "/");
-//  2. merges the per-shard metadata (tensor count, dominant dtype, total size,
-//     UserMetadata, rollup MetadataHash) into one package per group;
-//  3. enriches the merged package by consulting the resolver ONCE per group —
-//     sibling config.json + README.md for dir scans, the model-file companion
-//     layers + license layer for OCI — and attaches those locations as
-//     supporting evidence;
-//  4. picks a name via a two-rung precedence chain (see pickSafeTensorsName):
-//     config.json _name_or_path first (both sources), then the OCI image-ref
-//     last segment (OCI only). Drops the group when neither rung produces a
-//     name. There is no opaque fallback (no Architecture-Parameters synthetic,
-//     no parent-dir, no MetadataHash-as-name) — an unnameable model is
-//     intentionally absent from the SBOM rather than recorded under a
-//     misleading label.
+// safeTensorsMergeProcessor owns naming, license resolution, and tensor package creation
+// - groups all nameless packages
+// - merge the per-shard metadata
+// - picks a name (see pickSafeTensorsName)
 func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	if err != nil || len(pkgs) == 0 {
 		return pkgs, rels, err
 	}
 
-	// Defensively split off non-safetensors packages — the cataloger only emits
-	// SafeTensorsModelInfo today, but this keeps the processor robust if other
-	// types ever flow through.
+	// split off non-safetensors packages
+	// this keeps the processor robust if other types ever flow through
 	var stPkgs, other []pkg.Package
 	for _, p := range pkgs {
 		if _, ok := p.Metadata.(pkg.SafeTensorsModelInfo); ok {
@@ -127,11 +113,17 @@ func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs
 	out := other
 	for _, key := range keys {
 		merged := mergeSafeTensorsGroup(groups[key])
-		nameOrPath, fallbackName := enrichSafeTensorsGroup(ctx, resolver, key, &merged)
-		name := pickSafeTensorsName(nameOrPath, fallbackName)
+
+		// Resolve model identity (name candidates) before enrich
+		id := resolveSafeTensorsIdentity(resolver, key, &merged)
+		name := pickSafeTensorsName(id.nameOrPath, id.fallbackName)
 		if name == "" {
-			continue // drop groups with no name source and no usable fallback
+			log.Debugf("dropped safetensors model package (metadata hash %q): no name source",
+				merged.Metadata.(pkg.SafeTensorsModelInfo).MetadataHash)
+			continue
 		}
+
+		enrichSafeTensorsGroup(ctx, resolver, key, &merged, id)
 		merged.Name = name
 		merged.SetID()
 		out = append(out, merged)
@@ -140,8 +132,7 @@ func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs
 }
 
 // groupSafeTensorsPackages buckets packages by the parent directory of their
-// primary-evidence location, or the OCI sentinel when the location lives at
-// the ContainerImageModel resolver's virtual "/" path.
+// primary-evidence location
 func groupSafeTensorsPackages(pkgs []pkg.Package) map[string][]pkg.Package {
 	out := make(map[string][]pkg.Package)
 	for _, p := range pkgs {
@@ -178,19 +169,7 @@ func primaryEvidenceLocation(p pkg.Package) *file.Location {
 	return nil
 }
 
-// mergeSafeTensorsGroup folds a group's per-member metadata into a single
-// package. Members are classified into two buckets to avoid double-counting:
-//
-//   - "aggregate" members have producer-declared totals (TensorCount, TotalSize,
-//     ShardCount, Parameters) but no MetadataHash — these are the Docker AI
-//     config blob and the sharded-index file.
-//   - "shard" members have a content-derived MetadataHash and per-shard counts —
-//     these are the individual .safetensors header parsers, both dir-scan and
-//     OCI weight-layer.
-//
-// Aggregate values are the source of truth for the merged totals when present;
-// shards contribute Quantization, UserMetadata, the rollup MetadataHash, and
-// (for multi-shard models) the Parts breakdown.
+// mergeSafeTensorsGroup folds a group's per-member metadata into a single package.
 func mergeSafeTensorsGroup(members []pkg.Package) pkg.Package {
 	locSet := unionLocations(members)
 	aggregates, shards := bucketSafeTensorsMembers(members)
@@ -198,6 +177,11 @@ func mergeSafeTensorsGroup(members []pkg.Package) pkg.Package {
 	merged := pkg.SafeTensorsModelInfo{Format: "safetensors"}
 	mergeAggregatesInto(&merged, aggregates)
 	shardTensorTotal, hashes := mergeShardsInto(&merged, shards)
+
+	// Keep merged UserMetadata globally key-sorted so the SBOM is stable
+	sort.Slice(merged.UserMetadata, func(i, j int) bool {
+		return merged.UserMetadata[i].Key < merged.UserMetadata[j].Key
+	})
 
 	if merged.TensorCount == 0 {
 		merged.TensorCount = shardTensorTotal
@@ -228,10 +212,6 @@ func mergeSafeTensorsGroup(members []pkg.Package) pkg.Package {
 	}
 }
 
-// mergeAggregatesInto folds aggregate-declared totals (config blob or sharded
-// index) into merged. First non-empty wins, so the order aggregates are passed
-// in determines tie-breaking — in practice there is one config blob and one
-// index per group, never two of the same kind.
 func mergeAggregatesInto(merged *pkg.SafeTensorsModelInfo, aggregates []pkg.SafeTensorsModelInfo) {
 	for _, a := range aggregates {
 		if merged.TensorCount == 0 {
@@ -252,8 +232,7 @@ func mergeAggregatesInto(merged *pkg.SafeTensorsModelInfo, aggregates []pkg.Safe
 // mergeShardsInto folds the per-shard header metadata into merged, returning
 // the summed shard TensorCount and the list of non-empty per-shard hashes for
 // the rollup. Shards carry only the content-derived fields (Quantization,
-// Parameters, UserMetadata); producer-declared fields like Architecture come
-// from the resolver-backed enrichment that runs afterwards.
+// Parameters, UserMetadata);
 func mergeShardsInto(merged *pkg.SafeTensorsModelInfo, shards []pkg.SafeTensorsModelInfo) (shardTensorTotal uint64, hashes []string) {
 	seenKV := map[string]bool{}
 	for _, s := range shards {
@@ -309,11 +288,6 @@ func bucketSafeTensorsMembers(members []pkg.Package) (aggregates, shards []pkg.S
 	return aggregates, shards
 }
 
-// rollupHash returns a stable hash across the sorted set of per-member
-// content-derived hashes. For a single member it returns that hash unchanged,
-// so a single-file dir scan and an OCI scan with one safetensors layer surface
-// the same value. For multi-shard models the rollup is the xxhash of the
-// sorted hashes joined with "|".
 func rollupHash(hashes []string) string {
 	if len(hashes) == 0 {
 		return ""
@@ -326,43 +300,59 @@ func rollupHash(hashes []string) string {
 	return fmt.Sprintf("%016x", xxhash.Sum64String(strings.Join(sorted, "|")))
 }
 
-// enrichSafeTensorsGroup reads the resolver once for the group to populate the
-// merged metadata's Architecture / TorchDtype / TransformersVersion, set the
-// licenses on the merged package, and attach the location of every consulted
-// supporting file as SupportingEvidence. Returns two name candidates for the
-// merge processor: nameOrPath (raw _name_or_path from a config.json) and a
-// fallbackName used when no _name_or_path is available — the last path segment
-// of the OCI image reference for OCI groups, or the parent directory's base
-// name for directory-scan groups.
-func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKey string, merged *pkg.Package) (nameOrPath, fallbackName string) {
+type safeTensorsIdentity struct {
+	nameOrPath    string
+	fallbackName  string
+	readmeLicense string
+	supporting    []file.Location
+}
+
+// resolveSafeTensorsIdentity reads the resolver for the group's naming signals
+// (config.json _name_or_path, README base_model, OCI image ref / dir name)
+func resolveSafeTensorsIdentity(resolver file.Resolver, groupKey string, merged *pkg.Package) safeTensorsIdentity {
 	md := merged.Metadata.(pkg.SafeTensorsModelInfo)
 
-	var (
-		lics       []pkg.License
-		supporting []file.Location
-	)
+	var id safeTensorsIdentity
 	if groupKey == ociGroupKey {
-		nameOrPath, fallbackName, lics, supporting = enrichSafeTensorsOCI(ctx, resolver, &md)
+		id = resolveSafeTensorsOCIIdentity(resolver, &md)
 	} else {
-		nameOrPath, lics, supporting = enrichSafeTensorsDir(ctx, resolver, groupKey, &md)
-		fallbackName = safeTensorsDirName(groupKey)
+		id = resolveSafeTensorsDirIdentity(resolver, groupKey, &md)
 	}
 
 	merged.Metadata = md
+	return id
+}
+
+func enrichSafeTensorsGroup(ctx context.Context, resolver file.Resolver, groupKey string, merged *pkg.Package, id safeTensorsIdentity) {
+	var lics []pkg.License
+	supporting := id.supporting
+
+	switch {
+	case id.readmeLicense != "":
+		lics = pkg.NewLicensesFromValuesWithContext(ctx, id.readmeLicense)
+	case groupKey == ociGroupKey:
+		if ociResolver, ok := resolver.(file.OCIMediaTypeResolver); ok {
+			licLocs, err := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
+			if err != nil {
+				log.Debugf("failed to list docker AI license layers: %v", err)
+			}
+			if len(licLocs) > 0 {
+				lics = identifyLicenseLayers(ctx, resolver, licLocs)
+				supporting = append(supporting, licLocs...)
+			}
+		}
+	}
+
 	if len(lics) > 0 {
 		merged.Licenses = pkg.NewLicenseSet(lics...)
 	}
 	for _, loc := range supporting {
 		merged.Locations.Add(loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
 	}
-	return nameOrPath, fallbackName
 }
 
 // safeTensorsDirName returns the directory-scan naming fallback: the base name
 // of the group's parent directory (the group key is already that directory).
-// For "/models/tiny-llama" this returns "tiny-llama". Degenerate roots that
-// carry no meaningful model name ("/", ".", "") return "", so the group is
-// dropped rather than labeled with a filesystem artifact.
 func safeTensorsDirName(groupKey string) string {
 	base := path.Base(groupKey)
 	switch base {
@@ -372,41 +362,32 @@ func safeTensorsDirName(groupKey string) string {
 	return base
 }
 
-// enrichSafeTensorsDir handles the directory-scan case: look for a config.json
-// beside the model files (walking up parent directories to the scanned source
-// root if no sibling exists) and a sibling README.md.
-func enrichSafeTensorsDir(ctx context.Context, resolver file.Resolver, dir string, md *pkg.SafeTensorsModelInfo) (nameOrPath string, lics []pkg.License, supporting []file.Location) {
+// resolveSafeTensorsDirIdentity handles the directory-scan case: look for a
+// config.json beside the model files (walking up parent directories to the
+// scanned source root if no sibling exists) and a sibling README.md
+func resolveSafeTensorsDirIdentity(resolver file.Resolver, dir string, md *pkg.SafeTensorsModelInfo) safeTensorsIdentity {
+	id := safeTensorsIdentity{fallbackName: safeTensorsDirName(dir)}
+
 	if loc, cfg := findDirHFConfig(resolver, dir); cfg != nil {
 		applyHFConfig(md, cfg)
-		nameOrPath = cfg.NameOrPath
-		supporting = append(supporting, *loc)
+		id.nameOrPath = cfg.NameOrPath
+		id.supporting = append(id.supporting, *loc)
 	}
 
 	if loc, fm := readDirReadmeFrontmatter(resolver, path.Join(dir, "README.md")); fm != nil {
-		if fm.License != "" {
-			lics = pkg.NewLicensesFromValuesWithContext(ctx, fm.License)
+		id.readmeLicense = fm.License
+		if id.nameOrPath == "" && len(fm.BaseModel) > 0 {
+			id.nameOrPath = fm.BaseModel[0]
 		}
-		if nameOrPath == "" && len(fm.BaseModel) > 0 {
-			nameOrPath = fm.BaseModel[0]
-		}
-		supporting = append(supporting, *loc)
+		id.supporting = append(id.supporting, *loc)
 	}
-	return nameOrPath, lics, supporting
+	return id
 }
 
-// enrichSafeTensorsOCI handles the OCI-artifact case: walk the
-// vnd.docker.ai.model.file layers (READMEs and HF config.json all ride that
-// media type — we sniff content to tell them apart), then fall back to the
-// vnd.docker.ai.license layer through the shared license scanner. It also
-// pulls the user-supplied image reference off the resolver (when the resolver
-// implements file.OCIArtifactResolver) and returns its last path segment as a
-// naming candidate — repacked artifacts like Docker AI vllm images frequently
-// strip name fields out of every embedded config, so the image ref is often
-// the only remaining identifier for the model.
-func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.SafeTensorsModelInfo) (nameOrPath, imageRefName string, lics []pkg.License, supporting []file.Location) {
+func resolveSafeTensorsOCIIdentity(resolver file.Resolver, md *pkg.SafeTensorsModelInfo) safeTensorsIdentity {
 	ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
 	if !ok {
-		return "", "", nil, nil
+		return safeTensorsIdentity{}
 	}
 
 	modelFileLocs, err := ociResolver.FilesByMediaType(dockerAIModelFileMediaType)
@@ -417,6 +398,7 @@ func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.S
 	// Collect config / readme candidates separately so the layer-iteration order
 	// returned by the resolver doesn't decide the precedence.
 	var configName, readmeName, readmeLicense string
+	var supporting []file.Location
 	for _, loc := range modelFileLocs {
 		if classifyOCIModelFileLayer(resolver, loc, md, &configName, &readmeName, &readmeLicense) {
 			supporting = append(supporting, loc)
@@ -424,37 +406,19 @@ func enrichSafeTensorsOCI(ctx context.Context, resolver file.Resolver, md *pkg.S
 	}
 
 	// Precedence: config.json _name_or_path > README base_model.
-	if configName != "" {
-		nameOrPath = configName
-	} else {
+	nameOrPath := configName
+	if nameOrPath == "" {
 		nameOrPath = readmeName
 	}
 
-	// README license takes precedence; fall back to the license layer. For each
-	// license layer we first try a cheap YAML-frontmatter spdx-id read; layers
-	// without frontmatter fall through to the shared license scanner.
-	switch {
-	case readmeLicense != "":
-		lics = pkg.NewLicensesFromValuesWithContext(ctx, readmeLicense)
-	default:
-		licLocs, lErr := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
-		if lErr != nil {
-			log.Debugf("failed to list docker AI license layers: %v", lErr)
-		}
-		if len(licLocs) > 0 {
-			lics = identifyLicenseLayers(ctx, resolver, licLocs)
-			supporting = append(supporting, licLocs...)
-		}
+	return safeTensorsIdentity{
+		nameOrPath:    nameOrPath,
+		fallbackName:  ociImageRefBasename(resolver),
+		readmeLicense: readmeLicense,
+		supporting:    supporting,
 	}
-
-	imageRefName = ociImageRefBasename(resolver)
-	return nameOrPath, imageRefName, lics, supporting
 }
 
-// ociImageRefBasename returns the last path segment of the repository portion
-// of the OCI image reference exposed by the resolver, or "" when the resolver
-// does not implement OCIArtifactResolver or the reference fails to parse. For
-// "docker.io/ai/smollm2-vllm:360M" this returns "smollm2-vllm".
 func ociImageRefBasename(resolver file.Resolver) string {
 	info, ok := resolver.(file.OCIArtifactResolver)
 	if !ok {
@@ -473,11 +437,7 @@ func ociImageRefBasename(resolver file.Resolver) string {
 }
 
 // identifyLicenseLayers turns Docker AI license-layer locations into
-// pkg.License values. It first attempts a cheap, exact SPDX-id read from the
-// layer's YAML frontmatter (the choosealicense.com shape Docker Model Runner
-// publishes for its AI artifacts); layers without frontmatter fall through to
-// the shared license scanner. Each returned license is tagged with the layer
-// location it came from so the SBOM cites its source.
+// pkg.License values.
 func identifyLicenseLayers(ctx context.Context, resolver file.Resolver, locs []file.Location) []pkg.License {
 	var out []pkg.License
 	var scanFallback []file.Location
@@ -496,9 +456,7 @@ func identifyLicenseLayers(ctx context.Context, resolver file.Resolver, locs []f
 }
 
 // readLicenseSPDXIDFromFrontmatter reads a bounded prefix of a license-layer
-// blob and returns the spdx-id declared in its YAML frontmatter, if any. The
-// 64 KiB cap is well above any real choosealicense.com frontmatter block while
-// still bounding memory if the layer turns out to be huge.
+// blob and returns the spdx-id declared in its YAML frontmatter
 func readLicenseSPDXIDFromFrontmatter(resolver file.Resolver, loc file.Location) string {
 	rc, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
@@ -514,10 +472,7 @@ func readLicenseSPDXIDFromFrontmatter(resolver file.Resolver, loc file.Location)
 }
 
 // classifyOCIModelFileLayer reads up to 4 MiB of a model.file layer and
-// classifies it as README frontmatter or HF config.json based on its leading
-// bytes. Side-effects: applies HF config fields onto md, accumulates name and
-// license candidates via the out-params. Returns true when the layer was
-// successfully classified (and should be recorded as supporting evidence).
+// classifies it as README frontmatter or HF config.json based on its leading bytes.
 func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsModelInfo, configName, readmeName, license *string) bool {
 	rc, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
@@ -557,10 +512,6 @@ func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location, md *pk
 	return false
 }
 
-// applyHFConfig folds the subset of HF config.json fields we surface in our
-// metadata onto md. Fields already populated on md are left alone — earlier
-// content-derived values (Quantization, TensorCount, etc., from header bytes)
-// always win over producer-declared ones in case of conflict.
 func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 	if md.Architecture == "" && len(cfg.Architectures) > 0 {
 		md.Architecture = cfg.Architectures[0]
@@ -574,32 +525,15 @@ func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 }
 
 // pickSafeTensorsName implements the documented naming precedence chain:
-//
-//  1. config.json _name_or_path  (path.Base, so "org/Model" → "Model";
+//   - config.json _name_or_path  (path.Base, so "org/Model" → "Model";
 //     applies to both dir-scan and OCI groups)
-//  2. fallback name — the group's source-specific positional identifier:
-//     the OCI image-ref repository basename for OCI groups (e.g.
-//     "docker.io/ai/smollm2-vllm:360M" → "smollm2-vllm"), or the parent
-//     directory base name for directory-scan groups (e.g.
-//     "/models/tiny-llama/*.safetensors" → "tiny-llama")
-//
-// Returns "" to signal the merge processor should drop the group. There is
-// intentionally no Architecture-Parameters synthetic and no opaque hash label:
-// when neither a producer-declared name nor a positional fallback is available
-// the model is recorded as absent rather than under a label the SBOM consumer
-// would not recognize.
+//   - fallback name — the group's source-specific positional identifier
 func pickSafeTensorsName(nameOrPath, fallbackName string) string {
 	if nameOrPath != "" {
 		return path.Base(nameOrPath)
 	}
 	return fallbackName
 }
-
-// --- Enrichment helpers ---------------------------------------------------
-//
-// The parsers decode only the safetensors-specific format; every resolver-backed
-// read (config.json, README, license layers) is centralized here in the merge
-// processor, along with the types those reads decode into.
 
 // hfConfig is a minimal projection of Hugging Face config.json fields.
 type hfConfig struct {
@@ -615,14 +549,7 @@ type readmeFrontmatter struct {
 	BaseModel []string `yaml:"base_model"`
 }
 
-// findDirHFConfig looks for a config.json beside the model files, walking up
-// parent directories until it reaches the scanned source root. The walk needs
-// no explicit depth bound: the resolver only resolves paths within the scanned
-// source, so an ancestor above the scan root simply yields no config, and
-// path.Dir converges on a fixed point ("/" or ".") that terminates the loop.
-// The first config.json found wins, so the closest one — a sibling, then the
-// nearest ancestor — supplies both the producer-declared name and the HF fields
-// applied to the model.
+// findDirHFConfig looks for a config.json beside the model files
 func findDirHFConfig(resolver file.Resolver, dir string) (*file.Location, *hfConfig) {
 	for {
 		if loc, cfg := readDirHFConfig(resolver, path.Join(dir, "config.json")); cfg != nil {
@@ -678,9 +605,7 @@ func readDirReadmeFrontmatter(resolver file.Resolver, p string) (*file.Location,
 }
 
 // extractFrontmatterBlock returns the YAML bytes between the first and second
-// "---" delimiters of a file (stripping a leading BOM and any leading
-// whitespace), or nil when no closed frontmatter block exists. Shared by every
-// YAML-frontmatter parser the cataloger needs.
+// "---" delimiters of a file
 func extractFrontmatterBlock(buf []byte) []byte {
 	trimmed := bytes.TrimLeft(buf, "\xef\xbb\xbf \t\r\n")
 	if !bytes.HasPrefix(trimmed, []byte("---")) {
@@ -698,8 +623,7 @@ func extractFrontmatterBlock(buf []byte) []byte {
 }
 
 // parseFrontmatter decodes a Hugging Face model card YAML frontmatter block
-// and returns the license and base_model fields. base_model is decoded via
-// yaml.Node so a scalar value ("org/model") doesn't fail the whole block.
+// and returns the license and base_model fields.
 func parseFrontmatter(buf []byte) *readmeFrontmatter {
 	block := extractFrontmatterBlock(buf)
 	if block == nil {
@@ -727,17 +651,11 @@ func parseFrontmatter(buf []byte) *readmeFrontmatter {
 	return &fm
 }
 
-// licenseFrontmatter holds the fields we lift from a choosealicense.com-style
-// YAML frontmatter block at the top of a license file (the LICENSE blobs Docker
-// Model Runner publishes for AI artifacts use this shape).
 type licenseFrontmatter struct {
 	SPDXID string `yaml:"spdx-id"`
 }
 
-// parseLicenseFrontmatter returns the producer-declared SPDX identifier from a
-// choosealicense.com-style YAML frontmatter block, or "" if the buffer has no
-// frontmatter or no spdx-id field — caller should fall back to a full license
-// scan in that case.
+// parseLicenseFrontmatter returns the producer-declared SPDX identifier
 func parseLicenseFrontmatter(buf []byte) string {
 	block := extractFrontmatterBlock(buf)
 	if block == nil {
