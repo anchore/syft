@@ -12,5 +12,5 @@ type Relationship struct {
 	Type string `json:"type"`
 
 	// Metadata contains additional relationship-specific metadata.
-	Metadata interface{} `json:"metadata,omitempty"`
+	Metadata any `json:"metadata,omitempty"`
 }

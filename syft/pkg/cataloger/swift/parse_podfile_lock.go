@@ -17,7 +17,7 @@ import (
 var _ generic.Parser = parsePodfileLock
 
 type podfileLock struct {
-	Pods            []interface{}       `yaml:"PODS"`
+	Pods            []any               `yaml:"PODS"`
 	Dependencies    []string            `yaml:"DEPENDENCIES"`
 	SpecRepos       map[string][]string `yaml:"SPEC REPOS"`
 	SpecChecksums   map[string]string   `yaml:"SPEC CHECKSUMS"`
@@ -36,7 +36,7 @@ func parsePodfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 	for _, podInterface := range podfile.Pods {
 		var podBlob string
 		switch v := podInterface.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			for k := range v {
 				podBlob = k
 			}

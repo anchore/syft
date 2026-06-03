@@ -220,7 +220,7 @@ func TypeByName(name string) Type {
 		return CondaPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	case "dotnet": // here to support legacy use cases
+	case "dotnet", packageurl.TypeNuget: // "dotnet" is here to support legacy use cases; "nuget" is the canonical purl type
 		return DotnetPkg
 	case packageurl.TypeCocoapods:
 		return CocoapodsPkg

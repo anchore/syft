@@ -346,7 +346,7 @@ func parseELFPTLoadOffsets(elfHeader []byte) []uint64 {
 	phnum := binary.LittleEndian.Uint16(elfHeader[0x38:0x3a])
 
 	var offsets []uint64
-	for i := uint16(0); i < phnum; i++ {
+	for i := range phnum {
 		phStart := phoff + uint64(i)*uint64(phentsize)
 		if phStart+uint64(phentsize) > uint64(len(elfHeader)) {
 			break
@@ -499,13 +499,7 @@ func decompressLZMA(compressedData []byte, uncompressedSize uint32) ([]byte, err
 	// it may be that the dictionary size was not considered properly in this code.
 	const minDictSize = 64 * 1024         // 64KB minimum
 	const maxDictSize = 128 * 1024 * 1024 // 128MB maximum
-	dictSize := nextPowerOf2(uncompressedSize)
-	if dictSize < minDictSize {
-		dictSize = minDictSize
-	}
-	if dictSize > maxDictSize {
-		dictSize = maxDictSize
-	}
+	dictSize := min(max(nextPowerOf2(uncompressedSize), minDictSize), maxDictSize)
 
 	// construct standard 13-byte LZMA header
 	header := make([]byte, 13)

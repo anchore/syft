@@ -5132,6 +5132,7 @@
                 "armv9-a",
                 "armv9-m",
                 "s390x",
+                "riscv64",
                 "ppc64",
                 "ppc64le",
                 "other",

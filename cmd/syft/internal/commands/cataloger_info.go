@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -248,12 +249,7 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 
 // isDeprecatedCataloger checks if a cataloger is deprecated based on its selectors
 func isDeprecatedCataloger(selectors []string) bool {
-	for _, selector := range selectors {
-		if selector == "deprecated" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(selectors, "deprecated")
 }
 
 // convertDetectorPackages converts detector package info to the JSON output format
@@ -452,7 +448,7 @@ func extractArrayCapability(caps capabilities.CapabilitySet, name string) string
 				if len(v) > 0 {
 					return strings.Join(v, ", ")
 				}
-			case []interface{}:
+			case []any:
 				if len(v) > 0 {
 					strs := make([]string, 0, len(v))
 					for _, item := range v {
@@ -475,7 +471,7 @@ func extractNodesCapability(caps capabilities.CapabilitySet) string {
 			switch v := cap.Default.(type) {
 			case []string:
 				return formatDepthStringArray(v)
-			case []interface{}:
+			case []any:
 				return formatDepthInterfaceArray(v)
 			}
 			return noStyle.Render("·")
@@ -496,7 +492,7 @@ func formatDepthStringArray(v []string) string {
 }
 
 // formatDepthInterfaceArray formats a []interface{} dependency depth value
-func formatDepthInterfaceArray(v []interface{}) string {
+func formatDepthInterfaceArray(v []any) string {
 	if len(v) == 0 {
 		return noStyle.Render("·")
 	}

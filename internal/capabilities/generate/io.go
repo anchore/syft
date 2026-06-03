@@ -214,7 +214,7 @@ func mapCatalogerToEcosystem(cat capabilities.CatalogerEntry) string {
 }
 
 // updateNodeTreeEcosystem updates an existing ecosystem YAML node tree
-func updateNodeTreeEcosystem(rootNode *yaml.Node, doc interface{}) error {
+func updateNodeTreeEcosystem(rootNode *yaml.Node, doc any) error {
 	var newNode yaml.Node
 	if err := newNode.Encode(doc); err != nil {
 		return err
@@ -242,7 +242,7 @@ func updateNodeTreeEcosystem(rootNode *yaml.Node, doc interface{}) error {
 }
 
 // updateNodeTreeAppConfig updates appconfig YAML node tree
-func updateNodeTreeAppConfig(rootNode *yaml.Node, doc interface{}) error {
+func updateNodeTreeAppConfig(rootNode *yaml.Node, doc any) error {
 	return updateNodeTreeEcosystem(rootNode, doc)
 }
 

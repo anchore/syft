@@ -168,7 +168,7 @@ func TestReaderAtAdapter_ReadAt(t *testing.T) {
 		adapter := newReaderAtAdapter(reader)
 
 		// read the same data multiple times
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			buf := make([]byte, 5)
 			n, err := adapter.ReadAt(buf, 7)
 
@@ -194,12 +194,12 @@ func TestReaderAtAdapter_ReadAt(t *testing.T) {
 		var wg sync.WaitGroup
 		results := make(chan bool, numGoroutines*numReads)
 
-		for i := 0; i < numGoroutines; i++ {
+		for i := range numGoroutines {
 			wg.Add(1)
 			go func(goroutineID int) {
 				defer wg.Done()
 
-				for j := 0; j < numReads; j++ {
+				for range numReads {
 					offset := int64(goroutineID % len(td))
 					buf := make([]byte, 1)
 

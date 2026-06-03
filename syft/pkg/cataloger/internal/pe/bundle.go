@@ -206,7 +206,7 @@ func readDepsJSONAtOffset(r io.ReadSeeker, offset, size int64) (string, error) {
 
 // findDepsJSONInManifest parses manifest entries to find deps.json (for V1 bundles or fallback)
 func findDepsJSONInManifest(r io.ReadSeeker, numFiles int32, majorVersion uint32) (string, error) {
-	for i := int32(0); i < numFiles; i++ {
+	for range numFiles {
 		var offset, size int64
 
 		if err := binary.Read(r, binary.LittleEndian, &offset); err != nil {

@@ -26,7 +26,7 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 		Descriptor: extractDescriptor(bom.Metadata),
 	}
 
-	idMap := make(map[string]interface{})
+	idMap := make(map[string]any)
 
 	if err := collectBomPackages(bom, s, idMap); err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func ToSyftModel(bom *cyclonedx.BOM) (*sbom.SBOM, error) {
 	return s, nil
 }
 
-func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) error {
+func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]any) error {
 	componentsPresent := false
 	if bom.Components != nil {
 		for i := range *bom.Components {
@@ -58,7 +58,7 @@ func collectBomPackages(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]inter
 	return nil
 }
 
-func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]interface{}) {
+func collectPackages(component *cyclonedx.Component, s *sbom.SBOM, idMap map[string]any) {
 	switch component.Type {
 	case cyclonedx.ComponentTypeOS:
 	case cyclonedx.ComponentTypeContainer:
@@ -168,7 +168,7 @@ func getPropertyValue(component *cyclonedx.Component, name string) string {
 	return ""
 }
 
-func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]interface{}) {
+func collectRelationships(bom *cyclonedx.BOM, s *sbom.SBOM, idMap map[string]any) {
 	if bom.Dependencies == nil {
 		return
 	}

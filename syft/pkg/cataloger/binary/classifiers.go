@@ -106,13 +106,19 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "redis-binary",
 			FileGlob: "**/redis-server",
-			EvidenceMatcher: binutils.MatchAny(
-				// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
-				m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
-				// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
-				m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
-				// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
-				m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAll(
+				// Negative Matchers to exclude valkey-server
+				binutils.MatchNone(
+					binutils.MatchPath("**/valkey-server"),
+				),
+				binutils.MatchAny(
+					// matches most recent versions of redis (~v7), e.g. "7.0.14buildkitsandbox-1702957741000000000"
+					m.FileContentsVersionMatcher(`[^\d](?P<version>\d+.\d+\.\d+)buildkitsandbox-\d+`),
+					// matches against older versions of redis (~v3 - v6), e.g. "4.0.11841ce7054bd9-1542359302000000000"
+					m.FileContentsVersionMatcher(`[^\d](?P<version>[0-9]+\.[0-9]+\.[0-9]+)\w{12}-\d+`),
+					// matches against older versions of redis (~v2), e.g. "Server started, Redis version 2.8.23"
+					m.FileContentsVersionMatcher(`Redis version (?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				),
 			),
 			Package: "redis",
 			PURL:    mustPURL("pkg:generic/redis@version"),
@@ -425,10 +431,28 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:dart:dart_software_development_kit:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "deno-binary",
+			FileGlob: "**/deno",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// Deno/2.6.3
+				// Deno/1.41.0
+				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "deno",
+			PURL:    mustPURL("pkg:generic/deno@version"),
+			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)\x00GHC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL]libHSghc-7.10.3-0AG9TOjDEtx4Ji3wSwHOBe-ghc7.10.3.so[NUL]
+					// [NUL]libHSghc-8.10.4-ghc8.10.4.so[NUL]
+					`\x00libHSghc\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\-([a-zA-Z0-9]+\-)?ghc[0-9]+\.[0-9]+\.[0-9]+\.so\x00`,
+				),
 			),
 			Package: "haskell/ghc",
 			PURL:    mustPURL("pkg:generic/haskell/ghc@version"),
@@ -437,8 +461,14 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "haskell-cabal-binary",
 			FileGlob: "**/cabal",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					`(?m)\x00Cabal-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)-`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]/opt/cabal/1.22/lib/x86_64-linux-ghc-7.10.2/cabal-install-1.22.6.0-AfxbHivcmw40BMGrAXG3jJ[NUL][NUL][NUL]
+					`\x00.{0,50}cabal\-install\-(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?)\-[a-zA-Z0-9]+\x00+`,
+				),
 			),
 			Package: "haskell/cabal",
 			PURL:    mustPURL("pkg:generic/haskell/cabal@version"),
@@ -457,9 +487,19 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "consul-binary",
 			FileGlob: "**/consul",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// NOTE: This is brittle and may not work for past or future versions
-				`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// NOTE: This is brittle and may not work for past or future versions
+					`CONSUL_VERSION: (?P<version>\d+\.\d+\.\d+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// GitDescribe=1.12.9"
+					`GitDescribe=(?P<version>\d+\.\d+\.\d+)\"`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]v1.7.14[NUL][NUL][NUL]
+					`\x00+v(?P<version>\d+\.\d+\.\d+)\x00+`,
+				),
 			),
 			Package: "consul",
 			PURL:    mustPURL("pkg:golang/github.com/hashicorp/consul@version"),
@@ -468,9 +508,26 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "hashicorp-vault-binary",
 			FileGlob: "**/vault",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// revoke1.18.0
-				`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// revoke1.18.0
+					`(?m)revoke(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// secondsindex_state1.20.0-rc1
+					`state(?P<version>[0-9]+\.[0-9]+\.[0-9]+\-rc[0-9])`,
+				),
+				m.FileContentsVersionMatcher(
+					// %s0.0.0.00x%016x1.14.101.49.22123-abc19531252.5.4.32.5.4.52.5.4.62.5.4.72.5.4.82.5.4.92
+					// %s0.0.0.00x%016x1.14.3
+					// txn0.0.0.00x%016x1.13.13123-abc19531252.5.4.32.5.4.52.5.4.62.5.4.72.5.4.82.5.4.92006-019765625: type ::1/128::ffff::method:
+					`016x(?P<version>1.1[1,3,4].[0-9]{1,2})`,
+				),
+				m.FileContentsVersionMatcher(
+					// [NUL][NUL][NUL]1.11.6[NUL][NUL][NUL]
+					`\x00+(?P<version>1\.[0-9][0,1]?\.[0-9]+)\x00+`,
+				),
+			),
 			Package: "github.com/hashicorp/vault",
 			PURL:    mustPURL("pkg:golang/github.com/hashicorp/vault@version"),
 			CPEs:    singleCPE("cpe:2.3:a:hashicorp:vault:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -507,14 +564,29 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "openssl-binary",
 			FileGlob: "**/openssl",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// [NUL]OpenSSL 3.1.4'
-				// [NUL]OpenSSL 1.1.1w'
-				`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
-			),
-			Package: "openssl",
-			PURL:    mustPURL("pkg:generic/openssl@version"),
-			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			EvidenceMatcher: binutils.BranchingEvidenceMatcher([]binutils.Classifier{
+				{
+					Class: "openssl-binary-aws-lc",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						// [NUL]OpenSSL 1.1.1 (compatible; AWS-LC 1.69.0)[NUL]
+						`AWS-LC (?P<version>[0-9]+\.[0-9]+\.[0-9]+)\)\x00`,
+					),
+					Package: "aws-lc",
+					PURL:    mustPURL("pkg:generic/aws-lc@version"),
+					CPEs:    singleCPE("cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				},
+				{
+					Class: "openssl-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						// [NUL]OpenSSL 3.1.4'
+						// [NUL]OpenSSL 1.1.1w'
+						`\x00OpenSSL (?P<version>[0-9]+\.[0-9]+\.[0-9]+([a-z]+|-alpha[0-9]|-beta[0-9]|-rc[0-9])?)`,
+					),
+					Package: "openssl",
+					PURL:    mustPURL("pkg:generic/openssl@version"),
+					CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				},
+			}...),
 		},
 		{
 			Class:    "openldap-search-binary",
@@ -711,7 +783,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "elixir-binary",
 			FileGlob: "**/elixir",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// Capture optional pre-release suffix (-rc.1, -alpha.0, -beta.2,
+				// etc.) so release-candidate elixir images (#4819) match.
+				`(?m)ELIXIR_VERSION=(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9]+(?:\.[0-9]+)?)?)`),
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs: []cpe.CPE{
@@ -722,7 +796,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "elixir-library",
 			FileGlob: "**/elixir/ebin/elixir.app",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+)?)"\}`),
+				// Same pre-release extension as elixir-binary above.
+				`(?m)\{vsn,"(?P<version>[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9]+(?:\.[0-9]+)?)?)"\}`),
 			Package: "elixir",
 			PURL:    mustPURL("pkg:generic/elixir@version"),
 			CPEs:    singleCPE("cpe:2.3:a:elixir-lang:elixir:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -853,6 +928,29 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "mongodb",
 			PURL:    mustPURL("pkg:generic/mongodb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mongodb:mongodb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "ingress-nginx-binary",
+			FileGlob: "**/nginx-ingress-controller",
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL][NUL]v1.15.1[NUL][NUL]@e[ETX][NUL][NUL][NUL][NUL]go1.26.1[NUL][NUL][NUL]
+				// �v1.15.1[NUL][NUL]�z[ETX][NUL][NUL][NUL][NUL]go1.24.4[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{0,50}go[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?\.[0-9]+\x00+`),
+				// �Lv1.9.6[NUL][NUL]$a�c[SOH][NUL][NUL][NUL]
+				// [NUL][NUL]v0.34.0[NUL]......�$a�...[NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+.{0,800}\$a.{0,10}\x00+`),
+				// [NUL][NUL]v1.7.1[NUL][NUL][NUL]...S=v<y5...
+				// [NUL]0.33.0[NUL][NUL]...[NUL][NUL]...S=v<y5
+				m.FileContentsVersionMatcher(`\x00+v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+.{0,100}S=v<y5`),
+				// [NUL][NUL]go1.22.8[NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL][NUL]v1.12.0-beta.0[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+go[0-9]+\.[0-9]+\.[0-9]+\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?)\x00+`),
+				// [NUL][NUL]v1.2.0-beta.1[NUL][NUL]
+				// [NUL][NUL]v1.0.0-alpha.2[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+\-(alpha|beta)\.[0-9])\x00+`),
+			),
+			Package: "nginx-ingress-controller",
+			PURL:    mustPURL("pkg:generic/nginx-ingress-controller@version"),
+			CPEs:    singleCPE("cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 

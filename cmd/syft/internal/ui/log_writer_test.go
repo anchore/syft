@@ -36,33 +36,33 @@ func Test_logWriter(t *testing.T) {
 
 type bufferLogger struct{ values []any }
 
-func (l *bufferLogger) Tracef(_ string, _ ...interface{}) {}
+func (l *bufferLogger) Tracef(_ string, _ ...any) {}
 
-func (l *bufferLogger) Debugf(_ string, _ ...interface{}) {}
+func (l *bufferLogger) Debugf(_ string, _ ...any) {}
 
-func (l *bufferLogger) Infof(_ string, _ ...interface{}) {}
+func (l *bufferLogger) Infof(_ string, _ ...any) {}
 
-func (l *bufferLogger) Warnf(_ string, _ ...interface{}) {}
+func (l *bufferLogger) Warnf(_ string, _ ...any) {}
 
-func (l *bufferLogger) Errorf(_ string, _ ...interface{}) {}
+func (l *bufferLogger) Errorf(_ string, _ ...any) {}
 
-func (l *bufferLogger) Trace(vals ...interface{}) {
+func (l *bufferLogger) Trace(vals ...any) {
 	l.values = append(l.values, vals...)
 }
 
-func (l *bufferLogger) Debug(_ ...interface{}) {}
+func (l *bufferLogger) Debug(_ ...any) {}
 
-func (l *bufferLogger) Info(_ ...interface{}) {}
+func (l *bufferLogger) Info(_ ...any) {}
 
-func (l *bufferLogger) Warn(vals ...interface{}) {
+func (l *bufferLogger) Warn(vals ...any) {
 	l.values = append(l.values, vals...)
 }
 
-func (l *bufferLogger) Error(_ ...interface{}) {}
+func (l *bufferLogger) Error(_ ...any) {}
 
-func (l *bufferLogger) WithFields(_ ...interface{}) logger.MessageLogger { return l }
+func (l *bufferLogger) WithFields(_ ...any) logger.MessageLogger { return l }
 
-func (l *bufferLogger) Nested(_ ...interface{}) logger.Logger { return l }
+func (l *bufferLogger) Nested(_ ...any) logger.Logger { return l }
 
 func (l *bufferLogger) SetOutput(_ io.Writer) {}
 

@@ -1112,6 +1112,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "consul/1.12.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.12.9",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.12.9",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+		{
+			logicalFixture: "consul/1.7.14/linux-amd64",
+			expected: pkg.Package{
+				Name:      "consul",
+				Version:   "1.7.14",
+				Type:      "binary",
+				PURL:      "pkg:golang/github.com/hashicorp/consul@1.7.14",
+				Locations: locations("consul"),
+				Metadata:  metadata("consul-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.21.0-rc1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.21.0-rc1",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.21.0-rc1",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
 			logicalFixture: "vault/1.20.2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "github.com/hashicorp/vault",
@@ -1129,6 +1162,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.19.4",
 				Type:      "golang",
 				PURL:      "pkg:golang/github.com/hashicorp/vault@1.19.4",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.14.10/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.14.10",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.14.10",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.14.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.14.3",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.14.3",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.13.13/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.13.13",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.13.13",
+				Locations: locations("vault"),
+				Metadata:  metadata("hashicorp-vault-binary"),
+			},
+		},
+		{
+			logicalFixture: "vault/1.11.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "github.com/hashicorp/vault",
+				Version:   "1.11.6",
+				Type:      "golang",
+				PURL:      "pkg:golang/github.com/hashicorp/vault@1.11.6",
 				Locations: locations("vault"),
 				Metadata:  metadata("hashicorp-vault-binary"),
 			},
@@ -1255,6 +1332,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.41.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.41.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.41.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.0.0",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.6.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.6.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.6.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/7.10.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "7.10.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@7.10.3",
+				Locations: locations("ghc"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-ghc/8.10.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/ghc",
+				Version:   "8.10.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/ghc@8.10.4",
+				Locations: locations("ghc"),
+				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/9.6.5/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
@@ -1263,6 +1395,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/haskell/ghc@9.6.5",
 				Locations: locations("ghc-9.6.5"),
 				Metadata:  metadata("haskell-ghc-binary"),
+			},
+		},
+		{
+			logicalFixture: "haskell-cabal/1.22.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "haskell/cabal",
+				Version:   "1.22.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/haskell/cabal@1.22.6.0",
+				Locations: locations("cabal"),
+				Metadata:  metadata("haskell-cabal-binary"),
 			},
 		},
 		{
@@ -1340,6 +1483,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/openssl@1.1.1zb",
 				Locations: locations("openssl"),
 				Metadata:  metadata("openssl-binary"),
+			},
+		},
+		{
+			logicalFixture: "aws-lc/1.69.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "aws-lc",
+				Version:   "1.69.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/aws-lc@1.69.0",
+				Locations: locations("openssl"),
+				Metadata:  metadata("openssl-binary-aws-lc"),
 			},
 		},
 		{
@@ -1602,6 +1756,25 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.19.1",
 				Type:      "binary",
 				PURL:      "pkg:generic/elixir@1.19.1",
+				Locations: locations("elixir", "lib/elixir/ebin/elixir.app"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("elixir-binary", "elixir"),
+						match("elixir-library", "lib/elixir/ebin/elixir.app"),
+					},
+				},
+			},
+		},
+		{
+			// release-candidate elixir image — pre-fix the matchers stripped the
+			// "-rc.1" suffix from the elixir-library result and missed the
+			// elixir-binary entirely (#4819).
+			logicalFixture: "elixir/1.12.0-rc.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elixir",
+				Version:   "1.12.0-rc.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/elixir@1.12.0-rc.1",
 				Locations: locations("elixir", "lib/elixir/ebin/elixir.app"),
 				Metadata: pkg.BinarySignature{
 					Matches: []pkg.ClassifierMatch{
@@ -2082,6 +2255,105 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/envoy@1.6.0",
 				Locations: locations("envoy"),
 				Metadata:  metadata("envoy-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.15.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.15.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.15.1",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.11.8/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.11.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.11.8",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.7.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.7.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.7.1",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.12.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.12.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.12.0-beta.0",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.2.0-beta.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.2.0-beta.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.2.0-beta.1",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.0.0-alpha.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.0.0-alpha.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.0.0-alpha.2",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/0.34.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "0.34.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@0.34.0",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/0.33.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "0.33.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@0.33.0",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
 			},
 		},
 	}

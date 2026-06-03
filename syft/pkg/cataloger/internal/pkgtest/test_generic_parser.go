@@ -498,7 +498,7 @@ func stringPackage(p pkg.Package) string {
 }
 
 // getFunctionName extracts the function name from a function pointer using reflection
-func getFunctionName(fn interface{}) string {
+func getFunctionName(fn any) string {
 	// get the function pointer
 	ptr := reflect.ValueOf(fn).Pointer()
 
@@ -532,7 +532,7 @@ func getCatalogerName(_ *testing.T, cataloger pkg.Cataloger) string {
 
 // getPackagePath extracts the package path from a function name
 // e.g., "github.com/anchore/syft/syft/pkg/cataloger/python.parseRequirementsTxt" -> "python"
-func getPackagePath(fn interface{}) string {
+func getPackagePath(fn any) string {
 	ptr := reflect.ValueOf(fn).Pointer()
 	funcForPC := runtime.FuncForPC(ptr)
 	if funcForPC == nil {
@@ -566,7 +566,7 @@ func getPackagePath(fn interface{}) string {
 func getPackagePathFromCataloger(_ pkg.Cataloger) string {
 	// walk up the call stack to find the test file
 	// we're looking for a file in the cataloger directory structure
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		_, file, _, ok := runtime.Caller(i)
 		if !ok {
 			break

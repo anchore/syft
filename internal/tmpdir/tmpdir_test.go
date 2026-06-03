@@ -198,7 +198,7 @@ func TestConcurrentNewChildAndNewFile(t *testing.T) {
 	errs := make(chan error, goroutines)
 	paths := make(chan string, goroutines)
 
-	for i := 0; i < goroutines; i++ {
+	for i := range goroutines {
 		go func(i int) {
 			if i%2 == 0 {
 				child, cleanup, err := td.NewChild("concurrent")
@@ -223,7 +223,7 @@ func TestConcurrentNewChildAndNewFile(t *testing.T) {
 	}
 
 	seen := make(map[string]bool)
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		err := <-errs
 		require.NoError(t, err)
 	}
@@ -250,7 +250,7 @@ func TestConcurrentNewChildDuringCleanup(t *testing.T) {
 		close(done)
 	}()
 	// try creating children concurrently with cleanup — should get errors, not panics
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		_, c, _ := td.NewChild("race")
 		if c != nil {
 			c()

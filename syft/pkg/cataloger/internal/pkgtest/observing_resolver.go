@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
@@ -43,10 +44,8 @@ func NewObservingResolver(resolver file.Resolver) *ObservingResolver {
 // ObservedPathQuery checks if a specific path pattern was queried.
 func (r *ObservingResolver) ObservedPathQuery(input string) bool {
 	for _, queries := range r.pathQueries {
-		for _, query := range queries {
-			if query == input {
-				return true
-			}
+		if slices.Contains(queries, input) {
+			return true
 		}
 	}
 	return false

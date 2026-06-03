@@ -10,7 +10,7 @@ import (
 )
 
 type erlangNode struct {
-	value interface{}
+	value any
 }
 
 var errSkipComments = errors.New("")
@@ -39,7 +39,7 @@ func (e erlangNode) Get(index int) erlangNode {
 	return erlangNode{}
 }
 
-func node(value interface{}) erlangNode {
+func node(value any) erlangNode {
 	return erlangNode{
 		value: value,
 	}

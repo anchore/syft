@@ -194,8 +194,8 @@ func splitPkgList(pkgList string) (ret []string) {
 	return ret
 }
 
-func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
-	dpkgFields := make(map[string]interface{})
+func extractAllFields(reader *bufio.Reader) (map[string]any, error) {
+	dpkgFields := make(map[string]any)
 	var key string
 
 	for {
@@ -234,7 +234,7 @@ func extractAllFields(reader *bufio.Reader) (map[string]interface{}, error) {
 			dpkgFields[key] = val
 		default:
 			// parse a new key
-			var val interface{}
+			var val any
 			key, val, err = handleNewKeyValue(line)
 			if err != nil {
 				log.Tracef("parsing dpkg status: extracting key-value from line: %s err: %v", line, err)
@@ -259,7 +259,7 @@ func extractSourceVersion(source string) (string, string) {
 }
 
 // handleNewKeyValue parse a new key-value pair from the given unprocessed line
-func handleNewKeyValue(line string) (key string, val interface{}, err error) {
+func handleNewKeyValue(line string) (key string, val any, err error) {
 	if i := strings.Index(line, ":"); i > 0 {
 		key = strings.TrimSpace(line[0:i])
 		// mapstruct cant handle "-"

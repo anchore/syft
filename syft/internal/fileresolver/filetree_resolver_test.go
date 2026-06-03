@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package fileresolver
 
@@ -1355,7 +1354,7 @@ func (t testFileInfo) IsDir() bool {
 	panic("implement me")
 }
 
-func (t testFileInfo) Sys() interface{} {
+func (t testFileInfo) Sys() any {
 	panic("implement me")
 }
 

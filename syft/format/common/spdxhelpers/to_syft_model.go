@@ -479,7 +479,7 @@ func toSyftLocation(f *spdx.File) file.Location {
 	return l
 }
 
-func requireAndTrimPrefix(val interface{}, prefix string) string {
+func requireAndTrimPrefix(val any, prefix string) string {
 	if v, ok := val.(string); ok {
 		if strings.HasPrefix(v, prefix) {
 			return strings.TrimPrefix(v, prefix)

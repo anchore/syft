@@ -340,7 +340,7 @@ func TestExtractAppValue(t *testing.T) {
 	tests := []struct {
 		name string
 		src  string
-		want interface{}
+		want any
 	}{
 		{
 			name: "string literal",
@@ -406,7 +406,7 @@ func TestExtractAppValue_NestedStruct(t *testing.T) {
 	got := extractAppValue(compositeLit)
 
 	// verify it's a map with the expected values
-	gotMap, ok := got.(map[string]interface{})
+	gotMap, ok := got.(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, "value", gotMap["Field1"])
 	require.Equal(t, true, gotMap["Field2"])

@@ -33,7 +33,7 @@ func Test_configurationAuditTrail_StructTags(t *testing.T) {
 
 }
 
-func getJSONTags(t *testing.T, v interface{}) []string {
+func getJSONTags(t *testing.T, v any) []string {
 	var tags []string
 	err := collectJSONTags(t, reflect.ValueOf(v), &tags, "", "")
 	require.NoError(t, err)
@@ -142,7 +142,7 @@ func Test_collectJSONTags(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		v       interface{}
+		v       any
 		want    []string
 		wantErr require.ErrorAssertionFunc
 	}{

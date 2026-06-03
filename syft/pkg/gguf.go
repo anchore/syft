@@ -26,7 +26,7 @@ type GGUFFileHeader struct {
 	// RemainingKeyValues contains the remaining key-value pairs from the GGUF header that are not already
 	// represented as typed fields above. This preserves additional metadata fields for reference
 	// (namespaced with general.*, llama.*, etc.) while avoiding duplication.
-	RemainingKeyValues map[string]interface{} `json:"header,omitempty" cyclonedx:"header"`
+	RemainingKeyValues map[string]any `json:"header,omitempty" cyclonedx:"header"`
 
 	// MetadataKeyValuesHash is a xx64 hash of all key-value pairs from the GGUF header metadata.
 	// This hash is computed over the complete header metadata (including the fields extracted

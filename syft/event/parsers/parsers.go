@@ -17,14 +17,14 @@ import (
 type ErrBadPayload struct {
 	Type  partybus.EventType
 	Field string
-	Value interface{}
+	Value any
 }
 
 func (e *ErrBadPayload) Error() string {
 	return fmt.Sprintf("event='%s' has bad event payload field=%q: %q", string(e.Type), e.Field, e.Value)
 }
 
-func newPayloadErr(t partybus.EventType, field string, value interface{}) error {
+func newPayloadErr(t partybus.EventType, field string, value any) error {
 	return &ErrBadPayload{
 		Type:  t,
 		Field: field,

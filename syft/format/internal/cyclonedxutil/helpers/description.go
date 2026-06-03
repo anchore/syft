@@ -14,7 +14,7 @@ func encodeDescription(p pkg.Package) string {
 	return ""
 }
 
-func decodeDescription(description string, metadata interface{}) {
+func decodeDescription(description string, metadata any) {
 	switch meta := metadata.(type) {
 	case *pkg.ApkDBEntry:
 		meta.Description = description

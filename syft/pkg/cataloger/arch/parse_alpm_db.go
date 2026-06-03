@@ -153,7 +153,7 @@ func newScanner(reader io.Reader) *bufio.Scanner {
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(bufScan, maxScannerCapacity)
 	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		for i := 0; i < len(data); i++ {
+		for i := range data {
 			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {
 				return i + 1, data[:i-1], nil
 			}
@@ -188,7 +188,7 @@ func getLocation(path string, resolver file.Resolver) (file.Location, error) {
 
 func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 	var err error
-	pkgFields := make(map[string]interface{})
+	pkgFields := make(map[string]any)
 	for b.Scan() {
 		fields := strings.SplitN(b.Text(), "\n", 2)
 
@@ -213,12 +213,12 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 			}
 			pkgFields[key] = files
 		case "backup":
-			var backup []map[string]interface{}
+			var backup []map[string]any
 			for _, f := range strings.Split(value, "\n") {
 				fields := strings.SplitN(f, "\t", 2)
 				p := fmt.Sprintf("/%s", fields[0])
 				if ok := ignoredFiles[p]; !ok {
-					backup = append(backup, map[string]interface{}{
+					backup = append(backup, map[string]any{
 						"path": p,
 						"digests": []file.Digest{{
 							Algorithm: "md5",
@@ -257,7 +257,7 @@ func processLibrarySpecs(value string) []string {
 	return librarySpecs
 }
 
-func parsePkgFiles(pkgFields map[string]interface{}) (*parsedData, error) {
+func parsePkgFiles(pkgFields map[string]any) (*parsedData, error) {
 	var entry parsedData
 	if err := mapstructure.Decode(pkgFields, &entry); err != nil {
 		return nil, fmt.Errorf("unable to parse ALPM metadata: %w", err)
@@ -292,7 +292,7 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 	for _, f := range specDh.Entries {
 		var entry pkg.AlpmFileRecord
 		entry.Digests = make([]file.Digest, 0)
-		fileFields := make(map[string]interface{})
+		fileFields := make(map[string]any)
 		if ok := ignoredFiles[f.Name]; ok {
 			continue
 		}

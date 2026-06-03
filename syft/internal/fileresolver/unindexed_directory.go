@@ -300,7 +300,7 @@ func (u UnindexedDirectory) resolveLinks(filePath string) []string {
 	resolvedPath := ""
 
 	parts := strings.Split(filePath, "/")
-	for i := 0; i < len(parts); i++ {
+	for i := range parts {
 		part := parts[i]
 		if resolvedPath == "" {
 			resolvedPath = part

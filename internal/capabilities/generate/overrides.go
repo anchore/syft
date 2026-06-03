@@ -96,6 +96,20 @@ var binaryClassifierOverrides = map[string][]binaryClassifierOverride{
 			CPEs:    singleCPE("cpe:2.3:a:oracle:jdk:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	},
+	"openssl-binary": {
+		{
+			Class:   "openssl-binary-aws-lc",
+			Package: "aws-lc",
+			PURL:    mustPURL("pkg:generic/aws-lc@version"),
+			CPEs:    singleCPE("cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:   "openssl-binary",
+			Package: "openssl",
+			PURL:    mustPURL("pkg:generic/openssl@version"),
+			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+	},
 }
 
 func mustPURL(purl string) string {

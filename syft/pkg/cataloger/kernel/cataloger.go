@@ -39,6 +39,10 @@ var kernelArchiveGlobs = []string{
 	"**/vmlinux-*",
 	"**/vmlinuz",
 	"**/vmlinuz-*",
+	"**/bzImage",
+	"**/bzImage-*",
+	"**/zImage",
+	"**/zImage-*",
 }
 
 var kernelModuleGlobs = []string{

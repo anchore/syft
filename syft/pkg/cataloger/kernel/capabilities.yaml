@@ -31,6 +31,10 @@ catalogers:
           - '**/vmlinux-*'
           - '**/vmlinuz'
           - '**/vmlinuz-*'
+          - '**/bzImage'
+          - '**/bzImage-*'
+          - '**/zImage'
+          - '**/zImage-*'
           - '**/lib/modules/**/*.ko'
     metadata_types: # AUTO-GENERATED
       - pkg.LinuxKernel

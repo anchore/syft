@@ -22,6 +22,14 @@ var (
 	versionPunctuationRegex = regexp.MustCompile(`[.,]+`)
 )
 
+type runtimeFamily string
+
+const (
+	unknownRuntimeFamily    runtimeFamily = ""
+	netRuntimeFamily        runtimeFamily = "net"
+	aspNetCoreRuntimeFamily runtimeFamily = "aspnet_core"
+)
+
 // newDotnetDepsPackage creates a new Dotnet dependency package from a logicalDepsJSONPackage.
 // Note that the new logicalDepsJSONPackage now directly holds library and executable information.
 func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location) *pkg.Package {
@@ -36,7 +44,7 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 
 	var cpes []cpe.CPE
 	if isRuntime(name) {
-		cpes = runtimeCPEs(ver)
+		cpes = runtimeCPEs(name, ver)
 	}
 
 	p := &pkg.Package{
@@ -56,52 +64,68 @@ func newDotnetDepsPackage(lp logicalDepsJSONPackage, depsLocation file.Location)
 }
 
 func isRuntime(name string) bool {
-	// found in a self-contained net8 app in the deps.json for the application
-	selfContainedRuntimeDependency := strings.HasPrefix(name, "runtimepack.Microsoft.NETCore.App.Runtime")
-	// found in net8 apps in the deps.json for the runtime
-	explicitRuntimeDependency := strings.HasPrefix(name, "Microsoft.NETCore.App.Runtime")
-	// found in net2 apps in the deps.json for the runtime
-	producesARuntime := strings.HasPrefix(name, "runtime") && strings.HasSuffix(name, "Microsoft.NETCore.App")
-	return selfContainedRuntimeDependency || explicitRuntimeDependency || producesARuntime
+	return runtimeFamilyFromName(name) != unknownRuntimeFamily
 }
 
-func runtimeCPEs(ver string) []cpe.CPE {
-	// .NET Core Versions
-	// 2016: .NET Core 1.0, cpe:2.3:a:microsoft:dotnet_core:1.0:*:*:*:*:*:*:*
-	// 2016: .NET Core 1.1, cpe:2.3:a:microsoft:dotnet_core:1.1:*:*:*:*:*:*:*
-	// 2017: .NET Core 2.0, cpe:2.3:a:microsoft:dotnet_core:2.0:*:*:*:*:*:*:*
-	// 2018: .NET Core 2.1, cpe:2.3:a:microsoft:dotnet_core:2.1:*:*:*:*:*:*:*
-	// 2018: .NET Core 2.2, cpe:2.3:a:microsoft:dotnet_core:2.2:*:*:*:*:*:*:*
-	// 2019: .NET Core 3.0, cpe:2.3:a:microsoft:dotnet_core:3.0:*:*:*:*:*:*:*
-	// 2019: .NET Core 3.1, cpe:2.3:a:microsoft:dotnet_core:3.1:*:*:*:*:*:*:*
+func runtimeFamilyFromName(name string) runtimeFamily {
+	normalizedName := strings.ToLower(name)
 
-	// Unified .NET Versions
-	// 2020: .NET 5.0, cpe:2.3:a:microsoft:dotnet:5.0:*:*:*:*:*:*:*
-	// 2021: .NET 6.0, cpe:2.3:a:microsoft:dotnet:6.0:*:*:*:*:*:*:*
-	// 2022: .NET 7.0, cpe:2.3:a:microsoft:dotnet:7.0:*:*:*:*:*:*:*
-	// 2023: .NET 8.0, cpe:2.3:a:microsoft:dotnet:8.0:*:*:*:*:*:*:*
-	// 2024: .NET 9.0, cpe:2.3:a:microsoft:dotnet:9.0:*:*:*:*:*:*:*
-	// 2025 ...?
+	// found in self-contained or framework-dependent apps in deps.json entries
+	if strings.HasPrefix(normalizedName, "runtimepack.microsoft.aspnetcore.app.runtime") ||
+		strings.HasPrefix(normalizedName, "microsoft.aspnetcore.app.runtime") ||
+		normalizedName == "microsoft.aspnetcore.app" ||
+		(strings.HasPrefix(normalizedName, "runtime") && strings.HasSuffix(normalizedName, "microsoft.aspnetcore.app")) {
+		return aspNetCoreRuntimeFamily
+	}
 
-	fields := strings.Split(ver, ".")
-	majorVersion, err := strconv.Atoi(fields[0])
-	if err != nil {
-		log.WithFields("error", err).Tracef("failed to parse .NET major version from %q", ver)
+	// found in self-contained, framework-dependent, and synthesized runtime packages
+	if strings.HasPrefix(normalizedName, "runtimepack.microsoft.netcore.app.runtime") ||
+		strings.HasPrefix(normalizedName, "microsoft.netcore.app.runtime") ||
+		normalizedName == "microsoft.netcore.app" ||
+		(strings.HasPrefix(normalizedName, "runtime") && strings.HasSuffix(normalizedName, "microsoft.netcore.app")) {
+		return netRuntimeFamily
+	}
+
+	return unknownRuntimeFamily
+}
+
+func runtimeCPEs(name, ver string) []cpe.CPE {
+	family := runtimeFamilyFromName(name)
+	if family == unknownRuntimeFamily {
 		return nil
 	}
 
-	var minorVersion int
-	if len(fields) > 1 {
-		minorVersion, err = strconv.Atoi(fields[1])
-		if err != nil {
-			log.WithFields("error", err).Tracef("failed to parse .NET minor version from %q", ver)
-			return nil
-		}
+	fields := strings.Split(ver, ".")
+	if len(fields) == 0 {
+		return nil
 	}
 
-	productName := "dotnet"
-	if majorVersion < 5 {
-		productName = "dotnet_core"
+	normalizedVersionFields := make([]string, 0, len(fields))
+	majorVersion, err := strconv.Atoi(fields[0])
+	if err != nil {
+		log.WithFields("error", err).Tracef("failed to parse .NET runtime major version from %q", ver)
+		return nil
+	}
+	normalizedVersionFields = append(normalizedVersionFields, strconv.Itoa(majorVersion))
+
+	for _, field := range fields[1:] {
+		value, err := strconv.Atoi(field)
+		if err != nil {
+			log.WithFields("error", err).Tracef("failed to parse .NET runtime version component %q from %q", field, ver)
+			return nil
+		}
+		normalizedVersionFields = append(normalizedVersionFields, strconv.Itoa(value))
+	}
+
+	if len(normalizedVersionFields) == 1 {
+		normalizedVersionFields = append(normalizedVersionFields, "0")
+	}
+
+	productName := ".net"
+	if family == aspNetCoreRuntimeFamily {
+		productName = "asp.net_core"
+	} else if majorVersion < 5 {
+		productName = ".net_core"
 	}
 
 	return []cpe.CPE{
@@ -110,7 +134,7 @@ func runtimeCPEs(ver string) []cpe.CPE {
 				Part:    "a",
 				Vendor:  "microsoft",
 				Product: productName,
-				Version: fmt.Sprintf("%d.%d", majorVersion, minorVersion),
+				Version: strings.Join(normalizedVersionFields, "."),
 			},
 			// we didn't find this in the underlying material, but this is the convention in NVD and we are certain this is a runtime package
 			Source: cpe.DeclaredSource,
@@ -323,6 +347,13 @@ func findVersionFromVersionResources(versionResources map[string]string) string 
 	productVersion := extractVersionFromResourcesValue(versionResources["ProductVersion"])
 	fileVersion := extractVersionFromResourcesValue(versionResources["FileVersion"])
 
+	// ms file ver is a ci build stamp (major.minor.<buildfate>.<buildyime>) we'll match with fewer segments
+	if isMicrosoftVersionResource(versionResources) {
+		if v := preferShorterMajorMinorMatch(productVersion, fileVersion); v != "" {
+			return v
+		}
+	}
+
 	semanticVersionCompareResult := keepGreaterSemanticVersion(productVersion, fileVersion)
 	if semanticVersionCompareResult != "" {
 		return semanticVersionCompareResult
@@ -361,6 +392,33 @@ func extractVersionFromResourcesValue(version string) string {
 		}
 	}
 	return out
+}
+
+// preferShorterMajorMinorMatch returns productVersion when it shares major.minor
+// with fileversion and has fewer segments "" otherwise
+func preferShorterMajorMinorMatch(productVersion, fileVersion string) string {
+	semanticProductVersion, err := version.NewVersion(productVersion)
+	if err != nil || semanticProductVersion == nil {
+		return ""
+	}
+	semanticFileVersion, err := version.NewVersion(fileVersion)
+	if err != nil || semanticFileVersion == nil {
+		return ""
+	}
+	productSegments := semanticProductVersion.Segments()
+	fileSegments := semanticFileVersion.Segments()
+	if len(productSegments) < 2 || len(fileSegments) < 2 {
+		return ""
+	}
+	if productSegments[0] != fileSegments[0] || productSegments[1] != fileSegments[1] {
+		return ""
+	}
+	if len(productSegments) >= len(fileSegments) {
+		return ""
+	}
+	// 1.0.7+sha -> 1.0.7
+	v, _, _ := strings.Cut(productVersion, "+")
+	return v
 }
 
 func keepGreaterSemanticVersion(productVersion string, fileVersion string) string {

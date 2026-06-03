@@ -143,9 +143,9 @@ func replaceLicenseGroups(licenses []string, groups map[string][]string) []strin
 
 	result := make([]string, 0, len(licenses))
 	for _, license := range licenses {
-		if strings.HasPrefix(license, "@") {
+		if after, ok := strings.CutPrefix(license, "@"); ok {
 			// this is a license group...
-			name := strings.TrimPrefix(license, "@")
+			name := after
 			if expandedLicenses, ok := groups[name]; ok {
 				result = append(result, expandedLicenses...)
 			} else {

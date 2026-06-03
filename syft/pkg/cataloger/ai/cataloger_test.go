@@ -76,7 +76,7 @@ func TestGGUFCataloger(t *testing.T) {
 						GGUFVersion:           3,
 						TensorCount:           0,
 						MetadataKeyValuesHash: "6e3d368066455ce4",
-						RemainingKeyValues: map[string]interface{}{
+						RemainingKeyValues: map[string]any{
 							"general.some_random_kv": "foobar",
 						},
 					},
@@ -113,7 +113,7 @@ func TestGGUFCataloger(t *testing.T) {
 						GGUFVersion:           3,
 						TensorCount:           0,
 						MetadataKeyValuesHash: "9dc6f23591062a27",
-						RemainingKeyValues: map[string]interface{}{
+						RemainingKeyValues: map[string]any{
 							"gpt2.context_length":   "1024",
 							"gpt2.embedding_length": uint32(768),
 						},

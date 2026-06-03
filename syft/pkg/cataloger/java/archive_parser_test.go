@@ -395,7 +395,6 @@ func TestParseJar(t *testing.T) {
 
 			var parent *pkg.Package
 			for _, a := range actual {
-				a := a
 				if strings.Contains(a.Name, "example-") {
 					parent = &a
 				}
@@ -682,7 +681,6 @@ func TestParseNestedJar(t *testing.T) {
 
 			actualNameVersionPairSet := strset.New()
 			for _, a := range actual {
-				a := a
 				key := makeKey(&a)
 				actualNameVersionPairSet.Add(key)
 				if !expectedNameVersionPairSet.Has(key) {
@@ -701,7 +699,6 @@ func TestParseNestedJar(t *testing.T) {
 			}
 
 			for _, a := range actual {
-				a := a
 				actualKey := makeKey(&a)
 
 				metadata := a.Metadata.(pkg.JavaArchive)
@@ -1493,7 +1490,7 @@ func Test_deterministicMatchingPomProperties(t *testing.T) {
 		t.Run(test.fixture, func(t *testing.T) {
 			fixturePath := generateJavaMetadataJarFixture(t, test.fixture, "jar")
 
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				func() {
 					fixture, err := os.Open(fixturePath)
 					require.NoError(t, err)

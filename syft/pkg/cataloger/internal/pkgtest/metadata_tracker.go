@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -322,7 +323,7 @@ func (t *MetadataTracker) RecordCatalogerObservations(
 
 // getMetadataTypeName returns the fully qualified type name of metadata (e.g., "pkg.ApkDBEntry").
 // extracts just the last package path segment to keep names concise.
-func getMetadataTypeName(metadata interface{}) string {
+func getMetadataTypeName(metadata any) string {
 	if metadata == nil {
 		return ""
 	}
@@ -361,7 +362,7 @@ func lastPathSegment(path string) string {
 // hasIntegrityHash checks if metadata contains an integrity hash field.
 // note: this uses a best-effort approach checking common field names.
 // DO NOT depend on these values in auto-generated capabilities definitions - use for test validation only.
-func hasIntegrityHash(metadata interface{}) bool {
+func hasIntegrityHash(metadata any) bool {
 	v := dereferenceToStruct(metadata)
 	if !v.IsValid() || v.Kind() != reflect.Struct {
 		return false
@@ -378,7 +379,7 @@ func hasIntegrityHash(metadata interface{}) bool {
 // hasFileDigests checks if metadata contains file records with digests.
 // note: uses a best-effort approach for detection.
 // DO NOT depend on these values in auto-generated capabilities definitions - use for test validation only.
-func hasFileDigests(metadata interface{}) bool {
+func hasFileDigests(metadata any) bool {
 	v := dereferenceToStruct(metadata)
 	if !v.IsValid() || v.Kind() != reflect.Struct {
 		return false
@@ -400,7 +401,7 @@ func hasFileDigests(metadata interface{}) bool {
 
 // dereferenceToStruct handles pointer dereferencing and returns the underlying value.
 // returns an invalid value if the input is nil or not convertible to a struct.
-func dereferenceToStruct(v interface{}) reflect.Value {
+func dereferenceToStruct(v any) reflect.Value {
 	if v == nil {
 		return reflect.Value{}
 	}
@@ -460,12 +461,7 @@ func countDependencyRelationships(relationships []artifact.Relationship) int {
 
 // contains checks if a string slice contains a specific string.
 func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, item)
 }
 
 // ===== Result Writing =====
@@ -494,7 +490,7 @@ func (t *MetadataTracker) WriteResults() error {
 }
 
 // writeJSONFile writes data as pretty-printed JSON to the specified path.
-func writeJSONFile(path string, data interface{}) error {
+func writeJSONFile(path string, data any) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err

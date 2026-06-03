@@ -339,7 +339,7 @@ func TestSourceVersionExtract(t *testing.T) {
 }
 
 func requireAs(expected error) require.ErrorAssertionFunc {
-	return func(t require.TestingT, err error, i ...interface{}) {
+	return func(t require.TestingT, err error, i ...any) {
 		require.ErrorAs(t, err, &expected)
 	}
 }
@@ -413,7 +413,7 @@ func Test_handleNewKeyValue(t *testing.T) {
 		name    string
 		line    string
 		wantKey string
-		wantVal interface{}
+		wantVal any
 		wantErr require.ErrorAssertionFunc
 	}{
 		{

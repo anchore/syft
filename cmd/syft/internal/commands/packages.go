@@ -18,7 +18,7 @@ func Packages(app clio.Application, scanCmd *cobra.Command) *cobra.Command {
 		Short: scanCmd.Short,
 		Long:  scanCmd.Long,
 		Args:  scanCmd.Args,
-		Example: internal.Tprintf(scanHelp, map[string]interface{}{
+		Example: internal.Tprintf(scanHelp, map[string]any{
 			"appName": id.Name,
 			"command": "packages",
 		}),

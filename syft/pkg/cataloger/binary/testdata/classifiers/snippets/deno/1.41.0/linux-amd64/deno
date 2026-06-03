@@ -1,0 +1,9 @@
+name: deno
+offset: 17775514
+length: 100
+snippetSha256: 1bf995efbcf158531b2cde0a0213b348e189550a45d1db127b54eded4c520d0a
+fileSha256: b0877de86c74027327fca3ca37a5ac3780bcc9c70579ecf6c7c9a55d22147aef
+
+### byte snippet to follow ###
+t recognize flag ''
+Deno/1.41.0cli/worker.rsmain_module deno::worker[ext:cli/worker.rs:191:37][ext:c

@@ -308,6 +308,71 @@ func TestParsePackageJSON(t *testing.T) {
 			},
 		},
 		{
+			// see https://github.com/anchore/syft/issues/4778
+			// Ghost CMS publishes package.json with contributors as a single string
+			Fixture: "testdata/pkg-json/package-contributors-string.json",
+			ExpectedPkg: pkg.Package{
+				Name:    "ghost",
+				Version: "5.98.1",
+				PURL:    "pkg:npm/ghost@5.98.1",
+				Type:    pkg.NpmPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-contributors-string.json")),
+				),
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
+					Name:        "ghost",
+					Version:     "5.98.1",
+					Author:      "https://github.com/TryGhost/Ghost/graphs/contributors",
+					Homepage:    "https://docs.npmjs.com/",
+					URL:         "https://github.com/npm/cli",
+					Description: "a package manager for JavaScript",
+				},
+			},
+		},
+		{
+			Fixture: "testdata/pkg-json/package-authors-string.json",
+			ExpectedPkg: pkg.Package{
+				Name:    "npm",
+				Version: "6.14.6",
+				PURL:    "pkg:npm/npm@6.14.6",
+				Type:    pkg.NpmPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-authors-string.json")),
+				),
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
+					Name:        "npm",
+					Version:     "6.14.6",
+					Author:      "Harry Potter <hp@hogwards.com> (http://youknowwho.com/)",
+					Homepage:    "https://docs.npmjs.com/",
+					URL:         "https://github.com/npm/cli",
+					Description: "a package manager for JavaScript",
+				},
+			},
+		},
+		{
+			Fixture: "testdata/pkg-json/package-maintainers-object.json",
+			ExpectedPkg: pkg.Package{
+				Name:    "npm",
+				Version: "6.14.6",
+				PURL:    "pkg:npm/npm@6.14.6",
+				Type:    pkg.NpmPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromLocationsWithContext(ctx, "Artistic-2.0", file.NewLocation("testdata/pkg-json/package-maintainers-object.json")),
+				),
+				Language: pkg.JavaScript,
+				Metadata: pkg.NpmPackage{
+					Name:        "npm",
+					Version:     "6.14.6",
+					Author:      "Charlie Maintainer <charlie@example.com>",
+					Homepage:    "https://docs.npmjs.com/",
+					URL:         "https://github.com/npm/cli",
+					Description: "a package manager for JavaScript",
+				},
+			},
+		},
+		{
 			Fixture: "testdata/pkg-json/package-all-author-fields.json",
 			ExpectedPkg: pkg.Package{
 				Name:    "npm",
