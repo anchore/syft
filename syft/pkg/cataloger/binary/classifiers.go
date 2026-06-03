@@ -440,9 +440,17 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "mariadb-binary",
 			FileGlob: "**/{mariadb,mysql}",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.MatchAny(
 				// 10.6.15-MariaDB
-				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
+				m.FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
+				// MariaDB.org / RHEL tarball builds embed the release directory name, which does not contain the
+				// "-MariaDB" marker. The version is in the build path instead, e.g.:
+				//   mariadb-11.8.5-2-redhat-x86_64/rhel-8/bin/mariadb
+				//   mariadb-11.8.5-linux-systemd-x86_64
+				// Without this the older matcher misses the version and a later release suffix (e.g. "2") can be
+				// picked up instead, producing false-positive matches against ancient CVEs (see anchore/grype#3452).
+				m.FileContentsVersionMatcher(`(?m)(?:^|/)mariadb-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-`),
+			),
 			Package: "mariadb",
 			PURL:    mustPURL("pkg:generic/mariadb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mariadb:mariadb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),

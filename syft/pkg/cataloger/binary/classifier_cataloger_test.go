@@ -208,6 +208,20 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// RHEL / MariaDB.org tarball builds do not embed the "-MariaDB" marker; the version is only
+			// present in the build path (e.g. mariadb-11.8.5-2-redhat-x86_64). The release suffix ("-2")
+			// must not leak into the version. Regression for anchore/grype#3452.
+			logicalFixture: "mariadb/11.8.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mariadb",
+				Version:   "11.8.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/mariadb@11.8.5",
+				Locations: locations("mariadb"),
+				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
 			logicalFixture: "mysqld/9.7.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "mysql-server",
