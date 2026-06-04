@@ -957,6 +957,7 @@ catalogers:
       function: NewPEPackageCataloger
     selectors: # AUTO-GENERATED
       - binary
+      - bpl
       - declared
       - directory
       - dll
@@ -971,6 +972,7 @@ catalogers:
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
+            - '**/*.bpl'
             - '**/*.dll'
             - '**/*.exe'
         metadata_types: # AUTO-GENERATED
