@@ -336,7 +336,8 @@ func (s *ociModelSource) Describe() source.Description {
 	}
 }
 
-// FileResolver returns a file resolver for accessing header of GGUF files.
+// FileResolver returns a file resolver for accessing model headers and companion
+// metadata (GGUF/SafeTensors headers, the model config blob, and companion layers).
 func (s *ociModelSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }

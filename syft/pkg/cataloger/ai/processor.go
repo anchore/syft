@@ -52,9 +52,15 @@ func partitionSafeTensorsPackages(pkgs []pkg.Package) (safeTensors, other []pkg.
 }
 
 // fromOCIArtifact reports whether the packages came from an OCI model artifact.
-// That source presents every layer at the virtual path "/", whereas a filesystem
-// scan always carries a real file path. A single scan is one source, so the
-// first package is representative of the rest.
+// That source (the ContainerImageModel resolver) presents every layer at the
+// virtual path "/", whereas a filesystem scan always carries a real file path. A
+// single scan is one source, so the first package is representative of the rest.
+//
+// This deliberately keys off the path signal rather than type-asserting the
+// resolver to file.OCIMediaTypeResolver: the test harness wraps resolvers in an
+// ObservingResolver that implements that interface unconditionally, so an
+// interface check would misclassify directory scans as OCI. The "/" path is the
+// genuine, testable signal the OCI model source produces.
 func fromOCIArtifact(pkgs []pkg.Package) bool {
 	loc := primaryEvidenceLocation(pkgs[0])
 	return loc != nil && loc.RealPath == "/"

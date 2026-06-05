@@ -36,7 +36,21 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 	var configName, readmeName, readmeLicense string
 	var supporting []file.Location
 	for _, loc := range modelFileLocs {
-		if classifyOCIModelFileLayer(resolver, loc, md, &configName, &readmeName, &readmeLicense) {
+		cfg, fm := classifyOCIModelFileLayer(resolver, loc)
+		switch {
+		case cfg != nil:
+			applyHFConfig(md, cfg)
+			if configName == "" {
+				configName = cfg.NameOrPath
+			}
+			supporting = append(supporting, loc)
+		case fm != nil:
+			if readmeLicense == "" {
+				readmeLicense = fm.License
+			}
+			if readmeName == "" && len(fm.BaseModel) > 0 {
+				readmeName = fm.BaseModel[0]
+			}
 			supporting = append(supporting, loc)
 		}
 	}
@@ -53,21 +67,19 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 		supporting:   supporting,
 	}
 
-	// License precedence: a README model-card license wins over dedicated
-	// license layers (mirrors the dir-scan path, where README frontmatter is the
-	// license source).
+	// License precedence: a dedicated vnd.docker.ai.license layer is a
+	// producer-curated signal and outranks the free-text license field in a model
+	// card's README frontmatter.
+	licLocs, err := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
+	if err != nil {
+		log.Debugf("failed to list docker AI license layers: %v", err)
+	}
 	switch {
+	case len(licLocs) > 0:
+		id.licenses = identifyLicenseLayers(ctx, resolver, licLocs)
+		id.supporting = append(id.supporting, licLocs...)
 	case readmeLicense != "":
 		id.licenses = pkg.NewLicensesFromValuesWithContext(ctx, readmeLicense)
-	default:
-		licLocs, err := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
-		if err != nil {
-			log.Debugf("failed to list docker AI license layers: %v", err)
-		}
-		if len(licLocs) > 0 {
-			id.licenses = identifyLicenseLayers(ctx, resolver, licLocs)
-			id.supporting = append(id.supporting, licLocs...)
-		}
 	}
 
 	return id
@@ -100,45 +112,34 @@ func ociImageRefBasename(resolver file.Resolver) string {
 	return path.Base(parsed.Context().RepositoryStr())
 }
 
-// classifyOCIModelFileLayer reads up to 4 MiB of a model.file layer and
-// classifies it as README frontmatter or HF config.json based on its leading bytes.
-func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location, md *pkg.SafeTensorsModelInfo, configName, readmeName, license *string) bool {
+// classifyOCIModelFileLayer reads up to 4 MiB of a model.file layer and decodes
+// it as either an HF config.json or a README model card's YAML frontmatter,
+// based on its leading bytes. It returns whichever it recognized; both are nil
+// when the layer is neither (or fails to decode). The caller owns precedence and
+// metadata enrichment.
+func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location) (*hfConfig, *readmeFrontmatter) {
 	rc, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
-		return false
+		return nil, nil
 	}
 	defer internal.CloseAndLogError(rc, loc.RealPath)
 
 	buf, err := io.ReadAll(io.LimitReader(rc, 4*1024*1024))
 	if err != nil {
-		return false
+		return nil, nil
 	}
 	trimmed := bytes.TrimLeft(buf, "\xef\xbb\xbf \t\r\n")
 	switch {
 	case bytes.HasPrefix(trimmed, []byte("---")):
-		fm := parseFrontmatter(buf)
-		if fm == nil {
-			return false
-		}
-		if *license == "" {
-			*license = fm.License
-		}
-		if *readmeName == "" && len(fm.BaseModel) > 0 {
-			*readmeName = fm.BaseModel[0]
-		}
-		return true
+		return nil, parseFrontmatter(buf)
 	case bytes.HasPrefix(trimmed, []byte("{")):
 		var cfg hfConfig
 		if err := json.Unmarshal(buf, &cfg); err != nil {
-			return false
+			return nil, nil
 		}
-		applyHFConfig(md, &cfg)
-		if *configName == "" && cfg.NameOrPath != "" {
-			*configName = cfg.NameOrPath
-		}
-		return true
+		return &cfg, nil
 	}
-	return false
+	return nil, nil
 }
 
 // identifyLicenseLayers turns Docker AI license-layer locations into

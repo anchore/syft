@@ -34,7 +34,7 @@ type SafeTensorsModelInfo struct {
 	TensorCount uint64 `json:"tensorCount,omitempty" cyclonedx:"tensorCount"`
 
 	// TotalSize is the total byte size of tensor data across all shards when known
-	// (from the Docker AI model config "size" field or the sharded index "total_size").
+	// (from the Docker AI model config "size" field).
 	TotalSize string `json:"totalSize,omitempty" cyclonedx:"totalSize"`
 
 	// ShardCount is the number of .safetensors shards for a sharded model (1 for a

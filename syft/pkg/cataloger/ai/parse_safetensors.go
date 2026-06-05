@@ -148,10 +148,8 @@ func (h *safeTensorsHeader) metadataHash() string {
 }
 
 // userMetadataKeyValues converts the safetensors __metadata__ map into a
-// KeyValues slice sorted by key. We do not use the convention of returning a
-// nil slice for an empty input — instead, an empty input maps to an empty
-// (length-0, non-nil) KeyValues — so downstream JSON serialization remains
-// stable: `omitempty` drops the field either way.
+// KeyValues slice sorted by key, so SBOM output is stable across runs. Returns
+// nil for empty input (omitempty then drops the field).
 func userMetadataKeyValues(m map[string]string) pkg.KeyValues {
 	if len(m) == 0 {
 		return nil

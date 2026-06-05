@@ -123,6 +123,27 @@ func TestSafeTensorsCataloger(t *testing.T) {
 			},
 		},
 		{
+			// rung 1 via README: with no config.json, the README model card's
+			// base_model names the model (path.Base applied), still beating the
+			// directory fallback ("readme-named").
+			name: "README base_model names the model when there is no config.json",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				modelDir := filepath.Join(dir, "readme-named")
+				model(t, modelDir)
+				writeFile(t, filepath.Join(modelDir, "README.md"),
+					"---\nbase_model:\n  - org/base-model-name\n---\n# Card\n")
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "base-model-name",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
 			// rung 2: no config.json at all, so the model is named after its
 			// immediate parent directory.
 			name: "no config.json falls back to the parent directory name",
@@ -263,6 +284,46 @@ func TestSafeTensorsCataloger(t *testing.T) {
 				TestCataloger(t, NewSafeTensorsCataloger())
 		})
 	}
+}
+
+// TestSafeTensorsCataloger_shardedDirectory covers the primary multi-shard shape:
+// several `model-0000N-of-0000M.safetensors` files in one directory. The
+// cataloger must group the shards into a single package, sum their tensor counts,
+// record the shard count, and roll each shard up into Parts. (The OCI multi-shard
+// path is covered separately in TestSafeTensorsMergeProcessor.)
+func TestSafeTensorsCataloger_shardedDirectory(t *testing.T) {
+	userMeta := map[string]string{"format": "pt"}
+	// Two shards with distinct tensors → distinct per-shard metadata hashes, so
+	// the merge treats them as separate shards (3 tensors total across 2 shards).
+	shardA := map[string]safeTensorsEntry{
+		"layers.0.weight": {DType: "BF16", Shape: []int64{10, 10}, DataOffsets: []int64{0, 200}},
+	}
+	shardB := map[string]safeTensorsEntry{
+		"layers.1.weight": {DType: "BF16", Shape: []int64{10, 10}, DataOffsets: []int64{0, 200}},
+		"layers.2.weight": {DType: "BF16", Shape: []int64{10, 10}, DataOffsets: []int64{200, 400}},
+	}
+
+	dir := t.TempDir()
+	modelDir := filepath.Join(dir, "llama-sharded")
+	require.NoError(t, os.MkdirAll(modelDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model-00001-of-00002.safetensors"),
+		buildSafeTensorsFile(t, userMeta, shardA), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model-00002-of-00002.safetensors"),
+		buildSafeTensorsFile(t, userMeta, shardB), 0o644))
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, dir).
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			require.Len(t, pkgs, 1)
+			got := pkgs[0]
+			assert.Equal(t, "llama-sharded", got.Name, "a sharded model with no config.json is named by its directory")
+			md := got.Metadata.(pkg.SafeTensorsModelInfo)
+			assert.Equal(t, 2, md.ShardCount)
+			assert.Equal(t, uint64(3), md.TensorCount, "tensor counts are summed across shards")
+			assert.Len(t, md.Parts, 2, "each shard is rolled up into Parts")
+			assert.Equal(t, "BF16", md.Quantization)
+		}).
+		TestCataloger(t, NewSafeTensorsCataloger())
 }
 
 // TestParseSafeTensorsOCIConfig covers the parser in isolation: it should emit
@@ -507,6 +568,34 @@ spdx-id: Apache-2.0
 		require.NoError(t, err)
 		require.Len(t, out, 1)
 		assert.Equal(t, "with-license-fm", out[0].Name)
+		assertHasLicense(t, out[0], "Apache-2.0")
+	})
+
+	t.Run("OCI: license layer wins over a README model-card license", func(t *testing.T) {
+		// When both a dedicated license layer and a README model-card license are
+		// present, the producer-curated license layer is authoritative. (If the
+		// README won, the resolved license would be MIT and this assertion fails.)
+		dir := t.TempDir()
+		licensePath := filepath.Join(dir, "LICENSE")
+		require.NoError(t, os.WriteFile(licensePath, []byte("---\nspdx-id: Apache-2.0\n---\n"), 0o644))
+		readmePath := filepath.Join(dir, "README.md")
+		require.NoError(t, os.WriteFile(readmePath,
+			[]byte("---\nlicense: MIT\nbase_model:\n  - org/base\n---\n# Card\n"), 0o644))
+		configPath := filepath.Join(dir, "config.json")
+		require.NoError(t, os.WriteFile(configPath, []byte(`{"_name_or_path":"org/precedence-model"}`), 0o644))
+		resolver := file.NewMockResolverForMediaTypes(map[string][]file.Location{
+			dockerAIModelFileMediaType: {file.NewLocation(configPath), file.NewLocation(readmePath)},
+			dockerAILicenseMediaType:   {file.NewLocation(licensePath)},
+		})
+
+		configMd := pkg.SafeTensorsModelInfo{Format: "safetensors", TensorCount: 1}
+		out, _, err := safeTensorsMergeProcessor(
+			context.Background(), resolver,
+			[]pkg.Package{ociPkg(configMd)}, nil, nil,
+		)
+		require.NoError(t, err)
+		require.Len(t, out, 1)
+		assert.Equal(t, "precedence-model", out[0].Name)
 		assertHasLicense(t, out[0], "Apache-2.0")
 	})
 

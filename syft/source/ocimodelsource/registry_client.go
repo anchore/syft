@@ -286,8 +286,9 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 	// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#file-structure
 	data := make([]byte, maxBytes)
 	n, err := io.ReadFull(reader, data)
-	if err != nil && err != io.ErrUnexpectedEOF {
-		// ErrUnexpectedEOF is okay - it means the file is smaller than maxBytes
+	// ErrUnexpectedEOF means the layer is smaller than maxBytes; EOF means it is
+	// empty. Both mean we read everything there was, not a failure.
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return nil, fmt.Errorf("failed to read layer data: %w", err)
 	}
 

@@ -20,8 +20,10 @@ type LayerInfo struct {
 }
 
 // ContainerImageModel is a file.Resolver implementation that provides access to
-// GGUF header data fetched from OCI model artifacts via range-GET requests.
-// This does not fetch the entire model from the registry, only a sliver of it.
+// model header and metadata data (GGUF and SafeTensors headers, the model config
+// blob, and companion layers) fetched from OCI model artifacts via range-GET
+// requests. This does not fetch the entire model from the registry, only a
+// sliver of it.
 type ContainerImageModel struct {
 	tempDir    string                   // temp directory containing all layer files
 	layerFiles map[string]LayerInfo     // digest -> layer info (temp path + media type)
