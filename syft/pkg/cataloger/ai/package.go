@@ -22,10 +22,7 @@ func newGGUFPackage(metadata *pkg.GGUFFileHeader, modelName, version, license st
 }
 
 // newSafeTensorsPackage creates a SafeTensors package with the given metadata
-// and locations. Name and Licenses are intentionally not set here — the
-// safetensors cataloger emits nameless packages from every parser, and the
-// merge processor is the single owner of naming, license resolution, and
-// supporting-evidence attachment.
+// and locations. Name and Licenses are intentionally not set here and done at the processor level
 func newSafeTensorsPackage(metadata *pkg.SafeTensorsModelInfo, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
 		Locations: file.NewLocationSet(locations...),

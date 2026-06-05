@@ -37,10 +37,13 @@ const (
 	modelFormatGGUF        = "gguf"
 	modelFormatSafeTensors = "safetensors"
 
-	// Maximum bytes to read/return for weight-layer headers (GGUF + safetensors).
-	maxHeaderBytes = 8 * 1024 * 1024 // 8 MB
-	// Maximum bytes to fetch for a companion metadata layer (README, config.json, license).
-	// These blobs are small by convention; cap well below a safetensors header.
+	// maxWeightHeaderBytes is the leading slice we range-GET from a (multi-GB)
+	// weight layer — enough to cover the GGUF/safetensors header.
+	maxWeightHeaderBytes = 8 * 1024 * 1024 // 8 MB
+
+	// maxCompanionBytes caps a whole companion blob (README, config.json,
+	// license); these are small by convention. Matches the 4 MB read cap in
+	// classifyOCIModelFileLayer.
 	maxCompanionBytes = 4 * 1024 * 1024 // 4 MB
 )
 
@@ -129,17 +132,13 @@ type modelArtifact struct {
 	Format string
 
 	// GGUFLayers are descriptors for layers carrying GGUF-format weights.
-	// We fetch the first few MB of each to read the header.
+	// We fetch the first few MB of each to read the header data
 	GGUFLayers []v1.Descriptor
 
 	// SafeTensorsLayers are descriptors for layers carrying SafeTensors-format weights.
-	// We fetch the first maxHeaderBytes of each so the cataloger can read the JSON
-	// header (tensor map + __metadata__) without pulling the multi-GB tensor data.
 	SafeTensorsLayers []v1.Descriptor
 
-	// CompanionLayers are non-weight layers (README, config.json, license) that
-	// we do fetch (in full, given their small size) so companion-file parsing
-	// in the safetensors cataloger can find them via media type.
+	// CompanionLayers are non-weight layers (README, config.json, license)
 	CompanionLayers []v1.Descriptor
 }
 
@@ -199,10 +198,7 @@ func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) 
 }
 
 // detectModelFormat returns a single format string when either GGUF or
-// SafeTensors weight layers are present. When both appear (not expected in
-// practice for Docker Model Runner artifacts), GGUF wins because the GGUF
-// cataloger is the more established path. Empty result means the manifest has
-// no recognized weight layers.
+// SafeTensors weight layers are present.
 func detectModelFormat(ggufCount, safetensorsCount int) string {
 	switch {
 	case ggufCount > 0:
@@ -271,14 +267,6 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 	if err != nil {
 		return nil, fmt.Errorf("failed to get layer reader: %w", err)
 	}
-	// this defer is what causes the download to stop
-	//   1. io.ReadFull(reader, data) reads exactly 8MB into the buffer
-	//   2. The function returns with data[:n]
-	//   3. defer reader.Close() executes, closing the HTTP response body
-	//   4. Closing the response body closes the underlying TCP connection
-	//   5. The server receives TCP FIN/RST and stops sending
-	//   note: some data is already in flight when we close so we will see > 8mb over the wire
-	//   the full image will not download given we terminate the reader early here
 	defer reader.Close()
 
 	// Note: this is not some arbitrary number picked out of the blue.
@@ -286,6 +274,7 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 	// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#file-structure
 	data := make([]byte, maxBytes)
 	n, err := io.ReadFull(reader, data)
+
 	// ErrUnexpectedEOF means the layer is smaller than maxBytes; EOF means it is
 	// empty. Both mean we read everything there was, not a failure.
 	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {

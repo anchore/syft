@@ -47,12 +47,7 @@ type dockerAIModelConfig struct {
 	} `json:"config"`
 }
 
-// parseSafeTensorsOCIConfig decodes the Docker AI model-config blob and emits
-// a nameless package whose metadata mirrors the producer-declared aggregate
-// fields (Format, Quantization, Parameters, Size, TensorCount). For any
-// format other than "safetensors" it emits nothing so the GGUF cataloger can
-// claim the artifact. Naming, license, and HF-companion enrichment all run
-// once per group in safeTensorsMergeProcessor.
+// parseSafeTensorsOCIConfig decodes the Docker AI model-config blob
 func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
@@ -88,10 +83,7 @@ func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.En
 }
 
 // parseSafeTensorsOCILayer decodes the JSON header of a SafeTensors weight
-// layer fetched from an OCI model artifact (the source layer caps each layer
-// at a small prefix; tensor data is never downloaded). It emits a nameless
-// package; safeTensorsMergeProcessor folds it into the artifact's group and
-// rolls per-shard fields up into the final merged package.
+// layer fetched from an OCI model artifact
 func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 

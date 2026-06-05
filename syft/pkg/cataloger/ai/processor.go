@@ -15,12 +15,6 @@ import (
 // assembly. SafeTensors packages reach it nameless from the parsers; it groups
 // them per model, merges the per-shard metadata, resolves a name + licenses, and
 // drops any model it cannot name.
-//
-// There are exactly two sources, each handled by its own path:
-//   - an OCI model artifact, where the source presents every layer at the
-//     virtual path "/" and the whole scan is a single model (mergeOCIModel)
-//   - a filesystem scan, where models are grouped by the directory their files
-//     live in (mergeDirModels)
 func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	if err != nil || len(pkgs) == 0 {
 		return pkgs, rels, err
@@ -55,12 +49,6 @@ func partitionSafeTensorsPackages(pkgs []pkg.Package) (safeTensors, other []pkg.
 // That source (the ContainerImageModel resolver) presents every layer at the
 // virtual path "/", whereas a filesystem scan always carries a real file path. A
 // single scan is one source, so the first package is representative of the rest.
-//
-// This deliberately keys off the path signal rather than type-asserting the
-// resolver to file.OCIMediaTypeResolver: the test harness wraps resolvers in an
-// ObservingResolver that implements that interface unconditionally, so an
-// interface check would misclassify directory scans as OCI. The "/" path is the
-// genuine, testable signal the OCI model source produces.
 func fromOCIArtifact(pkgs []pkg.Package) bool {
 	loc := primaryEvidenceLocation(pkgs[0])
 	return loc != nil && loc.RealPath == "/"
@@ -83,8 +71,7 @@ func mergeOCIModel(ctx context.Context, resolver file.Resolver, pkgs []pkg.Packa
 }
 
 // mergeDirModels groups filesystem-scanned files by their parent directory and
-// emits one model per directory, named from a sibling config.json/README or the
-// directory itself.
+// emits one model per directory
 func mergeDirModels(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package) []pkg.Package {
 	groups := groupByParentDir(pkgs)
 
