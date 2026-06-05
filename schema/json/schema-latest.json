@@ -4114,7 +4114,7 @@
         },
         "totalSize": {
           "type": "string",
-          "description": "TotalSize is the total byte size of tensor data across all shards when known\n(from the Docker AI model config \"size\" field or the sharded index \"total_size\")."
+          "description": "TotalSize is the total byte size of tensor data across all shards when known\n(from the Docker AI model config \"size\" field)."
         },
         "shardCount": {
           "type": "integer",
