@@ -16,10 +16,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
-// resolveSafeTensorsOCIIdentity handles the OCI-artifact case: the model's
-// naming and license signals arrive as sibling layers (model.file companions
-// carrying config.json / README, and dedicated license layers). It returns the
-// group's name candidates, resolved licenses, and supporting evidence.
+// resolveSafeTensorsOCIIdentity handles the OCI-artifact case
 func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, md *pkg.SafeTensorsModelInfo) safeTensorsIdentity {
 	ociResolver, ok := resolver.(file.OCIMediaTypeResolver)
 	if !ok {
@@ -68,8 +65,7 @@ func resolveSafeTensorsOCIIdentity(ctx context.Context, resolver file.Resolver, 
 	}
 
 	// License precedence: a dedicated vnd.docker.ai.license layer is a
-	// producer-curated signal and outranks the free-text license field in a model
-	// card's README frontmatter.
+	// outranks the free-text license field in a model card's README frontmatter.
 	licLocs, err := ociResolver.FilesByMediaType(dockerAILicenseMediaType)
 	if err != nil {
 		log.Debugf("failed to list docker AI license layers: %v", err)
@@ -142,8 +138,7 @@ func classifyOCIModelFileLayer(resolver file.Resolver, loc file.Location) (*hfCo
 	return nil, nil
 }
 
-// identifyLicenseLayers turns Docker AI license-layer locations into
-// pkg.License values.
+// identifyLicenseLayers turns Docker AI license-layer locations into pkg.License values.
 func identifyLicenseLayers(ctx context.Context, resolver file.Resolver, locs []file.Location) []pkg.License {
 	var out []pkg.License
 	var scanFallback []file.Location

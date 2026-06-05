@@ -12,8 +12,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// resolveSafeTensorsDirIdentity handles the directory-scan case: look for a
-// config.json beside the model files (walking up parent directories to the
+// resolveSafeTensorsDirIdentity handles the directory-scan case for safe tensors
+// find config.json beside the model files (walking up parent directories to the
 // scanned source root if no sibling exists) and a sibling README.md. It returns
 // the group's name candidates, resolved licenses, and supporting evidence.
 func resolveSafeTensorsDirIdentity(ctx context.Context, resolver file.Resolver, dir string, md *pkg.SafeTensorsModelInfo) safeTensorsIdentity {
