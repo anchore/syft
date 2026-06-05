@@ -40,6 +40,20 @@ func buildSafeTensorsFile(t *testing.T, metadata map[string]string, tensors map[
 	return out
 }
 
+// TestSafeTensorsCataloger is the end-to-end `dir:` scan naming matrix: it walks
+// real on-disk directory trees and locks how a model package gets its name at
+// every depth a .safetensors file can appear (the scan root `./`, an immediate
+// child `./sometensor/`, and a grandchild `./dir/someothertensor/`).
+//
+// The naming precedence (owned by the merge processor's pickSafeTensorsName) is:
+//  1. config.json _name_or_path  (path.Base applied), found beside the model or
+//     by walking up parent directories to the scan root
+//  2. otherwise the model's immediate parent directory base name
+//     → drop (no package) when neither yields a usable name
+//
+// Every model below is built from the same header bytes, so the header-derived
+// metadata (Quantization/Parameters/TensorCount/UserMetadata/MetadataHash) is
+// identical across rows and each row stays focused on naming.
 func TestSafeTensorsCataloger(t *testing.T) {
 	userMeta := map[string]string{"format": "pt"}
 	tensors := map[string]safeTensorsEntry{
@@ -50,6 +64,33 @@ func TestSafeTensorsCataloger(t *testing.T) {
 	// cataloger wires the header hash through to the package metadata.
 	wantHash := (&safeTensorsHeader{metadata: userMeta, tensors: tensors}).metadataHash()
 
+	// model writes the shared .safetensors header into dir/<name>.safetensors,
+	// creating dir if needed.
+	model := func(t *testing.T, dir string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(dir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "model.safetensors"), buildSafeTensorsFile(t, userMeta, tensors), 0o644))
+	}
+	writeFile := func(t *testing.T, path, contents string) {
+		t.Helper()
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		require.NoError(t, os.WriteFile(path, []byte(contents), 0o644))
+	}
+	// wantMetadata is the constant header-derived metadata; architecture is the
+	// only field that varies (it's enriched from config.json when present).
+	wantMetadata := func(architecture string) pkg.SafeTensorsModelInfo {
+		return pkg.SafeTensorsModelInfo{
+			Format:       "safetensors",
+			Architecture: architecture,
+			Quantization: "BF16",
+			Parameters:   "16.26K",
+			TensorCount:  2,
+			ShardCount:   1,
+			UserMetadata: pkg.KeyValues{{Key: "format", Value: "pt"}},
+			MetadataHash: wantHash,
+		}
+	}
+
 	tests := []struct {
 		name                  string
 		setup                 func(t *testing.T) string
@@ -57,16 +98,17 @@ func TestSafeTensorsCataloger(t *testing.T) {
 		expectedRelationships []artifact.Relationship
 	}{
 		{
-			name: "single-file model directory with config.json and README",
+			// rung 1: config.json _name_or_path (path.Base of "org/Llama-3-8B")
+			// wins over the "sometensor" directory fallback; license from README.
+			name: "config.json _name_or_path names the model and wins over the directory",
 			setup: func(t *testing.T) string {
 				dir := t.TempDir()
-				modelDir := filepath.Join(dir, "models")
-				require.NoError(t, os.MkdirAll(modelDir, 0o755))
-				require.NoError(t, os.WriteFile(filepath.Join(modelDir, "model.safetensors"), buildSafeTensorsFile(t, userMeta, tensors), 0o644))
-				require.NoError(t, os.WriteFile(filepath.Join(modelDir, "config.json"),
-					[]byte(`{"architectures":["LlamaForCausalLM"],"torch_dtype":"bfloat16","transformers_version":"4.40.0","_name_or_path":"meta-llama/Llama-3-8B"}`), 0o644))
-				require.NoError(t, os.WriteFile(filepath.Join(modelDir, "README.md"),
-					[]byte("---\nlicense: Apache-2.0\nbase_model:\n  - meta-llama/Llama-3\n---\n# Llama 3\n"), 0o644))
+				modelDir := filepath.Join(dir, "sometensor")
+				model(t, modelDir)
+				writeFile(t, filepath.Join(modelDir, "config.json"),
+					`{"architectures":["LlamaForCausalLM"],"torch_dtype":"bfloat16","transformers_version":"4.40.0","_name_or_path":"meta-llama/Llama-3-8B"}`)
+				writeFile(t, filepath.Join(modelDir, "README.md"),
+					"---\nlicense: Apache-2.0\nbase_model:\n  - meta-llama/Llama-3\n---\n# Llama 3\n")
 				return dir
 			},
 			expectedPackages: []pkg.Package{
@@ -76,16 +118,134 @@ func TestSafeTensorsCataloger(t *testing.T) {
 					Licenses: pkg.NewLicenseSet(
 						pkg.NewLicenseFromFields("Apache-2.0", "", nil),
 					),
-					Metadata: pkg.SafeTensorsModelInfo{
-						Format:       "safetensors",
-						Architecture: "LlamaForCausalLM",
-						Quantization: "BF16",
-						Parameters:   "16.26K",
-						TensorCount:  2,
-						ShardCount:   1,
-						UserMetadata: pkg.KeyValues{{Key: "format", Value: "pt"}},
-						MetadataHash: wantHash,
-					},
+					Metadata: wantMetadata("LlamaForCausalLM"),
+				},
+			},
+		},
+		{
+			// rung 2: no config.json at all, so the model is named after its
+			// immediate parent directory.
+			name: "no config.json falls back to the parent directory name",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, filepath.Join(dir, "sometensor"))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "sometensor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// rung 2: config.json exists but carries no _name_or_path (only
+			// non-identifying info), so we still fall back to the directory name
+			// while enriching architecture from the config.
+			name: "config.json without _name_or_path falls back to the parent directory name",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				modelDir := filepath.Join(dir, "sometensor")
+				model(t, modelDir)
+				writeFile(t, filepath.Join(modelDir, "config.json"),
+					`{"architectures":["LlamaForCausalLM"],"torch_dtype":"bfloat16"}`)
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "sometensor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata("LlamaForCausalLM"),
+				},
+			},
+		},
+		{
+			// rung 2: the fallback is the IMMEDIATE parent ("someothertensor"),
+			// not an ancestor ("dir").
+			name: "nested model with no config.json is named by its immediate parent directory",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, filepath.Join(dir, "dir", "someothertensor"))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "someothertensor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// rung 1 at the scan root: a model directly at `./` is unnameable by
+			// the directory fallback (its parent is the degenerate root "."), but
+			// a sibling config.json still names it.
+			name: "root-level model is named from a root config.json",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, dir)
+				writeFile(t, filepath.Join(dir, "config.json"), `{"_name_or_path":"org/RootModel"}`)
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "RootModel",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// drop: a model directly at `./` with no config.json has no usable
+			// name — the parent is the degenerate root ".", which yields no
+			// directory fallback — so no package is emitted.
+			name: "root-level model with no config.json is dropped",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, dir)
+				return dir
+			},
+			expectedPackages: nil,
+		},
+		{
+			// rung 1 via parent-walk: findDirHFConfig walks up from the model
+			// directory, so a config.json in an ancestor names a nested model.
+			name: "config.json in an ancestor directory names a nested model",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, filepath.Join(dir, "dir", "someothertensor"))
+				writeFile(t, filepath.Join(dir, "dir", "config.json"), `{"_name_or_path":"org/Ancestor"}`)
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "Ancestor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// grouping: independent models in one scan are grouped by their own
+			// parent directory and each named from it.
+			name: "sibling models in one scan are each named by their own directory",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, filepath.Join(dir, "sometensor"))
+				model(t, filepath.Join(dir, "dir", "someothertensor"))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "sometensor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+				{
+					Name:     "someothertensor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
 				},
 			},
 		},

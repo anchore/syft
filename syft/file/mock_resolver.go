@@ -76,9 +76,9 @@ func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]Metadata) *Moc
 }
 
 // NewMockResolverForOCIArtifact creates a MockResolver that can resolve files
-// by media type AND surfaces the given OCI ref via the OCIArtifactResolver
-// interface. Intended for tests that exercise the catalogers' OCI-artifact-aware
-// naming code paths.
+// by media type AND surfaces the given OCI ref via the ImageReference method.
+// Intended for tests that exercise the catalogers' OCI-artifact-aware naming
+// code paths.
 func NewMockResolverForOCIArtifact(ref string, mediaTypes map[string][]Location) *MockResolver {
 	r := NewMockResolverForMediaTypes(mediaTypes)
 	r.ociRef = ref

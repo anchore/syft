@@ -30,9 +30,9 @@ type ContainerImageModel struct {
 }
 
 // NewContainerImageModel creates a new resolver with the given temp directory
-// and layer files. The ref is surfaced through the file.OCIArtifactResolver
-// interface so catalogers can derive context-level naming hints from the
-// artifact reference when the layer contents don't carry one.
+// and layer files. The ref is surfaced through the ImageReference method so
+// catalogers can derive context-level naming hints from the artifact reference
+// when the layer contents don't carry one.
 func NewContainerImageModel(tempDir string, layerFiles map[string]LayerInfo, ref string) *ContainerImageModel {
 	// Create locations for all layer files
 	// Each location has RealPath="/", FileSystemID=digest, AccessPath="/"

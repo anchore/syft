@@ -18,7 +18,6 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
@@ -417,10 +416,18 @@ func resolveSafeTensorsOCIIdentity(resolver file.Resolver, md *pkg.SafeTensorsMo
 	}
 }
 
+// ociImageReferencer is the minimal capability ociImageRefBasename needs: a
+// resolver that can surface the OCI image reference it was built from. It is
+// kept local to this package (rather than exported from the file package) so the
+// assertion stays with its only consumer.
+type ociImageReferencer interface {
+	ImageReference() string
+}
+
 func ociImageRefBasename(resolver file.Resolver) string {
 	// TODO: we don't think this approach is generalizable quite yet, but we really do need this information.
 	// (Ideally we should be NOT be type asserting on the file resolver directly).
-	info, ok := resolver.(*fileresolver.ContainerImageModel)
+	info, ok := resolver.(ociImageReferencer)
 	if !ok {
 		return ""
 	}
