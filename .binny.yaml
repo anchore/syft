@@ -1,6 +1,5 @@
 # only pull in version updates that were released more than a week ago (low-pass filter for quickly-retracted releases)
 cooldown: 7d
-
 # Most tools (binny, chronicle, cosign, golangci-lint, goreleaser, gosimports,
 # bouncer, quill, syft, task, gh) are inherited from anchore/go-make's embedded
 # .binny.yaml — see https://github.com/anchore/go-make. Only syft-specific tools
@@ -17,7 +16,7 @@ tools:
   # used to upload test fixture cache
   - name: oras
     version:
-      want: v1.3.1
+      want: v1.3.2
     method: github-release
     with:
       repo: oras-project/oras
@@ -25,7 +24,7 @@ tools:
   # used to parse JSON/YAML annotations on the fixture cache image
   - name: yq
     version:
-      want: v4.52.5
+      want: v4.53.2
     method: github-release
     with:
       repo: mikefarah/yq
