@@ -117,6 +117,7 @@ type dpkgExtractedMetadata struct {
 	Depends       string `mapstructure:"Depends"`
 	PreDepends    string `mapstructure:"PreDepends"` // note: original doc is Pre-Depends
 	Status        string `mapstructure:"Status"`
+	License       string `mapstructure:"License"`
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
@@ -166,6 +167,7 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
 		Provides:      splitPkgList(raw.Provides),
 		Depends:       splitPkgList(raw.Depends),
 		PreDepends:    splitPkgList(raw.PreDepends),
+		License:       raw.License,
 	}
 
 	// there may be an optional conffiles section that we should persist as files

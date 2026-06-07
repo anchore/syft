@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -24,8 +25,10 @@ const (
 )
 
 func newDpkgPackage(ctx context.Context, d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release, evidence ...file.Location) pkg.Package {
-	// TODO: separate pr to license refactor, but explore extracting dpkg-specific license parsing into a separate function
-	var licenses []pkg.License
+	// the License field is empty for standard Debian dpkg entries (licenses live in copyright files),
+	// but opkg/ipkg derivatives carry it inline in the status DB — extract it here so those packages
+	// report licenses without requiring per-package copyright lookups
+	licenses := extractDeclaredLicenses(ctx, d.License, dbLocation)
 
 	locations := file.NewLocationSet(dbLocation)
 	locations.Add(evidence...)
@@ -53,6 +56,21 @@ func newDpkgPackage(ctx context.Context, d pkg.DpkgDBEntry, dbLocation file.Loca
 	p.SetID()
 
 	return p
+}
+
+// extractDeclaredLicenses converts a License field from the status DB into a license set. Returns nil
+// for empty input so standard dpkg entries (which never declare License inline) incur no allocation.
+// Mirrors the alpine cataloger's approach: keep the value whole if it parses as a valid SPDX expression,
+// otherwise split on whitespace to handle space-separated lists.
+func extractDeclaredLicenses(ctx context.Context, raw string, dbLocation file.Location) []pkg.License {
+	if raw == "" {
+		return nil
+	}
+	licenseStrings := []string{raw}
+	if _, err := license.ParseExpression(raw); err != nil {
+		licenseStrings = strings.Fields(raw)
+	}
+	return pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, licenseStrings...)
 }
 
 func newDebArchivePackage(ctx context.Context, location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {

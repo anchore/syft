@@ -1,10 +1,13 @@
 package debian
 
 import (
+	"context"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -107,6 +110,55 @@ func Test_packageURL(t *testing.T) {
 			actual := packageURL(test.metadata, test.distro)
 			if diff := cmp.Diff(test.expected, actual); diff != "" {
 				t.Errorf("unexpected packageURL (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_extractDeclaredLicenses(t *testing.T) {
+	ctx := context.Background()
+	dbLocation := file.NewLocation("/var/lib/opkg/status")
+
+	tests := []struct {
+		name     string
+		raw      string
+		expected []string
+	}{
+		{
+			name:     "empty input returns nil",
+			raw:      "",
+			expected: nil,
+		},
+		{
+			name:     "single SPDX identifier kept whole",
+			raw:      "MIT",
+			expected: []string{"MIT"},
+		},
+		{
+			name:     "valid SPDX expression kept whole",
+			raw:      "Apache-2.0 OR MIT",
+			expected: []string{"Apache-2.0 OR MIT"},
+		},
+		{
+			name:     "non-expression space-separated list is split",
+			raw:      "GPL-2.0 BSD-3-Clause",
+			expected: []string{"GPL-2.0", "BSD-3-Clause"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := extractDeclaredLicenses(ctx, test.raw, dbLocation)
+			var gotValues []string
+			for _, l := range got {
+				gotValues = append(gotValues, l.Value)
+			}
+			// NewLicensesFromLocationWithContext does not guarantee output order
+			sort.Strings(gotValues)
+			want := append([]string(nil), test.expected...)
+			sort.Strings(want)
+			if diff := cmp.Diff(want, gotValues); diff != "" {
+				t.Errorf("unexpected licenses (-want +got):\n%s", diff)
 			}
 		})
 	}

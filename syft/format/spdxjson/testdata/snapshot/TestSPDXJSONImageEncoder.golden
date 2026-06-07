@@ -39,7 +39,7 @@
   },
   {
    "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "SPDXID": "SPDXRef-Package-deb-package-2-9fff7a6526b0de8b",
    "versionInfo": "2.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -95,7 +95,7 @@
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Image-user-image-input",
-   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-4b756c6f6fb127a3",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-9fff7a6526b0de8b",
    "relationshipType": "CONTAINS"
   },
   {

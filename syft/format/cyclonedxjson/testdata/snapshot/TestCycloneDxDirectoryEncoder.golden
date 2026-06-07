@@ -19,7 +19,7 @@
     "component": {
       "bom-ref": "redacted",
       "type": "file",
-      "name": "some/path"
+      "name": "some\\path"
     }
   },
   "components": [
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=ac7d0cc3d0d75001",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",

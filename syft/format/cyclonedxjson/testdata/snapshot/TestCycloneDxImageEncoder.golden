@@ -66,7 +66,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=4b756c6f6fb127a3",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=9fff7a6526b0de8b",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",

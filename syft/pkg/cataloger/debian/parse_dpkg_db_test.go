@@ -238,6 +238,39 @@ func Test_parseDpkgStatus(t *testing.T) {
 			},
 		},
 		{
+			name:        "opkg status with license field",
+			fixturePath: "testdata/var/lib/opkg/status",
+			expected: []pkg.DpkgDBEntry{
+				{
+					Package:      "dropbear",
+					Version:      "2024.85-r0",
+					Architecture: "x86_64",
+					Description:  "Small SSH server and client.",
+					Depends:      []string{"libc", "zlib"},
+					License:      "MIT",
+					Files:        []pkg.DpkgFileRecord{},
+				},
+				{
+					Package:      "busybox",
+					Version:      "1.36.1-r3",
+					Architecture: "x86_64",
+					Description:  "Single executable providing many common UNIX utilities.",
+					Depends:      []string{"libc"},
+					License:      "GPL-2.0-only",
+					Files:        []pkg.DpkgFileRecord{},
+				},
+				{
+					Package:      "kernel-modules",
+					Version:      "6.6.0-r0",
+					Architecture: "x86_64",
+					Description:  "Loadable kernel modules with mixed licensing.",
+					Depends:      []string{"kmod"},
+					License:      "GPL-2.0 BSD-3-Clause",
+					Files:        []pkg.DpkgFileRecord{},
+				},
+			},
+		},
+		{
 			name:        "deinstall status packages are ignored",
 			fixturePath: "testdata/var/lib/dpkg/status.d/deinstall",
 			expected: []pkg.DpkgDBEntry{
