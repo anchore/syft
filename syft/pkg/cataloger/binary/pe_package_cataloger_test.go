@@ -62,3 +62,30 @@ func Test_PEPackageCataloger(t *testing.T) {
 	}
 
 }
+
+func Test_PEPackageCataloger_Globs(t *testing.T) {
+	tests := []struct {
+		name     string
+		fixture  string
+		expected []string
+	}{
+		{
+			name:    "obtain PE binary files (dll, exe, bpl)",
+			fixture: "testdata/glob-paths",
+			expected: []string{
+				"src/library.dll",
+				"src/program.exe",
+				"src/archive.bpl",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, test.fixture).
+				ExpectsResolverContentQueries(test.expected).
+				TestCataloger(t, NewPEPackageCataloger())
+		})
+	}
+}

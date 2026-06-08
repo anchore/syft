@@ -12,10 +12,11 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
 )
 
-// NewPEPackageCataloger returns a cataloger that interprets packages from DLL and EXE files.
+// NewPEPackageCataloger returns a cataloger that interprets packages from DLL, EXE, and BPL files.
+// BPL (Borland Package Library) files are PE-format binaries used by Delphi and C++Builder.
 func NewPEPackageCataloger() pkg.Cataloger {
 	return generic.NewCataloger("pe-binary-package-cataloger").
-		WithParserByGlobs(parsePE, "**/*.dll", "**/*.exe")
+		WithParserByGlobs(parsePE, "**/*.dll", "**/*.exe", "**/*.bpl")
 }
 
 func parsePE(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {

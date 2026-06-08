@@ -9,3 +9,4 @@ classifiers/bin
 !VERSION*
 !classifiers/snippets/**/bin/
 !*.exe
+!*.dll
