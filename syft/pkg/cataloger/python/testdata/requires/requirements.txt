@@ -25,3 +25,4 @@ celery[redis, pytest] == 4.4.7 # should remove [redis, pytest]
 requests[security] == 2.8.* ; python_version < "2.7" and sys_platform == "linux"
 GithubSampleProject == 3.7.1 @ git+https://github.com/owner/repo@releases/tag/v3.7.1
 FrIeNdLy-_-bArD == 1.0.0
+local-version == 1.2.3+gcr.2
