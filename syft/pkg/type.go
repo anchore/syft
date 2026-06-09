@@ -55,6 +55,7 @@ const (
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
 	ModelPkg                Type = "model"
+	VscodeExtensionPkg      Type = "vscode-extension"
 )
 
 // AllPkgs represents all supported package types
@@ -100,6 +101,7 @@ var AllPkgs = []Type{
 	WordpressPluginPkg,
 	HomebrewPkg,
 	ModelPkg,
+	VscodeExtensionPkg,
 }
 
 // PackageURLType returns the PURL package type for the current package.
@@ -176,6 +178,10 @@ func (t Type) PackageURLType() string {
 		return "wordpress-plugin"
 	case HomebrewPkg:
 		return "homebrew"
+	case VscodeExtensionPkg:
+		// no formally registered PURL type for VSCode extensions yet — using
+		// the descriptive form, which matches existing community usage.
+		return "vscode-extension"
 	default:
 		// TODO: should this be a "generic" purl type instead?
 		return ""
@@ -264,6 +270,8 @@ func TypeByName(name string) Type {
 		return WordpressPluginPkg
 	case "homebrew":
 		return HomebrewPkg
+	case "vscode-extension":
+		return VscodeExtensionPkg
 	default:
 		return UnknownPkg
 	}

@@ -37,6 +37,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/swift"
 	"github.com/anchore/syft/syft/pkg/cataloger/swipl"
 	"github.com/anchore/syft/syft/pkg/cataloger/terraform"
+	"github.com/anchore/syft/syft/pkg/cataloger/vscode"
 	"github.com/anchore/syft/syft/pkg/cataloger/wordpress"
 )
 
@@ -180,6 +181,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
 		newSimplePackageTaskFactory(snap.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "snap"),
 		newSimplePackageTaskFactory(ai.NewGGUFCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "gguf", "ml"),
+		newSimplePackageTaskFactory(vscode.NewExtensionsCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "vscode", "vscode-extension", "editor"),
 
 		// deprecated catalogers ////////////////////////////////////////
 		// these are catalogers that should not be selectable other than specific inclusion via name or "deprecated" tag (to remain backwards compatible)
