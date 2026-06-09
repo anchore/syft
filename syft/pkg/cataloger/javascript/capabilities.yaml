@@ -39,7 +39,7 @@ catalogers:
         package_types: # AUTO-GENERATED
           - npm
         json_schema_types: # AUTO-GENERATED
-          - JavaScriptBunLockEntry
+          - JavascriptBunLockEntry
         capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: false

@@ -1868,37 +1868,6 @@
       ],
       "description": "JavaPomProperties represents the fields of interest extracted from a Java archive's pom.properties file."
     },
-    "JavaScriptBunLockEntry": {
-      "properties": {
-        "identifier": {
-          "type": "string",
-          "description": "Identifier is the package identifier (name@version)"
-        },
-        "resolved": {
-          "type": "string",
-          "description": "Resolved is the resolved URL or empty string"
-        },
-        "dependencies": {
-          "additionalProperties": {
-            "$ref": "#/$defs/BunLockPackageDependencies"
-          },
-          "type": "object",
-          "description": "Dependencies contains package dependency information"
-        },
-        "integrity": {
-          "type": "string",
-          "description": "Integrity is Subresource Integrity hash for verification (SRI format)"
-        }
-      },
-      "type": "object",
-      "required": [
-        "identifier",
-        "resolved",
-        "dependencies",
-        "integrity"
-      ],
-      "description": "BunLockEntry represents a single entry in the \"packages\" section of a bun.lock file"
-    },
     "JavaVMRelease": {
       "properties": {
         "implementor": {
@@ -1991,6 +1960,37 @@
       },
       "type": "object",
       "description": "JavaVMRelease represents JVM version and build information extracted from the release file in a Java installation."
+    },
+    "JavascriptBunLockEntry": {
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "description": "Identifier is the package identifier (name@version)"
+        },
+        "resolved": {
+          "type": "string",
+          "description": "Resolved is the resolved URL or empty string"
+        },
+        "dependencies": {
+          "additionalProperties": {
+            "$ref": "#/$defs/BunLockPackageDependencies"
+          },
+          "type": "object",
+          "description": "Dependencies contains package dependency information"
+        },
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is Subresource Integrity hash for verification (SRI format)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "identifier",
+        "resolved",
+        "dependencies",
+        "integrity"
+      ],
+      "description": "BunLockEntry represents a single entry in the \"packages\" section of a bun.lock file"
     },
     "JavascriptNpmPackage": {
       "properties": {
@@ -2732,7 +2732,7 @@
               "$ref": "#/$defs/JavaJvmInstallation"
             },
             {
-              "$ref": "#/$defs/JavaScriptBunLockEntry"
+              "$ref": "#/$defs/JavascriptBunLockEntry"
             },
             {
               "$ref": "#/$defs/JavascriptNpmPackage"
