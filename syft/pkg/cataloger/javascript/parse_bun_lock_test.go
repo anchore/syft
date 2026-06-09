@@ -403,12 +403,27 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parseBunLock, expectedPkgs, expectedRelationships)
 }
 
-func TestParseBunLock_JSONC(t *testing.T) {
+// TestParseBunLock_Fixtures parses each bun.lock fixture and asserts the set of cataloged
+// packages (and, where given, specific integrity hashes). It covers the real-world formats
+// bun emits:
+//   - strict JSON
+//   - JSONC with trailing commas (see https://bun.sh/blog/bun-lock-text-lockfile)
+//   - variable-length package tuples whose field positions differ by source:
+//   - root (2 elements): [identifier, {bin, binDir}], e.g. ["my-monorepo@root:", {...}]
+//   - workspace (1 element): only the identifier, e.g. ["@my/util@workspace:packages/util"]
+//   - github without integrity (3 elements): [identifier, {metadata}, resolved]
+//   - github with integrity (4 elements): [identifier, {metadata}, resolved, integrity]
+//   - registry (4 elements): [identifier, registry, {metadata}, integrity]
+//
+// The github and registry forms are both four elements but place the metadata object and
+// integrity hash at different indices, so they must be located by type rather than position.
+func TestParseBunLock_Fixtures(t *testing.T) {
 	tests := []struct {
 		name                   string
 		fixture                string
 		includeDevDependencies bool
 		wantNames              []string
+		wantIntegrity          map[string]string // package name -> expected integrity, checked when set
 	}{
 		{
 			name:                   "strict json",
@@ -433,6 +448,19 @@ func TestParseBunLock_JSONC(t *testing.T) {
 			includeDevDependencies: true,
 			wantNames:              []string{"axios", "follow-redirects", "lodash"},
 		},
+		{
+			name:                   "variable length tuples",
+			fixture:                "test-fixtures/bun-variable-tuples/bun.lock",
+			includeDevDependencies: true,
+			// the workspace package (@my/util) is a local first-party package, not a resolved
+			// third-party dependency, so it is not cataloged from the lockfile.
+			wantNames: []string{"axios", "follow-redirects", "ghostty-web", "tracestrings"},
+			// the github tuple places its integrity hash at index 3 with the metadata object at
+			// index 1, so a position-based parser (expecting metadata at index 2) would miss it.
+			wantIntegrity: map[string]string{
+				"ghostty-web": "sha512-nLx3R2hPwQvmL42LbiaQvbJpPZAXjzUtgU23G2LaKMRuA2mdXHdLQ5Hfw0PmxsohbqO/GhKOnTMcRrlLKS81+g==",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -450,11 +478,20 @@ func TestParseBunLock_JSONC(t *testing.T) {
 			)
 			require.NoError(t, err)
 
+			byName := make(map[string]pkg.Package)
 			var names []string
 			for _, p := range pkgs {
+				byName[p.Name] = p
 				names = append(names, p.Name)
 			}
 			assert.ElementsMatch(t, tt.wantNames, names)
+
+			for name, integrity := range tt.wantIntegrity {
+				require.Contains(t, byName, name)
+				meta, ok := byName[name].Metadata.(pkg.BunLockEntry)
+				require.True(t, ok)
+				assert.Equal(t, integrity, meta.Integrity)
+			}
 		})
 	}
 }

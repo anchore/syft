@@ -1,6 +1,7 @@
 package javascript
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -74,10 +75,7 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 
 	log.WithFields("lockfileVersion", lockfile.LockfileVersion, "configVersion", lockfile.ConfigVersion).Trace("parsed bun.lock metadata")
 
-	bunPkgs, err := parseBunLockPackages(lockfile)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse bun.lock packages: %w", err)
-	}
+	bunPkgs := parseBunLockPackages(lockfile)
 
 	// Collect dev dependencies from all workspaces
 	devDeps := make(map[string]bool)
@@ -108,17 +106,17 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 	return packages, dependency.Resolve(bunLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")
 }
 
-func parseBunLockPackages(lockfile bunLockfile) ([]bunPackage, error) {
+func parseBunLockPackages(lockfile bunLockfile) []bunPackage {
 	packages := make([]bunPackage, 0, len(lockfile.Packages))
 
 	for pkgName, pkgData := range lockfile.Packages {
 		var pkgArray []json.RawMessage
 		if err := json.Unmarshal(pkgData, &pkgArray); err != nil {
-			return nil, fmt.Errorf("failed to parse bun.lock package entry %q: %w", pkgName, err)
+			log.WithFields("package", pkgName, "error", err).Trace("unable to parse bun.lock package entry")
+			continue
 		}
-
-		if len(pkgArray) < 4 {
-			return nil, fmt.Errorf("bun.lock package entry %q has unexpected format: expected at least 4 elements, got %d", pkgName, len(pkgArray))
+		if len(pkgArray) == 0 {
+			continue
 		}
 
 		// Extract identifier (name@version) from first element
@@ -135,20 +133,15 @@ func parseBunLockPackages(lockfile bunLockfile) ([]bunPackage, error) {
 			continue
 		}
 
-		var resolved string
-		if err := json.Unmarshal(pkgArray[1], &resolved); err != nil {
-			log.WithFields("package", pkgName, "error", err).Trace("unable to parse bun.lock package resolved")
+		// root, workspace, link, and file entries are local first-party packages rather than
+		// resolved third-party dependencies, so they are not cataloged from the lockfile.
+		if isLocalBunPackage(version) {
+			continue
 		}
 
-		var metadata pkg.BunLockPackageDependencies
-		if err := json.Unmarshal(pkgArray[2], &metadata); err != nil {
-			log.WithFields("package", pkgName, "error", err).Trace("unable to parse bun.lock package metadata")
-		}
-
-		var integrity string
-		if err := json.Unmarshal(pkgArray[3], &integrity); err != nil {
-			log.WithFields("package", pkgName, "error", err).Trace("unable to parse bun.lock package integrity")
-		}
+		// tuple length and the positions of the metadata object and integrity hash vary by
+		// source (registry, git, tarball), locate by type
+		metadata, integrity := extractBunPackageFields(pkgName, pkgArray[1:])
 
 		dependencies := make(map[string]pkg.BunLockPackageDependencies)
 		if len(metadata.Dependencies) > 0 || len(metadata.OptionalDependencies) > 0 || len(metadata.PeerDependencies) > 0 || len(metadata.Bin) > 0 || metadata.OS != "" || metadata.CPU != "" {
@@ -159,13 +152,64 @@ func parseBunLockPackages(lockfile bunLockfile) ([]bunPackage, error) {
 			Name:         name,
 			Version:      version,
 			Identifier:   identifier,
-			Resolved:     resolved,
 			Integrity:    integrity,
 			Dependencies: dependencies,
 		})
 	}
 
-	return packages, nil
+	return packages
+}
+
+// extractBunPackageFields locates the metadata object and integrity hash within the trailing
+// elements of a bun.lock package tuple. Their positions vary by source: registry entries are
+// [identifier, registry, {metadata}, integrity]
+func extractBunPackageFields(pkgName string, elements []json.RawMessage) (pkg.BunLockPackageDependencies, string) {
+	var metadata pkg.BunLockPackageDependencies
+	var integrity string
+
+	for _, raw := range elements {
+		value := bytes.TrimSpace(raw)
+		if len(value) == 0 {
+			continue
+		}
+
+		switch value[0] {
+		case '{':
+			if err := json.Unmarshal(raw, &metadata); err != nil {
+				log.WithFields("package", pkgName, "error", err).Trace("unable to parse bun.lock package metadata")
+			}
+		case '"':
+			var s string
+			if err := json.Unmarshal(raw, &s); err == nil && isIntegrityHash(s) {
+				integrity = s
+			}
+		}
+	}
+
+	return metadata, integrity
+}
+
+// isIntegrityHash reports whether s is a Subresource Integrity hash (SRI format), which lets it
+// be distinguished from the other string fields in a tuple
+func isIntegrityHash(s string) bool {
+	for _, prefix := range []string{"sha512-", "sha384-", "sha256-", "sha1-"} {
+		if strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// isLocalBunPackage reports whether a package version refers to a local first-party package
+// (the root project, a workspace, a symlink, or a folder) rather than a resolved third-party
+// dependency. These correspond to the root/workspace/link/file resolution forms in bun.lock.
+func isLocalBunPackage(version string) bool {
+	for _, prefix := range []string{"root:", "workspace:", "link:", "file:"} {
+		if strings.HasPrefix(version, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // parseBunPackageIdentifier extracts the package name and version from a bun.lock identifier.
