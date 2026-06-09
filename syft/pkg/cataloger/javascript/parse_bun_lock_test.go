@@ -1,7 +1,12 @@
 package javascript
 
 import (
+	"context"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -396,6 +401,62 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 
 	adapter := newGenericBunLockAdapter(CatalogerConfig{IncludeDevDependencies: false})
 	pkgtest.TestFileParser(t, fixture, adapter.parseBunLock, expectedPkgs, expectedRelationships)
+}
+
+func TestParseBunLock_JSONC(t *testing.T) {
+	tests := []struct {
+		name                   string
+		fixture                string
+		includeDevDependencies bool
+		wantNames              []string
+	}{
+		{
+			name:                   "strict json",
+			fixture:                "test-fixtures/bun/bun.lock",
+			includeDevDependencies: true,
+			wantNames: []string{
+				"@img/sharp-darwin-arm64",
+				"@img/sharp-linux-x64",
+				"axios",
+				"color",
+				"eslint",
+				"eslint-visitor-keys",
+				"follow-redirects",
+				"lodash",
+				"sharp",
+				"typescript",
+			},
+		},
+		{
+			name:                   "jsonc with trailing commas",
+			fixture:                "test-fixtures/bun-trailing-comma/bun.lock",
+			includeDevDependencies: true,
+			wantNames:              []string{"axios", "follow-redirects", "lodash"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := os.Open(tt.fixture)
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = f.Close() })
+
+			adapter := newGenericBunLockAdapter(CatalogerConfig{IncludeDevDependencies: tt.includeDevDependencies})
+			pkgs, _, err := adapter.parseBunLock(
+				context.Background(),
+				nil,
+				nil,
+				file.NewLocationReadCloser(file.NewLocation(tt.fixture), f),
+			)
+			require.NoError(t, err)
+
+			var names []string
+			for _, p := range pkgs {
+				names = append(names, p.Name)
+			}
+			assert.ElementsMatch(t, tt.wantNames, names)
+		})
+	}
 }
 
 func TestParseBunPackageIdentifier(t *testing.T) {

@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"strings"
+
+	"github.com/tailscale/hujson"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
@@ -52,9 +55,16 @@ func newGenericBunLockAdapter(cfg CatalogerConfig) genericBunLockAdapter {
 
 // parseBunLock is the main parser function for bun.lock files.
 func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // bun.lock is JSONC; the full document must be buffered for hujson.Standardize before unmarshalling
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load bun.lock file: %w", err)
+	}
+
+	// bun.lock is JSONC (JSON with comments and trailing commas), not strict JSON, so it must
+	// be standardized before it can be unmarshalled. See https://bun.sh/blog/bun-lock-text-lockfile
+	data, err = hujson.Standardize(data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to standardize bun.lock file: %w", err)
 	}
 
 	var lockfile bunLockfile
@@ -80,9 +90,7 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 	// Determine dev-only packages
 	prodDeps := make(map[string]string)
 	for _, workspace := range lockfile.Workspaces {
-		for name, version := range workspace.Dependencies {
-			prodDeps[name] = version
-		}
+		maps.Copy(prodDeps, workspace.Dependencies)
 	}
 
 	devOnlyPkgs := findDevOnlyBunPkgs(bunPkgs, prodDeps, devDeps)

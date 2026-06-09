@@ -101,7 +101,10 @@ require (
 	modernc.org/sqlite v1.51.0
 )
 
-require github.com/pb33f/ordered-map/v2 v2.3.1
+require (
+	github.com/pb33f/ordered-map/v2 v2.3.1
+	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
+)
 
 require (
 	cel.dev/expr v0.25.1 // indirect
