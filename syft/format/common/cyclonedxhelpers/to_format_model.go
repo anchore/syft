@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	formatinternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -55,7 +56,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	artifacts := s.Artifacts
 
 	for _, coordinate := range coordinates {
-		var metadata *file.Metadata
 		// File Info
 		fileMetadata, exists := artifacts.FileMetadata[coordinate]
 		// no file metadata then don't include in SBOM
@@ -70,7 +70,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 			// skip dir, symlinks and sockets for the final bom
 			continue
 		}
-		metadata = &fileMetadata
 
 		// Digests
 		var digests []file.Digest
@@ -79,10 +78,14 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 		}
 
 		cdxHashes := digestsToHashes(digests)
+		relativePath, err := formatinternal.ConvertAbsoluteToRelative(coordinate.RealPath)
+		if err != nil {
+			relativePath = coordinate.RealPath
+		}
 		components = append(components, cyclonedx.Component{
 			BOMRef: string(coordinate.ID()),
 			Type:   cyclonedx.ComponentTypeFile,
-			Name:   metadata.Path,
+			Name:   relativePath,
 			Hashes: &cdxHashes,
 		})
 	}
