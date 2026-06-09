@@ -176,6 +176,7 @@ func Test_LockCataloger_Globs(t *testing.T) {
 				"src/package-lock.json",
 				"src/pnpm-lock.yaml",
 				"src/yarn.lock",
+				"src/bun.lock",
 			},
 		},
 	}
