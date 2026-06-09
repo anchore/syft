@@ -1,0 +1,24 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "test-dev-deps",
+      "dependencies": {
+        "prod-pkg": "^1.0.0",
+      },
+      "devDependencies": {
+        "dev-pkg": "^1.0.0",
+      },
+    },
+  },
+  "packages": {
+    "dev-only-transitive": ["dev-only-transitive@1.0.0", "", {}, "sha512-devonly=="],
+
+    "dev-pkg": ["dev-pkg@1.0.0", "", { "dependencies": { "dev-only-transitive": "^1.0.0", "shared-pkg": "^1.0.0" } }, "sha512-dev=="],
+
+    "prod-pkg": ["prod-pkg@1.0.0", "", { "dependencies": { "shared-pkg": "^1.0.0" } }, "sha512-prod=="],
+
+    "shared-pkg": ["shared-pkg@1.0.0", "", {}, "sha512-shared=="],
+  }
+}
