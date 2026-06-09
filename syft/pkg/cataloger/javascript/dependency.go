@@ -95,13 +95,11 @@ func bunLockDependencySpecifier(p pkg.Package) dependency.Specification {
 
 	var requires []string
 
-	for _, deps := range meta.Dependencies {
-		for name := range deps.Dependencies {
-			requires = append(requires, name)
-		}
-		for name := range deps.OptionalDependencies {
-			requires = append(requires, name)
-		}
+	for name := range meta.Dependencies {
+		requires = append(requires, name)
+	}
+	for name := range meta.OptionalDependencies {
+		requires = append(requires, name)
 	}
 	return dependency.Specification{
 		ProvidesRequires: dependency.ProvidesRequires{

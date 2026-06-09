@@ -63,26 +63,26 @@ type PnpmLockEntry struct {
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
 
-type BunLockPackageDependencies struct {
-	Dependencies         map[string]string `mapstructure:"dependencies" json:"dependencies"`
-	OptionalDependencies map[string]string `mapstructure:"optionalDependencies" json:"optionalDependencies"`
-	PeerDependencies     map[string]string `mapstructure:"peerDependencies" json:"peerDependencies"`
-	Bin                  map[string]string `mapstructure:"bin" json:"bin"`
-	OS                   string            `mapstructure:"os" json:"os"`
-	CPU                  string            `mapstructure:"cpu" json:"cpu"`
-}
-
 // BunLockEntry represents a single entry in the "packages" section of a bun.lock file
 type BunLockEntry struct {
-	// Identifier is the package identifier (name@version)
-	Identifier string `mapstructure:"identifier" json:"identifier"`
-
-	// Resolved is the resolved URL or empty string
-	Resolved string `mapstructure:"resolved" json:"resolved"`
-
-	// Dependencies contains package dependency information
-	Dependencies map[string]BunLockPackageDependencies `mapstructure:"dependencies" json:"dependencies"`
-
 	// Integrity is Subresource Integrity hash for verification (SRI format)
 	Integrity string `mapstructure:"integrity" json:"integrity"`
+
+	// Dependencies is a map of runtime dependencies and their version specifiers
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
+
+	// OptionalDependencies is a map of optional dependencies and their version specifiers
+	OptionalDependencies map[string]string `mapstructure:"optionalDependencies" json:"optionalDependencies"`
+
+	// PeerDependencies is a map of peer dependencies and their version specifiers
+	PeerDependencies map[string]string `mapstructure:"peerDependencies" json:"peerDependencies"`
+
+	// Bin is a map of binary names to the paths they are installed to
+	Bin map[string]string `mapstructure:"bin" json:"bin"`
+
+	// OS is the operating system constraint for the package (e.g. "darwin")
+	OS string `mapstructure:"os" json:"os"`
+
+	// CPU is the CPU architecture constraint for the package (e.g. "arm64")
+	CPU string `mapstructure:"cpu" json:"cpu"`
 }

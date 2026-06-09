@@ -220,7 +220,7 @@ func newYarnLockPackage(ctx context.Context, cfg CatalogerConfig, resolver file.
 	)
 }
 
-func newBunPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, integrity string, dependencies map[string]pkg.BunLockPackageDependencies) pkg.Package {
+func newBunPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resolver, location file.Location, name, version string, integrity string, metadata bunPackageMetadata) pkg.Package {
 	var licenseSet pkg.LicenseSet
 
 	if cfg.SearchRemoteLicenses {
@@ -244,7 +244,15 @@ func newBunPackage(ctx context.Context, cfg CatalogerConfig, resolver file.Resol
 			PURL:      packageURL(name, version),
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
-			Metadata:  pkg.BunLockEntry{Identifier: name + "@" + version, Integrity: integrity, Dependencies: dependencies},
+			Metadata: pkg.BunLockEntry{
+				Integrity:            integrity,
+				Dependencies:         metadata.Dependencies,
+				OptionalDependencies: metadata.OptionalDependencies,
+				PeerDependencies:     metadata.PeerDependencies,
+				Bin:                  metadata.Bin,
+				OS:                   metadata.OS,
+				CPU:                  metadata.CPU,
+			},
 		},
 	)
 }

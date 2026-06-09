@@ -28,14 +28,9 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "@img/sharp-darwin-arm64@0.33.5",
-				Integrity:  "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"@img/sharp-darwin-arm64": {
-						OS:  "darwin",
-						CPU: "arm64",
-					},
-				},
+				Integrity: "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==",
+				OS:        "darwin",
+				CPU:       "arm64",
 			},
 		},
 		{
@@ -46,14 +41,9 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "@img/sharp-linux-x64@0.33.5",
-				Integrity:  "sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"@img/sharp-linux-x64": {
-						OS:  "linux",
-						CPU: "x64",
-					},
-				},
+				Integrity: "sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==",
+				OS:        "linux",
+				CPU:       "x64",
 			},
 		},
 		{
@@ -64,14 +54,9 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "axios@1.6.0",
-				Integrity:  "sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"axios": {
-						Dependencies: map[string]string{
-							"follow-redirects": "^1.15.0",
-						},
-					},
+				Integrity: "sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==",
+				Dependencies: map[string]string{
+					"follow-redirects": "^1.15.0",
 				},
 			},
 		},
@@ -83,9 +68,7 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier:   "color@4.2.3",
-				Integrity:    "sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{},
+				Integrity: "sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==",
 			},
 		},
 		{
@@ -96,17 +79,12 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "eslint@9.0.0",
-				Integrity:  "sha512-IMryZ5SudxzQvuod6rUdxH8KRx8BKHkTXpHWe3BJ9Qef3PbG9v9vjSB0STcKOVjTvPnG1+9T5e4xfzZ4wKdqiA==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"eslint": {
-						Dependencies: map[string]string{
-							"eslint-visitor-keys": "^4.0.0",
-						},
-						Bin: map[string]string{
-							"eslint": "bin/eslint.js",
-						},
-					},
+				Integrity: "sha512-IMryZ5SudxzQvuod6rUdxH8KRx8BKHkTXpHWe3BJ9Qef3PbG9v9vjSB0STcKOVjTvPnG1+9T5e4xfzZ4wKdqiA==",
+				Dependencies: map[string]string{
+					"eslint-visitor-keys": "^4.0.0",
+				},
+				Bin: map[string]string{
+					"eslint": "bin/eslint.js",
 				},
 			},
 		},
@@ -118,9 +96,7 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier:   "eslint-visitor-keys@4.0.0",
-				Integrity:    "sha512-OtIRv/2GyiF6o/d8K7MYKKbXrOUBIK6SfkIRM4Z0dY3w+LiQ0vy3F57m0Z71bjbyeiWFiHJ8brqnmE6H6/jEuw==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{},
+				Integrity: "sha512-OtIRv/2GyiF6o/d8K7MYKKbXrOUBIK6SfkIRM4Z0dY3w+LiQ0vy3F57m0Z71bjbyeiWFiHJ8brqnmE6H6/jEuw==",
 			},
 		},
 		{
@@ -131,14 +107,9 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "follow-redirects@1.15.3",
-				Integrity:  "sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"follow-redirects": {
-						PeerDependencies: map[string]string{
-							"debug": "*",
-						},
-					},
+				Integrity: "sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==",
+				PeerDependencies: map[string]string{
+					"debug": "*",
 				},
 			},
 		},
@@ -150,9 +121,7 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier:   "lodash@4.17.21",
-				Integrity:    "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{},
+				Integrity: "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
 			},
 		},
 		{
@@ -163,18 +132,13 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "sharp@0.33.5",
-				Integrity:  "sha512-haPVm1EkS9pgvHrQ/F3Xy+hgxt/HmijnBghFeqCkXp3e+MH2fYF5o6qzrNJJ2k9s4bsZX0QBUCbFjr8VdLAIww==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"sharp": {
-						Dependencies: map[string]string{
-							"color": "^4.2.3",
-						},
-						OptionalDependencies: map[string]string{
-							"@img/sharp-darwin-arm64": "0.33.5",
-							"@img/sharp-linux-x64":    "0.33.5",
-						},
-					},
+				Integrity: "sha512-haPVm1EkS9pgvHrQ/F3Xy+hgxt/HmijnBghFeqCkXp3e+MH2fYF5o6qzrNJJ2k9s4bsZX0QBUCbFjr8VdLAIww==",
+				Dependencies: map[string]string{
+					"color": "^4.2.3",
+				},
+				OptionalDependencies: map[string]string{
+					"@img/sharp-darwin-arm64": "0.33.5",
+					"@img/sharp-linux-x64":    "0.33.5",
 				},
 			},
 		},
@@ -186,15 +150,10 @@ func TestParseBunLock(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "typescript@5.0.0",
-				Integrity:  "sha512-w5c493tkwFQLjKSYw0JvvVbqJ9ZM2SXoWBv/wqHYqWN/jP9bGilMKFbAKkpRHfaLxPn6A3K/fmJ6LD8B0EO9oA==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"typescript": {
-						Bin: map[string]string{
-							"tsc":      "bin/tsc",
-							"tsserver": "bin/tsserver",
-						},
-					},
+				Integrity: "sha512-w5c493tkwFQLjKSYw0JvvVbqJ9ZM2SXoWBv/wqHYqWN/jP9bGilMKFbAKkpRHfaLxPn6A3K/fmJ6LD8B0EO9oA==",
+				Bin: map[string]string{
+					"tsc":      "bin/tsc",
+					"tsserver": "bin/tsserver",
 				},
 			},
 		},
@@ -253,14 +212,9 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "@img/sharp-darwin-arm64@0.33.5",
-				Integrity:  "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"@img/sharp-darwin-arm64": {
-						OS:  "darwin",
-						CPU: "arm64",
-					},
-				},
+				Integrity: "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==",
+				OS:        "darwin",
+				CPU:       "arm64",
 			},
 		},
 		{
@@ -271,14 +225,9 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "@img/sharp-linux-x64@0.33.5",
-				Integrity:  "sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"@img/sharp-linux-x64": {
-						OS:  "linux",
-						CPU: "x64",
-					},
-				},
+				Integrity: "sha512-MmWmQ3iPFZr0Iev+BAgVMb3ZyC4KeFc3jFxnNbEPas60e1cIfevbtuyf9nDGIzOaW9PdnDciJm+wFFaTlj5xYw==",
+				OS:        "linux",
+				CPU:       "x64",
 			},
 		},
 		{
@@ -289,14 +238,9 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "axios@1.6.0",
-				Integrity:  "sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"axios": {
-						Dependencies: map[string]string{
-							"follow-redirects": "^1.15.0",
-						},
-					},
+				Integrity: "sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==",
+				Dependencies: map[string]string{
+					"follow-redirects": "^1.15.0",
 				},
 			},
 		},
@@ -308,9 +252,7 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier:   "color@4.2.3",
-				Integrity:    "sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{},
+				Integrity: "sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==",
 			},
 		},
 		{
@@ -321,14 +263,9 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "follow-redirects@1.15.3",
-				Integrity:  "sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"follow-redirects": {
-						PeerDependencies: map[string]string{
-							"debug": "*",
-						},
-					},
+				Integrity: "sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==",
+				PeerDependencies: map[string]string{
+					"debug": "*",
 				},
 			},
 		},
@@ -340,9 +277,7 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier:   "lodash@4.17.21",
-				Integrity:    "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{},
+				Integrity: "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
 			},
 		},
 		{
@@ -353,18 +288,13 @@ func TestParseBunLock_ExcludeDevDependencies(t *testing.T) {
 			Language:  pkg.JavaScript,
 			Type:      pkg.NpmPkg,
 			Metadata: pkg.BunLockEntry{
-				Identifier: "sharp@0.33.5",
-				Integrity:  "sha512-haPVm1EkS9pgvHrQ/F3Xy+hgxt/HmijnBghFeqCkXp3e+MH2fYF5o6qzrNJJ2k9s4bsZX0QBUCbFjr8VdLAIww==",
-				Dependencies: map[string]pkg.BunLockPackageDependencies{
-					"sharp": {
-						Dependencies: map[string]string{
-							"color": "^4.2.3",
-						},
-						OptionalDependencies: map[string]string{
-							"@img/sharp-darwin-arm64": "0.33.5",
-							"@img/sharp-linux-x64":    "0.33.5",
-						},
-					},
+				Integrity: "sha512-haPVm1EkS9pgvHrQ/F3Xy+hgxt/HmijnBghFeqCkXp3e+MH2fYF5o6qzrNJJ2k9s4bsZX0QBUCbFjr8VdLAIww==",
+				Dependencies: map[string]string{
+					"color": "^4.2.3",
+				},
+				OptionalDependencies: map[string]string{
+					"@img/sharp-darwin-arm64": "0.33.5",
+					"@img/sharp-linux-x64":    "0.33.5",
 				},
 			},
 		},

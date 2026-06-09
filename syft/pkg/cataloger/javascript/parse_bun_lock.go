@@ -20,17 +20,25 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
-// bunPackage holds the raw name, version, and metadata extracted from the lockfile.
+// bunPackage holds the name, version, and metadata extracted from a single lockfile entry.
 type bunPackage struct {
-	Name         string
-	Version      string
-	Identifier   string
-	Resolved     string
-	Integrity    string
-	Dependencies map[string]pkg.BunLockPackageDependencies
+	Name      string
+	Version   string
+	Integrity string
+	Metadata  bunPackageMetadata
 }
 
-// bunLockfile represents the structure of a bun.lock file (JSON format).
+// bunPackageMetadata is the metadata object (the third element) of a bun.lock package tuple.
+type bunPackageMetadata struct {
+	Dependencies         map[string]string `json:"dependencies"`
+	OptionalDependencies map[string]string `json:"optionalDependencies"`
+	PeerDependencies     map[string]string `json:"peerDependencies"`
+	Bin                  map[string]string `json:"bin"`
+	OS                   string            `json:"os"`
+	CPU                  string            `json:"cpu"`
+}
+
+// bunLockfile represents the structure of a bun.lock file (JSONC format).
 type bunLockfile struct {
 	LockfileVersion int                        `json:"lockfileVersion"`
 	ConfigVersion   int                        `json:"configVersion"`
@@ -98,7 +106,7 @@ func (a genericBunLockAdapter) parseBunLock(ctx context.Context, resolver file.R
 		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
 			continue
 		}
-		packages = append(packages, newBunPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
+		packages = append(packages, newBunPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Metadata))
 	}
 
 	pkg.Sort(packages)
@@ -143,17 +151,11 @@ func parseBunLockPackages(lockfile bunLockfile) []bunPackage {
 		// source (registry, git, tarball), locate by type
 		metadata, integrity := extractBunPackageFields(pkgName, pkgArray[1:])
 
-		dependencies := make(map[string]pkg.BunLockPackageDependencies)
-		if len(metadata.Dependencies) > 0 || len(metadata.OptionalDependencies) > 0 || len(metadata.PeerDependencies) > 0 || len(metadata.Bin) > 0 || metadata.OS != "" || metadata.CPU != "" {
-			dependencies[name] = metadata
-		}
-
 		packages = append(packages, bunPackage{
-			Name:         name,
-			Version:      version,
-			Identifier:   identifier,
-			Integrity:    integrity,
-			Dependencies: dependencies,
+			Name:      name,
+			Version:   version,
+			Integrity: integrity,
+			Metadata:  metadata,
 		})
 	}
 
@@ -163,8 +165,8 @@ func parseBunLockPackages(lockfile bunLockfile) []bunPackage {
 // extractBunPackageFields locates the metadata object and integrity hash within the trailing
 // elements of a bun.lock package tuple. Their positions vary by source: registry entries are
 // [identifier, registry, {metadata}, integrity]
-func extractBunPackageFields(pkgName string, elements []json.RawMessage) (pkg.BunLockPackageDependencies, string) {
-	var metadata pkg.BunLockPackageDependencies
+func extractBunPackageFields(pkgName string, elements []json.RawMessage) (bunPackageMetadata, string) {
+	var metadata bunPackageMetadata
 	var integrity string
 
 	for _, raw := range elements {
@@ -238,13 +240,11 @@ func findDevOnlyBunPkgs(bunPkgs []bunPackage, prodDeps map[string]string, devDep
 	depGraph := make(map[string][]string)
 	for _, p := range bunPkgs {
 		var deps []string
-		for _, metadata := range p.Dependencies {
-			for depName := range metadata.Dependencies {
-				deps = append(deps, depName)
-			}
-			for depName := range metadata.OptionalDependencies {
-				deps = append(deps, depName)
-			}
+		for depName := range p.Metadata.Dependencies {
+			deps = append(deps, depName)
+		}
+		for depName := range p.Metadata.OptionalDependencies {
+			deps = append(deps, depName)
 		}
 		depGraph[p.Name] = deps
 	}

@@ -310,49 +310,6 @@
       ],
       "description": "BitnamiSBOMEntry represents all captured data from Bitnami packages described in Bitnami' SPDX files."
     },
-    "BunLockPackageDependencies": {
-      "properties": {
-        "dependencies": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "optionalDependencies": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "peerDependencies": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "bin": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "os": {
-          "type": "string"
-        },
-        "cpu": {
-          "type": "string"
-        }
-      },
-      "type": "object",
-      "required": [
-        "dependencies",
-        "optionalDependencies",
-        "peerDependencies",
-        "bin",
-        "os",
-        "cpu"
-      ]
-    },
     "CConanFileEntry": {
       "properties": {
         "ref": {
@@ -1963,32 +1920,56 @@
     },
     "JavascriptBunLockEntry": {
       "properties": {
-        "identifier": {
-          "type": "string",
-          "description": "Identifier is the package identifier (name@version)"
-        },
-        "resolved": {
-          "type": "string",
-          "description": "Resolved is the resolved URL or empty string"
-        },
-        "dependencies": {
-          "additionalProperties": {
-            "$ref": "#/$defs/BunLockPackageDependencies"
-          },
-          "type": "object",
-          "description": "Dependencies contains package dependency information"
-        },
         "integrity": {
           "type": "string",
           "description": "Integrity is Subresource Integrity hash for verification (SRI format)"
+        },
+        "dependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Dependencies is a map of runtime dependencies and their version specifiers"
+        },
+        "optionalDependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "OptionalDependencies is a map of optional dependencies and their version specifiers"
+        },
+        "peerDependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "PeerDependencies is a map of peer dependencies and their version specifiers"
+        },
+        "bin": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Bin is a map of binary names to the paths they are installed to"
+        },
+        "os": {
+          "type": "string",
+          "description": "OS is the operating system constraint for the package (e.g. \"darwin\")"
+        },
+        "cpu": {
+          "type": "string",
+          "description": "CPU is the CPU architecture constraint for the package (e.g. \"arm64\")"
         }
       },
       "type": "object",
       "required": [
-        "identifier",
-        "resolved",
+        "integrity",
         "dependencies",
-        "integrity"
+        "optionalDependencies",
+        "peerDependencies",
+        "bin",
+        "os",
+        "cpu"
       ],
       "description": "BunLockEntry represents a single entry in the \"packages\" section of a bun.lock file"
     },
