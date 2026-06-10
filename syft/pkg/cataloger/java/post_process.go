@@ -41,7 +41,7 @@ func ResolveHierarchicalDependencies(accessor sbomsync.Accessor, cfg ArchiveCata
 			continue
 		}
 
-		data, ok := rel.Data.(DependencyRelationshipData)
+		data, ok := rel.Data.(dependencyRelationshipData)
 		if !ok || data.IntendedParentID == "" {
 			continue
 		}
@@ -55,16 +55,7 @@ func ResolveHierarchicalDependencies(accessor sbomsync.Accessor, cfg ArchiveCata
 			continue
 		}
 
-		// fallback: try to find nearest ancestor in SBOM
-		ancestor := findNearestAncestor(pkgIndex, data.IntendedParentID)
-		if ancestor != nil {
-			rel.To = *ancestor
-			data.IntendedParentID = ""
-			rel.Data = data
-			updated = true
-		} else {
-			log.WithFields("intendedParent", data.IntendedParentID).Debug("unable to resolve deferred parent relationship")
-		}
+		log.WithFields("intendedParent", data.IntendedParentID).Debug("unable to resolve deferred parent relationship")
 	}
 
 	if updated {
@@ -133,14 +124,6 @@ func findPackageByMavenID(pkgIndex map[string]*pkg.Package, mavenID string) *pkg
 		}
 	}
 
-	return nil
-}
-
-// findNearestAncestor attempts to locate a parent by progressively relaxing the match.
-// This handles the skip-to-ancestor case where an intermediate parent is not in the SBOM.
-func findNearestAncestor(pkgIndex map[string]*pkg.Package, intendedParentID string) *pkg.Package {
-	// the 3-tier lookup in findPackageByMavenID already handles relaxed matching
-	// this function exists as an extension point for future ancestor-walking logic
 	return nil
 }
 

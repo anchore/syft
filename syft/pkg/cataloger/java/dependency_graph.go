@@ -8,15 +8,15 @@ import (
 )
 
 // DependencyNode represents a single node in the Maven dependency tree.
-type DependencyNode struct {
+type dependencyNode struct {
 	ID       maven.ID
 	Scope    string
-	Parent   *DependencyNode
-	Children []*DependencyNode
+	Parent   *dependencyNode
+	Children []*dependencyNode
 }
 
 // Depth computes this node's depth by walking the parent chain.
-func (n *DependencyNode) Depth() int {
+func (n *dependencyNode) depth() int {
 	depth := 0
 	current := n.Parent
 	for current != nil {
@@ -27,32 +27,32 @@ func (n *DependencyNode) Depth() int {
 }
 
 // DependencyGraph holds the tree of Maven dependencies built from embedded POM files.
-type DependencyGraph struct {
-	Root    *DependencyNode
-	NodeMap map[maven.ID]*DependencyNode
+type dependencyGraph struct {
+	Root    *dependencyNode
+	NodeMap map[maven.ID]*dependencyNode
 }
 
 // NewDependencyGraph creates an empty dependency graph.
-func NewDependencyGraph() *DependencyGraph {
-	return &DependencyGraph{
-		NodeMap: make(map[maven.ID]*DependencyNode),
+func newDependencyGraph() *dependencyGraph {
+	return &dependencyGraph{
+		NodeMap: make(map[maven.ID]*dependencyNode),
 	}
 }
 
 // SetRoot creates and sets the root node of the graph.
-func (g *DependencyGraph) SetRoot(id maven.ID) *DependencyNode {
-	node := &DependencyNode{ID: id}
+func (g *dependencyGraph) setRoot(id maven.ID) *dependencyNode {
+	node := &dependencyNode{ID: id}
 	g.Root = node
 	g.NodeMap[id] = node
 	return node
 }
 
 // AddNode adds a dependency node with the given parent.
-func (g *DependencyGraph) AddNode(id maven.ID, scope string, parent *DependencyNode) *DependencyNode {
+func (g *dependencyGraph) addNode(id maven.ID, scope string, parent *dependencyNode) *dependencyNode {
 	if _, exists := g.NodeMap[id]; exists {
 		return g.NodeMap[id]
 	}
-	node := &DependencyNode{
+	node := &dependencyNode{
 		ID:     id,
 		Scope:  scope,
 		Parent: parent,
@@ -65,14 +65,14 @@ func (g *DependencyGraph) AddNode(id maven.ID, scope string, parent *DependencyN
 }
 
 // FindNode looks up a node by exact maven.ID match.
-func (g *DependencyGraph) FindNode(id maven.ID) *DependencyNode {
+func (g *dependencyGraph) findNode(id maven.ID) *dependencyNode {
 	return g.NodeMap[id]
 }
 
 // FindNodeByGA looks up a node by groupId and artifactId only, ignoring version.
 // This handles version-mismatch scenarios where Maven dependency management resolves
 // a different version than what the POM declares.
-func (g *DependencyGraph) FindNodeByGA(groupID, artifactID string) *DependencyNode {
+func (g *dependencyGraph) findNodeByGA(groupID, artifactID string) *dependencyNode {
 	for id, node := range g.NodeMap {
 		if id.GroupID == groupID && id.ArtifactID == artifactID {
 			return node
@@ -82,12 +82,12 @@ func (g *DependencyGraph) FindNodeByGA(groupID, artifactID string) *DependencyNo
 }
 
 // Size returns the number of nodes in the graph.
-func (g *DependencyGraph) Size() int {
+func (g *dependencyGraph) size() int {
 	return len(g.NodeMap)
 }
 
 // BuildFromPOMs constructs the dependency graph by walking embedded POM dependency sections.
-func (g *DependencyGraph) BuildFromPOMs(
+func (g *dependencyGraph) buildFromPOMs(
 	ctx context.Context,
 	poms map[maven.ID]*maven.Project,
 	resolver *maven.Resolver,
@@ -101,23 +101,23 @@ func (g *DependencyGraph) BuildFromPOMs(
 		return
 	}
 
-	rootNode := g.SetRoot(rootID)
+	rootNode := g.setRoot(rootID)
 
 	visited := map[maven.ID]bool{rootID: true}
 	g.buildFromPOM(ctx, poms, resolver, rootPom, rootNode, visited, resolveTransitive, maxDepth)
 }
 
-func (g *DependencyGraph) buildFromPOM(
+func (g *dependencyGraph) buildFromPOM(
 	ctx context.Context,
 	poms map[maven.ID]*maven.Project,
 	resolver *maven.Resolver,
 	pom *maven.Project,
-	parentNode *DependencyNode,
+	parentNode *dependencyNode,
 	visited map[maven.ID]bool,
 	resolveTransitive bool,
 	maxDepth int,
 ) {
-	if parentNode.Depth() >= maxDepth {
+	if parentNode.depth() >= maxDepth {
 		return
 	}
 
@@ -136,7 +136,7 @@ func (g *DependencyGraph) buildFromPOM(
 
 		scope := resolver.ResolveProperty(ctx, pom, dep.Scope)
 
-		node := g.AddNode(depID, scope, parentNode)
+		node := g.addNode(depID, scope, parentNode)
 
 		if resolveTransitive {
 			childPom, childExists := poms[depID]

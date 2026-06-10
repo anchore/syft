@@ -191,7 +191,7 @@ func TestResolveHierarchicalDependencies_Disabled(t *testing.T) {
 				From: pkg.Package{Name: "child"},
 				To:   pkg.Package{Name: "wrong-parent"},
 				Type: artifact.DependencyOfRelationship,
-				Data: NewDependencyRelationshipDataWithParent(1, "", "com.example:real-parent:1.0"),
+				Data: newDependencyRelationshipDataWithParent(1, "", "com.example:real-parent:1.0"),
 			},
 		},
 	}
@@ -244,7 +244,7 @@ func TestResolveHierarchicalDependencies_ResolvesParent(t *testing.T) {
 				From: child,
 				To:   placeholder,
 				Type: artifact.DependencyOfRelationship,
-				Data: NewDependencyRelationshipDataWithParent(1, "compile", "com.example:real-parent:1.0"),
+				Data: newDependencyRelationshipDataWithParent(1, "compile", "com.example:real-parent:1.0"),
 			},
 		},
 	}
@@ -257,7 +257,7 @@ func TestResolveHierarchicalDependencies_ResolvesParent(t *testing.T) {
 	assert.Equal(t, "real-parent", resolvedTo.Name)
 
 	// IntendedParentID should be cleared
-	data, ok := accessor.relationships[0].Data.(DependencyRelationshipData)
+	data, ok := accessor.relationships[0].Data.(dependencyRelationshipData)
 	require.True(t, ok)
 	assert.Empty(t, data.IntendedParentID)
 	assert.Equal(t, "compile", data.Scope)

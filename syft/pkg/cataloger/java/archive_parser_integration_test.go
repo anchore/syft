@@ -42,28 +42,28 @@ func TestBuildDependencyGraphFromEmbeddedPOMs_Integration(t *testing.T) {
 
 	resolver := maven.NewResolver(nil, maven.DefaultConfig())
 
-	graph := NewDependencyGraph()
-	graph.BuildFromPOMs(context.Background(), poms, resolver, rootID, true, 10)
+	graph := newDependencyGraph()
+	graph.buildFromPOMs(context.Background(), poms, resolver, rootID, true, 10)
 
 	// Verify graph structure
-	require.Equal(t, 4, graph.Size())
+	require.Equal(t, 4, graph.size())
 
-	nodeA := graph.FindNode(depAID)
+	nodeA := graph.findNode(depAID)
 	require.NotNil(t, nodeA)
 	assert.Equal(t, "compile", nodeA.Scope)
-	assert.Equal(t, 1, nodeA.Depth())
+	assert.Equal(t, 1, nodeA.depth())
 	assert.Equal(t, graph.Root, nodeA.Parent)
 
-	nodeB := graph.FindNode(depBID)
+	nodeB := graph.findNode(depBID)
 	require.NotNil(t, nodeB)
 	assert.Equal(t, "runtime", nodeB.Scope)
-	assert.Equal(t, 1, nodeB.Depth())
+	assert.Equal(t, 1, nodeB.depth())
 	assert.Equal(t, graph.Root, nodeB.Parent)
 
-	nodeC := graph.FindNode(transitiveID)
+	nodeC := graph.findNode(transitiveID)
 	require.NotNil(t, nodeC)
 	assert.Equal(t, "compile", nodeC.Scope)
-	assert.Equal(t, 2, nodeC.Depth())
+	assert.Equal(t, 2, nodeC.depth())
 	assert.Equal(t, nodeA, nodeC.Parent)
 }
 
@@ -73,10 +73,10 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 	depAID := maven.NewID("com.example", "dep-a", "2.0")
 	depBID := maven.NewID("com.example", "dep-b", "3.0")
 
-	graph := NewDependencyGraph()
-	root := graph.SetRoot(rootID)
-	nodeA := graph.AddNode(depAID, "compile", root)
-	graph.AddNode(depBID, "runtime", nodeA)
+	graph := newDependencyGraph()
+	root := graph.setRoot(rootID)
+	nodeA := graph.addNode(depAID, "compile", root)
+	graph.addNode(depBID, "runtime", nodeA)
 
 	rootPkg := &pkg.Package{
 		Name:    "root",
@@ -135,7 +135,7 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		// depA's parent is root, which is in pkgIndex
 		assert.Equal(t, rootPkg.ID(), rel.To.(pkg.Package).ID())
 
-		data, ok := rel.Data.(DependencyRelationshipData)
+		data, ok := rel.Data.(dependencyRelationshipData)
 		require.True(t, ok)
 		assert.Equal(t, 0, data.Depth)
 		assert.True(t, data.IsDirectDependency)
@@ -149,7 +149,7 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		// depB's parent is depA, which IS in pkgIndex
 		assert.Equal(t, depAPkg.ID(), rel.To.(pkg.Package).ID())
 
-		data, ok := rel.Data.(DependencyRelationshipData)
+		data, ok := rel.Data.(dependencyRelationshipData)
 		require.True(t, ok)
 		assert.Equal(t, 1, data.Depth)
 		assert.False(t, data.IsDirectDependency)
@@ -168,7 +168,7 @@ func TestCreateAuxPkgRelationship_WithGraph(t *testing.T) {
 		// falls back to rootPkg since depA isn't in the index
 		assert.Equal(t, rootPkg.ID(), rel.To.(pkg.Package).ID())
 
-		data, ok := rel.Data.(DependencyRelationshipData)
+		data, ok := rel.Data.(dependencyRelationshipData)
 		require.True(t, ok)
 		assert.Equal(t, 1, data.Depth)
 		assert.Equal(t, "com.example:dep-a:2.0", data.IntendedParentID)
@@ -273,9 +273,9 @@ func TestCreateMainPkgRelationship_WithGraph(t *testing.T) {
 	rootID := maven.NewID("com.example", "root", "1.0")
 	nestedID := maven.NewID("com.example", "nested", "2.0")
 
-	graph := NewDependencyGraph()
-	root := graph.SetRoot(rootID)
-	graph.AddNode(nestedID, "compile", root)
+	graph := newDependencyGraph()
+	root := graph.setRoot(rootID)
+	graph.addNode(nestedID, "compile", root)
 
 	mainPkg := &pkg.Package{
 		Name:    "nested",
@@ -306,7 +306,7 @@ func TestCreateMainPkgRelationship_WithGraph(t *testing.T) {
 		rel := parser.createMainPkgRelationship(mainPkg, parentPkg)
 		assert.Equal(t, artifact.DependencyOfRelationship, rel.Type)
 
-		data, ok := rel.Data.(DependencyRelationshipData)
+		data, ok := rel.Data.(dependencyRelationshipData)
 		require.True(t, ok)
 		assert.Equal(t, 0, data.Depth)
 		assert.Equal(t, "compile", data.Scope)
@@ -337,9 +337,9 @@ func TestCreateAuxPkgRelationship_VersionMismatchFallback(t *testing.T) {
 	rootID := maven.NewID("com.example", "root", "1.0")
 	depAGraphID := maven.NewID("com.example", "dep-a", "2.0")
 
-	graph := NewDependencyGraph()
-	root := graph.SetRoot(rootID)
-	graph.AddNode(depAGraphID, "compile", root)
+	graph := newDependencyGraph()
+	root := graph.setRoot(rootID)
+	graph.addNode(depAGraphID, "compile", root)
 
 	rootPkg := &pkg.Package{
 		Name:    "root",
@@ -382,7 +382,7 @@ func TestCreateAuxPkgRelationship_VersionMismatchFallback(t *testing.T) {
 	assert.Equal(t, artifact.DependencyOfRelationship, rel.Type)
 	assert.Equal(t, rootPkg.ID(), rel.To.(pkg.Package).ID())
 
-	data, ok := rel.Data.(DependencyRelationshipData)
+	data, ok := rel.Data.(dependencyRelationshipData)
 	require.True(t, ok)
 	assert.Equal(t, 0, data.Depth)
 	assert.True(t, data.IsDirectDependency)

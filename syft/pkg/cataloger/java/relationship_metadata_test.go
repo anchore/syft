@@ -44,7 +44,7 @@ func TestNewDependencyRelationshipData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := NewDependencyRelationshipData(tt.depth, tt.scope)
+			data := newDependencyRelationshipData(tt.depth, tt.scope)
 			assert.Equal(t, tt.expectDepth, data.Depth)
 			assert.Equal(t, tt.expectScope, data.Scope)
 			assert.Equal(t, tt.expectDirect, data.IsDirectDependency)
@@ -86,7 +86,7 @@ func TestNewDependencyRelationshipDataWithParent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := NewDependencyRelationshipDataWithParent(tt.depth, tt.scope, tt.intendedParentID)
+			data := newDependencyRelationshipDataWithParent(tt.depth, tt.scope, tt.intendedParentID)
 			assert.Equal(t, tt.depth, data.Depth)
 			assert.Equal(t, tt.scope, data.Scope)
 			assert.Equal(t, tt.expectDirect, data.IsDirectDependency)

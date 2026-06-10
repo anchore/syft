@@ -2,7 +2,7 @@ package java
 
 // DependencyRelationshipData holds metadata about a dependency relationship that is
 // attached to artifact.Relationship.Data for enriched Syft JSON output.
-type DependencyRelationshipData struct {
+type dependencyRelationshipData struct {
 	Depth              int    `json:"depth"`
 	Scope              string `json:"scope,omitempty"`
 	IsDirectDependency bool   `json:"isDirectDependency"`
@@ -10,8 +10,8 @@ type DependencyRelationshipData struct {
 }
 
 // NewDependencyRelationshipData creates relationship metadata with depth and scope.
-func NewDependencyRelationshipData(depth int, scope string) DependencyRelationshipData {
-	return DependencyRelationshipData{
+func newDependencyRelationshipData(depth int, scope string) dependencyRelationshipData {
+	return dependencyRelationshipData{
 		Depth:              depth,
 		Scope:              scope,
 		IsDirectDependency: depth == 0,
@@ -20,8 +20,8 @@ func NewDependencyRelationshipData(depth int, scope string) DependencyRelationsh
 
 // NewDependencyRelationshipDataWithParent creates relationship metadata that includes
 // an intended parent ID for deferred resolution by the post-processor.
-func NewDependencyRelationshipDataWithParent(depth int, scope string, intendedParentID string) DependencyRelationshipData {
-	return DependencyRelationshipData{
+func newDependencyRelationshipDataWithParent(depth int, scope string, intendedParentID string) dependencyRelationshipData {
+	return dependencyRelationshipData{
 		Depth:              depth,
 		Scope:              scope,
 		IsDirectDependency: depth == 0,
