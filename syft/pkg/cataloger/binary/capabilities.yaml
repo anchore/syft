@@ -788,6 +788,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/elastic-agent'
+        packages:
+          - class: elastic-agent-binary
+            name: elastic-agent
+            purl: pkg:generic/elastic-agent
+            cpes:
+              - cpe:2.3:a:elastic:elastic_agent:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary
