@@ -2558,6 +2558,83 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "filebeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "filebeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/filebeat@9.4.2",
+				Locations: locations("filebeat"),
+				Metadata:  metadata("filebeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "filebeat/8.18.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "filebeat",
+				Version:   "8.18.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/filebeat@8.18.4",
+				Locations: locations("filebeat"),
+				Metadata:  metadata("filebeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "filebeat/8.11.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "filebeat",
+				Version:   "8.11.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/filebeat@8.11.2",
+				Locations: locations("filebeat"),
+				Metadata:  metadata("filebeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "metricbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "metricbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/metricbeat@9.4.2",
+				Locations: locations("metricbeat"),
+				Metadata:  metadata("metricbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "heartbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "heartbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/heartbeat@9.4.2",
+				Locations: locations("heartbeat"),
+				Metadata:  metadata("heartbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "packetbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "packetbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/packetbeat@9.4.2",
+				Locations: locations("packetbeat"),
+				Metadata:  metadata("packetbeat-binary"),
+			},
+		},
+		{
+			logicalFixture: "auditbeat/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "auditbeat",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/auditbeat@9.4.2",
+				Locations: locations("auditbeat"),
+				Metadata:  metadata("auditbeat-binary"),
+			},
+		},
+		{
 			logicalFixture: "julia/1.13.0-alpha2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "julia",

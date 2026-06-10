@@ -28,6 +28,18 @@ func DefaultClassifiers() []binutils.Classifier {
 		// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
 		`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
 
+	// all Elastic Beats (filebeat, metricbeat, heartbeat, packetbeat, auditbeat)
+	var elasticBeatsMatcher = binutils.MatchAny(
+		// 9.x:    forcestdinsetupTest 9.4.2%s %w (filebeat/metricbeat/auditbeat)
+		//         forcestdinsetupTest 9.4.2input (heartbeat/packetbeat)
+		m.FileContentsVersionMatcher(`Test (?P<version>[0-9]+\.[0-9]+\.[0-9]+)[a-z%]`),
+		// 9.x:    exportconfigcreateplugin9.4.2-globalclient
+		// 8.18.x: exportconfigcreateplugin8.18.4globalclient
+		m.FileContentsVersionMatcher(`plugin(?:output)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)[-a-z]`),
+		// 8.11.x: 5m.rate8.11.2-9765625
+		m.FileContentsVersionMatcher(`5m\.rate(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-`),
+	)
+
 	classifiers := []binutils.Classifier{
 		{
 			Class:    "python-binary",
@@ -1109,6 +1121,46 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "nginx-ingress-controller",
 			PURL:    mustPURL("pkg:generic/nginx-ingress-controller@version"),
 			CPEs:    singleCPE("cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "filebeat-binary",
+			FileGlob:        "**/filebeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "filebeat",
+			PURL:            mustPURL("pkg:generic/filebeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:filebeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "metricbeat-binary",
+			FileGlob:        "**/metricbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "metricbeat",
+			PURL:            mustPURL("pkg:generic/metricbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:metricbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "heartbeat-binary",
+			FileGlob:        "**/heartbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "heartbeat",
+			PURL:            mustPURL("pkg:generic/heartbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:heartbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "packetbeat-binary",
+			FileGlob:        "**/packetbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "packetbeat",
+			PURL:            mustPURL("pkg:generic/packetbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:packetbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "auditbeat-binary",
+			FileGlob:        "**/auditbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "auditbeat",
+			PURL:            mustPURL("pkg:generic/auditbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:auditbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 
