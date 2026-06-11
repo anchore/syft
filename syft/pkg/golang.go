@@ -22,6 +22,11 @@ type GolangBinaryBuildinfoEntry struct {
 
 	// GoExperiments lists experimental Go features enabled during compilation (e.g., "arenas", "cgocheck2").
 	GoExperiments []string `json:"goExperiments,omitempty" cyclonedx:"goExperiments"`
+
+	// Symbols are the fully qualified function symbols from this module that are compiled into the binary
+	// (e.g., "github.com/foo/bar.(*Type).Method"), extracted from the binary symbol table (pclntab).
+	// Only captured when the golang cataloger is configured to capture symbols.
+	Symbols []string `json:"symbols,omitempty"`
 }
 
 // GolangModuleEntry represents all captured data for a Golang source scan with go.mod/go.sum

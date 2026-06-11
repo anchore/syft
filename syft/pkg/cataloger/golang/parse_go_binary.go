@@ -49,12 +49,14 @@ const devel = "(devel)"
 type goBinaryCataloger struct {
 	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
+	captureSymbols    bool
 }
 
 func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
+		captureSymbols:    opts.CaptureSymbols,
 	}
 }
 
@@ -68,7 +70,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, errs := scanFile(reader.Location, unionReader)
+	mods, errs := scanFile(reader.Location, unionReader, c.captureSymbols)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
@@ -128,6 +130,8 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 		mod.Main = createMainModuleFromPath(mod)
 	}
 
+	symbolsByModule := moduleSymbols(mod.symbols, &mod.Main, mod.Deps)
+
 	var pkgs []pkg.Package
 	for _, dep := range mod.Deps {
 		if dep == nil {
@@ -147,6 +151,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 			nil,
 			mod.cryptoSettings,
 			experiments,
+			symbolsByModule[dep.Path],
 		)
 
 		p := c.newGoBinaryPackage(
@@ -164,7 +169,7 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 		return nil, pkgs
 	}
 
-	main := c.makeGoMainPackage(ctx, resolver, mod, arch, location, reader)
+	main := c.makeGoMainPackage(ctx, resolver, mod, arch, location, reader, symbolsByModule[mod.Main.Path])
 
 	return &main, pkgs
 }
@@ -179,7 +184,7 @@ func missingMainModule(mod *extendedBuildInfo) bool {
 	return mod.Main == moduleFromPartialPackageBuild
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser, symbols []string) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	lics := c.licenseResolver.getLicenses(ctx, resolver, mod.Main.Path, mod.Main.Version)
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
@@ -192,6 +197,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file
 		gbs,
 		mod.cryptoSettings,
 		experiments,
+		symbols,
 	)
 
 	if mod.Main.Version == devel {

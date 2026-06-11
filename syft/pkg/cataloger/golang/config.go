@@ -49,6 +49,10 @@ type CatalogerConfig struct {
 
 	MainModuleVersion MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
 
+	// CaptureSymbols enables extracting function symbols from the binary symbol table (pclntab) and attributing them to the owning module.
+	// app-config: golang.capture-symbols
+	CaptureSymbols bool `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
+
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
 }
@@ -76,6 +80,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		UsePackagesLib:    true,
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
+		CaptureSymbols:    true,
 	}
 
 	// first process the proxy settings
@@ -181,6 +186,11 @@ func (g CatalogerConfig) WithNoProxy(input string) CatalogerConfig {
 
 func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) CatalogerConfig {
 	g.MainModuleVersion = input
+	return g
+}
+
+func (g CatalogerConfig) WithCaptureSymbols(input bool) CatalogerConfig {
+	g.CaptureSymbols = input
 	return g
 }
 

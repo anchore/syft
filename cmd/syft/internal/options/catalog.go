@@ -193,7 +193,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromBuildSettings(cfg.Golang.MainModuleVersion.FromBuildSettings).
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			).
-			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)),
+			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)).
+			WithCaptureSymbols(cfg.Golang.CaptureSymbols),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).

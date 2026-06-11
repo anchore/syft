@@ -18,10 +18,11 @@ type extendedBuildInfo struct {
 	*debug.BuildInfo
 	cryptoSettings []string
 	arch           string
+	symbols        []binarySymbol
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extendedBuildInfo, error) {
+func scanFile(location file.Location, reader unionreader.UnionReader, captureSymbols bool) ([]*extendedBuildInfo, error) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, errs := unionreader.GetReaders(reader)
@@ -61,7 +62,18 @@ func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extend
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
+		var symbols []binarySymbol
+		if captureSymbols {
+			symbols, err = getSymbols(r)
+			if err != nil {
+				log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang symbol info")
+				// don't skip this build info.
+				// we can still catalog packages, even if we can't get the symbol information
+				errs = unknown.Appendf(errs, location, "unable to read golang symbol info: %w", err)
+			}
+		}
+
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch, symbols: symbols})
 	}
 	return builds, errs
 }
