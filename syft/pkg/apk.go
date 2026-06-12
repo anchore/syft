@@ -17,6 +17,11 @@ const ApkDBGlob = "**/lib/apk/db/installed"
 
 var _ FileOwner = (*ApkDBEntry)(nil)
 
+var _ Architecture = (*ApkDBEntry)(nil)
+
+// TargetArchitecture returns the Alpine target architecture (e.g. "x86_64", "aarch64").
+func (m ApkDBEntry) TargetArchitecture() string { return m.Architecture }
+
 // ApkDBEntry represents all captured data for the alpine linux package manager flat-file store.
 // See the following sources for more information:
 // - https://wiki.alpinelinux.org/wiki/Apk_spec

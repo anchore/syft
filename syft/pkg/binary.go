@@ -13,6 +13,11 @@ type ClassifierMatch struct {
 	Location   file.Location `mapstructure:"Location" json:"location"`
 }
 
+var _ Architecture = (*ELFBinaryPackageNoteJSONPayload)(nil)
+
+// TargetArchitecture returns the ELF binary target architecture (e.g. "x86_64", "aarch64").
+func (m ELFBinaryPackageNoteJSONPayload) TargetArchitecture() string { return m.Architecture }
+
 // ELFBinaryPackageNoteJSONPayload Represents metadata captured from the .note.package section of an ELF-formatted binary
 type ELFBinaryPackageNoteJSONPayload struct {
 	// (these are well-known fields as defined by systemd ELF package metadata "spec" https://systemd.io/ELF_PACKAGE_METADATA/)

@@ -11,6 +11,11 @@ import (
 
 var _ FileOwner = (*AlpmDBEntry)(nil)
 
+var _ Architecture = (*AlpmDBEntry)(nil)
+
+// TargetArchitecture returns the pacman target architecture (e.g. "x86_64", "aarch64").
+func (m AlpmDBEntry) TargetArchitecture() string { return m.Architecture }
+
 const AlpmDBGlob = "**/var/lib/pacman/local/**/desc"
 
 // AlpmDBEntry is a struct that represents the package data stored in the pacman flat-file stores for arch linux.

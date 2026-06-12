@@ -1,5 +1,10 @@
 package pkg
 
+var _ Architecture = (*LinuxKernel)(nil)
+
+// TargetArchitecture returns the kernel target architecture (e.g. "x86_64", "aarch64").
+func (m LinuxKernel) TargetArchitecture() string { return m.Architecture }
+
 // LinuxKernel represents all captured data for a Linux kernel
 type LinuxKernel struct {
 	// Name is kernel name (typically "Linux")

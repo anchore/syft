@@ -12,6 +12,17 @@ const DpkgDBGlob = "**/var/lib/dpkg/{status,status.d/**}"
 
 var _ FileOwner = (*DpkgDBEntry)(nil)
 
+var (
+	_ Architecture = (*DpkgDBEntry)(nil)
+	_ Architecture = (*DpkgArchiveEntry)(nil)
+)
+
+// TargetArchitecture returns the Debian target architecture (e.g. "amd64", "arm64", "all").
+func (m DpkgDBEntry) TargetArchitecture() string { return m.Architecture }
+
+// TargetArchitecture returns the Debian target architecture (e.g. "amd64", "arm64", "all").
+func (m DpkgArchiveEntry) TargetArchitecture() string { return m.Architecture }
+
 // DpkgArchiveEntry represents package metadata extracted from a .deb archive file.
 type DpkgArchiveEntry DpkgDBEntry
 

@@ -22,6 +22,17 @@ const RpmManifestGlob = "**/var/lib/rpmmanifest/container-manifest-2"
 
 var _ FileOwner = (*RpmDBEntry)(nil)
 
+var (
+	_ Architecture = (*RpmDBEntry)(nil)
+	_ Architecture = (*RpmArchive)(nil)
+)
+
+// TargetArchitecture returns the rpm target architecture (e.g. "x86_64", "aarch64", "noarch").
+func (m RpmDBEntry) TargetArchitecture() string { return m.Arch }
+
+// TargetArchitecture returns the rpm target architecture (e.g. "x86_64", "aarch64", "noarch").
+func (m RpmArchive) TargetArchitecture() string { return m.Arch }
+
 // RpmArchive represents package metadata extracted directly from a .rpm archive file, containing the same information as an RPM database entry.
 type RpmArchive RpmDBEntry
 

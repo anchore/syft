@@ -1,5 +1,10 @@
 package pkg
 
+var _ Architecture = (*BitnamiSBOMEntry)(nil)
+
+// TargetArchitecture returns the Bitnami package target architecture (e.g. "amd64", "arm64").
+func (b BitnamiSBOMEntry) TargetArchitecture() string { return b.Architecture }
+
 // BitnamiSBOMEntry represents all captured data from Bitnami packages
 // described in Bitnami' SPDX files.
 type BitnamiSBOMEntry struct {

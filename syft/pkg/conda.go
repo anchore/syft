@@ -42,6 +42,11 @@ type CondaLink struct {
 	Type int `json:"type"`
 }
 
+var _ Architecture = (*CondaMetaPackage)(nil)
+
+// TargetArchitecture returns the Conda package target architecture (e.g. "x86_64", "aarch64").
+func (m CondaMetaPackage) TargetArchitecture() string { return m.Arch }
+
 // CondaMetaPackage represents metadata for a Conda package extracted from the conda-meta/*.json files.
 type CondaMetaPackage struct {
 	// Arch is the target CPU architecture for the package (e.g., "arm64", "x86_64").

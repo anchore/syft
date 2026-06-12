@@ -8,6 +8,11 @@ const (
 	SnapTypeSnapd  = "snapd"
 )
 
+var _ Architecture = (*SnapEntry)(nil)
+
+// TargetArchitecture returns the Snap target architecture (e.g. "amd64", "arm64").
+func (m SnapEntry) TargetArchitecture() string { return m.Architecture }
+
 // SnapEntry represents metadata for a Snap package extracted from snap.yaml or snapcraft.yaml files.
 type SnapEntry struct {
 	// SnapType indicates the snap type (base, kernel, app, gadget, or snapd).

@@ -1,5 +1,16 @@
 package pkg
 
+var (
+	_ Architecture = (*GolangBinaryBuildinfoEntry)(nil)
+	_ Architecture = (*GolangSourceEntry)(nil)
+)
+
+// TargetArchitecture returns the Go build target architecture (GOARCH, e.g. "amd64", "arm64").
+func (m GolangBinaryBuildinfoEntry) TargetArchitecture() string { return m.Architecture }
+
+// TargetArchitecture returns the Go build target architecture (GOARCH, e.g. "amd64", "arm64").
+func (m GolangSourceEntry) TargetArchitecture() string { return m.Architecture }
+
 // GolangBinaryBuildinfoEntry represents all captured data for a Golang binary
 type GolangBinaryBuildinfoEntry struct {
 	// BuildSettings contains the Go build settings and flags used to compile the binary (e.g., GOARCH, GOOS, CGO_ENABLED).
