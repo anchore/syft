@@ -10,15 +10,45 @@ import (
 )
 
 var (
+	// languageCatalogerTypes are package types that an OS package can legitimately subsume when it
+	// owns their files: language packages installed as discrete units (one package == its own files),
+	// for which OS file-ownership overlap means the distro repackaged the same thing.
+	//
+	// Inclusion rule (enforced by Test_languageCatalogerTypes_matchesLanguageTag, derived from
+	// cataloger capabilities so new catalogers stay covered):
+	//   languageCatalogerTypes == {types of "language"-tagged catalogers} \ osCatalogerTypes
+	//                             \ binaryExtractedLanguageTypes  (+ documented exceptions)
+	//
+	// Deliberately EXCLUDED are types whose catalogers extract many components from a single artifact the
+	// OS package owns (a binary or fat archive): go-module (GoModulePkg), rust-crate (RustPkg),
+	// dotnet (DotnetPkg), graalvm-native-image (GraalVMNativeImagePkg) and java-archive (JavaPkg). OS
+	// ownership of that container does NOT make the embedded components redundant — they have distinct
+	// identities/versions/PURLs/licenses and must stay in the SBOM (an rpm owning /usr/bin/foo must not
+	// delete the Go modules built into foo). The exclusion set lives in the test as
+	// binaryExtractedLanguageTypes and is verified against cataloger capabilities.
+	//
+	// Known limitation: this rule keys on pkg.Type, a coarse proxy. A more precise rule would key on
+	// per-package evidence (subsume only packages found as discrete installed artifacts, not
+	// manifest/lockfile-declared ones), since some included types can also be lockfile-derived. Kept at
+	// the type level to match the existing binary-overlap exclusion; tracked as a follow-up.
 	languageCatalogerTypes = []pkg.Type{
-		pkg.PythonPkg,
-		pkg.GemPkg,
-		pkg.NpmPkg,
-		pkg.PhpComposerPkg,
-		pkg.PhpPeclPkg,
-		pkg.Rpkg,
-		pkg.LuaRocksPkg,
+		pkg.CocoapodsPkg,
+		pkg.ConanPkg,
+		pkg.DartPubPkg,
 		pkg.ErlangOTPPkg,
+		pkg.GemPkg,
+		pkg.HackagePkg,
+		pkg.HexPkg,
+		pkg.LuaRocksPkg,
+		pkg.NpmPkg,
+		pkg.OpamPkg,
+		pkg.PhpComposerPkg,
+		pkg.PhpPearPkg,
+		pkg.PhpPeclPkg, // exception: php-pecl cataloger is DeprecatedTag (untagged for language); kept until removed in syft v2.0
+		pkg.PythonPkg,
+		pkg.Rpkg,
+		pkg.SwiftPkg,
+		pkg.SwiplPackPkg,
 	}
 )
 
