@@ -34,7 +34,7 @@
         <property name="syft:location:0:path">/some/path/pkg1</property>
       </properties>
     </component>
-    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=ac7d0cc3d0d75001" type="library">
+    <component bom-ref="pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669" type="library">
       <name>package-2</name>
       <version>2.0.1</version>
       <cpe>cpe:2.3:*:some:package:2:*:*:*:*:*:*:*</cpe>

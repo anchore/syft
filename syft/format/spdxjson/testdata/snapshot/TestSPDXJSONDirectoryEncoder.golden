@@ -2,7 +2,7 @@
  "spdxVersion": "SPDX-2.3",
  "dataLicense": "CC0-1.0",
  "SPDXID": "SPDXRef-DOCUMENT",
- "name": "some\\path",
+ "name": "some/path",
  "documentNamespace":"redacted",
  "creationInfo": {
   "licenseListVersion":"redacted",
@@ -39,7 +39,7 @@
   },
   {
    "name": "package-2",
-   "SPDXID": "SPDXRef-Package-deb-package-2-ac7d0cc3d0d75001",
+   "SPDXID": "SPDXRef-Package-deb-package-2-39392bb5e270f669",
    "versionInfo": "2.0.1",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -62,7 +62,7 @@
    ]
   },
   {
-   "name": "some\\path",
+   "name": "some/path",
    "SPDXID": "SPDXRef-DocumentRoot-Directory-some-path",
    "supplier": "NOASSERTION",
    "downloadLocation": "NOASSERTION",
@@ -81,7 +81,7 @@
   },
   {
    "spdxElementId": "SPDXRef-DocumentRoot-Directory-some-path",
-   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-ac7d0cc3d0d75001",
+   "relatedSpdxElement": "SPDXRef-Package-deb-package-2-39392bb5e270f669",
    "relationshipType": "CONTAINS"
   },
   {
