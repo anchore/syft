@@ -56,9 +56,6 @@ type DpkgDBEntry struct {
 	// PreDepends are the packages that must be installed and configured BEFORE even starting installation of this package (stronger than Depends, discouraged unless absolutely necessary as it adds strict constraints for apt)
 	PreDepends []string `json:"preDepends,omitempty"`
 
-	// License is the package license expression as declared in the control file. Debian dpkg does not use this field per Debian policy (licenses live in copyright files instead), but opkg/ipkg derivatives carry it inline.
-	License string `json:"license,omitempty"`
-
 	// Files are the files installed by this package
 	Files []DpkgFileRecord `json:"files"`
 }

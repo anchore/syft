@@ -20,9 +20,12 @@ import (
 
 func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
-		name        string
-		expected    []pkg.DpkgDBEntry
-		fixturePath string
+		name     string
+		expected []pkg.DpkgDBEntry
+		// expectedLicenses is the raw License value parsed for each entry (parallel to expected). License is not
+		// persisted on pkg.DpkgDBEntry, so it is asserted separately from the raw extracted metadata.
+		expectedLicenses []string
+		fixturePath      string
 	}{
 		{
 			name:        "single package",
@@ -247,7 +250,6 @@ func Test_parseDpkgStatus(t *testing.T) {
 					Architecture: "x86_64",
 					Description:  "Small SSH server and client.",
 					Depends:      []string{"libc", "zlib"},
-					License:      "MIT",
 					Files:        []pkg.DpkgFileRecord{},
 				},
 				{
@@ -256,7 +258,6 @@ func Test_parseDpkgStatus(t *testing.T) {
 					Architecture: "x86_64",
 					Description:  "Single executable providing many common UNIX utilities.",
 					Depends:      []string{"libc"},
-					License:      "GPL-2.0-only",
 					Files:        []pkg.DpkgFileRecord{},
 				},
 				{
@@ -265,10 +266,10 @@ func Test_parseDpkgStatus(t *testing.T) {
 					Architecture: "x86_64",
 					Description:  "Loadable kernel modules with mixed licensing.",
 					Depends:      []string{"kmod"},
-					License:      "GPL-2.0 BSD-3-Clause",
 					Files:        []pkg.DpkgFileRecord{},
 				},
 			},
+			expectedLicenses: []string{"MIT", "GPL-2.0-only", "GPL-2.0 BSD-3-Clause"},
 		},
 		{
 			name:        "deinstall status packages are ignored",
@@ -311,11 +312,23 @@ func Test_parseDpkgStatus(t *testing.T) {
 
 			reader := bufio.NewReader(f)
 
-			entries, err := parseDpkgStatus(reader)
+			raw, err := parseDpkgStatus(reader)
 			require.NoError(t, err)
+
+			// convert the raw metadata into the final entries just-in-time, mirroring the package-building stage
+			var entries []pkg.DpkgDBEntry
+			var licenses []string
+			for _, r := range raw {
+				entries = append(entries, r.toDpkgEntry())
+				licenses = append(licenses, r.License)
+			}
 
 			if diff := cmp.Diff(test.expected, entries); diff != "" {
 				t.Errorf("unexpected entry (-want +got):\n%s", diff)
+			}
+
+			if test.expectedLicenses != nil {
+				require.Equal(t, test.expectedLicenses, licenses)
 			}
 		})
 	}

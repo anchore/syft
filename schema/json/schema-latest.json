@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.5/document",
+  "$id": "anchore.io/schema/syft/json/16.1.4/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1001,10 +1001,6 @@
           "type": "array",
           "description": "PreDepends are the packages that must be installed and configured BEFORE even starting installation of this package (stronger than Depends, discouraged unless absolutely necessary as it adds strict constraints for apt)"
         },
-        "license": {
-          "type": "string",
-          "description": "License is the package license expression as declared in the control file. Debian dpkg does not use this field per Debian policy (licenses live in copyright files instead), but opkg/ipkg derivatives carry it inline."
-        },
         "files": {
           "items": {
             "$ref": "#/$defs/DpkgFileRecord"
@@ -1076,10 +1072,6 @@
           },
           "type": "array",
           "description": "PreDepends are the packages that must be installed and configured BEFORE even starting installation of this package (stronger than Depends, discouraged unless absolutely necessary as it adds strict constraints for apt)"
-        },
-        "license": {
-          "type": "string",
-          "description": "License is the package license expression as declared in the control file. Debian dpkg does not use this field per Debian policy (licenses live in copyright files instead), but opkg/ipkg derivatives carry it inline."
         },
         "files": {
           "items": {

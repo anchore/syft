@@ -24,23 +24,26 @@ const (
 	docsPath     = "/usr/share/doc"
 )
 
-func newDpkgPackage(ctx context.Context, d pkg.DpkgDBEntry, dbLocation file.Location, resolver file.Resolver, release *linux.Release, evidence ...file.Location) pkg.Package {
+func newDpkgPackage(ctx context.Context, d dpkgExtractedMetadata, dbLocation file.Location, resolver file.Resolver, release *linux.Release, evidence ...file.Location) pkg.Package {
 	// the License field is empty for standard Debian dpkg entries (licenses live in copyright files),
 	// but opkg/ipkg derivatives carry it inline in the status DB — extract it here so those packages
-	// report licenses without requiring per-package copyright lookups
+	// report licenses without requiring per-package copyright lookups. The license is not persisted on
+	// the final entry, so convert the raw metadata into the entry just-in-time here.
 	licenses := extractDeclaredLicenses(ctx, d.License, dbLocation)
+
+	entry := d.toDpkgEntry()
 
 	locations := file.NewLocationSet(dbLocation)
 	locations.Add(evidence...)
 
 	p := pkg.Package{
-		Name:      d.Package,
-		Version:   d.Version,
+		Name:      entry.Package,
+		Version:   entry.Version,
 		Licenses:  pkg.NewLicenseSet(licenses...),
 		Locations: locations,
-		PURL:      packageURL(d, release),
+		PURL:      packageURL(entry, release),
 		Type:      pkg.DebPkg,
-		Metadata:  d,
+		Metadata:  entry,
 	}
 
 	if resolver != nil {

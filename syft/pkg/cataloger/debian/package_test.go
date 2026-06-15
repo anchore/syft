@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -160,6 +161,39 @@ func Test_extractDeclaredLicenses(t *testing.T) {
 			if diff := cmp.Diff(want, gotValues); diff != "" {
 				t.Errorf("unexpected licenses (-want +got):\n%s", diff)
 			}
+		})
+	}
+}
+
+func Test_newDpkgPackage_declaredLicense(t *testing.T) {
+	// the License field is not persisted on pkg.DpkgDBEntry, so this guards that the inline opkg/ipkg license
+	// declared on the raw metadata still flows into the built package's license set
+	tests := []struct {
+		name     string
+		metadata dpkgExtractedMetadata
+		expected []string
+	}{
+		{
+			name:     "no declared license",
+			metadata: dpkgExtractedMetadata{Package: "apt", Version: "1.8.2"},
+			expected: nil,
+		},
+		{
+			name:     "inline license flows to package",
+			metadata: dpkgExtractedMetadata{Package: "dropbear", Version: "2024.85-r0", License: "MIT"},
+			expected: []string{"MIT"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			p := newDpkgPackage(context.Background(), test.metadata, file.NewLocation("/var/lib/opkg/status"), nil, nil)
+
+			var got []string
+			for _, l := range p.Licenses.ToSlice() {
+				got = append(got, l.Value)
+			}
+			require.Equal(t, test.expected, got)
 		})
 	}
 }

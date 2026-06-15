@@ -3,7 +3,7 @@ package internal
 const (
 	// JSONSchemaVersion is the current schema version output by the JSON encoder
 	// This is roughly following the "SchemaVer" guidelines for versioning the JSON schema. Please see schema/json/README.md for details on how to increment.
-	JSONSchemaVersion = "16.1.5"
+	JSONSchemaVersion = "16.1.4"
 
 	// Changelog
 	// 16.1.0 - reformulated the python pdm fields (added "URL" and removed the unused "path" field).
@@ -11,6 +11,5 @@ const (
 	// 16.1.2 - placeholder for 16.1.2 changelog
 	// 16.1.3 - add GGUFFileParts to GGUFFileHeader metadata
 	// 16.1.4 - add BunLockEntry metadata type for bun.lock support
-	// 16.1.5 - add License to DpkgDBEntry (populated for opkg/ipkg entries; absent for standard dpkg)
 
 )
