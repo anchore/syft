@@ -113,6 +113,7 @@ catalogers:
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/uv.lock'
+            - '**/*.py.lock'
         metadata_types: # AUTO-GENERATED
           - pkg.PythonUvLockEntry
         package_types: # AUTO-GENERATED
