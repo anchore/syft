@@ -183,6 +183,16 @@ func Test_newDpkgPackage_declaredLicense(t *testing.T) {
 			metadata: dpkgExtractedMetadata{Package: "dropbear", Version: "2024.85-r0", License: "MIT"},
 			expected: []string{"MIT"},
 		},
+		{
+			name:     "space-separated licenses split into the set",
+			metadata: dpkgExtractedMetadata{Package: "busybox", Version: "1.36.1", License: "GPL-2.0 BSD-3-Clause"},
+			expected: []string{"BSD-3-Clause", "GPL-2.0"},
+		},
+		{
+			name:     "valid SPDX expression kept whole",
+			metadata: dpkgExtractedMetadata{Package: "curl", Version: "8.5.0", License: "Apache-2.0 OR MIT"},
+			expected: []string{"Apache-2.0 OR MIT"},
+		},
 	}
 
 	for _, test := range tests {
@@ -193,6 +203,8 @@ func Test_newDpkgPackage_declaredLicense(t *testing.T) {
 			for _, l := range p.Licenses.ToSlice() {
 				got = append(got, l.Value)
 			}
+			// the license set does not guarantee output order
+			sort.Strings(got)
 			require.Equal(t, test.expected, got)
 		})
 	}
