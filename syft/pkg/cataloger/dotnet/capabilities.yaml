@@ -45,6 +45,9 @@ catalogers:
     package_types: # AUTO-GENERATED
       - dotnet
       - npm
+    purl_types: # AUTO-GENERATED
+      - dotnet
+      - npm
     json_schema_types: # AUTO-GENERATED
       - DotnetDepsEntry
       - DotnetPortableExecutableEntry
@@ -82,6 +85,8 @@ catalogers:
     metadata_types: # AUTO-GENERATED
       - pkg.DotnetDepsEntry
     package_types: # AUTO-GENERATED
+      - dotnet
+    purl_types: # AUTO-GENERATED
       - dotnet
     json_schema_types: # AUTO-GENERATED
       - DotnetDepsEntry
@@ -127,6 +132,8 @@ catalogers:
           - pkg.DotnetPackagesLockEntry
         package_types: # AUTO-GENERATED
           - dotnet
+        purl_types: # AUTO-GENERATED
+          - dotnet
         json_schema_types: # AUTO-GENERATED
           - DotnetPackagesLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -169,6 +176,8 @@ catalogers:
     metadata_types: # AUTO-GENERATED
       - pkg.DotnetPortableExecutableEntry
     package_types: # AUTO-GENERATED
+      - dotnet
+    purl_types: # AUTO-GENERATED
       - dotnet
     json_schema_types: # AUTO-GENERATED
       - DotnetPortableExecutableEntry

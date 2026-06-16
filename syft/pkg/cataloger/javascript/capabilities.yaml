@@ -38,6 +38,8 @@ catalogers:
           - pkg.BunLockEntry
         package_types: # AUTO-GENERATED
           - npm
+        purl_types: # AUTO-GENERATED
+          - npm
         json_schema_types: # AUTO-GENERATED
           - JavascriptBunLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -70,6 +72,8 @@ catalogers:
           - pkg.PnpmLockEntry
         package_types: # AUTO-GENERATED
           - npm
+        purl_types: # AUTO-GENERATED
+          - npm
         json_schema_types: # AUTO-GENERATED
           - JavascriptPnpmLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -98,6 +102,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.YarnLockEntry
         package_types: # AUTO-GENERATED
+          - npm
+        purl_types: # AUTO-GENERATED
           - npm
         json_schema_types: # AUTO-GENERATED
           - JavascriptYarnLockEntry
@@ -130,6 +136,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.NpmPackageLockEntry
         package_types: # AUTO-GENERATED
+          - npm
+        purl_types: # AUTO-GENERATED
           - npm
         json_schema_types: # AUTO-GENERATED
           - JavascriptNpmPackageLockEntry
@@ -176,6 +184,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.NpmPackage
         package_types: # AUTO-GENERATED
+          - npm
+        purl_types: # AUTO-GENERATED
           - npm
         json_schema_types: # AUTO-GENERATED
           - JavascriptNpmPackage
