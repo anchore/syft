@@ -23,6 +23,8 @@ catalogers:
             - '**/cabal.project.freeze'
         package_types: # AUTO-GENERATED
           - hackage
+        purl_types: # AUTO-GENERATED
+          - hackage
         capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: false
@@ -50,6 +52,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.HackageStackYamlLockEntry
         package_types: # AUTO-GENERATED
+          - hackage
+        purl_types: # AUTO-GENERATED
           - hackage
         json_schema_types: # AUTO-GENERATED
           - HaskellHackageStackLockEntry
@@ -82,6 +86,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.HackageStackYamlEntry
         package_types: # AUTO-GENERATED
+          - hackage
+        purl_types: # AUTO-GENERATED
           - hackage
         json_schema_types: # AUTO-GENERATED
           - HaskellHackageStackEntry

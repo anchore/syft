@@ -57,6 +57,8 @@ catalogers:
           - pkg.GolangBinaryBuildinfoEntry
         package_types: # AUTO-GENERATED
           - go-module
+        purl_types: # AUTO-GENERATED
+          - golang
         json_schema_types: # AUTO-GENERATED
           - GoModuleBuildinfoEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -113,6 +115,8 @@ catalogers:
           - pkg.GolangSourceEntry
         package_types: # AUTO-GENERATED
           - go-module
+        purl_types: # AUTO-GENERATED
+          - golang
         json_schema_types: # AUTO-GENERATED
           - GoModuleEntry
           - GoSourceEntry

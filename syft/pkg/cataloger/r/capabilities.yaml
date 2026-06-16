@@ -24,6 +24,8 @@ catalogers:
           - pkg.RDescription
         package_types: # AUTO-GENERATED
           - R-package
+        purl_types: # AUTO-GENERATED
+          - cran
         json_schema_types: # AUTO-GENERATED
           - RDescription
         capabilities: # MANUAL - preserved across regeneration

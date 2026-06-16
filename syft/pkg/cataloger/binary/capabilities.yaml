@@ -932,6 +932,9 @@ catalogers:
       - apk
       - binary
       - rpm
+    purl_types: # AUTO-GENERATED
+      - apk
+      - rpm
     json_schema_types: # AUTO-GENERATED
       - ElfBinaryPackageNoteJsonPayload
     capabilities: # MANUAL - edit capabilities here
