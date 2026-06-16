@@ -56,11 +56,14 @@ func main() {
 			},
 		},
 
-		// cli tests: native go-make Task. Requires SYFT_BINARY_LOCATION pointing at
-		// an *absolute* path to the snapshot binary. Intentionally does NOT depend
-		// on snapshot: in CI we download a pre-built snapshot artifact and re-running
-		// goreleaser here would both burn ~10m and clobber the downloaded binary.
-		// Locally, the failure message tells you to run `make snapshot` first.
+		// cli tests: native go-make Task. Runs SYFT_BINARY_LOCATION at an *absolute*
+		// path to the snapshot binary. Builds the snapshot only when the binary is
+		// missing rather than depending on the snapshot task unconditionally: in
+		// validations.yaml CI we download a pre-built snapshot artifact, so the binary
+		// already exists and rebuilding would both burn ~10m and clobber it. When
+		// `make test` runs cold (e.g. the release pipeline) or locally with no
+		// snapshot, we build a single-target snapshot (current OS/arch only) since
+		// that's all the CLI tests need.
 		Task{
 			Name:        "cli",
 			Description: "Run CLI tests",
@@ -68,7 +71,8 @@ func main() {
 			Run: func() {
 				bin := snapshotBinPath()
 				if !file.Exists(bin) {
-					panic(fmt.Sprintf("snapshot binary not found at %s; run `make snapshot` first", bin))
+					Log("snapshot binary not found at %s; building single-target snapshot", bin)
+					Run("make snapshot:single-target")
 				}
 				Log("testing binary: %s", bin)
 				Run(
