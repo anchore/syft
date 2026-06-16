@@ -292,6 +292,14 @@ func packagesFromLogicalDepsJSON(doc logicalDepsJSON, config CatalogerConfig) (*
 		}
 		lp := doc.PackagesByNameVersion[nameVersion]
 
+		if lp.Library != nil &&
+			lp.Library.Type == "referenceassembly" &&
+			lp.Library.Sha512 == "" &&
+			lp.Library.Path == "" {
+			skippedDepPkgs[nameVersion] = lp
+			continue
+		}
+
 		if config.ExcludeProjectReferences && lp.Library != nil && lp.Library.Type == "project" {
 			skippedDepPkgs[nameVersion] = lp
 			continue
