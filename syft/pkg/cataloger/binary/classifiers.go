@@ -1162,6 +1162,21 @@ func DefaultClassifiers() []binutils.Classifier {
 			PURL:            mustPURL("pkg:generic/auditbeat@version"),
 			CPEs:            singleCPE("cpe:2.3:a:elastic:auditbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
+		{
+			Class:    "elastic-agent-binary",
+			FileGlob: "**/elastic-agent",
+			EvidenceMatcher: binutils.MatchAny(
+				// 9.4.x:  config/statsenroll: true9.4.2-headeruint16secret
+				// 9.0.x:  configenroll9.0.0-headeruint16secret
+				// 8.19.x: config/statsenroll8.19.4headeruint16secret
+				m.FileContentsVersionMatcher(`enroll(?:: true)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-?header`),
+				// 8.11.x: 3:04PM8.11.2:https
+				m.FileContentsVersionMatcher(`PM(?P<version>[0-9]+\.[0-9]+\.[0-9]+):https`),
+			),
+			Package: "elastic-agent",
+			PURL:    mustPURL("pkg:generic/elastic-agent@version"),
+			CPEs:    singleCPE("cpe:2.3:a:elastic:elastic_agent:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
 	}
 
 	return append(classifiers, defaultJavaClassifiers()...)

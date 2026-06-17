@@ -1705,3 +1705,35 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/share/auditbeat/auditbeat
+
+  - name: elastic-agent
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:9.4.2@sha256:8187c0e2eb4db1a9780838789462bd3ecbeca36fccb89f872258a4f0d3d25ea1
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-dd9ee6/elastic-agent
+
+  - name: elastic-agent
+    version: 9.0.0
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:9.0.0@sha256:badb97acaf487273298e7f25d21177442d632f63cb9bab6f4defe341612bca07
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-9786ac/elastic-agent
+
+  - name: elastic-agent
+    version: 8.19.4
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.19.4@sha256:b54f796e43941da8665b83d3f31973fc66ef7fc33b43edc4593671325841d8fb
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-8fbe2b/elastic-agent
+
+  - name: elastic-agent
+    version: 8.11.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.11.2@sha256:1177eb349365132409df73e4a7fa97c32242db2b2c8704b9843d726837638001
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-1c21b0/elastic-agent

@@ -25,6 +25,8 @@ catalogers:
           - pkg.ConanV2LockEntry
         package_types: # AUTO-GENERATED
           - conan
+        purl_types: # AUTO-GENERATED
+          - conan
         json_schema_types: # AUTO-GENERATED
           - CConanLockEntry
           - CConanLockV2Entry
@@ -58,6 +60,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.ConanfileEntry
         package_types: # AUTO-GENERATED
+          - conan
+        purl_types: # AUTO-GENERATED
           - conan
         json_schema_types: # AUTO-GENERATED
           - CConanFileEntry
@@ -100,6 +104,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.ConaninfoEntry
         package_types: # AUTO-GENERATED
+          - conan
+        purl_types: # AUTO-GENERATED
           - conan
         json_schema_types: # AUTO-GENERATED
           - CConanInfoEntry
