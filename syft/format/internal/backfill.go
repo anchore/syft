@@ -87,27 +87,26 @@ func backfillFromPurl(p *pkg.Package) {
 		setJavaMetadataFromPurl(p, purl)
 	}
 
-	if p.Type == pkg.RpmPkg {
-		setRpmMetadataFromPurl(p, rpmmod, arch)
-	}
-
-	if p.Type == pkg.DebPkg {
-		setDpkgMetadataFromPurl(p, arch)
-	}
-
-	if p.Type == pkg.AlpmPkg {
-		setAlpmMetadataFromPurl(p, arch)
-	}
-
-	if p.Type == pkg.ApkPkg {
-		setApkMetadataFromPurl(p, arch)
-	}
+	setMetadataArchFromPurl(p, rpmmod, arch)
 
 	for _, c := range cpes {
 		if slices.Contains(p.CPEs, c) {
 			continue
 		}
 		p.CPEs = append(p.CPEs, c)
+	}
+}
+
+func setMetadataArchFromPurl(p *pkg.Package, rpmmod, arch string) {
+	switch p.Type {
+	case pkg.RpmPkg:
+		setRpmMetadataFromPurl(p, rpmmod, arch)
+	case pkg.DebPkg:
+		setDpkgMetadataFromPurl(p, arch)
+	case pkg.AlpmPkg:
+		setAlpmMetadataFromPurl(p, arch)
+	case pkg.ApkPkg:
+		setApkMetadataFromPurl(p, arch)
 	}
 }
 
@@ -199,8 +198,7 @@ func setAlpmMetadataFromPurl(p *pkg.Package, arch string) {
 		return
 	}
 
-	switch m := p.Metadata.(type) {
-	case pkg.AlpmDBEntry:
+	if m, ok := p.Metadata.(pkg.AlpmDBEntry); ok {
 		if m.Architecture == "" {
 			m.Architecture = arch
 		}
@@ -221,8 +219,7 @@ func setApkMetadataFromPurl(p *pkg.Package, arch string) {
 		return
 	}
 
-	switch m := p.Metadata.(type) {
-	case pkg.ApkDBEntry:
+	if m, ok := p.Metadata.(pkg.ApkDBEntry); ok {
 		if m.Architecture == "" {
 			m.Architecture = arch
 		}
