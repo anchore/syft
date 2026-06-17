@@ -2558,6 +2558,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "elastic-agent/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@9.4.2",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/9.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "9.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@9.0.0",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/8.19.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "8.19.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@8.19.4",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/8.11.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "8.11.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@8.11.2",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
 			logicalFixture: "julia/1.13.0-alpha2/linux-amd64",
 			expected: pkg.Package{
 				Name:      "julia",
