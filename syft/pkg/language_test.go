@@ -90,6 +90,10 @@ func TestLanguageFromPURL(t *testing.T) {
 			purl: "pkg:opam/ocaml-base-compiler@5.2.0",
 			want: OCaml,
 		},
+		{
+			purl: "pkg:julia/JSON3@0.21.4?uuid=682c06a0-de6a-54ab-a142-c8b1cf79cde6",
+			want: Julia,
+		},
 	}
 
 	var languages = strset.New()
@@ -266,6 +270,10 @@ func TestLanguageByName(t *testing.T) {
 		{
 			name:     "R",
 			language: R,
+		},
+		{
+			name:     "Julia",
+			language: Julia,
 		},
 	}
 

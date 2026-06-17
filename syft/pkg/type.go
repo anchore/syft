@@ -34,6 +34,7 @@ const (
 	HexPkg                  Type = "hex"
 	JavaPkg                 Type = "java-archive"
 	JenkinsPluginPkg        Type = "jenkins-plugin"
+	JuliaPkg                Type = "julia-pkg"
 	KbPkg                   Type = "msrc-kb"
 	LinuxKernelPkg          Type = "linux-kernel"
 	LinuxKernelModulePkg    Type = "linux-kernel-module"
@@ -79,6 +80,7 @@ var AllPkgs = []Type{
 	HexPkg,
 	JavaPkg,
 	JenkinsPluginPkg,
+	JuliaPkg,
 	KbPkg,
 	LinuxKernelPkg,
 	LinuxKernelModulePkg,
@@ -140,6 +142,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeHackage
 	case JavaPkg, JenkinsPluginPkg:
 		return packageurl.TypeMaven
+	case JuliaPkg:
+		return packageurl.TypeJulia
 	case LinuxKernelPkg:
 		return "generic/linux-kernel"
 	case LinuxKernelModulePkg:
@@ -232,6 +236,8 @@ func TypeByName(name string) Type {
 		return HexPkg
 	case packageurl.TypeLuaRocks:
 		return LuaRocksPkg
+	case packageurl.TypeJulia:
+		return JuliaPkg
 	case packageurl.TypeMaven:
 		return JavaPkg
 	case packageurl.TypeNPM:

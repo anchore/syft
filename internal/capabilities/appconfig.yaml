@@ -52,6 +52,10 @@ application: # AUTO-GENERATED - application-level config keys
     description: base NPM url to use
   - key: javascript.search-remote-licenses
     description: enables Syft to use the network to fill in more detailed license information
+  - key: julia.include-extras
+    description: include extra dependencies (such as test dependencies) in the catalog results even if they are not installed
+  - key: julia.include-weakdeps
+    description: include weak dependencies (dependency extensions) in the catalog results even if they are not installed
   - key: linux-kernel.catalog-modules
     description: whether to catalog linux kernel modules found within lib/modules/** directories
   - key: nix.capture-owned-files

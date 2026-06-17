@@ -359,6 +359,14 @@ func Test_SourceInfo(t *testing.T) {
 				"",
 			},
 		},
+		{
+			input: pkg.Package{
+				Type: pkg.JuliaPkg,
+			},
+			expected: []string{
+				"acquired package info from Julia Manifest",
+			},
+		},
 	}
 	var pkgTypes []pkg.Type
 	for _, test := range tests {
