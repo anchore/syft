@@ -12,12 +12,12 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func stdlibProcessor(ctx context.Context, _ file.Resolver, pkgs []pkg.Package, relationships []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	compilerPkgs, newRelationships := stdlibPackageAndRelationships(ctx, pkgs)
+func (c *goBinaryCataloger) stdlibProcessor(ctx context.Context, _ file.Resolver, pkgs []pkg.Package, relationships []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+	compilerPkgs, newRelationships := c.stdlibPackageAndRelationships(ctx, pkgs)
 	return append(pkgs, compilerPkgs...), append(relationships, newRelationships...), err
 }
 
-func stdlibPackageAndRelationships(ctx context.Context, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+func (c *goBinaryCataloger) stdlibPackageAndRelationships(ctx context.Context, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
 	var goCompilerPkgs []pkg.Package
 	var relationships []artifact.Relationship
 	totalLocations := file.NewLocationSet()
@@ -33,7 +33,7 @@ func stdlibPackageAndRelationships(ctx context.Context, pkgs []pkg.Package) ([]p
 				continue
 			}
 
-			stdLibPkg := newGoStdLib(ctx, mValue.GoCompiledVersion, goPkg.Locations)
+			stdLibPkg := newGoStdLib(ctx, mValue.GoCompiledVersion, goPkg.Locations, c.stdlibSymbolsFor(location.Coordinates))
 			if stdLibPkg == nil {
 				continue
 			}
@@ -50,7 +50,7 @@ func stdlibPackageAndRelationships(ctx context.Context, pkgs []pkg.Package) ([]p
 	return goCompilerPkgs, relationships
 }
 
-func newGoStdLib(ctx context.Context, version string, location file.LocationSet) *pkg.Package {
+func newGoStdLib(ctx context.Context, version string, location file.LocationSet, symbols []string) *pkg.Package {
 	stdlibCpe, err := generateStdlibCpe(version)
 	if err != nil {
 		return nil
@@ -66,6 +66,7 @@ func newGoStdLib(ctx context.Context, version string, location file.LocationSet)
 		Type:      pkg.GoModulePkg,
 		Metadata: pkg.GolangBinaryBuildinfoEntry{
 			GoCompiledVersion: version,
+			Symbols:           symbols,
 		},
 	}
 	goCompilerPkg.SetID()

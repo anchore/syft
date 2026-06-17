@@ -13,6 +13,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/mod/module"
@@ -50,6 +51,12 @@ type goBinaryCataloger struct {
 	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
 	captureSymbols    bool
+
+	// stdlibSymbols holds the standard-library function symbols discovered per binary (keyed by the
+	// binary's location), populated during parsing and consumed by stdlibProcessor when it builds the
+	// synthetic "stdlib" package. Guarded by stdlibSymbolsMu because parsers run concurrently.
+	stdlibSymbols   map[file.Coordinates][]string
+	stdlibSymbolsMu sync.Mutex
 }
 
 func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
@@ -57,7 +64,28 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
 		captureSymbols:    opts.CaptureSymbols,
+		stdlibSymbols:     make(map[file.Coordinates][]string),
 	}
+}
+
+// recordStdlibSymbols merges the standard-library symbols discovered for a binary location so the
+// stdlib processor can attach them to the synthetic stdlib package.
+func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols []string) {
+	if len(symbols) == 0 {
+		return
+	}
+	c.stdlibSymbolsMu.Lock()
+	defer c.stdlibSymbolsMu.Unlock()
+	merged := append(c.stdlibSymbols[coord], symbols...)
+	slices.Sort(merged)
+	c.stdlibSymbols[coord] = slices.Compact(merged)
+}
+
+// stdlibSymbolsFor returns the standard-library symbols recorded for a binary location.
+func (c *goBinaryCataloger) stdlibSymbolsFor(coord file.Coordinates) []string {
+	c.stdlibSymbolsMu.Lock()
+	defer c.stdlibSymbolsMu.Unlock()
+	return c.stdlibSymbols[coord]
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
@@ -130,7 +158,8 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 		mod.Main = createMainModuleFromPath(mod)
 	}
 
-	symbolsByModule := moduleSymbols(mod.symbols, &mod.Main, mod.Deps)
+	symbolsByModule, stdlibSymbols := moduleSymbols(mod.symbols, &mod.Main, mod.Deps)
+	c.recordStdlibSymbols(location.Coordinates, stdlibSymbols)
 
 	var pkgs []pkg.Package
 	for _, dep := range mod.Deps {

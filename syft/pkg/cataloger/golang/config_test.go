@@ -58,6 +58,7 @@ func Test_Config(t *testing.T) {
 				NoProxy:                     []string{"my.private", "no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				UsePackagesLib:              true,
+				CaptureSymbols:              true,
 			},
 		},
 		{
@@ -86,6 +87,7 @@ func Test_Config(t *testing.T) {
 				NoProxy:                     []string{"alt.no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				UsePackagesLib:              true,
+				CaptureSymbols:              true,
 			},
 		},
 	}

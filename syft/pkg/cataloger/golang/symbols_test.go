@@ -19,9 +19,10 @@ func Test_moduleSymbols(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		symbols  []binarySymbol
-		expected map[string][]string
+		name           string
+		symbols        []binarySymbol
+		expected       map[string][]string
+		expectedStdlib []string
 	}{
 		{
 			name:     "no symbols",
@@ -59,12 +60,18 @@ func Test_moduleSymbols(t *testing.T) {
 			},
 		},
 		{
-			name: "stdlib and runtime symbols are not attributed",
+			name: "stdlib and runtime symbols are collected separately",
 			symbols: []binarySymbol{
 				{packagePath: "runtime", name: "runtime.main"},
 				{packagePath: "net/http", name: "net/http.(*Client).Do"},
+				{packagePath: "internal/abi", name: "internal/abi.(*Type).Kind"},
 			},
 			expected: map[string][]string{},
+			expectedStdlib: []string{
+				"internal/abi.(*Type).Kind",
+				"net/http.(*Client).Do",
+				"runtime.main",
+			},
 		},
 		{
 			name: "duplicate symbols are deduplicated",
@@ -82,7 +89,9 @@ func Test_moduleSymbols(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, moduleSymbols(tt.symbols, mainModule, deps))
+			gotByModule, gotStdlib := moduleSymbols(tt.symbols, mainModule, deps)
+			assert.Equal(t, tt.expected, gotByModule)
+			assert.Equal(t, tt.expectedStdlib, gotStdlib)
 		})
 	}
 }
