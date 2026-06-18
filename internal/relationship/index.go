@@ -91,8 +91,10 @@ func (i *Index) Replace(ogID artifact.ID, replacement artifact.Identifiable) {
 	}
 
 	for _, mapped := range fromMappedByID(i.toID, ogID) {
-		// same as the above
-		if len(fromMappedByID(i.fromID, mapped.relationship.To.ID())) == 0 {
+		// same as the above, but check the surviving other endpoint (the From side, since these are edges TO ogID).
+		// note: this must reference From (not To, which is ogID itself) so that nodes appearing only on the To side
+		// of relationships (e.g. a go main module that nothing depends on) keep their edges after an ID change.
+		if len(fromMappedByID(i.fromID, mapped.relationship.From.ID())) == 0 {
 			continue
 		}
 		i.Add(artifact.Relationship{

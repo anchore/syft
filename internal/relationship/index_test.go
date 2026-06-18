@@ -380,6 +380,41 @@ func TestReplace(t *testing.T) {
 	compareRelationships(t, expectedRels, index.All())
 }
 
+func TestReplace_NodeOnlyOnToSide(t *testing.T) {
+	// regression: a node that only appears on the To side of relationships (nothing depends on it, e.g. a go main
+	// module that other modules are a dependency-of) must keep its incoming edges when its ID changes (such as when a
+	// compliance rule stubs a missing version and recomputes the package ID). previously the To-side remap guard
+	// checked ogID itself instead of the surviving From endpoint, so all such edges were dropped.
+	main := pkg.Package{Name: "main-module"} // empty version, like a go main module
+	dep1 := pkg.Package{Name: "dep-1", Version: "1.0.0"}
+	dep2 := pkg.Package{Name: "dep-2", Version: "2.0.0"}
+
+	for _, p := range []*pkg.Package{&main, &dep1, &dep2} {
+		p.SetID()
+	}
+
+	// both deps are a dependency-of main; main has no outgoing edges
+	r1 := artifact.Relationship{From: dep1, To: main, Type: artifact.DependencyOfRelationship}
+	r2 := artifact.Relationship{From: dep2, To: main, Type: artifact.DependencyOfRelationship}
+
+	index := NewIndex(r1, r2)
+
+	// simulate the version stub: main gets a new ID
+	stubbedMain := main
+	stubbedMain.Version = "UNKNOWN"
+	stubbedMain.SetID()
+	require.NotEqual(t, main.ID(), stubbedMain.ID())
+
+	index.Replace(main.ID(), &stubbedMain)
+
+	expectedRels := []artifact.Relationship{
+		{From: dep1, To: stubbedMain, Type: artifact.DependencyOfRelationship},
+		{From: dep2, To: stubbedMain, Type: artifact.DependencyOfRelationship},
+	}
+
+	compareRelationships(t, expectedRels, index.All())
+}
+
 func compareRelationships(t testing.TB, expected, actual []artifact.Relationship) {
 	assert.Equal(t, len(expected), len(actual), "number of relationships should match")
 	for _, e := range expected {
