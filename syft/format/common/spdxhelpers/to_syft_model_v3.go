@@ -519,7 +519,7 @@ func v3licenseInfoToExpression(info spdx.AnyLicenseInfo) string {
 		subject := v3licenseInfoToExpression(li.GetSubjectExtendableLicense())
 		addition := li.GetSubjectAddition()
 		if subject != "" && addition != nil {
-			return subject + " WITH " + addition.GetName()
+			return subject + " WITH " + addition.GetAdditionText()
 		}
 	case spdx.AnyConjunctiveLicenseSet:
 		var parts []string
