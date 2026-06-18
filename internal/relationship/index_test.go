@@ -443,3 +443,94 @@ func TestReplace_NoExistingRelations(t *testing.T) {
 	allRels := index.All()
 	assert.Len(t, allRels, 0)
 }
+
+// Remove must scrub the removed node's edges from adjacent nodes too, otherwise query methods keep returning
+// relationships that no longer exist. the original Remove only deleted the removed node's own maps, leaving
+// dangling pointers in the other endpoints.
+func TestRemove_NoStaleEdgesInAdjacentNodes(t *testing.T) {
+	p1 := pkg.Package{Name: "pkg-1", Version: "1"}
+	p2 := pkg.Package{Name: "pkg-2", Version: "2"}
+	p3 := pkg.Package{Name: "pkg-3", Version: "3"}
+	for _, p := range []*pkg.Package{&p1, &p2, &p3} {
+		p.SetID()
+	}
+
+	r12 := artifact.Relationship{From: p1, To: p2, Type: artifact.DependencyOfRelationship}
+	r32 := artifact.Relationship{From: p3, To: p2, Type: artifact.DependencyOfRelationship}
+	index := NewIndex(r12, r32)
+
+	index.Remove(p1.ID())
+
+	// p2 was on the To side of the removed edge; its incoming view must no longer include the stale p1 edge,
+	// but must still include the live p3 edge.
+	compareRelationships(t, []artifact.Relationship{r32}, index.To(p2, artifact.DependencyOfRelationship))
+	assert.False(t, index.Contains(r12), "Contains must not report a removed edge")
+	assert.Len(t, index.References(p2), 1, "p2 should only reference the surviving p3 edge")
+	assert.True(t, index.Contains(r32), "surviving edge should remain")
+	compareRelationships(t, []artifact.Relationship{r32}, index.All())
+}
+
+// Replace must leave no dangling references to the old ID in adjacent nodes' query views.
+func TestReplace_NoStaleEdgesAfterReplace(t *testing.T) {
+	main := pkg.Package{Name: "main-module"} // empty version
+	dep := pkg.Package{Name: "dep", Version: "1.0.0"}
+	main.SetID()
+	dep.SetID()
+
+	oldEdge := artifact.Relationship{From: dep, To: main, Type: artifact.DependencyOfRelationship}
+	index := NewIndex(oldEdge)
+
+	stubbed := main
+	stubbed.Version = "UNKNOWN"
+	stubbed.SetID()
+	require.NotEqual(t, main.ID(), stubbed.ID())
+
+	index.Replace(main.ID(), &stubbed)
+
+	newEdge := artifact.Relationship{From: dep, To: stubbed, Type: artifact.DependencyOfRelationship}
+	// the dep's outgoing view must point at the stubbed node, not the old one
+	from := index.From(dep, artifact.DependencyOfRelationship)
+	require.Len(t, from, 1)
+	assert.Equal(t, stubbed.ID(), from[0].To.ID())
+	assert.True(t, index.Contains(newEdge))
+	assert.False(t, index.Contains(oldEdge), "stale edge to old ID must be gone")
+	assert.Empty(t, index.To(main), "old node should have no incoming edges")
+	compareRelationships(t, []artifact.Relationship{newEdge}, index.All())
+}
+
+// replacing a node with one that has the same ID must be a no-op, not silently wipe its edges.
+func TestReplace_SameIDIsNoOp(t *testing.T) {
+	a := pkg.Package{Name: "a", Version: "1"}
+	b := pkg.Package{Name: "b", Version: "2"}
+	a.SetID()
+	b.SetID()
+	edge := artifact.Relationship{From: a, To: b, Type: artifact.DependencyOfRelationship}
+	index := NewIndex(edge)
+
+	// same identity object -> same ID
+	index.Replace(b.ID(), b)
+
+	compareRelationships(t, []artifact.Relationship{edge}, index.All())
+	assert.True(t, index.Contains(edge))
+}
+
+// a self-edge on the replaced node should be remapped to replacement->replacement, not dropped.
+func TestReplace_SelfEdge(t *testing.T) {
+	n := pkg.Package{Name: "n"} // empty version
+	n.SetID()
+	index := NewIndex(artifact.Relationship{From: n, To: n, Type: artifact.DependencyOfRelationship})
+
+	sn := n
+	sn.Version = "UNKNOWN"
+	sn.SetID()
+	require.NotEqual(t, n.ID(), sn.ID())
+
+	index.Replace(n.ID(), &sn)
+
+	all := index.All()
+	require.Len(t, all, 1)
+	assert.Equal(t, sn.ID(), all[0].From.ID())
+	assert.Equal(t, sn.ID(), all[0].To.ID())
+	assert.Empty(t, index.From(n), "no edges should reference the old ID")
+	assert.Empty(t, index.To(n), "no edges should reference the old ID")
+}
