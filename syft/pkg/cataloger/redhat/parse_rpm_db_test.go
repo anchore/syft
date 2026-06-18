@@ -115,6 +115,8 @@ func TestParseRpmDB(t *testing.T) {
 						SourceRpm:       "dive-0.9.2-1.src.rpm",
 						Size:            12406784,
 						Vendor:          "",
+						Packager:        "Alex Goodman",
+						URL:             "https://github.com/wagoodman/dive/",
 						ModularityLabel: strRef(""),
 						Provides:        []string{"dive"},
 						Files:           []pkg.RpmFileRecord{},
@@ -145,6 +147,8 @@ func TestParseRpmDB(t *testing.T) {
 						SourceRpm:       "dive-0.9.2-1.src.rpm",
 						Size:            12406784,
 						Vendor:          "",
+						Packager:        "Alex Goodman",
+						URL:             "https://github.com/wagoodman/dive/",
 						ModularityLabel: strRef(""),
 						Provides:        []string{"dive"},
 						Files: []pkg.RpmFileRecord{

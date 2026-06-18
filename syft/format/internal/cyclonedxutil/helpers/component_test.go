@@ -550,3 +550,114 @@ func TestGetPURL(t *testing.T) {
 		})
 	}
 }
+
+func Test_encodeSupplier(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        pkg.Package
+		sbomSupplier string
+		expected     *cyclonedx.OrganizationalEntity
+	}{
+		{
+			name:     "no metadata and no sbom supplier yields nil",
+			input:    pkg.Package{},
+			expected: nil,
+		},
+		{
+			name: "derive organization supplier from rpm vendor",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{Vendor: "Red Hat, Inc."},
+			},
+			expected: &cyclonedx.OrganizationalEntity{Name: "Red Hat, Inc."},
+		},
+		{
+			name: "rpm vendor with packager email -> supplier contact email",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{Vendor: "CentOS", Packager: "builder@centos.org"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{
+				Name:    "CentOS",
+				Contact: &[]cyclonedx.OrganizationalContact{{Name: "CentOS", Email: "builder@centos.org"}},
+			},
+		},
+		{
+			name: "rpm vendor with packager bug-tracker url -> supplier url",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{Vendor: "Red Hat, Inc.", Packager: "Red Hat, Inc. <http://bugzilla.redhat.com/bugzilla>"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{
+				Name: "Red Hat, Inc.",
+				URL:  &[]string{"http://bugzilla.redhat.com/bugzilla"},
+			},
+		},
+		{
+			name: "email-only supplier promotes email to name without repeating it as the contact name",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{Packager: "builder@centos.org"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{
+				Name:    "builder@centos.org",
+				Contact: &[]cyclonedx.OrganizationalContact{{Name: "", Email: "builder@centos.org"}},
+			},
+		},
+		{
+			name: "non-url parenthetical in vendor is not emitted as a supplier url",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{Vendor: "Acme Corp (Internal)"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{Name: "Acme Corp"},
+		},
+		{
+			name: "derive person supplier from apk maintainer (name + contact email)",
+			input: pkg.Package{
+				Metadata: pkg.ApkDBEntry{Maintainer: "Natanael Copa <ncopa@alpinelinux.org>"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{
+				Name: "Natanael Copa",
+				Contact: &[]cyclonedx.OrganizationalContact{
+					{Name: "Natanael Copa", Email: "ncopa@alpinelinux.org"},
+				},
+			},
+		},
+		{
+			name: "derive supplier with name, email, and url from npm author",
+			input: pkg.Package{
+				Metadata: pkg.NpmPackage{Author: "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{
+				Name: "Isaac Z. Schlueter",
+				URL:  &[]string{"http://blog.izs.me"},
+				Contact: &[]cyclonedx.OrganizationalContact{
+					{Name: "Isaac Z. Schlueter", Email: "i@izs.me"},
+				},
+			},
+		},
+		{
+			name: "derive supplier from alpm packager (supplier-specific path)",
+			input: pkg.Package{
+				Metadata: pkg.AlpmDBEntry{Packager: "someone"},
+			},
+			expected: &cyclonedx.OrganizationalEntity{Name: "someone"},
+		},
+		{
+			name:         "fall back to document-level supplier when metadata has none",
+			input:        pkg.Package{Metadata: pkg.NpmPackage{}},
+			sbomSupplier: "Acme Corp",
+			expected:     &cyclonedx.OrganizationalEntity{Name: "Acme Corp"},
+		},
+		{
+			name: "metadata-derived supplier takes precedence over document-level supplier",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{Vendor: "Red Hat, Inc."},
+			},
+			sbomSupplier: "Acme Corp",
+			expected:     &cyclonedx.OrganizationalEntity{Name: "Red Hat, Inc."},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, encodeSupplier(tt.input, tt.sbomSupplier))
+		})
+	}
+}

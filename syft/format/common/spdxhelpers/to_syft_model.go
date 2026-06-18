@@ -621,6 +621,7 @@ func extractMetadata(p *spdx.Package, info pkgInfo) any {
 			Arch:      arch,
 			SourceRpm: upstreamValue,
 			Vendor:    originator,
+			URL:       p.PackageHomePage,
 		}
 	case pkg.DebPkg:
 		return pkg.DpkgDBEntry{

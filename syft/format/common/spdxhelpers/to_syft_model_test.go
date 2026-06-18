@@ -162,8 +162,9 @@ func Test_extractMetadata(t *testing.T) {
 		},
 		{
 			pkg: spdx.Package{
-				PackageName:    "SomeRpmPkg",
-				PackageVersion: "13.2.79",
+				PackageName:     "SomeRpmPkg",
+				PackageVersion:  "13.2.79",
+				PackageHomePage: "https://www.gnu.org/software/bash",
 				PackageExternalReferences: []*spdx.PackageExternalReference{
 					{
 						Category: "PACKAGE-MANAGER",
@@ -179,6 +180,7 @@ func Test_extractMetadata(t *testing.T) {
 				Arch:      "x86_64",
 				Release:   "",
 				SourceRpm: "some-rpm-origin-1.16.3",
+				URL:       "https://www.gnu.org/software/bash",
 			},
 		},
 	}

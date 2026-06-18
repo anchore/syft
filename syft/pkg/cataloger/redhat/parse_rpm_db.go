@@ -82,6 +82,8 @@ func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 			SourceRpm:       entry.SourceRpm,
 			Signatures:      sigs,
 			Vendor:          entry.Vendor,
+			Packager:        entry.Packager,
+			URL:             entry.URL,
 			Size:            entry.Size,
 			ModularityLabel: &entry.Modularitylabel,
 			Files:           files,

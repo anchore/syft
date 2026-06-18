@@ -54,6 +54,12 @@ type RpmDBEntry struct {
 	// Vendor is the organization that packaged the software.
 	Vendor string `json:"vendor"`
 
+	// Packager is the person or entity that built the package, often a name and/or email (RPMTAG_PACKAGER).
+	Packager string `json:"packager,omitempty"`
+
+	// URL is the upstream project homepage for the software (RPMTAG_URL).
+	URL string `json:"url,omitempty"`
+
 	// ModularityLabel identifies the module stream for modular RPM packages (e.g., "nodejs:12:20200101").
 	ModularityLabel *string `json:"modularityLabel,omitempty" cyclonedx:"modularityLabel"`
 
