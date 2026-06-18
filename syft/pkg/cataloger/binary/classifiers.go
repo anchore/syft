@@ -88,8 +88,43 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "julia-binary",
 			FileGlob: "**/libjulia-internal.so",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00verify`),
+			EvidenceMatcher: binutils.MatchAny(
+				// �1.13.0-beta3[NUL]branch
+				// [NUL]GIT_VERSION_INFO[NUL]jl_image_unpack[NUL]1.13.0-alpha2[NUL]branch
+				// [NUL]GIT_VERSION_INFO[NUL]__init__[NUL]1.12.6[NUL]branch[NUL]commit
+				// [NUL]GIT_VERSION_INFO[NUL]__init__[NUL]verify_methods[NUL]1.11.9[NUL]branch[NUL]commit
+				// [NUL][NUL]__init__[NUL]1.10.11[NUL]verify_methods[NUL]
+				m.FileContentsVersionMatcher(`\x00__init__\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00(branch|verify_methods)`),
+				m.FileContentsVersionMatcher(`(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00branch\x00`),
+				// [NUL]verify_methods[NUL]Task cannot be serialized[NUL]1.9.0-alpha1[NUL]BigInt[NUL]
+				m.FileContentsVersionMatcher(`\x00verify_methods\x00.{0,30}(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00BigInt`),
+				// unknown option `%s`[NUL]1.8.5[NUL]julia version %s
+				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00julia version`),
+			),
+			Package: "julia",
+			PURL:    mustPURL("pkg:generic/julia@version"),
+			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "julia-binary",
+			FileGlob: "**/julia",
+			EvidenceMatcher: binutils.SharedLibraryLookup(
+				// libjulia.so.1
+				// libjulia.so.0.6
+				// libjulia.so
+				`^libjulia\.so(\.[0-9])?(\.[0-9])?$`,
+				binutils.MatchAny(
+					// unknown option `%s`[NUL]1.5.4[NUL]julia version %s
+					m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00julia version`),
+					// [NUL]#kw#[NUL]1.3.1[NUL]BigInt
+					// [NUL]#kw#[NUL]0.7.0-beta2[NUL]_require_dependencies
+					m.FileContentsVersionMatcher(`\x00#kw#\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00(BigInt|_require_dependencies)`),
+					// [NUL]ObjectIdDict[NUL]0.6.4[NUL]jl_sysimg_cpu_target
+					m.FileContentsVersionMatcher(`\x00ObjectIdDict\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00jl_sysimg_cpu_target`),
+					// [NUL]require[NUL]0.4.6[NUL]core2
+					m.FileContentsVersionMatcher(`\x00require\x00(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00core2`),
+				),
+			),
 			Package: "julia",
 			PURL:    mustPURL("pkg:generic/julia@version"),
 			CPEs:    singleCPE("cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -97,8 +132,17 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "helm",
 			FileGlob: "**/helm",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`(?m)\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00`),
+			EvidenceMatcher: binutils.MatchAny(
+				// [NUL]v1.21.2[NUL].......[NUL][NUL]v4.1.4[NUL][NUL][NUL]
+				// [NUL]v2.0.0-beta.2[NUL][NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00{2,}`),
+				// [NUK]'[DLE]v3.12.0[NUL][NUL]...go1.20.3[NUL][NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00+.{1,500}go[0-9]+\.[0-9]+\.[0-9]+\x00+`),
+				// [NUL]v3.11.1[NUL]�[NUL]
+				m.FileContentsVersionMatcher(`\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00`),
+				// [NUL]@�@v3.15.2[NUL][NUL]
+				m.FileContentsVersionMatcher(`@v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]|-beta\.[0-9]|-rc\.[0-9])?)\x00`),
+			),
 			Package: "helm",
 			PURL:    mustPURL("pkg:golang/helm.sh/helm@version"),
 			CPEs:    singleCPE("cpe:2.3:a:helm:helm:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -295,6 +339,96 @@ func DefaultClassifiers() []binutils.Classifier {
 			},
 		},
 		{
+			// Legacy MySQL Cluster contains both MySQL Server and MySQL Cluster versions (Example: 5.7.33-ndb-7.5.21)
+			// This classifier identifies the MySQL Server version of the mysqld binary (5.7.33 in the example above).
+			Class:    "mysqld-mysql-cluster-legacy-binary",
+			FileGlob: "**/mysqld",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`cluster-gpl\x00(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)\-ndb\-[0-9]+(\.[0-9]+)?(\.[0-9]+)?`),
+			Package: "mysql-server",
+			PURL:    mustPURL("pkg:generic/mysql-server@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "mysqld-binary",
+			FileGlob: "**/mysqld",
+			EvidenceMatcher: binutils.BranchingEvidenceMatcher([]binutils.Classifier{
+				{
+					// Legacy MySQL Cluster contains both MySQL Server and MySQL Cluster versions (Example: 5.7.33-ndb-7.5.21)
+					// This classifier identifies the MySQL Cluster version of the mysqld binary (7.5.21 in the example above).
+					Class: "mysqld-mysql-cluster-legacy-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`cluster-gpl\x00[0-9]+(\.[0-9]+)?(\.[0-9]+)?\-ndb\-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)`),
+					Package: "mysql-cluster",
+					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+				{
+					// mysqld from MySQL Cluster after versioning was aligned with MySQL Server
+					Class: "mysqld-mysql-cluster-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+					Package: "mysql-cluster",
+					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+				{
+					// mysqld from MySQL Server
+					Class: "mysqld-mysql-server-binary",
+					EvidenceMatcher: m.FileContentsVersionMatcher(
+						`/mysql-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+					Package: "mysql-server",
+					PURL:    mustPURL("pkg:generic/mysql-server@version"),
+					CPEs: []cpe.CPE{
+						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+						cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+					},
+				},
+			}...),
+		},
+		{
+			Class:    "ndbd-binary",
+			FileGlob: "**/ndbd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "ndbmtd-binary",
+			FileGlob: "**/ndbmtd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:    "ndb_mgmd-binary",
+			FileGlob: "**/ndb_mgmd",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
 			Class:    "xtrabackup-binary",
 			FileGlob: "**/xtrabackup",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
@@ -306,9 +440,17 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "mariadb-binary",
 			FileGlob: "**/{mariadb,mysql}",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
+			EvidenceMatcher: binutils.MatchAny(
 				// 10.6.15-MariaDB
-				`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
+				m.FileContentsVersionMatcher(`(?m)(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-MariaDB`),
+				// MariaDB.org / RHEL tarball builds embed the release directory name, which does not contain the
+				// "-MariaDB" marker. The version is in the build path instead, e.g.:
+				//   mariadb-11.8.5-2-redhat-x86_64/rhel-8/bin/mariadb
+				//   mariadb-11.8.5-linux-systemd-x86_64
+				// Without this the older matcher misses the version and a later release suffix (e.g. "2") can be
+				// picked up instead, producing false-positive matches against ancient CVEs (see anchore/grype#3452).
+				m.FileContentsVersionMatcher(`(?m)(?:^|/)mariadb-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)-`),
+			),
 			Package: "mariadb",
 			PURL:    mustPURL("pkg:generic/mariadb@version"),
 			CPEs:    singleCPE("cpe:2.3:a:mariadb:mariadb:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -433,10 +575,26 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "deno-binary",
 			FileGlob: "**/deno",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// Deno/2.6.3
-				// Deno/1.41.0
-				`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			EvidenceMatcher: binutils.MatchAny(
+				m.FileContentsVersionMatcher(
+					// Deno/2.6.3
+					// Deno/1.41.0
+					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// deno::tools::standalonedeno-65db94feba9d4d51a09b74629f566dbc90484fbarelease/v1.29.4windows
+					// cli/tools/standalone.rsdeno-74064c9d8c222b33b2a552ea0af1054f57002a96release/v1.28.3windows
+					`deno-[0-9a-z]{40}release/v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// cli/tools/standalone.rsdeno-ab286750a8c87215a9651efb11fcc620f29140051.16.4release/vdlwindows
+					`deno-[0-9a-z]{40}(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// 1.10.31567c1013cc8ff12cf039137792da66a1d0015b5DENO_UNSTABLE_COVERAGE_DIRNo current directorycli/main
+					`(?P<version>[0-9]+\.[0-9]+\.[0-9]+)[0-9a-z]{40}DENO`,
+				),
+			),
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -951,6 +1109,21 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "nginx-ingress-controller",
 			PURL:    mustPURL("pkg:generic/nginx-ingress-controller@version"),
 			CPEs:    singleCPE("cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "elastic-agent-binary",
+			FileGlob: "**/elastic-agent",
+			EvidenceMatcher: binutils.MatchAny(
+				// 9.4.x:  config/statsenroll: true9.4.2-headeruint16secret
+				// 9.0.x:  configenroll9.0.0-headeruint16secret
+				// 8.19.x: config/statsenroll8.19.4headeruint16secret
+				m.FileContentsVersionMatcher(`enroll(?:: true)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-?header`),
+				// 8.11.x: 3:04PM8.11.2:https
+				m.FileContentsVersionMatcher(`PM(?P<version>[0-9]+\.[0-9]+\.[0-9]+):https`),
+			),
+			Package: "elastic-agent",
+			PURL:    mustPURL("pkg:generic/elastic-agent@version"),
+			CPEs:    singleCPE("cpe:2.3:a:elastic:elastic_agent:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 

@@ -36,8 +36,9 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		// or testdata/classifiers/bin directory . Snippets are searched for first, and if not found, then existing binaries are
 		// used. If no binary or snippet is found the test will fail. If '-must-use-original-binaries' is used the only
 		// full binaries are tested (no snippets), and if no binary is found the test will be skipped.
-		logicalFixture string
-		expected       pkg.Package
+		logicalFixture   string
+		expected         pkg.Package
+		expectedPackages []pkg.Package
 	}{
 		{
 			logicalFixture: "arangodb/3.11.8/linux-amd64",
@@ -204,6 +205,96 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/mariadb@10.6.15",
 				Locations: locations("mariadb"),
 				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
+			// RHEL / MariaDB.org tarball builds do not embed the "-MariaDB" marker; the version is only
+			// present in the build path (e.g. mariadb-11.8.5-2-redhat-x86_64). The release suffix ("-2")
+			// must not leak into the version. Regression for anchore/grype#3452.
+			logicalFixture: "mariadb/11.8.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mariadb",
+				Version:   "11.8.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/mariadb@11.8.5",
+				Locations: locations("mariadb"),
+				Metadata:  metadata("mariadb-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysqld/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-server",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-server@9.7.0",
+				Locations: locations("mysqld"),
+				Metadata:  metadata("mysqld-mysql-server-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysql-cluster/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("mysqld"),
+				Metadata:  metadata("mysqld-mysql-cluster-binary"),
+			},
+		},
+		{
+			logicalFixture: "mysql-cluster/7.6.17/linux-amd64",
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "mysql-server",
+					Version:   "5.7.33",
+					Type:      "binary",
+					PURL:      "pkg:generic/mysql-server@5.7.33",
+					Locations: locations("mysqld"),
+					Metadata:  metadata("mysqld-mysql-cluster-legacy-binary"),
+				},
+				{
+					Name:      "mysql-cluster",
+					Version:   "7.6.17",
+					Type:      "binary",
+					PURL:      "pkg:generic/mysql-cluster@7.6.17",
+					Locations: locations("mysqld"),
+					Metadata:  metadata("mysqld-mysql-cluster-legacy-binary"),
+				},
+			},
+		},
+		{
+			logicalFixture: "ndbd/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("ndbd"),
+				Metadata:  metadata("ndbd-binary"),
+			},
+		},
+		{
+			logicalFixture: "ndbmtd/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("ndbmtd"),
+				Metadata:  metadata("ndbmtd-binary"),
+			},
+		},
+		{
+			logicalFixture: "ndb_mgmd/9.7.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "mysql-cluster",
+				Version:   "9.7.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/mysql-cluster@9.7.0",
+				Locations: locations("ndb_mgmd"),
+				Metadata:  metadata("ndb_mgmd-binary"),
 			},
 		},
 		{
@@ -433,12 +524,78 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "helm/4.1.4/linux-s390x",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "4.1.4",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@4.1.4",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/3.15.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.15.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.15.2",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/3.12.0/linux-s390x",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.12.0",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.12.0",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
 			logicalFixture: "helm/3.11.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "helm",
 				Version:   "3.11.1",
 				Type:      "binary",
 				PURL:      "pkg:golang/helm.sh/helm@3.11.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/3.0.0-alpha.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "3.0.0-alpha.1",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@3.0.0-alpha.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/2.17.0-rc.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "2.17.0-rc.1",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@2.17.0-rc.1",
+				Locations: locations("helm"),
+				Metadata:  metadata("helm"),
+			},
+		},
+		{
+			logicalFixture: "helm/2.0.0-beta.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "helm",
+				Version:   "2.0.0-beta.2",
+				Type:      "binary",
+				PURL:      "pkg:golang/helm.sh/helm@2.0.0-beta.2",
 				Locations: locations("helm"),
 				Metadata:  metadata("helm"),
 			},
@@ -1329,6 +1486,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/dart@3.6.0-216.1.beta",
 				Locations: locations("dart"),
 				Metadata:  metadata("dart-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.10.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.10.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.10.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.16.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.16.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.16.4",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.28.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.28.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.28.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.29.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.29.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.29.4",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
 			},
 		},
 		{
@@ -2356,6 +2557,150 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("ingress-nginx-binary"),
 			},
 		},
+		{
+			logicalFixture: "elastic-agent/9.4.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "9.4.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@9.4.2",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/9.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "9.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@9.0.0",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/8.19.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "8.19.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@8.19.4",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "elastic-agent/8.11.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "elastic-agent",
+				Version:   "8.11.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/elastic-agent@8.11.2",
+				Locations: locations("elastic-agent"),
+				Metadata:  metadata("elastic-agent-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.13.0-alpha2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.13.0-alpha2",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.13.0-alpha2",
+				Locations: locations("libjulia-internal.so.1.13.0"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.12.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.12.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.12.6",
+				Locations: locations("libjulia-internal.so.1.12.6"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.11.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.11.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.11.9",
+				Locations: locations("libjulia-internal.so.1.11.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.10.11/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.10.11",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.10.11",
+				Locations: locations("libjulia-internal.so.1.10.11"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.9.0-alpha1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.9.0-alpha1",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.9.0-alpha1",
+				Locations: locations("libjulia-internal.so.1.9"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			logicalFixture: "julia/1.8.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.8.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.8.5",
+				Locations: locations("libjulia-internal.so.1.8"),
+				Metadata:  metadata("julia-binary"),
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "julia/1.5.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.5.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.5.4",
+				Locations: locations("julia", "libjulia.so.1.5"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("julia-binary", "julia"),
+						match("julia-binary", "libjulia.so.1.5"),
+					},
+				},
+			},
+		},
+		{
+			// note: dynamic (non-snippet) test case
+			logicalFixture: "julia/1.3.1/linux-amd64",
+			expected: pkg.Package{
+				Name:      "julia",
+				Version:   "1.3.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/julia@1.3.1",
+				Locations: locations("julia", "libjulia.so.1.3"),
+				Metadata: pkg.BinarySignature{
+					Matches: []pkg.ClassifierMatch{
+						match("julia-binary", "julia"),
+						match("julia-binary", "libjulia.so.1.3"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -2377,9 +2722,16 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			packages, _, err := c.Catalog(context.Background(), resolver)
 			require.NoError(t, err)
 
-			require.Len(t, packages, 1, "mismatched package count")
+			expected := test.expectedPackages
+			if len(expected) == 0 {
+				expected = []pkg.Package{test.expected}
+			}
 
-			assertPackagesAreEqual(t, test.expected, packages[0])
+			require.Len(t, packages, len(expected), "mismatched package count")
+
+			for i := range expected {
+				assertPackagesAreEqual(t, expected[i], packages[i])
+			}
 		})
 	}
 }

@@ -10,7 +10,7 @@ type binaryClassifierOverride struct {
 	Class   string
 	Package string
 	PURL    string
-	CPEs    []string
+	CPEs    []cpe.CPE
 }
 
 var binaryClassifierOverrides = map[string][]binaryClassifierOverride{
@@ -110,12 +110,47 @@ var binaryClassifierOverrides = map[string][]binaryClassifierOverride{
 			CPEs:    singleCPE("cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	},
+	"mysqld-binary": {
+		{
+			Class:   "mysqld-mysql-cluster-legacy-binary",
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:   "mysqld-mysql-cluster-binary",
+			Package: "mysql-cluster",
+			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+		{
+			Class:   "mysqld-mysql-server-binary",
+			Package: "mysql-server",
+			PURL:    mustPURL("pkg:generic/mysql-server@version"),
+			CPEs: []cpe.CPE{
+				cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+				cpe.Must("cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			},
+		},
+	},
 }
 
 func mustPURL(purl string) string {
 	return purl
 }
 
-func singleCPE(cpeString string, _ ...any) []string {
-	return []string{cpeString}
+func singleCPE(cpeString string, source ...cpe.Source) []cpe.CPE {
+	src := cpe.GeneratedSource
+	if len(source) > 0 {
+		src = source[0]
+	}
+	return []cpe.CPE{
+		cpe.Must(cpeString, src),
+	}
 }

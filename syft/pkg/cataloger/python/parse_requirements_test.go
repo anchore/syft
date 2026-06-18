@@ -140,6 +140,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 				VersionConstraint: "== 1.0.0",
 			},
 		},
+		{
+			Name:      "local-version",
+			Version:   "1.2.3+gcr.2",
+			PURL:      "pkg:pypi/local-version@1.2.3%2Bgcr.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
+			},
+		},
 	}
 
 	var testCases = []struct {
@@ -357,6 +369,23 @@ func Test_newRequirement(t *testing.T) {
 				Markers:           "sys_platform == 'win32'",
 			},
 		},
+		{
+			name: "local version identifier",
+			raw:  "local-version == 1.2.3+gcr.2",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
+			},
+		},
+		{
+			name: "local version identifier with markers",
+			raw:  "local-version == 1.2.3+ubuntu1 ; sys_platform == 'linux'",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+ubuntu1",
+				Markers:           "sys_platform == 'linux'",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -387,6 +416,16 @@ func Test_parseVersion(t *testing.T) {
 			name:    "arbitrary equality constraint",
 			version: " === 1.26.20 ",
 			want:    "1.26.20",
+		},
+		{
+			name:    "local version identifier",
+			version: " == 1.2.3+gcr.2 ",
+			want:    "1.2.3+gcr.2",
+		},
+		{
+			name:    "arbitrary equality with local version identifier",
+			version: " === 1.2.3+ubuntu1 ",
+			want:    "1.2.3+ubuntu1",
 		},
 		{
 			name:    "resolve lowest, simple constraint",

@@ -29,8 +29,8 @@ const (
 	// namePattern matches: requests[security]
 	namePattern = `(?P<name>\w[\w\[\],\s-_\.]+)`
 
-	// versionConstraintPattern matches: == 2.8.*
-	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
+	// versionConstraintPattern matches: == 2.8.* (including local version identifiers, e.g. == 1.2.3+gcr.2)
+	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*+]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
 
 	// markersPattern matches: python_version < "2.7" and sys_platform == "linux"
 	markersPattern = `(;(?P<markers>.*))?`

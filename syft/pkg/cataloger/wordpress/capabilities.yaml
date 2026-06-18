@@ -22,6 +22,8 @@ catalogers:
           - pkg.WordpressPluginEntry
         package_types: # AUTO-GENERATED
           - wordpress-plugin
+        purl_types: # AUTO-GENERATED
+          - wordpress-plugin
         json_schema_types: # AUTO-GENERATED
           - WordpressPluginEntry
         capabilities: # MANUAL - preserved across regeneration

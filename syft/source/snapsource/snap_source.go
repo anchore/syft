@@ -282,7 +282,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 		var err error
 
 		if !d.IsDir() {
-			f, err = fsys.OpenFile(path, os.O_RDONLY)
+			f, err = fsys.OpenFile(intFile.ToFSPath(path), os.O_RDONLY)
 			if err != nil {
 				log.WithFields("error", err, "path", path).Trace("unable to open squash file path")
 			} else {
@@ -327,7 +327,7 @@ func squashfsVisitor(ft filetree.Writer, fileCatalog *image.FileCatalog, size *i
 			*(size) += metadata.Size()
 		}
 		fileCatalog.AssociateOpener(*fileReference, func() (io.ReadCloser, error) {
-			return fsys.OpenFile(path, os.O_RDONLY)
+			return fsys.OpenFile(intFile.ToFSPath(path), os.O_RDONLY)
 		})
 
 		prog.Increment()

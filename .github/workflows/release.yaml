@@ -1,7 +1,11 @@
 name: "Release"
 
-permissions:
-  contents: read
+permissions: {}
+
+# there should never be two releases in progress at the same time
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -19,116 +23,30 @@ on:
           - "install-script-only"
 
 jobs:
-  quality-gate:
-    environment: release
+  version-available:
     if: ${{ github.event.inputs.phase == 'all' }}
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-        with:
-          persist-credentials: false
+    permissions:
+      contents: read # required for fetching tags
+    uses: anchore/workflows/.github/workflows/check-version-available.yaml@b0c30a80409130d329aaa356fd64a34d8c0b3375 # v0.7.2
+    with:
+      version: ${{ github.event.inputs.version }}
 
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
-
-      - name: Validate Apple notarization credentials
-        run: .tool/quill submission list
-        env:
-          QUILL_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER }}
-          QUILL_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
-          QUILL_NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
-
-      - name: Check if running on main
-        if: github.ref != 'refs/heads/main'
-        # we are using the following flag when running `cosign blob-verify` for checksum signature verification:
-        #   --certificate-identity-regexp "https://github.com/anchore/.github/workflows/release.yaml@refs/heads/main"
-        # if we are not on the main branch, the signature will not be verifiable since the suffix requires the main branch
-        # at the time of when the OIDC token was issued on the Github Actions runner.
-        run: echo "This can only be run on the main branch otherwise releases produced will not be verifiable with cosign" && exit 1
-
-      - name: Check if tag already exists
-        # note: this will fail if the tag already exists
-        run: |
-          [[ "$VERSION" == v* ]] || (echo "version '$VERSION' does not have a 'v' prefix" && exit 1)
-          git tag "$VERSION"
-        env:
-          VERSION: ${{ github.event.inputs.version }}
-
-      - name: Check static analysis results
-        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
-        id: static-analysis
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
-          checkName: "Static analysis"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Check unit test results
-        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
-        id: unit
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
-          checkName: "Unit tests"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Check integration test results
-        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
-        id: integration
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
-          checkName: "Integration tests"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Check acceptance test results (linux)
-        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
-        id: acceptance-linux
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
-          checkName: "Acceptance tests (Linux)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Check acceptance test results (mac)
-        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
-        id: acceptance-mac
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
-          checkName: "Acceptance tests (Mac)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Check cli test results (linux)
-        uses: fountainhead/action-wait-for-check@5a908a24814494009c4bb27c242ea38c93c593be # v1.2.0
-        id: cli-linux
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # This check name is defined as the github action job name (in .github/workflows/testing.yaml)
-          checkName: "CLI tests (Linux)"
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Quality gate
-        if: steps.static-analysis.outputs.conclusion != 'success' || steps.unit.outputs.conclusion != 'success' || steps.integration.outputs.conclusion != 'success' || steps.cli-linux.outputs.conclusion != 'success' || steps.acceptance-linux.outputs.conclusion != 'success' || steps.acceptance-mac.outputs.conclusion != 'success'
-        env:
-          STATIC_ANALYSIS_STATUS: ${{ steps.static-analysis.conclusion }}
-          UNIT_TEST_STATUS: ${{ steps.unit.outputs.conclusion }}
-          INTEGRATION_TEST_STATUS: ${{ steps.integration.outputs.conclusion }}
-          ACCEPTANCE_LINUX_STATUS: ${{ steps.acceptance-linux.outputs.conclusion }}
-          ACCEPTANCE_MAC_STATUS: ${{ steps.acceptance-mac.outputs.conclusion }}
-          CLI_LINUX_STATUS: ${{ steps.cli-linux.outputs.conclusion }}
-        run: |
-          echo "Static Analysis Status: $STATIC_ANALYSIS_STATUS"
-          echo "Unit Test Status: $UNIT_TEST_STATUS"
-          echo "Integration Test Status: $INTEGRATION_TEST_STATUS"
-          echo "Acceptance Test (Linux) Status: $ACCEPTANCE_LINUX_STATUS"
-          echo "Acceptance Test (Mac) Status: $ACCEPTANCE_MAC_STATUS"
-          echo "CLI Test (Linux) Status: $CLI_LINUX_STATUS"
-          false
+  check-gate:
+    if: ${{ github.event.inputs.phase == 'all' }}
+    permissions:
+      contents: read
+      checks: read # required for getting the status of specific check names
+    uses: anchore/workflows/.github/workflows/check-gate.yaml@b0c30a80409130d329aaa356fd64a34d8c0b3375 # v0.7.2
+    with:
+      # these are checks that should be run on pull-request and merges to main.
+      # we do NOT want to kick off a release if these have not been verified on main.
+      # Please see the validations.yaml workflow for the names that should be used here.
+      checks: '["Acceptance tests (Linux)", "Acceptance tests (Mac)", "Build snapshot artifacts", "CLI tests (Linux)", "Integration tests", "Static analysis", "Unit tests"]'
 
   release:
-    needs: [ quality-gate ]
+    needs: [check-gate, version-available]
     if: ${{ github.event.inputs.phase == 'all' }}
+    environment: release
     # runs-on.com: compute instances for parallel builds
     #   spot disabled: reliability for build workflows (used for releases too)
     #   goreleaser uses parallelism of 12, so we need more CPUs
@@ -136,12 +54,11 @@ jobs:
     #   tmpfs: faster io-intensive workflows
     runs-on: runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs
     permissions:
-      contents: write
-      packages: write
-      # required for goreleaser signs section with cosign
-      id-token: write
+      contents: write # required for creating the GitHub release and pushing the version tag
+      packages: write # required for publishing release artifacts to GitHub packages
+      id-token: write # required for keyless signing (cosign/sigstore OIDC)
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: true
@@ -150,31 +67,24 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Login to Docker Hub
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  #v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee #v4.2.0
         with:
           username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
           password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  #v4.1.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee #v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Tag release
-        run: |
-          git config --global user.name "anchoreci"
-          git config --global user.email "anchoreci@users.noreply.github.com"
-          git tag -a "$VERSION" -m "Release $VERSION"
-          git push origin --tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ github.event.inputs.version }}
-
       - name: Build & publish release artifacts
         run: make ci-release
         env:
+          # used for pushing tags
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
           # for mac signing and notarization...
           QUILL_SIGN_P12: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_CHAIN }}
           QUILL_SIGN_PASSWORD: ${{ secrets.ANCHORE_APPLE_DEVELOPER_ID_CERT_PASS }}
@@ -192,30 +102,12 @@ jobs:
           file: go.mod
           artifact-name: sbom.spdx.json
 
-      - name: Notify Slack of new release
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c #v3.0.3
-        continue-on-error: true
-        with:
-          webhook: ${{ secrets.SLACK_TOOLBOX_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            text: "A new Syft release has been published: https://github.com/anchore/syft/releases/tag/${{ github.event.inputs.version }}"
-            blocks:
-              - type: section
-                text:
-                  type: mrkdwn
-                  text: |
-                    *A new Syft release has been published* :rocket:
-                    • Release: <https://github.com/anchore/syft/releases/tag/${{ github.event.inputs.version }}|${{ github.event.inputs.version }}>
-                    • Repo: `${{ github.repository }}`
-                    • Workflow: `${{ github.workflow }}`
-                    • Event: `${{ github.event_name }}`
-        if: ${{ success() }}
-
   release-install-script:
-    needs: [ release ]
+    needs: [release]
     if: ${{ always() && (needs.release.result == 'success' || github.event.inputs.phase == 'install-script-only') }}
-    uses: "anchore/workflows/.github/workflows/release-install-script.yaml@main"
+    permissions:
+      contents: read # required for the reusable workflow to check out the repo and publish the install script
+    uses: anchore/workflows/.github/workflows/release-install-script.yaml@b0c30a80409130d329aaa356fd64a34d8c0b3375 # v0.7.2
     with:
       tag: ${{ github.event.inputs.version }}
     secrets:

@@ -124,6 +124,38 @@ from-images:
       - /usr/lib/dart/bin/dart
 
   - name: deno
+    version: 1.10.3
+    images:
+      - ref: denoland/deno:1.10.3@sha256:9687db39d68333fce31f371734a1b982092507606508289a5c7a24cfc5fe6ee2
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.16.4
+    images:
+      - ref: denoland/deno:1.16.4@sha256:027868eb6f079ef290957bcda05280a6b08ff86baf549bc6eff5c17467a44d41
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.28.3
+    images:
+      - ref: denoland/deno:1.28.3@sha256:8636e6ac55fbd4687c111eb4b798b1772d43874c53647ca4a2bad6d1962643f0
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.29.4
+    images:
+      - ref: denoland/deno:1.29.4@sha256:f5b5a4678b18884724b277a4eb5490a978eab2da5a47461766df9fb59ebb08b6
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
     version: 1.41.0
     images:
       - ref: denoland/deno:1.41.0
@@ -312,20 +344,52 @@ from-images:
     paths:
     - /usr/bin/mysql
 
-# TODO: add pattern for mysqld
-#  - version: 5.6.51
-#    images:
-#      - ref: mysql:5.6.51@sha256:897086d07d1efa876224b147397ea8d3147e61dd84dce963aace1d5e9dc2802d
-#        platform: linux/amd64
-#    paths:
-#      - /usr/sbin/mysqld
-#
-#  - version: 8.0.34
-#    images:
-#      - ref: mysql:8.0.34@sha256:8b8835a2c32cd7357a5d2ea4b49ad870ff519c8c1d4add362803feddf4a0a973
-#        platform: linux/amd64
-#    paths:
-#      - /usr/sbin/mysqld
+  - version: 9.7.0
+    images:
+      - ref: mysql:9.7.0@sha256:6e5e46e6aece0bc8edb5abecc6fd726653f36447860f7f4dbf3481c91b477f69
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/mysqld
+
+  - name: mysql-cluster
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/mysqld
+
+  - name: mysql-cluster
+    version: 7.6.17
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:7.6.17
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/mysqld
+
+  - name: ndbd
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/ndbd
+
+  - name: ndbmtd
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/ndbmtd
+
+  - name: ndb_mgmd
+    version: 9.7.0
+    images:
+      - ref: container-registry.oracle.com/mysql/community-cluster:9.7.0
+        platform: linux/amd64
+    paths:
+      - /usr/sbin/ndb_mgmd
 
   - name: mongodb
     version: 8.0.17
@@ -804,6 +868,27 @@ from-images:
       - /usr/local/lib/libruby.so.2.6.10
       - /usr/local/lib/libruby.so.2.6
 
+  - version: 4.1.4
+    images:
+      - ref: alpine/helm:4.1.4@sha256:d69c97f71f38128c3ed4b8bcd70b4de65efad9e09494c85d158661e7ffd8b719
+        platform: linux/s390x
+    paths:
+      - /usr/bin/helm
+
+  - version: 3.15.2
+    images:
+      - ref: alpine/helm:3.15.2@sha256:61185768b41810085cb57a9bc8de9003bea78ac0dd417e5b0b16223a6a0aa812
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 3.12.0
+    images:
+      - ref: alpine/helm:3.12.0@sha256:6f6e18df0710af82188ab8b27d3890b6d519c501c0982f3a76f3fdbff39ff3c7
+        platform: linux/s390x
+    paths:
+      - /usr/bin/helm
+
   - version: 3.11.1
     images:
       - ref: alpine/helm:3.11.1@sha256:8628e3695fb743a8b9de89626f1b7a221280c2152c0e288c2504e59b68233e8b
@@ -817,6 +902,27 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/helm
+
+  - version: 3.0.0-alpha.1
+    images:
+      - ref: alpine/helm:3.0.0-alpha.1@sha256:95bd39add326ac58a333815666aace6d4a28606a79eef96d4e44287b11540b69
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 2.17.0-rc.1
+    images:
+      - ref: alpine/helm:2.17.0-rc.1@sha256:3938b9f291794fe88489dae2a87e0ad9d634464c686186d4a3ca33beef84278d
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
+
+  - version: 2.0.0-beta.2
+    images:
+      - ref: alpine/helm:2.0.0-beta.2@sha256:97d97b27a723b28c459d6c92e7b0591c553e88e483a248235fbdaa4dacb2e6d5
+        platform: linux/amd64
+    paths:
+      - /usr/bin/helm
 
   - version: 1.15.2
     images:
@@ -1460,3 +1566,118 @@ from-images:
     paths:
       - /nginx-ingress-controller
 
+  - name: julia
+    version: 1.13.0-beta3
+    images:
+      - ref: library/julia:1.13.0-beta3@sha256:3b36013b071d9abc9bdedb66a4230a9445bc692aa2c49f85852b94e81c7f0a74
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.13.0
+
+  - name: julia
+    version: 1.13.0-alpha2
+    images:
+      - ref: library/julia:1.13.0-alpha2@sha256:f1b1cd24979025371be317353d0d9071e9b549583d2b13783cbafd40b8d4e319
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.13.0
+
+  - name: julia
+    version: 1.12.6
+    images:
+      - ref: library/julia:1.12.6@sha256:54d6a3f40bbd76021e6ca8fab2dd2af08cc5388b078223d3040eaf3567b4ccd3
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.12.6
+
+  - name: julia
+    version: 1.11.9
+    images:
+      - ref: library/julia:1.11.9@sha256:18e83baa9277c2ac94bef267d585634760b5adf9bc7343480161c7b09034b452
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.11.9
+
+  - name: julia
+    version: 1.10.11
+    images:
+      - ref: library/julia:1.10.11@sha256:2f27b44f3ecda0f941c1b475b8967fa933fbf52b5f877f69bfe4df959c56df66
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.10.11
+
+  - name: julia
+    version: 1.9.0-alpha1
+    images:
+      - ref: library/julia:1.9.0-alpha1@sha256:fb932603485d7cea435e85c073c04bdf4d0b90232c03013585aa0f65c8216111
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.9
+
+  - name: julia
+    version: 1.8.5
+    images:
+      - ref: library/julia:1.8.5@sha256:5edccd0ca0b5f00d78beca0bd8217d65b2c24ef051ad07e2b08ed67224ff905a
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/lib/julia/libjulia-internal.so
+      - /usr/local/julia/lib/julia/libjulia-internal.so.1.8
+
+  - name: julia
+    version: 1.5.4
+    images:
+      - ref: library/julia:1.5.4@sha256:39c3f721aa5ede195965e7f20575b1ee5949bdd2b42204e227d98114bcc94b83
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/bin/julia
+      - /usr/local/julia/lib/libjulia.so.1
+      - /usr/local/julia/lib/libjulia.so.1.5
+
+  - name: julia
+    version: 1.3.1
+    images:
+      - ref: library/julia:1.3.1@sha256:a14f56f9f2ed44559d9f435cc346ede09a7d61afcbac61ba037acd2b39b56171
+        platform: linux/amd64
+    paths:
+      - /usr/local/julia/bin/julia
+      - /usr/local/julia/lib/libjulia.so.1
+      - /usr/local/julia/lib/libjulia.so.1.3
+
+
+  - name: elastic-agent
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:9.4.2@sha256:8187c0e2eb4db1a9780838789462bd3ecbeca36fccb89f872258a4f0d3d25ea1
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-dd9ee6/elastic-agent
+
+  - name: elastic-agent
+    version: 9.0.0
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:9.0.0@sha256:badb97acaf487273298e7f25d21177442d632f63cb9bab6f4defe341612bca07
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-9786ac/elastic-agent
+
+  - name: elastic-agent
+    version: 8.19.4
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.19.4@sha256:b54f796e43941da8665b83d3f31973fc66ef7fc33b43edc4593671325841d8fb
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-8fbe2b/elastic-agent
+
+  - name: elastic-agent
+    version: 8.11.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.11.2@sha256:1177eb349365132409df73e4a7fa97c32242db2b2c8704b9843d726837638001
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-1c21b0/elastic-agent
