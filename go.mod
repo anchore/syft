@@ -334,3 +334,8 @@ retract (
 	v0.53.2
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
+
+// TEMPORARY — DO NOT MERGE: points at a personal fork of anchore/go-rpmdb exposing the RPM Packager and
+// URL header tags. Blocked by the upstream anchore/go-rpmdb PR; remove this replace and bump the require
+// above to the released version once it merges.
+replace github.com/anchore/go-rpmdb => github.com/MackJM/go-rpmdb v0.0.0-20260618154917-5772793c04f4
