@@ -24,7 +24,7 @@ tools:
   # used to parse JSON/YAML annotations on the fixture cache image
   - name: yq
     version:
-      want: v4.53.2
+      want: v4.53.3
     method: github-release
     with:
       repo: mikefarah/yq
