@@ -15,6 +15,7 @@ const ID sbom.FormatID = "syft-json"
 type EncoderConfig struct {
 	Legacy bool // transform the output to the legacy syft-json format (pre v1.0 changes, enumerated in the README.md)
 	Pretty bool // don't include spaces and newlines; same as jq -c
+	Indent string
 }
 
 type encoder struct {
@@ -39,6 +40,7 @@ func DefaultEncoderConfig() EncoderConfig {
 	return EncoderConfig{
 		Legacy: false,
 		Pretty: false,
+		Indent: " ",
 	}
 }
 
@@ -65,7 +67,7 @@ func (e encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	enc.SetEscapeHTML(false)
 
 	if e.cfg.Pretty {
-		enc.SetIndent("", " ")
+		enc.SetIndent("", e.cfg.Indent)
 	}
 
 	return enc.Encode(&doc)
