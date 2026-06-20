@@ -102,6 +102,22 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
+			// standard Debian: VERSION_ID has major only, debian_version has the point release
+			fixture: "testdata/os/debian/with-point-release",
+			release: &Release{
+				PrettyName:      "Debian GNU/Linux 13 (trixie)",
+				Name:            "Debian GNU/Linux",
+				ID:              "debian",
+				IDLike:          nil,
+				Version:         "13 (trixie)",
+				VersionID:       "13.5",
+				VersionCodename: "trixie",
+				HomeURL:         "https://www.debian.org/",
+				SupportURL:      "https://www.debian.org/support",
+				BugReportURL:    "https://bugs.debian.org/",
+			},
+		},
+		{
 			fixture: "testdata/os/fedora",
 			release: &Release{
 				PrettyName:       "Fedora Linux 36 (Container Image)",

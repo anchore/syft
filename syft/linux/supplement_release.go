@@ -11,11 +11,10 @@ import (
 )
 
 func supplementDebianVersion(resolver file.Resolver, release *Release) {
-	// we're only looking for version information for debian when none is present in /etc/os-release
-	if release.Version != "" || release.VersionID != "" || !strings.EqualFold(release.ID, "debian") {
+	if !strings.EqualFold(release.ID, "debian") {
 		return
 	}
-	// if we have a debian release with no version, look for a debian_version
+	// debian_version has a more specific point release than os-release
 	locations, err := resolver.FilesByGlob("/etc/debian_version")
 	if err != nil {
 		log.Debugf("error reading /etc/debian_version: %v", err)
@@ -24,8 +23,10 @@ func supplementDebianVersion(resolver file.Resolver, release *Release) {
 	for _, location := range locations {
 		version := readDebianVersionFile(resolver, location)
 		if version != "" {
-			release.Version = version
 			release.VersionID = version
+			if release.Version == "" {
+				release.Version = version
+			}
 			return // keep the first result
 		}
 	}
