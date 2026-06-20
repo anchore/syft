@@ -985,6 +985,8 @@ catalogers:
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
+            - '**/*.DLL'
+            - '**/*.EXE'
             - '**/*.dll'
             - '**/*.exe'
             - '**/*.bpl'
