@@ -291,7 +291,7 @@ func Test_v3licenseInfoToExpression(t *testing.T) {
 			name: "with-addition operator",
 			info: &spdx.WithAdditionOperator{
 				SubjectExtendableLicense: &spdx.ListedLicense{Name: "GPL-2.0-only"},
-				SubjectAddition:          &spdx.ListedLicenseException{Name: "Classpath-exception-2.0"},
+				SubjectAddition:          &spdx.ListedLicenseException{AdditionText: "Classpath-exception-2.0"},
 			},
 			expected: "GPL-2.0-only WITH Classpath-exception-2.0",
 		},
@@ -316,7 +316,7 @@ func Test_v3licenseInfoToExpression(t *testing.T) {
 				Members: spdx.LicenseInfoList{
 					&spdx.WithAdditionOperator{
 						SubjectExtendableLicense: &spdx.ListedLicense{Name: "GPL-2.0-only"},
-						SubjectAddition:          &spdx.ListedLicenseException{Name: "Classpath-exception-2.0"},
+						SubjectAddition:          &spdx.ListedLicenseException{AdditionText: "Classpath-exception-2.0"},
 					},
 					&spdx.ListedLicense{Name: "MIT"},
 				},
