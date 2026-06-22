@@ -137,6 +137,7 @@ tasks:
   fingerprints:
     desc: Generate fingerprints for all non-docker test fixtures
     silent: true
+    deps: [tmpdir]
     # this will look for `testdata/Makefile` and invoke the `fingerprint` target to calculate all cache input fingerprint files
     generates:
       - '**/testdata/**/*.fingerprint'
