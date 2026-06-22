@@ -78,10 +78,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 		}
 
 		cdxHashes := digestsToHashes(digests)
-		relativePath, err := formatinternal.ConvertAbsoluteToRelative(coordinate.RealPath)
-		if err != nil {
-			relativePath = coordinate.RealPath
-		}
+		relativePath := fileRelativePath(s.Source, coordinate.RealPath)
 		components = append(components, cyclonedx.Component{
 			BOMRef: string(coordinate.ID()),
 			Type:   cyclonedx.ComponentTypeFile,
@@ -128,6 +125,18 @@ func digestsToHashes(digests []file.Digest) []cyclonedx.Hash {
 		})
 	}
 	return hashes
+}
+
+// fileRelativePath returns the path for a file component in the BOM.
+// When the source is a directory scan with a --base-path set, paths are made
+// relative to that base (supporting ".." for symlinks that escape the base).
+// For all other source types the absolute path is stripped to a simple relative
+// path via ConvertAbsoluteToRelative.
+func fileRelativePath(src source.Description, realPath string) string {
+	if m, ok := src.Metadata.(source.DirectoryMetadata); ok && m.Base != "" {
+		return formatinternal.Rel(m.Base, realPath)
+	}
+	return formatinternal.ConvertAbsoluteToRelative(realPath)
 }
 
 func toOSComponent(distro *linux.Release) []cyclonedx.Component {
