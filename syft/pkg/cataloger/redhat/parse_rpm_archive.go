@@ -77,6 +77,12 @@ func parseRpmArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 	vendor, err := rpm.Header.GetString(rpmutils.VENDOR)
 	logRpmArchiveErr(reader.Location, "vendor", err)
 
+	packager, err := rpm.Header.GetString(rpmutils.PACKAGER)
+	logRpmArchiveErr(reader.Location, "packager", err)
+
+	url, err := rpm.Header.GetString(rpmutils.URL)
+	logRpmArchiveErr(reader.Location, "url", err)
+
 	digestAlgorithm := getDigestAlgorithm(reader.Location, rpm.Header)
 
 	size, err := rpm.Header.InstalledSize()
@@ -106,6 +112,8 @@ func parseRpmArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 		SourceRpm:  sourceRpm,
 		Signatures: sigs,
 		Vendor:     vendor,
+		Packager:   packager,
+		URL:        url,
 		Size:       int(size),
 		Files:      mapFiles(files, digestAlgorithm),
 	}

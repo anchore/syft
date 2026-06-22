@@ -90,6 +90,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.55.0/go.mod h1:vB2GH9GAYYJTO3mEn8oYwzEdhlayZIdQz6zdzgUIRvA=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0 h1:0s6TxfCu2KHkkZPnBfsQ2y5qia0jl3MMrmBhu3nCOYk=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.55.0/go.mod h1:Mf6O40IAyB9zR/1J8nGDDPirZQQPbYJni8Yisy7NTMc=
+github.com/MackJM/go-rpmdb v0.0.0-20260618154917-5772793c04f4 h1:nHa8P/R7fdrO+Sg2f451bly2sVDEBiFHl+BLH+w8j+E=
+github.com/MackJM/go-rpmdb v0.0.0-20260618154917-5772793c04f4/go.mod h1:77xatvYXdliL9ZCuAD261rnaNm3Kv3efqyWEeNzuFfI=
 github.com/Masterminds/goutils v1.1.1 h1:5nUrii3FMTL5diU80unEVvNevw1nH4+ZV4DSLVJLSYI=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
 github.com/Masterminds/semver/v3 v3.5.0 h1:kQceYJfbupGfZOKZQg0kou0DgAKhzDg2NZPAwZ/2OOE=
@@ -136,8 +138,6 @@ github.com/anchore/go-lzo v0.1.0 h1:NgAacnzqPeGH49Ky19QKLBZEuFRqtTG9cdaucc3Vncs=
 github.com/anchore/go-lzo v0.1.0/go.mod h1:3kLx0bve2oN1iDwgM1U5zGku1Tfbdb0No5qp1eL1fIk=
 github.com/anchore/go-macholibre v0.1.0 h1:qHbdusBZNcZM/uuKf1Psa9xxAFSoyRTps8GW9gpJgsg=
 github.com/anchore/go-macholibre v0.1.0/go.mod h1:eu0gbwaZ+ocVFJLePdmPPDKU8MboV1MKsUCr36Ckd5s=
-github.com/anchore/go-rpmdb v0.1.0 h1:Q8dc208/HYzCqhx0L1zurfm1UPil24hlo9NjkdFmLdE=
-github.com/anchore/go-rpmdb v0.1.0/go.mod h1:eQVa6QFGzKy0qMcnW2pez0XBczvgwSjw9vA23qifEyU=
 github.com/anchore/go-struct-converter v0.1.0 h1:2rDRssAl6mgKBSLNiVCMADgZRhoqtw9dedlWa0OhD30=
 github.com/anchore/go-struct-converter v0.1.0/go.mod h1:rYqSE9HbjzpHTI74vwPvae4ZVYZd1lue2ta6xHPdblA=
 github.com/anchore/go-sync v0.1.0 h1:1TEZM7jISrvtoBMOF79xP0caQKASAtgW1yKqc0EjyZg=

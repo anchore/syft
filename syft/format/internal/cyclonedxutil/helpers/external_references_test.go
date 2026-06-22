@@ -55,6 +55,105 @@ func Test_encodeExternalReferences(t *testing.T) {
 			},
 		},
 		{
+			name: "from homebrew formula homepage",
+			input: pkg.Package{
+				Metadata: pkg.HomebrewFormula{
+					Homepage: "https://example.com/formula",
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://example.com/formula", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name: "from alpm url",
+			input: pkg.Package{
+				Metadata: pkg.AlpmDBEntry{
+					URL: "https://archlinux.org/pkg",
+				},
+			},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://archlinux.org/pkg", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from rpm db url",
+			input: pkg.Package{Metadata: pkg.RpmDBEntry{URL: "https://www.gnu.org/software/bash"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://www.gnu.org/software/bash", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from luarocks (homepage falls back to url)",
+			input: pkg.Package{Metadata: pkg.LuaRocksPackage{URL: "https://luarocks.org/pkg"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://luarocks.org/pkg", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from conda url",
+			input: pkg.Package{Metadata: pkg.CondaMetaPackage{URL: "https://anaconda.org/pkg"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://anaconda.org/pkg", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from r description (first url)",
+			input: pkg.Package{Metadata: pkg.RDescription{URL: []string{"https://cran.example/pkg", "https://second"}}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://cran.example/pkg", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from r description (repository fallback when no url)",
+			input: pkg.Package{Metadata: pkg.RDescription{Repository: "https://cran.r-project.org"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://cran.r-project.org", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from php composer homepage",
+			input: pkg.Package{Metadata: pkg.PhpComposerLockEntry{Homepage: "https://php.example"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://php.example", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from opam homepage",
+			input: pkg.Package{Metadata: pkg.OpamPackage{Homepage: "https://opam.example"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://opam.example", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from dart pubspec (homepage falls back to repository)",
+			input: pkg.Package{Metadata: pkg.DartPubspec{Repository: "https://github.com/acme/dartpkg"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://github.com/acme/dartpkg", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from swipl pack homepage",
+			input: pkg.Package{Metadata: pkg.SwiplPackEntry{Homepage: "https://swipl.example"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://swipl.example", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from rpm archive url",
+			input: pkg.Package{Metadata: pkg.RpmArchive{URL: "https://rpm-archive.example"}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://rpm-archive.example", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
+			name:  "from java pom project url",
+			input: pkg.Package{Metadata: pkg.JavaArchive{PomProject: &pkg.JavaPomProject{URL: "https://maven.example/project"}}},
+			expected: &[]cyclonedx.ExternalReference{
+				{URL: "https://maven.example/project", Type: cyclonedx.ERTypeWebsite},
+			},
+		},
+		{
 			name: "from cargo lock",
 			input: pkg.Package{
 				Name:     "ansi_term",
@@ -142,6 +241,51 @@ func Test_encodeExternalReferences(t *testing.T) {
 			assert.Equal(t, test.expected, encodeExternalReferences(test.input))
 		})
 	}
+}
+
+func Test_decodeExternalReferences_homepage(t *testing.T) {
+	const u = "https://example.com/home"
+	website := &cyclonedx.Component{
+		ExternalReferences: &[]cyclonedx.ExternalReference{
+			{URL: u, Type: cyclonedx.ERTypeWebsite},
+		},
+	}
+	// each homepage-bearing metadata type must decode a website external reference back into its
+	// url/homepage field
+	tests := []struct {
+		name string
+		meta any
+		got  func(any) string
+	}{
+		{"rpm db", &pkg.RpmDBEntry{}, func(m any) string { return m.(*pkg.RpmDBEntry).URL }},
+		{"rpm archive", &pkg.RpmArchive{}, func(m any) string { return m.(*pkg.RpmArchive).URL }},
+		{"alpm", &pkg.AlpmDBEntry{}, func(m any) string { return m.(*pkg.AlpmDBEntry).URL }},
+		{"homebrew", &pkg.HomebrewFormula{}, func(m any) string { return m.(*pkg.HomebrewFormula).Homepage }},
+		{"luarocks", &pkg.LuaRocksPackage{}, func(m any) string { return m.(*pkg.LuaRocksPackage).Homepage }},
+		{"opam", &pkg.OpamPackage{}, func(m any) string { return m.(*pkg.OpamPackage).Homepage }},
+		{"php composer lock", &pkg.PhpComposerLockEntry{}, func(m any) string { return m.(*pkg.PhpComposerLockEntry).Homepage }},
+		{"php composer installed", &pkg.PhpComposerInstalledEntry{}, func(m any) string { return m.(*pkg.PhpComposerInstalledEntry).Homepage }},
+		{"dart", &pkg.DartPubspec{}, func(m any) string { return m.(*pkg.DartPubspec).Homepage }},
+		{"swipl", &pkg.SwiplPackEntry{}, func(m any) string { return m.(*pkg.SwiplPackEntry).Homepage }},
+		{"conda", &pkg.CondaMetaPackage{}, func(m any) string { return m.(*pkg.CondaMetaPackage).URL }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			decodeExternalReferences(website, tt.meta)
+			assert.Equal(t, u, tt.got(tt.meta))
+		})
+	}
+
+	// r-description decodes the website ref into the first URL slice element
+	r := &pkg.RDescription{}
+	decodeExternalReferences(website, r)
+	assert.Equal(t, []string{u}, r.URL)
+
+	// java archive decodes the website ref into the pom project URL, creating the pom project if absent
+	j := &pkg.JavaArchive{}
+	decodeExternalReferences(website, j)
+	assert.NotNil(t, j.PomProject)
+	assert.Equal(t, u, j.PomProject.URL)
 }
 
 func Test_isValidExternalRef(t *testing.T) {

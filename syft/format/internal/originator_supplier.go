@@ -1,11 +1,11 @@
-package helpers
+package internal
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/anchore/syft/internal"
+	syftinternal "github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -14,7 +14,8 @@ const (
 	personType = "Person"
 )
 
-// Originator needs to conform to the SPDX spec here:
+// Originator returns the person or organization that the package originally came from, derived from
+// available package metadata. It needs to conform to the SPDX spec here:
 // https://spdx.github.io/spdx-spec/v2.2.2/package-information/#76-package-originator-field
 //
 // Definition:
@@ -34,8 +35,16 @@ const (
 //
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 // return values are: <type>, <value>
-func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,funlen
-	if !hasMetadata(p) {
+func Originator(p pkg.Package) (typ string, author string) {
+	typ, author = originatorRaw(p)
+	return typ, parseAndFormatPersonOrOrg(author)
+}
+
+// originatorRaw returns the originator type and the raw (unformatted) author string straight from the
+// package metadata, so callers can either format it as a single string (Originator) or break it into
+// its name/email/url parts.
+func originatorRaw(p pkg.Package) (typ string, author string) { //nolint: gocyclo,funlen
+	if p.Metadata == nil {
 		return typ, author
 	}
 
@@ -90,8 +99,15 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,f
 		typ = orgType
 		author = metadata.Release.Implementor
 
+	case pkg.LinuxKernel:
+		author = metadata.Author
+
 	case pkg.LinuxKernelModule:
 		author = metadata.Author
+
+	case pkg.ELFBinaryPackageNoteJSONPayload:
+		typ = orgType
+		author = metadata.Vendor
 
 	case pkg.PhpComposerLockEntry:
 		if len(metadata.Authors) > 0 {
@@ -125,11 +141,11 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,f
 		}
 	case pkg.RpmDBEntry:
 		typ = orgType
-		author = metadata.Vendor
+		author = rpmAuthor(metadata.Vendor, metadata.Packager)
 
 	case pkg.RpmArchive:
 		typ = orgType
-		author = metadata.Vendor
+		author = rpmAuthor(metadata.Vendor, metadata.Packager)
 
 	case pkg.WordpressPluginEntry:
 		// it seems that the vast majority of the time the author is an org, not a person
@@ -144,10 +160,12 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,f
 		typ = personType
 	}
 
-	return typ, parseAndFormatPersonOrOrg(author)
+	return typ, author
 }
 
-// Supplier needs to conform to the SPDX spec here:
+// Supplier returns the actual distribution source for the package, derived from available package
+// metadata, falling back to the Originator when no distinct supplier can be determined. It needs to
+// conform to the SPDX spec here:
 // https://spdx.github.io/spdx-spec/v2.2.2/package-information/#75-package-supplier-field
 //
 // Definition:
@@ -166,7 +184,24 @@ func Originator(p pkg.Package) (typ string, author string) { //nolint: gocyclo,f
 // Available options are: <omit>, NOASSERTION, Person: <person>, Organization: <org>
 // return values are: <type>, <value>
 func Supplier(p pkg.Package) (typ string, author string) {
-	if !hasMetadata(p) {
+	typ, author = supplierRaw(p)
+	return typ, parseAndFormatPersonOrOrg(author)
+}
+
+// SupplierParts returns the supplier broken into its structured components (entity type, display name,
+// email, and URL). Formats with dedicated contact and URL fields can use this to populate them
+// individually rather than collapsing everything into a single name string. All parts may be empty
+// when no supplier can be determined.
+func SupplierParts(p pkg.Package) (typ, name, email, url string) {
+	typ, author := supplierRaw(p)
+	name, email, url = parseNameEmailURL(author)
+	return typ, name, email, url
+}
+
+// supplierRaw returns the supplier type and the raw (unformatted) author string straight from the
+// package metadata, falling back to the originator when no distinct supplier can be determined.
+func supplierRaw(p pkg.Package) (typ string, author string) {
+	if p.Metadata == nil {
 		return
 	}
 
@@ -184,18 +219,74 @@ func Supplier(p pkg.Package) (typ string, author string) {
 	}
 
 	if author == "" {
-		// TODO: this uses the Originator function for now until a better distinction can be made for supplier
-		return Originator(p)
+		// TODO: this uses the originator logic for now until a better distinction can be made for supplier
+		return originatorRaw(p)
 	}
 
 	if typ == "" && author != "" {
 		typ = personType
 	}
 
-	return typ, parseAndFormatPersonOrOrg(author)
+	return typ, author
 }
 
-var nameEmailURLPattern = regexp.MustCompile(`^(?P<name>[^<>()]*)( <(?P<email>[^@]+@\w+\.\w+)>)?( \((?P<url>.*)\))?$`)
+// rpmPackagerContact captures the contact carried inside the angle brackets of an RPM Packager value,
+// which is commonly either an email (e.g. "Rocky Linux Build System (Peridot) <releng@rockylinux.org>")
+// or a bug-tracker URL (e.g. "Red Hat, Inc. <http://bugzilla.redhat.com/bugzilla>").
+var rpmPackagerContact = regexp.MustCompile(`<([^<>]+)>`)
+
+// rpmAuthor combines the RPM Vendor (the supplier organization) with the contact carried in the
+// Packager tag, which commonly holds either an email or a bug-tracker URL. The Vendor is used as the
+// name, falling back to the Packager's leading text when Vendor is absent.
+func rpmAuthor(vendor, packager string) string {
+	name := vendor
+	contact := ""
+
+	if m := rpmPackagerContact.FindStringSubmatch(packager); len(m) == 2 {
+		// "Name (qualifier) <contact>" — the contact lives inside the angle brackets
+		contact = strings.TrimSpace(m[1])
+		if name == "" {
+			name = packagerName(packager)
+		}
+	} else if approximatesAsEmail(packager) {
+		// bare email packager with no name, e.g. "builder@centos.org"
+		contact = strings.TrimSpace(packager)
+	} else if name == "" {
+		// freeform packager with no extractable contact; use it as the name
+		name = strings.TrimSpace(packager)
+	}
+
+	switch {
+	case name == "":
+		return contact // may be "" when nothing is extractable
+	case contact == "":
+		return name
+	default:
+		// parseNameEmailURL classifies the parenthesized contact as an email or URL
+		return fmt.Sprintf("%s (%s)", name, contact)
+	}
+}
+
+// packagerName returns the organization/person portion of an RPM Packager value: the text before the
+// first "<" (contact) or "(" (build-id qualifier). It returns "" when the value leads with one of those.
+func packagerName(packager string) string {
+	name := packager
+	if i := strings.IndexAny(name, "<("); i >= 0 {
+		name = name[:i]
+	}
+	return strings.TrimSpace(name)
+}
+
+// nameEmailURLPattern parses a "name <email> (url)" string. The email sub-expression [^@<>]+@[^@<>]+
+// cannot run past the closing '>' that delimits it, while dots and hyphens in multi-level domains
+// (e.g. lists.alpinelinux.org) pass through freely. Bare addresses with no angle brackets are not
+// matched here; parseNameEmailURL routes those through approximatesAsEmail.
+//
+// The url sub-expression is [^)]* (not .*) so it stops at the first closing paren rather than running
+// greedily to the last one. npm author fields can list multiple authors separated by commas
+// (e.g. "A <a@x> (http://a), B <b@y> (http://b)"); the trailing (,.*)? tolerates that remainder so only
+// the first author is captured, keeping the url a single valid value rather than a concatenation.
+var nameEmailURLPattern = regexp.MustCompile(`^(?P<name>[^<>()]*)( <(?P<email>[^@<>]+@[^@<>]+)>)?( \((?P<url>[^)]*)\))?(,.*)?$`)
 
 func parseAndFormatPersonOrOrg(s string) string {
 	name, email, _ := parseNameEmailURL(s)
@@ -203,7 +294,7 @@ func parseAndFormatPersonOrOrg(s string) string {
 }
 
 func parseNameEmailURL(s string) (name, email, url string) {
-	fields := internal.MatchNamedCaptureGroups(nameEmailURLPattern, s)
+	fields := syftinternal.MatchNamedCaptureGroups(nameEmailURLPattern, s)
 	name = strings.TrimSpace(fields["name"])
 	email = strings.TrimSpace(fields["email"])
 	url = strings.TrimSpace(fields["url"])

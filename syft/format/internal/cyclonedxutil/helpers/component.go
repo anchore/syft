@@ -65,14 +65,39 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 	}
 }
 
-// TODO: we eventually want to update this so that we can read "supplier" from different syft metadata
-func encodeSupplier(_ pkg.Package, sbomSupplier string) *cyclonedx.OrganizationalEntity {
-	if sbomSupplier != "" {
-		return &cyclonedx.OrganizationalEntity{
-			Name: sbomSupplier,
-		}
+// encodeSupplier builds the CycloneDX supplier as an OrganizationalEntity derived from the package
+// metadata, falling back to the document-level supplier provided via configuration when no
+// per-package supplier can be determined. It returns nil when neither is available.
+func encodeSupplier(p pkg.Package, sbomSupplier string) *cyclonedx.OrganizationalEntity {
+	_, name, email, url := internal.SupplierParts(p)
+
+	// a supplier needs a human-readable identifier (name or email); a bare URL is not one
+	if name == "" {
+		name = email
 	}
-	return nil
+	if name == "" {
+		// no per-package supplier identity; fall back to the document-level supplier
+		if sbomSupplier == "" {
+			return nil
+		}
+		return &cyclonedx.OrganizationalEntity{Name: sbomSupplier}
+	}
+
+	entity := &cyclonedx.OrganizationalEntity{Name: name}
+	// only emit a supplier URL when it is actually a valid URL; a parenthetical that is not a URL
+	// (e.g. "Acme Corp (Internal)") can otherwise be parsed into the url part and land here
+	if url != "" && isValidExternalRef(url) {
+		entity.URL = &[]string{url}
+	}
+	if email != "" {
+		contactName := name
+		if contactName == email {
+			// name was promoted from email above; don't repeat the address as the contact name
+			contactName = ""
+		}
+		entity.Contact = &[]cyclonedx.OrganizationalContact{{Name: contactName, Email: email}}
+	}
+	return entity
 }
 
 func DeriveBomRef(p pkg.Package) string {
