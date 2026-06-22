@@ -25,7 +25,7 @@ func SupportedVersions() []string {
 
 type EncoderConfig struct {
 	Version           string
-	Pretty            bool       // don't include spaces and newlines; same as jq -c
+	Pretty            bool // don't include spaces and newlines; same as jq -c
 	DefaultVersion    string
 	DeterministicUUID bool       // use UUIDv5 for deterministic document namespace generation
 	CreatedTime       *time.Time // if nil, the current time is used

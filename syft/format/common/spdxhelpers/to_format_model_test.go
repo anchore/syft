@@ -401,10 +401,11 @@ func Test_toFormatModel(t *testing.T) {
 				},
 			},
 			expected: &spdx.Document{
-				SPDXIdentifier: "DOCUMENT",
-				SPDXVersion:    spdx.Version,
-				DataLicense:    spdx.DataLicense,
-				DocumentName:   "llama",
+				SPDXIdentifier:    "DOCUMENT",
+				SPDXVersion:       spdx.Version,
+				DataLicense:       spdx.DataLicense,
+				DocumentName:      "llama",
+				DocumentNamespace: "https://anchore.com/oci-model/llama-85932321-c7ad-5379-98f5-40e9884ab57a",
 				Packages: []*spdx.Package{
 					{
 						PackageSPDXIdentifier: "Package-pkg-1-pkg-1",
@@ -453,6 +454,21 @@ func Test_toFormatModel(t *testing.T) {
 						},
 						Relationship: spdx.RelationshipDescribes,
 					},
+				},
+				CreationInfo: &spdx.CreationInfo{
+					LicenseListVersion: trimPatchVersion(spdxlicense.Version),
+					Creators: []spdx.Creator{
+						{
+							Creator:     "Anchore, Inc",
+							CreatorType: "Organization",
+						},
+						{
+							Creator:     "-",
+							CreatorType: "Tool",
+						},
+					},
+					Created:        "2025-05-26T14:50:19Z",
+					CreatorComment: "",
 				},
 			},
 		},
