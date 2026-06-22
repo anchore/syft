@@ -6,9 +6,16 @@ type (
 
 	// RelocationReadOnly indicates the RELRO security protection level applied to an ELF binary.
 	RelocationReadOnly string
+
+	// ToolchainComponent represents which part of the toolchain an entry describes (e.g. compiler, linker).
+	// This can be expanded in the future to include assemblers, runtimes, and other toolchain components.
+	ToolchainComponent string
 )
 
 const (
+	ToolchainComponentCompiler ToolchainComponent = "compiler"
+	ToolchainComponentLinker   ToolchainComponent = "linker"
+
 	ELF   ExecutableFormat = "elf"   // Executable and Linkable Format used on Unix-like systems
 	MachO ExecutableFormat = "macho" // Mach object file format used on macOS and iOS
 	PE    ExecutableFormat = "pe"    // Portable Executable format used on Windows
@@ -34,6 +41,20 @@ type Executable struct {
 
 	// ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF.
 	ELFSecurityFeatures *ELFSecurityFeatures `json:"elfSecurityFeatures,omitempty" yaml:"elfSecurityFeatures" mapstructure:"elfSecurityFeatures"`
+
+	// Toolchains captures information about the compiler, linker, runtime, or other toolchains used to build (or otherwise exist within) the executable.
+	Toolchains []Toolchain `json:"toolchains,omitempty" yaml:"toolchains" mapstructure:"toolchains"`
+}
+
+type Toolchain struct {
+	// Name is the name of the toolchain (e.g., "gcc", "clang", "rust", "lld", "GNU AS", etc.).
+	Name string `json:"name" yaml:"name" mapstructure:"name"`
+
+	// Version is the version of the toolchain.
+	Version string `json:"version,omitempty" yaml:"version,omitempty" mapstructure:"version"`
+
+	// Component indicates which part of the toolchain this represents (e.g., compiler, linker, assembler).
+	Component ToolchainComponent `json:"component" yaml:"component" mapstructure:"component"`
 }
 
 // ELFSecurityFeatures captures security hardening and protection mechanisms in ELF binaries.

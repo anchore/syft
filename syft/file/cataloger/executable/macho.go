@@ -48,12 +48,20 @@ func findMachoFeatures(data *file.Executable, reader unionreader.UnionReader) er
 		if !data.HasExports {
 			data.HasExports = machoHasExports(f)
 		}
+
+		data.Toolchains = machoToolchains(reader)
 	}
 
 	// de-duplicate libraries
 	data.ImportedLibraries = internal.NewSet(libs...).ToSlice()
 
 	return nil
+}
+
+func machoToolchains(reader unionreader.UnionReader) []file.Toolchain {
+	return includeNoneNil(
+		golangToolchainEvidence(reader),
+	)
 }
 
 func machoHasEntrypoint(f *macho.File) bool {

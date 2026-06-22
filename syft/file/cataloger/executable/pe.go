@@ -25,6 +25,7 @@ func findPEFeatures(data *file.Executable, reader unionreader.UnionReader) error
 	data.ImportedLibraries = libs
 	data.HasEntrypoint = peHasEntrypoint(f)
 	data.HasExports = peHasExports(f)
+	data.Toolchains = peToolchains(reader)
 
 	return nil
 }
@@ -81,4 +82,10 @@ func peHasExports(f *pe.File) bool {
 	}
 
 	return false
+}
+
+func peToolchains(reader unionreader.UnionReader) []file.Toolchain {
+	return includeNoneNil(
+		golangToolchainEvidence(reader),
+	)
 }
