@@ -1,6 +1,7 @@
 package electron
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,7 +28,7 @@ func TestParseAsarArchive(t *testing.T) {
 	location := file.NewLocation(asarPath)
 	reader := file.NewLocationReadCloser(location, f)
 
-	pkgs, relationships, err := parseAsarArchive(nil, nil, nil, reader)
+	pkgs, relationships, err := parseAsarArchive(context.Background(), nil, nil, reader)
 	require.NoError(t, err)
 	assert.Empty(t, relationships)
 	require.Len(t, pkgs, 2, "expected 2 packages: test-app and lodash")
@@ -304,7 +305,7 @@ func TestParseAsarArchive_InvalidASAR(t *testing.T) {
 
 	reader := file.NewLocationReadCloser(location, f)
 
-	pkgs, _, err := parseAsarArchive(nil, nil, nil, reader)
+	pkgs, _, err := parseAsarArchive(context.Background(), nil, nil, reader)
 	assert.Error(t, err)
 	assert.Nil(t, pkgs)
 }

@@ -30,7 +30,7 @@ var (
 func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
-	contents, err := io.ReadAll(reader)
+	contents, err := io.ReadAll(reader) //nolint:gocritic // json.Unmarshal requires the full document buffered
 	if err != nil {
 		return nil, nil, fmt.Errorf("read package.json: %w", err)
 	}
@@ -60,7 +60,7 @@ type asarEntry struct {
 func parseAsarArchive(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
-	asarData, err := io.ReadAll(reader)
+	asarData, err := io.ReadAll(reader) //nolint:gocritic // ASAR is random-access by byte offset; the full archive must be buffered
 	if err != nil {
 		return nil, nil, fmt.Errorf("read ASAR: %w", err)
 	}
