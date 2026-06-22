@@ -788,6 +788,56 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/filebeat'
+        packages:
+          - class: filebeat-binary
+            name: filebeat
+            purl: pkg:generic/filebeat
+            cpes:
+              - cpe:2.3:a:elastic:filebeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/metricbeat'
+        packages:
+          - class: metricbeat-binary
+            name: metricbeat
+            purl: pkg:generic/metricbeat
+            cpes:
+              - cpe:2.3:a:elastic:metricbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/heartbeat'
+        packages:
+          - class: heartbeat-binary
+            name: heartbeat
+            purl: pkg:generic/heartbeat
+            cpes:
+              - cpe:2.3:a:elastic:heartbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/packetbeat'
+        packages:
+          - class: packetbeat-binary
+            name: packetbeat
+            purl: pkg:generic/packetbeat
+            cpes:
+              - cpe:2.3:a:elastic:packetbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/auditbeat'
+        packages:
+          - class: auditbeat-binary
+            name: auditbeat
+            purl: pkg:generic/auditbeat
+            cpes:
+              - cpe:2.3:a:elastic:auditbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/elastic-agent'
         packages:
           - class: elastic-agent-binary

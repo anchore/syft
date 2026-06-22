@@ -1650,6 +1650,62 @@ from-images:
       - /usr/local/julia/lib/libjulia.so.1.3
 
 
+  - name: filebeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/filebeat:9.4.2@sha256:f2b3bb6a6a02ebfc5f2f91cf8d560522acc4965bdb941f3f1608964cb8544829
+        platform: linux/amd64
+    paths:
+      - /usr/share/filebeat/filebeat
+
+  - name: filebeat
+    version: 8.18.4
+    images:
+      - ref: docker.elastic.co/beats/filebeat:8.18.4@sha256:307efa7d01df0f823c585a9dc3b1f8e70372eab94f7f307a4d974d32ab6f4959
+        platform: linux/amd64
+    paths:
+      - /usr/share/filebeat/filebeat
+
+  - name: filebeat
+    version: 8.11.2
+    images:
+      - ref: docker.elastic.co/beats/filebeat:8.11.2@sha256:4c22cdb4b260de6f2b3f2f1cc6a4f6635280c21ab3b3753f9599855b2f360c5d
+        platform: linux/amd64
+    paths:
+      - /usr/share/filebeat/filebeat
+
+  - name: metricbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/metricbeat:9.4.2@sha256:a14bbcef77a505b3236c5aba972ed4066902c81e52be01257a086d02677386c2
+        platform: linux/amd64
+    paths:
+      - /usr/share/metricbeat/metricbeat
+
+  - name: heartbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/heartbeat:9.4.2@sha256:a1e0446251f8f5f19860453510e9da65ccd3c2e1e6701830fce91b157063908f
+        platform: linux/amd64
+    paths:
+      - /usr/share/heartbeat/heartbeat
+
+  - name: packetbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/packetbeat:9.4.2@sha256:306950c4e4e38c2b84e8a091ad0d82b744fe10a21f36a3d694eb3767be599f81
+        platform: linux/amd64
+    paths:
+      - /usr/share/packetbeat/packetbeat
+
+  - name: auditbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/auditbeat:9.4.2@sha256:1d8006227b171e62413ee40367ab77a89d73d95692ad0345f34d4a7f49bd7281
+        platform: linux/amd64
+    paths:
+      - /usr/share/auditbeat/auditbeat
+
   - name: elastic-agent
     version: 9.4.2
     images:
