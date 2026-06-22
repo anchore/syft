@@ -30,6 +30,44 @@ catalogers:
       - npm
       - package
     parsers: # AUTO-GENERATED structure
+      - function: parseDenoLock
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/deno.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.DenoLockEntry
+          - pkg.DenoRemoteLockEntry
+          - pkg.NpmPackageLockEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        purl_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - DenoLockEntry
+          - DenoRemoteLockEntry
+          - JavascriptNpmPackageLockEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - DenoLockEntry.Integrity
+              - DenoRemoteLockEntry.Integrity
       - function: parseBunLock
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
@@ -64,42 +102,6 @@ catalogers:
             default: true
             evidence:
               - BunLockEntry.Integrity
-      - function: parseDenoLock
-        detector: # AUTO-GENERATED
-          method: glob # AUTO-GENERATED
-          criteria: # AUTO-GENERATED
-            - '**/deno.lock'
-        metadata_types: # AUTO-GENERATED
-          - pkg.DenoLockEntry
-          - pkg.DenoRemoteLockEntry
-          - pkg.NpmPackageLockEntry
-        package_types: # AUTO-GENERATED
-          - npm
-        json_schema_types: # AUTO-GENERATED
-          - DenoLockEntry
-          - DenoRemoteLockEntry
-          - JavascriptNpmPackageLockEntry
-        capabilities: # MANUAL - preserved across regeneration
-          - name: license
-            default: false
-          - name: dependency.depth
-            default:
-              - direct
-              - indirect
-          - name: dependency.edges
-            default: ""
-          - name: dependency.kinds
-            default:
-              - runtime
-          - name: package_manager.files.listing
-            default: false
-          - name: package_manager.files.digests
-            default: false
-          - name: package_manager.package_integrity_hash
-            default: true
-            evidence:
-              - DenoLockEntry.Integrity
-              - DenoRemoteLockEntry.Integrity
       - function: parsePnpmLock
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
