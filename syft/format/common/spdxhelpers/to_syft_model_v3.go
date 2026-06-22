@@ -655,6 +655,9 @@ func v3agentString(agent spdx.AnyAgent) string {
 }
 
 func v3findPURLValue(p spdx.AnyPackage) string {
+	if p.GetPackageURL() != "" {
+		return string(p.GetPackageURL())
+	}
 	for _, r := range p.GetExternalIdentifiers() {
 		if r.GetType() == spdx.ExternalIdentifierType_PackageURL {
 			for _, l := range r.GetIdentifierLocators() {
@@ -669,10 +672,17 @@ func v3findPURLValue(p spdx.AnyPackage) string {
 func v3extractCPEs(p spdx.AnyPackage) (cpes []cpe.CPE) {
 	for _, r := range p.GetExternalIdentifiers() {
 		if r.GetType() == spdx.ExternalIdentifierType_Cpe23 || r.GetType() == spdx.ExternalIdentifierType_Cpe22 {
+			c, err := cpe.New(r.GetIdentifier(), cpe.DeclaredSource)
+			if err == nil {
+				cpes = append(cpes, c)
+				continue
+			}
+			log.Tracef("unable to extract SPDX IDENTIFIER CPE=%q: %+v", r.GetIdentifier(), err)
+			// try the locators
 			for _, l := range r.GetIdentifierLocators() {
-				c, err := cpe.New(string(l), cpe.DeclaredSource)
+				c, err = cpe.New(string(l), cpe.DeclaredSource)
 				if err != nil {
-					log.Warnf("unable to extract SPDX CPE=%q: %+v", l, err)
+					log.Tracef("unable to extract SPDX CPE=%q: %+v", l, err)
 					continue
 				}
 				cpes = append(cpes, c)
