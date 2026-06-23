@@ -87,7 +87,7 @@ func backfillFromPurl(p *pkg.Package) {
 		setJavaMetadataFromPurl(p, purl)
 	}
 
-	setMetadataArchFromPurl(p, rpmmod, arch)
+	setDistroMetadata(p, rpmmod, arch)
 
 	for _, c := range cpes {
 		if slices.Contains(p.CPEs, c) {
@@ -97,7 +97,7 @@ func backfillFromPurl(p *pkg.Package) {
 	}
 }
 
-func setMetadataArchFromPurl(p *pkg.Package, rpmmod, arch string) {
+func setDistroMetadata(p *pkg.Package, rpmmod, arch string) {
 	switch p.Type {
 	case pkg.RpmPkg:
 		setRpmMetadataFromPurl(p, rpmmod, arch)
@@ -130,12 +130,7 @@ func setRpmMetadataFromPurl(p *pkg.Package, rpmmod, arch string) {
 	}
 
 	if p.Metadata == nil {
-		entry := pkg.RpmDBEntry{Arch: arch}
-		if rpmmod != "" {
-			entry.ModularityLabel = &rpmmod
-		}
-		p.Metadata = entry
-		return
+		p.Metadata = pkg.RpmDBEntry{}
 	}
 
 	switch m := p.Metadata.(type) {
@@ -167,8 +162,7 @@ func setDpkgMetadataFromPurl(p *pkg.Package, arch string) {
 	}
 
 	if p.Metadata == nil {
-		p.Metadata = pkg.DpkgDBEntry{Architecture: arch}
-		return
+		p.Metadata = pkg.DpkgDBEntry{}
 	}
 
 	switch m := p.Metadata.(type) {
