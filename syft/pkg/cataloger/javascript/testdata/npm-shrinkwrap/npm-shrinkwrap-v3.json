@@ -1,0 +1,49 @@
+{
+  "name": "lock-v3-fixture",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "lock-v3-fixture",
+      "version": "1.0.0",
+      "dependencies": {
+        "@types/react": "^18.0.9"
+      },
+      "devDependencies": {
+        "async": "^3.2.4"
+      }
+    },
+    "node_modules/@types/prop-types": {
+      "version": "15.7.5",
+      "resolved": "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.5.tgz",
+      "integrity": "sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w=="
+    },
+    "node_modules/@types/react": {
+      "version": "18.0.20",
+      "resolved": "https://registry.npmjs.org/@types/react/-/react-18.0.20.tgz",
+      "integrity": "sha512-MWul1teSPxujEHVwZl4a5HxQ9vVNsjTchVA+xRqv/VYGCuKGAU6UhfrTdF5aBefwD1BHUD8i/zq+O/vyCm/FrA==",
+      "dependencies": {
+        "@types/prop-types": "*",
+        "@types/scheduler": "*",
+        "csstype": "^3.0.2"
+      }
+    },
+    "node_modules/@types/scheduler": {
+      "version": "0.16.2",
+      "resolved": "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.16.2.tgz",
+      "integrity": "sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew=="
+    },
+    "node_modules/csstype": {
+      "version": "3.1.1",
+      "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.1.1.tgz",
+      "integrity": "sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw=="
+    },
+    "node_modules/async": {
+      "version": "3.2.4",
+      "resolved": "https://registry.npmjs.org/async/-/async-3.2.4.tgz",
+      "integrity": "sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==",
+      "dev": true
+    }
+  }
+}

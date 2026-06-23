@@ -65,6 +65,24 @@ func Test_DownloadLocation(t *testing.T) {
 			expected: NOASSERTION,
 		},
 		{
+			name: "from npm-shrinkwrap should include resolved",
+			input: pkg.Package{
+				Metadata: pkg.NpmShrinkwrapEntry{
+					Resolved: "http://npm-shrinkwrap.test",
+				},
+			},
+			expected: "http://npm-shrinkwrap.test",
+		},
+		{
+			name: "from npm-shrinkwrap empty should be NONE",
+			input: pkg.Package{
+				Metadata: pkg.NpmShrinkwrapEntry{
+					Resolved: "",
+				},
+			},
+			expected: NOASSERTION,
+		},
+		{
 			name: "from php installed.json",
 			input: pkg.Package{
 				Metadata: pkg.PhpComposerInstalledEntry{

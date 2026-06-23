@@ -45,6 +45,7 @@ func AllTypes() []any {
 		pkg.NixStoreEntry{},
 		pkg.NpmPackage{},
 		pkg.NpmPackageLockEntry{},
+		pkg.NpmShrinkwrapEntry{},
 		pkg.OpamPackage{},
 		pkg.PEBinary{},
 		pkg.PhpComposerInstalledEntry{},

@@ -162,6 +162,38 @@ catalogers:
             default: true
             evidence:
               - NpmPackageLockEntry.Integrity
+      - function: parseNpmShrinkwrap
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/npm-shrinkwrap.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.NpmShrinkwrapEntry
+        package_types: # AUTO-GENERATED
+          - npm
+        json_schema_types: # AUTO-GENERATED
+          - JavascriptNpmShrinkwrapEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default:
+              - runtime
+              - dev
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: true
+            evidence:
+              - NpmShrinkwrapEntry.Integrity
   - ecosystem: javascript # MANUAL
     name: javascript-package-cataloger # AUTO-GENERATED
     type: generic # AUTO-GENERATED
