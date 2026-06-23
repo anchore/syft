@@ -317,7 +317,7 @@ func Test_decodeComponent(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: pkg.RpmDBEntry{},
+			wantMetadata: pkg.RpmDBEntry{Arch: "x86_64"},
 			wantPURL:     "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
 		},
 		{
@@ -341,6 +341,7 @@ func Test_decodeComponent(t *testing.T) {
 			},
 			wantMetadata: pkg.RpmDBEntry{
 				Release: "some-release",
+				Arch:    "x86_64",
 			},
 			wantPURL: "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
 		},
