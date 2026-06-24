@@ -748,6 +748,45 @@
       ],
       "description": "DartPubspecLockEntry is a struct that represents a single entry found in the \"packages\" section in a Dart pubspec.lock file."
     },
+    "DenoLockEntry": {
+      "properties": {
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is the crpto hash of the package content for verification"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies is the list of package specifiers that this package depends on"
+        }
+      },
+      "type": "object",
+      "required": [
+        "integrity",
+        "dependencies"
+      ],
+      "description": "DenoLockEntry is a struct that rep a single entry found in the \"packages\" section of a Deno deno.lock file"
+    },
+    "DenoRemoteLockEntry": {
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL is the remote URL from which the module fetcef"
+        },
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is the crpto hash of the package content for verification"
+        }
+      },
+      "type": "object",
+      "required": [
+        "url",
+        "integrity"
+      ],
+      "description": "DenoRemoteLockEntry is a struct that rep a single entry found in the \"remote\" section of a Deno deno.lock file"
+    },
     "Descriptor": {
       "properties": {
         "name": {
@@ -1228,13 +1267,6 @@
         "pkgHashExt": {
           "type": "string",
           "description": "PkgHashExt is the extended package hash format (inner checksum is deprecated - SHA-256 of concatenated file contents excluding CHECKSUM file, now replaced by outer checksum)"
-        },
-        "dependencies": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Dependencies are the names of the packages this entry depends on, as\ndeclared in the entry's dependency list within mix.lock. Used to derive\ndependency-of relationships between locked packages."
         }
       },
       "type": "object",
@@ -2664,6 +2696,12 @@
             },
             {
               "$ref": "#/$defs/DartPubspecLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DenoLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DenoRemoteLockEntry"
             },
             {
               "$ref": "#/$defs/DotnetDepsEntry"

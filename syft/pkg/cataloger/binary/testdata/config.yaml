@@ -1649,3 +1649,169 @@ from-images:
       - /usr/local/julia/lib/libjulia.so.1
       - /usr/local/julia/lib/libjulia.so.1.3
 
+
+  - name: filebeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/filebeat:9.4.2@sha256:f2b3bb6a6a02ebfc5f2f91cf8d560522acc4965bdb941f3f1608964cb8544829
+        platform: linux/amd64
+    paths:
+      - /usr/share/filebeat/filebeat
+
+  - name: filebeat
+    version: 8.18.4
+    images:
+      - ref: docker.elastic.co/beats/filebeat:8.18.4@sha256:307efa7d01df0f823c585a9dc3b1f8e70372eab94f7f307a4d974d32ab6f4959
+        platform: linux/amd64
+    paths:
+      - /usr/share/filebeat/filebeat
+
+  - name: filebeat
+    version: 8.11.2
+    images:
+      - ref: docker.elastic.co/beats/filebeat:8.11.2@sha256:4c22cdb4b260de6f2b3f2f1cc6a4f6635280c21ab3b3753f9599855b2f360c5d
+        platform: linux/amd64
+    paths:
+      - /usr/share/filebeat/filebeat
+
+  - name: metricbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/metricbeat:9.4.2@sha256:a14bbcef77a505b3236c5aba972ed4066902c81e52be01257a086d02677386c2
+        platform: linux/amd64
+    paths:
+      - /usr/share/metricbeat/metricbeat
+
+  - name: heartbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/heartbeat:9.4.2@sha256:a1e0446251f8f5f19860453510e9da65ccd3c2e1e6701830fce91b157063908f
+        platform: linux/amd64
+    paths:
+      - /usr/share/heartbeat/heartbeat
+
+  - name: packetbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/packetbeat:9.4.2@sha256:306950c4e4e38c2b84e8a091ad0d82b744fe10a21f36a3d694eb3767be599f81
+        platform: linux/amd64
+    paths:
+      - /usr/share/packetbeat/packetbeat
+
+  - name: auditbeat
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/beats/auditbeat:9.4.2@sha256:1d8006227b171e62413ee40367ab77a89d73d95692ad0345f34d4a7f49bd7281
+        platform: linux/amd64
+    paths:
+      - /usr/share/auditbeat/auditbeat
+
+  - name: elastic-agent
+    version: 9.4.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:9.4.2@sha256:8187c0e2eb4db1a9780838789462bd3ecbeca36fccb89f872258a4f0d3d25ea1
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-dd9ee6/elastic-agent
+
+  - name: elastic-agent
+    version: 9.0.0
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:9.0.0@sha256:badb97acaf487273298e7f25d21177442d632f63cb9bab6f4defe341612bca07
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-9786ac/elastic-agent
+
+  - name: elastic-agent
+    version: 8.19.4
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.19.4@sha256:b54f796e43941da8665b83d3f31973fc66ef7fc33b43edc4593671325841d8fb
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-8fbe2b/elastic-agent
+
+  - name: elastic-agent
+    version: 8.11.2
+    images:
+      - ref: docker.elastic.co/elastic-agent/elastic-agent:8.11.2@sha256:1177eb349365132409df73e4a7fa97c32242db2b2c8704b9843d726837638001
+        platform: linux/amd64
+    paths:
+      - /usr/share/elastic-agent/data/elastic-agent-1c21b0/elastic-agent
+
+  # contrib builds
+  - version: 1.22.10
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.22.10@sha256:2c479dd69aaaf555ab48ab9142b5970b74ee472e50f08d2b85caa1460c19f689
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.24.5
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.24.5@sha256:9a32eaff6798dd62a7d6662a02226d47df694406d1698f000ad25dd1a3355952
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.30.2
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.30.2@sha256:8878516ce3c8f099300243fadacb2e3d869d447dfd276ac2661c6c06c92bcd45
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.31.2
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.31.2@sha256:ebdf98ff3b26d5fa70276fb43f0dbca168f49aa5aa1fe5f18382d391f482aa3e
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.34.12
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.34.12@sha256:50da8a5221c9afc84df79f384aa9ee9c7000f8509d3f2562a58d84cb2fd39645
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.23.7
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.23.7@sha256:4589b08900e41de763d19ac3c854c280796a575f58c218c5e8b2f2a6e4765dda
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.24.9
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.24.9@sha256:e6cdba2e747f2c024821cec58d2e2833cd0e6512c61d1dbe7200f8046235a026
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.30.1
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.30.1@sha256:92d50d25c28d68979a20607736e401e4c05c717109fc0d07d688aaa3db35bd94
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.30.6
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.30.6@sha256:58bd1cb68eea4ffd5b4d41112bc31299057f17e72c6cacaf7431fd0ee6b5222b
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.35.4
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.35.4@sha256:07378820f9669a3c7eac5d0a88fda78ccb8dfdd4100388db1110b2038f8d5d21
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy
+
+  - version: 1.36.1
+    images:
+      - ref: envoyproxy/envoy:contrib-v1.36.1@sha256:f2001f6f72abc22e7ac9cebe940e48570ee5970703ada61bca6919c687b2accf
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/envoy

@@ -1,0 +1,8 @@
+name: elastic-agent
+offset: 66470886
+length: 100
+snippetSha256: 7cbc4bee88dbcb215e1335dacc614041aa63bca2c5cc4ce05c795f421ce9b143
+fileSha256: 71b8b1552629c1c845516580054eb4d8a1eb1afc1f6fefbcee1922c932fac6a6
+
+### byte snippet to follow ###
+idspliceconfig/statsenroll: true9.4.2-headeruint16secret%s: %seventsfollownumberreexecstatusoutputso

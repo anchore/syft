@@ -20,9 +20,11 @@ func NewLockCataloger(cfg CatalogerConfig) pkg.Cataloger {
 	packageLockAdapter := newGenericPackageLockAdapter(cfg)
 	pnpmLockAdapter := newGenericPnpmLockAdapter(cfg)
 	bunLockAdapter := newGenericBunLockAdapter(cfg)
+	denoLockAdapter := newGenericDenoLockAdapter(cfg)
 	return generic.NewCataloger("javascript-lock-cataloger").
 		WithParserByGlobs(packageLockAdapter.parsePackageLock, "**/package-lock.json").
 		WithParserByGlobs(yarnLockAdapter.parseYarnLock, "**/yarn.lock").
 		WithParserByGlobs(pnpmLockAdapter.parsePnpmLock, "**/pnpm-lock.yaml").
-		WithParserByGlobs(bunLockAdapter.parseBunLock, "**/bun.lock")
+		WithParserByGlobs(bunLockAdapter.parseBunLock, "**/bun.lock").
+		WithParserByGlobs(denoLockAdapter.parseDenoLock, "**/deno.lock")
 }
