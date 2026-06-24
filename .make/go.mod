@@ -2,7 +2,7 @@ module github.com/anchore/syft/.make
 
 go 1.25.8
 
-require github.com/anchore/go-make v0.7.0
+require github.com/anchore/go-make v0.8.0
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
