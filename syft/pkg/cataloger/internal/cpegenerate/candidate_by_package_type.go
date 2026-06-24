@@ -508,6 +508,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "poco"},
 			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
 		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "libxml2"},
+			candidateAddition{AdditionalVendors: []string{"xmlsoft"}},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(

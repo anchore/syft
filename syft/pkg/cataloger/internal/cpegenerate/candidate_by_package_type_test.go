@@ -232,3 +232,8 @@ func Test_findProductsToRemove(t *testing.T) {
 		})
 	}
 }
+
+func Test_defaultCandidateAdditions_conan_libxml2(t *testing.T) {
+	vendors := findAdditionalVendors(defaultCandidateAdditions, pkg.ConanPkg, "libxml2", "")
+	assert.Contains(t, vendors, "xmlsoft")
+}
