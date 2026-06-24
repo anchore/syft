@@ -2,9 +2,9 @@ version: "3"
 
 # NOTE: most generic tasks (static-analysis, format, lint, unit, snapshot, release,
 # changelog, ci-release, etc.) are now provided natively by anchore/go-make and
-# defined in .make/main.go. This file holds the syft-specific tasks that go-make
-# wraps via `wrap("<name>")` calls — keep descriptions (`desc:`) populated so they
-# show up in `make help`.
+# defined in .make/main.go. This file holds the syft-specific tasks, which go-make
+# auto-discovers via gotask.Tasks() and surfaces as `make <name>` — keep
+# descriptions (`desc:`) populated so they show up in `make help`.
 
 includes:
   generate:cpe-index: ./task.d/generate/cpe-index.yaml
