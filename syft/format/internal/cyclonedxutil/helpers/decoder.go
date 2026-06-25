@@ -231,6 +231,8 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 
 		return source.Description{
 			ID:       "",
+			Name:     c.Name,
+			Version:  c.Version,
 			Supplier: supplier,
 			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
 
@@ -247,11 +249,21 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		// TODO: this is lossy... we can't know if this is a file or a directory
 		return source.Description{
 			ID:       "",
+			Name:     c.Name,
+			Version:  c.Version,
 			Supplier: supplier,
 			Metadata: source.FileMetadata{Path: c.Name},
 		}
 	}
-	return source.Description{}
+	// All other component types (application, library, framework, ...) — the
+	// caller's BOM had a metadata.component with a name/version that they care
+	// about; surface them on the Description even if we don't have a
+	// dedicated Metadata shape for the type yet (issue anchore/grype#2418).
+	return source.Description{
+		Name:     c.Name,
+		Version:  c.Version,
+		Supplier: supplier,
+	}
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used

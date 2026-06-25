@@ -259,6 +259,34 @@ func Test_decode(t *testing.T) {
 	}
 }
 
+func Test_extractComponents_preservesMainComponentVersion(t *testing.T) {
+	// Issue anchore/grype#2418: a CycloneDX BOM with metadata.component.version
+	// (e.g. produced by `syft … --source-version=0.1.0`) was decoded back into
+	// a source.Description with empty Name/Version, so re-emitting CycloneDX
+	// dropped the field entirely.
+	for _, ct := range []cyclonedx.ComponentType{
+		cyclonedx.ComponentTypeApplication,
+		cyclonedx.ComponentTypeLibrary,
+		cyclonedx.ComponentTypeFramework,
+		cyclonedx.ComponentTypeContainer,
+		cyclonedx.ComponentTypeFile,
+	} {
+		t.Run(string(ct), func(t *testing.T) {
+			meta := &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    ct,
+					Name:    "my-project",
+					Version: "0.1.0",
+				},
+			}
+			d := extractComponents(meta)
+			assert.Equal(t, "my-project", d.Name)
+			assert.Equal(t, "0.1.0", d.Version)
+		})
+	}
+}
+
+
 func Test_relationshipDirection(t *testing.T) {
 	cyclonedx_bom := cyclonedx.BOM{Metadata: nil,
 		Components: &[]cyclonedx.Component{
