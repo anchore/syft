@@ -198,6 +198,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		// NPM packages
 		{
 			pkg.NpmPkg,
+			candidateKey{PkgName: "react"},
+			candidateAddition{AdditionalVendors: []string{"facebook"}},
+		},
+		{
+			pkg.NpmPkg,
 			candidateKey{PkgName: "next"},
 			candidateAddition{AdditionalProducts: []string{"next.js"}, AdditionalVendors: []string{"vercel"}},
 		},
