@@ -191,7 +191,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromBuildSettings(cfg.Golang.MainModuleVersion.FromBuildSettings).
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
 			).
-			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)),
+			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)).
+			WithExcludeIndirect(cfg.Golang.ExcludeIndirect),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
@@ -249,6 +250,8 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 
 	flags.StringVarP(&cfg.Source.Supplier, "source-supplier", "",
 		"the organization that supplied the component, which often may be the manufacturer, distributor, or repackager")
+
+	flags.BoolVarP(&cfg.Golang.ExcludeIndirect, "exclude-indirect", "", "exclude indirect dependencies from sbom file (only golang support now)")
 }
 
 func (cfg *Catalog) DescribeFields(descriptions fangs.FieldDescriptionSet) {

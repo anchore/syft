@@ -17,6 +17,7 @@ type golangConfig struct {
 	NoProxy                     string                        `json:"no-proxy" yaml:"no-proxy" mapstructure:"no-proxy"`
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
 	UsePackagesLib              *bool                         `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
+	ExcludeIndirect             bool                         `json:"exclude-indirect" yaml:"exclude-indirect" mapstructure:"exclude-indirect"`
 }
 
 var _ interface {
@@ -43,6 +44,7 @@ a more accurate version from the binary.`)
 	descriptions.Add(&o.MainModuleVersion.FromBuildSettings, `use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version 
 (e.g. v0.0.0-20220308212642-53e6d0aaf6fb) when a more accurate version cannot be found otherwise`)
 	descriptions.Add(&o.MainModuleVersion.FromContents, `search for semver-like strings in the binary contents`)
+	descriptions.Add(&o.ExcludeIndirect, `exclude indirect dependencies`)
 }
 
 type golangMainModuleVersionConfig struct {
@@ -67,5 +69,6 @@ func defaultGolangConfig() golangConfig {
 			FromBuildSettings: def.MainModuleVersion.FromBuildSettings,
 		},
 		UsePackagesLib: nil, // this defaults to true, which is the API default
+		ExcludeIndirect: def.ExcludeIndirect,
 	}
 }
