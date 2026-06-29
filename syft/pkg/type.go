@@ -30,6 +30,7 @@ const (
 	GithubActionWorkflowPkg Type = "github-action-workflow"
 	GoModulePkg             Type = "go-module"
 	GraalVMNativeImagePkg   Type = "graalvm-native-image"
+	HadronPkg               Type = "hadron"
 	HackagePkg              Type = "hackage"
 	HexPkg                  Type = "hex"
 	JavaPkg                 Type = "java-archive"
@@ -75,6 +76,7 @@ var AllPkgs = []Type{
 	GithubActionWorkflowPkg,
 	GraalVMNativeImagePkg,
 	GoModulePkg,
+	HadronPkg,
 	HackagePkg,
 	HexPkg,
 	JavaPkg,
@@ -136,6 +138,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeGithub
 	case GoModulePkg:
 		return packageurl.TypeGolang
+	case HadronPkg:
+		return "hadron"
 	case HackagePkg:
 		return packageurl.TypeHackage
 	case JavaPkg, JenkinsPluginPkg:
