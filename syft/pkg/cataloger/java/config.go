@@ -33,6 +33,18 @@ type ArchiveCatalogerConfig struct {
 	// ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
 	// app-config: java.resolve-transitive-dependencies
 	ResolveTransitiveDependencies bool `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+
+	// UseEmbeddedPOMDependencies enables building a dependency graph from embedded pom.xml files within JARs.
+	// When enabled, the <dependencies> sections of embedded POMs are used to determine hierarchical parent-child
+	// relationships instead of treating all dependencies as direct.
+	// app-config: java.use-embedded-pom-dependencies
+	UseEmbeddedPOMDependencies bool `yaml:"use-embedded-pom-dependencies" json:"use-embedded-pom-dependencies" mapstructure:"use-embedded-pom-dependencies"`
+
+	// MavenDependencyTreeFile specifies the path to a pre-generated Maven dependency tree file.
+	// Generate with: mvn dependency:tree -DoutputFile=dependency-tree.txt
+	// When provided, this takes priority over embedded POM analysis for building the dependency graph.
+	// app-config: java.maven-dependency-tree
+	MavenDependencyTreeFile string `yaml:"maven-dependency-tree" json:"maven-dependency-tree" mapstructure:"maven-dependency-tree"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -45,6 +57,8 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		MavenBaseURL:                  strings.Join(mavenCfg.Repositories, ","),
 		MaxParentRecursiveDepth:       mavenCfg.MaxParentRecursiveDepth,
 		ResolveTransitiveDependencies: false,
+		UseEmbeddedPOMDependencies:    false,
+		MavenDependencyTreeFile:       "",
 	}
 }
 
@@ -78,6 +92,16 @@ func (j ArchiveCatalogerConfig) WithResolveTransitiveDependencies(resolveTransit
 func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSearchConfig, maxDepth int) ArchiveCatalogerConfig {
 	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithUseEmbeddedPOMDependencies(input bool) ArchiveCatalogerConfig {
+	j.UseEmbeddedPOMDependencies = input
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithMavenDependencyTreeFile(input string) ArchiveCatalogerConfig {
+	j.MavenDependencyTreeFile = input
 	return j
 }
 
