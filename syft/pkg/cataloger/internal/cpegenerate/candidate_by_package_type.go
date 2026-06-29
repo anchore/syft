@@ -221,6 +221,23 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "mustache"},
 			candidateAddition{AdditionalProducts: []string{"mustache.js"}},
 		},
+		{
+			// NVD records react under the facebook vendor, e.g.
+			// cpe:2.3:a:facebook:react:*, but the npm package.json
+			// names neither the vendor nor the author. Without
+			// this hint syft emits cpe:2.3:a:react:react:* and
+			// grype/DependencyTrack miss every React CVE. See #4653.
+			pkg.NpmPkg,
+			candidateKey{PkgName: "react"},
+			candidateAddition{AdditionalVendors: []string{"facebook"}},
+		},
+		{
+			// Same story for react-dom, which NVD also records under
+			// facebook (and ties to react CVEs).
+			pkg.NpmPkg,
+			candidateKey{PkgName: "react-dom"},
+			candidateAddition{AdditionalVendors: []string{"facebook"}},
+		},
 
 		// Gem packages
 		{
@@ -329,6 +346,17 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ApkPkg,
 			candidateKey{PkgName: "curl"},
 			candidateAddition{AdditionalVendors: []string{"haxx"}},
+		},
+		{
+			// libpcap is maintained by the tcpdump project and NVD
+			// records the CVEs under vendor "tcpdump", e.g.
+			// cpe:2.3:a:tcpdump:libpcap:*. Without this hint syft
+			// generates cpe:2.3:a:libpcap:libpcap:* from the Alpine
+			// package name, which NVD does not match, so grype
+			// reports zero vulnerabilities for libpcap (see #4712).
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libpcap"},
+			candidateAddition{AdditionalVendors: []string{"tcpdump"}},
 		},
 		{
 			pkg.ApkPkg,
@@ -747,7 +775,7 @@ func findAdditionalVendors(allAdditions map[pkg.Type]map[candidateKey]candidateA
 		vendors = append(vendors, addition.AdditionalVendors...)
 	}
 
-	return vendors
+	return dedup(vendors)
 }
 
 // findAdditionalProducts searches all possible product additions that could be added during the CPE generation process (given package info)
@@ -796,4 +824,20 @@ func findProductsToRemove(allRemovals map[pkg.Type]map[candidateKey]candidateRem
 	}
 
 	return products
+}
+
+// dedup removes duplicate strings while preserving the original order of first occurrence.
+func dedup(s []string) []string {
+	if len(s) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(s))
+	result := make([]string, 0, len(s))
+	for _, v := range s {
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
+			result = append(result, v)
+		}
+	}
+	return result
 }
