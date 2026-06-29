@@ -29,6 +29,8 @@ type gemData struct {
 // match example:      Al\u003Ex   --->   003E
 var unicodePattern = regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
 
+var interpolationPattern = regexp.MustCompile(`#\{[^}]*\}`)
+
 var patterns = map[string]*regexp.Regexp{
 	// match example:       name = "railties".freeze   --->   railties
 	"name": regexp.MustCompile(`.*\.name\s*=\s*["']{1}(?P<name>.*)["']{1} *`),
@@ -97,6 +99,9 @@ func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic
 	}
 
 	if fields["name"] != "" && fields["version"] != "" {
+		if homepage, ok := fields["homepage"].(string); ok && interpolationPattern.MatchString(homepage) {
+			delete(fields, "homepage")
+		}
 		var metadata gemData
 		if err := mapstructure.Decode(fields, &metadata); err != nil {
 			return nil, nil, fmt.Errorf("unable to decode gem metadata: %w", err)

@@ -35,3 +35,30 @@ func TestParseGemspec(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseGemSpecEntries, []pkg.Package{expectedPkg}, nil)
 }
+
+func TestParseGemspecWithInterpolation(t *testing.T) {
+	fixture := "testdata/formatador.gemspec"
+	ctx := context.TODO()
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	var expectedPkg = pkg.Package{
+		Name:      "formatador",
+		Version:   "1.0.0",
+		PURL:      "pkg:gem/formatador@1.0.0",
+		Locations: locations,
+		Type:      pkg.GemPkg,
+		Licenses: pkg.NewLicenseSet(
+			pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", file.NewLocation(fixture)),
+		),
+		Language: pkg.Ruby,
+		Metadata: pkg.RubyGemspec{
+			Name:     "formatador",
+			Version:  "1.0.0",
+			Files:    []string{"lib/formatador.rb"},
+			Authors:  []string{"geemus"},
+			Homepage: "",
+		},
+	}
+
+	pkgtest.TestFileParser(t, fixture, parseGemSpecEntries, []pkg.Package{expectedPkg}, nil)
+}
