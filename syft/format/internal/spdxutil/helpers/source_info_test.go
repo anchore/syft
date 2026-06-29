@@ -345,10 +345,10 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
-				Type: pkg.MacOSAppPkg,
+				Type: pkg.AppleAppBundlePkg,
 			},
 			expected: []string{
-				"acquired package info from macOS application Info.plist",
+				"acquired package info from Apple application bundle Info.plist",
 			},
 		},
 		{

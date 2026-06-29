@@ -9,6 +9,7 @@ func AllTypes() []any {
 	return []any{
 		pkg.AlpmDBEntry{},
 		pkg.ApkDBEntry{},
+		pkg.AppleAppBundleEntry{},
 		pkg.BinarySignature{},
 		pkg.BitnamiSBOMEntry{},
 		pkg.BunLockEntry{},
@@ -43,7 +44,6 @@ func AllTypes() []any {
 		pkg.LinuxKernel{},
 		pkg.LinuxKernelModule{},
 		pkg.LuaRocksPackage{},
-		pkg.MacOSAppEntry{},
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
 		pkg.NpmPackage{},

@@ -1,4 +1,4 @@
-package macos
+package apple
 
 import (
 	"context"
@@ -40,6 +40,10 @@ func parseInfoPlist(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	if name == "" {
 		name = info.CFBundleExecutable
 	}
+	if name == "" {
+		// last-resort name so identifiable bundles aren't dropped (e.g. com.apple.Safari)
+		name = info.CFBundleIdentifier
+	}
 
 	version := info.CFBundleShortVersionString
 	if version == "" {
@@ -51,7 +55,7 @@ func parseInfoPlist(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	}
 
 	pkgs := []pkg.Package{
-		newMacOSAppPackage(name, version, info.CFBundleIdentifier, reader.Location),
+		newAppBundlePackage(name, version, info.CFBundleIdentifier, reader.Location),
 	}
 
 	return pkgs, nil, nil
