@@ -124,7 +124,7 @@ func (t Type) PackageURLType() string {
 	case DebPkg:
 		return "deb"
 	case DotnetPkg:
-		return "dotnet"
+		return packageurl.TypeNuget
 	case ErlangOTPPkg:
 		return packageurl.TypeOTP
 	case GemPkg:
