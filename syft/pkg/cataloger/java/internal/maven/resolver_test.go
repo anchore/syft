@@ -163,7 +163,7 @@ func Test_resolveProperty(t *testing.T) {
 }
 
 func Test_mavenResolverLocal(t *testing.T) {
-	dir, err := filepath.Abs("test-fixtures/maven-repo")
+	dir, err := filepath.Abs("testdata/maven-repo")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -226,7 +226,7 @@ func Test_mavenResolverLocal(t *testing.T) {
 }
 
 func Test_mavenResolverRemote(t *testing.T) {
-	url := maventest.MockRepo(t, "test-fixtures/maven-repo")
+	url := maventest.MockRepo(t, "testdata/maven-repo")
 
 	tests := []struct {
 		groupID    string
@@ -273,7 +273,7 @@ func Test_mavenResolverRemote(t *testing.T) {
 }
 
 func Test_relativePathParent(t *testing.T) {
-	resolver, err := fileresolver.NewFromDirectory("test-fixtures/local", "")
+	resolver, err := fileresolver.NewFromDirectory("testdata/local", "")
 	require.NoError(t, err)
 
 	ctx := context.Background()

@@ -137,7 +137,7 @@ func TestDecoder_Decode(t *testing.T) {
 		},
 		{
 			name:      "invalid prefix",
-			userInput: "dir:test-fixtures/cpe",
+			userInput: "dir:testdata/cpe",
 			sbom: &sbom.SBOM{
 				Artifacts: sbom.Artifacts{
 					Packages: pkg.NewCollection(),

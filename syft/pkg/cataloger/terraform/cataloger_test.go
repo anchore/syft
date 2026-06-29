@@ -95,7 +95,7 @@ func TestTerraformCataloger(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
-				WithResolver(fileresolver.NewFromUnindexedDirectory(filepath.Join("test-fixtures", tt.name))).
+				WithResolver(fileresolver.NewFromUnindexedDirectory(filepath.Join("testdata", tt.name))).
 				Expects(tt.expected, nil).
 				TestCataloger(t, c)
 		})

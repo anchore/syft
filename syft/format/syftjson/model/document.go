@@ -17,8 +17,8 @@ type Document struct {
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {
-	type Alias *Document
-	aux := Alias(d)
+	type Alias Document
+	aux := (*Alias)(d)
 
 	if err := json.Unmarshal(data, aux); err != nil {
 		return fmt.Errorf("could not unmarshal syft JSON document: %w", err)
@@ -44,7 +44,7 @@ type Descriptor struct {
 	Version string `json:"version"`
 
 	// Configuration contains the tool configuration used during SBOM generation.
-	Configuration interface{} `json:"configuration,omitempty"`
+	Configuration any `json:"configuration,omitempty"`
 }
 
 // Schema specifies the JSON schema version and URL reference that defines the structure and validation rules for this document format.

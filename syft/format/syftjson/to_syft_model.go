@@ -223,7 +223,7 @@ func toInternalLinuxRelease(d model.LinuxRelease) *linux.Release {
 }
 
 func toSyftRelationships(doc *model.Document, catalog *pkg.Collection, relationships []model.Relationship, idAliases map[string]string) ([]artifact.Relationship, []error) {
-	idMap := make(map[string]interface{})
+	idMap := make(map[string]any)
 
 	for _, p := range catalog.Sorted() {
 		idMap[string(p.ID())] = p
@@ -263,7 +263,7 @@ func toSyftSource(s model.Source) source.Source {
 	return source.FromDescription(*description)
 }
 
-func toSyftRelationship(idMap map[string]interface{}, relationship model.Relationship, idAliases map[string]string) (*artifact.Relationship, error) {
+func toSyftRelationship(idMap map[string]any, relationship model.Relationship, idAliases map[string]string) (*artifact.Relationship, error) {
 	id := func(id string) string {
 		aliased, ok := idAliases[id]
 		if ok {

@@ -23,6 +23,7 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
@@ -163,7 +164,10 @@ func (c *goLicenseResolver) getLicensesFromRemote(ctx context.Context, moduleNam
 	return c.licenseCache.Resolve(fmt.Sprintf("%s/%s", moduleName, moduleVersion), func() ([]pkg.License, error) {
 		proxies := remotesForModule(c.opts.Proxies, c.opts.NoProxy, moduleName)
 
-		urlPrefix, fsys, err := getModule(proxies, moduleName, moduleVersion)
+		urlPrefix, fsys, cleanup, err := getModule(ctx, proxies, moduleName, moduleVersion)
+		if cleanup != nil {
+			defer cleanup()
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +262,7 @@ func processCaps(s string) string {
 	})
 }
 
-func getModule(proxies []string, moduleName, moduleVersion string) (urlPrefix string, fsys fs.FS, err error) {
+func getModule(ctx context.Context, proxies []string, moduleName, moduleVersion string) (urlPrefix string, fsys fs.FS, cleanup func(), err error) {
 	for _, proxy := range proxies {
 		u, _ := url.Parse(proxy)
 		if proxy == "direct" {
@@ -267,7 +271,7 @@ func getModule(proxies []string, moduleName, moduleVersion string) (urlPrefix st
 		}
 		switch u.Scheme {
 		case "https", "http":
-			urlPrefix, fsys, err = getModuleProxy(proxy, moduleName, moduleVersion)
+			urlPrefix, fsys, cleanup, err = getModuleProxy(ctx, proxy, moduleName, moduleVersion)
 		case "file":
 			p := filepath.Join(u.Path, moduleName, "@v", moduleVersion)
 			urlPrefix = path.Join("file://", p) + "/"
@@ -281,42 +285,78 @@ func getModule(proxies []string, moduleName, moduleVersion string) (urlPrefix st
 	return
 }
 
-func getModuleProxy(proxy string, moduleName string, moduleVersion string) (moduleURL string, out fs.FS, _ error) {
+// getModuleProxy downloads a Go module zip from the given proxy and returns a filesystem view of its contents.
+// The returned cleanup function closes the underlying temp file and removes it; callers must not use the
+// returned fs.FS after calling cleanup.
+func getModuleProxy(ctx context.Context, proxy string, moduleName string, moduleVersion string) (moduleURL string, out fs.FS, cleanup func(), _ error) {
 	u := fmt.Sprintf("%s/%s/@v/%s.zip", proxy, moduleName, moduleVersion)
 
 	// get the module zip
 	log.WithFields("url", u).Info("downloading go module from proxy")
 	resp, err := http.Get(u) //nolint:gosec
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
+		// close the first response before retrying with a lowercased module name
+		_ = resp.Body.Close()
+
 		u = fmt.Sprintf("%s/%s/@v/%s.zip", proxy, strings.ToLower(moduleName), moduleVersion)
 
 		// try lowercasing it; some packages have mixed casing that really messes up the proxy
 		resp, err = http.Get(u) //nolint:gosec
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
-			return "", nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
+			return "", nil, nil, fmt.Errorf("failed to get module zip: %s", resp.Status)
 		}
 	}
 
-	// read the zip
-	b, err := io.ReadAll(resp.Body)
+	// stream the zip to a temp file to avoid unbounded memory usage
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return "", nil, nil, fmt.Errorf("no temp dir factory in context")
+	}
+	tmpFile, cleanupFile, err := td.NewFile("gomodule-*.zip") //nolint:gocritic // cleanup is returned to caller, not deferred here
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, fmt.Errorf("failed to create temp file for module zip: %w", err)
 	}
 
-	out, err = zip.NewReader(bytes.NewReader(b), resp.ContentLength)
+	cleanup = func() {
+		_ = tmpFile.Close()
+		cleanupFile()
+	}
+
+	// cap downloads at 500MB to prevent disk exhaustion from malicious proxies
+	const maxModuleZipSize = 500 * 1024 * 1024
+	size, err := io.Copy(tmpFile, io.LimitReader(resp.Body, maxModuleZipSize))
+	if err != nil {
+		cleanup()
+		return "", nil, nil, fmt.Errorf("failed to download module zip: %w", err)
+	}
+	if size >= maxModuleZipSize {
+		cleanup()
+		return "", nil, nil, fmt.Errorf("module zip exceeds %d byte size limit", maxModuleZipSize)
+	}
+
+	if _, err := tmpFile.Seek(0, io.SeekStart); err != nil {
+		cleanup()
+		return "", nil, nil, fmt.Errorf("failed to seek module zip: %w", err)
+	}
+
+	out, err = zip.NewReader(tmpFile, size)
+	if err != nil {
+		cleanup()
+		return "", nil, nil, fmt.Errorf("failed to read module zip: %w", err)
+	}
 	versionPath := findVersionPath(out, ".")
 	out = getSubFS(out, versionPath)
 
-	return u + "#" + versionPath + "/", out, err
+	return u + "#" + versionPath + "/", out, cleanup, err
 }
 
 func findVersionPath(f fs.FS, dir string) string {

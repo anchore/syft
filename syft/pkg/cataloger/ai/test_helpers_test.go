@@ -35,7 +35,7 @@ type testGGUFBuilder struct {
 type testKVPair struct {
 	key       string
 	valueType uint32
-	value     interface{}
+	value     any
 }
 
 func newTestGGUFBuilder() *testGGUFBuilder {

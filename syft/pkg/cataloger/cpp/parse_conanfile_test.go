@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseConanfile(t *testing.T) {
-	fixture := "test-fixtures/conanfile.txt"
+	fixture := "testdata/conanfile.txt"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expected := []pkg.Package{
 		{

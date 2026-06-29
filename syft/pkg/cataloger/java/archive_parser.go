@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -47,6 +48,7 @@ var archiveFormatGlobs = []string{
 	// out of date, and they charge for their IDE. If you find an example
 	// project that we can build in CI feel free to include it
 	"**/*.rar", // Java Resource Adapter Archive
+	"**/*.zap", // ZAP add-ons https://github.com/zaproxy/zaproxy/wiki/ZapAddOns
 }
 
 // javaArchiveHashes are all the current hash algorithms used to calculate archive digests
@@ -104,7 +106,11 @@ func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, d
 	virtualElements := strings.Split(reader.Path(), ":")
 	currentFilepath := virtualElements[len(virtualElements)-1]
 
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(currentFilepath, reader)
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return nil, func() {}, fmt.Errorf("no temp dir factory in context")
+	}
+	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(td, currentFilepath, reader)
 	if err != nil {
 		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
 	}

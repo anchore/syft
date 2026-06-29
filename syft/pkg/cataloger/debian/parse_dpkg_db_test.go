@@ -20,13 +20,16 @@ import (
 
 func Test_parseDpkgStatus(t *testing.T) {
 	tests := []struct {
-		name        string
-		expected    []pkg.DpkgDBEntry
-		fixturePath string
+		name     string
+		expected []pkg.DpkgDBEntry
+		// expectedLicenses is the raw License value parsed for each entry (parallel to expected). License is not
+		// persisted on pkg.DpkgDBEntry, so it is asserted separately from the raw extracted metadata.
+		expectedLicenses []string
+		fixturePath      string
 	}{
 		{
 			name:        "single package",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/single",
+			fixturePath: "testdata/var/lib/dpkg/status.d/single",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
@@ -100,7 +103,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "single package with installed size",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/installed-size-4KB",
+			fixturePath: "testdata/var/lib/dpkg/status.d/installed-size-4KB",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "apt",
@@ -141,7 +144,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 		},
 		{
 			name:        "multiple entries",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/multiple",
+			fixturePath: "testdata/var/lib/dpkg/status.d/multiple",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package: "no-version",
@@ -238,8 +241,39 @@ func Test_parseDpkgStatus(t *testing.T) {
 			},
 		},
 		{
+			name:        "opkg status with license field",
+			fixturePath: "testdata/var/lib/opkg/status",
+			expected: []pkg.DpkgDBEntry{
+				{
+					Package:      "dropbear",
+					Version:      "2024.85-r0",
+					Architecture: "x86_64",
+					Description:  "Small SSH server and client.",
+					Depends:      []string{"libc", "zlib"},
+					Files:        []pkg.DpkgFileRecord{},
+				},
+				{
+					Package:      "busybox",
+					Version:      "1.36.1-r3",
+					Architecture: "x86_64",
+					Description:  "Single executable providing many common UNIX utilities.",
+					Depends:      []string{"libc"},
+					Files:        []pkg.DpkgFileRecord{},
+				},
+				{
+					Package:      "kernel-modules",
+					Version:      "6.6.0-r0",
+					Architecture: "x86_64",
+					Description:  "Loadable kernel modules with mixed licensing.",
+					Depends:      []string{"kmod"},
+					Files:        []pkg.DpkgFileRecord{},
+				},
+			},
+			expectedLicenses: []string{"MIT", "GPL-2.0-only", "GPL-2.0 BSD-3-Clause"},
+		},
+		{
 			name:        "deinstall status packages are ignored",
-			fixturePath: "test-fixtures/var/lib/dpkg/status.d/deinstall",
+			fixturePath: "testdata/var/lib/dpkg/status.d/deinstall",
 			expected: []pkg.DpkgDBEntry{
 				{
 					Package:       "linux-image-6.14.0-1012-aws",
@@ -278,18 +312,30 @@ func Test_parseDpkgStatus(t *testing.T) {
 
 			reader := bufio.NewReader(f)
 
-			entries, err := parseDpkgStatus(reader)
+			raw, err := parseDpkgStatus(reader)
 			require.NoError(t, err)
+
+			// convert the raw metadata into the final entries just-in-time, mirroring the package-building stage
+			var entries []pkg.DpkgDBEntry
+			var licenses []string
+			for _, r := range raw {
+				entries = append(entries, r.toDpkgEntry())
+				licenses = append(licenses, r.License)
+			}
 
 			if diff := cmp.Diff(test.expected, entries); diff != "" {
 				t.Errorf("unexpected entry (-want +got):\n%s", diff)
+			}
+
+			if test.expectedLicenses != nil {
+				require.Equal(t, test.expectedLicenses, licenses)
 			}
 		})
 	}
 }
 
 func Test_corruptEntry(t *testing.T) {
-	f, err := os.Open("test-fixtures/var/lib/dpkg/status.d/corrupt")
+	f, err := os.Open("testdata/var/lib/dpkg/status.d/corrupt")
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, f.Close()) })
 
@@ -339,7 +385,7 @@ func TestSourceVersionExtract(t *testing.T) {
 }
 
 func requireAs(expected error) require.ErrorAssertionFunc {
-	return func(t require.TestingT, err error, i ...interface{}) {
+	return func(t require.TestingT, err error, i ...any) {
 		require.ErrorAs(t, err, &expected)
 	}
 }
@@ -413,7 +459,7 @@ func Test_handleNewKeyValue(t *testing.T) {
 		name    string
 		line    string
 		wantKey string
-		wantVal interface{}
+		wantVal any
 		wantErr require.ErrorAssertionFunc
 	}{
 		{

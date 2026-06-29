@@ -14,7 +14,7 @@ func Test_WordpressPlugin_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain wordpress plugin files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"wp-content/plugins/akismet/akismet.php",
 				"wp-content/plugins/all-in-one-wp-migration/all-in-one-wp-migration.php",

@@ -12,7 +12,7 @@ import (
 )
 
 func TestParseWordpressPluginFiles(t *testing.T) {
-	fixture := "test-fixtures/glob-paths/wp-content/plugins/akismet/akismet.php"
+	fixture := "testdata/glob-paths/wp-content/plugins/akismet/akismet.php"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	ctx := context.TODO()
 	var expectedPkg = pkg.Package{

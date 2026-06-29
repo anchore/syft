@@ -107,7 +107,7 @@ func fetchLatestApplicationVersion(id clio.Identification) (*hashiVersion.Versio
 		return nil, fmt.Errorf("HTTP %d on fetching latest version: %s", resp.StatusCode, resp.Status)
 	}
 
-	versionBytes, err := io.ReadAll(resp.Body)
+	versionBytes, err := io.ReadAll(io.LimitReader(resp.Body, 500))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read latest version: %w", err)
 	}

@@ -6,5 +6,5 @@ type Description struct {
 	Name     string `hash:"ignore"`
 	Version  string `hash:"ignore"`
 	Supplier string `hash:"ignore"`
-	Metadata interface{}
+	Metadata any
 }

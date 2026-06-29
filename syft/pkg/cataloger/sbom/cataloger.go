@@ -85,6 +85,6 @@ func adaptToReadSeeker(reader io.Reader) (io.ReadSeeker, error) {
 	log.Debug("SBOM cataloger reader is not a ReadSeeker, reading entire SBOM into memory")
 
 	var buff bytes.Buffer
-	_, err := io.Copy(&buff, reader)
+	_, err := io.Copy(&buff, reader) //nolint:gocritic // buffering to ReadSeeker
 	return bytes.NewReader(buff.Bytes()), err
 }

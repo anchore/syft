@@ -18,22 +18,22 @@ func TestFileMetadataFromPath(t *testing.T) {
 		expectedMIMEType string
 	}{
 		{
-			path:             "test-fixtures/symlinks-simple/readme",
+			path:             "testdata/symlinks-simple/readme",
 			expectedType:     file.TypeRegular,
 			expectedMIMEType: "text/plain",
 		},
 		{
-			path:             "test-fixtures/symlinks-simple/link_to_new_readme",
+			path:             "testdata/symlinks-simple/link_to_new_readme",
 			expectedType:     file.TypeSymLink,
 			expectedMIMEType: "",
 		},
 		{
-			path:             "test-fixtures/symlinks-simple/link_to_link_to_new_readme",
+			path:             "testdata/symlinks-simple/link_to_link_to_new_readme",
 			expectedType:     file.TypeSymLink,
 			expectedMIMEType: "",
 		},
 		{
-			path:             "test-fixtures/symlinks-simple",
+			path:             "testdata/symlinks-simple",
 			expectedType:     file.TypeDirectory,
 			expectedMIMEType: "",
 		},

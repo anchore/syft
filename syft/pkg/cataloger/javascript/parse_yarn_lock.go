@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"maps"
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -25,6 +23,11 @@ import (
 )
 
 var (
+	// packageAliasExp matches aliased yarn dependencies and captures the
+	// underlying npm package name instead of the local alias.
+	// For example: "old-async@npm:async@0.9.2" returns "async".
+	packageAliasExp = regexp.MustCompile(`^"?(?:@\w[\w-_.]*\/)?\w[\w-_.]*@npm:((?:@\w[\w-_.]*\/)?\w[\w-_.]*)@`)
+
 	// packageNameExp matches the name of the dependency in yarn.lock
 	// including scope/namespace prefix if found.
 	// For example: "aws-sdk@2.706.0" returns "aws-sdk"
@@ -166,7 +169,8 @@ func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string
 }
 
 func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
-	content, err := io.ReadAll(reader)
+	// TODO: refactor to use bufio.Scanner for streaming line-by-line parsing instead of reading the entire file
+	content, err := io.ReadAll(reader) //nolint:gocritic // stateful multi-line parser; candidate for streaming refactor
 	if err != nil {
 		return nil, fmt.Errorf("failed to read yarn.lock file: %w", err)
 	}
@@ -244,7 +248,9 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 		return nil, fmt.Errorf("failed to unmarshal yarn v2 lockfile: %w", err)
 	}
 
-	packages := make(map[string]yarnPackage)
+	var seenPkgs = strset.New()
+
+	pkgs := []yarnPackage{}
 	for key, value := range lockfile {
 		packageName := findPackageName(key)
 		if packageName == "" {
@@ -252,10 +258,16 @@ func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
 			continue
 		}
 
-		packages[packageName] = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+		var pkg = yarnPackage{Name: packageName, Version: value.Version, Resolved: value.Resolution, Integrity: value.Checksum, Dependencies: value.Dependencies}
+		var nameVersion = pkg.Name + "@" + pkg.Version
+
+		if !seenPkgs.Has(nameVersion) {
+			seenPkgs.Add(nameVersion)
+			pkgs = append(pkgs, pkg)
+		}
 	}
 
-	return slices.Collect(maps.Values(packages)), nil
+	return pkgs, nil
 }
 
 func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -265,7 +277,8 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		return nil, nil, nil
 	}
 
-	data, err := io.ReadAll(reader)
+	// TODO: refactor to detect version from the first line via bufio.Scanner, then dispatch to a streaming parser
+	data, err := io.ReadAll(reader) //nolint:gocritic // two-pass parse: version detection then format-specific parsing
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load yarn.lock file: %w", err)
 	}
@@ -303,6 +316,9 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 }
 
 func findPackageName(line string) string {
+	if matches := packageAliasExp.FindStringSubmatch(line); len(matches) >= 2 {
+		return matches[1]
+	}
 	if matches := packageNameExp.FindStringSubmatch(line); len(matches) >= 2 {
 		return matches[1]
 	}

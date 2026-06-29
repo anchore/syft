@@ -43,10 +43,10 @@ func createTestFS(t *testing.T) filesystem.FileSystem {
 
 	for _, tf := range testFiles {
 		if tf.isDir {
-			err := fsys.Mkdir(tf.path)
+			err := fsys.Mkdir(ToFSPath(tf.path))
 			require.NoError(t, err)
 		} else {
-			f, err := fsys.OpenFile(tf.path, os.O_CREATE|os.O_RDWR)
+			f, err := fsys.OpenFile(ToFSPath(tf.path), os.O_CREATE|os.O_RDWR)
 			require.NoError(t, err)
 			_, err = f.Write([]byte(tf.content))
 			require.NoError(t, err)

@@ -1,8 +1,9 @@
 package nix
 
 import (
+	"bufio"
+	"context"
 	"fmt"
-	"io"
 	"path"
 	"strconv"
 	"strings"
@@ -17,7 +18,7 @@ import (
 
 const defaultSchema = 10
 
-type dbProcessor func(config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error)
+type dbProcessor func(ctx context.Context, config Config, dbLocation file.Location, resolver file.Resolver, catalogerName string) ([]pkg.Package, []artifact.Relationship, error)
 
 type dbCataloger struct {
 	config          Config
@@ -45,7 +46,7 @@ type dbPackageEntry struct {
 	Files    []string
 }
 
-func (c dbCataloger) catalog(resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+func (c dbCataloger) catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	dbLocs, err := resolver.FilesByGlob("**/nix/var/nix/db/db.sqlite")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to find Nix database: %w", err)
@@ -65,7 +66,7 @@ func (c dbCataloger) catalog(resolver file.Resolver) ([]pkg.Package, []artifact.
 			continue
 		}
 
-		newPkgs, newRelationships, err := parser(c.config, dbLoc, resolver, c.catalogerName)
+		newPkgs, newRelationships, err := parser(ctx, c.config, dbLoc, resolver, c.catalogerName)
 		if err != nil {
 			errs = unknown.Append(errs, dbLoc.Coordinates, err)
 			continue
@@ -92,13 +93,13 @@ func (c dbCataloger) selectDBParser(dbLocation file.Location, resolver file.Reso
 		return c.schemaProcessor[defaultSchema], 0
 	}
 
-	contents, err := io.ReadAll(schemaContents)
-	if err != nil {
+	scanner := bufio.NewScanner(schemaContents)
+	if !scanner.Scan() {
 		log.WithFields("path", loc.RealPath).Tracef("failed to read Nix database schema file, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0
 	}
 
-	schema, err := strconv.Atoi(strings.TrimSpace(string(contents)))
+	schema, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
 	if err != nil {
 		log.WithFields("path", loc.RealPath).Tracef("failed to parse Nix database schema file, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0

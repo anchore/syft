@@ -448,7 +448,7 @@ func Test_toSyftRelationship(t *testing.T) {
 	parentPackage := packageWithId("some-parent-id")
 	tests := []struct {
 		name          string
-		idMap         map[string]interface{}
+		idMap         map[string]any
 		idAliases     map[string]string
 		relationships model.Relationship
 		want          *artifact.Relationship
@@ -456,7 +456,7 @@ func Test_toSyftRelationship(t *testing.T) {
 	}{
 		{
 			name: "one relationship no warnings",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-child-id":  childPackage,
 				"some-parent-id": parentPackage,
 			},
@@ -474,7 +474,7 @@ func Test_toSyftRelationship(t *testing.T) {
 		},
 		{
 			name: "relationship unknown type one warning",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-child-id":  childPackage,
 				"some-parent-id": parentPackage,
 			},
@@ -490,7 +490,7 @@ func Test_toSyftRelationship(t *testing.T) {
 		},
 		{
 			name: "relationship missing child ID one warning",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-parent-id": parentPackage,
 			},
 			idAliases: map[string]string{},
@@ -505,7 +505,7 @@ func Test_toSyftRelationship(t *testing.T) {
 		},
 		{
 			name: "relationship missing parent ID one warning",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-child-id": childPackage,
 			},
 			idAliases: map[string]string{},

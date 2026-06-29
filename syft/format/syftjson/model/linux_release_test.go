@@ -11,7 +11,7 @@ import (
 func TestIDLikes_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		name     string
-		data     interface{}
+		data     any
 		expected IDLikes
 	}{
 		{

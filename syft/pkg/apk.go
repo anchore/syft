@@ -71,11 +71,11 @@ type spaceDelimitedStringSlice []string
 
 func (m *ApkDBEntry) UnmarshalJSON(data []byte) error {
 	var fields []reflect.StructField
-	t := reflect.TypeOf(ApkDBEntry{})
+	t := reflect.TypeFor[ApkDBEntry]()
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		if f.Name == "Dependencies" {
-			f.Type = reflect.TypeOf(spaceDelimitedStringSlice{})
+			f.Type = reflect.TypeFor[spaceDelimitedStringSlice]()
 		}
 		fields = append(fields, f)
 	}
@@ -89,7 +89,7 @@ func (m *ApkDBEntry) UnmarshalJSON(data []byte) error {
 }
 
 func (a *spaceDelimitedStringSlice) UnmarshalJSON(data []byte) error {
-	var jsonObj interface{}
+	var jsonObj any
 
 	if err := json.Unmarshal(data, &jsonObj); err != nil {
 		return err
@@ -103,7 +103,7 @@ func (a *spaceDelimitedStringSlice) UnmarshalJSON(data []byte) error {
 			*a = strings.Split(obj, " ")
 		}
 		return nil
-	case []interface{}:
+	case []any:
 		s := make([]string, 0, len(obj))
 		for _, v := range obj {
 			value, ok := v.(string)

@@ -260,8 +260,8 @@ func addEntryForNPMPackage(indexed *dictionary.Indexed, ref string, cpeItemName 
 }
 
 func phpExtensionPackageFromURLFragment(ref string) string {
-	if strings.HasPrefix(ref, "package/") { // package/HTML_QuickForm/download
-		ref = strings.TrimPrefix(ref, "package/")
+	if after, ok := strings.CutPrefix(ref, "package/"); ok { // package/HTML_QuickForm/download
+		ref = after
 		components := strings.Split(ref, "/")
 
 		if len(components) < 1 {

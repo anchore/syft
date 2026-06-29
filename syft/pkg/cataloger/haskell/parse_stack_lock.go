@@ -3,7 +3,6 @@ package haskell
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -42,16 +41,11 @@ type completedSnapshot struct {
 
 // parseStackLock is a parser function for stack.yaml.lock contents, returning all packages discovered.
 func parseStackLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	bytes, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load stack.yaml.lock file: %w", err)
-	}
-
 	var lockFile stackLock
 
-	if err := yaml.Unmarshal(bytes, &lockFile); err != nil {
+	if err := yaml.NewDecoder(reader).Decode(&lockFile); err != nil {
 		log.WithFields("error", err, "path", reader.RealPath).Trace("failed to parse stack.yaml.lock")
-		return nil, nil, fmt.Errorf("failed to parse stack.yaml.lock file")
+		return nil, nil, fmt.Errorf("failed to parse stack.yaml.lock file: %w", err)
 	}
 
 	var (

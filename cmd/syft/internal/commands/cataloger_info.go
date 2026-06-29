@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -59,6 +60,7 @@ type (
 		Packages        []detectorPackageInfo            `json:"packages,omitempty"`
 		Comment         string                           `json:"comment,omitempty"`
 		PackageTypes    []string                         `json:"package_types,omitempty"`
+		PURLTypes       []string                         `json:"purl_types,omitempty"`
 		JSONSchemaTypes []string                         `json:"json_schema_types,omitempty"`
 		Capabilities    capabilities.CapabilitySet       `json:"capabilities,omitempty"`
 	}
@@ -234,7 +236,7 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 		// if no parsers, use detectors instead
 		if len(info.Patterns) == 0 {
 			info.Capabilities = cat.Capabilities
-			info.Patterns = convertDetectorsToPatterns(cat.Detectors, cat.PackageTypes, cat.JSONSchemaTypes)
+			info.Patterns = convertDetectorsToPatterns(cat.Detectors, cat.PackageTypes, cat.PURLTypes, cat.JSONSchemaTypes)
 		}
 
 		info.Config = getConfigInfoFromDocument(doc, cat.Config)
@@ -248,12 +250,7 @@ func renderCatalogerInfoJSON(doc *capabilities.Document, catalogers []capabiliti
 
 // isDeprecatedCataloger checks if a cataloger is deprecated based on its selectors
 func isDeprecatedCataloger(selectors []string) bool {
-	for _, selector := range selectors {
-		if selector == "deprecated" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(selectors, "deprecated")
 }
 
 // convertDetectorPackages converts detector package info to the JSON output format
@@ -282,6 +279,7 @@ func convertParsersToPatterns(parsers []capabilities.Parser) []patternInfo {
 			Packages:        convertDetectorPackages(parser.Detector.Packages),
 			Comment:         parser.Detector.Comment,
 			PackageTypes:    parser.PackageTypes,
+			PURLTypes:       parser.PURLTypes,
 			JSONSchemaTypes: parser.JSONSchemaTypes,
 			Capabilities:    parser.Capabilities,
 		})
@@ -290,7 +288,7 @@ func convertParsersToPatterns(parsers []capabilities.Parser) []patternInfo {
 }
 
 // convertDetectorsToPatterns converts detector entries to pattern info for JSON output (for non-parser catalogers)
-func convertDetectorsToPatterns(detectors []capabilities.Detector, packageTypes, jsonSchemaTypes []string) []patternInfo {
+func convertDetectorsToPatterns(detectors []capabilities.Detector, packageTypes, purlTypes, jsonSchemaTypes []string) []patternInfo {
 	var patterns []patternInfo
 	for _, det := range detectors {
 		patterns = append(patterns, patternInfo{
@@ -300,6 +298,7 @@ func convertDetectorsToPatterns(detectors []capabilities.Detector, packageTypes,
 			Packages:        convertDetectorPackages(det.Packages),
 			Comment:         det.Comment,
 			PackageTypes:    packageTypes,
+			PURLTypes:       purlTypes,
 			JSONSchemaTypes: jsonSchemaTypes,
 		})
 	}
@@ -357,7 +356,7 @@ func renderCatalogerInfoTable(_ *capabilities.Document, catalogers []capabilitie
 	)
 
 	// set headers
-	table.Header("ECOSYSTEM", "CATALOGER", "CRITERIA", "LICENSE", "NODES", "EDGES", "KINDS", "LISTING", "DIGESTS", "HASH")
+	table.Header("ECOSYSTEM", "CATALOGER", "CRITERIA", "PURL", "LICENSE", "NODES", "EDGES", "KINDS", "LISTING", "DIGESTS", "HASH")
 
 	// build rows for each cataloger
 	var data [][]string
@@ -371,13 +370,13 @@ func renderCatalogerInfoTable(_ *capabilities.Document, catalogers []capabilitie
 			// generic catalogers: one row per parser
 			for _, parser := range cat.Parsers {
 				criteria := formatCriteria([]capabilities.Detector{parser.Detector})
-				row := buildTableRowFromCapabilities(ecosystem, cat.Name, criteria, parser.Capabilities)
+				row := buildTableRowFromCapabilities(ecosystem, cat.Name, criteria, parser.PURLTypes, parser.Capabilities)
 				data = append(data, row)
 			}
 		} else {
 			// custom catalogers: one row with all detectors
 			criteria := formatCriteria(cat.Detectors)
-			row := buildTableRowFromCapabilities(ecosystem, cat.Name, criteria, cat.Capabilities)
+			row := buildTableRowFromCapabilities(ecosystem, cat.Name, criteria, cat.PURLTypes, cat.Capabilities)
 			data = append(data, row)
 		}
 	}
@@ -389,7 +388,7 @@ func renderCatalogerInfoTable(_ *capabilities.Document, catalogers []capabilitie
 }
 
 // buildTableRowFromCapabilities builds a table row from capability values
-func buildTableRowFromCapabilities(ecosystem, name, criteria string, caps capabilities.CapabilitySet) []string {
+func buildTableRowFromCapabilities(ecosystem, name, criteria string, purlTypes []string, caps capabilities.CapabilitySet) []string {
 	// extract capability default values
 	license := extractBoolCapability(caps, "license")
 	nodes := extractNodesCapability(caps)
@@ -403,6 +402,7 @@ func buildTableRowFromCapabilities(ecosystem, name, criteria string, caps capabi
 		ecosystem,
 		name,
 		criteria,
+		formatPURLTypes(purlTypes),
 		license,
 		nodes,
 		edges,
@@ -411,6 +411,14 @@ func buildTableRowFromCapabilities(ecosystem, name, criteria string, caps capabi
 		digests,
 		hash,
 	}
+}
+
+// formatPURLTypes renders the PURL types as a comma-separated list, or a placeholder when empty
+func formatPURLTypes(purlTypes []string) string {
+	if len(purlTypes) == 0 {
+		return noStyle.Render("·")
+	}
+	return strings.Join(purlTypes, ", ")
 }
 
 // extractBoolCapability extracts a boolean capability value and formats it
@@ -452,7 +460,7 @@ func extractArrayCapability(caps capabilities.CapabilitySet, name string) string
 				if len(v) > 0 {
 					return strings.Join(v, ", ")
 				}
-			case []interface{}:
+			case []any:
 				if len(v) > 0 {
 					strs := make([]string, 0, len(v))
 					for _, item := range v {
@@ -475,7 +483,7 @@ func extractNodesCapability(caps capabilities.CapabilitySet) string {
 			switch v := cap.Default.(type) {
 			case []string:
 				return formatDepthStringArray(v)
-			case []interface{}:
+			case []any:
 				return formatDepthInterfaceArray(v)
 			}
 			return noStyle.Render("·")
@@ -496,7 +504,7 @@ func formatDepthStringArray(v []string) string {
 }
 
 // formatDepthInterfaceArray formats a []interface{} dependency depth value
-func formatDepthInterfaceArray(v []interface{}) string {
+func formatDepthInterfaceArray(v []any) string {
 	if len(v) == 0 {
 		return noStyle.Render("·")
 	}

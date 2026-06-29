@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseConanLock(t *testing.T) {
-	fixture := "test-fixtures/conan.lock"
+	fixture := "testdata/conan.lock"
 	expected := []pkg.Package{
 		{
 			Name:      "mfast",
@@ -334,7 +334,7 @@ func TestParseConanLock(t *testing.T) {
 }
 
 func TestParseConanLockV2(t *testing.T) {
-	fixture := "test-fixtures/conanlock-v2/conan.lock"
+	fixture := "testdata/conanlock-v2/conan.lock"
 	expected := []pkg.Package{
 		{
 			Name:      "matrix",
@@ -376,7 +376,7 @@ func TestParseConanLockV2(t *testing.T) {
 
 func Test_corruptConanlock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/conan.lock").
+		FromFile(t, "testdata/corrupt/conan.lock").
 		WithError().
 		TestParser(t, parseConanLock)
 }

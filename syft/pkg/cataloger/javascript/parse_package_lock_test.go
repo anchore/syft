@@ -102,7 +102,7 @@ func TestParsePackageLock(t *testing.T) {
 			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.3.tgz", Integrity: "sha1-o9XabNXAvAAI03I0u68b7WMFkQc="},
 		},
 	}
-	fixture := "test-fixtures/pkg-lock/package-lock.json"
+	fixture := "testdata/pkg-lock/package-lock.json"
 	for i := range expectedPkgs {
 		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
 	}
@@ -113,7 +113,7 @@ func TestParsePackageLock(t *testing.T) {
 
 func TestParsePackageLockV2(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pkg-lock/package-lock-2.json"
+	fixture := "testdata/pkg-lock/package-lock-2.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
@@ -199,7 +199,7 @@ func TestParsePackageLockV2(t *testing.T) {
 }
 
 func TestParsePackageLockV3(t *testing.T) {
-	fixture := "test-fixtures/pkg-lock/package-lock-3.json"
+	fixture := "testdata/pkg-lock/package-lock-3.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
@@ -302,8 +302,8 @@ func TestParsePackageLockAlias(t *testing.T) {
 		},
 	}
 
-	packageLockV1 := "test-fixtures/pkg-lock/alias-package-lock-1.json"
-	packageLockV2 := "test-fixtures/pkg-lock/alias-package-lock-2.json"
+	packageLockV1 := "testdata/pkg-lock/alias-package-lock-1.json"
+	packageLockV2 := "testdata/pkg-lock/alias-package-lock-2.json"
 	packageLocks := []string{packageLockV1, packageLockV2}
 
 	v2Pkg := pkg.Package{
@@ -356,7 +356,7 @@ func TestParsePackageLockAlias(t *testing.T) {
 
 func TestParsePackageLockLicenseWithArray(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pkg-lock/array-license-package-lock.json"
+	fixture := "testdata/pkg-lock/array-license-package-lock.json"
 	var expectedRelationships []artifact.Relationship
 	expectedPkgs := []pkg.Package{
 		{
@@ -418,7 +418,7 @@ func TestParsePackageLockLicenseWithArray(t *testing.T) {
 func Test_corruptPackageLock(t *testing.T) {
 	gap := newGenericPackageLockAdapter(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/package-lock.json").
+		FromFile(t, "testdata/corrupt/package-lock.json").
 		WithError().
 		TestParser(t, gap.parsePackageLock)
 }

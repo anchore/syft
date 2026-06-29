@@ -48,6 +48,7 @@ func backfillFromPurl(p *pkg.Package) {
 	var cpes []cpe.CPE
 	epoch := ""
 	rpmmod := ""
+	arch := ""
 
 	for _, qualifier := range purl.Qualifiers {
 		switch qualifier.Key {
@@ -65,6 +66,8 @@ func backfillFromPurl(p *pkg.Package) {
 			epoch = qualifier.Value
 		case pkg.PURLQualifierRpmModularity:
 			rpmmod = qualifier.Value
+		case pkg.PURLQualifierArch:
+			arch = qualifier.Value
 		}
 	}
 
@@ -84,15 +87,26 @@ func backfillFromPurl(p *pkg.Package) {
 		setJavaMetadataFromPurl(p, purl)
 	}
 
-	if p.Type == pkg.RpmPkg {
-		setRpmMetadataFromPurl(p, rpmmod)
-	}
+	setDistroMetadata(p, rpmmod, arch)
 
 	for _, c := range cpes {
 		if slices.Contains(p.CPEs, c) {
 			continue
 		}
 		p.CPEs = append(p.CPEs, c)
+	}
+}
+
+func setDistroMetadata(p *pkg.Package, rpmmod, arch string) {
+	switch p.Type {
+	case pkg.RpmPkg:
+		setRpmMetadataFromPurl(p, rpmmod, arch)
+	case pkg.DebPkg:
+		setDpkgMetadataFromPurl(p, arch)
+	case pkg.AlpmPkg:
+		setAlpmMetadataFromPurl(p, arch)
+	case pkg.ApkPkg:
+		setApkMetadataFromPurl(p, arch)
 	}
 }
 
@@ -107,32 +121,103 @@ func setJavaMetadataFromPurl(p *pkg.Package, _ packageurl.PackageURL) {
 	}
 }
 
-func setRpmMetadataFromPurl(p *pkg.Package, rpmmod string) {
+func setRpmMetadataFromPurl(p *pkg.Package, rpmmod, arch string) {
 	if p.Type != pkg.RpmPkg {
 		return
 	}
-	if rpmmod == "" {
+	if rpmmod == "" && arch == "" {
 		return
 	}
 
 	if p.Metadata == nil {
-		p.Metadata = pkg.RpmDBEntry{
-			ModularityLabel: &rpmmod,
-		}
-		return
+		p.Metadata = pkg.RpmDBEntry{}
 	}
 
 	switch m := p.Metadata.(type) {
 	case pkg.RpmDBEntry:
-		if m.ModularityLabel == nil {
+		if m.ModularityLabel == nil && rpmmod != "" {
 			m.ModularityLabel = &rpmmod
-			p.Metadata = m
 		}
+		if m.Arch == "" {
+			m.Arch = arch
+		}
+		p.Metadata = m
 	case pkg.RpmArchive:
-		if m.ModularityLabel == nil {
+		if m.ModularityLabel == nil && rpmmod != "" {
 			m.ModularityLabel = &rpmmod
-			p.Metadata = m
 		}
+		if m.Arch == "" {
+			m.Arch = arch
+		}
+		p.Metadata = m
+	}
+}
+
+func setDpkgMetadataFromPurl(p *pkg.Package, arch string) {
+	if p.Type != pkg.DebPkg {
+		return
+	}
+	if arch == "" {
+		return
+	}
+
+	if p.Metadata == nil {
+		p.Metadata = pkg.DpkgDBEntry{}
+	}
+
+	switch m := p.Metadata.(type) {
+	case pkg.DpkgDBEntry:
+		if m.Architecture == "" {
+			m.Architecture = arch
+		}
+		p.Metadata = m
+	case pkg.DpkgArchiveEntry:
+		if m.Architecture == "" {
+			m.Architecture = arch
+		}
+		p.Metadata = m
+	}
+}
+
+func setAlpmMetadataFromPurl(p *pkg.Package, arch string) {
+	if p.Type != pkg.AlpmPkg {
+		return
+	}
+	if arch == "" {
+		return
+	}
+
+	if p.Metadata == nil {
+		p.Metadata = pkg.AlpmDBEntry{Architecture: arch}
+		return
+	}
+
+	if m, ok := p.Metadata.(pkg.AlpmDBEntry); ok {
+		if m.Architecture == "" {
+			m.Architecture = arch
+		}
+		p.Metadata = m
+	}
+}
+
+func setApkMetadataFromPurl(p *pkg.Package, arch string) {
+	if p.Type != pkg.ApkPkg {
+		return
+	}
+	if arch == "" {
+		return
+	}
+
+	if p.Metadata == nil {
+		p.Metadata = pkg.ApkDBEntry{Architecture: arch}
+		return
+	}
+
+	if m, ok := p.Metadata.(pkg.ApkDBEntry); ok {
+		if m.Architecture == "" {
+			m.Architecture = arch
+		}
+		p.Metadata = m
 	}
 }
 
@@ -151,13 +236,13 @@ var epochPrefix = regexp.MustCompile(`^\d+:`)
 // nameFromPurl returns the syft package name of the package from the purl. If the purl includes a namespace,
 // the name is prefixed as appropriate based on the PURL type
 func nameFromPurl(purl packageurl.PackageURL) string {
-	if !nameExcludesPurlNamespace(purl.Type) && purl.Namespace != "" {
+	if !NameExcludesPurlNamespace(purl.Type) && purl.Namespace != "" {
 		return fmt.Sprintf("%s/%s", purl.Namespace, purl.Name)
 	}
 	return purl.Name
 }
 
-func nameExcludesPurlNamespace(purlType string) bool {
+func NameExcludesPurlNamespace(purlType string) bool {
 	switch purlType {
 	case packageurl.TypeAlpine,
 		packageurl.TypeAlpm,

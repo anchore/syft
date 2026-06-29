@@ -38,7 +38,7 @@ func readDebianVersionFile(resolver file.Resolver, location file.Location) strin
 		return ""
 	}
 	defer internal.CloseAndLogError(rdr, location.RealPath)
-	contents, err := io.ReadAll(rdr)
+	contents, err := io.ReadAll(io.LimitReader(rdr, 5*1024*1024))
 	if err != nil {
 		log.Debugf("error reading %s: %v", location.RealPath, err)
 		return ""

@@ -17,7 +17,7 @@ import (
 )
 
 func TestParseYarnBerry(t *testing.T) {
-	fixture := "test-fixtures/yarn-berry/yarn.lock"
+	fixture := "testdata/yarn-berry/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
@@ -204,9 +204,45 @@ func TestParseYarnBerry(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParseYarnBerryWithDuplicates(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/yarn-berry-dups/yarn.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "async",
+			Version:   "3.2.6",
+			Locations: locations,
+			PURL:      "pkg:npm/async@3.2.6",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "async@npm:3.2.6",
+				Integrity: "10c0/36484bb15ceddf07078688d95e27076379cc2f87b10c03b6dd8a83e89475a3c8df5848859dd06a4c95af1e4c16fc973de0171a77f18ea00be899aca2a4f85e70",
+			},
+		},
+		{
+			Name:      "async",
+			Version:   "0.9.2",
+			Locations: locations,
+			PURL:      "pkg:npm/async@0.9.2",
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.YarnLockEntry{
+				Resolved:  "async@npm:0.9.2",
+				Integrity: "10c0/22ac816db119a9b84ac7182fa969b2cceacfcfa278c3efb0ac6a94d1210a4429e42c8cf6e704039aa7662e4ba62f26cecf039c91d41ceb91355dc9672c9b9ac1",
+			},
+		},
+	}
+
+	adapter := newGenericYarnLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parseYarnLock, expectedPkgs, expectedRelationships)
+}
+
 func TestParseYarnLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/yarn/yarn.lock"
+	fixture := "testdata/yarn/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
@@ -361,7 +397,7 @@ func TestParseYarnLock(t *testing.T) {
 }
 
 func TestParseYarnLockWithRelationships(t *testing.T) {
-	fixture := "test-fixtures/yarn-v1-deps/yarn.lock"
+	fixture := "testdata/yarn-v1-deps/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
@@ -530,7 +566,7 @@ func TestParseYarnLockWithRelationships(t *testing.T) {
 }
 func TestParseYarnLockWithDuplicates(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/yarn-dups/yarn.lock"
+	fixture := "testdata/yarn-dups/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{
@@ -612,7 +648,7 @@ type handlerPath struct {
 
 func TestSearchYarnForLicenses(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/yarn-remote/yarn.lock"
+	fixture := "testdata/yarn-remote/yarn.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupYarnRegistry()
 	defer teardown()
@@ -630,7 +666,7 @@ func TestSearchYarnForLicenses(t *testing.T) {
 				{
 					// https://registry.yarnpkg.com/@babel/code-frame/7.10.4
 					path:    "/@babel/code-frame/7.10.4",
-					handler: generateMockYarnRegistryHandler("test-fixtures/yarn-remote/registry_response.json"),
+					handler: generateMockYarnRegistryHandler("testdata/yarn-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -709,6 +745,18 @@ func TestParseYarnFindPackageNames(t *testing.T) {
 			expected: "color-convert",
 		},
 		{
+			line:     `"old-async@npm:async@0.9.2":`,
+			expected: "async",
+		},
+		{
+			line:     `"old-foo@npm:@scope/foo@1.2.3":`,
+			expected: "@scope/foo",
+		},
+		{
+			line:     `"@scope/old-foo@npm:@scope/foo@1.2.3":`,
+			expected: "@scope/foo",
+		},
+		{
 			line:     `"@npmcorp/code-frame@^7.1.0", "@npmcorp/code-frame@^7.10.4":`,
 			expected: "@npmcorp/code-frame",
 		},
@@ -748,7 +796,7 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 	}{
 		{
 			name:       "v1 include dev dependencies",
-			fixtureDir: "test-fixtures/yarn-dev-deps",
+			fixtureDir: "testdata/yarn-dev-deps",
 			includeDev: true,
 			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
 				pkgs := []pkg.Package{
@@ -826,7 +874,7 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 		},
 		{
 			name:       "v1 exclude dev dependencies",
-			fixtureDir: "test-fixtures/yarn-dev-deps",
+			fixtureDir: "testdata/yarn-dev-deps",
 			includeDev: false,
 			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
 				pkgs := []pkg.Package{
@@ -871,7 +919,7 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 		},
 		{
 			name:       "v2 (berry) include dev dependencies",
-			fixtureDir: "test-fixtures/yarn-berry-dev-deps",
+			fixtureDir: "testdata/yarn-berry-dev-deps",
 			includeDev: true,
 			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
 				pkgs := []pkg.Package{
@@ -947,7 +995,7 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 		},
 		{
 			name:       "v2 (berry) exclude dev dependencies",
-			fixtureDir: "test-fixtures/yarn-berry-dev-deps",
+			fixtureDir: "testdata/yarn-berry-dev-deps",
 			includeDev: false,
 			expected: func(locations file.LocationSet) ([]pkg.Package, []artifact.Relationship) {
 				pkgs := []pkg.Package{

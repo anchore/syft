@@ -10,7 +10,7 @@ import (
 )
 
 func TestContentsCataloger(t *testing.T) {
-	allFiles := []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"}
+	allFiles := []string{"testdata/last/path.txt", "testdata/another-path.txt", "testdata/a-path.txt"}
 
 	tests := []struct {
 		name     string
@@ -21,18 +21,18 @@ func TestContentsCataloger(t *testing.T) {
 	}{
 		{
 			name:  "multi-pattern",
-			globs: []string{"test-fixtures/last/*.txt", "test-fixtures/*.txt"},
+			globs: []string{"testdata/last/*.txt", "testdata/*.txt"},
 			files: allFiles,
 			expected: map[file.Coordinates]string{
-				file.NewLocation("test-fixtures/last/path.txt").Coordinates:    "dGVzdC1maXh0dXJlcy9sYXN0L3BhdGgudHh0IGZpbGUgY29udGVudHMh",
-				file.NewLocation("test-fixtures/another-path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9hbm90aGVyLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
-				file.NewLocation("test-fixtures/a-path.txt").Coordinates:       "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/last/path.txt").Coordinates:    "dGVzdC1maXh0dXJlcy9sYXN0L3BhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/another-path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9hbm90aGVyLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/a-path.txt").Coordinates:       "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
 			},
 		},
 		{
 			name:     "no-patterns",
 			globs:    []string{},
-			files:    []string{"test-fixtures/last/path.txt", "test-fixtures/another-path.txt", "test-fixtures/a-path.txt"},
+			files:    []string{"testdata/last/path.txt", "testdata/another-path.txt", "testdata/a-path.txt"},
 			expected: map[file.Coordinates]string{},
 		},
 		{
@@ -40,18 +40,18 @@ func TestContentsCataloger(t *testing.T) {
 			globs: []string{"**/*.txt"},
 			files: allFiles,
 			expected: map[file.Coordinates]string{
-				file.NewLocation("test-fixtures/last/path.txt").Coordinates:    "dGVzdC1maXh0dXJlcy9sYXN0L3BhdGgudHh0IGZpbGUgY29udGVudHMh",
-				file.NewLocation("test-fixtures/another-path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9hbm90aGVyLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
-				file.NewLocation("test-fixtures/a-path.txt").Coordinates:       "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/last/path.txt").Coordinates:    "dGVzdC1maXh0dXJlcy9sYXN0L3BhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/another-path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9hbm90aGVyLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/a-path.txt").Coordinates:       "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
 			},
 		},
 		{
 			name:  "subpath",
-			globs: []string{"test-fixtures/*.txt"},
+			globs: []string{"testdata/*.txt"},
 			files: allFiles,
 			expected: map[file.Coordinates]string{
-				file.NewLocation("test-fixtures/another-path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9hbm90aGVyLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
-				file.NewLocation("test-fixtures/a-path.txt").Coordinates:       "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/another-path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9hbm90aGVyLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/a-path.txt").Coordinates:       "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
 			},
 		},
 		{
@@ -60,8 +60,8 @@ func TestContentsCataloger(t *testing.T) {
 			globs:   []string{"**/*.txt"},
 			files:   allFiles,
 			expected: map[file.Coordinates]string{
-				file.NewLocation("test-fixtures/last/path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9sYXN0L3BhdGgudHh0IGZpbGUgY29udGVudHMh",
-				file.NewLocation("test-fixtures/a-path.txt").Coordinates:    "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/last/path.txt").Coordinates: "dGVzdC1maXh0dXJlcy9sYXN0L3BhdGgudHh0IGZpbGUgY29udGVudHMh",
+				file.NewLocation("testdata/a-path.txt").Coordinates:    "dGVzdC1maXh0dXJlcy9hLXBhdGgudHh0IGZpbGUgY29udGVudHMh",
 			},
 		},
 	}

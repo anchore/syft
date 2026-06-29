@@ -11,10 +11,11 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+// https://packaging.python.org/en/latest/specifications/name-normalization/
+var nameNormalizationPattern = regexp.MustCompile(`[-_.]+`)
+
 func normalize(name string) string {
-	// https://packaging.python.org/en/latest/specifications/name-normalization/
-	re := regexp.MustCompile(`[-_.]+`)
-	normalized := re.ReplaceAllString(name, "-")
+	normalized := nameNormalizationPattern.ReplaceAllString(name, "-")
 	return strings.ToLower(normalized)
 }
 
@@ -37,7 +38,7 @@ func newPackageForIndex(ctx context.Context, lr pythonLicenseResolver, name, ver
 	return p
 }
 
-func newPackageForIndexWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata interface{}, locations ...file.Location) pkg.Package {
+func newPackageForIndexWithMetadata(ctx context.Context, lr pythonLicenseResolver, name, version string, metadata any, locations ...file.Location) pkg.Package {
 	name = normalize(name)
 	licenseSet := lr.getLicenses(ctx, name, version)
 

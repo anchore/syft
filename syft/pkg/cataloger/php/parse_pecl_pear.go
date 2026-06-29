@@ -58,7 +58,7 @@ func parsePear(ctx context.Context, _ file.Resolver, _ *generic.Environment, rea
 
 // parsePeclPearSerialized is a parser function for Pear metadata contents, returning "Default" php packages discovered.
 func parsePeclPearSerialized(reader file.LocationReadCloser) (*peclPearData, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // phpserialize requires []byte
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)

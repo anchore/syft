@@ -14,7 +14,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain package files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"lua/package.rockspec",
 			},

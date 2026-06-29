@@ -73,6 +73,8 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
 	jsonNames(pkg.DartPubspec{}, "dart-pubspec"),
+	jsonNames(pkg.DenoLockEntry{}, "deno-lock-entry"),
+	jsonNames(pkg.DenoRemoteLockEntry{}, "deno-remote-lock-entry"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
@@ -96,6 +98,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.NpmPackageLockEntry{}, "javascript-npm-package-lock-entry", "NpmPackageLockJsonMetadata"),
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
 	jsonNames(pkg.PnpmLockEntry{}, "javascript-pnpm-lock-entry"),
+	jsonNames(pkg.BunLockEntry{}, "javascript-bun-lock-entry"),
 	jsonNames(pkg.PEBinary{}, "pe-binary"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred

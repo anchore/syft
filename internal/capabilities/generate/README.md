@@ -48,7 +48,7 @@ graph LR
     end
 
     subgraph "Test Inputs"
-        B1[test-fixtures/<br/>test-observations.json]
+        B1[testdata/<br/>test-observations.json]
     end
 
     subgraph "Discovery Processes"
@@ -400,7 +400,7 @@ func NewGoModuleBinaryCataloger(cfg golang.CatalogerConfig) pkg.Cataloger
 **What it finds:** metadata types and package types each parser produces
 
 **Process:**
-1. Find all `test-fixtures/test-observations.json` files
+1. Find all `testdata/test-observations.json` files
 2. Parse JSON which contains:
    ```json
    {
@@ -503,7 +503,7 @@ func (c golangConfig) DescribeFields(opts ...options.DescribeFieldsOption) []opt
 
 #### test-observations.json Files
 
-**Location:** `syft/pkg/cataloger/*/test-fixtures/test-observations.json`
+**Location:** `syft/pkg/cataloger/*/testdata/test-observations.json`
 
 **Purpose:** records what metadata and package types each parser produces during test execution
 
@@ -515,7 +515,7 @@ func TestGoModuleCataloger(t *testing.T) {
     tester := NewGoModuleBinaryCataloger()
 
     pkgtest.NewCatalogTester().
-        FromDirectory(t, "test-fixtures/go-module-fixture").
+        FromDirectory(t, "testdata/go-module-fixture").
         TestCataloger(t, tester)  // Auto-writes observations on first run
 }
 ```
@@ -832,7 +832,7 @@ capabilities:
 **Fix:** update tests to use `pkgtest.CatalogTester`:
 ```go
 pkgtest.NewCatalogTester().
-    FromDirectory(t, "test-fixtures/my-fixture").
+    FromDirectory(t, "testdata/my-fixture").
     TestCataloger(t, myCataloger)
 ```
 
@@ -1071,7 +1071,7 @@ SYFT_ENABLE_COMPLETENESS_TESTS=true go test ./internal/capabilities/...
 
 # 7. Commit
 git add syft/pkg/cataloger/mynew/capabilities.yaml
-git add syft/pkg/cataloger/mynew/test-fixtures/test-observations.json
+git add syft/pkg/cataloger/mynew/testdata/test-observations.json
 git commit
 ```
 
@@ -1129,7 +1129,7 @@ go generate ./internal/capabilities
 
 # 5. Commit
 git add syft/pkg/cataloger/*/capabilities.yaml
-git add syft/pkg/cataloger/something/test-fixtures/test-observations.json
+git add syft/pkg/cataloger/something/testdata/test-observations.json
 git commit
 ```
 
@@ -1261,7 +1261,7 @@ go generate ./internal/capabilities
 ```go
 // Update test to use pkgtest
 pkgtest.NewCatalogTester().
-    FromDirectory(t, "test-fixtures/my-fixture").
+    FromDirectory(t, "testdata/my-fixture").
     TestCataloger(t, myCataloger)
 
 // Run tests
@@ -1294,7 +1294,7 @@ func TestMyParser(t *testing.T) {
 func TestMyParser(t *testing.T) {
     cataloger := NewMyCataloger()
     pkgtest.NewCatalogTester().
-        FromDirectory(t, "test-fixtures/my-fixture").
+        FromDirectory(t, "testdata/my-fixture").
         TestCataloger(t, cataloger)
 }
 ```

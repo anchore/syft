@@ -33,7 +33,7 @@ func createZipArchive(t testing.TB, sourceDirPath, destinationArchivePath string
 	}
 
 	cmd := exec.Command("./generate-zip-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath), zip64Arg)
-	cmd.Dir = filepath.Join(cwd, "test-fixtures")
+	cmd.Dir = filepath.Join(cwd, "testdata")
 
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("unable to start generate zip fixture script: %+v", err)

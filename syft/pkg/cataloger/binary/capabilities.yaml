@@ -68,6 +68,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/julia'
+        packages:
+          - class: julia-binary
+            name: julia
+            purl: pkg:generic/julia
+            cpes:
+              - cpe:2.3:a:julialang:julia:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/helm'
         packages:
           - class: helm
@@ -244,6 +254,77 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/mysqld'
+        packages:
+          - class: mysqld-mysql-cluster-legacy-binary
+            name: mysql-server
+            purl: pkg:generic/mysql-server
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/mysqld'
+        packages:
+          - class: mysqld-binary
+            name: ""
+            purl: pkg:/
+            cpes: []
+            type: BinaryPkg
+          - class: mysqld-mysql-cluster-legacy-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: mysqld-mysql-cluster-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: mysqld-mysql-server-binary
+            name: mysql-server
+            purl: pkg:generic/mysql-server
+            cpes:
+              - cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*
+              - cpe:2.3:a:oracle:mysql_server:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ndbd'
+        packages:
+          - class: ndbd-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ndbmtd'
+        packages:
+          - class: ndbmtd-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ndb_mgmd'
+        packages:
+          - class: ndb_mgmd-binary
+            name: mysql-cluster
+            purl: pkg:generic/mysql-cluster
+            cpes:
+              - cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/xtrabackup'
         packages:
           - class: xtrabackup-binary
@@ -344,6 +425,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/deno'
+        packages:
+          - class: deno-binary
+            name: deno
+            purl: pkg:generic/deno
+            cpes:
+              - cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ghc*'
         packages:
           - class: haskell-ghc-binary
@@ -418,10 +509,31 @@ catalogers:
           - '**/openssl'
         packages:
           - class: openssl-binary
+            name: ""
+            purl: pkg:/
+            cpes: []
+            type: BinaryPkg
+          - class: openssl-binary-aws-lc
+            name: aws-lc
+            purl: pkg:generic/aws-lc
+            cpes:
+              - cpe:2.3:a:amazon:aws_libcrypto:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+          - class: openssl-binary
             name: openssl
             purl: pkg:generic/openssl
             cpes:
               - cpe:2.3:a:openssl:openssl:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/ldapsearch'
+        packages:
+          - class: openldap-search-binary
+            name: openldap
+            purl: pkg:generic/openldap
+            cpes:
+              - cpe:2.3:a:openldap:openldap:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:
@@ -666,6 +778,96 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/nginx-ingress-controller'
+        packages:
+          - class: ingress-nginx-binary
+            name: nginx-ingress-controller
+            purl: pkg:generic/nginx-ingress-controller
+            cpes:
+              - cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/filebeat'
+        packages:
+          - class: filebeat-binary
+            name: filebeat
+            purl: pkg:generic/filebeat
+            cpes:
+              - cpe:2.3:a:elastic:filebeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/metricbeat'
+        packages:
+          - class: metricbeat-binary
+            name: metricbeat
+            purl: pkg:generic/metricbeat
+            cpes:
+              - cpe:2.3:a:elastic:metricbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/heartbeat'
+        packages:
+          - class: heartbeat-binary
+            name: heartbeat
+            purl: pkg:generic/heartbeat
+            cpes:
+              - cpe:2.3:a:elastic:heartbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/packetbeat'
+        packages:
+          - class: packetbeat-binary
+            name: packetbeat
+            purl: pkg:generic/packetbeat
+            cpes:
+              - cpe:2.3:a:elastic:packetbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/auditbeat'
+        packages:
+          - class: auditbeat-binary
+            name: auditbeat
+            purl: pkg:generic/auditbeat
+            cpes:
+              - cpe:2.3:a:elastic:auditbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/elastic-agent'
+        packages:
+          - class: elastic-agent-binary
+            name: elastic-agent
+            purl: pkg:generic/elastic-agent
+            cpes:
+              - cpe:2.3:a:elastic:elastic_agent:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libkrb5.so*'
+        packages:
+          - class: krb5-library
+            name: krb5
+            purl: pkg:generic/krb5
+            cpes:
+              - cpe:2.3:a:mit:kerberos_5:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libkrb5.so*'
+        packages:
+          - class: heimdal-krb5-library
+            name: heimdal-krb5
+            purl: pkg:generic/heimdal-krb5
+            cpes:
+              - cpe:2.3:a:heimdal_project:heimdal:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/java'
         packages:
           - class: java-binary
@@ -810,6 +1012,9 @@ catalogers:
       - apk
       - binary
       - rpm
+    purl_types: # AUTO-GENERATED
+      - apk
+      - rpm
     json_schema_types: # AUTO-GENERATED
       - ElfBinaryPackageNoteJsonPayload
     capabilities: # MANUAL - edit capabilities here
@@ -835,6 +1040,7 @@ catalogers:
       function: NewPEPackageCataloger
     selectors: # AUTO-GENERATED
       - binary
+      - bpl
       - declared
       - directory
       - dll
@@ -851,6 +1057,7 @@ catalogers:
           criteria: # AUTO-GENERATED
             - '**/*.dll'
             - '**/*.exe'
+            - '**/*.bpl'
         metadata_types: # AUTO-GENERATED
           - pkg.PEBinary
         package_types: # AUTO-GENERATED

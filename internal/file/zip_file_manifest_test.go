@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package file
 
@@ -19,7 +18,7 @@ func TestNewZipFileManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
+	sourceDirPath := path.Join(cwd, "testdata", "zip-source")
 	err = ensureNestedZipExists(t, sourceDirPath)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +58,7 @@ func TestNewZip64FileManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
+	sourceDirPath := path.Join(cwd, "testdata", "zip-source")
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, true)
 
 	actual, err := NewZipFileManifest(context.Background(), archiveFilePath)
@@ -94,7 +93,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sourceDirPath := path.Join(cwd, "test-fixtures", "zip-source")
+	sourceDirPath := path.Join(cwd, "testdata", "zip-source")
 	err = ensureNestedZipExists(t, sourceDirPath)
 	if err != nil {
 		t.Fatal(err)

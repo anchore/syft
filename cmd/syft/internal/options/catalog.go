@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -175,7 +176,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
 			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
-			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected),
+			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected).
+			WithExcludeProjectReferences(cfg.Dotnet.ExcludeProjectReferences),
+
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
@@ -313,10 +316,8 @@ func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
 				directive = directive[1:]
 				enable = false
 			}
-			for _, feature := range features {
-				if directive == feature {
-					return &enable
-				}
+			if slices.Contains(features, directive) {
+				return &enable
 			}
 		}
 		return nil

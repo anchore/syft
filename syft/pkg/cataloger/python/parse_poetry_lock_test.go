@@ -11,7 +11,7 @@ import (
 )
 
 func TestParsePoetryLock(t *testing.T) {
-	fixture := "test-fixtures/poetry/dev-deps/poetry.lock"
+	fixture := "testdata/poetry/dev-deps/poetry.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -86,7 +86,7 @@ func TestParsePoetryLock(t *testing.T) {
 
 func TestParsePoetryLockWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pypi-remote/poetry.lock"
+	fixture := "testdata/pypi-remote/poetry.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupPypiRegistry()
 	defer teardown()
@@ -103,7 +103,7 @@ func TestParsePoetryLockWithLicenseEnrichment(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -137,7 +137,7 @@ func TestParsePoetryLockWithLicenseEnrichment(t *testing.T) {
 func Test_corruptPoetryLock(t *testing.T) {
 	poetryLockParser := newPoetryLockParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/poetry.lock").
+		FromFile(t, "testdata/glob-paths/src/poetry.lock").
 		WithError().
 		TestParser(t, poetryLockParser.parsePoetryLock)
 }

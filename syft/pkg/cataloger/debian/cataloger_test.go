@@ -176,7 +176,7 @@ func Test_CatalogerRelationships(t *testing.T) {
 	}{
 		{
 			name:    "relationships for coreutils",
-			fixture: "test-fixtures/var/lib/dpkg/status.d/coreutils-relationships",
+			fixture: "testdata/var/lib/dpkg/status.d/coreutils-relationships",
 			wantRelationships: map[string][]string{
 				"coreutils":    {"libacl1", "libattr1", "libc6", "libgmp10", "libselinux1"},
 				"libacl1":      {"libc6"},
@@ -190,7 +190,7 @@ func Test_CatalogerRelationships(t *testing.T) {
 		},
 		{
 			name:    "relationships from dpkg example docs",
-			fixture: "test-fixtures/var/lib/dpkg/status.d/doc-examples",
+			fixture: "testdata/var/lib/dpkg/status.d/doc-examples",
 			wantRelationships: map[string][]string{
 				"made-up-package-1": {"gnumach-dev", "hurd-dev", "kernel-headers-2.2.10"},
 				"made-up-package-2": {"liblua5.1-dev", "libluajit5.1-dev"},
@@ -206,7 +206,7 @@ func Test_CatalogerRelationships(t *testing.T) {
 		},
 		{
 			name:    "relationships for libpam-runtime",
-			fixture: "test-fixtures/var/lib/dpkg/status.d/libpam-runtime",
+			fixture: "testdata/var/lib/dpkg/status.d/libpam-runtime",
 			wantRelationships: map[string][]string{
 				"libpam-runtime": {"cdebconf", "debconf-2.0", "debconf1", "debconf2", "libpam-modules"},
 			},
@@ -298,7 +298,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain db status files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"usr/lib/dpkg/status",
 				"var/lib/dpkg/status",

@@ -8,11 +8,11 @@ import (
 )
 
 var jsonNameFromType = map[reflect.Type][]string{
-	reflect.TypeOf(source.DirectoryMetadata{}): {"directory", "dir"},
-	reflect.TypeOf(source.FileMetadata{}):      {"file"},
-	reflect.TypeOf(source.ImageMetadata{}):     {"image"},
-	reflect.TypeOf(source.SnapMetadata{}):      {"snap"},
-	reflect.TypeOf(source.OCIModelMetadata{}):  {"oci-model"},
+	reflect.TypeFor[source.DirectoryMetadata](): {"directory", "dir"},
+	reflect.TypeFor[source.FileMetadata]():      {"file"},
+	reflect.TypeFor[source.ImageMetadata]():     {"image"},
+	reflect.TypeFor[source.SnapMetadata]():      {"snap"},
+	reflect.TypeFor[source.OCIModelMetadata]():  {"oci-model"},
 }
 
 func AllTypeNames() []string {

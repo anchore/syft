@@ -143,7 +143,7 @@ func build() *jsonschema.Schema {
 	// srcMetadataContainer := assembleTypeContainer(sourcemetadata.AllTypes())
 	// srcMetadataContainerType := reflect.TypeOf(srcMetadataContainer)
 
-	documentSchema := reflector.ReflectFromType(reflect.TypeOf(&syftJsonModel.Document{}))
+	documentSchema := reflector.ReflectFromType(reflect.TypeFor[*syftJsonModel.Document]())
 	pkgMetadataSchema := reflector.ReflectFromType(reflect.TypeOf(pkgMetadataContainer))
 	// srcMetadataSchema := reflector.ReflectFromType(reflect.TypeOf(srcMetadataContainer))
 
@@ -215,7 +215,7 @@ func write(schema []byte) {
 			panic(err)
 		}
 
-		existingSchemaBytes, err := io.ReadAll(existingFh)
+		existingSchemaBytes, err := io.ReadAll(existingFh) //nolint:gocritic // offline code generator
 		if err != nil {
 			panic(err)
 		}

@@ -28,7 +28,7 @@ func TestParseRpmFiles(t *testing.T) {
 	}{
 		{
 			name:       "go case",
-			fixtureDir: "test-fixtures/rpms",
+			fixtureDir: "testdata/rpms",
 			expected: []pkg.Package{
 				{
 					Name:      "abc",
@@ -110,7 +110,7 @@ func TestParseRpmFiles(t *testing.T) {
 		},
 		{
 			name:       "bad rpms",
-			fixtureDir: "test-fixtures/bad",
+			fixtureDir: "testdata/bad",
 		},
 		{
 			name:         "rpms with signatures from RSA header",
@@ -118,32 +118,32 @@ func TestParseRpmFiles(t *testing.T) {
 			skipFiles:    true,
 			expected: []pkg.Package{
 				{
-					Name:      "postgresql14-server",
-					Version:   "0:14.10-1PGDG.rhel9",
-					PURL:      "pkg:rpm/postgresql14-server@14.10-1PGDG.rhel9?arch=x86_64&epoch=0&upstream=postgresql14-14.10-1PGDG.rhel9.src.rpm",
-					Locations: file.NewLocationSet(file.NewLocation("/postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm")),
+					Name:      "basesystem",
+					Version:   "0:11-13.el9.0.1",
+					PURL:      "pkg:rpm/basesystem@11-13.el9.0.1?arch=noarch&epoch=0&upstream=basesystem-11-13.el9.0.1.src.rpm",
+					Locations: file.NewLocationSet(file.NewLocation("/basesystem-11-13.el9.0.1.noarch.rpm")),
 					FoundBy:   "rpm-archive-cataloger",
 					Type:      pkg.RpmPkg,
-					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("PostgreSQL", file.NewLocation("/postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm"))),
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocations("Public Domain", file.NewLocation("/basesystem-11-13.el9.0.1.noarch.rpm"))),
 					Language:  "",
 					CPEs:      nil,
 					Metadata: pkg.RpmArchive{
-						Name:      "postgresql14-server",
-						Version:   "14.10",
+						Name:      "basesystem",
+						Version:   "11",
 						Epoch:     ref(0),
-						Arch:      "x86_64",
-						Release:   "1PGDG.rhel9",
-						SourceRpm: "postgresql14-14.10-1PGDG.rhel9.src.rpm",
-						Size:      24521699,
+						Arch:      "noarch",
+						Release:   "13.el9.0.1",
+						SourceRpm: "basesystem-11-13.el9.0.1.src.rpm",
+						Size:      0,
 						Signatures: []pkg.RpmSignature{
 							{
 								PublicKeyAlgorithm: "RSA",
 								HashAlgorithm:      "SHA256",
-								Created:            "Tue Jan  2 16:45:56 2024",
-								IssuerKeyID:        "40bca2b408b40d20",
+								Created:            "Thu Feb 29 17:37:22 2024",
+								IssuerKeyID:        "702d426d350d275d",
 							},
 						},
-						Vendor: "PostgreSQL Global Development Group",
+						Vendor: "Rocky Enterprise Software Foundation",
 						// note: files are not asserted in this test
 					},
 				},
@@ -233,7 +233,7 @@ func ref[T any](v T) *T {
 
 func Test_corruptRpmArchive(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/bad/bad.rpm").
+		FromFile(t, "testdata/bad/bad.rpm").
 		WithError().
 		TestParser(t, parseRpmArchive)
 }

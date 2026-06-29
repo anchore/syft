@@ -206,7 +206,7 @@ func (c *NVDAPIClient) fetchDateRange(ctx context.Context, start, end time.Time)
 func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, start, end time.Time) (NVDProductsResponse, error) {
 	var lastErr error
 
-	for attempt := 0; attempt < maxRetries; attempt++ {
+	for attempt := range maxRetries {
 		// wait for rate limiter
 		if err := c.rateLimiter.Wait(ctx); err != nil {
 			return NVDProductsResponse{}, fmt.Errorf("rate limiter error: %w", err)
@@ -270,7 +270,7 @@ func (c *NVDAPIClient) fetchPage(ctx context.Context, startIndex int, start, end
 
 // handleRateLimit handles HTTP 429 responses by parsing Retry-After and waiting
 func (c *NVDAPIClient) handleRateLimit(ctx context.Context, httpResp *http.Response, attempt int) error {
-	body, _ := io.ReadAll(httpResp.Body)
+	body, _ := io.ReadAll(httpResp.Body) //nolint:gocritic // offline code generator
 	httpResp.Body.Close()
 
 	// parse Retry-After header
@@ -298,7 +298,7 @@ func checkHTTPStatus(httpResp *http.Response) error {
 	if httpResp.StatusCode == http.StatusOK {
 		return nil
 	}
-	body, _ := io.ReadAll(httpResp.Body)
+	body, _ := io.ReadAll(httpResp.Body) //nolint:gocritic // offline code generator
 	httpResp.Body.Close()
 	return fmt.Errorf("NVD API error (status %d): %s", httpResp.StatusCode, string(body))
 }

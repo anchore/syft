@@ -19,7 +19,7 @@ import (
 )
 
 func TestNewFromFile(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc       string
@@ -30,7 +30,7 @@ func TestNewFromFile(t *testing.T) {
 	}{
 		{
 			desc:  "path detected by glob",
-			input: "test-fixtures/file-index-filter/.vimrc",
+			input: "testdata/file-index-filter/.vimrc",
 			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
 				return resolver.FilesByGlob("**/.vimrc", "**/.2", "**/.1/*", "**/empty")
 			},
@@ -38,7 +38,7 @@ func TestNewFromFile(t *testing.T) {
 		},
 		{
 			desc:  "path detected by abs path",
-			input: "test-fixtures/file-index-filter/.vimrc",
+			input: "testdata/file-index-filter/.vimrc",
 			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
 				return resolver.FilesByPath("/.vimrc", "/.2", "/.1/something", "/empty")
 			},
@@ -46,7 +46,7 @@ func TestNewFromFile(t *testing.T) {
 		},
 		{
 			desc:  "path detected by relative path",
-			input: "test-fixtures/file-index-filter/.vimrc",
+			input: "testdata/file-index-filter/.vimrc",
 			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
 				return resolver.FilesByPath(".vimrc", "/.2", "/.1/something", "empty")
 			},
@@ -54,7 +54,7 @@ func TestNewFromFile(t *testing.T) {
 		},
 		{
 			desc:  "normal path",
-			input: "test-fixtures/actual-path/empty",
+			input: "testdata/actual-path/empty",
 			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
 				return resolver.FilesByPath("empty")
 			},
@@ -62,7 +62,7 @@ func TestNewFromFile(t *testing.T) {
 		},
 		{
 			desc:  "path containing symlink",
-			input: "test-fixtures/symlink/empty",
+			input: "testdata/symlink/empty",
 			testPathFn: func(resolver file.Resolver) ([]file.Location, error) {
 				return resolver.FilesByPath("empty")
 			},
@@ -96,7 +96,7 @@ func TestNewFromFile(t *testing.T) {
 }
 
 func TestNewFromFile_WithArchive(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
 		desc               string
@@ -110,13 +110,13 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 	}{
 		{
 			desc:       "path detected",
-			input:      "test-fixtures/path-detected",
+			input:      "testdata/path-detected",
 			inputPaths: []string{"/.vimrc"},
 			expRefs:    1,
 		},
 		{
 			desc:       "use first entry for duplicate paths",
-			input:      "test-fixtures/path-detected",
+			input:      "testdata/path-detected",
 			inputPaths: []string{"/.vimrc"},
 			expRefs:    1,
 			layer2:     true,
@@ -124,7 +124,7 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 		},
 		{
 			desc:               "skip extract archive",
-			input:              "test-fixtures/path-detected",
+			input:              "testdata/path-detected",
 			inputPaths:         []string{"/.vimrc"},
 			expRefs:            0,
 			layer2:             false,
@@ -209,7 +209,7 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 	}
 
 	cmd := exec.Command("./generate-tar-fixture-from-source-dir.sh", destinationArchivePath, path.Base(sourceDirPath))
-	cmd.Dir = filepath.Join(cwd, "test-fixtures")
+	cmd.Dir = filepath.Join(cwd, "testdata")
 
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("unable to start generate zip fixture script: %+v", err)
@@ -235,7 +235,7 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 
 	if layer2 {
 		cmd = exec.Command("tar", "-rvf", destinationArchivePath, ".")
-		cmd.Dir = filepath.Join(cwd, "test-fixtures", path.Base(sourceDirPath+"-2"))
+		cmd.Dir = filepath.Join(cwd, "testdata", path.Base(sourceDirPath+"-2"))
 		if err := cmd.Start(); err != nil {
 			t.Fatalf("unable to start tar appending fixture script: %+v", err)
 		}
@@ -244,7 +244,7 @@ func createArchive(t testing.TB, sourceDirPath, destinationArchivePath string, l
 }
 
 func Test_FileSource_ID(t *testing.T) {
-	testutil.Chdir(t, "..") // run with source/test-fixtures
+	testutil.Chdir(t, "..") // run with source/testdata
 
 	tests := []struct {
 		name       string
@@ -261,27 +261,27 @@ func Test_FileSource_ID(t *testing.T) {
 		{
 			name: "does not exist",
 			cfg: Config{
-				Path: "./test-fixtures/does-not-exist",
+				Path: "./testdata/does-not-exist",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name: "to dir",
 			cfg: Config{
-				Path: "./test-fixtures/image-simple",
+				Path: "./testdata/image-simple",
 			},
 			wantErr: require.Error,
 		},
 		{
 			name:       "with path",
-			cfg:        Config{Path: "./test-fixtures/image-simple/Dockerfile"},
+			cfg:        Config{Path: "./testdata/image-simple/Dockerfile"},
 			want:       artifact.ID("db7146472cf6d49b3ac01b42812fb60020b0b4898b97491b21bb690c808d5159"),
 			wantDigest: "sha256:38601c0bb4269a10ce1d00590ea7689c1117dd9274c758653934ab4f2016f80f",
 		},
 		{
 			name: "with path and alias",
 			cfg: Config{
-				Path: "./test-fixtures/image-simple/Dockerfile",
+				Path: "./testdata/image-simple/Dockerfile",
 				Alias: source.Alias{
 					Name:    "name-me-that!",
 					Version: "version-me-this!",
@@ -293,7 +293,7 @@ func Test_FileSource_ID(t *testing.T) {
 		{
 			name: "other fields do not affect ID",
 			cfg: Config{
-				Path: "test-fixtures/image-simple/Dockerfile",
+				Path: "testdata/image-simple/Dockerfile",
 				Exclude: source.ExcludeConfig{
 					Paths: []string{"a", "b"},
 				},

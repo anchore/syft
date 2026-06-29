@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	rpmdb "github.com/anchore/go-rpmdb/pkg"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -22,21 +22,16 @@ import (
 //
 //nolint:funlen
 func parseRpmDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	f, err := os.CreateTemp("", "rpmdb")
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return nil, nil, fmt.Errorf("no temp dir factory in context")
+	}
+	f, cleanup, err := td.NewFile("rpmdb-*")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create temp rpmdb file: %w", err)
 	}
-
-	defer func() {
-		err = f.Close()
-		if err != nil {
-			log.Errorf("failed to close temp rpmdb file: %+v", err)
-		}
-		err = os.Remove(f.Name())
-		if err != nil {
-			log.Errorf("failed to remove temp rpmdb file: %+v", err)
-		}
-	}()
+	defer cleanup()
+	defer f.Close()
 
 	_, err = io.Copy(f, reader)
 	if err != nil {

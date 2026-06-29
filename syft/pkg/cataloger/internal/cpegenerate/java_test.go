@@ -184,6 +184,22 @@ func Test_groupIDsFromJavaPackage(t *testing.T) {
 			expects: []string{"io.jenkins-ci.plugin.thing"},
 		},
 		{
+			name: "groupId correction properly applied",
+			pkg: pkg.Package{
+				Metadata: pkg.JavaArchive{
+					Manifest: &pkg.JavaManifest{
+						Main: pkg.KeyValues{
+							{
+								Key:   "Automatic-Module-Name",
+								Value: "org.lz4.java",
+							},
+						},
+					},
+				},
+			},
+			expects: []string{"org.lz4"},
+		},
+		{
 			name: "from main Extension-Name field",
 			pkg: pkg.Package{
 				Metadata: pkg.JavaArchive{

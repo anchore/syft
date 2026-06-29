@@ -22,7 +22,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -50,7 +50,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -78,7 +78,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -108,7 +108,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{

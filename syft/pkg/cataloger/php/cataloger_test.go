@@ -14,7 +14,7 @@ func Test_ComposerInstalledCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain composer files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/installed.json",
 			},
@@ -39,7 +39,7 @@ func Test_ComposerLockCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain composer lock files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/composer.lock",
 			},
@@ -64,7 +64,7 @@ func Test_PearCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain pear files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"php/.registry/.channel.pecl.php.net/memcached.reg",
 			},
@@ -89,7 +89,7 @@ func Test_PeclCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain pear files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"php/.registry/.channel.pecl.php.net/memcached.reg",
 			},

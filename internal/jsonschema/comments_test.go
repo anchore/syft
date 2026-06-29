@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/invopop/jsonschema"
+	orderedmap "github.com/pb33f/ordered-map/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 // TestCopyAliasFieldComments verifies that field comments from source types are correctly copied to alias types.

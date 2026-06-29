@@ -18,7 +18,7 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain java archive files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"java-archives/example.jar",
 				"java-archives/example.war",
@@ -32,6 +32,7 @@ func Test_ArchiveCataloger_Globs(t *testing.T) {
 				"java-archives/example.far",
 				"java-archives/example.lpkg",
 				"java-archives/example.rar",
+				"java-archives/example.zap",
 				"archives/example.zip",
 				"archives/example.tar",
 				"archives/example.tar.gz",
@@ -83,7 +84,7 @@ func Test_POMCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain java pom files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/pom.xml",
 			},
@@ -117,7 +118,7 @@ func TestJvmDistributionCataloger(t *testing.T) {
 	}{
 		{
 			name:    "valid 1.8.0",
-			fixture: "test-fixtures/jvm-installs/oracle-jdk-se-8",
+			fixture: "testdata/jvm-installs/oracle-jdk-se-8",
 			expected: pkg.Package{
 				Name:      "jdk",
 				Version:   "1.8.0_411-b25",
@@ -150,7 +151,7 @@ func TestJvmDistributionCataloger(t *testing.T) {
 		},
 		{
 			name:    "valid post-jep223",
-			fixture: "test-fixtures/jvm-installs/valid-post-jep223",
+			fixture: "testdata/jvm-installs/valid-post-jep223",
 			expected: pkg.Package{
 				Name:      "openjdk",
 				Version:   "21.0.4+7-LTS",
@@ -227,7 +228,7 @@ func TestJvmDistributionCatalogerFromFile(t *testing.T) {
 	}{
 		{
 			name:    "valid 1.8.0",
-			fixture: "test-fixtures/jvm-installs/oracle-jdk-se-8/usr/lib/jvm/jdk-1.8-oracle-x64/release",
+			fixture: "testdata/jvm-installs/oracle-jdk-se-8/usr/lib/jvm/jdk-1.8-oracle-x64/release",
 			expected: pkg.Package{
 				Name:      "jdk",
 				Version:   "1.8.0_411-b25",
@@ -259,7 +260,7 @@ func TestJvmDistributionCatalogerFromFile(t *testing.T) {
 		},
 		{
 			name:    "valid post-jep223",
-			fixture: "test-fixtures/jvm-installs/valid-post-jep223/jvm/openjdk/release",
+			fixture: "testdata/jvm-installs/valid-post-jep223/jvm/openjdk/release",
 			expected: pkg.Package{
 				Name:      "openjdk",
 				Version:   "21.0.4+7-LTS",

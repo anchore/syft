@@ -14,7 +14,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain stack and cabal files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/stack.yaml",
 				"src/stack.yaml.lock",

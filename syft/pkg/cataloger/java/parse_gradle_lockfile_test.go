@@ -14,7 +14,7 @@ func Test_parserGradleLockfile(t *testing.T) {
 		expected []pkg.Package
 	}{
 		{
-			input: "test-fixtures/gradle/gradle.lockfile",
+			input: "testdata/gradle/gradle.lockfile",
 			expected: []pkg.Package{
 				{
 					Name:     "commons-text",

@@ -90,14 +90,14 @@ func Test_Sort(t *testing.T) {
 		{
 			name: "multiple licenses with only contents are still sorted by their computed lic.value references",
 			licenses: []License{
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/nvidia-software-and-cuda-supplement")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/Knuth-CTAN")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/apache-license-2.0")),
 			},
 			expected: Licenses{
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/apache-license-2.0")),
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/nvidia-software-and-cuda-supplement")),
-				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/test-fixtures/Knuth-CTAN")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/apache-license-2.0")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/nvidia-software-and-cuda-supplement")),
+				NewLicenseWithContext(ctx, readFileAsString("../../internal/licenses/testdata/Knuth-CTAN")),
 			},
 		},
 	}

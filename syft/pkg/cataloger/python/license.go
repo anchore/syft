@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/anchore/syft/internal/cache"
@@ -100,13 +98,6 @@ func getLicenseFromPypiRegistry(baseURL, packageName, version string) (string, e
 		return "", fmt.Errorf("unable to get package from pypi registry")
 	}
 
-	bytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("unable to parse package from pypi registry: %w", err)
-	}
-
-	dec := json.NewDecoder(strings.NewReader(string(bytes)))
-
 	// Read "license" from the response
 	var pypiResponse struct {
 		Info struct {
@@ -115,7 +106,7 @@ func getLicenseFromPypiRegistry(baseURL, packageName, version string) (string, e
 		} `json:"info"`
 	}
 
-	if err := dec.Decode(&pypiResponse); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&pypiResponse); err != nil {
 		return "", fmt.Errorf("unable to parse license from pypi registry: %w", err)
 	}
 

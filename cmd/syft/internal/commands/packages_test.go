@@ -29,7 +29,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 		{
 			name: "single non-expression error is retained",
 			err:  errors.New("foo"),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.Equal(t, "foo", err.Error())
 			},
 			wantHelp: "",
@@ -42,7 +42,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				err = multierror.Append(err, errors.New("bar"))
 				return err
 			}(),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, i ...any) bool {
 				// note: this is the default formatting from the hashicorp multierror object
 				expected := `2 errors occurred:
 	* foo
@@ -64,7 +64,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				err = multierror.Append(err, errors.New("last"))
 				return err
 			}(),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, i ...any) bool {
 				expected := `5 errors occurred:
 	* foo
 	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
@@ -103,7 +103,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 
 				return fmt.Errorf("top: %w", fmt.Errorf("middle: %w", err))
 			}(),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, i ...any) bool {
 				expected := `top: middle: 4 errors occurred:
 	* foo: bar: last
 	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
@@ -142,7 +142,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 				// note we wrap the top error in a chain
 				return fmt.Errorf("top: %w", fmt.Errorf("middle: %w", err))
 			}(),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, i ...any) bool {
 				expected := `top: middle: 4 errors occurred:
 	* foo: bar: last
 	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)
@@ -178,7 +178,7 @@ func Test_filterExpressionErrors_expressionErrorsHelp(t *testing.T) {
 
 				return err
 			}(),
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+			wantErr: func(t assert.TestingT, err error, i ...any) bool {
 				// note: the errors are removed and the help text shows the enriched error help
 				expected := `2 errors occurred:
 	* invalid expression: "foo": tags are not allowed with this operation (must use exact names)

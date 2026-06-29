@@ -17,13 +17,13 @@ func Test_ParseHomebrewPackage(t *testing.T) {
 	}{
 		{
 			name:    "syft example",
-			fixture: "test-fixtures/formulas/syft/1.23.1/.brew/syft.rb",
+			fixture: "testdata/formulas/syft/1.23.1/.brew/syft.rb",
 			expected: pkg.Package{
 				Name:    "syft",
 				Version: "1.23.1",
 				Type:    pkg.HomebrewPkg,
 				Locations: file.NewLocationSet(
-					file.NewLocation("test-fixtures/formulas/syft/1.23.1/.brew/syft.rb").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					file.NewLocation("testdata/formulas/syft/1.23.1/.brew/syft.rb").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 				Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValues("Apache License 2.0")...),
 				FoundBy:  "homebrew-cataloger",
@@ -36,13 +36,13 @@ func Test_ParseHomebrewPackage(t *testing.T) {
 		},
 		{
 			name:    "crazy example",
-			fixture: "test-fixtures/formulas/crazy/1.0.0/.brew/crazy.rb",
+			fixture: "testdata/formulas/crazy/1.0.0/.brew/crazy.rb",
 			expected: pkg.Package{
 				Name:    "crazy",
 				Version: "1.0.0",
 				Type:    pkg.HomebrewPkg,
 				Locations: file.NewLocationSet(
-					file.NewLocation("test-fixtures/formulas/crazy/1.0.0/.brew/crazy.rb").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					file.NewLocation("testdata/formulas/crazy/1.0.0/.brew/crazy.rb").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 				FoundBy: "homebrew-cataloger",
 				PURL:    "pkg:brew/crazy@1.0.0",

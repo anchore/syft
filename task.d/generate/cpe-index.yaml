@@ -2,14 +2,15 @@ version: "3"
 
 vars:
   CPE_CACHE_DIR: "syft/pkg/cataloger/internal/cpegenerate/dictionary/index-generator/.cpe-cache"
-  CPE_CACHE_REGISTRY: "ghcr.io/anchore/syft/cpe-cache:latest"
+  CPE_CACHE_REGISTRY: "ghcr.io/anchore/oss-cache/cpe-cache:latest"
+  CPE_CACHE_REPO: "oss-cache"
   CPE_INDEX_OUTPUT: "syft/pkg/cataloger/internal/cpegenerate/dictionary/data/cpe-index.json"
   CPE_GENERATOR_DIR: "syft/pkg/cataloger/internal/cpegenerate/dictionary/index-generator"
 
 tasks:
   cache:pull:
-    desc: Pull CPE cache from ORAS registry (ghcr.io/anchore/syft/cpe-cache:latest)
-    # deps: [tools]
+    desc: Pull CPE cache from ORAS registry (ghcr.io/anchore/oss-cache/cpe-cache:latest)
+    deps: [':tools']
     cmds:
       - cmd: |
           set -eu
@@ -116,7 +117,7 @@ tasks:
           # push compressed files to ORAS (from cache directory, so only basenames are used)
           echo "Pushing compressed files to registry..."
           "$oras_bin" push {{ .CPE_CACHE_REGISTRY }} $compressed_files \
-            --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .PROJECT }} \
+            --annotation org.opencontainers.image.source=https://github.com/{{ .OWNER }}/{{ .CPE_CACHE_REPO }} \
             --annotation org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           # clean up compressed files

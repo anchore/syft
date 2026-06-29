@@ -1,7 +1,6 @@
 package java
 
 import (
-	"context"
 	"os"
 	"path"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
 func Test_parseZipWrappedJavaArchive(t *testing.T) {
@@ -18,7 +18,7 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 		expected []string
 	}{
 		{
-			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.zip",
+			fixture: "testdata/java-builds/packages/example-java-app-maven-0.1.0.zip",
 			expected: []string{
 				"example-java-app-maven",
 				"joda-time",
@@ -36,7 +36,7 @@ func Test_parseZipWrappedJavaArchive(t *testing.T) {
 
 			gzp := newGenericZipWrappedJavaArchiveParser(ArchiveCatalogerConfig{})
 
-			actualPkgs, _, err := gzp.parseZipWrappedJavaArchive(context.Background(), nil, nil, file.LocationReadCloser{
+			actualPkgs, _, err := gzp.parseZipWrappedJavaArchive(pkgtest.Context(t), nil, nil, file.LocationReadCloser{
 				Location:   file.NewLocation(test.fixture),
 				ReadCloser: fixture,
 			})

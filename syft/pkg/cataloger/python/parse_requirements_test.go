@@ -13,7 +13,7 @@ import (
 )
 
 func TestParseRequirementsTxt(t *testing.T) {
-	fixture := "test-fixtures/requires/requirements.txt"
+	fixture := "testdata/requires/requirements.txt"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	pinnedPkgs := []pkg.Package{
@@ -27,6 +27,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "flask",
 				VersionConstraint: "== 4.0.0",
+			},
+		},
+		{
+			Name:      "urllib3",
+			Version:   "1.26.20",
+			PURL:      "pkg:pypi/urllib3@1.26.20",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
 			},
 		},
 		{
@@ -126,6 +138,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "FrIeNdLy-_-bArD",
 				VersionConstraint: "== 1.0.0",
+			},
+		},
+		{
+			Name:      "local-version",
+			Version:   "1.2.3+gcr.2",
+			PURL:      "pkg:pypi/local-version@1.2.3%2Bgcr.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
 			},
 		},
 	}
@@ -229,7 +253,7 @@ func TestParseRequirementsTxt(t *testing.T) {
 
 func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pypi-remote/requirements.txt"
+	fixture := "testdata/pypi-remote/requirements.txt"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupPypiRegistry()
 	defer teardown()
@@ -246,7 +270,7 @@ func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -295,6 +319,14 @@ func Test_newRequirement(t *testing.T) {
 			},
 		},
 		{
+			name: "arbitrary equality",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
+		{
 			name: "comment + constraint",
 			raw:  "Mopidy-Dirble ~= 1.1 # Compatible release. Same as >= 1.1, == 1.*",
 			want: &unprocessedRequirement{
@@ -337,6 +369,23 @@ func Test_newRequirement(t *testing.T) {
 				Markers:           "sys_platform == 'win32'",
 			},
 		},
+		{
+			name: "local version identifier",
+			raw:  "local-version == 1.2.3+gcr.2",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
+			},
+		},
+		{
+			name: "local version identifier with markers",
+			raw:  "local-version == 1.2.3+ubuntu1 ; sys_platform == 'linux'",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+ubuntu1",
+				Markers:           "sys_platform == 'linux'",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -362,6 +411,21 @@ func Test_parseVersion(t *testing.T) {
 			name:    "exact constraint",
 			version: " == 1.0.0 ",
 			want:    "1.0.0",
+		},
+		{
+			name:    "arbitrary equality constraint",
+			version: " === 1.26.20 ",
+			want:    "1.26.20",
+		},
+		{
+			name:    "local version identifier",
+			version: " == 1.2.3+gcr.2 ",
+			want:    "1.2.3+gcr.2",
+		},
+		{
+			name:    "arbitrary equality with local version identifier",
+			version: " === 1.2.3+ubuntu1 ",
+			want:    "1.2.3+ubuntu1",
 		},
 		{
 			name:    "resolve lowest, simple constraint",
@@ -410,7 +474,7 @@ func Test_parseVersion(t *testing.T) {
 func Test_corruptRequirementsTxt(t *testing.T) {
 	rp := newRequirementsParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/requirements.txt").
+		FromFile(t, "testdata/glob-paths/src/requirements.txt").
 		WithError().
 		TestParser(t, rp.parseRequirementsTxt)
 }

@@ -20,7 +20,7 @@ func parsePackPackage(ctx context.Context, resolver file.Resolver, _ *generic.En
 	homeRe := regexp.MustCompile(`home\(\s*'([^']+)'\s*\)`)
 	authorRe := regexp.MustCompile(`(author|packager)\(\s*'([^']+)'\s*(?:,\s*'([^']+)'\s*)?\)`)
 
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // regex matching requires full buffer
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse Rockspec app")
 		return nil, nil, nil

@@ -122,7 +122,7 @@ func formatVersionOptions(nameVersionPairs []string) string {
 	for _, name := range sortedAvailableFormats {
 		s.WriteString("\n")
 
-		s.WriteString(fmt.Sprintf("   - %s", name))
+		fmt.Fprintf(&s, "   - %s", name)
 
 		if len(availableVersions[name]) > 0 {
 			s.WriteString(" @ ")

@@ -18,7 +18,7 @@ func TestIdentifyRelease(t *testing.T) {
 		release *Release
 	}{
 		{
-			fixture: "test-fixtures/os/alpine",
+			fixture: "testdata/os/alpine",
 			release: &Release{
 				PrettyName:   "Alpine Linux v3.11",
 				Name:         "Alpine Linux",
@@ -30,7 +30,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/amazon",
+			fixture: "testdata/os/amazon",
 			release: &Release{
 				PrettyName: "Amazon Linux 2",
 				Name:       "Amazon Linux",
@@ -47,7 +47,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/busybox",
+			fixture: "testdata/os/busybox",
 			release: &Release{
 				PrettyName: "BusyBox v1.31.1",
 				Name:       "busybox",
@@ -58,7 +58,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/centos",
+			fixture: "testdata/os/centos",
 			release: &Release{
 				PrettyName: "CentOS Linux 8 (Core)",
 				Name:       "CentOS Linux",
@@ -74,7 +74,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/debian/from-os-release",
+			fixture: "testdata/os/debian/from-os-release",
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
 				Name:         "Debian GNU/Linux",
@@ -88,7 +88,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/debian/from-debian_version",
+			fixture: "testdata/os/debian/from-debian_version",
 			release: &Release{
 				PrettyName:   "Distroless",
 				Name:         "Debian GNU/Linux",
@@ -102,7 +102,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/fedora",
+			fixture: "testdata/os/fedora",
 			release: &Release{
 				PrettyName:       "Fedora Linux 36 (Container Image)",
 				Name:             "Fedora Linux",
@@ -121,7 +121,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/redhat/from-os-release",
+			fixture: "testdata/os/redhat/from-os-release",
 			release: &Release{
 				PrettyName:   "Red Hat Enterprise Linux Server 7.3 (Maipo)",
 				Name:         "Red Hat Enterprise Linux Server",
@@ -135,7 +135,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/redhat/from-redhat-release",
+			fixture: "testdata/os/redhat/from-redhat-release",
 			release: &Release{
 				PrettyName: "Red Hat Enterprise Linux release 8.10 (Ootpa)",
 				Name:       "Red Hat Enterprise Linux",
@@ -146,7 +146,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/ubuntu",
+			fixture: "testdata/os/ubuntu",
 			release: &Release{
 				PrettyName:       "Ubuntu 20.04 LTS",
 				Name:             "Ubuntu",
@@ -162,7 +162,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/oraclelinux",
+			fixture: "testdata/os/oraclelinux",
 			release: &Release{
 				PrettyName:   "Oracle Linux Server 8.3",
 				Name:         "Oracle Linux Server",
@@ -178,10 +178,10 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/empty",
+			fixture: "testdata/os/empty",
 		},
 		{
-			fixture: "test-fixtures/os/custom",
+			fixture: "testdata/os/custom",
 			release: &Release{
 				PrettyName: "CentOS Linux 8 (Core)",
 				Name:       "Scientific Linux",
@@ -198,7 +198,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/opensuse-leap",
+			fixture: "testdata/os/opensuse-leap",
 			release: &Release{
 				PrettyName: "openSUSE Leap 15.2",
 				Name:       "openSUSE Leap",
@@ -215,7 +215,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/sles",
+			fixture: "testdata/os/sles",
 			release: &Release{
 				PrettyName: "SUSE Linux Enterprise Server 15 SP2",
 				Name:       "SLES",
@@ -227,7 +227,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/photon",
+			fixture: "testdata/os/photon",
 			release: &Release{
 				PrettyName:   "VMware Photon OS/Linux",
 				Name:         "VMware Photon OS",
@@ -240,7 +240,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/arch",
+			fixture: "testdata/os/arch",
 			release: &Release{
 				PrettyName:   "Arch Linux",
 				Name:         "Arch Linux",
@@ -253,7 +253,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/partial-fields/missing-id",
+			fixture: "testdata/partial-fields/missing-id",
 			release: &Release{
 				Name:      "Debian GNU/Linux",
 				IDLike:    []string{"debian"},
@@ -261,7 +261,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/partial-fields/unknown-id",
+			fixture: "testdata/partial-fields/unknown-id",
 			release: &Release{
 				Name:      "Debian GNU/Linux",
 				ID:        "my-awesome-distro",
@@ -270,14 +270,14 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/partial-fields/missing-version",
+			fixture: "testdata/partial-fields/missing-version",
 			release: &Release{
 				Name:   "Debian GNU/Linux",
 				IDLike: []string{"debian"},
 			},
 		},
 		{
-			fixture: "test-fixtures/os/centos6",
+			fixture: "testdata/os/centos6",
 			release: &Release{
 				PrettyName: "centos",
 				Name:       "centos",
@@ -289,18 +289,18 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/centos5",
+			fixture: "testdata/os/centos5",
 			release: &Release{
 				PrettyName: "CentOS release 5.7 (Final)",
 				Name:       "CentOS",
 				ID:         "centos",
-				IDLike:     []string{"centos"},
+				IDLike:     []string{"centos", "rhel"},
 				Version:    "5.7",
 				VersionID:  "5.7",
 			},
 		},
 		{
-			fixture: "test-fixtures/os/mariner",
+			fixture: "testdata/os/mariner",
 			release: &Release{
 				PrettyName:   "CBL-Mariner/Linux",
 				Name:         "Common Base Linux Mariner",
@@ -314,7 +314,7 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/rockylinux",
+			fixture: "testdata/os/rockylinux/from-os-release",
 			release: &Release{
 				PrettyName: "Rocky Linux 8.4 (Green Obsidian)",
 				Name:       "Rocky Linux",
@@ -331,7 +331,21 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/almalinux",
+			fixture: "testdata/os/rockylinux/from-redhat-release",
+			release: &Release{
+				PrettyName: "Rocky Linux release 8.10 (Green Obsidian)",
+				Name:       "Rocky Linux",
+				ID:         "rocky",
+				IDLike: []string{
+					"rocky",
+					"rhel",
+				},
+				Version:   "8.10 (Green Obsidian)",
+				VersionID: "8.10",
+			},
+		},
+		{
+			fixture: "testdata/os/almalinux/from-os-release",
 			release: &Release{
 				PrettyName: "AlmaLinux 8.4 (Electric Cheetah)",
 				Name:       "AlmaLinux",
@@ -349,7 +363,53 @@ func TestIdentifyRelease(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/os/wolfi",
+			fixture: "testdata/os/almalinux/from-redhat-release",
+			release: &Release{
+				PrettyName: "AlmaLinux release 8.10 (Cerulean Leopard)",
+				Name:       "AlmaLinux",
+				ID:         "almalinux",
+				IDLike: []string{
+					"almalinux",
+					"rhel",
+				},
+				Version:   "8.10 (Cerulean Leopard)",
+				VersionID: "8.10",
+			},
+		},
+		{
+			fixture: "testdata/os/scientific/from-os-release",
+			release: &Release{
+				PrettyName: "Scientific Linux 7.5 (Nitrogen)",
+				Name:       "Scientific Linux",
+				ID:         "scientific",
+				IDLike: []string{
+					"rhel",
+					"centos",
+					"fedora",
+				},
+				Version:      "7.5 (Nitrogen)",
+				VersionID:    "7.5",
+				HomeURL:      "http://www.scientificlinux.org//",
+				BugReportURL: "mailto:scientific-linux-devel@listserv.fnal.gov",
+				CPEName:      "cpe:/o:scientificlinux:scientificlinux:7.5:GA",
+			},
+		},
+		{
+			fixture: "testdata/os/scientific/from-redhat-release",
+			release: &Release{
+				PrettyName: "Scientific Linux release 7.9 (Nitrogen)",
+				Name:       "Scientific Linux",
+				ID:         "scientific",
+				IDLike: []string{
+					"scientific",
+					"rhel",
+				},
+				Version:   "7.9 (Nitrogen)",
+				VersionID: "7.9",
+			},
+		},
+		{
+			fixture: "testdata/os/wolfi",
 			release: &Release{
 				PrettyName: "Wolfi",
 				Name:       "Wolfi",
@@ -382,7 +442,7 @@ func TestParseOsRelease(t *testing.T) {
 		release *Release
 	}{
 		{
-			fixture: "test-fixtures/ubuntu-20.04",
+			fixture: "testdata/ubuntu-20.04",
 
 			release: &Release{
 				PrettyName:       "Ubuntu 20.04 LTS",
@@ -400,7 +460,7 @@ func TestParseOsRelease(t *testing.T) {
 		},
 
 		{
-			fixture: "test-fixtures/debian-8",
+			fixture: "testdata/debian-8",
 
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
@@ -416,7 +476,7 @@ func TestParseOsRelease(t *testing.T) {
 		},
 
 		{
-			fixture: "test-fixtures/centos-8",
+			fixture: "testdata/centos-8",
 
 			release: &Release{
 				PrettyName: "CentOS Linux 8 (Core)",
@@ -435,7 +495,7 @@ func TestParseOsRelease(t *testing.T) {
 		},
 
 		{
-			fixture: "test-fixtures/rhel-8",
+			fixture: "testdata/rhel-8",
 
 			release: &Release{
 				PrettyName:   "Red Hat Enterprise Linux 8.1 (Ootpa)",
@@ -451,7 +511,7 @@ func TestParseOsRelease(t *testing.T) {
 		},
 
 		{
-			fixture: "test-fixtures/unprintable",
+			fixture: "testdata/unprintable",
 
 			release: &Release{
 				PrettyName:   "Debian GNU/Linux 8 (jessie)",
@@ -489,7 +549,7 @@ func TestParseSystemReleaseCPE(t *testing.T) {
 		release *Release
 	}{
 		{
-			fixture: "test-fixtures/os/centos6/etc/system-release-cpe",
+			fixture: "testdata/os/centos6/etc/system-release-cpe",
 			release: &Release{
 				PrettyName: "centos",
 				Name:       "centos",
@@ -501,7 +561,7 @@ func TestParseSystemReleaseCPE(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/bad-system-release-cpe",
+			fixture: "testdata/bad-system-release-cpe",
 			release: nil,
 		},
 	}
@@ -528,19 +588,19 @@ func TestParseRedhatRelease(t *testing.T) {
 		release *Release
 	}{
 		{
-			fixture: "test-fixtures/os/centos5/etc/redhat-release",
+			fixture: "testdata/os/centos5/etc/redhat-release",
 			name:    "Centos 5",
 			release: &Release{
 				PrettyName: "CentOS release 5.7 (Final)",
 				Name:       "CentOS",
 				ID:         "centos",
-				IDLike:     []string{"centos"},
+				IDLike:     []string{"centos", "rhel"},
 				Version:    "5.7",
 				VersionID:  "5.7",
 			},
 		},
 		{
-			fixture: "test-fixtures/bad-redhat-release",
+			fixture: "testdata/bad-redhat-release",
 			name:    "Centos 5 Bad Redhat Release",
 			release: nil,
 		},

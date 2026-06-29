@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/scylladb/go-set/strset"
@@ -10,6 +11,7 @@ import (
 	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/internal/capabilities/internal"
 	"github.com/anchore/syft/internal/packagemetadata"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 )
 
@@ -191,6 +193,9 @@ func RegenerateCapabilities(catalogerDir string, repoRoot string) (*Statistics, 
 		return nil, fmt.Errorf("orphaned parsers detected (parser functions renamed or deleted):\n%s\n\nPlease manually remove these from the capabilities files or restore the parser functions in the code",
 			formatOrphans(orphans))
 	}
+
+	// 5a. Derive PURL types from the discovered package types (purely a function of pkg.Type)
+	derivePURLTypes(updated)
 
 	// 6. Write back to YAML files with comments, preserving existing node trees
 	fmt.Print("  → Writing updated capabilities files...")
@@ -427,6 +432,39 @@ func (e *EnrichmentData) GetMetadataTypes(catalogerName string) ([]string, bool)
 	return types, ok
 }
 
+// derivePURLTypes populates the PURLTypes field on every cataloger and parser by mapping each
+// observed package type to its canonical PURL type via pkg.Type.PackageURLType. this is a pure
+// function of the already-discovered package_types, so it needs no additional test observations.
+func derivePURLTypes(doc *capabilities.Document) {
+	for i := range doc.Catalogers {
+		cat := &doc.Catalogers[i]
+		cat.PURLTypes = purlTypesFromPackageTypes(cat.PackageTypes)
+		for j := range cat.Parsers {
+			cat.Parsers[j].PURLTypes = purlTypesFromPackageTypes(cat.Parsers[j].PackageTypes)
+		}
+	}
+}
+
+// purlTypesFromPackageTypes maps syft package type strings (e.g. "go-module") to their PURL types
+// (e.g. "golang"), returning a deduplicated, sorted slice. package types with no PURL mapping are skipped.
+func purlTypesFromPackageTypes(packageTypes []string) []string {
+	if len(packageTypes) == 0 {
+		return nil
+	}
+	set := strset.New()
+	for _, pt := range packageTypes {
+		if purlType := pkg.Type(pt).PackageURLType(); purlType != "" {
+			set.Add(purlType)
+		}
+	}
+	if set.IsEmpty() {
+		return nil
+	}
+	result := set.List()
+	sort.Strings(result)
+	return result
+}
+
 // GetPackageTypes returns the package types for the given cataloger name
 func (e *EnrichmentData) GetPackageTypes(catalogerName string) ([]string, bool) {
 	types, ok := e.packageTypes[catalogerName]
@@ -490,11 +528,15 @@ func (e *EnrichmentData) EnrichWithBinaryClassifier(catalogerName string, entry 
 			}
 
 			for _, o := range binaryClassifierOverrides[classifier.Class] {
+				cpeStrings := make([]string, len(o.CPEs))
+				for i, c := range o.CPEs {
+					cpeStrings[i] = c.Attributes.BindToFmtString()
+				}
 				packages = append(packages, capabilities.DetectorPackageInfo{
 					Class: o.Class,
 					Name:  o.Package,
 					PURL:  stripPURLVersion(o.PURL),
-					CPEs:  o.CPEs,
+					CPEs:  cpeStrings,
 					Type:  "BinaryPkg",
 				})
 			}

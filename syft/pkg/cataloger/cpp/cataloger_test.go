@@ -14,7 +14,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain conan files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"somewhere/src/conanfile.txt",
 				"somewhere/src/conan.lock",
@@ -40,7 +40,7 @@ func TestCatalogerInfo_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain conan files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"somewhere/src/conaninfo.txt",
 			},

@@ -31,7 +31,7 @@ func TestSPDXJSONSchema(t *testing.T) {
 		{
 			name:       "scan:image:docker-archive:pkg-coverage",
 			subcommand: "scan",
-			args:       []string{"-o", "spdx-json"},
+			args:       []string{"-o", "spdx-json@2.3"},
 			fixture:    imageFixture,
 		},
 		{
@@ -39,7 +39,7 @@ func TestSPDXJSONSchema(t *testing.T) {
 			subcommand: "scan",
 			args:       []string{"-o", "spdx-json"},
 			fixture: func(t *testing.T) string {
-				return "dir:test-fixtures/image-pkg-coverage"
+				return "dir:testdata/image-pkg-coverage"
 			},
 		},
 	}

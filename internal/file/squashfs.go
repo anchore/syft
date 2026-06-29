@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/diskfs/go-diskfs/filesystem"
 )
@@ -14,8 +15,7 @@ type WalkDiskDirFunc func(fsys filesystem.FileSystem, path string, d os.FileInfo
 // WalkDiskDir walks the file tree within the go-diskfs filesystem at root, calling fn for each file or directory in the tree, including root.
 // This is meant to mimic the behavior of fs.WalkDir in the standard library.
 func WalkDiskDir(fsys filesystem.FileSystem, root string, fn WalkDiskDirFunc) error {
-	infos, err := fsys.ReadDir(root)
-
+	infos, err := readDiskDir(fsys, root)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 
 	isDir := d != nil && d.IsDir()
 	if d == nil {
-		_, err := fsys.ReadDir(name)
+		_, err := readDiskDir(fsys, name)
 		if err != nil {
 			return nil
 		}
@@ -62,7 +62,7 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 		return nil
 	}
 
-	dirs, err := fsys.ReadDir(name)
+	dirs, err := readDiskDir(fsys, name)
 	if err != nil {
 		err = walkDirFn(fsys, name, d, err)
 		if err != nil {
@@ -86,4 +86,34 @@ func walkDiskDir(fsys filesystem.FileSystem, name string, d os.FileInfo, walkDir
 		}
 	}
 	return nil
+}
+
+// readDiskDir reads the directory entries at the given path from a go-diskfs filesystem.
+// go-diskfs returns fs.DirEntry values; these are resolved to os.FileInfo so callers have
+// access to the full file metadata (mode, size, modification time).
+func readDiskDir(fsys filesystem.FileSystem, p string) ([]os.FileInfo, error) {
+	entries, err := fsys.ReadDir(ToFSPath(p))
+	if err != nil {
+		return nil, err
+	}
+
+	infos := make([]os.FileInfo, 0, len(entries))
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			return nil, err
+		}
+		infos = append(infos, info)
+	}
+	return infos, nil
+}
+
+// ToFSPath converts an absolute ("/"-rooted) path into an io/fs-valid path as required by
+// go-diskfs, where the root is "." and other paths carry no leading slash (see io/fs.ValidPath).
+func ToFSPath(p string) string {
+	p = strings.TrimPrefix(p, "/")
+	if p == "" {
+		return "."
+	}
+	return p
 }

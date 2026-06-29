@@ -3,7 +3,6 @@ package snapsource
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -215,13 +214,8 @@ func (c *snapcraftClient) GetSnapDownloadURL(id snapIdentity) (string, error) {
 		return "", fmt.Errorf("API request failed with status code %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	var info snapcraftInfo
-	if err := json.Unmarshal(body, &info); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
 		return "", fmt.Errorf("failed to parse JSON response: %w", err)
 	}
 
@@ -259,13 +253,8 @@ func (c *snapcraftClient) CheckSnapExists(snapName string) (bool, string, error)
 		return false, "", fmt.Errorf("find API request failed with status code %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false, "", fmt.Errorf("failed to read find response body: %w", err)
-	}
-
 	var findResp snapFindResponse
-	if err := json.Unmarshal(body, &findResp); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&findResp); err != nil {
 		return false, "", fmt.Errorf("failed to parse find JSON response: %w", err)
 	}
 

@@ -14,7 +14,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain mix.lock files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/mix.lock",
 			},
@@ -29,4 +29,16 @@ func TestCataloger_Globs(t *testing.T) {
 				TestCataloger(t, NewMixLockCataloger())
 		})
 	}
+}
+
+func TestCataloger_Relationships(t *testing.T) {
+	expectedRelationships := []string{
+		"cowlib @ 2.11.0 (mix.lock) [dependency-of] cowboy @ 2.9.0 (mix.lock)",
+		"ranch @ 1.8.0 (mix.lock) [dependency-of] cowboy @ 2.9.0 (mix.lock)",
+	}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/relationships").
+		ExpectsRelationshipStrings(expectedRelationships).
+		TestCataloger(t, NewMixLockCataloger())
 }

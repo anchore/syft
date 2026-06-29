@@ -1,10 +1,10 @@
 package snap
 
 import (
+	"bufio"
 	"compress/gzip"
 	"context"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 
@@ -22,16 +22,28 @@ type kernelVersionInfo struct {
 	majorVersion   string // e.g., "5.4"
 }
 
-// parseKernelChangelog parses changelog files from kernel snaps to extract kernel version
+// parseKernelChangelog parses changelog files from kernel snaps to extract kernel version.
+// The changelog is gzip-compressed and may be very large, so we stream it line-by-line
+// rather than reading it entirely into memory.
 func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	// The file should be gzipped
-	lines, err := readChangelogLines(reader)
+	gzReader, err := gzip.NewReader(reader)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create gzip reader for changelog: %w", err)
+	}
+	defer gzReader.Close()
+
+	scanner := bufio.NewScanner(gzReader)
+
+	// read the first line to extract kernel version
+	// Format: "linux (5.4.0-195.215) focal; urgency=medium"
+	if !scanner.Scan() {
+		if err := scanner.Err(); err != nil {
+			return nil, nil, fmt.Errorf("failed to read changelog content: %w", err)
+		}
+		return nil, nil, fmt.Errorf("changelog file is empty")
 	}
 
-	// pull from first line
-	versionInfo, err := extractKernelVersion(lines[0])
+	versionInfo, err := extractKernelVersion(scanner.Text())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -42,36 +54,19 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 
 	packages := createMainKernelPackage(versionInfo, snapMetadata, reader.Location)
 
-	// Check for base kernel package
-	basePackage := findBaseKernelPackage(lines, versionInfo, snapMetadata, reader.Location)
-	if basePackage != nil {
-		packages = append(packages, *basePackage)
+	// stream remaining lines looking for the base kernel entry
+	baseKernelEntry := fmt.Sprintf("%s/linux:", strings.ReplaceAll(versionInfo.releaseVersion, ";", "/"))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, baseKernelEntry) {
+			if basePackage := parseBaseKernelLine(line, versionInfo.majorVersion, snapMetadata, reader.Location); basePackage != nil {
+				packages = append(packages, *basePackage)
+			}
+			break
+		}
 	}
 
 	return packages, nil, nil
-}
-
-// readChangelogLines reads and decompresses the changelog content
-func readChangelogLines(reader file.LocationReadCloser) ([]string, error) {
-	gzReader, err := gzip.NewReader(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create gzip reader for changelog: %w", err)
-	}
-	defer gzReader.Close()
-
-	content, err := io.ReadAll(gzReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read changelog content: %w", err)
-	}
-
-	lines := strings.Split(string(content), "\n")
-	if len(lines) == 0 {
-		return nil, fmt.Errorf("changelog file is empty")
-	}
-
-	// Parse the first line to extract kernel version information
-	// Format: "linux (5.4.0-195.215) focal; urgency=medium"
-	return lines, nil
 }
 
 // extractKernelVersion parses version information from the first changelog line
@@ -115,19 +110,6 @@ func createMainKernelPackage(versionInfo *kernelVersionInfo, snapMetadata pkg.Sn
 	)
 
 	return []pkg.Package{kernelPkg}
-}
-
-// findBaseKernelPackage searches for and creates base kernel package if present
-func findBaseKernelPackage(lines []string, versionInfo *kernelVersionInfo, snapMetadata pkg.SnapEntry, location file.Location) *pkg.Package {
-	baseKernelEntry := fmt.Sprintf("%s/linux:", strings.ReplaceAll(versionInfo.releaseVersion, ";", "/"))
-
-	for _, line := range lines {
-		if strings.Contains(line, baseKernelEntry) {
-			return parseBaseKernelLine(line, versionInfo.majorVersion, snapMetadata, location)
-		}
-	}
-
-	return nil
 }
 
 // parseBaseKernelLine extracts base kernel version from a changelog line

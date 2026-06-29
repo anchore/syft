@@ -16,7 +16,7 @@ import (
 
 func TestParsePdmLock(t *testing.T) {
 
-	fixture := "test-fixtures/pdm-lock/pdm.lock"
+	fixture := "testdata/pdm-lock/pdm.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -374,7 +374,7 @@ func TestParsePdmLock(t *testing.T) {
 
 func TestParsePdmLockWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pypi-remote/pdm.lock"
+	fixture := "testdata/pypi-remote/pdm.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupPypiRegistry()
 	defer teardown()
@@ -391,7 +391,7 @@ func TestParsePdmLockWithLicenseEnrichment(t *testing.T) {
 			requestHandlers: []handlerPath{
 				{
 					path:    "/certifi/2025.10.5/json",
-					handler: generateMockPypiRegistryHandler("test-fixtures/pypi-remote/registry_response.json"),
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -451,7 +451,7 @@ func TestParsePdmLockWithExtras(t *testing.T) {
 	//
 	// We should get exactly ONE coverage package in the output, with extras properly tracked.
 
-	fixture := "test-fixtures/pdm-lock-extras/pdm.lock"
+	fixture := "testdata/pdm-lock-extras/pdm.lock"
 	pdmLockParser := newPdmLockParser(DefaultCatalogerConfig())
 
 	fh, err := os.Open(fixture)
@@ -584,7 +584,7 @@ func TestParsePdmLockWithSeparateFilesFixture(t *testing.T) {
 	// We should get exactly ONE rfc3986 package in the output, with the extras variant properly tracked
 	// in the Extras field.
 
-	fixture := "test-fixtures/pdm-lock-separate-files/pdm.lock"
+	fixture := "testdata/pdm-lock-separate-files/pdm.lock"
 	pdmLockParser := newPdmLockParser(DefaultCatalogerConfig())
 
 	fh, err := os.Open(fixture)
@@ -697,7 +697,7 @@ func TestMergePdmLockPackagesNoBasePackage(t *testing.T) {
 func Test_corruptPdmLock(t *testing.T) {
 	psr := newPdmLockParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/pdm.lock").
+		FromFile(t, "testdata/glob-paths/src/pdm.lock").
 		WithError().
 		TestParser(t, psr.parsePdmLock)
 }

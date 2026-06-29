@@ -8,6 +8,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -16,7 +19,7 @@ import (
 
 func TestParsePnpmLock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm/pnpm-lock.yaml"
+	fixture := "testdata/pnpm/pnpm-lock.yaml"
 
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
@@ -68,7 +71,7 @@ func TestParsePnpmLock(t *testing.T) {
 
 func TestParsePnpmLock_ExcludeDevDependencies(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm/pnpm-lock.yaml"
+	fixture := "testdata/pnpm/pnpm-lock.yaml"
 
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
@@ -108,7 +111,7 @@ func TestParsePnpmLock_ExcludeDevDependencies(t *testing.T) {
 
 func TestParsePnpmV6Lock(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm-v6/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-v6/pnpm-lock.yaml"
 
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
@@ -306,7 +309,7 @@ func TestParsePnpmV6Lock(t *testing.T) {
 
 func TestParsePnpmLockV9(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/pnpm-v9/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-v9/pnpm-lock.yaml"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expected := []pkg.Package{
@@ -354,7 +357,7 @@ func TestParsePnpmLockV9(t *testing.T) {
 
 func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
-	fixture := "test-fixtures/pnpm-v9-snapshots/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-v9-snapshots/pnpm-lock.yaml"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -465,7 +468,7 @@ func TestParsePnpmLockV9WithDependencies(t *testing.T) {
 
 func TestSearchPnpmForLicenses(t *testing.T) {
 	ctx := context.TODO()
-	fixture := "test-fixtures/pnpm-remote/pnpm-lock.yaml"
+	fixture := "testdata/pnpm-remote/pnpm-lock.yaml"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	mux, url, teardown := setupNpmRegistry()
 	defer teardown()
@@ -483,7 +486,7 @@ func TestSearchPnpmForLicenses(t *testing.T) {
 				{
 					// https://registry.npmjs.org/nanoid/3.3.4
 					path:    "/nanoid/3.3.4",
-					handler: generateMockNpmRegistryHandler("test-fixtures/pnpm-remote/registry_response.json"),
+					handler: generateMockNpmRegistryHandler("testdata/pnpm-remote/registry_response.json"),
 				},
 			},
 			expectedPackages: []pkg.Package{
@@ -519,9 +522,64 @@ func TestSearchPnpmForLicenses(t *testing.T) {
 func Test_corruptPnpmLock(t *testing.T) {
 	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/pnpm-lock.yaml").
+		FromFile(t, "testdata/corrupt/pnpm-lock.yaml").
 		WithError().
 		TestParser(t, adapter.parsePnpmLock)
+}
+
+func TestParsePnpmLock_DeterministicWithCollidingPeerDeps(t *testing.T) {
+	// this test verifies that when multiple lockfile keys collapse to the same
+	// package key after peer-dep stripping (e.g., pkg@1.0.0(peer-a@1) and
+	// pkg@1.0.0(peer-b@2) both become pkg@1.0.0), the output is deterministic.
+	// Since we iterate in sorted key order and later keys overwrite earlier ones,
+	// the last key lexicographically wins.
+
+	// v9 lockfile with two entries that collapse to the same key
+	lockfileV9 := []byte(`
+lockfileVersion: '9.0'
+packages:
+  some-pkg@1.0.0(peer-b@2.0.0):
+    resolution: {integrity: sha512-BBB}
+  some-pkg@1.0.0(peer-a@1.0.0):
+    resolution: {integrity: sha512-AAA}
+snapshots:
+  some-pkg@1.0.0(peer-b@2.0.0): {}
+  some-pkg@1.0.0(peer-a@1.0.0): {}
+`)
+
+	// run multiple times to catch nondeterminism
+	for range 10 {
+		parser := &pnpmV9LockYaml{}
+		pkgs, err := parser.Parse(9.0, lockfileV9)
+		require.NoError(t, err)
+		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
+
+		// sorted order: peer-a (AAA) then peer-b (BBB), so BBB overwrites AAA
+		assert.Equal(t, "some-pkg", pkgs[0].Name)
+		assert.Equal(t, "1.0.0", pkgs[0].Version)
+		assert.Equal(t, "sha512-BBB", pkgs[0].Integrity, "expected last lexicographic key to win")
+	}
+
+	// v6 lockfile with two entries that collapse to the same key
+	lockfileV6 := []byte(`
+lockfileVersion: '6.0'
+packages:
+  /some-pkg@1.0.0(peer-b@2.0.0):
+    resolution: {integrity: sha512-BBB}
+  /some-pkg@1.0.0(peer-a@1.0.0):
+    resolution: {integrity: sha512-AAA}
+`)
+
+	for range 10 {
+		parser := &pnpmV6LockYaml{}
+		pkgs, err := parser.Parse(6.0, lockfileV6)
+		require.NoError(t, err)
+		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
+
+		assert.Equal(t, "some-pkg", pkgs[0].Name)
+		assert.Equal(t, "1.0.0", pkgs[0].Version)
+		assert.Equal(t, "sha512-BBB", pkgs[0].Integrity, "expected last lexicographic key to win")
+	}
 }
 
 func generateMockNpmRegistryHandler(responseFixture string) func(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package file
 
@@ -47,7 +46,7 @@ func TestUnzipToDir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	goldenRootDir := filepath.Join(cwd, "test-fixtures")
+	goldenRootDir := filepath.Join(cwd, "testdata")
 	sourceDirPath := path.Join(goldenRootDir, "zip-source")
 	archiveFilePath := setupZipFileTest(t, sourceDirPath, false)
 
@@ -242,8 +241,8 @@ func assertZipSourceFixtureContents(t testing.TB, actual map[string]string, expe
 }
 
 // looks like there isn't a helper for this yet? https://github.com/stretchr/testify/issues/497
-func assertErrorAs(expectedErr interface{}) assert.ErrorAssertionFunc {
-	return func(t assert.TestingT, actualErr error, i ...interface{}) bool {
+func assertErrorAs(expectedErr any) assert.ErrorAssertionFunc {
+	return func(t assert.TestingT, actualErr error, i ...any) bool {
 		return errors.As(actualErr, &expectedErr)
 	}
 }

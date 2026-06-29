@@ -42,7 +42,7 @@ func TestDecoder_Decode(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.file, func(t *testing.T) {
-			reader, err := os.Open(filepath.Join("test-fixtures", test.file))
+			reader, err := os.Open(filepath.Join("testdata", test.file))
 			require.NoError(t, err)
 			reset := func() { _, err = reader.Seek(0, io.SeekStart); require.NoError(t, err) }
 
@@ -101,7 +101,7 @@ func TestDecoder_Identify(t *testing.T) {
 	for _, version := range SupportedVersions() {
 		cases = append(cases, testCase{
 			name:    fmt.Sprintf("v%s schema", version),
-			file:    fmt.Sprintf("test-fixtures/identify/%s.json", version),
+			file:    fmt.Sprintf("testdata/identify/%s.json", version),
 			id:      ID,
 			version: version,
 		})
@@ -110,13 +110,13 @@ func TestDecoder_Identify(t *testing.T) {
 	cases = append(cases, []testCase{
 		{
 			name:    "no-schema-1.4",
-			file:    "test-fixtures/identify/micronaut-1.4.json",
+			file:    "testdata/identify/micronaut-1.4.json",
 			id:      ID,
 			version: "1.4",
 		},
 		{
 			name:    "no-schema-1.5",
-			file:    "test-fixtures/identify/micronaut-1.5.json",
+			file:    "testdata/identify/micronaut-1.5.json",
 			id:      ID,
 			version: "1.5",
 		},

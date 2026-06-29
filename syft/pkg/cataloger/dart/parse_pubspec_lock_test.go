@@ -20,13 +20,13 @@ func TestParsePubspecLock(t *testing.T) {
 	}{
 		{
 			name:    "standard pubspec.lock",
-			fixture: "test-fixtures/pubspec_locks/pubspec.lock",
+			fixture: "testdata/pubspec_locks/pubspec.lock",
 			expectedPackages: []pkg.Package{
 				{
 					Name:      "ale",
 					Version:   "3.3.0",
 					PURL:      "pkg:pub/ale@3.3.0?hosted_url=pub.hosted.org",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -39,7 +39,7 @@ func TestParsePubspecLock(t *testing.T) {
 					Name:      "analyzer",
 					Version:   "0.40.7",
 					PURL:      "pkg:pub/analyzer@0.40.7",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -51,7 +51,7 @@ func TestParsePubspecLock(t *testing.T) {
 					Name:      "ansicolor",
 					Version:   "1.1.1",
 					PURL:      "pkg:pub/ansicolor@1.1.1",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -63,7 +63,7 @@ func TestParsePubspecLock(t *testing.T) {
 					Name:      "archive",
 					Version:   "2.0.13",
 					PURL:      "pkg:pub/archive@2.0.13",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -75,7 +75,7 @@ func TestParsePubspecLock(t *testing.T) {
 					Name:      "args",
 					Version:   "1.6.0",
 					PURL:      "pkg:pub/args@1.6.0",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -87,7 +87,7 @@ func TestParsePubspecLock(t *testing.T) {
 					Name:      "flutter",
 					Version:   "3.24.5",
 					PURL:      "pkg:pub/flutter@3.24.5",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -99,7 +99,7 @@ func TestParsePubspecLock(t *testing.T) {
 					Name:      "key_binder",
 					Version:   "1.11.20",
 					PURL:      "pkg:pub/key_binder@1.11.20?vcs_url=git%40github.com%3AWorkiva%2Fkey_binder.git%403f7b3a6350e73c7dcac45301c0e18fbd42af02f7",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspec_locks/pubspec.lock")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspec_locks/pubspec.lock")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspecLockEntry{
@@ -122,13 +122,13 @@ func TestParsePubspecLock(t *testing.T) {
 
 func Test_corruptPubspecLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/pubspec.lock").
+		FromFile(t, "testdata/corrupt/pubspec.lock").
 		WithError().
 		TestParser(t, parsePubspecLock)
 }
 
 func Test_missingSdkEntryPubspecLock(t *testing.T) {
-	fixture := "test-fixtures/missing-sdk/pubspec.lock"
+	fixture := "testdata/missing-sdk/pubspec.lock"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	// SDK version is missing, so flutter version cannot be determined and
@@ -155,7 +155,7 @@ func Test_missingSdkEntryPubspecLock(t *testing.T) {
 }
 
 func Test_invalidSdkEntryPubspecLock(t *testing.T) {
-	fixture := "test-fixtures/invalid-sdk/pubspec.lock"
+	fixture := "testdata/invalid-sdk/pubspec.lock"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	// SDK version is invalid, so flutter version cannot be determined and

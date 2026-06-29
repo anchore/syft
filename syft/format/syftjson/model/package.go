@@ -205,7 +205,7 @@ func unpackPkgMetadata(p *Package, unpacker packageMetadataUnpacker) error {
 	if typ == nil {
 		// capture unknown metadata as a generic struct
 		if len(unpacker.Metadata) > 0 {
-			var val interface{}
+			var val any
 			if err := json.Unmarshal(unpacker.Metadata, &val); err != nil {
 				return err
 			}
