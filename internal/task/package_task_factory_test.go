@@ -87,7 +87,8 @@ func TestApplyCompliance(t *testing.T) {
 		MissingVersion: cataloging.ComplianceActionStub,
 	}
 
-	remainingPkgs, remainingRels := applyCompliance(cfg, []pkg.Package{p1, p2, p3, p4}, []artifact.Relationship{r1, r2})
+	remainingPkgs, remainingRels, err := applyCompliance(cfg, []pkg.Package{p1, p2, p3, p4}, []artifact.Relationship{r1, r2})
+	require.NoError(t, err)
 
 	// p2 should be dropped because it has a missing name, p3 and p4 should pass with a warning for the missing version
 	assert.Len(t, remainingPkgs, 3) // p1, p3, p4 should remain
@@ -108,7 +109,8 @@ func TestFilterNonCompliantPackages(t *testing.T) {
 		MissingVersion: cataloging.ComplianceActionKeep,
 	}
 
-	remainingPkgs, droppedPkgs, replacement := filterNonCompliantPackages([]pkg.Package{p1, p2, p3}, cfg)
+	remainingPkgs, droppedPkgs, replacement, err := filterNonCompliantPackages([]pkg.Package{p1, p2, p3}, cfg)
+	require.NoError(t, err)
 	require.Nil(t, replacement)
 
 	// p2 should be dropped because it has a missing name
@@ -270,7 +272,8 @@ func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 		MissingVersion: cataloging.ComplianceActionStub,
 	}
 
-	isCompliant, replacement := applyComplianceRules(&p, cfg)
+	isCompliant, replacement, err := applyComplianceRules(&p, cfg)
+	require.NoError(t, err)
 	require.NotNil(t, replacement)
 	assert.Equal(t, packageReplacement{
 		original: ogID,
@@ -280,4 +283,19 @@ func TestApplyComplianceRules_DropAndStub(t *testing.T) {
 	// the package should be dropped due to missing name (drop action) and its version should be stubbed
 	assert.False(t, isCompliant)
 	assert.Equal(t, cataloging.UnknownStubValue, p.Version)
+}
+
+func TestApplyComplianceRules_Fail(t *testing.T) {
+	p := pkg.Package{Name: "dep", Version: ""}
+	p.SetID()
+
+	cfg := cataloging.ComplianceConfig{
+		MissingName:    cataloging.ComplianceActionKeep,
+		MissingVersion: cataloging.ComplianceActionFail,
+	}
+
+	isCompliant, replacement, err := applyComplianceRules(&p, cfg)
+	require.Error(t, err)
+	assert.True(t, isCompliant)
+	assert.Nil(t, replacement)
 }
