@@ -23,7 +23,8 @@ type infoPlist struct {
 }
 
 func parseInfoPlist(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	data, err := io.ReadAll(reader)
+	// 5MB cap matches the convention in syft/linux; Info.plist files are far smaller
+	data, err := io.ReadAll(io.LimitReader(reader, 5*1024*1024))
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to read file: %w", err)
 	}
