@@ -3,7 +3,8 @@ package php
 import (
 	"context"
 	"fmt"
-	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -202,7 +203,7 @@ func (p interpreterCataloger) getClassifier(realPath string) (string, *binutils.
 		return "", nil
 	}
 
-	base := path.Base(realPath)
+	base := filepath.Base(realPath)
 	name := strings.TrimSuffix(base, ".so")
 
 	var match string
@@ -214,7 +215,7 @@ func (p interpreterCataloger) getClassifier(realPath string) (string, *binutils.
 	case "zip":
 		match = `\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+Zip`
 	default:
-		match = fmt.Sprintf(`(?m)(\x00+%s)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+API`, name)
+		match = fmt.Sprintf(`(?m)(\x00+%s)?\x00+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+API`, regexp.QuoteMeta(name))
 	}
 
 	return name, &binutils.Classifier{
