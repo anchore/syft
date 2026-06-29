@@ -31,6 +31,16 @@ func findBundleHeaderOffsetInELF(r unionreader.UnionReader) (int64, error) {
 		return 0, nil
 	}
 
+	// clamp to the actual file size so a malformed ELF (with bogus segment/section
+	// offsets+sizes) can't drive an arbitrarily large allocation below.
+	fileSize, err := r.Seek(0, io.SeekEnd)
+	if err != nil {
+		return 0, err
+	}
+	if elfEndOffset > fileSize {
+		elfEndOffset = fileSize
+	}
+
 	if _, err := r.Seek(0, io.SeekStart); err != nil {
 		return 0, err
 	}
