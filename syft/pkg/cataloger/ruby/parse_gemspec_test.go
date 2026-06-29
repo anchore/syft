@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -34,6 +36,78 @@ func TestParseGemspec(t *testing.T) {
 	}
 
 	pkgtest.TestFileParser(t, fixture, parseGemSpecEntries, []pkg.Package{expectedPkg}, nil)
+}
+
+func TestResolveRubyInterpolationsInFields(t *testing.T) {
+	tests := []struct {
+		name         string
+		fields       map[string]any
+		wantHomepage string // "" with wantDropped=true means the key should be absent
+		wantDropped  bool
+	}{
+		{
+			name:         "resolves #{s.name}",
+			fields:       map[string]any{"name": "formatador", "homepage": "https://github.com/geemus/#{s.name}"},
+			wantHomepage: "https://github.com/geemus/formatador",
+		},
+		{
+			name:         "resolves #{s.version}",
+			fields:       map[string]any{"version": "1.1.0", "homepage": "https://example.com/v/#{s.version}"},
+			wantHomepage: "https://example.com/v/1.1.0",
+		},
+		{
+			name:         "resolves #{gem.name}",
+			fields:       map[string]any{"name": "foo", "homepage": "https://x/#{gem.name}"},
+			wantHomepage: "https://x/foo",
+		},
+		{
+			name:         "resolves #{spec.version}",
+			fields:       map[string]any{"version": "2.0", "homepage": "https://x/#{spec.version}"},
+			wantHomepage: "https://x/2.0",
+		},
+		{
+			name:         "resolves bare #{name}",
+			fields:       map[string]any{"name": "foo", "homepage": "https://x/#{name}"},
+			wantHomepage: "https://x/foo",
+		},
+		{
+			name:         "resolves with surrounding whitespace",
+			fields:       map[string]any{"name": "foo", "homepage": "https://x/#{ s.name }"},
+			wantHomepage: "https://x/foo",
+		},
+		{
+			name:         "resolves multiple interpolations in one field",
+			fields:       map[string]any{"name": "foo", "version": "1.2", "homepage": "https://x/#{s.name}/#{s.version}"},
+			wantHomepage: "https://x/foo/1.2",
+		},
+		{
+			name:        "drops field on unresolvable expression",
+			fields:      map[string]any{"name": "foo", "homepage": "https://x/#{Time.now}"},
+			wantDropped: true,
+		},
+		{
+			name:        "drops field when referenced value was not captured",
+			fields:      map[string]any{"homepage": "https://x/#{s.name}"},
+			wantDropped: true,
+		},
+		{
+			name:         "leaves plain field untouched",
+			fields:       map[string]any{"name": "foo", "homepage": "https://bundler.io"},
+			wantHomepage: "https://bundler.io",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolveRubyInterpolationsInFields(tt.fields)
+			got, present := tt.fields["homepage"].(string)
+			if tt.wantDropped {
+				assert.False(t, present, "expected homepage to be dropped, got %q", got)
+				return
+			}
+			assert.Equal(t, tt.wantHomepage, got)
+		})
+	}
 }
 
 // Regression test for https://github.com/anchore/syft/issues/4720:

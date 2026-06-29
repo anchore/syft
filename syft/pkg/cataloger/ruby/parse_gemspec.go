@@ -29,6 +29,12 @@ type gemData struct {
 // match example:      Al\u003Ex   --->   003E
 var unicodePattern = regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
 
+// match the common Ruby string-interpolation forms gemspec authors use to build
+// fields from the gem's own name/version: #{s.name}, #{gem.name}, #{spec.version},
+// bare #{name}, and the same with surrounding whitespace. The optional receiver
+// (s./gem./spec./...) is discarded; only the trailing attribute is captured.
+var rubyInterpolationPattern = regexp.MustCompile(`#\{\s*(?:\w+\.)?(name|version)\s*\}`)
+
 var patterns = map[string]*regexp.Regexp{
 	// match example:       name = "railties".freeze   --->   railties
 	"name": regexp.MustCompile(`.*\.name\s*=\s*["']{1}(?P<name>.*)["']{1} *`),
@@ -131,44 +137,45 @@ func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic
 // the SBOM and in particular break CycloneDX schema validation because
 // '{' and '}' are not valid IRI characters (see anchore/syft#4720).
 //
-// We only resolve fields for which syft has already captured a concrete
-// value, and only the simple interpolation forms pointing at those same
-// fields. Any remaining unresolved interpolation in a URL-like field
-// (homepage) is dropped so the output BOM is always schema-valid.
+// We only resolve interpolations pointing at name/version (the values syft has
+// already captured from the same file). Both the substitution and the drop
+// below are driven by the same field list, so adding a URL-like field here
+// keeps it protected from leaking unresolved interpolation.
 func resolveRubyInterpolationsInFields(fields map[string]any) {
-	replaceIn := func(key string, placeholders []string, with string) {
+	name, _ := fields["name"].(string)
+	version, _ := fields["version"].(string)
+
+	// homepage is currently the only captured string field that flows into a
+	// schema-validated URL slot (CycloneDX externalReferences, SPDX homepage).
+	for _, key := range []string{"homepage"} {
 		v, ok := fields[key].(string)
-		if !ok || v == "" || with == "" {
-			return
+		if !ok || v == "" {
+			continue
 		}
-		for _, p := range placeholders {
-			v = strings.ReplaceAll(v, p, with)
+
+		v = rubyInterpolationPattern.ReplaceAllStringFunc(v, func(match string) string {
+			switch rubyInterpolationPattern.FindStringSubmatch(match)[1] {
+			case "name":
+				if name != "" {
+					return name
+				}
+			case "version":
+				if version != "" {
+					return version
+				}
+			}
+			return match // leave unresolved; the field is dropped below
+		})
+
+		// anything still containing a '#{' is an unresolvable Ruby expression.
+		// Drop the field rather than emit a URL with '{'/'}', which fails
+		// CycloneDX IRI validation (see anchore/syft#4720); a missing homepage
+		// is preferable to a BOM downstream tools reject.
+		if strings.Contains(v, "#{") {
+			delete(fields, key)
+			continue
 		}
 		fields[key] = v
-	}
-
-	// Expand known placeholders in every captured string field. We could
-	// restrict this to URL-like fields, but the substitution is
-	// well-scoped and any future addition of a new string field gets the
-	// same behaviour for free.
-	stringFields := []string{"homepage"}
-	if name, ok := fields["name"].(string); ok {
-		for _, k := range stringFields {
-			replaceIn(k, []string{"#{s.name}", "#{gem.name}", "#{name}"}, name)
-		}
-	}
-	if version, ok := fields["version"].(string); ok {
-		for _, k := range stringFields {
-			replaceIn(k, []string{"#{s.version}", "#{gem.version}", "#{version}"}, version)
-		}
-	}
-
-	// Anything still containing a '#{' after best-effort substitution is
-	// an unresolvable Ruby expression. Dropping URL-like fields keeps
-	// the SBOM schema-valid; we would rather lose the homepage URL than
-	// emit one that breaks downstream consumers.
-	if v, ok := fields["homepage"].(string); ok && strings.Contains(v, "#{") {
-		delete(fields, "homepage")
 	}
 }
 
