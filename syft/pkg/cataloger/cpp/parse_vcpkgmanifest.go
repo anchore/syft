@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -58,13 +59,16 @@ func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.R
 			pPkg)
 
 		r := vcpkg.NewResolver(
+			ctx,
 			conf,
 			v.allowGitClone,
 		)
 		for _, dep := range parentVcpkg.Dependencies {
 			cMans, fetchErr := r.FindManifests(dep, true, triplet, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
-				return nil, nil, fmt.Errorf("failed to fetch vcpkg.json file: %w", fetchErr)
+				// best-effort: a single unresolvable dependency shouldn't discard packages already found
+				log.Debugf("vcpkg: unable to resolve dependency in %q: %v", parentVcpkg.Name, fetchErr)
+				continue
 			}
 			pkgs, relationships = appendPkgsAndRelationships(ctx, toplevelVcpkg, cMans, overlayVcpkgs, resolver, reader, relationships, pkgs)
 		}

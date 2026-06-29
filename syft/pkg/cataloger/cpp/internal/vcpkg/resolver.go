@@ -1,6 +1,7 @@
 package vcpkg
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -194,6 +195,7 @@ type ID struct {
 // Resolver is a short-lived utility to resolve vcpkg manifests from multiple sources, including:
 // the filesystem, local maven cache directories, remote maven repositories, and the syft cache
 type Resolver struct {
+	ctx           context.Context
 	gitRepos      map[string]storage.Storer
 	allowGitClone bool
 	cfg           *Config
@@ -201,8 +203,9 @@ type Resolver struct {
 }
 
 // NewResolver constructs a new Resolver with the given vcpkg configuration.
-func NewResolver(cfg *Config, allowGitClone bool) *Resolver {
+func NewResolver(ctx context.Context, cfg *Config, allowGitClone bool) *Resolver {
 	return &Resolver{
+		ctx:           ctx,
 		gitRepos:      map[string]storage.Storer{},
 		allowGitClone: allowGitClone,
 		cfg:           cfg,
@@ -221,17 +224,17 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, builtinBaseli
 	case string:
 		name = d
 	case map[string]any:
-		if d["name"] != nil {
-			name = d["name"].(string)
+		if n, ok := d["name"].(string); ok {
+			name = n
 		}
-		if d["version>="] != nil {
-			fullVersion = d["version>="].(string)
+		if v, ok := d["version>="].(string); ok {
+			fullVersion = v
 		}
-		if d["default-features"] != nil {
-			defaultFeatures = defaultFeatures && d["default-features"].(bool)
+		if v, ok := d["default-features"].(bool); ok {
+			defaultFeatures = defaultFeatures && v
 		}
-		if d["features"] != nil {
-			features = d["features"].([]any)
+		if v, ok := d["features"].([]any); ok {
+			features = v
 		}
 	}
 	// for when top-level manifest has this dependency version overridden
@@ -287,22 +290,24 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, builtinBaseli
 }
 
 func (v *Vcpkg) appendFtrDepsToDeps(df bool, features []any) {
+	// collect explicitly requested feature names (a feature is either a string or a feature object)
+	requested := map[string]bool{}
 	for _, feature := range features {
 		switch fo := feature.(type) {
 		case string:
-			for name, f := range v.Features {
-				if fo == name || (df && isDefaultFeature(name, v.DefaultFeatures)) {
-					v.Dependencies = append(v.Dependencies, f.Dependencies...)
-				}
-			}
+			requested[fo] = true
 		case map[string]any:
-			// json decodes a feature object into map[string]any, not the struct
-			foName, _ := fo["name"].(string)
-			for name, f := range v.Features {
-				if foName == name || (df && isDefaultFeature(name, v.DefaultFeatures)) {
-					v.Dependencies = append(v.Dependencies, f.Dependencies...)
-				}
+			// json decodes a feature object into map[string]any, not a struct
+			if name, ok := fo["name"].(string); ok {
+				requested[name] = true
 			}
+		}
+	}
+	// add each feature's deps at most once: when requested, or when it's a default feature and defaults are enabled.
+	// this must be independent of the requested loop so default features apply even when none are requested.
+	for name, f := range v.Features {
+		if requested[name] || (df && isDefaultFeature(name, v.DefaultFeatures)) {
+			v.Dependencies = append(v.Dependencies, f.Dependencies...)
 		}
 	}
 }
@@ -320,7 +325,7 @@ func (r *Resolver) resolveRepo(repoStr string) (*git.Repository, error) {
 	if r.gitRepos[repoStr] != nil {
 		return git.Open(r.gitRepos[repoStr], nil)
 	} else if r.allowGitClone {
-		repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+		repo, err := git.CloneContext(r.ctx, memory.NewStorage(), nil, &git.CloneOptions{
 			URL: repoStr,
 		})
 		if err != nil {
@@ -358,7 +363,7 @@ func getVcpkgGitCachePath() string {
 	if len(roots) == 0 {
 		return ""
 	}
-	// not sure if this is an exceptible way of getting the vcpkg cache directory
+	// vcpkg keeps its git registry cache as a sibling of the syft cache dir
 	return roots[0] + "/../vcpkg/registries/git"
 }
 
@@ -394,11 +399,11 @@ func (r *Resolver) depResolved(dep any, builtinBaseline string) (*pkg.VcpkgManif
 	case string:
 		name = d
 	case map[string]any:
-		if d["name"] != nil {
-			name = d["name"].(string)
+		if n, ok := d["name"].(string); ok {
+			name = n
 		}
-		if d["version>="] != nil {
-			version = d["version>="].(string)
+		if v, ok := d["version>="].(string); ok {
+			version = v
 		}
 	}
 	reg := r.depRegistry(name, builtinBaseline)
@@ -526,6 +531,9 @@ func (r *Resolver) getManifestFromGitRepo(repo *git.Repository, head, name, full
 				break
 			}
 		}
+		if gitTreeHash == "" {
+			return nil, fmt.Errorf("version %q not found in versions file for port %q", fullVersion, name)
+		}
 		verTree, err := repo.TreeObject(plumbing.NewHash(gitTreeHash))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tree from hash %v. %w", gitTreeHash, err)
@@ -584,18 +592,23 @@ func (r *Resolver) getManifestFromFilesystem(path, baseline, name, fullVersion s
 		var baselineMatch map[string]any
 		for k, v := range baselineGen {
 			if k == baseline {
-				baselineMatch = v.(map[string]any)
+				baselineMatch, _ = v.(map[string]any)
 				break
 			}
 		}
 		var baselineVer vcpkgBaselineVersionObjectEntry
 		for k, v := range baselineMatch {
 			if k == name {
-				foundBaseline := v.(map[string]any)
+				foundBaseline, ok := v.(map[string]any)
+				if !ok {
+					continue
+				}
+				bl, _ := foundBaseline["baseline"].(string)
+				// default for go json package when unmarshalling number is float64
+				pv, _ := foundBaseline["port-version"].(float64)
 				baselineVer = vcpkgBaselineVersionObjectEntry{
-					Baseline: foundBaseline["baseline"].(string),
-					// default for go json package when unmarshalling number is float64
-					PortVersion: foundBaseline["port-version"].(float64),
+					Baseline:    bl,
+					PortVersion: pv,
 				}
 			}
 		}
