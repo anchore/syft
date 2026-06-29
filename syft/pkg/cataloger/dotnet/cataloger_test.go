@@ -14,10 +14,11 @@ import (
 
 func TestCataloger_Globs(t *testing.T) {
 	tests := []struct {
-		name      string
-		fixture   string
-		cataloger pkg.Cataloger
-		expected  []string
+		name              string
+		fixture           string
+		cataloger         pkg.Cataloger
+		expected          []string
+		ignoreUnfulfilled []string
 	}{
 		{
 			name:      "obtain deps.json files",
@@ -47,6 +48,9 @@ func TestCataloger_Globs(t *testing.T) {
 				"src/something.dll",
 				"src/something.exe",
 			},
+			// the binary cataloger probes executables by MIME type to find embedded bundles,
+			// but the glob fixtures aren't real binaries so those queries go unfulfilled
+			ignoreUnfulfilled: []string{"application/x-executable", "application/x-sharedlib"},
 		},
 	}
 
@@ -55,8 +59,8 @@ func TestCataloger_Globs(t *testing.T) {
 			tester := pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				ExpectsResolverContentQueries(test.expected)
-			if test.cataloger.Name() == "dotnet-deps-binary-cataloger" {
-				tester = tester.IgnoreUnfulfilledPathResponses("application/x-executable", "application/x-sharedlib")
+			if len(test.ignoreUnfulfilled) > 0 {
+				tester = tester.IgnoreUnfulfilledPathResponses(test.ignoreUnfulfilled...)
 			}
 			tester.TestCataloger(t, test.cataloger)
 		})
