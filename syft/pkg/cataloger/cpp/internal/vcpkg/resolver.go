@@ -97,22 +97,6 @@ type vcpkgGitVersions struct {
 	Versions []vcpkgGitVersionObjectEntry `json:"versions"`
 }
 
-// vcpkgDependencyEntry represents a single entry in the dependencies section of the "vcpkg.json" source
-// type vcpkgDependencyEntry struct {
-// 	DefaultFeatures bool                      `json:"default-features,omitempty"`
-// 	Features        []vcpkgFeatureObjectEntry `json:"features,omitempty"`
-// 	Host            bool                      `json:"host,omitempty"`
-// 	Name            string                    `json:"name"`
-// 	 A "Platform Expression" that limits the platforms where the feature is required. Optional
-// 	Platform   string `json:"platform,omitempty"`
-// 	VersionGte string `json:"version>=,omitempty"`
-// }
-
-type vcpkgFeatureObjectEntry struct {
-	Name     string `json:"name"`
-	Platform string `json:"platform,omitempty"`
-}
-
 // Filesystem VersionObject
 type vcpkgFsVersionObjectEntry struct {
 	Path          string  `json:"path"`
@@ -311,9 +295,11 @@ func (v *Vcpkg) appendFtrDepsToDeps(df bool, features []any) {
 					v.Dependencies = append(v.Dependencies, f.Dependencies...)
 				}
 			}
-		case vcpkgFeatureObjectEntry:
+		case map[string]any:
+			// json decodes a feature object into map[string]any, not the struct
+			foName, _ := fo["name"].(string)
 			for name, f := range v.Features {
-				if fo.Name == name || (df && isDefaultFeature(name, v.DefaultFeatures)) {
+				if foName == name || (df && isDefaultFeature(name, v.DefaultFeatures)) {
 					v.Dependencies = append(v.Dependencies, f.Dependencies...)
 				}
 			}
@@ -337,8 +323,11 @@ func (r *Resolver) resolveRepo(repoStr string) (*git.Repository, error) {
 		repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 			URL: repoStr,
 		})
+		if err != nil {
+			return nil, err
+		}
 		r.gitRepos[repoStr] = repo.Storer
-		return repo, err
+		return repo, nil
 	}
 	return nil, fmt.Errorf("could not resolve %s. enable vcpkg-allow-git-clone flag to allow cloning of remote git repos", repoStr)
 }
@@ -387,8 +376,10 @@ func (r *Resolver) depRegistry(name string, builtinBaseline string) *pkg.VcpkgRe
 		}
 	}
 	if reg == nil {
-		reg = &defaultRegistry
-		reg.Baseline = builtinBaseline
+		// copy the package-global so concurrent catalogers don't clobber its baseline
+		def := defaultRegistry
+		def.Baseline = builtinBaseline
+		reg = &def
 	} else if reg.Kind == pkg.Builtin {
 		reg.Baseline = builtinBaseline
 	}
@@ -432,7 +423,7 @@ func isDefaultFeature(name string, defaultFeatures []any) bool {
 				return true
 			}
 		case map[string]any:
-			if name == d["name"].(string) {
+			if n, ok := d["name"].(string); ok && name == n {
 				return true
 			}
 		}
@@ -657,8 +648,13 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 	switch d := v.Description.(type) {
 	case string:
 		desc = append(desc, d)
-	case []string:
-		desc = append(desc, d...)
+	case []any:
+		// json decodes a description array into []any, not []string
+		for _, item := range d {
+			if s, ok := item.(string); ok {
+				desc = append(desc, s)
+			}
+		}
 	}
 	return &pkg.VcpkgManifest{
 		Description:   desc,

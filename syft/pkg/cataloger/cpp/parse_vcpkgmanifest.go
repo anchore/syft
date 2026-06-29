@@ -86,8 +86,9 @@ func appendPkgsAndRelationships(ctx context.Context, toplevelVcpkg vcpkg.Vcpkg, 
 				pPkg.FoundBy = "vcpkg-manifest-cataloger"
 				cPkg.FoundBy = "vcpkg-manifest-cataloger"
 				rship := artifact.Relationship{
-					From: pPkg,
-					To:   cPkg,
+					// From is the dependency, To is the dependent (syft convention)
+					From: cPkg,
+					To:   pPkg,
 					Type: artifact.DependencyOfRelationship,
 				}
 				r = append(

@@ -146,44 +146,44 @@ func TestParseVcpkgManifest(t *testing.T) {
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: helloPkg,
+			From: fmtPkg,
+			To:   helloPkg,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: vcpkgCmakePkg,
 			To:   fmtPkg,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: fmtPkg,
-			To:   vcpkgCmakePkg,
+			From: vcpkgCmakeConfigPkg,
+			To:   fmtPkg,
+			Type: artifact.DependencyOfRelationship,
+			Data: nil,
+		},
+		{
+			From: sampleLibPkg,
+			To:   helloPkg,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
 			From: fmtPkg,
-			To:   vcpkgCmakeConfigPkg,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: helloPkg,
 			To:   sampleLibPkg,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: sampleLibPkg,
-			To:   fmtPkg,
+			From: vcpkgCmakePkg,
+			To:   sampleLibPkg,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
 		{
-			From: sampleLibPkg,
-			To:   vcpkgCmakePkg,
-			Type: artifact.DependencyOfRelationship,
-			Data: nil,
-		},
-		{
-			From: sampleLibPkg,
-			To:   vcpkgCmakeConfigPkg,
+			From: vcpkgCmakeConfigPkg,
+			To:   sampleLibPkg,
 			Type: artifact.DependencyOfRelationship,
 			Data: nil,
 		},
