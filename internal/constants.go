@@ -13,6 +13,6 @@ const (
 	// 16.1.4 - add BunLockEntry metadata type for bun.lock support
 	// 16.1.5 - add DenoLockEntry and DenoRemoteLockEntry metadata types for deno.lock support
 	// 16.1.6 - add Dependencies to ElixirMixLockEntry metadata
-	// 16.1.7 - add MacOSAppEntry metadata type for the macOS .app cataloger
+	// 16.1.7 - add AppleAppBundleEntry metadata type for the apple app bundle cataloger
 
 )
