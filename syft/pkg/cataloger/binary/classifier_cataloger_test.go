@@ -1632,6 +1632,18 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// base releases brand with a 2-component version (e.g. "krb5-1.17-final 1.17")
+			logicalFixture: "krb5/1.17/linux-amd64",
+			expected: pkg.Package{
+				Name:      "krb5",
+				Version:   "1.17",
+				Type:      "binary",
+				PURL:      "pkg:generic/krb5@1.17",
+				Locations: locations("libkrb5.so.3.3"),
+				Metadata:  metadata("krb5-library"),
+			},
+		},
+		{
 			logicalFixture: "heimdal-krb5/7.8.0/linux-amd64",
 			expected: pkg.Package{
 				Name:      "heimdal-krb5",

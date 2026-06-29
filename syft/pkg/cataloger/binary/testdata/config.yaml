@@ -1442,6 +1442,14 @@ from-images:
     paths:
       - /usr/lib/libkrb5.so.3.3
 
+  - name: krb5
+    version: 1.17
+    images:
+      - ref: mongo:4.4@sha256:4be76f674fc4b27859816811b8baa3c51830eb1dbf4ca81a51e26b79edd662ef
+        platform: linux/amd64
+    paths:
+      - /usr/lib/x86_64-linux-gnu/libkrb5.so.3.3
+
   - name: heimdal-krb5
     version: 7.8.0
     images:

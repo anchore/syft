@@ -1195,8 +1195,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "krb5-library",
 			FileGlob: "**/libkrb5.so*",
 			// [NUL]KRB5_BRAND: krb5-1.18.4-final 1.18.4 20210722
+			// [NUL]KRB5_BRAND: krb5-1.17-final 1.17 20190108  (base releases brand as 2-component)
 			EvidenceMatcher: m.FileContentsVersionMatcher(
-				`\x00KRB5_BRAND:\s+krb5-[^\s]+\s+(?P<version>[0-9]+\.[0-9]+\.[0-9]+)(?:\s|$)`,
+				`\x00KRB5_BRAND:\s+krb5-[^\s]+\s+(?P<version>[0-9]+(?:\.[0-9]+){1,2})(?:\s|$)`,
 			),
 			Package: "krb5",
 			PURL:    mustPURL("pkg:generic/krb5@version"),
