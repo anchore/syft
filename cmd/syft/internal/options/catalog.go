@@ -175,7 +175,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
-		Cpp:    cpp.DefaultCatalogerConfig().WithVcpkgAllowGitClone(cfg.Cpp.VcpkgAllowGitClone),
+		Cpp: cpp.DefaultCatalogerConfig().
+			WithVcpkgAllowGitClone(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Cpp, task.Vcpkg), cfg.Cpp.VcpkgAllowGitClone)),
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
@@ -305,6 +306,7 @@ var publicisedEnrichmentOptions = []string{
 	task.Java,
 	task.JavaScript,
 	task.Python,
+	task.Vcpkg,
 }
 
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {

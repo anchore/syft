@@ -30,7 +30,7 @@ func TestParseVcpkgManifest(t *testing.T) {
 	fmtPkg := pkg.Package{
 		Name:      "fmt",
 		Version:   "11.0.2#1",
-		PURL:      "pkg:vcpkg/fmt@11.0.2?port_revision=1&repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture&triplet=x64-linux",
+		PURL:      "pkg:vcpkg/fmt@11.0.2?port_revision=1&repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture",
 		FoundBy:   "vcpkg-manifest-cataloger",
 		Locations: fixtureLocationSet,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", fileLocs...)),
@@ -48,13 +48,12 @@ func TestParseVcpkgManifest(t *testing.T) {
 				Kind:       pkg.Git,
 				Repository: "https://github.com/anchore/vcpkg-test-fixture",
 			},
-			Triplet: "x64-linux",
 		},
 	}
 	helloPkg := pkg.Package{
 		Name:      "hello",
 		Version:   "0.1.0",
-		PURL:      "pkg:vcpkg/hello@0.1.0?triplet=x64-linux",
+		PURL:      "pkg:vcpkg/hello@0.1.0",
 		FoundBy:   "vcpkg-manifest-cataloger",
 		Locations: fixtureLocationSet,
 		Language:  pkg.CPP,
@@ -64,13 +63,12 @@ func TestParseVcpkgManifest(t *testing.T) {
 			Version:     "0.1.0",
 			Name:        "hello",
 			Registry:    nil,
-			Triplet:     "x64-linux",
 		},
 	}
 	vcpkgCmakeConfigPkg := pkg.Package{
 		Name:      "vcpkg-cmake-config",
 		Version:   "2024-05-23",
-		PURL:      "pkg:vcpkg/vcpkg-cmake-config@2024-05-23?repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture&triplet=x64-linux",
+		PURL:      "pkg:vcpkg/vcpkg-cmake-config@2024-05-23?repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture",
 		FoundBy:   "vcpkg-manifest-cataloger",
 		Locations: fixtureLocationSet,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", fileLocs...)),
@@ -87,13 +85,12 @@ func TestParseVcpkgManifest(t *testing.T) {
 				Kind:       pkg.Git,
 				Repository: "https://github.com/anchore/vcpkg-test-fixture",
 			},
-			Triplet: "x64-linux",
 		},
 	}
 	vcpkgCmakePkg := pkg.Package{
 		Name:      "vcpkg-cmake",
 		Version:   "2024-04-23",
-		PURL:      "pkg:vcpkg/vcpkg-cmake@2024-04-23?repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture&triplet=x64-linux",
+		PURL:      "pkg:vcpkg/vcpkg-cmake@2024-04-23?repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture",
 		FoundBy:   "vcpkg-manifest-cataloger",
 		Locations: fixtureLocationSet,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", fileLocs...)),
@@ -110,13 +107,12 @@ func TestParseVcpkgManifest(t *testing.T) {
 				Kind:       pkg.Git,
 				Repository: "https://github.com/anchore/vcpkg-test-fixture",
 			},
-			Triplet: "x64-linux",
 		},
 	}
 	sampleLibPkg := pkg.Package{
 		Name:      "vcpkg-sample-library",
 		Version:   "1.0.2",
-		PURL:      "pkg:vcpkg/vcpkg-sample-library@1.0.2?repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture&triplet=x64-linux",
+		PURL:      "pkg:vcpkg/vcpkg-sample-library@1.0.2?repository_revision=fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3&repository_url=https%3A%2F%2Fgithub.com%2Fanchore%2Fvcpkg-test-fixture",
 		FoundBy:   "vcpkg-manifest-cataloger",
 		Locations: fixtureLocationSet,
 		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, "MIT", fileLocs...)),
@@ -133,7 +129,6 @@ func TestParseVcpkgManifest(t *testing.T) {
 				Kind:       pkg.Git,
 				Repository: "https://github.com/anchore/vcpkg-test-fixture",
 			},
-			Triplet: "x64-linux",
 		},
 	}
 

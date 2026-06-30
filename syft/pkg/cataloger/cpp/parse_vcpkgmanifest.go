@@ -1,12 +1,10 @@
 package cpp
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -51,8 +49,9 @@ func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.R
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, parentVcpkg := range vcpkgs {
-		triplet := identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, parentVcpkg.Name)
-		parentMan := parentVcpkg.BuildManifest(nil, triplet)
+		// triplet is a build-time selection recorded under vcpkg_installed/, which is absent in a
+		// dir/source scan; it is left empty here and is the installed-state cataloger's job (see cataloger.go)
+		parentMan := parentVcpkg.BuildManifest(nil, "")
 		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		pkgs = append(
 			pkgs,
@@ -64,28 +63,26 @@ func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.R
 			v.allowGitClone,
 		)
 		for _, dep := range parentVcpkg.Dependencies {
-			cMans, fetchErr := r.FindManifests(dep, true, triplet, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
+			cMans, fetchErr := r.FindManifests(dep, true, "", toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
 				// best-effort: a single unresolvable dependency shouldn't discard packages already found
 				log.Debugf("vcpkg: unable to resolve dependency in %q: %v", parentVcpkg.Name, fetchErr)
 				continue
 			}
-			pkgs, relationships = appendPkgsAndRelationships(ctx, toplevelVcpkg, cMans, overlayVcpkgs, resolver, reader, relationships, pkgs)
+			pkgs, relationships = appendPkgsAndRelationships(ctx, cMans, overlayVcpkgs, reader, relationships, pkgs)
 		}
 	}
 	pkg.Sort(pkgs)
 	return pkgs, relationships, nil
 }
 
-func appendPkgsAndRelationships(ctx context.Context, toplevelVcpkg vcpkg.Vcpkg, cMans []vcpkg.ManifestNode, overlayVcpkgs []vcpkg.Vcpkg, resolver file.Resolver, reader file.LocationReadCloser, relationships []artifact.Relationship, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
+func appendPkgsAndRelationships(ctx context.Context, cMans []vcpkg.ManifestNode, overlayVcpkgs []vcpkg.Vcpkg, reader file.LocationReadCloser, relationships []artifact.Relationship, pkgs []pkg.Package) ([]pkg.Package, []artifact.Relationship) {
 	p := pkgs
 	r := relationships
 	for _, c := range cMans {
 		if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayVcpkgs) {
-			c.Child.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Child.Name)
 			cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 			if c.Parent != nil {
-				c.Parent.Triplet = identifyTripletForVcpkg(resolver, toplevelVcpkg.Name, c.Parent.Name)
 				pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 				pPkg.FoundBy = "vcpkg-manifest-cataloger"
 				cPkg.FoundBy = "vcpkg-manifest-cataloger"
@@ -153,43 +150,6 @@ func hasBeenOverlayed(pkgName string, overlayMans []vcpkg.Vcpkg) bool {
 		}
 	}
 	return false
-}
-
-// capture target triplet of the build to be added to metadata. https://learn.microsoft.com/en-us/vcpkg/concepts/triplets
-func identifyTripletForVcpkg(resolver file.Resolver, toplevel, name string) string {
-	var locs []file.Location
-	var err error
-	if toplevel == name {
-		locs, err = resolver.FilesByGlob("**/build/CMakeCache.txt")
-		if err != nil {
-			return ""
-		}
-		if len(locs) != 0 {
-			reader, err := resolver.FileContentsByLocation(locs[0])
-			if err != nil {
-				return ""
-			}
-			defer internal.CloseAndLogError(reader, locs[0].RealPath)
-			scanner := bufio.NewScanner(reader)
-			targetTripPrefix := "VCPKG_TARGET_TRIPLET:STRING="
-			for scanner.Scan() {
-				line := scanner.Text()
-				if after, ok := strings.CutPrefix(line, targetTripPrefix); ok {
-					return after
-				}
-			}
-		}
-	} else {
-		locs, err = resolver.FilesByGlob("**/build/vcpkg_installed/*/share/" + name + "/copyright")
-		if err != nil {
-			return ""
-		}
-		if len(locs) != 0 {
-			path := locs[0].Path()
-			return strings.TrimPrefix(strings.TrimSuffix(path, "/share/"+name+"/copyright"), "build/vcpkg_installed/")
-		}
-	}
-	return ""
 }
 
 // needed to know what vcpkg registries to use for what packages when looking for manifest files
