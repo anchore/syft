@@ -24,7 +24,7 @@ func Test_AppleAppBundleCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain Info.plist files within .app bundles",
-			fixture: "test-fixtures/install-example",
+			fixture: "testdata/install-example",
 			expected: []string{
 				"Applications/Slack.app/Contents/Info.plist",
 			},
@@ -50,7 +50,7 @@ func Test_AppleAppBundleCataloger(t *testing.T) {
 	}{
 		{
 			name: "go case",
-			path: "test-fixtures/install-example",
+			path: "testdata/install-example",
 			expected: []pkg.Package{
 				{
 					Name:    "Slack",
