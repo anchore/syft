@@ -232,3 +232,16 @@ func Test_findProductsToRemove(t *testing.T) {
 		})
 	}
 }
+
+// Regression test for https://github.com/anchore/syft/issues/4771:
+// NVD records expat CVEs under product "libexpat" (vendor "libexpat"),
+// so without a hint the conan-derived cpe:2.3:a:expat:expat:* fails
+// to match every recent expat CVE like CVE-2024-45492.
+func Test_conanCandidateAdditions_expat(t *testing.T) {
+	vendors := findAdditionalVendors(defaultCandidateAdditions, pkg.ConanPkg, "expat", "")
+	assert.Contains(t, vendors, "libexpat",
+		"conan package expat should map to the libexpat vendor for NVD matching")
+	products := findAdditionalProducts(defaultCandidateAdditions, pkg.ConanPkg, "expat")
+	assert.Contains(t, products, "libexpat",
+		"conan package expat should also emit libexpat as a candidate product")
+}
