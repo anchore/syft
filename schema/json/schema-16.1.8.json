@@ -4408,9 +4408,6 @@
         "port-version": {
           "type": "integer"
         },
-        "license": {
-          "type": "string"
-        },
         "maintainers": {
           "items": {
             "type": "string"

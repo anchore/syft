@@ -114,9 +114,17 @@ type vcpkgFsVersions struct {
 }
 
 // helpful to define relationships between Vcpkgs
+// ResolvedManifest is a source manifest (vcpkg.json) together with the registry it was resolved from.
+// it carries the raw Vcpkg so the cataloger can build the SBOM metadata and set package-level fields
+// (e.g. license) on pkg.Package rather than on the metadata.
+type ResolvedManifest struct {
+	Vcpkg    *Vcpkg
+	Registry *pkg.VcpkgRegistryEntry
+}
+
 type ManifestNode struct {
-	Parent *pkg.VcpkgManifest
-	Child  *pkg.VcpkgManifest
+	Parent *ResolvedManifest
+	Child  *ResolvedManifest
 }
 
 type vcpkgBaselineVersionObjectEntry struct {
@@ -199,7 +207,7 @@ type Resolver struct {
 	gitRepos      map[string]storage.Storer
 	allowGitClone bool
 	cfg           *Config
-	resolved      map[ID]*pkg.VcpkgManifest
+	resolved      map[ID]*ResolvedManifest
 }
 
 // NewResolver constructs a new Resolver with the given vcpkg configuration.
@@ -209,12 +217,12 @@ func NewResolver(ctx context.Context, cfg *Config, allowGitClone bool) *Resolver
 		gitRepos:      map[string]storage.Storer{},
 		allowGitClone: allowGitClone,
 		cfg:           cfg,
-		resolved:      map[ID]*pkg.VcpkgManifest{},
+		resolved:      map[ID]*ResolvedManifest{},
 	}
 }
 
 // Get all of the manifest/vcpkg.json files for a vcpkg dependency
-func (r *Resolver) FindManifests(dependency any, df bool, triplet, builtinBaseline string, overrides []vcpkgOverrideEntry, parent *pkg.VcpkgManifest) ([]ManifestNode, error) {
+func (r *Resolver) FindManifests(dependency any, df bool, builtinBaseline string, overrides []vcpkgOverrideEntry, parent *ResolvedManifest) ([]ManifestNode, error) {
 	var name string
 	var fullVersion string
 	defaultFeatures := df
@@ -246,26 +254,23 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, builtinBaseli
 	if err != nil {
 		return nil, err
 	}
+	child := &ResolvedManifest{Vcpkg: vcpkg, Registry: reg}
 	// need to add dependency to map, even if it doesn't find its manifest, to avoid infinite loops caused by circular depenencies
 	switch reg.Kind {
 	case pkg.Git:
-		id := ID{reg.Repository, reg.Baseline, name, fullVersion}
-		r.resolved[id] = vcpkg.BuildManifest(reg, triplet)
+		r.resolved[ID{reg.Repository, reg.Baseline, name, fullVersion}] = child
 	case pkg.Builtin:
 		vcpkgRoot := os.Getenv("VCPKG_ROOT")
-		id := ID{vcpkgRoot, reg.Baseline, name, fullVersion}
-		r.resolved[id] = vcpkg.BuildManifest(reg, triplet)
+		r.resolved[ID{vcpkgRoot, reg.Baseline, name, fullVersion}] = child
 	case pkg.FileSystem:
-		id := ID{reg.Path, reg.Baseline, name, fullVersion}
-		r.resolved[id] = vcpkg.BuildManifest(reg, triplet)
+		r.resolved[ID{reg.Path, reg.Baseline, name, fullVersion}] = child
 	}
 	vcpkg.appendFtrDepsToDeps(defaultFeatures, features)
 
-	childManifest := vcpkg.BuildManifest(reg, triplet)
 	manNodes := []ManifestNode{}
 	manNodes = append(manNodes, ManifestNode{
 		Parent: parent,
-		Child:  childManifest,
+		Child:  child,
 	})
 	if len(vcpkg.Dependencies) != 0 {
 		for _, dep := range vcpkg.Dependencies {
@@ -274,11 +279,11 @@ func (r *Resolver) FindManifests(dependency any, df bool, triplet, builtinBaseli
 				// this is to catch duplicates
 				manNodes = append(manNodes, ManifestNode{
 					// child is parent in this case
-					Parent: childManifest,
+					Parent: child,
 					Child:  resolvedManifest,
 				})
 			} else {
-				childManNodes, err := r.FindManifests(dep, df, triplet, builtinBaseline, overrides, childManifest)
+				childManNodes, err := r.FindManifests(dep, df, builtinBaseline, overrides, child)
 				if err != nil {
 					return nil, fmt.Errorf("could not find vcpkg.json file for dependency. %w", err)
 				}
@@ -392,7 +397,7 @@ func (r *Resolver) depRegistry(name string, builtinBaseline string) *pkg.VcpkgRe
 }
 
 // checks if dependency has been retrieved already this run. Without this check, there were infinite loops from circular dependencies
-func (r *Resolver) depResolved(dep any, builtinBaseline string) (*pkg.VcpkgManifest, bool) {
+func (r *Resolver) depResolved(dep any, builtinBaseline string) (*ResolvedManifest, bool) {
 	var name string
 	var version string
 	switch d := dep.(type) {
@@ -683,7 +688,6 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 		FullVersion:   v.GetFullVersion(),
 		Version:       v.GetPopulatedVersion(),
 		PortVersion:   int(v.PortVersion),
-		License:       v.License,
 		Maintainers:   v.Maintainers,
 		Name:          v.Name,
 		Supports:      v.Supports,

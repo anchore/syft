@@ -15,7 +15,6 @@ type VcpkgManifest struct {
 	FullVersion   string   `json:"full-version"`
 	Version       string   `json:"version"`
 	PortVersion   int      `json:"port-version"`
-	License       string   `json:"license,omitempty"`
 	Maintainers   []string `json:"maintainers,omitempty"`
 	Name          string   `json:"name"`
 	Supports      string   `json:"supports,omitempty"`

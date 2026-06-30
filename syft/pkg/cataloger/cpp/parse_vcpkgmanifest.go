@@ -52,9 +52,9 @@ func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.R
 	var pkgs []pkg.Package
 	var relationships []artifact.Relationship
 	for _, parentVcpkg := range vcpkgs {
-		// triplet is a build-time selection recorded under vcpkg_installed/, which is absent in a
-		// dir/source scan; it is left empty here and is the installed-state cataloger's job (see cataloger.go)
-		parentMan := parentVcpkg.BuildManifest(nil, "")
+		pv := parentVcpkg
+		// the top-level project manifest has no registry (it is the thing being scanned, not a resolved dep)
+		parentMan := &vcpkg.ResolvedManifest{Vcpkg: &pv, Registry: nil}
 		pPkg := newVcpkgPackage(ctx, parentMan, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		pkgs = append(
 			pkgs,
@@ -66,7 +66,7 @@ func (v *vcpkgCataloger) parseVcpkgManifest(ctx context.Context, resolver file.R
 			v.allowGitClone,
 		)
 		for _, dep := range parentVcpkg.Dependencies {
-			cMans, fetchErr := r.FindManifests(dep, true, "", toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
+			cMans, fetchErr := r.FindManifests(dep, true, toplevelVcpkg.BuiltinBaseline, toplevelVcpkg.Overrides, parentMan)
 			if fetchErr != nil {
 				// best-effort: a single unresolvable dependency shouldn't discard packages already found
 				log.Debugf("vcpkg: unable to resolve dependency in %q: %v", parentVcpkg.Name, fetchErr)
@@ -83,7 +83,7 @@ func appendPkgsAndRelationships(ctx context.Context, cMans []vcpkg.ManifestNode,
 	p := pkgs
 	r := relationships
 	for _, c := range cMans {
-		if c.Child != nil && !hasBeenOverlayed(c.Child.Name, overlayVcpkgs) {
+		if c.Child != nil && !hasBeenOverlayed(c.Child.Vcpkg.Name, overlayVcpkgs) {
 			cPkg := newVcpkgPackage(ctx, c.Child, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 			if c.Parent != nil {
 				pPkg := newVcpkgPackage(ctx, c.Parent, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))

@@ -41,7 +41,6 @@ func TestParseVcpkgManifest(t *testing.T) {
 			FullVersion: "11.0.2#1",
 			Version:     "11.0.2",
 			PortVersion: 1,
-			License:     "MIT",
 			Name:        "fmt",
 			Registry: &pkg.VcpkgRegistryEntry{
 				Baseline:   "fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3",
@@ -78,7 +77,6 @@ func TestParseVcpkgManifest(t *testing.T) {
 			Documentation: "https://learn.microsoft.com/vcpkg/maintainers/functions/vcpkg_cmake_config_fixup",
 			FullVersion:   "2024-05-23",
 			Version:       "2024-05-23",
-			License:       "MIT",
 			Name:          "vcpkg-cmake-config",
 			Registry: &pkg.VcpkgRegistryEntry{
 				Baseline:   "fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3",
@@ -100,7 +98,6 @@ func TestParseVcpkgManifest(t *testing.T) {
 			Documentation: "https://learn.microsoft.com/vcpkg/maintainers/functions/vcpkg_cmake_configure",
 			FullVersion:   "2024-04-23",
 			Version:       "2024-04-23",
-			License:       "MIT",
 			Name:          "vcpkg-cmake",
 			Registry: &pkg.VcpkgRegistryEntry{
 				Baseline:   "fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3",
@@ -122,7 +119,6 @@ func TestParseVcpkgManifest(t *testing.T) {
 			Description: []string{"A sample C++ library designed to serve as a foundational example for a tutorial on packaging libraries with vcpkg."},
 			FullVersion: "1.0.2",
 			Version:     "1.0.2",
-			License:     "MIT",
 			Name:        "vcpkg-sample-library",
 			Registry: &pkg.VcpkgRegistryEntry{
 				Baseline:   "fbfe5a93a4b9562d88dcbc9cefca0016594ba3b3",

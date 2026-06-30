@@ -9,6 +9,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp/internal/vcpkg"
 )
 
 type conanRef struct {
@@ -124,16 +125,19 @@ func packageURLFromConanRef(ref *conanRef) string {
 	).ToString()
 }
 
-func newVcpkgPackage(ctx context.Context, v *pkg.VcpkgManifest, l file.Location) pkg.Package {
+func newVcpkgPackage(ctx context.Context, rm *vcpkg.ResolvedManifest, l file.Location) pkg.Package {
+	// build the SBOM metadata from the source manifest; license is a package-level field (pkg.Package),
+	// not metadata, so it is read off the source manifest here rather than carried in pkg.VcpkgManifest
+	man := rm.Vcpkg.BuildManifest(rm.Registry, "")
 	p := pkg.Package{
-		Name:      v.Name,
-		Version:   v.FullVersion,
-		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, v.License, l)),
+		Name:      man.Name,
+		Version:   man.FullVersion,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicenseFromLocationsWithContext(ctx, rm.Vcpkg.License, l)),
 		Locations: file.NewLocationSet(l),
-		PURL:      packageURLFromVcpkgManifest(v),
+		PURL:      packageURLFromVcpkgManifest(man),
 		Language:  pkg.CPP,
 		Type:      pkg.VcpkgPkg,
-		Metadata:  v,
+		Metadata:  man,
 	}
 
 	p.SetID()
