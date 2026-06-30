@@ -89,6 +89,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // we have coverage for pear instead
 	definedPkgs.Remove(string(pkg.CondaPkg))
 	definedPkgs.Remove(string(pkg.ModelPkg))
+	definedPkgs.Remove(string(pkg.AppleAppBundlePkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -164,6 +165,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedPkgs.Remove(string(pkg.CondaPkg))
 	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // this is covered as pear packages
 	definedPkgs.Remove(string(pkg.ModelPkg))
+	definedPkgs.Remove(string(pkg.AppleAppBundlePkg))
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))

@@ -5,6 +5,7 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/ai"
 	"github.com/anchore/syft/syft/pkg/cataloger/alpine"
+	"github.com/anchore/syft/syft/pkg/cataloger/apple"
 	"github.com/anchore/syft/syft/pkg/cataloger/arch"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
 	bitnamiSbomCataloger "github.com/anchore/syft/syft/pkg/cataloger/bitnami"
@@ -105,7 +106,7 @@ func DefaultPackageTaskFactories() Factories {
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
 				return javascript.NewLockCataloger(cfg.PackagesConfig.JavaScript)
 			},
-			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Node, NPM,
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, JavaScript, Node, NPM, "deno",
 		),
 		newSimplePackageTaskFactory(php.NewComposerLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "php", "composer"),
 		newSimplePackageTaskFactory(php.NewPearCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, pkgcataloging.ImageTag, "php", "pear"),
@@ -177,6 +178,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(wordpress.NewWordpressPluginCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "wordpress"),
 		newSimplePackageTaskFactory(terraform.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "terraform"),
 		newSimplePackageTaskFactory(homebrew.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "homebrew"),
+		newSimplePackageTaskFactory(apple.NewAppBundleCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "apple"),
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
 		newSimplePackageTaskFactory(snap.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "snap"),
 		newSimplePackageTaskFactory(ai.NewGGUFCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "ai", "model", "gguf", "ml"),

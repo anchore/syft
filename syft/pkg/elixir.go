@@ -13,4 +13,9 @@ type ElixirMixLockEntry struct {
 
 	// PkgHashExt is the extended package hash format (inner checksum is deprecated - SHA-256 of concatenated file contents excluding CHECKSUM file, now replaced by outer checksum)
 	PkgHashExt string `mapstructure:"pkgHashExt" json:"pkgHashExt"`
+
+	// Dependencies are the names of the packages this entry depends on, as
+	// declared in the entry's dependency list within mix.lock. Used to derive
+	// dependency-of relationships between locked packages.
+	Dependencies []string `mapstructure:"dependencies" json:"dependencies,omitempty"`
 }

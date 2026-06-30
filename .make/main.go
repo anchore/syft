@@ -1,27 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 
-	"github.com/goccy/go-yaml"
-
 	. "github.com/anchore/go-make"
 	"github.com/anchore/go-make/file"
-	"github.com/anchore/go-make/git"
 	"github.com/anchore/go-make/lang"
 	"github.com/anchore/go-make/run"
 	"github.com/anchore/go-make/tasks/golint"
 	"github.com/anchore/go-make/tasks/goreleaser"
+	"github.com/anchore/go-make/tasks/gotask"
 	"github.com/anchore/go-make/tasks/gotest"
 )
-
-// taskfileDescriptions maps Taskfile.yaml task names to their `desc:` field.
-// Loaded at package init so wrap() can use Taskfile.yaml as the single source
-// of truth for wrapped-task descriptions.
-var taskfileDescriptions = mustReadTaskfileDescriptions()
 
 func main() {
 	Makefile(
@@ -89,108 +80,56 @@ func main() {
 			Dependencies: Deps("static-analysis", "test", "install-test"),
 		},
 
-		// --- everything below is implemented in Taskfile.yaml and surfaced here
-		// via wrap(). Descriptions come from Taskfile.yaml (single source of truth).
+		// --- everything else is implemented in Taskfile.yaml. gotask.Tasks()
+		// discovers every (non-internal) Taskfile task — including the namespaced
+		// `generate:cpe-index:*` tasks from the included task.d file — and surfaces
+		// them as first-class go-make tasks (with their canonical names and `desc:`)
+		// that forward to `task <name>`. Descriptions live in Taskfile.yaml as the
+		// single source of truth; no per-task wrapping needed here.
+		gotask.Tasks(),
 
-		// static analysis extras
-		wrap("check-json-schema-drift").RunOn("static-analysis"),
-		wrap("check-capability-drift"),
-		wrap("check-binary-fixture-size").RunOn("static-analysis"),
+		// gotask.Tasks() discovers canonical task names only, not Taskfile aliases,
+		// so re-expose `refresh-fixtures`'s `fixtures` alias for manual use.
+		Task{
+			Name:         "fixtures",
+			Description:  "Clear and fetch all test fixture cache (alias of refresh-fixtures)",
+			Dependencies: Deps("refresh-fixtures"),
+		},
 
-		// test extras
-		wrap("validate-cyclonedx-schema").RunOn("test"),
-		wrap("test-utils").RunOn("test"),
-		wrap("check-docker-cache").RunOn("test"),
-		wrap("snapshot-smoke-test"),
-
-		// update commands
-		wrap("update-format-golden-files"),
-
-		// fixture cache plumbing (heavy ORAS logic, lives in Taskfile).
-		// refresh-fixtures hooks into "unit" so `make unit` triggers the
-		// stale-cache detection + download just like `task unit` did on main
-		// (its `deps: [tmpdir, fixtures]` is what kept the fixture cache fresh).
-		wrap("fingerprints"),
-		wrap("refresh-fixtures").RunOn("unit"),
-		wrap("fixtures"),
-		wrap("build-fixtures"),
-		wrap("download-test-fixture-cache"),
-		wrap("upload-test-fixture-cache"),
-		wrap("show-test-image-cache"),
-
-		// install-script tests (delegates to test/install/Makefile)
-		wrap("install-test"),
-		wrap("install-test-cache-save"),
-		wrap("install-test-cache-load"),
-		wrap("install-test-ci-mac"),
-
-		// compare tests
-		wrap("generate-compare-file"),
-		wrap("compare-mac"),
-		wrap("compare-linux"),
-		wrap("compare-test-deb-package-install"),
-		wrap("compare-test-rpm-package-install"),
-
-		// code/data generation (umbrella + per-target; each lives in Taskfile)
-		wrap("generate"),
-		wrap("generate-json-schema"),
-		wrap("generate-license-list"),
-		wrap("generate-cpe-dictionary-index"),
-		wrap("generate-capabilities"),
-
-		// cleanup (each hooks into go-make's built-in `clean` label)
-		wrap("clean-snapshot").RunOn("clean"),
-		wrap("clean-docker-cache").RunOn("clean"),
-		wrap("clean-oras-cache").RunOn("clean"),
-		wrap("clean-cache").RunOn("clean"),
-		wrap("clean-test-observations").RunOn("clean"),
+		// gotask.Tasks() can't attach RunsOn labels, so wire the syft-specific
+		// Taskfile tasks into go-make's native phases here. These thin hooks have
+		// no body and no description (hidden from `make help`); they only pull the
+		// discovered tasks in when the labeled phase runs.
+		Task{
+			Name:         "static-analysis:syft",
+			RunsOn:       lang.List("static-analysis"),
+			Dependencies: Deps("check-json-schema-drift", "check-binary-fixture-size"),
+		},
+		Task{
+			Name:         "test:syft",
+			RunsOn:       lang.List("test"),
+			Dependencies: Deps("validate-cyclonedx-schema", "test-utils", "check-docker-cache"),
+		},
+		// refresh-fixtures hooks into "unit" so `make unit` triggers the stale-cache
+		// detection + download just like `task unit` did on main (its
+		// `deps: [tmpdir, fixtures]` is what kept the fixture cache fresh).
+		Task{
+			Name:         "unit:syft",
+			RunsOn:       lang.List("unit"),
+			Dependencies: Deps("refresh-fixtures"),
+		},
+		Task{
+			Name:   "clean:syft",
+			RunsOn: lang.List("clean"),
+			Dependencies: Deps(
+				"clean-snapshot",
+				"clean-docker-cache",
+				"clean-oras-cache",
+				"clean-cache",
+				"clean-test-observations",
+			),
+		},
 	)
-}
-
-// wrap creates a go-make Task that delegates execution to `task <name>`. The
-// task's description is pulled from Taskfile.yaml's `desc:` field — descriptions
-// for wrapped tasks must always live in Taskfile.yaml, never here.
-func wrap(name string) Task {
-	desc, ok := taskfileDescriptions[name]
-	if !ok || desc == "" {
-		// loud-fail at startup so missing descs can't sneak through review.
-		panic(fmt.Sprintf("Taskfile.yaml task %q is missing a `desc:` field; please add one", name))
-	}
-	return Task{
-		Name:        name,
-		Description: desc,
-		Run:         func() { Run("task " + name) },
-	}
-}
-
-// mustReadTaskfileDescriptions parses Taskfile.yaml at the repo root and returns
-// a map of task name -> desc. Runs at package init time so wrap() can use it.
-func mustReadTaskfileDescriptions() map[string]string {
-	root := git.Root()
-	if root == "" {
-		return nil
-	}
-	path := filepath.Join(root, "Taskfile.yaml")
-	data, err := os.ReadFile(path) //nolint:gosec // G304: path resolved from git.Root()
-	if err != nil {
-		return nil
-	}
-	var tf struct {
-		Tasks map[string]struct {
-			Desc    string   `yaml:"desc"`
-			Aliases []string `yaml:"aliases"`
-		} `yaml:"tasks"`
-	}
-	lang.Throw(yaml.Unmarshal(data, &tf))
-	out := make(map[string]string, len(tf.Tasks))
-	for name, t := range tf.Tasks {
-		out[name] = t.Desc
-		// aliases inherit the canonical task's description so wrap() can find them.
-		for _, alias := range t.Aliases {
-			out[alias] = t.Desc
-		}
-	}
-	return out
 }
 
 // snapshotBinPath replicates the SNAPSHOT_BIN computation from the prior Taskfile:

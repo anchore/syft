@@ -1,0 +1,5 @@
+%{
+  "cowlib": {:hex, :cowlib, "2.11.0", "aaa", [:make, :rebar3], [], "hexpm", "bbb"},
+  "ranch": {:hex, :ranch, "1.8.0", "ccc", [:make, :rebar3], [], "hexpm", "ddd"},
+  "cowboy": {:hex, :cowboy, "2.9.0", "eee", [:make, :rebar3], [{:cowlib, "2.11.0", [hex: :cowlib, repo: "hexpm", optional: false]}, {:ranch, "1.8.0", [hex: :ranch, repo: "hexpm", optional: false]}], "hexpm", "fff"},
+}

@@ -28,6 +28,18 @@ func DefaultClassifiers() []binutils.Classifier {
 		// ruby 2.7.7p221 (2022-11-24 revision 168ec2b1e5) [x86_64-linux]
 		`(?m)ruby (?P<version>[0-9]+\.[0-9]+\.[0-9]+((p|preview|rc|dev)[0-9]*)?) `)
 
+	// all Elastic Beats (filebeat, metricbeat, heartbeat, packetbeat, auditbeat)
+	var elasticBeatsMatcher = binutils.MatchAny(
+		// 9.x:    forcestdinsetupTest 9.4.2%s %w (filebeat/metricbeat/auditbeat)
+		//         forcestdinsetupTest 9.4.2input (heartbeat/packetbeat)
+		m.FileContentsVersionMatcher(`Test (?P<version>[0-9]+\.[0-9]+\.[0-9]+)[a-z%]`),
+		// 9.x:    exportconfigcreateplugin9.4.2-globalclient
+		// 8.18.x: exportconfigcreateplugin8.18.4globalclient
+		m.FileContentsVersionMatcher(`plugin(?:output)?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)[-a-z]`),
+		// 8.11.x: 5m.rate8.11.2-9765625
+		m.FileContentsVersionMatcher(`5m\.rate(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-`),
+	)
+
 	classifiers := []binutils.Classifier{
 		{
 			Class:    "python-binary",
@@ -1064,6 +1076,20 @@ func DefaultClassifiers() []binutils.Classifier {
 				m.FileContentsVersionMatcher(`(?s)\[source/.{0,200}\x00(?P<version>1\.1[0-9]\.[0-9]+(-dev)?)\x00`),
 				// 1.x [NUL]1.6.0[NUL]RELEASE
 				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.[0-9]\.[0-9]+(-dev)?)\x00.{0,20}RELEASE`),
+				// contrib 1.3x [NUL]1.34.12[NUL]envoy_quiche... or [NUL]1.30.2[NUL]envoy/extensions... or [NUL]1.30.8[NUL]envoy://
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00envoy[/._:]`),
+				// contrib 1.3x [NUL]1.30.7[NUL]...envoy.service or [NUL]1.30.6[NUL]...envoy.data
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,200}envoy[./]`),
+				// contrib1.3x [NUL]1.31.2[NUL]...envoy_quic or [NUL]1.36.x[NUL]...envoy_quic
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00.{0,1000}envoy_quic`),
+				// contrib 1.3x [NUL]1.30.1[NUL]TLS client
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.3[0-9]\.[0-9]+(-dev)?)\x00TLS `),
+				// contrib 1.2x [NUL]1.24.9[NUL]envoy/extensions...
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00envoy[/._]`),
+				// contrib 1.2x [NUL]1.22.10[NUL]...envoy. or [NUL]1.24.5[NUL]...envoy.
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00.{0,500}envoy\.`),
+				// contrib 1.2x [NUL]1.23.7[NUL]...envoy_internal
+				m.FileContentsVersionMatcher(`(?s)\x00(?P<version>1\.2[0-9]\.[0-9]+(-dev)?)\x00.{0,300}envoy_`),
 			),
 			Package: "envoy",
 			PURL:    mustPURL("pkg:generic/envoy@version"),
@@ -1111,6 +1137,46 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:           "filebeat-binary",
+			FileGlob:        "**/filebeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "filebeat",
+			PURL:            mustPURL("pkg:generic/filebeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:filebeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "metricbeat-binary",
+			FileGlob:        "**/metricbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "metricbeat",
+			PURL:            mustPURL("pkg:generic/metricbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:metricbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "heartbeat-binary",
+			FileGlob:        "**/heartbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "heartbeat",
+			PURL:            mustPURL("pkg:generic/heartbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:heartbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "packetbeat-binary",
+			FileGlob:        "**/packetbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "packetbeat",
+			PURL:            mustPURL("pkg:generic/packetbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:packetbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "auditbeat-binary",
+			FileGlob:        "**/auditbeat",
+			EvidenceMatcher: elasticBeatsMatcher,
+			Package:         "auditbeat",
+			PURL:            mustPURL("pkg:generic/auditbeat@version"),
+			CPEs:            singleCPE("cpe:2.3:a:elastic:auditbeat:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "elastic-agent-binary",
 			FileGlob: "**/elastic-agent",
 			EvidenceMatcher: binutils.MatchAny(
@@ -1124,6 +1190,32 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "elastic-agent",
 			PURL:    mustPURL("pkg:generic/elastic-agent@version"),
 			CPEs:    singleCPE("cpe:2.3:a:elastic:elastic_agent:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "krb5-library",
+			FileGlob: "**/libkrb5.so*",
+			// [NUL]KRB5_BRAND: krb5-1.18.4-final 1.18.4 20210722
+			// [NUL]KRB5_BRAND: krb5-1.17-final 1.17 20190108  (base releases brand as 2-component)
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`\x00KRB5_BRAND:\s+krb5-[^\s]+\s+(?P<version>[0-9]+(?:\.[0-9]+){1,2})(?:\s|$)`,
+			),
+			Package: "krb5",
+			PURL:    mustPURL("pkg:generic/krb5@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mit:kerberos_5:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "heimdal-krb5-library",
+			FileGlob: "**/libkrb5.so*",
+			// $Version: Heimdal 7.5.0
+			// $Version: Heimdal 7.8.0
+			// $Version: Heimdal 7.1
+			// $Version: Heimdal 7.0.3
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`(?m)\$Version:\s+Heimdal\s+(?P<version>[0-9]+(?:\.[0-9]+){1,2})(?:\s|$)`,
+			),
+			Package: "heimdal-krb5",
+			PURL:    mustPURL("pkg:generic/heimdal-krb5@version"),
+			CPEs:    singleCPE("cpe:2.3:a:heimdal_project:heimdal:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 

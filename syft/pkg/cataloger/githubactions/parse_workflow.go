@@ -19,6 +19,8 @@ var (
 	_ generic.Parser = parseWorkflowForWorkflowUsage
 )
 
+var versionRegex = regexp.MustCompile(`v?\d+(\.\d+)*`)
+
 type workflowDef struct {
 	Jobs map[string]workflowJobDef `yaml:"jobs"`
 }
@@ -185,7 +187,6 @@ func processUsesNode(node *yaml.Node, wf *workflowDef, currentJob *string, curre
 	}
 
 	if comment != "" {
-		versionRegex := regexp.MustCompile(`v?\d+(\.\d+)*`)
 		versionMatch := versionRegex.FindString(comment)
 
 		if versionMatch != "" {

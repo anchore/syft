@@ -748,6 +748,45 @@
       ],
       "description": "DartPubspecLockEntry is a struct that represents a single entry found in the \"packages\" section in a Dart pubspec.lock file."
     },
+    "DenoLockEntry": {
+      "properties": {
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is the crpto hash of the package content for verification"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies is the list of package specifiers that this package depends on"
+        }
+      },
+      "type": "object",
+      "required": [
+        "integrity",
+        "dependencies"
+      ],
+      "description": "DenoLockEntry is a struct that rep a single entry found in the \"packages\" section of a Deno deno.lock file"
+    },
+    "DenoRemoteLockEntry": {
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL is the remote URL from which the module fetcef"
+        },
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is the crpto hash of the package content for verification"
+        }
+      },
+      "type": "object",
+      "required": [
+        "url",
+        "integrity"
+      ],
+      "description": "DenoRemoteLockEntry is a struct that rep a single entry found in the \"remote\" section of a Deno deno.lock file"
+    },
     "Descriptor": {
       "properties": {
         "name": {
@@ -2659,6 +2698,12 @@
               "$ref": "#/$defs/DartPubspecLockEntry"
             },
             {
+              "$ref": "#/$defs/DenoLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DenoRemoteLockEntry"
+            },
+            {
               "$ref": "#/$defs/DotnetDepsEntry"
             },
             {
@@ -2798,9 +2843,6 @@
             },
             {
               "$ref": "#/$defs/RustCargoLockEntry"
-            },
-            {
-              "$ref": "#/$defs/SafetensorsModelInfo"
             },
             {
               "$ref": "#/$defs/SnapEntry"
@@ -4089,55 +4131,6 @@
         "dependencies"
       ],
       "description": "RustCargoLockEntry represents a locked dependency from a Cargo.lock file with precise version and checksum information."
-    },
-    "SafetensorsModelInfo": {
-      "properties": {
-        "format": {
-          "type": "string",
-          "description": "Format is the source format label (always \"safetensors\" for this metadata type).\nPresent because the Docker AI model config blob carries an explicit format field"
-        },
-        "architecture": {
-          "type": "string",
-          "description": "Architecture is the model architecture (e.g., \"LlamaForCausalLM\",\n\"Qwen3MoeForConditionalGeneration\"). It is not present in the SafeTensors\nheader itself; it is enriched from the companion config.json\n\"architectures\" array when one is found alongside the model."
-        },
-        "quantization": {
-          "type": "string",
-          "description": "Quantization describes tensor precision (e.g., \"BF16\", \"F16\", \"F32\", \"INT8\")."
-        },
-        "parameters": {
-          "type": "string",
-          "description": "Parameters is the parameter count as reported by upstream. Stored as a string\nbecause Docker AI and Hugging Face labels use notation like \"2.68B\" or \"35B-A3B\"."
-        },
-        "tensorCount": {
-          "type": "integer",
-          "description": "TensorCount is the number of tensor entries in the file header."
-        },
-        "totalSize": {
-          "type": "string",
-          "description": "TotalSize is the total byte size of tensor data across all shards when known\n(from the Docker AI model config \"size\" field)."
-        },
-        "shardCount": {
-          "type": "integer",
-          "description": "ShardCount is the number of .safetensors shards for a sharded model (1 for a\nsingle-file model)."
-        },
-        "userMetadata": {
-          "$ref": "#/$defs/KeyValues",
-          "description": "UserMetadata is the optional \"__metadata__\" map from a .safetensors file header\n(string-to-string key/values set by the producer)."
-        },
-        "metadataHash": {
-          "type": "string",
-          "description": "MetadataHash is an xxhash over the on-disk SafeTensors header (sorted tensor\nentries + __metadata__). It is derived ONLY from the safetensors file bytes."
-        },
-        "parts": {
-          "items": {
-            "$ref": "#/$defs/SafetensorsModelInfo"
-          },
-          "type": "array",
-          "description": "Parts contains metadata from additional SafeTensors shards or OCI layers that\nwere merged into this package during post-processing."
-        }
-      },
-      "type": "object",
-      "description": "SafeTensorsModelInfo holds the model details extracted from SafeTensors content."
     },
     "Schema": {
       "properties": {
