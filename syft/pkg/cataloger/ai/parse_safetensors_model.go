@@ -31,12 +31,10 @@ func parseSafeTensorsFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		TensorCount:  uint64(len(header.tensors)),
+		Parameters:   header.parameterCount(),
 		Quantization: normalizeDType(header.dominantDType()),
 		UserMetadata: userMetadataKeyValues(header.metadata),
 		MetadataHash: header.metadataHash(),
-	}
-	if p := header.parameterCount(); p > 0 {
-		md.Parameters = formatParameterCount(p)
 	}
 
 	p := newSafeTensorsPackage(
@@ -44,22 +42,6 @@ func parseSafeTensorsFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse safetensors file")
-}
-
-// formatParameterCount prints a count like 6_700_000_000 as "6.70B" using
-// B/M/K thresholds matching the notation used by Hugging Face and Docker AI
-// labels.
-func formatParameterCount(n uint64) string {
-	switch {
-	case n >= 1_000_000_000:
-		return fmt.Sprintf("%.2fB", float64(n)/1_000_000_000)
-	case n >= 1_000_000:
-		return fmt.Sprintf("%.2fM", float64(n)/1_000_000)
-	case n >= 1_000:
-		return fmt.Sprintf("%.2fK", float64(n)/1_000)
-	default:
-		return fmt.Sprintf("%d", n)
-	}
 }
 
 // integrity check

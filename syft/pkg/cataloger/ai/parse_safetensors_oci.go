@@ -39,7 +39,6 @@ type dockerAIModelConfig struct {
 	Config struct {
 		Format       string `json:"format"`
 		Quantization string `json:"quantization"`
-		Parameters   string `json:"parameters"`
 		Size         string `json:"size"`
 		SafeTensors  struct {
 			TensorCount json.Number `json:"tensor_count"`
@@ -65,10 +64,13 @@ func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.En
 		return nil, nil, nil
 	}
 
+	// Parameters is intentionally not read from the config blob: we measure the
+	// true parameter count from the SafeTensors layer headers (parseSafeTensorsOCILayer)
+	// so OCI and directory scans of the same model agree, rather than trusting the
+	// producer-supplied label here.
 	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		Quantization: cfg.Config.Quantization,
-		Parameters:   cfg.Config.Parameters,
 		TotalSize:    cfg.Config.Size,
 	}
 	if n, err := cfg.Config.SafeTensors.TensorCount.Int64(); err == nil && n > 0 {
@@ -95,12 +97,10 @@ func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Env
 	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		TensorCount:  uint64(len(header.tensors)),
+		Parameters:   header.parameterCount(),
 		Quantization: normalizeDType(header.dominantDType()),
 		UserMetadata: userMetadataKeyValues(header.metadata),
 		MetadataHash: header.metadataHash(),
-	}
-	if p := header.parameterCount(); p > 0 {
-		md.Parameters = formatParameterCount(p)
 	}
 
 	p := newSafeTensorsPackage(

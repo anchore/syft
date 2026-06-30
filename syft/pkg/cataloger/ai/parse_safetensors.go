@@ -51,14 +51,14 @@ func readSafeTensorsHeader(r io.Reader) (*safeTensorsHeader, error) {
 		return nil, fmt.Errorf("safetensors header size %d exceeds maximum %d", headerLen, maxSafeTensorsHeaderSize)
 	}
 
-        // Read incrementally rather than pre-allocating headerLen up front
-        body, err := io.ReadAll(io.LimitReader(r, int64(headerLen)))
-        if err != nil {
+	// Read incrementally rather than pre-allocating headerLen up front
+	body, err := io.ReadAll(io.LimitReader(r, int64(headerLen)))
+	if err != nil {
 		return nil, fmt.Errorf("failed to read header body: %w", err)
 	}
-        if uint64(len(body)) != headerLen {
-                return nil, fmt.Errorf("safetensors header truncated: read %d of %d bytes", len(body), headerLen)
-        }
+	if uint64(len(body)) != headerLen {
+		return nil, fmt.Errorf("safetensors header truncated: read %d of %d bytes", len(body), headerLen)
+	}
 
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(body, &raw); err != nil {
@@ -131,19 +131,19 @@ func (h *safeTensorsHeader) dominantDType() string {
 // (name + dtype + shape) plus the __metadata__ map. Tensor keys are sorted to
 // keep the hash deterministic across producers.
 func (h *safeTensorsHeader) metadataHash() string {
-        type logicalEntry struct {
-                Name  string  `json:"name"`
-                DType string  `json:"dtype"`
-                Shape []int64 `json:"shape"`
+	type logicalEntry struct {
+		Name  string  `json:"name"`
+		DType string  `json:"dtype"`
+		Shape []int64 `json:"shape"`
 	}
-        entries := make([]logicalEntry, 0, len(h.tensors))
+	entries := make([]logicalEntry, 0, len(h.tensors))
 	for name, t := range h.tensors {
-                entries = append(entries, logicalEntry{Name: name, DType: t.DType, Shape: t.Shape})
+		entries = append(entries, logicalEntry{Name: name, DType: t.DType, Shape: t.Shape})
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Name < entries[j].Name })
 
 	type hashInput struct {
-                Tensors  []logicalEntry    `json:"tensors"`
+		Tensors  []logicalEntry    `json:"tensors"`
 		Metadata map[string]string `json:"metadata,omitempty"`
 	}
 	b, err := json.Marshal(hashInput{Tensors: entries, Metadata: h.metadata})

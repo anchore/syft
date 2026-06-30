@@ -59,7 +59,6 @@ func mergeAggregatesInto(merged *pkg.SafeTensorsModelInfo, aggregates []pkg.Safe
 		if merged.TensorCount == 0 {
 			merged.TensorCount = a.TensorCount
 		}
-		firstNonEmpty(&merged.Parameters, a.Parameters)
 		firstNonEmpty(&merged.TotalSize, a.TotalSize)
 		firstNonEmpty(&merged.Quantization, a.Quantization)
 	}
@@ -69,12 +68,15 @@ func mergeAggregatesInto(merged *pkg.SafeTensorsModelInfo, aggregates []pkg.Safe
 // the summed shard TensorCount and the list of non-empty per-shard hashes for
 // the rollup. Shards carry only the content-derived fields (Quantization,
 // Parameters, UserMetadata), so those are the only fields folded in here.
+// TensorCount and Parameters are summed because each shard holds a distinct
+// slice of the model; Quantization takes the first value since all shards share
+// one precision.
 func mergeShardsInto(merged *pkg.SafeTensorsModelInfo, shards []pkg.SafeTensorsModelInfo) (shardTensorTotal uint64, hashes []string) {
 	seenKV := map[string]bool{}
 	for _, s := range shards {
 		shardTensorTotal += s.TensorCount
+		merged.Parameters += s.Parameters
 		firstNonEmpty(&merged.Quantization, s.Quantization)
-		firstNonEmpty(&merged.Parameters, s.Parameters)
 		for _, kv := range s.UserMetadata {
 			if seenKV[kv.Key] {
 				continue

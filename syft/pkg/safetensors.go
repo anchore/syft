@@ -18,9 +18,10 @@ type SafeTensorsModelInfo struct {
 	// Quantization describes tensor precision (e.g., "BF16", "F16", "F32", "INT8").
 	Quantization string `json:"quantization,omitempty" cyclonedx:"quantization"`
 
-	// Parameters is the parameter count as reported by upstream. Stored as a string
-	// because Docker AI and Hugging Face labels use notation like "2.68B" or "35B-A3B".
-	Parameters string `json:"parameters,omitempty" cyclonedx:"parameters"`
+	// Parameters is the total number of model parameters, computed from the tensor
+	// shapes in the SafeTensors header(s). For a sharded model it is the sum across
+	// every shard.
+	Parameters uint64 `json:"parameters,omitempty" cyclonedx:"parameters"`
 
 	// TensorCount is the number of tensor entries in the file header.
 	TensorCount uint64 `json:"tensorCount,omitempty" cyclonedx:"tensorCount"`

@@ -27,7 +27,7 @@ func shardMeta(hash string, tensorCount uint64) pkg.SafeTensorsModelInfo {
 		Format:       "safetensors",
 		TensorCount:  tensorCount,
 		Quantization: "BF16",
-		Parameters:   "1.00K",
+		Parameters:   1000,
 		MetadataHash: hash,
 	}
 }
@@ -60,6 +60,7 @@ func TestMergeSafeTensorsGroup(t *testing.T) {
 		md := out.Metadata.(pkg.SafeTensorsModelInfo)
 		assert.Equal(t, 3, md.ShardCount)
 		assert.Equal(t, uint64(9), md.TensorCount, "tensor counts are summed across shards")
+		assert.Equal(t, uint64(3000), md.Parameters, "parameter counts are summed across shards")
 		require.Len(t, md.Parts, 3)
 		assert.Equal(t,
 			[]string{"aaaa", "bbbb", "cccc"},
@@ -85,7 +86,6 @@ func TestMergeSafeTensorsGroup(t *testing.T) {
 			Format:       "safetensors",
 			TensorCount:  999,
 			TotalSize:    "5.00GB",
-			Parameters:   "2.68B",
 			Quantization: "Q4_K_M",
 		}
 		in := []pkg.Package{
@@ -98,7 +98,7 @@ func TestMergeSafeTensorsGroup(t *testing.T) {
 		md := out.Metadata.(pkg.SafeTensorsModelInfo)
 		assert.Equal(t, uint64(999), md.TensorCount, "aggregate TensorCount is authoritative; shard counts are not summed in")
 		assert.Equal(t, "5.00GB", md.TotalSize)
-		assert.Equal(t, "2.68B", md.Parameters)
+		assert.Equal(t, uint64(2000), md.Parameters, "parameters are always measured from the shards (summed), not taken from the aggregate")
 		assert.Equal(t, "Q4_K_M", md.Quantization, "aggregate quantization wins over the shard dtype")
 		assert.Equal(t, 2, md.ShardCount, "ShardCount comes from the number of shards, not the aggregate")
 		assert.Equal(t, rollupHash([]string{"aaaa", "bbbb"}), md.MetadataHash, "the content hash still rolls up the shard hashes")

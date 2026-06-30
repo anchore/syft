@@ -83,7 +83,7 @@ func TestSafeTensorsCataloger(t *testing.T) {
 			Format:       "safetensors",
 			Architecture: architecture,
 			Quantization: "BF16",
-			Parameters:   "16.26K",
+			Parameters:   16256,
 			TensorCount:  2,
 			ShardCount:   1,
 			UserMetadata: pkg.KeyValues{{Key: "format", Value: "pt"}},
@@ -344,12 +344,13 @@ func TestParseSafeTensorsOCIConfig(t *testing.T) {
 				{
 					// nameless: the merge processor assigns the name and resolves
 					// licenses. Config blobs carry no header content, so
-					// MetadataHash stays empty.
+					// MetadataHash stays empty. The "parameters" label in the blob is
+					// intentionally ignored: the true count is measured from the
+					// SafeTensors layer headers, so Parameters stays zero here.
 					Type: pkg.ModelPkg,
 					Metadata: pkg.SafeTensorsModelInfo{
 						Format:       "safetensors",
 						Quantization: "Q4_K_M",
-						Parameters:   "8B",
 						TotalSize:    "16.00GB",
 						TensorCount:  291,
 					},
@@ -708,7 +709,7 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 				Type: pkg.ModelPkg,
 				Metadata: pkg.SafeTensorsModelInfo{
 					Format:       "safetensors",
-					Parameters:   "16.64K",
+					Parameters:   16640,
 					Quantization: "BF16",
 					TensorCount:  2,
 					UserMetadata: wantUserMetadata,
@@ -740,7 +741,6 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 			Type: pkg.ModelPkg,
 			Metadata: pkg.SafeTensorsModelInfo{
 				Format:       "safetensors",
-				Parameters:   "2.68B",
 				TotalSize:    "5.00GB",
 				Quantization: "Q4_K_M", // raw producer string
 				TensorCount:  9999,
@@ -767,11 +767,13 @@ func TestParseSafeTensorsOCILayer(t *testing.T) {
 		got := out[0]
 		assert.Equal(t, "qwen-test", got.Name, "name comes from the companion config.json _name_or_path")
 		md := got.Metadata.(pkg.SafeTensorsModelInfo)
-		// Aggregate-declared fields win for totals; per-shard count must NOT be
-		// summed into the aggregate.
+		// Aggregate-declared TensorCount/TotalSize win as authoritative totals; the
+		// per-shard TensorCount must NOT be summed into the aggregate. Parameters is
+		// the exception: it is always measured from the shard layer header (here the
+		// 16640-element blob), never taken from the config aggregate.
 		assert.Equal(t, uint64(9999), md.TensorCount)
 		assert.Equal(t, "5.00GB", md.TotalSize)
-		assert.Equal(t, "2.68B", md.Parameters)
+		assert.Equal(t, uint64(16640), md.Parameters)
 		// Aggregate Quantization wins when set; shard's normalized dtype is the
 		// fallback (not exercised here because the config had Q4_K_M).
 		assert.Equal(t, "Q4_K_M", md.Quantization)
@@ -804,11 +806,11 @@ func TestParseSafeTensorsOCILayer_realFixture(t *testing.T) {
 			Type: pkg.ModelPkg,
 			Metadata: pkg.SafeTensorsModelInfo{
 				Format:       "safetensors",
-				Parameters:   "475.29M",
-				Quantization: "F32", // every tensor in the captured shard is F32
-				TensorCount:  148,   // nomic-embed-v2-moe 475M ships 148 tensor entries in this shard
+				Parameters:   475292928, // exact element count summed across the 148 tensors in this shard
+				Quantization: "F32",     // every tensor in the captured shard is F32
+				TensorCount:  148,       // nomic-embed-v2-moe 475M ships 148 tensor entries in this shard
 				UserMetadata: pkg.KeyValues{{Key: "format", Value: "pt"}},
-				MetadataHash: "051a14e686673dea",
+				MetadataHash: "6026c28a883ab918",
 			},
 		},
 	}
@@ -976,24 +978,6 @@ func TestNormalizeDType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, normalizeDType(tt.in))
-		})
-	}
-}
-
-func TestFormatParameterCount(t *testing.T) {
-	tests := []struct {
-		name string
-		in   uint64
-		want string
-	}{
-		{name: "raw count under 1K", in: 512, want: "512"},
-		{name: "thousands", in: 16256, want: "16.26K"},
-		{name: "billions", in: 2_680_000_000, want: "2.68B"},
-		{name: "millions", in: 35_000_000, want: "35.00M"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, formatParameterCount(tt.in))
 		})
 	}
 }

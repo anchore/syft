@@ -4221,8 +4221,8 @@
           "description": "Quantization describes tensor precision (e.g., \"BF16\", \"F16\", \"F32\", \"INT8\")."
         },
         "parameters": {
-          "type": "string",
-          "description": "Parameters is the parameter count as reported by upstream. Stored as a string\nbecause Docker AI and Hugging Face labels use notation like \"2.68B\" or \"35B-A3B\"."
+          "type": "integer",
+          "description": "Parameters is the total number of model parameters, computed from the tensor\nshapes in the SafeTensors header(s). For a sharded model it is the sum across\nevery shard."
         },
         "tensorCount": {
           "type": "integer",
