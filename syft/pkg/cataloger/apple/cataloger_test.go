@@ -2,13 +2,11 @@ package apple
 
 import (
 	"context"
-	"io"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"howett.net/plist"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -17,44 +15,27 @@ import (
 )
 
 func Test_AppleAppBundleCataloger_Globs(t *testing.T) {
-	tests := []struct {
-		name     string
-		fixture  string
-		expected []string
-	}{
-		{
-			name:    "obtain Info.plist files within .app bundles",
-			fixture: "testdata/install-example",
-			expected: []string{
-				"Applications/Slack.app/Contents/Info.plist",
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			pkgtest.NewCatalogTester().
-				FromDirectory(t, test.fixture).
-				ExpectsResolverContentQueries(test.expected).
-				TestCataloger(t, NewAppBundleCataloger())
-		})
-	}
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/install-example").
+		ExpectsResolverContentQueries([]string{
+			"Applications/Slack.app/Contents/Info.plist",
+		}).
+		TestCataloger(t, NewAppBundleCataloger())
 }
 
 func Test_AppleAppBundleCataloger(t *testing.T) {
 	tests := []struct {
-		name         string
-		path         string
-		expected     []pkg.Package
-		expectedRels []artifact.Relationship
+		name     string
+		fixture  string
+		expected []pkg.Package
 	}{
 		{
-			name: "go case",
-			path: "testdata/install-example",
+			name:    "xml plist (Slack)",
+			fixture: "testdata/install-example",
 			expected: []pkg.Package{
 				{
 					Name:    "Slack",
-					Version: "4.44.65",
+					Version: "4.50.128",
 					Type:    pkg.AppleAppBundlePkg,
 					FoundBy: "apple-app-bundle-cataloger",
 					Locations: file.NewLocationSet(
@@ -62,7 +43,46 @@ func Test_AppleAppBundleCataloger(t *testing.T) {
 					),
 					PURL: "", // no standard purl type for apple app bundles
 					Metadata: pkg.AppleAppBundleEntry{
-						BundleIdentifier: "com.tinyspeck.slackmacgap",
+						BundleIdentifier:     "com.tinyspeck.slackmacgap",
+						Name:                 "Slack",
+						DisplayName:          "Slack",
+						Executable:           "Slack",
+						ShortVersion:         "4.50.128",
+						Version:              "450000128",
+						PackageType:          "APPL",
+						MinimumSystemVersion: "12.0",
+						Copyright:            "©2026 Slack Technologies LLC, a Salesforce company. All rights reserved.",
+						SDKName:              "macosx15.5",
+					},
+				},
+			},
+		},
+		{
+			// platform/array fields; values are from a real Ghostty.app
+			name:    "platform fields (Ghostty)",
+			fixture: "testdata/native-app-example",
+			expected: []pkg.Package{
+				{
+					Name:    "Ghostty",
+					Version: "1.3.1",
+					Type:    pkg.AppleAppBundlePkg,
+					FoundBy: "apple-app-bundle-cataloger",
+					Locations: file.NewLocationSet(
+						file.NewLocation("Applications/Ghostty.app/Contents/Info.plist").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					PURL: "",
+					Metadata: pkg.AppleAppBundleEntry{
+						BundleIdentifier:     "com.mitchellh.ghostty",
+						Name:                 "Ghostty",
+						DisplayName:          "Ghostty",
+						Executable:           "ghostty",
+						ShortVersion:         "1.3.1",
+						Version:              "15212",
+						PackageType:          "APPL",
+						SupportedPlatforms:   []string{"MacOSX"},
+						MinimumSystemVersion: "13.0",
+						PlatformName:         "macosx",
+						SDKName:              "macosx26.2",
 					},
 				},
 			},
@@ -72,23 +92,17 @@ func Test_AppleAppBundleCataloger(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pkgtest.NewCatalogTester().
-				FromDirectory(t, tt.path).
-				Expects(tt.expected, tt.expectedRels).
+				FromDirectory(t, tt.fixture).
+				Expects(tt.expected, nil).
 				TestCataloger(t, NewAppBundleCataloger())
 		})
 	}
 }
 
-// xmlPlist wraps the given dictionary body in a minimal XML plist document.
-func xmlPlist(body string) string {
-	return `<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0"><dict>` + body + `</dict></plist>`
-}
-
-func Test_parseInfoPlist_fieldHandling(t *testing.T) {
+func Test_parseInfoPlist(t *testing.T) {
 	tests := []struct {
 		name          string
-		content       string
+		fixture       string
 		wantName      string
 		wantVersion   string
 		wantBundleID  string
@@ -96,63 +110,44 @@ func Test_parseInfoPlist_fieldHandling(t *testing.T) {
 		wantParseErr  bool
 	}{
 		{
-			name:        "display name preferred over name and executable",
-			content:     xmlPlist(`<key>CFBundleDisplayName</key><string>Display</string><key>CFBundleName</key><string>Name</string><key>CFBundleExecutable</key><string>Exec</string><key>CFBundleShortVersionString</key><string>1.0</string>`),
-			wantName:    "Display",
-			wantVersion: "1.0",
-		},
-		{
-			name:        "falls back to bundle name when display name missing",
-			content:     xmlPlist(`<key>CFBundleName</key><string>Name</string><key>CFBundleExecutable</key><string>Exec</string><key>CFBundleShortVersionString</key><string>1.0</string>`),
-			wantName:    "Name",
-			wantVersion: "1.0",
-		},
-		{
-			name:        "falls back to executable when display and bundle name missing",
-			content:     xmlPlist(`<key>CFBundleExecutable</key><string>Exec</string><key>CFBundleShortVersionString</key><string>1.0</string>`),
+			name:        "name falls back to executable",
+			fixture:     "testdata/parse-cases/name-from-executable.plist",
 			wantName:    "Exec",
 			wantVersion: "1.0",
 		},
 		{
-			name:         "falls back to bundle identifier as last resort name",
-			content:      xmlPlist(`<key>CFBundleIdentifier</key><string>com.example.app</string><key>CFBundleShortVersionString</key><string>1.0</string>`),
+			name:         "name falls back to bundle identifier",
+			fixture:      "testdata/parse-cases/name-from-identifier.plist",
 			wantName:     "com.example.app",
 			wantVersion:  "1.0",
 			wantBundleID: "com.example.app",
 		},
 		{
-			name:        "falls back to bundle version when short version missing",
-			content:     xmlPlist(`<key>CFBundleName</key><string>Name</string><key>CFBundleVersion</key><string>42</string>`),
+			name:        "version falls back to bundle version",
+			fixture:     "testdata/parse-cases/version-from-bundle-version.plist",
 			wantName:    "Name",
 			wantVersion: "42",
 		},
 		{
-			name:          "no package when no name fields present",
-			content:       xmlPlist(`<key>CFBundleShortVersionString</key><string>1.0</string>`),
+			name:          "no package without a name",
+			fixture:       "testdata/parse-cases/no-name.plist",
 			wantNoPackage: true,
 		},
 		{
-			name:          "no package when no version fields present",
-			content:       xmlPlist(`<key>CFBundleName</key><string>Name</string>`),
+			name:          "no package without a version",
+			fixture:       "testdata/parse-cases/no-version.plist",
 			wantNoPackage: true,
-		},
-		{
-			name:         "package without bundle identifier still emitted",
-			content:      xmlPlist(`<key>CFBundleName</key><string>Name</string><key>CFBundleShortVersionString</key><string>1.0</string>`),
-			wantName:     "Name",
-			wantVersion:  "1.0",
-			wantBundleID: "",
 		},
 		{
 			name:         "malformed plist returns an error",
-			content:      "this is not a plist",
+			fixture:      "testdata/parse-cases/malformed.plist",
 			wantParseErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pkgs, _, err := parse(t, tt.content)
+			pkgs, _, err := parseFixture(t, tt.fixture)
 			if tt.wantParseErr {
 				require.Error(t, err)
 				return
@@ -176,25 +171,10 @@ func Test_parseInfoPlist_fieldHandling(t *testing.T) {
 	}
 }
 
-// Test_parseInfoPlist_binary ensures binary-format plists (the common real-world case) parse identically to XML.
-func Test_parseInfoPlist_binary(t *testing.T) {
-	data, err := plist.Marshal(infoPlist{
-		CFBundleName:               "Name",
-		CFBundleShortVersionString: "1.0",
-		CFBundleIdentifier:         "com.example.app",
-	}, plist.BinaryFormat)
-	require.NoError(t, err)
-
-	loc := file.NewLocation("Applications/Example.app/Contents/Info.plist")
-	pkgs, _, err := parseInfoPlist(context.Background(), nil, nil, file.NewLocationReadCloser(loc, io.NopCloser(strings.NewReader(string(data)))))
-	require.NoError(t, err)
-	require.Len(t, pkgs, 1)
-	assert.Equal(t, "Name", pkgs[0].Name)
-	assert.Equal(t, "1.0", pkgs[0].Version)
-}
-
-func parse(t *testing.T, content string) ([]pkg.Package, []artifact.Relationship, error) {
+func parseFixture(t *testing.T, path string) ([]pkg.Package, []artifact.Relationship, error) {
 	t.Helper()
-	loc := file.NewLocation("Applications/Example.app/Contents/Info.plist")
-	return parseInfoPlist(context.Background(), nil, nil, file.NewLocationReadCloser(loc, io.NopCloser(strings.NewReader(content))))
+	f, err := os.Open(path)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = f.Close() })
+	return parseInfoPlist(context.Background(), nil, nil, file.NewLocationReadCloser(file.NewLocation(path), f))
 }

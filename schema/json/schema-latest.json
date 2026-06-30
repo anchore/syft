@@ -253,7 +253,58 @@
       "properties": {
         "bundleIdentifier": {
           "type": "string",
-          "description": "BundleIdentifier is the unique identifier for the application (e.g. \"com.apple.Safari\")"
+          "description": "BundleIdentifier is the unique identifier for the bundle (e.g. \"com.apple.Safari\")"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name is the short name of the bundle"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "DisplayName is the user-facing name of the bundle"
+        },
+        "executable": {
+          "type": "string",
+          "description": "Executable is the name of the executable within the bundle"
+        },
+        "shortVersion": {
+          "type": "string",
+          "description": "ShortVersion is the release (marketing) version of the bundle"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the build version of the bundle, which often differs from the short version"
+        },
+        "packageType": {
+          "type": "string",
+          "description": "PackageType is the four-letter type code (e.g. \"APPL\" for apps, \"FMWK\" for frameworks, \"BNDL\" for bundles)"
+        },
+        "supportedPlatforms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "SupportedPlatforms lists the platforms the bundle targets (e.g. \"MacOSX\", \"iPhoneOS\")"
+        },
+        "minimumSystemVersion": {
+          "type": "string",
+          "description": "MinimumSystemVersion is the minimum macOS version required to run the bundle"
+        },
+        "minimumOSVersion": {
+          "type": "string",
+          "description": "MinimumOSVersion is the minimum OS version required for non-macOS platforms (e.g. iOS)"
+        },
+        "copyright": {
+          "type": "string",
+          "description": "Copyright is the human-readable copyright notice for the bundle"
+        },
+        "platformName": {
+          "type": "string",
+          "description": "PlatformName is the platform name of the SDK used to build the bundle (e.g. \"macosx\")"
+        },
+        "sdkName": {
+          "type": "string",
+          "description": "SDKName is the name of the SDK used to build the bundle (e.g. \"macosx14.0\")"
         }
       },
       "type": "object",

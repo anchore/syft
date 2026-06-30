@@ -13,13 +13,22 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+// infoPlist captures the raw CFBundle keys read from an Info.plist. It is kept separate from the public
+// pkg.AppleAppBundleEntry so the parser can read fields without committing to expressing all of them.
 type infoPlist struct {
-	CFBundleDisplayName        string `plist:"CFBundleDisplayName"`
-	CFBundleName               string `plist:"CFBundleName"`
-	CFBundleExecutable         string `plist:"CFBundleExecutable"`
-	CFBundleIdentifier         string `plist:"CFBundleIdentifier"`
-	CFBundleShortVersionString string `plist:"CFBundleShortVersionString"`
-	CFBundleVersion            string `plist:"CFBundleVersion"`
+	CFBundleIdentifier         string   `plist:"CFBundleIdentifier"`
+	CFBundleName               string   `plist:"CFBundleName"`
+	CFBundleDisplayName        string   `plist:"CFBundleDisplayName"`
+	CFBundleExecutable         string   `plist:"CFBundleExecutable"`
+	CFBundleShortVersionString string   `plist:"CFBundleShortVersionString"`
+	CFBundleVersion            string   `plist:"CFBundleVersion"`
+	CFBundlePackageType        string   `plist:"CFBundlePackageType"`
+	CFBundleSupportedPlatforms []string `plist:"CFBundleSupportedPlatforms"`
+	LSMinimumSystemVersion     string   `plist:"LSMinimumSystemVersion"`
+	MinimumOSVersion           string   `plist:"MinimumOSVersion"`
+	NSHumanReadableCopyright   string   `plist:"NSHumanReadableCopyright"`
+	DTPlatformName             string   `plist:"DTPlatformName"`
+	DTSDKName                  string   `plist:"DTSDKName"`
 }
 
 func parseInfoPlist(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -56,8 +65,27 @@ func parseInfoPlist(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 	}
 
 	pkgs := []pkg.Package{
-		newAppBundlePackage(name, version, info.CFBundleIdentifier, reader.Location),
+		newAppBundlePackage(name, version, info.toEntry(), reader.Location),
 	}
 
 	return pkgs, nil, nil
+}
+
+// toEntry maps the parsed plist into the public metadata type.
+func (i infoPlist) toEntry() pkg.AppleAppBundleEntry {
+	return pkg.AppleAppBundleEntry{
+		BundleIdentifier:     i.CFBundleIdentifier,
+		Name:                 i.CFBundleName,
+		DisplayName:          i.CFBundleDisplayName,
+		Executable:           i.CFBundleExecutable,
+		ShortVersion:         i.CFBundleShortVersionString,
+		Version:              i.CFBundleVersion,
+		PackageType:          i.CFBundlePackageType,
+		SupportedPlatforms:   i.CFBundleSupportedPlatforms,
+		MinimumSystemVersion: i.LSMinimumSystemVersion,
+		MinimumOSVersion:     i.MinimumOSVersion,
+		Copyright:            i.NSHumanReadableCopyright,
+		PlatformName:         i.DTPlatformName,
+		SDKName:              i.DTSDKName,
+	}
 }

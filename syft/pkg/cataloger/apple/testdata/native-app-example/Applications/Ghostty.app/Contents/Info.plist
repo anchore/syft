@@ -2,25 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDisplayName</key>
-	<string>Slack</string>
 	<key>CFBundleName</key>
-	<string>Slack</string>
+	<string>Ghostty</string>
+	<key>CFBundleDisplayName</key>
+	<string>Ghostty</string>
 	<key>CFBundleExecutable</key>
-	<string>Slack</string>
+	<string>ghostty</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.tinyspeck.slackmacgap</string>
+	<string>com.mitchellh.ghostty</string>
 	<key>CFBundleShortVersionString</key>
-	<string>4.50.128</string>
+	<string>1.3.1</string>
 	<key>CFBundleVersion</key>
-	<string>450000128</string>
+	<string>15212</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
 	<key>LSMinimumSystemVersion</key>
-	<string>12.0</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>©2026 Slack Technologies LLC, a Salesforce company. All rights reserved.</string>
+	<string>13.0</string>
+	<key>DTPlatformName</key>
+	<string>macosx</string>
 	<key>DTSDKName</key>
-	<string>macosx15.5</string>
+	<string>macosx26.2</string>
 </dict>
 </plist>
