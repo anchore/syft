@@ -55,6 +55,7 @@ const (
 	VcpkgPkg                Type = "vcpkg"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	AppleAppBundlePkg       Type = "apple-app-bundle"
 	ModelPkg                Type = "model"
 )
 
@@ -101,6 +102,7 @@ var AllPkgs = []Type{
 	VcpkgPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	AppleAppBundlePkg,
 	ModelPkg,
 }
 
