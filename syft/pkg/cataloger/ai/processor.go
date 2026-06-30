@@ -97,8 +97,17 @@ func mergeDirModels(ctx context.Context, resolver file.Resolver, pkgs []pkg.Pack
 	return out
 }
 
-// groupByParentDir buckets filesystem-scanned packages by the directory their
-// primary-evidence file lives in (the shards of one model share a directory).
+// groupByParentDir buckets filesystem-scanned models by the directory their
+// primary-evidence file lives in.
+
+// This encodes a deliberate assumption: a directory holds one logical
+// model, so every .safetensors file in a directory is treated as a shard of the
+// same modeland merged into one package.
+// The trade-off is that if a directory happens to contain several unrelated models,
+// they are merged into one package rather than reported separately.
+// We accept that because the conventional on-disk layout gives each model
+// (with all of its shards) its own directory.
+// We have no reliable per-file signal to tell co-located-but-independent models apart.
 func groupByParentDir(pkgs []pkg.Package) map[string][]pkg.Package {
 	out := make(map[string][]pkg.Package)
 	for _, p := range pkgs {
