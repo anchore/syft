@@ -54,6 +54,7 @@ const (
 	TerraformPkg            Type = "terraform"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	AppleAppBundlePkg       Type = "apple-app-bundle"
 	ModelPkg                Type = "model"
 )
 
@@ -99,6 +100,7 @@ var AllPkgs = []Type{
 	TerraformPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	AppleAppBundlePkg,
 	ModelPkg,
 }
 
