@@ -1,8 +1,15 @@
 package cpp
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/cache"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -11,8 +18,11 @@ import (
 
 func TestParseVcpkgManifest(t *testing.T) {
 
-	// set builtin registry to only have git object data relevant to the test
 	fixture := "testdata/vcpkg/helloworld"
+	// the resolver reads the vcpkg registry from a local git clone rather than cloning over the network
+	// at test time. the clone is materialized just-in-time on first run (network required once) into a
+	// gitignored cache dir, then reused offline on later runs.
+	useLocalVcpkgRegistryCache(t)
 	fileLocs := []file.Location{file.NewLocation("vcpkg.json")}
 	fixtureLocationSet := file.NewLocationSet(fileLocs...)
 	ctx := pkgtest.Context(t)
@@ -190,7 +200,54 @@ func TestParseVcpkgManifest(t *testing.T) {
 	}
 
 	catalogerCfg := CatalogerConfig{
-		VcpkgAllowGitClone: true,
+		VcpkgAllowGitClone: false,
 	}
 	pkgtest.TestCataloger(t, fixture, NewVcpkgManifestCataloger(catalogerCfg), expectedPkgs, expectedRelationships)
+}
+
+// the registry the helloworld fixture pins; see testdata/vcpkg/helloworld/vcpkg-configuration.json
+const vcpkgTestRegistryURL = "https://github.com/anchore/vcpkg-test-fixture"
+
+// useLocalVcpkgRegistryCache points syft's cache manager at a gitignored testdata cache and ensures a local
+// clone of the vcpkg test registry exists there, so the resolver resolves it offline via git.PlainOpen
+// (getVcpkgGitCachePath resolves to "<syft cache root>/../vcpkg/registries/git").
+func useLocalVcpkgRegistryCache(t *testing.T) {
+	t.Helper()
+
+	cacheRoot := filepath.Join("testdata", "cache")
+	syftCacheRoot := filepath.Join(cacheRoot, "syft")
+	registryGitDir := filepath.Join(cacheRoot, "vcpkg", "registries", "git")
+
+	prepareVcpkgRegistryCache(t, registryGitDir)
+
+	mgr, err := cache.NewFromDir(syftCacheRoot, 24*time.Hour)
+	require.NoError(t, err)
+	prev := cache.GetManager()
+	cache.SetManager(mgr)
+	t.Cleanup(func() { cache.SetManager(prev) })
+}
+
+// prepareVcpkgRegistryCache clones the vcpkg test registry into gitDir if a valid clone is not already present.
+// the clone happens once (first run, requires network); later runs reuse it offline.
+func prepareVcpkgRegistryCache(t *testing.T, gitDir string) {
+	t.Helper()
+
+	if _, err := git.PlainOpen(gitDir); err == nil {
+		return // valid cache already present
+	}
+	// clear any partial/stale state left by an interrupted run
+	require.NoError(t, os.RemoveAll(gitDir))
+	require.NoError(t, os.MkdirAll(filepath.Dir(gitDir), 0o755))
+
+	// clone into a temp sibling then atomically move into place so an interrupted or concurrent run can't
+	// observe a half-written cache
+	tmp, err := os.MkdirTemp(filepath.Dir(gitDir), "clone-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmp)
+
+	cloneTarget := filepath.Join(tmp, "git")
+	if _, err := git.PlainClone(cloneTarget, false, &git.CloneOptions{URL: vcpkgTestRegistryURL}); err != nil {
+		t.Skipf("vcpkg registry cache is not present and could not be prepared (first run requires network): %v", err)
+	}
+	require.NoError(t, os.Rename(cloneTarget, gitDir))
 }

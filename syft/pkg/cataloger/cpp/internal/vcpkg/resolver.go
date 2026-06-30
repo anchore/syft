@@ -669,6 +669,14 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 			}
 		}
 	}
+	// give each manifest its own registry copy: the resolver hands out a shared *VcpkgRegistryEntry
+	// (e.g. cfg.DefaultRegistry) to every package, and a shared pointer means one package's metadata
+	// can alias another's
+	var regCopy *pkg.VcpkgRegistryEntry
+	if reg != nil {
+		r := *reg
+		regCopy = &r
+	}
 	return &pkg.VcpkgManifest{
 		Description:   desc,
 		Documentation: v.Documentation,
@@ -679,7 +687,7 @@ func (v *Vcpkg) BuildManifest(reg *pkg.VcpkgRegistryEntry, triplet string) *pkg.
 		Maintainers:   v.Maintainers,
 		Name:          v.Name,
 		Supports:      v.Supports,
-		Registry:      reg,
+		Registry:      regCopy,
 		Triplet:       triplet,
 	}
 }

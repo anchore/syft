@@ -1,0 +1,89 @@
+{
+  "package": "cpp",
+  "updated_at": "2026-06-29T16:07:14.51287Z",
+  "catalogers": {},
+  "parsers": {
+    "parseConanLock": {
+      "metadata_types": [
+        "pkg.ConanV1LockEntry",
+        "pkg.ConanV2LockEntry"
+      ],
+      "package_types": [
+        "conan"
+      ],
+      "observations": {
+        "license": false,
+        "relationships": {
+          "found": true,
+          "count": 5
+        },
+        "file_listing": {
+          "found": false,
+          "count": 0
+        },
+        "file_digests": {
+          "found": false,
+          "count": 0
+        },
+        "integrity_hash": {
+          "found": false,
+          "count": 0
+        }
+      }
+    },
+    "parseConanfile": {
+      "metadata_types": [
+        "pkg.ConanfileEntry"
+      ],
+      "package_types": [
+        "conan"
+      ],
+      "observations": {
+        "license": false,
+        "relationships": {
+          "found": false,
+          "count": 0
+        },
+        "file_listing": {
+          "found": false,
+          "count": 0
+        },
+        "file_digests": {
+          "found": false,
+          "count": 0
+        },
+        "integrity_hash": {
+          "found": false,
+          "count": 0
+        }
+      }
+    },
+    "parseConaninfo": {
+      "metadata_types": [
+        "pkg.ConaninfoEntry"
+      ],
+      "package_types": [
+        "conan"
+      ],
+      "observations": {
+        "license": false,
+        "relationships": {
+          "found": true,
+          "count": 5
+        },
+        "file_listing": {
+          "found": false,
+          "count": 0
+        },
+        "file_digests": {
+          "found": false,
+          "count": 0
+        },
+        "integrity_hash": {
+          "found": false,
+          "count": 0
+        }
+      }
+    }
+  }
+}
