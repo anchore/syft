@@ -153,7 +153,11 @@ func setupArchiveOrchestration(ctx context.Context, baseResolver file.Resolver, 
 		if err != nil {
 			return nil, fmt.Errorf("invalid exclusion patterns for archive child resolver: %w", err)
 		}
-		return fileresolver.NewFromDirectory(root, "", filters...)
+		// depth 0: the archive Orchestrator (PR #4761) drives recursion here, so the
+		// resolver-level recursive archive indexing (PR #4044) is disabled to avoid
+		// double extraction. With depth 0 no temp dir is created, so the cleanup is a no-op.
+		res, _, err := fileresolver.NewFromDirectory(root, "", 0, filters...)
+		return res, err
 	}
 
 	orch := intArchive.NewOrchestrator(baseResolver, cfg.Archive, archiveTmpDir, resolverFactory)

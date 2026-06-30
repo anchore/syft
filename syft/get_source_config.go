@@ -51,6 +51,11 @@ func (c *GetSourceConfig) WithBasePath(basePath string) *GetSourceConfig {
 	return c
 }
 
+func (c *GetSourceConfig) WithMaxArchiveRecursiveIndexDepth(maxArchiveRecursiveIndexDepth int) *GetSourceConfig {
+	c.SourceProviderConfig = c.SourceProviderConfig.WithMaxArchiveRecursiveIndexDepth(maxArchiveRecursiveIndexDepth)
+	return c
+}
+
 func (c *GetSourceConfig) WithSources(sources ...string) *GetSourceConfig {
 	c.Sources = sources
 	return c
