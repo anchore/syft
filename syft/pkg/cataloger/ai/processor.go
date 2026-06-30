@@ -16,20 +16,25 @@ import (
 // them per model, merges the per-shard metadata, resolves a name + licenses, and
 // drops any model it cannot name.
 func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	if err != nil || len(pkgs) == 0 {
+	if len(pkgs) == 0 {
 		return pkgs, rels, err
 	}
 
-	// keep the processor robust if non-safetensors packages ever flow through
+	// Note: we do NOT early-return when err != nil. A non-nil err here means some
+	// file in the run failed to parse, but the successfully-parsed packages are
+	// still nameless until this processor names or drops them. Skipping that work
+	// would let those nameless packages flow downstream, where they are silently
+	// dropped by missing-name compliance — turning one bad file into the loss of
+	// every otherwise-valid model. So we always name/drop and propagate err.
 	stPkgs, other := partitionSafeTensorsPackages(pkgs)
 	if len(stPkgs) == 0 {
 		return pkgs, rels, err
 	}
 
 	if fromOCIArtifact(stPkgs) {
-		return append(other, mergeOCIModel(ctx, resolver, stPkgs)...), rels, nil
+		return append(other, mergeOCIModel(ctx, resolver, stPkgs)...), rels, err
 	}
-	return append(other, mergeDirModels(ctx, resolver, stPkgs)...), rels, nil
+	return append(other, mergeDirModels(ctx, resolver, stPkgs)...), rels, err
 }
 
 // partitionSafeTensorsPackages separates safetensors packages from anything else

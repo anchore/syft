@@ -600,12 +600,19 @@ spdx-id: Apache-2.0
 		assertHasLicense(t, out[0], "Apache-2.0")
 	})
 
-	t.Run("passes through upstream error", func(t *testing.T) {
+	t.Run("names packages and still propagates an upstream error", func(t *testing.T) {
+		// A non-nil upstream error (e.g. another file in the run failed to parse)
+		// must NOT short-circuit naming. The package is still nameless at this
+		// point; skipping the merge would let it flow downstream where missing-name
+		// compliance silently drops it, turning one bad file into the loss of every
+		// valid model. So we name/drop as usual and pass the error through.
 		sentinel := assert.AnError
 		p := dirPkg("/models/x/y.safetensors", pkg.SafeTensorsModelInfo{Format: "safetensors", MetadataHash: "h"})
-		out, _, err := safeTensorsMergeProcessor(context.Background(), nil, []pkg.Package{p}, nil, sentinel)
-		assert.Equal(t, sentinel, err)
-		assert.Equal(t, []pkg.Package{p}, out)
+		resolver := file.NewMockResolverForPaths() // no config.json -> parent directory base name
+		out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{p}, nil, sentinel)
+		assert.Equal(t, sentinel, err, "the upstream error is still propagated")
+		require.Len(t, out, 1)
+		assert.Equal(t, "x", out[0].Name, "the model is still named (from its parent directory) despite the error")
 	})
 }
 
