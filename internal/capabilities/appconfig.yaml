@@ -2,6 +2,8 @@
 # This file is partially auto-generated. Run 'go generate ./internal/capabilities' to regenerate.
 
 application: # AUTO-GENERATED - application-level config keys
+  - key: cpp.vcpkg-allow-git-clone
+    description: enables Syft to use clone remote repositories for vcpkg custom git registries. (also useful if the builtin vcpkg registry is not cloned locally)
   - key: dotnet.dep-packages-must-claim-dll
     description: only keep dep.json packages which have a runtime/resource DLL claimed in the deps.json targets section (but not necessarily found on disk). The package is also included if any child package claims a DLL, even if the package itself does not claim a DLL.
   - key: dotnet.dep-packages-must-have-dll

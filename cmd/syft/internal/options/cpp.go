@@ -2,6 +2,7 @@ package options
 
 import (
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 )
 
 type cppConfig struct {
@@ -9,9 +10,12 @@ type cppConfig struct {
 }
 
 func defaultCppConfig() cppConfig {
+	// reference the cataloger default so capability generation can associate this config with the cpp
+	// ecosystem (it discovers ecosystem configs by their cataloger import). the value itself stays nil:
+	// nil defaults to false (no network), and leaving it unset lets --enrich opt in. cloning requires a
+	// network connection, which must be opt-in.
+	_ = cpp.DefaultCatalogerConfig()
 	return cppConfig{
-		// nil defaults to false (no network); leaving it unset lets --enrich opt in. cloning requires
-		// a network connection, which must be opt-in
 		VcpkgAllowGitClone: nil,
 	}
 }

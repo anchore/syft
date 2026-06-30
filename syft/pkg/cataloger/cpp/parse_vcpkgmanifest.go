@@ -15,6 +15,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
+// vcpkg manifests are small JSON files; cap reads to guard against pathological inputs
+const maxVcpkgManifestSize = 5 * 1024 * 1024
+
 type vcpkgCataloger struct {
 	allowGitClone bool
 }
@@ -130,7 +133,7 @@ func findManAtLoc(loc file.Location, resolver file.Resolver) (*vcpkg.Vcpkg, erro
 		return nil, err
 	}
 	defer internal.CloseAndLogError(manCont, loc.RealPath)
-	manBytes, err := io.ReadAll(manCont)
+	manBytes, err := io.ReadAll(io.LimitReader(manCont, maxVcpkgManifestSize))
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +167,7 @@ func findVcpkgConfig(resolver file.Resolver) (*vcpkg.Config, error) {
 			return nil, err
 		}
 		defer internal.CloseAndLogError(cfgCont, locs[0].RealPath)
-		cfgBytes, err := io.ReadAll(cfgCont)
+		cfgBytes, err := io.ReadAll(io.LimitReader(cfgCont, maxVcpkgManifestSize))
 		if err != nil {
 			return nil, err
 		}

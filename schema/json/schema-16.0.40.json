@@ -1,0 +1,3979 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "anchore.io/schema/syft/json/16.0.40/document",
+  "$ref": "#/$defs/Document",
+  "$defs": {
+    "AlpmDbEntry": {
+      "properties": {
+        "basepackage": {
+          "type": "string",
+          "description": "BasePackage is the base package name this package was built from (source package in Arch build system)"
+        },
+        "package": {
+          "type": "string",
+          "description": "Package is the package name as found in the desc file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the desc file"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable package description"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture as defined in Arch architecture spec (e.g. x86_64, aarch64, or \"any\" for arch-independent packages)"
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size is the installed size in bytes"
+        },
+        "packager": {
+          "type": "string",
+          "description": "Packager is the name and email of the person who packaged this (RFC822 format)"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the upstream project URL"
+        },
+        "validation": {
+          "type": "string",
+          "description": "Validation is the validation method used for package integrity (e.g. pgp signature, sha256 checksum)"
+        },
+        "reason": {
+          "type": "integer",
+          "description": "Reason is the installation reason tracked by pacman (0=explicitly installed by user, 1=installed as dependency)"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the files installed by this package"
+        },
+        "backup": {
+          "items": {
+            "$ref": "#/$defs/AlpmFileRecord"
+          },
+          "type": "array",
+          "description": "Backup is the list of configuration files that pacman backs up before upgrades"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Provides are virtual packages provided by this package (allows other packages to depend on capabilities rather than specific packages)"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Depends are the runtime dependencies required by this package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "basepackage",
+        "package",
+        "version",
+        "description",
+        "architecture",
+        "size",
+        "packager",
+        "url",
+        "validation",
+        "reason",
+        "files",
+        "backup"
+      ],
+      "description": "AlpmDBEntry is a struct that represents the package data stored in the pacman flat-file stores for arch linux."
+    },
+    "AlpmFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is the file path relative to the filesystem root"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type is the file type (e.g. regular file, directory, symlink)"
+        },
+        "uid": {
+          "type": "string",
+          "description": "UID is the file owner user ID as recorded by pacman"
+        },
+        "gid": {
+          "type": "string",
+          "description": "GID is the file owner group ID as recorded by pacman"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time is the file modification timestamp"
+        },
+        "size": {
+          "type": "string",
+          "description": "Size is the file size in bytes"
+        },
+        "link": {
+          "type": "string",
+          "description": "Link is the symlink target path if this is a symlink"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array",
+          "description": "Digests contains file content hashes for integrity verification"
+        }
+      },
+      "type": "object"
+    },
+    "ApkDbEntry": {
+      "properties": {
+        "package": {
+          "type": "string",
+          "description": "Package is the package name as found in the installed file"
+        },
+        "originPackage": {
+          "type": "string",
+          "description": "OriginPackage is the original source package name this binary was built from (used to track which aport/source built this)"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "Maintainer is the package maintainer name and email"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the installed file"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the upstream project URL"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable package description"
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size is the package archive size in bytes (.apk file size)"
+        },
+        "installedSize": {
+          "type": "integer",
+          "description": "InstalledSize is the total size of installed files in bytes"
+        },
+        "pullDependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the runtime dependencies required by this package"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Provides are virtual packages provided by this package (for capability-based dependencies)"
+        },
+        "pullChecksum": {
+          "type": "string",
+          "description": "Checksum is the package content checksum for integrity verification"
+        },
+        "gitCommitOfApkPort": {
+          "type": "string",
+          "description": "GitCommit is the git commit hash of the APK port definition in Alpine's aports repository"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/ApkFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the files installed by this package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "originPackage",
+        "maintainer",
+        "version",
+        "architecture",
+        "url",
+        "description",
+        "size",
+        "installedSize",
+        "pullDependencies",
+        "provides",
+        "pullChecksum",
+        "gitCommitOfApkPort",
+        "files"
+      ],
+      "description": "ApkDBEntry represents all captured data for the alpine linux package manager flat-file store."
+    },
+    "ApkFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is the file path relative to the filesystem root"
+        },
+        "ownerUid": {
+          "type": "string",
+          "description": "OwnerUID is the file owner user ID"
+        },
+        "ownerGid": {
+          "type": "string",
+          "description": "OwnerGID is the file owner group ID"
+        },
+        "permissions": {
+          "type": "string",
+          "description": "Permissions is the file permission mode string (e.g. \"0755\", \"0644\")"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest",
+          "description": "Digest is the file content hash for integrity verification"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "description": "ApkFileRecord represents a single file listing and metadata from a APK DB entry (which may have many of these file records)."
+    },
+    "BinarySignature": {
+      "properties": {
+        "matches": {
+          "items": {
+            "$ref": "#/$defs/ClassifierMatch"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "matches"
+      ],
+      "description": "BinarySignature represents a set of matched values within a binary file."
+    },
+    "BitnamiSbomEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the Bitnami SPDX file"
+        },
+        "arch": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture (amd64 or arm64 in Bitnami images)"
+        },
+        "distro": {
+          "type": "string",
+          "description": "Distro is the distribution name this package is for (base OS like debian, ubuntu, etc.)"
+        },
+        "revision": {
+          "type": "string",
+          "description": "Revision is the Bitnami-specific package revision number (incremented for Bitnami rebuilds of same upstream version)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the Bitnami SPDX file"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path is the installation path in the filesystem where the package is located"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files are the file paths owned by this package (tracked via SPDX relationships)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "arch",
+        "distro",
+        "revision",
+        "version",
+        "path",
+        "files"
+      ],
+      "description": "BitnamiSBOMEntry represents all captured data from Bitnami packages described in Bitnami' SPDX files."
+    },
+    "CConanFileEntry": {
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Ref is the package reference string in format name/version@user/channel"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "description": "ConanfileEntry represents a single \"Requires\" entry from a conanfile.txt."
+    },
+    "CConanInfoEntry": {
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Ref is the package reference string in format name/version@user/channel"
+        },
+        "package_id": {
+          "type": "string",
+          "description": "PackageID is a unique package variant identifier"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "description": "ConaninfoEntry represents a single \"full_requires\" entry from a conaninfo.txt."
+    },
+    "CConanLockEntry": {
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Ref is the package reference string in format name/version@user/channel"
+        },
+        "package_id": {
+          "type": "string",
+          "description": "PackageID is a unique package variant identifier computed from settings/options (static hash in Conan 1.x, can have collisions with complex dependency graphs)"
+        },
+        "prev": {
+          "type": "string",
+          "description": "Prev is the previous lock entry reference for versioning"
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Requires are the runtime package dependencies"
+        },
+        "build_requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "BuildRequires are the build-time dependencies (e.g. cmake, compilers)"
+        },
+        "py_requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "PythonRequires are the Python dependencies needed for Conan recipes"
+        },
+        "options": {
+          "$ref": "#/$defs/KeyValues",
+          "description": "Options are package configuration options as key-value pairs (e.g. shared=True, fPIC=True)"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path is the filesystem path to the package in Conan cache"
+        },
+        "context": {
+          "type": "string",
+          "description": "Context is the build context information"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "description": "ConanV1LockEntry represents a single \"node\" entry from a conan.lock V1 file."
+    },
+    "CConanLockV2Entry": {
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "Ref is the package reference string in format name/version@user/channel"
+        },
+        "packageID": {
+          "type": "string",
+          "description": "PackageID is a unique package variant identifier (dynamic in Conan 2.0, more accurate than V1)"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username is the Conan user/organization name"
+        },
+        "channel": {
+          "type": "string",
+          "description": "Channel is the Conan channel name indicating stability/purpose (e.g. stable, testing, experimental)"
+        },
+        "recipeRevision": {
+          "type": "string",
+          "description": "RecipeRevision is a git-like revision hash (RREV) of the recipe"
+        },
+        "packageRevision": {
+          "type": "string",
+          "description": "PackageRevision is a git-like revision hash of the built binary package"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "TimeStamp is when this package was built/locked"
+        }
+      },
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "description": "ConanV2LockEntry represents a single \"node\" entry from a conan.lock V2 file."
+    },
+    "CPE": {
+      "properties": {
+        "cpe": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "cpe"
+      ]
+    },
+    "ClassifierMatch": {
+      "properties": {
+        "classifier": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        }
+      },
+      "type": "object",
+      "required": [
+        "classifier",
+        "location"
+      ],
+      "description": "ClassifierMatch represents a single matched value within a binary file and the \"class\" name the search pattern represents."
+    },
+    "CocoaPodfileLockEntry": {
+      "properties": {
+        "checksum": {
+          "type": "string",
+          "description": "Checksum is the SHA-1 hash of the podspec file for integrity verification (generated via `pod ipc spec ... | openssl sha1`), ensuring all team members use the same pod specification version"
+        }
+      },
+      "type": "object",
+      "required": [
+        "checksum"
+      ],
+      "description": "CocoaPodfileLockEntry represents a single entry from the \"Pods\" section of a Podfile.lock file."
+    },
+    "CondaLink": {
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source is the original path where the package was extracted from cache."
+        },
+        "type": {
+          "type": "integer",
+          "description": "Type indicates the link type (1 for hard link, 2 for soft link, 3 for copy)."
+        }
+      },
+      "type": "object",
+      "required": [
+        "source",
+        "type"
+      ],
+      "description": "CondaLink represents link metadata from a Conda package's link.json file describing package installation source."
+    },
+    "CondaMetadataEntry": {
+      "properties": {
+        "arch": {
+          "type": "string",
+          "description": "Arch is the target CPU architecture for the package (e.g., \"arm64\", \"x86_64\")."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the conda-meta JSON file."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the conda-meta JSON file."
+        },
+        "build": {
+          "type": "string",
+          "description": "Build is the build string identifier (e.g., \"h90dfc92_1014\")."
+        },
+        "build_number": {
+          "type": "integer",
+          "description": "BuildNumber is the sequential build number for this version."
+        },
+        "channel": {
+          "type": "string",
+          "description": "Channel is the Conda channel URL where the package was retrieved from."
+        },
+        "subdir": {
+          "type": "string",
+          "description": "Subdir is the subdirectory within the channel (e.g., \"osx-arm64\", \"linux-64\")."
+        },
+        "noarch": {
+          "type": "string",
+          "description": "Noarch indicates if the package is platform-independent (e.g., \"python\", \"generic\")."
+        },
+        "license": {
+          "type": "string",
+          "description": "License is the package license identifier."
+        },
+        "license_family": {
+          "type": "string",
+          "description": "LicenseFamily is the general license category (e.g., \"MIT\", \"Apache\", \"GPL\")."
+        },
+        "md5": {
+          "type": "string",
+          "description": "MD5 is the MD5 hash of the package archive."
+        },
+        "sha256": {
+          "type": "string",
+          "description": "SHA256 is the SHA-256 hash of the package archive."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size is the package archive size in bytes."
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "Timestamp is the Unix timestamp when the package was built."
+        },
+        "fn": {
+          "type": "string",
+          "description": "Filename is the original package archive filename (e.g., \"zlib-1.2.11-h90dfc92_1014.tar.bz2\")."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the full download URL for the package archive."
+        },
+        "extracted_package_dir": {
+          "type": "string",
+          "description": "ExtractedPackageDir is the local cache directory where the package was extracted."
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Depends is the list of runtime dependencies with version constraints."
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files is the list of files installed by this package."
+        },
+        "paths_data": {
+          "$ref": "#/$defs/CondaPathsData",
+          "description": "PathsData contains detailed file metadata from the paths.json file."
+        },
+        "link": {
+          "$ref": "#/$defs/CondaLink",
+          "description": "Link contains installation source metadata from the link.json file."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "build",
+        "build_number"
+      ],
+      "description": "CondaMetaPackage represents metadata for a Conda package extracted from the conda-meta/*.json files."
+    },
+    "CondaPathData": {
+      "properties": {
+        "_path": {
+          "type": "string",
+          "description": "Path is the file path relative to the Conda environment root."
+        },
+        "path_type": {
+          "type": "string",
+          "description": "PathType indicates the link type for the file (e.g., \"hardlink\", \"softlink\", \"directory\")."
+        },
+        "sha256": {
+          "type": "string",
+          "description": "SHA256 is the SHA-256 hash of the file contents."
+        },
+        "sha256_in_prefix": {
+          "type": "string",
+          "description": "SHA256InPrefix is the SHA-256 hash of the file after prefix replacement during installation."
+        },
+        "size_in_bytes": {
+          "type": "integer",
+          "description": "SizeInBytes is the file size in bytes."
+        }
+      },
+      "type": "object",
+      "required": [
+        "_path",
+        "path_type",
+        "sha256",
+        "sha256_in_prefix",
+        "size_in_bytes"
+      ],
+      "description": "CondaPathData represents metadata for a single file within a Conda package from the paths.json file."
+    },
+    "CondaPathsData": {
+      "properties": {
+        "paths_version": {
+          "type": "integer",
+          "description": "PathsVersion is the schema version of the paths data format."
+        },
+        "paths": {
+          "items": {
+            "$ref": "#/$defs/CondaPathData"
+          },
+          "type": "array",
+          "description": "Paths is the list of file metadata entries for all files in the package."
+        }
+      },
+      "type": "object",
+      "required": [
+        "paths_version",
+        "paths"
+      ],
+      "description": "CondaPathsData represents the paths.json file structure from a Conda package containing file metadata."
+    },
+    "Coordinates": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed)."
+        },
+        "layerID": {
+          "type": "string",
+          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "description": "Coordinates contains the minimal information needed to describe how to find a file within any possible source object (e.g."
+    },
+    "DartPubspec": {
+      "properties": {
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is the package homepage URL"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Repository is the source code repository URL"
+        },
+        "documentation": {
+          "type": "string",
+          "description": "Documentation is the documentation site URL"
+        },
+        "publish_to": {
+          "type": "string",
+          "description": "PublishTo is the package repository to publish to, or \"none\" to prevent accidental publishing"
+        },
+        "environment": {
+          "$ref": "#/$defs/DartPubspecEnvironment",
+          "description": "Environment is SDK version constraints for Dart and Flutter"
+        },
+        "platforms": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Platforms are the supported platforms (Android, iOS, web, etc.)"
+        },
+        "ignored_advisories": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "IgnoredAdvisories are the security advisories to explicitly ignore for this package"
+        }
+      },
+      "type": "object",
+      "description": "DartPubspec is a struct that represents a package described in a pubspec.yaml file"
+    },
+    "DartPubspecEnvironment": {
+      "properties": {
+        "sdk": {
+          "type": "string",
+          "description": "SDK is the Dart SDK version constraint (e.g. \"\u003e=2.12.0 \u003c3.0.0\")"
+        },
+        "flutter": {
+          "type": "string",
+          "description": "Flutter is the Flutter SDK version constraint if this is a Flutter package"
+        }
+      },
+      "type": "object",
+      "description": "DartPubspecEnvironment represents SDK version constraints from the environment section of pubspec.yaml."
+    },
+    "DartPubspecLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the pubspec.lock file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the pubspec.lock file"
+        },
+        "hosted_url": {
+          "type": "string",
+          "description": "HostedURL is the URL of the package repository for hosted packages (typically pub.dev, but can be custom repository identified by hosted-url). When PUB_HOSTED_URL environment variable changes, lockfile tracks the source."
+        },
+        "vcs_url": {
+          "type": "string",
+          "description": "VcsURL is the URL of the VCS repository for git/path dependencies (for packages fetched from version control systems like Git)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "description": "DartPubspecLockEntry is a struct that represents a single entry found in the \"packages\" section in a Dart pubspec.lock file."
+    },
+    "Descriptor": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "configuration": true
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "description": "Descriptor describes what created the document as well as surrounding metadata"
+    },
+    "Digest": {
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "description": "Algorithm specifies the hash algorithm used (e.g., \"sha256\", \"md5\")."
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is the hexadecimal string representation of the hash."
+        }
+      },
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "description": "Digest represents a cryptographic hash of file contents."
+    },
+    "Document": {
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/Package"
+          },
+          "type": "array"
+        },
+        "artifactRelationships": {
+          "items": {
+            "$ref": "#/$defs/Relationship"
+          },
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/File"
+          },
+          "type": "array"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "distro": {
+          "$ref": "#/$defs/LinuxRelease"
+        },
+        "descriptor": {
+          "$ref": "#/$defs/Descriptor"
+        },
+        "schema": {
+          "$ref": "#/$defs/Schema"
+        }
+      },
+      "type": "object",
+      "required": [
+        "artifacts",
+        "artifactRelationships",
+        "source",
+        "distro",
+        "descriptor",
+        "schema"
+      ],
+      "description": "Document represents the syft cataloging findings as a JSON document"
+    },
+    "DotnetDepsEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the deps.json file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the deps.json file"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path is the relative path to the package within the deps structure (e.g. \"app.metrics/3.0.0\")"
+        },
+        "sha512": {
+          "type": "string",
+          "description": "Sha512 is the SHA-512 hash of the NuGet package content WITHOUT the signed content for verification (won't match hash from NuGet API or manual calculation of .nupkg file)"
+        },
+        "hashPath": {
+          "type": "string",
+          "description": "HashPath is the relative path to the .nupkg.sha512 hash file (e.g. \"app.metrics.3.0.0.nupkg.sha512\")"
+        },
+        "executables": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/DotnetPortableExecutableEntry"
+            }
+          },
+          "type": "object",
+          "description": "Executables are the map of .NET Portable Executable files within this package with their version resources"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "path",
+        "sha512",
+        "hashPath"
+      ],
+      "description": "DotnetDepsEntry is a struct that represents a single entry found in the \"libraries\" section in a .NET [*.]deps.json file."
+    },
+    "DotnetPackagesLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the packages.lock.json file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the packages.lock.json file"
+        },
+        "contentHash": {
+          "type": "string",
+          "description": "ContentHash is the hash of the package content for verification"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type is the dependency type indicating how this dependency was added (Direct=explicit in project file, Transitive=pulled in by another package, Project=project reference)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "contentHash",
+        "type"
+      ],
+      "description": "DotnetPackagesLockEntry is a struct that represents a single entry found in the \"dependencies\" section in a .NET packages.lock.json file."
+    },
+    "DotnetPortableExecutableEntry": {
+      "properties": {
+        "assemblyVersion": {
+          "type": "string",
+          "description": "AssemblyVersion is the .NET assembly version number (strong-named version)"
+        },
+        "legalCopyright": {
+          "type": "string",
+          "description": "LegalCopyright is the copyright notice string"
+        },
+        "comments": {
+          "type": "string",
+          "description": "Comments are additional comments or description embedded in PE resources"
+        },
+        "internalName": {
+          "type": "string",
+          "description": "InternalName is the internal name of the file"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "CompanyName is the company that produced the file"
+        },
+        "productName": {
+          "type": "string",
+          "description": "ProductName is the name of the product this file is part of"
+        },
+        "productVersion": {
+          "type": "string",
+          "description": "ProductVersion is the version of the product (may differ from AssemblyVersion)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "assemblyVersion",
+        "legalCopyright",
+        "companyName",
+        "productName",
+        "productVersion"
+      ],
+      "description": "DotnetPortableExecutableEntry is a struct that represents a single entry found within \"VersionResources\" section of a .NET Portable Executable binary file."
+    },
+    "DpkgArchiveEntry": {
+      "properties": {
+        "package": {
+          "type": "string",
+          "description": "Package is the package name as found in the status file"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source is the source package name this binary was built from (one source can produce multiple binary packages)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the binary package version as found in the status file"
+        },
+        "sourceVersion": {
+          "type": "string",
+          "description": "SourceVersion is the source package version (may differ from binary version when binNMU rebuilds occur)"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target architecture per Debian spec (specific arch like amd64/arm64, wildcard like any, architecture-independent \"all\", or \"source\" for source packages)"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "Maintainer is the package maintainer's name and email in RFC822 format (name must come first, then email in angle brackets)"
+        },
+        "installedSize": {
+          "type": "integer",
+          "description": "InstalledSize is the total size of installed files in kilobytes"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Provides are the virtual packages provided by this package (allows other packages to depend on capabilities. Can include versioned provides like \"libdigest-md5-perl (= 2.55.01)\")"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Depends are the packages required for this package to function (will not be installed unless these requirements are met, creates strict ordering constraint)"
+        },
+        "preDepends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "PreDepends are the packages that must be installed and configured BEFORE even starting installation of this package (stronger than Depends, discouraged unless absolutely necessary as it adds strict constraints for apt)"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/DpkgFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the files installed by this package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "source",
+        "version",
+        "sourceVersion",
+        "architecture",
+        "maintainer",
+        "installedSize",
+        "files"
+      ],
+      "description": "DpkgArchiveEntry represents package metadata extracted from a .deb archive file."
+    },
+    "DpkgDbEntry": {
+      "properties": {
+        "package": {
+          "type": "string",
+          "description": "Package is the package name as found in the status file"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source is the source package name this binary was built from (one source can produce multiple binary packages)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the binary package version as found in the status file"
+        },
+        "sourceVersion": {
+          "type": "string",
+          "description": "SourceVersion is the source package version (may differ from binary version when binNMU rebuilds occur)"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target architecture per Debian spec (specific arch like amd64/arm64, wildcard like any, architecture-independent \"all\", or \"source\" for source packages)"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "Maintainer is the package maintainer's name and email in RFC822 format (name must come first, then email in angle brackets)"
+        },
+        "installedSize": {
+          "type": "integer",
+          "description": "InstalledSize is the total size of installed files in kilobytes"
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Provides are the virtual packages provided by this package (allows other packages to depend on capabilities. Can include versioned provides like \"libdigest-md5-perl (= 2.55.01)\")"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Depends are the packages required for this package to function (will not be installed unless these requirements are met, creates strict ordering constraint)"
+        },
+        "preDepends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "PreDepends are the packages that must be installed and configured BEFORE even starting installation of this package (stronger than Depends, discouraged unless absolutely necessary as it adds strict constraints for apt)"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/DpkgFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the files installed by this package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "package",
+        "source",
+        "version",
+        "sourceVersion",
+        "architecture",
+        "maintainer",
+        "installedSize",
+        "files"
+      ],
+      "description": "DpkgDBEntry represents all captured data for a Debian package DB entry; available fields are described at http://manpages.ubuntu.com/manpages/xenial/man1/dpkg-query.1.html in the --showformat section."
+    },
+    "DpkgFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is the file path relative to the filesystem root"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest",
+          "description": "Digest is the file content hash (typically MD5 for dpkg compatibility with legacy systems)"
+        },
+        "isConfigFile": {
+          "type": "boolean",
+          "description": "IsConfigFile is whether this file is marked as a configuration file (dpkg will preserve user modifications during upgrades)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "isConfigFile"
+      ],
+      "description": "DpkgFileRecord represents a single file attributed to a debian package."
+    },
+    "ELFSecurityFeatures": {
+      "properties": {
+        "symbolTableStripped": {
+          "type": "boolean",
+          "description": "SymbolTableStripped indicates whether debugging symbols have been removed."
+        },
+        "stackCanary": {
+          "type": "boolean",
+          "description": "StackCanary indicates whether stack smashing protection is enabled."
+        },
+        "nx": {
+          "type": "boolean",
+          "description": "NoExecutable indicates whether NX (no-execute) protection is enabled for the stack."
+        },
+        "relRO": {
+          "type": "string",
+          "description": "RelocationReadOnly indicates the RELRO protection level."
+        },
+        "pie": {
+          "type": "boolean",
+          "description": "PositionIndependentExecutable indicates whether the binary is compiled as PIE."
+        },
+        "dso": {
+          "type": "boolean",
+          "description": "DynamicSharedObject indicates whether the binary is a shared library."
+        },
+        "safeStack": {
+          "type": "boolean",
+          "description": "LlvmSafeStack represents a compiler-based security mechanism that separates the stack into a safe stack for storing return addresses and other critical data, and an unsafe stack for everything else, to mitigate stack-based memory corruption errors\nsee https://clang.llvm.org/docs/SafeStack.html"
+        },
+        "cfi": {
+          "type": "boolean",
+          "description": "ControlFlowIntegrity represents runtime checks to ensure a program's control flow adheres to the legal paths determined at compile time, thus protecting against various types of control-flow hijacking attacks\nsee https://clang.llvm.org/docs/ControlFlowIntegrity.html"
+        },
+        "fortify": {
+          "type": "boolean",
+          "description": "ClangFortifySource is a broad suite of extensions to libc aimed at catching misuses of common library functions\nsee https://android.googlesource.com/platform//bionic/+/d192dbecf0b2a371eb127c0871f77a9caf81c4d2/docs/clang_fortify_anatomy.md"
+        }
+      },
+      "type": "object",
+      "required": [
+        "symbolTableStripped",
+        "nx",
+        "relRO",
+        "pie",
+        "dso"
+      ],
+      "description": "ELFSecurityFeatures captures security hardening and protection mechanisms in ELF binaries."
+    },
+    "ElfBinaryPackageNoteJsonPayload": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type is the type of the package (e.g. \"rpm\", \"deb\", \"apk\", etc.)"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture of the binary package (e.g. \"amd64\", \"arm\", etc.)"
+        },
+        "osCPE": {
+          "type": "string",
+          "description": "OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)"
+        },
+        "os": {
+          "type": "string",
+          "description": "OS is the OS name, typically corresponding to ID in os-release (e.g. \"fedora\")"
+        },
+        "osVersion": {
+          "type": "string",
+          "description": "osVersion is the version of the OS, typically corresponding to VERSION_ID in os-release (e.g. \"33\")"
+        },
+        "system": {
+          "type": "string",
+          "description": "System is a context-specific name for the system that the binary package is intended to run on or a part of"
+        },
+        "vendor": {
+          "type": "string",
+          "description": "Vendor is the individual or organization that produced the source code for the binary"
+        },
+        "sourceRepo": {
+          "type": "string",
+          "description": "SourceRepo is the URL to the source repository for which the binary was built from"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Commit is the commit hash of the source repository for which the binary was built from"
+        }
+      },
+      "type": "object",
+      "description": "ELFBinaryPackageNoteJSONPayload Represents metadata captured from the .note.package section of an ELF-formatted binary"
+    },
+    "ElixirMixLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the mix.lock file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the mix.lock file"
+        },
+        "pkgHash": {
+          "type": "string",
+          "description": "PkgHash is the outer checksum (SHA-256) of the entire Hex package tarball for integrity verification (preferred method, replaces deprecated inner checksum)"
+        },
+        "pkgHashExt": {
+          "type": "string",
+          "description": "PkgHashExt is the extended package hash format (inner checksum is deprecated - SHA-256 of concatenated file contents excluding CHECKSUM file, now replaced by outer checksum)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "pkgHash",
+        "pkgHashExt"
+      ],
+      "description": "ElixirMixLockEntry is a struct that represents a single entry in a mix.lock file"
+    },
+    "ErlangRebarLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the rebar.lock file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the rebar.lock file"
+        },
+        "pkgHash": {
+          "type": "string",
+          "description": "PkgHash is the outer checksum (SHA-256) of the entire Hex package tarball for integrity verification (preferred method over deprecated inner checksum)"
+        },
+        "pkgHashExt": {
+          "type": "string",
+          "description": "PkgHashExt is the extended package hash format (inner checksum deprecated - was SHA-256 of concatenated file contents)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "pkgHash",
+        "pkgHashExt"
+      ],
+      "description": "ErlangRebarLockEntry represents a single package entry from the \"deps\" section within an Erlang rebar.lock file."
+    },
+    "Executable": {
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "Format denotes either ELF, Mach-O, or PE"
+        },
+        "hasExports": {
+          "type": "boolean",
+          "description": "HasExports indicates whether the binary exports symbols."
+        },
+        "hasEntrypoint": {
+          "type": "boolean",
+          "description": "HasEntrypoint indicates whether the binary has an entry point function."
+        },
+        "importedLibraries": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "ImportedLibraries lists the shared libraries required by this executable."
+        },
+        "elfSecurityFeatures": {
+          "$ref": "#/$defs/ELFSecurityFeatures",
+          "description": "ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF."
+        }
+      },
+      "type": "object",
+      "required": [
+        "format",
+        "hasExports",
+        "hasEntrypoint",
+        "importedLibraries"
+      ],
+      "description": "Executable contains metadata about binary files and their security features."
+    },
+    "File": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Coordinates"
+        },
+        "metadata": {
+          "$ref": "#/$defs/FileMetadataEntry"
+        },
+        "contents": {
+          "type": "string"
+        },
+        "digests": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "items": {
+            "$ref": "#/$defs/FileLicense"
+          },
+          "type": "array"
+        },
+        "executable": {
+          "$ref": "#/$defs/Executable"
+        },
+        "unknowns": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "location"
+      ]
+    },
+    "FileLicense": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdxExpression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/FileLicenseEvidence"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type"
+      ]
+    },
+    "FileLicenseEvidence": {
+      "properties": {
+        "confidence": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "extent": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "confidence",
+        "offset",
+        "extent"
+      ]
+    },
+    "FileMetadataEntry": {
+      "properties": {
+        "mode": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "linkDestination": {
+          "type": "string"
+        },
+        "userID": {
+          "type": "integer"
+        },
+        "groupID": {
+          "type": "integer"
+        },
+        "mimeType": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "mode",
+        "type",
+        "userID",
+        "groupID",
+        "mimeType",
+        "size"
+      ]
+    },
+    "GithubActionsUseStatement": {
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Value is the action reference (e.g. \"actions/checkout@v3\")"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Comment is the inline comment associated with this uses statement"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "description": "GitHubActionsUseStatement represents a single 'uses' statement in a GitHub Actions workflow file referencing an action or reusable workflow."
+    },
+    "GoModuleBuildinfoEntry": {
+      "properties": {
+        "goBuildSettings": {
+          "$ref": "#/$defs/KeyValues",
+          "description": "BuildSettings contains the Go build settings and flags used to compile the binary (e.g., GOARCH, GOOS, CGO_ENABLED)."
+        },
+        "goCompiledVersion": {
+          "type": "string",
+          "description": "GoCompiledVersion is the version of Go used to compile the binary."
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture for the binary (extracted from GOARCH build setting)."
+        },
+        "h1Digest": {
+          "type": "string",
+          "description": "H1Digest is the Go module hash in h1: format for the main module from go.sum."
+        },
+        "mainModule": {
+          "type": "string",
+          "description": "MainModule is the main module path for the binary (e.g., \"github.com/anchore/syft\")."
+        },
+        "goCryptoSettings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "GoCryptoSettings contains FIPS and cryptographic configuration settings if present."
+        },
+        "goExperiments": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "GoExperiments lists experimental Go features enabled during compilation (e.g., \"arenas\", \"cgocheck2\")."
+        }
+      },
+      "type": "object",
+      "required": [
+        "goCompiledVersion",
+        "architecture"
+      ],
+      "description": "GolangBinaryBuildinfoEntry represents all captured data for a Golang binary"
+    },
+    "GoModuleEntry": {
+      "properties": {
+        "h1Digest": {
+          "type": "string",
+          "description": "H1Digest is the Go module hash in h1: format from go.sum for verifying module contents."
+        }
+      },
+      "type": "object",
+      "description": "GolangModuleEntry represents all captured data for a Golang source scan with go.mod/go.sum"
+    },
+    "GoSourceEntry": {
+      "properties": {
+        "h1Digest": {
+          "type": "string",
+          "description": "H1Digest is the Go module hash in h1: format from go.sum for verifying module contents."
+        },
+        "os": {
+          "type": "string",
+          "description": "OperatingSystem is the target OS for build constraints (e.g., \"linux\", \"darwin\", \"windows\")."
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture for build constraints (e.g., \"amd64\", \"arm64\")."
+        },
+        "buildTags": {
+          "type": "string",
+          "description": "BuildTags are the build tags used to conditionally compile code (e.g., \"integration,debug\")."
+        },
+        "cgoEnabled": {
+          "type": "boolean",
+          "description": "CgoEnabled indicates whether CGO was enabled for this package."
+        }
+      },
+      "type": "object",
+      "required": [
+        "cgoEnabled"
+      ],
+      "description": "GolangSourceEntry represents all captured data for a Golang package found through source analysis"
+    },
+    "HaskellHackageStackEntry": {
+      "properties": {
+        "pkgHash": {
+          "type": "string",
+          "description": "PkgHash is the package content hash for verification"
+        }
+      },
+      "type": "object",
+      "description": "HackageStackYamlEntry represents a single entry from the \"extra-deps\" section of a stack.yaml file."
+    },
+    "HaskellHackageStackLockEntry": {
+      "properties": {
+        "pkgHash": {
+          "type": "string",
+          "description": "PkgHash is the package content hash for verification"
+        },
+        "snapshotURL": {
+          "type": "string",
+          "description": "SnapshotURL is the URL to the Stack snapshot this package came from"
+        }
+      },
+      "type": "object",
+      "description": "HackageStackYamlLockEntry represents a single entry from the \"packages\" section of a stack.yaml.lock file."
+    },
+    "HomebrewFormula": {
+      "properties": {
+        "tap": {
+          "type": "string",
+          "description": "Tap is Homebrew tap this formula belongs to (e.g. \"homebrew/core\")"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is the upstream project homepage URL"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable formula description"
+        }
+      },
+      "type": "object",
+      "description": "HomebrewFormula represents metadata about a Homebrew formula package extracted from formula JSON files."
+    },
+    "IDLikes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "JavaArchive": {
+      "properties": {
+        "virtualPath": {
+          "type": "string",
+          "description": "VirtualPath is path within the archive hierarchy, where nested entries are delimited with ':' (for nested JARs)"
+        },
+        "manifest": {
+          "$ref": "#/$defs/JavaManifest",
+          "description": "Manifest is parsed META-INF/MANIFEST.MF contents"
+        },
+        "pomProperties": {
+          "$ref": "#/$defs/JavaPomProperties",
+          "description": "PomProperties is parsed pom.properties file contents"
+        },
+        "pomProject": {
+          "$ref": "#/$defs/JavaPomProject",
+          "description": "PomProject is parsed pom.xml file contents"
+        },
+        "digest": {
+          "items": {
+            "$ref": "#/$defs/Digest"
+          },
+          "type": "array",
+          "description": "ArchiveDigests is cryptographic hashes of the archive file"
+        }
+      },
+      "type": "object",
+      "required": [
+        "virtualPath"
+      ],
+      "description": "JavaArchive encapsulates all Java ecosystem metadata for a package as well as an (optional) parent relationship."
+    },
+    "JavaJvmInstallation": {
+      "properties": {
+        "release": {
+          "$ref": "#/$defs/JavaVMRelease",
+          "description": "Release is JVM release information and version details"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files are the list of files that are part of this JVM installation"
+        }
+      },
+      "type": "object",
+      "required": [
+        "release",
+        "files"
+      ],
+      "description": "JavaVMInstallation represents a Java Virtual Machine installation discovered on the system with its release information and file list."
+    },
+    "JavaManifest": {
+      "properties": {
+        "main": {
+          "$ref": "#/$defs/KeyValues",
+          "description": "Main is main manifest attributes as key-value pairs"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/KeyValues"
+          },
+          "type": "array",
+          "description": "Sections are the named sections from the manifest (e.g. per-entry attributes)"
+        }
+      },
+      "type": "object",
+      "description": "JavaManifest represents the fields of interest extracted from a Java archive's META-INF/MANIFEST.MF file."
+    },
+    "JavaPomParent": {
+      "properties": {
+        "groupId": {
+          "type": "string",
+          "description": "GroupID is the parent Maven group identifier"
+        },
+        "artifactId": {
+          "type": "string",
+          "description": "ArtifactID is the parent Maven artifact identifier"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the parent version (child inherits configuration from this specific version of parent POM)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "groupId",
+        "artifactId",
+        "version"
+      ],
+      "description": "JavaPomParent contains the fields within the \u003cparent\u003e tag in a pom.xml file"
+    },
+    "JavaPomProject": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is path to the pom.xml file within the archive"
+        },
+        "parent": {
+          "$ref": "#/$defs/JavaPomParent",
+          "description": "Parent is the parent POM reference for inheritance (child POMs inherit configuration from parent)"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "GroupID is Maven group identifier (reversed domain name like org.apache.maven)"
+        },
+        "artifactId": {
+          "type": "string",
+          "description": "ArtifactID is Maven artifact identifier (project name)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is project version (together with groupId and artifactId forms Maven coordinates groupId:artifactId:version)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name is a human-readable project name (displayed in Maven-generated documentation)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is detailed project description"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the project URL (typically project website or repository)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "groupId",
+        "artifactId",
+        "version",
+        "name"
+      ],
+      "description": "JavaPomProject represents fields of interest extracted from a Java archive's pom.xml file."
+    },
+    "JavaPomProperties": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is path to the pom.properties file within the archive"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name is the project name"
+        },
+        "groupId": {
+          "type": "string",
+          "description": "GroupID is Maven group identifier uniquely identifying the project across all projects (follows reversed domain name convention like com.company.project)"
+        },
+        "artifactId": {
+          "type": "string",
+          "description": "ArtifactID is Maven artifact identifier, the name of the jar/artifact (unique within the groupId scope)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is artifact version"
+        },
+        "scope": {
+          "type": "string",
+          "description": "Scope is dependency scope determining when dependency is available (compile=default all phases, test=test compilation/execution only, runtime=runtime and test not compile, provided=expected from JDK or container)"
+        },
+        "extraFields": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Extra is additional custom properties not in standard Maven coordinates"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "name",
+        "groupId",
+        "artifactId",
+        "version"
+      ],
+      "description": "JavaPomProperties represents the fields of interest extracted from a Java archive's pom.properties file."
+    },
+    "JavaVMRelease": {
+      "properties": {
+        "implementor": {
+          "type": "string",
+          "description": "Implementor is extracted with the `java.vendor` JVM property"
+        },
+        "implementorVersion": {
+          "type": "string",
+          "description": "ImplementorVersion is extracted with the `java.vendor.version` JVM property"
+        },
+        "javaRuntimeVersion": {
+          "type": "string",
+          "description": "JavaRuntimeVersion is extracted from the 'java.runtime.version' JVM property"
+        },
+        "javaVersion": {
+          "type": "string",
+          "description": "JavaVersion matches that from `java -version` command output"
+        },
+        "javaVersionDate": {
+          "type": "string",
+          "description": "JavaVersionDate is extracted from the 'java.version.date' JVM property"
+        },
+        "libc": {
+          "type": "string",
+          "description": "Libc can either be 'glibc' or 'musl'"
+        },
+        "modules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Modules is a list of JVM modules that are packaged"
+        },
+        "osArch": {
+          "type": "string",
+          "description": "OsArch is the target CPU architecture"
+        },
+        "osName": {
+          "type": "string",
+          "description": "OsName is the name of the target runtime operating system environment"
+        },
+        "osVersion": {
+          "type": "string",
+          "description": "OsVersion is the version of the target runtime operating system environment"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source refers to the origin repository of OpenJDK source"
+        },
+        "buildSource": {
+          "type": "string",
+          "description": "BuildSource Git SHA of the build repository"
+        },
+        "buildSourceRepo": {
+          "type": "string",
+          "description": "BuildSourceRepo refers to rhe repository URL for the build source"
+        },
+        "sourceRepo": {
+          "type": "string",
+          "description": "SourceRepo refers to the OpenJDK repository URL"
+        },
+        "fullVersion": {
+          "type": "string",
+          "description": "FullVersion is extracted from the 'java.runtime.version' JVM property"
+        },
+        "semanticVersion": {
+          "type": "string",
+          "description": "SemanticVersion is derived from the OpenJDK version"
+        },
+        "buildInfo": {
+          "type": "string",
+          "description": "BuildInfo contains additional build information"
+        },
+        "jvmVariant": {
+          "type": "string",
+          "description": "JvmVariant specifies the JVM variant (e.g., Hotspot or OpenJ9)"
+        },
+        "jvmVersion": {
+          "type": "string",
+          "description": "JvmVersion is extracted from the 'java.vm.version' JVM property"
+        },
+        "imageType": {
+          "type": "string",
+          "description": "ImageType can be 'JDK' or 'JRE'"
+        },
+        "buildType": {
+          "type": "string",
+          "description": "BuildType can be 'commercial' (used in some older oracle JDK distributions)"
+        }
+      },
+      "type": "object",
+      "description": "JavaVMRelease represents JVM version and build information extracted from the release file in a Java installation."
+    },
+    "JavascriptNpmPackage": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in package.json"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in package.json"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is package author name"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable package description"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is repository or project URL"
+        },
+        "private": {
+          "type": "boolean",
+          "description": "Private is whether this is a private package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "homepage",
+        "description",
+        "url",
+        "private"
+      ],
+      "description": "NpmPackage represents the contents of a javascript package.json file."
+    },
+    "JavascriptNpmPackageLockEntry": {
+      "properties": {
+        "resolved": {
+          "type": "string",
+          "description": "Resolved is URL where this package was downloaded from (registry source)"
+        },
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is Subresource Integrity hash for verification using standard SRI format (sha512-... or sha1-...). npm changed from SHA-1 to SHA-512 in newer versions. For registry sources this is the integrity from registry, for remote tarballs it's SHA-512 of the file. npm verifies tarball matches this hash before unpacking, throwing EINTEGRITY error if mismatch detected."
+        }
+      },
+      "type": "object",
+      "required": [
+        "resolved",
+        "integrity"
+      ],
+      "description": "NpmPackageLockEntry represents a single entry within the \"packages\" section of a package-lock.json file."
+    },
+    "JavascriptYarnLockEntry": {
+      "properties": {
+        "resolved": {
+          "type": "string",
+          "description": "Resolved is URL where this package was downloaded from"
+        },
+        "integrity": {
+          "type": "string",
+          "description": "Integrity is Subresource Integrity hash for verification (SRI format)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "resolved",
+        "integrity"
+      ],
+      "description": "YarnLockEntry represents a single entry section of a yarn.lock file."
+    },
+    "KeyValue": {
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Key is the key name"
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is the value associated with the key"
+        }
+      },
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "description": "KeyValue represents a single key-value pair."
+    },
+    "KeyValues": {
+      "items": {
+        "$ref": "#/$defs/KeyValue"
+      },
+      "type": "array",
+      "description": "KeyValues represents an ordered collection of key-value pairs that preserves insertion order."
+    },
+    "License": {
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "spdxExpression": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "urls": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "type": "array"
+        },
+        "contents": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value",
+        "spdxExpression",
+        "type",
+        "urls",
+        "locations"
+      ]
+    },
+    "LinuxKernelArchive": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is kernel name (typically \"Linux\")"
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is kernel version string"
+        },
+        "extendedVersion": {
+          "type": "string",
+          "description": "ExtendedVersion is additional version information"
+        },
+        "buildTime": {
+          "type": "string",
+          "description": "BuildTime is when the kernel was built"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is who built the kernel"
+        },
+        "format": {
+          "type": "string",
+          "description": "Format is kernel image format (e.g. bzImage, zImage)"
+        },
+        "rwRootFS": {
+          "type": "boolean",
+          "description": "RWRootFS is whether root filesystem is mounted read-write"
+        },
+        "swapDevice": {
+          "type": "integer",
+          "description": "SwapDevice is swap device number"
+        },
+        "rootDevice": {
+          "type": "integer",
+          "description": "RootDevice is root device number"
+        },
+        "videoMode": {
+          "type": "string",
+          "description": "VideoMode is default video mode setting"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "architecture",
+        "version"
+      ],
+      "description": "LinuxKernel represents all captured data for a Linux kernel"
+    },
+    "LinuxKernelModule": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is module name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is module version string"
+        },
+        "sourceVersion": {
+          "type": "string",
+          "description": "SourceVersion is the source code version identifier"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path is the filesystem path to the .ko kernel object file (absolute path)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable module description"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is module author name and email"
+        },
+        "license": {
+          "type": "string",
+          "description": "License is module license (e.g. GPL, BSD) which must be compatible with kernel"
+        },
+        "kernelVersion": {
+          "type": "string",
+          "description": "KernelVersion is kernel version this module was built for"
+        },
+        "versionMagic": {
+          "type": "string",
+          "description": "VersionMagic is version magic string for compatibility checking (includes kernel version, SMP status, module loading capabilities like \"3.17.4-302.fc21.x86_64 SMP mod_unload modversions\"). Module will NOT load if vermagic doesn't match running kernel."
+        },
+        "parameters": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/LinuxKernelModuleParameter"
+            }
+          },
+          "type": "object",
+          "description": "Parameters are the module parameters that can be configured at load time (user-settable values like module options)"
+        }
+      },
+      "type": "object",
+      "description": "LinuxKernelModule represents a loadable kernel module (.ko file) with its metadata, parameters, and dependencies."
+    },
+    "LinuxKernelModuleParameter": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type is parameter data type (e.g. int, string, bool, array types)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable parameter description explaining what the parameter controls"
+        }
+      },
+      "type": "object",
+      "description": "LinuxKernelModuleParameter represents a configurable parameter for a kernel module with its type and description."
+    },
+    "LinuxRelease": {
+      "properties": {
+        "prettyName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "idLike": {
+          "$ref": "#/$defs/IDLikes"
+        },
+        "version": {
+          "type": "string"
+        },
+        "versionID": {
+          "type": "string"
+        },
+        "versionCodename": {
+          "type": "string"
+        },
+        "buildID": {
+          "type": "string"
+        },
+        "imageID": {
+          "type": "string"
+        },
+        "imageVersion": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "variantID": {
+          "type": "string"
+        },
+        "homeURL": {
+          "type": "string"
+        },
+        "supportURL": {
+          "type": "string"
+        },
+        "bugReportURL": {
+          "type": "string"
+        },
+        "privacyPolicyURL": {
+          "type": "string"
+        },
+        "cpeName": {
+          "type": "string"
+        },
+        "supportEnd": {
+          "type": "string"
+        },
+        "extendedSupport": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Location": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed)."
+        },
+        "layerID": {
+          "type": "string",
+          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
+        },
+        "accessPath": {
+          "type": "string",
+          "description": "AccessPath is the path used to retrieve file contents (which may or may not have hardlinks / symlinks in the path)"
+        },
+        "annotations": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "accessPath"
+      ],
+      "description": "Location represents a path relative to a particular filesystem resolved to a specific file.Reference."
+    },
+    "LuarocksPackage": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the .rockspec file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the .rockspec file"
+        },
+        "license": {
+          "type": "string",
+          "description": "License is license identifier"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable package description"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the source download URL"
+        },
+        "dependencies": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Dependencies are the map of dependency names to version constraints"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "license",
+        "homepage",
+        "description",
+        "url",
+        "dependencies"
+      ],
+      "description": "LuaRocksPackage represents a Lua package managed by the LuaRocks package manager with metadata from .rockspec files."
+    },
+    "MicrosoftKbPatch": {
+      "properties": {
+        "product_id": {
+          "type": "string",
+          "description": "ProductID is MSRC Product ID (e.g. \"Windows 10 Version 1703 for 32-bit Systems\")"
+        },
+        "kb": {
+          "type": "string",
+          "description": "Kb is Knowledge Base article number (e.g. \"5001028\")"
+        }
+      },
+      "type": "object",
+      "required": [
+        "product_id",
+        "kb"
+      ],
+      "description": "MicrosoftKbPatch is slightly odd in how it is expected to map onto data."
+    },
+    "NixDerivation": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is path to the .drv file in Nix store"
+        },
+        "system": {
+          "type": "string",
+          "description": "System is target system string indicating where derivation can be built (e.g. \"x86_64-linux\", \"aarch64-darwin\"). Must match current system for local builds."
+        },
+        "inputDerivations": {
+          "items": {
+            "$ref": "#/$defs/NixDerivationReference"
+          },
+          "type": "array",
+          "description": "InputDerivations are the list of other derivations that were inputs to this build (dependencies)"
+        },
+        "inputSources": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "InputSources are the list of source file paths that were inputs to this build"
+        }
+      },
+      "type": "object",
+      "description": "NixDerivation represents a Nix .drv file that describes how to build a package including inputs, outputs, and build instructions."
+    },
+    "NixDerivationReference": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is path to the referenced .drv file"
+        },
+        "outputs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Outputs are which outputs of the referenced derivation were used (e.g. [\"out\"], [\"bin\", \"dev\"])"
+        }
+      },
+      "type": "object",
+      "description": "NixDerivationReference represents a reference to another derivation used as a build input or runtime dependency."
+    },
+    "NixStoreEntry": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is full store path for this output (e.g. /nix/store/abc123...-package-1.0)"
+        },
+        "output": {
+          "type": "string",
+          "description": "Output is the specific output name for multi-output packages (empty string for default \"out\" output, can be \"bin\", \"dev\", \"doc\", etc.)"
+        },
+        "outputHash": {
+          "type": "string",
+          "description": "OutputHash is hash prefix of the store path basename (first part before the dash)"
+        },
+        "derivation": {
+          "$ref": "#/$defs/NixDerivation",
+          "description": "Derivation is information about the .drv file that describes how this package was built"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files are the list of files under the nix/store path for this package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "outputHash"
+      ],
+      "description": "NixStoreEntry represents a package in the Nix store (/nix/store) with its derivation information and metadata."
+    },
+    "OpamPackage": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the .opam file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the .opam file"
+        },
+        "licenses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Licenses are the list of applicable licenses"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is download URL for the package source"
+        },
+        "checksum": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Checksums are the list of checksums for verification"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the list of required dependencies"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "licenses",
+        "url",
+        "checksum",
+        "homepage",
+        "dependencies"
+      ],
+      "description": "OpamPackage represents an OCaml package managed by the OPAM package manager with metadata from .opam files."
+    },
+    "Package": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "foundBy": {
+          "type": "string"
+        },
+        "locations": {
+          "items": {
+            "$ref": "#/$defs/Location"
+          },
+          "type": "array"
+        },
+        "licenses": {
+          "$ref": "#/$defs/licenses"
+        },
+        "language": {
+          "type": "string"
+        },
+        "cpes": {
+          "$ref": "#/$defs/cpes"
+        },
+        "purl": {
+          "type": "string"
+        },
+        "metadataType": {
+          "type": "string"
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/AlpmDbEntry"
+            },
+            {
+              "$ref": "#/$defs/ApkDbEntry"
+            },
+            {
+              "$ref": "#/$defs/BinarySignature"
+            },
+            {
+              "$ref": "#/$defs/BitnamiSbomEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanFileEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanInfoEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanLockEntry"
+            },
+            {
+              "$ref": "#/$defs/CConanLockV2Entry"
+            },
+            {
+              "$ref": "#/$defs/CocoaPodfileLockEntry"
+            },
+            {
+              "$ref": "#/$defs/CondaMetadataEntry"
+            },
+            {
+              "$ref": "#/$defs/DartPubspec"
+            },
+            {
+              "$ref": "#/$defs/DartPubspecLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DotnetDepsEntry"
+            },
+            {
+              "$ref": "#/$defs/DotnetPackagesLockEntry"
+            },
+            {
+              "$ref": "#/$defs/DotnetPortableExecutableEntry"
+            },
+            {
+              "$ref": "#/$defs/DpkgArchiveEntry"
+            },
+            {
+              "$ref": "#/$defs/DpkgDbEntry"
+            },
+            {
+              "$ref": "#/$defs/ElfBinaryPackageNoteJsonPayload"
+            },
+            {
+              "$ref": "#/$defs/ElixirMixLockEntry"
+            },
+            {
+              "$ref": "#/$defs/ErlangRebarLockEntry"
+            },
+            {
+              "$ref": "#/$defs/GithubActionsUseStatement"
+            },
+            {
+              "$ref": "#/$defs/GoModuleBuildinfoEntry"
+            },
+            {
+              "$ref": "#/$defs/GoModuleEntry"
+            },
+            {
+              "$ref": "#/$defs/GoSourceEntry"
+            },
+            {
+              "$ref": "#/$defs/HaskellHackageStackEntry"
+            },
+            {
+              "$ref": "#/$defs/HaskellHackageStackLockEntry"
+            },
+            {
+              "$ref": "#/$defs/HomebrewFormula"
+            },
+            {
+              "$ref": "#/$defs/JavaArchive"
+            },
+            {
+              "$ref": "#/$defs/JavaJvmInstallation"
+            },
+            {
+              "$ref": "#/$defs/JavascriptNpmPackage"
+            },
+            {
+              "$ref": "#/$defs/JavascriptNpmPackageLockEntry"
+            },
+            {
+              "$ref": "#/$defs/JavascriptYarnLockEntry"
+            },
+            {
+              "$ref": "#/$defs/LinuxKernelArchive"
+            },
+            {
+              "$ref": "#/$defs/LinuxKernelModule"
+            },
+            {
+              "$ref": "#/$defs/LuarocksPackage"
+            },
+            {
+              "$ref": "#/$defs/MicrosoftKbPatch"
+            },
+            {
+              "$ref": "#/$defs/NixStoreEntry"
+            },
+            {
+              "$ref": "#/$defs/OpamPackage"
+            },
+            {
+              "$ref": "#/$defs/PeBinary"
+            },
+            {
+              "$ref": "#/$defs/PhpComposerInstalledEntry"
+            },
+            {
+              "$ref": "#/$defs/PhpComposerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PhpPearEntry"
+            },
+            {
+              "$ref": "#/$defs/PhpPeclEntry"
+            },
+            {
+              "$ref": "#/$defs/PortageDbEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonPackage"
+            },
+            {
+              "$ref": "#/$defs/PythonPipRequirementsEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonPipfileLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonPoetryLockEntry"
+            },
+            {
+              "$ref": "#/$defs/PythonUvLockEntry"
+            },
+            {
+              "$ref": "#/$defs/RDescription"
+            },
+            {
+              "$ref": "#/$defs/RpmArchive"
+            },
+            {
+              "$ref": "#/$defs/RpmDbEntry"
+            },
+            {
+              "$ref": "#/$defs/RubyGemspec"
+            },
+            {
+              "$ref": "#/$defs/RustCargoAuditEntry"
+            },
+            {
+              "$ref": "#/$defs/RustCargoLockEntry"
+            },
+            {
+              "$ref": "#/$defs/SnapEntry"
+            },
+            {
+              "$ref": "#/$defs/SwiftPackageManagerLockEntry"
+            },
+            {
+              "$ref": "#/$defs/SwiplpackPackage"
+            },
+            {
+              "$ref": "#/$defs/TerraformLockProviderEntry"
+            },
+            {
+              "$ref": "#/$defs/WordpressPluginEntry"
+            }
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "foundBy",
+        "locations",
+        "licenses",
+        "language",
+        "cpes",
+        "purl"
+      ],
+      "description": "Package represents a pkg.Package object specialized for JSON marshaling and unmarshalling."
+    },
+    "PeBinary": {
+      "properties": {
+        "VersionResources": {
+          "$ref": "#/$defs/KeyValues",
+          "description": "VersionResources contains key-value pairs extracted from the PE file's version resource section (e.g., FileVersion, ProductName, CompanyName)."
+        }
+      },
+      "type": "object",
+      "required": [
+        "VersionResources"
+      ],
+      "description": "PEBinary represents metadata captured from a Portable Executable formatted binary (dll, exe, etc.)"
+    },
+    "PhpComposerAuthors": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is author's full name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email is author's email address"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is author's personal or company website"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "description": "PhpComposerAuthors represents author information for a PHP Composer package from the authors field in composer.json."
+    },
+    "PhpComposerExternalReference": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Type is reference type (git for source VCS, zip/tar for dist archives)"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the URL to the resource (git repository URL or archive download URL)"
+        },
+        "reference": {
+          "type": "string",
+          "description": "Reference is git commit hash or version tag for source, or archive version for dist"
+        },
+        "shasum": {
+          "type": "string",
+          "description": "Shasum is SHA hash of the archive file for integrity verification (dist only)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "type",
+        "url",
+        "reference"
+      ],
+      "description": "PhpComposerExternalReference represents source or distribution information for a PHP package, indicating where the package code is retrieved from."
+    },
+    "PhpComposerInstalledEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is package name in vendor/package format (e.g. symfony/console)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference",
+          "description": "Source is the source repository information for development (typically git repo, used when passing --prefer-source). Originates from source code repository."
+        },
+        "dist": {
+          "$ref": "#/$defs/PhpComposerExternalReference",
+          "description": "Dist is distribution archive information for production (typically zip/tar, default install method). Packaged version of released code."
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Require is runtime dependencies with version constraints (package will not install unless these requirements can be met)"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Provide is virtual packages/functionality provided by this package (allows other packages to depend on capabilities)"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "RequireDev is development-only dependencies (not installed in production, only when developing this package or running tests)"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Suggest is optional but recommended dependencies (suggestions for packages that would extend functionality)"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "License is the list of license identifiers (SPDX format)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type is package type indicating purpose (library=reusable code, project=application, metapackage=aggregates dependencies, etc.)"
+        },
+        "notification-url": {
+          "type": "string",
+          "description": "NotificationURL is the URL to notify when package is installed (for tracking/statistics)"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Bin is the list of binary/executable files that should be added to PATH"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array",
+          "description": "Authors are the list of package authors with name/email/homepage"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable package description"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Keywords are the list of keywords for package discovery/search"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time is timestamp when this package version was released"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ],
+      "description": "PhpComposerInstalledEntry represents a single package entry from a composer v1/v2 \"installed.json\" files (very similar to composer.lock files)."
+    },
+    "PhpComposerLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is package name in vendor/package format (e.g. symfony/console)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version"
+        },
+        "source": {
+          "$ref": "#/$defs/PhpComposerExternalReference",
+          "description": "Source is the source repository information for development (typically git repo, used when passing --prefer-source). Originates from source code repository."
+        },
+        "dist": {
+          "$ref": "#/$defs/PhpComposerExternalReference",
+          "description": "Dist is distribution archive information for production (typically zip/tar, default install method). Packaged version of released code."
+        },
+        "require": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Require is runtime dependencies with version constraints (package will not install unless these requirements can be met)"
+        },
+        "provide": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Provide is virtual packages/functionality provided by this package (allows other packages to depend on capabilities)"
+        },
+        "require-dev": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "RequireDev is development-only dependencies (not installed in production, only when developing this package or running tests)"
+        },
+        "suggest": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "description": "Suggest is optional but recommended dependencies (suggestions for packages that would extend functionality)"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "License is the list of license identifiers (SPDX format)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type is package type indicating purpose (library=reusable code, project=application, metapackage=aggregates dependencies, etc.)"
+        },
+        "notification-url": {
+          "type": "string",
+          "description": "NotificationURL is the URL to notify when package is installed (for tracking/statistics)"
+        },
+        "bin": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Bin is the list of binary/executable files that should be added to PATH"
+        },
+        "authors": {
+          "items": {
+            "$ref": "#/$defs/PhpComposerAuthors"
+          },
+          "type": "array",
+          "description": "Authors are the list of package authors with name/email/homepage"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is a human-readable package description"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        },
+        "keywords": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Keywords are the list of keywords for package discovery/search"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time is timestamp when this package version was released"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "dist"
+      ],
+      "description": "PhpComposerLockEntry represents a single package entry found from a composer.lock file."
+    },
+    "PhpPearEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name"
+        },
+        "channel": {
+          "type": "string",
+          "description": "Channel is PEAR channel this package is from"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "License is the list of applicable licenses"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "description": "PhpPearEntry represents a single package entry found within php pear metadata files."
+    },
+    "PhpPeclEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name"
+        },
+        "channel": {
+          "type": "string",
+          "description": "Channel is PEAR channel this package is from"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version"
+        },
+        "license": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "License is the list of applicable licenses"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "description": "PhpPeclEntry represents a single package entry found within php pecl metadata files."
+    },
+    "PortageDbEntry": {
+      "properties": {
+        "installedSize": {
+          "type": "integer",
+          "description": "InstalledSize is total size of installed files in bytes"
+        },
+        "licenses": {
+          "type": "string",
+          "description": "Licenses is license string which may be an expression (e.g. \"GPL-2 OR Apache-2.0\")"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/PortageFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the files installed by this package (tracked in CONTENTS file)"
+        }
+      },
+      "type": "object",
+      "required": [
+        "installedSize",
+        "files"
+      ],
+      "description": "PortageEntry represents a single package entry in the portage DB flat-file store."
+    },
+    "PortageFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is the file path relative to the filesystem root"
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest",
+          "description": "Digest is file content hash (MD5 for regular files in CONTENTS format: \"obj filename md5hash mtime\")"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "description": "PortageFileRecord represents a single file attributed to a portage package."
+    },
+    "PythonDirectURLOriginInfo": {
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL is the source URL from which the package was installed."
+        },
+        "commitId": {
+          "type": "string",
+          "description": "CommitID is the VCS commit hash if installed from version control."
+        },
+        "vcs": {
+          "type": "string",
+          "description": "VCS is the version control system type (e.g., \"git\", \"hg\")."
+        }
+      },
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "description": "PythonDirectURLOriginInfo represents installation source metadata from direct_url.json for packages installed from VCS or direct URLs."
+    },
+    "PythonFileDigest": {
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "description": "Algorithm is the hash algorithm used (e.g., \"sha256\")."
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is the hex-encoded hash digest value."
+        }
+      },
+      "type": "object",
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "description": "PythonFileDigest represents the file metadata for a single file attributed to a python package."
+    },
+    "PythonFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is the installed file path from the RECORD file."
+        },
+        "digest": {
+          "$ref": "#/$defs/PythonFileDigest",
+          "description": "Digest contains the hash algorithm and value for file integrity verification."
+        },
+        "size": {
+          "type": "string",
+          "description": "Size is the file size in bytes as a string."
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "description": "PythonFileRecord represents a single entry within a RECORD file for a python wheel or egg package"
+    },
+    "PythonPackage": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name from the Name field in PKG-INFO or METADATA."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version from the Version field in PKG-INFO or METADATA."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is the package author name from the Author field."
+        },
+        "authorEmail": {
+          "type": "string",
+          "description": "AuthorEmail is the package author's email address from the Author-Email field."
+        },
+        "platform": {
+          "type": "string",
+          "description": "Platform indicates the target platform for the package (e.g., \"any\", \"linux\", \"win32\")."
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/PythonFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the installed files listed in the RECORD file for wheels or installed-files.txt for eggs."
+        },
+        "sitePackagesRootPath": {
+          "type": "string",
+          "description": "SitePackagesRootPath is the root directory path containing the package (e.g., \"/usr/lib/python3.9/site-packages\")."
+        },
+        "topLevelPackages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "TopLevelPackages are the top-level Python module names from top_level.txt file."
+        },
+        "directUrlOrigin": {
+          "$ref": "#/$defs/PythonDirectURLOriginInfo",
+          "description": "DirectURLOrigin contains VCS or direct URL installation information from direct_url.json."
+        },
+        "requiresPython": {
+          "type": "string",
+          "description": "RequiresPython specifies the Python version requirement (e.g., \"\u003e=3.6\")."
+        },
+        "requiresDist": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "RequiresDist lists the package dependencies with version specifiers from Requires-Dist fields."
+        },
+        "providesExtra": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "ProvidesExtra lists optional feature names that can be installed via extras (e.g., \"dev\", \"test\")."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "platform",
+        "sitePackagesRootPath"
+      ],
+      "description": "PythonPackage represents all captured data for a python egg or wheel package (specifically as outlined in the PyPA core metadata specification https://packaging.python.org/en/latest/specifications/core-metadata/)."
+    },
+    "PythonPipRequirementsEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name from the requirements file."
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Extras are the optional features to install from the package (e.g., package[dev,test])."
+        },
+        "versionConstraint": {
+          "type": "string",
+          "description": "VersionConstraint specifies version requirements (e.g., \"\u003e=1.0,\u003c2.0\")."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL is the direct download URL or VCS URL if specified instead of a PyPI package."
+        },
+        "markers": {
+          "type": "string",
+          "description": "Markers are environment marker expressions for conditional installation (e.g., \"python_version \u003e= '3.8'\")."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "versionConstraint"
+      ],
+      "description": "PythonRequirementsEntry represents a single entry within a [*-]requirements.txt file."
+    },
+    "PythonPipfileLockEntry": {
+      "properties": {
+        "hashes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Hashes are the package file hash values in the format \"algorithm:digest\" for integrity verification."
+        },
+        "index": {
+          "type": "string",
+          "description": "Index is the PyPI index name where the package should be fetched from."
+        }
+      },
+      "type": "object",
+      "required": [
+        "hashes",
+        "index"
+      ],
+      "description": "PythonPipfileLockEntry represents a single package entry within a Pipfile.lock file."
+    },
+    "PythonPoetryLockDependencyEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the dependency package name."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the locked version or version constraint for the dependency."
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "Optional indicates whether this dependency is optional (only needed for certain extras)."
+        },
+        "markers": {
+          "type": "string",
+          "description": "Markers are environment marker expressions that conditionally enable the dependency (e.g., \"python_version \u003e= '3.8'\")."
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Extras are the optional feature names from the dependency that should be installed."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "optional"
+      ],
+      "description": "PythonPoetryLockDependencyEntry represents a single dependency entry within a Poetry lock file."
+    },
+    "PythonPoetryLockEntry": {
+      "properties": {
+        "index": {
+          "type": "string",
+          "description": "Index is the package repository name where the package should be fetched from."
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/PythonPoetryLockDependencyEntry"
+          },
+          "type": "array",
+          "description": "Dependencies are the package's runtime dependencies with version constraints."
+        },
+        "extras": {
+          "items": {
+            "$ref": "#/$defs/PythonPoetryLockExtraEntry"
+          },
+          "type": "array",
+          "description": "Extras are optional feature groups that include additional dependencies."
+        }
+      },
+      "type": "object",
+      "required": [
+        "index",
+        "dependencies"
+      ],
+      "description": "PythonPoetryLockEntry represents a single package entry within a Pipfile.lock file."
+    },
+    "PythonPoetryLockExtraEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the optional feature name (e.g., \"dev\", \"test\")."
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the package names required when this extra is installed."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "dependencies"
+      ],
+      "description": "PythonPoetryLockExtraEntry represents an optional feature group in a Poetry lock file."
+    },
+    "PythonUvLockDependencyEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the dependency package name."
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "Optional indicates whether this dependency is optional (only needed for certain extras)."
+        },
+        "markers": {
+          "type": "string",
+          "description": "Markers are environment marker expressions that conditionally enable the dependency (e.g., \"python_version \u003e= '3.8'\")."
+        },
+        "extras": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Extras are the optional feature names from the dependency that should be installed."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "optional"
+      ],
+      "description": "PythonUvLockDependencyEntry represents a single dependency entry within a uv lock file."
+    },
+    "PythonUvLockEntry": {
+      "properties": {
+        "index": {
+          "type": "string",
+          "description": "Index is the package repository name where the package should be fetched from."
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/PythonUvLockDependencyEntry"
+          },
+          "type": "array",
+          "description": "Dependencies are the package's runtime dependencies with version constraints."
+        },
+        "extras": {
+          "items": {
+            "$ref": "#/$defs/PythonUvLockExtraEntry"
+          },
+          "type": "array",
+          "description": "Extras are optional feature groups that include additional dependencies."
+        }
+      },
+      "type": "object",
+      "required": [
+        "index",
+        "dependencies"
+      ],
+      "description": "PythonUvLockEntry represents a single package entry within a uv.lock file."
+    },
+    "PythonUvLockExtraEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the optional feature name (e.g., \"dev\", \"test\")."
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the package names required when this extra is installed."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "dependencies"
+      ],
+      "description": "PythonUvLockExtraEntry represents an optional feature group in a uv lock file."
+    },
+    "RDescription": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Title is short one-line package title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description is detailed package description"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is package author(s)"
+        },
+        "maintainer": {
+          "type": "string",
+          "description": "Maintainer is current package maintainer"
+        },
+        "url": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "URL is the list of related URLs"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Repository is CRAN or other repository name"
+        },
+        "built": {
+          "type": "string",
+          "description": "Built is R version and platform this was built with"
+        },
+        "needsCompilation": {
+          "type": "boolean",
+          "description": "NeedsCompilation is whether this package requires compilation"
+        },
+        "imports": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Imports are the packages imported in the NAMESPACE"
+        },
+        "depends": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Depends are the packages this package depends on"
+        },
+        "suggests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Suggests are the optional packages that extend functionality"
+        }
+      },
+      "type": "object",
+      "description": "RDescription represents metadata from an R package DESCRIPTION file containing package information, dependencies, and author details."
+    },
+    "Relationship": {
+      "properties": {
+        "parent": {
+          "type": "string"
+        },
+        "child": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": true
+      },
+      "type": "object",
+      "required": [
+        "parent",
+        "child",
+        "type"
+      ]
+    },
+    "RpmArchive": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the RPM package name as found in the RPM database."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the upstream version of the package."
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "description": "Epoch is the version epoch used to force upgrade ordering (null if not set)."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Arch is the target CPU architecture (e.g., \"x86_64\", \"aarch64\", \"noarch\")."
+        },
+        "release": {
+          "type": "string",
+          "description": "Release is the package release number or distribution-specific version suffix."
+        },
+        "sourceRpm": {
+          "type": "string",
+          "description": "SourceRpm is the source RPM filename that was used to build this package."
+        },
+        "signatures": {
+          "items": {
+            "$ref": "#/$defs/RpmSignature"
+          },
+          "type": "array",
+          "description": "Signatures contains GPG signature metadata for package verification."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size is the total installed size of the package in bytes."
+        },
+        "vendor": {
+          "type": "string",
+          "description": "Vendor is the organization that packaged the software."
+        },
+        "modularityLabel": {
+          "type": "string",
+          "description": "ModularityLabel identifies the module stream for modular RPM packages (e.g., \"nodejs:12:20200101\")."
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Provides lists the virtual packages and capabilities this package provides."
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Requires lists the dependencies required by this package."
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the file records for all files owned by this package."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "files"
+      ],
+      "description": "RpmArchive represents package metadata extracted directly from a .rpm archive file, containing the same information as an RPM database entry."
+    },
+    "RpmDbEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the RPM package name as found in the RPM database."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the upstream version of the package."
+        },
+        "epoch": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "description": "Epoch is the version epoch used to force upgrade ordering (null if not set)."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Arch is the target CPU architecture (e.g., \"x86_64\", \"aarch64\", \"noarch\")."
+        },
+        "release": {
+          "type": "string",
+          "description": "Release is the package release number or distribution-specific version suffix."
+        },
+        "sourceRpm": {
+          "type": "string",
+          "description": "SourceRpm is the source RPM filename that was used to build this package."
+        },
+        "signatures": {
+          "items": {
+            "$ref": "#/$defs/RpmSignature"
+          },
+          "type": "array",
+          "description": "Signatures contains GPG signature metadata for package verification."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size is the total installed size of the package in bytes."
+        },
+        "vendor": {
+          "type": "string",
+          "description": "Vendor is the organization that packaged the software."
+        },
+        "modularityLabel": {
+          "type": "string",
+          "description": "ModularityLabel identifies the module stream for modular RPM packages (e.g., \"nodejs:12:20200101\")."
+        },
+        "provides": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Provides lists the virtual packages and capabilities this package provides."
+        },
+        "requires": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Requires lists the dependencies required by this package."
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/RpmFileRecord"
+          },
+          "type": "array",
+          "description": "Files are the file records for all files owned by this package."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "epoch",
+        "architecture",
+        "release",
+        "sourceRpm",
+        "size",
+        "vendor",
+        "files"
+      ],
+      "description": "RpmDBEntry represents all captured data from a RPM DB package entry."
+    },
+    "RpmFileRecord": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path is the absolute file path where the file is installed."
+        },
+        "mode": {
+          "type": "integer",
+          "description": "Mode is the file permission mode bits following Unix stat.h conventions."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size is the file size in bytes."
+        },
+        "digest": {
+          "$ref": "#/$defs/Digest",
+          "description": "Digest contains the hash algorithm and value for file integrity verification."
+        },
+        "userName": {
+          "type": "string",
+          "description": "UserName is the owner username for the file."
+        },
+        "groupName": {
+          "type": "string",
+          "description": "GroupName is the group name for the file."
+        },
+        "flags": {
+          "type": "string",
+          "description": "Flags indicates the file type (e.g., \"%config\", \"%doc\", \"%ghost\")."
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "mode",
+        "size",
+        "digest",
+        "userName",
+        "groupName",
+        "flags"
+      ],
+      "description": "RpmFileRecord represents the file metadata for a single file attributed to a RPM package."
+    },
+    "RpmSignature": {
+      "properties": {
+        "algo": {
+          "type": "string",
+          "description": "PublicKeyAlgorithm is the public key algorithm used for signing (e.g., \"RSA\")."
+        },
+        "hash": {
+          "type": "string",
+          "description": "HashAlgorithm is the hash algorithm used for the signature (e.g., \"SHA256\")."
+        },
+        "created": {
+          "type": "string",
+          "description": "Created is the timestamp when the signature was created."
+        },
+        "issuer": {
+          "type": "string",
+          "description": "IssuerKeyID is the GPG key ID that created the signature."
+        }
+      },
+      "type": "object",
+      "required": [
+        "algo",
+        "hash",
+        "created",
+        "issuer"
+      ],
+      "description": "RpmSignature represents a GPG signature for an RPM package used for authenticity verification."
+    },
+    "RubyGemspec": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is gem name as specified in the gemspec"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is gem version as specified in the gemspec"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files is logical list of files in the gem (NOT directly usable as filesystem paths. Example: bundler gem lists \"lib/bundler/vendor/uri/lib/uri/ldap.rb\" but actual path is \"/usr/local/lib/ruby/3.2.0/bundler/vendor/uri/lib/uri/ldap.rb\". Would need gem installation path, ruby version, and env vars like GEM_HOME to resolve actual paths.)"
+        },
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Authors are the list of gem authors (stored as array regardless of using `author` or `authors` method in gemspec)"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "description": "RubyGemspec represents all metadata parsed from the *.gemspec file"
+    },
+    "RustCargoAuditEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is crate name as specified in audit section of the build binary"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is crate version as specified in audit section of the build binary"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source is the source registry or repository where this crate came from"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source"
+      ],
+      "description": "RustBinaryAuditEntry represents Rust crate metadata extracted from a compiled binary using cargo-auditable format."
+    },
+    "RustCargoLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is crate name as specified in Cargo.toml"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is crate version as specified in Cargo.toml"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source is the source registry or repository URL in format \"registry+https://github.com/rust-lang/crates.io-index\" for registry packages"
+        },
+        "checksum": {
+          "type": "string",
+          "description": "Checksum is content checksum for registry packages only (hexadecimal string). Cargo doesn't require or include checksums for git dependencies. Used to detect MITM attacks by verifying downloaded crate matches lockfile checksum."
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the list of dependencies with version constraints"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "source",
+        "checksum",
+        "dependencies"
+      ],
+      "description": "RustCargoLockEntry represents a locked dependency from a Cargo.lock file with precise version and checksum information."
+    },
+    "Schema": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "version",
+        "url"
+      ]
+    },
+    "SnapEntry": {
+      "properties": {
+        "snapType": {
+          "type": "string",
+          "description": "SnapType indicates the snap type (base, kernel, app, gadget, or snapd)."
+        },
+        "base": {
+          "type": "string",
+          "description": "Base is the base snap name that this snap depends on (e.g., \"core20\", \"core22\")."
+        },
+        "snapName": {
+          "type": "string",
+          "description": "SnapName is the snap package name."
+        },
+        "snapVersion": {
+          "type": "string",
+          "description": "SnapVersion is the snap package version."
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Architecture is the target CPU architecture (e.g., \"amd64\", \"arm64\")."
+        }
+      },
+      "type": "object",
+      "required": [
+        "snapType",
+        "base",
+        "snapName",
+        "snapVersion",
+        "architecture"
+      ],
+      "description": "SnapEntry represents metadata for a Snap package extracted from snap.yaml or snapcraft.yaml files."
+    },
+    "Source": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "supplier": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "metadata": true
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "version",
+        "type",
+        "metadata"
+      ],
+      "description": "Instead, the Supplier can be determined by the user of syft and passed as a config or flag to help fulfill the NTIA minimum elements."
+    },
+    "SwiftPackageManagerLockEntry": {
+      "properties": {
+        "revision": {
+          "type": "string",
+          "description": "Revision is git commit hash of the resolved package"
+        }
+      },
+      "type": "object",
+      "required": [
+        "revision"
+      ],
+      "description": "SwiftPackageManagerResolvedEntry represents a resolved dependency from a Package.resolved file with its locked version and source location."
+    },
+    "SwiplpackPackage": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the package name as found in the .toml file"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the package version as found in the .toml file"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is author name"
+        },
+        "authorEmail": {
+          "type": "string",
+          "description": "AuthorEmail is author email address"
+        },
+        "packager": {
+          "type": "string",
+          "description": "Packager is packager name (if different from author)"
+        },
+        "packagerEmail": {
+          "type": "string",
+          "description": "PackagerEmail is packager email address"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is project homepage URL"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the list of required dependencies"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "author",
+        "authorEmail",
+        "packager",
+        "packagerEmail",
+        "homepage",
+        "dependencies"
+      ],
+      "description": "SwiplPackEntry represents a SWI-Prolog package from the pack system with metadata about the package and its dependencies."
+    },
+    "TerraformLockProviderEntry": {
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "URL is the provider source address (e.g., \"registry.terraform.io/hashicorp/aws\")."
+        },
+        "constraints": {
+          "type": "string",
+          "description": "Constraints specifies the version constraints for the provider (e.g., \"~\u003e 4.0\")."
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the locked provider version selected during terraform init."
+        },
+        "hashes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Hashes are cryptographic checksums for the provider plugin archives across different platforms."
+        }
+      },
+      "type": "object",
+      "required": [
+        "url",
+        "constraints",
+        "version",
+        "hashes"
+      ],
+      "description": "TerraformLockProviderEntry represents a single provider entry in a Terraform dependency lock file (.terraform.lock.hcl)."
+    },
+    "WordpressPluginEntry": {
+      "properties": {
+        "pluginInstallDirectory": {
+          "type": "string",
+          "description": "PluginInstallDirectory is directory name where the plugin is installed"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is plugin author name"
+        },
+        "authorUri": {
+          "type": "string",
+          "description": "AuthorURI is author's website URL"
+        }
+      },
+      "type": "object",
+      "required": [
+        "pluginInstallDirectory"
+      ],
+      "description": "WordpressPluginEntry represents all metadata parsed from the wordpress plugin file"
+    },
+    "cpes": {
+      "items": {
+        "$ref": "#/$defs/CPE"
+      },
+      "type": "array"
+    },
+    "licenses": {
+      "items": {
+        "$ref": "#/$defs/License"
+      },
+      "type": "array"
+    }
+  }
+}

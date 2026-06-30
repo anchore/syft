@@ -1,6 +1,8 @@
 package cpp
 
 type CatalogerConfig struct {
+	// VcpkgAllowGitClone enables cloning remote git registries to resolve vcpkg manifest dependencies (requires network access).
+	// app-config: cpp.vcpkg-allow-git-clone
 	VcpkgAllowGitClone bool `yaml:"vcpkg-allow-git-clone" json:"vcpkg-allow-git-clone" mapstructure:"vcpkg-allow-git-clone"`
 }
 
