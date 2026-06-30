@@ -58,6 +58,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.YarnLockEntry{},
 		pkg.TerraformLockProviderEntry{},
 		pkg.GGUFFileHeader{},
+		pkg.SafeTensorsModelInfo{},
 		pkg.DenoLockEntry{},
 		pkg.DenoRemoteLockEntry{},
 	)
