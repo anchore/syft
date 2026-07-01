@@ -14,6 +14,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	formatinternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
 	"github.com/anchore/syft/syft/pkg"
@@ -55,7 +56,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	artifacts := s.Artifacts
 
 	for _, coordinate := range coordinates {
-		var metadata *file.Metadata
 		// File Info
 		fileMetadata, exists := artifacts.FileMetadata[coordinate]
 		// no file metadata then don't include in SBOM
@@ -70,7 +70,6 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 			// skip dir, symlinks and sockets for the final bom
 			continue
 		}
-		metadata = &fileMetadata
 
 		// Digests
 		var digests []file.Digest
@@ -79,10 +78,11 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 		}
 
 		cdxHashes := digestsToHashes(digests)
+		relativePath := fileRelativePath(s.Source, coordinate.RealPath)
 		components = append(components, cyclonedx.Component{
 			BOMRef: string(coordinate.ID()),
 			Type:   cyclonedx.ComponentTypeFile,
-			Name:   metadata.Path,
+			Name:   relativePath,
 			Hashes: &cdxHashes,
 		})
 	}
@@ -125,6 +125,18 @@ func digestsToHashes(digests []file.Digest) []cyclonedx.Hash {
 		})
 	}
 	return hashes
+}
+
+// fileRelativePath returns the path for a file component in the BOM.
+// When the source is a directory scan with a --base-path set, paths are made
+// relative to that base (supporting ".." for symlinks that escape the base).
+// For all other source types the absolute path is stripped to a simple relative
+// path via ConvertAbsoluteToRelative.
+func fileRelativePath(src source.Description, realPath string) string {
+	if m, ok := src.Metadata.(source.DirectoryMetadata); ok && m.Base != "" {
+		return formatinternal.Rel(m.Base, realPath)
+	}
+	return formatinternal.ConvertAbsoluteToRelative(realPath)
 }
 
 func toOSComponent(distro *linux.Release) []cyclonedx.Component {
