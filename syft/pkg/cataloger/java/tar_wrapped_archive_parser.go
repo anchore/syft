@@ -80,5 +80,5 @@ func discoverPkgsFromTar(ctx context.Context, location file.Location, archivePat
 		return nil, nil, fmt.Errorf("unable to extract files from tar: %w", err)
 	}
 
-	return discoverPkgsFromOpeners(ctx, location, openers, nil, cfg)
+	return discoverPkgsFromOpeners(ctx, location, openers, nil, cfg, 0, nil)
 }

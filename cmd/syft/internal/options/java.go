@@ -12,6 +12,7 @@ type javaConfig struct {
 	MavenURL                      string `yaml:"maven-url" json:"maven-url" mapstructure:"maven-url"`
 	MaxParentRecursiveDepth       int    `yaml:"max-parent-recursive-depth" json:"max-parent-recursive-depth" mapstructure:"max-parent-recursive-depth"`
 	ResolveTransitiveDependencies bool   `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+	UseEmbeddedPOMDependencies    bool   `yaml:"use-embedded-pom-dependencies" json:"use-embedded-pom-dependencies" mapstructure:"use-embedded-pom-dependencies"`
 }
 
 func defaultJavaConfig() javaConfig {
@@ -24,6 +25,7 @@ func defaultJavaConfig() javaConfig {
 		MavenLocalRepositoryDir:       def.MavenLocalRepositoryDir,
 		MavenURL:                      def.MavenBaseURL,
 		ResolveTransitiveDependencies: def.ResolveTransitiveDependencies,
+		UseEmbeddedPOMDependencies:    def.UseEmbeddedPOMDependencies,
 	}
 }
 
@@ -46,4 +48,6 @@ build, run 'mvn help:effective-pom' before performing the scan with syft.`)
 	descriptions.Add(&o.MavenLocalRepositoryDir, `override the default location of the local Maven repository. 
 the default is the subdirectory '.m2/repository' in your home directory`)
 	descriptions.Add(&o.ResolveTransitiveDependencies, `resolve transient dependencies such as those defined in a dependency's POM on Maven central`)
+	descriptions.Add(&o.UseEmbeddedPOMDependencies, `build a hierarchical dependency graph from embedded pom.xml files within archives.
+When enabled, dependency relationships are wired to their actual Maven parent rather than all pointing to the root archive`)
 }
