@@ -76,7 +76,7 @@ func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols 
 	}
 	c.stdlibSymbolsMu.Lock()
 	defer c.stdlibSymbolsMu.Unlock()
-	merged := append(c.stdlibSymbols[coord], symbols...)
+	merged := slices.Concat(c.stdlibSymbols[coord], symbols)
 	slices.Sort(merged)
 	c.stdlibSymbols[coord] = slices.Compact(merged)
 }

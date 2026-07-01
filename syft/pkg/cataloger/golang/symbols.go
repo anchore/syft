@@ -13,6 +13,9 @@ import (
 	"strings"
 )
 
+// mainPackage is the import path the linker assigns to the binary's main package.
+const mainPackage = "main"
+
 // binarySymbol represents a single function symbol extracted from a go binary's pclntab.
 type binarySymbol struct {
 	// packagePath is the import path of the package that owns the symbol (e.g. "github.com/foo/bar/internal/baz")
@@ -224,7 +227,7 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 	results := make(map[string][]string)
 	for _, sym := range symbols {
 		pkgPath := sym.packagePath
-		if pkgPath == "main" && main != nil {
+		if pkgPath == mainPackage && main != nil {
 			// the linker renames the main package's import path to "main"
 			pkgPath = main.Path
 		}
@@ -236,7 +239,7 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 			}
 		}
 		if best == "" {
-			if pkgPath != "main" && isStandardImportPath(pkgPath) {
+			if pkgPath != mainPackage && isStandardImportPath(pkgPath) {
 				stdlib = append(stdlib, sym.name)
 			}
 			continue
