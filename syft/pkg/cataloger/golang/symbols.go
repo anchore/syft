@@ -47,7 +47,7 @@ func getSymbols(r io.ReaderAt) (syms []binarySymbol, err error) {
 
 	seen := make(map[string]struct{})
 	for _, fn := range table.Funcs {
-		if fn.Sym == nil {
+		if fn.Sym == nil || isCompilerGeneratedName(fn.Name) {
 			continue
 		}
 		seen[fn.Name] = struct{}{}
@@ -79,14 +79,26 @@ func getSymbols(r io.ReaderAt) (syms []binarySymbol, err error) {
 // packagePathFromSymbolName derives the owning package import path from a fully qualified symbol name.
 // The package path is everything up to the first "." that follows the final "/" — e.g.
 // "path/filepath.IsLocal" -> "path/filepath" and "golang.org/x/net/html.(*Tokenizer).Next" ->
-// "golang.org/x/net/html". Returns "" when the name has no package-qualifying dot.
+// "golang.org/x/net/html". Returns "" when the name has no package-qualifying dot or is compiler-generated.
 func packagePathFromSymbolName(name string) string {
+	if isCompilerGeneratedName(name) {
+		return ""
+	}
 	slash := strings.LastIndex(name, "/")
 	dot := strings.IndexByte(name[slash+1:], '.')
 	if dot < 0 {
 		return ""
 	}
 	return name[:slash+1+dot]
+}
+
+// isCompilerGeneratedName reports whether a symbol name was synthesized by the compiler or linker rather
+// than declared in Go source. These names use ':' or '..' (e.g. "type:.eq.*", "type..hash.*",
+// "go:string.*") — byte sequences that never appear in a real Go import path or identifier — so they
+// belong to no package and are dropped rather than mis-attributed (e.g. bucketed under a bogus "type"
+// stdlib package).
+func isCompilerGeneratedName(name string) bool {
+	return strings.Contains(name, ":") || strings.Contains(name, "..")
 }
 
 // funcNameTable returns every function name recorded in the pclntab's funcname table, including the
@@ -143,7 +155,7 @@ func funcNameTable(pclntab []byte) []string {
 	}
 
 	var names []string
-	for _, raw := range bytes.Split(pclntab[start:end], []byte{0}) {
+	for raw := range bytes.SplitSeq(pclntab[start:end], []byte{0}) {
 		if len(raw) == 0 {
 			continue
 		}
@@ -264,9 +276,6 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 // "net/http", "runtime", "internal/abi"), which distinguishes it from module paths like
 // "github.com/foo/bar" whose leading element is a domain name.
 func isStandardImportPath(path string) bool {
-	first := path
-	if i := strings.Index(path, "/"); i >= 0 {
-		first = path[:i]
-	}
+	first, _, _ := strings.Cut(path, "/")
 	return first != "" && !strings.Contains(first, ".")
 }

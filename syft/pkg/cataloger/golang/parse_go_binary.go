@@ -82,11 +82,12 @@ func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols 
 	c.stdlibSymbols[coord] = slices.Compact(merged)
 }
 
-// stdlibSymbolsFor returns the standard-library symbols recorded for a binary location.
+// stdlibSymbolsFor returns the standard-library symbols recorded for a binary location. It returns a copy
+// so callers cannot alias (and later mutate or race on) the map's internal slice.
 func (c *goBinaryCataloger) stdlibSymbolsFor(coord file.Coordinates) []string {
 	c.stdlibSymbolsMu.Lock()
 	defer c.stdlibSymbolsMu.Unlock()
-	return c.stdlibSymbols[coord]
+	return slices.Clone(c.stdlibSymbols[coord])
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
@@ -429,7 +430,7 @@ func getExperimentsFromVersion(version string) (string, []string) {
 	version, rest, ok := strings.Cut(version, " ")
 	if ok {
 		// Assume they may add more non-version chunks in the future, so only look for "X:".
-		for _, chunk := range strings.Split(rest, " ") {
+		for chunk := range strings.SplitSeq(rest, " ") {
 			if strings.HasPrefix(rest, "X:") {
 				csv := strings.TrimPrefix(chunk, "X:")
 				experiments = append(experiments, strings.Split(csv, ",")...)
