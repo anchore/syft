@@ -216,6 +216,12 @@ func (r *directoryIndexer) indexBranch(root string, stager *progress.AtomicStage
 		lstat, err := os.Lstat(targetPath)
 		newRoot, err := r.indexPath(targetPath, lstat, err)
 		if err != nil && !errors.Is(err, ErrSkipPath) && !errors.Is(err, fs.SkipDir) {
+			// file access errors (e.g. permission denied on restricted directories like /boot/grub2)
+			// should not stop the walk -- skip and continue, matching filepath.Walk behavior.
+			// Only fail for truly unexpected errors (ErrSkipPath and fs.SkipDir are expected/safe).
+			if r.isFileAccessErr(targetPath, err) {
+				return nil, nil
+			}
 			return nil, fmt.Errorf("unable to index ancestor path=%q: %w", targetPath, err)
 		}
 		if newRoot != "" {
