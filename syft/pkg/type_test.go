@@ -153,6 +153,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(KbPkg))
 	expectedTypes.Remove(string(JenkinsPluginPkg))
 	expectedTypes.Remove(string(PortagePkg))
+	expectedTypes.Remove(string(HadronPkg))
 	expectedTypes.Remove(string(BinaryPkg))
 	expectedTypes.Remove(string(LinuxKernelModulePkg))
 	expectedTypes.Remove(string(GithubActionPkg), string(GithubActionWorkflowPkg))

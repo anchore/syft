@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/gentoo"
 	"github.com/anchore/syft/syft/pkg/cataloger/githubactions"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/pkg/cataloger/hadron"
 	"github.com/anchore/syft/syft/pkg/cataloger/haskell"
 	"github.com/anchore/syft/syft/pkg/cataloger/homebrew"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -67,6 +68,7 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(alpine.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "apk", "alpine"),
 		newSimplePackageTaskFactory(debian.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "dpkg", "debian"),
 		newSimplePackageTaskFactory(gentoo.NewPortageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "portage", "gentoo"),
+		newSimplePackageTaskFactory(hadron.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "hadron"),
 		newSimplePackageTaskFactory(redhat.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
 
 		// OS package declared catalogers ///////////////////////////////////////////////////////////////////////////
