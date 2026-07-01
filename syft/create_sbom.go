@@ -145,6 +145,14 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 	if cfg != nil {
 		parallelism = cfg.Parallelism
 	}
+	// align GOMAXPROCS with the user's parallelism intent so the Go runtime
+	// does not schedule more OS threads than the user asked the cataloger
+	// pool to run. Only apply when the user explicitly set a positive value,
+	// and only decrease GOMAXPROCS (never raise it past the runtime default
+	// the user already accepted by not setting one explicitly themselves).
+	// See https://github.com/anchore/syft/issues/3924.
+	maybeReduceGOMAXPROCS(parallelism)
+
 	// executor parallelism is: 0 == serial, no goroutines, 1 == max 1 goroutine
 	// so if they set 1, we just run in serial to avoid overhead, and treat 0 as default, reasonable max for the system
 	// negative is unbounded, so no need for any other special handling
@@ -164,6 +172,22 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 		ctx = sync.SetContextExecutor(ctx, cataloging.ExecutorFile, sync.NewExecutor(parallelism))
 	}
 	return ctx
+}
+
+// maybeReduceGOMAXPROCS lowers runtime.GOMAXPROCS to the requested parallelism
+// when the caller asked for a positive value lower than the current GOMAXPROCS.
+// It is a no-op for the default (0), serial (1), unbounded (negative), or test
+// sentinel (-99) parallelism values, and never raises GOMAXPROCS above what the
+// runtime had previously chosen.
+func maybeReduceGOMAXPROCS(parallelism int) {
+	if parallelism <= 1 {
+		// 0 == default, 1 == serial, negative == unbounded; leave GOMAXPROCS alone.
+		return
+	}
+	current := runtime.GOMAXPROCS(0)
+	if parallelism < current {
+		runtime.GOMAXPROCS(parallelism)
+	}
 }
 
 func monitorPackageCount(prog *monitor.TaskProgress) func(s *sbom.SBOM) {
