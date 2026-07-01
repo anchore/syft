@@ -57,6 +57,10 @@ const (
 
 	// Python ecosystem labels
 	Python = "python"
+
+	// C/C++ ecosystem labels
+	Cpp   = "cpp"
+	Vcpkg = "vcpkg"
 )
 
 //nolint:funlen
@@ -83,6 +87,11 @@ func DefaultPackageTaskFactories() Factories {
 
 		// language-specific package declared catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(cpp.NewConanCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "cpp", "conan"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return cpp.NewVcpkgManifestCataloger(cfg.PackagesConfig.Cpp)
+			},
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, Cpp, Vcpkg),
 		newSimplePackageTaskFactory(dart.NewPubspecLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dart"),
 		newSimplePackageTaskFactory(dart.NewPubspecCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "dart"),
 		newSimplePackageTaskFactory(elixir.NewMixLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.LanguageTag, "elixir"),

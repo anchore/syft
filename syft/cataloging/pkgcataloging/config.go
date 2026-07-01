@@ -2,6 +2,7 @@ package pkgcataloging
 
 import (
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -13,6 +14,7 @@ import (
 
 type Config struct {
 	Binary      binary.ClassifierCatalogerConfig  `yaml:"binary" json:"binary" mapstructure:"binary"`
+	Cpp         cpp.CatalogerConfig               `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
 	Dotnet      dotnet.CatalogerConfig            `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golang.CatalogerConfig            `yaml:"golang" json:"golang" mapstructure:"golang"`
 	JavaArchive java.ArchiveCatalogerConfig       `yaml:"java-archive" json:"java-archive" mapstructure:"java-archive"`
@@ -25,6 +27,7 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		Binary:      binary.DefaultClassifierCatalogerConfig(),
+		Cpp:         cpp.DefaultCatalogerConfig(),
 		Dotnet:      dotnet.DefaultCatalogerConfig(),
 		Golang:      golang.DefaultCatalogerConfig(),
 		JavaArchive: java.DefaultArchiveCatalogerConfig(),
@@ -41,6 +44,11 @@ func (c Config) WithNixConfig(cfg nix.Config) Config {
 
 func (c Config) WithBinaryConfig(cfg binary.ClassifierCatalogerConfig) Config {
 	c.Binary = cfg
+	return c
+}
+
+func (c Config) WithCppConfig(cfg cpp.CatalogerConfig) Config {
+	c.Cpp = cfg
 	return c
 }
 
