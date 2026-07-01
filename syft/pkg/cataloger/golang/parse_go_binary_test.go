@@ -1422,3 +1422,71 @@ type alwaysErrorReader struct{}
 func (alwaysErrorReader) Read(_ []byte) (int, error) {
 	return 0, errors.New("read from always error reader")
 }
+
+func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
+	location := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"})
+
+	// the symbols a binary would carry once scanFile has extracted them: one main-package symbol, one
+	// dependency symbol, and one standard-library symbol. For the "none" scope scanFile never runs, so the
+	// build info carries no symbols at all.
+	populatedSymbols := []binarySymbol{
+		{packagePath: "main", name: "main.main"},
+		{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
+		{packagePath: "net/http", name: "net/http.(*Client).Do"},
+	}
+
+	tests := []struct {
+		name           string
+		scope          SymbolScope
+		symbols        []binarySymbol
+		wantMainSyms   []string
+		wantDepSyms    []string
+		wantStdlibSyms []string
+	}{
+		{
+			name:    "none captures nothing",
+			scope:   SymbolScopeNone,
+			symbols: nil,
+		},
+		{
+			name:           "stdlib captures only the stdlib package",
+			scope:          SymbolScopeStdlib,
+			symbols:        populatedSymbols,
+			wantStdlibSyms: []string{"net/http.(*Client).Do"},
+		},
+		{
+			name:           "all captures module and stdlib packages",
+			scope:          SymbolScopeAll,
+			symbols:        populatedSymbols,
+			wantMainSyms:   []string{"main.main"},
+			wantDepSyms:    []string{"github.com/foo/bar.Parse"},
+			wantStdlibSyms: []string{"net/http.(*Client).Do"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mod := &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.0",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "v1.0.0"},
+					Deps:      []*debug.Module{{Path: "github.com/foo/bar", Version: "v1.2.3"}},
+				},
+				arch:    "amd64",
+				symbols: tt.symbols,
+			}
+
+			c := newGoBinaryCataloger(CatalogerConfig{CaptureSymbols: tt.scope})
+			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader("")))
+			require.NoError(t, err)
+
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, mod, mod.arch, reader)
+			require.NotNil(t, mainPkg)
+			require.Len(t, pkgs, 1)
+
+			assert.Equal(t, tt.wantMainSyms, mainPkg.Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "main module symbols")
+			assert.Equal(t, tt.wantDepSyms, pkgs[0].Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "dependency symbols")
+			assert.Equal(t, tt.wantStdlibSyms, c.stdlibSymbolsFor(location.Coordinates), "recorded stdlib symbols")
+		})
+	}
+}

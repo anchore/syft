@@ -50,7 +50,7 @@ const devel = "(devel)"
 type goBinaryCataloger struct {
 	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
-	captureSymbols    bool
+	symbolScope       SymbolScope
 
 	// stdlibSymbols holds the standard-library function symbols discovered per binary (keyed by the
 	// binary's location), populated during parsing and consumed by stdlibProcessor when it builds the
@@ -63,7 +63,7 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
-		captureSymbols:    opts.CaptureSymbols,
+		symbolScope:       opts.CaptureSymbols.Parse(),
 		stdlibSymbols:     make(map[file.Coordinates][]string),
 	}
 }
@@ -98,7 +98,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, errs := scanFile(reader.Location, unionReader, c.captureSymbols)
+	mods, errs := scanFile(reader.Location, unionReader, c.symbolScope != SymbolScopeNone)
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
@@ -160,6 +160,12 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 
 	symbolsByModule, stdlibSymbols := moduleSymbols(mod.symbols, &mod.Main, mod.Deps)
 	c.recordStdlibSymbols(location.Coordinates, stdlibSymbols)
+
+	if c.symbolScope != SymbolScopeAll {
+		// only the "all" scope attaches per-module symbols; for the "stdlib" scope we keep just the
+		// recorded stdlib symbols. nil map lookups below then yield nil symbol lists for each module.
+		symbolsByModule = nil
+	}
 
 	var pkgs []pkg.Package
 	for _, dep := range mod.Deps {

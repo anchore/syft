@@ -25,7 +25,9 @@ type GolangBinaryBuildinfoEntry struct {
 
 	// Symbols are the fully qualified function symbols from this module that are compiled into the binary
 	// (e.g., "github.com/foo/bar.(*Type).Method"), extracted from the binary symbol table (pclntab).
-	// Only captured when the golang cataloger is configured to capture symbols.
+	// Populated only when the golang cataloger's capture-symbols scope covers this package: the "all" scope
+	// populates every module package plus the synthetic stdlib package, while the "stdlib" scope populates
+	// only the stdlib package.
 	Symbols []string `json:"symbols,omitempty"`
 }
 
