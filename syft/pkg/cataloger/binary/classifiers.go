@@ -84,6 +84,14 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "go-binary",
 			FileGlob: "**/{go,go.exe}",
 			EvidenceMatcher: binutils.MatchAny(
+				// prefer the most specific build-version string (3-part or prerelease) before
+				// falling back to a 2-part match. On some architectures (notably s390x and
+				// ppc64le for go 1.8.x / 1.9.x) the release-tag table is emitted as
+				// `go1.1\x00go1.2\x00...go1.8\x00` immediately before the real build-version
+				// `go1.8.7\x00`, so a 2-part-tolerant primary pattern reports the first table
+				// entry instead of the real version. see anchore/syft#4866.
+				m.FileContentsVersionMatcher(
+					`(?m)go(?P<version>[0-9]+\.[0-9]+\.[0-9]+(beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 				m.FileContentsVersionMatcher(
 					`(?m)go(?P<version>[0-9]+\.[0-9]+(\.[0-9]+|beta[0-9]+|alpha[0-9]+|rc[0-9]+)?)\x00`),
 				binutils.SupportingEvidenceMatcher("VERSION*",
