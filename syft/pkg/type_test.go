@@ -163,6 +163,7 @@ func TestTypeFromPURL(t *testing.T) {
 	expectedTypes.Remove(string(ModelPkg))          // no valid purl for ai artifacts currently
 	expectedTypes.Remove(string(AppleAppBundlePkg)) // no standard purl type for apple app bundles
 	expectedTypes.Remove(string(PhpPeclPkg))        // we should always consider this a pear package
+	expectedTypes.Remove(string(VcpkgPkg))
 
 	for _, test := range tests {
 		t.Run(string(test.expected), func(t *testing.T) {

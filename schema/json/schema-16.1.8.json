@@ -1653,13 +1653,6 @@
           },
           "type": "array",
           "description": "GoExperiments lists experimental Go features enabled during compilation (e.g., \"arenas\", \"cgocheck2\")."
-        },
-        "symbols": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Symbols are the fully qualified function symbols from this module that are compiled into the binary\n(e.g., \"github.com/foo/bar.(*Type).Method\"), extracted from the binary symbol table (pclntab).\nPopulated only when the golang cataloger's capture-symbols scope covers this package: the \"all\" scope\npopulates every module package plus the synthetic stdlib package, while the \"stdlib\" scope populates\nonly the stdlib package."
         }
       },
       "type": "object",
@@ -2933,6 +2926,9 @@
             },
             {
               "$ref": "#/$defs/TerraformLockProviderEntry"
+            },
+            {
+              "$ref": "#/$defs/VcpkgManifest"
             },
             {
               "$ref": "#/$defs/WordpressPluginEntry"
@@ -4391,6 +4387,86 @@
         "hashes"
       ],
       "description": "TerraformLockProviderEntry represents a single provider entry in a Terraform dependency lock file (.terraform.lock.hcl)."
+    },
+    "VcpkgManifest": {
+      "properties": {
+        "description": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "documentation": {
+          "type": "string"
+        },
+        "full-version": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "port-version": {
+          "type": "integer"
+        },
+        "maintainers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "supports": {
+          "type": "string"
+        },
+        "registry": {
+          "$ref": "#/$defs/VcpkgRegistryEntry",
+          "description": "to show where it came from"
+        },
+        "triplet": {
+          "type": "string",
+          "description": "found by looking at build folder to find target. ex. \"x64-linux\""
+        }
+      },
+      "type": "object",
+      "required": [
+        "full-version",
+        "version",
+        "port-version",
+        "name"
+      ],
+      "description": "used for metadata."
+    },
+    "VcpkgRegistryEntry": {
+      "properties": {
+        "baseline": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "packages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "path": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "description": "Matches definition of Vcpkg \"Registry\"."
     },
     "WordpressPluginEntry": {
       "properties": {

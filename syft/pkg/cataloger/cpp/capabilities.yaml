@@ -1,5 +1,11 @@
 # Cataloger capabilities. See ../README.md for documentation.
 
+configs: # AUTO-GENERATED - config structs and their fields
+  cpp.CatalogerConfig:
+    fields:
+      - key: VcpkgAllowGitClone
+        description: VcpkgAllowGitClone enables cloning remote git registries to resolve vcpkg manifest dependencies (requires network access).
+        app_key: cpp.vcpkg-allow-git-clone
 catalogers:
   - ecosystem: c++ # MANUAL
     name: conan-cataloger # AUTO-GENERATED
@@ -117,6 +123,52 @@ catalogers:
               - direct
           - name: dependency.edges
             default: flat
+          - name: dependency.kinds
+            default:
+              - runtime
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false
+  - ecosystem: c++ # MANUAL
+    name: vcpkg-manifest-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/cpp/cataloger.go
+      function: NewVcpkgManifestCataloger
+    config: cpp.CatalogerConfig # AUTO-GENERATED
+    selectors: # AUTO-GENERATED
+      - cpp
+      - declared
+      - directory
+      - language
+      - package
+      - vcpkg
+    parsers: # AUTO-GENERATED structure
+      - function: parseVcpkgManifest
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/vcpkg.json'
+        metadata_types: # AUTO-GENERATED
+          - pkg.VcpkgManifest
+        package_types: # AUTO-GENERATED
+          - vcpkg
+        purl_types: # AUTO-GENERATED
+          - vcpkg
+        json_schema_types: # AUTO-GENERATED
+          - VcpkgManifest
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default:
+              - direct
+              - indirect
+          - name: dependency.edges
+            default: complete
           - name: dependency.kinds
             default:
               - runtime
