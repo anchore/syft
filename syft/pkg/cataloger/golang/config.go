@@ -80,7 +80,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		UsePackagesLib:    true,
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
-		CaptureSymbols:    true,
+		CaptureSymbols:    false,
 	}
 
 	// first process the proxy settings
