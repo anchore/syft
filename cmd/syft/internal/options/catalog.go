@@ -120,7 +120,8 @@ func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
 		PackageFileOwnership:        cfg.Relationships.PackageFileOwnership,
 		PackageFileOwnershipOverlap: cfg.Relationships.PackageFileOwnershipOverlap,
 		// note: this option was surfaced in the syft application configuration before this relationships section was added
-		ExcludeBinaryPackagesWithFileOwnershipOverlap: cfg.Package.ExcludeBinaryOverlapByOwnership,
+		ExcludeBinaryPackagesWithFileOwnershipOverlap:   cfg.Package.ExcludeBinaryOverlapByOwnership,
+		ExcludeLanguagePackagesWithFileOwnershipOverlap: cfg.Package.ExcludeLanguageOverlapByOwnership,
 	}
 }
 
@@ -274,6 +275,11 @@ func (cfg *Catalog) PostLoad() error {
 	// the binary package exclusion code depends on the file overlap relationships being created upstream in processing
 	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeBinaryOverlapByOwnership {
 		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
+	}
+
+	// the language package exclusion code depends on the file overlap relationships being created upstream in processing
+	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeLanguageOverlapByOwnership {
+		return fmt.Errorf("cannot enable exclude-language-overlap-by-ownership without enabling package-file-ownership-overlap")
 	}
 
 	return nil
