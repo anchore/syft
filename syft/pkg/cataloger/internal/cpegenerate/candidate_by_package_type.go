@@ -221,6 +221,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "mustache"},
 			candidateAddition{AdditionalProducts: []string{"mustache.js"}},
 		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateAddition{AdditionalVendors: []string{"redis.js"}},
+		},
 
 		// Gem packages
 		{
