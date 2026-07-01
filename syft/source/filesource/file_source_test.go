@@ -1,6 +1,8 @@
 package filesource
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"io"
 	"os"
 	"os/exec"
@@ -167,6 +169,48 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 
 		})
 	}
+}
+
+func Test_fileAnalysisPath(t *testing.T) {
+	t.Run("regular file with archive extension in its name is not unarchived", func(t *testing.T) {
+		// a regular JSON file whose name contains ".tar.gz" as a substring should be
+		// analyzed as-is, not misidentified as an archive. See issue #4582.
+		dir := t.TempDir()
+		p := filepath.Join(dir, "sample.tar.gz_hashed.json")
+		require.NoError(t, os.WriteFile(p, []byte(`{"hello":"world"}`), 0o600))
+
+		analysisPath, cleanupFn, err := fileAnalysisPath(p, false)
+		t.Cleanup(func() { assert.NoError(t, cleanupFn()) })
+
+		require.NoError(t, err)
+		// the file is not an archive, so analysis happens on the original path
+		assert.Equal(t, p, analysisPath)
+	})
+
+	t.Run("real gzipped tar is still extracted", func(t *testing.T) {
+		dir := t.TempDir()
+		p := filepath.Join(dir, "real.tar.gz")
+
+		f, err := os.Create(p)
+		require.NoError(t, err)
+		gw := gzip.NewWriter(f)
+		tw := tar.NewWriter(gw)
+		contents := []byte("hi")
+		require.NoError(t, tw.WriteHeader(&tar.Header{Name: "a.txt", Mode: 0o600, Size: int64(len(contents))}))
+		_, err = tw.Write(contents)
+		require.NoError(t, err)
+		require.NoError(t, tw.Close())
+		require.NoError(t, gw.Close())
+		require.NoError(t, f.Close())
+
+		analysisPath, cleanupFn, err := fileAnalysisPath(p, false)
+		t.Cleanup(func() { assert.NoError(t, cleanupFn()) })
+
+		require.NoError(t, err)
+		// a genuine archive is extracted to a temp dir, so the analysis path differs
+		assert.NotEqual(t, p, analysisPath)
+		assert.FileExists(t, filepath.Join(analysisPath, "a.txt"))
+	})
 }
 
 // setupArchiveTest encapsulates common test setup work for tar file tests. It returns a cleanup function,
