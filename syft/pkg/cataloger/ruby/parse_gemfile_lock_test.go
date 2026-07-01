@@ -66,5 +66,54 @@ func TestParseGemfileLockEntries(t *testing.T) {
 		{Name: "unicorn", Version: "4.8.3", PURL: "pkg:gem/unicorn@4.8.3", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 	}
 
-	pkgtest.TestFileParser(t, fixture, parseGemFileLockEntries, expectedPkgs, nil)
+	// gemDeps mirrors the dependency lines listed under each gem in
+	// testdata/Gemfile.lock, in file order. It deliberately preserves entries as
+	// written: "bundler" (which is not itself a locked gem) and treetop's
+	// duplicate "polyglot" are recorded here even though the resolver drops them
+	// when building relationships.
+	gemDeps := map[string][]string{
+		"actionmailer":    {"actionpack", "actionview", "mail"},
+		"actionpack":      {"actionview", "activesupport", "rack", "rack-test"},
+		"actionview":      {"activesupport", "builder", "erubis"},
+		"activemodel":     {"activesupport", "builder"},
+		"activerecord":    {"activemodel", "activesupport", "arel"},
+		"activesupport":   {"i18n", "json", "minitest", "thread_safe", "tzinfo"},
+		"bootstrap-sass":  {"sass"},
+		"coffee-rails":    {"coffee-script", "railties"},
+		"coffee-script":   {"coffee-script-source", "execjs"},
+		"jbuilder":        {"activesupport", "multi_json"},
+		"jquery-rails":    {"railties", "thor"},
+		"mail":            {"mime-types", "treetop"},
+		"rack-test":       {"rack"},
+		"rails":           {"actionmailer", "actionpack", "actionview", "activemodel", "activerecord", "activesupport", "bundler", "railties", "sprockets-rails"},
+		"railties":        {"actionpack", "activesupport", "rake", "thor"},
+		"rdoc":            {"json"},
+		"sass-rails":      {"railties", "sass", "sprockets", "sprockets-rails"},
+		"sdoc":            {"json", "rdoc"},
+		"sprockets":       {"hike", "multi_json", "rack", "tilt"},
+		"sprockets-rails": {"actionpack", "activesupport", "sprockets"},
+		"therubyracer":    {"libv8", "ref"},
+		"treetop":         {"polyglot", "polyglot"},
+		"turbolinks":      {"coffee-rails"},
+		"tzinfo":          {"thread_safe"},
+		"uglifier":        {"execjs", "json"},
+		"unicorn":         {"kgio", "rack", "raindrops"},
+	}
+
+	for i := range expectedPkgs {
+		name := expectedPkgs[i].Name
+		expectedPkgs[i].Metadata = pkg.RubyGemfileLockEntry{
+			Name:         name,
+			Version:      expectedPkgs[i].Version,
+			Dependencies: gemDeps[name],
+		}
+		expectedPkgs[i].SetID()
+	}
+
+	// relationships are produced by the cataloger's dependency.Processor, not the
+	// parser itself; see TestCataloger_Relationships.
+	pkgtest.NewCatalogTester().
+		FromFile(t, fixture).
+		Expects(expectedPkgs, nil).
+		TestParser(t, parseGemFileLockEntries)
 }
