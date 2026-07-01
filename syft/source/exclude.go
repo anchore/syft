@@ -1,5 +1,7 @@
 package source
 
 type ExcludeConfig struct {
-	Paths []string
+	Paths                []string
+	ExcludeFile          string
+	ExcludeGitignoreMode string
 }
