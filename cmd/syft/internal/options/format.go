@@ -28,7 +28,7 @@ func (o *Format) PostLoad() error {
 	o.CyclonedxJSON.Pretty = multiLevelOption[bool](false, o.Pretty, o.CyclonedxJSON.Pretty)
 	o.CyclonedxXML.Pretty = multiLevelOption[bool](false, o.Pretty, o.CyclonedxXML.Pretty)
 
-	return nil
+	return o.SPDXJSON.Validate()
 }
 
 func (o *Format) DescribeFields(descriptions clio.FieldDescriptionSet) {
@@ -54,6 +54,8 @@ Note: long term support for this option is not guaranteed (it may change or brea
 note: inherits default value from 'format.pretty' or 'false' if parent is unset`
 	descriptions.Add(&o.SyftJSON.Pretty, prettyDescription)
 	descriptions.Add(&o.SPDXJSON.Pretty, prettyDescription)
+	descriptions.Add(&o.SPDXJSON.DeterministicUUID, `if true, uses UUIDv5 for deterministic document namespace generation`)
+	descriptions.Add(&o.SPDXJSON.CreatedTime, `if set, uses the given Unix timestamp as the SPDX document creation time instead of the current time. Must be a non-negative integer.`)
 	descriptions.Add(&o.CyclonedxJSON.Pretty, prettyDescription)
 	descriptions.Add(&o.CyclonedxXML.Pretty, prettyDescription)
 }
