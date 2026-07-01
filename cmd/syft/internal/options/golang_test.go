@@ -5,30 +5,30 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/anchore/syft/syft/pkg/cataloger/golang"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 func Test_golangConfig_PostLoad(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      golangConfig
-		expected golang.SymbolScope
+		expected cataloging.SymbolScope
 		wantErr  assert.ErrorAssertionFunc
 	}{
 		{
 			name:     "normalize all",
 			cfg:      golangConfig{CaptureSymbols: "all"},
-			expected: golang.SymbolScopeAll,
+			expected: cataloging.SymbolScopeAll,
 		},
 		{
 			name:     "normalize stdlib",
 			cfg:      golangConfig{CaptureSymbols: "stdlib"},
-			expected: golang.SymbolScopeStdlib,
+			expected: cataloging.SymbolScopeStdlib,
 		},
 		{
 			name:     "empty defaults to none",
 			cfg:      golangConfig{CaptureSymbols: ""},
-			expected: golang.SymbolScopeNone,
+			expected: cataloging.SymbolScopeNone,
 		},
 		{
 			name:    "error on invalid value",

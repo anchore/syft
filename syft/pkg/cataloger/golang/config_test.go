@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/go-homedir"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 func Test_Config(t *testing.T) {
@@ -58,7 +59,7 @@ func Test_Config(t *testing.T) {
 				NoProxy:                     []string{"my.private", "no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				UsePackagesLib:              true,
-				CaptureSymbols:              SymbolScopeNone,
+				CaptureSymbols:              cataloging.SymbolScopeNone,
 			},
 		},
 		{
@@ -87,7 +88,7 @@ func Test_Config(t *testing.T) {
 				NoProxy:                     []string{"alt.no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				UsePackagesLib:              true,
-				CaptureSymbols:              SymbolScopeNone,
+				CaptureSymbols:              cataloging.SymbolScopeNone,
 			},
 		},
 	}
@@ -110,29 +111,6 @@ func Test_Config(t *testing.T) {
 				WithNoProxy(test.opts.noProxy)
 
 			assert.Equal(t, test.expected, got)
-		})
-	}
-}
-
-func Test_SymbolScope_Parse(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected SymbolScope
-	}{
-		{"all", SymbolScopeAll},
-		{"ALL", SymbolScopeAll},
-		{"  all  ", SymbolScopeAll},
-		{"stdlib", SymbolScopeStdlib},
-		{"Stdlib", SymbolScopeStdlib},
-		{"none", SymbolScopeNone},
-		{"", SymbolScopeNone},
-		{"true", ""},
-		{"false", ""},
-		{"bogus", ""},
-	}
-	for _, test := range tests {
-		t.Run(test.input, func(t *testing.T) {
-			assert.Equal(t, test.expected, SymbolScope(test.input).Parse())
 		})
 	}
 }

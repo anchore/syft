@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 )
 
@@ -18,7 +19,7 @@ type golangConfig struct {
 	NoProxy                     string                        `json:"no-proxy" yaml:"no-proxy" mapstructure:"no-proxy"`
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
 	UsePackagesLib              *bool                         `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
-	CaptureSymbols              golang.SymbolScope            `json:"capture-symbols" yaml:"capture-symbols" mapstructure:"capture-symbols"`
+	CaptureSymbols              cataloging.SymbolScope        `json:"capture-symbols" yaml:"capture-symbols" mapstructure:"capture-symbols"`
 }
 
 var _ interface {

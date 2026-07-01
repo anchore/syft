@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -1437,7 +1438,7 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		scope          SymbolScope
+		scope          cataloging.SymbolScope
 		symbols        []binarySymbol
 		wantMainSyms   []string
 		wantDepSyms    []string
@@ -1445,18 +1446,18 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 	}{
 		{
 			name:    "none captures nothing",
-			scope:   SymbolScopeNone,
+			scope:   cataloging.SymbolScopeNone,
 			symbols: nil,
 		},
 		{
 			name:           "stdlib captures only the stdlib package",
-			scope:          SymbolScopeStdlib,
+			scope:          cataloging.SymbolScopeStdlib,
 			symbols:        populatedSymbols,
 			wantStdlibSyms: []string{"net/http.(*Client).Do"},
 		},
 		{
 			name:           "all captures module and stdlib packages",
-			scope:          SymbolScopeAll,
+			scope:          cataloging.SymbolScopeAll,
 			symbols:        populatedSymbols,
 			wantMainSyms:   []string{"main.main"},
 			wantDepSyms:    []string{"github.com/foo/bar.Parse"},

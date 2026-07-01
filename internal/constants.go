@@ -10,6 +10,7 @@ const (
 	// 16.1.1 - correct elf package osCpe field according to the document of systemd (also add appCpe field)
 	// 16.1.2 - placeholder for 16.1.2 changelog
 	// 16.1.3 - add GGUFFileParts to GGUFFileHeader metadata
+	// 16.1.4 - add BunLockEntry metadata type for bun.lock support
 	// 16.1.5 - add DenoLockEntry and DenoRemoteLockEntry metadata types for deno.lock support
 	// 16.1.6 - add Dependencies to ElixirMixLockEntry metadata
 	// 16.1.7 - add AppleAppBundleEntry metadata type for the apple app bundle cataloger

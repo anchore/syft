@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 const (
@@ -17,34 +18,6 @@ const (
 var (
 	directProxiesOnly = []string{directProxyOnly}
 )
-
-// SymbolScope controls which packages get function symbols (from the binary pclntab) attached to their metadata.
-type SymbolScope string
-
-const (
-	// SymbolScopeNone disables symbol capture entirely.
-	SymbolScopeNone SymbolScope = "none"
-
-	// SymbolScopeStdlib captures symbols only for the synthetic "stdlib" package, leaving module packages without symbols.
-	SymbolScopeStdlib SymbolScope = "stdlib"
-
-	// SymbolScopeAll captures symbols for all module packages as well as the synthetic "stdlib" package.
-	SymbolScopeAll SymbolScope = "all"
-)
-
-// Parse normalizes a SymbolScope, treating an empty (unset) value as SymbolScopeNone. It returns an empty
-// SymbolScope to signal an unrecognized value, which callers validate against.
-func (s SymbolScope) Parse() SymbolScope {
-	switch strings.ToLower(strings.TrimSpace(string(s))) {
-	case string(SymbolScopeAll):
-		return SymbolScopeAll
-	case string(SymbolScopeStdlib):
-		return SymbolScopeStdlib
-	case string(SymbolScopeNone), "":
-		return SymbolScopeNone
-	}
-	return ""
-}
 
 type CatalogerConfig struct {
 	// SearchLocalModCacheLicenses enables searching for go package licenses in the local GOPATH mod cache.
@@ -80,7 +53,7 @@ type CatalogerConfig struct {
 	// CaptureSymbols controls extracting function symbols from the binary symbol table (pclntab). Valid values are
 	// "none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib).
 	// app-config: golang.capture-symbols
-	CaptureSymbols SymbolScope `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
+	CaptureSymbols cataloging.SymbolScope `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
 
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
@@ -109,7 +82,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		UsePackagesLib:    true,
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
-		CaptureSymbols:    SymbolScopeNone,
+		CaptureSymbols:    cataloging.SymbolScopeNone,
 	}
 
 	// first process the proxy settings
@@ -218,7 +191,7 @@ func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) Ca
 	return g
 }
 
-func (g CatalogerConfig) WithCaptureSymbols(input SymbolScope) CatalogerConfig {
+func (g CatalogerConfig) WithCaptureSymbols(input cataloging.SymbolScope) CatalogerConfig {
 	g.CaptureSymbols = input
 	return g
 }
