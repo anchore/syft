@@ -163,8 +163,6 @@ catalogers:
         capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: true
-            evidence:
-              - VcpkgManifest.License
           - name: dependency.depth
             default:
               - direct
