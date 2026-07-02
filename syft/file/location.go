@@ -152,6 +152,31 @@ func NewLocationFromImage(accessPath string, ref file.Reference, img *image.Imag
 	}
 }
 
+// NewVirtualLocationFromImage creates a new Location surfaced at realPath but whose contents and metadata are
+// described by the given reference. This is used to present a hardlink as the underlying type it points to (at the
+// hardlink's own path) so that image results are in parity with directory results, which cannot distinguish a
+// hardlink from a regular file. Note that RealPath (the hardlink's own path) intentionally differs from
+// ref.RealPath (the target's path); callers must not assume the two agree for these locations.
+func NewVirtualLocationFromImage(realPath, accessPath string, ref file.Reference, img *image.Image) Location {
+	// the FileSystemID comes from the target ref's layer. a hardlink and its target are always materialized in the
+	// same layer tar (a tar hardlink entry can only reference a file within the same archive), so the target's layer
+	// digest is also the hardlink path's layer.
+	layer := img.FileCatalog.Layer(ref)
+	return Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     realPath,
+				FileSystemID: layer.Metadata.Digest,
+			},
+			AccessPath: accessPath,
+			ref:        ref,
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: map[string]string{},
+		},
+	}
+}
+
 // NewLocationFromDirectory creates a new Location representing the given path (extracted from the Reference) relative to the given directory.
 func NewLocationFromDirectory(responsePath string, fd string, ref file.Reference) Location {
 	return Location{
