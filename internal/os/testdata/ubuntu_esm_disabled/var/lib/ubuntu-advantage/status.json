@@ -1,0 +1,18 @@
+{
+  "_schema_version": "0.1",
+  "attached": true,
+  "services": [
+    {
+      "name": "esm-apps",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "disabled"
+    },
+    {
+      "name": "esm-infra",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "disabled"
+    }
+  ]
+}
