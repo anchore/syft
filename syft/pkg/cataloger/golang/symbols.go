@@ -31,6 +31,7 @@ func getSymbols(r io.ReaderAt) (syms []binarySymbol, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			// the gosym package can panic on malformed pclntab data
+			syms = nil
 			err = fmt.Errorf("recovered from panic while reading pclntab: %v", r)
 		}
 	}()
@@ -84,6 +85,7 @@ func packagePathFromSymbolName(name string) string {
 	if isCompilerGeneratedName(name) {
 		return ""
 	}
+	name = nameWithoutTypeArgs(name)
 	slash := strings.LastIndex(name, "/")
 	dot := strings.IndexByte(name[slash+1:], '.')
 	if dot < 0 {
@@ -92,13 +94,62 @@ func packagePathFromSymbolName(name string) string {
 	return name[:slash+1+dot]
 }
 
+// nameWithoutTypeArgs strips the type-argument portion from an instantiated generic symbol name, e.g.
+// "foo/bar.Do[net/url.Values]" -> "foo/bar.Do". The slashes and dots inside the brackets would otherwise
+// corrupt package-path derivation (yielding "foo/bar.Do[net" for the example above). Mirrors
+// debug/gosym's (*Sym).nameWithoutInst.
+func nameWithoutTypeArgs(name string) string {
+	start := strings.IndexByte(name, '[')
+	if start < 0 {
+		return name
+	}
+	end := strings.LastIndexByte(name, ']')
+	if end < 0 {
+		// malformed: an opening bracket should always have a closing one
+		return name
+	}
+	return name[:start] + name[end+1:]
+}
+
+// oldStyleCompilerGeneratedPrefixes match compiler/linker-generated symbols from toolchains older than
+// go1.20, which used "." where newer toolchains use ":" (e.g. "go.buildid" is now "go:buildid",
+// "go.type.*" is now "go:type.*"). These must be prefix (not substring) matches, and a bare "go." prefix
+// is not enough: legitimate module paths such as "go.uber.org/zap" also start with "go.".
+var oldStyleCompilerGeneratedPrefixes = []string{
+	"go.buildid",
+	"go.builtin.",
+	"go.constinfo.",
+	"go.cuinfo.",
+	"go.func.",
+	"go.importpath.",
+	"go.info.",
+	"go.interface.",
+	"go.itab.",
+	"go.itablink.",
+	"go.map.",
+	"go.shape.",
+	"go.string.",
+	"go.type.",
+	"go.typelink.",
+	"type.",
+}
+
 // isCompilerGeneratedName reports whether a symbol name was synthesized by the compiler or linker rather
-// than declared in Go source. These names use ':' or '..' (e.g. "type:.eq.*", "type..hash.*",
-// "go:string.*") — byte sequences that never appear in a real Go import path or identifier — so they
-// belong to no package and are dropped rather than mis-attributed (e.g. bucketed under a bogus "type"
-// stdlib package).
+// than declared in Go source. Since go1.20 these names contain ':' or '..' (e.g. "type:.eq.*",
+// "go:string.*") — byte sequences that never appear in a real Go import path or identifier. Older
+// toolchains used '.' as the separator (e.g. "go.type.*", "type..hash.*"), which is matched against the
+// known reserved prefixes. Such names belong to no package and are dropped rather than mis-attributed
+// (e.g. bucketed under a bogus "type" stdlib package).
 func isCompilerGeneratedName(name string) bool {
-	return strings.Contains(name, ":") || strings.Contains(name, "..")
+	if strings.Contains(name, ":") || strings.Contains(name, "..") {
+		return true
+	}
+	for _, prefix := range oldStyleCompilerGeneratedPrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // funcNameTable returns every function name recorded in the pclntab's funcname table, including the

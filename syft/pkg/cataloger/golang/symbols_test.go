@@ -174,12 +174,24 @@ func Test_packagePathFromSymbolName(t *testing.T) {
 		{"github.com/foo/bar.Parse.func1", "github.com/foo/bar"},
 		{"main.main", "main"},
 		{"runtime.gcBgMarkWorker", "runtime"},
+		// generic instantiations: type arguments must not corrupt the package path
+		{"foo/bar.Do[net/url.Values]", "foo/bar"},
+		{"github.com/foo/bar.Map[go.shape.int,go.shape.string]", "github.com/foo/bar"},
+		{"main.Do[go.shape.int]", "main"},
 		// no package-qualifying dot
 		{"runtime", ""},
 		// compiler/linker-generated symbols belong to no package
 		{"type:.eq.[]string", ""},
 		{"type..hash.runtime._type", ""},
 		{"go:string.\"foo\"", ""},
+		// pre-go1.20 toolchains generated symbols with "." where newer ones use ":"
+		{"go.buildid", ""},
+		{"go.type.*runtime._type", ""},
+		{"go.itab.*os.File,io.Reader", ""},
+		{"go.string.\"foo\"", ""},
+		// module paths that begin with "go." are not compiler-generated
+		{"go.uber.org/zap.(*Logger).Info", "go.uber.org/zap"},
+		{"go.opentelemetry.io/otel.Tracer", "go.opentelemetry.io/otel"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

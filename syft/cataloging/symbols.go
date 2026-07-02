@@ -16,16 +16,13 @@ const (
 	SymbolScopeAll SymbolScope = "all"
 )
 
-// Parse normalizes a SymbolScope, treating an empty (unset) value as SymbolScopeNone. It returns an empty
-// SymbolScope to signal an unrecognized value, which callers validate against.
+// Parse normalizes a SymbolScope, treating empty (unset) and unrecognized values as SymbolScopeNone.
 func (s SymbolScope) Parse() SymbolScope {
 	switch strings.ToLower(strings.TrimSpace(string(s))) {
 	case string(SymbolScopeAll):
 		return SymbolScopeAll
 	case string(SymbolScopeStdlib):
 		return SymbolScopeStdlib
-	case string(SymbolScopeNone), "":
-		return SymbolScopeNone
 	}
-	return ""
+	return SymbolScopeNone
 }

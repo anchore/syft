@@ -18,9 +18,9 @@ func Test_SymbolScope_Parse(t *testing.T) {
 		{"Stdlib", SymbolScopeStdlib},
 		{"none", SymbolScopeNone},
 		{"", SymbolScopeNone},
-		{"true", ""},
-		{"false", ""},
-		{"bogus", ""},
+		{"true", SymbolScopeNone},
+		{"false", SymbolScopeNone},
+		{"bogus", SymbolScopeNone},
 	}
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {

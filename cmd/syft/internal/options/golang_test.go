@@ -31,14 +31,14 @@ func Test_golangConfig_PostLoad(t *testing.T) {
 			expected: cataloging.SymbolScopeNone,
 		},
 		{
-			name:    "error on invalid value",
-			cfg:     golangConfig{CaptureSymbols: "bogus"},
-			wantErr: assert.Error,
+			name:     "invalid value defaults to none",
+			cfg:      golangConfig{CaptureSymbols: "bogus"},
+			expected: cataloging.SymbolScopeNone,
 		},
 		{
-			name:    "boolean spellings are not valid",
-			cfg:     golangConfig{CaptureSymbols: "true"},
-			wantErr: assert.Error,
+			name:     "boolean spellings default to none",
+			cfg:      golangConfig{CaptureSymbols: "true"},
+			expected: cataloging.SymbolScopeNone,
 		},
 	}
 	for _, tt := range tests {

@@ -1,7 +1,6 @@
 package options
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/anchore/clio"
@@ -52,11 +51,7 @@ a more accurate version from the binary.`)
 }
 
 func (o *golangConfig) PostLoad() error {
-	parsed := o.CaptureSymbols.Parse()
-	if parsed == "" {
-		return fmt.Errorf("invalid value %q for golang.capture-symbols; valid values are: none, stdlib, all", o.CaptureSymbols)
-	}
-	o.CaptureSymbols = parsed
+	o.CaptureSymbols = o.CaptureSymbols.Parse()
 	return nil
 }
 

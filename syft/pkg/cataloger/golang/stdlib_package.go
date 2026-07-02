@@ -80,10 +80,10 @@ func generateStdlibCpe(version string) (stdlibCpe cpe.CPE, err error) {
 
 	// we also need to trim starting from the first +<metadata>  to
 	// correctly extract potential rc candidate information for cpe generation
-	// ex: 2.0.0-rc.1+build.123 -> 2.0.0-rc.1; if no + is found then + is returned
-	after, _, found := strings.Cut("+", version)
+	// ex: 2.0.0-rc.1+build.123 -> 2.0.0-rc.1; if no + is found version is unchanged
+	before, _, found := strings.Cut(version, "+")
 	if found {
-		version = after
+		version = before
 	}
 
 	// extracting <version> and <candidate>

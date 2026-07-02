@@ -64,7 +64,7 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
-		symbolScope:       opts.CaptureSymbols.Parse(),
+		symbolScope:       opts.CaptureSymbols,
 		stdlibSymbols:     make(map[file.Coordinates][]string),
 	}
 }
