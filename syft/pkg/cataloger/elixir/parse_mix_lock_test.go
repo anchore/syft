@@ -230,6 +230,34 @@ func TestParseMixLock(t *testing.T) {
 				Dependencies: []string{"decimal"},
 			},
 		},
+		{
+			// git-sourced dependency: version is the commit SHA (not a URL
+			// fragment) and no pkg:hex/ PURL is emitted, so it cannot be
+			// matched as a hex.pm package.
+			Name:      "enacl",
+			Version:   "2f50ba6289f2f2d9fef05d22a396c0bab4f64149",
+			Language:  pkg.Elixir,
+			Type:      pkg.HexPkg,
+			Locations: locations,
+			PURL:      "",
+			Metadata: pkg.ElixirMixLockEntry{
+				Name:    "enacl",
+				Version: "2f50ba6289f2f2d9fef05d22a396c0bab4f64149",
+			},
+		},
+		{
+			// path-sourced dependency: no version (tokens[4] is the empty
+			// dependency list `[]`, not a version) and no pkg:hex/ PURL.
+			Name:      "local_dep",
+			Version:   "",
+			Language:  pkg.Elixir,
+			Type:      pkg.HexPkg,
+			Locations: locations,
+			PURL:      "",
+			Metadata: pkg.ElixirMixLockEntry{
+				Name: "local_dep",
+			},
+		},
 	}
 
 	fixture := "testdata/mix.lock"
