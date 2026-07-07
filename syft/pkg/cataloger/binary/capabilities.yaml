@@ -688,19 +688,9 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
-          - '**/code'
+          - '**/{code,Code.exe}'
         packages:
-          - class: electron-binary-renamed-linux
-            name: electron
-            purl: pkg:generic/electron
-            cpes:
-              - cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*
-            type: BinaryPkg
-      - method: glob
-        criteria:
-          - '**/Code.exe'
-        packages:
-          - class: electron-binary-renamed-windows
+          - class: visual-studio-code-binary
             name: electron
             purl: pkg:generic/electron
             cpes:

@@ -936,21 +936,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
-			// VS Code and other Electron apps on Linux that rename the binary to "code"
-			Class:    "electron-binary-renamed-linux",
-			FileGlob: "**/code",
-			EvidenceMatcher: binutils.MatchAll(
-				m.FileContentsVersionMatcher(`Electron/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
-				m.FileContentsVersionMatcher(`Chrome/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+`),
-			),
-			Package: "electron",
-			PURL:    mustPURL("pkg:generic/electron@version"),
-			CPEs:    singleCPE("cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
-		},
-		{
-			// VS Code and other Electron apps on Windows (Code.exe)
-			Class:    "electron-binary-renamed-windows",
-			FileGlob: "**/Code.exe",
+			// VS Code renames the electron bin: code (linux) / Code.exe (win)
+			Class:    "visual-studio-code-binary",
+			FileGlob: "**/{code,Code.exe}",
 			EvidenceMatcher: binutils.MatchAll(
 				m.FileContentsVersionMatcher(`Electron/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 				m.FileContentsVersionMatcher(`Chrome/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+`),

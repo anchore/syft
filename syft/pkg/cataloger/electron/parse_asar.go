@@ -1,6 +1,7 @@
 package electron
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/binary"
@@ -30,12 +31,7 @@ var (
 func parsePackageJSON(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
-	contents, err := io.ReadAll(reader) //nolint:gocritic // json.Unmarshal requires the full document buffered
-	if err != nil {
-		return nil, nil, fmt.Errorf("read package.json: %w", err)
-	}
-
-	p, err := parsePackageJSONFromContents(contents, reader.Location)
+	p, err := parsePackageJSONFromReader(reader, reader.Location)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -91,13 +87,10 @@ func parseAsarArchive(_ context.Context, _ file.Resolver, _ *generic.Environment
 			continue
 		}
 
-		virtualPath := fmt.Sprintf("%s:%s", reader.Path(), pkgPath)
-		virtualLocation := file.NewVirtualLocationFromCoordinates(
-			reader.Coordinates,
-			virtualPath,
-		)
+		nestedLocation := file.NewLocationFromCoordinates(reader.Coordinates)
+		nestedLocation.AccessPath = fmt.Sprintf("%s:%s", reader.Path(), pkgPath)
 
-		npmPkg, err := parsePackageJSONFromContents(contents, virtualLocation)
+		npmPkg, err := parsePackageJSONFromContents(contents, nestedLocation)
 		if err != nil {
 			log.Debugf("parse pkg %s: %v", pkgPath, err)
 			continue
@@ -251,10 +244,12 @@ type packageJSONForParsing struct {
 }
 
 func parsePackageJSONFromContents(contents []byte, location file.Location) (pkg.Package, error) {
-	contents = bytes.TrimPrefix(contents, []byte{0xef, 0xbb, 0xbf})
+	return parsePackageJSONFromReader(bytes.NewReader(contents), location)
+}
 
+func parsePackageJSONFromReader(reader io.Reader, location file.Location) (pkg.Package, error) {
 	var pkgJSON packageJSONForParsing
-	if err := json.Unmarshal(contents, &pkgJSON); err != nil {
+	if err := json.NewDecoder(skipBOM(reader)).Decode(&pkgJSON); err != nil {
 		return pkg.Package{}, fmt.Errorf("unmarshal package.json: %w", err)
 	}
 
@@ -291,6 +286,14 @@ func parsePackageJSONFromContents(contents []byte, location file.Location) (pkg.
 	p.SetID()
 
 	return p, nil
+}
+
+func skipBOM(reader io.Reader) io.Reader {
+	br := bufio.NewReader(reader)
+	if prefix, err := br.Peek(3); err == nil && bytes.Equal(prefix, []byte{0xef, 0xbb, 0xbf}) {
+		_, _ = br.Discard(3)
+	}
+	return br
 }
 
 func extractAuthor(author any) string {
@@ -353,10 +356,9 @@ func extractRepositoryURL(repo any) string {
 func packageURL(name, version string) string {
 	var namespace string
 
-	fields := strings.SplitN(name, "/", 2)
-	if len(fields) > 1 {
-		namespace = fields[0]
-		name = fields[1]
+	if ns, n, ok := strings.Cut(name, "/"); ok {
+		namespace = ns
+		name = n
 	}
 
 	return packageurl.NewPackageURL(

@@ -188,7 +188,6 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(dotnet.NewDotnetDepsCataloger, pkgcataloging.DeprecatedTag),               //nolint:staticcheck // TODO: remove in syft v2.0
 		newSimplePackageTaskFactory(dotnet.NewDotnetPortableExecutableCataloger, pkgcataloging.DeprecatedTag), //nolint:staticcheck // TODO: remove in syft v2.0
 		newSimplePackageTaskFactory(php.NewPeclCataloger, pkgcataloging.DeprecatedTag),                        //nolint:staticcheck // TODO: remove in syft v2.0
-		//nolint:staticcheck // TODO: remove in syft v2.0
-		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag),
+		newSimplePackageTaskFactory(nix.NewStoreCataloger, pkgcataloging.DeprecatedTag),                       //nolint:staticcheck // TODO: remove in syft v2.0
 	}
 }
