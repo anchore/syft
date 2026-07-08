@@ -93,9 +93,12 @@ func swiftNamespaceFromSourceURL(sourceURL, name string) string {
 		ns = strings.TrimPrefix(ns, prefix)
 	}
 	ns = strings.TrimSuffix(ns, ".git")
+	// drop a trailing "/<name>" segment. Package.resolved identities are lowercased
+	// while the repo path may be mixed-case (e.g. github.com/Apple/Swift-NIO vs
+	// identity swift-nio), so compare case-insensitively.
 	if name != "" {
-		if trimmed := strings.TrimSuffix(ns, "/"+name); trimmed != ns {
-			ns = trimmed
+		if idx := strings.LastIndex(ns, "/"); idx >= 0 && strings.EqualFold(ns[idx+1:], name) {
+			ns = ns[:idx]
 		}
 	}
 	return ns
