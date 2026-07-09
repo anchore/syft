@@ -26,9 +26,25 @@ const (
 	// Reference: https://www.docker.com/blog/oci-artifacts-for-ai-model-packaging/
 	modelConfigMediaTypePrefix = "application/vnd.docker.ai.model.config."
 	ggufLayerMediaType         = "application/vnd.docker.ai.gguf.v3"
+	safetensorsLayerMediaType  = "application/vnd.docker.ai.safetensors"
 
-	// Maximum bytes to read/return for GGUF headers
-	maxHeaderBytes = 8 * 1024 * 1024 // 8 MB
+	// Companion metadata layers packaged alongside the weight tensors.
+	// model.file covers README.md / config.json / tokenizer.json / generation_config.json.
+	modelFileMediaType = "application/vnd.docker.ai.model.file"
+	licenseMediaType   = "application/vnd.docker.ai.license"
+
+	// Weight format labels surfaced on modelArtifact.Format.
+	modelFormatGGUF        = "gguf"
+	modelFormatSafeTensors = "safetensors"
+
+	// maxWeightHeaderBytes is the leading slice we range-GET from a (multi-GB)
+	// weight layer — enough to cover the GGUF/safetensors header.
+	maxWeightHeaderBytes = 8 * 1024 * 1024 // 8 MB
+
+	// maxCompanionBytes caps a whole companion blob (README, config.json,
+	// license); these are small by convention. Matches the 4 MB read cap in
+	// classifyOCIModelFileLayer.
+	maxCompanionBytes = 4 * 1024 * 1024 // 4 MB
 )
 
 // registryClient handles OCI registry interactions for model artifacts.
@@ -110,7 +126,20 @@ type modelArtifact struct {
 	RawManifest    []byte
 	RawConfig      []byte
 	ManifestDigest string
-	GGUFLayers     []v1.Descriptor
+
+	// Format identifies the weight storage format advertised by the manifest's
+	// layer media types. Empty means no recognized weight layers were found.
+	Format string
+
+	// GGUFLayers are descriptors for layers carrying GGUF-format weights.
+	// We fetch the first few MB of each to read the header data
+	GGUFLayers []v1.Descriptor
+
+	// SafeTensorsLayers are descriptors for layers carrying SafeTensors-format weights.
+	SafeTensorsLayers []v1.Descriptor
+
+	// CompanionLayers are non-weight layers (README, config.json, license)
+	CompanionLayers []v1.Descriptor
 }
 
 func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) (*modelArtifact, error) {
@@ -151,16 +180,34 @@ func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) 
 	}
 
 	ggufLayers := extractGGUFLayers(manifest)
+	safetensorsLayers := extractSafeTensorsLayers(manifest)
+	companionLayers := extractCompanionLayers(manifest)
 
 	return &modelArtifact{
-		Reference:      ref,
-		Manifest:       manifest,
-		Config:         configFile,
-		RawManifest:    desc.Manifest,
-		RawConfig:      rawConfig,
-		ManifestDigest: desc.Digest.String(),
-		GGUFLayers:     ggufLayers,
+		Reference:         ref,
+		Manifest:          manifest,
+		Config:            configFile,
+		RawManifest:       desc.Manifest,
+		RawConfig:         rawConfig,
+		ManifestDigest:    desc.Digest.String(),
+		Format:            detectModelFormat(len(ggufLayers), len(safetensorsLayers)),
+		GGUFLayers:        ggufLayers,
+		SafeTensorsLayers: safetensorsLayers,
+		CompanionLayers:   companionLayers,
 	}, nil
+}
+
+// detectModelFormat returns a single format string when either GGUF or
+// SafeTensors weight layers are present.
+func detectModelFormat(ggufCount, safetensorsCount int) string {
+	switch {
+	case ggufCount > 0:
+		return modelFormatGGUF
+	case safetensorsCount > 0:
+		return modelFormatSafeTensors
+	default:
+		return ""
+	}
 }
 
 // isModelArtifact checks if the manifest represents a model artifact.
@@ -179,6 +226,33 @@ func extractGGUFLayers(manifest *v1.Manifest) []v1.Descriptor {
 	return ggufLayers
 }
 
+// extractSafeTensorsLayers extracts SafeTensors weight-layer descriptors from
+// the manifest.
+func extractSafeTensorsLayers(manifest *v1.Manifest) []v1.Descriptor {
+	var out []v1.Descriptor
+	for _, layer := range manifest.Layers {
+		if string(layer.MediaType) == safetensorsLayerMediaType {
+			out = append(out, layer)
+		}
+	}
+	return out
+}
+
+// extractCompanionLayers extracts small, non-weight layers that carry
+// cataloger-relevant metadata: README.md / config.json / tokenizer.json /
+// generation_config.json under vnd.docker.ai.model.file, and the LICENSE under
+// vnd.docker.ai.license.
+func extractCompanionLayers(manifest *v1.Manifest) []v1.Descriptor {
+	var out []v1.Descriptor
+	for _, layer := range manifest.Layers {
+		switch string(layer.MediaType) {
+		case modelFileMediaType, licenseMediaType:
+			out = append(out, layer)
+		}
+	}
+	return out
+}
+
 func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference, digest v1.Hash, maxBytes int64) ([]byte, error) {
 	repo := ref.Context()
 
@@ -193,14 +267,6 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 	if err != nil {
 		return nil, fmt.Errorf("failed to get layer reader: %w", err)
 	}
-	// this defer is what causes the download to stop
-	//   1. io.ReadFull(reader, data) reads exactly 8MB into the buffer
-	//   2. The function returns with data[:n]
-	//   3. defer reader.Close() executes, closing the HTTP response body
-	//   4. Closing the response body closes the underlying TCP connection
-	//   5. The server receives TCP FIN/RST and stops sending
-	//   note: some data is already in flight when we close so we will see > 8mb over the wire
-	//   the full image will not download given we terminate the reader early here
 	defer reader.Close()
 
 	// Note: this is not some arbitrary number picked out of the blue.
@@ -208,8 +274,10 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 	// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#file-structure
 	data := make([]byte, maxBytes)
 	n, err := io.ReadFull(reader, data)
-	if err != nil && err != io.ErrUnexpectedEOF {
-		// ErrUnexpectedEOF is okay - it means the file is smaller than maxBytes
+
+	// ErrUnexpectedEOF means the layer is smaller than maxBytes; EOF means it is
+	// empty. Both mean we read everything there was, not a failure.
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return nil, fmt.Errorf("failed to read layer data: %w", err)
 	}
 
