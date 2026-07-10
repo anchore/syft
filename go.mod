@@ -62,7 +62,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.8.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/kastenhq/goversion v0.0.0-20230811215019-93b2f8823953
-	github.com/klauspost/compress v1.18.6
+	github.com/klauspost/compress v1.19.0
 	github.com/magiconair/properties v1.8.10
 	github.com/mholt/archives v0.1.5
 	github.com/moby/sys/mountinfo v0.7.2
