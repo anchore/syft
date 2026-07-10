@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -375,12 +377,45 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "traefik/2.10.5/linux-s390x",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.10.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.10.5",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
 			logicalFixture: "traefik/2.10.7/linux-amd64",
 			expected: pkg.Package{
 				Name:      "traefik",
 				Version:   "2.10.7",
 				Type:      "binary",
 				PURL:      "pkg:generic/traefik@2.10.7",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.11.10/linux-ppc64le",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.11.10",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.11.10",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.11.30/linux-amd64",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.11.30",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.11.30",
 				Locations: locations("traefik"),
 				Metadata:  metadata("traefik-binary"),
 			},
@@ -403,6 +438,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "3.6.5",
 				Type:      "binary",
 				PURL:      "pkg:generic/traefik@3.6.5",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/3.6.6/linux-arm-v6",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "3.6.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@3.6.6",
 				Locations: locations("traefik"),
 				Metadata:  metadata("traefik-binary"),
 			},
@@ -3007,6 +3053,25 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTraefikClassifierPrefersVersionData(t *testing.T) {
+	dir := t.TempDir()
+	// Traefik 2.10.5 on s390x contains this dependency version before its own version data.
+	contents := []byte("\x00group\x002.7.0\x00%s,%s\xbe\xb0\x8f\xf92.10.5\x00\x00\x00\x00\x00\x00")
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "traefik"), contents, 0o600))
+
+	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
+	src, err := directorysource.NewFromPath(dir)
+	require.NoError(t, err)
+
+	resolver, err := src.FileResolver(source.SquashedScope)
+	require.NoError(t, err)
+
+	packages, _, err := c.Catalog(context.Background(), resolver)
+	require.NoError(t, err)
+	require.Len(t, packages, 1)
+	assert.Equal(t, "2.10.5", packages[0].Version)
 }
 
 func TestClassifierCataloger_DefaultClassifiers_NegativeCases(t *testing.T) {

@@ -751,9 +751,30 @@ from-images:
     paths:
       - /usr/local/bin/traefik
 
+  - version: 2.10.5
+    images:
+      - ref: traefik:v2.10.5@sha256:0ac60f2c2f4a9564d06dfe1b9f68d47457142d947714c6367d6e2063346c79f9
+        platform: linux/s390x
+    paths:
+      - /usr/local/bin/traefik
+
   - version: 2.10.7
     images:
       - ref: traefik:2.10.7@sha256:a98415716a91066ef5e442969887ebb3df7d80775b5bfa7b67fcaed989833d84
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/traefik
+
+  - version: 2.11.10
+    images:
+      - ref: traefik:v2.11.10@sha256:b271577cf5521c880a3eafab8df2bd2348ad77128b0a146802be63084fb4e746
+        platform: linux/ppc64le
+    paths:
+      - /usr/local/bin/traefik
+
+  - version: 2.11.30
+    images:
+      - ref: traefik:v2.11.30@sha256:1332aeea1523caaac64bc7406c29fc64251fa094ceb7bfb07bc2cb0b8f529f5f
         platform: linux/amd64
     paths:
       - /usr/local/bin/traefik
@@ -769,6 +790,13 @@ from-images:
     images:
       - ref: traefik:v3.6.5@sha256:d944e3693bbf5a361ddd2e411bb713049cfb4f5ff3da200b30ee7a347dbd6abd
         platform: linux/amd64
+    paths:
+      - /usr/local/bin/traefik
+
+  - version: 3.6.6
+    images:
+      - ref: traefik:v3.6.6@sha256:5457c0a157f7ed95be8253228daf32bba1a12ae1db68ba0337fee123623c347c
+        platform: linux/arm/v6
     paths:
       - /usr/local/bin/traefik
 

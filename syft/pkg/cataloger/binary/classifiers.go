@@ -281,11 +281,16 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "traefik-binary",
 			FileGlob: "**/traefik",
-			EvidenceMatcher: m.FileContentsVersionMatcher(
-				// [NUL]v1.7.34[NUL]
-				// [NUL]2.9.6[NUL]
-				// 3.0.4[NUL]
-				`(?m)(\x00v?|\x{FFFD}.?)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+			EvidenceMatcher: binutils.MatchAny(
+				// Newer cross-platform builds have no stable prefix, but terminate the version with multiple NULs.
+				m.FileContentsVersionMatcher(
+					`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00{2,}`),
+				m.FileContentsVersionMatcher(
+					// [NUL]v1.7.34[NUL]
+					// [NUL]2.9.6[NUL]
+					// 3.0.4[NUL]
+					`(?m)(\x00v?|\x{FFFD}.?)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00`),
+			),
 			Package: "traefik",
 			PURL:    mustPURL("pkg:generic/traefik@version"),
 			CPEs:    singleCPE("cpe:2.3:a:traefik:traefik:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
