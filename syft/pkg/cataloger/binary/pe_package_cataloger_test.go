@@ -70,12 +70,15 @@ func Test_PEPackageCataloger_Globs(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:    "obtain PE binary files (dll, exe, bpl)",
+			name:    "obtain PE binary files (dll, exe, bpl), including uppercase extensions",
 			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/library.dll",
 				"src/program.exe",
 				"src/archive.bpl",
+				// uppercase extensions appear on Windows/ISO 9660 filesystems and must also match
+				"src/winlibrary.DLL",
+				"src/winprogram.EXE",
 			},
 		},
 	}
