@@ -3057,8 +3057,9 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 
 func TestTraefikClassifierPrefersVersionData(t *testing.T) {
 	dir := t.TempDir()
-	// Traefik 2.10.5 on s390x contains this dependency version before its own version data.
-	contents := []byte("\x00group\x002.7.0\x00%s,%s\xbe\xb0\x8f\xf92.10.5\x00\x00\x00\x00\x00\x00")
+	// Traefik 2.10.5 on s390x contains a dependency version before its own version data,
+	// followed by other multi-NUL-terminated version strings.
+	contents := []byte("\x00group\x002.7.0\x00%s,%s\xbe\xb0\x8f\xf92.10.5\x00\x00\x00\x00\x00\x000.0.721\x00\x00\x001.21.3\x00\x00")
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "traefik"), contents, 0o600))
 
 	c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())

@@ -282,7 +282,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "traefik-binary",
 			FileGlob: "**/traefik",
 			EvidenceMatcher: binutils.MatchAny(
-				// Newer cross-platform builds have no stable prefix, but terminate the version with multiple NULs.
+				// Keep this before the legacy matcher: some s390x builds contain an earlier dependency version.
+				// The Traefik version has no stable cross-platform prefix, but is the first semver followed by multiple NULs.
 				m.FileContentsVersionMatcher(
 					`(?m)(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-alpha[0-9]|-beta[0-9]|-rc[0-9])?)\x00{2,}`),
 				m.FileContentsVersionMatcher(
