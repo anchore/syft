@@ -5875,6 +5875,9 @@
       "three": [
         "cpe:2.3:a:three_project:three:*:*:*:*:*:node.js:*:*"
       ],
+      "thumbler": [
+        "cpe:2.3:a:mmahrous:thumbler:*:*:*:*:*:node.js:*:*"
+      ],
       "tianma-static": [
         "cpe:2.3:a:tianma-static_project:tianma-static:*:*:*:*:*:node.js:*:*"
       ],
@@ -6961,7 +6964,7 @@
         "cpe:2.3:a:google:slashify:*:*:*:*:*:node.js:*:*"
       ],
       "snowflake-connector-python": [
-        "cpe:2.3:a:snowflake:snowflake-connector-python:*:*:*:*:*:*:*:*"
+        "cpe:2.3:a:snowflake:snowflake_connector:*:*:*:*:*:python:*:*"
       ],
       "sockeye": [
         "cpe:2.3:a:amazon:sockeye:*:*:*:*:*:python:*:*"
@@ -7040,6 +7043,9 @@
       ],
       "xmpp-http-upload": [
         "cpe:2.3:a:xmpp-http-upload_project:xmpp-http-upload:*:*:*:*:*:*:*:*"
+      ],
+      "zeep": [
+        "cpe:2.3:a:python-zeep:zeep:*:*:*:*:*:python:*:*"
       ],
       "zibalPlatform": [
         "cpe:2.3:a:zibal_project:zibal:*:*:*:*:*:pypi:*:*"
@@ -10665,6 +10671,9 @@
         "cpe:2.3:a:really-simple-plugins:complianz:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:really-simple-plugins:complianz:*:*:*:*:premium:wordpress:*:*"
       ],
+      "compress-then-upload": [
+        "cpe:2.3:a:eliehanna:compress_\\\u0026_upload:*:*:*:*:*:wordpress:*:*"
+      ],
       "conditional-extra-fees-for-woocommerce": [
         "cpe:2.3:a:piwebsolution:conditional_cart_fee_\\/_extra_charge_rule_for_woocommerce_extra_fees:*:*:*:*:*:wordpress:*:*"
       ],
@@ -11407,6 +11416,9 @@
       ],
       "database-peek": [
         "cpe:2.3:a:database_peek_project:database_peek:*:*:*:*:*:wordpress:*:*"
+      ],
+      "db-access": [
+        "cpe:2.3:a:jimbob1953:db-access:*:*:*:*:*:wordpress:*:*"
       ],
       "dc-woocommerce-multi-vendor": [
         "cpe:2.3:a:multivendorx:multivendorx:*:*:*:*:*:wordpress:*:*",
@@ -18282,6 +18294,9 @@
       "simple-side-tab": [
         "cpe:2.3:a:rumspeed:simple_side_tab:*:*:*:*:*:wordpress:*:*"
       ],
+      "simple-signup-form": [
+        "cpe:2.3:a:modalsurvey:simple_signup_form:*:*:*:*:*:wordpress:*:*"
+      ],
       "simple-site-verify": [
         "cpe:2.3:a:idoweb:simple_site_verify:*:*:*:*:*:wordpress:*:*"
       ],
@@ -22456,6 +22471,9 @@
       ],
       "wpextended": [
         "cpe:2.3:a:wpextended:wp_extended:*:*:*:*:*:wordpress:*:*"
+      ],
+      "wpfavicon": [
+        "cpe:2.3:a:nihal:wpfavicon:*:*:*:*:*:wordpress:*:*"
       ],
       "wpforms": [
         "cpe:2.3:a:wpforms:wpforms:*:*:*:*:pro:wordpress:*:*"
