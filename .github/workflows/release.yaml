@@ -41,7 +41,7 @@ jobs:
     permissions:
       contents: read
       checks: read # required for getting the status of specific check names
-    uses: anchore/workflows/.github/workflows/check-gate.yaml@b0c30a80409130d329aaa356fd64a34d8c0b3375 # v0.7.2
+    uses: anchore/workflows/.github/workflows/check-gate.yaml@7212994dc8fc3a53fe9c8e766ab5b4ddd16ea3d4 # v0.8.0
     with:
       # these are checks that should be run on pull-request and merges to main.
       # we do NOT want to kick off a release if these have not been verified on main.
@@ -70,7 +70,7 @@ jobs:
       packages: write # required for publishing release artifacts to GitHub packages
       id-token: write # required for keyless signing (cosign/sigstore OIDC)
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: true
@@ -79,13 +79,13 @@ jobs:
         uses: ./.github/actions/bootstrap
 
       - name: Login to Docker Hub
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee #v4.2.0
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 #v4.4.0
         with:
           username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
           password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee #v4.2.0
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 #v4.4.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -119,7 +119,7 @@ jobs:
     if: ${{ always() && (needs.release.result == 'success' || github.event.inputs.phase == 'install-script-only') }}
     permissions:
       contents: read # required for the reusable workflow to check out the repo and publish the install script
-    uses: anchore/workflows/.github/workflows/release-install-script.yaml@b0c30a80409130d329aaa356fd64a34d8c0b3375 # v0.7.2
+    uses: anchore/workflows/.github/workflows/release-install-script.yaml@7212994dc8fc3a53fe9c8e766ab5b4ddd16ea3d4 # v0.8.0
     with:
       tag: ${{ github.event.inputs.version }}
     secrets:

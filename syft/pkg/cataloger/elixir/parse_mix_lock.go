@@ -53,7 +53,34 @@ func parseMixLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 			errs = unknown.Appendf(errs, reader, "unable to read mix lock line %d: %s", lineNum, line)
 			continue
 		}
-		name, version, hash, hashExt := tokens[1], tokens[4], tokens[5], tokens[len(tokens)-2]
+
+		// tokens[2] is the source atom of the entry's tuple: `hex`, `git`, or
+		// `path`. The layout of the remaining tokens differs per source, so the
+		// version/hash positions must be read accordingly. Only hex entries are
+		// backed by the hex.pm registry; git/path entries must not be emitted as
+		// hex packages (see newPackage), otherwise a bogus pkg:hex/ PURL produces
+		// false hex.pm vulnerability matches.
+		source := tokens[2]
+
+		var name, version, hash, hashExt string
+		switch source {
+		case "git":
+			// e.g. `"dep": {:git, "https://host/dep.git", "<sha-or-ref>", [ref: "..."]}`
+			// tokens: ["", name, "git", "<url-scheme>", "//host/dep.git", "<sha-or-ref>", ...]
+			// The version is the commit SHA/ref immediately after the URL; there
+			// is no hex checksum for a git-sourced dependency.
+			name, version = tokens[1], tokens[5]
+		case "path":
+			// e.g. `"dep": {:path, "../local", []}`
+			// tokens: ["", name, "path", "../local", "[]", ""]
+			// A path dependency has no version or checksum; tokens[4] is the empty
+			// dependency list `[]`, not a version.
+			name = tokens[1]
+		default:
+			// hex (and any registry-style tuple): keep the original behavior.
+			// tokens: ["", name, "hex", name, version, hash, ..., hashExt, ""]
+			name, version, hash, hashExt = tokens[1], tokens[4], tokens[5], tokens[len(tokens)-2]
+		}
 
 		if name == "" {
 			log.WithFields("path", reader.RealPath).Debug("skipping empty package name from mix.lock file")
@@ -63,6 +90,7 @@ func parseMixLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 
 		packages = append(packages,
 			newPackage(
+				source,
 				pkg.ElixirMixLockEntry{
 					Name:         name,
 					Version:      version,
