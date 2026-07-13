@@ -45,7 +45,7 @@ func (c *goBinaryCataloger) newGoBinaryPackage(dep *debug.Module, m pkg.GolangBi
 	return p
 }
 
-func newBinaryMetadata(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments, symbols []string) pkg.GolangBinaryBuildinfoEntry {
+func newBinaryMetadata(dep *debug.Module, mainModule, goVersion, architecture string, buildSettings pkg.KeyValues, cryptoSettings, experiments []string, symbols map[string][]string) pkg.GolangBinaryBuildinfoEntry {
 	if dep.Replace != nil {
 		dep = dep.Replace
 	}

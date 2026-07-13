@@ -22,8 +22,8 @@ func Test_moduleSymbols(t *testing.T) {
 	tests := []struct {
 		name           string
 		symbols        []binarySymbol
-		expected       map[string][]string
-		expectedStdlib []string
+		expected       map[string]map[string][]string
+		expectedStdlib map[string][]string
 	}{
 		{
 			name:     "no symbols",
@@ -31,47 +31,47 @@ func Test_moduleSymbols(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name: "attribute symbols by longest module path prefix",
+			name: "attribute symbols by longest module path prefix, grouped by import path",
 			symbols: []binarySymbol{
 				{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
 				{packagePath: "github.com/foo/bar/internal/util", name: "github.com/foo/bar/internal/util.(*Helper).Do"},
 				{packagePath: "github.com/foo/bar/v2", name: "github.com/foo/bar/v2.Parse"},
 			},
-			expected: map[string][]string{
+			expected: map[string]map[string][]string{
 				"github.com/foo/bar": {
-					"github.com/foo/bar.Parse",
-					"github.com/foo/bar/internal/util.(*Helper).Do",
+					"github.com/foo/bar":               {"Parse"},
+					"github.com/foo/bar/internal/util": {"(*Helper).Do"},
 				},
 				"github.com/foo/bar/v2": {
-					"github.com/foo/bar/v2.Parse",
+					"github.com/foo/bar/v2": {"Parse"},
 				},
 			},
 		},
 		{
-			name: "main package symbols are attributed to the main module",
+			name: "main package symbols are attributed to the main module and keyed by the main import path",
 			symbols: []binarySymbol{
 				{packagePath: "main", name: "main.main"},
 				{packagePath: "github.com/someorg/somecli/cmd", name: "github.com/someorg/somecli/cmd.Execute"},
 			},
-			expected: map[string][]string{
+			expected: map[string]map[string][]string{
 				"github.com/someorg/somecli": {
-					"github.com/someorg/somecli/cmd.Execute",
-					"main.main",
+					"github.com/someorg/somecli/cmd": {"Execute"},
+					"main":                           {"main"},
 				},
 			},
 		},
 		{
-			name: "stdlib and runtime symbols are collected separately",
+			name: "stdlib and runtime symbols are collected separately, grouped by import path",
 			symbols: []binarySymbol{
 				{packagePath: "runtime", name: "runtime.main"},
 				{packagePath: "net/http", name: "net/http.(*Client).Do"},
 				{packagePath: "internal/abi", name: "internal/abi.(*Type).Kind"},
 			},
-			expected: map[string][]string{},
-			expectedStdlib: []string{
-				"internal/abi.(*Type).Kind",
-				"net/http.(*Client).Do",
-				"runtime.main",
+			expected: map[string]map[string][]string{},
+			expectedStdlib: map[string][]string{
+				"internal/abi": {"(*Type).Kind"},
+				"net/http":     {"(*Client).Do"},
+				"runtime":      {"main"},
 			},
 		},
 		{
@@ -80,9 +80,9 @@ func Test_moduleSymbols(t *testing.T) {
 				{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
 				{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
 			},
-			expected: map[string][]string{
+			expected: map[string]map[string][]string{
 				"github.com/foo/bar": {
-					"github.com/foo/bar.Parse",
+					"github.com/foo/bar": {"Parse"},
 				},
 			},
 		},
@@ -93,6 +93,53 @@ func Test_moduleSymbols(t *testing.T) {
 			gotByModule, gotStdlib := moduleSymbols(tt.symbols, mainModule, deps)
 			assert.Equal(t, tt.expected, gotByModule)
 			assert.Equal(t, tt.expectedStdlib, gotStdlib)
+		})
+	}
+}
+
+func Test_localSymbolName(t *testing.T) {
+	tests := []struct {
+		name       string
+		symbol     string
+		importPath string
+		expected   string
+	}{
+		{
+			name:       "function",
+			symbol:     "github.com/foo/bar.Parse",
+			importPath: "github.com/foo/bar",
+			expected:   "Parse",
+		},
+		{
+			name:       "pointer-receiver method",
+			symbol:     "github.com/foo/bar.(*T).M",
+			importPath: "github.com/foo/bar",
+			expected:   "(*T).M",
+		},
+		{
+			// type-argument brackets sit to the right of the stripped prefix and must be preserved
+			name:       "generic instantiation",
+			symbol:     "github.com/foo/bar.Do[net/url.Values]",
+			importPath: "github.com/foo/bar",
+			expected:   "Do[net/url.Values]",
+		},
+		{
+			// a sibling package must not be stripped by a shorter import path (the "." boundary guards this)
+			name:       "prefix mismatch is returned unchanged",
+			symbol:     "github.com/foo/bar/sub.Func",
+			importPath: "github.com/foo/bar",
+			expected:   "github.com/foo/bar/sub.Func",
+		},
+		{
+			name:       "empty import path is returned unchanged",
+			symbol:     "runtime.main",
+			importPath: "",
+			expected:   "runtime.main",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, localSymbolName(tt.symbol, tt.importPath))
 		})
 	}
 }

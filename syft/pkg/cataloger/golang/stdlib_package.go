@@ -50,7 +50,7 @@ func (c *goBinaryCataloger) stdlibPackageAndRelationships(ctx context.Context, p
 	return goCompilerPkgs, relationships
 }
 
-func newGoStdLib(ctx context.Context, version string, location file.LocationSet, symbols []string) *pkg.Package {
+func newGoStdLib(ctx context.Context, version string, location file.LocationSet, symbols map[string][]string) *pkg.Package {
 	stdlibCpe, err := generateStdlibCpe(version)
 	if err != nil {
 		return nil
