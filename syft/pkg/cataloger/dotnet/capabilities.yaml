@@ -39,6 +39,10 @@ catalogers:
           - '**/*.deps.json'
           - '**/*.dll'
           - '**/*.exe'
+          - '**/*.bpl'
+          - '**/*.DLL'
+          - '**/*.EXE'
+          - '**/*.BPL'
     metadata_types: # AUTO-GENERATED
       - pkg.DotnetDepsEntry
       - pkg.DotnetPortableExecutableEntry
@@ -173,6 +177,10 @@ catalogers:
         criteria:
           - '**/*.dll'
           - '**/*.exe'
+          - '**/*.bpl'
+          - '**/*.DLL'
+          - '**/*.EXE'
+          - '**/*.BPL'
     metadata_types: # AUTO-GENERATED
       - pkg.DotnetPortableExecutableEntry
     package_types: # AUTO-GENERATED
