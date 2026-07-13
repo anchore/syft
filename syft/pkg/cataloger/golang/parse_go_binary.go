@@ -54,10 +54,10 @@ type goBinaryCataloger struct {
 	symbolScope       cataloging.SymbolScope
 
 	// stdlibSymbols holds the standard-library function symbols discovered per binary (keyed by the
-        // binary's location), grouped by import path, populated during parsing and consumed by stdlibProcessor
-        // when it builds the synthetic "stdlib" package. Guarded by stdlibSymbolsMu because parsers run
-        // concurrently.
-        stdlibSymbols   map[file.Coordinates]map[string][]string
+	// binary's location), grouped by import path, populated during parsing and consumed by stdlibProcessor
+	// when it builds the synthetic "stdlib" package. Guarded by stdlibSymbolsMu because parsers run
+	// concurrently.
+	stdlibSymbols   map[file.Coordinates]map[string][]string
 	stdlibSymbolsMu sync.Mutex
 }
 
@@ -66,7 +66,7 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
 		symbolScope:       opts.CaptureSymbols,
-                stdlibSymbols:     make(map[file.Coordinates]map[string][]string),
+		stdlibSymbols:     make(map[file.Coordinates]map[string][]string),
 	}
 }
 
@@ -78,16 +78,16 @@ func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols 
 	}
 	c.stdlibSymbolsMu.Lock()
 	defer c.stdlibSymbolsMu.Unlock()
-        existing := c.stdlibSymbols[coord]
-        if existing == nil {
-                existing = make(map[string][]string)
-                c.stdlibSymbols[coord] = existing
-        }
-        for path, names := range symbols {
-                merged := slices.Concat(existing[path], names)
-                slices.Sort(merged)
-                existing[path] = slices.Compact(merged)
-        }
+	existing := c.stdlibSymbols[coord]
+	if existing == nil {
+		existing = make(map[string][]string)
+		c.stdlibSymbols[coord] = existing
+	}
+	for path, names := range symbols {
+		merged := slices.Concat(existing[path], names)
+		slices.Sort(merged)
+		existing[path] = slices.Compact(merged)
+	}
 }
 
 // stdlibSymbolsFor returns the standard-library symbols recorded for a binary location. It returns a deep
@@ -95,20 +95,20 @@ func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols 
 func (c *goBinaryCataloger) stdlibSymbolsFor(coord file.Coordinates) map[string][]string {
 	c.stdlibSymbolsMu.Lock()
 	defer c.stdlibSymbolsMu.Unlock()
-        return cloneSymbolGroups(c.stdlibSymbols[coord])
+	return cloneSymbolGroups(c.stdlibSymbols[coord])
 }
 
 // cloneSymbolGroups returns a deep copy of a symbol group map (import path -> local symbol names), or nil
 // when the input is empty.
 func cloneSymbolGroups(groups map[string][]string) map[string][]string {
-        if len(groups) == 0 {
-                return nil
-        }
-        out := make(map[string][]string, len(groups))
-        for path, names := range groups {
-                out[path] = slices.Clone(names)
-        }
-        return out
+	if len(groups) == 0 {
+		return nil
+	}
+	out := make(map[string][]string, len(groups))
+	for path, names := range groups {
+		out[path] = slices.Clone(names)
+	}
+	return out
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
