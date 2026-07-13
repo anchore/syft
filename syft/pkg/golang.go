@@ -27,9 +27,11 @@ type GolangBinaryBuildinfoEntry struct {
 	// the binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each
 	// value is the sorted, deduplicated list of symbol names local to that package, i.e. with the import
 	// path prefix stripped (e.g. import path "github.com/foo/bar" -> "(*Type).Method"). The fully qualified
-	// name is the import path, a ".", and the local name. Populated only when the golang cataloger's
-	// capture-symbols scope covers this package: the "all" scope populates every module package plus the
-	// synthetic stdlib package, while the "stdlib" scope populates only the stdlib package.
+	// name is the import path, a ".", and the local name. One exception: the binary's main package appears
+	// under the key "main" (the name the linker assigns), not its original source import path, which is not
+	// recoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers
+	// this package: the "all" scope populates every module package plus the synthetic stdlib package, while
+	// the "stdlib" scope populates only the stdlib package.
 	Symbols map[string][]string `json:"symbols,omitempty"`
 }
 

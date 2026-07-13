@@ -1427,12 +1427,14 @@ func (alwaysErrorReader) Read(_ []byte) (int, error) {
 func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 	location := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"})
 
-	// the symbols a binary would carry once scanFile has extracted them: one main-package symbol, one
-	// dependency symbol, and one standard-library symbol. For the "none" scope scanFile never runs, so the
-	// build info carries no symbols at all.
+	// the symbols a binary would carry once scanFile has extracted them: one main-package symbol, two
+	// dependency symbols from distinct packages within the same module (so the per-package keying of the
+	// emitted map is visible), and one standard-library symbol. For the "none" scope scanFile never runs,
+	// so the build info carries no symbols at all.
 	populatedSymbols := []binarySymbol{
 		{packagePath: "main", name: "main.main"},
 		{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
+		{packagePath: "github.com/foo/bar/baz", name: "github.com/foo/bar/baz.Helper"},
 		{packagePath: "net/http", name: "net/http.(*Client).Do"},
 	}
 
@@ -1440,9 +1442,9 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 		name           string
 		scope          cataloging.SymbolScope
 		symbols        []binarySymbol
-                wantMainSyms   map[string][]string
-                wantDepSyms    map[string][]string
-                wantStdlibSyms map[string][]string
+		wantMainSyms   map[string][]string
+		wantDepSyms    map[string][]string
+		wantStdlibSyms map[string][]string
 	}{
 		{
 			name:    "none captures nothing",
@@ -1453,15 +1455,18 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			name:           "stdlib captures only the stdlib package",
 			scope:          cataloging.SymbolScopeStdlib,
 			symbols:        populatedSymbols,
-                        wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 		{
-			name:           "all captures module and stdlib packages",
-			scope:          cataloging.SymbolScopeAll,
-			symbols:        populatedSymbols,
-                        wantMainSyms:   map[string][]string{"main": {"main"}},
-                        wantDepSyms:    map[string][]string{"github.com/foo/bar": {"Parse"}},
-                        wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+			name:         "all captures module and stdlib packages",
+			scope:        cataloging.SymbolScopeAll,
+			symbols:      populatedSymbols,
+			wantMainSyms: map[string][]string{"main": {"main"}},
+			wantDepSyms: map[string][]string{
+				"github.com/foo/bar":     {"Parse"},
+				"github.com/foo/bar/baz": {"Helper"},
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 	}
 
@@ -1490,4 +1495,42 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			assert.Equal(t, tt.wantStdlibSyms, c.stdlibSymbolsFor(location.Coordinates), "recorded stdlib symbols")
 		})
 	}
+}
+
+// Test_recordStdlibSymbols_merge covers the merge path where the same binary location records stdlib
+// symbols more than once. This happens in production for universal/fat Mach-O binaries: scanFile yields
+// one build info per architecture and each is recorded under the same location coordinates.
+func Test_recordStdlibSymbols_merge(t *testing.T) {
+	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	c := newGoBinaryCataloger(CatalogerConfig{})
+
+	c.recordStdlibSymbols(coord, map[string][]string{
+		"net/http": {"(*Client).Do", "Get"},
+		"net/url":  {"Parse"},
+	})
+	// a second architecture: overlapping names (must dedup), a new name for an existing package, and a new package
+	c.recordStdlibSymbols(coord, map[string][]string{
+		"net/http": {"Get", "Post"},
+		"os":       {"Open"},
+	})
+
+	assert.Equal(t, map[string][]string{
+		"net/http": {"(*Client).Do", "Get", "Post"},
+		"net/url":  {"Parse"},
+		"os":       {"Open"},
+	}, c.stdlibSymbolsFor(coord))
+}
+
+// Test_stdlibSymbolsFor_isolation asserts the returned map is a deep copy: mutating it (or its slices)
+// must not corrupt the cataloger's guarded internal state.
+func Test_stdlibSymbolsFor_isolation(t *testing.T) {
+	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	c := newGoBinaryCataloger(CatalogerConfig{})
+	c.recordStdlibSymbols(coord, map[string][]string{"net/http": {"Get"}})
+
+	got := c.stdlibSymbolsFor(coord)
+	got["net/http"] = append(got["net/http"], "MUTATED")
+	got["net/url"] = []string{"Parse"}
+
+	assert.Equal(t, map[string][]string{"net/http": {"Get"}}, c.stdlibSymbolsFor(coord), "internal state must be unaffected by caller mutation")
 }

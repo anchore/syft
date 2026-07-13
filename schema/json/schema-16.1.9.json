@@ -1662,7 +1662,7 @@
             "type": "array"
           },
           "type": "object",
-          "description": "Symbols are the function symbols from this module that are compiled into the binary, extracted from\nthe binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each\nvalue is the sorted, deduplicated list of symbol names local to that package, i.e. with the import\npath prefix stripped (e.g. import path \"github.com/foo/bar\" -\u003e \"(*Type).Method\"). The fully qualified\nname is the import path, a \".\", and the local name. Populated only when the golang cataloger's\ncapture-symbols scope covers this package: the \"all\" scope populates every module package plus the\nsynthetic stdlib package, while the \"stdlib\" scope populates only the stdlib package."
+          "description": "Symbols are the function symbols from this module that are compiled into the binary, extracted from\nthe binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each\nvalue is the sorted, deduplicated list of symbol names local to that package, i.e. with the import\npath prefix stripped (e.g. import path \"github.com/foo/bar\" -\u003e \"(*Type).Method\"). The fully qualified\nname is the import path, a \".\", and the local name. One exception: the binary's main package appears\nunder the key \"main\" (the name the linker assigns), not its original source import path, which is not\nrecoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers\nthis package: the \"all\" scope populates every module package plus the synthetic stdlib package, while\nthe \"stdlib\" scope populates only the stdlib package."
         }
       },
       "type": "object",
