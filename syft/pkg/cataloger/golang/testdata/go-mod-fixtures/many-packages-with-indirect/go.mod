@@ -1,0 +1,20 @@
+module (
+	github.com/anchore/syft
+)
+
+go 1.14
+
+// github.com/bogus/package v10.10.10
+
+require (
+	github.com/adrg/xdg v0.2.1
+	github.com/anchore/go-testutils v0.0.0-20200624184116-66aa578126db // github.com/bogus/package v10.10.10
+	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
+	github.com/anchore/stereoscope v0.0.0-20200706164556-7cf39d7f4639
+	github.com/anchore/archiver/v3 v3.5.1
+	//github.com/ignore/this v9.9.9  // indirect
+	github.com/bmatcuk/doublestar v1.3.1 // indirect
+	github.com/go-playground/validator/v10 v10.30.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+	github.com/go-test/deep v1.0.6 // a comment
+)
