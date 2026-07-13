@@ -96,19 +96,35 @@ func parseDenoJsrNameVersion(nameVersion string) (name, version string) {
 }
 
 func parseDenoNpmNameVersion(nameVersion string) (name, version string) {
+	// deno.lock npm keys append resolved peer dependencies after the version,
+	// separated by "_", e.g. "typedoc@0.28.19_typescript@6.0.3" or the scoped
+	// "@scope/name@1.2.3_@scope+peer@4.5.6". The peer suffix must be stripped
+	// before splitting name@version, otherwise LastIndex("@") splits on a peer's
+	// "@" and yields a garbage name and the peer's version.
+	//
+	// A semver version never contains "_", and it begins immediately after the
+	// package name's version "@", so the first "_" following that "@" starts the
+	// peer list.
+	var versionAt int
 	if strings.HasPrefix(nameVersion, "@") {
-		rest := nameVersion[1:]
-		idx := strings.LastIndex(rest, "@")
+		// scoped "@scope/name@version": the version "@" is the second "@"
+		idx := strings.Index(nameVersion[1:], "@")
 		if idx <= 0 {
 			return "", ""
 		}
-		return nameVersion[:idx+1], rest[idx+1:]
+		versionAt = idx + 1
+	} else {
+		versionAt = strings.Index(nameVersion, "@")
+		if versionAt <= 0 {
+			return "", ""
+		}
 	}
-	idx := strings.LastIndex(nameVersion, "@")
-	if idx <= 0 {
-		return "", ""
+
+	base := nameVersion
+	if underscore := strings.Index(nameVersion[versionAt:], "_"); underscore >= 0 {
+		base = nameVersion[:versionAt+underscore]
 	}
-	return nameVersion[:idx], nameVersion[idx+1:]
+	return base[:versionAt], base[versionAt+1:]
 }
 
 func newDenoJsrPackage(location file.Location, name, version string, meta denoJsrPackage) pkg.Package {

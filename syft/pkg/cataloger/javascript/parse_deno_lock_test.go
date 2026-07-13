@@ -55,6 +55,28 @@ func TestParseDenoLock(t *testing.T) {
 				Integrity: "d3e68d0abb393fb0bf94a6d07c46ec31dc755b544b13144dee931d8d5f06a52d",
 			},
 		},
+		{
+			// npm key carries a resolved peer dependency suffix ("_typescript@6.0.3")
+			Name:     "typedoc",
+			Version:  "0.28.19",
+			PURL:     "pkg:npm/typedoc@0.28.19",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{
+				Integrity: "sha512-TYPEDOCtestfixtureintegrityAAAA==",
+			},
+		},
+		{
+			// scoped npm key with a scope-encoded ("+") peer dependency suffix
+			Name:     "@algolia/autocomplete-preset-algolia",
+			Version:  "1.17.9",
+			PURL:     "pkg:npm/%40algolia/autocomplete-preset-algolia@1.17.9",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{
+				Integrity: "sha512-ALGOLIAtestfixtureintegrityBBBB==",
+			},
+		},
 	}
 
 	for i := range expectedPkgs {
