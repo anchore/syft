@@ -5,6 +5,7 @@ import (
 
 	"github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -21,6 +22,8 @@ func Test_encodeExternalReferences(t *testing.T) {
 			expected: nil,
 		},
 		{
+			// apk's "U:" field is the upstream project homepage, so it is emitted as a website
+			// reference (not distribution, which per the CycloneDX spec is a download location)
 			name: "from apk",
 			input: pkg.Package{
 				Metadata: pkg.ApkDBEntry{
@@ -28,7 +31,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 				},
 			},
 			expected: &[]cyclonedx.ExternalReference{
-				{URL: "http://a-place.gov", Type: cyclonedx.ERTypeDistribution},
+				{URL: "http://a-place.gov", Type: cyclonedx.ERTypeWebsite},
 			},
 		},
 		{
@@ -286,6 +289,54 @@ func Test_decodeExternalReferences_homepage(t *testing.T) {
 	decodeExternalReferences(website, j)
 	assert.NotNil(t, j.PomProject)
 	assert.Equal(t, u, j.PomProject.URL)
+}
+
+// Test_homepageRoundTrip drives each homepage-bearing metadata type through the real encode -> decode
+// cycle and asserts the URL survives. It is the drift guard for the two lists that cannot be structurally
+// unified: the encode source (internal.Homepage) and the decode setter (decodeExternalReferences). Adding
+// a type to one but not the other fails here -- either encode emits no ref (require.NotNil) or decode
+// drops it (assert.Equal).
+func Test_homepageRoundTrip(t *testing.T) {
+	const u = "https://example.com/home"
+	tests := []struct {
+		name  string
+		meta  any // value metadata with its homepage field set, for encode
+		blank any // pointer to zero metadata, for decode
+		got   func(any) string
+	}{
+		{"rpm db", pkg.RpmDBEntry{URL: u}, &pkg.RpmDBEntry{}, func(m any) string { return m.(*pkg.RpmDBEntry).URL }},
+		{"rpm archive", pkg.RpmArchive{URL: u}, &pkg.RpmArchive{}, func(m any) string { return m.(*pkg.RpmArchive).URL }},
+		{"alpm", pkg.AlpmDBEntry{URL: u}, &pkg.AlpmDBEntry{}, func(m any) string { return m.(*pkg.AlpmDBEntry).URL }},
+		{"apk", pkg.ApkDBEntry{URL: u}, &pkg.ApkDBEntry{}, func(m any) string { return m.(*pkg.ApkDBEntry).URL }},
+		{"dpkg db", pkg.DpkgDBEntry{Homepage: u}, &pkg.DpkgDBEntry{}, func(m any) string { return m.(*pkg.DpkgDBEntry).Homepage }},
+		{"dpkg archive", pkg.DpkgArchiveEntry{Homepage: u}, &pkg.DpkgArchiveEntry{}, func(m any) string { return m.(*pkg.DpkgArchiveEntry).Homepage }},
+		{"python", pkg.PythonPackage{Homepage: u}, &pkg.PythonPackage{}, func(m any) string { return m.(*pkg.PythonPackage).Homepage }},
+		{"homebrew", pkg.HomebrewFormula{Homepage: u}, &pkg.HomebrewFormula{}, func(m any) string { return m.(*pkg.HomebrewFormula).Homepage }},
+		{"luarocks", pkg.LuaRocksPackage{Homepage: u}, &pkg.LuaRocksPackage{}, func(m any) string { return m.(*pkg.LuaRocksPackage).Homepage }},
+		{"opam", pkg.OpamPackage{Homepage: u}, &pkg.OpamPackage{}, func(m any) string { return m.(*pkg.OpamPackage).Homepage }},
+		{"php installed", pkg.PhpComposerInstalledEntry{Homepage: u}, &pkg.PhpComposerInstalledEntry{}, func(m any) string { return m.(*pkg.PhpComposerInstalledEntry).Homepage }},
+		{"php lock", pkg.PhpComposerLockEntry{Homepage: u}, &pkg.PhpComposerLockEntry{}, func(m any) string { return m.(*pkg.PhpComposerLockEntry).Homepage }},
+		{"dart", pkg.DartPubspec{Homepage: u}, &pkg.DartPubspec{}, func(m any) string { return m.(*pkg.DartPubspec).Homepage }},
+		{"swipl", pkg.SwiplPackEntry{Homepage: u}, &pkg.SwiplPackEntry{}, func(m any) string { return m.(*pkg.SwiplPackEntry).Homepage }},
+		{"conda", pkg.CondaMetaPackage{URL: u}, &pkg.CondaMetaPackage{}, func(m any) string { return m.(*pkg.CondaMetaPackage).URL }},
+		{"r description", pkg.RDescription{URL: []string{u}}, &pkg.RDescription{}, func(m any) string { return firstOrEmpty(m.(*pkg.RDescription).URL) }},
+		{"java", pkg.JavaArchive{PomProject: &pkg.JavaPomProject{URL: u}}, &pkg.JavaArchive{}, func(m any) string { return m.(*pkg.JavaArchive).PomProject.URL }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			refs := encodeExternalReferences(pkg.Package{Metadata: tt.meta})
+			require.NotNil(t, refs, "expected a website external reference to be encoded")
+			decodeExternalReferences(&cyclonedx.Component{ExternalReferences: refs}, tt.blank)
+			assert.Equal(t, u, tt.got(tt.blank))
+		})
+	}
+}
+
+func firstOrEmpty(s []string) string {
+	if len(s) > 0 {
+		return s[0]
+	}
+	return ""
 }
 
 func Test_isValidExternalRef(t *testing.T) {

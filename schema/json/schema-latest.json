@@ -1076,6 +1076,10 @@
           "type": "string",
           "description": "Maintainer is the package maintainer's name and email in RFC822 format (name must come first, then email in angle brackets)"
         },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is the upstream project homepage URL from the Homepage control field."
+        },
         "installedSize": {
           "type": "integer",
           "description": "InstalledSize is the total size of installed files in kilobytes"
@@ -1147,6 +1151,10 @@
         "maintainer": {
           "type": "string",
           "description": "Maintainer is the package maintainer's name and email in RFC822 format (name must come first, then email in angle brackets)"
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is the upstream project homepage URL from the Homepage control field."
         },
         "installedSize": {
           "type": "integer",
@@ -3420,6 +3428,10 @@
         "authorEmail": {
           "type": "string",
           "description": "AuthorEmail is the package author's email address from the Author-Email field."
+        },
+        "homepage": {
+          "type": "string",
+          "description": "Homepage is the upstream project homepage URL from the Home-page field."
         },
         "platform": {
           "type": "string",

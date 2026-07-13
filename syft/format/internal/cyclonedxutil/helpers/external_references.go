@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/syft/internal/file"
 	syftFile "github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -19,13 +20,6 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		// Skip adding extracted URL and Homepage metadata
 		// as "external_reference" if the metadata isn't IRI-compliant
 		switch metadata := p.Metadata.(type) {
-		case pkg.ApkDBEntry:
-			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
-				refs = append(refs, cyclonedx.ExternalReference{
-					URL:  metadata.URL,
-					Type: cyclonedx.ERTypeDistribution,
-				})
-			}
 		case pkg.RustCargoLockEntry:
 			if metadata.Source != "" {
 				refs = append(refs, cyclonedx.ExternalReference{
@@ -86,47 +80,13 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 	return nil
 }
 
-// encodeHomepageRefs emits a "website" external reference from the project homepage/URL field for
-// ecosystems whose metadata carries one. Homepage-only ecosystems are handled here to keep them
-// separate from the distribution- and digest-reference cases in encodeExternalReferences.
-//
-// Some ecosystems fall back to a secondary URL (e.g. distribution URL or repository) when no dedicated
-// homepage is set, which a CycloneDX round-trip may reclassify as a homepage.
+// encodeHomepageRefs emits a "website" external reference from the shared project-homepage source for
+// ecosystems whose metadata carries one. It is kept separate from the distribution- and digest-reference
+// cases in encodeExternalReferences, and from the ruby/npm cases there that already emit their own
+// website reference. internal.Homepage is the single source of truth shared with the SPDX homepage
+// encoder so the two formats stay in lockstep.
 func encodeHomepageRefs(p pkg.Package) []cyclonedx.ExternalReference {
-	switch metadata := p.Metadata.(type) {
-	case pkg.RpmDBEntry:
-		return websiteRef(metadata.URL)
-	case pkg.RpmArchive:
-		return websiteRef(metadata.URL)
-	case pkg.AlpmDBEntry:
-		return websiteRef(metadata.URL)
-	case pkg.HomebrewFormula:
-		return websiteRef(metadata.Homepage)
-	case pkg.LuaRocksPackage:
-		return websiteRef(firstNonEmpty(metadata.Homepage, metadata.URL))
-	case pkg.OpamPackage:
-		return websiteRef(firstNonEmpty(metadata.Homepage, metadata.URL))
-	case pkg.PhpComposerInstalledEntry:
-		return websiteRef(metadata.Homepage)
-	case pkg.PhpComposerLockEntry:
-		return websiteRef(metadata.Homepage)
-	case pkg.DartPubspec:
-		return websiteRef(firstNonEmpty(metadata.Homepage, metadata.Repository))
-	case pkg.SwiplPackEntry:
-		return websiteRef(metadata.Homepage)
-	case pkg.CondaMetaPackage:
-		return websiteRef(metadata.URL)
-	case pkg.RDescription:
-		if len(metadata.URL) > 0 {
-			return websiteRef(metadata.URL[0])
-		}
-		return websiteRef(metadata.Repository)
-	case pkg.JavaArchive:
-		if metadata.PomProject != nil {
-			return websiteRef(metadata.PomProject.URL)
-		}
-	}
-	return nil
+	return websiteRef(internal.Homepage(p))
 }
 
 // websiteRef returns the given URL as a single "website" external reference when it is a valid,
@@ -139,15 +99,6 @@ func websiteRef(u string) []cyclonedx.ExternalReference {
 		}}
 	}
 	return nil
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if v != "" {
-			return v
-		}
-	}
-	return ""
 }
 
 // supported algorithm in cycloneDX as of 1.4
@@ -171,7 +122,11 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata any) {
 	}
 	switch meta := metadata.(type) {
 	case *pkg.ApkDBEntry:
-		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
+		meta.URL = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.DpkgDBEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.DpkgArchiveEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.RustCargoLockEntry:
 		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
 	case *pkg.NpmPackage:
@@ -208,6 +163,7 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata any) {
 	case *pkg.JavaArchive:
 		decodeJavaArchiveRefs(c, meta)
 	case *pkg.PythonPackage:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 		if meta.DirectURLOrigin == nil {
 			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
 		}

@@ -18,7 +18,7 @@ require (
 	github.com/anchore/go-homedir v0.1.1
 	github.com/anchore/go-logger v0.1.1
 	github.com/anchore/go-macholibre v0.1.1
-	github.com/anchore/go-rpmdb v0.1.0
+	github.com/anchore/go-rpmdb v0.2.0
 	github.com/anchore/go-sync v0.1.1
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.2.0
@@ -334,8 +334,3 @@ retract (
 	v0.53.2
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
-
-// TEMPORARY — DO NOT MERGE: points at a personal fork of anchore/go-rpmdb exposing the RPM Packager and
-// URL header tags. Blocked by the upstream anchore/go-rpmdb PR; remove this replace and bump the require
-// above to the released version once it merges.
-replace github.com/anchore/go-rpmdb => github.com/MackJM/go-rpmdb v0.0.0-20260618154917-5772793c04f4

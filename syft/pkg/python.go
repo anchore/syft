@@ -21,6 +21,8 @@ type PythonPackage struct {
 	Author string `json:"author" mapstructure:"Author"`
 	// AuthorEmail is the package author's email address from the Author-Email field.
 	AuthorEmail string `json:"authorEmail" mapstructure:"AuthorEmail"`
+	// Homepage is the upstream project homepage URL from the Home-page field.
+	Homepage string `json:"homepage,omitempty" mapstructure:"Homepage"`
 	// Platform indicates the target platform for the package (e.g., "any", "linux", "win32").
 	Platform string `json:"platform" mapstructure:"Platform"`
 	// Files are the installed files listed in the RECORD file for wheels or installed-files.txt for eggs.

@@ -197,6 +197,10 @@ func Supplier(p pkg.Package) (typ string, author string) {
 // email, and URL). Formats with dedicated contact and URL fields can use this to populate them
 // individually rather than collapsing everything into a single name string. All parts may be empty
 // when no supplier can be determined.
+//
+// The url part is best-effort and not guaranteed to be a valid URL: it is whatever appeared in a
+// trailing "(...)" of the supplier string, which can be a non-URL qualifier (e.g. "Acme Corp (Internal)"
+// yields url="Internal"). Callers that emit it as a URL must validate it first (see isValidExternalRef).
 func SupplierParts(p pkg.Package) (typ, name, email, url string) {
 	typ, author := supplierRaw(p)
 	name, email, url = parseNameEmailURL(author)
