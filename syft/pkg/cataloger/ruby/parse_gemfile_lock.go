@@ -46,7 +46,7 @@ func parseGemFileLockEntries(_ context.Context, _ file.Resolver, _ *generic.Envi
 			pkgs = append(pkgs,
 				newGemfileLockPackage(
 					candidate[0],
-					gemfileLockVersion(candidate[1]),
+					strings.Trim(candidate[1], "()"),
 					reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 				),
 			)
@@ -63,18 +63,4 @@ func isDependencyLine(line string) bool {
 		return false
 	}
 	return strings.Count(line[:5], " ") == 4
-}
-
-// gemfileLockVersion extracts the gem version from a Gemfile.lock spec token such
-// as "(1.13.0)" or, for a platform-specific gem, "(1.13.0-x86_64-linux)". Bundler
-// appends the platform to the version with a "-", and a RubyGems version never
-// contains a "-" (pre-release segments use "."), so the platform suffix can be
-// split off cleanly. Without this the platform leaks into the version, corrupting
-// the PURL and producing a separate entry per platform for the same gem.
-func gemfileLockVersion(token string) string {
-	version := strings.Trim(token, "()")
-	if idx := strings.Index(version, "-"); idx >= 0 {
-		version = version[:idx]
-	}
-	return version
 }
