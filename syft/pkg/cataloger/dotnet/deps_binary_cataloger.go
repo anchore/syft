@@ -27,6 +27,10 @@ const (
 	dllGlob      = "**/*.dll"
 	exeGlob      = "**/*.exe"
 	bplGlob      = "**/*.bpl"
+	// uppercase variants match PE files on case-preserving Windows/ISO 9660 filesystems (doublestar globs are case-sensitive)
+	dllGlobUpper = "**/*.DLL"
+	exeGlobUpper = "**/*.EXE"
+	bplGlobUpper = "**/*.BPL"
 )
 
 var elfMagic = []byte{0x7f, 'E', 'L', 'F'}
@@ -483,7 +487,7 @@ func readDepsJSON(resolver file.Resolver, loc file.Location) (*depsJSON, error) 
 
 // findPEFiles locates and parses all PE files (dll/exe).
 func findPEFiles(resolver file.Resolver) ([]logicalPE, error, error) {
-	peLocs, err := resolver.FilesByGlob(dllGlob, exeGlob, bplGlob)
+	peLocs, err := resolver.FilesByGlob(dllGlob, exeGlob, bplGlob, dllGlobUpper, exeGlobUpper, bplGlobUpper)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to find PE files: %w", err)
 	}

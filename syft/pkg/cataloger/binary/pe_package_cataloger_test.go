@@ -79,6 +79,7 @@ func Test_PEPackageCataloger_Globs(t *testing.T) {
 				// uppercase extensions appear on Windows/ISO 9660 filesystems and must also match
 				"src/winlibrary.DLL",
 				"src/winprogram.EXE",
+				"src/winarchive.BPL",
 			},
 		},
 	}

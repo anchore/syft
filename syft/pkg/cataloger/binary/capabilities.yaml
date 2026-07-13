@@ -1057,6 +1057,7 @@ catalogers:
           criteria: # AUTO-GENERATED
             - '**/*.DLL'
             - '**/*.EXE'
+            - '**/*.BPL'
             - '**/*.dll'
             - '**/*.exe'
             - '**/*.bpl'
