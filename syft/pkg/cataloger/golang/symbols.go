@@ -267,12 +267,15 @@ func readPclntab(r io.ReaderAt) (pclntab []byte, textStart uint64, err error) {
 }
 
 // moduleSymbols attributes each extracted symbol to the module that owns it (by longest module path prefix
-// of the symbol's package path) and returns a sorted, deduplicated list of symbol names per module path.
-// Symbols from the "main" package are attributed to the main module. Standard-library symbols (which belong
-// to no module) are collected separately and returned as the second value so they can be attached to the
+// of the symbol's package path) and returns, per module path, the symbols grouped by the import path of the
+// owning package. Each inner value is a sorted, deduplicated list of symbol names local to that package
+// (the import path prefix stripped, e.g. "github.com/foo/bar.(*T).M" under key "github.com/foo/bar" becomes
+// "(*T).M"). Symbols from the "main" package are attributed to the main module and keyed by the "main"
+// import path the linker assigns. Standard-library symbols (which belong to no module) are collected
+// separately and returned as the second value, grouped by import path, so they can be attached to the
 // synthetic "stdlib" package. Compiler/runtime-internal symbols that are neither module-owned nor a
 // recognizable stdlib import path are dropped.
-func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Module) (byModule map[string][]string, stdlib []string) {
+func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Module) (byModule map[string]map[string][]string, stdlib map[string][]string) {
 	if len(symbols) == 0 {
 		return nil, nil
 	}
@@ -287,39 +290,65 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 		}
 	}
 
-	results := make(map[string][]string)
+        results := make(map[string]map[string][]string)
+        stdlib = make(map[string][]string)
 	for _, sym := range symbols {
-		pkgPath := sym.packagePath
-		if pkgPath == mainPackage && main != nil {
-			// the linker renames the main package's import path to "main"
-			pkgPath = main.Path
+                importPath := sym.packagePath
+
+                // the linker renames the main package's import path to "main"; attribute it to the main module,
+                // but keep "main" as the group key since the original import path is not recoverable.
+                attrPath := importPath
+                if importPath == mainPackage && main != nil {
+                        attrPath = main.Path
 		}
 
 		var best string
 		for _, modPath := range modulePaths {
-			if len(modPath) > len(best) && (pkgPath == modPath || strings.HasPrefix(pkgPath, modPath+"/")) {
+                        if len(modPath) > len(best) && (attrPath == modPath || strings.HasPrefix(attrPath, modPath+"/")) {
 				best = modPath
 			}
 		}
+
+                local := localSymbolName(sym.name, importPath)
 		if best == "" {
-			if pkgPath != mainPackage && isStandardImportPath(pkgPath) {
-				stdlib = append(stdlib, sym.name)
+                        if importPath != mainPackage && isStandardImportPath(importPath) {
+                                stdlib[importPath] = append(stdlib[importPath], local)
 			}
 			continue
 		}
-		results[best] = append(results[best], sym.name)
+                if results[best] == nil {
+                        results[best] = make(map[string][]string)
+                }
+                results[best][importPath] = append(results[best][importPath], local)
 	}
 
-	for modPath, names := range results {
-		slices.Sort(names)
-		results[modPath] = slices.Compact(names)
+        for _, byImport := range results {
+                sortCompactGroups(byImport)
 	}
-	if len(stdlib) > 0 {
-		slices.Sort(stdlib)
-		stdlib = slices.Compact(stdlib)
+        sortCompactGroups(stdlib)
+        if len(stdlib) == 0 {
+                stdlib = nil
 	}
 
 	return results, stdlib
+}
+
+// localSymbolName strips the owning package's import path prefix from a fully qualified symbol name, e.g.
+// "github.com/foo/bar.(*T).M" with import path "github.com/foo/bar" becomes "(*T).M". The name is returned
+// unchanged when it does not carry the expected prefix.
+func localSymbolName(name, importPath string) string {
+        if importPath != "" && strings.HasPrefix(name, importPath+".") {
+                return name[len(importPath)+1:]
+        }
+        return name
+}
+
+// sortCompactGroups sorts and deduplicates each symbol list in a group keyed by import path, in place.
+func sortCompactGroups(groups map[string][]string) {
+        for path, names := range groups {
+                slices.Sort(names)
+                groups[path] = slices.Compact(names)
+        }
 }
 
 // isStandardImportPath reports whether path is a Go standard-library import path. This mirrors the rule

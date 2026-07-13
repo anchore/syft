@@ -1655,11 +1655,14 @@
           "description": "GoExperiments lists experimental Go features enabled during compilation (e.g., \"arenas\", \"cgocheck2\")."
         },
         "symbols": {
-          "items": {
-            "type": "string"
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
-          "type": "array",
-          "description": "Symbols are the fully qualified function symbols from this module that are compiled into the binary\n(e.g., \"github.com/foo/bar.(*Type).Method\"), extracted from the binary symbol table (pclntab).\nPopulated only when the golang cataloger's capture-symbols scope covers this package: the \"all\" scope\npopulates every module package plus the synthetic stdlib package, while the \"stdlib\" scope populates\nonly the stdlib package."
+          "type": "object",
+          "description": "Symbols are the function symbols from this module that are compiled into the binary, extracted from\nthe binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each\nvalue is the sorted, deduplicated list of symbol names local to that package, i.e. with the import\npath prefix stripped (e.g. import path \"github.com/foo/bar\" -\u003e \"(*Type).Method\"). The fully qualified\nname is the import path, a \".\", and the local name. Populated only when the golang cataloger's\ncapture-symbols scope covers this package: the \"all\" scope populates every module package plus the\nsynthetic stdlib package, while the \"stdlib\" scope populates only the stdlib package."
         }
       },
       "type": "object",

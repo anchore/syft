@@ -1440,9 +1440,9 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 		name           string
 		scope          cataloging.SymbolScope
 		symbols        []binarySymbol
-		wantMainSyms   []string
-		wantDepSyms    []string
-		wantStdlibSyms []string
+                wantMainSyms   map[string][]string
+                wantDepSyms    map[string][]string
+                wantStdlibSyms map[string][]string
 	}{
 		{
 			name:    "none captures nothing",
@@ -1453,15 +1453,15 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			name:           "stdlib captures only the stdlib package",
 			scope:          cataloging.SymbolScopeStdlib,
 			symbols:        populatedSymbols,
-			wantStdlibSyms: []string{"net/http.(*Client).Do"},
+                        wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 		{
 			name:           "all captures module and stdlib packages",
 			scope:          cataloging.SymbolScopeAll,
 			symbols:        populatedSymbols,
-			wantMainSyms:   []string{"main.main"},
-			wantDepSyms:    []string{"github.com/foo/bar.Parse"},
-			wantStdlibSyms: []string{"net/http.(*Client).Do"},
+                        wantMainSyms:   map[string][]string{"main": {"main"}},
+                        wantDepSyms:    map[string][]string{"github.com/foo/bar": {"Parse"}},
+                        wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 	}
 

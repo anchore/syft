@@ -15,5 +15,5 @@ const (
 	// 16.1.6 - add Dependencies to ElixirMixLockEntry metadata
 	// 16.1.7 - add AppleAppBundleEntry metadata type for the apple app bundle cataloger
 	// 16.1.8 - add VcpkgManifest metadata type for vcpkg manifest support
-	// 16.1.9 - add Symbols to GolangBinaryBuildinfoEntry metadata
+	// 16.1.9 - add Symbols (grouped by owning package import path) to GolangBinaryBuildinfoEntry metadata
 )

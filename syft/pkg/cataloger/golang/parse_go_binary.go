@@ -54,9 +54,10 @@ type goBinaryCataloger struct {
 	symbolScope       cataloging.SymbolScope
 
 	// stdlibSymbols holds the standard-library function symbols discovered per binary (keyed by the
-	// binary's location), populated during parsing and consumed by stdlibProcessor when it builds the
-	// synthetic "stdlib" package. Guarded by stdlibSymbolsMu because parsers run concurrently.
-	stdlibSymbols   map[file.Coordinates][]string
+        // binary's location), grouped by import path, populated during parsing and consumed by stdlibProcessor
+        // when it builds the synthetic "stdlib" package. Guarded by stdlibSymbolsMu because parsers run
+        // concurrently.
+        stdlibSymbols   map[file.Coordinates]map[string][]string
 	stdlibSymbolsMu sync.Mutex
 }
 
@@ -65,29 +66,49 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
 		symbolScope:       opts.CaptureSymbols,
-		stdlibSymbols:     make(map[file.Coordinates][]string),
+                stdlibSymbols:     make(map[file.Coordinates]map[string][]string),
 	}
 }
 
-// recordStdlibSymbols merges the standard-library symbols discovered for a binary location so the
-// stdlib processor can attach them to the synthetic stdlib package.
-func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols []string) {
+// recordStdlibSymbols merges the standard-library symbols discovered for a binary location (grouped by
+// import path) so the stdlib processor can attach them to the synthetic stdlib package.
+func (c *goBinaryCataloger) recordStdlibSymbols(coord file.Coordinates, symbols map[string][]string) {
 	if len(symbols) == 0 {
 		return
 	}
 	c.stdlibSymbolsMu.Lock()
 	defer c.stdlibSymbolsMu.Unlock()
-	merged := slices.Concat(c.stdlibSymbols[coord], symbols)
-	slices.Sort(merged)
-	c.stdlibSymbols[coord] = slices.Compact(merged)
+        existing := c.stdlibSymbols[coord]
+        if existing == nil {
+                existing = make(map[string][]string)
+                c.stdlibSymbols[coord] = existing
+        }
+        for path, names := range symbols {
+                merged := slices.Concat(existing[path], names)
+                slices.Sort(merged)
+                existing[path] = slices.Compact(merged)
+        }
 }
 
-// stdlibSymbolsFor returns the standard-library symbols recorded for a binary location. It returns a copy
-// so callers cannot alias (and later mutate or race on) the map's internal slice.
-func (c *goBinaryCataloger) stdlibSymbolsFor(coord file.Coordinates) []string {
+// stdlibSymbolsFor returns the standard-library symbols recorded for a binary location. It returns a deep
+// copy so callers cannot alias (and later mutate or race on) the map's internal state.
+func (c *goBinaryCataloger) stdlibSymbolsFor(coord file.Coordinates) map[string][]string {
 	c.stdlibSymbolsMu.Lock()
 	defer c.stdlibSymbolsMu.Unlock()
-	return slices.Clone(c.stdlibSymbols[coord])
+        return cloneSymbolGroups(c.stdlibSymbols[coord])
+}
+
+// cloneSymbolGroups returns a deep copy of a symbol group map (import path -> local symbol names), or nil
+// when the input is empty.
+func cloneSymbolGroups(groups map[string][]string) map[string][]string {
+        if len(groups) == 0 {
+                return nil
+        }
+        out := make(map[string][]string, len(groups))
+        for path, names := range groups {
+                out[path] = slices.Clone(names)
+        }
+        return out
 }
 
 // parseGoBinary catalogs packages found in the "buildinfo" section of a binary built by the go compiler.
@@ -221,7 +242,7 @@ func missingMainModule(mod *extendedBuildInfo) bool {
 	return mod.Main == moduleFromPartialPackageBuild
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser, symbols []string) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser, symbols map[string][]string) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	lics := c.licenseResolver.getLicenses(ctx, resolver, mod.Main.Path, mod.Main.Version)
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
