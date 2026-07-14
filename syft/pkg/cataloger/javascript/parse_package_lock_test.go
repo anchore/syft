@@ -422,3 +422,42 @@ func Test_corruptPackageLock(t *testing.T) {
 		WithError().
 		TestParser(t, gap.parsePackageLock)
 }
+
+func TestParsePackageLockDevOptional(t *testing.T) {
+	fixture := "testdata/pkg-lock/package-lock-dev-optional.json"
+
+	regularDep := pkg.Package{
+		Name:     "regular-dep",
+		Version:  "1.0.0",
+		PURL:     "pkg:npm/regular-dep@1.0.0",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/regular-dep/-/regular-dep-1.0.0.tgz", Integrity: "sha512-regular"},
+	}
+	devOptionalDep := pkg.Package{
+		Name:     "dev-optional-dep",
+		Version:  "2.0.0",
+		PURL:     "pkg:npm/dev-optional-dep@2.0.0",
+		Language: pkg.JavaScript,
+		Type:     pkg.NpmPkg,
+		Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/dev-optional-dep/-/dev-optional-dep-2.0.0.tgz", Integrity: "sha512-devoptional"},
+	}
+
+	t.Run("devOptional excluded by default", func(t *testing.T) {
+		expected := []pkg.Package{regularDep}
+		for i := range expected {
+			expected[i].Locations.Add(file.NewLocation(fixture))
+		}
+		adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+		pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expected, nil)
+	})
+
+	t.Run("devOptional included when dev dependencies are included", func(t *testing.T) {
+		expected := []pkg.Package{devOptionalDep, regularDep}
+		for i := range expected {
+			expected[i].Locations.Add(file.NewLocation(fixture))
+		}
+		adapter := newGenericPackageLockAdapter(CatalogerConfig{}.WithIncludeDevDependencies(true))
+		pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expected, nil)
+	})
+}
