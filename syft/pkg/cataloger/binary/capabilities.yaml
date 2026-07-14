@@ -668,6 +668,36 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/Electron Framework'
+        packages:
+          - class: electron-binary-macos
+            name: electron
+            purl: pkg:generic/electron
+            cpes:
+              - cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/electron'
+        packages:
+          - class: electron-binary
+            name: electron
+            purl: pkg:generic/electron
+            cpes:
+              - cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/{code,Code.exe}'
+        packages:
+          - class: visual-studio-code-binary
+            name: electron
+            purl: pkg:generic/electron
+            cpes:
+              - cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ffmpeg'
         packages:
           - class: ffmpeg-binary

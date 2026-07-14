@@ -914,6 +914,40 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "electron-binary-macos",
+			FileGlob: "**/Electron Framework",
+			EvidenceMatcher: m.FileContentsVersionMatcher(
+				// Electron/28.0.0 pattern found in Electron framework binaries
+				`Electron/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			Package: "electron",
+			PURL:    mustPURL("pkg:generic/electron@version"),
+			CPEs:    singleCPE("cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "electron-binary",
+			FileGlob: "**/electron",
+			EvidenceMatcher: binutils.MatchAll(
+				// Match both Electron and Chrome version patterns to confirm it's Electron
+				m.FileContentsVersionMatcher(`Electron/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				m.FileContentsVersionMatcher(`Chrome/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+`),
+			),
+			Package: "electron",
+			PURL:    mustPURL("pkg:generic/electron@version"),
+			CPEs:    singleCPE("cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			// VS Code renames the electron bin: code (linux) / Code.exe (win)
+			Class:    "visual-studio-code-binary",
+			FileGlob: "**/{code,Code.exe}",
+			EvidenceMatcher: binutils.MatchAll(
+				m.FileContentsVersionMatcher(`Electron/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				m.FileContentsVersionMatcher(`Chrome/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+`),
+			),
+			Package: "electron",
+			PURL:    mustPURL("pkg:generic/electron@version"),
+			CPEs:    singleCPE("cpe:2.3:a:electronjs:electron:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
 			Class:    "ffmpeg-binary",
 			FileGlob: "**/ffmpeg",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
