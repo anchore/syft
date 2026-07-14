@@ -31,6 +31,7 @@ type lockDependency struct {
 	Resolved     string                    `json:"resolved"`
 	Integrity    string                    `json:"integrity"`
 	Dev          bool                      `json:"dev"`
+	DevOptional  bool                      `json:"devOptional"`
 	Dependencies map[string]lockDependency `json:"dependencies"`
 }
 
@@ -41,6 +42,7 @@ type lockPackage struct {
 	Integrity    string             `json:"integrity"`
 	License      packageLockLicense `json:"license"`
 	Dev          bool               `json:"dev"`
+	DevOptional  bool               `json:"devOptional"`
 	Dependencies map[string]string  `json:"dependencies"`
 }
 
@@ -92,8 +94,8 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 				name = pkgMeta.Name
 			}
 
-			// skip packages that are only present as a dev dependency
-			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+			// skip packages that are only present as a dev dependency (including devOptional)
+			if !a.cfg.IncludeDevDependencies && (pkgMeta.Dev || pkgMeta.DevOptional) {
 				continue
 			}
 
@@ -119,8 +121,8 @@ func (a genericPackageLockAdapter) packageLockV1Packages(ctx context.Context, re
 	var walk func(map[string]lockDependency)
 	walk = func(dependencies map[string]lockDependency) {
 		for name, pkgMeta := range dependencies {
-			// Skipping a dev-only dependency also skips its dev-only subtree.
-			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+			// Skipping a dev-only dependency (including devOptional) also skips its dev-only subtree.
+			if !a.cfg.IncludeDevDependencies && (pkgMeta.Dev || pkgMeta.DevOptional) {
 				continue
 			}
 
