@@ -24,7 +24,7 @@
   },
   "components": [
     {
-      "bom-ref": "f04d218ff5ff50db",
+      "bom-ref": "ba51a250a95db823",
       "type": "library",
       "name": "package-1",
       "version": "1.0.1",
@@ -61,7 +61,7 @@
       ]
     },
     {
-      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=39392bb5e270f669",
+      "bom-ref": "pkg:deb/debian/package-2@2.0.1?package-id=f6d8dd31ff22bbdf",
       "type": "library",
       "name": "package-2",
       "version": "2.0.1",
