@@ -118,6 +118,7 @@ func TestDpkgCataloger(t *testing.T) {
 						Version:       "3.34.1-3",
 						Architecture:  "arm64",
 						Maintainer:    "Laszlo Boszormenyi (GCS) <gcs@debian.org>",
+						Homepage:      "https://www.sqlite.org/",
 						InstalledSize: 1490,
 						Description: `SQLite 3 shared library
  SQLite is a C library that implements an SQL database engine.
@@ -253,6 +254,7 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 						Version:       "1:1.3.dfsg-3.1ubuntu2.1",
 						Architecture:  "amd64",
 						Maintainer:    "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>",
+						Homepage:      "http://zlib.net/",
 						InstalledSize: 163,
 						Description: `compression library - runtime
  zlib is a library implementing the deflate compression method found
