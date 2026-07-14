@@ -113,6 +113,7 @@ type dpkgExtractedMetadata struct {
 	SourceVersion string `mapstructure:"SourceVersion"`
 	Architecture  string `mapstructure:"Architecture"`
 	Maintainer    string `mapstructure:"Maintainer"`
+	Homepage      string `mapstructure:"Homepage"`
 	InstalledSize int    `mapstructure:"InstalledSize"`
 	Description   string `mapstructure:"Description"`
 	Provides      string `mapstructure:"Provides"`
@@ -131,6 +132,7 @@ func (d *dpkgExtractedMetadata) toDpkgEntry() pkg.DpkgDBEntry {
 		SourceVersion: d.SourceVersion,
 		Architecture:  d.Architecture,
 		Maintainer:    d.Maintainer,
+		Homepage:      d.Homepage,
 		InstalledSize: d.InstalledSize,
 		Description:   d.Description,
 		Provides:      splitPkgList(d.Provides),

@@ -37,6 +37,7 @@ func Test_DBCataloger(t *testing.T) {
 			SourceRpm:  "basesystem-11-13.el9.src.rpm",
 			Size:       0,
 			Vendor:     "Rocky Enterprise Software Foundation",
+			Packager:   "Rocky Linux Build System (Peridot) <releng@rockylinux.org>",
 			Signatures: mustParseSignatures(t, "RSA/SHA256, Wed May 11 11:12:32 2022, Key ID 702d426d350d275d"),
 			Provides:   []string{"basesystem"},
 			Requires: []string{
@@ -70,6 +71,8 @@ func Test_DBCataloger(t *testing.T) {
 			Signatures:      mustParseSignatures(t, "RSA/SHA256, Mon Jan 23 22:49:22 2023, Key ID 702d426d350d275d"),
 			ModularityLabel: strRef(""),
 			Vendor:          "Rocky Enterprise Software Foundation",
+			Packager:        "Rocky Linux Build System (Peridot) <releng@rockylinux.org>",
+			URL:             "https://www.gnu.org/software/bash",
 			Provides: []string{
 				"/bin/bash",
 				"/bin/sh",
@@ -123,6 +126,8 @@ func Test_DBCataloger(t *testing.T) {
 			Signatures:      mustParseSignatures(t, "RSA/SHA256, Mon May 16 12:32:55 2022, Key ID 702d426d350d275d"),
 			ModularityLabel: strRef(""),
 			Vendor:          "Rocky Enterprise Software Foundation",
+			Packager:        "Rocky Linux Build System (Peridot) <releng@rockylinux.org>",
+			URL:             "https://pagure.io/filesystem",
 			Provides: []string{
 				"filesystem",
 				"filesystem(x86-64)",

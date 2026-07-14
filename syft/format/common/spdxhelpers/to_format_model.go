@@ -592,7 +592,7 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 }
 
 func toPackageOriginator(p pkg.Package) *spdx.Originator {
-	kind, originator := helpers.Originator(p)
+	kind, originator := formatInternal.Originator(p)
 	if kind == "" || originator == "" {
 		return nil
 	}
@@ -603,7 +603,7 @@ func toPackageOriginator(p pkg.Package) *spdx.Originator {
 }
 
 func toPackageSupplier(p pkg.Package, sbomSupplier string) *spdx.Supplier {
-	kind, supplier := helpers.Supplier(p)
+	kind, supplier := formatInternal.Supplier(p)
 	if kind == "" || supplier == "" {
 		supplier := helpers.NOASSERTION
 		supplierType := ""

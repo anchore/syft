@@ -67,6 +67,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "any",
 						Author:               "Georg Brandl",
 						AuthorEmail:          "georg@python.org",
+						Homepage:             "https://pygments.org/",
 						SitePackagesRootPath: "dist-name",
 						Files: []pkg.PythonFileRecord{
 							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
@@ -106,6 +107,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "UNKNOWN",
 						Author:               "Kenneth Reitz",
 						AuthorEmail:          "me@kennethreitz.org",
+						Homepage:             "http://python-requests.org",
 						SitePackagesRootPath: "egg-name",
 						Files: []pkg.PythonFileRecord{
 							{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
@@ -150,6 +152,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "any",
 						Author:               "Georg Brandl",
 						AuthorEmail:          "georg@python.org",
+						Homepage:             "https://pygments.org/",
 						SitePackagesRootPath: "dist-name",
 						Files: []pkg.PythonFileRecord{
 							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
@@ -186,6 +189,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "UNKNOWN",
 						Author:               "Kenneth Reitz",
 						AuthorEmail:          "me@kennethreitz.org",
+						Homepage:             "http://python-requests.org",
 						SitePackagesRootPath: "egg-name",
 						Files: []pkg.PythonFileRecord{
 							{Path: "requests-2.22.0.dist-info/INSTALLER", Digest: &pkg.PythonFileDigest{"sha256", "zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg"}, Size: "4"},
@@ -235,6 +239,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "any",
 						Author:               "Georg Brandl",
 						AuthorEmail:          "georg@python.org",
+						Homepage:             "https://pygments.org/",
 						SitePackagesRootPath: ".",
 						Files: []pkg.PythonFileRecord{
 							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
@@ -281,6 +286,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "any",
 						Author:               "Georg Brandl",
 						AuthorEmail:          "georg@python.org",
+						Homepage:             "https://pygments.org/",
 						SitePackagesRootPath: ".",
 						Files: []pkg.PythonFileRecord{
 							{Path: "../../../bin/pygmentize", Digest: &pkg.PythonFileDigest{"sha256", "dDhv_U2jiCpmFQwIRHpFRLAHUO4R1jIJPEvT_QYTFp8"}, Size: "220"},
@@ -325,6 +331,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "any",
 						Author:               "Georg Brandl",
 						AuthorEmail:          "georg@python.org",
+						Homepage:             "https://pygments.org/",
 						SitePackagesRootPath: ".",
 						Files: []pkg.PythonFileRecord{
 							{Path: "flask/json/tag.py", Digest: &pkg.PythonFileDigest{"sha256", "9ehzrmt5k7hxf7ZEK0NOs3swvQyU9fWNe-pnYe69N60"}, Size: "8223"},
@@ -362,6 +369,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "any",
 						Author:               "Georg Brandl",
 						AuthorEmail:          "georg@python.org",
+						Homepage:             "https://pygments.org/",
 						SitePackagesRootPath: ".",
 						RequiresPython:       ">=3.5",
 					},
@@ -391,6 +399,7 @@ func Test_InstalledPackageCataloger(t *testing.T) {
 						Platform:             "UNKNOWN",
 						Author:               "Kenneth Reitz",
 						AuthorEmail:          "me@kennethreitz.org",
+						Homepage:             "http://python-requests.org",
 						SitePackagesRootPath: ".",
 						RequiresPython:       ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
 						ProvidesExtra:        []string{"security", "socks"},

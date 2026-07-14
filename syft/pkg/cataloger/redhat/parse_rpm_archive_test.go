@@ -55,8 +55,10 @@ func TestParseRpmFiles(t *testing.T) {
 								IssuerKeyID:        "6a2faea2352c64e5",
 							},
 						},
-						Size:   17396,
-						Vendor: "Fedora Project",
+						Size:     17396,
+						Vendor:   "Fedora Project",
+						Packager: "Fedora Project",
+						URL:      "http://www.eecs.berkeley.edu/~alanmi/abc/abc.htm",
 						Files: []pkg.RpmFileRecord{
 							{"/usr/bin/abc", 33261, 7120, file.Digest{"sha256", "8f8495a65c66762b60afa0c3949d81b275ca6fa0601696caba5af762f455d0b9"}, "root", "root", ""},
 							{"/usr/share/doc/abc-1.01", 16877, 4096, file.Digest{}, "root", "root", ""},
@@ -92,7 +94,9 @@ func TestParseRpmFiles(t *testing.T) {
 								IssuerKeyID:        "6a2faea2352c64e5",
 							},
 						},
-						Vendor: "Fedora Project",
+						Vendor:   "Fedora Project",
+						Packager: "Fedora Project",
+						URL:      "https://github.com/devshane/zork",
 						Files: []pkg.RpmFileRecord{
 							{"/usr/bin/zork", 33261, 115440, file.Digest{"sha256", "31b2ffc20b676a8fff795a45308f584273b9c47e8f7e196b4f36220b2734b472"}, "root", "root", ""},
 							{"/usr/share/doc/zork-1.0.3", 16877, 38, file.Digest{}, "root", "root", ""},
@@ -143,7 +147,8 @@ func TestParseRpmFiles(t *testing.T) {
 								IssuerKeyID:        "702d426d350d275d",
 							},
 						},
-						Vendor: "Rocky Enterprise Software Foundation",
+						Vendor:   "Rocky Enterprise Software Foundation",
+						Packager: "Rocky Linux Build System (Peridot) <releng@rockylinux.org>",
 						// note: files are not asserted in this test
 					},
 				},

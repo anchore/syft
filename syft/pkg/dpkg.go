@@ -41,6 +41,9 @@ type DpkgDBEntry struct {
 	// Maintainer is the package maintainer's name and email in RFC822 format (name must come first, then email in angle brackets)
 	Maintainer string `json:"maintainer"`
 
+	// Homepage is the upstream project homepage URL from the Homepage control field.
+	Homepage string `json:"homepage,omitempty"`
+
 	// InstalledSize is the total size of installed files in kilobytes
 	InstalledSize int `json:"installedSize" cyclonedx:"installedSize"`
 

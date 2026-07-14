@@ -1,4 +1,4 @@
-package helpers
+package internal
 
 import (
 	"testing"
@@ -24,7 +24,6 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.DartPubspec{},
 		pkg.DotnetDepsEntry{},
 		pkg.DotnetPackagesLockEntry{},
-		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
 		pkg.GolangBinaryBuildinfoEntry{},
@@ -34,7 +33,6 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.AppleAppBundleEntry{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
-		pkg.LinuxKernel{},
 		pkg.LuaRocksPackage{},
 		pkg.MicrosoftKbPatch{},
 		pkg.NixStoreEntry{},
@@ -150,6 +148,18 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Person: auth",
 		},
 		{
+			// real-world maintainers commonly use multi-level domains (e.g. lists.ubuntu.com),
+			// which must still parse into a name+email rather than being dropped entirely
+			name: "from dpkg DB -- maintainer with multi-level domain email",
+			input: pkg.Package{
+				Metadata: pkg.DpkgDBEntry{
+					Maintainer: "Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>",
+				},
+			},
+			originator: "Person: Ubuntu Developers (ubuntu-devel-discuss@lists.ubuntu.com)",
+			supplier:   "Person: Ubuntu Developers (ubuntu-devel-discuss@lists.ubuntu.com)",
+		},
+		{
 			name: "from dpkg archive",
 			input: pkg.Package{
 				Metadata: pkg.DpkgArchiveEntry{
@@ -242,6 +252,16 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: Oracle",
 		},
 		{
+			name: "from linux kernel",
+			input: pkg.Package{
+				Metadata: pkg.LinuxKernel{
+					Author: "auth",
+				},
+			},
+			originator: "Person: auth",
+			supplier:   "Person: auth",
+		},
+		{
 			name: "from linux kernel module",
 			input: pkg.Package{
 				Metadata: pkg.LinuxKernelModule{
@@ -250,6 +270,16 @@ func Test_OriginatorSupplier(t *testing.T) {
 			},
 			originator: "Person: auth",
 			supplier:   "Person: auth",
+		},
+		{
+			name: "from elf binary package note",
+			input: pkg.Package{
+				Metadata: pkg.ELFBinaryPackageNoteJSONPayload{
+					Vendor: "Acme Corp",
+				},
+			},
+			originator: "Organization: Acme Corp",
+			supplier:   "Organization: Acme Corp",
 		},
 		{
 			name: "from Lua Rockspecs",
@@ -411,6 +441,48 @@ func Test_OriginatorSupplier(t *testing.T) {
 			supplier:   "Organization: auth",
 		},
 		{
+			name: "from rpm DB -- vendor with packager email contact",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{
+					Vendor:   "CentOS",
+					Packager: "builder@centos.org",
+				},
+			},
+			originator: "Organization: CentOS (builder@centos.org)",
+			supplier:   "Organization: CentOS (builder@centos.org)",
+		},
+		{
+			name: "from rpm DB -- packager URL-only contact is not surfaced in SPDX originator",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{
+					Vendor:   "Red Hat, Inc.",
+					Packager: "Red Hat, Inc. <http://bugzilla.redhat.com/bugzilla>",
+				},
+			},
+			originator: "Organization: Red Hat, Inc.",
+			supplier:   "Organization: Red Hat, Inc.",
+		},
+		{
+			name: "from rpm DB -- packager build-id qualifier with no vendor recovers name and email",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{
+					Packager: "Rocky Linux Build System (Peridot) <releng@rockylinux.org>",
+				},
+			},
+			originator: "Organization: Rocky Linux Build System (releng@rockylinux.org)",
+			supplier:   "Organization: Rocky Linux Build System (releng@rockylinux.org)",
+		},
+		{
+			name: "from rpm DB -- bare email packager with no vendor",
+			input: pkg.Package{
+				Metadata: pkg.RpmDBEntry{
+					Packager: "builder@centos.org",
+				},
+			},
+			originator: "Organization: builder@centos.org",
+			supplier:   "Organization: builder@centos.org",
+		},
+		{
 			name: "from wordpress plugin",
 			input: pkg.Package{
 				Metadata: pkg.WordpressPluginEntry{
@@ -519,6 +591,16 @@ func Test_parseNameEmailUrl(t *testing.T) {
 			input:     "my name (i@izs.me)",
 			wantName:  "my name",
 			wantEmail: "i@izs.me",
+		},
+		{
+			// npm author fields may list multiple comma-separated authors; only the first is
+			// captured and its url must not absorb the rest (regression: produced a non-IRI url
+			// that failed CycloneDX 1.7 validation).
+			name:      "npm-like: multiple authors, capture first only",
+			input:     "Gord Tanner <gtanner@gmail.com> (http://github.com/gtanner), Michael Brooks <mikeywbrooks@gmail.com> (http://github.com/mwbrooks)",
+			wantName:  "Gord Tanner",
+			wantEmail: "gtanner@gmail.com",
+			wantUrl:   "http://github.com/gtanner",
 		},
 	}
 	for _, tt := range tests {

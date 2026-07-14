@@ -9,6 +9,7 @@ import (
 
 	"github.com/anchore/syft/internal/file"
 	syftFile "github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/pkg"
 )
 
@@ -19,13 +20,6 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 		// Skip adding extracted URL and Homepage metadata
 		// as "external_reference" if the metadata isn't IRI-compliant
 		switch metadata := p.Metadata.(type) {
-		case pkg.ApkDBEntry:
-			if metadata.URL != "" && isValidExternalRef(metadata.URL) {
-				refs = append(refs, cyclonedx.ExternalReference{
-					URL:  metadata.URL,
-					Type: cyclonedx.ERTypeDistribution,
-				})
-			}
 		case pkg.RustCargoLockEntry:
 			if metadata.Source != "" {
 				refs = append(refs, cyclonedx.ExternalReference{
@@ -78,9 +72,31 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 				refs = append(refs, ref)
 			}
 		}
+		refs = append(refs, encodeHomepageRefs(p)...)
 	}
 	if len(refs) > 0 {
 		return &refs
+	}
+	return nil
+}
+
+// encodeHomepageRefs emits a "website" external reference from the shared project-homepage source for
+// ecosystems whose metadata carries one. It is kept separate from the distribution- and digest-reference
+// cases in encodeExternalReferences, and from the ruby/npm cases there that already emit their own
+// website reference. internal.Homepage is the single source of truth shared with the SPDX homepage
+// encoder so the two formats stay in lockstep.
+func encodeHomepageRefs(p pkg.Package) []cyclonedx.ExternalReference {
+	return websiteRef(internal.Homepage(p))
+}
+
+// websiteRef returns the given URL as a single "website" external reference when it is a valid,
+// IRI-compliant URL, or nil otherwise.
+func websiteRef(u string) []cyclonedx.ExternalReference {
+	if u != "" && isValidExternalRef(u) {
+		return []cyclonedx.ExternalReference{{
+			URL:  u,
+			Type: cyclonedx.ERTypeWebsite,
+		}}
 	}
 	return nil
 }
@@ -106,7 +122,11 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata any) {
 	}
 	switch meta := metadata.(type) {
 	case *pkg.ApkDBEntry:
-		meta.URL = refURL(c, cyclonedx.ERTypeDistribution)
+		meta.URL = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.DpkgDBEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.DpkgArchiveEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.RustCargoLockEntry:
 		meta.Source = refURL(c, cyclonedx.ERTypeDistribution)
 	case *pkg.NpmPackage:
@@ -114,26 +134,63 @@ func decodeExternalReferences(c *cyclonedx.Component, metadata any) {
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 	case *pkg.RubyGemspec:
 		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
-	case *pkg.JavaArchive:
-		var digests []syftFile.Digest
-		if ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta); ref != nil {
-			if ref.Hashes != nil {
-				for _, hash := range *ref.Hashes {
-					digests = append(digests, syftFile.Digest{
-						Algorithm: file.CleanDigestAlgorithmName(string(hash.Algorithm)),
-						Value:     hash.Value,
-					})
-				}
-			}
+	case *pkg.RpmDBEntry:
+		meta.URL = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.RpmArchive:
+		meta.URL = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.AlpmDBEntry:
+		meta.URL = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.HomebrewFormula:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.LuaRocksPackage:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.OpamPackage:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.PhpComposerInstalledEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.PhpComposerLockEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.DartPubspec:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.SwiplPackEntry:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.CondaMetaPackage:
+		meta.URL = refURL(c, cyclonedx.ERTypeWebsite)
+	case *pkg.RDescription:
+		if u := refURL(c, cyclonedx.ERTypeWebsite); u != "" {
+			meta.URL = []string{u}
 		}
-
-		meta.ArchiveDigests = digests
+	case *pkg.JavaArchive:
+		decodeJavaArchiveRefs(c, meta)
 	case *pkg.PythonPackage:
+		meta.Homepage = refURL(c, cyclonedx.ERTypeWebsite)
 		if meta.DirectURLOrigin == nil {
 			meta.DirectURLOrigin = &pkg.PythonDirectURLOriginInfo{}
 		}
 		meta.DirectURLOrigin.URL = refURL(c, cyclonedx.ERTypeVCS)
 		meta.DirectURLOrigin.CommitID = strings.TrimPrefix(refComment(c, cyclonedx.ERTypeVCS), "commit: ")
+	}
+}
+
+// decodeJavaArchiveRefs restores a JavaArchive's build-metadata digests and its pom project homepage
+// from the component's external references.
+func decodeJavaArchiveRefs(c *cyclonedx.Component, meta *pkg.JavaArchive) {
+	var digests []syftFile.Digest
+	if ref := findExternalRef(c, cyclonedx.ERTypeBuildMeta); ref != nil && ref.Hashes != nil {
+		for _, hash := range *ref.Hashes {
+			digests = append(digests, syftFile.Digest{
+				Algorithm: file.CleanDigestAlgorithmName(string(hash.Algorithm)),
+				Value:     hash.Value,
+			})
+		}
+	}
+	meta.ArchiveDigests = digests
+
+	if u := refURL(c, cyclonedx.ERTypeWebsite); u != "" {
+		if meta.PomProject == nil {
+			meta.PomProject = &pkg.JavaPomProject{}
+		}
+		meta.PomProject.URL = u
 	}
 }
 

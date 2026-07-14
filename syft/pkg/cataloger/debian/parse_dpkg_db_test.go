@@ -157,6 +157,7 @@ func Test_parseDpkgStatus(t *testing.T) {
 					Architecture:  "all",
 					InstalledSize: 3036,
 					Maintainer:    "GNU Libc Maintainers <debian-glibc@lists.debian.org>",
+					Homepage:      "https://www.iana.org/time-zones",
 					Description: `time zone and daylight-saving time data
  This package contains data required for the implementation of
  standard local time for many representative locations around the
