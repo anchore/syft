@@ -508,6 +508,26 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "poco"},
 			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
 		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "libcurl"},
+			candidateAddition{AdditionalVendors: []string{"haxx"}, AdditionalProducts: []string{"curl"}},
+		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "protobuf"},
+			candidateAddition{AdditionalVendors: []string{"google"}},
+		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "mbedtls"},
+			candidateAddition{AdditionalVendors: []string{"arm"}, AdditionalProducts: []string{"mbed_tls"}},
+		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "lwip"},
+			candidateAddition{AdditionalVendors: []string{"lwip_project"}},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(
