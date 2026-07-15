@@ -3,9 +3,10 @@ package pkg
 import (
 	"testing"
 
-	"github.com/anchore/packageurl-go"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/anchore/packageurl-go"
 )
 
 func TestTypeFromPURL(t *testing.T) {

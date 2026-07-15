@@ -88,7 +88,7 @@ func Test_stdlibPackageAndRelationships(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-                        c := &goBinaryCataloger{stdlibSymbols: make(map[file.Coordinates]map[string][]string)}
+			c := &goBinaryCataloger{stdlibSymbols: make(map[file.Coordinates]map[string][]string)}
 			gotPkgs, gotRels := c.stdlibPackageAndRelationships(ctx, tt.pkgs)
 			assert.Len(t, gotPkgs, tt.wantPkgs)
 			assert.Len(t, gotRels, tt.wantRels)
@@ -138,7 +138,7 @@ func Test_stdlibPackageAndRelationships_values(t *testing.T) {
 		Type: artifact.DependencyOfRelationship,
 	}
 
-        c := &goBinaryCataloger{stdlibSymbols: make(map[file.Coordinates]map[string][]string)}
+	c := &goBinaryCataloger{stdlibSymbols: make(map[file.Coordinates]map[string][]string)}
 	gotPkgs, gotRels := c.stdlibPackageAndRelationships(ctx, []pkg.Package{p})
 	require.Len(t, gotPkgs, 1)
 
