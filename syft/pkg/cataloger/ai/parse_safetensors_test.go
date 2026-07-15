@@ -882,6 +882,15 @@ func TestReadSafeTensorsHeader(t *testing.T) {
 	truncatedBody := make([]byte, 8)
 	binary.LittleEndian.PutUint64(truncatedBody, 100) // claims 100 bytes but supplies none
 
+	// length prefix declares a header larger than the OOM guard allows; the body
+	// is intentionally omitted because the cap must reject before any allocation.
+	overCap := make([]byte, 8)
+	binary.LittleEndian.PutUint64(overCap, uint64(maxSafeTensorsHeaderSize)+1)
+
+	malformedJSON := make([]byte, 8+len("not-json"))
+	binary.LittleEndian.PutUint64(malformedJSON[:8], uint64(len("not-json")))
+	copy(malformedJSON[8:], "not-json")
+
 	tests := []struct {
 		name    string
 		data    []byte
@@ -906,6 +915,16 @@ func TestReadSafeTensorsHeader(t *testing.T) {
 		{
 			name:    "truncated body",
 			data:    truncatedBody,
+			wantErr: true,
+		},
+		{
+			name:    "header exceeds max size cap",
+			data:    overCap,
+			wantErr: true,
+		},
+		{
+			name:    "malformed JSON body",
+			data:    malformedJSON,
 			wantErr: true,
 		},
 	}
@@ -965,6 +984,28 @@ func TestSafeTensorsHeader_parameterCountAndDType(t *testing.T) {
 		"scalar": {DType: "F32", Shape: []int64{}}, // empty shape contributes 1
 	}}
 	assert.Equal(t, uint64(1000*16+16*16+1), h.parameterCount())
+	assert.Equal(t, "BF16", h.dominantDType())
+}
+
+func TestSafeTensorsHeader_parameterCount_nonPositiveDims(t *testing.T) {
+	// a zero or negative dim zeroes that tensor's contribution rather than
+	// wrapping the uint64 product (a negative int64 cast would otherwise become a
+	// huge value); other tensors are unaffected.
+	h := &safeTensorsHeader{tensors: map[string]safeTensorsEntry{
+		"good":     {DType: "F32", Shape: []int64{4, 4}},
+		"zero":     {DType: "F32", Shape: []int64{4, 0}},
+		"negative": {DType: "F32", Shape: []int64{-1, 8}},
+	}}
+	assert.Equal(t, uint64(16), h.parameterCount())
+}
+
+func TestSafeTensorsHeader_dominantDType_tieBreak(t *testing.T) {
+	// two dtypes tied on parameter count: the lexicographically smallest wins,
+	// independent of map iteration order.
+	h := &safeTensorsHeader{tensors: map[string]safeTensorsEntry{
+		"a": {DType: "F32", Shape: []int64{4, 4}},
+		"b": {DType: "BF16", Shape: []int64{4, 4}},
+	}}
 	assert.Equal(t, "BF16", h.dominantDType())
 }
 

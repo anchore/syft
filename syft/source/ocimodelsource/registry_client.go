@@ -38,7 +38,11 @@ const (
 	modelFormatSafeTensors = "safetensors"
 
 	// maxWeightHeaderBytes is the leading slice we range-GET from a (multi-GB)
-	// weight layer — enough to cover the GGUF/safetensors header.
+	// weight layer — enough to cover the GGUF/safetensors header. Note this is
+	// smaller than the ai cataloger's own maxSafeTensorsHeaderSize (100 MB) parse
+	// ceiling: a safetensors header between the two is parseable from a directory
+	// scan but truncated here, so its shard would go uncounted on an OCI scan.
+	// Keep this comfortably above real-world header sizes.
 	maxWeightHeaderBytes = 8 * 1024 * 1024 // 8 MB
 
 	// maxCompanionBytes caps a whole companion blob (README, config.json,
@@ -198,7 +202,9 @@ func (c *registryClient) fetchModelArtifact(ctx context.Context, refStr string) 
 }
 
 // detectModelFormat returns a single format string when either GGUF or
-// SafeTensors weight layers are present.
+// SafeTensors weight layers are present. GGUF wins if both somehow appear in one
+// artifact; Docker AI artifacts carry a single weight format in practice, so the
+// mixed case is not expected and the safetensors side would go uncataloged.
 func detectModelFormat(ggufCount, safetensorsCount int) string {
 	switch {
 	case ggufCount > 0:
@@ -263,6 +269,10 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 		return nil, fmt.Errorf("failed to fetch layer: %w", err)
 	}
 
+	// Compressed() returns the raw stored blob. Docker AI weight/companion layers
+	// are stored uncompressed (their media types carry no +gzip suffix), so this
+	// is the header bytes as-is. A gzip-compressed layer would parse as garbage
+	// downstream rather than being transparently decompressed here.
 	reader, err := layer.Compressed()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get layer reader: %w", err)
