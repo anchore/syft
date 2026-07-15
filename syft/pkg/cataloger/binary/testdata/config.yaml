@@ -17,6 +17,15 @@ from-images:
     paths:
       - /bin/[
 
+  - name: firefox
+    version: "151.0"
+    images:
+      - ref: mcr.microsoft.com/playwright:v1.61.1-noble@sha256:cf0daee9b994042e011bc29f20cdff1a9f682a039b43fcd738f7d8a9d3bcd9d6
+        platform: linux/amd64
+    paths:
+      - /ms-playwright/firefox-1532/firefox/firefox
+      - /ms-playwright/firefox-1532/firefox/application.ini
+
   - name: util-linux
     version: 2.37.4
     images:

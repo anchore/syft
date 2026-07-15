@@ -1952,6 +1952,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "firefox/151.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "firefox",
+				Version:   "151.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/firefox@151.0",
+				Locations: locations("firefox", "application.ini"),
+				Metadata:  metadata("firefox-binary"),
+			},
+		},
+		{
 			logicalFixture: "ffmpeg/7.1.1/darwin-arm64",
 			expected: pkg.Package{
 				Name:      "ffmpeg",
