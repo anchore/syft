@@ -63,8 +63,13 @@ jobs:
     #   spot disabled: reliability for build workflows (used for releases too)
     #   goreleaser uses parallelism of 12, so we need more CPUs
     #   s3-cache: faster actions cache
-    #   tmpfs: faster io-intensive workflows
-    runs-on: runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache+tmpfs
+    #   volume: enlarge dist/ disk -- the default 40GB EBS root fills up during the multi-arch
+    #   image + binary build and OOMs (runs out of disk); size it well above peak usage.
+    #   provisioned throughput/iops above the gp3 free baseline (125mbs/3000iops) approximate
+    #   the tmpfs IO speed on disk, for ~1c/run.
+    #   note: tmpfs intentionally omitted -- a RAM-backed dist/ never touches the enlarged
+    #   volume and competes with the build's memory peak, so keep dist/ on disk.
+    runs-on: runs-on=${{ github.run_id }}/cpu=16+32/ram=32+128/family=c5+c6+c7+c8/spot=false/extras=s3-cache/volume=120gb:gp3:500mbs:4000iops
     permissions:
       contents: write # required for creating the GitHub release and pushing the version tag
       packages: write # required for publishing release artifacts to GitHub packages
