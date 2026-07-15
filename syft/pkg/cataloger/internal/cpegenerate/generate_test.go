@@ -855,6 +855,66 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{},
 		},
+		{
+			name: "conan libcurl has curated haxx vendor and curl product",
+			p: pkg.Package{
+				Name:    "libcurl",
+				Version: "7.87.0",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:curl:curl:7.87.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:curl:libcurl:7.87.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:haxx:curl:7.87.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:haxx:libcurl:7.87.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libcurl:curl:7.87.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libcurl:libcurl:7.87.0:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "conan protobuf has curated google vendor",
+			p: pkg.Package{
+				Name:    "protobuf",
+				Version: "3.21.9",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:google:protobuf:3.21.9:*:*:*:*:*:*:*",
+				"cpe:2.3:a:protobuf:protobuf:3.21.9:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "conan mbedtls has curated arm vendor and mbed_tls product",
+			p: pkg.Package{
+				Name:    "mbedtls",
+				Version: "2.28.0",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:arm:mbed_tls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:arm:mbedtls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbed-tls:mbed_tls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbed-tls:mbedtls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbed:mbed_tls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbed:mbedtls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbed_tls:mbed_tls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbed_tls:mbedtls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbedtls:mbed_tls:2.28.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:mbedtls:mbedtls:2.28.0:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "conan lwip has curated lwip_project vendor",
+			p: pkg.Package{
+				Name:    "lwip",
+				Version: "2.1.3",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:lwip:lwip:2.1.3:*:*:*:*:*:*:*",
+				"cpe:2.3:a:lwip_project:lwip:2.1.3:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
