@@ -147,6 +147,14 @@ func Test_additionalVendors(t *testing.T) {
 			vendor:   "my-vendor",
 			expected: []string{"awesome-vendor-addition", "one-good-addition", "another-good-addition"},
 		},
+		{
+			name:         "default additionsnpm redis gets redisjs vendor",
+			allAdditions: defaultCandidateAdditions,
+			ty:           pkg.NpmPkg,
+			pkgName:      "redis",
+			vendor:       "redis",
+			expected:     []string{"redis.js"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
