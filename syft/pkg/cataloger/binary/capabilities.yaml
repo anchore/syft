@@ -668,6 +668,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/{firefox,firefox.exe}'
+        packages:
+          - class: firefox-binary
+            name: firefox
+            purl: pkg:generic/firefox
+            cpes:
+              - cpe:2.3:a:mozilla:firefox:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ffmpeg'
         packages:
           - class: ffmpeg-binary

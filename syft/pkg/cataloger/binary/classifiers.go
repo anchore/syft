@@ -914,6 +914,19 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
 		},
 		{
+			Class:    "firefox-binary",
+			FileGlob: "**/{firefox,firefox.exe}",
+			EvidenceMatcher: binutils.SupportingEvidenceMatcher(
+				"application.ini",
+				m.FileContentsVersionMatcher(
+					`(?ms)^Name=Firefox\r?$.*?^Version=(?P<version>[0-9]+(?:\.[0-9]+)+(?:[A-Za-z][0-9A-Za-z.-]*)?)\r?$`,
+				),
+			),
+			Package: "firefox",
+			PURL:    mustPURL("pkg:generic/firefox@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mozilla:firefox:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "ffmpeg-binary",
 			FileGlob: "**/ffmpeg",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
