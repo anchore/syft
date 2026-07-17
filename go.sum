@@ -620,8 +620,8 @@ github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/invopop/jsonschema v0.14.0 h1:MHQqLhvpNUZfw+hM3AZDYK7jxO8FZoQeQM77g8iyZjg=
 github.com/invopop/jsonschema v0.14.0/go.mod h1:ygm6C2EaVNMBDPpaPlnOA2pFAxBnxGjFlMZABxm9n2I=
-github.com/jasonpaulos/stereoscope v0.0.0-20260716213708-1243139a6baf h1:X4r27XMdqLx1StBPCDnv8JfmBGx2oEwoDL7XXwpWxB0=
-github.com/jasonpaulos/stereoscope v0.0.0-20260716213708-1243139a6baf/go.mod h1:QlplQu2t4Oq+8WUlObBFRwM81mDKhnLoPTWOPteF48A=
+github.com/jasonpaulos/stereoscope v0.0.0-20260717145207-e197ddfc615d h1:cj6ooG1mjn0lTlsYETaHh/lZX4WlSMCCrcNok7wXAmA=
+github.com/jasonpaulos/stereoscope v0.0.0-20260717145207-e197ddfc615d/go.mod h1:QlplQu2t4Oq+8WUlObBFRwM81mDKhnLoPTWOPteF48A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
 github.com/jedib0t/go-pretty/v6 v6.8.1 h1:0fkCNhjrX0zPpwkWaDYU5VMrygg41Tu197mWILIJoqQ=

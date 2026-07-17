@@ -20,15 +20,15 @@ import (
 // multi-platform OCI image on disk (both --from oci-dir and --from oci-archive) by selecting the
 // image that matches the requested platform.
 func TestMultiPlatformOCIImageSelection(t *testing.T) {
-	remoteImage := "quay.io/skopeo/stable:v1.20.0-immutable"
+	remoteImage := "docker.io/library/busybox:1.38.0"
 
 	// Per-platform image config digests within the multi-platform index, obtained from the OCI layout
 	// (see anchore/stereoscope integration tests: TestPlatformSelectionWithOciLocalSources).
 	expectedDigest := map[string]string{
-		"arm64":   "sha256:59de7b16fa64a0a21873c02622c45259e89dbbe29e33afd77821f6106d537c95",
-		"s390x":   "sha256:121427690da1f522eb73d58432b070a96c1b6be6b2aa0603dc76f029febdf2b1",
-		"amd64":   "sha256:a8951deb17b620ff20ca25c0bfa82eca93560711def5bf096ee1e38a11742658",
-		"ppc64le": "sha256:642fb8a0ef786227bb12ad0da6326b97809c162b86329f5e39ad990672cee5da",
+		"arm64":   "sha256:e0e8b3cbfed68a90084781e2962f9c0deead51c5a3f11a488eef0283a4284bc2",
+		"s390x":   "sha256:0cf160e720a8e4f20883b72276a6eaded83b79539f3f1d39e35a3336154b9960",
+		"amd64":   "sha256:c6348fa86ba0fb2108c9334f5fe913ddc6d853313e655891f133a0127c30099f",
+		"ppc64le": "sha256:b144fc0e06537d07956cde340b878a81a717e394edb736d3110858a12a6635cb",
 	}
 
 	// syft --from source tag -> stereoscope OCI source used to prepare the local fixture
@@ -71,7 +71,7 @@ func TestMultiPlatformOCIImageSelection(t *testing.T) {
 // TestMultiPlatformOCIImageSelection_UnavailablePlatform verifies that requesting a platform not present
 // in the multi-platform OCI image results in an error rather than silently selecting the wrong image.
 func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
-	remoteImage := "quay.io/skopeo/stable:v1.20.0-immutable"
+	remoteImage := "docker.io/library/busybox:1.38.0"
 
 	// windows/amd64 is not present in this linux-only multi-platform image
 	platform, err := image.NewPlatform("windows/amd64")
@@ -99,7 +99,7 @@ func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
 // TestMultiPlatformOCIImageSelection_DefaultPlatform verifies that not specifying a platform results
 // in the current platform being selected.
 func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
-	remoteImage := "quay.io/skopeo/stable:v1.20.0-immutable"
+	remoteImage := "docker.io/library/busybox:1.38.0"
 
 	sources := map[string]image.Source{
 		"oci-dir":     image.OciDirectorySource,
