@@ -38,32 +38,33 @@ func TestMultiPlatformOCIImageSelection(t *testing.T) {
 	}
 
 	for from, imageSource := range sources {
-		for _, arch := range []string{"amd64", "arm64", "s390x", "ppc64le"} {
-			t.Run(fmt.Sprintf("%s/linux/%s", from, arch), func(t *testing.T) {
-				localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, remoteImage)
+		t.Run(from, func(t *testing.T) {
+			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, remoteImage)
+			for _, arch := range []string{"amd64", "arm64", "s390x", "ppc64le"} {
+				t.Run(fmt.Sprintf("linux/%s", arch), func(t *testing.T) {
+					platform, err := image.NewPlatform("linux/" + arch)
+					require.NoError(t, err)
 
-				platform, err := image.NewPlatform("linux/" + arch)
-				require.NoError(t, err)
+					src, err := syft.GetSource(
+						context.Background(),
+						localPath,
+						syft.DefaultGetSourceConfig().WithSources(from).WithPlatform(platform),
+					)
+					require.NoError(t, err)
+					t.Cleanup(func() {
+						require.NoError(t, src.Close())
+					})
 
-				src, err := syft.GetSource(
-					context.Background(),
-					localPath,
-					syft.DefaultGetSourceConfig().WithSources(from).WithPlatform(platform),
-				)
-				require.NoError(t, err)
-				t.Cleanup(func() {
-					require.NoError(t, src.Close())
+					meta, ok := src.Describe().Metadata.(source.ImageMetadata)
+					require.True(t, ok, "expected image metadata, got %T", src.Describe().Metadata)
+
+					// The raw config of the selected image must match the requested platform...
+					assertConfigPlatform(t, meta.RawConfig, "linux", arch)
+					// ...and it must be the exact per-platform image from the multi-platform index.
+					assert.Equal(t, expectedDigest[arch], meta.ID)
 				})
-
-				meta, ok := src.Describe().Metadata.(source.ImageMetadata)
-				require.True(t, ok, "expected image metadata, got %T", src.Describe().Metadata)
-
-				// The raw config of the selected image must match the requested platform...
-				assertConfigPlatform(t, meta.RawConfig, "linux", arch)
-				// ...and it must be the exact per-platform image from the multi-platform index.
-				assert.Equal(t, expectedDigest[arch], meta.ID)
-			})
-		}
+			}
+		})
 	}
 }
 
