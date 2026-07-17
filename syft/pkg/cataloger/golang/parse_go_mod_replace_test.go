@@ -15,7 +15,7 @@ import (
 )
 
 func Test_parseGoSource_replacedModulesAreNotDuplicated(t *testing.T) {
-	fixture := filepath.Join("internal", "gotestdata", "go-source-replacements")
+	fixture := filepath.Join("testdata", "go-source-replacements")
 	s, err := directorysource.NewFromPath(fixture)
 	require.NoError(t, err)
 	resolver, err := s.FileResolver(source.AllLayersScope)
