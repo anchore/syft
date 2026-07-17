@@ -221,6 +221,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "mustache"},
 			candidateAddition{AdditionalProducts: []string{"mustache.js"}},
 		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateAddition{AdditionalVendors: []string{"redis.js"}},
+		},
 
 		// Gem packages
 		{
@@ -507,6 +512,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ConanPkg,
 			candidateKey{PkgName: "poco"},
 			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
+		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "libxml2"},
+			candidateAddition{AdditionalVendors: []string{"xmlsoft"}},
 		},
 	})
 

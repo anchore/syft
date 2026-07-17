@@ -131,6 +131,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 	jsonNames(pkg.CondaMetaPackage{}, "conda-metadata-entry", "CondaPackageMetadata"),
 	jsonNames(pkg.GGUFFileHeader{}, "gguf-file-header"),
+	jsonNames(pkg.SafeTensorsModelInfo{}, "safetensors-model-info"),
 	jsonNames(pkg.VcpkgManifest{}, "vcpkg-manifest"),
 )
 

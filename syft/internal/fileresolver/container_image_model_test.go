@@ -60,7 +60,8 @@ func TestOCIModelResolver_FilesByMediaType(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver := NewContainerImageModel(tempDir, test.layerFiles)
+			ref := ""
+			resolver := NewContainerImageModel(tempDir, test.layerFiles, ref)
 
 			locations, err := resolver.FilesByMediaType(test.patterns...)
 			require.NoError(t, err)
@@ -81,7 +82,8 @@ func TestOCIModelResolver_FileContentsByLocation(t *testing.T) {
 		digest: {TempPath: tempFile, MediaType: ggufLayerMediaType},
 	}
 
-	resolver := NewContainerImageModel(tempDir, layerFiles)
+	ref := ""
+	resolver := NewContainerImageModel(tempDir, layerFiles, ref)
 
 	tests := []struct {
 		name      string
