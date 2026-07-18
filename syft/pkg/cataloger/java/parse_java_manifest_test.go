@@ -194,6 +194,23 @@ func TestParseJavaManifest(t *testing.T) {
 	}
 }
 
+func TestSelectLicensesSplitsBundleLicenseClauses(t *testing.T) {
+	manifest := &pkg.JavaManifest{
+		Main: pkg.KeyValues{
+			{
+				Key: "Bundle-License",
+				Value: "https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt;description=\"EPL, version 2\", " +
+					"https://www.gnu.org/software/classpath/license.html",
+			},
+		},
+	}
+
+	assert.Equal(t, []string{
+		"https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt",
+		"https://www.gnu.org/software/classpath/license.html",
+	}, selectLicenses(manifest))
+}
+
 func TestSelectName(t *testing.T) {
 	tests := []struct {
 		desc     string
