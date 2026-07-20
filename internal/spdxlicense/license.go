@@ -16,6 +16,12 @@ const (
 	LicenseRefPrefix = "LicenseRef-" // prefix for non-standard licenses
 )
 
+var licenseExpressionsByURL = map[string]string{
+	"projects.eclipse.org/license/secondary-gpl-2.0-cp": "GPL-2.0-only WITH Classpath-exception-2.0",
+	"www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt": "EPL-2.0",
+	"www.gnu.org/software/classpath/license.html":       "GPL-2.0-only WITH Classpath-exception-2.0",
+}
+
 //go:generate go run ./generate
 
 // ID returns the canonical license ID for the given license ID
@@ -50,6 +56,11 @@ func LicenseByURL(url string) (LicenseInfo, bool) {
 	if id, exists := urlToLicense[url]; exists {
 		return LicenseInfo{
 			ID: id,
+		}, true
+	}
+	if expression, exists := licenseExpressionsByURL[url]; exists {
+		return LicenseInfo{
+			ID: expression,
 		}, true
 	}
 	return LicenseInfo{}, false

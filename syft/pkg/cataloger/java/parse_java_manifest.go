@@ -261,11 +261,58 @@ func selectLicenses(manifest *pkg.JavaManifest) []string {
 
 	for _, fieldName := range fieldNames {
 		if v := fieldValueFromManifest(*manifest, fieldName); v != "" {
-			result = append(result, v)
+			if fieldName != "Bundle-License" {
+				result = append(result, v)
+				continue
+			}
+
+			for _, clause := range splitUnquoted(v, ',') {
+				identifier := strings.TrimSpace(splitUnquoted(clause, ';')[0])
+				if identifier != "" {
+					result = append(result, identifier)
+				}
+			}
 		}
 	}
 
 	return result
+}
+
+func splitUnquoted(value string, delimiter rune) []string {
+	var parts []string
+	var current strings.Builder
+	var quote rune
+	escaped := false
+
+	for _, r := range value {
+		if escaped {
+			current.WriteRune(r)
+			escaped = false
+			continue
+		}
+		if quote != 0 && r == '\\' {
+			current.WriteRune(r)
+			escaped = true
+			continue
+		}
+		if r == '\'' || r == '"' {
+			if quote == 0 {
+				quote = r
+			} else if quote == r {
+				quote = 0
+			}
+			current.WriteRune(r)
+			continue
+		}
+		if quote == 0 && r == delimiter {
+			parts = append(parts, current.String())
+			current.Reset()
+			continue
+		}
+		current.WriteRune(r)
+	}
+
+	return append(parts, current.String())
 }
 
 func fieldValueFromManifest(manifest pkg.JavaManifest, fieldName string) string {
