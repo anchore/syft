@@ -8,3 +8,5 @@
 
 **/go.sum
 !image-go-bin-arch-coverage/go.sum
+
+cache/
