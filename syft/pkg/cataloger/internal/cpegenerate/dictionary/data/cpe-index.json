@@ -7,6 +7,9 @@
       "chainguard.dev/apko": [
         "cpe:2.3:a:chainguard:apko:*:*:*:*:*:go:*:*"
       ],
+      "github.com/Azure/go-ntlmssp": [
+        "cpe:2.3:a:microsoft:go-ntlmssp:*:*:*:*:*:go:*:*"
+      ],
       "github.com/ClickHouse/ch-go": [
         "cpe:2.3:a:clickhouse:ch:*:*:*:*:*:go:*:*"
       ],
@@ -222,6 +225,9 @@
       ],
       "github.com/xddxdd/bird-lg-go": [
         "cpe:2.3:a:xddxdd:bird-lg-go:*:*:*:*:*:go:*:*"
+      ],
+      "github.com/xuri/excelize/v2": [
+        "cpe:2.3:a:excelize:excelize:*:*:*:*:*:go:*:*"
       ],
       "github.com/yuin/goldmark": [
         "cpe:2.3:a:yuin:goldmark:*:*:*:*:*:go:*:*"
@@ -2349,6 +2355,9 @@
       "@apollosproject/data-connector-rock": [
         "cpe:2.3:a:apollosapp:data-connector-rock:*:*:*:*:*:node.js:*:*"
       ],
+      "@appium/base-driver": [
+        "cpe:2.3:a:appium:appium\\/base-driver:*:*:*:*:*:node.js:*:*"
+      ],
       "@appium/support": [
         "cpe:2.3:a:appium:appium\\/support:*:*:*:*:*:node.js:*:*"
       ],
@@ -2615,6 +2624,9 @@
       ],
       "@octokit/webhooks": [
         "cpe:2.3:a:octokit:webhooks:*:*:*:*:*:node.js:*:*"
+      ],
+      "@openclaw/feishu": [
+        "cpe:2.3:a:openclaw:openclaw\\/feishu:*:*:*:*:*:node.js:*:*"
       ],
       "@openclaw/voice-call": [
         "cpe:2.3:a:openclaw:openclaw\\/voice-call:*:*:*:*:*:node.js:*:*"
@@ -3085,6 +3097,9 @@
       ],
       "cli": [
         "cpe:2.3:a:cli_project:cli:*:*:*:*:*:node.js:*:*"
+      ],
+      "client-certificate-auth": [
+        "cpe:2.3:a:tgies:client-certificate-auth:*:*:*:*:*:node.js:*:*"
       ],
       "closure-compiler-stream": [
         "cpe:2.3:a:closure-compiler-stream_project:closure-compiler-stream:*:*:*:*:*:node.js:*:*"
@@ -5752,6 +5767,9 @@
       "ssrf-agent": [
         "cpe:2.3:a:ssrf-agent_project:ssrf-agent:*:*:*:*:*:node.js:*:*"
       ],
+      "ssrfcheck": [
+        "cpe:2.3:a:felippe-regazio:ssrf_check:*:*:*:*:*:node.js:*:*"
+      ],
       "ssri": [
         "cpe:2.3:a:ssri_project:ssri:*:*:*:*:*:node.js:*:*"
       ],
@@ -6978,6 +6996,9 @@
       "sqlparse": [
         "cpe:2.3:a:sqlparse_project:sqlparse:*:*:*:*:*:python:*:*"
       ],
+      "stanza": [
+        "cpe:2.3:a:stanford:stanza:*:*:*:*:*:python:*:*"
+      ],
       "starlette": [
         "cpe:2.3:a:encode:starlette:*:*:*:*:*:python:*:*"
       ],
@@ -7689,6 +7710,12 @@
       ],
       "bzip2": [
         "cpe:2.3:a:bzip2_project:bzip2:*:*:*:*:*:rust:*:*"
+      ],
+      "c2pa": [
+        "cpe:2.3:a:adobe:c2pa:*:*:*:*:*:rust:*:*"
+      ],
+      "c2patool": [
+        "cpe:2.3:a:adobe:c2patool:*:*:*:*:*:*:*:*"
       ],
       "cache": [
         "cpe:2.3:a:cache_project:cache:*:*:*:*:*:rust:*:*"
@@ -9175,7 +9202,8 @@
         "cpe:2.3:a:article_directory_project:article_directory:*:*:*:*:*:wordpress:*:*"
       ],
       "article-directory-redux": [
-        "cpe:2.3:a:icontrolwp:article_directory_redux:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:icontrolwp:article_directory_redux:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:icontrolwp:icontrolwp:*:*:*:*:*:wordpress:*:*"
       ],
       "article2pdf": [
         "cpe:2.3:a:article2pdf_project:article2pdf:*:*:*:*:*:wordpress:*:*"
@@ -13831,6 +13859,9 @@
       "ibtana-visual-editor": [
         "cpe:2.3:a:vowelweb:ibtana:*:*:*:*:*:wordpress:*:*"
       ],
+      "ibuildapp": [
+        "cpe:2.3:a:ibuildapp:ibuildapp:*:*:*:*:*:wordpress:*:*"
+      ],
       "icegram": [
         "cpe:2.3:a:icegram:icegram_engage:*:*:*:*:*:wordpress:*:*"
       ],
@@ -15508,7 +15539,7 @@
         "cpe:2.3:a:motor_racing_league_project:motor_racing_league:*:*:*:*:*:wordpress:*:*"
       ],
       "motors-car-dealership-classified-listings": [
-        "cpe:2.3:a:stylemixthemes:motors_-_car_dealer\\,_classifieds_\\\u0026_listing:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:stylemixthemes:motors_-_car_dealer\\,_classifieds_\\\u0026_listing:*:*:*:*:starter:wordpress:*:*"
       ],
       "mousewheel-smooth-scroll": [
         "cpe:2.3:a:mousewheel_smooth_scroll_project:mousewheel_smooth_scroll:*:*:*:*:*:wordpress:*:*"
