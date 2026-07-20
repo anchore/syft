@@ -137,6 +137,34 @@ func Test_identifyOverlappingLanguageRelationship(t *testing.T) {
 			shouldRemove: true,
 		},
 		{
+			// java-archive is binary-extracted (see binaryExtractedLanguageTypes): a JAR the deb owns may
+			// contain nested components the deb does not subsume, so we must NOT delete it on overlap.
+			name: "deb owns java archive - keep java (binary-extracted, not subsumed)",
+			parent: &pkg.Package{
+				Name: "libreoffice-java-common",
+				Type: pkg.DebPkg,
+			},
+			child: &pkg.Package{
+				Name: "some-jar",
+				Type: pkg.JavaPkg,
+			},
+			shouldRemove: false,
+		},
+		{
+			// go modules are extracted from a single OS-owned binary; deleting them would drop distinct
+			// components (their identities/versions/licenses) the OS package does not replace.
+			name: "deb owns go binary - keep go modules (binary-extracted, not subsumed)",
+			parent: &pkg.Package{
+				Name: "golang-github-foo-dev",
+				Type: pkg.DebPkg,
+			},
+			child: &pkg.Package{
+				Name: "github.com/foo/bar",
+				Type: pkg.GoModulePkg,
+			},
+			shouldRemove: false,
+		},
+		{
 			name: "binary owns python - keep both",
 			parent: &pkg.Package{
 				Name: "python-binary",
