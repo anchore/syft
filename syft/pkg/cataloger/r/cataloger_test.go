@@ -56,5 +56,5 @@ func TestRPackageCataloger(t *testing.T) {
 	// TODO: relationships are not under test yet
 	var expectedRelationships []artifact.Relationship
 
-	pkgtest.NewCatalogTester().FromDirectory(t, "test-fixtures/installed").Expects(expectedPkgs, expectedRelationships).TestCataloger(t, NewPackageCataloger())
+	pkgtest.NewCatalogTester().FromDirectory(t, "testdata/installed").Expects(expectedPkgs, expectedRelationships).TestCataloger(t, NewPackageCataloger())
 }

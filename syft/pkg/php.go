@@ -85,6 +85,7 @@ type PhpComposerAuthors struct {
 }
 
 // PhpPeclEntry represents a single package entry found within php pecl metadata files.
+//
 // Deprecated: please use PhpPearEntry instead with the pear cataloger.
 type PhpPeclEntry PhpPearEntry
 

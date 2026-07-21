@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseCabalFreeze(t *testing.T) {
-	fixture := "test-fixtures/cabal.project.freeze"
+	fixture := "testdata/cabal.project.freeze"
 	locationSet := file.NewLocationSet(file.NewLocation(fixture))
 
 	expectedPkgs := []pkg.Package{

@@ -111,6 +111,10 @@ func TestValidateSourcePlatform_SupportedMetadataTypes(t *testing.T) {
 			metadata: source.FileMetadata{},
 			wantErr:  require.Error,
 		},
+		{
+			name:     "oci-model",
+			metadata: source.OCIModelMetadata{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -144,7 +148,7 @@ func TestValidateSourcePlatform_UnsupportedMetadataTypes(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		metadata interface{}
+		metadata any
 	}{
 		{
 			name:     "string metadata",

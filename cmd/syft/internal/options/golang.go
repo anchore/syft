@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 )
 
@@ -16,10 +17,13 @@ type golangConfig struct {
 	Proxy                       string                        `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
 	NoProxy                     string                        `json:"no-proxy" yaml:"no-proxy" mapstructure:"no-proxy"`
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
+	UsePackagesLib              *bool                         `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
+	CaptureSymbols              cataloging.SymbolScope        `json:"capture-symbols" yaml:"capture-symbols" mapstructure:"capture-symbols"`
 }
 
 var _ interface {
 	clio.FieldDescriber
+	clio.PostLoader
 } = (*golangConfig)(nil)
 
 func (o *golangConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
@@ -37,10 +41,18 @@ if unset this defaults to $GONOPROXY`)
 	descriptions.Add(&o.MainModuleVersion, `the go main module version discovered from binaries built with the go compiler will
 always show (devel) as the version. Use these options to control heuristics to guess
 a more accurate version from the binary.`)
+	descriptions.Add(&o.UsePackagesLib, `use the golang.org/x/tools/go/packages library, which executes golang tooling found on the path in addition to potential network access to get the most accurate results`)
+	descriptions.Add(&o.CaptureSymbols, `capture function symbols from the binary symbol table (pclntab). valid values are:
+"none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib)`)
 	descriptions.Add(&o.MainModuleVersion.FromLDFlags, `look for LD flags that appear to be setting a version (e.g. -X main.version=1.0.0)`)
-	descriptions.Add(&o.MainModuleVersion.FromBuildSettings, `use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version 
+	descriptions.Add(&o.MainModuleVersion.FromBuildSettings, `use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version
 (e.g. v0.0.0-20220308212642-53e6d0aaf6fb) when a more accurate version cannot be found otherwise`)
 	descriptions.Add(&o.MainModuleVersion.FromContents, `search for semver-like strings in the binary contents`)
+}
+
+func (o *golangConfig) PostLoad() error {
+	o.CaptureSymbols = o.CaptureSymbols.Parse()
+	return nil
 }
 
 type golangMainModuleVersionConfig struct {
@@ -64,5 +76,7 @@ func defaultGolangConfig() golangConfig {
 			FromContents:      def.MainModuleVersion.FromContents,
 			FromBuildSettings: def.MainModuleVersion.FromBuildSettings,
 		},
+		UsePackagesLib: nil, // this defaults to true, which is the API default
+		CaptureSymbols: def.CaptureSymbols,
 	}
 }

@@ -1,9 +1,0 @@
-classifiers/dynamic
-classifiers/bin
-
-# allow for lb patterns (rust, pytho, php and more)
-!lib*.so
-!lib*.dylib
-
-# allow for go-hint file
-!VERSION*

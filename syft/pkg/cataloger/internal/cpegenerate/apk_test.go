@@ -97,6 +97,15 @@ func Test_candidateVendorsForAPK(t *testing.T) {
 			},
 			expected: []string{"rake", "ruby-lang"},
 		},
+		{
+			name: "libavif",
+			pkg: pkg.Package{
+				Metadata: pkg.ApkDBEntry{
+					Package: "libavif",
+				},
+			},
+			expected: []string{"aomedia", "libavif"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

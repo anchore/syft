@@ -3,9 +3,16 @@ package kernel
 import (
 	"context"
 	"debug/elf"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
+	"github.com/mholt/archives"
+
+	intfile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -20,7 +27,14 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to get union reader for file: %w", err)
 	}
-	metadata, err := parseLinuxKernelModuleMetadata(unionReader)
+
+	moduleReader, err := decompressedModuleReader(ctx, reader.RealPath, unionReader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to decompress kernel module %q: %w", reader.RealPath, err)
+	}
+	defer moduleReader.Close()
+
+	metadata, err := parseLinuxKernelModuleMetadata(moduleReader)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to parse kernel module metadata: %w", err)
 	}
@@ -37,6 +51,91 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 			reader.Location,
 		),
 	}, nil, nil
+}
+
+// decompressedModuleReader returns a UnionReader over the decompressed contents of the kernel module
+// when the path indicates compression (e.g. .ko.gz, .ko.xz, .ko.zst). For plain .ko files the original
+// reader is returned unchanged. ELF parsing requires random access (io.ReaderAt + io.Seeker), so
+// compressed streams are spilled to a temp file rather than buffered in memory — kernel modules can be
+// tens of MB decompressed and large numbers of them are scanned per cataloger run. The caller owns
+// the returned reader and must Close it; the underlying reader (r) is not closed by Close on the
+// passthrough path — its lifecycle is the caller's.
+func decompressedModuleReader(ctx context.Context, path string, r unionreader.UnionReader) (unionreader.UnionReader, error) {
+	// fast path: plain .ko files don't need format sniffing
+	if strings.HasSuffix(path, ".ko") {
+		return &nopCloseUnionReader{UnionReader: r}, nil
+	}
+
+	format, stream, err := intfile.IdentifyArchive(ctx, path, r)
+	if err != nil {
+		if errors.Is(err, archives.NoMatch) {
+			return passthrough(r)
+		}
+		return nil, fmt.Errorf("unable to identify compression format: %w", err)
+	}
+
+	decompressor, ok := format.(archives.Decompressor)
+	if !ok {
+		// not a single-stream compressed format (e.g. a tar/zip archive); treat as a plain .ko
+		return passthrough(r)
+	}
+
+	rc, err := decompressor.OpenReader(stream)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open %s decompression stream: %w", format.Extension(), err)
+	}
+	defer rc.Close()
+
+	td := tmpdir.FromContext(ctx)
+	if td == nil {
+		return nil, fmt.Errorf("no temp dir factory in context")
+	}
+	tempFile, fileCleanup, err := td.NewFile("syft-kmod-*.ko") //nolint:gocritic // cleanup outlives this function — runs from tempFileUnionReader.Close on the returned reader
+	if err != nil {
+		fileCleanup()
+		return nil, fmt.Errorf("unable to create temp file for decompressed kernel module: %w", err)
+	}
+	tfr := &tempFileUnionReader{File: tempFile, cleanup: fileCleanup}
+
+	if _, err := io.Copy(tempFile, rc); err != nil {
+		_ = tfr.Close()
+		return nil, fmt.Errorf("unable to write decompressed kernel module: %w", err)
+	}
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+		_ = tfr.Close()
+		return nil, fmt.Errorf("unable to rewind decompressed kernel module: %w", err)
+	}
+
+	return tfr, nil
+}
+
+// passthrough returns the original reader rewound to offset 0. IdentifyArchive consumes bytes to
+// sniff magic; we rewind explicitly so callers don't have to reason about the seeker's position.
+func passthrough(r unionreader.UnionReader) (unionreader.UnionReader, error) {
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return nil, fmt.Errorf("unable to rewind reader after format sniff: %w", err)
+	}
+	return &nopCloseUnionReader{UnionReader: r}, nil
+}
+
+// nopCloseUnionReader wraps a UnionReader so that Close is a no-op. used on the passthrough path
+// where the underlying reader's lifecycle is owned by the caller, not by us.
+type nopCloseUnionReader struct {
+	unionreader.UnionReader
+}
+
+func (*nopCloseUnionReader) Close() error { return nil }
+
+// tempFileUnionReader is a UnionReader backed by a temp file; Close closes the file and removes it.
+type tempFileUnionReader struct {
+	*os.File
+	cleanup func()
+}
+
+func (t *tempFileUnionReader) Close() error {
+	err := t.File.Close()
+	t.cleanup()
+	return err
 }
 
 func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKernelModule, err error) {

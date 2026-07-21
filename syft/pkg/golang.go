@@ -22,6 +22,17 @@ type GolangBinaryBuildinfoEntry struct {
 
 	// GoExperiments lists experimental Go features enabled during compilation (e.g., "arenas", "cgocheck2").
 	GoExperiments []string `json:"goExperiments,omitempty" cyclonedx:"goExperiments"`
+
+	// Symbols are the function symbols from this module that are compiled into the binary, extracted from
+	// the binary symbol table (pclntab) and grouped by the import path of the package that owns them. Each
+	// value is the sorted, deduplicated list of symbol names local to that package, i.e. with the import
+	// path prefix stripped (e.g. import path "github.com/foo/bar" -> "(*Type).Method"). The fully qualified
+	// name is the import path, a ".", and the local name. One exception: the binary's main package appears
+	// under the key "main" (the name the linker assigns), not its original source import path, which is not
+	// recoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers
+	// this package: the "all" scope populates every module package plus the synthetic stdlib package, while
+	// the "stdlib" scope populates only the stdlib package.
+	Symbols map[string][]string `json:"symbols,omitempty"`
 }
 
 // GolangModuleEntry represents all captured data for a Golang source scan with go.mod/go.sum

@@ -161,6 +161,34 @@ func Test_toSourceModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "oci-model",
+			src: source.Description{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: model.Source{
+				ID:      "test-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "oci-model",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+					RepoDigests:    []string{},
+					Tags:           []string{},
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -216,6 +244,30 @@ func Test_toSourceModel(t *testing.T) {
 				ID:   "test-id",
 				Type: "image",
 				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+					RepoDigests:    []string{},
+					Tags:           []string{},
+				},
+			},
+		},
+		{
+			name: "oci-model - no name/version",
+			src: source.Description{
+				ID: "test-id",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: model.Source{
+				ID:   "test-id",
+				Type: "oci-model",
+				Metadata: source.OCIModelMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",

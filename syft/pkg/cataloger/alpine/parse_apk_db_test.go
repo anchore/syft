@@ -60,7 +60,7 @@ func TestExtraFileAttributes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			fixturePath := "test-fixtures/extra-file-attributes"
+			fixturePath := "testdata/extra-file-attributes"
 			lrc := newLocationReadCloser(t, fixturePath)
 
 			pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), lrc)
@@ -82,7 +82,7 @@ func TestSinglePackageDetails(t *testing.T) {
 		expected pkg.Package
 	}{
 		{
-			fixture: "test-fixtures/single",
+			fixture: "testdata/single",
 			expected: pkg.Package{
 				Name:    "musl-utils",
 				Version: "1.1.24-r2",
@@ -171,7 +171,7 @@ func TestSinglePackageDetails(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/empty-deps-and-provides",
+			fixture: "testdata/empty-deps-and-provides",
 			expected: pkg.Package{
 				Name:    "alpine-baselayout-data",
 				Version: "3.4.0-r0",
@@ -215,7 +215,7 @@ func TestSinglePackageDetails(t *testing.T) {
 			},
 		},
 		{
-			fixture: "test-fixtures/base",
+			fixture: "testdata/base",
 			expected: pkg.Package{
 				Name:    "alpine-baselayout",
 				Version: "3.2.0-r6",
@@ -774,7 +774,7 @@ func Test_parseApkDB_expectedPkgNames(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixture, func(t *testing.T) {
-			fixturePath := filepath.Join("test-fixtures", test.fixture)
+			fixturePath := filepath.Join("testdata", test.fixture)
 			lrc := newLocationReadCloser(t, fixturePath)
 
 			pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), lrc)

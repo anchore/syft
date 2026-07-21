@@ -13,8 +13,8 @@ import (
 func TestParseInstalledJsonComposerV1(t *testing.T) {
 	ctx := context.TODO()
 	fixtures := []string{
-		"test-fixtures/vendor/composer_1/installed.json",
-		"test-fixtures/vendor/composer_2/installed.json",
+		"testdata/vendor/composer_1/installed.json",
+		"testdata/vendor/composer_2/installed.json",
 	}
 
 	var expectedRelationships []artifact.Relationship
@@ -147,7 +147,7 @@ func TestParseInstalledJsonComposerV1(t *testing.T) {
 
 func Test_corruptInstalledJSON(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/installed.json").
+		FromFile(t, "testdata/glob-paths/src/installed.json").
 		WithError().
 		TestParser(t, parseInstalledJSON)
 }

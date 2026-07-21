@@ -34,7 +34,10 @@ type elfBinaryPackageNotes struct {
 	CPE                                 string `json:"cpe"`
 	License                             string `json:"license"`
 	pkg.ELFBinaryPackageNoteJSONPayload `json:",inline"`
-	Location                            file.Location `json:"-"`
+	// CorrectOSCPE has the corrected casing for the osCPE field relative to the systemd ELF package metadata "spec" https://systemd.io/ELF_PACKAGE_METADATA/ .
+	// Ideally in syft 2.0 this field should be replaced with the pkg.ELFBinaryPackageNoteJSONPayload.OSCPE field directly (with the struct tag corrected).
+	CorrectOSCPE string        `json:"osCpe,omitempty"`
+	Location     file.Location `json:"-"`
 }
 
 type elfPackageKey struct {
@@ -164,9 +167,9 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 	}
 
 	{
-		var metadata elfBinaryPackageNotes
-		if err := json.Unmarshal(notes, &metadata); err == nil {
-			return &metadata, nil
+		var metadata *elfBinaryPackageNotes
+		if metadata, err = unmarshalELFPackageNotesPayload(notes); err == nil {
+			return metadata, nil
 		}
 	}
 
@@ -174,16 +177,31 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		var header elf64SectionHeader
 		headerSize := binary.Size(header) / 4
 		if len(notes) > headerSize {
-			var metadata elfBinaryPackageNotes
+			var metadata *elfBinaryPackageNotes
 			newPayload := bytes.TrimRight(notes[headerSize:], "\x00")
-			if err = json.Unmarshal(newPayload, &metadata); err == nil {
-				return &metadata, nil
+			if metadata, err = unmarshalELFPackageNotesPayload(newPayload); err == nil {
+				return metadata, nil
 			}
 			log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to unmarshal ELF package notes as JSON")
 		}
 	}
 
 	return nil, err
+}
+
+func unmarshalELFPackageNotesPayload(data []byte) (*elfBinaryPackageNotes, error) {
+	var metadata elfBinaryPackageNotes
+	if err := json.Unmarshal(data, &metadata); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal ELF package notes payload: %w", err)
+	}
+
+	// normalize the os CPE field
+	if metadata.OSCPE == "" { //nolint:staticcheck
+		// ensure the public field is populated for backwards compatibility
+		metadata.OSCPE = metadata.CorrectOSCPE //nolint:staticcheck
+	}
+
+	return &metadata, nil
 }
 
 type elf64SectionHeader struct {

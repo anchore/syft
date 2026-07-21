@@ -6,7 +6,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func TestCataloger_Globs(t *testing.T) {
+func TestCatalogerConan_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
 		fixture  string
@@ -14,7 +14,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain conan files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"somewhere/src/conanfile.txt",
 				"somewhere/src/conan.lock",
@@ -32,7 +32,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}
 }
 
-func TestCatalogerInfo_Globs(t *testing.T) {
+func TestCatalogerConanInfo_Globs(t *testing.T) {
 	tests := []struct {
 		name     string
 		fixture  string
@@ -40,7 +40,7 @@ func TestCatalogerInfo_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain conan files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"somewhere/src/conaninfo.txt",
 			},

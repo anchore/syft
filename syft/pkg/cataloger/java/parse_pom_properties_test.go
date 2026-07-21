@@ -15,7 +15,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 	}{
 		{
 			expected: pkg.JavaPomProperties{
-				Path:       "test-fixtures/pom/small.pom.properties",
+				Path:       "testdata/pom/small.pom.properties",
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
@@ -23,7 +23,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 		},
 		{
 			expected: pkg.JavaPomProperties{
-				Path:       "test-fixtures/pom/extra.pom.properties",
+				Path:       "testdata/pom/extra.pom.properties",
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
@@ -36,7 +36,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 		},
 		{
 			expected: pkg.JavaPomProperties{
-				Path:       "test-fixtures/pom/colon-delimited.pom.properties",
+				Path:       "testdata/pom/colon-delimited.pom.properties",
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java-app-maven",
 				Version:    "0.1.0",
@@ -44,7 +44,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 		},
 		{
 			expected: pkg.JavaPomProperties{
-				Path:       "test-fixtures/pom/equals-delimited-with-colons.pom.properties",
+				Path:       "testdata/pom/equals-delimited-with-colons.pom.properties",
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java:app-maven",
 				Version:    "0.1.0:something",
@@ -52,7 +52,7 @@ func TestParseJavaPomProperties(t *testing.T) {
 		},
 		{
 			expected: pkg.JavaPomProperties{
-				Path:       "test-fixtures/pom/colon-delimited-with-equals.pom.properties",
+				Path:       "testdata/pom/colon-delimited-with-equals.pom.properties",
 				GroupID:    "org.anchore",
 				ArtifactID: "example-java=app-maven",
 				Version:    "0.1.0=something",

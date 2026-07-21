@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/iancoleman/strcase"
@@ -79,10 +80,8 @@ func isFollowingConvention(path, fieldName string) (bool, string) {
 	result := exp == fieldName
 
 	exception := func(exceptions ...string) (bool, string) {
-		for _, e := range exceptions {
-			if e == fieldName {
-				return true, fieldName
-			}
+		if slices.Contains(exceptions, fieldName) {
+			return true, fieldName
 		}
 		return result, exp
 	}

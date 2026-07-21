@@ -62,16 +62,13 @@ func GetIndexedDictionary() (_ *dictionary.Indexed, err error) {
 
 func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	dict, err := GetIndexedDictionary()
-	parsedCPEs := []cpe.CPE{}
 	if err != nil {
 		log.Debugf("CPE dictionary lookup not available: %+v", err)
-		return parsedCPEs, false
+		return []cpe.CPE{}, false
 	}
 
-	var (
-		cpes *dictionary.Set
-		ok   bool
-	)
+	var cpes *dictionary.Set
+	var ok bool
 
 	switch p.Type {
 	case pkg.NpmPkg:
@@ -101,20 +98,25 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	case pkg.WordpressPluginPkg:
 		metadata, valid := p.Metadata.(pkg.WordpressPluginEntry)
 		if !valid {
-			return parsedCPEs, false
+			return nil, false
 		}
 		cpes, ok = dict.EcosystemPackages[dictionary.EcosystemWordpressPlugins][metadata.PluginInstallDirectory]
 
+	case pkg.ModelPkg:
+		// ML models should not have CPEs as they are not traditional software packages
+		// and don't fit the vulnerability model used for software packages.
+		return nil, false
 	default:
 		// The dictionary doesn't support this package type yet.
-		return parsedCPEs, false
+		return nil, false
 	}
 
 	if !ok {
 		// The dictionary doesn't have a CPE for this package.
-		return parsedCPEs, false
+		return []cpe.CPE{}, false
 	}
 
+	parsedCPEs := []cpe.CPE{}
 	for _, c := range cpes.List() {
 		parsedCPE, err := cpe.New(c, cpe.NVDDictionaryLookupSource)
 		if err != nil {
@@ -126,7 +128,7 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 	}
 
 	if len(parsedCPEs) == 0 {
-		return []cpe.CPE{}, false
+		return nil, false
 	}
 
 	sort.Sort(cpe.BySourceThenSpecificity(parsedCPEs))
@@ -137,6 +139,12 @@ func FromDictionaryFind(p pkg.Package) ([]cpe.CPE, bool) {
 // generate the minimal set of representative CPEs, which implies that optional fields should not be included
 // (such as target SW).
 func FromPackageAttributes(p pkg.Package) []cpe.CPE {
+	// ML models should not have CPEs as they are not traditional software packages
+	// and don't fit the vulnerability model used for software packages.
+	if p.Type == pkg.ModelPkg {
+		return nil
+	}
+
 	vendors := candidateVendors(p)
 	products := candidateProducts(p)
 	targetSWs := candidateTargetSw(p)
@@ -225,6 +233,9 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.union(candidateVendorsForAPK(p))
 	case pkg.NpmPackage:
 		vendors.union(candidateVendorsForJavascript(p))
+	case pkg.PEBinary:
+		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
+		vendors.union(candidateVendorsForPE(p))
 	case pkg.WordpressPluginEntry:
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
@@ -301,6 +312,9 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 	switch p.Metadata.(type) {
 	case pkg.ApkDBEntry:
 		products.union(candidateProductsForAPK(p))
+	case pkg.PEBinary:
+		// Add PE-specific product hints (e.g. ghostscript)
+		products.union(candidateProductsForPE(p))
 	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))

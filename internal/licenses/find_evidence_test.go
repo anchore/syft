@@ -19,13 +19,13 @@ func TestDefaultScanner_FindEvidence(t *testing.T) {
 	}{
 		{
 			name:     "Single licenses are able to be recognized and returned Apache 2.0",
-			fixture:  "test-fixtures/apache-license-2.0",
+			fixture:  "testdata/apache-license-2.0",
 			wantIDs:  []string{"Apache-2.0"},
 			minMatch: 1,
 		},
 		{
 			name:    "Multiple Licenses are returned as evidence with duplicates at different offset",
-			fixture: "test-fixtures/multi-license",
+			fixture: "testdata/multi-license",
 			wantIDs: []string{
 				"MIT",
 				"MIT",

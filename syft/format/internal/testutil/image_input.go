@@ -75,7 +75,7 @@ func changeToDirectoryWithGoldenFixture(t testing.TB, testImage string) func() {
 	// check if test fixture exists... if not, check if there is a shared fixture relative to this dir
 	fn := func() {}
 
-	path := filepath.Join("test-fixtures", testImage)
+	path := filepath.Join("testdata", testImage)
 	if _, err := os.Stat(path); err != nil {
 		// change dir, restore as defer
 		wd, err := os.Getwd()

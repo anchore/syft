@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseConanfile(t *testing.T) {
-	fixture := "test-fixtures/conanfile.txt"
+	fixture := "testdata/conanfile.txt"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
 	expected := []pkg.Package{
 		{
@@ -82,6 +82,39 @@ func TestParseConanfile(t *testing.T) {
 	}
 
 	// TODO: relationships are not under test
+	var expectedRelationships []artifact.Relationship
+
+	pkgtest.TestFileParser(t, fixture, parseConanfile, expected, expectedRelationships)
+}
+
+func TestParseConanfileCommentInRequires(t *testing.T) {
+	fixture := "testdata/conanfile-comment-in-requires.txt"
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
+	expected := []pkg.Package{
+		{
+			Name:      "catch2",
+			Version:   "2.13.8",
+			PURL:      "pkg:conan/catch2@2.13.8",
+			Locations: fixtureLocationSet,
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
+			Metadata: pkg.ConanfileEntry{
+				Ref: "catch2/2.13.8",
+			},
+		},
+		{
+			Name:      "docopt.cpp",
+			Version:   "0.6.3",
+			PURL:      "pkg:conan/docopt.cpp@0.6.3",
+			Locations: fixtureLocationSet,
+			Language:  pkg.CPP,
+			Type:      pkg.ConanPkg,
+			Metadata: pkg.ConanfileEntry{
+				Ref: "docopt.cpp/0.6.3",
+			},
+		},
+	}
+
 	var expectedRelationships []artifact.Relationship
 
 	pkgtest.TestFileParser(t, fixture, parseConanfile, expected, expectedRelationships)

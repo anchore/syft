@@ -14,9 +14,10 @@ func Test_GemFileLock_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain gemfile lock files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/Gemfile.lock",
+				"src/Gemfile.next.lock",
 			},
 		},
 	}
@@ -39,7 +40,7 @@ func Test_GemSpec_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain gemspec files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"specifications/root.gemspec",
 				"specifications/pkg/nested.gemspec",

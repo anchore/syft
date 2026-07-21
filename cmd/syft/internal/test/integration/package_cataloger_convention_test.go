@@ -278,7 +278,7 @@ func packageCatalogerExports(t *testing.T) map[string]exportTokenSet {
 		if info.IsDir() ||
 			!strings.HasSuffix(info.Name(), ".go") ||
 			strings.HasSuffix(info.Name(), "_test.go") ||
-			strings.Contains(path, "test-fixtures") ||
+			strings.Contains(path, "testdata") ||
 			strings.Contains(path, "internal") {
 			return nil
 		}
@@ -329,7 +329,7 @@ func packageCatalogerExports(t *testing.T) map[string]exportTokenSet {
 					}
 					exportsPerPackage[pkg].Add(exportToken{
 						Name:            decl.Name.Name,
-						Type:            reflect.TypeOf(decl.Type).String(),
+						Type:            reflect.TypeFor[*ast.FuncType]().String(),
 						SignatureSize:   len(decl.Type.Params.List),
 						ReturnTypeNames: returnTypes,
 					})

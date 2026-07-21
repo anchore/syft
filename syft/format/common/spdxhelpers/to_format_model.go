@@ -35,6 +35,7 @@ const (
 	spdxPrimaryPurposeOther     = "OTHER"
 
 	prefixImage     = "Image"
+	prefixOCIModel  = "OCIModel"
 	prefixDirectory = "Directory"
 	prefixFile      = "File"
 	prefixSnap      = "Snap"
@@ -215,6 +216,36 @@ func toRootPackage(s source.Description) *spdx.Package {
 			}
 		}
 
+	case source.OCIModelMetadata:
+		prefix = prefixOCIModel
+		purpose = spdxPrimaryPurposeContainer
+
+		qualifiers := packageurl.Qualifiers{
+			{
+				Key:   "arch",
+				Value: m.Architecture,
+			},
+		}
+
+		ref, _ := reference.Parse(m.UserInput)
+		if ref, ok := ref.(reference.NamedTagged); ok {
+			qualifiers = append(qualifiers, packageurl.Qualifier{
+				Key:   "tag",
+				Value: ref.Tag(),
+			})
+		}
+
+		c := toChecksum(m.ManifestDigest)
+		if c != nil {
+			checksums = append(checksums, *c)
+			purl = &packageurl.PackageURL{
+				Type:       "oci",
+				Name:       s.Name,
+				Version:    m.ManifestDigest,
+				Qualifiers: qualifiers,
+			}
+		}
+
 	case source.DirectoryMetadata:
 		prefix = prefixDirectory
 		purpose = spdxPrimaryPurposeFile
@@ -279,9 +310,9 @@ func toRootPackage(s source.Description) *spdx.Package {
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
 	id := string(identifiable.ID())
-	if strings.HasPrefix(id, "SPDXRef-") {
+	if after, ok := strings.CutPrefix(id, "SPDXRef-"); ok {
 		// this is already an SPDX ID, no need to change it (except for the prefix)
-		return spdx.ElementID(helpers.SanitizeElementID(strings.TrimPrefix(id, "SPDXRef-")))
+		return spdx.ElementID(helpers.SanitizeElementID(after))
 	}
 	maxLen := 40
 	switch it := identifiable.(type) {

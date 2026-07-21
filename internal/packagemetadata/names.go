@@ -73,6 +73,8 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
 	jsonNames(pkg.DartPubspec{}, "dart-pubspec"),
+	jsonNames(pkg.DenoLockEntry{}, "deno-lock-entry"),
+	jsonNames(pkg.DenoRemoteLockEntry{}, "deno-remote-lock-entry"),
 	jsonNames(pkg.DotnetDepsEntry{}, "dotnet-deps-entry", "DotnetDepsMetadata"),
 	jsonNames(pkg.DotnetPortableExecutableEntry{}, "dotnet-portable-executable-entry"),
 	jsonNames(pkg.DpkgArchiveEntry{}, "dpkg-archive-entry"),
@@ -95,9 +97,12 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.NpmPackage{}, "javascript-npm-package", "NpmPackageJsonMetadata"),
 	jsonNames(pkg.NpmPackageLockEntry{}, "javascript-npm-package-lock-entry", "NpmPackageLockJsonMetadata"),
 	jsonNames(pkg.YarnLockEntry{}, "javascript-yarn-lock-entry", "YarnLockJsonMetadata"),
+	jsonNames(pkg.PnpmLockEntry{}, "javascript-pnpm-lock-entry"),
+	jsonNames(pkg.BunLockEntry{}, "javascript-bun-lock-entry"),
 	jsonNames(pkg.PEBinary{}, "pe-binary"),
 	jsonNames(pkg.PhpComposerLockEntry{}, "php-composer-lock-entry", "PhpComposerJsonMetadata"),
 	jsonNamesWithoutLookup(pkg.PhpComposerInstalledEntry{}, "php-composer-installed-entry", "PhpComposerJsonMetadata"), // the legacy value is split into two types, where the other is preferred
+	//nolint:staticcheck
 	jsonNames(pkg.PhpPeclEntry{}, "php-pecl-entry", "PhpPeclMetadata"),
 	jsonNames(pkg.PhpPearEntry{}, "php-pear-entry"),
 	jsonNames(pkg.PortageEntry{}, "portage-db-entry", "PortageMetadata"),
@@ -119,10 +124,14 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.SnapEntry{}, "snap-entry"),
 	jsonNames(pkg.WordpressPluginEntry{}, "wordpress-plugin-entry", "WordpressMetadata"),
 	jsonNames(pkg.HomebrewFormula{}, "homebrew-formula"),
+	jsonNames(pkg.AppleAppBundleEntry{}, "apple-app-bundle-entry"),
 	jsonNames(pkg.LuaRocksPackage{}, "luarocks-package"),
 	jsonNames(pkg.TerraformLockProviderEntry{}, "terraform-lock-provider-entry"),
 	jsonNames(pkg.DotnetPackagesLockEntry{}, "dotnet-packages-lock-entry"),
 	jsonNames(pkg.CondaMetaPackage{}, "conda-metadata-entry", "CondaPackageMetadata"),
+	jsonNames(pkg.GGUFFileHeader{}, "gguf-file-header"),
+	jsonNames(pkg.SafeTensorsModelInfo{}, "safetensors-model-info"),
+	jsonNames(pkg.VcpkgManifest{}, "vcpkg-manifest"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {
@@ -163,4 +172,31 @@ func JSONLegacyName(metadata any) string {
 func ReflectTypeFromJSONName(name string) reflect.Type {
 	name = strings.ToLower(name)
 	return jsonTypes.nameToType[name]
+}
+
+// JSONNameFromString converts a Go struct name string (e.g., "pkg.AlpmDBEntry" or "AlpmDBEntry")
+// to its JSON schema name (e.g., "alpm-db-entry"). Returns empty string if not found.
+func JSONNameFromString(typeName string) string {
+	// strip "pkg." prefix if present
+	typeName = strings.TrimPrefix(typeName, "pkg.")
+
+	// look through all types to find matching struct name
+	for typ, jsonName := range jsonTypes.typeToName {
+		if typ.Name() == typeName {
+			return jsonName
+		}
+	}
+	return ""
+}
+
+// ToUpperCamelCase converts kebab-case to UpperCamelCase
+// e.g., "alpm-db-entry" -> "AlpmDbEntry"
+func ToUpperCamelCase(kebab string) string {
+	parts := strings.Split(kebab, "-")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[0:1]) + part[1:]
+		}
+	}
+	return strings.Join(parts, "")
 }

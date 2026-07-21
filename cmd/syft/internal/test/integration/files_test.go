@@ -22,7 +22,7 @@ import (
 func TestFileCataloging_Default(t *testing.T) {
 	cfg := options.DefaultCatalog().ToSBOMConfig(clio.Identification{})
 	cfg = cfg.WithFilesConfig(filecataloging.DefaultConfig())
-	sbom, _ := catalogDirectoryWithConfig(t, "test-fixtures/files", cfg)
+	sbom, _ := catalogDirectoryWithConfig(t, "testdata/files", cfg)
 
 	var metadata map[file.Coordinates]file.Metadata
 
@@ -48,13 +48,13 @@ func TestFileCataloging_AllFiles(t *testing.T) {
 			SkipFilesAboveSize: 30,
 		},
 	})
-	sbom, _ := catalogDirectoryWithConfig(t, "test-fixtures/files", cfg)
+	sbom, _ := catalogDirectoryWithConfig(t, "testdata/files", cfg)
 
 	pwd, err := os.Getwd()
 	require.NoError(t, err)
 
 	testPath := func(path string) string {
-		return filepath.Join(pwd, "test-fixtures/files", path)
+		return filepath.Join(pwd, "testdata/files", path)
 	}
 
 	metadata := map[file.Coordinates]file.Metadata{

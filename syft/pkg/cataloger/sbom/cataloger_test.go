@@ -402,7 +402,7 @@ func Test_parseSBOM(t *testing.T) {
 	}{
 		{
 			name:              "parse syft JSON",
-			fixture:           "test-fixtures/alpine/syft-json",
+			fixture:           "testdata/alpine/syft-json",
 			wantPkgs:          expectedPkgs,
 			wantRelationships: expectedRelationships,
 		},
@@ -426,7 +426,7 @@ func Test_Cataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain sbom files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"bom",
 				"sbom",
@@ -455,7 +455,7 @@ func Test_Cataloger_Globs(t *testing.T) {
 
 func Test_corruptSBOM(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/app.spdx.json").
+		FromFile(t, "testdata/glob-paths/app.spdx.json").
 		WithError().
 		TestParser(t, parseSBOM)
 }

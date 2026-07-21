@@ -24,7 +24,12 @@ type ELFBinaryPackageNoteJSONPayload struct {
 	Architecture string `json:"architecture,omitempty"`
 
 	// OSCPE is a CPE name for the OS, typically corresponding to CPE_NAME in os-release (e.g. cpe:/o:fedoraproject:fedora:33)
+	//
+	// Deprecated: in Syft 2.0 the struct tag will be corrected to `osCpe` to match the systemd spec casing.
 	OSCPE string `json:"osCPE,omitempty"`
+
+	// AppCpe is a CPE name for the upstream Application, as found in NVD CPE search (e.g. cpe:2.3:a:gnu:coreutils:5.0)
+	AppCpe string `json:"appCpe,omitempty"`
 
 	// OS is the OS name, typically corresponding to ID in os-release (e.g. "fedora")
 	OS string `json:"os,omitempty"`

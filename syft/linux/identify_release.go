@@ -54,6 +54,12 @@ var identityFiles = []parseEntry{
 	// /////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
+// after a parser function returns a Release, it may have incomplete information; supplementers can be used to
+// fill in missing details based on other files present in the filesystem
+var supplementers = []func(file.Resolver, *Release){
+	supplementDebianVersion,
+}
+
 // IdentifyRelease parses distro-specific files to discover and raise linux distribution release details.
 func IdentifyRelease(resolver file.Resolver) *Release {
 	logger := log.Nested("operation", "identify-release")
@@ -67,6 +73,9 @@ func IdentifyRelease(resolver file.Resolver) *Release {
 		for _, location := range locations {
 			release := tryParseReleaseInfo(resolver, location, logger, entry)
 			if release != nil {
+				for _, supplementer := range supplementers {
+					supplementer(resolver, release)
+				}
 				return release
 			}
 		}
@@ -83,7 +92,7 @@ func tryParseReleaseInfo(resolver file.Resolver, location file.Location, logger 
 	}
 	defer internal.CloseAndLogError(contentReader, location.AccessPath)
 
-	content, err := io.ReadAll(contentReader)
+	content, err := io.ReadAll(io.LimitReader(contentReader, 5*1024*1024))
 	if err != nil {
 		logger.WithFields("error", err, "path", location.RealPath).Trace("unable to read contents")
 		return nil
@@ -191,13 +200,26 @@ func parseRedhatRelease(contents string) (*Release, error) {
 	case strings.HasPrefix(id, "centos"):
 		// ignore the parenthetical version information
 		version = versionID
+	case strings.HasPrefix(id, "rocky linux"):
+		id = "rocky"
+	case strings.HasPrefix(id, "scientific linux"):
+		id = "scientific"
+	}
+
+	idLike := []string{id}
+
+	// Because this is the RedHat release file, assume that this distro is a rhel clone and
+	// add `rhel` to the idLike slice.  This ensures that vulnerability matching will at least
+	// fall back to rhel if nothing more specific can be identified
+	if id != "rhel" {
+		idLike = append(idLike, "rhel")
 	}
 
 	return &Release{
 		PrettyName: contents,
 		Name:       name,
 		ID:         id,
-		IDLike:     []string{id},
+		IDLike:     idLike,
 		Version:    version,
 		VersionID:  versionID,
 	}, nil

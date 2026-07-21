@@ -23,4 +23,5 @@ type CpeList struct {
 	CpeItems []CpeItem `xml:"cpe-item"`
 }
 
-const cpeDictionaryURL = "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz"
+// cpeDictionaryURL is deprecated - we now use the NVD Products API
+// const cpeDictionaryURL = "https://nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml.gz"

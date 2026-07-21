@@ -11,7 +11,7 @@ import (
 )
 
 func TestNpmPackageLockDirectory(t *testing.T) {
-	sbom, _ := catalogDirectory(t, "test-fixtures/npm-lock")
+	sbom, _ := catalogDirectory(t, "testdata/npm-lock")
 
 	foundPackages := strset.New()
 
@@ -32,10 +32,11 @@ func TestNpmPackageLockDirectory(t *testing.T) {
 }
 
 func TestYarnPackageLockDirectory(t *testing.T) {
-	sbom, _ := catalogDirectory(t, "test-fixtures/yarn-lock")
+	sbom, _ := catalogDirectory(t, "testdata/yarn-lock")
 
 	foundPackages := strset.New()
-	expectedPackages := strset.New("async@0.9.2", "async@3.2.3", "merge-objects@1.0.5", "should-type@1.3.0", "@4lolo/resize-observer-polyfill@1.5.2")
+	// merge-objects and should-type are devDependencies in package.json and are excluded by default
+	expectedPackages := strset.New("async@0.9.2", "async@3.2.3", "@4lolo/resize-observer-polyfill@1.5.2")
 
 	for actualPkg := range sbom.Artifacts.Packages.Enumerate(pkg.NpmPkg) {
 		for _, actualLocation := range actualPkg.Locations.ToSlice() {

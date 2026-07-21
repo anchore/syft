@@ -10,7 +10,7 @@ import (
 )
 
 func Test_parseWorkflowForActionUsage(t *testing.T) {
-	fixture := "test-fixtures/workflow-multi-job.yaml"
+	fixture := "testdata/workflow-multi-job.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
 	expected := []pkg.Package{
@@ -61,7 +61,7 @@ func Test_parseWorkflowForActionUsage(t *testing.T) {
 }
 
 func Test_parseWorkflowForWorkflowUsage(t *testing.T) {
-	fixture := "test-fixtures/call-shared-workflow.yaml"
+	fixture := "testdata/call-shared-workflow.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
 	expected := []pkg.Package{
@@ -98,7 +98,7 @@ func Test_parseWorkflowForWorkflowUsage(t *testing.T) {
 }
 
 func Test_parseWorkflowForVersionComments(t *testing.T) {
-	fixture := "test-fixtures/workflow-with-version-comments.yaml"
+	fixture := "testdata/workflow-with-version-comments.yaml"
 	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 
 	expected := []pkg.Package{
@@ -131,14 +131,14 @@ func Test_parseWorkflowForVersionComments(t *testing.T) {
 
 func Test_corruptActionWorkflow(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/workflow-multi-job.yaml").
+		FromFile(t, "testdata/corrupt/workflow-multi-job.yaml").
 		WithError().
 		TestParser(t, parseWorkflowForActionUsage)
 }
 
 func Test_corruptWorkflowWorkflow(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/corrupt/workflow-multi-job.yaml").
+		FromFile(t, "testdata/corrupt/workflow-multi-job.yaml").
 		WithError().
 		TestParser(t, parseWorkflowForWorkflowUsage)
 }

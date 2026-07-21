@@ -1,5 +1,9 @@
 package cpegenerate
 
+var GroupIDCorrections = map[string]string{
+	"org.lz4.java": "org.lz4",
+}
+
 var DefaultArtifactIDToGroupID = map[string]string{
 	"ant":                                         "org.apache.ant",
 	"ant-antlr":                                   "org.apache.ant",
@@ -377,7 +381,14 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"spring-jms":                                  "org.springframework",
 	"spring-jmx":                                  "org.springframework",
 	"spring-jpa":                                  "org.springframework",
-	"spring-ldap":                                 "org.springframework",
+	"spring-ldap":                                 "org.springframework.ldap",
+	"spring-ldap-core":                            "org.springframework.ldap",
+	"spring-ldap-core-tiger":                      "org.springframework.ldap",
+	"spring-ldap-ldif-batch":                      "org.springframework.ldap",
+	"spring-ldap-ldif-core":                       "org.springframework.ldap",
+	"spring-ldap-odm":                             "org.springframework.ldap",
+	"spring-ldap-test":                            "org.springframework.ldap",
+	"spring-ldap-tiger":                           "org.springframework.ldap",
 	"spring-messaging":                            "org.springframework",
 	"spring-mock":                                 "org.springframework",
 	"spring-ojb":                                  "org.springframework",

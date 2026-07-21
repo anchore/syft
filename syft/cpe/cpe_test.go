@@ -94,7 +94,7 @@ func Test_CPEParser(t *testing.T) {
 		CPEUrl    string     `json:"cpe-url"`
 		WFN       Attributes `json:"wfn"`
 	}
-	out, err := os.ReadFile("test-fixtures/cpe-data.json")
+	out, err := os.ReadFile("testdata/cpe-data.json")
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(out, &testCases))
 

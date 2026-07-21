@@ -13,16 +13,19 @@ import (
 )
 
 var _ Resolver = (*MockResolver)(nil)
+var _ OCIMediaTypeResolver = (*MockResolver)(nil)
 
 // MockResolver implements the FileResolver interface and is intended for use *only in test code*.
 // It provides an implementation that can resolve local filesystem paths using only a provided discrete list of file
 // paths, which are typically paths to test fixtures.
 type MockResolver struct {
-	locations     []Location
-	metadata      map[Coordinates]Metadata
-	mimeTypeIndex map[string][]Location
-	extension     map[string][]Location
-	basename      map[string][]Location
+	locations      []Location
+	metadata       map[Coordinates]Metadata
+	mimeTypeIndex  map[string][]Location
+	mediaTypeIndex map[string][]Location
+	extension      map[string][]Location
+	basename       map[string][]Location
+	ociRef         string
 }
 
 // NewMockResolverForPaths creates a new MockResolver, where the only resolvable
@@ -70,6 +73,49 @@ func NewMockResolverForPathsWithMetadata(metadata map[Coordinates]Metadata) *Moc
 		extension:     extension,
 		basename:      basename,
 	}
+}
+
+// NewMockResolverForOCIArtifact creates a MockResolver that can resolve files
+// by media type AND surfaces the given OCI ref via the ImageReference method.
+// Intended for tests that exercise the catalogers' OCI-artifact-aware naming
+// code paths.
+func NewMockResolverForOCIArtifact(ref string, mediaTypes map[string][]Location) *MockResolver {
+	r := NewMockResolverForMediaTypes(mediaTypes)
+	r.ociRef = ref
+	return r
+}
+
+// NewMockResolverForMediaTypes creates a MockResolver that can resolve files by media type.
+// The mediaTypes map specifies which locations should be returned for each media type.
+func NewMockResolverForMediaTypes(mediaTypes map[string][]Location) *MockResolver {
+	var locations []Location
+	mediaTypeIndex := make(map[string][]Location)
+	extension := make(map[string][]Location)
+	basename := make(map[string][]Location)
+
+	for mediaType, locs := range mediaTypes {
+		mediaTypeIndex[mediaType] = append(mediaTypeIndex[mediaType], locs...)
+		for _, l := range locs {
+			locations = append(locations, l)
+			ext := path.Ext(l.RealPath)
+			extension[ext] = append(extension[ext], l)
+			bn := path.Base(l.RealPath)
+			basename[bn] = append(basename[bn], l)
+		}
+	}
+
+	return &MockResolver{
+		locations:      locations,
+		metadata:       make(map[Coordinates]Metadata),
+		mediaTypeIndex: mediaTypeIndex,
+		extension:      extension,
+		basename:       basename,
+	}
+}
+
+// ImageReference returns the image reference associated with this mock, if any.
+func (r MockResolver) ImageReference() string {
+	return r.ociRef
 }
 
 // HasPath indicates if the given path exists in the underlying source.
@@ -185,6 +231,14 @@ func (r MockResolver) FilesByMIMEType(types ...string) ([]Location, error) {
 	var locations []Location
 	for _, ty := range types {
 		locations = append(r.mimeTypeIndex[ty], locations...)
+	}
+	return locations, nil
+}
+
+func (r MockResolver) FilesByMediaType(types ...string) ([]Location, error) {
+	var locations []Location
+	for _, ty := range types {
+		locations = append(locations, r.mediaTypeIndex[ty]...)
 	}
 	return locations, nil
 }

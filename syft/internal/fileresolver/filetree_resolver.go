@@ -190,7 +190,7 @@ func (r *FiletreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 			select {
 			case <-ctx.Done():
 				return
-			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), ref):
+			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), "", ref):
 				continue
 			}
 		}

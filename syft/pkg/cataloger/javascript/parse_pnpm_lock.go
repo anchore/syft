@@ -1,9 +1,13 @@
 package javascript
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
+	"iter"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,12 +20,16 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 // pnpmPackage holds the raw name and version extracted from the lockfile.
 type pnpmPackage struct {
-	Name    string
-	Version string
+	Name         string
+	Version      string
+	Integrity    string
+	Dependencies map[string]string
+	Dev          bool
 }
 
 // pnpmLockfileParser defines the interface for parsing different versions of pnpm lockfiles.
@@ -29,17 +37,37 @@ type pnpmLockfileParser interface {
 	Parse(version float64, data []byte) ([]pnpmPackage, error)
 }
 
+type pnpmV6PackageEntry struct {
+	Resolution   map[string]string `yaml:"resolution"`
+	Dependencies map[string]string `yaml:"dependencies"`
+	Dev          bool              `yaml:"dev"`
+}
+
 // pnpmV6LockYaml represents the structure of pnpm lockfiles for versions < 9.0.
 type pnpmV6LockYaml struct {
-	Dependencies map[string]interface{} `yaml:"dependencies"`
-	Packages     map[string]interface{} `yaml:"packages"`
+	Dependencies map[string]any                `yaml:"dependencies"`
+	Packages     map[string]pnpmV6PackageEntry `yaml:"packages"`
+}
+
+type pnpmV9SnapshotEntry struct {
+	Dependencies               map[string]string `yaml:"dependencies"`
+	Optional                   bool              `yaml:"optional"`
+	OptionalDependencies       map[string]string `yaml:"optionalDependencies"`
+	TransitivePeerDependencies []string          `yaml:"transitivePeerDependencies"`
+}
+
+type pnpmV9PackageEntry struct {
+	Resolution       map[string]string `yaml:"resolution"`
+	PeerDependencies map[string]string `yaml:"peerDependencies"`
+	Dev              bool              `yaml:"dev"`
 }
 
 // pnpmV9LockYaml represents the structure of pnpm lockfiles for versions >= 9.0.
 type pnpmV9LockYaml struct {
-	LockfileVersion string                 `yaml:"lockfileVersion"`
-	Importers       map[string]interface{} `yaml:"importers"` // Using interface{} for forward compatibility
-	Packages        map[string]interface{} `yaml:"packages"`
+	LockfileVersion string                         `yaml:"lockfileVersion"`
+	Importers       map[string]any                 `yaml:"importers"` // Using interface{} for forward compatibility
+	Packages        map[string]pnpmV9PackageEntry  `yaml:"packages"`
+	Snapshots       map[string]pnpmV9SnapshotEntry `yaml:"snapshots"`
 }
 
 type genericPnpmLockAdapter struct {
@@ -60,8 +88,8 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 
 	packages := make(map[string]pnpmPackage)
 
-	// Direct dependencies
-	for name, info := range p.Dependencies {
+	// Direct dependencies — use sorted keys for deterministic output
+	for name, info := range sortedIter(p.Dependencies) {
 		ver, err := parseVersionField(name, info)
 		if err != nil {
 			log.WithFields("package", name, "error", err).Trace("unable to parse pnpm dependency")
@@ -76,15 +104,27 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 		splitChar = "@"
 	}
 
-	// All transitive dependencies
-	for key := range p.Packages {
+	// All transitive dependencies — use sorted keys for deterministic output
+	for key, pkgInfo := range sortedIter(p.Packages) {
 		name, ver, ok := parsePnpmPackageKey(key, splitChar)
 		if !ok {
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver}
+
+		integrity := ""
+		if value, ok := pkgInfo.Resolution["integrity"]; ok {
+			integrity = value
+		}
+
+		dependencies := make(map[string]string)
+		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
+			var normalizedVersion = strings.SplitN(depVersion, "(", 2)[0]
+			dependencies[depName] = normalizedVersion
+		}
+
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrity, Dependencies: dependencies, Dev: pkgInfo.Dev}
 	}
 
 	return toSortedSlice(packages), nil
@@ -100,7 +140,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 
 	// In v9, all resolved dependencies are listed in the top-level "packages" field.
 	// The key format is like /<name>@<version> or /<name>@<version>(<peer-deps>).
-	for key := range p.Packages {
+	for key, entry := range sortedIter(p.Packages) {
 		// The separator for name and version is consistently '@' in v9+ keys.
 		name, ver, ok := parsePnpmPackageKey(key, "@")
 		if !ok {
@@ -108,7 +148,26 @@ func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
+	}
+
+	for key, snapshotInfo := range sortedIter(p.Snapshots) {
+		name, ver, ok := parsePnpmPackageKey(key, "@")
+		if !ok {
+			log.WithFields("key", key).Trace("unable to parse pnpm v9 package snapshot key")
+			continue
+		}
+		pkgKey := name + "@" + ver
+		if pkg, ok := packages[pkgKey]; ok {
+			pkg.Dependencies = make(map[string]string)
+			for name, versionSpecifier := range sortedIter(snapshotInfo.Dependencies) {
+				var normalizedVersion = strings.SplitN(versionSpecifier, "(", 2)[0]
+				pkg.Dependencies[name] = normalizedVersion
+			}
+			packages[pkgKey] = pkg
+		} else {
+			log.WithFields("package", pkgKey).Trace("package not found in packages map")
+		}
 	}
 
 	return toSortedSlice(packages), nil
@@ -124,7 +183,7 @@ func newPnpmLockfileParser(version float64) pnpmLockfileParser {
 
 // parsePnpmLock is the main parser function for pnpm-lock.yaml files.
 func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // multi-pass parse requires []byte
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
 	}
@@ -147,20 +206,23 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
 	}
 
-	packages := make([]pkg.Package, len(pnpmPkgs))
-	for i, p := range pnpmPkgs {
-		packages[i] = newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version)
+	packages := make([]pkg.Package, 0, len(pnpmPkgs))
+	for _, p := range pnpmPkgs {
+		if p.Dev && !a.cfg.IncludeDevDependencies {
+			continue
+		}
+		packages = append(packages, newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
 	}
 
-	return packages, nil, unknown.IfEmptyf(packages, "unable to determine packages")
+	return packages, dependency.Resolve(pnpmLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")
 }
 
 // parseVersionField extracts the version string from a dependency entry.
-func parseVersionField(name string, info interface{}) (string, error) {
+func parseVersionField(name string, info any) (string, error) {
 	switch v := info.(type) {
 	case string:
 		return v, nil
-	case map[string]interface{}:
+	case map[string]any:
 		if ver, ok := v["version"].(string); ok {
 			// e.g., "1.2.3(react@17.0.0)" -> "1.2.3"
 			return strings.SplitN(ver, "(", 2)[0], nil
@@ -193,6 +255,19 @@ func parsePnpmPackageKey(key, separator string) (name, version string, ok bool) 
 	name = strings.Join(parts[:len(parts)-1], separator)
 
 	return name, version, true
+}
+
+// sortedIter returns an iterator over the map entries sorted by key, ensuring deterministic iteration order.
+func sortedIter[K cmp.Ordered, V any](values map[K]V) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		keys := slices.Collect(maps.Keys(values))
+		slices.Sort(keys)
+		for _, key := range keys {
+			if !yield(key, values[key]) {
+				return
+			}
+		}
+	}
 }
 
 // toSortedSlice converts the map of packages to a sorted slice for deterministic output.

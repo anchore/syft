@@ -12,6 +12,6 @@ if ! make generate-json-schema; then
 fi
 
 if [ "$(git status --porcelain | wc -l)" -ne "0" ]; then
-  echo "  🔴 there are uncommitted changes, please commit them before running this check"
+  echo "  🔴 there is drift in json schema! Please run 'make generate-json-schema' and commit the changes."
   exit 1
 fi

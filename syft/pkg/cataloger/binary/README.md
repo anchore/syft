@@ -2,11 +2,12 @@
 
 > [!TIP]
 > **TL;DR** to add a test for a new classifier:
->  1. head to the correct directory: `cd test-fixtures`
+>  1. head to the correct directory: `cd testdata`
 >  2. add a new entry to `config.yaml` to track where to get the binary from (verify the entry with `make list`)
 >  3. run `make download` to get the binary
->  4. run `make add-snippet` and follow the prompts (use `/` to search)
->  5. add a new test case to `Test_Cataloger_PositiveCases` in `../cataloger_test.go`
+>  4. run `make add-snippet` and follow the prompts (use `/` to search; answer `y` at the `(Y/n/q)` prompt to write the snippet)
+>  5. add a new test case to `Test_Cataloger_PositiveCases` in `../classifier_cataloger_test.go`
+>  6. if you added a new classifier, regenerate the capabilities catalog from the repo root and commit the result: `go generate ./internal/capabilities`
 
 
 To test the binary cataloger we run it against a set of files ("test fixtures"). There are two kinds of test fixtures:
@@ -20,7 +21,7 @@ The upside with full binaries is that they are the "Real McCoy" and allows the b
 
 You can find the test fixtures at the following locations:
 ```
-syft/pkg/cataloger/binary/test-fixtures/
+syft/pkg/cataloger/binary/testdata/
 └── classifiers/
     ├── bin/        # full binaries
     ├── ...
@@ -32,7 +33,7 @@ And use tooling to list and manage the fixtures:
 - `make list` - list all fixtures
 - `make download` - download binaries that are not covered by a snippet
 - `make download-all` - download all binaries
-- `go run ./manager add-snippet` - add a new snippet based off of a configured binary
+- `make add-snippet` - add a new snippet based off of a configured binary
 - `capture-snippet.sh` - add a new snippet based off of a binary on your local machine (not recommended, but allowed)
 
 There is a `config.yaml` that tracks all binaries that the tests can use. This makes it possible to download it at any time from a hosted source. Today the only method allowed is to download a container image and extract files out.
@@ -74,10 +75,17 @@ from-images:
 ## Testing
 
 The test cases have been setup to allow testing against full binaries or a mix of both (default).
-To force running only against full binaries run with:
+To force running only against the original full binaries (instead of snippets), run with the
+`-must-use-original-binaries` flag:
 
 ```bash
-go test -must-use-full-binaries ./syft/pkg/cataloger/binary/test-fixtures/...
+go test -v ./syft/pkg/cataloger/binary -run Test_Cataloger_PositiveCases/ -must-use-original-binaries
+```
+
+To run against a single fixture, append its name to the `-run` filter:
+
+```bash
+go test -v ./syft/pkg/cataloger/binary -run Test_Cataloger_PositiveCases/<name> -must-use-original-binaries
 ```
 
 ## Adding a new test fixture
@@ -91,7 +99,7 @@ Even if you are adding a snippet, it is best practice to:
 
 1. Follow the steps above to [add a full binary](#adding-a-full-binary)
 
-2. Run `go run ./manager add-snippet` and follow the prompts to create a new snippet
+2. Run `make add-snippet` and follow the prompts to create a new snippet (answer `y` at the `(Y/n/q)` prompt to write the snippet)
    - you should see your binary in the list of binaries to choose from. If not, check step 2
    - if the search results in no matching snippets, you can specify your own search with `--search-for <grep-pattern>`
    - you should see a new snippet file created in `snippets/`

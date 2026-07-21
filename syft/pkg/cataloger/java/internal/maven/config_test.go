@@ -15,7 +15,7 @@ func Test_defaultMavenLocalRepoDir(t *testing.T) {
 	home, err := homedir.Dir()
 	require.NoError(t, err)
 
-	fixtures, err := filepath.Abs("test-fixtures")
+	fixtures, err := filepath.Abs("testdata")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -31,12 +31,12 @@ func Test_defaultMavenLocalRepoDir(t *testing.T) {
 		{
 			name:     "alternate dir",
 			expected: "/some/other/repo",
-			home:     "test-fixtures/local-repository-settings",
+			home:     "testdata/local-repository-settings",
 		},
 		{
 			name:     "explicit home",
 			expected: filepath.Join(fixtures, ".m2", "repository"),
-			home:     "test-fixtures",
+			home:     "testdata",
 		},
 	}
 	for _, test := range tests {
@@ -61,7 +61,7 @@ func Test_getSettingsXmlLocalRepository(t *testing.T) {
 	}{
 		{
 			expected: "/some/other/repo",
-			file:     "test-fixtures/local-repository-settings/.m2/settings.xml",
+			file:     "testdata/local-repository-settings/.m2/settings.xml",
 		},
 		{
 			expected: "",

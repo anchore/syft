@@ -12,7 +12,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-func parsePackPackage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parsePackPackage(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 
 	nameRe := regexp.MustCompile(`name\(\s*'?([^')]+)'?\s*\)`)
@@ -20,7 +20,7 @@ func parsePackPackage(_ context.Context, _ file.Resolver, _ *generic.Environment
 	homeRe := regexp.MustCompile(`home\(\s*'([^']+)'\s*\)`)
 	authorRe := regexp.MustCompile(`(author|packager)\(\s*'([^']+)'\s*(?:,\s*'([^']+)'\s*)?\)`)
 
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // regex matching requires full buffer
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse Rockspec app")
 		return nil, nil, nil
@@ -61,6 +61,8 @@ func parsePackPackage(_ context.Context, _ file.Resolver, _ *generic.Environment
 	pkgs = append(
 		pkgs,
 		newSwiplPackPackage(
+			ctx,
+			resolver,
 			entry,
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),

@@ -70,7 +70,7 @@ func TestStoreCataloger_Directory(t *testing.T) {
 		wantRel  []artifact.Relationship
 	}{
 		{
-			fixture: "test-fixtures/fixture-1",
+			fixture: "testdata/fixture-1",
 			wantPkgs: []pkg.Package{
 				{
 					Name:    "glibc",

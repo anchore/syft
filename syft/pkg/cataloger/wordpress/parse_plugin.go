@@ -38,7 +38,7 @@ type pluginData struct {
 	pkg.WordpressPluginEntry `mapstructure:",squash" json:",inline"`
 }
 
-func parseWordpressPluginFiles(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseWordpressPluginFiles(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	buffer := make([]byte, contentBufferSize)
 
@@ -81,6 +81,7 @@ func parseWordpressPluginFiles(ctx context.Context, _ file.Resolver, _ *generic.
 			pkgs,
 			newWordpressPluginPackage(
 				ctx,
+				resolver,
 				name.(string),
 				version.(string),
 				metadata,
@@ -93,7 +94,7 @@ func parseWordpressPluginFiles(ctx context.Context, _ file.Resolver, _ *generic.
 }
 
 func extractFields(in string) map[string]any {
-	var fields = make(map[string]interface{})
+	var fields = make(map[string]any)
 
 	for field, pattern := range patterns {
 		matchMap := internal.MatchNamedCaptureGroups(pattern, in)

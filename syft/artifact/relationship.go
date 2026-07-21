@@ -38,5 +38,5 @@ type Relationship struct {
 	From Identifiable
 	To   Identifiable
 	Type RelationshipType
-	Data interface{}
+	Data any
 }

@@ -640,6 +640,16 @@ func Test_DownloadLocation(t *testing.T) {
 			},
 			expected: "bzr+https://bzr.myproject.org/MyProject/trunk@2019#src/somefile.c",
 		},
+
+		{
+			name: "Github Repository",
+			input: pkg.Package{
+				Metadata: pkg.NpmPackage{
+					URL: "github:anchore/syft",
+				},
+			},
+			expected: "https://github.com/anchore/syft",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

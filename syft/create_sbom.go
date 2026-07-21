@@ -12,8 +12,10 @@ import (
 	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/licenses"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/task"
+	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -24,6 +26,8 @@ import (
 
 // CreateSBOM creates a software bill-of-materials from the given source. If the CreateSBOMConfig is nil, then
 // default options will be used.
+//
+//nolint:funlen
 func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (*sbom.SBOM, error) {
 	if cfg == nil {
 		cfg = DefaultCreateSBOMConfig()
@@ -65,10 +69,23 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		},
 	}
 
-	// setup everything we need in context: license scanner, executors, etc.
+	// check if the caller already provided a TempDir; if so, don't clean it up (the caller owns it)
+	callerOwnsTempDir := tmpdir.FromContext(ctx) != nil
+
+	// setup everything we need in context: license scanner, executors, temp storage, etc.
 	ctx, err = setupContext(ctx, cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if !callerOwnsTempDir {
+		if td := tmpdir.FromContext(ctx); td != nil {
+			defer func() {
+				if err := td.Cleanup(); err != nil {
+					log.Warnf("failed to clean up temp dir: %v", err)
+				}
+			}()
+		}
 	}
 
 	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
@@ -94,6 +111,11 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
 	// configure parallel executors
 	ctx = setContextExecutors(ctx, cfg)
+
+	// configure temp dir factory for catalogers (if not already set)
+	if tmpdir.FromContext(ctx) == nil {
+		ctx, _ = tmpdir.Root(ctx, "syft-cataloger")
+	}
 
 	// configure license scanner
 	// skip injecting a license scanner if one already set on context

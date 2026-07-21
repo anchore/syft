@@ -31,7 +31,7 @@ func encodeAuthor(p pkg.Package) string {
 	return ""
 }
 
-func decodeAuthor(author string, metadata interface{}) {
+func decodeAuthor(author string, metadata any) {
 	switch meta := metadata.(type) {
 	case *pkg.NpmPackage:
 		meta.Author = author

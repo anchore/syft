@@ -47,6 +47,8 @@ type dotnetConfig struct {
 	NuGetRepositoryURLs string `yaml:"package-nugetrepositoryurls,omitempty" json:"package-nugetrepositoryurls,omitempty" mapstructure:"package-nugetrepositoryurls"`
 
 	NuGetRepositoryCredentials dotNetProviderCredentials `yaml:"package-nugetrepository-credentials,omitempty" json:"package-nugetrepository-credentials,omitempty" mapstructure:"package-nugetrepository-credentials"`
+
+  ExcludeProjectReferences bool `mapstructure:"exclude-project-references" json:"exclude-project-references" yaml:"exclude-project-references"`
 }
 
 var _ interface {
@@ -78,6 +80,7 @@ func (o *dotnetConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchRemoteLicenses, `search for NuGet package licences by retrieving the package from a network proxy`)
 	descriptions.Add(&o.NuGetRepositoryURLs, `remote NuGet repository URLs (comma-separated) to use when retrieving NuGet packages from the network; defaults to the nuget.org-repository`)
 	descriptions.Add(&o.NuGetRepositoryCredentials, `remote NuGet package provider credentials to use when retrieving NuGet packages from the network.`)
+	descriptions.Add(&o.ExcludeProjectReferences, `exclude packages with type "project" from deps.json output (these are internal project references, not NuGet packages)`)
 }
 
 func defaultDotnetConfig() dotnetConfig {
@@ -101,5 +104,6 @@ func defaultDotnetConfig() dotnetConfig {
 		SearchRemoteLicenses:               &def.SearchRemoteLicenses,
 		NuGetRepositoryURLs:                strings.Join(def.NuGetRepositoryURLs, ","),
 		NuGetRepositoryCredentials:         providerCredentials,
+		ExcludeProjectReferences:           def.ExcludeProjectReferences,
 	}
 }

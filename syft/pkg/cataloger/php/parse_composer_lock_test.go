@@ -13,7 +13,7 @@ import (
 func TestParseComposerFileLock(t *testing.T) {
 	ctx := context.Background()
 	var expectedRelationships []artifact.Relationship
-	fixture := "test-fixtures/composer.lock"
+	fixture := "testdata/composer.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
@@ -118,7 +118,7 @@ func TestParseComposerFileLock(t *testing.T) {
 
 func Test_corruptComposerLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/composer.lock").
+		FromFile(t, "testdata/glob-paths/src/composer.lock").
 		WithError().
 		TestParser(t, parseComposerLock)
 }

@@ -18,7 +18,7 @@ func Test_findELFSecurityFeatures(t *testing.T) {
 
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/elf", fixture))
+		f, err := os.Open(filepath.Join("testdata/elf", fixture))
 		require.NoError(t, err)
 		return f
 	}
@@ -163,7 +163,7 @@ func Test_elfHasEntrypoint(t *testing.T) {
 
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}
@@ -196,7 +196,7 @@ func Test_elfHasEntrypoint(t *testing.T) {
 func Test_elfHasExports(t *testing.T) {
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}

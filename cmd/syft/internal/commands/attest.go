@@ -35,6 +35,7 @@ const (
 	attestSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp
 	attestHelp       = attestExample + attestSchemeHelp
 	cosignBinName    = "cosign"
+	jsonFormat       = "json"
 )
 
 type attestOptions struct {
@@ -58,7 +59,7 @@ func Attest(app clio.Application) *cobra.Command {
 		Use:   "attest --output [FORMAT] <IMAGE>",
 		Short: "Generate an SBOM as an attestation for the given [SOURCE] container image",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from a container image as the predicate of an in-toto attestation that will be uploaded to the image registry",
-		Example: internal.Tprintf(attestHelp, map[string]interface{}{
+		Example: internal.Tprintf(attestHelp, map[string]any{
 			"appName": id.Name,
 			"command": "attest",
 		}),
@@ -93,9 +94,7 @@ func defaultAttestOutputOptions() options.Output {
 			string(spdxtagvalue.ID),
 		},
 		Outputs: []string{syftjson.ID.String()},
-		OutputFile: options.OutputFile{ //nolint:staticcheck
-			Enabled: false, // explicitly not allowed
-		},
+		// OutputFile is omitted (defaults to Enabled: false, explicitly not allowed for attestation)
 		Format: options.DefaultFormat(),
 	}
 }
@@ -240,7 +239,7 @@ func predicateType(outputName string) string {
 		return "cyclonedx"
 	case "spdx-tag-value", "spdx-tv":
 		return "spdx"
-	case "spdx-json", "json":
+	case "spdx-json", jsonFormat:
 		return "spdxjson"
 	default:
 		return "custom"
@@ -253,7 +252,6 @@ func generateSBOMForAttestation(ctx context.Context, id clio.Identification, opt
 	}
 
 	src, err := getSource(ctx, opts, userInput, stereoscope.RegistryTag)
-
 	if err != nil {
 		return nil, err
 	}

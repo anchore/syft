@@ -35,6 +35,10 @@ type CatalogerConfig struct {
 	SearchRemoteLicenses       bool                          `mapstructure:"search-remote-licenses" json:"search-remote-licenses" yaml:"search-remote-licenses"`
 	NuGetRepositoryURLs        []string                      `mapstructure:"package-nugetrepositoryurls" json:"package-nugetrepositoryurls,omitempty" yaml:"package-nugetrepositoryurls,omitempty"`
 	NuGetRepositoryCredentials []credential.SimpleCredential `mapstructure:"package-nugetrepository-credentials" json:"package-nugetrepository-credentials,omitempty" yaml:"package-nugetrepository-credentials,omitempty"`
+	// ExcludeProjectReferences excludes packages with type "project" from deps.json output.
+	// These are internal project references, not external NuGet packages.
+	// app-config: dotnet.exclude-project-references
+	ExcludeProjectReferences bool `mapstructure:"exclude-project-references" json:"exclude-project-references" yaml:"exclude-project-references"`
 }
 
 func (c CatalogerConfig) WithDepPackagesMustHaveDLL(requireDlls bool) CatalogerConfig {
@@ -99,6 +103,8 @@ func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) Ca
 		}
 	}
 
+func (c CatalogerConfig) WithExcludeProjectReferences(exclude bool) CatalogerConfig {
+	c.ExcludeProjectReferences = exclude
 	return c
 }
 
@@ -113,5 +119,6 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		SearchRemoteLicenses:               false,
 		NuGetRepositoryURLs:                []string{defaultNuGetProvider},
 		NuGetRepositoryCredentials:         []credential.SimpleCredential{},
+		ExcludeProjectReferences:           true,
 	}
 }

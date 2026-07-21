@@ -385,8 +385,8 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 			// we cannot directly concatenate ".." to "/root/symlink",however,
 			// the parent directory of linkTarget should be "/root"
 			for strings.HasPrefix(dir, "..") {
-				if strings.HasPrefix(dir, "../") {
-					dir = strings.TrimPrefix(dir, "../")
+				if after, ok := strings.CutPrefix(dir, "../"); ok {
+					dir = after
 				} else {
 					dir = strings.TrimPrefix(dir, "..")
 				}

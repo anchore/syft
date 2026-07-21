@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/iancoleman/orderedmap"
 	"github.com/invopop/jsonschema"
+	orderedmap "github.com/pb33f/ordered-map/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -373,8 +373,8 @@ func TestWarnMissingDescriptions(t *testing.T) {
 }
 
 // helper to create an ordered map from a regular map
-func newOrderedMap(m map[string]*jsonschema.Schema) *orderedmap.OrderedMap {
-	om := orderedmap.New()
+func newOrderedMap(m map[string]*jsonschema.Schema) *orderedmap.OrderedMap[string, *jsonschema.Schema] {
+	om := orderedmap.New[string, *jsonschema.Schema]()
 	for k, v := range m {
 		om.Set(k, v)
 	}

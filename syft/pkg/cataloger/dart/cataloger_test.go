@@ -14,7 +14,7 @@ func TestPubspecLockCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain pubspec lock files",
-			fixture: "test-fixtures/glob-paths/lock",
+			fixture: "testdata/glob-paths/lock",
 			expected: []string{
 				"src/pubspec.lock",
 			},
@@ -39,7 +39,7 @@ func TestPubspecCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain pubspec files",
-			fixture: "test-fixtures/glob-paths/spec",
+			fixture: "testdata/glob-paths/spec",
 			expected: []string{
 				"pubspec.yml",
 				"pubspec.yaml",

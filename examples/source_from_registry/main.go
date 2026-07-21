@@ -15,6 +15,7 @@ func main() {
 	image := "alpine:3.19"
 
 	src, _ := syft.GetSource(context.Background(), image, syft.DefaultGetSourceConfig().WithSources("registry"))
+	defer src.Close()
 
 	sbom, _ := syft.CreateSBOM(context.Background(), src, syft.DefaultCreateSBOMConfig())
 

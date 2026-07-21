@@ -1,26 +1,27 @@
 name: "Bootstrap"
+description: "Bootstrap all syft tools and dependencies on top of go-make's setup action"
 
-description: "Bootstrap all tools and dependencies"
+# This action is a thin wrapper around anchore/go-make/.github/actions/setup which
+# already handles checkout, setup-go, restore-only build/mod cache, and tool cache.
+# We add the syft-specific extras here: apt packages and the test fixture cache.
+
 inputs:
   go-version:
-    description: "Go version to install"
+    description: "Go version to install (passed to go-make/setup)"
     required: true
-    default: ">= 1.24"
-  go-dependencies:
-    description: "Download go dependencies"
+    default: "1.26.2"
+  cache-key-prefix:
+    description: "Prefix all cache keys with this value (passed to go-make/setup)"
+    required: true
+    default: "v1"
+  cache-enabled:
+    description: "Enable build/mod and tool caching (passed to go-make/setup)"
     required: true
     default: "true"
-  cache-key-prefix:
-    description: "Prefix all cache keys with this value"
-    required: true
-    default: "181053ac82"
   download-test-fixture-cache:
     description: "Download test fixture cache from OCI and github actions"
     required: true
     default: "false"
-  tools:
-    description: "whether to install tools"
-    default: "true"
   bootstrap-apt-packages:
     description: "Space delimited list of tools to install via apt"
     default: "libxml2-utils"
@@ -28,29 +29,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # note: go mod and build is automatically cached on default with v4+
-    - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
-      if: inputs.go-version != ''
+    - name: Setup go + go-make tooling
+      uses: anchore/go-make/.github/actions/setup@430e2175bb166bfd138ef75466adbcc8ddab875f # v0.8.0
       with:
         go-version: ${{ inputs.go-version }}
+        cache-key-prefix: ${{ inputs.cache-key-prefix }}
+        cache-enabled: ${{ inputs.cache-enabled }}
 
-    - name: Restore tool cache
-      if: inputs.tools == 'true'
-      id: tool-cache
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-      with:
-        path: ${{ github.workspace }}/.tool
-        key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-tool-${{ hashFiles('.binny.yaml') }}
-
-    - name: Install project tools
+    - name: Install binny-managed tools
       shell: bash
-      if: inputs.tools == 'true'
-      run: make tools
-
-    - name: Install go dependencies
-      if: inputs.go-dependencies == 'true'
-      shell: bash
-      run: make ci-bootstrap-go
+      run: make binny:install
 
     - name: Install apt packages
       if: inputs.bootstrap-apt-packages != ''
@@ -61,9 +49,18 @@ runs:
         IFS=' ' read -ra packages <<< "$APT_PACKAGES"
         DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${packages[@]}"
 
+    # ORAS cache: restore-only on non-default branches / forks
     - name: Restore ORAS cache from github actions
-      if: inputs.download-test-fixture-cache == 'true'
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      if: ${{ inputs.download-test-fixture-cache == 'true' && (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) || github.event.repository.fork == true) }}
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ github.workspace }}/.tmp/oras-cache
+        key: ${{ inputs.cache-key-prefix }}-oras-cache
+
+    # ORAS cache: restore + save on the default branch of the canonical repo only.
+    - name: Restore and save ORAS cache from github actions
+      if: ${{ inputs.download-test-fixture-cache == 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.event.repository.fork == false }}
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ github.workspace }}/.tmp/oras-cache
         key: ${{ inputs.cache-key-prefix }}-oras-cache

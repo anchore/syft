@@ -10,7 +10,7 @@ import (
 )
 
 func Test_HomebrewCataloger_Globs(t *testing.T) {
-	fixture := "test-fixtures/install-example"
+	fixture := "testdata/install-example"
 
 	expected := []string{
 		"opt/homebrew/Cellar/foo/1.2.3/.brew/foo.rb",
@@ -33,7 +33,7 @@ func Test_HomebrewCataloger(t *testing.T) {
 	}{
 		{
 			name: "go case",
-			path: "test-fixtures/install-example",
+			path: "testdata/install-example",
 			expected: []pkg.Package{
 				{
 					Name:    "bar",

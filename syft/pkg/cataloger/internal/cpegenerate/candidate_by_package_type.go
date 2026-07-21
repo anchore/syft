@@ -198,6 +198,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		// NPM packages
 		{
 			pkg.NpmPkg,
+			candidateKey{PkgName: "next"},
+			candidateAddition{AdditionalProducts: []string{"next.js"}, AdditionalVendors: []string{"vercel"}},
+		},
+		{
+			pkg.NpmPkg,
 			candidateKey{PkgName: "hapi"},
 			candidateAddition{AdditionalProducts: []string{"hapi_server_framework"}},
 		},
@@ -215,6 +220,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.NpmPkg,
 			candidateKey{PkgName: "mustache"},
 			candidateAddition{AdditionalProducts: []string{"mustache.js"}},
+		},
+		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateAddition{AdditionalVendors: []string{"redis.js"}},
 		},
 
 		// Gem packages
@@ -407,6 +417,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 		},
 		{
 			pkg.ApkPkg,
+			candidateKey{PkgName: "libavif"},
+			candidateAddition{AdditionalVendors: []string{"aomedia"}},
+		},
+		{
+			pkg.ApkPkg,
 			candidateKey{PkgName: "bind"},
 			candidateAddition{AdditionalVendors: []string{"isc"}},
 		},
@@ -497,6 +512,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ConanPkg,
 			candidateKey{PkgName: "poco"},
 			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
+		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "libxml2"},
+			candidateAddition{AdditionalVendors: []string{"xmlsoft"}},
 		},
 	})
 

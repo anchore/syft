@@ -33,8 +33,17 @@ type encoder struct {
 func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 	// TODO: revisit this... should no template file be an error or simply render an empty result? or render the json output?
 	// Note: do not check for the existence of the template file here, as the default encoder cannot provide one.
+	// start from the hermetic (repeatable) sprig map, which omits functions that reach into the
+	// environment or network (env, expandenv, getHostByName), then re-expose just the date/time
+	// helpers requested in issue #2372. Allowlisting here keeps the user-template trust boundary
+	// safe even if sprig adds new non-hermetic functions in the future.
 	f := sprig.HermeticTxtFuncMap()
-	f["getLastIndex"] = func(collection interface{}) int {
+	full := sprig.TxtFuncMap()
+	for _, name := range []string{"now", "date", "dateInZone", "dateModify", "date_in_zone", "date_modify", "htmlDate", "htmlDateInZone"} {
+		f[name] = full[name]
+	}
+
+	f["getLastIndex"] = func(collection any) int {
 		if v := reflect.ValueOf(collection); v.Kind() == reflect.Slice {
 			return v.Len() - 1
 		}
@@ -42,7 +51,7 @@ func NewFormatEncoder(cfg EncoderConfig) (sbom.FormatEncoder, error) {
 		return 0
 	}
 	// Checks if a field is defined
-	f["hasField"] = func(obj interface{}, field string) bool {
+	f["hasField"] = func(obj any, field string) bool {
 		t := reflect.TypeOf(obj)
 		_, ok := t.FieldByName(field)
 		return ok

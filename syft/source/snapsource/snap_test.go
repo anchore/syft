@@ -508,78 +508,109 @@ func TestDownloadSnap(t *testing.T) {
 
 func TestParseSnapRequest(t *testing.T) {
 	tests := []struct {
-		name            string
-		request         string
-		expectedName    string
-		expectedChannel string
+		name             string
+		request          string
+		expectedName     string
+		expectedRevision int
+		expectedChannel  string
+		expectedError    require.ErrorAssertionFunc
 	}{
 		{
 			name:            "snap name only - uses default channel",
 			request:         "etcd",
 			expectedName:    "etcd",
 			expectedChannel: "stable",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap with beta channel",
 			request:         "etcd@beta",
 			expectedName:    "etcd",
 			expectedChannel: "beta",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap with edge channel",
 			request:         "etcd@edge",
 			expectedName:    "etcd",
 			expectedChannel: "edge",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap with version track",
 			request:         "etcd@2.3/stable",
 			expectedName:    "etcd",
 			expectedChannel: "2.3/stable",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap with complex channel path",
 			request:         "mysql@8.0/candidate",
 			expectedName:    "mysql",
 			expectedChannel: "8.0/candidate",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap with multiple @ symbols - only first is delimiter",
 			request:         "app@beta@test",
 			expectedName:    "app",
 			expectedChannel: "beta@test",
+			expectedError:   require.NoError,
+		},
+		{
+			name:             "snap with revision",
+			request:          "etcd:249",
+			expectedName:     "etcd",
+			expectedRevision: 249,
+			expectedError:    require.NoError,
+		},
+		{
+			name:             "snap with revision so the channel doesn't work",
+			request:          "etcd:249@2.3/beta",
+			expectedName:     "etcd",
+			expectedRevision: 249,
+			expectedError:    require.NoError,
 		},
 		{
 			name:            "empty snap name with channel",
 			request:         "@stable",
 			expectedName:    "",
 			expectedChannel: "stable",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap name with empty channel - uses default",
 			request:         "etcd@",
 			expectedName:    "etcd",
 			expectedChannel: "stable",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "hyphenated snap name",
 			request:         "hello-world@stable",
 			expectedName:    "hello-world",
 			expectedChannel: "stable",
+			expectedError:   require.NoError,
 		},
 		{
 			name:            "snap name with numbers",
 			request:         "app123",
 			expectedName:    "app123",
 			expectedChannel: "stable",
+			expectedError:   require.NoError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			name, channel := parseSnapRequest(tt.request)
+			name, revision, channel, err := parseSnapRequest(tt.request)
 			assert.Equal(t, tt.expectedName, name)
-			assert.Equal(t, tt.expectedChannel, channel)
+			if tt.expectedRevision != NotSpecifiedRevision {
+				assert.Equal(t, tt.expectedRevision, revision)
+			} else {
+				assert.Equal(t, tt.expectedChannel, channel)
+			}
+			require.NoError(t, err)
 		})
 	}
 }

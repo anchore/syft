@@ -14,7 +14,7 @@ import (
 
 func TestAlpmUnknowns(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/installed").
+		FromDirectory(t, "testdata/installed").
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.AlpmFileRecord{}, "Time")).
 		WithError().
 		TestCataloger(t, NewDBCataloger())
@@ -304,7 +304,7 @@ func TestAlpmCataloger(t *testing.T) {
 	}
 
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/installed").
+		FromDirectory(t, "testdata/installed").
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.AlpmFileRecord{}, "Time")).
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewDBCataloger())
@@ -319,7 +319,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain description files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"var/lib/pacman/local/base-1.0/desc",
 				"var/lib/pacman/local/dive-0.10.0/desc",

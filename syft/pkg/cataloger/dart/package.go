@@ -1,9 +1,12 @@
 package dart
 
 import (
+	"context"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...file.Location) pkg.Package {
@@ -29,7 +32,7 @@ func newPubspecLockPackage(name string, raw pubspecLockPackage, locations ...fil
 	return p
 }
 
-func newPubspecPackage(raw pubspecPackage, locations ...file.Location) pkg.Package {
+func newPubspecPackage(ctx context.Context, resolver file.Resolver, raw pubspecPackage, locations ...file.Location) pkg.Package {
 	var env *pkg.DartPubspecEnvironment
 	if raw.Environment.SDK != "" || raw.Environment.Flutter != "" {
 		// this is required only after pubspec v2, but might have been optional before this
@@ -57,6 +60,8 @@ func newPubspecPackage(raw pubspecPackage, locations ...file.Location) pkg.Packa
 	}
 
 	p.SetID()
+
+	p = licenses.RelativeToPackage(ctx, resolver, p)
 
 	return p
 }

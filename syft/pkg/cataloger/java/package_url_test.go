@@ -22,7 +22,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -50,7 +50,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -78,7 +78,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -108,7 +108,7 @@ func Test_packageURL(t *testing.T) {
 				Language: pkg.Java,
 				Type:     pkg.JavaPkg,
 				Metadata: pkg.JavaArchive{
-					VirtualPath: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
+					VirtualPath: "testdata/java-builds/packages/example-java-app-maven-0.1.0.jar",
 					Manifest: &pkg.JavaManifest{
 						Main: []pkg.KeyValue{
 							{
@@ -170,6 +170,20 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			pkgName:  "ant-antlr",
 			metadata: pkg.JavaArchive{},
 			expect:   "org.apache.ant",
+		},
+		{
+			// regression for github.com/anchore/syft/issues/4030: spring-ldap artifacts
+			// live under org.springframework.ldap, not org.springframework
+			name:     "known package list spring-ldap-core",
+			pkgName:  "spring-ldap-core",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.springframework.ldap",
+		},
+		{
+			name:     "known package list spring-ldap",
+			pkgName:  "spring-ldap",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.springframework.ldap",
 		},
 		{
 			name: "java manifest",

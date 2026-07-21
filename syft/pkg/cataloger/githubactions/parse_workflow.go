@@ -3,7 +3,6 @@ package githubactions
 import (
 	"context"
 	"fmt"
-	"io"
 	"regexp"
 
 	"go.yaml.in/yaml/v3"
@@ -19,6 +18,8 @@ var (
 	_ generic.Parser = parseWorkflowForActionUsage
 	_ generic.Parser = parseWorkflowForWorkflowUsage
 )
+
+var versionRegex = regexp.MustCompile(`v?\d+(\.\d+)*`)
 
 type workflowDef struct {
 	Jobs map[string]workflowJobDef `yaml:"jobs"`
@@ -41,14 +42,10 @@ type stepDef struct {
 }
 
 func parseWorkflowForWorkflowUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contents, errs := io.ReadAll(reader)
-	if errs != nil {
-		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", errs)
-	}
-
 	// parse the yaml file into a generic node to preserve comments
 	var node yaml.Node
-	if errs = yaml.Unmarshal(contents, &node); errs != nil {
+	var errs error
+	if errs = yaml.NewDecoder(reader).Decode(&node); errs != nil {
 		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", errs)
 	}
 
@@ -79,14 +76,10 @@ func parseWorkflowForWorkflowUsage(_ context.Context, _ file.Resolver, _ *generi
 }
 
 func parseWorkflowForActionUsage(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	contents, errs := io.ReadAll(reader)
-	if errs != nil {
-		return nil, nil, fmt.Errorf("unable to read yaml workflow file: %w", errs)
-	}
-
 	// parse the yaml file into a generic node to preserve comments
 	var node yaml.Node
-	if errs = yaml.Unmarshal(contents, &node); errs != nil {
+	var errs error
+	if errs = yaml.NewDecoder(reader).Decode(&node); errs != nil {
 		return nil, nil, fmt.Errorf("unable to parse yaml workflow file: %w", errs)
 	}
 
@@ -194,7 +187,6 @@ func processUsesNode(node *yaml.Node, wf *workflowDef, currentJob *string, curre
 	}
 
 	if comment != "" {
-		versionRegex := regexp.MustCompile(`v?\d+(\.\d+)*`)
 		versionMatch := versionRegex.FindString(comment)
 
 		if versionMatch != "" {

@@ -132,7 +132,7 @@ func Test_JavascriptCataloger(t *testing.T) {
 	}
 
 	pkgtest.NewCatalogTester().
-		FromDirectory(t, "test-fixtures/pkg-lock").
+		FromDirectory(t, "testdata/pkg-lock").
 		Expects(expectedPkgs, nil).
 		TestCataloger(t, NewLockCataloger(CatalogerConfig{}))
 
@@ -146,7 +146,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain package files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/package.json",
 			},
@@ -171,11 +171,13 @@ func Test_LockCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain package files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
+				"src/deno.lock",
 				"src/package-lock.json",
 				"src/pnpm-lock.yaml",
 				"src/yarn.lock",
+				"src/bun.lock",
 			},
 		},
 	}

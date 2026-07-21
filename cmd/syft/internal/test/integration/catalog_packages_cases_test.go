@@ -97,7 +97,7 @@ var imageOnlyTestCases = []testCase{
 			"Serilog.Sinks.Console":                                 "4.0.1",
 			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
 			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
-			"TestCommon":  "1.0.0",
+			//"TestCommon":  "1.0.0",
 			"TestLibrary": "1.0.0",
 		},
 	},
@@ -274,7 +274,7 @@ var dirOnlyTestCases = []testCase{
 			"Serilog.Sinks.Console":                                 "4.0.1",
 			//"System.Diagnostics.DiagnosticSource":                   "6.0.0", // no dll claims in deps.json targets section
 			//"System.Runtime.CompilerServices.Unsafe":                "6.0.0", // no dll claims in deps.json targets section
-			"TestCommon":  "1.0.0",
+			//"TestCommon":  "1.0.0",
 			"TestLibrary": "1.0.0",
 		},
 	},

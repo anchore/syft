@@ -1,10 +1,8 @@
 name: "Validate GitHub Actions"
 
 on:
+  workflow_dispatch:
   pull_request:
-    paths:
-      - '.github/workflows/**'
-      - '.github/actions/**'
   push:
     branches:
       - main
@@ -12,8 +10,7 @@ on:
       - '.github/workflows/**'
       - '.github/actions/**'
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   zizmor:
@@ -23,13 +20,13 @@ jobs:
       contents: read
       security-events: write  # for uploading SARIF results
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
       - name: "Run zizmor"
-        uses: zizmorcore/zizmor-action@e673c3917a1aef3c65c972347ed84ccd013ecda4 # v0.2.0
+        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
         with:
-          config-file: .github/zizmor.yml
-          sarif-upload: true
+          # there is a pass/fail gate as a repo ruleset (if there is no ruleset configured then the action will pass by default)
+          advanced-security: true
           inputs: .github

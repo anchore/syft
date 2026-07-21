@@ -6,6 +6,7 @@ import (
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
 func newGemfileLockPackage(name, version string, locations ...file.Location) pkg.Package {
@@ -23,7 +24,7 @@ func newGemfileLockPackage(name, version string, locations ...file.Location) pkg
 	return p
 }
 
-func newGemspecPackage(ctx context.Context, m gemData, gemSpecLocation file.Location) pkg.Package {
+func newGemspecPackage(ctx context.Context, resolver file.Resolver, m gemData, gemSpecLocation file.Location) pkg.Package {
 	p := pkg.Package{
 		Name:      m.Name,
 		Version:   m.Version,
@@ -36,6 +37,8 @@ func newGemspecPackage(ctx context.Context, m gemData, gemSpecLocation file.Loca
 	}
 
 	p.SetID()
+
+	p = licenses.RelativeToPackage(ctx, resolver, p)
 
 	return p
 }

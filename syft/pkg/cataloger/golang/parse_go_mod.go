@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"os"
 	"path/filepath"
-	"regexp"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -20,36 +20,35 @@ import (
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-var (
-	licenseRegexp = regexp.MustCompile(`^(?i)((UN)?LICEN(S|C)E|COPYING|NOTICE).*$`)
-)
-
 type goModCataloger struct {
+	usePackagesLib  bool
 	licenseResolver goLicenseResolver
 }
 
 func newGoModCataloger(opts CatalogerConfig) *goModCataloger {
 	return &goModCataloger{
+		usePackagesLib:  opts.UsePackagesLib,
 		licenseResolver: newGoLicenseResolver(modFileCatalogerName, opts),
 	}
 }
 
 // parseGoModFile takes a go.mod and tries to resolve and lists all packages discovered.
-func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) (pkgs []pkg.Package, relationships []artifact.Relationship, err error) {
 	modDir := filepath.Dir(string(reader.Location.Reference().RealPath))
 	digests, err := parseGoSumFile(resolver, reader)
 	if err != nil {
 		log.Debugf("unable to get go.sum: %v", err)
 	}
 
-	// source analysis using go toolchain if available
-	syftSourcePackages, sourceModules, sourceDependencies, unknownErr := c.loadPackages(modDir, reader.Location)
-	catalogedModules, sourceModuleToPkg := c.catalogModules(ctx, syftSourcePackages, sourceModules, reader, digests)
-	relationships := buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
+	scanRoot := ""
+	if dir, ok := resolver.(*fileresolver.Directory); ok && dir != nil {
+		scanRoot = dir.Chroot.Base()
+	}
 
 	// base case go.mod file parsing
 	modFile, err := c.parseModFileContents(reader)
@@ -57,13 +56,28 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 		return nil, nil, err
 	}
 
-	// only use mod packages NOT found in source analysis
+	// source analysis using go toolchain if available
+	var sourceModules map[string]*packages.Module
+	var catalogedModules []pkg.Package
+
+	if c.usePackagesLib {
+		var sourcePackages map[string][]pkgInfo
+		var sourceDependencies map[string][]string
+		var sourceModuleToPkg map[string]artifact.Identifiable
+
+		sourcePackages, sourceModules, sourceDependencies, err = c.loadPackages(modDir, reader.Location)
+		catalogedModules, sourceModuleToPkg = c.catalogModules(ctx, scanRoot, sourcePackages, sourceModules, reader, digests)
+		relationships = buildModuleRelationships(catalogedModules, sourceDependencies, sourceModuleToPkg)
+	}
+
+	// only use go.mod packages NOT found in source analysis
 	goModPackages := c.createGoModPackages(ctx, resolver, modFile, sourceModules, reader, digests)
-	c.applyReplaceDirectives(ctx, resolver, modFile, goModPackages, reader, digests)
+	c.applyReplaceDirectives(ctx, resolver, modFile, sourceModules, goModPackages, reader, digests)
 	c.applyExcludeDirectives(modFile, goModPackages)
 
-	finalPkgs := c.assembleResults(catalogedModules, goModPackages)
-	return finalPkgs, relationships, unknownErr
+	pkgs = c.assembleResults(catalogedModules, goModPackages)
+
+	return pkgs, relationships, err
 }
 
 // loadPackages uses golang.org/x/tools/go/packages to get dependency information.
@@ -96,6 +110,9 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 		Mode:  packages.NeedModule | packages.NeedName | packages.NeedFiles | packages.NeedDeps | packages.NeedImports,
 		Dir:   modDir,
 		Tests: true,
+		// disable workspace mode so that we only use the go.mod in the target directory,
+		// not any parent go.work file that may exist
+		Env: append(os.Environ(), "GOWORK=off"),
 	}
 
 	// From Go documentation: "all" expands to all packages in the main module
@@ -208,12 +225,16 @@ func (c *goModCataloger) visitPackages(
 				}
 			}
 		}
-		pkgs[module.Path] = append(pkgs[module.Path], pkgInfo{
+
+		info := pkgInfo{
 			pkgPath:    p.PkgPath,
 			modulePath: module.Path,
 			pkgDir:     pkgDir,
 			moduleDir:  module.Dir,
-		})
+		}
+		if !slices.Contains(pkgs[module.Path], info) { // avoid duplicates
+			pkgs[module.Path] = append(pkgs[module.Path], info)
+		}
 		modules[p.Module.Path] = module
 
 		return true
@@ -224,6 +245,7 @@ func (c *goModCataloger) visitPackages(
 // create syft packages from Go modules found by the go toolchain
 func (c *goModCataloger) catalogModules(
 	ctx context.Context,
+	scanRoot string,
 	pkgs map[string][]pkgInfo,
 	modules map[string]*packages.Module,
 	reader file.LocationReadCloser,
@@ -243,7 +265,7 @@ func (c *goModCataloger) catalogModules(
 		}
 
 		pkgInfos := pkgs[m.Path]
-		moduleLicenses := resolveModuleLicenses(ctx, pkgInfos, afero.NewOsFs())
+		moduleLicenses := resolveModuleLicenses(ctx, scanRoot, pkgInfos, afero.NewOsFs())
 		// we do out of source lookups for module parsing
 		// locations are NOT included in the SBOM because of this
 		goModulePkg := pkg.Package{
@@ -302,7 +324,7 @@ func buildModuleRelationships(
 }
 
 func (c *goModCataloger) parseModFileContents(reader file.LocationReadCloser) (*modfile.File, error) {
-	contents, err := io.ReadAll(reader)
+	contents, err := io.ReadAll(reader) //nolint:gocritic // modfile.Parse requires []byte
 	if err != nil {
 		return nil, fmt.Errorf("failed to read go module: %w", err)
 	}
@@ -320,7 +342,7 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 	goModPackages := make(map[string]pkg.Package)
 
 	for _, m := range modFile.Require {
-		if _, exists := sourceModules[m.Mod.Path]; !exists {
+		if sourceModules == nil || sourceModules[m.Mod.Path] == nil {
 			lics := c.licenseResolver.getLicenses(ctx, resolver, m.Mod.Path, m.Mod.Version)
 			goModPkg := pkg.Package{
 				Name:      m.Mod.Path,
@@ -343,8 +365,11 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 }
 
 // applyReplaceDirectives processes replace directives from go.mod
-func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver file.Resolver, modFile *modfile.File, goModPackages map[string]pkg.Package, reader file.LocationReadCloser, digests map[string]string) {
+func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver file.Resolver, modFile *modfile.File, sourceModules map[string]*packages.Module, goModPackages map[string]pkg.Package, reader file.LocationReadCloser, digests map[string]string) {
 	for _, m := range modFile.Replace {
+		if sourceModules != nil && sourceModules[m.Old.Path] != nil {
+			continue
+		}
 		lics := c.licenseResolver.getLicenses(ctx, resolver, m.New.Path, m.New.Version)
 		var finalPath string
 		if !strings.HasPrefix(m.New.Path, ".") && !strings.HasPrefix(m.New.Path, "/") {
@@ -385,9 +410,7 @@ func (c *goModCataloger) assembleResults(catalogedPkgs []pkg.Package, goModPacka
 		pkgsSlice = append(pkgsSlice, p)
 	}
 
-	sort.SliceStable(pkgsSlice, func(i, j int) bool {
-		return pkgsSlice[i].Name < pkgsSlice[j].Name
-	})
+	pkg.Sort(pkgsSlice)
 
 	return pkgsSlice
 }

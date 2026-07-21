@@ -17,6 +17,7 @@ type ImageMetadata struct {
 	Variant        string            `json:"architectureVariant,omitempty"`
 	OS             string            `json:"os"`
 	Labels         map[string]string `json:"labels,omitempty"`
+	Annotations    map[string]string `json:"annotations,omitempty" id:"-"` // critical: do not consider annotations as an identifiable part of the source image
 }
 
 // LayerMetadata represents all static metadata that defines what a container image layer is.

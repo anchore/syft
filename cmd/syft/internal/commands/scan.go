@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
@@ -59,7 +60,9 @@ const (
 	nonImageSchemeHelp = `    {{.appName}} {{.command}} dir:path/to/yourproject                  read directly from a path on disk (any directory)
     {{.appName}} {{.command}} file:path/to/yourproject/file            read directly from a path on disk (any single file)
 `
-	scanSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp + nonImageSchemeHelp
+	modelSchemeHelp = `    {{.appName}} {{.command}} oci-model-registry:ai/llama3.2           scan an OCI model artifact from a registry (e.g. Docker Hub AI models)
+`
+	scanSchemeHelp = "\n  " + schemeHelpHeader + "\n" + imageSchemeHelp + modelSchemeHelp + nonImageSchemeHelp
 
 	scanHelp = scanExample + scanSchemeHelp
 )
@@ -90,7 +93,7 @@ func Scan(app clio.Application) *cobra.Command {
 		Use:   "scan [SOURCE]",
 		Short: "Generate an SBOM",
 		Long:  "Generate a packaged-based Software Bill Of Materials (SBOM) from container images and filesystems",
-		Example: internal.Tprintf(scanHelp, map[string]interface{}{
+		Example: internal.Tprintf(scanHelp, map[string]any{
 			"appName": id.Name,
 			"command": "scan",
 		}),
@@ -169,6 +172,11 @@ func validateArgs(cmd *cobra.Command, args []string, err string) error {
 }
 
 func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, userInput string) error {
+	scanStart := time.Now()
+	defer func() {
+		log.Infof("scan completed in %s", time.Since(scanStart).Round(time.Millisecond))
+	}()
+
 	writer, err := opts.SBOMWriter()
 	if err != nil {
 		return err
@@ -185,7 +193,6 @@ func runScan(ctx context.Context, id clio.Identification, opts *scanOptions, use
 	}
 
 	src, err := getSource(ctx, &opts.Catalog, userInput, sources...)
-
 	if err != nil {
 		return err
 	}

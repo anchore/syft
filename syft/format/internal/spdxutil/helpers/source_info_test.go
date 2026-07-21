@@ -201,6 +201,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.VcpkgPkg,
+			},
+			expected: []string{
+				"from vcpkg manifest",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.PortagePkg,
 			},
 			expected: []string{
@@ -345,10 +353,26 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.AppleAppBundlePkg,
+			},
+			expected: []string{
+				"acquired package info from Apple application bundle Info.plist",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.TerraformPkg,
 			},
 			expected: []string{
 				"acquired package info from Terraform dependency lock file",
+			},
+		},
+		{
+			input: pkg.Package{
+				Type: pkg.ModelPkg,
+			},
+			expected: []string{
+				"",
 			},
 		},
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 func TestParseCargoLock(t *testing.T) {
-	fixture := "test-fixtures/Cargo.lock"
+	fixture := "testdata/Cargo.lock"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	ansiTerm := pkg.Package{
 		Name:      "ansi_term",
@@ -326,7 +326,7 @@ func TestParseCargoLock(t *testing.T) {
 }
 
 func TestCargoLockWithGitDependencies(t *testing.T) {
-	fixture := "test-fixtures/Cargo.lock-with-git-deps"
+	fixture := "testdata/Cargo.lock-with-git-deps"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	ahoCorasick := pkg.Package{
@@ -834,7 +834,7 @@ func TestCargoLockDependencySpecification(t *testing.T) {
 
 func Test_corruptCargoLock(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/Cargo.lock").
+		FromFile(t, "testdata/glob-paths/src/Cargo.lock").
 		WithError().
 		TestParser(t, parseCargoLock)
 }

@@ -16,7 +16,7 @@ func Test_peHasEntrypoint(t *testing.T) {
 
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}
@@ -49,7 +49,7 @@ func Test_peHasEntrypoint(t *testing.T) {
 func Test_peHasExports(t *testing.T) {
 	readerForFixture := func(t *testing.T, fixture string) unionreader.UnionReader {
 		t.Helper()
-		f, err := os.Open(filepath.Join("test-fixtures/shared-info", fixture))
+		f, err := os.Open(filepath.Join("testdata/shared-info", fixture))
 		require.NoError(t, err)
 		return f
 	}

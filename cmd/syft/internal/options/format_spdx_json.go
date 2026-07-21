@@ -13,12 +13,10 @@ func DefaultFormatSPDXJSON() FormatSPDXJSON {
 }
 
 func (o FormatSPDXJSON) config(v string) spdxjson.EncoderConfig {
-	var pretty bool
+	c := spdxjson.DefaultEncoderConfig()
+	c.Version = v
 	if o.Pretty != nil {
-		pretty = *o.Pretty
+		c.Pretty = *o.Pretty
 	}
-	return spdxjson.EncoderConfig{
-		Version: v,
-		Pretty:  pretty,
-	}
+	return c
 }

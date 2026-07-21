@@ -130,6 +130,32 @@ func Test_toSyftSourceData(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "oci-model",
+			src: model.Source{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Type:    "oci-model",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: &source.Description{
+				ID:      "the-id",
+				Name:    "some-name",
+				Version: "some-version",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+		},
 		// below are regression tests for when the name/version are not provided
 		// historically we've hoisted up the name/version from the metadata, now it is a simple pass-through
 		{
@@ -185,6 +211,28 @@ func Test_toSyftSourceData(t *testing.T) {
 			expected: &source.Description{
 				ID: "the-id",
 				Metadata: source.ImageMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+		},
+		{
+			name: "oci-model - no name/version",
+			src: model.Source{
+				ID:   "the-id",
+				Type: "oci-model",
+				Metadata: source.OCIModelMetadata{
+					UserInput:      "user-input",
+					ID:             "id...",
+					ManifestDigest: "digest...",
+					MediaType:      "type...",
+				},
+			},
+			expected: &source.Description{
+				ID: "the-id",
+				Metadata: source.OCIModelMetadata{
 					UserInput:      "user-input",
 					ID:             "id...",
 					ManifestDigest: "digest...",
@@ -400,7 +448,7 @@ func Test_toSyftRelationship(t *testing.T) {
 	parentPackage := packageWithId("some-parent-id")
 	tests := []struct {
 		name          string
-		idMap         map[string]interface{}
+		idMap         map[string]any
 		idAliases     map[string]string
 		relationships model.Relationship
 		want          *artifact.Relationship
@@ -408,7 +456,7 @@ func Test_toSyftRelationship(t *testing.T) {
 	}{
 		{
 			name: "one relationship no warnings",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-child-id":  childPackage,
 				"some-parent-id": parentPackage,
 			},
@@ -426,7 +474,7 @@ func Test_toSyftRelationship(t *testing.T) {
 		},
 		{
 			name: "relationship unknown type one warning",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-child-id":  childPackage,
 				"some-parent-id": parentPackage,
 			},
@@ -442,7 +490,7 @@ func Test_toSyftRelationship(t *testing.T) {
 		},
 		{
 			name: "relationship missing child ID one warning",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-parent-id": parentPackage,
 			},
 			idAliases: map[string]string{},
@@ -457,7 +505,7 @@ func Test_toSyftRelationship(t *testing.T) {
 		},
 		{
 			name: "relationship missing parent ID one warning",
-			idMap: map[string]interface{}{
+			idMap: map[string]any{
 				"some-child-id": childPackage,
 			},
 			idAliases: map[string]string{},

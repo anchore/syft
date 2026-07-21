@@ -58,6 +58,7 @@ type AlpmDBEntry struct {
 	Depends []string `mapstructure:"depends" json:"depends,omitempty"`
 }
 
+// AlpmFileRecord represents a single file entry within an Arch Linux package with its associated metadata tracked by pacman.
 type AlpmFileRecord struct {
 	// Path is the file path relative to the filesystem root
 	Path string `mapstruture:"path" json:"path,omitempty"`

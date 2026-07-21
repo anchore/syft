@@ -1,0 +1,12 @@
+{
+  "version": "5.98.1",
+  "name": "ghost",
+  "description": "a package manager for JavaScript",
+  "homepage": "https://docs.npmjs.com/",
+  "contributors": "https://github.com/TryGhost/Ghost/graphs/contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/npm/cli"
+  },
+  "license": "Artistic-2.0"
+}

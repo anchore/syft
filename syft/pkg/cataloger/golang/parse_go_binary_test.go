@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -29,7 +30,7 @@ import (
 func runMakeTarget(t *testing.T, fixtureName string) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
-	fixtureDir := filepath.Join(cwd, "test-fixtures/", fixtureName)
+	fixtureDir := filepath.Join(cwd, "testdata/", fixtureName)
 
 	t.Logf("Generating Fixture in %q", fixtureDir)
 
@@ -84,23 +85,23 @@ func Test_getGOARCHFromBin(t *testing.T) {
 	}{
 		{
 			name:     "pe",
-			filepath: "test-fixtures/archs/binaries/hello-win-amd64",
+			filepath: "testdata/archs/binaries/hello-win-amd64",
 			// see: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 			expected: strconv.Itoa(0x8664),
 		},
 		{
 			name:     "elf-ppc64",
-			filepath: "test-fixtures/archs/binaries/hello-linux-ppc64le",
+			filepath: "testdata/archs/binaries/hello-linux-ppc64le",
 			expected: "ppc64",
 		},
 		{
 			name:     "mach-o-arm64",
-			filepath: "test-fixtures/archs/binaries/hello-mach-o-arm64",
+			filepath: "testdata/archs/binaries/hello-mach-o-arm64",
 			expected: "arm64",
 		},
 		{
 			name:     "linux-arm",
-			filepath: "test-fixtures/archs/binaries/hello-linux-arm",
+			filepath: "testdata/archs/binaries/hello-linux-arm",
 			expected: "arm",
 		},
 		{
@@ -278,7 +279,7 @@ func TestBuildGoPkgInfo(t *testing.T) {
 				{
 					Name:     "github.com/a/b/c",
 					Version:  "", // this was (devel) but we cleared it explicitly
-					PURL:     "pkg:golang/github.com/a/b#c",
+					PURL:     "pkg:golang/github.com/a/b/c",
 					Language: pkg.Go,
 					Type:     pkg.GoModulePkg,
 					Locations: file.NewLocationSet(
@@ -848,6 +849,86 @@ func TestBuildGoPkgInfo(t *testing.T) {
 			},
 		},
 		{
+			name: "parse a populated mod string and returns packages when a replace directive and synthetic main module 'command line arguments' exists",
+			mod: &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: goCompiledVersion,
+					Main:      debug.Module{Path: "command-line-arguments", Version: devel},
+					Settings: []debug.BuildSetting{
+						{Key: "GOARCH", Value: archDetails},
+						{Key: "GOOS", Value: "linux"},
+						{Key: "GOAMD64", Value: "v1"},
+					},
+					Path: "command-line-arguments",
+					Deps: []*debug.Module{
+						{
+							Path:    "example.com/mylib",
+							Version: "v0.0.0",
+							Replace: &debug.Module{
+								Path:    "./mylib",
+								Version: devel,
+							},
+						},
+						{
+							Path:    "command-line-arguments",
+							Version: devel,
+						},
+					},
+				},
+				cryptoSettings: nil,
+				arch:           archDetails,
+			},
+			expected: []pkg.Package{
+				{
+					Name:     "example.com/mylib",
+					Version:  "",
+					PURL:     "pkg:golang/example.com/mylib",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
+						MainModule:        "command-line-arguments",
+					},
+				},
+				{
+					Name:     "command-line-arguments",
+					Version:  "",
+					PURL:     "pkg:golang/command-line-arguments",
+					Language: pkg.Go,
+					Type:     pkg.GoModulePkg,
+					Locations: file.NewLocationSet(
+						file.NewLocationFromCoordinates(
+							file.Coordinates{
+								RealPath:     "/a-path",
+								FileSystemID: "layer-id",
+							},
+						).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+					),
+					Metadata: pkg.GolangBinaryBuildinfoEntry{
+						BuildSettings: pkg.KeyValues{
+							{Key: "GOARCH", Value: "amd64"},
+							{Key: "GOOS", Value: "linux"},
+							{Key: "GOAMD64", Value: "v1"},
+						},
+						GoCompiledVersion: goCompiledVersion,
+						Architecture:      archDetails,
+						H1Digest:          "",
+						MainModule:        "command-line-arguments",
+					},
+				},
+			},
+		},
+		{
 			name: "parse main mod and replace devel with pattern from binary contents",
 			cfg: func() *CatalogerConfig {
 				c := DefaultCatalogerConfig()
@@ -1341,4 +1422,115 @@ type alwaysErrorReader struct{}
 
 func (alwaysErrorReader) Read(_ []byte) (int, error) {
 	return 0, errors.New("read from always error reader")
+}
+
+func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
+	location := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"})
+
+	// the symbols a binary would carry once scanFile has extracted them: one main-package symbol, two
+	// dependency symbols from distinct packages within the same module (so the per-package keying of the
+	// emitted map is visible), and one standard-library symbol. For the "none" scope scanFile never runs,
+	// so the build info carries no symbols at all.
+	populatedSymbols := []binarySymbol{
+		{packagePath: "main", name: "main.main"},
+		{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
+		{packagePath: "github.com/foo/bar/baz", name: "github.com/foo/bar/baz.Helper"},
+		{packagePath: "net/http", name: "net/http.(*Client).Do"},
+	}
+
+	tests := []struct {
+		name           string
+		scope          cataloging.SymbolScope
+		symbols        []binarySymbol
+		wantMainSyms   map[string][]string
+		wantDepSyms    map[string][]string
+		wantStdlibSyms map[string][]string
+	}{
+		{
+			name:    "none captures nothing",
+			scope:   cataloging.SymbolScopeNone,
+			symbols: nil,
+		},
+		{
+			name:           "stdlib captures only the stdlib package",
+			scope:          cataloging.SymbolScopeStdlib,
+			symbols:        populatedSymbols,
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			name:         "all captures module and stdlib packages",
+			scope:        cataloging.SymbolScopeAll,
+			symbols:      populatedSymbols,
+			wantMainSyms: map[string][]string{"main": {"main"}},
+			wantDepSyms: map[string][]string{
+				"github.com/foo/bar":     {"Parse"},
+				"github.com/foo/bar/baz": {"Helper"},
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mod := &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.0",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "v1.0.0"},
+					Deps:      []*debug.Module{{Path: "github.com/foo/bar", Version: "v1.2.3"}},
+				},
+				arch:    "amd64",
+				symbols: tt.symbols,
+			}
+
+			c := newGoBinaryCataloger(CatalogerConfig{CaptureSymbols: tt.scope})
+			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader("")))
+			require.NoError(t, err)
+
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, mod, mod.arch, reader)
+			require.NotNil(t, mainPkg)
+			require.Len(t, pkgs, 1)
+
+			assert.Equal(t, tt.wantMainSyms, mainPkg.Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "main module symbols")
+			assert.Equal(t, tt.wantDepSyms, pkgs[0].Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "dependency symbols")
+			assert.Equal(t, tt.wantStdlibSyms, c.stdlibSymbolsFor(location.Coordinates), "recorded stdlib symbols")
+		})
+	}
+}
+
+// Test_recordStdlibSymbols_merge covers the merge path where the same binary location records stdlib
+// symbols more than once. This happens in production for universal/fat Mach-O binaries: scanFile yields
+// one build info per architecture and each is recorded under the same location coordinates.
+func Test_recordStdlibSymbols_merge(t *testing.T) {
+	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	c := newGoBinaryCataloger(CatalogerConfig{})
+
+	c.recordStdlibSymbols(coord, map[string][]string{
+		"net/http": {"(*Client).Do", "Get"},
+		"net/url":  {"Parse"},
+	})
+	// a second architecture: overlapping names (must dedup), a new name for an existing package, and a new package
+	c.recordStdlibSymbols(coord, map[string][]string{
+		"net/http": {"Get", "Post"},
+		"os":       {"Open"},
+	})
+
+	assert.Equal(t, map[string][]string{
+		"net/http": {"(*Client).Do", "Get", "Post"},
+		"net/url":  {"Parse"},
+		"os":       {"Open"},
+	}, c.stdlibSymbolsFor(coord))
+}
+
+// Test_stdlibSymbolsFor_isolation asserts the returned map is a deep copy: mutating it (or its slices)
+// must not corrupt the cataloger's guarded internal state.
+func Test_stdlibSymbolsFor_isolation(t *testing.T) {
+	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	c := newGoBinaryCataloger(CatalogerConfig{})
+	c.recordStdlibSymbols(coord, map[string][]string{"net/http": {"Get"}})
+
+	got := c.stdlibSymbolsFor(coord)
+	got["net/http"] = append(got["net/http"], "MUTATED")
+	got["net/url"] = []string{"Parse"}
+
+	assert.Equal(t, map[string][]string{"net/http": {"Get"}}, c.stdlibSymbolsFor(coord), "internal state must be unaffected by caller mutation")
 }

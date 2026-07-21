@@ -52,6 +52,17 @@ type PathResolver interface {
 	RelativeFileByPath(_ Location, path string) *Location
 }
 
+// OCIMediaTypeResolver resolves single files as a layer in an OCI artifact for a given media type.
+type OCIMediaTypeResolver interface {
+	// FilesByMediaType fetches a set of file references which the contents have been classified as one of the given Media Types.
+	// The implementation for this may vary, however, this was first implemented to classify ai globs stored in OCI images.
+	// The following considerations should be made when implementing:
+	// - only return locations to files (NOT directories)
+	// - locations for the implementer should be "/" and the fsid should be the layer digest the glob was found
+	// - locations should be used with the FileContents API to return readers to the temporary data
+	FilesByMediaType(types ...string) ([]Location, error)
+}
+
 // LocationResolver provides iteration over all file locations in a source.
 type LocationResolver interface {
 	// AllLocations returns a channel of all file references from the underlying source.

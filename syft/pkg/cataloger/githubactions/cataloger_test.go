@@ -16,7 +16,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:      "obtain all workflow and composite action files",
-			fixture:   "test-fixtures/glob",
+			fixture:   "testdata/glob",
 			cataloger: NewActionUsageCataloger(),
 			expected: []string{
 				// composite actions
@@ -29,7 +29,7 @@ func TestCataloger_Globs(t *testing.T) {
 		},
 		{
 			name:      "obtain all workflow files",
-			fixture:   "test-fixtures/glob",
+			fixture:   "testdata/glob",
 			cataloger: NewWorkflowUsageCataloger(),
 			expected: []string{
 				// workflows

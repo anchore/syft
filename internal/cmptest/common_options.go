@@ -29,7 +29,8 @@ func BuildOptions(licenseCmp LicenseComparer, locationCmp LocationComparer) []cm
 	}
 
 	return []cmp.Option{
-		cmpopts.IgnoreFields(pkg.Package{}, "id"), // note: ID is not deterministic for test purposes
+		cmpopts.IgnoreFields(pkg.Package{}, "id"),      // note: ID is not deterministic for test purposes
+		cmpopts.IgnoreFields(pkg.Package{}, "FoundBy"), // not necessary in most tests
 		cmpopts.SortSlices(pkg.Less),
 		cmpopts.SortSlices(DefaultRelationshipComparer),
 		cmp.Comparer(buildSetComparer[file.Location, file.LocationSet](locationCmp, locationSorter)),

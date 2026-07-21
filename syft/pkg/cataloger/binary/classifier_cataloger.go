@@ -64,6 +64,10 @@ func (c cataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Pac
 	var relationships []artifact.Relationship
 	var errs error
 
+	// we do not run these classifiers in parallel currently because: when determining primary vs. supporting evidence,
+	// we take preference to the classifier that was defined first, if we modify this to run in parallel,
+	// we need to retain this behavior by giving precedence to the classifier defined first in the c.classifiers list;
+	// if this is ever made parallel, we will need to account for this to have deterministic behavior
 	for _, cls := range c.classifiers {
 		log.WithFields("classifier", cls.Class).Trace("cataloging binaries")
 		newPkgs, err := catalog(resolver, cls)
@@ -101,8 +105,26 @@ func mergePackages(target *pkg.Package, extra *pkg.Package) {
 	if extra.Type != pkg.BinaryPkg && target.Type == pkg.BinaryPkg {
 		target.Type = extra.Type
 	}
-	// add the locations
-	target.Locations.Add(extra.Locations.ToSlice()...)
+	addedEvidence := false
+	// when merging locations together, we need to maintain primary vs. supporting evidence -
+	// if we are merging two packages together that have overlapping evidence, e.g. libpython
+	// which are found by 2 different classifiers, we want to deduplicate evidence for the same
+	// locations when merging so libpython is not considered primary evidence. This allows cases
+	// where we find python binary with version info coming from libpython to deduplicate the libpython
+	// entries, but also surface results for libpython separately as primary evidence when there is
+	// no python binary referencing it
+	for _, location := range extra.Locations.ToSlice() {
+		// if we already have the same location, don't include duplicates
+		if target.Locations.Contains(location) {
+			continue
+		}
+		addedEvidence = true
+		target.Locations.Add(location)
+	}
+	// only include the additional metadata if we added evidence, as it was likely duplicated e.g. libpython
+	if !addedEvidence {
+		return
+	}
 	// update the metadata to indicate which classifiers were used
 	meta, _ := target.Metadata.(pkg.BinarySignature)
 	if m, ok := extra.Metadata.(pkg.BinarySignature); ok {

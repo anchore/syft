@@ -14,7 +14,7 @@ type rockspec struct {
 
 type rockspecNode struct {
 	key   string
-	value interface{}
+	value any
 }
 
 func (r rockspecNode) Slice() []rockspecNode {
@@ -39,7 +39,7 @@ var noReturn = rockspec{
 
 // parseRockspec basic parser for rockspec
 func parseRockspecData(reader io.Reader) (rockspec, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // custom parser requires []byte
 	if err != nil {
 		return noReturn, err
 	}
@@ -63,8 +63,11 @@ func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rocksp
 
 	parsing.SkipWhitespace(data, i)
 
-	if *i >= len(data) && len(out) > 0 {
-		return nil, fmt.Errorf("unexpected end of block at %d", *i)
+	if *i >= len(data) {
+		if len(out) > 0 {
+			return nil, fmt.Errorf("unexpected end of block at %d", *i)
+		}
+		return out, nil
 	}
 
 	c := data[*i]
@@ -73,6 +76,9 @@ func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rocksp
 	if c == '-' {
 		parseComment(data, i)
 		parsing.SkipWhitespace(data, i)
+		if *i >= len(data) {
+			return out, nil
+		}
 		c = data[*i]
 	}
 
@@ -376,7 +382,7 @@ out:
 			if c != ']' {
 				return "", fmt.Errorf("unterminated literal at %d", *i)
 			}
-			buf.WriteString(fmt.Sprintf("[\"%s\"]", nested.String()))
+			fmt.Fprintf(&buf, "[\"%s\"]", nested.String())
 		case isLiteral(c):
 			buf.WriteByte(c)
 		default:
@@ -421,7 +427,7 @@ func parseComment(data []byte, i *int) {
 		// Rest of a line is a comment. Deals with CR, LF and CR/LF
 		if c == '\n' {
 			break
-		} else if c == '\r' && data[*i] == '\n' {
+		} else if c == '\r' && *i < len(data) && data[*i] == '\n' {
 			*i++
 			break
 		}

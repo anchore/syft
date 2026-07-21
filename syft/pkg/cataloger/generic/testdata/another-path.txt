@@ -1,0 +1,1 @@
+testdata/another-path.txt file contents!

@@ -17,7 +17,7 @@ func TestMD5SumInfoParsing(t *testing.T) {
 		expected []pkg.DpkgFileRecord
 	}{
 		{
-			fixture: "test-fixtures/info/zlib1g.md5sums",
+			fixture: "testdata/info/zlib1g.md5sums",
 			expected: []pkg.DpkgFileRecord{
 				{Path: "/lib/x86_64-linux-gnu/libz.so.1.2.11", Digest: &file.Digest{
 					Algorithm: "md5",
@@ -61,7 +61,7 @@ func TestConffileInfoParsing(t *testing.T) {
 		expected []pkg.DpkgFileRecord
 	}{
 		{
-			fixture: "test-fixtures/info/util-linux.conffiles",
+			fixture: "testdata/info/util-linux.conffiles",
 			expected: []pkg.DpkgFileRecord{
 				{Path: "/etc/default/hwclock", IsConfigFile: true},
 				{Path: "/etc/init.d/hwclock.sh", IsConfigFile: true},

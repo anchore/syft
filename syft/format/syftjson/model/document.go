@@ -17,8 +17,8 @@ type Document struct {
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {
-	type Alias *Document
-	aux := Alias(d)
+	type Alias Document
+	aux := (*Alias)(d)
 
 	if err := json.Unmarshal(data, aux); err != nil {
 		return fmt.Errorf("could not unmarshal syft JSON document: %w", err)
@@ -35,14 +35,23 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Descriptor describes what created the document as well as surrounding metadata
+// Descriptor identifies the tool that generated this SBOM document, including its name, version, and configuration used during catalog generation.
 type Descriptor struct {
-	Name          string      `json:"name"`
-	Version       string      `json:"version"`
-	Configuration interface{} `json:"configuration,omitempty"`
+	// Name is the name of the tool that generated this SBOM (e.g., "syft").
+	Name string `json:"name"`
+
+	// Version is the version of the tool that generated this SBOM.
+	Version string `json:"version"`
+
+	// Configuration contains the tool configuration used during SBOM generation.
+	Configuration any `json:"configuration,omitempty"`
 }
 
+// Schema specifies the JSON schema version and URL reference that defines the structure and validation rules for this document format.
 type Schema struct {
+	// Version is the JSON schema version for this document format.
 	Version string `json:"version"`
-	URL     string `json:"url"`
+
+	// URL is the URL to the JSON schema definition document.
+	URL string `json:"url"`
 }

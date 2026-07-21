@@ -14,13 +14,13 @@ import (
 )
 
 func TestParsePackageResolved(t *testing.T) {
-	fixture := "test-fixtures/Package.resolved"
+	fixture := "testdata/Package.resolved"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "swift-algorithms",
 			Version:   "1.0.0",
-			PURL:      "pkg:swift/github.com/apple/swift-algorithms.git/swift-algorithms@1.0.0",
+			PURL:      "pkg:swift/github.com/apple/swift-algorithms@1.0.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -31,7 +31,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-async-algorithms",
 			Version:   "0.1.0",
-			PURL:      "pkg:swift/github.com/apple/swift-async-algorithms.git/swift-async-algorithms@0.1.0",
+			PURL:      "pkg:swift/github.com/apple/swift-async-algorithms@0.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -42,7 +42,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-atomics",
 			Version:   "1.1.0",
-			PURL:      "pkg:swift/github.com/apple/swift-atomics.git/swift-atomics@1.1.0",
+			PURL:      "pkg:swift/github.com/apple/swift-atomics@1.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -53,7 +53,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-collections",
 			Version:   "1.0.4",
-			PURL:      "pkg:swift/github.com/apple/swift-collections.git/swift-collections@1.0.4",
+			PURL:      "pkg:swift/github.com/apple/swift-collections@1.0.4",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -64,7 +64,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-numerics",
 			Version:   "1.0.2",
-			PURL:      "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
+			PURL:      "pkg:swift/github.com/apple/swift-numerics@1.0.2",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -81,13 +81,13 @@ func TestParsePackageResolved(t *testing.T) {
 }
 
 func TestParsePackageResolvedV3(t *testing.T) {
-	fixture := "test-fixtures/PackageV3.resolved"
+	fixture := "testdata/PackageV3.resolved"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	expectedPkgs := []pkg.Package{
 		{
 			Name:      "swift-mmio",
 			Version:   "",
-			PURL:      "pkg:swift/github.com/apple/swift-mmio/swift-mmio",
+			PURL:      "pkg:swift/github.com/apple/swift-mmio",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -98,7 +98,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 		{
 			Name:      "swift-syntax",
 			Version:   "509.1.1",
-			PURL:      "pkg:swift/github.com/apple/swift-syntax.git/swift-syntax@509.1.1",
+			PURL:      "pkg:swift/github.com/apple/swift-syntax@509.1.1",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -116,7 +116,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 
 func TestParsePackageResolved_empty(t *testing.T) {
 	// regression for https://github.com/anchore/syft/issues/2225
-	fixture := "test-fixtures/empty-packages.resolved"
+	fixture := "testdata/empty-packages.resolved"
 
 	pkgtest.TestFileParser(t, fixture, parsePackageResolved, nil, nil)
 
@@ -130,14 +130,14 @@ func TestParsePackageResolved_empty(t *testing.T) {
 
 func TestParsePackageResolved_versionNotANumber(t *testing.T) {
 	// regression for https://github.com/anchore/syft/issues/2225
-	fixture := "test-fixtures/bad-version-packages.resolved"
+	fixture := "testdata/bad-version-packages.resolved"
 
 	pkgtest.NewCatalogTester().FromFile(t, fixture).WithError().TestParser(t, parsePackageResolved)
 }
 
 func Test_corruptPackageResolved(t *testing.T) {
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/bad-version-packages.resolved").
+		FromFile(t, "testdata/bad-version-packages.resolved").
 		WithError().
 		TestParser(t, parsePackageResolved)
 }

@@ -10,25 +10,55 @@ import (
 	"github.com/anchore/syft/syft/license"
 )
 
+// File represents a file discovered during cataloging with its metadata, content digests, licenses, and relationships to packages.
 type File struct {
-	ID         string             `json:"id"`
-	Location   file.Coordinates   `json:"location"`
-	Metadata   *FileMetadataEntry `json:"metadata,omitempty"`
-	Contents   string             `json:"contents,omitempty"`
-	Digests    []file.Digest      `json:"digests,omitempty"`
-	Licenses   []FileLicense      `json:"licenses,omitempty"`
-	Executable *file.Executable   `json:"executable,omitempty"`
-	Unknowns   []string           `json:"unknowns,omitempty"`
+	// ID is a unique identifier for this file within the SBOM.
+	ID string `json:"id"`
+
+	// Location is the file path and layer information where this file was found.
+	Location file.Coordinates `json:"location"`
+
+	// Metadata contains filesystem metadata such as permissions, ownership, and file type.
+	Metadata *FileMetadataEntry `json:"metadata,omitempty"`
+
+	// Contents is the file contents for small files.
+	Contents string `json:"contents,omitempty"`
+
+	// Digests contains cryptographic hashes of the file contents.
+	Digests []file.Digest `json:"digests,omitempty"`
+
+	// Licenses contains license information discovered within this file.
+	Licenses []FileLicense `json:"licenses,omitempty"`
+
+	// Executable contains executable metadata if this file is a binary.
+	Executable *file.Executable `json:"executable,omitempty"`
+
+	// Unknowns contains unknown fields for forward compatibility.
+	Unknowns []string `json:"unknowns,omitempty"`
 }
 
+// FileMetadataEntry contains filesystem-level metadata attributes such as permissions, ownership, type, and size for a cataloged file.
 type FileMetadataEntry struct {
-	Mode            int    `json:"mode"`
-	Type            string `json:"type"`
+	// Mode is the Unix file permission mode in octal format.
+	Mode int `json:"mode"`
+
+	// Type is the file type (e.g., "RegularFile", "Directory", "SymbolicLink").
+	Type string `json:"type"`
+
+	// LinkDestination is the target path for symbolic links.
 	LinkDestination string `json:"linkDestination,omitempty"`
-	UserID          int    `json:"userID"`
-	GroupID         int    `json:"groupID"`
-	MIMEType        string `json:"mimeType"`
-	Size            int64  `json:"size"`
+
+	// UserID is the file owner user ID.
+	UserID int `json:"userID"`
+
+	// GroupID is the file owner group ID.
+	GroupID int `json:"groupID"`
+
+	// MIMEType is the MIME type of the file contents.
+	MIMEType string `json:"mimeType"`
+
+	// Size is the file size in bytes.
+	Size int64 `json:"size"`
 }
 
 type auxFileMetadataEntry FileMetadataEntry
@@ -82,17 +112,31 @@ type sbomImportLegacyFileMetadataEntry struct {
 	Size            int64               `json:"Size"`
 }
 
+// FileLicense represents license information discovered within a file's contents or metadata, including the matched license text and SPDX expression.
 type FileLicense struct {
-	Value          string               `json:"value"`
-	SPDXExpression string               `json:"spdxExpression"`
-	Type           license.Type         `json:"type"`
-	Evidence       *FileLicenseEvidence `json:"evidence,omitempty"`
+	// Value is the raw license identifier or text as found in the file.
+	Value string `json:"value"`
+
+	// SPDXExpression is the parsed SPDX license expression.
+	SPDXExpression string `json:"spdxExpression"`
+
+	// Type is the license type classification (e.g., declared, concluded, discovered).
+	Type license.Type `json:"type"`
+
+	// Evidence contains supporting evidence for this license detection.
+	Evidence *FileLicenseEvidence `json:"evidence,omitempty"`
 }
 
+// FileLicenseEvidence contains supporting evidence for a license detection in a file, including the byte offset, extent, and confidence level.
 type FileLicenseEvidence struct {
+	// Confidence is the confidence score for this license detection (0-100).
 	Confidence int `json:"confidence"`
-	Offset     int `json:"offset"`
-	Extent     int `json:"extent"`
+
+	// Offset is the byte offset where the license text starts in the file.
+	Offset int `json:"offset"`
+
+	// Extent is the length of the license text in bytes.
+	Extent int `json:"extent"`
 }
 
 type intOrStringFileType struct {

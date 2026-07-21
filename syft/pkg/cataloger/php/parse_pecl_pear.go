@@ -30,8 +30,8 @@ func (p *peclPearData) ToPear() pkg.PhpPearEntry {
 	}
 }
 
-func (p *peclPearData) ToPecl() pkg.PhpPeclEntry {
-	return pkg.PhpPeclEntry(p.ToPear())
+func (p *peclPearData) ToPecl() pkg.PhpPeclEntry { //nolint:staticcheck
+	return pkg.PhpPeclEntry(p.ToPear()) //nolint:staticcheck
 }
 
 func parsePecl(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -58,7 +58,7 @@ func parsePear(ctx context.Context, _ file.Resolver, _ *generic.Environment, rea
 
 // parsePeclPearSerialized is a parser function for Pear metadata contents, returning "Default" php packages discovered.
 func parsePeclPearSerialized(reader file.LocationReadCloser) (*peclPearData, error) {
-	data, err := io.ReadAll(reader)
+	data, err := io.ReadAll(reader) //nolint:gocritic // phpserialize requires []byte
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)

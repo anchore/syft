@@ -11,11 +11,12 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 	"github.com/anchore/syft/syft/pkg/cataloger/java/internal/maven"
 )
 
 const (
-	pomXMLGlob       = "*pom.xml"
+	pomXMLGlob       = "**/*pom.xml"
 	pomCatalogerName = "java-pom-cataloger"
 )
 
@@ -65,7 +66,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 			continue
 		}
 		resolved[id] = mainPkg
-		pkgs = append(pkgs, *mainPkg)
+		pkgs = append(pkgs, licenses.RelativeToPackage(ctx, fileResolver, *mainPkg))
 	}
 
 	// catalog all dependencies
@@ -117,7 +118,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 	if err != nil {
 		log.Tracef("error resolving licenses: %v", err)
 	}
-	licenses := toPkgLicenses(ctx, &location, pomLicenses)
+	pkgLicenses := toPkgLicenses(ctx, &location, pomLicenses)
 
 	m := pkg.JavaArchive{
 		PomProject: &pkg.JavaPomProject{
@@ -137,7 +138,7 @@ func newPackageFromMavenPom(ctx context.Context, r *maven.Resolver, pom *maven.P
 		Locations: file.NewLocationSet(
 			location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		),
-		Licenses: pkg.NewLicenseSet(licenses...),
+		Licenses: pkg.NewLicenseSet(pkgLicenses...),
 		Language: pkg.Java,
 		Type:     pkg.JavaPkg,
 		FoundBy:  pomCatalogerName,
@@ -231,7 +232,7 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 	id := r.ResolveDependencyID(ctx, pom, dep)
 
 	var err error
-	var licenses []pkg.License
+	var pkgLicenses []pkg.License
 	dependencyPom, depErr := r.FindPom(ctx, id.GroupID, id.ArtifactID, id.Version)
 	if depErr != nil {
 		err = errors.Join(err, depErr)
@@ -240,7 +241,7 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 	var pomProject *pkg.JavaPomProject
 	if dependencyPom != nil {
 		depLicenses, _ := r.ResolveLicenses(ctx, dependencyPom)
-		licenses = append(licenses, toPkgLicenses(ctx, nil, depLicenses)...)
+		pkgLicenses = append(pkgLicenses, toPkgLicenses(ctx, nil, depLicenses)...)
 		pomProject = &pkg.JavaPomProject{
 			Parent:      pomParent(ctx, r, dependencyPom),
 			GroupID:     id.GroupID,
@@ -265,7 +266,7 @@ func newPackageFromDependency(ctx context.Context, r *maven.Resolver, pom *maven
 		Name:      id.ArtifactID,
 		Version:   id.Version,
 		Locations: file.NewLocationSet(locations...),
-		Licenses:  pkg.NewLicenseSet(licenses...),
+		Licenses:  pkg.NewLicenseSet(pkgLicenses...),
 		PURL:      packageURL(id.ArtifactID, id.Version, m),
 		Language:  pkg.Java,
 		Type:      pkg.JavaPkg, // TODO: should we differentiate between packages from jar/war/zip versus packages from a pom.xml that were not installed yet?

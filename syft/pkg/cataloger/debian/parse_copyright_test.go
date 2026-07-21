@@ -2,6 +2,7 @@ package debian
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,38 +15,43 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 		expected []string
 	}{
 		{
-			fixture: "test-fixtures/copyright/libc6",
-			// note: there are other licenses in this file that are not matched --we don't do full text license identification yet
-			expected: []string{"GPL-2", "LGPL-2.1"},
+			// no Format header; not machine-readable, returns nil
+			fixture:  "testdata/copyright/libc6",
+			expected: nil,
 		},
 		{
-			fixture:  "test-fixtures/copyright/trilicense",
-			expected: []string{"GPL-2", "LGPL-2.1", "MPL-1.1"},
+			// no Format header; not machine-readable, returns nil
+			fixture:  "testdata/copyright/trilicense",
+			expected: nil,
 		},
 		{
-			fixture:  "test-fixtures/copyright/liblzma5",
+			fixture:  "testdata/copyright/liblzma5",
 			expected: []string{"Autoconf", "GPL-2", "GPL-2+", "GPL-3", "LGPL-2", "LGPL-2.1", "LGPL-2.1+", "PD", "PD-debian", "config-h", "noderivs", "permissive-fsf", "permissive-nowarranty", "probably-PD"},
 		},
 		{
-			fixture:  "test-fixtures/copyright/libaudit-common",
+			fixture:  "testdata/copyright/libaudit-common",
 			expected: []string{"GPL-1", "GPL-2", "LGPL-2.1"},
 		},
 		{
-			fixture: "test-fixtures/copyright/python",
-			// note: this should not capture #, Permission, This, see ... however it's not clear how to fix this (this is probably good enough)
-			expected: []string{"#", "Apache", "Apache-2", "Apache-2.0", "Expat", "GPL-2", "ISC", "LGPL-2.1+", "PSF-2", "Permission", "Python", "This", "see"},
+			// no Format header; not machine-readable, returns nil
+			// previously this captured nonsensical values like "#", "Permission", "This", "see"
+			fixture:  "testdata/copyright/python",
+			expected: nil,
 		},
 		{
-			fixture:  "test-fixtures/copyright/cuda",
-			expected: []string{"NVIDIA Software License Agreement and CUDA Supplement to Software License Agreement"},
+			// no Format header; not machine-readable, returns nil
+			fixture:  "testdata/copyright/cuda",
+			expected: nil,
 		},
 		{
-			fixture:  "test-fixtures/copyright/dev-kit",
-			expected: []string{"LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS"},
+			// no Format header; not machine-readable, returns nil
+			fixture:  "testdata/copyright/dev-kit",
+			expected: nil,
 		},
 		{
-			fixture:  "test-fixtures/copyright/microsoft",
-			expected: []string{"LICENSE AGREEMENT FOR MICROSOFT PRODUCTS"},
+			// no Format header; not machine-readable, returns nil
+			fixture:  "testdata/copyright/microsoft",
+			expected: nil,
 		},
 	}
 
@@ -61,5 +67,73 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 				t.Errorf("unexpected package licenses (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestParseLicensesFromCopyright_FormatHeader(t *testing.T) {
+	tests := []struct {
+		name            string
+		content         string
+		machineReadable bool
+	}{
+		{
+			name:            "valid http Format header",
+			content:         "Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: true,
+		},
+		{
+			name:            "valid https Format header",
+			content:         "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: true,
+		},
+		{
+			name:            "blank lines before Format header",
+			content:         "\n\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: true,
+		},
+		{
+			name:            "no Format header",
+			content:         "This is the Debian prepackaged version of foo.\n",
+			machineReadable: false,
+		},
+		{
+			name:            "Format header is not first non-blank line",
+			content:         "Some-Field: value\nFormat: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\n",
+			machineReadable: false,
+		},
+		{
+			name:            "empty content",
+			content:         "",
+			machineReadable: false,
+		},
+		{
+			name:            "only blank lines",
+			content:         "\n\n\n",
+			machineReadable: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := parseLicensesFromCopyright(strings.NewReader(test.content))
+			// parseLicensesFromCopyright returns nil for non-machine-readable
+			// files and a (possibly empty) slice otherwise.
+			if test.machineReadable {
+				require.NotNil(t, actual)
+			} else {
+				require.Nil(t, actual)
+			}
+		})
+	}
+}
+
+func TestParseLicensesFromCopyrightInline(t *testing.T) {
+	// verify that a file with License: fields but no Format header returns nil
+	content := `License: GPL-2
+License: LGPL-2.1
+`
+	actual := parseLicensesFromCopyright(strings.NewReader(content))
+	if actual != nil {
+		t.Errorf("expected nil for non-machine-readable file, got %v", actual)
 	}
 }

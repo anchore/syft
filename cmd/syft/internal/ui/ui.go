@@ -100,7 +100,7 @@ func (m *UI) Teardown(force bool) error {
 		})
 
 		// it may be tempting to use Kill() however it has been found that this can cause the terminal to be left in
-		// a bad state (where Ctrl+C and other control characters no longer works for future processes in that terminal).
+		// a bad state (where Ctrl+C and other control characters no longer work for future processes in that terminal).
 		m.program.Quit()
 
 		_ = runWithTimeout(250*time.Millisecond, func() error {

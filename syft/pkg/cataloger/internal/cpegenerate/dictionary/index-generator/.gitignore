@@ -1,0 +1,6 @@
+# ORAS cache directory - raw CPE data from NVD API
+.cpe-cache/
+
+# Build artifacts
+index-generator
+.tmp-*

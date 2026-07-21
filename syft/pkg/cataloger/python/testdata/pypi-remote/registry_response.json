@@ -1,0 +1,116 @@
+{
+    "info": {
+        "author": "Kenneth Reitz",
+        "author_email": "me@kennethreitz.com",
+        "bugtrack_url": null,
+        "classifiers": [
+            "Development Status :: 5 - Production/Stable",
+            "Intended Audience :: Developers",
+            "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+            "Natural Language :: English",
+            "Programming Language :: Python",
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3 :: Only",
+            "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
+            "Programming Language :: Python :: 3.12",
+            "Programming Language :: Python :: 3.13",
+            "Programming Language :: Python :: 3.14",
+            "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9"
+        ],
+        "description": "Certifi: Python SSL Certificates\n================================\n\nCertifi provides Mozilla's carefully curated collection of Root Certificates for\nvalidating the trustworthiness of SSL certificates while verifying the identity\nof TLS hosts. It has been extracted from the `Requests`_ project.\n\nInstallation\n------------\n\n``certifi`` is available on PyPI. Simply install it with ``pip``::\n\n    $ pip install certifi\n\nUsage\n-----\n\nTo reference the installed certificate authority (CA) bundle, you can use the\nbuilt-in function::\n\n    >>> import certifi\n\n    >>> certifi.where()\n    '/usr/local/lib/python3.7/site-packages/certifi/cacert.pem'\n\nOr from the command line::\n\n    $ python -m certifi\n    /usr/local/lib/python3.7/site-packages/certifi/cacert.pem\n\nEnjoy!\n\n.. _`Requests`: https://requests.readthedocs.io/en/master/\n\nAddition/Removal of Certificates\n--------------------------------\n\nCertifi does not support any addition/removal or other modification of the\nCA trust store content. This project is intended to provide a reliable and\nhighly portable root of trust to python deployments. Look to upstream projects\nfor methods to use alternate trust.\n",
+        "description_content_type": null,
+        "docs_url": null,
+        "download_url": null,
+        "downloads": {
+            "last_day": -1,
+            "last_month": -1,
+            "last_week": -1
+        },
+        "dynamic": [
+            "Author",
+            "Author-Email",
+            "Classifier",
+            "Description",
+            "Home-Page",
+            "License",
+            "License-File",
+            "Project-Url",
+            "Requires-Python",
+            "Summary"
+        ],
+        "home_page": "https://github.com/certifi/python-certifi",
+        "keywords": null,
+        "license": "MPL-2.0",
+        "license_expression": null,
+        "license_files": [
+            "LICENSE"
+        ],
+        "maintainer": null,
+        "maintainer_email": null,
+        "name": "certifi",
+        "package_url": "https://pypi.org/project/certifi/",
+        "platform": null,
+        "project_url": "https://pypi.org/project/certifi/",
+        "project_urls": {
+            "Homepage": "https://github.com/certifi/python-certifi",
+            "Source": "https://github.com/certifi/python-certifi"
+        },
+        "provides_extra": null,
+        "release_url": "https://pypi.org/project/certifi/2025.10.5/",
+        "requires_dist": null,
+        "requires_python": ">=3.7",
+        "summary": "Python package for providing Mozilla's CA Bundle.",
+        "version": "2025.10.5",
+        "yanked": false,
+        "yanked_reason": null
+    },
+    "last_serial": 31620018,
+    "urls": [
+        {
+            "comment_text": null,
+            "digests": {
+                "blake2b_256": "e437af0d2ef3967ac0d6113837b44a4f0bfe1328c2b9763bd5b1744520e5cfed",
+                "md5": "7b56f7121949a196441739c539fd01be",
+                "sha256": "0f212c2744a9bb6de0c56639a6f68afe01ecd92d91f14ae897c4fe7bbeeef0de"
+            },
+            "downloads": -1,
+            "filename": "certifi-2025.10.5-py3-none-any.whl",
+            "has_sig": false,
+            "md5_digest": "7b56f7121949a196441739c539fd01be",
+            "packagetype": "bdist_wheel",
+            "python_version": "py3",
+            "requires_python": ">=3.7",
+            "size": 163286,
+            "upload_time": "2025-10-05T04:12:14",
+            "upload_time_iso_8601": "2025-10-05T04:12:14.030503Z",
+            "url": "https://files.pythonhosted.org/packages/e4/37/af0d2ef3967ac0d6113837b44a4f0bfe1328c2b9763bd5b1744520e5cfed/certifi-2025.10.5-py3-none-any.whl",
+            "yanked": false,
+            "yanked_reason": null
+        },
+        {
+            "comment_text": null,
+            "digests": {
+                "blake2b_256": "4c5bb6ce21586237c77ce67d01dc5507039d444b630dd76611bbca2d8e5dcd91",
+                "md5": "7fe97b2e79933430062935f3759a09b0",
+                "sha256": "47c09d31ccf2acf0be3f701ea53595ee7e0b8fa08801c6624be771df09ae7b43"
+            },
+            "downloads": -1,
+            "filename": "certifi-2025.10.5.tar.gz",
+            "has_sig": false,
+            "md5_digest": "7fe97b2e79933430062935f3759a09b0",
+            "packagetype": "sdist",
+            "python_version": "source",
+            "requires_python": ">=3.7",
+            "size": 164519,
+            "upload_time": "2025-10-05T04:12:15",
+            "upload_time_iso_8601": "2025-10-05T04:12:15.808237Z",
+            "url": "https://files.pythonhosted.org/packages/4c/5b/b6ce21586237c77ce67d01dc5507039d444b630dd76611bbca2d8e5dcd91/certifi-2025.10.5.tar.gz",
+            "yanked": false,
+            "yanked_reason": null
+        }
+    ],
+    "vulnerabilities": []
+}

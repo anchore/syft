@@ -40,7 +40,7 @@ func ParsePomXML(content io.Reader) (project *Project, err error) {
 }
 
 func getUtf8Reader(content io.Reader) (io.Reader, error) {
-	pomContents, err := io.ReadAll(content)
+	pomContents, err := io.ReadAll(content) //nolint:gocritic // charset detection requires full buffer
 	if err != nil {
 		return nil, err
 	}

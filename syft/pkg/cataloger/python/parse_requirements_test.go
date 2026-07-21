@@ -1,6 +1,7 @@
 package python
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestParseRequirementsTxt(t *testing.T) {
-	fixture := "test-fixtures/requires/requirements.txt"
+	fixture := "testdata/requires/requirements.txt"
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
 	pinnedPkgs := []pkg.Package{
@@ -26,6 +27,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "flask",
 				VersionConstraint: "== 4.0.0",
+			},
+		},
+		{
+			Name:      "urllib3",
+			Version:   "1.26.20",
+			PURL:      "pkg:pypi/urllib3@1.26.20",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
 			},
 		},
 		{
@@ -127,6 +140,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 				VersionConstraint: "== 1.0.0",
 			},
 		},
+		{
+			Name:      "local-version",
+			Version:   "1.2.3+gcr.2",
+			PURL:      "pkg:pypi/local-version@1.2.3%2Bgcr.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
+			},
+		},
 	}
 
 	var testCases = []struct {
@@ -226,6 +251,58 @@ func TestParseRequirementsTxt(t *testing.T) {
 	}
 }
 
+func TestParseRequirementsTxtWithLicenseEnrichment(t *testing.T) {
+	ctx := context.TODO()
+	fixture := "testdata/pypi-remote/requirements.txt"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+	mux, url, teardown := setupPypiRegistry()
+	defer teardown()
+	tests := []struct {
+		name             string
+		fixture          string
+		config           CatalogerConfig
+		requestHandlers  []handlerPath
+		expectedPackages []pkg.Package
+	}{
+		{
+			name:   "search remote licenses returns the expected licenses when search is set to true",
+			config: CatalogerConfig{SearchRemoteLicenses: true},
+			requestHandlers: []handlerPath{
+				{
+					path:    "/certifi/2025.10.5/json",
+					handler: generateMockPypiRegistryHandler("testdata/pypi-remote/registry_response.json"),
+				},
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:      "certifi",
+					Version:   "2025.10.5",
+					Locations: locations,
+					PURL:      "pkg:pypi/certifi@2025.10.5",
+					Licenses:  pkg.NewLicenseSet(pkg.NewLicenseWithContext(ctx, "MPL-2.0")),
+					Language:  pkg.Python,
+					Type:      pkg.PythonPkg,
+					Metadata: pkg.PythonRequirementsEntry{
+						Name:              "certifi",
+						VersionConstraint: "== 2025.10.5",
+					},
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			// set up the mock server
+			for _, handler := range tc.requestHandlers {
+				mux.HandleFunc(handler.path, handler.handler)
+			}
+			tc.config.PypiBaseURL = url
+			requirementsParser := newRequirementsParser(tc.config)
+			pkgtest.TestFileParser(t, fixture, requirementsParser.parseRequirementsTxt, tc.expectedPackages, nil)
+		})
+	}
+}
+
 func Test_newRequirement(t *testing.T) {
 
 	tests := []struct {
@@ -239,6 +316,14 @@ func Test_newRequirement(t *testing.T) {
 			want: &unprocessedRequirement{
 				Name:              "requests",
 				VersionConstraint: "==2.8",
+			},
+		},
+		{
+			name: "arbitrary equality",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
 			},
 		},
 		{
@@ -284,6 +369,128 @@ func Test_newRequirement(t *testing.T) {
 				Markers:           "sys_platform == 'win32'",
 			},
 		},
+		{
+			name: "local version identifier",
+			raw:  "local-version == 1.2.3+gcr.2",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
+			},
+		},
+		{
+			name: "local version identifier with markers",
+			raw:  "local-version == 1.2.3+ubuntu1 ; sys_platform == 'linux'",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+ubuntu1",
+				Markers:           "sys_platform == 'linux'",
+			},
+		},
+		{
+			name: "epoch",
+			raw:  "pkg == 1!2.0.0",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1!2.0.0",
+			},
+		},
+		{
+			name: "pre-release",
+			raw:  "pkg == 1.0rc1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0rc1",
+			},
+		},
+		{
+			name: "pre-release with dash separators",
+			raw:  "pkg == 1.0-alpha-1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0-alpha-1",
+			},
+		},
+		{
+			name: "pre-release with underscore separators",
+			raw:  "pkg == 1.0_beta_2",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0_beta_2",
+			},
+		},
+		{
+			name: "post-release",
+			raw:  "pkg == 1.0.post1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0.post1",
+			},
+		},
+		{
+			name: "implicit post-release",
+			raw:  "pkg == 1.0-1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0-1",
+			},
+		},
+		{
+			name: "dev-release",
+			raw:  "pkg == 1.0.dev1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0.dev1",
+			},
+		},
+		{
+			name: "local version with dash separator",
+			raw:  "pkg == 1.0+ubuntu-1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0+ubuntu-1",
+			},
+		},
+		{
+			name: "local version with underscore separator",
+			raw:  "pkg == 1.0+ubuntu_1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0+ubuntu_1",
+			},
+		},
+		{
+			name: "all segments combined",
+			raw:  "pkg == 1!1.0a1.post2.dev3+local.1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1!1.0a1.post2.dev3+local.1",
+			},
+		},
+		{
+			name: "release wildcard",
+			raw:  "pkg == 2.*",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 2.*",
+			},
+		},
+		{
+			name: "epoch with markers and hashes",
+			raw:  "pkg == 1!2.0 ; python_version < '3.8' --hash=sha256:abc123",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1!2.0",
+				Markers:           "python_version < '3.8' --hash=sha256:abc123",
+			},
+		},
+		{
+			name: "compound constraint with exclusion is unaffected",
+			raw:  "pkg >= 1.0.0, != 1.1.0, < 2.0.0",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: ">= 1.0.0, != 1.1.0, < 2.0.0",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -309,6 +516,51 @@ func Test_parseVersion(t *testing.T) {
 			name:    "exact constraint",
 			version: " == 1.0.0 ",
 			want:    "1.0.0",
+		},
+		{
+			name:    "arbitrary equality constraint",
+			version: " === 1.26.20 ",
+			want:    "1.26.20",
+		},
+		{
+			name:    "local version identifier",
+			version: " == 1.2.3+gcr.2 ",
+			want:    "1.2.3+gcr.2",
+		},
+		{
+			name:    "arbitrary equality with local version identifier",
+			version: " === 1.2.3+ubuntu1 ",
+			want:    "1.2.3+ubuntu1",
+		},
+		{
+			name:    "pre-release",
+			version: "== 1.0rc1",
+			want:    "1.0rc1",
+		},
+		{
+			name:    "pre-release with dash separators",
+			version: "== 1.0-alpha-1",
+			want:    "1.0-alpha-1",
+		},
+		{
+			name:    "post-release",
+			version: "== 1.0.post1",
+			want:    "1.0.post1",
+		},
+		{
+			name:    "dev-release",
+			version: "== 1.0.dev1",
+			want:    "1.0.dev1",
+		},
+		{
+			name:    "local version with dash separator",
+			version: "== 1.0+ubuntu-1",
+			want:    "1.0+ubuntu-1",
+		},
+		{
+			name:    "all segments combined",
+			version: "== 1.0a1.post2.dev3+local.1",
+			want:    "1.0a1.post2.dev3+local.1",
 		},
 		{
 			name:    "resolve lowest, simple constraint",
@@ -357,7 +609,7 @@ func Test_parseVersion(t *testing.T) {
 func Test_corruptRequirementsTxt(t *testing.T) {
 	rp := newRequirementsParser(DefaultCatalogerConfig())
 	pkgtest.NewCatalogTester().
-		FromFile(t, "test-fixtures/glob-paths/src/requirements.txt").
+		FromFile(t, "testdata/glob-paths/src/requirements.txt").
 		WithError().
 		TestParser(t, rp.parseRequirementsTxt)
 }

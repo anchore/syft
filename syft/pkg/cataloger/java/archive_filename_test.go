@@ -187,6 +187,13 @@ func TestExtractInfoFromJavaArchiveFilename(t *testing.T) {
 			name:      "gradle-build-cache",
 			ty:        pkg.JavaPkg,
 		},
+		{
+			filename:  "pkg-extra-field-maven-4.3.2-rc1.rar",
+			version:   "4.3.2-rc1",
+			extension: "rar",
+			name:      "pkg-extra-field-maven",
+			ty:        pkg.JavaPkg,
+		},
 	}
 
 	for _, test := range tests {

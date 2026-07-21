@@ -14,7 +14,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
-func Test_PackageCataloger(t *testing.T) {
+func Test_InstalledPackageCataloger(t *testing.T) {
 	ctx := context.TODO()
 	tests := []struct {
 		name             string
@@ -23,7 +23,7 @@ func Test_PackageCataloger(t *testing.T) {
 	}{
 		{
 			name:    "egg-file-no-version",
-			fixture: "test-fixtures/site-packages/no-version",
+			fixture: "testdata/site-packages/no-version",
 			expectedPackages: []pkg.Package{
 				{
 					Name:      "no-version",
@@ -41,7 +41,7 @@ func Test_PackageCataloger(t *testing.T) {
 		},
 		{
 			name:    "dist-info+egg-info site-packages directory",
-			fixture: "test-fixtures/site-packages/nested",
+			fixture: "testdata/site-packages/nested",
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "pygments",
@@ -124,7 +124,7 @@ func Test_PackageCataloger(t *testing.T) {
 		},
 		{
 			name:    "DIST-INFO+EGG-INFO site-packages directory (case insensitive)",
-			fixture: "test-fixtures/site-packages/uppercase",
+			fixture: "testdata/site-packages/uppercase",
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "pygments",
@@ -204,7 +204,7 @@ func Test_PackageCataloger(t *testing.T) {
 		},
 		{
 			name:    "detect licenses",
-			fixture: "test-fixtures/site-packages/license",
+			fixture: "testdata/site-packages/license",
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "pygments",
@@ -223,7 +223,7 @@ func Test_PackageCataloger(t *testing.T) {
 							Value:          "BSD-3-Clause",
 							SPDXExpression: "BSD-3-Clause",
 							Type:           "concluded",
-							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
+							Contents:       mustContentsFromLocation(t, "testdata/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
 							// we read the path from the LicenseFile field in the METADATA file, then read the license file directly
 							Locations: file.NewLocationSet(file.NewLocation("with-license-file-declared.dist-info/LICENSE.txt")),
 						},
@@ -270,7 +270,7 @@ func Test_PackageCataloger(t *testing.T) {
 							Value:          "BSD-3-Clause",
 							SPDXExpression: "BSD-3-Clause",
 							Type:           "concluded",
-							Contents:       mustContentsFromLocation(t, "test-fixtures/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
+							Contents:       mustContentsFromLocation(t, "testdata/site-packages/license/with-license-file-declared.dist-info/LICENSE.txt", 0, 1475),
 							Locations:      file.NewLocationSet(file.NewLocation("without-license-file-declared.dist-info/LICENSE.txt")),
 						},
 					),
@@ -303,7 +303,7 @@ func Test_PackageCataloger(t *testing.T) {
 		},
 		{
 			name:    "malformed-record",
-			fixture: "test-fixtures/site-packages/malformed-record",
+			fixture: "testdata/site-packages/malformed-record",
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "pygments",
@@ -341,7 +341,7 @@ func Test_PackageCataloger(t *testing.T) {
 			// in cases where the metadata file is available and the record is not we should still record there is a package
 			// additionally empty top_level.txt files should not result in an error
 			name:    "partial dist-info directory",
-			fixture: "test-fixtures/site-packages/partial.dist-info",
+			fixture: "testdata/site-packages/partial.dist-info",
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "pygments",
@@ -370,7 +370,7 @@ func Test_PackageCataloger(t *testing.T) {
 		},
 		{
 			name:    "egg-info regular file",
-			fixture: "test-fixtures/site-packages/test",
+			fixture: "testdata/site-packages/test",
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "requests",
@@ -402,10 +402,57 @@ func Test_PackageCataloger(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			(pkgtest.NewCatalogTester().
+			pkgtest.NewCatalogTester().
 				FromDirectory(t, test.fixture).
 				Expects(test.expectedPackages, nil).
-				TestCataloger(t, NewInstalledPackageCataloger()))
+				TestCataloger(t, NewInstalledPackageCataloger())
+		})
+	}
+}
+
+func Test_PackageCataloger(t *testing.T) {
+
+	tests := []struct {
+		name                  string
+		fixture               string
+		expectedPackages      []string
+		expectedRelationships []string
+	}{
+		{
+			name:    "pdm",
+			fixture: "testdata/pdm-lock",
+			expectedPackages: []string{
+				"certifi @ 2025.1.31 (pdm.lock)",
+				"chardet @ 3.0.4 (pdm.lock)",
+				"charset-normalizer @ 2.0.12 (pdm.lock)",
+				"colorama @ 0.3.9 (pdm.lock)",
+				"idna @ 2.7 (pdm.lock)",
+				"py @ 1.4.34 (pdm.lock)",
+				"pytest @ 3.2.5 (pdm.lock)",
+				"requests @ 2.27.1 (pdm.lock)",
+				"setuptools @ 39.2.0 (pdm.lock)",
+				"urllib3 @ 1.26.20 (pdm.lock)",
+			},
+			expectedRelationships: []string{
+				"certifi @ 2025.1.31 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"chardet @ 3.0.4 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"charset-normalizer @ 2.0.12 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"colorama @ 0.3.9 (pdm.lock) [dependency-of] pytest @ 3.2.5 (pdm.lock)",
+				"idna @ 2.7 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+				"py @ 1.4.34 (pdm.lock) [dependency-of] pytest @ 3.2.5 (pdm.lock)",
+				"setuptools @ 39.2.0 (pdm.lock) [dependency-of] pytest @ 3.2.5 (pdm.lock)",
+				"urllib3 @ 1.26.20 (pdm.lock) [dependency-of] requests @ 2.27.1 (pdm.lock)",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgtest.NewCatalogTester().
+				FromDirectory(t, tt.fixture).
+				ExpectsPackageStrings(tt.expectedPackages).
+				ExpectsRelationshipStrings(tt.expectedRelationships).
+				TestCataloger(t, NewPackageCataloger(DefaultCatalogerConfig()))
 		})
 	}
 }
@@ -415,10 +462,10 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		MetadataFixture string
 	}{
 		{
-			MetadataFixture: "test-fixtures/Python-2.7.egg-info",
+			MetadataFixture: "testdata/Python-2.7.egg-info",
 		},
 		{
-			MetadataFixture: "test-fixtures/empty-1.0.0-py3.8.egg-info",
+			MetadataFixture: "testdata/empty-1.0.0-py3.8.egg-info",
 		},
 	}
 
@@ -426,7 +473,7 @@ func Test_PackageCataloger_IgnorePackage(t *testing.T) {
 		t.Run(test.MetadataFixture, func(t *testing.T) {
 			resolver := file.NewMockResolverForPaths(test.MetadataFixture)
 
-			actual, _, err := NewInstalledPackageCataloger().Catalog(pkgtest.Context(), resolver)
+			actual, _, err := NewInstalledPackageCataloger().Catalog(pkgtest.Context(t), resolver)
 			require.NoError(t, err)
 
 			if len(actual) != 0 {
@@ -444,7 +491,7 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain index files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/requirements.txt",
 				"src/extra-requirements.txt",
@@ -454,6 +501,7 @@ func Test_IndexCataloger_Globs(t *testing.T) {
 				"src/poetry.lock",
 				"src/Pipfile.lock",
 				"src/uv.lock",
+				"src/script.py.lock",
 				"src/pdm.lock",
 			},
 		},
@@ -477,7 +525,7 @@ func Test_PackageCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain index files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"site-packages/v.DIST-INFO/METADATA",
 				"site-packages/w.EGG-INFO/PKG-INFO",
@@ -507,12 +555,12 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 	}{
 		{
 			name:                  "poetry - no dependencies",
-			fixture:               "test-fixtures/poetry/dev-deps",
+			fixture:               "testdata/poetry/dev-deps",
 			expectedRelationships: nil,
 		},
 		{
 			name:    "poetry - simple dependencies",
-			fixture: "test-fixtures/poetry/simple-deps",
+			fixture: "testdata/poetry/simple-deps",
 			expectedRelationships: []string{
 				"certifi @ 2024.2.2 (.) [dependency-of] requests @ 2.32.2 (.)",
 				"charset-normalizer @ 3.3.2 (.) [dependency-of] requests @ 2.32.2 (.)",
@@ -522,7 +570,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "poetry - multiple extras",
-			fixture: "test-fixtures/poetry/multiple-extras",
+			fixture: "testdata/poetry/multiple-extras",
 			expectedRelationships: []string{
 				"anyio @ 4.3.0 (.) [dependency-of] anyio @ 4.3.0 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpcore @ 1.0.5 (.)",
@@ -549,7 +597,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "poetry - nested extras",
-			fixture: "test-fixtures/poetry/nested-extras",
+			fixture: "testdata/poetry/nested-extras",
 			expectedRelationships: []string{
 				"annotated-types @ 0.7.0 (.) [dependency-of] pydantic @ 2.7.1 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] anyio @ 4.3.0 (.)",
@@ -567,6 +615,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 				"colorama @ 0.4.6 (.) [dependency-of] pygments @ 2.18.0 (.)",
 				"colorama @ 0.4.6 (.) [dependency-of] uvicorn @ 0.29.0 (.)", // proof of uvicorn[standard]
 				"dnspython @ 2.6.1 (.) [dependency-of] email-validator @ 2.1.1 (.)",
+				"email-validator @ 2.1.1 (.) [dependency-of] fastapi @ 0.111.0 (.)",
 				"email-validator @ 2.1.1 (.) [dependency-of] pydantic @ 2.7.1 (.)",
 				"fastapi @ 0.111.0 (.) [dependency-of] fastapi-cli @ 0.0.4 (.)",
 				"fastapi-cli @ 0.0.4 (.) [dependency-of] fastapi @ 0.111.0 (.)",
@@ -587,6 +636,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 				"jinja2 @ 3.1.4 (.) [dependency-of] fastapi @ 0.111.0 (.)",
 				"jinja2 @ 3.1.4 (.) [dependency-of] starlette @ 0.37.2 (.)",
 				"markdown-it-py @ 3.0.0 (.) [dependency-of] rich @ 13.7.1 (.)",
+				"markupsafe @ 2.1.5 (.) [dependency-of] jinja2 @ 3.1.4 (.)", // MarkupSafe (mixed case) -> markupsafe
 				"mdurl @ 0.1.2 (.) [dependency-of] markdown-it-py @ 3.0.0 (.)",
 				"orjson @ 3.10.3 (.) [dependency-of] fastapi @ 0.111.0 (.)",
 				"pydantic @ 2.7.1 (.) [dependency-of] fastapi @ 0.111.0 (.)",
@@ -629,7 +679,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "poetry - conflicting extras",
-			fixture: "test-fixtures/poetry/conflicting-with-extras",
+			fixture: "testdata/poetry/conflicting-with-extras",
 			expectedRelationships: []string{
 				"anyio @ 4.3.0 (.) [dependency-of] anyio @ 4.3.0 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpcore @ 1.0.5 (.)",
@@ -683,7 +733,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "uv - simple dependencies",
-			fixture: "test-fixtures/uv/simple-deps",
+			fixture: "testdata/uv/simple-deps",
 			expectedRelationships: []string{
 				"certifi @ 2025.1.31 (.) [dependency-of] requests @ 2.32.3 (.)",
 				"charset-normalizer @ 3.4.1 (.) [dependency-of] requests @ 2.32.3 (.)",
@@ -694,7 +744,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "uv - multiple extras",
-			fixture: "test-fixtures/uv/multiple-extras",
+			fixture: "testdata/uv/multiple-extras",
 			expectedRelationships: []string{
 				"anyio @ 4.9.0 (.) [dependency-of] httpx @ 0.28.1 (.)",
 				"brotli @ 1.1.0 (.) [dependency-of] httpx @ 0.28.1 (.)",
@@ -718,7 +768,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "uv - nested extras",
-			fixture: "test-fixtures/uv/nested-extras",
+			fixture: "testdata/uv/nested-extras",
 			expectedRelationships: []string{
 				"annotated-types @ 0.7.0 (.) [dependency-of] pydantic @ 2.11.0 (.)",
 				"anyio @ 4.9.0 (.) [dependency-of] httpx @ 0.28.1 (.)",
@@ -787,7 +837,7 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 		},
 		{
 			name:    "uv - conflicting extras",
-			fixture: "test-fixtures/uv/conflicting-with-extras",
+			fixture: "testdata/uv/conflicting-with-extras",
 			expectedRelationships: []string{
 				"anyio @ 4.6.2.post1 (.) [dependency-of] httpx @ 0.28.1 (.)",
 				"brotli @ 1.1.0 (.) [dependency-of] httpx @ 0.28.1 (.)",

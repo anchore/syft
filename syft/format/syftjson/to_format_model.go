@@ -21,11 +21,11 @@ import (
 )
 
 // MetadataType infers the metadata type value based on the pkg.Metadata payload.
-func MetadataType(metadata interface{}) string {
+func MetadataType(metadata any) string {
 	return metadataType(metadata, false)
 }
 
-func metadataType(metadata interface{}, legacy bool) string {
+func metadataType(metadata any, legacy bool) string {
 	if legacy {
 		return packagemetadata.JSONLegacyName(metadata)
 	}
@@ -325,7 +325,17 @@ func toSourceModel(src source.Description) model.Source {
 		Metadata: src.Metadata,
 	}
 
-	if metadata, ok := src.Metadata.(source.ImageMetadata); ok {
+	switch metadata := src.Metadata.(type) {
+	case source.ImageMetadata:
+		// ensure that empty collections are not shown as null
+		if metadata.RepoDigests == nil {
+			metadata.RepoDigests = []string{}
+		}
+		if metadata.Tags == nil {
+			metadata.Tags = []string{}
+		}
+		m.Metadata = metadata
+	case source.OCIModelMetadata:
 		// ensure that empty collections are not shown as null
 		if metadata.RepoDigests == nil {
 			metadata.RepoDigests = []string{}

@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseRpmManifest(t *testing.T) {
-	fixture := "test-fixtures/container-manifest-2"
+	fixture := "testdata/container-manifest-2"
 	location := file.NewLocation(fixture)
 	expected := []pkg.Package{
 		{

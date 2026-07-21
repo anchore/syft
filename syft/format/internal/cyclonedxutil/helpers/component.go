@@ -40,8 +40,11 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 	}
 
 	componentType := cyclonedx.ComponentTypeLibrary
-	if p.Type == pkg.BinaryPkg {
+	switch p.Type {
+	case pkg.BinaryPkg:
 		componentType = cyclonedx.ComponentTypeApplication
+	case pkg.ModelPkg:
+		componentType = cyclonedx.ComponentTypeMachineLearningModel
 	}
 
 	return cyclonedx.Component{
@@ -162,6 +165,7 @@ func getPURL(c *cyclonedx.Component, ty pkg.Type) string {
 	return purl.ToString()
 }
 
+//nolint:gocognit
 func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 	name := c.Name
 	if c.Group != "" {
@@ -192,14 +196,16 @@ func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 				}
 			}
 		default:
-			name = fmt.Sprintf("%s/%s", c.Group, name)
+			if !internal.NameExcludesPurlNamespace(p.Type.PackageURLType()) {
+				name = fmt.Sprintf("%s/%s", c.Group, name)
+			}
 		}
 	}
 	p.Name = name
 }
 
 func decodeLocations(vals map[string]string) file.LocationSet {
-	v := Decode(reflect.TypeOf([]file.Location{}), vals, "syft:location", CycloneDXFields)
+	v := Decode(reflect.TypeFor[[]file.Location](), vals, "syft:location", CycloneDXFields)
 	out, ok := v.([]file.Location)
 	if !ok {
 		out = nil
@@ -207,7 +213,7 @@ func decodeLocations(vals map[string]string) file.LocationSet {
 	return file.NewLocationSet(out...)
 }
 
-func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) interface{} {
+func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeName string) any {
 	if typeName != "" && c.Properties != nil {
 		metadataType := packagemetadata.ReflectTypeFromJSONName(typeName)
 		if metadataType == nil {

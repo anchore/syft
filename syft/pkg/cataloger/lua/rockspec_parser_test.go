@@ -15,6 +15,17 @@ func Test_parseRockspecData(t *testing.T) {
 		wantErr require.ErrorAssertionFunc
 	}{
 		{
+			name:    "empty file",
+			content: ``,
+		},
+		{
+			name: "whitespace only",
+			content: `
+
+
+`,
+		},
+		{
 			name: "basic valid content",
 			content: `
 foo = "bar"
@@ -173,6 +184,14 @@ local function test
 end
 test = "blah"
 `,
+		},
+		{
+			name:    "comment only ending in bare carriage return at EOF",
+			content: "--\r",
+		},
+		{
+			name:    "trailing comment ending in bare carriage return at EOF",
+			content: "foo = \"bar\"\n-- x\r",
 		},
 		{
 			name:    "invalid complex syntax",

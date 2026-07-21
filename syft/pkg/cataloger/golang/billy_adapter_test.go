@@ -10,10 +10,10 @@ import (
 )
 
 func Test_billyFSAdapter(t *testing.T) {
-	r, err := git.PlainInit("test-fixtures/repo", false)
+	r, err := git.PlainInit("testdata/repo", false)
 
 	t.Cleanup(func() {
-		_ = os.RemoveAll("test-fixtures/repo/.git")
+		_ = os.RemoveAll("testdata/repo/.git")
 	})
 
 	wt, err := r.Worktree()

@@ -3,6 +3,8 @@ go.work
 go.work.sum
 .tool-versions
 .python-version
+.mise.toml
+.env
 
 # app configuration
 /.syft.yaml
@@ -19,6 +21,9 @@ bin/
 /.task
 /generate
 /specs
+mise.toml
+.make/.make
+.conductor
 
 # changelog generation
 CHANGELOG.md
@@ -35,6 +40,8 @@ VERSION
 /test/results
 coverage.txt
 *.log
+**/test-fixtures/test-observations.json
+**/testdata/test-observations.json
 
 # probable archives
 .images

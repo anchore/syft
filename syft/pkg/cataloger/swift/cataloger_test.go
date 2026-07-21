@@ -14,7 +14,7 @@ func Test_Cataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:    "obtain swift files",
-			fixture: "test-fixtures/glob-paths",
+			fixture: "testdata/glob-paths",
 			expected: []string{
 				"src/Podfile.lock",
 			},

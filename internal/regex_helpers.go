@@ -92,10 +92,7 @@ func processReaderInChunks(rdr io.Reader, chunkSize int, handler func(data []byt
 	lastRead := 0
 
 	for {
-		offset := half
-		if lastRead < half {
-			offset = lastRead
-		}
+		offset := min(lastRead, half)
 		start := half - offset
 		if lastRead > 0 {
 			copy(buf[start:], buf[half+offset:half+lastRead])

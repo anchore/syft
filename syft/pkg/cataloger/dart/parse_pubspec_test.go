@@ -18,13 +18,13 @@ func TestParsePubspec(t *testing.T) {
 	}{
 		{
 			name:    "_macros",
-			fixture: "test-fixtures/pubspecs/macros.pubspec.yaml",
+			fixture: "testdata/pubspecs/macros.pubspec.yaml",
 			expectedPackages: []pkg.Package{
 				{
 					Name:      "_macros",
 					Version:   "0.3.2",
 					PURL:      "pkg:pub/_macros@0.3.2",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspecs/macros.pubspec.yaml")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspecs/macros.pubspec.yaml")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspec{
@@ -40,13 +40,13 @@ func TestParsePubspec(t *testing.T) {
 		},
 		{
 			name:    "_macros",
-			fixture: "test-fixtures/pubspecs/appainter.pubspec.yaml",
+			fixture: "testdata/pubspecs/appainter.pubspec.yaml",
 			expectedPackages: []pkg.Package{
 				{
 					Name:      "appainter",
 					Version:   "2.4.8",
 					PURL:      "pkg:pub/appainter@2.4.8",
-					Locations: file.NewLocationSet(file.NewLocation("test-fixtures/pubspecs/appainter.pubspec.yaml")),
+					Locations: file.NewLocationSet(file.NewLocation("testdata/pubspecs/appainter.pubspec.yaml")),
 					Language:  pkg.Dart,
 					Type:      pkg.DartPubPkg,
 					Metadata: pkg.DartPubspec{

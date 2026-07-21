@@ -94,7 +94,7 @@ func getVersion(resolver file.Resolver) (string, []file.Location, error) {
 	}
 	defer internal.CloseAndLogError(reader, locations[0].RealPath)
 
-	version, err := io.ReadAll(reader)
+	version, err := io.ReadAll(reader) //nolint:gocritic // example code
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to read alpine version: %w", err)
 	}
@@ -117,7 +117,7 @@ func getAPKKeys(resolver file.Resolver) (map[string]string, []file.Location, err
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to resolve file contents by location at %s: %w", location.RealPath, err)
 		}
-		content, err := io.ReadAll(reader)
+		content, err := io.ReadAll(reader) //nolint:gocritic // example code
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to read apk key content at %s: %w", location.RealPath, err)
 		}

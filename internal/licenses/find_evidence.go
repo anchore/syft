@@ -10,7 +10,7 @@ func (s *scanner) FindEvidence(_ context.Context, reader io.Reader) (evidence []
 		return nil, nil, nil
 	}
 
-	content, err = io.ReadAll(reader)
+	content, err = io.ReadAll(reader) //nolint:gocritic // license scanner requires full content
 	if err != nil {
 		return nil, nil, err
 	}

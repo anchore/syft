@@ -28,13 +28,14 @@ func TestConvertCmd(t *testing.T) {
 	}{
 		{from: "syft-json", to: "spdx-tag-value", expect: mustEncoder(spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.DefaultEncoderConfig()))},
 		{from: "syft-json", to: "spdx-json", expect: mustEncoder(spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig()))},
+		{from: "syft-json", to: "spdx-json@3.0", expect: mustEncoder(spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig()))},
 		{from: "syft-json", to: "cyclonedx-json", expect: mustEncoder(cyclonedxjson.NewFormatEncoderWithConfig(cyclonedxjson.DefaultEncoderConfig()))},
 		{from: "syft-json", to: "cyclonedx-xml", expect: mustEncoder(cyclonedxxml.NewFormatEncoderWithConfig(cyclonedxxml.DefaultEncoderConfig()))},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("from %s to %s", test.from, test.to), func(t *testing.T) {
-			sbomArgs := []string{"dir:./test-fixtures/image-pkg-coverage", "-o", test.from}
+			sbomArgs := []string{"dir:./testdata/image-pkg-coverage", "-o", test.from}
 			cmd, stdout, stderr := runSyft(t, nil, sbomArgs...)
 			if cmd.ProcessState.ExitCode() != 0 {
 				t.Log("STDOUT:\n", stdout)

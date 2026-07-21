@@ -27,7 +27,7 @@ type repository struct {
 }
 
 // parseRockspec parses a package.rockspec and returns the discovered Lua packages.
-func parseRockspec(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseRockspec(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	doc, err := parseRockspecData(reader)
 	if err != nil {
 		log.WithFields("error", err).Trace("unable to parse Rockspec app")
@@ -35,6 +35,7 @@ func parseRockspec(ctx context.Context, _ file.Resolver, _ *generic.Environment,
 	}
 
 	var name, version, license, homepage, description, url string
+	var dependencies map[string]string
 
 	for _, node := range doc.value {
 		switch node.key {
@@ -60,11 +61,22 @@ func parseRockspec(ctx context.Context, _ file.Resolver, _ *generic.Environment,
 					license = strings.ReplaceAll(child.String(), " ", "-")
 				}
 			}
+		case "dependencies":
+			if dependencies == nil {
+				dependencies = make(map[string]string)
+			}
+			for _, child := range node.Slice() {
+				depName, depVersion := parseDependency(child.String())
+				if depName != "" {
+					dependencies[depName] = depVersion
+				}
+			}
 		}
 	}
 
 	p := newLuaRocksPackage(
 		ctx,
+		resolver,
 		luaRocksPackage{
 			Name:    name,
 			Version: version,
@@ -72,11 +84,34 @@ func parseRockspec(ctx context.Context, _ file.Resolver, _ *generic.Environment,
 			Repository: repository{
 				URL: url,
 			},
-			Homepage:    homepage,
-			Description: description,
+			Homepage:     homepage,
+			Description:  description,
+			Dependencies: dependencies,
 		},
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
 	return []pkg.Package{p}, nil, nil
+}
+
+// parseDependency extracts the package name and version constraint from a dependency string.
+// Examples:
+//   - "lua >= 5.1" -> ("lua", ">= 5.1")
+//   - "lpeg" -> ("lpeg", "")
+//   - "lualogging >= 1.4.0, < 2.0.0" -> ("lualogging", ">= 1.4.0, < 2.0.0")
+func parseDependency(dep string) (name string, version string) {
+	dep = strings.TrimSpace(dep)
+	if dep == "" {
+		return "", ""
+	}
+
+	// Find the first space which separates package name from version constraint
+	parts := strings.SplitN(dep, " ", 2)
+	name = strings.TrimSpace(parts[0])
+
+	if len(parts) == 2 {
+		version = strings.TrimSpace(parts[1])
+	}
+
+	return name, version
 }

@@ -41,7 +41,7 @@ func TestJSONSchema(t *testing.T) {
 			subcommand: "scan",
 			args:       []string{"-o", "json"},
 			fixture: func(t *testing.T) string {
-				return "dir:test-fixtures/image-pkg-coverage"
+				return "dir:testdata/image-pkg-coverage"
 			},
 		},
 	}

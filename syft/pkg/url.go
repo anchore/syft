@@ -18,6 +18,9 @@ const (
 	// PURLQualifierUpstream this qualifier is not in the pURL spec, but is used by grype to perform indirect matching based on source information
 	PURLQualifierUpstream = "upstream"
 
+	// PURLQualifierRpmModularity this qualifier is not in the pURL spec, but is used to specify RPM modularity information
+	PURLQualifierRpmModularity = "rpmmod"
+
 	purlCargoPkgType  = "cargo"
 	purlGradlePkgType = "gradle"
 )

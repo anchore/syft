@@ -1,0 +1,14 @@
+name: consul
+offset: 52534344
+length: 220
+snippetSha256: ca576f5ee181015359ecf2a2d3b7431593816d510cb1fd03014998128ebfd54c
+fileSha256: fc2840fe55664ccc8c197debca3a2f09e907ef0a55cbf3d239d8ea63f66fc96d
+
+### byte snippet to follow ###
+
+build	-compiler=gc
+build	-ldflags="-X github.com/hashicorp/consul/version.GitCommit=96505027 -X github.com/hashicorp/consul/version.GitDescribe=1.12.9"
+build	CGO_ENABLED=0
+build	GOARCH=amd64
+build	GOOS=linux
+build	GOAMD

@@ -56,6 +56,20 @@ func Test_packageURL(t *testing.T) {
 			expected: "pkg:rpm/p@v-r",
 		},
 		{
+			name: "hummingbird distro maps to redhat namespace",
+			distro: &linux.Release{
+				ID:        "hummingbird",
+				VersionID: "1.0",
+			},
+			metadata: pkg.RpmDBEntry{
+				Name:    "p",
+				Version: "v",
+				Release: "r",
+				Epoch:   nil,
+			},
+			expected: "pkg:rpm/redhat/p@v-r?distro=hummingbird-1.0",
+		},
+		{
 			name: "with upstream source rpm info",
 			distro: &linux.Release{
 				ID:        "rhel",

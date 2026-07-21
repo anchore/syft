@@ -29,6 +29,12 @@ type gemData struct {
 // match example:      Al\u003Ex   --->   003E
 var unicodePattern = regexp.MustCompile(`\\u(?P<unicode>[0-9A-F]{4})`)
 
+// match the common Ruby string-interpolation forms gemspec authors use to build
+// fields from the gem's own name/version: #{s.name}, #{gem.name}, #{spec.version},
+// bare #{name}, and the same with surrounding whitespace. The optional receiver
+// (s./gem./spec./...) is discarded; only the trailing attribute is captured.
+var rubyInterpolationPattern = regexp.MustCompile(`#\{\s*(?:\w+\.)?(name|version)\s*\}`)
+
 var patterns = map[string]*regexp.Regexp{
 	// match example:       name = "railties".freeze   --->   railties
 	"name": regexp.MustCompile(`.*\.name\s*=\s*["']{1}(?P<name>.*)["']{1} *`),
@@ -66,9 +72,9 @@ func processList(s string) []string {
 }
 
 // parseGemSpecEntries parses the gemspec file and returns the packages and relationships found.
-func parseGemSpecEntries(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
-	var fields = make(map[string]interface{})
+	var fields = make(map[string]any)
 	scanner := bufio.NewScanner(reader)
 
 	for scanner.Scan() {
@@ -96,6 +102,8 @@ func parseGemSpecEntries(ctx context.Context, _ file.Resolver, _ *generic.Enviro
 		}
 	}
 
+	resolveRubyInterpolationsInFields(fields)
+
 	if fields["name"] != "" && fields["version"] != "" {
 		var metadata gemData
 		if err := mapstructure.Decode(fields, &metadata); err != nil {
@@ -106,6 +114,7 @@ func parseGemSpecEntries(ctx context.Context, _ file.Resolver, _ *generic.Enviro
 			pkgs,
 			newGemspecPackage(
 				ctx,
+				resolver,
 				metadata,
 				reader.Location,
 			),
@@ -113,6 +122,61 @@ func parseGemSpecEntries(ctx context.Context, _ file.Resolver, _ *generic.Enviro
 	}
 
 	return pkgs, nil, nil
+}
+
+// resolveRubyInterpolationsInFields substitutes a handful of well-known
+// Ruby string interpolation placeholders (#{s.name}, #{s.version}, and
+// the equivalent #{gem.*} forms) in captured gemspec string fields using
+// values already captured from the same file. Gemspec authors routinely
+// write things like
+//
+//	s.homepage = "https://github.com/foo/#{s.name}"
+//
+// which Ruby evaluates before loading the gem. Syft reads the gemspec as
+// plain text, so without this pass the literal #{s.name} would leak into
+// the SBOM and in particular break CycloneDX schema validation because
+// '{' and '}' are not valid IRI characters (see anchore/syft#4720).
+//
+// We only resolve interpolations pointing at name/version (the values syft has
+// already captured from the same file). Both the substitution and the drop
+// below are driven by the same field list, so adding a URL-like field here
+// keeps it protected from leaking unresolved interpolation.
+func resolveRubyInterpolationsInFields(fields map[string]any) {
+	name, _ := fields["name"].(string)
+	version, _ := fields["version"].(string)
+
+	// homepage is currently the only captured string field that flows into a
+	// schema-validated URL slot (CycloneDX externalReferences, SPDX homepage).
+	for _, key := range []string{"homepage"} {
+		v, ok := fields[key].(string)
+		if !ok || v == "" {
+			continue
+		}
+
+		v = rubyInterpolationPattern.ReplaceAllStringFunc(v, func(match string) string {
+			switch rubyInterpolationPattern.FindStringSubmatch(match)[1] {
+			case "name":
+				if name != "" {
+					return name
+				}
+			case "version":
+				if version != "" {
+					return version
+				}
+			}
+			return match // leave unresolved; the field is dropped below
+		})
+
+		// anything still containing a '#{' is an unresolvable Ruby expression.
+		// Drop the field rather than emit a URL with '{'/'}', which fails
+		// CycloneDX IRI validation (see anchore/syft#4720); a missing homepage
+		// is preferable to a BOM downstream tools reject.
+		if strings.Contains(v, "#{") {
+			delete(fields, key)
+			continue
+		}
+		fields[key] = v
+	}
 }
 
 // renderUtf8 takes any string escaped string subsections from the ruby string and replaces those sections with the UTF8 runes.

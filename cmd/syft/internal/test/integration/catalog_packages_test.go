@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -25,7 +26,6 @@ func BenchmarkImagePackageCatalogers(b *testing.B) {
 	// get the source object for the image
 	theSource, err := syft.GetSource(context.Background(), tarPath, syft.DefaultGetSourceConfig().WithSources("docker-archive"))
 	require.NoError(b, err)
-
 	b.Cleanup(func() {
 		require.NoError(b, theSource.Close())
 	})
@@ -88,6 +88,9 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.TerraformPkg))
 	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // we have coverage for pear instead
 	definedPkgs.Remove(string(pkg.CondaPkg))
+	definedPkgs.Remove(string(pkg.ModelPkg))
+	definedPkgs.Remove(string(pkg.VcpkgPkg))
+	definedPkgs.Remove(string(pkg.AppleAppBundlePkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -125,7 +128,7 @@ func TestPkgCoverageImage(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory(t *testing.T) {
-	sbom, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
+	sbom, _ := catalogDirectory(t, "testdata/image-pkg-coverage")
 
 	observedLanguages := strset.New()
 	definedLanguages := strset.New()
@@ -162,6 +165,9 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedPkgs.Remove(string(pkg.UnknownPkg))
 	definedPkgs.Remove(string(pkg.CondaPkg))
 	definedPkgs.Remove(string(pkg.PhpPeclPkg)) // this is covered as pear packages
+	definedPkgs.Remove(string(pkg.ModelPkg))
+	definedPkgs.Remove(string(pkg.VcpkgPkg))
+	definedPkgs.Remove(string(pkg.AppleAppBundlePkg))
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
@@ -193,11 +199,8 @@ func assertPackages(t *testing.T, sbom sbom.SBOM, test testCase, observedLanguag
 		}
 
 		var foundLang bool
-		for _, lang := range strings.Split(test.pkgLanguage.String(), ",") {
-			if actualPkg.Language.String() == lang {
-				foundLang = true
-				break
-			}
+		if slices.Contains(strings.Split(test.pkgLanguage.String(), ","), actualPkg.Language.String()) {
+			foundLang = true
 		}
 		if !foundLang {
 			t.Errorf("bad language (pkg=%+v): %+v", actualPkg.Name, actualPkg.Language)
@@ -260,7 +263,7 @@ func TestPkgCoverageImage_HasEvidence(t *testing.T) {
 }
 
 func TestPkgCoverageDirectory_HasEvidence(t *testing.T) {
-	sbom, _ := catalogDirectory(t, "test-fixtures/image-pkg-coverage")
+	sbom, _ := catalogDirectory(t, "testdata/image-pkg-coverage")
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)

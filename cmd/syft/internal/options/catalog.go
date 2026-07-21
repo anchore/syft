@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
+	"github.com/anchore/syft/syft/pkg/cataloger/cpp"
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/pkg/cataloger/java"
@@ -31,19 +33,19 @@ import (
 
 type Catalog struct {
 	// high-level cataloger configuration
-	Catalogers        []string            `yaml:"-" json:"catalogers" mapstructure:"catalogers"` // deprecated and not shown in yaml output
-	DefaultCatalogers []string            `yaml:"default-catalogers" json:"default-catalogers" mapstructure:"default-catalogers"`
-	SelectCatalogers  []string            `yaml:"select-catalogers" json:"select-catalogers" mapstructure:"select-catalogers"`
-	Package           packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
-	License           licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
-	File              fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
-	Scope             string              `yaml:"scope" json:"scope" mapstructure:"scope"`
-	Parallelism       int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
-	Relationships     relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
-	Compliance        complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
-	Enrich            []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
+	CatalogerSelection `yaml:",inline" json:",inline" mapstructure:",squash"`
+
+	Package       packageConfig       `yaml:"package" json:"package" mapstructure:"package"`
+	License       licenseConfig       `yaml:"license" json:"license" mapstructure:"license"`
+	File          fileConfig          `yaml:"file" json:"file" mapstructure:"file"`
+	Scope         string              `yaml:"scope" json:"scope" mapstructure:"scope"`
+	Parallelism   int                 `yaml:"parallelism" json:"parallelism" mapstructure:"parallelism"` // the number of catalog workers to run in parallel
+	Relationships relationshipsConfig `yaml:"relationships" json:"relationships" mapstructure:"relationships"`
+	Compliance    complianceConfig    `yaml:"compliance" json:"compliance" mapstructure:"compliance"`
+	Enrich        []string            `yaml:"enrich" json:"enrich" mapstructure:"enrich"`
 
 	// ecosystem-specific cataloger configuration
+	Cpp         cppConfig         `yaml:"cpp" json:"cpp" mapstructure:"cpp"`
 	Dotnet      dotnetConfig      `yaml:"dotnet" json:"dotnet" mapstructure:"dotnet"`
 	Golang      golangConfig      `yaml:"golang" json:"golang" mapstructure:"golang"`
 	Java        javaConfig        `yaml:"java" json:"java" mapstructure:"java"`
@@ -77,7 +79,10 @@ func DefaultCatalog() Catalog {
 		Package:       defaultPackageConfig(),
 		License:       defaultLicenseConfig(),
 		LinuxKernel:   defaultLinuxKernelConfig(),
+		JavaScript:    defaultJavaScriptConfig(),
+		Python:        defaultPythonConfig(),
 		Nix:           defaultNixConfig(),
+		Cpp:           defaultCppConfig(),
 		Dotnet:        defaultDotnetConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
@@ -170,6 +175,8 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 	}
 	return pkgcataloging.Config{
 		Binary: binary.DefaultClassifierCatalogerConfig(),
+		Cpp: cpp.DefaultCatalogerConfig().
+			WithVcpkgAllowGitClone(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Cpp, task.Vcpkg), cfg.Cpp.VcpkgAllowGitClone)),
 		Dotnet: dotnet.DefaultCatalogerConfig().
 			WithDepPackagesMustHaveDLL(cfg.Dotnet.DepPackagesMustHaveDLL).
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
@@ -193,7 +200,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 					WithFromContents(cfg.Golang.MainModuleVersion.FromContents).
 					WithFromBuildSettings(cfg.Golang.MainModuleVersion.FromBuildSettings).
 					WithFromLDFlags(cfg.Golang.MainModuleVersion.FromLDFlags),
-			),
+			).
+			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)).
+			WithCaptureSymbols(cfg.Golang.CaptureSymbols),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).
@@ -203,9 +212,10 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 		},
 		Nix: nix.DefaultConfig().
 			WithCaptureOwnedFiles(cfg.Nix.CaptureOwnedFiles),
-		Python: python.CatalogerConfig{
-			GuessUnpinnedRequirements: cfg.Python.GuessUnpinnedRequirements,
-		},
+		Python: python.DefaultCatalogerConfig().
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.SearchRemoteLicenses)).
+			WithPypiBaseURL(cfg.Python.PypiBaseURL).
+			WithGuessUnpinnedRequirements(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.GuessUnpinnedRequirements)),
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseMavenLocalRepository)).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
@@ -233,25 +243,8 @@ func (cfg *Catalog) AddFlags(flags clio.FlagSet) {
 	flags.StringArrayVarP(&cfg.Exclusions, "exclude", "",
 		"exclude paths from being scanned using a glob expression")
 
-	flags.StringArrayVarP(&cfg.Catalogers, "catalogers", "",
-		"enable one or more package catalogers")
-
 	flags.IntVarP(&cfg.Parallelism, "parallelism", "",
 		"number of cataloger workers to run in parallel")
-
-	if pfp, ok := flags.(fangs.PFlagSetProvider); ok {
-		if err := pfp.PFlagSet().MarkDeprecated("catalogers", "use: override-default-catalogers and select-catalogers"); err != nil {
-			panic(err)
-		}
-	} else {
-		panic("unable to mark flags as deprecated")
-	}
-
-	flags.StringArrayVarP(&cfg.DefaultCatalogers, "override-default-catalogers", "",
-		"set the base set of catalogers to use (defaults to 'image' or 'directory' depending on the scan source)")
-
-	flags.StringArrayVarP(&cfg.SelectCatalogers, "select-catalogers", "",
-		"add, remove, and filter the catalogers to be used")
 
 	flags.StringArrayVarP(&cfg.Enrich, "enrich", "",
 		fmt.Sprintf("enable package data enrichment from local and online sources (options: %s)", strings.Join(publicisedEnrichmentOptions, ", ")))
@@ -279,22 +272,8 @@ Available options are: %s`, strings.Join(publicisedEnrichmentOptions, ", ")))
 }
 
 func (cfg *Catalog) PostLoad() error {
-	usingLegacyCatalogers := len(cfg.Catalogers) > 0
-	usingNewCatalogers := len(cfg.DefaultCatalogers) > 0 || len(cfg.SelectCatalogers) > 0
-
-	if usingLegacyCatalogers && usingNewCatalogers {
-		return fmt.Errorf("cannot use both 'catalogers' and 'select-catalogers'/'default-catalogers' flags")
-	}
-
 	cfg.From = Flatten(cfg.From)
-
-	cfg.Catalogers = Flatten(cfg.Catalogers)
-	cfg.DefaultCatalogers = Flatten(cfg.DefaultCatalogers)
-	cfg.SelectCatalogers = Flatten(cfg.SelectCatalogers)
-	cfg.Enrich = Flatten(cfg.Enrich)
-
-	// for backwards compatibility
-	cfg.DefaultCatalogers = append(cfg.DefaultCatalogers, cfg.Catalogers...)
+	cfg.Enrich = FlattenAndSort(cfg.Enrich)
 
 	s := source.ParseScope(cfg.Scope)
 	if s == source.UnknownScope {
@@ -316,6 +295,11 @@ func Flatten(commaSeparatedEntries []string) []string {
 			out = append(out, strings.TrimSpace(s))
 		}
 	}
+	return out
+}
+
+func FlattenAndSort(commaSeparatedEntries []string) []string {
+	out := Flatten(commaSeparatedEntries)
 	sort.Strings(out)
 	return out
 }
@@ -326,6 +310,8 @@ var publicisedEnrichmentOptions = []string{
 	task.Dotnet,
 	task.Java,
 	task.JavaScript,
+	task.Python,
+	task.Vcpkg,
 }
 
 func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
@@ -341,10 +327,8 @@ func enrichmentEnabled(enrichDirectives []string, features ...string) *bool {
 				directive = directive[1:]
 				enable = false
 			}
-			for _, feature := range features {
-				if directive == feature {
-					return &enable
-				}
+			if slices.Contains(features, directive) {
+				return &enable
 			}
 		}
 		return nil
