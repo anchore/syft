@@ -102,6 +102,8 @@ func (c CatalogerConfig) WithCredentials(input []credential.SimpleCredential) Ca
 			c.NuGetRepositoryCredentials = append(c.NuGetRepositoryCredentials, credential)
 		}
 	}
+	return c
+}
 
 func (c CatalogerConfig) WithExcludeProjectReferences(exclude bool) CatalogerConfig {
 	c.ExcludeProjectReferences = exclude

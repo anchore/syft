@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -22,7 +23,7 @@ func TestCataloger_Globs(t *testing.T) {
 	}{
 		{
 			name:      "obtain deps.json files",
-			fixture:   "test-fixtures/glob-paths",
+			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetDepsCataloger(DefaultCatalogerConfig()),
 			expected: []string{
 				"src/something.deps.json",
@@ -30,7 +31,7 @@ func TestCataloger_Globs(t *testing.T) {
 		},
 		{
 			name:      "obtain portable executable files",
-			fixture:   "test-fixtures/glob-paths",
+			fixture:   "testdata/glob-paths",
 			cataloger: NewDotnetPortableExecutableCataloger(DefaultCatalogerConfig()),
 			expected: []string{
 				"src/something.bpl",
