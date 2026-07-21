@@ -589,9 +589,18 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/deno",
 			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
+					// Deno/2.6.3Deno/
+					// Deno/1.41.0cli/
+					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)(Deno/|cli/)`,
+				),
+				m.FileContentsVersionMatcher(
 					// Deno/2.6.3
 					// Deno/1.41.0
 					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// cli/tools/standalone.rsdeno-canary/f4bed1081456089559c82441a13c4fb700840cac1.11.3dlwindows
+					`deno-canary/[0-9a-z]{40}(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
 				),
 				m.FileContentsVersionMatcher(
 					// deno::tools::standalonedeno-65db94feba9d4d51a09b74629f566dbc90484fbarelease/v1.29.4windows
