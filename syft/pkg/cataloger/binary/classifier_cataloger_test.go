@@ -1500,6 +1500,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.11.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.11.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.11.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.11.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.11.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.11.4",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
 			logicalFixture: "deno/1.16.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "deno",
@@ -1561,6 +1583,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "2.6.3",
 				Type:      "binary",
 				PURL:      "pkg:generic/deno@2.6.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.9.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.9.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.9.2",
 				Locations: locations("deno"),
 				Metadata:  metadata("deno-binary"),
 			},
