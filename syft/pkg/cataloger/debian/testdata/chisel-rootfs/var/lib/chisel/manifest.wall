@@ -1,0 +1,13 @@
+{"jsonwall":"1.0","schema":"1.0","count":13}
+{"kind":"content","slice":"pkg-a_copyright","path":"/usr/share/doc/pkg-a/copyright"}
+{"kind":"content","slice":"pkg-b_copyright","path":"/usr/share/doc/pkg-b"}
+{"kind":"content","slice":"pkg-c_libs","path":"/usr/lib/libfake.so.1"}
+{"kind":"package","name":"pkg-a","version":"1.0","sha256":"79f9bd57d5f4c0f57741b7c9a898abc2fee2ba0ef507a24d2f04f9bfe745c8b9","arch":"amd64"}
+{"kind":"package","name":"pkg-b","version":"2.0","sha256":"3b075aae0bbbf07db0fc0da85e0e6462e3ea892b1e35d18f27fc748d16bfd0a5","arch":"amd64"}
+{"kind":"package","name":"pkg-c","version":"3.0","sha256":"c1f27e5c539c489bcb28d5764e2b06ca07ba549cca41a1e50a71a76e0a1a4001","arch":"amd64"}
+{"kind":"path","path":"/usr/lib/libfake.so.1","mode":"0644","slices":["pkg-c_libs"],"sha256":"8a0a63e77f8b8f626aa1082f78e0f22d0b0f00a1c9885464b8f3a93be6cb9e78","size":13}
+{"kind":"path","path":"/usr/share/doc/pkg-a/copyright","mode":"0644","slices":["pkg-a_copyright"],"sha256":"5f56b9e184d346e64c1c657bbb6e0e871976e0aac372c920a2618e0d1c9b2f43","size":152}
+{"kind":"path","path":"/usr/share/doc/pkg-b","mode":"0777","slices":["pkg-b_copyright"],"link":"pkg-a"}
+{"kind":"slice","name":"pkg-a_copyright"}
+{"kind":"slice","name":"pkg-b_copyright"}
+{"kind":"slice","name":"pkg-c_libs"}
