@@ -97,6 +97,58 @@ func Test_moduleSymbols(t *testing.T) {
 	}
 }
 
+func Test_escapedImportPathAttribution(t *testing.T) {
+	// the go linker escapes the '.' in the last path element, so "gopkg.in/yaml.v2" appears in the symbol
+	// table as "gopkg.in/yaml%2ev2". attribution must still land these under the unescaped module path.
+	mainModule := &debug.Module{Path: "github.com/someorg/somecli"}
+	deps := []*debug.Module{{Path: "gopkg.in/yaml.v2"}}
+
+	symbols := []binarySymbol{
+		makeBinarySymbol("gopkg.in/yaml%2ev2.(*decoder).alias", "gopkg.in/yaml%2ev2"),
+		makeBinarySymbol("gopkg.in/yaml%2ev2.(*TypeError).Error", "gopkg.in/yaml%2ev2"),
+	}
+
+	gotByModule, gotStdlib := moduleSymbols(symbols, mainModule, deps)
+	assert.Nil(t, gotStdlib)
+	assert.Equal(t, map[string]map[string][]string{
+		"gopkg.in/yaml.v2": {
+			"gopkg.in/yaml.v2": {"(*TypeError).Error", "(*decoder).alias"},
+		},
+	}, gotByModule)
+}
+
+func Test_unescapePackagePath(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"gopkg.in/yaml%2ev2", "gopkg.in/yaml.v2"},
+		{"foo%25bar", "foo%bar"},
+		{"foo%22bar", "foo\"bar"},
+		// no escapes: unchanged
+		{"github.com/foo/bar", "github.com/foo/bar"},
+		{"", ""},
+		// malformed sequences are left as-is
+		{"foo%2", "foo%2"},
+		{"foo%zz", "foo%zz"},
+		{"foo%", "foo%"},
+		// uppercase hex is accepted too
+		{"foo%2Ebar", "foo.bar"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			assert.Equal(t, tt.expected, unescapePackagePath(tt.input))
+		})
+	}
+}
+
+func Test_makeBinarySymbol(t *testing.T) {
+	// only the import-path prefix is unescaped; the local-symbol suffix is preserved verbatim
+	sym := makeBinarySymbol("gopkg.in/yaml%2ev2.(*decoder).alias", "gopkg.in/yaml%2ev2")
+	assert.Equal(t, "gopkg.in/yaml.v2", sym.packagePath)
+	assert.Equal(t, "gopkg.in/yaml.v2.(*decoder).alias", sym.name)
+}
+
 func Test_localSymbolName(t *testing.T) {
 	tests := []struct {
 		name       string

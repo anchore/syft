@@ -52,10 +52,7 @@ func getSymbols(r io.ReaderAt) (syms []binarySymbol, err error) {
 			continue
 		}
 		seen[fn.Name] = struct{}{}
-		syms = append(syms, binarySymbol{
-			packagePath: fn.PackageName(),
-			name:        fn.Name,
-		})
+		syms = append(syms, makeBinarySymbol(fn.Name, fn.PackageName()))
 	}
 
 	// debug/gosym only exposes top-level functions; functions that the compiler inlined into their
@@ -71,7 +68,7 @@ func getSymbols(r io.ReaderAt) (syms []binarySymbol, err error) {
 			continue
 		}
 		seen[name] = struct{}{}
-		syms = append(syms, binarySymbol{packagePath: pkgPath, name: name})
+		syms = append(syms, makeBinarySymbol(name, pkgPath))
 	}
 
 	return syms, nil
@@ -92,6 +89,55 @@ func packagePathFromSymbolName(name string) string {
 		return ""
 	}
 	return name[:slash+1+dot]
+}
+
+// makeBinarySymbol builds a binarySymbol, unescaping the %xx sequences the go linker introduces in the
+// import-path portion of a symbol name (see unescapePackagePath). The local-symbol suffix (method and
+// function names) is left untouched, so only the path prefix shared by packagePath and name is rewritten.
+func makeBinarySymbol(name, pkgPath string) binarySymbol {
+	unescaped := unescapePackagePath(pkgPath)
+	if unescaped != pkgPath && strings.HasPrefix(name, pkgPath) {
+		name = unescaped + name[len(pkgPath):]
+	}
+	return binarySymbol{packagePath: unescaped, name: name}
+}
+
+// unescapePackagePath reverses the escaping cmd/internal/objabi.PathToPrefix applies to import paths in
+// symbol names: bytes like '.' (at or after the final '/'), '%', '"', control bytes, and high bytes are
+// written as lowercase "%xx". For example "gopkg.in/yaml.v2" is stored as "gopkg.in/yaml%2ev2", so this
+// restores it before matching against the (unescaped) module paths from build info. A lone or malformed
+// '%' sequence is left as-is.
+func unescapePackagePath(path string) string {
+	if !strings.Contains(path, "%") {
+		return path
+	}
+	var b strings.Builder
+	b.Grow(len(path))
+	for i := 0; i < len(path); i++ {
+		if path[i] == '%' && i+2 < len(path) {
+			if hi, ok1 := unhex(path[i+1]); ok1 {
+				if lo, ok2 := unhex(path[i+2]); ok2 {
+					b.WriteByte(hi<<4 | lo)
+					i += 2
+					continue
+				}
+			}
+		}
+		b.WriteByte(path[i])
+	}
+	return b.String()
+}
+
+func unhex(c byte) (byte, bool) {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0', true
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10, true
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10, true
+	}
+	return 0, false
 }
 
 // nameWithoutTypeArgs strips the type-argument portion from an instantiated generic symbol name, e.g.
