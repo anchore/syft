@@ -20,7 +20,7 @@ import (
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
-	formatInternal "github.com/anchore/syft/syft/format/internal"
+	formatinternal "github.com/anchore/syft/syft/format/internal"
 	"github.com/anchore/syft/syft/format/internal/spdxutil/helpers"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
@@ -680,7 +680,7 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
 
-	_, coordinateSorter := formatInternal.GetLocationSorters(s)
+	_, coordinateSorter := formatinternal.GetLocationSorters(s)
 
 	coordinates := s.AllCoordinates()
 	slices.SortFunc(coordinates, coordinateSorter)
@@ -712,11 +712,7 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 			comment = fmt.Sprintf("layerID: %s", c.FileSystemID)
 		}
 
-		relativePath, err := convertAbsoluteToRelative(c.RealPath)
-		if err != nil {
-			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
-			relativePath = c.RealPath
-		}
+		relativePath := spdxFileRelativePath(s.Source, c.RealPath)
 
 		results = append(results, &spdx.File{
 			FileSPDXIdentifier: toSPDXID(c),
@@ -870,21 +866,19 @@ func trimPatchVersion(semver string) string {
 
 // spdx requires that the file name field is a relative filename
 // with the root of the package archive or directory
-func convertAbsoluteToRelative(absPath string) (string, error) {
-	// Ensure the absolute path is absolute (although it should already be)
-	if !path.IsAbs(absPath) {
-		// already relative
-		log.Debugf("%s is already relative", absPath)
-		return absPath, nil
-	}
+func convertAbsoluteToRelative(absPath string) string {
+	return formatinternal.ConvertAbsoluteToRelative(absPath)
+}
 
-	// we use "/" here given that we're converting absolute paths from root to relative
-	relPath, found := strings.CutPrefix(absPath, "/")
-	if !found {
-		return "", fmt.Errorf("error calculating relative path: %s", absPath)
+// spdxFileRelativePath returns the file name to embed in the SPDX document.
+// When the source is a directory scan with a --base-path set, paths are made
+// relative to that base (supporting ".." for symlinks that escape the base).
+// For all other source types the absolute leading "/" is simply stripped.
+func spdxFileRelativePath(src source.Description, realPath string) string {
+	if m, ok := src.Metadata.(source.DirectoryMetadata); ok && m.Base != "" {
+		return formatinternal.Rel(m.Base, realPath)
 	}
-
-	return relPath, nil
+	return convertAbsoluteToRelative(realPath)
 }
 
 func convertOtherLicense(otherLicenses []spdx.OtherLicense) []*spdx.OtherLicense {
