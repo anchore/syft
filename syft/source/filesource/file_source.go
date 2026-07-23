@@ -212,7 +212,19 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 		return analysisPath, cleanupFn, nil
 	}
 
-	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, nil)
+	// Pass the file contents to archive identification rather than relying on the
+	// filename alone. mholt/archives matches filenames with strings.Contains, so a
+	// regular file whose name merely contains an archive extension as a substring
+	// (e.g. "sample.tar.gz_hashed.json") is otherwise misidentified as an archive
+	// and fails to "unarchive". With the reader, content-based detection runs and
+	// non-archives fall through to regular file analysis. See issue #4582.
+	f, err := os.Open(path)
+	if err != nil {
+		return "", cleanupFn, fmt.Errorf("unable to open source file: %w", err)
+	}
+	defer f.Close()
+
+	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, f)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
