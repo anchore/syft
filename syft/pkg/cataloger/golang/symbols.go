@@ -16,6 +16,10 @@ import (
 // mainPackage is the import path the linker assigns to the binary's main package.
 const mainPackage = "main"
 
+// vendorPrefix is the import-path prefix carried by vendored packages (e.g. from `go mod vendor`, or the
+// standard library's own vendored dependencies such as "vendor/golang.org/x/net/http2").
+const vendorPrefix = "vendor/"
+
 // binarySymbol represents a single function symbol extracted from a go binary's pclntab.
 type binarySymbol struct {
 	// packagePath is the import path of the package that owns the symbol (e.g. "github.com/foo/bar/internal/baz")
@@ -273,8 +277,10 @@ func readPclntab(r io.ReaderAt) (pclntab []byte, textStart uint64, err error) {
 // "(*T).M"). Symbols from the "main" package are attributed to the main module and keyed by the "main"
 // import path the linker assigns. Standard-library symbols (which belong to no module) are collected
 // separately and returned as the second value, grouped by import path, so they can be attached to the
-// synthetic "stdlib" package. Compiler/runtime-internal symbols that are neither module-owned nor a
-// recognizable stdlib import path are dropped.
+// synthetic "stdlib" package. Vendored packages carry a "vendor/" import-path prefix that module paths do
+// not; the prefix is ignored for module attribution and such symbols are recorded under both the vendored
+// and the canonical (trimmed) import path. Compiler/runtime-internal symbols that are neither module-owned
+// nor a recognizable stdlib import path are dropped.
 func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Module) (byModule map[string]map[string][]string, stdlib map[string][]string) {
 	if len(symbols) == 0 {
 		return nil, nil
@@ -301,6 +307,8 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 		if importPath == mainPackage && main != nil {
 			attrPath = main.Path
 		}
+		// vendored packages carry a "vendor/" prefix that module paths do not
+		attrPath = strings.TrimPrefix(attrPath, vendorPrefix)
 
 		var best string
 		for _, modPath := range modulePaths {
@@ -311,15 +319,17 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 
 		local := localSymbolName(sym.name, importPath)
 		if best == "" {
+			// checked against the original (untrimmed) import path: a module-less "vendor/..." package should
+			// only come from GOROOT/src/vendor, which ships as part of the stdlib
 			if importPath != mainPackage && isStandardImportPath(importPath) {
-				stdlib[importPath] = append(stdlib[importPath], local)
+				addSymbol(stdlib, importPath, local)
 			}
 			continue
 		}
 		if results[best] == nil {
 			results[best] = make(map[string][]string)
 		}
-		results[best][importPath] = append(results[best][importPath], local)
+		addSymbol(results[best], importPath, local)
 	}
 
 	for _, byImport := range results {
@@ -331,6 +341,16 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 	}
 
 	return results, stdlib
+}
+
+// addSymbol records a symbol name under its import path; a vendored import path is additionally recorded
+// under the path with the "vendor/" prefix trimmed, so lookups by either the vendored path (e.g.
+// "vendor/golang.org/x/net/http2") or the canonical import path ("golang.org/x/net/http2") succeed.
+func addSymbol(groups map[string][]string, importPath, name string) {
+	groups[importPath] = append(groups[importPath], name)
+	if trimmed, ok := strings.CutPrefix(importPath, vendorPrefix); ok {
+		groups[trimmed] = append(groups[trimmed], name)
+	}
 }
 
 // localSymbolName strips the owning package's import path prefix from a fully qualified symbol name, e.g.

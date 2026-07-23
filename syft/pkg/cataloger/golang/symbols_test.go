@@ -75,6 +75,45 @@ func Test_moduleSymbols(t *testing.T) {
 			},
 		},
 		{
+			name: "vendored packages match modules despite the vendor/ prefix and are recorded under both paths",
+			symbols: []binarySymbol{
+				{packagePath: "vendor/github.com/foo/bar", name: "vendor/github.com/foo/bar.Parse"},
+				{packagePath: "vendor/github.com/foo/bar/internal/util", name: "vendor/github.com/foo/bar/internal/util.(*Helper).Do"},
+			},
+			expected: map[string]map[string][]string{
+				"github.com/foo/bar": {
+					"vendor/github.com/foo/bar":               {"Parse"},
+					"github.com/foo/bar":                      {"Parse"},
+					"vendor/github.com/foo/bar/internal/util": {"(*Helper).Do"},
+					"github.com/foo/bar/internal/util":        {"(*Helper).Do"},
+				},
+			},
+		},
+		{
+			name: "stdlib-vendored packages are recorded under both the vendored and canonical import path",
+			symbols: []binarySymbol{
+				{packagePath: "vendor/golang.org/x/net/http2", name: "vendor/golang.org/x/net/http2.(*Framer).ReadFrame"},
+			},
+			expected: map[string]map[string][]string{},
+			expectedStdlib: map[string][]string{
+				"vendor/golang.org/x/net/http2": {"(*Framer).ReadFrame"},
+				"golang.org/x/net/http2":        {"(*Framer).ReadFrame"},
+			},
+		},
+		{
+			name: "vendored and unvendored symbols for the same package are merged and deduplicated under the canonical path",
+			symbols: []binarySymbol{
+				{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
+				{packagePath: "vendor/github.com/foo/bar", name: "vendor/github.com/foo/bar.Parse"},
+			},
+			expected: map[string]map[string][]string{
+				"github.com/foo/bar": {
+					"github.com/foo/bar":        {"Parse"},
+					"vendor/github.com/foo/bar": {"Parse"},
+				},
+			},
+		},
+		{
 			name: "duplicate symbols are deduplicated",
 			symbols: []binarySymbol{
 				{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
@@ -239,6 +278,9 @@ func Test_packagePathFromSymbolName(t *testing.T) {
 		// module paths that begin with "go." are not compiler-generated
 		{"go.uber.org/zap.(*Logger).Info", "go.uber.org/zap"},
 		{"go.opentelemetry.io/otel.Tracer", "go.opentelemetry.io/otel"},
+		// vendored packages retain their "vendor/" import-path prefix in symbol names
+		{"vendor/golang.org/x/net/http2.(*Framer).ReadFrame", "vendor/golang.org/x/net/http2"},
+		{"vendor/github.com/foo/bar.Parse", "vendor/github.com/foo/bar"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
