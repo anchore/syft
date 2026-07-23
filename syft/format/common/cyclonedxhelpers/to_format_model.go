@@ -86,11 +86,26 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 			Hashes: &cdxHashes,
 		})
 	}
+
 	cdxBOM.Components = &components
+	// cdxBOM.Metadata.Component.Components = &components // this results in no components at all in DT
+
+	// add all dependencies from the root component to found components
+	rootDeps := cyclonedx.Dependency{
+		Ref:          cdxBOM.Metadata.Component.BOMRef,
+		Dependencies: &[]string{},
+	}
+	for _, c := range components {
+		if c.Type != cyclonedx.ComponentTypeApplication && c.Type != cyclonedx.ComponentTypeLibrary {
+			continue
+		}
+		*rootDeps.Dependencies = append(*rootDeps.Dependencies, c.BOMRef)
+	}
+	cdxBOM.Dependencies = &[]cyclonedx.Dependency{rootDeps}
 
 	dependencies := toDependencies(s.Relationships)
 	if len(dependencies) > 0 {
-		cdxBOM.Dependencies = &dependencies
+		*cdxBOM.Dependencies = append(*cdxBOM.Dependencies, dependencies...)
 	}
 
 	return cdxBOM
