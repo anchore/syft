@@ -1,0 +1,2 @@
+#this simulates a mise shim for jdb — not a real JVM binary
+with: openjdk 0.0 21.0.2+13
