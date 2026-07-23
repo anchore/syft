@@ -40,6 +40,17 @@ func (r *ContainerImageSquash) FilesByPath(paths ...string) ([]file.Location, er
 	uniqueLocations := make([]file.Location, 0)
 
 	for _, path := range paths {
+		// if the requested path is itself a hardlink, surface it at its own path (bound to its target's content)
+		// rather than collapsing it onto the target's path, so that image results are in parity with directory
+		// results (which cannot tell a hardlink from a regular file).
+		if ownRef, targetRef, ok := r.hardLinkAtPath(path); ok {
+			if !uniqueFileIDs.Contains(ownRef) {
+				uniqueFileIDs.Add(ownRef)
+				uniqueLocations = append(uniqueLocations, file.NewVirtualLocationFromImage(string(ownRef.RealPath), path, targetRef, r.img))
+			}
+			continue
+		}
+
 		ref, err := r.img.SquashedSearchContext.SearchByPath(path, filetree.FollowBasenameLinks)
 		if err != nil {
 			return nil, err
@@ -82,7 +93,7 @@ func (r *ContainerImageSquash) FilesByPath(paths ...string) ([]file.Location, er
 //
 //nolint:gocognit
 func (r *ContainerImageSquash) FilesByGlob(patterns ...string) ([]file.Location, error) {
-	uniqueFileIDs := stereoscopeFile.NewFileReferenceSet()
+	uniqueCoordinates := file.NewCoordinateSet()
 	uniqueLocations := make([]file.Location, 0)
 
 	for _, pattern := range patterns {
@@ -116,10 +127,14 @@ func (r *ContainerImageSquash) FilesByGlob(patterns ...string) ([]file.Location,
 				return nil, fmt.Errorf("failed to find files by path (result=%+v): %w", result, err)
 			}
 			for _, resolvedLocation := range resolvedLocations {
-				if uniqueFileIDs.Contains(resolvedLocation.Reference()) {
+				// dedup on the surfaced coordinate rather than the underlying reference: distinct hardlinks share a
+				// single target reference but each has its own real path, so a reference-based dedup would collapse
+				// them back onto one entry (the exact behavior this parity fix removes). symlink resolutions keep
+				// their target's real path, so they still collapse as before.
+				if uniqueCoordinates.Contains(resolvedLocation.Coordinates) {
 					continue
 				}
-				uniqueFileIDs.Add(resolvedLocation.Reference())
+				uniqueCoordinates.Add(resolvedLocation.Coordinates)
 				uniqueLocations = append(uniqueLocations, resolvedLocation)
 			}
 		}
@@ -179,15 +194,52 @@ func (r *ContainerImageSquash) AllLocations(ctx context.Context) <-chan file.Loc
 	go func() {
 		defer close(results)
 		for _, ref := range r.img.SquashedTree().AllFiles(stereoscopeFile.AllTypes()...) {
+			loc := file.NewLocationFromImage(string(ref.RealPath), ref, r.img)
+			// surface a hardlink as the underlying type it points to (at its own path) so image results match
+			// directory results, which cannot distinguish a hardlink from a regular file.
+			if targetRef, ok := r.resolveHardLinkTarget(ref); ok {
+				loc = file.NewVirtualLocationFromImage(string(ref.RealPath), string(ref.RealPath), targetRef, r.img)
+			}
 			select {
 			case <-ctx.Done():
 				return
-			case results <- file.NewLocationFromImage(string(ref.RealPath), ref, r.img):
+			case results <- loc:
 				continue
 			}
 		}
 	}()
 	return results
+}
+
+// hardLinkAtPath returns the hardlink's own reference and its resolved target reference when the basename of path is a
+// hardlink. ok is false when path does not exist or is not a hardlink. The lookup does not follow the basename link so
+// that the hardlink's own path is preserved. This adds a tree walk per FilesByPath path; if it shows up in
+// profiles, fold the hardlink check into the existing SearchByPath resolution.
+func (r *ContainerImageSquash) hardLinkAtPath(path string) (stereoscopeFile.Reference, stereoscopeFile.Reference, bool) {
+	var own stereoscopeFile.Reference
+	exists, resolution, err := r.img.SquashedTree().File(stereoscopeFile.Path(path))
+	if err != nil || !exists || !resolution.HasReference() {
+		return own, own, false
+	}
+	target, ok := r.resolveHardLinkTarget(*resolution.Reference)
+	if !ok {
+		return own, own, false
+	}
+	return *resolution.Reference, target, true
+}
+
+// resolveHardLinkTarget returns the reference of a hardlink's underlying target when ref is a hardlink; ok is false
+// otherwise. No resolution is performed for non-hardlinks (symlinks keep their existing resolution semantics).
+func (r *ContainerImageSquash) resolveHardLinkTarget(ref stereoscopeFile.Reference) (stereoscopeFile.Reference, bool) {
+	metadata, err := r.img.FileCatalog.Get(ref)
+	if err != nil || metadata.Type != stereoscopeFile.TypeHardLink {
+		return ref, false
+	}
+	resolved, err := r.img.ResolveLinkByImageSquash(ref)
+	if err != nil || !resolved.HasReference() {
+		return ref, false
+	}
+	return *resolved.Reference, true
 }
 
 func (r *ContainerImageSquash) FilesByMIMEType(types ...string) ([]file.Location, error) {

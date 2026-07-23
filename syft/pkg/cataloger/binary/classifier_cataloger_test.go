@@ -2992,8 +2992,8 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 				Name:      "busybox",
 				Version:   "1.35.0",
 				PURL:      "pkg:generic/busybox@1.35.0",
-				Locations: locations("/bin/["),
-				Metadata:  metadata("busybox-binary", "/bin/[", "/bin/busybox"),
+				Locations: locations("/bin/busybox"),
+				Metadata:  metadata("busybox-binary", "/bin/busybox"),
 			},
 		},
 	}
