@@ -760,6 +760,57 @@ func Test_UnindexedDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 }
 
+func Test_UnindexedDirectoryResolver_RelativeFileByPath(t *testing.T) {
+	resolver := NewFromUnindexedDirectory("./testdata")
+
+	refs, err := resolver.FilesByPath("image-symlinks/file-1.txt")
+	require.NoError(t, err)
+	require.Len(t, refs, 1)
+	anchor := refs[0]
+
+	tests := []struct {
+		name     string
+		path     string
+		expected string // expected RealPath; empty means no location should be returned
+	}{
+		{
+			name:     "absolute path is resolved from the root, not the anchor location",
+			path:     "/image-symlinks/parent/file-4.txt",
+			expected: "image-symlinks/parent/file-4.txt",
+		},
+		{
+			name:     "relative path is resolved from the anchor location's directory",
+			path:     "parent/file-4.txt",
+			expected: "image-symlinks/parent/file-4.txt",
+		},
+		{
+			name:     "relative path to a sibling of the anchor location",
+			path:     "file-2.txt",
+			expected: "image-symlinks/file-2.txt",
+		},
+		{
+			name: "missing file returns nothing",
+			path: "/image-symlinks/bogus.txt",
+		},
+		{
+			name: "directory returns nothing",
+			path: "/image-symlinks/parent",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			location := resolver.RelativeFileByPath(anchor, test.path)
+			if test.expected == "" {
+				require.Nil(t, location)
+				return
+			}
+			require.NotNil(t, location)
+			assert.Equal(t, test.expected, location.RealPath)
+		})
+	}
+}
+
 func Test_UnindexedDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 	resolver := NewFromUnindexedDirectory("./testdata")
 	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
