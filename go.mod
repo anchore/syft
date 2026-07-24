@@ -52,7 +52,7 @@ require (
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.1
-	github.com/gpustack/gguf-parser-go v0.24.1
+	github.com/gpustack/gguf-parser-go v0.25.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-getter v1.8.6
 	github.com/hashicorp/go-multierror v1.1.1
