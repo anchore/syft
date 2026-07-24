@@ -27,10 +27,11 @@ type packageLock struct {
 
 // lockDependency represents a single package dependency listed in the package.lock json file
 type lockDependency struct {
-	Version   string `json:"version"`
-	Resolved  string `json:"resolved"`
-	Integrity string `json:"integrity"`
-	Dev       bool   `json:"dev"`
+	Version     string `json:"version"`
+	Resolved    string `json:"resolved"`
+	Integrity   string `json:"integrity"`
+	Dev         bool   `json:"dev"`
+	DevOptional bool   `json:"devOptional"`
 }
 
 type lockPackage struct {
@@ -40,6 +41,7 @@ type lockPackage struct {
 	Integrity    string             `json:"integrity"`
 	License      packageLockLicense `json:"license"`
 	Dev          bool               `json:"dev"`
+	DevOptional  bool               `json:"devOptional"`
 	Dependencies map[string]string  `json:"dependencies"`
 }
 
@@ -78,8 +80,8 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 
 	if lock.LockfileVersion == 1 {
 		for name, pkgMeta := range lock.Dependencies {
-			// skip packages that are only present as a dev dependency
-			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+			// skip packages that are only present as a dev dependency (including devOptional)
+			if !a.cfg.IncludeDevDependencies && (pkgMeta.Dev || pkgMeta.DevOptional) {
 				continue
 			}
 
@@ -96,8 +98,8 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 				name = pkgMeta.Name
 			}
 
-			// skip packages that are only present as a dev dependency
-			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+			// skip packages that are only present as a dev dependency (including devOptional)
+			if !a.cfg.IncludeDevDependencies && (pkgMeta.Dev || pkgMeta.DevOptional) {
 				continue
 			}
 
