@@ -186,6 +186,22 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			expect:   "org.springframework.ldap",
 		},
 		{
+			// regression: Apache Derby jars are OSGi bundles that ship no pom
+			// metadata, so the manifest heuristic would otherwise pick up
+			// Bundle-Activator (org.apache.derby.osgi.EmbeddedActivator) as the
+			// group ID. The known package list must win instead.
+			name:     "known package list derby",
+			pkgName:  "derby",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.apache.derby",
+		},
+		{
+			name:     "known package list derbytools",
+			pkgName:  "derbytools",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.apache.derby",
+		},
+		{
 			name: "java manifest",
 			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
