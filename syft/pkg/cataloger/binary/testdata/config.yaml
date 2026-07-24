@@ -141,6 +141,22 @@ from-images:
       - /usr/bin/deno
 
   - name: deno
+    version: 1.11.3
+    images:
+      - ref: denoland/deno:1.11.3@sha256:340d071dc71c8403c75713694db04f59b8cb7f6c7244798cd7447d55f2750596
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 1.11.4
+    images:
+      - ref: denoland/deno:1.11.4@sha256:8e9a449a50b71c779ad1c10ec79055b20a331e78a3852818fac47bc3e85b49f4
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
     version: 1.16.4
     images:
       - ref: denoland/deno:1.16.4@sha256:027868eb6f079ef290957bcda05280a6b08ff86baf549bc6eff5c17467a44d41
@@ -184,6 +200,14 @@ from-images:
     version: 2.6.3
     images:
       - ref: denoland/deno:2.6.3
+        platform: linux/amd64
+    paths:
+      - /usr/bin/deno
+
+  - name: deno
+    version: 2.9.2
+    images:
+      - ref: denoland/deno:ubuntu-2.9.2@sha256:0d27941f871700ebd95953c36fb1a817135c20f5afe3a645935672dfab72b2e9
         platform: linux/amd64
     paths:
       - /usr/bin/deno
