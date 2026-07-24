@@ -1566,6 +1566,50 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "bun/0.5.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "0.5.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@0.5.9",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.0.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.1.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.1.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.1.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.3.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.3.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.3.5",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
 			logicalFixture: "haskell-ghc/7.10.3/linux-amd64",
 			expected: pkg.Package{
 				Name:      "haskell/ghc",
