@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_decode(t *testing.T) {
@@ -480,4 +481,72 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 	assert.Len(t, pkgsWithoutID, 1)
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
 
+}
+
+func Test_extractComponents_preservesNameAndVersion(t *testing.T) {
+	tests := []struct {
+		name            string
+		component       *cyclonedx.Component
+		wantName        string
+		wantVersion     string
+		wantMetaType    string
+		wantImageDigest string
+	}{
+		{
+			name: "application component (directory / --source-version)",
+			component: &cyclonedx.Component{
+				Type:    cyclonedx.ComponentTypeApplication,
+				Name:    "my-app",
+				Version: "0.1.0",
+			},
+			wantName:    "my-app",
+			wantVersion: "0.1.0",
+		},
+		{
+			name: "file component preserves version",
+			component: &cyclonedx.Component{
+				Type:    cyclonedx.ComponentTypeFile,
+				Name:    "/path/to/project",
+				Version: "1.2.3",
+			},
+			wantName:     "/path/to/project",
+			wantVersion:  "1.2.3",
+			wantMetaType: "file",
+		},
+		{
+			name: "container component preserves version and image digest",
+			component: &cyclonedx.Component{
+				Type:    cyclonedx.ComponentTypeContainer,
+				BOMRef:  "img-ref",
+				Name:    "alpine:latest",
+				Version: "sha256:abc123",
+			},
+			wantName:        "alpine:latest",
+			wantVersion:     "sha256:abc123",
+			wantMetaType:    "image",
+			wantImageDigest: "sha256:abc123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := extractComponents(&cyclonedx.Metadata{Component: tt.component})
+			assert.Equal(t, tt.wantName, got.Name)
+			assert.Equal(t, tt.wantVersion, got.Version)
+
+			switch tt.wantMetaType {
+			case "file":
+				meta, ok := got.Metadata.(source.FileMetadata)
+				require.True(t, ok)
+				assert.Equal(t, tt.wantName, meta.Path)
+			case "image":
+				meta, ok := got.Metadata.(source.ImageMetadata)
+				require.True(t, ok)
+				assert.Equal(t, tt.wantName, meta.UserInput)
+				assert.Equal(t, tt.wantImageDigest, meta.ManifestDigest)
+			default:
+				assert.Nil(t, got.Metadata)
+			}
+		})
+	}
 }
