@@ -78,6 +78,7 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 
                 if len(releases) > 0 {
                         r = &releases[0]
+				}
         }
 
         pkgs := make([]pkg.Package, 0, len(apks))
