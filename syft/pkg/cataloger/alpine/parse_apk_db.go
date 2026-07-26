@@ -88,7 +88,11 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
         return pkgs, nil, errs
 }
 
-
+// scanApkDBEntries parses packages from a given APK "installed" flat-file DB.
+// If maxTokenSize is > 0 it's passed to the scanner as a maximum token size
+//
+// Any scanner errors are returned so that caller has opportunity to recall with
+// a larger buffer
 func scanApkDBEntries(reader file.LocationReadCloser, maxTokenSize int) (apks []parsedData, errs error, scanErr error) {
 	scanner := bufio.NewScanner(reader)
 	if maxTokenSize > 0 {
