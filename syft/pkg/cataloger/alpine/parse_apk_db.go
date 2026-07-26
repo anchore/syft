@@ -40,8 +40,6 @@ const maxAPKDBTokenSize = 512 * 1024
 
 // parseApkDB parses packages from a given APK "installed" flat-file DB. For more
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
-//
-// nolint:funlen
 func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	// Attempt to parse with the default scanner.
 	// If it encounters a field which exceeds the 64KB buffer size, rewind
