@@ -36,11 +36,12 @@ type parsedData struct {
 // information on specific fields, see https://wiki.alpinelinux.org/wiki/Apk_spec.
 //
 //nolint:funlen
-func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func scanApkDBEntries(reader file.LocationReadCloser, maxTokenSize int) (apks []parsedData, errs error, scanErr error) {
 	scanner := bufio.NewScanner(reader)
-
-	var errs error
-	var apks []parsedData
+	if maxTokenSize > 0 {
+		scanner.Buffer(make([]byte, 0, bufio.MaxScanTokenSize), maxTokenSize)
+	}
+	
 	var currentEntry parsedData
 	entryParsingInProgress := false
 	fileParsingCtx := newApkFileParsingContext()
@@ -108,34 +109,7 @@ func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Enviro
 		appendApk(currentEntry)
 	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse APK installed DB file: %w", err)
-	}
-
-	var r *linux.Release
-	if env != nil {
-		r = env.LinuxRelease
-	}
-	// this is somewhat ugly, but better than completely failing when we can't find the release,
-	// e.g. embedded deeper in the tree, like containers or chroots.
-	// but we now have no way of handling different repository sources. On the other hand,
-	// we never could before this. At least now, we can handle some.
-	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
-	if r == nil {
-		// find the repositories file from the relative directory of the DB file
-		releases := findReleases(resolver, reader.RealPath)
-
-		if len(releases) > 0 {
-			r = &releases[0]
-		}
-	}
-
-	pkgs := make([]pkg.Package, 0, len(apks))
-	for _, apk := range apks {
-		pkgs = append(pkgs, newPackage(ctx, apk, r, reader.Location))
-	}
-
-	return pkgs, nil, errs
+	return apks, errs, scanner.Err()
 }
 
 func findReleases(resolver file.Resolver, dbPath string) []linux.Release {
