@@ -43,50 +43,50 @@ const maxAPKDBTokenSize = 512 * 1024
 //
 // nolint:funlen
 func parseApkDB(ctx context.Context, resolver file.Resolver, env *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-        // Attempt to parse with the default scanner.
-        // If it encounters a field which exceeds the 64KB buffer size, rewind
-        // and rescan with a larger buffer
-        apks, errs, scanErr := scanApkDBEntries(reader, 0)
-        if errors.Is(scanErr, bufio.ErrTooLong) {
-                if seeker, ok := reader.ReadCloser.(io.Seeker); ok {
-                        if _, seekErr := seeker.Seek(0, io.SeekStart); seekErr == nil {
-                                apks, errs, scanErr = scanApkDBEntries(reader, maxAPKDBTokenSize)
-                        } else {
-                                log.Debugf("unable to rewind APK installed DB to re-parse with a larger buffer: %+v", seekErr)
-                        }
-                } else {
-                        log.Debug("APK installed DB contains an oversized field but the reader is not seekable; cannot re-parse with a larger buffer")
-                }
-        }
+	// Attempt to parse with the default scanner.
+	// If it encounters a field which exceeds the 64KB buffer size, rewind
+	// and rescan with a larger buffer
+	apks, errs, scanErr := scanApkDBEntries(reader, 0)
+	if errors.Is(scanErr, bufio.ErrTooLong) {
+		if seeker, ok := reader.ReadCloser.(io.Seeker); ok {
+			if _, seekErr := seeker.Seek(0, io.SeekStart); seekErr == nil {
+				apks, errs, scanErr = scanApkDBEntries(reader, maxAPKDBTokenSize)
+			} else {
+				log.Debugf("unable to rewind APK installed DB to re-parse with a larger buffer: %+v", seekErr)
+			}
+		} else {
+			log.Debug("APK installed DB contains an oversized field but the reader is not seekable; cannot re-parse with a larger buffer")
+		}
+	}
 
-        if scanErr != nil {
-                return nil, nil, fmt.Errorf("failed to parse APK installed DB file: %w", scanErr)
-        }
+	if scanErr != nil {
+		return nil, nil, fmt.Errorf("failed to parse APK installed DB file: %w", scanErr)
+	}
 
-        var r *linux.Release
-        if env != nil {
-                r = env.LinuxRelease
-        }
-        // this is somewhat ugly, but better than completely failing when we can't find the release,
-        // e.g. embedded deeper in the tree, like containers or chroots.
-        // but we now have no way of handling different repository sources. On the other hand,
-        // we never could before this. At least now, we can handle some.
-        // This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
-        if r == nil {
-                // find the repositories file from the relative directory of the DB file
-                releases := findReleases(resolver, reader.RealPath)
+	var r *linux.Release
+	if env != nil {
+		r = env.LinuxRelease
+	}
+	// this is somewhat ugly, but better than completely failing when we can't find the release,
+	// e.g. embedded deeper in the tree, like containers or chroots.
+	// but we now have no way of handling different repository sources. On the other hand,
+	// we never could before this. At least now, we can handle some.
+	// This should get fixed with https://gitlab.alpinelinux.org/alpine/apk-tools/-/issues/10875
+	if r == nil {
+		// find the repositories file from the relative directory of the DB file
+		releases := findReleases(resolver, reader.RealPath)
 
-                if len(releases) > 0 {
-                        r = &releases[0]
-				}
-        }
+		if len(releases) > 0 {
+			r = &releases[0]
+		}
+	}
 
-        pkgs := make([]pkg.Package, 0, len(apks))
-        for _, apk := range apks {
-                pkgs = append(pkgs, newPackage(ctx, apk, r, reader.Location))
-        }
+	pkgs := make([]pkg.Package, 0, len(apks))
+	for _, apk := range apks {
+		pkgs = append(pkgs, newPackage(ctx, apk, r, reader.Location))
+	}
 
-        return pkgs, nil, errs
+	return pkgs, nil, errs
 }
 
 // scanApkDBEntries parses packages from a given APK "installed" flat-file DB.
@@ -99,7 +99,7 @@ func scanApkDBEntries(reader file.LocationReadCloser, maxTokenSize int) (apks []
 	if maxTokenSize > 0 {
 		scanner.Buffer(make([]byte, 0, bufio.MaxScanTokenSize), maxTokenSize)
 	}
-	
+
 	var currentEntry parsedData
 	entryParsingInProgress := false
 	fileParsingCtx := newApkFileParsingContext()
