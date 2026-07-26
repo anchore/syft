@@ -1,7 +1,9 @@
 package alpine
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -786,6 +788,53 @@ func Test_parseApkDB_expectedPkgNames(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Call parseApkDB against a DB which includes a field greater that bufio's
+// default 64KB token size - the reader should silently expand the buffer
+// size and successfully return the records
+func Test_parseApkDB_recoversFromOversizedField(t *testing.T) {
+	record := func(name, provides string) string {
+		return strings.Join([]string{
+			"C:Q1" + name + "0000000000000000000000000=",
+			"P:" + name,
+			"V:1.0.0-r0",
+			"A:x86_64",
+			"L:MIT",
+			"T:test package " + name,
+			"o:" + name,
+			"m:test",
+			"t:1700000000",
+			"S:100",
+			"I:200",
+			"p:" + provides,
+			"F:usr",
+			"R:" + name,
+			"Z:Q10000000000000000000000000000=",
+		}, "\n")
+	}
+
+	// create a provides line beyond the 64 KB default scanner token size
+	var big strings.Builder
+	big.WriteString("cmd:beta=1.0.0-r0")
+	for i := 0; i < 3000; i++ {
+		fmt.Fprintf(&big, " so-ver:lib%d.so=1.0.0-r0", i)
+	}
+	require.Greater(t, big.Len(), bufio.MaxScanTokenSize, "provides line must exceed the default token size to exercise the fix")
+
+	content := record("alpha", "cmd:alpha=1.0.0-r0") + "\n\n" + record("beta", big.String()) + "\n"
+
+	dbPath := filepath.Join(t.TempDir(), "installed")
+	require.NoError(t, os.WriteFile(dbPath, []byte(content), 0o600))
+
+	// use a real *os.File so the reader is seekable, mirroring the resolver's behavior
+	lrc := newLocationReadCloser(t, dbPath)
+
+	pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), lrc)
+	require.NoError(t, err)
+
+	// both the package before the oversized field and the one carrying it must survive
+	assert.Equal(t, []string{"alpha", "beta"}, toPackageNames(pkgs))
 }
 
 func toPackageNames(pkgs []pkg.Package) []string {
