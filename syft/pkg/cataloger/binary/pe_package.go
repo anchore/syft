@@ -15,6 +15,10 @@ var (
 	// spaceRegex includes nbsp (#160) considered to be a space character
 	spaceRegex  = regexp.MustCompile(`[\s\xa0]+`)
 	numberRegex = regexp.MustCompile(`\d`)
+	// commaSeparatedVersionRegex matches the comma-separated form that Windows
+	// VERSIONINFO resources often carry (mirroring the FILEVERSION x,y,z,w
+	// declaration in a .rc file), e.g. "3, 0, 21, 0"
+	commaSeparatedVersionRegex = regexp.MustCompile(`^\d+(?:\s*,\s*\d+)+$`)
 )
 
 func newPEPackage(versionResources map[string]string, f file.Location) pkg.Package {
@@ -129,6 +133,7 @@ func findVersionFromVR(versionResources map[string]string) string {
 
 func extractVersionFromResourcesValue(version string) string {
 	version = strings.TrimSpace(version)
+	version = normalizeCommaSeparatedVersion(version)
 	out := ""
 	for i, f := range strings.Fields(version) {
 		if containsNumber(out) && !containsNumber(f) {
@@ -141,6 +146,23 @@ func extractVersionFromResourcesValue(version string) string {
 		}
 	}
 	return out
+}
+
+// normalizeCommaSeparatedVersion converts the comma-separated version form used
+// by Windows VERSIONINFO resources into the canonical dotted form, e.g.
+// "3, 0, 21, 0" becomes "3.0.21.0". Values that are not entirely made up of
+// comma-separated numbers are returned unchanged.
+func normalizeCommaSeparatedVersion(version string) string {
+	if !commaSeparatedVersionRegex.MatchString(version) {
+		return version
+	}
+
+	fields := strings.Split(version, ",")
+	for i := range fields {
+		fields[i] = strings.TrimSpace(fields[i])
+	}
+
+	return strings.Join(fields, ".")
 }
 
 func containsNumber(s string) bool {
