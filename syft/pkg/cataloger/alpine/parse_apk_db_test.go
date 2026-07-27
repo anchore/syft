@@ -719,6 +719,25 @@ func Test_processChecksum(t *testing.T) {
 	}
 }
 
+func TestParseApkDBAllowsLargeFieldValues(t *testing.T) {
+	contents := strings.Join([]string{
+		"P:large-description",
+		"V:1.0-r0",
+		"A:x86_64",
+		"S:1",
+		"I:1",
+		"T:" + strings.Repeat("a", 70*1024),
+		"",
+	}, "\n")
+	reader := file.NewLocationReadCloser(file.NewLocation("large-installed-db"), io.NopCloser(strings.NewReader(contents)))
+
+	pkgs, _, err := parseApkDB(context.Background(), nil, new(generic.Environment), reader)
+
+	require.NoError(t, err)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "large-description", pkgs[0].Name)
+}
+
 func Test_parseApkDB_expectedPkgNames(t *testing.T) {
 	tests := []struct {
 		fixture      string
