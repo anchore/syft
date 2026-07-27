@@ -612,6 +612,20 @@ func DefaultClassifiers() []binutils.Classifier {
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 		{
+			Class:    "bun-binary",
+			FileGlob: "**/bun",
+			EvidenceMatcher: binutils.MatchAny(
+				// bun 1.1.0
+				// Bun v1.0.0
+				m.FileContentsVersionMatcher(`(?m)[Bb]un v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// bun-1.1.0
+				m.FileContentsVersionMatcher(`(?m)bun-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			),
+			Package: "bun",
+			PURL:    mustPURL("pkg:generic/bun@version"),
+			CPEs:    singleCPE("cpe:2.3:a:oven-sh:bun:*:*:*:*:*:*:*:*"),
+		},
+		{
 			Class:    "haskell-ghc-binary",
 			FileGlob: "**/ghc*",
 			EvidenceMatcher: binutils.MatchAny(
