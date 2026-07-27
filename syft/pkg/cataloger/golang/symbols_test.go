@@ -90,8 +90,6 @@ func Test_moduleSymbols(t *testing.T) {
 			},
 		},
 		{
-			// stdlib vulnerabilities are reported against the public packages (e.g. crypto/x509), not the
-			// vendored internal copies, so module-less vendored packages are dropped rather than recorded
 			name: "stdlib-vendored packages are dropped",
 			symbols: []binarySymbol{
 				{packagePath: "vendor/golang.org/x/net/http2", name: "vendor/golang.org/x/net/http2.(*Framer).ReadFrame"},

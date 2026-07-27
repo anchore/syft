@@ -321,9 +321,7 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 
 		local := localSymbolName(sym.name, importPath)
 		if best == "" {
-			// we drop stdlib vendored packages such as golang.org/x/crypto/cryptobyte
-			// because vulnerabilities in the stdlib seem to be reported against the public package such as crypto/x509
-			if importPath != mainPackage && isStandardImportPath(importPath) {
+			if importPath != mainPackage && isStandardImportPath(importPath) { // drop stdlib vendored packages
 				stdlib[importPath] = append(stdlib[importPath], local)
 			}
 			continue
