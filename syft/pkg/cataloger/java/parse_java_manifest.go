@@ -296,9 +296,10 @@ func splitUnquoted(value string, delimiter rune) []string {
 			continue
 		}
 		if r == '\'' || r == '"' {
-			if quote == 0 {
+			switch quote {
+			case 0:
 				quote = r
-			} else if quote == r {
+			case r:
 				quote = 0
 			}
 			current.WriteRune(r)
