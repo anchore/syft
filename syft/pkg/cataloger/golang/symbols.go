@@ -277,10 +277,13 @@ func readPclntab(r io.ReaderAt) (pclntab []byte, textStart uint64, err error) {
 // "(*T).M"). Symbols from the "main" package are attributed to the main module and keyed by the "main"
 // import path the linker assigns. Standard-library symbols (which belong to no module) are collected
 // separately and returned as the second value, grouped by import path, so they can be attached to the
-// synthetic "stdlib" package. Vendored packages carry a "vendor/" import-path prefix that module paths do
-// not; the prefix is ignored for module attribution and such symbols are recorded under both the vendored
-// and the canonical (trimmed) import path. Compiler/runtime-internal symbols that are neither module-owned
-// nor a recognizable stdlib import path are dropped.
+// synthetic "stdlib" package. Vendored packages carry a "vendor/" import-path prefix: such symbols match
+// both modules whose own path carries the prefix and modules without it (matched with the prefix trimmed),
+// and the prefix is retained in the group key only when the owning module itself is named "vendor/...".
+// Module-less vendored packages (the stdlib's own vendored dependencies, e.g.
+// "vendor/golang.org/x/net/http2") are dropped: stdlib vulnerabilities seem to be reported against the public
+// packages (e.g. "crypto/x509"), not the vendored internal copies. Compiler/runtime-internal symbols that
+// are neither module-owned nor a recognizable stdlib import path are likewise dropped.
 func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Module) (byModule map[string]map[string][]string, stdlib map[string][]string) {
 	if len(symbols) == 0 {
 		return nil, nil
@@ -307,29 +310,28 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 		if importPath == mainPackage && main != nil {
 			attrPath = main.Path
 		}
-		// vendored packages carry a "vendor/" prefix that module paths do not
-		attrPath = strings.TrimPrefix(attrPath, vendorPrefix)
 
-		var best string
-		for _, modPath := range modulePaths {
-			if len(modPath) > len(best) && (attrPath == modPath || strings.HasPrefix(attrPath, modPath+"/")) {
-				best = modPath
-			}
+		best := findBestMatch(modulePaths, attrPath)
+
+		// the vendor/ prefix is only retained when the owning module itself is named "vendor/...";
+		// in all other cases (non-vendored modules and vendored stdlib) the recorded import path is trimmed
+		if !strings.HasPrefix(best, vendorPrefix) {
+			importPath = strings.TrimPrefix(importPath, vendorPrefix)
 		}
 
 		local := localSymbolName(sym.name, importPath)
 		if best == "" {
-			// checked against the original (untrimmed) import path: a module-less "vendor/..." package should
-			// only come from GOROOT/src/vendor, which ships as part of the stdlib
+			// we drop stdlib vendored packages such as golang.org/x/crypto/cryptobyte
+			// because vulnerabilities in the stdlib seem to be reported against the public package such as crypto/x509
 			if importPath != mainPackage && isStandardImportPath(importPath) {
-				addSymbol(stdlib, importPath, local)
+				stdlib[importPath] = append(stdlib[importPath], local)
 			}
 			continue
 		}
 		if results[best] == nil {
 			results[best] = make(map[string][]string)
 		}
-		addSymbol(results[best], importPath, local)
+		results[best][importPath] = append(results[best][importPath], local)
 	}
 
 	for _, byImport := range results {
@@ -343,21 +345,36 @@ func moduleSymbols(symbols []binarySymbol, main *debug.Module, deps []*debug.Mod
 	return results, stdlib
 }
 
-// addSymbol records a symbol name under its import path; a vendored import path is additionally recorded
-// under the path with the "vendor/" prefix trimmed, so lookups by either the vendored path (e.g.
-// "vendor/golang.org/x/net/http2") or the canonical import path ("golang.org/x/net/http2") succeed.
-func addSymbol(groups map[string][]string, importPath, name string) {
-	groups[importPath] = append(groups[importPath], name)
-	if trimmed, ok := strings.CutPrefix(importPath, vendorPrefix); ok {
-		groups[trimmed] = append(groups[trimmed], name)
+// findBestMatch returns the module path that owns the given package path taking into account vendor/ prefixes: a vendor/ import path
+// will take precedence and continue to match, non-vendored imports will match against their vendored equivalent
+func findBestMatch(modulePaths []string, importPath string) string {
+	trimmedPath, trimmed := strings.CutPrefix(importPath, vendorPrefix)
+	candidatePaths := []string{importPath, trimmedPath}
+	if !trimmed {
+		candidatePaths = candidatePaths[:1]
 	}
+
+	var best string
+	for _, candidate := range candidatePaths {
+		for _, modPath := range modulePaths {
+			// the prefix must end at a path-segment boundary in candidate, so that e.g. the module
+			// "github.com/foo/bar" matches the package "github.com/foo/bar/baz" but not "github.com/foo/barbaz"
+			if len(modPath) > len(best) && strings.HasPrefix(candidate, modPath) && (candidate == modPath || candidate[len(modPath)] == '/') {
+				best = modPath
+			}
+		}
+	}
+	return best
 }
 
 // localSymbolName strips the owning package's import path prefix from a fully qualified symbol name, e.g.
 // "github.com/foo/bar.(*T).M" with import path "github.com/foo/bar" becomes "(*T).M". The name is returned
 // unchanged when it does not carry the expected prefix.
 func localSymbolName(name, importPath string) string {
-	if importPath != "" && strings.HasPrefix(name, importPath+".") {
+	if !strings.HasPrefix(importPath, vendorPrefix) {
+		name = strings.TrimPrefix(name, vendorPrefix)
+	}
+	if len(importPath) < len(name) && strings.HasPrefix(name, importPath) && name[len(importPath)] == '.' {
 		return name[len(importPath)+1:]
 	}
 	return name

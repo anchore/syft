@@ -16,6 +16,8 @@ func Test_moduleSymbols(t *testing.T) {
 	deps := []*debug.Module{
 		{Path: "github.com/foo/bar"},
 		{Path: "github.com/foo/bar/v2"},
+		{Path: "vendor/github.com/vendored/mod"},
+		{Path: "github.com/vendored/mod"},
 		nil,
 	}
 
@@ -75,43 +77,63 @@ func Test_moduleSymbols(t *testing.T) {
 			},
 		},
 		{
-			name: "vendored packages match modules despite the vendor/ prefix and are recorded under both paths",
+			name: "vendored packages match non-vendored modules and are recorded under the canonical import path",
 			symbols: []binarySymbol{
 				{packagePath: "vendor/github.com/foo/bar", name: "vendor/github.com/foo/bar.Parse"},
 				{packagePath: "vendor/github.com/foo/bar/internal/util", name: "vendor/github.com/foo/bar/internal/util.(*Helper).Do"},
 			},
 			expected: map[string]map[string][]string{
 				"github.com/foo/bar": {
-					"vendor/github.com/foo/bar":               {"Parse"},
-					"github.com/foo/bar":                      {"Parse"},
-					"vendor/github.com/foo/bar/internal/util": {"(*Helper).Do"},
-					"github.com/foo/bar/internal/util":        {"(*Helper).Do"},
+					"github.com/foo/bar":               {"Parse"},
+					"github.com/foo/bar/internal/util": {"(*Helper).Do"},
 				},
 			},
 		},
 		{
-			name: "stdlib-vendored packages are recorded under both the vendored and canonical import path",
+			// stdlib vulnerabilities are reported against the public packages (e.g. crypto/x509), not the
+			// vendored internal copies, so module-less vendored packages are dropped rather than recorded
+			name: "stdlib-vendored packages are dropped",
 			symbols: []binarySymbol{
 				{packagePath: "vendor/golang.org/x/net/http2", name: "vendor/golang.org/x/net/http2.(*Framer).ReadFrame"},
 			},
 			expected: map[string]map[string][]string{},
-			expectedStdlib: map[string][]string{
-				"vendor/golang.org/x/net/http2": {"(*Framer).ReadFrame"},
-				"golang.org/x/net/http2":        {"(*Framer).ReadFrame"},
+		},
+		{
+			name: "modules whose own path carries the vendor/ prefix match exactly and win over the trimmed match",
+			symbols: []binarySymbol{
+				{packagePath: "vendor/github.com/vendored/mod", name: "vendor/github.com/vendored/mod.Run"},
+				{packagePath: "github.com/vendored/mod", name: "github.com/vendored/mod.Run"},
+			},
+			expected: map[string]map[string][]string{
+				"vendor/github.com/vendored/mod": {
+					"vendor/github.com/vendored/mod": {"Run"},
+				},
+				"github.com/vendored/mod": {
+					"github.com/vendored/mod": {"Run"},
+				},
 			},
 		},
 		{
-			name: "vendored and unvendored symbols for the same package are merged and deduplicated under the canonical path",
+			name: "vendored and unvendored symbols for the same package are merged and deduplicated under the canonical import path",
 			symbols: []binarySymbol{
 				{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
 				{packagePath: "vendor/github.com/foo/bar", name: "vendor/github.com/foo/bar.Parse"},
 			},
 			expected: map[string]map[string][]string{
 				"github.com/foo/bar": {
-					"github.com/foo/bar":        {"Parse"},
-					"vendor/github.com/foo/bar": {"Parse"},
+					"github.com/foo/bar": {"Parse"},
 				},
 			},
+		},
+		{
+			// "github.com/foo/barbaz" shares a string prefix with the "github.com/foo/bar" module but not a
+			// path-segment boundary, so it must not be attributed to it (and, having a dotted first element,
+			// it is not a stdlib path either — it is dropped)
+			name: "module paths only match the package path at a path-segment boundary",
+			symbols: []binarySymbol{
+				{packagePath: "github.com/foo/barbaz", name: "github.com/foo/barbaz.Parse"},
+			},
+			expected: map[string]map[string][]string{},
 		},
 		{
 			name: "duplicate symbols are deduplicated",
