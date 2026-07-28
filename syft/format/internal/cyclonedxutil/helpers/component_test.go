@@ -385,6 +385,72 @@ func Test_decodeComponent(t *testing.T) {
 	}
 }
 
+func Test_decodeComponentLocations(t *testing.T) {
+	tests := []struct {
+		name      string
+		component cyclonedx.Component
+		wantPaths []string
+	}{
+		{
+			name: "decode CycloneDX evidence occurrences",
+			component: cyclonedx.Component{
+				Name: "example",
+				Evidence: evidenceWithOccurrences(
+					"/usr/bin/example",
+					"/opt/example",
+				),
+			},
+			wantPaths: []string{"/opt/example", "/usr/bin/example"},
+		},
+		{
+			name: "combine Syft properties and evidence occurrences",
+			component: cyclonedx.Component{
+				Name: "example",
+				Properties: &[]cyclonedx.Property{
+					{
+						Name:  "syft:location:0:path",
+						Value: "/usr/lib/example",
+					},
+				},
+				Evidence: evidenceWithOccurrences("/usr/bin/example"),
+			},
+			wantPaths: []string{"/usr/bin/example", "/usr/lib/example"},
+		},
+		{
+			name: "ignore empty and duplicate evidence locations",
+			component: cyclonedx.Component{
+				Name: "example",
+				Evidence: evidenceWithOccurrences(
+					"/usr/bin/example",
+					"",
+					"/usr/bin/example",
+				),
+			},
+			wantPaths: []string{"/usr/bin/example"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := decodeComponent(&tt.component)
+			locations := p.Locations.ToSlice()
+			paths := make([]string, len(locations))
+			for i, location := range locations {
+				paths[i] = location.RealPath
+			}
+			assert.ElementsMatch(t, tt.wantPaths, paths)
+		})
+	}
+}
+
+func evidenceWithOccurrences(locations ...string) *cyclonedx.Evidence {
+	occurrences := make([]cyclonedx.EvidenceOccurrence, len(locations))
+	for i, location := range locations {
+		occurrences[i] = cyclonedx.EvidenceOccurrence{Location: location}
+	}
+	return &cyclonedx.Evidence{Occurrences: &occurrences}
+}
+
 func Test_setPackageName(t *testing.T) {
 	tests := []struct {
 		name     string
