@@ -38,7 +38,7 @@ curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
 ```
 
 > [!TIP]
-> **See [Installation docs](https://oss.anchore.com/docs/installation/syft/) for more ways to get Syft, including Homebrew, Docker, Scoop, Chocolatey, Nix, and more!**
+> **See [Installation docs](https://oss.anchore.com/docs/installation/syft/) for more ways to get Syft, including Homebrew, Docker, Scoop, Chocolatey, Nix, Snap, deb-get, and more!**
 
 ## The basics
 
