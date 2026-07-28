@@ -71,6 +71,10 @@ func parsePackageJSON(ctx context.Context, resolver file.Resolver, _ *generic.En
 			return nil, nil, fmt.Errorf("failed to parse package.json file: %w", err)
 		}
 
+		if isSubpathExportStub(p) {
+			continue
+		}
+
 		// always create a package, regardless of having a valid name and/or version,
 		// a compliance filter later will remove these packages based on compliance rules
 		pkgs = append(
@@ -82,6 +86,15 @@ func parsePackageJSON(ctx context.Context, resolver file.Resolver, _ *generic.En
 	pkg.Sort(pkgs)
 
 	return pkgs, nil, nil
+}
+
+// isSubpathExportStub reports named but versionless proxy package.json w no
+// deps (e.g. node_modules/firebase/firestore/package.json) not a real pkg
+func isSubpathExportStub(p packageJSON) bool {
+	return p.Name != "" &&
+		p.Version == "" &&
+		len(p.Dependencies) == 0 &&
+		len(p.DevDependencies) == 0
 }
 
 func (p *person) UnmarshalJSON(b []byte) error {

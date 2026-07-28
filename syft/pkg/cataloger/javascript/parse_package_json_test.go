@@ -427,6 +427,11 @@ func TestParsePackageJSON_Partial(t *testing.T) { // see https://github.com/anch
 	pkgtest.TestFileParser(t, fixtureFile, parsePackageJSON, expectedPkgs, nil)
 }
 
+func TestParsePackageJSON_SubpathExportStub(t *testing.T) {
+	// stub => zero packages
+	pkgtest.TestFileParser(t, "testdata/pkg-json/package-subpath-stub.json", parsePackageJSON, nil, nil)
+}
+
 func Test_pathContainsNodeModulesDirectory(t *testing.T) {
 	tests := []struct {
 		path     string
