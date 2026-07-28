@@ -119,7 +119,20 @@ func newFromPath(cfg Config, f *snapFile) (source.Source, error) {
 		closer:       f.Cleanup,
 	}
 
-	return s, s.extractManifest()
+	if err := s.extractManifest(); err != nil {
+		// a later source provider may still resolve this path, in which case this error is dropped, so
+		// report the reason the snap was rejected here
+		log.WithFields("error", err, "path", f.Path).Warn("unable to read snap")
+
+		// never hand back a source alongside an error: callers that discard the source on error would
+		// leave behind the open squashfs file and the temp directory holding a downloaded snap
+		if closeErr := s.Close(); closeErr != nil {
+			log.WithFields("error", closeErr, "path", f.Path).Warn("unable to clean up snap source")
+		}
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (s *snapSource) extractManifest() error {
@@ -130,7 +143,10 @@ func (s *snapSource) extractManifest() error {
 
 	manifest, err := parseManifest(r)
 	if err != nil {
-		return fmt.Errorf("unable to parse snap manifest file: %w", err)
+		// a squashfs payload is not required to carry a snap manifest; describe what we can instead of
+		// failing the scan outright
+		log.WithFields("error", err, "path", s.squashfsPath).Debug("unable to parse snap manifest file")
+		return nil
 	}
 
 	if manifest != nil {
