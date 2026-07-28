@@ -264,6 +264,10 @@ func TestNewSnapFileFromRemote(t *testing.T) {
 
 				_, err = fs.Stat(result.Path)
 				assert.True(t, os.IsNotExist(err))
+
+				// cleanup owns the whole temp directory, not just the snap file within it
+				_, err = fs.Stat(filepath.Dir(result.Path))
+				assert.True(t, os.IsNotExist(err), "temp directory outlived the cleanup closure")
 			},
 		},
 		{
