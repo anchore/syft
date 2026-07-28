@@ -315,12 +315,85 @@ func TestNewSnapFileFromRemote(t *testing.T) {
 			expectError: true,
 			errorMsg:    "failed to download snap file",
 		},
+		{
+			name: "download writes partial data then fails",
+			cfg: Config{
+				DigestAlgorithms: []crypto.Hash{crypto.SHA256},
+			},
+			info: &remoteSnap{
+				snapIdentity: snapIdentity{
+					Name:         "partial-snap",
+					Channel:      "stable",
+					Architecture: "amd64",
+				},
+				URL: "https://api.snapcraft.io/download/partial_snap.snap",
+			},
+			setupMock: func(mockGetter *mockFileGetter, fs afero.Fs) {
+				mockGetter.On("GetFile", mock.AnythingOfType("string"), "https://api.snapcraft.io/download/partial_snap.snap", mock.Anything).Run(func(args mock.Arguments) {
+					// simulate a transfer that writes some bytes before the connection drops
+					require.NoError(t, createMockSquashfsFile(fs, args.String(0)))
+				}).Return(fmt.Errorf("connection reset by peer"))
+			},
+			expectError: true,
+			errorMsg:    "failed to download snap file",
+		},
+		{
+			// isSquashFSFile trusts the .snap extension, so non-squashfs content under that name is accepted
+			name: "downloaded file has a snap extension but non-snap content",
+			cfg: Config{
+				DigestAlgorithms: []crypto.Hash{crypto.SHA256},
+			},
+			info: &remoteSnap{
+				snapIdentity: snapIdentity{
+					Name:         "not-a-snap",
+					Channel:      "stable",
+					Architecture: "amd64",
+				},
+				URL: "https://api.snapcraft.io/download/not_a_snap.snap",
+			},
+			setupMock: func(mockGetter *mockFileGetter, fs afero.Fs) {
+				mockGetter.On("GetFile", mock.AnythingOfType("string"), "https://api.snapcraft.io/download/not_a_snap.snap", mock.Anything).Run(func(args mock.Arguments) {
+					require.NoError(t, afero.WriteFile(fs, args.String(0), []byte("not squashfs"), 0644))
+				}).Return(nil)
+			},
+			expectError: false,
+			validate: func(t *testing.T, result *snapFile, fs afero.Fs) {
+				assert.NotNil(t, result)
+				assert.Contains(t, result.Path, "not_a_snap.snap")
+				assert.NotNil(t, result.Cleanup)
+			},
+		},
+		{
+			name: "downloaded file is not a snap",
+			cfg: Config{
+				DigestAlgorithms: []crypto.Hash{crypto.SHA256},
+			},
+			info: &remoteSnap{
+				snapIdentity: snapIdentity{
+					Name:         "not-a-snap",
+					Channel:      "stable",
+					Architecture: "amd64",
+				},
+				URL: "https://api.snapcraft.io/download/not_a_snap.tar.gz",
+			},
+			setupMock: func(mockGetter *mockFileGetter, fs afero.Fs) {
+				mockGetter.On("GetFile", mock.AnythingOfType("string"), "https://api.snapcraft.io/download/not_a_snap.tar.gz", mock.Anything).Run(func(args mock.Arguments) {
+					require.NoError(t, afero.WriteFile(fs, args.String(0), []byte("not squashfs"), 0644))
+				}).Return(nil)
+			},
+			expectError: true,
+			errorMsg:    "not a valid squashfs/snap file",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fs := afero.NewOsFs()
 			mockGetter := &mockFileGetter{}
+
+			// isolate the temp directory that newSnapFileFromRemote allocates so we can assert on its contents
+			tmpRoot := t.TempDir()
+			t.Setenv("TMPDIR", tmpRoot)
 
 			if tt.setupMock != nil {
 				tt.setupMock(mockGetter, fs)
@@ -334,6 +407,11 @@ func TestNewSnapFileFromRemote(t *testing.T) {
 					assert.Contains(t, err.Error(), tt.errorMsg)
 				}
 				assert.Nil(t, result)
+
+				// the temp directory and any partially downloaded payload must not be left behind
+				entries, readErr := afero.ReadDir(fs, tmpRoot)
+				require.NoError(t, readErr)
+				assert.Empty(t, entries, "temp directory was not cleaned up after failure")
 			} else {
 				require.NoError(t, err)
 				if tt.validate != nil {

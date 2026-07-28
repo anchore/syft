@@ -83,18 +83,27 @@ func newSnapFileFromRemote(ctx context.Context, fs afero.Fs, cfg Config, getter 
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
-	snapFilePath := path.Join(t, path.Base(info.URL))
-	err = downloadSnap(getter, info, snapFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to download snap file: %w", err)
-	}
-
 	closer := func() error {
 		return fs.RemoveAll(t)
 	}
 
+	// any failure past this point must not leave the temp directory (or a partially downloaded snap) behind
+	cleanupOnErr := func() {
+		if err := closer(); err != nil {
+			log.WithFields("directory", t, "error", err).Warn("unable to remove temp directory for snap")
+		}
+	}
+
+	snapFilePath := path.Join(t, path.Base(info.URL))
+	err = downloadSnap(getter, info, snapFilePath)
+	if err != nil {
+		cleanupOnErr()
+		return nil, fmt.Errorf("failed to download snap file: %w", err)
+	}
+
 	mimeType, digests, err := getSnapFileInfo(ctx, fs, snapFilePath, cfg.DigestAlgorithms)
 	if err != nil {
+		cleanupOnErr()
 		return nil, err
 	}
 
