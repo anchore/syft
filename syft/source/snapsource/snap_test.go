@@ -391,10 +391,6 @@ func TestNewSnapFileFromRemote(t *testing.T) {
 			fs := afero.NewOsFs()
 			mockGetter := &mockFileGetter{}
 
-			// isolate the temp directory that newSnapFileFromRemote allocates so we can assert on its contents
-			tmpRoot := t.TempDir()
-			t.Setenv("TMPDIR", tmpRoot)
-
 			if tt.setupMock != nil {
 				tt.setupMock(mockGetter, fs)
 			}
@@ -408,12 +404,17 @@ func TestNewSnapFileFromRemote(t *testing.T) {
 				}
 				assert.Nil(t, result)
 
-				// the temp directory and any partially downloaded payload must not be left behind
-				entries, readErr := afero.ReadDir(fs, tmpRoot)
-				require.NoError(t, readErr)
-				assert.Empty(t, entries, "temp directory was not cleaned up after failure")
+				// the temp directory and any partially downloaded payload must not be left behind. the
+				// download destination handed to the getter lives directly under the temp directory.
+				require.Len(t, mockGetter.Calls, 1)
+				tempDir := filepath.Dir(mockGetter.Calls[0].Arguments.String(0))
+				_, statErr := fs.Stat(tempDir)
+				assert.True(t, os.IsNotExist(statErr), "temp directory %q was not cleaned up after failure", tempDir)
 			} else {
 				require.NoError(t, err)
+				if result.Cleanup != nil {
+					t.Cleanup(func() { _ = result.Cleanup() })
+				}
 				if tt.validate != nil {
 					tt.validate(t, result, fs)
 				}

@@ -90,7 +90,7 @@ func newSnapFileFromRemote(ctx context.Context, fs afero.Fs, cfg Config, getter 
 	// any failure past this point must not leave the temp directory (or a partially downloaded snap) behind
 	cleanupOnErr := func() {
 		if err := closer(); err != nil {
-			log.WithFields("directory", t, "error", err).Warn("unable to remove temp directory for snap")
+			log.WithFields("error", err, "directory", t).Warn("unable to remove temp directory for snap")
 		}
 	}
 
