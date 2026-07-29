@@ -68,6 +68,7 @@ func AllTypes() []any {
 		pkg.RubyGemspec{},
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
+		pkg.SafeTensorsModelInfo{},
 		pkg.SnapEntry{},
 		pkg.SwiftPackageManagerResolvedEntry{},
 		pkg.SwiplPackEntry{},

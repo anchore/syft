@@ -1,59 +1,172 @@
 package ai
 
 import (
+	"context"
+	"path"
+	"sort"
+
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// ggufMergeProcessor consolidates multiple GGUF packages into a single package
-// representing the AI model. When scanning OCI images with multiple layers,
-// each layer may produce a separate package. This processor finds the package
-// with a name and merges metadata from nameless packages into its GGUFFileParts field.
-// Only packages with a non-empty name are returned in the final result.
-func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	if err != nil {
-		return pkgs, rels, err
-	}
-
+// safeTensorsMergeProcessor owns naming, license resolution, and final package
+// assembly. SafeTensors packages reach it nameless from the parsers; it groups
+// them per model, merges the per-shard metadata, resolves a name + licenses, and
+// drops any model it cannot name.
+func safeTensorsMergeProcessor(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	if len(pkgs) == 0 {
 		return pkgs, rels, err
 	}
 
-	// Separate packages with names from those without
-	var namedPkgs []pkg.Package
-	var namelessHeaders []pkg.GGUFFileHeader
+	// Note: we do NOT early-return when err != nil. A non-nil err here means some
+	// file in the run failed to parse, but the successfully-parsed packages are
+	// still nameless until this processor names or drops them. Skipping that work
+	// would let those nameless packages flow downstream, where they are silently
+	// dropped by missing-name compliance — turning one bad file into the loss of
+	// every otherwise-valid model. So we always name/drop and propagate err.
+	stPkgs, other := partitionSafeTensorsPackages(pkgs)
+	if len(stPkgs) == 0 {
+		return pkgs, rels, err
+	}
 
+	if fromOCIArtifact(stPkgs) {
+		return append(other, mergeOCIModel(ctx, resolver, stPkgs)...), rels, err
+	}
+	return append(other, mergeDirModels(ctx, resolver, stPkgs)...), rels, err
+}
+
+// partitionSafeTensorsPackages separates safetensors packages from anything else
+// flowing through the processor.
+func partitionSafeTensorsPackages(pkgs []pkg.Package) (safeTensors, other []pkg.Package) {
 	for _, p := range pkgs {
-		if p.Name != "" {
-			namedPkgs = append(namedPkgs, p)
-		} else {
-			if header, ok := p.Metadata.(pkg.GGUFFileHeader); ok {
-				// We do not want a kv hash for nameless headers
-				header.MetadataKeyValuesHash = ""
-				namelessHeaders = append(namelessHeaders, header)
-			}
+		if _, ok := p.Metadata.(pkg.SafeTensorsModelInfo); ok {
+			safeTensors = append(safeTensors, p)
+			continue
+		}
+		other = append(other, p)
+	}
+	return safeTensors, other
+}
+
+// fromOCIArtifact reports whether the packages came from an OCI model artifact.
+// That source (the ContainerImageModel resolver) presents every layer at the
+// virtual path "/", whereas a filesystem scan always carries a real file path. A
+// single scan is one source, so the first package is representative of the rest.
+func fromOCIArtifact(pkgs []pkg.Package) bool {
+	loc := primaryEvidenceLocation(pkgs[0])
+	return loc != nil && loc.RealPath == "/"
+}
+
+// mergeOCIModel treats the whole OCI artifact as a single model: every layer
+// merges into one package, named from the artifact's config.json/README or its
+// image reference.
+func mergeOCIModel(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package) []pkg.Package {
+	merged := mergeSafeTensorsGroup(pkgs)
+
+	md := merged.Metadata.(pkg.SafeTensorsModelInfo)
+	id := resolveSafeTensorsOCIIdentity(ctx, resolver, &md)
+	merged.Metadata = md // write architecture enrichment back before assembly
+
+	if p, ok := assembleSafeTensorsPackage(merged, id); ok {
+		return []pkg.Package{p}
+	}
+	return nil
+}
+
+// mergeDirModels groups filesystem-scanned files by their parent directory and
+// emits one model per directory
+func mergeDirModels(ctx context.Context, resolver file.Resolver, pkgs []pkg.Package) []pkg.Package {
+	groups := groupByParentDir(pkgs)
+
+	// deterministic iteration order so the SBOM doesn't depend on map order
+	dirs := make([]string, 0, len(groups))
+	for dir := range groups {
+		dirs = append(dirs, dir)
+	}
+	sort.Strings(dirs)
+
+	var out []pkg.Package
+	for _, dir := range dirs {
+		merged := mergeSafeTensorsGroup(groups[dir])
+
+		md := merged.Metadata.(pkg.SafeTensorsModelInfo)
+		id := resolveSafeTensorsDirIdentity(ctx, resolver, dir, &md)
+		merged.Metadata = md // write architecture enrichment back before assembly
+
+		if p, ok := assembleSafeTensorsPackage(merged, id); ok {
+			out = append(out, p)
 		}
 	}
+	return out
+}
 
-	// If there are no named packages, return nothing
-	if len(namedPkgs) == 0 {
-		return nil, rels, err
+// groupByParentDir buckets filesystem-scanned models by the directory their
+// primary-evidence file lives in.
+
+// This encodes a deliberate assumption: a directory holds one logical
+// model, so every .safetensors file in a directory is treated as a shard of the
+// same modeland merged into one package.
+// The trade-off is that if a directory happens to contain several unrelated models,
+// they are merged into one package rather than reported separately.
+// We accept that because the conventional on-disk layout gives each model
+// (with all of its shards) its own directory.
+// We have no reliable per-file signal to tell co-located-but-independent models apart.
+func groupByParentDir(pkgs []pkg.Package) map[string][]pkg.Package {
+	out := make(map[string][]pkg.Package)
+	for _, p := range pkgs {
+		loc := primaryEvidenceLocation(p)
+		if loc == nil {
+			continue
+		}
+		dir := path.Dir(loc.RealPath)
+		out[dir] = append(out[dir], p)
 	}
+	return out
+}
 
-	// merge nameless headers into a single named package;
-	// if there are multiple named packages, return them without trying to merge headers.
-	// we cannot determine which nameless headers belong to which package
-	// this is because the order we receive the gguf headers in is not guaranteed
-	// to match the layer order in the original oci image
-	if len(namedPkgs) == 1 && len(namelessHeaders) > 0 {
-		winner := &namedPkgs[0]
-		if header, ok := winner.Metadata.(pkg.GGUFFileHeader); ok {
-			header.Parts = namelessHeaders
-			winner.Metadata = header
+func primaryEvidenceLocation(p pkg.Package) *file.Location {
+	locs := p.Locations.ToSlice()
+	for i, l := range locs {
+		if l.Annotations != nil && l.Annotations[pkg.EvidenceAnnotationKey] == pkg.PrimaryEvidenceAnnotation {
+			return &locs[i]
 		}
 	}
+	if len(locs) > 0 {
+		return &locs[0]
+	}
+	return nil
+}
 
-	// Largest number of key value
+// safeTensorsIdentity is the fully-resolved naming/license result for a model.
+// Each source resolver (dir or OCI) populates it so assembly stays source-agnostic.
+type safeTensorsIdentity struct {
+	nameOrPath   string
+	fallbackName string
+	licenses     []pkg.License
+	supporting   []file.Location
+}
 
-	return namedPkgs, rels, err
+// assembleSafeTensorsPackage finalizes a merged model from its resolved identity:
+// it picks the name, attaches licenses and supporting evidence, and sets the ID.
+// A model with no name source is dropped (ok=false).
+func assembleSafeTensorsPackage(merged pkg.Package, id safeTensorsIdentity) (pkg.Package, bool) {
+	name := pickSafeTensorsName(id.nameOrPath, id.fallbackName)
+	if name == "" {
+		log.Debugf("dropped safetensors model package (metadata hash %q): no name source",
+			merged.Metadata.(pkg.SafeTensorsModelInfo).MetadataHash)
+		return pkg.Package{}, false
+	}
+
+	if len(id.licenses) > 0 {
+		merged.Licenses = pkg.NewLicenseSet(id.licenses...)
+	}
+	for _, loc := range id.supporting {
+		merged.Locations.Add(loc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation))
+	}
+
+	merged.Name = name
+	merged.SetID()
+	return merged, true
 }

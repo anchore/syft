@@ -24,6 +24,9 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: NoProxy
         description: NoProxy is a list of glob patterns that match go module names that should not be fetched from the go proxy. When not set, syft will use the GOPRIVATE and GONOPROXY env vars.
         app_key: golang.no-proxy
+      - key: CaptureSymbols
+        description: CaptureSymbols controls extracting function symbols from the binary symbol table (pclntab). Valid values are "none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib).
+        app_key: golang.capture-symbols
 catalogers:
   - ecosystem: go # MANUAL
     name: go-module-binary-cataloger # AUTO-GENERATED

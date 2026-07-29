@@ -1500,6 +1500,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "deno/1.11.3/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.11.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.11.3",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/1.11.4/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "1.11.4",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@1.11.4",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
 			logicalFixture: "deno/1.16.4/linux-amd64",
 			expected: pkg.Package{
 				Name:      "deno",
@@ -1563,6 +1585,61 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/deno@2.6.3",
 				Locations: locations("deno"),
 				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "deno/2.9.2/linux-amd64",
+			expected: pkg.Package{
+				Name:      "deno",
+				Version:   "2.9.2",
+				Type:      "binary",
+				PURL:      "pkg:generic/deno@2.9.2",
+				Locations: locations("deno"),
+				Metadata:  metadata("deno-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/0.5.9/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "0.5.9",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@0.5.9",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.0.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.0.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.1.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.1.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.1.0",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
+			},
+		},
+		{
+			logicalFixture: "bun/1.3.5/linux-amd64",
+			expected: pkg.Package{
+				Name:      "bun",
+				Version:   "1.3.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/bun@1.3.5",
+				Locations: locations("bun"),
+				Metadata:  metadata("bun-binary"),
 			},
 		},
 		{
@@ -1949,6 +2026,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				PURL:      "pkg:generic/chrome@127.0.6533.119",
 				Locations: locations("chrome"),
 				Metadata:  metadata("chrome-binary"),
+			},
+		},
+		{
+			logicalFixture: "firefox/151.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "firefox",
+				Version:   "151.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/firefox@151.0",
+				Locations: locations("firefox", "application.ini"),
+				Metadata:  metadata("firefox-binary"),
 			},
 		},
 		{

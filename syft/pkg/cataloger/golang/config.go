@@ -7,6 +7,7 @@ import (
 
 	"github.com/anchore/go-homedir"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 const (
@@ -49,6 +50,11 @@ type CatalogerConfig struct {
 
 	MainModuleVersion MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
 
+	// CaptureSymbols controls extracting function symbols from the binary symbol table (pclntab). Valid values are
+	// "none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib).
+	// app-config: golang.capture-symbols
+	CaptureSymbols cataloging.SymbolScope `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
+
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
 }
@@ -76,6 +82,7 @@ func DefaultCatalogerConfig() CatalogerConfig {
 		UsePackagesLib:    true,
 		MainModuleVersion: DefaultMainModuleVersionConfig(),
 		LocalModCacheDir:  defaultGoModDir(),
+		CaptureSymbols:    cataloging.SymbolScopeNone,
 	}
 
 	// first process the proxy settings
@@ -181,6 +188,11 @@ func (g CatalogerConfig) WithNoProxy(input string) CatalogerConfig {
 
 func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) CatalogerConfig {
 	g.MainModuleVersion = input
+	return g
+}
+
+func (g CatalogerConfig) WithCaptureSymbols(input cataloging.SymbolScope) CatalogerConfig {
+	g.CaptureSymbols = input
 	return g
 }
 

@@ -45,6 +45,10 @@ func parseCabalFreeze(_ context.Context, _ file.Resolver, _ *generic.Environment
 
 		line = line[startPkgEncoding:endPkgEncoding]
 		fields := strings.Split(line, " ==")
+		// skip constraints without a version (e.g. GHC boot libs: "any.base installed")
+		if len(fields) < 2 {
+			continue
+		}
 
 		pkgName, pkgVersion := fields[0], fields[1]
 		pkgs = append(

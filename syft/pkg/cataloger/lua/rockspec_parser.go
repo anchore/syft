@@ -76,6 +76,9 @@ func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rocksp
 	if c == '-' {
 		parseComment(data, i)
 		parsing.SkipWhitespace(data, i)
+		if *i >= len(data) {
+			return out, nil
+		}
 		c = data[*i]
 	}
 
@@ -424,7 +427,7 @@ func parseComment(data []byte, i *int) {
 		// Rest of a line is a comment. Deals with CR, LF and CR/LF
 		if c == '\n' {
 			break
-		} else if c == '\r' && data[*i] == '\n' {
+		} else if c == '\r' && *i < len(data) && data[*i] == '\n' {
 			*i++
 			break
 		}

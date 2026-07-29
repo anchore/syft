@@ -589,9 +589,18 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/deno",
 			EvidenceMatcher: binutils.MatchAny(
 				m.FileContentsVersionMatcher(
+					// Deno/2.6.3Deno/
+					// Deno/1.41.0cli/
+					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)(Deno/|cli/)`,
+				),
+				m.FileContentsVersionMatcher(
 					// Deno/2.6.3
 					// Deno/1.41.0
 					`Deno/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
+				),
+				m.FileContentsVersionMatcher(
+					// cli/tools/standalone.rsdeno-canary/f4bed1081456089559c82441a13c4fb700840cac1.11.3dlwindows
+					`deno-canary/[0-9a-z]{40}(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`,
 				),
 				m.FileContentsVersionMatcher(
 					// deno::tools::standalonedeno-65db94feba9d4d51a09b74629f566dbc90484fbarelease/v1.29.4windows
@@ -610,6 +619,20 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "deno",
 			PURL:    mustPURL("pkg:generic/deno@version"),
 			CPEs:    singleCPE("cpe:2.3:a:deno:deno:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:    "bun-binary",
+			FileGlob: "**/bun",
+			EvidenceMatcher: binutils.MatchAny(
+				// bun 1.1.0
+				// Bun v1.0.0
+				m.FileContentsVersionMatcher(`(?m)[Bb]un v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+				// bun-1.1.0
+				m.FileContentsVersionMatcher(`(?m)bun-(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
+			),
+			Package: "bun",
+			PURL:    mustPURL("pkg:generic/bun@version"),
+			CPEs:    singleCPE("cpe:2.3:a:oven-sh:bun:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "haskell-ghc-binary",
@@ -912,6 +935,19 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "chrome",
 			PURL:    mustPURL("pkg:generic/chrome@version"),
 			CPEs:    singleCPE("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"),
+		},
+		{
+			Class:    "firefox-binary",
+			FileGlob: "**/{firefox,firefox.exe}",
+			EvidenceMatcher: binutils.SupportingEvidenceMatcher(
+				"application.ini",
+				m.FileContentsVersionMatcher(
+					`(?ms)^Name=Firefox\r?$.*?^Version=(?P<version>[0-9]+(?:\.[0-9]+)+(?:[A-Za-z][0-9A-Za-z.-]*)?)\r?$`,
+				),
+			),
+			Package: "firefox",
+			PURL:    mustPURL("pkg:generic/firefox@version"),
+			CPEs:    singleCPE("cpe:2.3:a:mozilla:firefox:*:*:*:*:*:*:*:*"),
 		},
 		{
 			Class:    "ffmpeg-binary",
