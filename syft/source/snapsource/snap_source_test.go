@@ -2,17 +2,23 @@ package snapsource
 
 import (
 	"crypto"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 
+	diskFile "github.com/diskfs/go-diskfs/backend/file"
+	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/go-homedir"
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/syft/source"
 )
 
 func TestNewFromLocal(t *testing.T) {
@@ -147,4 +153,144 @@ func TestNewFromPathOnResolverError(t *testing.T) {
 			}
 		})
 	}
+}
+
+// a manifest problem must never fail the source: snapsource is the only provider that can descend
+// into squashfs, so an error here falls through to filesource and every package inside the payload
+// silently disappears from the SBOM.
+func TestNewFromPathToleratesManifestProblems(t *testing.T) {
+	tests := []struct {
+		name        string
+		manifest    string // written to /meta/snap.yaml; empty means no manifest at all
+		wantName    string
+		wantVersion string
+		wantSummary string
+	}{
+		{
+			name:     "no manifest at all",
+			manifest: "",
+		},
+		{
+			name:     "manifest is not valid yaml",
+			manifest: "name: etcd\n\tversion: 3.4\n",
+		},
+		{
+			name:        "manifest is missing name and version",
+			manifest:    "summary: a thing\nbase: core22\n",
+			wantSummary: "a thing",
+		},
+		{
+			name:        "manifest is complete",
+			manifest:    "name: etcd\nversion: 3.4.0\nsummary: a thing\n",
+			wantName:    "etcd",
+			wantVersion: "3.4.0",
+			wantSummary: "a thing",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			snapPath := writeSquashfs(t, tt.manifest)
+
+			src, err := newFromPath(Config{Request: snapPath}, &snapFile{Path: snapPath})
+			require.NoError(t, err, "a manifest problem must not fail the source")
+			require.NotNil(t, src)
+			t.Cleanup(func() { _ = src.Close() })
+
+			desc := src.Describe()
+			assert.Equal(t, tt.wantName, desc.Name)
+			assert.Equal(t, tt.wantVersion, desc.Version)
+
+			meta, ok := desc.Metadata.(source.SnapMetadata)
+			require.True(t, ok, "expected snap metadata")
+			assert.Equal(t, tt.wantSummary, meta.Summary, "fields that did decode must survive")
+
+			// the whole point: the payload is still walkable, so cataloging sees what is inside
+			r, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+			locations, err := r.FilesByPath("/payload.txt")
+			require.NoError(t, err)
+			assert.Len(t, locations, 1, "contents must remain catalogable regardless of the manifest")
+		})
+	}
+}
+
+func TestSnapSourceClose(t *testing.T) {
+	newSource := func(closeErr, cleanupErr error) (*snapSource, *int) {
+		var cleanupRuns int
+		return &snapSource{
+			mutex: &sync.Mutex{},
+			squashFileCloser: func() error {
+				return closeErr
+			},
+			closer: func() error {
+				cleanupRuns++
+				return cleanupErr
+			},
+		}, &cleanupRuns
+	}
+
+	t.Run("temp directory is removed even when closing the file handle fails", func(t *testing.T) {
+		s, cleanupRuns := newSource(errors.New("handle is busy"), nil)
+
+		err := s.Close()
+
+		// the whole point: a failure here used to return early and skip the cleanup below, leaving a
+		// downloaded snap on disk
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "handle is busy")
+		assert.Equal(t, 1, *cleanupRuns, "temp directory removal was skipped")
+	})
+
+	t.Run("every failure is reported, not just the first", func(t *testing.T) {
+		s, _ := newSource(errors.New("handle is busy"), errors.New("directory is busy"))
+
+		err := s.Close()
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "handle is busy")
+		assert.Contains(t, err.Error(), "directory is busy")
+	})
+
+	t.Run("is safe to call twice", func(t *testing.T) {
+		s, cleanupRuns := newSource(nil, nil)
+
+		require.NoError(t, s.Close())
+		require.NoError(t, s.Close())
+		assert.Equal(t, 1, *cleanupRuns, "cleanup must not run again on a second close")
+	})
+}
+
+// writeSquashfs builds a real squashfs image containing /payload.txt and, when manifest is non-empty,
+// /meta/snap.yaml. Returns the path to the image.
+func writeSquashfs(t *testing.T, manifest string) string {
+	t.Helper()
+
+	snapPath := filepath.Join(t.TempDir(), "test.snap")
+	f, err := os.Create(snapPath)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, f.Close()) }()
+
+	fs, err := squashfs.Create(diskFile.New(f, false), 0, 0, 4096)
+	require.NoError(t, err)
+
+	write := func(path, contents string) {
+		t.Helper()
+		w, err := fs.OpenFile(path, os.O_CREATE|os.O_RDWR)
+		require.NoError(t, err)
+		_, err = w.Write([]byte(contents))
+		require.NoError(t, err)
+	}
+
+	// note: go-diskfs wants paths relative to the image root, without a leading slash
+	require.NoError(t, fs.Mkdir("."))
+	write("payload.txt", "hello")
+
+	if manifest != "" {
+		require.NoError(t, fs.Mkdir("meta"))
+		write(strings.TrimPrefix(manifestLocation, "/"), manifest)
+	}
+
+	require.NoError(t, fs.Finalize(squashfs.FinalizeOptions{}))
+	return snapPath
 }

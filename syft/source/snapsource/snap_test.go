@@ -408,7 +408,7 @@ func TestNewSnapFileFromRemote(t *testing.T) {
 				}
 				assert.Nil(t, result)
 
-				// the temp directory and any partially downloaded payload must not be left behind. the
+				// the temp directory and any partially downloaded payload must not be left behind. The
 				// download destination handed to the getter lives directly under the temp directory.
 				require.Len(t, mockGetter.Calls, 1)
 				tempDir := filepath.Dir(mockGetter.Calls[0].Arguments.String(0))

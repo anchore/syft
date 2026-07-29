@@ -88,7 +88,7 @@ func newSnapFileFromRemote(ctx context.Context, fs afero.Fs, cfg Config, getter 
 	}
 
 	// any failure past this point must not leave the temp directory (or a partially downloaded snap)
-	// behind. on success the caller owns the directory by way of snapFile.Cleanup.
+	// behind. On success the caller owns the directory by way of snapFile.Cleanup.
 	defer func() {
 		if err == nil {
 			return
