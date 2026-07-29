@@ -39,6 +39,12 @@ vars:
   PROJECT_ROOT:
     sh: echo $PWD
 
+  # docker platform suffix goreleaser appends to snapshot image tags (e.g. latest-amd64).
+  # snapshot builds load per-arch images rather than a multi-arch manifest, so the smoke
+  # test must run the host-native tag to avoid emulation (and red-local/green-CI splits).
+  DOCKER_ARCH:
+    sh: go env GOARCH
+
   # note: the snapshot dir must be a relative path starting with ./
   # e.g. when installing snapshot debs from a local path, ./ forces the deb to be installed in the current working directory instead of referencing a package name
   SNAPSHOT_DIR: ./snapshot
@@ -129,8 +135,8 @@ tasks:
         silent: true
       - "{{ .SNAPSHOT_BIN }} version"
       - "{{ .SNAPSHOT_BIN }} scan alpine:latest"
-      - docker run --rm anchore/syft:latest version
-      - docker run --rm anchore/syft:latest scan alpine:latest
+      - docker run --pull=never --rm anchore/syft:latest-{{ .DOCKER_ARCH }} version
+      - docker run --pull=never --rm anchore/syft:latest-{{ .DOCKER_ARCH }} scan alpine:latest
 
   ## Test-fixture-related targets ###########################################
 

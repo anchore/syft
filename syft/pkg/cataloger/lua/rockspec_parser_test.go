@@ -186,6 +186,14 @@ test = "blah"
 `,
 		},
 		{
+			name:    "comment only ending in bare carriage return at EOF",
+			content: "--\r",
+		},
+		{
+			name:    "trailing comment ending in bare carriage return at EOF",
+			content: "foo = \"bar\"\n-- x\r",
+		},
+		{
 			name:    "invalid complex syntax",
 			wantErr: require.Error,
 			content: `

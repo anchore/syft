@@ -435,6 +435,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/bun'
+        packages:
+          - class: bun-binary
+            name: bun
+            purl: pkg:generic/bun
+            cpes:
+              - cpe:2.3:a:oven-sh:bun:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ghc*'
         packages:
           - class: haskell-ghc-binary
@@ -665,6 +675,16 @@ catalogers:
             purl: pkg:generic/chrome
             cpes:
               - cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/{firefox,firefox.exe}'
+        packages:
+          - class: firefox-binary
+            name: firefox
+            purl: pkg:generic/firefox
+            cpes:
+              - cpe:2.3:a:mozilla:firefox:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:
@@ -1055,6 +1075,9 @@ catalogers:
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
+            - '**/*.DLL'
+            - '**/*.EXE'
+            - '**/*.BPL'
             - '**/*.dll'
             - '**/*.exe'
             - '**/*.bpl'

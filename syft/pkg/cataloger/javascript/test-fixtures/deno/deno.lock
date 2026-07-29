@@ -19,6 +19,12 @@
   "npm": {
     "chalk@5.3.0": {
       "integrity": "sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w=="
+    },
+    "typedoc@0.28.19_typescript@6.0.3": {
+      "integrity": "sha512-TYPEDOCtestfixtureintegrityAAAA=="
+    },
+    "@algolia/autocomplete-preset-algolia@1.17.9_@algolia+client-search@5.50.0": {
+      "integrity": "sha512-ALGOLIAtestfixtureintegrityBBBB=="
     }
   },
   "remote": {

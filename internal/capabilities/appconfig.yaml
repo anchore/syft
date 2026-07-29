@@ -14,6 +14,8 @@ application: # AUTO-GENERATED - application-level config keys
     description: treat DLL claims or on-disk evidence for child packages as DLL claims or on-disk evidence for any parent package
   - key: dotnet.relax-dll-claims-when-bundling-detected
     description: show all packages from the deps.json if bundling tooling is present as a dependency (e.g. ILRepack)
+  - key: golang.capture-symbols
+    description: 'capture function symbols from the binary symbol table (pclntab). valid values are: "none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib)'
   - key: golang.local-mod-cache-dir
     description: specify an explicit go mod cache directory, if unset this defaults to $GOPATH/pkg/mod or $HOME/go/pkg/mod
   - key: golang.local-vendor-dir

@@ -36,6 +36,10 @@ func TestCataloger_Globs(t *testing.T) {
 				"src/something.bpl",
 				"src/something.dll",
 				"src/something.exe",
+				// uppercase extensions appear on Windows/ISO 9660 filesystems and must also match
+				"src/winsomething.DLL",
+				"src/winsomething.EXE",
+				"src/winsomething.BPL",
 			},
 		},
 		{
@@ -47,6 +51,10 @@ func TestCataloger_Globs(t *testing.T) {
 				"src/something.deps.json",
 				"src/something.dll",
 				"src/something.exe",
+				// uppercase extensions appear on Windows/ISO 9660 filesystems and must also match
+				"src/winsomething.DLL",
+				"src/winsomething.EXE",
+				"src/winsomething.BPL",
 			},
 			// the binary cataloger probes executables by MIME type to find embedded bundles,
 			// but the glob fixtures aren't real binaries so those queries go unfulfilled
