@@ -483,70 +483,109 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 
 }
 
-func Test_extractComponents_preservesNameAndVersion(t *testing.T) {
+func Test_extractComponents(t *testing.T) {
 	tests := []struct {
-		name            string
-		component       *cyclonedx.Component
-		wantName        string
-		wantVersion     string
-		wantMetaType    string
-		wantImageDigest string
+		name     string
+		input    *cyclonedx.Metadata
+		expected source.Description
 	}{
 		{
-			name: "application component (directory / --source-version)",
-			component: &cyclonedx.Component{
-				Type:    cyclonedx.ComponentTypeApplication,
+			name:     "no metadata",
+			input:    nil,
+			expected: source.Description{},
+		},
+		{
+			name:     "no component",
+			input:    &cyclonedx.Metadata{},
+			expected: source.Description{},
+		},
+		{
+			name: "application component keeps name and version",
+			input: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeApplication,
+					Name:    "my-app",
+					Version: "0.1.0",
+				},
+			},
+			expected: source.Description{
 				Name:    "my-app",
 				Version: "0.1.0",
 			},
-			wantName:    "my-app",
-			wantVersion: "0.1.0",
 		},
 		{
-			name: "file component preserves version",
-			component: &cyclonedx.Component{
-				Type:    cyclonedx.ComponentTypeFile,
-				Name:    "/path/to/project",
-				Version: "1.2.3",
+			name: "file component keeps name and version",
+			input: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeFile,
+					Name:    "/path/to/project",
+					Version: "1.2.3",
+				},
 			},
-			wantName:     "/path/to/project",
-			wantVersion:  "1.2.3",
-			wantMetaType: "file",
+			expected: source.Description{
+				Name:     "/path/to/project",
+				Version:  "1.2.3",
+				Metadata: source.FileMetadata{Path: "/path/to/project"},
+			},
 		},
 		{
-			name: "container component preserves version and image digest",
-			component: &cyclonedx.Component{
-				Type:    cyclonedx.ComponentTypeContainer,
-				BOMRef:  "img-ref",
+			name: "container component keeps name and version",
+			input: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeContainer,
+					BOMRef:  "img-ref",
+					Name:    "alpine:latest",
+					Version: "sha256:abc123",
+				},
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:image:labels:maintainer", Value: "someone"},
+				},
+			},
+			expected: source.Description{
 				Name:    "alpine:latest",
 				Version: "sha256:abc123",
+				Metadata: source.ImageMetadata{
+					UserInput:      "alpine:latest",
+					ID:             "img-ref",
+					ManifestDigest: "sha256:abc123",
+					Labels:         map[string]string{"maintainer": "someone"},
+				},
 			},
-			wantName:        "alpine:latest",
-			wantVersion:     "sha256:abc123",
-			wantMetaType:    "image",
-			wantImageDigest: "sha256:abc123",
+		},
+		{
+			name: "component supplier is preferred over metadata supplier",
+			input: &cyclonedx.Metadata{
+				Supplier: &cyclonedx.OrganizationalEntity{Name: "metadata-supplier"},
+				Component: &cyclonedx.Component{
+					Type:     cyclonedx.ComponentTypeApplication,
+					Name:     "my-app",
+					Supplier: &cyclonedx.OrganizationalEntity{Name: "component-supplier"},
+				},
+			},
+			expected: source.Description{
+				Name:     "my-app",
+				Supplier: "component-supplier",
+			},
+		},
+		{
+			name: "metadata supplier is used when the component has none",
+			input: &cyclonedx.Metadata{
+				Supplier: &cyclonedx.OrganizationalEntity{Name: "metadata-supplier"},
+				Component: &cyclonedx.Component{
+					Type: cyclonedx.ComponentTypeApplication,
+					Name: "my-app",
+				},
+			},
+			expected: source.Description{
+				Name:     "my-app",
+				Supplier: "metadata-supplier",
+			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := extractComponents(&cyclonedx.Metadata{Component: tt.component})
-			assert.Equal(t, tt.wantName, got.Name)
-			assert.Equal(t, tt.wantVersion, got.Version)
-
-			switch tt.wantMetaType {
-			case "file":
-				meta, ok := got.Metadata.(source.FileMetadata)
-				require.True(t, ok)
-				assert.Equal(t, tt.wantName, meta.Path)
-			case "image":
-				meta, ok := got.Metadata.(source.ImageMetadata)
-				require.True(t, ok)
-				assert.Equal(t, tt.wantName, meta.UserInput)
-				assert.Equal(t, tt.wantImageDigest, meta.ManifestDigest)
-			default:
-				assert.Nil(t, got.Metadata)
-			}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, extractComponents(test.input))
 		})
 	}
 }

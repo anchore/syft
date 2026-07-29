@@ -221,8 +221,8 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		supplier = meta.Supplier.Name
 	}
 
-	// Always preserve name/version so CycloneDX metadata.component round-trips
-	// (e.g. syft --source-version → grype → cyclonedx-json).
+	// the component name and version describe the source, so they are always preserved (regardless of
+	// component type) to survive a decode-then-encode round trip.
 	desc := source.Description{
 		Name:     c.Name,
 		Version:  c.Version,
@@ -243,12 +243,11 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			ManifestDigest: c.Version,
 			Labels:         labels,
 		}
-		return desc
 	case cyclonedx.ComponentTypeFile:
 		// TODO: this is lossy... we can't know if this is a file or a directory
 		desc.Metadata = source.FileMetadata{Path: c.Name}
-		return desc
 	}
+
 	return desc
 }
 
