@@ -154,8 +154,12 @@ type safeTensorsIdentity struct {
 func assembleSafeTensorsPackage(merged pkg.Package, id safeTensorsIdentity) (pkg.Package, bool) {
 	name := pickSafeTensorsName(id.nameOrPath, id.fallbackName)
 	if name == "" {
-		log.Debugf("dropped safetensors model package (metadata hash %q): no name source",
-			merged.Metadata.(pkg.SafeTensorsModelInfo).MetadataHash)
+		if metadata, ok := merged.Metadata.(pkg.SafeTensorsModelInfo); ok {
+			log.Debugf("dropped safetensors model package (metadata hash %q): no name source",
+				metadata.MetadataHash)
+		} else {
+			log.Debugf("dropped safetensors model package: no name source")
+		}
 		return pkg.Package{}, false
 	}
 
