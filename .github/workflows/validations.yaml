@@ -227,7 +227,7 @@ jobs:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Acceptance tests (Windows)"
 #    needs: [Build-Snapshot-Artifacts]
-    runs-on: runs-on=${{ github.run_id }}/image=windows25-full-x64/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized
+    runs-on: windows-2022
     permissions:
       contents: read
     steps:
