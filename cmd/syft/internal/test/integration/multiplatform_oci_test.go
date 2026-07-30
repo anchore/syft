@@ -60,6 +60,8 @@ func TestMultiPlatformOCIImageSelection(t *testing.T) {
 
 					// The raw config of the selected image must match the requested platform...
 					assertConfigPlatform(t, meta.RawConfig, "linux", arch)
+					assert.Equal(t, "linux", meta.OS)
+					assert.Equal(t, arch, meta.Architecture)
 					// ...and it must be the exact per-platform image from the multi-platform index.
 					assert.Equal(t, expectedDigest[arch], meta.ID)
 				})
@@ -99,6 +101,10 @@ func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
 // TestMultiPlatformOCIImageSelection_DefaultPlatform verifies that not specifying a platform results
 // in the current platform being selected.
 func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("skipping test on non-linux platforms")
+	}
+
 	remoteImage := "docker.io/library/busybox:1.38.0"
 
 	sources := map[string]image.Source{
@@ -125,6 +131,8 @@ func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
 
 			// The raw config of the selected image must match the current platform
 			assertConfigPlatform(t, meta.RawConfig, "linux", runtime.GOARCH)
+			assert.Equal(t, "linux", meta.OS)
+			assert.Equal(t, runtime.GOARCH, meta.Architecture)
 		})
 	}
 }
