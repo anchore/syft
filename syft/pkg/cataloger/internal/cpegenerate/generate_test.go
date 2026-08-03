@@ -855,6 +855,20 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{},
 		},
+		{
+			// regression: react npm package should include facebook as vendor (NVD CPE uses facebook:react)
+			// see https://github.com/anchore/syft/issues/4653
+			name: "react npm package includes facebook vendor",
+			p: pkg.Package{
+				Name:    "react",
+				Version: "18.3.1",
+				Type:    pkg.NpmPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:react:react:18.3.1:*:*:*:*:*:*:*",
+				"cpe:2.3:a:facebook:react:18.3.1:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -1033,6 +1047,17 @@ func TestCandidateVendor(t *testing.T) {
 				Type: pkg.PythonPkg,
 			},
 			expected: []string{"djangoproject", "python-Django", "python_Django" /* <-- known good names | default guess --> */, "python", "Django"},
+		},
+		{
+			// regression: react npm package vendor should include "facebook"
+			// NVD uses cpe:2.3:a:facebook:react not cpe:2.3:a:react:react
+			// see https://github.com/anchore/syft/issues/4653
+			name: "react npm vendor includes facebook",
+			p: pkg.Package{
+				Name: "react",
+				Type: pkg.NpmPkg,
+			},
+			expected: []string{"facebook" /* <-- known good names | default guess --> */, "react"},
 		},
 	}
 
