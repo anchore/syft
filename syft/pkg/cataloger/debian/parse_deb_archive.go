@@ -2,6 +2,7 @@ package debian
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -28,10 +29,16 @@ import (
 //
 // This function extracts and processes the control information to create package metadata.
 func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	arReader := ar.NewReader(reader)
+	validatedReader, err := newValidatedArReader(reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid ar archive: %w", err)
+	}
+
+	arReader := ar.NewReader(validatedReader)
 
 	var metadata *pkg.DpkgArchiveEntry
 	var licenses []string
+	var ctrlLicenses []string
 	var unknownErr error
 	for {
 		header, err := arReader.Next()
@@ -49,7 +56,7 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 			if err != nil {
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to decompress control.tar.* file: %w", err))
 			}
-			metadata, err = processControlTar(dcReader)
+			metadata, ctrlLicenses, err = processControlTar(dcReader)
 			if err != nil {
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to process control.tar.* file: %w", err))
 			}
@@ -68,6 +75,10 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 
 	if metadata == nil {
 		return nil, nil, unknown.New(reader.Location, fmt.Errorf("no application found described in .dpkg archive"))
+	}
+
+	if len(licenses) == 0 && len(ctrlLicenses) > 0 {
+		licenses = ctrlLicenses
 	}
 
 	return []pkg.Package{
@@ -103,7 +114,7 @@ func processDataTar(dcReader io.ReadCloser) ([]string, error) {
 	return licenses, nil
 }
 
-func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
+func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, []string, error) {
 	defer internal.CloseAndLogError(dcReader, "")
 
 	tarReader := tar.NewReader(dcReader)
@@ -111,6 +122,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	var metadata *pkg.DpkgArchiveEntry
 	var files []pkg.DpkgFileRecord
 	var confFileRecords []pkg.DpkgFileRecord
+	var licenses []string
 
 	for {
 		header, err := tarReader.Next()
@@ -118,7 +130,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to read control tar: %w", err)
+			return nil, nil, fmt.Errorf("failed to read control tar: %w", err)
 		}
 
 		switch filepath.Base(header.Name) {
@@ -126,12 +138,13 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 			// parseDpkgStatus already streams via bufio.Reader
 			entries, err := parseDpkgStatus(tarReader)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse control file: %w", err)
+				return nil, nil, fmt.Errorf("failed to parse control file: %w", err)
 			}
 			if len(entries) == 0 {
-				return nil, fmt.Errorf("no package entries found in control file")
+				return nil, nil, fmt.Errorf("no package entries found in control file")
 			}
 			entry := pkg.DpkgArchiveEntry(entries[0].toDpkgEntry())
+			licenses = normalizeControlLicenses(entries[0].License)
 			metadata = &entry
 		case "md5sums":
 			// parseDpkgMD5Info already streams via bufio.Scanner
@@ -143,7 +156,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	}
 
 	if metadata == nil {
-		return nil, fmt.Errorf("control file not found in archive")
+		return nil, nil, fmt.Errorf("control file not found in archive")
 	}
 
 	if len(confFileRecords) > 0 && len(files) > 0 {
@@ -159,7 +172,48 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 	}
 
 	metadata.Files = files
-	return metadata, nil
+	return metadata, licenses, nil
+}
+
+func normalizeControlLicenses(rawLicense string) []string {
+	parts := strings.Split(rawLicense, "&")
+	licenses := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		license := strings.TrimSpace(part)
+		if license == "" {
+			continue
+		}
+
+		if strings.HasPrefix(license, "(") && strings.HasSuffix(license, ")") {
+			license = strings.TrimSpace(strings.TrimPrefix(strings.TrimSuffix(license, ")"), "("))
+		}
+
+		if strings.Contains(license, "|") {
+			alternatives := strings.Split(license, "|")
+			for i := range alternatives {
+				alternatives[i] = strings.TrimSpace(alternatives[i])
+			}
+			license = strings.Join(alternatives, " or ")
+		}
+
+		licenses = append(licenses, license)
+	}
+
+	return licenses
+}
+
+func newValidatedArReader(reader io.ReadCloser) (io.ReadCloser, error) {
+	prefix := make([]byte, len(ar.GLOBAL_HEADER))
+	if _, err := io.ReadFull(reader, prefix); err != nil {
+		return nil, fmt.Errorf("failed to read ar header: %w", err)
+	}
+
+	if !bytes.Equal(prefix, []byte(ar.GLOBAL_HEADER)) {
+		return nil, fmt.Errorf("expected ar header %q, got %q", string(ar.GLOBAL_HEADER), string(prefix))
+	}
+
+	return io.NopCloser(io.MultiReader(bytes.NewReader(prefix), reader)), nil
 }
 
 func decompressionStream(ctx context.Context, r io.Reader, filePath string) (io.ReadCloser, error) {
