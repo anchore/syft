@@ -46,8 +46,14 @@ func parsePodfileLock(_ context.Context, _ file.Resolver, _ *generic.Environment
 			return nil, nil, fmt.Errorf("malformed podfile.lock")
 		}
 		splits := strings.Split(podBlob, " ")
+		if len(splits) < 1 {
+			continue
+		}
 		podName := splits[0]
-		podVersion := strings.TrimSuffix(strings.TrimPrefix(splits[1], "("), ")")
+		var podVersion string
+		if len(splits) > 1 {
+			podVersion = strings.TrimSuffix(strings.TrimPrefix(splits[1], "("), ")")
+		}
 		podRootPkg := strings.Split(podName, "/")[0]
 
 		var pkgHash string
