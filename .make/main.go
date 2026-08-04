@@ -3,8 +3,10 @@ package main
 import (
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	. "github.com/anchore/go-make"
+	"github.com/anchore/go-make/config"
 	"github.com/anchore/go-make/file"
 	"github.com/anchore/go-make/lang"
 	"github.com/anchore/go-make/run"
@@ -27,22 +29,43 @@ func main() {
 			gotest.Name("unit"),
 			gotest.ExcludeGlob("**/test/**"),
 			gotest.CoverageThreshold(62),
+			race(),
 		),
 
-		// integration tests: native go-make Task. The race-detector smoke against a
-		// real image stays bundled here (RunsOn integration) so `make integration`
-		// behaves like the Taskfile version did.
-		gotest.Tasks(
-			gotest.Name("integration"),
-			gotest.IncludeGlob("./cmd/syft/internal/test/integration/..."),
-			gotest.Verbose(),
-			gotest.NoCoverage(),
-		),
+		// integration tests: run `go test` directly instead of via gotest.Tasks(), which
+		// has no way to set a timeout. The suite is a single package of ~36 sequential
+		// tests over 18 docker fixture images, so with a cold fixture cache (every image
+		// built + saved inline, under -race) it runs well past `go test`'s default 10m
+		// timeout -- which is exactly the case when regenerating the fixture cache from
+		// scratch. -count=1 keeps the go test cache from short-circuiting a run whose
+		// side effect (the built fixtures) is the thing we're after.
+		//
+		// The race-detector smoke against a real image stays bundled here (RunsOn
+		// integration) so `make integration` behaves like the Taskfile version did.
+		Task{
+			Name:        "integration",
+			Description: "run integration tests",
+			RunsOn:      lang.List("test"),
+			Run: func() {
+				raceFlag := ""
+				if raceEnabled() {
+					raceFlag = " -race"
+				}
+				Run(
+					"go test -count=1 -timeout=30m -v"+raceFlag+" ./cmd/syft/internal/test/integration/...",
+					run.Env("GODEBUG", "dontfreezetheworld=1"),
+				)
+			},
+		},
 		Task{
 			Name:        "integration:race-smoke",
 			Description: "exercise the CLI with the race detector",
 			RunsOn:      lang.List("integration"),
 			Run: func() {
+				if !raceEnabled() {
+					Log("race detector disabled (RACE=false); skipping race smoke")
+					return
+				}
 				Run("go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2")
 			},
 		},
@@ -130,6 +153,26 @@ func main() {
 			),
 		},
 	)
+}
+
+// raceEnabled is the single switch for the race detector across every test suite.
+// Unset it and we keep go-make's behavior (on in CI, off locally and on windows);
+// set RACE=false to turn it off everywhere -- worth doing when rebuilding the test
+// fixture cache from scratch, where every suite is dominated by building docker
+// fixtures and the race detector only adds wall clock. RACE=true forces it on.
+func raceEnabled() bool {
+	if enabled, err := strconv.ParseBool(config.Env("RACE", "")); err == nil {
+		return enabled
+	}
+	return config.CI && !config.Windows
+}
+
+// race applies raceEnabled() to a gotest suite. gotest exposes no functional option
+// for the race detector, but gotest.Config.Race is exported.
+func race() gotest.Option {
+	return func(c *gotest.Config) {
+		c.Race = raceEnabled()
+	}
 }
 
 // snapshotBinPath replicates the SNAPSHOT_BIN computation from the prior Taskfile:
