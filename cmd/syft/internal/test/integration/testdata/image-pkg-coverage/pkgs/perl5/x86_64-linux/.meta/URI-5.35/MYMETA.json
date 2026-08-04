@@ -1,0 +1,9 @@
+{
+  "abstract": "Uniform Resource Identifiers (absolute and relative)",
+  "license": ["perl_5"],
+  "meta-spec": {"version": 2},
+  "name": "URI",
+  "prereqs": {"runtime": {"requires": {"Carp": "0", "perl": "5.008001"}}},
+  "release_status": "stable",
+  "version": "5.35"
+}

@@ -184,8 +184,13 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 }
 
 func candidateTargetSw(p pkg.Package) []string {
-	if p.Type == pkg.WordpressPluginPkg {
+	switch {
+	case p.Type == pkg.WordpressPluginPkg:
 		return []string{"wordpress"}
+	case p.Language == pkg.Perl:
+		// NVD records CPAN distributions with perl in target_sw, e.g.
+		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
+		return []string{"perl"}
 	}
 	return []string{cpe.Any}
 }

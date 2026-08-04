@@ -279,6 +279,46 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				return []pkg.Package{parent, child}, nil
 			},
 		},
+		{
+			// a CPAN distribution owns whatever its .packlist recorded, which is how a distribution that
+			// installed a binary or a shared object is related to the package cataloged from it
+			name: "cpan-distribution-owns-packlist-paths",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				parent := pkg.Package{
+					Locations: file.NewLocationSet(
+						file.NewLocation("/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/.packlist"),
+					),
+					Type: pkg.CpanPkg,
+					Metadata: pkg.CpanDistribution{
+						MainModule: "Net::SSLeay",
+						Files: []string{
+							"/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/Net/SSLeay.pm",
+							"/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/SSLeay.so",
+						},
+					},
+				}
+				parent.SetID()
+
+				child := pkg.Package{
+					Locations: file.NewLocationSet(
+						file.NewLocation("/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/SSLeay.so"),
+					),
+					Type: pkg.BinaryPkg,
+				}
+				child.SetID()
+
+				return []pkg.Package{parent, child}, []artifact.Relationship{
+					{
+						From: parent,
+						To:   child,
+						Type: artifact.OwnershipByFileOverlapRelationship,
+						Data: ownershipByFilesMetadata{
+							Files: []string{"/usr/local/lib/perl5/site_perl/5.40.4/x86_64-linux/auto/Net/SSLeay/SSLeay.so"},
+						},
+					},
+				}
+			},
+		},
 	}
 
 	for _, test := range tests {

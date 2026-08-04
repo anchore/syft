@@ -20,6 +20,8 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.ConanfileEntry{},
 		pkg.ConaninfoEntry{},
 		pkg.CondaMetaPackage{},
+		pkg.CpanDistribution{}, // the author is a PAUSE ID, not a person or organization name
+		pkg.CpanUnpackedRelease{},
 		pkg.DartPubspecLockEntry{},
 		pkg.DartPubspec{},
 		pkg.DotnetDepsEntry{},

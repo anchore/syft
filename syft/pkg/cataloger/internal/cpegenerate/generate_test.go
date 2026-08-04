@@ -778,6 +778,25 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			// NVD records CPAN distributions with perl in target_sw
+			name: "cpan distribution",
+			p: pkg.Package{
+				Name:     "Mojolicious",
+				Version:  "9.10",
+				Type:     pkg.CpanPkg,
+				Language: pkg.Perl,
+				Metadata: pkg.CpanDistribution{
+					Author: "SRI",
+					Path:   "S/SR/SRI/Mojolicious-9.10.tar.gz",
+				},
+			},
+			expected: []string{
+				// note: the distribution name keeps its casing here, as it does for every other ecosystem.
+				// NVD spells the same CPE lowercase (cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*)
+				"cpe:2.3:a:Mojolicious:Mojolicious:9.10:*:*:*:*:perl:*:*",
+			},
+		},
+		{
 			name: "dotnet deps.json",
 			p: pkg.Package{
 				Name:    "Something",
