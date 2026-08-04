@@ -48,6 +48,17 @@ type Classifier struct {
 
 	// CPEs are the specific CPEs we want to include for this binary with updated version information
 	CPEs []cpe.CPE `json:"cpes"`
+
+	// Type optionally overrides the package type reported for matches; when unset pkg.BinaryPkg is used
+	Type pkg.Type `json:"-"`
+}
+
+// PackageType is the package type reported for matches of this classifier, defaulting to pkg.BinaryPkg.
+func (cfg Classifier) PackageType() pkg.Type {
+	if cfg.Type == "" {
+		return pkg.BinaryPkg
+	}
+	return cfg.Type
 }
 
 func (cfg Classifier) MarshalJSON() ([]byte, error) {
