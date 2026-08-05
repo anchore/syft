@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_decode(t *testing.T) {
@@ -480,4 +481,111 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 	assert.Len(t, pkgsWithoutID, 1)
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
 
+}
+
+func Test_extractComponents(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *cyclonedx.Metadata
+		expected source.Description
+	}{
+		{
+			name:     "no metadata",
+			input:    nil,
+			expected: source.Description{},
+		},
+		{
+			name:     "no component",
+			input:    &cyclonedx.Metadata{},
+			expected: source.Description{},
+		},
+		{
+			name: "application component keeps name and version",
+			input: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeApplication,
+					Name:    "my-app",
+					Version: "0.1.0",
+				},
+			},
+			expected: source.Description{
+				Name:    "my-app",
+				Version: "0.1.0",
+			},
+		},
+		{
+			name: "file component keeps name and version",
+			input: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeFile,
+					Name:    "/path/to/project",
+					Version: "1.2.3",
+				},
+			},
+			expected: source.Description{
+				Name:     "/path/to/project",
+				Version:  "1.2.3",
+				Metadata: source.FileMetadata{Path: "/path/to/project"},
+			},
+		},
+		{
+			name: "container component keeps name and version",
+			input: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeContainer,
+					BOMRef:  "img-ref",
+					Name:    "alpine:latest",
+					Version: "sha256:abc123",
+				},
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:image:labels:maintainer", Value: "someone"},
+				},
+			},
+			expected: source.Description{
+				Name:    "alpine:latest",
+				Version: "sha256:abc123",
+				Metadata: source.ImageMetadata{
+					UserInput:      "alpine:latest",
+					ID:             "img-ref",
+					ManifestDigest: "sha256:abc123",
+					Labels:         map[string]string{"maintainer": "someone"},
+				},
+			},
+		},
+		{
+			name: "component supplier is preferred over metadata supplier",
+			input: &cyclonedx.Metadata{
+				Supplier: &cyclonedx.OrganizationalEntity{Name: "metadata-supplier"},
+				Component: &cyclonedx.Component{
+					Type:     cyclonedx.ComponentTypeApplication,
+					Name:     "my-app",
+					Supplier: &cyclonedx.OrganizationalEntity{Name: "component-supplier"},
+				},
+			},
+			expected: source.Description{
+				Name:     "my-app",
+				Supplier: "component-supplier",
+			},
+		},
+		{
+			name: "metadata supplier is used when the component has none",
+			input: &cyclonedx.Metadata{
+				Supplier: &cyclonedx.OrganizationalEntity{Name: "metadata-supplier"},
+				Component: &cyclonedx.Component{
+					Type: cyclonedx.ComponentTypeApplication,
+					Name: "my-app",
+				},
+			},
+			expected: source.Description{
+				Name:     "my-app",
+				Supplier: "metadata-supplier",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, extractComponents(test.input))
+		})
+	}
 }
