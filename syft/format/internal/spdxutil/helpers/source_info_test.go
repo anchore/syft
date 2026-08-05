@@ -289,6 +289,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.CpanPkg,
+			},
+			expected: []string{
+				"acquired package info from CPAN distribution metadata",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.LuaRocksPkg,
 			},
 			expected: []string{
