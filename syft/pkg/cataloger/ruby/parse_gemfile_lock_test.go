@@ -39,6 +39,8 @@ func TestParseGemfileLockEntries(t *testing.T) {
 		{Name: "minitest", Version: "5.3.4", PURL: "pkg:gem/minitest@5.3.4", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 		{Name: "multi_json", Version: "1.10.1", PURL: "pkg:gem/multi_json@1.10.1", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 		{Name: "mysql2", Version: "0.3.16", PURL: "pkg:gem/mysql2@0.3.16", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
+		// platform-specific gem: the version is kept as-found (with the platform); only the PURL drops the platform
+		{Name: "nokogiri", Version: "1.16.0-x86_64-linux", PURL: "pkg:gem/nokogiri@1.16.0", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 		{Name: "polyglot", Version: "0.3.4", PURL: "pkg:gem/polyglot@0.3.4", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 		{Name: "rack", Version: "1.5.2", PURL: "pkg:gem/rack@1.5.2", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
 		{Name: "rack-test", Version: "0.6.2", PURL: "pkg:gem/rack-test@0.6.2", Locations: locations, Language: pkg.Ruby, Type: pkg.GemPkg},
