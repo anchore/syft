@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 )
@@ -98,6 +99,35 @@ func Test_ClassifierCPEs(t *testing.T) {
 				cpes = append(cpes, c.Attributes.String())
 			}
 			require.Equal(t, test.cpes, cpes)
+		})
+	}
+}
+
+func Test_ClassifierPackageType(t *testing.T) {
+	tests := []struct {
+		name       string
+		classifier Classifier
+		want       pkg.Type
+	}{
+		{
+			name:       "defaults to binary when unset",
+			classifier: Classifier{Class: "some-binary", Package: "some-app"},
+			want:       pkg.BinaryPkg,
+		},
+		{
+			name:       "honors an explicit type",
+			classifier: Classifier{Class: "perl-binary", Package: "perl", Type: pkg.CpanPkg},
+			want:       pkg.CpanPkg,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, test.classifier.PackageType())
+
+			p := NewClassifierPackage(test.classifier, file.NewLocation("/usr/bin/app"), map[string]string{"version": "1.2.3"}, "cataloger-name")
+			require.NotNil(t, p)
+			assert.Equal(t, test.want, p.Type)
 		})
 	}
 }
