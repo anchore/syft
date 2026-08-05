@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"testing"
 
 	"github.com/anchore/go-make/config"
@@ -23,8 +24,11 @@ func TestRaceEnabled(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.env != "" {
-				t.Setenv("RACE", tt.env)
+			// always go through t.Setenv (it registers the restore) so an ambient
+			// RACE from the caller's environment can't leak into the unset cases
+			t.Setenv("RACE", tt.env)
+			if tt.env == "" {
+				os.Unsetenv("RACE")
 			}
 			orig := config.CI
 			config.CI = tt.ci
