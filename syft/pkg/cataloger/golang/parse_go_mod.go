@@ -134,7 +134,7 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 			// Log errors but continue processing
 			for _, e := range p.Errors {
 				log.Debugf("package load error for %s: %v", p.PkgPath, e)
-				unknownErr = unknown.Append(unknownErr, loc, err)
+				unknownErr = unknown.Append(unknownErr, loc, e)
 			}
 		}
 	}
