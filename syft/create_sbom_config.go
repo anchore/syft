@@ -467,6 +467,11 @@ func (c *CreateSBOMConfig) validate() error {
 			return fmt.Errorf("invalid configuration: to exclude binary packages based on file ownership overlap relationships, cataloging file ownership overlap relationships must be enabled")
 		}
 	}
+	if c.Relationships.ExcludeLanguagePackagesWithFileOwnershipOverlap {
+		if !c.Relationships.PackageFileOwnershipOverlap {
+			return fmt.Errorf("invalid configuration: to exclude language packages based on file ownership overlap relationships, cataloging file ownership overlap relationships must be enabled")
+		}
+	}
 	return nil
 }
 
