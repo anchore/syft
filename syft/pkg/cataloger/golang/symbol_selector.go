@@ -17,26 +17,26 @@ var scopePatterns = map[cataloging.SymbolScope][]string{
 }
 
 // symbolSelector decides which go module paths get function symbols attached to their metadata. The scope
-// preset and any user-supplied include patterns are compiled into a single glob list so there is exactly
+// preset and any user-supplied module patterns are compiled into a single glob list so there is exactly
 // one matcher answering "does this module path get symbols" (two matchers over the same subject drift).
 type symbolSelector struct {
 	scope    cataloging.SymbolScope
 	patterns []string
 }
 
-func newSymbolSelector(scope cataloging.SymbolScope, include []string) symbolSelector {
+func newSymbolSelector(scope cataloging.SymbolScope, modules []string) symbolSelector {
 	// normalize here rather than trusting the caller: the CLI runs Parse in PostLoad, but a library
 	// consumer setting CaptureSymbols directly (or via WithCaptureSymbols) does not, and an unnormalized
 	// value falls through both switches below into stdlib-only capture rather than the intended scope.
 	scope = scope.Parse()
 
 	var patterns []string
-	for _, pattern := range slices.Concat(scopePatterns[scope], include) {
+	for _, pattern := range slices.Concat(scopePatterns[scope], modules) {
 		if !doublestar.ValidatePattern(pattern) {
 			// a typo in a filter that decides what gets vulnerability-scanned must not pass quietly:
 			// someone would believe they captured symbols they did not. Drop just this pattern and keep
 			// the rest of the selection in force.
-			log.WithFields("pattern", pattern).Warn("ignoring malformed golang capture-symbols-include pattern")
+			log.WithFields("pattern", pattern).Warn("ignoring malformed golang capture-symbols-modules pattern")
 			continue
 		}
 		patterns = append(patterns, pattern)

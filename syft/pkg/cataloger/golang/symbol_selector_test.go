@@ -15,7 +15,7 @@ func Test_symbolSelector_selects(t *testing.T) {
 	tests := []struct {
 		name       string
 		scope      cataloging.SymbolScope
-		include    []string
+		modules    []string
 		modulePath string
 		want       bool
 	}{
@@ -25,9 +25,9 @@ func Test_symbolSelector_selects(t *testing.T) {
 			modulePath: "github.com/foo/bar",
 		},
 		{
-			name:       "none is inert even with includes",
+			name:       "none is inert even with module patterns",
 			scope:      cataloging.SymbolScopeNone,
-			include:    []string{"github.com/foo/**"},
+			modules:    []string{"github.com/foo/**"},
 			modulePath: "github.com/foo/bar",
 		},
 		{
@@ -70,63 +70,63 @@ func Test_symbolSelector_selects(t *testing.T) {
 			// /v2-style major version suffixes that must not be swept up by a single-segment pattern
 			name:       "single star matches one path segment",
 			scope:      cataloging.SymbolScopeStdlib,
-			include:    []string{"github.com/klauspost/*"},
+			modules:    []string{"github.com/klauspost/*"},
 			modulePath: "github.com/klauspost/compress",
 			want:       true,
 		},
 		{
 			name:       "single star does not cross a separator",
 			scope:      cataloging.SymbolScopeStdlib,
-			include:    []string{"github.com/klauspost/*"},
+			modules:    []string{"github.com/klauspost/*"},
 			modulePath: "github.com/klauspost/compress/v2",
 		},
 		{
 			name:       "doublestar crosses a separator",
 			scope:      cataloging.SymbolScopeStdlib,
-			include:    []string{"github.com/klauspost/**"},
+			modules:    []string{"github.com/klauspost/**"},
 			modulePath: "github.com/klauspost/compress/v2",
 			want:       true,
 		},
 		{
-			name:       "includes widen a preset",
+			name:       "module patterns widen a preset",
 			scope:      cataloging.SymbolScopeExtendedStdlib,
-			include:    []string{"github.com/klauspost/**"},
+			modules:    []string{"github.com/klauspost/**"},
 			modulePath: "github.com/klauspost/compress",
 			want:       true,
 		},
 		{
-			name:       "includes cannot narrow a preset",
+			name:       "module patterns cannot narrow a preset",
 			scope:      cataloging.SymbolScopeExtendedStdlib,
-			include:    []string{"github.com/klauspost/**"},
+			modules:    []string{"github.com/klauspost/**"},
 			modulePath: "golang.org/x/net",
 			want:       true,
 		},
 		{
 			name:       "exact module path",
 			scope:      cataloging.SymbolScopeStdlib,
-			include:    []string{"google.golang.org/grpc"},
+			modules:    []string{"google.golang.org/grpc"},
 			modulePath: "google.golang.org/grpc",
 			want:       true,
 		},
 		{
-			name:       "empty includes are a no-op",
+			name:       "an empty module pattern list is a no-op",
 			scope:      cataloging.SymbolScopeStdlib,
-			include:    []string{},
+			modules:    []string{},
 			modulePath: "github.com/foo/bar",
 		},
 		{
-			// all short-circuits before any matching, so an include list cannot subtract from it
-			name:       "includes cannot narrow all",
+			// all short-circuits before any matching, so a module pattern list cannot subtract from it
+			name:       "module patterns cannot narrow all",
 			scope:      cataloging.SymbolScopeAll,
-			include:    []string{"github.com/klauspost/**"},
+			modules:    []string{"github.com/klauspost/**"},
 			modulePath: "github.com/foo/bar",
 			want:       true,
 		},
 		{
 			// selection is a per-module boolean, so a pattern overlapping the preset is idempotent
-			name:       "include overlapping the preset is idempotent",
+			name:       "a module pattern overlapping the preset is idempotent",
 			scope:      cataloging.SymbolScopeExtendedStdlib,
-			include:    []string{"golang.org/x/**"},
+			modules:    []string{"golang.org/x/**"},
 			modulePath: "golang.org/x/net",
 			want:       true,
 		},
@@ -141,14 +141,14 @@ func Test_symbolSelector_selects(t *testing.T) {
 		{
 			name:       "unrecognized scope resolves to none",
 			scope:      "bogus",
-			include:    []string{"github.com/foo/**"},
+			modules:    []string{"github.com/foo/**"},
 			modulePath: "github.com/foo/bar",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, newSymbolSelector(tt.scope, tt.include).selects(tt.modulePath))
+			assert.Equal(t, tt.want, newSymbolSelector(tt.scope, tt.modules).selects(tt.modulePath))
 		})
 	}
 }
@@ -175,7 +175,7 @@ func Test_symbolSelector_filter(t *testing.T) {
 	tests := []struct {
 		name    string
 		scope   cataloging.SymbolScope
-		include []string
+		modules []string
 		want    []string // remaining module paths
 	}{
 		{
@@ -192,9 +192,9 @@ func Test_symbolSelector_filter(t *testing.T) {
 			want:  []string{"golang.org/x/net"},
 		},
 		{
-			name:    "includes widen the selection",
+			name:    "module patterns widen the selection",
 			scope:   cataloging.SymbolScopeExtendedStdlib,
-			include: []string{"github.com/klauspost/**"},
+			modules: []string{"github.com/klauspost/**"},
 			want:    []string{"golang.org/x/net", "github.com/klauspost/compress"},
 		},
 		{
@@ -206,7 +206,7 @@ func Test_symbolSelector_filter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := newSymbolSelector(tt.scope, tt.include).filter(symbols())
+			got := newSymbolSelector(tt.scope, tt.modules).filter(symbols())
 			if len(tt.want) == 0 {
 				// nil, not an empty map, so the omitempty JSON tag keeps the field out of output
 				assert.Nil(t, got)

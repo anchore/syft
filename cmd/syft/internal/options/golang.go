@@ -20,7 +20,7 @@ type golangConfig struct {
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
 	UsePackagesLib              *bool                         `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
 	CaptureSymbols              cataloging.SymbolScope        `json:"capture-symbols" yaml:"capture-symbols" mapstructure:"capture-symbols"`
-	CaptureSymbolsInclude       []string                      `json:"capture-symbols-include" yaml:"capture-symbols-include" mapstructure:"capture-symbols-include"`
+	CaptureSymbolsModules       []string                      `json:"capture-symbols-modules" yaml:"capture-symbols-modules" mapstructure:"capture-symbols-modules"`
 }
 
 var _ interface {
@@ -49,7 +49,7 @@ a more accurate version from the binary.`)
 	descriptions.Add(&o.CaptureSymbols, `capture function symbols from the binary symbol table (pclntab). valid values are:
 "none" (disabled), "stdlib" (only the synthetic stdlib package), "extended-stdlib" (stdlib plus every
 module under golang.org/x/), and "all" (all module packages plus stdlib)`)
-	descriptions.Add(&o.CaptureSymbolsInclude, `glob patterns matched against go module paths (e.g. github.com/klauspost/**) that should have symbols
+	descriptions.Add(&o.CaptureSymbolsModules, `glob patterns matched against go module paths (e.g. github.com/klauspost/**) that should have symbols
 captured in addition to whatever capture-symbols selects. ** crosses path separators, * does not.
 this can only widen the selection, never narrow it, and is inert when capture-symbols is none`)
 	descriptions.Add(&o.MainModuleVersion.FromLDFlags, `look for LD flags that appear to be setting a version (e.g. -X main.version=1.0.0)`)
@@ -73,8 +73,8 @@ func (o *golangConfig) PostLoad() error {
 	// yaml string) into a slice before this point, and there is no CLI flag feeding this key. The one thing
 	// Flatten would add is splitting commas *inside* a list entry, which silently breaks doublestar brace
 	// alternation like github.com/{foo,bar}/**. Viper's split does not trim, so that part is still needed.
-	for i, pattern := range o.CaptureSymbolsInclude {
-		o.CaptureSymbolsInclude[i] = strings.TrimSpace(pattern)
+	for i, pattern := range o.CaptureSymbolsModules {
+		o.CaptureSymbolsModules[i] = strings.TrimSpace(pattern)
 	}
 
 	return nil
@@ -103,6 +103,6 @@ func defaultGolangConfig() golangConfig {
 		},
 		UsePackagesLib:        nil, // this defaults to true, which is the API default
 		CaptureSymbols:        def.CaptureSymbols,
-		CaptureSymbolsInclude: def.CaptureSymbolsInclude,
+		CaptureSymbolsModules: def.CaptureSymbolsModules,
 	}
 }

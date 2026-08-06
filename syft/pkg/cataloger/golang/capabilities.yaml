@@ -27,9 +27,9 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: CaptureSymbols
         description: CaptureSymbols controls extracting function symbols from the binary symbol table (pclntab). Valid values are "none" (disabled), "stdlib" (only the synthetic stdlib package), "extended-stdlib" (stdlib plus every module under golang.org/x/), and "all" (all module packages plus stdlib).
         app_key: golang.capture-symbols
-      - key: CaptureSymbolsInclude
-        description: CaptureSymbolsInclude is a list of glob patterns (doublestar syntax, where ** crosses path separators and * does not) matched against go module paths. Matching modules get symbols in addition to whatever CaptureSymbols selects, so this can only widen the selection and never narrow it. It has no effect under the "none" scope.
-        app_key: golang.capture-symbols-include
+      - key: CaptureSymbolsModules
+        description: CaptureSymbolsModules is a list of glob patterns (doublestar syntax, where ** crosses path separators and * does not) matched against go module paths. Matching modules get symbols in addition to whatever CaptureSymbols selects, so this can only widen the selection and never narrow it. It has no effect under the "none" scope.
+        app_key: golang.capture-symbols-modules
 catalogers:
   - ecosystem: go # MANUAL
     name: go-module-binary-cataloger # AUTO-GENERATED

@@ -200,7 +200,7 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			).
 			WithUsePackagesLib(*multiLevelOption(true, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.UsePackagesLib)).
 			WithCaptureSymbols(cfg.Golang.CaptureSymbols).
-			WithCaptureSymbolsInclude(cfg.Golang.CaptureSymbolsInclude),
+			WithCaptureSymbolsModules(cfg.Golang.CaptureSymbolsModules),
 		JavaScript: javascript.DefaultCatalogerConfig().
 			WithIncludeDevDependencies(*multiLevelOption(false, cfg.JavaScript.IncludeDevDependencies)).
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.JavaScript, task.Node, task.NPM), cfg.JavaScript.SearchRemoteLicenses)).

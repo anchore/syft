@@ -56,12 +56,12 @@ type CatalogerConfig struct {
 	// app-config: golang.capture-symbols
 	CaptureSymbols cataloging.SymbolScope `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
 
-	// CaptureSymbolsInclude is a list of glob patterns (doublestar syntax, where ** crosses path separators
+	// CaptureSymbolsModules is a list of glob patterns (doublestar syntax, where ** crosses path separators
 	// and * does not) matched against go module paths. Matching modules get symbols in addition to whatever
 	// CaptureSymbols selects, so this can only widen the selection and never narrow it. It has no effect
 	// under the "none" scope.
-	// app-config: golang.capture-symbols-include
-	CaptureSymbolsInclude []string `yaml:"capture-symbols-include,omitempty" json:"capture-symbols-include,omitempty" mapstructure:"capture-symbols-include"`
+	// app-config: golang.capture-symbols-modules
+	CaptureSymbolsModules []string `yaml:"capture-symbols-modules,omitempty" json:"capture-symbols-modules,omitempty" mapstructure:"capture-symbols-modules"`
 
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
@@ -204,8 +204,8 @@ func (g CatalogerConfig) WithCaptureSymbols(input cataloging.SymbolScope) Catalo
 	return g
 }
 
-func (g CatalogerConfig) WithCaptureSymbolsInclude(input []string) CatalogerConfig {
-	g.CaptureSymbolsInclude = input
+func (g CatalogerConfig) WithCaptureSymbolsModules(input []string) CatalogerConfig {
+	g.CaptureSymbolsModules = input
 	return g
 }
 

@@ -1443,7 +1443,7 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 	tests := []struct {
 		name           string
 		scope          cataloging.SymbolScope
-		include        []string
+		modules        []string
 		extraDeps      []*debug.Module
 		symbols        []binarySymbol
 		wantMainSyms   map[string][]string
@@ -1487,9 +1487,9 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 		{
-			name:      "include patterns widen extended-stdlib",
+			name:      "module patterns widen extended-stdlib",
 			scope:     cataloging.SymbolScopeExtendedStdlib,
-			include:   []string{"github.com/klauspost/**"},
+			modules:   []string{"github.com/klauspost/**"},
 			extraDeps: extendedDeps,
 			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
 			wantExtraSyms: []map[string][]string{
@@ -1499,9 +1499,9 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 		{
-			name:      "include patterns can select the main module",
+			name:      "module patterns can select the main module",
 			scope:     cataloging.SymbolScopeStdlib,
-			include:   []string{"github.com/anchore/**"},
+			modules:   []string{"github.com/anchore/**"},
 			extraDeps: extendedDeps,
 			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
 			// the main package is keyed by the "main" import path the linker assigns, not its real path
@@ -1510,20 +1510,20 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 		{
-			name:      "include patterns are inert under the none scope",
+			name:      "module patterns are inert under the none scope",
 			scope:     cataloging.SymbolScopeNone,
-			include:   []string{"github.com/**", "golang.org/x/**"},
+			modules:   []string{"github.com/**", "golang.org/x/**"},
 			extraDeps: extendedDeps,
 			// scanFile never runs under "none", so the build info carries no symbols to begin with
 			symbols:       nil,
 			wantExtraSyms: []map[string][]string{nil, nil},
 		},
 		{
-			// all short-circuits ahead of the pattern walk, so a narrow include list cannot subtract
+			// all short-circuits ahead of the pattern walk, so a narrow module pattern list cannot subtract
 			// from it. this is also the guard on that short-circuit still existing.
-			name:         "include patterns cannot narrow the all scope",
+			name:         "module patterns cannot narrow the all scope",
 			scope:        cataloging.SymbolScopeAll,
-			include:      []string{"golang.org/x/**"},
+			modules:      []string{"golang.org/x/**"},
 			extraDeps:    extendedDeps,
 			symbols:      slices.Concat(populatedSymbols, extendedSymbols),
 			wantMainSyms: map[string][]string{"main": {"main"}},
@@ -1538,11 +1538,11 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
 		},
 		{
-			// an include that restates what the preset already covers must not duplicate or drop anything:
+			// a module pattern that restates what the preset already covers must not duplicate or drop anything:
 			// selection is a per-module boolean, so overlap is idempotent
-			name:      "include overlapping the preset changes nothing",
+			name:      "a module pattern overlapping the preset changes nothing",
 			scope:     cataloging.SymbolScopeExtendedStdlib,
-			include:   []string{"golang.org/x/**"},
+			modules:   []string{"golang.org/x/**"},
 			extraDeps: extendedDeps,
 			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
 			wantExtraSyms: []map[string][]string{
@@ -1565,7 +1565,7 @@ func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
 				symbols: tt.symbols,
 			}
 
-			c := newGoBinaryCataloger(CatalogerConfig{CaptureSymbols: tt.scope, CaptureSymbolsInclude: tt.include})
+			c := newGoBinaryCataloger(CatalogerConfig{CaptureSymbols: tt.scope, CaptureSymbolsModules: tt.modules})
 			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader("")))
 			require.NoError(t, err)
 

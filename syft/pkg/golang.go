@@ -32,7 +32,7 @@ type GolangBinaryBuildinfoEntry struct {
 	// recoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers
 	// this package: the "all" scope populates every module package plus the synthetic stdlib package, the
 	// "extended-stdlib" scope populates the stdlib package plus every module under golang.org/x/, and the
-	// "stdlib" scope populates only the stdlib package. The capture-symbols-include glob patterns populate
+	// "stdlib" scope populates only the stdlib package. The capture-symbols-modules glob patterns populate
 	// any additional modules they match.
 	Symbols map[string][]string `json:"symbols,omitempty"`
 }

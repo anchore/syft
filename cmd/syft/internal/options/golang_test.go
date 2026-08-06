@@ -13,7 +13,7 @@ func Test_golangConfig_PostLoad(t *testing.T) {
 		name            string
 		cfg             golangConfig
 		expected        cataloging.SymbolScope
-		expectedInclude []string
+		expectedModules []string
 		wantErr         assert.ErrorAssertionFunc
 	}{
 		{
@@ -32,25 +32,25 @@ func Test_golangConfig_PostLoad(t *testing.T) {
 			expected: cataloging.SymbolScopeExtendedStdlib,
 		},
 		{
-			name: "include patterns keep embedded commas",
+			name: "module patterns keep embedded commas",
 			cfg: golangConfig{
 				CaptureSymbols: "stdlib",
 				// brace alternation contains a comma; splitting on it would corrupt the pattern
-				CaptureSymbolsInclude: []string{"github.com/{foo,bar}/**", "golang.org/x/**"},
+				CaptureSymbolsModules: []string{"github.com/{foo,bar}/**", "golang.org/x/**"},
 			},
 			expected:        cataloging.SymbolScopeStdlib,
-			expectedInclude: []string{"github.com/{foo,bar}/**", "golang.org/x/**"},
+			expectedModules: []string{"github.com/{foo,bar}/**", "golang.org/x/**"},
 		},
 		{
 			// viper splits a comma-separated scalar (env var or bare yaml string) but does not trim,
 			// so a leading space would otherwise survive into a pattern that silently matches nothing
-			name: "include patterns are trimmed",
+			name: "module patterns are trimmed",
 			cfg: golangConfig{
 				CaptureSymbols:        "stdlib",
-				CaptureSymbolsInclude: []string{"golang.org/x/**", " github.com/foo/** "},
+				CaptureSymbolsModules: []string{"golang.org/x/**", " github.com/foo/** "},
 			},
 			expected:        cataloging.SymbolScopeStdlib,
-			expectedInclude: []string{"golang.org/x/**", "github.com/foo/**"},
+			expectedModules: []string{"golang.org/x/**", "github.com/foo/**"},
 		},
 		{
 			name:     "empty defaults to none",
@@ -89,7 +89,7 @@ func Test_golangConfig_PostLoad(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tt.expected, tt.cfg.CaptureSymbols)
-			assert.Equal(t, tt.expectedInclude, tt.cfg.CaptureSymbolsInclude)
+			assert.Equal(t, tt.expectedModules, tt.cfg.CaptureSymbolsModules)
 		})
 	}
 }
