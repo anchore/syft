@@ -51,6 +51,8 @@ a more accurate version from the binary.`)
 module under golang.org/x/), and "all" (all module packages plus stdlib)`)
 	descriptions.Add(&o.CaptureSymbolsModules, `glob patterns matched against go module paths (e.g. github.com/klauspost/**) that should have symbols
 captured in addition to whatever capture-symbols selects. ** crosses path separators, * does not.
+a trailing major version suffix is ignored when matching, so github.com/foo/* covers github.com/foo/bar/v2;
+spelling a suffix out in the pattern selects only that major version.
 this can only widen the selection, never narrow it, and is inert when capture-symbols is none`)
 	descriptions.Add(&o.MainModuleVersion.FromLDFlags, `look for LD flags that appear to be setting a version (e.g. -X main.version=1.0.0)`)
 	descriptions.Add(&o.MainModuleVersion.FromBuildSettings, `use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version

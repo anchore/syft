@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
+	"golang.org/x/mod/module"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cataloging"
@@ -58,17 +59,36 @@ func (s symbolSelector) selects(modulePath string) bool {
 	case cataloging.SymbolScopeAll:
 		return true
 	}
+
+	// a major version suffix is part of a module's path but not part of its identity, so patterns are matched
+	// against the path both with and without it: `github.com/foo/bar` and `github.com/foo/*` each select
+	// `github.com/foo/bar/v2`, which is what whoever wrote either one meant, and a config does not quietly
+	// stop covering a module the day it bumps a major version. Spelling a suffix out in the pattern still
+	// selects that major version alone, since the unsuffixed path cannot match a pattern carrying one.
+	// Only a trailing suffix is a version: in `github.com/foo/v2/bar` the `v2` is an ordinary path element,
+	// and SplitPathVersion leaves it there.
+	unversioned, major, ok := module.SplitPathVersion(modulePath)
+	versioned := ok && major != ""
+
 	for _, pattern := range s.patterns {
-		matched, err := doublestar.Match(pattern, modulePath)
-		if err != nil {
-			// unreachable: newSymbolSelector rejects (and warns about) patterns that cannot compile
-			continue
+		if globMatches(pattern, modulePath) {
+			return true
 		}
-		if matched {
+		if versioned && globMatches(pattern, unversioned) {
 			return true
 		}
 	}
 	return false
+}
+
+// globMatches treats a pattern that cannot compile as no match, which newSymbolSelector has already warned about.
+func globMatches(pattern, modulePath string) bool {
+	matched, err := doublestar.Match(pattern, modulePath)
+	if err != nil {
+		// unreachable: newSymbolSelector rejects (and warns about) patterns that cannot compile
+		return false
+	}
+	return matched
 }
 
 // filter drops the entries of a module-path-keyed symbol map that the selector does not select. It returns

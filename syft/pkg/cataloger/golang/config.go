@@ -59,7 +59,9 @@ type CatalogerConfig struct {
 	// CaptureSymbolsModules is a list of glob patterns (doublestar syntax, where ** crosses path separators
 	// and * does not) matched against go module paths. Matching modules get symbols in addition to whatever
 	// CaptureSymbols selects, so this can only widen the selection and never narrow it. It has no effect
-	// under the "none" scope.
+	// under the "none" scope. A trailing major version suffix is not part of a module's identity, so a
+	// pattern matches with or without it: both "github.com/foo/bar" and "github.com/foo/*" select
+	// "github.com/foo/bar/v2". A pattern that spells out a suffix selects only that major version.
 	// app-config: golang.capture-symbols-modules
 	CaptureSymbolsModules []string `yaml:"capture-symbols-modules,omitempty" json:"capture-symbols-modules,omitempty" mapstructure:"capture-symbols-modules"`
 

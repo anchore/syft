@@ -66,8 +66,6 @@ func Test_symbolSelector_selects(t *testing.T) {
 			modulePath: "github.com/klauspost/compress",
 		},
 		{
-			// a single star does not cross "/", which is why doublestar is needed: go module paths carry
-			// /v2-style major version suffixes that must not be swept up by a single-segment pattern
 			name:       "single star matches one path segment",
 			scope:      cataloging.SymbolScopeStdlib,
 			modules:    []string{"github.com/klauspost/*"},
@@ -75,10 +73,35 @@ func Test_symbolSelector_selects(t *testing.T) {
 			want:       true,
 		},
 		{
-			name:       "single star does not cross a separator",
+			// a single star does not cross "/", but a major version suffix is not a path segment for this
+			// purpose: the module is matched with the suffix stripped as well, so a config written before a
+			// major bump keeps covering the module after it
+			name:       "single star reaches across a major version suffix",
 			scope:      cataloging.SymbolScopeStdlib,
 			modules:    []string{"github.com/klauspost/*"},
 			modulePath: "github.com/klauspost/compress/v2",
+			want:       true,
+		},
+		{
+			name:       "single star does not cross a separator that is not a version suffix",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/klauspost/*"},
+			modulePath: "github.com/klauspost/compress/internal/thing",
+		},
+		{
+			// only a trailing suffix is a version. here "v2" is an ordinary path element naming the major
+			// subdirectory a nested module lives in, so it is matched literally and ** is the way to reach it
+			name:       "a mid-path version-like element is an ordinary segment",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/anchore/*/thing"},
+			modulePath: "github.com/anchore/syft/v2/thing",
+		},
+		{
+			name:       "doublestar reaches a mid-path version-like element",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/anchore/**/thing"},
+			modulePath: "github.com/anchore/syft/v2/thing",
+			want:       true,
 		},
 		{
 			name:       "doublestar crosses a separator",
@@ -86,6 +109,45 @@ func Test_symbolSelector_selects(t *testing.T) {
 			modules:    []string{"github.com/klauspost/**"},
 			modulePath: "github.com/klauspost/compress/v2",
 			want:       true,
+		},
+		{
+			name:       "an exact path covers every major version of that module",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/klauspost/compress"},
+			modulePath: "github.com/klauspost/compress/v2",
+			want:       true,
+		},
+		{
+			// spelling the suffix out is how a single major version is targeted: v1's path carries no suffix,
+			// so there is nothing for a suffixed pattern to match
+			name:       "a pattern naming a major version selects only that one",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/klauspost/compress/v2"},
+			modulePath: "github.com/klauspost/compress",
+		},
+		{
+			name:       "a pattern naming a major version selects it",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/klauspost/compress/v2"},
+			modulePath: "github.com/klauspost/compress/v2",
+			want:       true,
+		},
+		{
+			// gopkg.in spells the major version as a .vN suffix on the last element, which SplitPathVersion
+			// understands, so it strips the same way
+			name:       "gopkg.in style suffixes strip too",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"gopkg.in/yaml"},
+			modulePath: "gopkg.in/yaml.v2",
+			want:       true,
+		},
+		{
+			// /v1 and /v0 are not valid major version suffixes, so this is not a versioned path at all and
+			// nothing is stripped from it
+			name:       "a v1 element is not a version suffix",
+			scope:      cataloging.SymbolScopeStdlib,
+			modules:    []string{"github.com/klauspost/compress"},
+			modulePath: "github.com/klauspost/compress/v1",
 		},
 		{
 			name:       "module patterns widen a preset",
