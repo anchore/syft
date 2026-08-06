@@ -182,8 +182,11 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithDepPackagesMustClaimDLL(cfg.Dotnet.DepPackagesMustClaimDLL).
 			WithPropagateDLLClaimsToParents(cfg.Dotnet.PropagateDLLClaimsToParents).
 			WithRelaxDLLClaimsWhenBundlingDetected(cfg.Dotnet.RelaxDLLClaimsWhenBundlingDetected).
-			WithExcludeProjectReferences(cfg.Dotnet.ExcludeProjectReferences),
-
+			WithSearchLocalLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.Dotnet.SearchLocalLicenses)).
+			WithLocalCachePaths(cfg.Dotnet.LocalCachePaths).
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Dotnet, task.CSharp, task.CSharpWrittenOut), cfg.Dotnet.SearchRemoteLicenses)).
+			WithNuGetRepositoryURLs(cfg.Dotnet.NuGetRepositoryURLs).
+			WithCredentials(cfg.Dotnet.NuGetRepositoryCredentials.ToProviderCredentials()),
 		Golang: golang.DefaultCatalogerConfig().
 			WithSearchLocalModCacheLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Go, task.Golang), cfg.Golang.SearchLocalModCacheLicenses)).
 			WithLocalModCacheDir(cfg.Golang.LocalModCacheDir).
@@ -304,6 +307,7 @@ func FlattenAndSort(commaSeparatedEntries []string) []string {
 var publicisedEnrichmentOptions = []string{
 	"all",
 	task.Golang,
+	task.Dotnet,
 	task.Java,
 	task.JavaScript,
 	task.Python,
