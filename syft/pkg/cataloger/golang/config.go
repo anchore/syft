@@ -51,9 +51,17 @@ type CatalogerConfig struct {
 	MainModuleVersion MainModuleVersionConfig `yaml:"main-module-version" json:"main-module-version" mapstructure:"main-module-version"`
 
 	// CaptureSymbols controls extracting function symbols from the binary symbol table (pclntab). Valid values are
-	// "none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib).
+	// "none" (disabled), "stdlib" (only the synthetic stdlib package), "extended-stdlib" (stdlib plus every module
+	// under golang.org/x/), and "all" (all module packages plus stdlib).
 	// app-config: golang.capture-symbols
 	CaptureSymbols cataloging.SymbolScope `yaml:"capture-symbols" json:"capture-symbols" mapstructure:"capture-symbols"`
+
+	// CaptureSymbolsInclude is a list of glob patterns (doublestar syntax, where ** crosses path separators
+	// and * does not) matched against go module paths. Matching modules get symbols in addition to whatever
+	// CaptureSymbols selects, so this can only widen the selection and never narrow it. It has no effect
+	// under the "none" scope.
+	// app-config: golang.capture-symbols-include
+	CaptureSymbolsInclude []string `yaml:"capture-symbols-include,omitempty" json:"capture-symbols-include,omitempty" mapstructure:"capture-symbols-include"`
 
 	// Whether to use the golang.org/x/tools/go/packages, which executes golang tooling found on the path in addition to potential network access
 	UsePackagesLib bool `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
@@ -193,6 +201,11 @@ func (g CatalogerConfig) WithMainModuleVersion(input MainModuleVersionConfig) Ca
 
 func (g CatalogerConfig) WithCaptureSymbols(input cataloging.SymbolScope) CatalogerConfig {
 	g.CaptureSymbols = input
+	return g
+}
+
+func (g CatalogerConfig) WithCaptureSymbolsInclude(input []string) CatalogerConfig {
+	g.CaptureSymbolsInclude = input
 	return g
 }
 
