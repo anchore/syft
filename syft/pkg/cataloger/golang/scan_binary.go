@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"runtime/debug"
+	"strings"
 
 	"github.com/kastenhq/goversion/version"
 
@@ -51,6 +52,7 @@ func scanFile(location file.Location, reader unionreader.UnionReader, captureSym
 			// we can still catalog packages, even if we can't get the crypto information
 			errs = unknown.Appendf(errs, location, "unable to read golang version info: %w", err)
 		}
+		v = append(v, getNativeFIPSSettings(bi.Settings)...)
 		arch := getGOARCH(bi.Settings)
 		if arch == "" {
 			arch, err = getGOARCHFromBin(r)
@@ -97,6 +99,25 @@ func getCryptoSettingsFromVersion(v version.Version) []string {
 	}
 	if v.FIPSOnly {
 		cryptoSettings = append(cryptoSettings, "crypto/tls/fipsonly")
+	}
+	return cryptoSettings
+}
+
+func getNativeFIPSSettings(settings []debug.BuildSetting) []string {
+	var cryptoSettings []string
+	for _, s := range settings {
+		switch s.Key {
+		case "GOFIPS140":
+			if s.Value != "" {
+				cryptoSettings = append(cryptoSettings, "GOFIPS140="+s.Value)
+			}
+		case "DefaultGODEBUG":
+			for _, kv := range strings.Split(s.Value, ",") {
+				if setting, val, ok := strings.Cut(kv, "="); ok && setting == "fips140" {
+					cryptoSettings = append(cryptoSettings, "GODEBUG=fips140="+val)
+				}
+			}
+		}
 	}
 	return cryptoSettings
 }
