@@ -186,6 +186,23 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			expect:   "org.springframework.ldap",
 		},
 		{
+			// regression for github.com/anchore/syft/issues/4598: legacy Jackson 1.x ("-asl")
+			// jars built before ~2014 have no embedded pom.properties, so without the known
+			// package list the group ID falls back to the artifact name itself, producing a
+			// purl that doesn't match the vulnerability database's namespace (e.g. the correct
+			// group for jackson-mapper-asl is org.codehaus.jackson, not jackson-mapper-asl).
+			name:     "known package list jackson-mapper-asl",
+			pkgName:  "jackson-mapper-asl",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.codehaus.jackson",
+		},
+		{
+			name:     "known package list jackson-core-asl",
+			pkgName:  "jackson-core-asl",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.codehaus.jackson",
+		},
+		{
 			name: "java manifest",
 			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
