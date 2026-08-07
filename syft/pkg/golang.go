@@ -30,8 +30,10 @@ type GolangBinaryBuildinfoEntry struct {
 	// name is the import path, a ".", and the local name. One exception: the binary's main package appears
 	// under the key "main" (the name the linker assigns), not its original source import path, which is not
 	// recoverable from the binary. Populated only when the golang cataloger's capture-symbols scope covers
-	// this package: the "all" scope populates every module package plus the synthetic stdlib package, while
-	// the "stdlib" scope populates only the stdlib package.
+	// this package: the "all" scope populates every module package plus the synthetic stdlib package, the
+	// "extended-stdlib" scope populates the stdlib package plus every module under golang.org/x/, and the
+	// "stdlib" scope populates only the stdlib package. The capture-symbols-modules glob patterns populate
+	// any additional modules they match.
 	Symbols map[string][]string `json:"symbols,omitempty"`
 }
 

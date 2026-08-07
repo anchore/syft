@@ -12,6 +12,10 @@ const (
 	// SymbolScopeStdlib captures symbols only for the synthetic "stdlib" package, leaving module packages without symbols.
 	SymbolScopeStdlib SymbolScope = "stdlib"
 
+	// SymbolScopeExtendedStdlib captures symbols for the synthetic "stdlib" package as well as every module
+	// under golang.org/x/ (the extended standard library).
+	SymbolScopeExtendedStdlib SymbolScope = "extended-stdlib"
+
 	// SymbolScopeAll captures symbols for all module packages as well as the synthetic "stdlib" package.
 	SymbolScopeAll SymbolScope = "all"
 )
@@ -21,6 +25,8 @@ func (s SymbolScope) Parse() SymbolScope {
 	switch strings.ToLower(strings.TrimSpace(string(s))) {
 	case string(SymbolScopeAll):
 		return SymbolScopeAll
+	case string(SymbolScopeExtendedStdlib):
+		return SymbolScopeExtendedStdlib
 	case string(SymbolScopeStdlib):
 		return SymbolScopeStdlib
 	}

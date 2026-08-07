@@ -21,7 +21,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
-	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
@@ -51,7 +50,7 @@ const devel = "(devel)"
 type goBinaryCataloger struct {
 	licenseResolver   goLicenseResolver
 	mainModuleVersion MainModuleVersionConfig
-	symbolScope       cataloging.SymbolScope
+	symbolSelector    symbolSelector
 
 	// stdlibSymbols holds the standard-library function symbols discovered per binary (keyed by the
 	// binary's location), grouped by import path, populated during parsing and consumed by stdlibProcessor
@@ -65,7 +64,7 @@ func newGoBinaryCataloger(opts CatalogerConfig) *goBinaryCataloger {
 	return &goBinaryCataloger{
 		licenseResolver:   newGoLicenseResolver(binaryCatalogerName, opts),
 		mainModuleVersion: opts.MainModuleVersion,
-		symbolScope:       opts.CaptureSymbols,
+		symbolSelector:    newSymbolSelector(opts.CaptureSymbols, opts.CaptureSymbolsModules),
 		stdlibSymbols:     make(map[file.Coordinates]map[string][]string),
 	}
 }
@@ -121,7 +120,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, errs := scanFile(reader.Location, unionReader, c.symbolScope != cataloging.SymbolScopeNone)
+	mods, errs := scanFile(reader.Location, unionReader, c.symbolSelector.enabled())
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
@@ -184,11 +183,10 @@ func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Re
 	symbolsByModule, stdlibSymbols := moduleSymbols(mod.symbols, &mod.Main, mod.Deps)
 	c.recordStdlibSymbols(location.Coordinates, stdlibSymbols)
 
-	if c.symbolScope != cataloging.SymbolScopeAll {
-		// only the "all" scope attaches per-module symbols; for the "stdlib" scope we keep just the
-		// recorded stdlib symbols. nil map lookups below then yield nil symbol lists for each module.
-		symbolsByModule = nil
-	}
+	// keep only the modules the selector covers; the main module goes through the same map, so this
+	// incidentally decides the main module too (which is intended: it is treated like any dependency).
+	// unselected modules fall out entirely, so the lookups below yield nil rather than an empty map.
+	symbolsByModule = c.symbolSelector.filter(symbolsByModule)
 
 	var pkgs []pkg.Package
 	for _, dep := range mod.Deps {
