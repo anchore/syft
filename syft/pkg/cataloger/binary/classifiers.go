@@ -40,6 +40,19 @@ func DefaultClassifiers() []binutils.Classifier {
 		m.FileContentsVersionMatcher(`5m\.rate(?P<version>[0-9]+\.[0-9]+\.[0-9]+)-`),
 	)
 
+	var kubernetesMatcher = binutils.MatchAny(
+		// [NUL][NUL]v1.36.0-alpha.0[NUL]v1.36.0-alpha.0[NUL]call frame too large[NUL][NUL][NUL][NUL]
+		m.FileContentsVersionMatcher(`(?s)v[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9].*\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+-(alpha|beta|rc)\.[0-9])\x00+`),
+		// [NUL][NUL]v1.36.0[NUL]v1.36.0[NUL]......[NUL]go1.26.2[NUL]
+		// [NUL][NUL]v1.28.0[NUL]......[NUL]v1.28.0......[NUL]go1.20.7[NUL]
+		m.FileContentsVersionMatcher(`(?s)v[0-9]+\.[0-9]+\.[0-9]+.*\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.*go[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?\.[0-9]+\x00+`),
+		// [NUL][NUL]v1.25.0[NUL]......[NUL]v1.25.0......[NUL]g/usr/local/go[NUL]
+		m.FileContentsVersionMatcher(`(?s)v[0-9]+\.[0-9]+\.[0-9]+.*\x00v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.*/usr/local/go\x00+`),
+		// [NUL][NUL][NUL]cleav[NUL][NUL][NUL]1.6.0[NUL][NUL]v1.6.0[NUL][NUL]...=v<y5
+		// [NUL][NUL][NUL]cleav[NUL][NUL][NUL]1.5.0[NUL][NUL]...=v<y5
+		m.FileContentsVersionMatcher(`(?s)\x00+clean\x00+v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{0,200}=v<y5`),
+	)
+
 	classifiers := []binutils.Classifier{
 		{
 			Class:    "python-binary",
@@ -1252,6 +1265,22 @@ func DefaultClassifiers() []binutils.Classifier {
 			Package: "heimdal-krb5",
 			PURL:    mustPURL("pkg:generic/heimdal-krb5@version"),
 			CPEs:    singleCPE("cpe:2.3:a:heimdal_project:heimdal:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "kube-apiserver-binary",
+			FileGlob:        "**/kube-apiserver",
+			EvidenceMatcher: kubernetesMatcher,
+			Package:         "kube-apiserver",
+			PURL:            mustPURL("pkg:generic/kube-apiserver@version"),
+			CPEs:            singleCPE("cpe:2.3:a:kubernetes:kubernetes:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+		},
+		{
+			Class:           "kubelet-binary",
+			FileGlob:        "**/kubelet",
+			EvidenceMatcher: kubernetesMatcher,
+			Package:         "kubelet",
+			PURL:            mustPURL("pkg:generic/kubelet@version"),
+			CPEs:            singleCPE("cpe:2.3:a:kubernetes:kubernetes:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
 		},
 	}
 
