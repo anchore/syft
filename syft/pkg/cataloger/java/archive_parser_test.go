@@ -89,6 +89,83 @@ func TestSearchMavenForLicenses(t *testing.T) {
 	}
 }
 
+func TestToPkgLicensesCombinesMavenAlternatives(t *testing.T) {
+	const eplName = "Eclipse Public License 2.0"
+	const eplURL = "https://projects.eclipse.org/license/epl-2.0"
+	const gplName = "GNU General Public License, version 2 with the GNU Classpath Exception"
+	const gplURL = "https://projects.eclipse.org/license/secondary-gpl-2.0-cp"
+
+	actual := toPkgLicenses(pkgtest.Context(t), nil, []maven.License{
+		{Name: ptr(eplName), URL: ptr(eplURL)},
+		{Name: ptr(gplName), URL: ptr(gplURL)},
+	})
+
+	expected := []pkg.License{
+		{
+			Value:          eplName + " OR " + gplName,
+			SPDXExpression: "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+			Type:           license.Declared,
+			URLs:           []string{eplURL, gplURL},
+		},
+	}
+	assert.Equal(t, expected, actual)
+}
+
+func TestCombineEclipseClasspathAlternatives(t *testing.T) {
+	alternatives := []pkg.License{
+		{Value: "EPL", SPDXExpression: "EPL-2.0", Type: license.Declared},
+		{Value: "GPL plus exception", SPDXExpression: "GPL-2.0-only WITH Classpath-exception-2.0", Type: license.Declared},
+	}
+
+	actual := combineEclipseClasspathAlternatives(alternatives)
+	require.Len(t, actual, 1)
+	assert.Equal(t, eclipseClasspathDualLicense, actual[0].SPDXExpression)
+
+	unrelated := []pkg.License{
+		{SPDXExpression: "Apache-2.0"},
+		{SPDXExpression: "MIT"},
+	}
+	assert.Equal(t, unrelated, combineEclipseClasspathAlternatives(unrelated))
+}
+
+func TestNormalizeClasspathExceptionLicenses(t *testing.T) {
+	location := file.NewLocation("META-INF/LICENSE.md")
+	actual := normalizeClasspathExceptionLicenses([]pkg.License{
+		{
+			Value:          "EPL-2.0",
+			SPDXExpression: "EPL-2.0",
+			Type:           license.Concluded,
+			Locations:      file.NewLocationSet(location),
+		},
+		{
+			Value:          "GPL-2.0-only",
+			SPDXExpression: "GPL-2.0-only",
+			Type:           license.Concluded,
+			Locations:      file.NewLocationSet(location),
+		},
+	}, "## CLASSPATH EXCEPTION\n\nAs a special exception...")
+
+	expected := []pkg.License{
+		{
+			Value:          eclipseClasspathDualLicense,
+			SPDXExpression: eclipseClasspathDualLicense,
+			Type:           license.Concluded,
+			Locations:      file.NewLocationSet(location),
+		},
+	}
+	assert.Equal(t, expected, actual)
+}
+
+func TestNormalizeClasspathExceptionLicensesPreservesOtherLicenses(t *testing.T) {
+	found := []pkg.License{
+		{SPDXExpression: "EPL-2.0"},
+		{SPDXExpression: "GPL-2.0-only"},
+		{SPDXExpression: "MIT"},
+	}
+
+	assert.Equal(t, found, normalizeClasspathExceptionLicenses(found, "## CLASSPATH EXCEPTION"))
+}
+
 func TestParseJar(t *testing.T) {
 	ctx := pkgtest.Context(t)
 	tests := []struct {
