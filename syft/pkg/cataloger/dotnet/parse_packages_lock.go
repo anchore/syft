@@ -101,8 +101,8 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 			}
 
 			rel := artifact.Relationship{
-				From: parentPkg,
-				To:   childPkg,
+				From: childPkg,
+				To:   parentPkg,
 				Type: artifact.DependencyOfRelationship,
 			}
 			relationships = append(relationships, rel)
