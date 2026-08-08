@@ -39,6 +39,8 @@ curl -sSfL https://get.anchore.io/syft | sudo sh -s -- -b /usr/local/bin
 > [!TIP]
 > **See [Installation docs](https://oss.anchore.com/docs/installation/syft/) for more ways to get Syft, including Homebrew, Docker, Scoop, Chocolatey, Nix, and more!**
 
+After installing via Scoop, Chocolatey, or similar on Windows, open a **new** terminal so `PATH` updates and `syft` is available.
+
 ## The basics
 
 See the packages within a container image or directory:
