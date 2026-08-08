@@ -9,6 +9,7 @@ import (
 	"iter"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -300,6 +301,9 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 	}
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
+	}
+	if version == "" {
+		version = j.versionFromPropertiesFile(ctx, manifest)
 	}
 
 	if len(lics) == 0 {
@@ -607,6 +611,44 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 	}
 
 	return identified
+}
+
+// optional "v" + leading digit + version-ish chars; rejects placeholders like "${revision}"
+var releaseVersionPattern = regexp.MustCompile(`^v?(\d[0-9A-Za-z.\-_+]*)$`)
+
+// versionFromPropertiesFile: last-resort ver from root version.properties for uber-jars built
+// outside maven/gradle e.g. metabase, "tag=v0.63.5", shading can land a deps file at t same
+// path, so be conservative => Main-Class jars only, "version"/"tag" keys only, version shaped values only
+func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest *pkg.JavaManifest) string {
+	if manifest == nil || manifest.Main.MustGet("Main-Class") == "" {
+		return ""
+	}
+
+	matches := j.fileManifest.GlobMatch(true, "/version.properties")
+	if len(matches) != 1 {
+		return ""
+	}
+
+	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, matches...)
+	if err != nil {
+		log.Debugf("unable to extract version.properties (%s): %v", j.location, err)
+		return ""
+	}
+
+	props := map[string]string{}
+	for line := range strings.Lines(contents[matches[0]]) {
+		if k, v, ok := strings.Cut(line, "="); ok {
+			props[strings.ToLower(strings.TrimSpace(k))] = strings.TrimSpace(v)
+		}
+	}
+
+	for _, key := range []string{"version", "tag"} {
+		if m := releaseVersionPattern.FindStringSubmatch(props[key]); m != nil {
+			return m[1]
+		}
+	}
+
+	return ""
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
