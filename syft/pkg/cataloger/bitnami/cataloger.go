@@ -10,6 +10,7 @@ import (
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/pkg"
@@ -57,6 +58,11 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 
 		p.FoundBy = catalogerName
 		p.Type = pkg.BitnamiPkg
+		for i := range p.CPEs {
+			if p.CPEs[i].Attributes.Part == cpe.Any {
+				p.CPEs[i].Attributes.Part = "a"
+			}
+		}
 		// replace all locations on the package with the location of the SBOM file.
 		// Why not keep the original list of locations? Since the "locations" field is meant to capture
 		// where there is evidence of this file, and the catalogers have not run against any file other than,
