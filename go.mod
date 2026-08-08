@@ -11,18 +11,18 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/bubbly v0.2.1
-	github.com/anchore/clio v0.1.1
-	github.com/anchore/fangs v0.1.1
-	github.com/anchore/go-collections v0.1.1
+	github.com/anchore/bubbly v0.2.2-0.20260731055418-54cb36559aef
+	github.com/anchore/clio v0.1.2-0.20260807204443-df98d4273b1f
+	github.com/anchore/fangs v0.1.2-0.20260807223428-10e35a22d979
+	github.com/anchore/go-collections v0.1.2-0.20260731083434-cb996d8c3bf3
 	github.com/anchore/go-homedir v0.1.1
-	github.com/anchore/go-logger v0.1.1
-	github.com/anchore/go-macholibre v0.1.1
+	github.com/anchore/go-logger v0.1.2-0.20260731155834-200b9a5f3774
+	github.com/anchore/go-macholibre v0.1.2-0.20260731232419-db44e94c1e73
 	github.com/anchore/go-rpmdb v0.2.0
-	github.com/anchore/go-sync v0.1.1
+	github.com/anchore/go-sync v0.1.2-0.20260731235415-6c5bb5c16700
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/packageurl-go v0.2.0
-	github.com/anchore/stereoscope v0.3.0
+	github.com/anchore/packageurl-go v0.2.1-0.20260622180350-663437b4879b
+	github.com/anchore/stereoscope v0.3.1-0.20260807204731-4d73b6530b14
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
@@ -48,7 +48,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gohugoio/hashstructure v0.6.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-containerregistry v0.21.7
+	github.com/google/go-containerregistry v0.21.8
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.1
@@ -127,7 +127,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/anchore/go-lzo v0.1.1 // indirect
+	github.com/anchore/go-lzo v0.1.2-0.20260731041417-39e40733a5e0 // indirect
 	github.com/anchore/go-struct-converter v0.2.0-rc2 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -183,9 +183,9 @@ require (
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/cli v29.6.1+incompatible // indirect
+	github.com/docker/cli v29.7.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.5 // indirect
-	github.com/docker/go-connections v0.7.0 // indirect
+	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
@@ -196,7 +196,7 @@ require (
 	github.com/felixge/fgprof v0.9.5 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/gkampitakis/ciinfo v0.3.4 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
@@ -239,7 +239,7 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/moby/api v1.55.0 // indirect
-	github.com/moby/moby/client v0.5.0 // indirect
+	github.com/moby/moby/client v0.5.1 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
 	github.com/moby/sys/signal v0.7.1 // indirect
 	github.com/moby/sys/user v0.4.0 // indirect
