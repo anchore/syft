@@ -184,9 +184,13 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 }
 
 func candidateTargetSw(p pkg.Package) []string {
-	if p.Type == pkg.WordpressPluginPkg {
+	switch p.Type {
+	case pkg.WordpressPluginPkg:
 		return []string{"wordpress"}
+	case pkg.RustPkg:
+		return []string{"rust"}
 	}
+
 	return []string{cpe.Any}
 }
 
@@ -253,6 +257,11 @@ func candidateVendors(p pkg.Package) []string {
 
 	// try swapping hyphens for underscores, vice versa, and removing separators altogether
 	addDelimiterVariations(vendors)
+
+	// rust vendor name needs to be added after the `addDelimiterVariations` call as `-project` suffix is used otherwise
+	if p.Language == pkg.Rust {
+		vendors.addValue(p.Name + "_project")
+	}
 
 	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
 	addAllSubSelections(vendors)
