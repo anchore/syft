@@ -12,9 +12,18 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/license"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
+
+// phpInterpreterLicense is the SPDX identifier for the PHP License, version 3.01.
+// The PHP interpreter (php-cli, php-fpm, and the libphp Apache module) has been
+// distributed under this license across all supported PHP versions, so it can be
+// reliably associated with every interpreter binary this cataloger positively
+// identifies -- even though the license text does not sit alongside the binary
+// itself, which is why it was otherwise reported as NOASSERTION (see #5026).
+const phpInterpreterLicense = "PHP-3.01"
 
 type interpreterCataloger struct {
 	name                   string
@@ -108,8 +117,8 @@ func (p interpreterCataloger) Name() string {
 	return p.name
 }
 
-func (p interpreterCataloger) Catalog(_ context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	interpreterPkgs, intErrs := p.catalogInterpreters(resolver)
+func (p interpreterCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
+	interpreterPkgs, intErrs := p.catalogInterpreters(ctx, resolver)
 	extensionPkgs, extErrs := p.catalogExtensions(resolver)
 
 	// TODO: a future iteration of this cataloger could be to read all php.ini / php/conf.d/*.ini files and indicate which extensions are enabled
@@ -135,7 +144,7 @@ func (p interpreterCataloger) Catalog(_ context.Context, resolver file.Resolver)
 	return allPkgs, relationships, unknown.Join(intErrs, extErrs)
 }
 
-func (p interpreterCataloger) catalogInterpreters(resolver file.Resolver) ([]pkg.Package, error) {
+func (p interpreterCataloger) catalogInterpreters(ctx context.Context, resolver file.Resolver) ([]pkg.Package, error) {
 	var errs error
 	var packages []pkg.Package
 	for _, cls := range p.interpreterClassifiers {
@@ -151,7 +160,16 @@ func (p interpreterCataloger) catalogInterpreters(resolver file.Resolver) ([]pkg
 				errs = unknown.Append(errs, location, err)
 				continue
 			}
-			packages = append(packages, pkgs...)
+			for _, interpreterPkg := range pkgs {
+				// the interpreter binary carries no license text of its own, but every PHP
+				// interpreter is licensed under the PHP License -- attach it so these packages
+				// are no longer reported as NOASSERTION (#5026).
+				interpreterPkg.Licenses = pkg.NewLicenseSet(
+					pkg.NewLicenseFromTypeWithContext(ctx, phpInterpreterLicense, license.Concluded),
+				)
+				interpreterPkg.SetID()
+				packages = append(packages, interpreterPkg)
+			}
 		}
 	}
 	return packages, errs

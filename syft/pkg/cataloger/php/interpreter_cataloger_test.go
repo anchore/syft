@@ -3,6 +3,12 @@ package php
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/license"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -146,4 +152,26 @@ func Test_InterpreterCataloger(t *testing.T) {
 				TestCataloger(t, c)
 		})
 	}
+}
+
+func Test_InterpreterCataloger_attachesPHPLicense(t *testing.T) {
+	// The interpreter binary carries no license text of its own, so before #5026 these packages
+	// were reported with no license (NOASSERTION). Every PHP interpreter is distributed under the
+	// PHP License (SPDX: PHP-3.01), which the cataloger now attaches once it has positively
+	// identified the binary as PHP.
+	c := NewInterpreterCataloger()
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/interpreter-license").
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			require.Len(t, pkgs, 1)
+			interpreter := pkgs[0]
+			assert.Equal(t, "php-cli", interpreter.Name)
+
+			licenses := interpreter.Licenses.ToSlice()
+			require.Len(t, licenses, 1)
+			assert.Equal(t, phpInterpreterLicense, licenses[0].SPDXExpression)
+			assert.Equal(t, license.Concluded, licenses[0].Type)
+		}).
+		TestCataloger(t, c)
 }
