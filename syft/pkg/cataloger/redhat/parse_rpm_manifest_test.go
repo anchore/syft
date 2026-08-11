@@ -80,6 +80,23 @@ func TestParseRpmManifest(t *testing.T) {
 				Vendor:    "Microsoft Corporation",
 			},
 		},
+		{
+			Name:      "vim",
+			Version:   "2:9.0-1.cm2",
+			PURL:      "pkg:rpm/vim@9.0-1.cm2?arch=x86_64&epoch=2&upstream=vim-9.0-1.cm2.src.rpm",
+			Locations: file.NewLocationSet(location),
+			Type:      pkg.RpmPkg,
+			Metadata: pkg.RpmDBEntry{
+				Name:      "vim",
+				Epoch:     intRef(2),
+				Arch:      "x86_64",
+				Release:   "1.cm2",
+				Version:   "9.0",
+				SourceRpm: "vim-9.0-1.cm2.src.rpm",
+				Size:      45000,
+				Vendor:    "Microsoft Corporation",
+			},
+		},
 	}
 
 	pkgtest.NewCatalogTester().

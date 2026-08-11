@@ -59,17 +59,13 @@ func newMetadataFromManifestLine(entry string) (*pkg.RpmDBEntry, error) {
 	version := versionParts[0]
 	release := versionParts[1]
 
-	converted, err := strconv.Atoi(parts[8])
 	var epoch *int
-	if err != nil || parts[5] == "(none)" {
-		epoch = nil
-	} else {
-		epoch = &converted
+	if epochNum, err := strconv.Atoi(parts[8]); err == nil && parts[5] != "(none)" {
+		epoch = &epochNum
 	}
 
-	converted, err = strconv.Atoi(parts[6])
 	var size int
-	if err == nil {
+	if converted, err := strconv.Atoi(parts[6]); err == nil {
 		size = converted
 	}
 	return &pkg.RpmDBEntry{
