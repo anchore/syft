@@ -2614,6 +2614,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm-v7",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-s390x",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
 			logicalFixture: "nginx-ingress-controller/1.7.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "nginx-ingress-controller",

@@ -1153,6 +1153,8 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ingress-nginx-binary",
 			FileGlob: "**/nginx-ingress-controller",
 			EvidenceMatcher: binutils.MatchAny(
+				// v1.9.6[NUL][NUL][NUL][NUL]...[NUL][NUL][NUL]go1.21.5[NUL][NUL]
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta)\.?[0-9]+)?)\x00+(?s:.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000})go[0-9]+\.[0-9]+(\.[0-9]+)?\x00+`),
 				// [NUL][NUL]v1.15.1[NUL][NUL]@e[ETX][NUL][NUL][NUL][NUL]go1.26.1[NUL][NUL][NUL]
 				// �v1.15.1[NUL][NUL]�z[ETX][NUL][NUL][NUL][NUL]go1.24.4[NUL][NUL][NUL]
 				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{0,50}go[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?\.[0-9]+\x00+`),
