@@ -898,7 +898,13 @@ func DefaultClassifiers() []binutils.Classifier {
 		{
 			Class:    "gzip-binary",
 			FileGlob: "**/gzip",
+			// GNU gzip assembles its version banner at runtime from argv[0], so the version is stored as a
+			// bare NUL-delimited token with nothing to anchor against. Require a gzip-specific string
+			// elsewhere in the file before trusting that token, otherwise any binary reachable by a path
+			// named "gzip" (such as the busybox multicall binary, which provides a gzip applet by symlink)
+			// is reported as GNU gzip with an arbitrary version.
 			EvidenceMatcher: m.FileContentsVersionMatcher(
+				`not in gzip format|bug-gzip@gnu\.org|GZIP environment variable`,
 				`\x00(?P<version>[0-9]+\.[0-9]+)\x00`,
 			),
 			Package: "gzip",
