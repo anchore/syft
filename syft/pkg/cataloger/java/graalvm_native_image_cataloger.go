@@ -584,14 +584,17 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 			newPkgs, newRelationships, err := ni.fetchPkgs()
 			if err != nil {
 				log.Tracef("unable to extract SBOM from possible java native-image %s: %v", filename, err)
-				continue
+			} else {
+				// Associate extracted packages with the native image location
+				for i := range newPkgs {
+					newPkgs[i].Locations.Add(location)
+				}
+				pkgs = append(pkgs, newPkgs...)
+				relationships = append(relationships, newRelationships...)
 			}
-			// Associate extracted packages with the native image location
-			for i := range newPkgs {
-				newPkgs[i].Locations.Add(location)
-			}
-			pkgs = append(pkgs, newPkgs...)
-			relationships = append(relationships, newRelationships...)
+			// this reader parsed as this format, so no later format applies to it; without stopping, a
+			// file that parses as more than one contributes its packages once per format
+			break
 		}
 	}
 	return pkgs, relationships
