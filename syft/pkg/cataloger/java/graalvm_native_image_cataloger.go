@@ -82,6 +82,17 @@ const nativeImageMissingSymbolsError = "one or more symbols are missing from the
 const nativeImageInvalidIndexError = "parsing the executable file generated an invalid index"
 const nativeImageMissingExportedDataDirectoryError = "exported data directory is missing"
 
+// nativeImageMaxDecompressedSbomSize bounds how far the embedded SBOM may decompress.
+//
+// A native-image SBOM enumerating thousands of Java dependencies comes to single-digit megabytes (20k
+// components is ~4MB, see TestDecompressSbom_AcceptsLargeSbom), so this is a ~20x margin over anything
+// real and should never truncate a genuine SBOM. Truncating one silently drops packages, so the margin
+// is deliberate, but the ceiling is not free either: the decoder buffers the whole stream before it can
+// identify it, and io.ReadAll's growth makes the real peak roughly double this. It has to bound the
+// decompressed stream rather than the compressed bytes, since gzip will happily turn a few kilobytes
+// into gigabytes. Hitting it is logged, because the packages are dropped either way.
+const nativeImageMaxDecompressedSbomSize = 100 * 1024 * 1024
+
 // NewNativeImageCataloger returns a new Native Image cataloger object.
 func NewNativeImageCataloger() pkg.Cataloger {
 	return &nativeImageCataloger{}
@@ -94,34 +105,48 @@ func (c *nativeImageCataloger) Name() string {
 
 // decompressSbom returns the packages given within a native image executable's SBOM.
 func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg.Package, []artifact.Relationship, error) {
-	lengthEnd := lengthStart + 8
-	bufLen := len(dataBuf)
-	if lengthEnd > uint64(bufLen) {
+	return decompressSbomWithLimit(dataBuf, sbomStart, lengthStart, nativeImageMaxDecompressedSbomSize)
+}
+
+// decompressSbomWithLimit is decompressSbom with the decompressed-size bound passed in, so that a test
+// can exercise the bound without first having to produce the hundreds of megabytes it takes to trip the
+// real one. Production always goes through decompressSbom.
+//
+// Both offsets and the stored length come from the binary being parsed, so every bound below subtracts
+// from the known-good buffer length rather than adding to a user-controlled value: `start+n` wraps, and a
+// wrapped sum compares as in-range while the slice that follows it panics.
+func decompressSbomWithLimit(dataBuf []byte, sbomStart, lengthStart uint64, maxDecompressed int64) ([]pkg.Package, []artifact.Relationship, error) {
+	bufLen := uint64(len(dataBuf))
+	if lengthStart > bufLen || bufLen-lengthStart < 8 {
 		return nil, nil, errors.New("the 'sbom_length' symbol overflows the binary")
 	}
 
-	length := dataBuf[lengthStart:lengthEnd]
-	p := bytes.NewBuffer(length)
-	var storedLength uint64
-	err := binary.Read(p, binary.LittleEndian, &storedLength)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not read from binary file: %w", err)
-	}
+	storedLength := binary.LittleEndian.Uint64(dataBuf[lengthStart : lengthStart+8])
 
 	log.WithFields("len", storedLength).Trace("found java native-image SBOM")
-	sbomEnd := sbomStart + storedLength
-	if sbomEnd > uint64(bufLen) {
+	if sbomStart > bufLen || storedLength > bufLen-sbomStart {
 		return nil, nil, errors.New("the sbom symbol overflows the binary")
 	}
 
-	sbomCompressed := dataBuf[sbomStart:sbomEnd]
-	p = bytes.NewBuffer(sbomCompressed)
-	gzreader, err := gzip.NewReader(p)
+	sbomCompressed := dataBuf[sbomStart : sbomStart+storedLength]
+	gzreader, err := gzip.NewReader(bytes.NewBuffer(sbomCompressed))
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
 	}
 
-	sbom, _, _, err := cyclonedxjson.NewFormatDecoder().Decode(gzreader)
+	// sbomCompressed is bounded by the file, but the decompressed stream is not, so bound it too. The
+	// decoder buffers everything it is handed before it can even tell whether the payload is CycloneDX,
+	// so a payload that is not an SBOM at all still costs whatever we allow here.
+	limited := &io.LimitedReader{R: gzreader, N: maxDecompressed + 1}
+
+	sbom, _, _, err := cyclonedxjson.NewFormatDecoder().Decode(limited)
+	// checked before err, since hitting the bound surfaces as an unhelpful "not a cyclonedx json
+	// document" from the decoder rather than as anything about size
+	if limited.N == 0 {
+		log.WithFields("limit", maxDecompressed, "compressed", len(sbomCompressed)).
+			Debug("java native-image SBOM decompresses past the size limit; skipping it")
+		return nil, nil, fmt.Errorf("the java native-image SBOM decompresses past %d bytes", maxDecompressed)
+	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not unmarshal the java native-image SBOM: %w", err)
 	}
@@ -130,6 +155,16 @@ func decompressSbom(dataBuf []byte, sbomStart uint64, lengthStart uint64) ([]pkg
 		pkgs = append(pkgs, p)
 	}
 	return pkgs, sbom.Relationships, nil
+}
+
+// symbolOffsets converts the SBOM symbol addresses into offsets within the section data that should hold
+// them. Both addresses come from the binary, and the subtraction is unsigned, so an address below the
+// section base underflows into a huge offset instead of a negative one.
+func symbolOffsets(sbomAddr, lengthAddr, sectionBase uint64) (sbomOffset uint64, lengthOffset uint64, err error) {
+	if sbomAddr < sectionBase || lengthAddr < sectionBase {
+		return 0, 0, errors.New("an SBOM symbol precedes the section that should contain it")
+	}
+	return sbomAddr - sectionBase, lengthAddr - sectionBase, nil
 }
 
 // fileError logs an error message when an executable cannot be read.
@@ -210,10 +245,21 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 		return fileError(filename, errors.New(nativeImageMissingExportedDataDirectoryError))
 	}
 	exportSymbolsOffset := uint64(exportSymbolsDataDirectory.VirtualAddress)
-	exports := make([]byte, exportSymbolsDataDirectory.Size)
-	_, err = r.ReadAt(exports, int64(exportSymbolsOffset))
+	// Size is a user-controlled uint32 from the PE optional header, so sizing the buffer from it up
+	// front lets a small file reserve up to 4GB. Reading grows the buffer to what the file actually holds
+	// instead, bounded by the declared size, and the length check below still requires the whole directory
+	// to be present rather than accepting a truncated read. The io.LimitReader is redundant with the
+	// SectionReader, which already stops at exportSize, but the ruleguard rule in test/rules/rules.go
+	// matches on the text of the io.ReadAll argument and cannot see that; removing it fails lint.
+	exportSize := int64(exportSymbolsDataDirectory.Size)
+	sectionReader := io.NewSectionReader(r, int64(exportSymbolsOffset), exportSize)
+	exports, err := io.ReadAll(io.LimitReader(sectionReader, exportSize))
 	if err != nil {
 		return fileError(filename, fmt.Errorf("could not read the exported symbols data directory: %w", err))
+	}
+	if int64(len(exports)) != exportSize {
+		return fileError(filename, fmt.Errorf("exported symbols data directory is truncated: got %d of %d bytes",
+			len(exports), exportSize))
 	}
 	return nativeImagePE{
 		file:          bi,
@@ -273,15 +319,16 @@ func (ni nativeImageElf) fetchPkgs() (pkgs []pkg.Package, relationships []artifa
 	}
 	dataSection := bi.Section(".data")
 	if dataSection == nil {
-		return nil, nil, fmt.Errorf("no .data section found in binary: %w", err)
+		return nil, nil, errors.New("no .data section found in binary")
 	}
-	dataSectionBase := dataSection.Addr
 	data, err := dataSection.Data()
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot read the .data section: %w", err)
 	}
-	sbomLocation := sbom.Value - dataSectionBase
-	lengthLocation := sbomLength.Value - dataSectionBase
+	sbomLocation, lengthLocation, err := symbolOffsets(sbom.Value, sbomLength.Value, dataSection.Addr)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	return decompressSbom(data, sbomLocation, lengthLocation)
 }
@@ -352,48 +399,39 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, relationships []arti
 		log.Tracef("cannot obtain buffer from data segment")
 		return nil, nil, nil
 	}
-	sbomLocation := sbom.Value - dataSegment.Addr
-	lengthLocation := sbomLength.Value - dataSegment.Addr
+	sbomLocation, lengthLocation, err := symbolOffsets(sbom.Value, sbomLength.Value, dataSegment.Addr)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	return decompressSbom(dataBuf, sbomLocation, lengthLocation)
 }
 
 // fetchExportAttribute obtains an attribute from the exported symbols directory entry.
 func (ni nativeImagePE) fetchExportAttribute(i int) (uint32, error) {
-	var attribute uint32
 	n := len(ni.exports)
+	// i is only ever 0-3, so this arithmetic cannot overflow; the bound is > rather than >= because an
+	// attribute ending flush with the directory is still entirely present
 	j := int(unsafe.Sizeof(ni.header)) + i*int(unsafe.Sizeof(ni.t.headerAttribute))
-	if j+4 >= n {
+	if j+4 > n {
 		log.Tracef("invalid index to export directory entry attribute: %v", j)
 		return uint32(0), errors.New(nativeImageInvalidIndexError)
 	}
-	p := bytes.NewBuffer(ni.exports[j : j+4])
-	err := binary.Read(p, binary.LittleEndian, &attribute)
-	if err != nil {
-		log.Tracef("error fetching export directory entry attribute: %v", err)
-		return uint32(0), err
-	}
-	return attribute, nil
+	return binary.LittleEndian.Uint32(ni.exports[j : j+4]), nil
 }
 
 // fetchExportFunctionPointer obtains a function pointer from the exported symbols directory entry.
 func (ni nativeImagePE) fetchExportFunctionPointer(functionsBase uint32, i uint32) (uint32, error) {
-	var pointer uint32
-
-	n := uint32(len(ni.exports))
-	sz := uint32(unsafe.Sizeof(ni.t.functionPointer))
-	j := functionsBase + i*sz
-	if j+sz >= n {
+	// functionsBase derives from a file-controlled RVA, so widen to uint64 before indexing: in uint32 the
+	// sum wraps to a small value that passes the bound and then panics on the slice
+	n := uint64(len(ni.exports))
+	sz := uint64(unsafe.Sizeof(ni.t.functionPointer))
+	j := uint64(functionsBase) + uint64(i)*sz
+	if j > n || n-j < sz {
 		log.Tracef("invalid index to exported function: %v", j)
 		return uint32(0), errors.New(nativeImageInvalidIndexError)
 	}
-	p := bytes.NewBuffer(ni.exports[j : j+sz])
-	err := binary.Read(p, binary.LittleEndian, &pointer)
-	if err != nil {
-		log.Tracef("error fetching exported function: %v", err)
-		return uint32(0), err
-	}
-	return pointer, nil
+	return binary.LittleEndian.Uint32(ni.exports[j : j+sz]), nil
 }
 
 // fetchExportContent obtains the content of the export directory entry relevant to the SBOM.
@@ -425,27 +463,31 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 	sbomBytes := []byte(nativeImageSbomSymbol + "\x00")
 	sbomLengthBytes := []byte(nativeImageSbomLengthSymbol + "\x00")
 	svmVersionInfoBytes := []byte(nativeImageSbomVersionSymbol + "\x00")
-	n := uint32(len(ni.exports))
+	n := uint64(len(ni.exports))
+	sz := uint64(unsafe.Sizeof(ni.t.namePointer))
+
+	// the name array must start inside the directory we read; an RVA below it would underflow the
+	// subtraction into a huge offset that then wraps back into range on the bound below
+	if content.addressOfNames < ni.exportSymbols.VirtualAddress {
+		log.Tracef("exported name array precedes the export directory: %v", content.addressOfNames)
+		return
+	}
+	addressBase := uint64(content.addressOfNames - ni.exportSymbols.VirtualAddress)
 
 	// Find SBOM, SBOM Length, and SVM Version Symbol
 	for i := uint32(0); i < content.numberOfNames; i++ {
-		j := i * uint32(unsafe.Sizeof(ni.t.namePointer))
-		addressBase := content.addressOfNames - ni.exportSymbols.VirtualAddress
-		k := addressBase + j
-		sz := uint32(unsafe.Sizeof(ni.t.namePointer))
-		if k+sz >= n {
+		k := addressBase + uint64(i)*sz
+		if k > n || n-k < sz {
 			log.Tracef("invalid index to exported function: %v", k)
 			// If we are at the end of exports, stop looking
 			return
 		}
-		var symbolAddress uint32
-		p := bytes.NewBuffer(ni.exports[k : k+sz])
-		err := binary.Read(p, binary.LittleEndian, &symbolAddress)
-		if err != nil {
-			log.Tracef("error fetching address of symbol %v", err)
+		symbolAddress := binary.LittleEndian.Uint32(ni.exports[k : k+sz])
+		if symbolAddress < ni.exportSymbols.VirtualAddress {
+			log.Tracef("exported symbol precedes the export directory: %v", symbolAddress)
 			return
 		}
-		symbolBase := symbolAddress - ni.exportSymbols.VirtualAddress
+		symbolBase := uint64(symbolAddress - ni.exportSymbols.VirtualAddress)
 		if symbolBase >= n {
 			log.Tracef("invalid index to exported symbol: %v", symbolBase)
 			return
@@ -480,6 +522,9 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, relationships []artifac
 	if content.addressOfSbom == uint32(0) || content.addressOfSbomLength == uint32(0) || content.addressOfSvmVersion == uint32(0) {
 		return nil, nil, errors.New(nativeImageMissingSymbolsError)
 	}
+	if content.addressOfFunctions < ni.exportSymbols.VirtualAddress {
+		return nil, nil, errors.New("exported function array precedes the export directory")
+	}
 	functionsBase := content.addressOfFunctions - ni.exportSymbols.VirtualAddress
 	sbomOffset := content.addressOfSbom
 	sbomAddress, err := ni.fetchExportFunctionPointer(functionsBase, sbomOffset)
@@ -501,10 +546,13 @@ func (ni nativeImagePE) fetchPkgs() (pkgs []pkg.Package, relationships []artifac
 		log.Tracef("cannot obtain buffer from the java native-image .data section")
 		return nil, nil, nil
 	}
-	sbomLocation := sbomAddress - dataSection.VirtualAddress
-	lengthLocation := sbomLengthAddress - dataSection.VirtualAddress
+	sbomLocation, lengthLocation, err := symbolOffsets(uint64(sbomAddress), uint64(sbomLengthAddress),
+		uint64(dataSection.VirtualAddress))
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return decompressSbom(dataBuf, uint64(sbomLocation), uint64(lengthLocation))
+	return decompressSbom(dataBuf, sbomLocation, lengthLocation)
 }
 
 // fetchPkgs provides the packages available in a UnionReader.
@@ -525,6 +573,9 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
 			if err != nil {
+				// this covers both "not this format" and a real rejection of a file that is one, and the
+				// latter drops every package the binary carries, so it cannot go unrecorded
+				log.WithFields("file", filename, "error", err).Trace("unable to read possible java native-image")
 				continue
 			}
 			if ni == nil {
