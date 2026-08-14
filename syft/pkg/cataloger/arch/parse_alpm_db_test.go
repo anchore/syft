@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -221,20 +222,42 @@ func TestMtreeParse(t *testing.T) {
 
 }
 
-// gzipOf returns a gzip member that decompresses to exactly n bytes of payload repeated. The
-// payload is highly compressible, which is the whole point: the caller supplies kilobytes and
-// the decompressed stream is whatever size it asks for.
-func gzipOf(t *testing.T, payload byte, n int64) io.Reader {
+// mtreeSpec builds a valid listing naming n files, shaped like a real one: a signature, a /set of
+// shared keywords, then one line per file. The boundary tests need the parser to actually reach the
+// end of the listing, which a payload of filler bytes never does.
+func mtreeSpec(n int) []byte {
+	var buf bytes.Buffer
+	buf.WriteString("#mtree\n")
+	buf.WriteString("/set type=file uid=0 gid=0 mode=644\n")
+	for i := range n {
+		fmt.Fprintf(&buf, "./file%d time=1649595592.0 size=10 sha256digest=%064x\n", i, i)
+	}
+	return buf.Bytes()
+}
+
+func gzipOf(t *testing.T, data []byte) io.Reader {
+	t.Helper()
+
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	_, err := w.Write(data)
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+
+	return bytes.NewReader(buf.Bytes())
+}
+
+// gzipOfRepeated returns a gzip member that decompresses to n bytes of payload repeated. The payload
+// is highly compressible, which is the whole point: the caller supplies kilobytes and the
+// decompressed stream is whatever size it asks for.
+func gzipOfRepeated(t *testing.T, payload byte, n int64) io.Reader {
 	t.Helper()
 
 	var buf bytes.Buffer
 	w := gzip.NewWriter(&buf)
 	chunk := bytes.Repeat([]byte{payload}, 32*1024)
 	for remaining := n; remaining > 0; {
-		size := int64(len(chunk))
-		if remaining < size {
-			size = remaining
-		}
+		size := min(remaining, int64(len(chunk)))
 		written, err := w.Write(chunk[:size])
 		require.NoError(t, err)
 		remaining -= int64(written)
@@ -245,27 +268,25 @@ func gzipOf(t *testing.T, payload byte, n int64) io.Reader {
 }
 
 func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
-	// note: a NUL payload holds no newlines, so these exercise the byte cap without tripping the
-	// entry cap first
+	// the limits come from the fixture rather than the production constants so both sides of the
+	// boundary are exact and neither case has to allocate its way up to 64MB
+	spec := mtreeSpec(50)
 
-	t.Run("rejects a listing past the cap", func(t *testing.T) {
-		r := gzipOf(t, 0x00, maxMtreeSize+1)
+	t.Run("a listing at the cap parses whole", func(t *testing.T) {
+		records, err := parseMtreeWithLimits(gzipOf(t, spec), int64(len(spec)), maxMtreeEntries)
 
-		_, err := parseMtree(r)
-
-		require.ErrorContains(t, err, "larger than the max allowed size")
+		// asserting the records, not just the absence of an error: hitting the cap exactly must not
+		// quietly truncate the listing, which is the failure a size check invites
+		require.NoError(t, err)
+		require.Len(t, records, 50)
+		require.Equal(t, "/file0", records[0].Path)
+		require.Equal(t, "/file49", records[49].Path)
 	})
 
-	t.Run("a listing at the cap is not rejected on size", func(t *testing.T) {
-		// guards the off-by-one: at exactly the cap the size check must not fire, so whatever
-		// happens next is the mtree parser's business and not ours
-		r := gzipOf(t, 0x00, maxMtreeSize)
+	t.Run("rejects a listing one byte past the cap", func(t *testing.T) {
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), int64(len(spec))-1, maxMtreeEntries)
 
-		_, err := parseMtree(r)
-
-		if err != nil {
-			require.NotContains(t, err.Error(), "larger than the max allowed size")
-		}
+		require.ErrorContains(t, err, "larger than the max allowed size")
 	})
 }
 
@@ -273,22 +294,55 @@ func Test_parseMtree_boundsEntryCount(t *testing.T) {
 	// the byte cap alone does not bound retained memory, since the parser keeps an entry per line
 	// including blank ones. Measured on this parser before the entry cap existed: 16MB of newlines,
 	// well inside the byte cap, cost 8GB of peak heap and returned no records and no error.
+	spec := mtreeSpec(50)
+	lines := bytes.Count(spec, []byte("\n")) // the two header lines get entries of their own
 
-	t.Run("rejects a listing with too many entries", func(t *testing.T) {
-		r := gzipOf(t, '\n', maxMtreeEntries+1)
+	t.Run("a listing at the cap parses whole", func(t *testing.T) {
+		records, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, lines)
 
-		_, err := parseMtree(r)
+		require.NoError(t, err)
+		require.Len(t, records, 50)
+	})
+
+	t.Run("rejects a listing one entry past the cap", func(t *testing.T) {
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, lines-1)
 
 		require.ErrorContains(t, err, "more entries than allowed")
 	})
 
-	t.Run("a listing at the entry cap is not rejected on count", func(t *testing.T) {
-		r := gzipOf(t, '\n', maxMtreeEntries)
+	t.Run("rejects a bomb at the production limits", func(t *testing.T) {
+		// the case the caps exist for: a few KB expanding to 4MB of lines, twenty times the entry cap
+		// and still well inside the byte cap. Runs against parseMtree so the shipped constants are what
+		// gets exercised. Kept to 4MB so that a regression here fails on the deadline below rather than
+		// taking the machine down with it.
+		bomb := gzipOfRepeated(t, '\n', 4*1024*1024)
+		compressed := bomb.(*bytes.Reader).Size()
+		require.Less(t, compressed, int64(64*1024), "payload should be small enough to be worth rejecting")
 
-		_, err := parseMtree(r)
+		start := time.Now()
+		_, err := parseMtree(bomb)
 
-		if err != nil {
-			require.NotContains(t, err.Error(), "more entries than allowed")
-		}
+		require.ErrorContains(t, err, "more entries than allowed")
+		// it has to give up while reading rather than after materializing the listing
+		require.Less(t, time.Since(start), 10*time.Second)
+	})
+}
+
+func Test_parseMtree_malformedInput(t *testing.T) {
+	t.Run("not gzip", func(t *testing.T) {
+		_, err := parseMtree(bytes.NewReader(mtreeSpec(2)))
+
+		require.Error(t, err)
+	})
+
+	t.Run("truncated gzip", func(t *testing.T) {
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, gzipOf(t, mtreeSpec(50)))
+		require.NoError(t, err)
+
+		_, err = parseMtree(bytes.NewReader(buf.Bytes()[:buf.Len()/2]))
+
+		// a truncated listing has to fail rather than come back as a package missing most of its files
+		require.Error(t, err)
 	})
 }
