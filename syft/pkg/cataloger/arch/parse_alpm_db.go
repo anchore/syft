@@ -284,6 +284,14 @@ func parsePkgFiles(pkgFields map[string]any) (*parsedData, error) {
 // mtree.ParseSpec materializes every entry before returning any of them.
 const maxMtreeSize = 64 * 1024 * 1024
 
+// maxMtreeEntries bounds how many lines the listing may hold, which the byte cap alone does not.
+// go-mtree gives every line its own entry and appends it unconditionally, blank lines included, so
+// short lines cost about 1KB of retained heap each. 16MB of newlines is 8GB of peak heap while
+// staying comfortably inside maxMtreeSize, and it returns no records and no error while doing it.
+// Real listings run 150 to 250 bytes per line, so a listing that trips this held far more lines than
+// any package has files.
+const maxMtreeEntries = 200_000
+
 func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 	var entries []pkg.AlpmFileRecord
 
@@ -300,6 +308,12 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 	}
 	if len(data) > maxMtreeSize {
 		return nil, fmt.Errorf("mtree file is larger than the max allowed size (%d bytes)", maxMtreeSize)
+	}
+
+	// counting lines up front is what keeps the entry allocation bounded, since the parser materializes
+	// every line before it returns. Lines the parser skips only make this an over-count, never an under.
+	if lines := bytes.Count(data, []byte("\n")); lines > maxMtreeEntries {
+		return nil, fmt.Errorf("mtree file has more entries than allowed (%d entries, max %d)", lines, maxMtreeEntries)
 	}
 
 	specDh, err := mtree.ParseSpec(bytes.NewReader(data))
