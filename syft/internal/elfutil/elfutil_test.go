@@ -27,6 +27,7 @@ type section struct {
 	legacyZlib   bool // emit a 12-byte .zdebug-style ZLIB header ahead of body
 	declaredSize uint64
 	offsetOf     string // borrow another section's file offset, for SHT_NOBITS fixtures
+	shSize       uint64 // override sh_size, since an SHT_NOBITS section's size is not its span in the file
 }
 
 type buildOpts struct {
@@ -126,6 +127,9 @@ func buildELF(t *testing.T, class elf.Class, order binary.ByteOrder, secs []sect
 	off := uint64(dataOff)
 	for i, s := range all {
 		size := uint64(len(payloads[i]))
+		if s.shSize != 0 {
+			size = s.shSize
+		}
 		secOff := off
 		if s.offsetOf != "" {
 			secOff = offsets[s.offsetOf]
@@ -337,6 +341,11 @@ func TestNewFile_RejectsOversizedReachableSections(t *testing.T) {
 
 // TestNewFile_AcceptsWhatDebugELFWouldNotExpand covers the false-negative direction: rejecting a whole
 // binary over a section debug/elf is never driven to decompress drops real packages from the SBOM.
+//
+// Every fixture here is a file debug/elf parses without complaint, and every one must come back from
+// NewFile without complaint too. An oversized claim is only worth rejecting when debug/elf can actually
+// be made to allocate against it, so a claim it will never act on has to be ignored outright rather than
+// merely tolerated.
 func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 	tests := []struct {
 		name string
@@ -344,6 +353,13 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 		why  string
 	}{
 		{
+			// only File.DWARF expands a .debug_* section, and nothing in syft calls it, so this claim is
+			// never acted on. reachableSections leaves DWARF out on purpose: compressed debug info is
+			// routinely enormous in a legitimate binary, and bounding it would skip the binary entirely.
+			//
+			// non-allocable and SHF_COMPRESSED is deliberately the one shape debug/elf will expand, so the
+			// name is the only thing keeping this accepted. Adding SHF_ALLOC would make it pass for the
+			// allocable case's reason below and stop saying anything about DWARF.
 			name: "oversized compressed DWARF",
 			secs: []section{
 				{name: ".debug_info", typ: elf.SHT_PROGBITS, compressed: true, declaredSize: overLimit},
@@ -351,6 +367,11 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 			why: "syft never calls File.DWARF, so debug/elf is never asked to expand it",
 		},
 		{
+			// the same section in the older form toolchains emitted before SHF_COMPRESSED existed. The
+			// header is different, the reader that would expand it is the same one syft never calls.
+			//
+			// SHF_COMPRESSED is deliberately absent: with it set, debug/elf takes the modern path and the
+			// legacy header is never consulted, so the .zdebug name gate would go untested.
 			name: "oversized legacy .zdebug DWARF",
 			secs: []section{
 				{name: ".zdebug_info", typ: elf.SHT_PROGBITS, legacyZlib: true, declaredSize: overLimit},
@@ -358,13 +379,27 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 			why: "same, via the legacy form",
 		},
 		{
+			// an ordinary uncompressed note that happens to open with those four bytes. debug/elf takes
+			// the legacy path only for a .zdebug-prefixed name, so it reads this as content and nothing
+			// here is a size claim at all. A check that sniffed for the magic instead would decode the
+			// 0xff padding behind it as a declared size and throw the binary away.
+			//
+			// .note.package because it has to be a section syft actually reads, or reachableSections skips
+			// it and the case passes without exercising anything. No flags for the same reason the name is
+			// not .zdebug-prefixed: either one would put debug/elf on a path where the bytes are a header.
 			name: "an uncompressed section whose bytes happen to start with ZLIB",
 			secs: []section{
 				{name: ".note.package", typ: elf.SHT_NOTE, body: append([]byte("ZLIB"), bytes.Repeat([]byte{0xff}, 32)...)},
 			},
-			why: "debug/elf gates the legacy form on the section name, not the magic",
+			why: "debug/elf gates the legacy form on the section name, not the magic, so this is not a claim at all",
 		},
 		{
+			// a section that occupies memory at runtime cannot be compressed on disk, so (*Section).Open
+			// hands back the raw bytes rather than expanding one that says it is. The claim is real and
+			// oversized, and still costs nothing.
+			//
+			// this is the ".symtab" reject case with one bit added: .data is read by name just as .symtab
+			// is, so SHF_ALLOC is the only reason the two outcomes differ.
 			name: "an allocable compressed section",
 			secs: []section{
 				{name: ".data", typ: elf.SHT_PROGBITS, flags: elf.SHF_COMPRESSED | elf.SHF_ALLOC,
@@ -373,12 +408,21 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 			why: "debug/elf refuses to decompress an allocable section",
 		},
 		{
-			name: "an SHT_NOBITS section borrowing another section's offset",
+			// the hardest one to see: sh_offset points into .rodata's payload, so elf.NewFile reads that
+			// compression header and .data comes back carrying an oversized Size of its own. Reading Size
+			// alone would reject here, but a SHT_NOBITS section holds no file bytes and its reader yields
+			// none, so the size is never allocated against. sh_size is set by hand because such a section
+			// has a size without occupying any of the file, and a zero one is a file debug/elf rejects.
+			//
+			// SHF_COMPRESSED has to be set for the size to be a claim at all, and .data has to be the
+			// borrower rather than the donor, since the donor is unreachable by name and never checked.
+			name: "an SHT_NOBITS section borrowing another section's compression header",
 			secs: []section{
-				{name: ".real", typ: elf.SHT_PROGBITS, compressed: true, declaredSize: overLimit},
-				{name: ".data", typ: elf.SHT_NOBITS, flags: elf.SHF_COMPRESSED, offsetOf: ".real"},
+				{name: ".rodata", typ: elf.SHT_PROGBITS, compressed: true, declaredSize: overLimit},
+				{name: ".data", typ: elf.SHT_NOBITS, flags: elf.SHF_COMPRESSED, offsetOf: ".rodata",
+					shSize: 4096},
 			},
-			why: "debug/elf never yields bytes for SHT_NOBITS",
+			why: "debug/elf never yields bytes for SHT_NOBITS, whatever Size it ends up carrying",
 		},
 	}
 
@@ -387,15 +431,12 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 			t.Run(tt.name+"/"+c.name, func(t *testing.T) {
 				data := buildELF(t, c.class, c.order, tt.secs, buildOpts{})
 
-				_, wantErr := elf.NewFile(bytes.NewReader(data))
-				_, err := NewFile(bytes.NewReader(data))
+				// "elfutil accepted it" only means something if debug/elf accepts it too, so a fixture
+				// that drifts into being malformed fails here rather than passing for the wrong reason
+				_, err := elf.NewFile(bytes.NewReader(data))
+				require.NoError(t, err, "fixture is supposed to be a file debug/elf accepts")
 
-				if wantErr != nil {
-					// whatever debug/elf makes of the fixture, elfutil must not be the one rejecting it
-					require.Error(t, err)
-					assert.NotContains(t, err.Error(), "over the", tt.why)
-					return
-				}
+				_, err = NewFile(bytes.NewReader(data))
 				require.NoError(t, err, tt.why)
 			})
 		}
