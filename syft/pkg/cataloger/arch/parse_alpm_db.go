@@ -292,7 +292,30 @@ const maxMtreeSize = 64 * 1024 * 1024
 // any package has files.
 const maxMtreeEntries = 200_000
 
+// lineLimitedReader fails the read once the stream has carried more than max newlines. Counting as
+// the bytes flow is what keeps the entries bounded: the parser materializes one per line before it
+// returns any of them, so the count has to trip while it is still reading. Lines the parser goes on
+// to skip only make this an over-count, never an under.
+type lineLimitedReader struct {
+	reader io.Reader
+	lines  int
+	max    int
+}
+
+func (l *lineLimitedReader) Read(p []byte) (int, error) {
+	n, err := l.reader.Read(p)
+	l.lines += bytes.Count(p[:n], []byte("\n"))
+	if l.lines > l.max {
+		return n, fmt.Errorf("mtree file has more entries than allowed (max %d)", l.max)
+	}
+	return n, err
+}
+
 func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
+	return parseMtreeWithLimits(r, maxMtreeSize, maxMtreeEntries)
+}
+
+func parseMtreeWithLimits(r io.Reader, maxSize int64, maxEntries int) ([]pkg.AlpmFileRecord, error) {
 	var entries []pkg.AlpmFileRecord
 
 	gzReader, err := gzip.NewReader(r)
@@ -300,23 +323,19 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 		return nil, err
 	}
 
-	// read one byte past the cap so that hitting it is distinguishable from a listing that simply ends
-	// there. Truncating instead would hand back a package silently missing most of its files.
-	data, err := io.ReadAll(io.LimitReader(gzReader, maxMtreeSize+1))
-	if err != nil {
-		return nil, err
-	}
-	if len(data) > maxMtreeSize {
-		return nil, fmt.Errorf("mtree file is larger than the max allowed size (%d bytes)", maxMtreeSize)
-	}
+	// both bounds apply while the listing streams rather than after it is buffered. Buffering made the
+	// peak cost scale with cataloger parallelism, which runs a goroutine per package by default.
+	// Allowing one byte past the cap is what makes tripping it distinguishable from a listing that
+	// simply ends there. Truncating instead would hand back a package silently missing most of its files.
+	sizeLimited := &io.LimitedReader{R: gzReader, N: maxSize + 1}
+	specDh, err := mtree.ParseSpec(&lineLimitedReader{reader: sizeLimited, max: maxEntries})
 
-	// counting lines up front is what keeps the entry allocation bounded, since the parser materializes
-	// every line before it returns. Lines the parser skips only make this an over-count, never an under.
-	if lines := bytes.Count(data, []byte("\n")); lines > maxMtreeEntries {
-		return nil, fmt.Errorf("mtree file has more entries than allowed (%d entries, max %d)", lines, maxMtreeEntries)
+	// the size bound is checked first because overrunning it looks like a clean EOF to the parser, so
+	// the parser either succeeds on a truncated listing or fails for some downstream reason. Either way
+	// the size is the useful error.
+	if sizeLimited.N <= 0 {
+		return nil, fmt.Errorf("mtree file is larger than the max allowed size (%d bytes)", maxSize)
 	}
-
-	specDh, err := mtree.ParseSpec(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
