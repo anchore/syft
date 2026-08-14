@@ -221,15 +221,15 @@ func TestMtreeParse(t *testing.T) {
 
 }
 
-// gzipOfSize returns a gzip member that decompresses to exactly n bytes. The payload is
-// highly compressible, which is the whole point: the caller supplies kilobytes and the
-// decompressed stream is whatever size it asks for.
-func gzipOfSize(t *testing.T, n int64) io.Reader {
+// gzipOf returns a gzip member that decompresses to exactly n bytes of payload repeated. The
+// payload is highly compressible, which is the whole point: the caller supplies kilobytes and
+// the decompressed stream is whatever size it asks for.
+func gzipOf(t *testing.T, payload byte, n int64) io.Reader {
 	t.Helper()
 
 	var buf bytes.Buffer
 	w := gzip.NewWriter(&buf)
-	chunk := make([]byte, 32*1024)
+	chunk := bytes.Repeat([]byte{payload}, 32*1024)
 	for remaining := n; remaining > 0; {
 		size := int64(len(chunk))
 		if remaining < size {
@@ -245,8 +245,11 @@ func gzipOfSize(t *testing.T, n int64) io.Reader {
 }
 
 func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
+	// note: a NUL payload holds no newlines, so these exercise the byte cap without tripping the
+	// entry cap first
+
 	t.Run("rejects a listing past the cap", func(t *testing.T) {
-		r := gzipOfSize(t, maxMtreeSize+1)
+		r := gzipOf(t, 0x00, maxMtreeSize+1)
 
 		_, err := parseMtree(r)
 
@@ -256,12 +259,36 @@ func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
 	t.Run("a listing at the cap is not rejected on size", func(t *testing.T) {
 		// guards the off-by-one: at exactly the cap the size check must not fire, so whatever
 		// happens next is the mtree parser's business and not ours
-		r := gzipOfSize(t, maxMtreeSize)
+		r := gzipOf(t, 0x00, maxMtreeSize)
 
 		_, err := parseMtree(r)
 
 		if err != nil {
 			require.NotContains(t, err.Error(), "larger than the max allowed size")
+		}
+	})
+}
+
+func Test_parseMtree_boundsEntryCount(t *testing.T) {
+	// the byte cap alone does not bound retained memory, since the parser keeps an entry per line
+	// including blank ones. Measured on this parser before the entry cap existed: 16MB of newlines,
+	// well inside the byte cap, cost 8GB of peak heap and returned no records and no error.
+
+	t.Run("rejects a listing with too many entries", func(t *testing.T) {
+		r := gzipOf(t, '\n', maxMtreeEntries+1)
+
+		_, err := parseMtree(r)
+
+		require.ErrorContains(t, err, "more entries than allowed")
+	})
+
+	t.Run("a listing at the entry cap is not rejected on count", func(t *testing.T) {
+		r := gzipOf(t, '\n', maxMtreeEntries)
+
+		_, err := parseMtree(r)
+
+		if err != nil {
+			require.NotContains(t, err.Error(), "more entries than allowed")
 		}
 	})
 }
