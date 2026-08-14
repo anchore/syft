@@ -122,7 +122,10 @@ func reachableSections(f *elf.File) map[int]struct{} {
 			mark(int(s.Link))
 		case elf.SHT_GNU_VERSYM, elf.SHT_GNU_VERDEF, elf.SHT_GNU_VERNEED:
 			// File.DynamicSymbols pulls the symbol version tables in behind the caller's back, via
-			// gnuVersionInit, so they are reachable wherever .dynsym is
+			// gnuVersionInit. Strictly they are only reachable alongside a .dynsym, since getSymbols
+			// returns first without one, but they are marked unconditionally rather than tracked: the
+			// only file that loses out carries an oversized version table and no dynamic symbols at
+			// all, which is not something a toolchain emits.
 			mark(i)
 		}
 		if _, ok := sectionsReadByName[s.Name]; ok {

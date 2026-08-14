@@ -69,6 +69,12 @@ func buildELF(t *testing.T, class elf.Class, order binary.ByteOrder, secs []sect
 		names.WriteByte(0)
 	}
 	all[shstrndx].body = names.Bytes()
+	// a fixture that compresses the name table without rigging a size gets an honest one, so the file is
+	// readable rather than merely parseable
+	if all[shstrndx].compressed && all[shstrndx].declaredSize == 0 {
+		all[shstrndx].declaredSize = uint64(names.Len())
+		all[shstrndx].body = deflate(t, names.Bytes())
+	}
 
 	is32 := class == elf.ELFCLASS32
 	ehsize, shentsize := binary.Size(elf.Header64{}), binary.Size(elf.Section64{})
@@ -379,6 +385,30 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 			why: "same, via the legacy form",
 		},
 		{
+			// reachable by type and named the way debug/elf gates the legacy form on, so the name half of
+			// that gate passes and the magic is the only thing left to reject the claim. Without the magic
+			// check the 0xff bytes behind it decode as a declared size of 2^64-1.
+			name: "a .zdebug-named reachable section whose bytes are not a legacy header",
+			secs: []section{
+				{name: ".zdebug_symtab", typ: elf.SHT_SYMTAB, link: 2,
+					body: append([]byte("NOPE"), bytes.Repeat([]byte{0xff}, 32)...)},
+				{name: ".strtab", typ: elf.SHT_STRTAB},
+			},
+			why: "the legacy form needs the magic as well as the name",
+		},
+		{
+			// the other half of the same gate: fewer bytes present than a legacy header needs. The magic is
+			// intact and some of the size field is present, so a short read has to read as "no claim"
+			// rather than as a size decoded out of a partly-filled buffer, which here would be huge.
+			name: "a .zdebug-named reachable section too short to hold a legacy header",
+			secs: []section{
+				{name: ".zdebug_symtab", typ: elf.SHT_SYMTAB, link: 2,
+					body: append([]byte("ZLIB"), bytes.Repeat([]byte{0xff}, 4)...)},
+				{name: ".strtab", typ: elf.SHT_STRTAB},
+			},
+			why: "a truncated legacy header is not a claim",
+		},
+		{
 			// an ordinary uncompressed note that happens to open with those four bytes. debug/elf takes
 			// the legacy path only for a .zdebug-prefixed name, so it reads this as content and nothing
 			// here is a size claim at all. A check that sniffed for the magic instead would decode the
@@ -424,6 +454,17 @@ func TestNewFile_AcceptsWhatDebugELFWouldNotExpand(t *testing.T) {
 			},
 			why: "debug/elf never yields bytes for SHT_NOBITS, whatever Size it ends up carrying",
 		},
+		{
+			// a string table is reached through some symbol table's sh_link, never on its own, so one
+			// nothing points at is one nothing reads. This is the reject test's linked-.strtab case with
+			// the .symtab removed, and it is the case an implementation that bounded every SHT_STRTAB
+			// rather than following the links would fail.
+			name: "an oversized string table that no symbol table links",
+			secs: []section{
+				{name: ".strtab", typ: elf.SHT_STRTAB, compressed: true, declaredSize: overLimit},
+			},
+			why: "reachability runs through sh_link, not section type",
+		},
 	}
 
 	for _, tt := range tests {
@@ -460,6 +501,25 @@ func TestNewFile_AcceptsAndReadsSectionUnderTheLimit(t *testing.T) {
 			got, err := f.Section(".note.package").Data()
 			require.NoError(t, err)
 			assert.Equal(t, payload, got)
+		})
+	}
+}
+
+// TestNewFile_AcceptsAndReadsCompressedSectionNameTable covers the other half of CheckSectionNameTable.
+// That check runs before the parse, off a hand-decoded section header rather than anything debug/elf has
+// resolved, so a version of it that rejected every compressed name table outright, or that read the size
+// out of the wrong offset, would still pass every rejection case. Resolving the names proves the file was
+// left intact and not merely let through.
+func TestNewFile_AcceptsAndReadsCompressedSectionNameTable(t *testing.T) {
+	for _, c := range classes {
+		t.Run(c.name, func(t *testing.T) {
+			data := buildELF(t, c.class, c.order,
+				[]section{{name: ".note.package", typ: elf.SHT_NOTE}},
+				buildOpts{nameTable: &section{compressed: true}})
+
+			f, err := NewFile(bytes.NewReader(data))
+			require.NoError(t, err)
+			assert.NotNil(t, f.Section(".note.package"), "section names did not survive the name table")
 		})
 	}
 }
