@@ -338,8 +338,11 @@ func TestNewFile_RejectsOversizedReachableSections(t *testing.T) {
 				data := buildELF(t, c.class, c.order, tt.secs, tt.opts)
 				_, err := NewFile(bytes.NewReader(data))
 				require.Error(t, err)
+				// the fixtures are hand-assembled ELF bytes, so a bad one would satisfy require.Error on
+				// its own. Naming the section proves the rejection is the one we set up, and naming the
+				// limit proves it came from this package rather than from debug/elf.
 				assert.Contains(t, err.Error(), tt.wantErr)
-				assert.Contains(t, err.Error(), "over the")
+				assert.Contains(t, err.Error(), fmt.Sprint(maxDeclaredSectionSize))
 			})
 		}
 	}
