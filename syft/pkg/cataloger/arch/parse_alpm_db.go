@@ -2,6 +2,7 @@ package arch
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"fmt"
@@ -277,15 +278,31 @@ func parsePkgFiles(pkgFields map[string]any) (*parsedData, error) {
 	return &entry, nil
 }
 
+// maxMtreeSize bounds the decompressed mtree listing. An mtree names every file in a package along
+// with its digests, so even a very large package lands well under this. The cap is here because gzip
+// reaches roughly 1032:1, so without it a small crafted member expands until the process dies, and
+// mtree.ParseSpec materializes every entry before returning any of them.
+const maxMtreeSize = 64 * 1024 * 1024
+
 func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
-	var err error
 	var entries []pkg.AlpmFileRecord
 
-	r, err = gzip.NewReader(r)
+	gzReader, err := gzip.NewReader(r)
 	if err != nil {
 		return nil, err
 	}
-	specDh, err := mtree.ParseSpec(r)
+
+	// read one byte past the cap so that hitting it is distinguishable from a listing that simply ends
+	// there. Truncating instead would hand back a package silently missing most of its files.
+	data, err := io.ReadAll(io.LimitReader(gzReader, maxMtreeSize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxMtreeSize {
+		return nil, fmt.Errorf("mtree file is larger than the max allowed size (%d bytes)", maxMtreeSize)
+	}
+
+	specDh, err := mtree.ParseSpec(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}

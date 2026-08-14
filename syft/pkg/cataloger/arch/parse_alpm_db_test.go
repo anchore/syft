@@ -2,6 +2,9 @@ package arch
 
 import (
 	"bufio"
+	"bytes"
+	"compress/gzip"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -216,4 +219,49 @@ func TestMtreeParse(t *testing.T) {
 		})
 	}
 
+}
+
+// gzipOfSize returns a gzip member that decompresses to exactly n bytes. The payload is
+// highly compressible, which is the whole point: the caller supplies kilobytes and the
+// decompressed stream is whatever size it asks for.
+func gzipOfSize(t *testing.T, n int64) io.Reader {
+	t.Helper()
+
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	chunk := make([]byte, 32*1024)
+	for remaining := n; remaining > 0; {
+		size := int64(len(chunk))
+		if remaining < size {
+			size = remaining
+		}
+		written, err := w.Write(chunk[:size])
+		require.NoError(t, err)
+		remaining -= int64(written)
+	}
+	require.NoError(t, w.Close())
+
+	return bytes.NewReader(buf.Bytes())
+}
+
+func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
+	t.Run("rejects a listing past the cap", func(t *testing.T) {
+		r := gzipOfSize(t, maxMtreeSize+1)
+
+		_, err := parseMtree(r)
+
+		require.ErrorContains(t, err, "larger than the max allowed size")
+	})
+
+	t.Run("a listing at the cap is not rejected on size", func(t *testing.T) {
+		// guards the off-by-one: at exactly the cap the size check must not fire, so whatever
+		// happens next is the mtree parser's business and not ours
+		r := gzipOfSize(t, maxMtreeSize)
+
+		_, err := parseMtree(r)
+
+		if err != nil {
+			require.NotContains(t, err.Error(), "larger than the max allowed size")
+		}
+	})
 }
