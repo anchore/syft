@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/cpe"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
@@ -248,8 +249,9 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`(?m)\/usr\/local\/lib\/perl\d\/(?P<version>[0-9]+\.[0-9]+\.[0-9]+)`),
 			Package: "perl",
-			PURL:    mustPURL("pkg:generic/perl@version"),
+			PURL:    mustPURL("pkg:cpan/perl@version"),
 			CPEs:    singleCPE("cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
+			Type:    pkg.CpanPkg,
 		},
 		{
 			Class:    "php-composer-binary",
