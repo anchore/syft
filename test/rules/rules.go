@@ -55,6 +55,8 @@ func noUnboundedAllocations(m dsl.Matcher) {
 
 // nolint:unused
 func noUnboundedDecompression(m dsl.Matcher) {
+	m.Import("github.com/mholt/archives")
+
 	// compression ratios are unbounded (gzip does ~1032:1), so a decompressed stream must be capped
 	// independently of the compressed input, which is already bounded by the file it came from.
 	// The constructor is flagged rather than the consumer because the consumer is often a
@@ -68,7 +70,14 @@ func noUnboundedDecompression(m dsl.Matcher) {
 		`xz.NewReader($_)`,
 	).
 		Where(m.File().PkgPath.Matches(`/cataloger/`)).
-		Report("unbounded decompression in a cataloger: wrap the decompressed stream in io.LimitReader before anything consumes it, or nolint with the bound that already applies")
+		Report("unbounded decompression in a cataloger: wrap the decompressed stream in io.LimitReader before anything consumes it, or nolint with the bound that already applies. Note that a byte limit bounds the input, not what the consumer retains: a parser that keeps an object per line still needs a count bound")
+
+	// the mholt/archives decompressors reach the same stdlib readers a layer down, so a site using them
+	// is exactly as unbounded while matching none of the constructors above
+	m.Match(`$d.OpenReader($_)`).
+		Where(m.File().PkgPath.Matches(`/cataloger/`) &&
+			m["d"].Type.Implements(`archives.Decompressor`)).
+		Report("unbounded decompression in a cataloger: $d.OpenReader returns a stream with no ceiling. bound it before anything consumes it, or nolint with the bound that already applies")
 }
 
 // nolint:unused
