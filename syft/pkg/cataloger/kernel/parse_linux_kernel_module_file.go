@@ -2,7 +2,6 @@ package kernel
 
 import (
 	"context"
-	"debug/elf"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +14,7 @@ import (
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -168,7 +168,7 @@ func parseLinuxKernelModuleMetadata(r unionreader.UnionReader) (p *pkg.LinuxKern
 	p = &pkg.LinuxKernelModule{
 		Parameters: make(map[string]pkg.LinuxKernelModuleParameter),
 	}
-	f, err := elf.NewFile(r)
+	f, err := elfutil.NewFile(r)
 	if err != nil {
 		return nil, err
 	}

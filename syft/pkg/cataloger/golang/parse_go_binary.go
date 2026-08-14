@@ -3,7 +3,6 @@ package golang
 import (
 	"bytes"
 	"context"
-	"debug/elf"
 	"debug/macho"
 	"debug/pe"
 	"errors"
@@ -22,6 +21,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -398,7 +398,7 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 	var arch string
 	switch {
 	case bytes.HasPrefix(ident, []byte("\x7FELF")):
-		f, err := elf.NewFile(r)
+		f, err := elfutil.NewFile(r)
 		if err != nil {
 			return "", fmt.Errorf("unrecognized file format: %w", err)
 		}

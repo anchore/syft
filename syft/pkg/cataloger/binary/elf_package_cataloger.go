@@ -3,7 +3,6 @@ package binary
 import (
 	"bytes"
 	"context"
-	"debug/elf"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -146,7 +146,7 @@ func getELFNotes(r file.LocationReadCloser) (*elfBinaryPackageNotes, error) {
 		return nil, fmt.Errorf("unable to get union reader for binary: %w", err)
 	}
 
-	f, err := elf.NewFile(unionReader)
+	f, err := elfutil.NewFile(unionReader)
 	if f == nil || err != nil {
 		log.WithFields("file", r.Location.Path(), "error", err).Trace("unable to parse binary as ELF")
 		return nil, nil
