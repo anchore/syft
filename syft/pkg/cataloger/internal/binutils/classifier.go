@@ -370,9 +370,11 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	e, err := elfutil.NewFile(contents)
 	if err != nil {
 		// this function tries ELF, then Mach-O, then PE, so "not an ELF" is the expected case and stays
-		// quiet. Anything else means a real ELF was dropped, and nothing downstream would report it.
+		// quiet. debug/elf reports a wrong magic as an *elf.FormatError, but a file too short to hold a
+		// header as a bare EOF, so both count as "not an ELF" here. Anything else means a real ELF was
+		// dropped, and nothing downstream would report it.
 		var fmtErr *elf.FormatError
-		if !errors.As(err, &fmtErr) {
+		if !errors.As(err, &fmtErr) && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
 			log.WithFields("file", context.Location.RealPath, "error", err).Debug("unable to parse ELF binary")
 		}
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -122,6 +123,17 @@ func getNativeFIPSSettings(settings []debug.BuildSetting) []string {
 	return cryptoSettings
 }
 
+// readBuildInfo bounds the reader before handing it to debug/buildinfo, which opens ELF files with
+// debug/elf itself rather than through elfutil. elf.NewFile expands the section-name string table as it
+// parses, so an unbounded read here is reachable no matter how little of the file buildinfo goes on to
+// look at.
+func readBuildInfo(r io.ReaderAt) (*debug.BuildInfo, error) {
+	if err := elfutil.CheckSectionNameTable(r); err != nil {
+		return nil, err
+	}
+	return buildinfo.Read(r)
+}
+
 func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -133,7 +145,7 @@ func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, e
 	}()
 
 	// try to read buildinfo from the binary directly
-	bi, err = buildinfo.Read(r)
+	bi, err = readBuildInfo(r)
 	if err == nil {
 		return bi, nil
 	}
@@ -144,7 +156,7 @@ func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, e
 		log.WithFields("path", location.RealPath).Trace("detected UPX-compressed Go binary, attempting decompression to read the build info")
 		decompressed, decompErr := decompressUPX(r)
 		if decompErr == nil {
-			bi, err = buildinfo.Read(decompressed)
+			bi, err = readBuildInfo(decompressed)
 			if err == nil {
 				return bi, nil
 			}

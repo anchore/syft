@@ -146,8 +146,7 @@ func newElf(filename string, r io.ReaderAt) (nativeImage, error) {
 
 	if err != nil {
 		var fmtErr *elf.FormatError
-		// a size rejection from elfutil is deliberately not an *elf.FormatError, so it lands in the
-		// "real error" branch below rather than being reported as "not an ELF"
+		// note: a size rejection from elfutil is not an *elf.FormatError, so it takes the branch below
 		if errors.As(err, &fmtErr) {
 			// this is not an elf file
 			log.WithFields("filename", filename, "error", err).Trace("not an ELF binary")

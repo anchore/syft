@@ -271,6 +271,41 @@ func TestNewFile_RejectsOversizedReachableSections(t *testing.T) {
 			wantErr: `".note.package"`,
 		},
 		{
+			name: "compressed .modinfo, read by the kernel module cataloger",
+			secs: []section{
+				{name: ".modinfo", typ: elf.SHT_PROGBITS, compressed: true, declaredSize: overLimit},
+			},
+			wantErr: `".modinfo"`,
+		},
+		{
+			// File.DynamicSymbols reads these via gnuVersionInit without the caller naming them
+			name: "compressed .gnu.version alongside a .dynsym",
+			secs: []section{
+				{name: ".dynsym", typ: elf.SHT_DYNSYM, link: 2},
+				{name: ".dynstr", typ: elf.SHT_STRTAB},
+				{name: ".gnu.version", typ: elf.SHT_GNU_VERSYM, compressed: true, declaredSize: overLimit},
+			},
+			wantErr: `".gnu.version"`,
+		},
+		{
+			name: "compressed .gnu.version_r alongside a .dynsym",
+			secs: []section{
+				{name: ".dynsym", typ: elf.SHT_DYNSYM, link: 2},
+				{name: ".dynstr", typ: elf.SHT_STRTAB},
+				{name: ".gnu.version_r", typ: elf.SHT_GNU_VERNEED, compressed: true, declaredSize: overLimit},
+			},
+			wantErr: `".gnu.version_r"`,
+		},
+		{
+			name: "compressed .gnu.version_d alongside a .dynsym",
+			secs: []section{
+				{name: ".dynsym", typ: elf.SHT_DYNSYM, link: 2},
+				{name: ".dynstr", typ: elf.SHT_STRTAB},
+				{name: ".gnu.version_d", typ: elf.SHT_GNU_VERDEF, compressed: true, declaredSize: overLimit},
+			},
+			wantErr: `".gnu.version_d"`,
+		},
+		{
 			// the one section elf.NewFile expands itself, so this has to be caught before the parse
 			name:    "compressed section name table",
 			opts:    buildOpts{nameTable: &section{compressed: true, declaredSize: overLimit}},

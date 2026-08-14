@@ -4,8 +4,11 @@ implausible decompressed size.
 
 debug/elf sizes a section's buffer from the section's own compression header, and a highly compressible
 stream really does deliver the bytes that header promises, so internal/saferio's chunked read does not
-help: it faithfully allocates every byte. A 2MB input file is enough to drive elf.NewFile to allocate over
-10GB, which is a fatal Go OOM rather than a recoverable panic.
+help: it faithfully allocates every byte, and appends its way there, so the cost runs several times the
+declared size. A 510KB input file declaring a 512MB section drives elf.NewFile through 2.6GB of
+allocation and returns no error, which is a fatal Go OOM rather than a recoverable panic. Zlib caps out
+near 1000:1, but debug/elf also accepts zstd, which reaches 32767:1 on zeroed input, so the input needed
+to declare a given size is smaller still.
 
 The check runs in two parts, because debug/elf expands sections at two different times. elf.NewFile
 expands exactly one section on its own, the section-name string table, so that one has to be bounded
@@ -33,7 +36,7 @@ import (
 // maxDeclaredSectionSize bounds the decompressed size any single reachable section may declare.
 //
 // Only non-allocable sections can legitimately be compressed, so nothing syft reads on the hot path
-// (.data, .go.buildinfo, notes) is affected at all. The realistic ceiling for a section syft does read out
+// (.data, .text, notes) is affected at all. The realistic ceiling for a section syft does read out
 // of a compressed file is .symtab/.strtab on a very large binary, orders of magnitude under this. The
 // trade-off is that a binary whose symbol or string table decompresses past this is skipped rather than
 // cataloged; that is the correct direction to fail, since the alternative is OOM-killing the whole scan.
@@ -47,12 +50,16 @@ const legacyZlibHeaderSize = 12
 
 // sectionsReadByName are the sections syft asks debug/elf for by name. Everything else it reaches by
 // section type, which reachableSections covers separately.
+//
+// Add to this list when a cataloger starts reading a new section by name. The ruleguard rule only stops a
+// new debug/elf call site; it cannot see a new (*Section).Data call behind an already-bounded open.
 var sectionsReadByName = map[string]struct{}{
 	".symtab":       {},
 	".data":         {},
 	".text":         {},
 	".gopclntab":    {},
 	".note.package": {},
+	".modinfo":      {},
 }
 
 // wire sizes of the structures we decode, which differ between the two ELF classes
@@ -68,7 +75,7 @@ var (
 // reported as a plain error rather than an *elf.FormatError, so callers that distinguish "not an ELF"
 // from "bad ELF" treat it as the latter.
 func NewFile(r io.ReaderAt) (*elf.File, error) {
-	if err := checkSectionNameTable(r); err != nil {
+	if err := CheckSectionNameTable(r); err != nil {
 		return nil, err
 	}
 
@@ -113,6 +120,10 @@ func reachableSections(f *elf.File) map[int]struct{} {
 			// string table its Link field points at
 			mark(i)
 			mark(int(s.Link))
+		case elf.SHT_GNU_VERSYM, elf.SHT_GNU_VERDEF, elf.SHT_GNU_VERNEED:
+			// File.DynamicSymbols pulls the symbol version tables in behind the caller's back, via
+			// gnuVersionInit, so they are reachable wherever .dynsym is
+			mark(i)
 		}
 		if _, ok := sectionsReadByName[s.Name]; ok {
 			mark(i)
@@ -153,10 +164,15 @@ func declaredSize(s *elf.Section) (uint64, bool) {
 	return binary.BigEndian.Uint64(hdr[4:]), true
 }
 
-// checkSectionNameTable bounds the one section elf.NewFile expands on its own. Anything that does not
+// CheckSectionNameTable bounds the one section elf.NewFile expands on its own. Anything that does not
 // parse as ELF is passed through untouched, so that elf.NewFile remains the single source of format
 // errors.
-func checkSectionNameTable(r io.ReaderAt) error {
+//
+// NewFile calls this itself. It is exported for the callers that cannot use NewFile because the
+// debug/elf call is made for them inside another package, debug/buildinfo being the one syft reaches:
+// gate the reader on this and the eager section-name table read is bounded, though nothing else that
+// package chooses to expand is.
+func CheckSectionNameTable(r io.ReaderAt) error {
 	var ident [16]byte
 	if _, err := io.ReadFull(io.NewSectionReader(r, 0, int64(len(ident))), ident[:]); err != nil {
 		return nil //nolint:nilerr // not our error to report; let elf.NewFile describe the file
