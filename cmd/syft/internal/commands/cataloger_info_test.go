@@ -280,12 +280,15 @@ func Test_catalogerInfoReport(t *testing.T) {
 					Detectors: []capabilities.Detector{
 						{Method: capabilities.GlobDetection, Criteria: []string{"**/*.test"}},
 					},
+					PURLTypes: []string{"npm"},
 				},
 			},
 			assertions: func(t *testing.T, got string) {
 				assert.Contains(t, got, "test-cataloger")
 				assert.Contains(t, got, "ECOSYSTEM")
 				assert.Contains(t, got, "CATALOGER")
+				assert.Contains(t, got, "PURL")
+				assert.Contains(t, got, "npm")
 			},
 		},
 		{
@@ -298,12 +301,17 @@ func Test_catalogerInfoReport(t *testing.T) {
 					Ecosystem: "test",
 					Type:      "custom",
 					Selectors: []string{"test", "custom"},
+					Detectors: []capabilities.Detector{
+						{Method: capabilities.GlobDetection, Criteria: []string{"**/*.test"}},
+					},
+					PURLTypes: []string{"npm"},
 				},
 			},
 			assertions: func(t *testing.T, got string) {
 				assert.Contains(t, got, `"name":"test-cataloger"`)
 				assert.Contains(t, got, `"ecosystem":"test"`)
 				assert.Contains(t, got, `"type":"custom"`)
+				assert.Contains(t, got, `"purl_types":["npm"]`)
 			},
 		},
 		{

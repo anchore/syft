@@ -62,3 +62,27 @@ type PnpmLockEntry struct {
 	// Dependencies is a map of dependencies and their versions
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
 }
+
+// BunLockEntry represents a single entry in the "packages" section of a bun.lock file
+type BunLockEntry struct {
+	// Integrity is Subresource Integrity hash for verification (SRI format)
+	Integrity string `mapstructure:"integrity" json:"integrity"`
+
+	// Dependencies is a map of runtime dependencies and their version specifiers
+	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
+
+	// OptionalDependencies is a map of optional dependencies and their version specifiers
+	OptionalDependencies map[string]string `mapstructure:"optionalDependencies" json:"optionalDependencies"`
+
+	// PeerDependencies is a map of peer dependencies and their version specifiers
+	PeerDependencies map[string]string `mapstructure:"peerDependencies" json:"peerDependencies"`
+
+	// Bin is a map of binary names to the paths they are installed to
+	Bin map[string]string `mapstructure:"bin" json:"bin"`
+
+	// OS is the operating system constraint for the package (e.g. "darwin")
+	OS string `mapstructure:"os" json:"os"`
+
+	// CPU is the CPU architecture constraint for the package (e.g. "arm64")
+	CPU string `mapstructure:"cpu" json:"cpu"`
+}

@@ -165,6 +165,7 @@ func getPURL(c *cyclonedx.Component, ty pkg.Type) string {
 	return purl.ToString()
 }
 
+//nolint:gocognit
 func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 	name := c.Name
 	if c.Group != "" {
@@ -195,7 +196,9 @@ func setPackageName(p *pkg.Package, c *cyclonedx.Component) {
 				}
 			}
 		default:
-			name = fmt.Sprintf("%s/%s", c.Group, name)
+			if !internal.NameExcludesPurlNamespace(p.Type.PackageURLType()) {
+				name = fmt.Sprintf("%s/%s", c.Group, name)
+			}
 		}
 	}
 	p.Name = name

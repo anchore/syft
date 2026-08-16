@@ -112,7 +112,7 @@ func Less(i, j Package) bool {
 			jLocations := j.Locations.ToSlice()
 			if i.Type == j.Type {
 				maxLen := max(len(jLocations), len(iLocations))
-				for l := 0; l < maxLen; l++ {
+				for l := range maxLen {
 					if len(iLocations) < l+1 || len(jLocations) < l+1 {
 						if len(iLocations) == len(jLocations) {
 							break

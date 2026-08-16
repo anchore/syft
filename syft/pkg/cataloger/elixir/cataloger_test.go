@@ -30,3 +30,15 @@ func TestCataloger_Globs(t *testing.T) {
 		})
 	}
 }
+
+func TestCataloger_Relationships(t *testing.T) {
+	expectedRelationships := []string{
+		"cowlib @ 2.11.0 (mix.lock) [dependency-of] cowboy @ 2.9.0 (mix.lock)",
+		"ranch @ 1.8.0 (mix.lock) [dependency-of] cowboy @ 2.9.0 (mix.lock)",
+	}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/relationships").
+		ExpectsRelationshipStrings(expectedRelationships).
+		TestCataloger(t, NewMixLockCataloger())
+}

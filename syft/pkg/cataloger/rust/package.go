@@ -14,7 +14,7 @@ func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Loc
 		Name:      m.Name,
 		Version:   m.Version,
 		Locations: file.NewLocationSet(locations...),
-		PURL:      packageURL(m.Name, m.Version),
+		PURL:      cargoLockPackageURL(m),
 		Language:  pkg.Rust,
 		Type:      pkg.RustPkg,
 		Metadata:  m,
@@ -23,6 +23,18 @@ func newPackageFromCargoMetadata(m pkg.RustCargoLockEntry, locations ...file.Loc
 	p.SetID()
 
 	return p
+}
+
+func cargoLockPackageURL(m pkg.RustCargoLockEntry) string {
+	// Cargo omits source for packages resolved from the local workspace or a
+	// path dependency. A cargo PURL without a repository qualifier identifies
+	// a package on crates.io, so emitting one for a local package can cause
+	// downstream scanners to match unrelated registry vulnerabilities.
+	if m.Source == "" {
+		return ""
+	}
+
+	return packageURL(m.Name, m.Version)
 }
 
 func newPackageFromAudit(dep *rustaudit.Package, locations ...file.Location) pkg.Package {

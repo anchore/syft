@@ -15,14 +15,18 @@ fixtures: build verify
 # requirement 2: 'fingerprint' goal to determine if the fixture input that indicates any existing cache should be busted
 fingerprint: $(FINGERPRINT_FILE)
 
-tools-check:
-	@sha256sum -c Dockerfile.sha256 || (echo "Tools Dockerfile has changed" && exit 1)
-
 # for selfrando...
 # docker buildx build --platform linux/amd64 -t $(TOOL_IMAGE) .
 
 tools:
-	@(docker image inspect $(TOOL_IMAGE) > /dev/null 2>&1 && make tools-check) || (docker build -t $(TOOL_IMAGE) . && sha256sum Dockerfile > Dockerfile.sha256)
+	@if docker image inspect $(TOOL_IMAGE) > /dev/null 2>&1 \
+	   && test -f Dockerfile.sha256 \
+	   && sha256sum --quiet -c Dockerfile.sha256 2>/dev/null; then \
+	  : ; \
+	else \
+	  docker build -t $(TOOL_IMAGE) . \
+	  && sha256sum Dockerfile > Dockerfile.sha256; \
+	fi
 
 build: tools
 	mkdir -p $(BIN)
@@ -46,4 +50,4 @@ $(FINGERPRINT_FILE):
 clean:
 	rm -rf $(BIN) Dockerfile.sha256 $(VERIFY_FILE) $(FINGERPRINT_FILE)
 
-.PHONY: tools tools-check build verify debug clean
+.PHONY: tools build verify debug clean

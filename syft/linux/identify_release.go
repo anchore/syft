@@ -200,13 +200,26 @@ func parseRedhatRelease(contents string) (*Release, error) {
 	case strings.HasPrefix(id, "centos"):
 		// ignore the parenthetical version information
 		version = versionID
+	case strings.HasPrefix(id, "rocky linux"):
+		id = "rocky"
+	case strings.HasPrefix(id, "scientific linux"):
+		id = "scientific"
+	}
+
+	idLike := []string{id}
+
+	// Because this is the RedHat release file, assume that this distro is a rhel clone and
+	// add `rhel` to the idLike slice.  This ensures that vulnerability matching will at least
+	// fall back to rhel if nothing more specific can be identified
+	if id != "rhel" {
+		idLike = append(idLike, "rhel")
 	}
 
 	return &Release{
 		PrettyName: contents,
 		Name:       name,
 		ID:         id,
-		IDLike:     []string{id},
+		IDLike:     idLike,
 		Version:    version,
 		VersionID:  versionID,
 	}, nil

@@ -131,7 +131,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, error) {
 			if len(entries) == 0 {
 				return nil, fmt.Errorf("no package entries found in control file")
 			}
-			entry := pkg.DpkgArchiveEntry(entries[0])
+			entry := pkg.DpkgArchiveEntry(entries[0].toDpkgEntry())
 			metadata = &entry
 		case "md5sums":
 			// parseDpkgMD5Info already streams via bufio.Scanner

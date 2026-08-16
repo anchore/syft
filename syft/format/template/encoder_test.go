@@ -82,6 +82,27 @@ func TestFormatWithOptionAndHasField(t *testing.T) {
 	)
 }
 
+func TestFuncMap_ExposesDateFunctions_ExcludesEnvAndNetwork(t *testing.T) {
+	enc, err := NewFormatEncoder(DefaultEncoderConfig())
+	require.NoError(t, err)
+
+	e, ok := enc.(encoder)
+	require.True(t, ok)
+
+	// date/time functions (the reason for issue #2372) should be available
+	for _, name := range []string{"now", "date", "dateInZone", "dateModify", "unixEpoch"} {
+		_, exists := e.funcMap[name]
+		assert.Truef(t, exists, "expected date function %q to be available", name)
+	}
+
+	// functions that reach into the environment or network must remain excluded.
+	// rand*/uuidv4 are also kept out to preserve hermetic (repeatable) output.
+	for _, name := range []string{"env", "expandenv", "getHostByName", "randAlphaNum", "uuidv4"} {
+		_, exists := e.funcMap[name]
+		assert.Falsef(t, exists, "expected non-hermetic function %q to be excluded", name)
+	}
+}
+
 func TestFormatWithoutOptions(t *testing.T) {
 	f, err := NewFormatEncoder(DefaultEncoderConfig())
 	require.NoError(t, err)

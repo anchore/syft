@@ -80,7 +80,7 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 	for depNameVersion, dep := range allDependencies {
 		parentPkg, ok := pkgMap[depNameVersion]
 		if !ok {
-			log.Debugf("package \"%s\" not found in map of all pacakges", depNameVersion)
+			log.Debugf("package \"%s\" not found in map of all packages", depNameVersion)
 			continue
 		}
 

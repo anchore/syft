@@ -1,0 +1,31 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 0,
+  "workspaces": {
+    "": {
+      "name": "my-monorepo",
+      "dependencies": {
+        "axios": "^1.6.0",
+        "ghostty-web": "github:rcarmo/ghostty-web#6c1c75b",
+        "tracestrings": "github:oven-sh/bun.report#912ca63",
+      },
+    },
+    "packages/util": {
+      "name": "@my/util",
+      "version": "1.0.0",
+    },
+  },
+  "packages": {
+    "my-monorepo": ["my-monorepo@root:", { "bin": { "my-cli": "bin/cli.js" } }],
+
+    "@my/util": ["@my/util@workspace:packages/util"],
+
+    "axios": ["axios@1.6.0", "", { "dependencies": { "follow-redirects": "^1.15.0" } }, "sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg=="],
+
+    "follow-redirects": ["follow-redirects@1.15.3", "", {}, "sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q=="],
+
+    "ghostty-web": ["ghostty-web@github:rcarmo/ghostty-web#6c1c75b", {}, "rcarmo-ghostty-web-6c1c75b", "sha512-nLx3R2hPwQvmL42LbiaQvbJpPZAXjzUtgU23G2LaKMRuA2mdXHdLQ5Hfw0PmxsohbqO/GhKOnTMcRrlLKS81+g=="],
+
+    "tracestrings": ["tracestrings@github:oven-sh/bun.report#912ca63", {}, "oven-sh-bun.report-912ca63"],
+  }
+}

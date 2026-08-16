@@ -222,6 +222,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateAddition{AdditionalProducts: []string{"mustache.js"}},
 		},
 		{
+			pkg.NpmPkg,
+			candidateKey{PkgName: "redis"},
+			candidateAddition{AdditionalVendors: []string{"redis.js"}},
+		},
+		{
 			// NVD records react under the facebook vendor, e.g.
 			// cpe:2.3:a:facebook:react:*, but the npm package.json
 			// names neither the vendor nor the author. Without
@@ -535,6 +540,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			pkg.ConanPkg,
 			candidateKey{PkgName: "poco"},
 			candidateAddition{AdditionalVendors: []string{"pocoproject"}},
+		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "libxml2"},
+			candidateAddition{AdditionalVendors: []string{"xmlsoft"}},
 		},
 	})
 

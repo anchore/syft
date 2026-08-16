@@ -13,6 +13,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 	completionTester := packagemetadata.NewCompletionTester(t,
 		pkg.BinarySignature{},
 		pkg.BitnamiSBOMEntry{},
+		pkg.BunLockEntry{},
 		pkg.CocoaPodfileLockEntry{},
 		pkg.ConanV1LockEntry{},
 		pkg.ConanV2LockEntry{}, // the field Username might be the username of either the package originator or the supplier (unclear currently)
@@ -30,6 +31,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.GolangModuleEntry{},
 		pkg.GolangSourceEntry{},
 		pkg.HomebrewFormula{},
+		pkg.AppleAppBundleEntry{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.LinuxKernel{},
@@ -56,6 +58,10 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.YarnLockEntry{},
 		pkg.TerraformLockProviderEntry{},
 		pkg.GGUFFileHeader{},
+		pkg.SafeTensorsModelInfo{},
+		pkg.DenoLockEntry{},
+		pkg.DenoRemoteLockEntry{},
+		pkg.VcpkgManifest{},
 	)
 	tests := []struct {
 		name       string

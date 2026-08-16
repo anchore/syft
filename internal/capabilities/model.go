@@ -82,6 +82,7 @@ type CatalogerEntry struct {
 	Detectors       []Detector    `yaml:"detectors,omitempty" json:"detectors,omitempty"`                 // AUTO-GENERATED - detection methods (only for type=custom)
 	MetadataTypes   []string      `yaml:"metadata_types,omitempty" json:"metadata_types,omitempty"`       // AUTO-GENERATED - pkg metadata types emitted (only for type=custom)
 	PackageTypes    []string      `yaml:"package_types,omitempty" json:"package_types,omitempty"`         // AUTO-GENERATED - package types emitted (only for type=custom)
+	PURLTypes       []string      `yaml:"purl_types,omitempty" json:"purl_types,omitempty"`               // AUTO-GENERATED - PURL types derived from package_types (only for type=custom)
 	JSONSchemaTypes []string      `yaml:"json_schema_types,omitempty" json:"json_schema_types,omitempty"` // AUTO-GENERATED - JSON schema type names (UpperCamelCase)
 	Capabilities    CapabilitySet `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`           // MANUAL - config-driven capability definitions (only for type=custom)
 }
@@ -92,6 +93,7 @@ type Parser struct {
 	Detector        Detector      `yaml:"detector" json:"detector"`                                       // AUTO-GENERATED - how artifacts are detected
 	MetadataTypes   []string      `yaml:"metadata_types,omitempty" json:"metadata_types,omitempty"`       // AUTO-GENERATED - pkg metadata types emitted by this parser
 	PackageTypes    []string      `yaml:"package_types,omitempty" json:"package_types,omitempty"`         // AUTO-GENERATED - package types emitted by this parser
+	PURLTypes       []string      `yaml:"purl_types,omitempty" json:"purl_types,omitempty"`               // AUTO-GENERATED - PURL types derived from package_types
 	JSONSchemaTypes []string      `yaml:"json_schema_types,omitempty" json:"json_schema_types,omitempty"` // AUTO-GENERATED - JSON schema type names (UpperCamelCase)
 	Capabilities    CapabilitySet `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`           // MANUAL - config-driven capability definitions
 }

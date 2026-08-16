@@ -29,6 +29,7 @@ func TestAllFormatsConvertable(t *testing.T) {
 		{to: "spdx-json", from: "cyclonedx-json"},
 		{to: "cyclonedx-json", from: "syft-json"},
 		{to: "cyclonedx-json", from: "spdx-json"},
+		{to: "spdx-json@3", from: "spdx-tag-value@2.1"},
 	}
 
 	for _, test := range tests {

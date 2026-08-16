@@ -381,7 +381,14 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"spring-jms":                                  "org.springframework",
 	"spring-jmx":                                  "org.springframework",
 	"spring-jpa":                                  "org.springframework",
-	"spring-ldap":                                 "org.springframework",
+	"spring-ldap":                                 "org.springframework.ldap",
+	"spring-ldap-core":                            "org.springframework.ldap",
+	"spring-ldap-core-tiger":                      "org.springframework.ldap",
+	"spring-ldap-ldif-batch":                      "org.springframework.ldap",
+	"spring-ldap-ldif-core":                       "org.springframework.ldap",
+	"spring-ldap-odm":                             "org.springframework.ldap",
+	"spring-ldap-test":                            "org.springframework.ldap",
+	"spring-ldap-tiger":                           "org.springframework.ldap",
 	"spring-messaging":                            "org.springframework",
 	"spring-mock":                                 "org.springframework",
 	"spring-ojb":                                  "org.springframework",
@@ -1914,4 +1921,16 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"kafka_2.8.2":                                              "org.apache.kafka",
 	"kafka_2.9.1":                                              "org.apache.kafka",
 	"kafka_2.9.2":                                              "org.apache.kafka",
+
+	// legacy "Jackson 1.x" (aka "jackson-asl") artifacts predate the convention of embedding
+	// META-INF/maven/.../pom.properties in the jar, so groupIDFromKnownPackageList is the only
+	// way to recover the correct group ID for jars built without that metadata (e.g. Ant-built
+	// jars from before ~2014). Without this, the group ID falls back to the artifact name itself,
+	// producing purls that do not match the vulnerability database's namespace.
+	// See https://github.com/anchore/syft/issues/4598
+	"jackson-core-asl":   "org.codehaus.jackson",
+	"jackson-mapper-asl": "org.codehaus.jackson",
+	"jackson-jaxrs":      "org.codehaus.jackson",
+	"jackson-xc":         "org.codehaus.jackson",
+	"jackson-smile":      "org.codehaus.jackson",
 }

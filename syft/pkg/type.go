@@ -52,8 +52,10 @@ const (
 	SwiftPkg                Type = "swift"
 	SwiplPackPkg            Type = "swiplpack"
 	TerraformPkg            Type = "terraform"
+	VcpkgPkg                Type = "vcpkg"
 	WordpressPluginPkg      Type = "wordpress-plugin"
 	HomebrewPkg             Type = "homebrew"
+	AppleAppBundlePkg       Type = "apple-app-bundle"
 	ModelPkg                Type = "model"
 )
 
@@ -97,8 +99,10 @@ var AllPkgs = []Type{
 	SwiftPkg,
 	SwiplPackPkg,
 	TerraformPkg,
+	VcpkgPkg,
 	WordpressPluginPkg,
 	HomebrewPkg,
+	AppleAppBundlePkg,
 	ModelPkg,
 }
 
@@ -124,7 +128,7 @@ func (t Type) PackageURLType() string {
 	case DebPkg:
 		return "deb"
 	case DotnetPkg:
-		return "dotnet"
+		return packageurl.TypeNuget
 	case ErlangOTPPkg:
 		return packageurl.TypeOTP
 	case GemPkg:
@@ -172,6 +176,8 @@ func (t Type) PackageURLType() string {
 		return "swiplpack"
 	case TerraformPkg:
 		return "terraform"
+	case VcpkgPkg:
+		return "vcpkg"
 	case WordpressPluginPkg:
 		return "wordpress-plugin"
 	case HomebrewPkg:
@@ -220,7 +226,7 @@ func TypeByName(name string) Type {
 		return CondaPkg
 	case packageurl.TypePub:
 		return DartPubPkg
-	case "dotnet": // here to support legacy use cases
+	case "dotnet", packageurl.TypeNuget: // "dotnet" is here to support legacy use cases; "nuget" is the canonical purl type
 		return DotnetPkg
 	case packageurl.TypeCocoapods:
 		return CocoapodsPkg
@@ -260,6 +266,8 @@ func TypeByName(name string) Type {
 		return SwiplPackPkg
 	case "terraform":
 		return TerraformPkg
+	case "vcpkg":
+		return VcpkgPkg
 	case "wordpress-plugin":
 		return WordpressPluginPkg
 	case "homebrew":

@@ -1,35 +1,45 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import os
 import glob
-import sys
-import json
 import hashlib
-
+import json
+import os
+import sys
 
 IGNORED_PREFIXES = []
 
 
 def find_fingerprints_and_check_dirs(base_dir):
-    all_fingerprints = set(glob.glob(os.path.join(base_dir, '**', 'test*', '**', '*.fingerprint'), recursive=True))
+    all_fingerprints = set(
+        glob.glob(
+            os.path.join(base_dir, "**", "test*", "**", "*.fingerprint"), recursive=True
+        )
+    )
 
-    all_fingerprints = {os.path.relpath(fp) for fp in all_fingerprints
-                        if not any(fp.startswith(prefix) for prefix in IGNORED_PREFIXES)}
+    all_fingerprints = {
+        os.path.relpath(fp)
+        for fp in all_fingerprints
+        if not any(fp.startswith(prefix) for prefix in IGNORED_PREFIXES)
+    }
 
     if not all_fingerprints:
         show("No .fingerprint files or cache directories found.")
         exit(1)
 
-    missing_content = []
+    orphan_fingerprints = []
+    empty_content = []
     valid_paths = set()
     fingerprint_contents = []
 
     for fingerprint in all_fingerprints:
-        path = fingerprint.replace('.fingerprint', '')
+        path = fingerprint.replace(".fingerprint", "")
 
         if not os.path.exists(path):
-            missing_content.append(path)
+            # paired content path is entirely missing — the .fingerprint is likely
+            # leftover from a moved/deleted source (testdata trees are git-ignored,
+            # so they persist locally across rename refactors)
+            orphan_fingerprints.append(fingerprint)
             continue
 
         if not os.path.isdir(path):
@@ -39,13 +49,13 @@ def find_fingerprints_and_check_dirs(base_dir):
         if os.listdir(path):
             valid_paths.add(path)
         else:
-            missing_content.append(path)
+            empty_content.append(path)
 
-        with open(fingerprint, 'r') as f:
+        with open(fingerprint, "r") as f:
             content = f.read().strip()
             fingerprint_contents.append((fingerprint, content))
 
-    return sorted(valid_paths), missing_content, fingerprint_contents
+    return sorted(valid_paths), empty_content, orphan_fingerprints, fingerprint_contents
 
 
 def parse_fingerprint_contents(fingerprint_content):
@@ -59,7 +69,9 @@ def parse_fingerprint_contents(fingerprint_content):
 def calculate_sha256(fingerprint_contents):
     sorted_fingerprint_contents = sorted(fingerprint_contents, key=lambda x: x[0])
 
-    concatenated_contents = ''.join(content for _, content in sorted_fingerprint_contents)
+    concatenated_contents = "".join(
+        content for _, content in sorted_fingerprint_contents
+    )
 
     sha256_hash = hashlib.sha256(concatenated_contents.encode()).hexdigest()
 
@@ -68,7 +80,7 @@ def calculate_sha256(fingerprint_contents):
 
 def calculate_file_sha256(file_path):
     sha256_hash = hashlib.sha256()
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
@@ -79,17 +91,28 @@ def show(*s: str):
 
 
 def main(file_path: str | None):
-    base_dir = '.'
-    valid_paths, missing_content, fingerprint_contents = find_fingerprints_and_check_dirs(base_dir)
+    base_dir = "."
+    valid_paths, empty_content, orphan_fingerprints, fingerprint_contents = (
+        find_fingerprints_and_check_dirs(base_dir)
+    )
 
-    if missing_content:
-        show("The following paths are missing or have no content, but have corresponding .fingerprint files:")
-        for path in sorted(missing_content):
+    if empty_content:
+        show(
+            "The following paths exist but are empty, and have corresponding .fingerprint files:"
+        )
+        for path in sorted(empty_content):
             show(f"- {path}")
         # when adding new cache directories there is a time where it is not possible to have this directory without
         # running the tests first... but this step is a prerequisite for running the tests. We should not block on this.
-        # show("Please ensure these paths exist and have content if they are directories.")
-        # exit(1)
+
+    if orphan_fingerprints:
+        show(
+            "The following .fingerprint files reference paths that no longer exist "
+            "(likely leftover from a moved/deleted cataloger — safe to delete, "
+            "or run `task prune-orphan-fingerprints`):"
+        )
+        for fp in sorted(orphan_fingerprints):
+            show(f"- {fp}")
 
     sha256_hash = calculate_sha256(fingerprint_contents)
 
@@ -101,30 +124,24 @@ def main(file_path: str | None):
                 file_digest = calculate_file_sha256(fingerprint_file)
 
                 # Parse the fingerprint file to get the digest/path tuples
-                with open(fingerprint_file, 'r') as f:
+                with open(fingerprint_file, "r") as f:
                     fingerprint_content = f.read().strip()
                     input_map = parse_fingerprint_contents(fingerprint_content)
 
-                paths_with_digests.append({
-                    "path": path,
-                    "digest": file_digest,
-                    "input": input_map
-                })
+                paths_with_digests.append(
+                    {"path": path, "digest": file_digest, "input": input_map}
+                )
 
         except Exception as e:
             show(f"Error processing {fingerprint_file}: {e}")
             raise e
 
-
-    output = {
-        "digest": sha256_hash,
-        "paths": paths_with_digests
-    }
+    output = {"digest": sha256_hash, "paths": paths_with_digests}
 
     content = json.dumps(output, indent=2, sort_keys=True)
 
     if file_path:
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             f.write(content)
 
     print(content)

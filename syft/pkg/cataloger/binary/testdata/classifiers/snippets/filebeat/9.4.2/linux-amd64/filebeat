@@ -1,0 +1,8 @@
+name: filebeat
+offset: 156731953
+length: 100
+snippetSha256: e41d8a6af2f8614feab3bc1875622c4e1a817198d2db64230af14c82f5655550
+fileSha256: 52919ee04ec37e4ee86dbe5f6bd216f0d95e9dab037c230a582a921c4a677dcc
+
+### byte snippet to follow ###
+*.ymlforcestdinsetupTest 9.4.2%s %w8.0.0sse41sse42ssse3int16int32int64uint8arraysliceInts:Ptrs:value

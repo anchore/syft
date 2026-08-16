@@ -24,6 +24,8 @@ catalogers:
           - pkg.LuaRocksPackage
         package_types: # AUTO-GENERATED
           - lua-rocks
+        purl_types: # AUTO-GENERATED
+          - luarocks
         json_schema_types: # AUTO-GENERATED
           - LuarocksPackage
         capabilities: # MANUAL - preserved across regeneration

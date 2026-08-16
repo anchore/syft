@@ -72,7 +72,7 @@ func (c *goModCataloger) parseGoModFile(ctx context.Context, resolver file.Resol
 
 	// only use go.mod packages NOT found in source analysis
 	goModPackages := c.createGoModPackages(ctx, resolver, modFile, sourceModules, reader, digests)
-	c.applyReplaceDirectives(ctx, resolver, modFile, goModPackages, reader, digests)
+	c.applyReplaceDirectives(ctx, resolver, modFile, sourceModules, goModPackages, reader, digests)
 	c.applyExcludeDirectives(modFile, goModPackages)
 
 	pkgs = c.assembleResults(catalogedModules, goModPackages)
@@ -365,8 +365,11 @@ func (c *goModCataloger) createGoModPackages(ctx context.Context, resolver file.
 }
 
 // applyReplaceDirectives processes replace directives from go.mod
-func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver file.Resolver, modFile *modfile.File, goModPackages map[string]pkg.Package, reader file.LocationReadCloser, digests map[string]string) {
+func (c *goModCataloger) applyReplaceDirectives(ctx context.Context, resolver file.Resolver, modFile *modfile.File, sourceModules map[string]*packages.Module, goModPackages map[string]pkg.Package, reader file.LocationReadCloser, digests map[string]string) {
 	for _, m := range modFile.Replace {
+		if sourceModules != nil && sourceModules[m.Old.Path] != nil {
+			continue
+		}
 		lics := c.licenseResolver.getLicenses(ctx, resolver, m.New.Path, m.New.Version)
 		var finalPath string
 		if !strings.HasPrefix(m.New.Path, ".") && !strings.HasPrefix(m.New.Path, "/") {

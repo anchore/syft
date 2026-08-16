@@ -147,6 +147,14 @@ func Test_additionalVendors(t *testing.T) {
 			vendor:   "my-vendor",
 			expected: []string{"awesome-vendor-addition", "one-good-addition", "another-good-addition"},
 		},
+		{
+			name:         "default additionsnpm redis gets redisjs vendor",
+			allAdditions: defaultCandidateAdditions,
+			ty:           pkg.NpmPkg,
+			pkgName:      "redis",
+			vendor:       "redis",
+			expected:     []string{"redis.js"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -264,4 +272,9 @@ func Test_apkCandidateAdditions_libpcap(t *testing.T) {
 	got := findAdditionalVendors(defaultCandidateAdditions, pkg.ApkPkg, "libpcap", "")
 	assert.Contains(t, got, "tcpdump",
 		"apk package libpcap should map to the tcpdump vendor for NVD matching")
+}
+
+func Test_defaultCandidateAdditions_conan_libxml2(t *testing.T) {
+	vendors := findAdditionalVendors(defaultCandidateAdditions, pkg.ConanPkg, "libxml2", "")
+	assert.Contains(t, vendors, "xmlsoft")
 }

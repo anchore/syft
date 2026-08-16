@@ -24,6 +24,8 @@ catalogers:
           - pkg.DartPubspec
         package_types: # AUTO-GENERATED
           - dart-pub
+        purl_types: # AUTO-GENERATED
+          - pub
         json_schema_types: # AUTO-GENERATED
           - DartPubspec
         capabilities: # MANUAL - preserved across regeneration
@@ -65,6 +67,8 @@ catalogers:
           - pkg.DartPubspecLockEntry
         package_types: # AUTO-GENERATED
           - dart-pub
+        purl_types: # AUTO-GENERATED
+          - pub
         json_schema_types: # AUTO-GENERATED
           - DartPubspecLockEntry
         capabilities: # MANUAL - preserved across regeneration

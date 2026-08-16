@@ -42,7 +42,7 @@ func parseDpkgDB(ctx context.Context, resolver file.Resolver, env *generic.Envir
 
 	dbLoc := reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
 	var pkgs []pkg.Package
-	_ = sync.CollectSlice(&ctx, cataloging.ExecutorFile, sync.ToSeq(metadata), func(m pkg.DpkgDBEntry) (pkg.Package, error) {
+	_ = sync.CollectSlice(&ctx, cataloging.ExecutorFile, sync.ToSeq(metadata), func(m dpkgExtractedMetadata) (pkg.Package, error) {
 		return newDpkgPackage(ctx, m, dbLoc, resolver, env.LinuxRelease, findDpkgInfoFiles(m.Package, resolver, reader.Location)...), nil
 	}, &pkgs)
 
@@ -77,10 +77,12 @@ func findDpkgInfoFiles(name string, resolver file.Resolver, dbLocation file.Loca
 	return locations
 }
 
-// parseDpkgStatus is a parser function for Debian DB status contents, returning all Debian packages listed.
-func parseDpkgStatus(reader io.Reader) ([]pkg.DpkgDBEntry, error) {
+// parseDpkgStatus is a parser function for Debian DB status contents, returning the raw metadata for all Debian
+// packages listed. Conversion to pkg.DpkgDBEntry is deferred to the package-building stage so that fields which
+// are not part of the final entry (e.g. License) remain available to the caller.
+func parseDpkgStatus(reader io.Reader) ([]dpkgExtractedMetadata, error) {
 	buffedReader := bufio.NewReader(reader)
-	var metadata []pkg.DpkgDBEntry
+	var metadata []dpkgExtractedMetadata
 
 	continueProcessing := true
 	for continueProcessing {
@@ -117,10 +119,41 @@ type dpkgExtractedMetadata struct {
 	Depends       string `mapstructure:"Depends"`
 	PreDepends    string `mapstructure:"PreDepends"` // note: original doc is Pre-Depends
 	Status        string `mapstructure:"Status"`
+	License       string `mapstructure:"License"`
+	Conffiles     string `mapstructure:"Conffiles"`
+}
+
+func (d *dpkgExtractedMetadata) toDpkgEntry() pkg.DpkgDBEntry {
+	entry := pkg.DpkgDBEntry{
+		Package:       d.Package,
+		Source:        d.Source,
+		Version:       d.Version,
+		SourceVersion: d.SourceVersion,
+		Architecture:  d.Architecture,
+		Maintainer:    d.Maintainer,
+		InstalledSize: d.InstalledSize,
+		Description:   d.Description,
+		Provides:      splitPkgList(d.Provides),
+		Depends:       splitPkgList(d.Depends),
+		PreDepends:    splitPkgList(d.PreDepends),
+		// note: licenses and conffiles are handled separately
+	}
+
+	// there may be an optional conffiles section that we should persist as files
+	if d.Conffiles != "" {
+		entry.Files = parseDpkgConffileInfo(strings.NewReader(d.Conffiles))
+	}
+
+	if entry.Files == nil {
+		// ensure the default value for a collection is never nil since this may be shown as JSON
+		entry.Files = make([]pkg.DpkgFileRecord, 0)
+	}
+
+	return entry
 }
 
 // parseDpkgStatusEntry returns an individual Dpkg entry, or returns errEndOfPackages if there are no more packages to parse from the reader.
-func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
+func parseDpkgStatusEntry(reader *bufio.Reader) (*dpkgExtractedMetadata, error) {
 	var retErr error
 	dpkgFields, err := extractAllFields(reader)
 	if err != nil {
@@ -154,33 +187,7 @@ func parseDpkgStatusEntry(reader *bufio.Reader) (*pkg.DpkgDBEntry, error) {
 		return nil, retErr
 	}
 
-	entry := pkg.DpkgDBEntry{
-		Package:       raw.Package,
-		Source:        raw.Source,
-		Version:       raw.Version,
-		SourceVersion: raw.SourceVersion,
-		Architecture:  raw.Architecture,
-		Maintainer:    raw.Maintainer,
-		InstalledSize: raw.InstalledSize,
-		Description:   raw.Description,
-		Provides:      splitPkgList(raw.Provides),
-		Depends:       splitPkgList(raw.Depends),
-		PreDepends:    splitPkgList(raw.PreDepends),
-	}
-
-	// there may be an optional conffiles section that we should persist as files
-	if conffilesSection, exists := dpkgFields["Conffiles"]; exists && conffilesSection != nil {
-		if sectionStr, ok := conffilesSection.(string); ok {
-			entry.Files = parseDpkgConffileInfo(strings.NewReader(sectionStr))
-		}
-	}
-
-	if entry.Files == nil {
-		// ensure the default value for a collection is never nil since this may be shown as JSON
-		entry.Files = make([]pkg.DpkgFileRecord, 0)
-	}
-
-	return &entry, retErr
+	return &raw, retErr
 }
 
 func splitPkgList(pkgList string) (ret []string) {

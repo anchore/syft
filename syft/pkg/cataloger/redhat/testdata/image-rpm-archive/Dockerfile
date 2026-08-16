@@ -1,26 +1,24 @@
 
 FROM --platform=linux/amd64 rockylinux:9 AS rpm-downloader
 
-# download a signed RPM (PostgreSQL in this example, known to be signed)
-# using PostgreSQL official RPM which is signed with their GPG key
-# $ rpm -Kv postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm
-#   postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm:
-#      Header V4 RSA/SHA256 Signature, key ID 08b40d20: NOKEY
-#      Header SHA256 digest: OK
-#      Header SHA1 digest: OK
-#      Payload SHA256 digest: OK
-#      MD5 digest: OK
+# download a signed RPM from the Rocky Linux 9.3 vault. Rocky Linux freezes
+# minor-version contents in the vault indefinitely, which gives us a stable
+# upstream that won't rotate the way distro "current" repos do (the previous
+# fixture used a PostgreSQL repo and broke when PG removed older 14.x RPMs).
 #
-# $ rpm -ivh --nodeps --force postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm
-#   warning: postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm: Header V4 RSA/SHA256 Signature, key ID 08b40d20: NOKEY
-#   Verifying...                          ################################# [100%]
-#   Preparing...                          ################################# [100%]
+# $ rpm -Kv basesystem-11-13.el9.0.1.noarch.rpm
+#   basesystem-11-13.el9.0.1.noarch.rpm:
+#       Header V4 RSA/SHA256 Signature, key ID 350d275d: NOKEY
+#       Header SHA256 digest: OK
+#       Header SHA1 digest: OK
+#       Payload SHA256 digest: OK
+#       MD5 digest: OK
 #
-# $ rpm -q --qf '%{NAME}-%{VERSION}-%{RELEASE} %{RSAHEADER:pgpsig}\n' postgresql14-server-14.10-1PGDG.rhel9.x86_64
-#   postgresql14-server-14.10-1PGDG.rhel9 RSA/SHA256, Tue Jan  2 16:45:56 2024, Key ID 40bca2b408b40d20
+# $ rpm -qp --qf '%{NAME}-%{VERSION}-%{RELEASE} %{RSAHEADER:pgpsig}\n' basesystem-11-13.el9.0.1.noarch.rpm
+#   basesystem-11-13.el9.0.1 RSA/SHA256, Thu Feb 29 17:37:22 2024, Key ID 702d426d350d275d
 
-RUN curl -O https://download.postgresql.org/pub/repos/yum/14/redhat/rhel-9-x86_64/postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm
+RUN curl -O https://dl.rockylinux.org/vault/rocky/9.3/BaseOS/x86_64/os/Packages/b/basesystem-11-13.el9.0.1.noarch.rpm
 
 FROM scratch
 
-COPY --from=rpm-downloader /postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm /postgresql14-server-14.10-1PGDG.rhel9.x86_64.rpm
+COPY --from=rpm-downloader /basesystem-11-13.el9.0.1.noarch.rpm /basesystem-11-13.el9.0.1.noarch.rpm

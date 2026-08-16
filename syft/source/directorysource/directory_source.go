@@ -145,6 +145,9 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		// check exclusions for supported paths, these are all relative to the "scan root"
 		if strings.HasPrefix(exclusion, "./") || strings.HasPrefix(exclusion, "*/") || strings.HasPrefix(exclusion, "**/") {
 			exclusion = strings.TrimPrefix(exclusion, "./")
+			// a trailing slash signals a directory but is otherwise discarded by doublestar.Match,
+			// causing the pattern to silently match nothing (see issue #4839)
+			exclusion = strings.TrimSuffix(exclusion, "/")
 			exclusions[idx] = root + exclusion
 		} else {
 			errors = append(errors, exclusion)

@@ -156,7 +156,7 @@ func parseErlangString(data []byte, i *int) (erlangNode, error) {
 		}
 		if c == '\\' {
 			*i++
-			if len(data) >= *i {
+			if *i >= len(data) {
 				return node(nil), fmt.Errorf("invalid escape without closed string at %d", *i)
 			}
 			c = data[*i]

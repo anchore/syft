@@ -275,9 +275,15 @@ func copyBinaryFromContainer(containerName, containerPath, destinationPath, dige
 		return err
 	}
 
-	// ensure permissions are 600 for destination
-	if err := os.Chmod(destinationPath, 0600); err != nil {
-		return fmt.Errorf("unable to set permissions on file %q: %w", destinationPath, err)
+	// ensure permissions are 600 for destination (if it is not a symlink)
+	info, err := os.Lstat(destinationPath)
+	if err != nil {
+		return fmt.Errorf("unable to stat file %q: %w", destinationPath, err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		if err := os.Chmod(destinationPath, 0600); err != nil {
+			return fmt.Errorf("unable to set permissions on file %q: %w", destinationPath, err)
+		}
 	}
 
 	// capture digest file

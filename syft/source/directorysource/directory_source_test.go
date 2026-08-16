@@ -177,6 +177,18 @@ func Test_DirectorySource_Exclusions(t *testing.T) {
 		},
 		{
 			input: "testdata/image-simple",
+			desc:  "exclude explicit directory with trailing slash (issue #4839)",
+			glob:  "**",
+			expected: []string{
+				"Dockerfile",
+				"file-1.txt",
+				"file-2.txt",
+				//"target/really/nested/file-3.txt", // explicitly skipped
+			},
+			exclusions: []string{"./target/"},
+		},
+		{
+			input: "testdata/image-simple",
 			desc:  "exclude explicit file relative to the root",
 			glob:  "**",
 			expected: []string{
@@ -326,6 +338,14 @@ func Test_getDirectoryExclusionFunctions_crossPlatform(t *testing.T) {
 			root:     "/",
 			path:     "/usr/var/lib",
 			exclude:  "**/var/lib",
+			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
+			walkHint: fs.SkipDir,
+		},
+		{
+			desc:     "directory exclusion with trailing slash (issue #4839)",
+			root:     "/usr/var",
+			path:     "/usr/var/lib",
+			exclude:  "./lib/",
 			finfo:    file.ManualInfo{ModeValue: os.ModeDir},
 			walkHint: fs.SkipDir,
 		},

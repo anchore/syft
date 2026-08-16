@@ -30,6 +30,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 			},
 		},
 		{
+			Name:      "urllib3",
+			Version:   "1.26.20",
+			PURL:      "pkg:pypi/urllib3@1.26.20",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
+		{
 			Name:      "foo",
 			Version:   "1.0.0",
 			PURL:      "pkg:pypi/foo@1.0.0",
@@ -126,6 +138,18 @@ func TestParseRequirementsTxt(t *testing.T) {
 			Metadata: pkg.PythonRequirementsEntry{
 				Name:              "FrIeNdLy-_-bArD",
 				VersionConstraint: "== 1.0.0",
+			},
+		},
+		{
+			Name:      "local-version",
+			Version:   "1.2.3+gcr.2",
+			PURL:      "pkg:pypi/local-version@1.2.3%2Bgcr.2",
+			Locations: locations,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata: pkg.PythonRequirementsEntry{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
 			},
 		},
 	}
@@ -295,6 +319,14 @@ func Test_newRequirement(t *testing.T) {
 			},
 		},
 		{
+			name: "arbitrary equality",
+			raw:  "urllib3===1.26.20",
+			want: &unprocessedRequirement{
+				Name:              "urllib3",
+				VersionConstraint: "===1.26.20",
+			},
+		},
+		{
 			name: "comment + constraint",
 			raw:  "Mopidy-Dirble ~= 1.1 # Compatible release. Same as >= 1.1, == 1.*",
 			want: &unprocessedRequirement{
@@ -337,6 +369,128 @@ func Test_newRequirement(t *testing.T) {
 				Markers:           "sys_platform == 'win32'",
 			},
 		},
+		{
+			name: "local version identifier",
+			raw:  "local-version == 1.2.3+gcr.2",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+gcr.2",
+			},
+		},
+		{
+			name: "local version identifier with markers",
+			raw:  "local-version == 1.2.3+ubuntu1 ; sys_platform == 'linux'",
+			want: &unprocessedRequirement{
+				Name:              "local-version",
+				VersionConstraint: "== 1.2.3+ubuntu1",
+				Markers:           "sys_platform == 'linux'",
+			},
+		},
+		{
+			name: "epoch",
+			raw:  "pkg == 1!2.0.0",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1!2.0.0",
+			},
+		},
+		{
+			name: "pre-release",
+			raw:  "pkg == 1.0rc1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0rc1",
+			},
+		},
+		{
+			name: "pre-release with dash separators",
+			raw:  "pkg == 1.0-alpha-1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0-alpha-1",
+			},
+		},
+		{
+			name: "pre-release with underscore separators",
+			raw:  "pkg == 1.0_beta_2",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0_beta_2",
+			},
+		},
+		{
+			name: "post-release",
+			raw:  "pkg == 1.0.post1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0.post1",
+			},
+		},
+		{
+			name: "implicit post-release",
+			raw:  "pkg == 1.0-1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0-1",
+			},
+		},
+		{
+			name: "dev-release",
+			raw:  "pkg == 1.0.dev1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0.dev1",
+			},
+		},
+		{
+			name: "local version with dash separator",
+			raw:  "pkg == 1.0+ubuntu-1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0+ubuntu-1",
+			},
+		},
+		{
+			name: "local version with underscore separator",
+			raw:  "pkg == 1.0+ubuntu_1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1.0+ubuntu_1",
+			},
+		},
+		{
+			name: "all segments combined",
+			raw:  "pkg == 1!1.0a1.post2.dev3+local.1",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1!1.0a1.post2.dev3+local.1",
+			},
+		},
+		{
+			name: "release wildcard",
+			raw:  "pkg == 2.*",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 2.*",
+			},
+		},
+		{
+			name: "epoch with markers and hashes",
+			raw:  "pkg == 1!2.0 ; python_version < '3.8' --hash=sha256:abc123",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: "== 1!2.0",
+				Markers:           "python_version < '3.8' --hash=sha256:abc123",
+			},
+		},
+		{
+			name: "compound constraint with exclusion is unaffected",
+			raw:  "pkg >= 1.0.0, != 1.1.0, < 2.0.0",
+			want: &unprocessedRequirement{
+				Name:              "pkg",
+				VersionConstraint: ">= 1.0.0, != 1.1.0, < 2.0.0",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -362,6 +516,51 @@ func Test_parseVersion(t *testing.T) {
 			name:    "exact constraint",
 			version: " == 1.0.0 ",
 			want:    "1.0.0",
+		},
+		{
+			name:    "arbitrary equality constraint",
+			version: " === 1.26.20 ",
+			want:    "1.26.20",
+		},
+		{
+			name:    "local version identifier",
+			version: " == 1.2.3+gcr.2 ",
+			want:    "1.2.3+gcr.2",
+		},
+		{
+			name:    "arbitrary equality with local version identifier",
+			version: " === 1.2.3+ubuntu1 ",
+			want:    "1.2.3+ubuntu1",
+		},
+		{
+			name:    "pre-release",
+			version: "== 1.0rc1",
+			want:    "1.0rc1",
+		},
+		{
+			name:    "pre-release with dash separators",
+			version: "== 1.0-alpha-1",
+			want:    "1.0-alpha-1",
+		},
+		{
+			name:    "post-release",
+			version: "== 1.0.post1",
+			want:    "1.0.post1",
+		},
+		{
+			name:    "dev-release",
+			version: "== 1.0.dev1",
+			want:    "1.0.dev1",
+		},
+		{
+			name:    "local version with dash separator",
+			version: "== 1.0+ubuntu-1",
+			want:    "1.0+ubuntu-1",
+		},
+		{
+			name:    "all segments combined",
+			version: "== 1.0a1.post2.dev3+local.1",
+			want:    "1.0a1.post2.dev3+local.1",
 		},
 		{
 			name:    "resolve lowest, simple constraint",

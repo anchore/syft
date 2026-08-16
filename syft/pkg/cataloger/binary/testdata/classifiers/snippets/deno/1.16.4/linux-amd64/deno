@@ -1,0 +1,9 @@
+name: deno
+offset: 4219127
+length: 120
+snippetSha256: 97e369d4eed74c5b1ff7d578c9de100c71136dfcc54f19455b2938671d1a9640
+fileSha256: f3af5cf3838c0cd01de1acaaa716de804ad08c716927af1848aa9664b96a737c
+
+### byte snippet to follow ###
+g ctrl+d or close()
+Error: cli/tools/standalone.rsdeno-ab286750a8c87215a9651efb11fcc620f29140051.16.4release/vdlwindowsh

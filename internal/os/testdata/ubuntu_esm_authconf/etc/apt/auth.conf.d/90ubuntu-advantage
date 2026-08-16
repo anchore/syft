@@ -1,0 +1,2 @@
+machine esm.ubuntu.com/infra/ubuntu/ login bearer password DUMMYTOKENREDACTED  # ubuntu-pro-client
+machine esm.ubuntu.com/apps/ubuntu/ login bearer password DUMMYTOKENREDACTED  # ubuntu-pro-client

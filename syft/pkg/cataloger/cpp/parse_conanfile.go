@@ -31,15 +31,20 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 			return nil, nil, fmt.Errorf("failed to parse conanfile.txt file: %w", err)
 		}
 
+		trimmed := strings.TrimSpace(line)
+
+		// skip blank lines and comments without affecting section state
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
 		switch {
 		case strings.Contains(line, "[requires]"):
 			inRequirements = true
-		case strings.ContainsAny(line, "[]") || strings.HasPrefix(strings.TrimSpace(line), "#"):
+			continue
+		case strings.ContainsAny(line, "[]"):
 			inRequirements = false
-		}
-
-		m := pkg.ConanfileEntry{
-			Ref: strings.TrimSpace(line),
+			continue
 		}
 
 		if !inRequirements {
@@ -47,7 +52,7 @@ func parseConanfile(_ context.Context, _ file.Resolver, _ *generic.Environment, 
 		}
 
 		p := newConanfilePackage(
-			m,
+			pkg.ConanfileEntry{Ref: trimmed},
 			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
 		if p == nil {

@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -141,10 +142,11 @@ func fileError(filename string, err error) (nativeImage, error) {
 // newElf reads a Native Image from an ELF executable.
 func newElf(filename string, r io.ReaderAt) (nativeImage, error) {
 	// First attempt to read an ELF file.
-	bi, err := elf.NewFile(r)
+	bi, err := elfutil.NewFile(r)
 
 	if err != nil {
 		var fmtErr *elf.FormatError
+		// note: a size rejection from elfutil is not an *elf.FormatError, so it takes the branch below
 		if errors.As(err, &fmtErr) {
 			// this is not an elf file
 			log.WithFields("filename", filename, "error", err).Trace("not an ELF binary")
