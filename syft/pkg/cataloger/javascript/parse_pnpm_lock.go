@@ -1,8 +1,10 @@
 package javascript
 
 import (
+	"bytes"
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -188,23 +190,50 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
 	}
 
-	var lockfile struct {
-		Version string `yaml:"lockfileVersion"`
-	}
-	if err := yaml.Unmarshal(data, &lockfile); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml version: %w", err)
-	}
-
-	version, err := strconv.ParseFloat(lockfile.Version, 64)
-	if err != nil {
-		return nil, nil, fmt.Errorf("invalid lockfile version %q: %w", lockfile.Version, err)
-	}
-
-	parser := newPnpmLockfileParser(version)
-	pnpmPkgs, err := parser.Parse(version, data)
+	// pnpm-lock.yaml can be a multi-document YAML stream: pnpm keeps config
+	// dependencies and the pinned package-manager version in a leading document
+	// and the project's dependency graph in the next one. Reading only the first
+	// document yields a well-formed SBOM that contains pnpm's own release
+	// binaries and none of the project's dependencies.
+	docs, err := splitYAMLDocuments(data)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
 	}
+
+	var pnpmPkgs []pnpmPackage
+	var firstVersion float64
+	for i, doc := range docs {
+		var lockfile struct {
+			Version string `yaml:"lockfileVersion"`
+		}
+		if err := yaml.Unmarshal(doc, &lockfile); err != nil {
+			return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml version: %w", err)
+		}
+
+		version, err := strconv.ParseFloat(lockfile.Version, 64)
+		switch {
+		case err == nil:
+			if i == 0 {
+				firstVersion = version
+			}
+		case i == 0:
+			// Preserve the original error for a lockfile whose only document has
+			// no usable version.
+			return nil, nil, fmt.Errorf("invalid lockfile version %q: %w", lockfile.Version, err)
+		default:
+			// Later documents are expected to repeat lockfileVersion, but do not
+			// discard a document just because it omits one.
+			version = firstVersion
+		}
+
+		parser := newPnpmLockfileParser(version)
+		pkgs, err := parser.Parse(version, doc)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
+		}
+		pnpmPkgs = append(pnpmPkgs, pkgs...)
+	}
+	pnpmPkgs = dedupePnpmPackages(pnpmPkgs)
 
 	packages := make([]pkg.Package, 0, len(pnpmPkgs))
 	for _, p := range pnpmPkgs {
@@ -285,4 +314,55 @@ func toSortedSlice(packages map[string]pnpmPackage) []pnpmPackage {
 	})
 
 	return pkgs
+}
+
+// splitYAMLDocuments returns each document of a YAML stream separately. A
+// single-document file yields exactly one entry, so callers behave as before.
+func splitYAMLDocuments(data []byte) ([][]byte, error) {
+	dec := yaml.NewDecoder(bytes.NewReader(data))
+
+	var docs [][]byte
+	for {
+		var node yaml.Node
+		if err := dec.Decode(&node); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, err
+		}
+		if node.Kind == 0 {
+			// empty document
+			continue
+		}
+		doc, err := yaml.Marshal(&node)
+		if err != nil {
+			return nil, err
+		}
+		docs = append(docs, doc)
+	}
+	return docs, nil
+}
+
+// dedupePnpmPackages merges packages collected from every document, keeping the
+// entry that carries the most detail when the same name@version appears twice.
+func dedupePnpmPackages(pkgs []pnpmPackage) []pnpmPackage {
+	merged := make(map[string]pnpmPackage, len(pkgs))
+	for _, p := range pkgs {
+		key := p.Name + "@" + p.Version
+		existing, ok := merged[key]
+		if !ok {
+			merged[key] = p
+			continue
+		}
+		if existing.Integrity == "" {
+			existing.Integrity = p.Integrity
+		}
+		if len(existing.Dependencies) == 0 {
+			existing.Dependencies = p.Dependencies
+		}
+		// A package is only a dev dependency if every document agrees it is.
+		existing.Dev = existing.Dev && p.Dev
+		merged[key] = existing
+	}
+	return toSortedSlice(merged)
 }

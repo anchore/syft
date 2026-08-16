@@ -618,3 +618,60 @@ func setupNpmRegistry() (mux *http.ServeMux, serverURL string, teardown func()) 
 
 	return mux, server.URL, server.Close
 }
+
+// pnpm-lock.yaml can be a two-document YAML stream: pnpm records config
+// dependencies and the pinned package-manager version in the leading document
+// and the project's dependency graph in the next one. Reading only the first
+// document produces a well-formed SBOM holding pnpm's own release binaries and
+// none of the project's dependencies, with nothing to signal it is wrong.
+//
+// See https://github.com/anchore/syft/issues/5168
+func TestParsePnpmLock_MultiDocument(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/pnpm-multi-doc/pnpm-lock.yaml"
+
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "@pnpm/exe.linux-x64",
+			Version:   "12.0.0-rc.3",
+			PURL:      "pkg:npm/%40pnpm/exe.linux-x64@12.0.0-rc.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-/6xWaYfp6MEaJF+7AZIfCMp/fZX2jZlTLh2KVBEH0QOWk1ktaBlKNIJEgT4m6mieOLhNYMzCfLJImMbJDK1IwA=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			// The project's actual dependency, which lives in the second document.
+			Name:      "minimist",
+			Version:   "1.2.0",
+			PURL:      "pkg:npm/minimist@1.2.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-7Wl+Jz+IGWuSdgsQEJ4JunV0si/iMhg42MnQQG6h1R6TNeVenp4U9x5CC5v/gYqz/fENLQITAWXidNtVL0NNbw=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "pnpm",
+			Version:   "12.0.0-rc.3",
+			PURL:      "pkg:npm/pnpm@12.0.0-rc.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-JZ9fDGH+WLdRdTEikN3UxeZe6bpDY7dYwV0RX0+OrJ927vc72XbId4IJXeT++ebNFA9cF3IQ1swiXHEd/Maq0Q=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
