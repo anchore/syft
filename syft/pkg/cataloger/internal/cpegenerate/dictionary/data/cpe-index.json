@@ -40,6 +40,9 @@
       "github.com/charmbracelet/soft-serve": [
         "cpe:2.3:a:charm:soft_serve:*:*:*:*:*:go:*:*"
       ],
+      "github.com/cli/go-gh": [
+        "cpe:2.3:a:cli:go-gh:*:*:*:*:*:go:*:*"
+      ],
       "github.com/cloudflare/circl": [
         "cpe:2.3:a:cloudflare:circl:*:*:*:*:*:go:*:*"
       ],
@@ -304,6 +307,9 @@
       ],
       "Parameterized-Remote-Trigger": [
         "cpe:2.3:a:jenkins:parameterized_remote_trigger:*:*:*:*:*:jenkins:*:*"
+      ],
+      "PrioritySorter": [
+        "cpe:2.3:a:jenkins:priority_sorter:*:*:*:*:*:jenkins:*:*"
       ],
       "TestComplete": [
         "cpe:2.3:a:jenkins:testcomplete_support:*:*:*:*:*:jenkins:*:*"
@@ -897,6 +903,9 @@
       ],
       "ec2-deployment-dashboard": [
         "cpe:2.3:a:jenkins:deployment_dashboard:*:*:*:*:*:jenkins:*:*"
+      ],
+      "ec2-fleet": [
+        "cpe:2.3:a:jenkins:ec2_fleet:*:*:*:*:*:jenkins:*:*"
       ],
       "echarts-api": [
         "cpe:2.3:a:jenkins:echarts_api:*:*:*:*:*:jenkins:*:*"
@@ -2285,6 +2294,9 @@
       "zap-pipeline": [
         "cpe:2.3:a:jenkins:zap_pipeline:*:*:*:*:*:jenkins:*:*"
       ],
+      "zdevops": [
+        "cpe:2.3:a:jenkins:zowe_zdevops:*:*:*:*:*:jenkins:*:*"
+      ],
       "zephyr-enterprise-test-management": [
         "cpe:2.3:a:jenkins:zephyr_enterprise_test_management:*:*:*:*:*:jenkins:*:*"
       ],
@@ -2974,6 +2986,9 @@
       "blamer": [
         "cpe:2.3:a:blamer_project:blamer:*:*:*:*:*:node.js:*:*"
       ],
+      "bluebird": [
+        "cpe:2.3:a:bluebirdjs:bluebird:*:*:*:*:*:node.js:*:*"
+      ],
       "bmoor": [
         "cpe:2.3:a:bmoor_project:bmoor:*:*:*:*:*:node.js:*:*"
       ],
@@ -3131,6 +3146,9 @@
       ],
       "closurecompiler": [
         "cpe:2.3:a:closurecompiler_project:closurecompiler:*:*:*:*:*:node.js:*:*"
+      ],
+      "cloudinary": [
+        "cpe:2.3:a:cloudinary:cloudinary:*:*:*:*:*:node.js:*:*"
       ],
       "cloudpub-redis": [
         "cpe:2.3:a:cloudpub-redis_project:cloudpub-redis:*:*:*:*:*:node.js:*:*"
@@ -4182,6 +4200,9 @@
       "jdf-sass": [
         "cpe:2.3:a:jdf-sass_project:jdf-sass:*:*:*:*:*:node.js:*:*"
       ],
+      "jest": [
+        "cpe:2.3:a:openjsf:jest:*:*:*:*:*:node.js:*:*"
+      ],
       "jikes": [
         "cpe:2.3:a:jikes_project:jikes:*:*:*:*:*:node.js:*:*"
       ],
@@ -4372,6 +4393,9 @@
       ],
       "langchain": [
         "cpe:2.3:a:langchain:langchain.js:*:*:*:*:*:*:*:*"
+      ],
+      "langsmith": [
+        "cpe:2.3:a:langchain:langsmith:*:*:*:*:*:node.js:*:*"
       ],
       "larvitbase-api": [
         "cpe:2.3:a:larvit:larvitbase:*:*:*:*:*:node.js:*:*"
@@ -4587,6 +4611,9 @@
       ],
       "mcstatic": [
         "cpe:2.3:a:mcstatic_project:mcstatic:*:*:*:*:*:node.js:*:*"
+      ],
+      "md-fileserver": [
+        "cpe:2.3:a:commenthol:md-fileserver:*:*:*:*:*:node.js:*:*"
       ],
       "md-to-pdf": [
         "cpe:2.3:a:markdown_to_pdf_project:markdown_to_pdf:*:*:*:*:*:node.js:*:*"
@@ -5410,6 +5437,15 @@
       ],
       "react-router": [
         "cpe:2.3:a:shopify:react-router:*:*:*:*:*:node.js:*:*"
+      ],
+      "react-server-dom-parcel": [
+        "cpe:2.3:a:facebook:react-server-dom-parcel:*:*:*:*:*:node.js:*:*"
+      ],
+      "react-server-dom-turbopack": [
+        "cpe:2.3:a:facebook:react-server-dom-turbopack:*:*:*:*:*:node.js:*:*"
+      ],
+      "react-server-dom-webpack": [
+        "cpe:2.3:a:facebook:react-server-dom-webpack:*:*:*:*:*:node.js:*:*"
       ],
       "realms-shim": [
         "cpe:2.3:a:agoric:realms-shim:*:*:*:*:*:node.js:*:*"
@@ -6336,6 +6372,12 @@
       "shopware/shopware": [
         "cpe:2.3:a:shopware:shopware:*:*:*:*:*:*:*:*"
       ],
+      "symfony/twig-bridge": [
+        "cpe:2.3:a:symfony:twig-bridge:*:*:*:*:*:*:*:*"
+      ],
+      "symfony/twig-bundle": [
+        "cpe:2.3:a:symfony:twig-bundle:*:*:*:*:*:*:*:*"
+      ],
       "typo3/html-sanitizer": [
         "cpe:2.3:a:typo3:html_sanitizer:*:*:*:*:*:*:*:*"
       ],
@@ -6472,6 +6514,12 @@
       ],
       "awslabs.aws-api-mcp-server": [
         "cpe:2.3:a:amazon:aws_api_mcp_server:*:*:*:*:*:python:*:*"
+      ],
+      "awslabs.aws-transform-mcp-server": [
+        "cpe:2.3:a:amazon:aws_transform_mcp_server:*:*:*:*:*:python:*:*"
+      ],
+      "awslabs.documentdb-mcp-server": [
+        "cpe:2.3:a:amazon:documentdb_mcp_server:*:*:*:*:*:python:*:*"
       ],
       "azure-core": [
         "cpe:2.3:a:microsoft:azure_core_shared_client_library:*:*:*:*:*:python:*:*"
@@ -7087,6 +7135,9 @@
       "untangle": [
         "cpe:2.3:a:untangle_project:untangle:*:*:*:*:*:python:*:*"
       ],
+      "upsonic": [
+        "cpe:2.3:a:upsonic:upsonic:*:*:*:*:*:python:*:*"
+      ],
       "urllib3": [
         "cpe:2.3:a:python:urllib3:*:*:*:*:*:*:*:*"
       ],
@@ -7113,6 +7164,9 @@
       ],
       "zeep": [
         "cpe:2.3:a:python-zeep:zeep:*:*:*:*:*:python:*:*"
+      ],
+      "zeroconf": [
+        "cpe:2.3:a:paulsm:zeroconf:*:*:*:*:*:python:*:*"
       ],
       "zibalPlatform": [
         "cpe:2.3:a:zibal_project:zibal:*:*:*:*:*:pypi:*:*"
@@ -7717,6 +7771,9 @@
       ],
       "aws-lc-sys": [
         "cpe:2.3:a:amazon:aws-lc-sys:*:*:*:*:*:rust:*:*"
+      ],
+      "aws-smithy-json": [
+        "cpe:2.3:a:amazon:aws-smithy-json:*:*:*:*:*:rust:*:*"
       ],
       "axum-core": [
         "cpe:2.3:a:axum-core_project:axum-core:*:*:*:*:*:rust:*:*"
@@ -9171,6 +9228,9 @@
       ],
       "ap-mega-menu": [
         "cpe:2.3:a:accesspressthemes:ap_mega_menu:*:*:*:*:*:wordpress:*:*"
+      ],
+      "ap-plugin-scripteo": [
+        "cpe:2.3:a:scripteo:ads_pro:*:*:*:*:*:wordpress:*:*"
       ],
       "ap-pricing-tables-lite": [
         "cpe:2.3:a:accesspressthemes:ap_pricing_tables_lite:*:*:*:*:*:wordpress:*:*"
@@ -13874,7 +13934,8 @@
         "cpe:2.3:a:kibokolabs:hostel:*:*:*:*:*:wordpress:*:*"
       ],
       "hostinger": [
-        "cpe:2.3:a:hostinger:hostinger:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:hostinger:hostinger:*:*:*:*:*:wordpress:*:*",
+        "cpe:2.3:a:hostinger:hostinger_tools:*:*:*:*:*:wordpress:*:*"
       ],
       "hot-linked-image-cacher": [
         "cpe:2.3:a:hot_linked_image_cacher_project:hot_linked_image_cacher:*:*:*:*:*:wordpress:*:*"
@@ -15252,6 +15313,9 @@
       ],
       "manual-image-crop": [
         "cpe:2.3:a:manual_image_crop_project:manual_image_crop:*:*:*:*:*:wordpress:*:*"
+      ],
+      "map-addons-for-elementor-waze-map": [
+        "cpe:2.3:a:nervythemes:local_business_addons_for_elementor:*:*:*:*:*:wordpress:*:*"
       ],
       "mapfig-studio": [
         "cpe:2.3:a:acugis:mapfig_studio:*:*:*:*:*:wordpress:*:*"
@@ -17540,6 +17604,7 @@
         "cpe:2.3:a:inisev:redirection:*:*:*:*:*:wordpress:*:*"
       ],
       "redirection": [
+        "cpe:2.3:a:johngodley:redirection:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:redirection:redirection:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:redirection_project:redirection:*:*:*:*:*:wordpress:*:*"
       ],
@@ -18375,6 +18440,9 @@
       ],
       "simple-download-monitor": [
         "cpe:2.3:a:tipsandtricks-hq:simple_download_monitor:*:*:*:*:*:wordpress:*:*"
+      ],
+      "simple-downloads-list": [
+        "cpe:2.3:a:neofix:simple_downloads_list:*:*:*:*:*:wordpress:*:*"
       ],
       "simple-e-commerce-shopping-cart": [
         "cpe:2.3:a:simple-e-commerce-shopping-cart_project:simple-e-commerce-shopping-cart:*:*:*:*:*:wordpress:*:*"
@@ -21415,6 +21483,7 @@
         "cpe:2.3:a:wow-company:wp_coder:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-comment-fields": [
+        "cpe:2.3:a:najeebmedia:comments_extra_fields_for_post\\,_pages_and_cpt:*:*:*:*:*:wordpress:*:*",
         "cpe:2.3:a:najeebmedia:wordpress_comments_fields:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-commentnavi": [
@@ -22222,7 +22291,7 @@
         "cpe:2.3:a:bootstrapped:wp_recipe_maker:*:*:*:*:free:wordpress:*:*"
       ],
       "wp-registration": [
-        "cpe:2.3:a:najeebmedia:simple_user_registration:*:*:*:*:*:wordpress:*:*"
+        "cpe:2.3:a:najeebmedia:memberhero:*:*:*:*:*:wordpress:*:*"
       ],
       "wp-remote-site-search": [
         "cpe:2.3:a:brainstormforce:wp_remote_site_search:*:*:*:*:*:wordpress:*:*"
@@ -23252,6 +23321,9 @@
       ],
       "activello": [
         "cpe:2.3:a:colorlib:activello:*:*:*:*:*:wordpress:*:*"
+      ],
+      "adforest": [
+        "cpe:2.3:a:scriptsbundle:adforest:*:*:*:*:*:wordpress:*:*"
       ],
       "affluent": [
         "cpe:2.3:a:cpothemes:affluent:*:*:*:*:*:wordpress:*:*"
