@@ -2,6 +2,7 @@ package options
 
 import (
 	"fmt"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
@@ -272,6 +273,13 @@ func (cfg *Catalog) PostLoad() error {
 	// the binary package exclusion code depends on the file overlap relationships being created upstream in processing
 	if !cfg.Relationships.PackageFileOwnershipOverlap && cfg.Package.ExcludeBinaryOverlapByOwnership {
 		return fmt.Errorf("cannot enable exclude-binary-overlap-by-ownership without enabling package-file-ownership-overlap")
+	}
+
+	// align GOMAXPROCS with the configured parallelism so the Go runtime does not schedule more OS threads than
+	// the user asked the cataloger pool to run. Only lower it (never raise past what the runtime already chose),
+	// and only from the CLI so library embedders (e.g. grype) are unaffected. See https://github.com/anchore/syft/issues/3924.
+	if cfg.Parallelism > 1 && cfg.Parallelism < runtime.GOMAXPROCS(0) {
+		runtime.GOMAXPROCS(cfg.Parallelism)
 	}
 
 	return nil
