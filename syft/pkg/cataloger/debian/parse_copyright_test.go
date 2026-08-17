@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,6 +53,13 @@ func TestParseLicensesFromCopyright(t *testing.T) {
 			// no Format header; not machine-readable, returns nil
 			fixture:  "testdata/copyright/microsoft",
 			expected: nil,
+		},
+		{
+			// machine-readable file (has a Format header, so it passes the gate)
+			// carrying both License: short-name fields and embedded license-text
+			// URLs. URL detection is additive on top of the License: captures.
+			fixture:  "testdata/copyright/format-header",
+			expected: []string{"Apache-2.0", "MIT"},
 		},
 	}
 
@@ -135,5 +143,44 @@ License: LGPL-2.1
 	actual := parseLicensesFromCopyright(strings.NewReader(content))
 	if actual != nil {
 		t.Errorf("expected nil for non-machine-readable file, got %v", actual)
+	}
+}
+
+func TestLicenseIDsFromURLs(t *testing.T) {
+	tests := []struct {
+		name string
+		line string
+		want []string
+	}{
+		{
+			name: "Apache 2.0 seeAlso URL",
+			line: "See http://www.apache.org/licenses/LICENSE-2.0 for details.",
+			want: []string{"Apache-2.0"},
+		},
+		{
+			name: "MIT seeAlso URL with https",
+			line: "https://opensource.org/licenses/MIT",
+			want: []string{"MIT"},
+		},
+		{
+			name: "trailing punctuation is stripped before lookup",
+			line: "(see http://www.apache.org/licenses/LICENSE-2.0.)",
+			want: []string{"Apache-2.0"},
+		},
+		{
+			name: "non-license URL does not produce a finding",
+			line: "Source: https://example.com/foo",
+			want: nil,
+		},
+		{
+			name: "no URL on the line",
+			line: "License: GPL-2",
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, licenseIDsFromURLs(tt.line))
+		})
 	}
 }
