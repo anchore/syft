@@ -150,17 +150,11 @@ func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, e
 		return bi, nil
 	}
 
-	// if direct read fails and this looks like a UPX-compressed binary,
-	// try to decompress and read the buildinfo from the decompressed data
-	if isUPXCompressed(r) {
-		log.WithFields("path", location.RealPath).Trace("detected UPX-compressed Go binary, attempting decompression to read the build info")
-		decompressed, decompErr := decompressUPX(r)
-		if decompErr == nil {
-			bi, err = readBuildInfo(decompressed)
-			if err == nil {
-				return bi, nil
-			}
-		}
+	// if the direct read fails the file may be UPX-packed, in which case .go.buildinfo is compressed.
+	// decompressUPX locates the header itself and reports errNotUPX when there is none, so there is no
+	// cheaper pre-check to make here: scanning for the magic separately reads the same 8KB twice.
+	if upxBI := buildInfoFromUPX(r, location); upxBI != nil {
+		return upxBI, nil
 	}
 
 	// note: the stdlib does not export the error we need to check for
@@ -176,4 +170,24 @@ func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, e
 		return bi, err
 	}
 	return bi, err
+}
+
+// buildInfoFromUPX decompresses a UPX-packed binary and reads its build info. A nil result means there
+// was nothing to unpack or nothing Go inside it, so the caller falls through to its normal handling.
+func buildInfoFromUPX(r io.ReaderAt, location file.Location) *debug.BuildInfo {
+	decompressed, err := decompressUPX(r)
+	if err != nil {
+		log.WithFields("path", location.RealPath, "error", err).Trace("not a readable UPX-packed binary")
+		return nil
+	}
+
+	log.WithFields("path", location.RealPath).Trace("decompressed a UPX-packed binary to read the build info")
+
+	bi, err := readBuildInfo(decompressed)
+	if err != nil {
+		log.WithFields("path", location.RealPath, "error", err).
+			Trace("unable to read build info from the decompressed UPX binary")
+		return nil
+	}
+	return bi
 }
