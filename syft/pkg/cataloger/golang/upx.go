@@ -178,6 +178,13 @@ var (
 	errUPXOutputExceeded    = errors.New("UPX blocks decompress to more than the declared original size")
 	errUPXImplausibleHeader = errors.New("implausible UPX header")
 	errUPXInvalidLZMAParams = errors.New("invalid LZMA parameters")
+
+	// errUPXDecompress marks a file that got past the header and the method dispatch and still could not
+	// be unpacked, which is a gap in the SBOM rather than a file to skip. It is deliberately the only
+	// signal the caller acts on: everything else this file returns (a stray magic, an implausible header,
+	// a method we have not implemented) means "not something we can catalog" and stays quiet, so a new
+	// guard added later is silent by default instead of turning into SBOM noise.
+	errUPXDecompress = errors.New("unable to decompress UPX-compressed Go binary")
 )
 
 // upxInfo contains parsed UPX header information
@@ -270,7 +277,9 @@ func unfilter49(data []byte, cto8 byte) {
 // Why this matters: simply concatenating decompressed blocks produces invalid output.
 // Each block corresponds to a PT_LOAD segment and must be placed at its correct file offset.
 //
-// Returns the decompressed binary as a bytes.Reader (implements io.ReaderAt).
+// Returns the decompressed binary as a bytes.Reader (implements io.ReaderAt). errNotUPX and
+// errUPXImplausibleHeader mean the file is not really packed; only errUPXDecompress means a packed file
+// we could not read.
 func decompressUPX(r io.ReaderAt) (io.ReaderAt, error) {
 	info, err := parseUPXInfo(r)
 	if err != nil {
@@ -342,7 +351,7 @@ func decompressUPXBlocks(r io.ReaderAt, info *upxInfo) ([]byte, error) {
 		// nothing here (remaining is already <= p_filesize) and real output sits at exactly p_blocksize,
 		// so that check would run with no headroom against a value the format does not guarantee.
 		if block.uncompressedSize > remaining {
-			return nil, fmt.Errorf("%w: block %d claims %d with %d left of %d",
+			return nil, fmt.Errorf("%w: %w: block %d claims %d with %d left of %d", errUPXDecompress,
 				errUPXOutputExceeded, blockNum+1, block.uncompressedSize, remaining, info.originalSize)
 		}
 		remaining -= block.uncompressedSize
@@ -368,7 +377,7 @@ func decompressUPXBlocks(r io.ReaderAt, info *upxInfo) ([]byte, error) {
 		}
 
 		if err := decompressBlock(r, block, decompressor, dst); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %w", errUPXDecompress, err)
 		}
 
 		// the first block carries the original ELF headers, which place every block after the second
