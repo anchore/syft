@@ -9,7 +9,6 @@ import (
 	"io"
 	"unicode/utf16"
 
-	"github.com/scylladb/go-set/strset"
 	"github.com/scylladb/go-set/u32set"
 
 	"github.com/anchore/syft/internal/log"
@@ -17,7 +16,87 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
-const peMaxAllowedDirectoryEntries = 0x1000
+const (
+	peMaxAllowedDirectoryEntries = 0x1000
+
+	// peResourceBudgetFactor bounds the total bytes a walk will read out of a resource section, as a
+	// multiple of that section's own size. The per-directory cap above only bounds the fan-out of one
+	// node, and nothing in the format stops entries from aliasing: thousands of them may name the same
+	// blob, so a tree whose every individual offset is in bounds can still drive work quadratic in the
+	// section size. A well-formed section's entries partition it rather than overlapping, so real binaries
+	// come in right around 1x and the slack here only absorbs padding and shared string tables.
+	peResourceBudgetFactor = 4
+
+	// clrDebugInfoResourceName is the only resource name any downstream logic asks about.
+	clrDebugInfoResourceName = "CLRDEBUGINFO"
+)
+
+// resourceWalk is the state shared across a single resource directory traversal.
+//
+// reader and baseRVA are fixed for the whole walk: every RVA a nested entry names resolves against the
+// same origin and the same bytes, so reader.Size() is the one authoritative bound on every offset derived
+// from them. Holding them here rather than on a per-node value is what keeps that invariant structural.
+type resourceWalk struct {
+	reader  *bytes.Reader
+	baseRVA uint32
+
+	// dirs tracks the RVAs already parsed (prevents infinite recursion edge cases)
+	dirs *u32set.Set
+
+	// fields collects version resource keys and their values
+	fields map[string]string
+
+	// hasCLRDebugInfo records whether a CLRDEBUGINFO resource name was seen
+	hasCLRDebugInfo bool
+
+	// budget is the number of bytes left that we are willing to read out of the section. Charging every
+	// read against one counter bounds the blobs, the names, and the tree walk itself together, and makes
+	// recursion depth fall out for free since each level costs at least a directory header.
+	budget int64
+}
+
+func newResourceWalk() *resourceWalk {
+	return &resourceWalk{
+		dirs:   u32set.New(),
+		fields: make(map[string]string),
+	}
+}
+
+// bind points the walk at a resource section's bytes and fixes the origin every RVA is measured from.
+func (w *resourceWalk) bind(reader *bytes.Reader, baseRVA uint32) {
+	w.reader = reader
+	w.baseRVA = baseRVA
+	w.budget = reader.Size() * peResourceBudgetFactor
+}
+
+// offsetOf turns an RVA into an offset into the walk's bytes, rejecting any RVA the section does not
+// actually hold. RVAs are user-controlled uint32s, so this is what keeps the subtraction from underflowing
+// and keeps every offset derived from one inside the buffer.
+func (w *resourceWalk) offsetOf(rva uint32) (int64, error) {
+	if rva < w.baseRVA {
+		return 0, fmt.Errorf("RVA=0x%x precedes its section base 0x%x", rva, w.baseRVA)
+	}
+
+	offset := int64(rva - w.baseRVA)
+	if offset >= w.reader.Size() {
+		return 0, fmt.Errorf("RVA=0x%x lies past its section end (baseRVA=0x%x size=0x%x)", rva, w.baseRVA, w.reader.Size())
+	}
+
+	return offset, nil
+}
+
+// errResourceBudget stops the walk rather than one entry: once the budget is gone every remaining sibling
+// would hit it too, so callers that normally log-and-continue have to propagate this one.
+var errResourceBudget = errors.New("resource walk read more of its section than a well-formed one could justify")
+
+// spend charges n bytes about to be read out of the section against the walk's budget.
+func (w *resourceWalk) spend(n int64) error {
+	w.budget -= n
+	if w.budget < 0 {
+		return errResourceBudget
+	}
+	return nil
+}
 
 var imageDirectoryEntryIndexes = []int{
 	pe.IMAGE_DIRECTORY_ENTRY_RESOURCE,       // where version resources are stored
@@ -162,15 +241,15 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, fmt.Errorf("unable to parse PE sections: %w", err)
 	}
 
-	dirs := u32set.New()                        // keep track of the RVAs we have already parsed (prevent infinite recursion edge cases)
-	versionResources := make(map[string]string) // map of version resource keys to their values
-	resourceNames := strset.New()               // set of resource names found in the PE file
-	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources, resourceNames)
-	if err != nil {
-		return nil, err
+	walk := newResourceWalk()
+	if err := parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], walk); err != nil {
+		// a resource tree that stops early still tells us about the fields it did yield, and says nothing
+		// about the CLR directory or an embedded deps.json. Failing the whole file here would drop the
+		// package from the SBOM entirely over one malformed section.
+		log.Tracef("unable to fully parse PE resource directory for %s: %v", f.RealPath, err)
 	}
 
-	c, err := parseCLR(sections[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR], resourceNames)
+	c, err := parseCLR(sections[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR], walk.hasCLRDebugInfo)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
@@ -184,7 +263,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		Location:         f.Location,
 		CLR:              c,
 		EmbeddedDepsJSON: embeddedDepsJSON,
-		VersionResources: versionResources,
+		VersionResources: walk.fields,
 	}, nil
 }
 
@@ -297,12 +376,15 @@ func parseSectionHeaders(file unionreader.UnionReader, magic uint16, numberOfSec
 		return nil, nil, fmt.Errorf("unknown optional header magic: 0x%x", magic)
 	}
 
-	// read section headers
-	headers := make([]pe.SectionHeader32, numberOfSections)
-	for i := 0; i < int(numberOfSections); i++ {
-		if err := binary.Read(file, binary.LittleEndian, &headers[i]); err != nil {
+	// read section headers. numberOfSections is a uint16 straight out of the file header, so the slice
+	// grows to the headers that are actually there rather than reserving for all 65535 up front.
+	var headers []pe.SectionHeader32
+	for range numberOfSections {
+		var header pe.SectionHeader32
+		if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
 			return nil, nil, fmt.Errorf("error reading section header: %w", err)
 		}
+		headers = append(headers, header)
 	}
 
 	return soi, headers, nil
@@ -310,8 +392,7 @@ func parseSectionHeaders(file unionreader.UnionReader, magic uint16, numberOfSec
 
 // parseCLR extracts the CLR (common language runtime) version information from the COM descriptor and makes
 // present/not-present determination based on the presence of CLR resource names.
-func parseCLR(sec *extractedSection, resourceNames *strset.Set) (*CLREvidence, error) {
-	hasCLRDebugResourceNames := resourceNames.HasAny("CLRDEBUGINFO")
+func parseCLR(sec *extractedSection, hasCLRDebugResourceNames bool) (*CLREvidence, error) {
 	if sec == nil || sec.Reader == nil {
 		return &CLREvidence{
 			HasClrResourceNames: hasCLRDebugResourceNames,
@@ -352,8 +433,21 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 		return nil, err
 	}
 
+	// size is a user-controlled uint32, so sizing the buffer from it alone lets a small file reserve up to
+	// 4GB. Clamping to the bytes that actually remain keeps the allocation exact in one shot, which an
+	// append-growing read cannot do: it holds both arrays at its final growth, so a legitimate 150MB
+	// bundle would cost well over twice its own size to scan.
+	end, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return nil, fmt.Errorf("error measuring file: %w", err)
+	}
+
 	if _, err := file.Seek(int64(offset), io.SeekStart); err != nil {
 		return nil, fmt.Errorf("error seeking to data: %w", err)
+	}
+
+	if remaining := end - int64(offset); remaining < int64(size) {
+		return nil, fmt.Errorf("error reading data: %d bytes declared at offset %d but only %d remain", size, offset, max(remaining, 0))
 	}
 
 	data := make([]byte, size)
@@ -388,7 +482,7 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 // sources:
 // - https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#the-rsrc-section
 // - https://learn.microsoft.com/en-us/previous-versions/ms809762(v=msdn.10)#pe-file-resources
-func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
+func parseResourceDirectory(sec *extractedSection, w *resourceWalk) error {
 	if sec == nil || sec.Size <= 0 {
 		return nil
 	}
@@ -402,40 +496,63 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 		baseRVA = sec.RVA
 	}
 
-	offset := int64(sec.RVA - baseRVA)
-	if _, err := sec.Reader.Seek(offset, io.SeekStart); err != nil {
+	w.bind(sec.Reader, baseRVA)
+
+	return parseResourceDirectoryAt(sec.RVA, w)
+}
+
+func parseResourceDirectoryAt(rva uint32, w *resourceWalk) error {
+	offset, err := w.offsetOf(rva)
+	if err != nil {
+		return fmt.Errorf("resource directory: %w", err)
+	}
+
+	if _, err := w.reader.Seek(offset, io.SeekStart); err != nil {
 		return fmt.Errorf("error seeking to directory offset: %w", err)
 	}
 
 	var directoryHeader peImageResourceDirectory
-	if err := readIntoStruct(sec.Reader, &directoryHeader); err != nil {
+	if err := w.spend(int64(binary.Size(directoryHeader))); err != nil {
+		return err
+	}
+
+	if err := readIntoStruct(w.reader, &directoryHeader); err != nil {
 		return fmt.Errorf("error reading directory header: %w", err)
 	}
 
-	numEntries := int(directoryHeader.NumberOfNamedEntries + directoryHeader.NumberOfIDEntries)
+	// widen before adding: the two counts are uint16s that a crafted file can make sum past 0xFFFF,
+	// which would wrap and hide entries a real loader would still walk
+	numEntries := int(directoryHeader.NumberOfNamedEntries) + int(directoryHeader.NumberOfIDEntries)
 	switch {
 	case numEntries > peMaxAllowedDirectoryEntries:
 		return fmt.Errorf("too many entries in resource directory: %d", numEntries)
 	case numEntries == 0:
 		return fmt.Errorf("no entries in resource directory")
-	case numEntries < 0:
-		return fmt.Errorf("invalid number of entries in resource directory: %d", numEntries)
 	}
 
 	for i := range numEntries {
 		var entry peImageResourceDirectoryEntry
 
+		if err := w.spend(int64(binary.Size(entry))); err != nil {
+			return err
+		}
+
 		entryOffset := offset + int64(binary.Size(directoryHeader)) + int64(i*binary.Size(entry))
-		if _, err := sec.Reader.Seek(entryOffset, io.SeekStart); err != nil {
+		if _, err := w.reader.Seek(entryOffset, io.SeekStart); err != nil {
 			log.Tracef("error seeking to PE entry offset: %v", err)
 			continue
 		}
 
-		if err := readIntoStruct(sec.Reader, &entry); err != nil {
+		if err := readIntoStruct(w.reader, &entry); err != nil {
 			continue
 		}
 
-		if err := processResourceEntry(entry, baseRVA, sec, dirs, fields, names); err != nil {
+		if err := processResourceEntry(entry, w); err != nil {
+			// a budget exhausted partway down the tree is not a property of this one entry, so stop the
+			// walk rather than letting every sibling re-discover it
+			if errors.Is(err, errResourceBudget) {
+				return err
+			}
 			log.Tracef("error processing resource entry: %v", err)
 			continue
 		}
@@ -444,7 +561,7 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 	return nil
 }
 
-func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
+func processResourceEntry(entry peImageResourceDirectoryEntry, w *resourceWalk) error {
 	// if the high bit is set, this is a directory entry, otherwise it is a data entry
 	isDirectory := entry.OffsetToData&0x80000000 != 0
 
@@ -456,75 +573,90 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 
 	// read the string name of the resource directory
 	if nameIsString {
-		currentPos, err := sec.Reader.Seek(0, io.SeekCurrent)
+		currentPos, err := w.reader.Seek(0, io.SeekCurrent)
 		if err != nil {
 			return fmt.Errorf("error getting current reader position: %w", err)
 		}
 
-		if _, err := sec.Reader.Seek(int64(nameOffset), io.SeekStart); err != nil {
-			return fmt.Errorf("error restoring reader position: %w", err)
+		if _, err := w.reader.Seek(int64(nameOffset), io.SeekStart); err != nil {
+			return fmt.Errorf("error seeking to resource name: %w", err)
 		}
 
-		name, err := readUTF16WithLength(sec.Reader)
-		if err == nil {
-			names.Add(name)
+		// only one name matters downstream, so compare in place rather than retaining every name a
+		// crafted file cares to declare
+		name, err := readUTF16WithLength(w.reader, w)
+		switch {
+		case errors.Is(err, errResourceBudget):
+			return err
+		case err == nil && name == clrDebugInfoResourceName:
+			w.hasCLRDebugInfo = true
 		}
 
-		if _, err := sec.Reader.Seek(currentPos, io.SeekStart); err != nil {
+		if _, err := w.reader.Seek(currentPos, io.SeekStart); err != nil {
 			return fmt.Errorf("error restoring reader position: %w", err)
 		}
 	}
+
+	targetRVA := w.baseRVA + entryOffsetToData
 
 	if isDirectory {
-		subRVA := baseRVA + entryOffsetToData
-		if dirs.Has(subRVA) {
+		if w.dirs.Has(targetRVA) {
 			// some malware uses recursive PE references to evade analysis
-			return fmt.Errorf("recursive PE reference detected; skipping directory at baseRVA=0x%x subRVA=0x%x", baseRVA, subRVA)
+			return fmt.Errorf("recursive PE reference detected; skipping directory at baseRVA=0x%x subRVA=0x%x", w.baseRVA, targetRVA)
 		}
 
-		dirs.Add(subRVA)
-		err := parseResourceDirectory(
-			&extractedSection{
-				RVA:     subRVA,
-				BaseRVA: baseRVA,
-				Size:    sec.Size - (sec.RVA - baseRVA),
-				Reader:  sec.Reader,
-			},
-			dirs, fields, names)
-		if err != nil {
-			return err
-		}
-		return nil
+		w.dirs.Add(targetRVA)
+
+		return parseResourceDirectoryAt(targetRVA, w)
 	}
-	return parseResourceDataEntry(sec.Reader, baseRVA, baseRVA+entryOffsetToData, sec.Size, fields)
+
+	return parseResourceDataEntry(targetRVA, w)
 }
 
-func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize uint32, fields map[string]string) error {
-	var dataEntry peImageResourceDataEntry
-	offset := int64(rva - baseRVA)
+func parseResourceDataEntry(rva uint32, w *resourceWalk) error {
+	offset, err := w.offsetOf(rva)
+	if err != nil {
+		return fmt.Errorf("resource data entry: %w", err)
+	}
 
-	if _, err := reader.Seek(offset, io.SeekStart); err != nil {
+	if _, err := w.reader.Seek(offset, io.SeekStart); err != nil {
 		return fmt.Errorf("error seeking to data entry offset: %w", err)
 	}
 
-	if err := readIntoStruct(reader, &dataEntry); err != nil {
+	var dataEntry peImageResourceDataEntry
+	if err := w.spend(int64(binary.Size(dataEntry))); err != nil {
+		return err
+	}
+
+	if err := readIntoStruct(w.reader, &dataEntry); err != nil {
 		return fmt.Errorf("error reading resource data entry: %w", err)
 	}
 
-	if remainingSize < dataEntry.Size {
-		return fmt.Errorf("resource data entry size exceeds remaining size")
+	// OffsetToData and Size are both user-controlled uint32s, so the region they describe has to be bounded
+	// against the bytes the section actually holds before it sizes the allocation below.
+	dataOffset, err := w.offsetOf(dataEntry.OffsetToData)
+	if err != nil {
+		return fmt.Errorf("resource data: %w", err)
+	}
+
+	if int64(dataEntry.Size) > w.reader.Size()-dataOffset {
+		return fmt.Errorf("resource data (offset=0x%x size=0x%x) extends past its section end 0x%x", dataOffset, dataEntry.Size, w.reader.Size())
+	}
+
+	if err := w.spend(int64(dataEntry.Size)); err != nil {
+		return err
 	}
 
 	data := make([]byte, dataEntry.Size)
-	if _, err := reader.Seek(int64(dataEntry.OffsetToData-baseRVA), io.SeekStart); err != nil {
+	if _, err := w.reader.Seek(dataOffset, io.SeekStart); err != nil {
 		return fmt.Errorf("error seeking to resource data: %w", err)
 	}
 
-	if _, err := reader.Read(data); err != nil {
+	if _, err := io.ReadFull(w.reader, data); err != nil {
 		return fmt.Errorf("error reading resource data: %w", err)
 	}
 
-	return parseVersionResourceSection(bytes.NewReader(data), fields)
+	return parseVersionResourceSection(bytes.NewReader(data), w.fields)
 }
 
 // parseVersionResourceSection parses a PE version resource section from within a resource directory.
@@ -697,8 +829,8 @@ func isTruncated(err error) bool {
 
 // readIntoStruct reads a struct from the reader and updates the offsets if provided.
 //
-// note: a truncated read must stay an error. Callers advance their loop counters by the offsets updated
-// below, so reporting a zeroed struct as a successful read leaves length-driven loops spinning forever.
+// note: EOF must stay an error. Callers advance their loop counters by the offsets updated below, so
+// reporting a zeroed struct as a successful read leaves length-driven loops spinning forever.
 func readIntoStruct[T any](reader io.Reader, data *T, offsets ...*int) error {
 	if err := binary.Read(reader, binary.LittleEndian, data); err != nil {
 		return err
@@ -757,13 +889,24 @@ func readUTF16(reader *bytes.Reader, offsets ...*int) string {
 
 // readUTF16WithLength reads a length-prefixed UTF-16 string from reader.
 // The first 2 bytes represent the number of UTF-16 code units.
-func readUTF16WithLength(reader *bytes.Reader) (string, error) {
+func readUTF16WithLength(reader *bytes.Reader, w *resourceWalk) (string, error) {
 	var length uint16
 	if err := binary.Read(reader, binary.LittleEndian, &length); err != nil {
 		return "", err
 	}
 	if length == 0 {
 		return "", nil
+	}
+
+	// length is a user-controlled uint16 and binary.Read allocates a second buffer of its own, so a name
+	// the reader cannot satisfy must be rejected before either one is sized from it
+	size := int64(length) * 2
+	if size > int64(reader.Len()) {
+		return "", fmt.Errorf("declared name length %d exceeds the %d bytes remaining", length, reader.Len())
+	}
+
+	if err := w.spend(size); err != nil {
+		return "", err
 	}
 
 	// read length UTF-16 code units.
