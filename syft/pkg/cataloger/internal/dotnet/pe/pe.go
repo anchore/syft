@@ -607,6 +607,11 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 
 		var sfiHeader peStringFileInfo
 		if szKey, err := readIntoStructAndSzKey(reader, &sfiHeader, &offset); err != nil {
+			if isTruncated(err) {
+				// a well-formed version resource whose last child is VarFileInfo ends right here, so stop
+				// and let the FileVersion fallback below still run
+				break
+			}
 			return fmt.Errorf("error reading PE string file info header: %v", err)
 		} else if szKey != "StringFileInfo" {
 			// we only care about extracting strings from any string tables, skip this
@@ -619,31 +624,14 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 		// note: the szKey for the prStringTable is the language
 		var stHeader peStringTable
 		if _, err := readIntoStructAndSzKey(reader, &stHeader, &offset, &stOffset); err != nil {
+			if isTruncated(err) {
+				break
+			}
 			return fmt.Errorf("error reading PE string table header: %v", err)
 		}
 
-		for stOffset < int(stHeader.Length) {
-			var stringHeader peString
-			if err := readIntoStruct(reader, &stringHeader, &offset, &stOffset); err != nil {
-				break
-			}
-
-			key := readUTF16(reader, &offset, &stOffset)
-
-			if err := alignAndSeek(reader, &offset, &stOffset); err != nil {
-				return fmt.Errorf("error aligning to next PE string table value: %w", err)
-			}
-
-			var value string
-			if stringHeader.ValueLength > 0 {
-				value = readUTF16(reader, &offset, &stOffset)
-			}
-
-			fields[key] = value
-
-			if err := alignAndSeek(reader, &offset, &stOffset); err != nil {
-				return fmt.Errorf("error aligning to next PE string table key: %w", err)
-			}
+		if err := parseStringTable(reader, int(stHeader.Length), &offset, &stOffset, fields); err != nil {
+			return err
 		}
 	}
 
@@ -657,6 +645,40 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 	return nil
 }
 
+// parseStringTable reads the key/value pairs of a single string table into fields. length is what the
+// string table header claims it holds, and stOffset tracks how much of that has actually been consumed.
+func parseStringTable(reader *bytes.Reader, length int, offset, stOffset *int, fields map[string]string) error {
+	for *stOffset < length {
+		var stringHeader peString
+		if err := readIntoStruct(reader, &stringHeader, offset, stOffset); err != nil {
+			if isTruncated(err) {
+				// the table claims more content than the resource carries; stop rather than re-reading a
+				// reader that is not advancing
+				break
+			}
+			return fmt.Errorf("error reading PE string table entry: %w", err)
+		}
+
+		key := readUTF16(reader, offset, stOffset)
+
+		if err := alignAndSeek(reader, offset, stOffset); err != nil {
+			return fmt.Errorf("error aligning to next PE string table value: %w", err)
+		}
+
+		var value string
+		if stringHeader.ValueLength > 0 {
+			value = readUTF16(reader, offset, stOffset)
+		}
+
+		fields[key] = value
+
+		if err := alignAndSeek(reader, offset, stOffset); err != nil {
+			return fmt.Errorf("error aligning to next PE string table key: %w", err)
+		}
+	}
+	return nil
+}
+
 // readIntoStructAndSzKey reads a struct from the reader and updates the offsets if provided, returning the szKey value.
 // This is only useful in the context of the resource directory parsing in narrow cases (this is invalid to use outside of that context).
 func readIntoStructAndSzKey[T any](reader *bytes.Reader, data *T, offsets ...*int) (string, error) {
@@ -666,12 +688,19 @@ func readIntoStructAndSzKey[T any](reader *bytes.Reader, data *T, offsets ...*in
 	return readUTF16(reader, offsets...), nil
 }
 
+// isTruncated reports whether err means the resource simply ran out of bytes. binary.Read gives io.EOF when
+// nothing was left and io.ErrUnexpectedEOF when a struct was cut in half; both say the same thing about a
+// version resource, and neither should cost us the fields already collected.
+func isTruncated(err error) bool {
+	return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)
+}
+
 // readIntoStruct reads a struct from the reader and updates the offsets if provided.
+//
+// note: a truncated read must stay an error. Callers advance their loop counters by the offsets updated
+// below, so reporting a zeroed struct as a successful read leaves length-driven loops spinning forever.
 func readIntoStruct[T any](reader io.Reader, data *T, offsets ...*int) error {
 	if err := binary.Read(reader, binary.LittleEndian, data); err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
 		return err
 	}
 
