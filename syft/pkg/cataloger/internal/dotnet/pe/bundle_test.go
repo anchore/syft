@@ -1,6 +1,8 @@
 package pe
 
 import (
+	"bytes"
+	"debug/pe"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,4 +57,38 @@ func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
 			}
 		})
 	}
+}
+
+// readSizeRecorder records the largest single Read length requested of it. The worst end offset PE
+// headers can describe is about 8.6GB, and `make([]byte, 8.6e9)` succeeds on any 64-bit host from fresh
+// anonymous mmap without touching the pages, so asserting "no panic" would pass with or without the
+// bound. The requested read size is what actually distinguishes them.
+type readSizeRecorder struct {
+	*bytes.Reader
+	maxRead int
+}
+
+func (r *readSizeRecorder) Read(p []byte) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.Read(p)
+}
+
+func TestExtractDepsJSONFromBundle_MalformedSectionSizesDoNotOverAllocate(t *testing.T) {
+	// PointerToRawData and SizeOfRawData are user-controlled and unrelated to the real file size
+	sections := []pe.SectionHeader32{{PointerToRawData: 0xFFFFFFFF, SizeOfRawData: 0xFFFFFFFF}}
+
+	// sanity: the headers really do describe an end offset far past the file, so the bound is what keeps
+	// the allocation small rather than the input being small
+	require.Greater(t, calculatePEEndOffset(sections), int64(8*1024*1024*1024))
+
+	const fileSize = 512 // a small "file" with no bundle signature
+	r := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, fileSize))}
+
+	content, err := extractDepsJSONFromBundle(r, sections)
+	require.NoError(t, err)
+	assert.Empty(t, content)
+	assert.LessOrEqual(t, r.maxRead, fileSize,
+		"the search must be bounded by the file, not by what the section headers claim")
 }

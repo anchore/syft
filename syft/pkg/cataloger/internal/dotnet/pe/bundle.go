@@ -1,22 +1,11 @@
 package pe
 
 import (
-	"bytes"
 	"debug/pe"
-	"encoding/binary"
-	"errors"
 	"io"
 
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/bundle"
 )
-
-// dotNetBundleSignature is the SHA-256 hash of ".net core bundle" used to identify single-file bundles.
-var dotNetBundleSignature = []byte{
-	0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
-	0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
-	0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
-	0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae,
-}
 
 // ExtractDepsJSONFromBundle searches for an embedded deps.json file in a .NET single-file bundle.
 // When built with PublishSingleFile=true, .NET embeds the application and all dependencies into
@@ -51,41 +40,7 @@ var dotNetBundleSignature = []byte{
 // - https://github.com/dotnet/runtime/blob/main/src/native/corehost/bundle/file_entry.h
 // - https://github.com/dotnet/runtime/blob/main/src/native/corehost/bundle/file_type.h
 func extractDepsJSONFromBundle(r io.ReadSeeker, sections []pe.SectionHeader32) (string, error) {
-	headerOffset, err := findBundleHeaderOffset(r, sections)
-	if err != nil {
-		return "", err
-	}
-	if headerOffset == 0 {
-		return "", nil // not a .NET single-file bundle
-	}
-
-	return bundle.ReadDepsJSONFromBundleHeader(r, headerOffset)
-}
-
-// findBundleHeaderOffset locates the bundle marker within the PE structure and returns the header offset.
-// Returns 0 if no bundle marker is found (not a single-file bundle).
-func findBundleHeaderOffset(r io.ReadSeeker, sections []pe.SectionHeader32) (int64, error) {
-	peEndOffset := calculatePEEndOffset(sections)
-
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return 0, err
-	}
-
-	peData := make([]byte, peEndOffset)
-	n, err := io.ReadFull(r, peData)
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
-		return 0, err
-	}
-	peData = peData[:n]
-
-	idx := bytes.Index(peData, dotNetBundleSignature)
-	if idx == -1 || idx < 8 {
-		return 0, nil
-	}
-
-	// the header offset is stored in the 8 bytes immediately before the signature
-	headerOffset := int64(binary.LittleEndian.Uint64(peData[idx-8 : idx]))
-	return headerOffset, nil
+	return bundle.ExtractDepsJSON(r, calculatePEEndOffset(sections))
 }
 
 // calculatePEEndOffset determines where the PE structure ends based on section headers,

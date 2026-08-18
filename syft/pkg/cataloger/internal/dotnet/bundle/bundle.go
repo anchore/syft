@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -13,6 +14,54 @@ var dotNetBundleSignature = []byte{
 	0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
 	0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
 	0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae,
+}
+
+// ExtractDepsJSON returns the deps.json embedded in the .NET single-file bundle in r, or "" if r carries no
+// bundle marker.
+//
+// searchLimit is where the caller's format parsing says the executable structure ends, which is as far into
+// the file as the marker can be. It comes from user-controlled header fields, so it may describe far more
+// than the file holds or overflow negative; it is clamped to the real file length before anything is sized
+// from it. A non-positive limit reads nothing.
+func ExtractDepsJSON(r io.ReadSeeker, searchLimit int64) (string, error) {
+	headerOffset, err := findSignatureOffset(r, searchLimit)
+	if err != nil || headerOffset == 0 {
+		return "", err
+	}
+
+	return readDepsJSONFromBundleHeader(r, headerOffset)
+}
+
+// findSignatureOffset searches the start of r for the .NET single-file bundle signature and returns the
+// bundle header offset stored in the 8 bytes immediately before it, or 0 if the signature is not found.
+func findSignatureOffset(r io.ReadSeeker, searchLimit int64) (int64, error) {
+	if searchLimit <= 0 {
+		return 0, nil
+	}
+
+	end, err := r.Seek(0, io.SeekEnd)
+	if err != nil {
+		return 0, err
+	}
+
+	if _, err := r.Seek(0, io.SeekStart); err != nil {
+		return 0, err
+	}
+
+	// this scans a whole executable, routinely over 100MB for a single-file bundle, so the buffer is sized
+	// exactly once. An append-growing read holds both arrays at its final growth and would cost well over
+	// twice the file's own size for the same result.
+	searchData := make([]byte, min(searchLimit, end))
+	if _, err := io.ReadFull(r, searchData); err != nil {
+		return 0, err
+	}
+
+	idx := bytes.Index(searchData, dotNetBundleSignature)
+	if idx == -1 || idx < 8 {
+		return 0, nil
+	}
+
+	return int64(binary.LittleEndian.Uint64(searchData[idx-8 : idx])), nil
 }
 
 // dotNetBundleHeader represents the fixed portion of the bundle header (version 1+)
@@ -44,7 +93,7 @@ const (
 )
 
 // ReadDepsJSONFromBundleHeader parses the bundle header at the given offset and extracts deps.json content.
-func ReadDepsJSONFromBundleHeader(r io.ReadSeeker, headerOffset int64) (string, error) {
+func readDepsJSONFromBundleHeader(r io.ReadSeeker, headerOffset int64) (string, error) {
 	if _, err := r.Seek(headerOffset, io.SeekStart); err != nil {
 		return "", err
 	}
@@ -103,6 +152,13 @@ func read7BitEncodedInt(r io.Reader) (int, error) {
 			return 0, errors.New("invalid 7-bit encoded int")
 		}
 	}
+
+	// the shift above can carry past int32 where int is 32 bits, and a negative length would seek callers
+	// backwards and let a manifest walk re-read the same bytes for every file it claims
+	if result < 0 {
+		return 0, errors.New("negative 7-bit encoded int")
+	}
+
 	return result, nil
 }
 
