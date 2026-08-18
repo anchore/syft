@@ -4,6 +4,8 @@ Thank you for your interest in contributing to Syft!
 
 Please see the [contribution guide](https://oss.anchore.com/docs/contributing/syft/) for development requirements and helpful tips to get started developing in the repo. For a deeper dive, please see the [architecture docs](https://oss.anchore.com/docs/architecture/syft/).
 
+To add or change package catalogers in this repo, see [DEVELOPING.md](DEVELOPING.md).
+
 **Have a question or need help?** Check out our [issues and discussions guide](https://oss.anchore.com/docs/contributing/issues-and-discussions/) to find the right place to start a conversation.
 
 **Ready to submit code?** Our [pull request guide](https://oss.anchore.com/docs/contributing/pull-requests/) covers everything from title conventions to the review process. Don't forget that ***all commits require a [sign-off](https://oss.anchore.com/docs/contributing/sign-off/)***.
