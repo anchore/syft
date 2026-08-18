@@ -108,6 +108,7 @@ func TestDecompressUPX_OversizedBlockRejected(t *testing.T) {
 			_, err := decompressUPX(bytes.NewReader(data))
 			require.Error(t, err)
 			assert.ErrorIs(t, err, errUPXOutputExceeded)
+			assert.ErrorIs(t, err, errUPXDecompress, "a plausible header that fails to unpack is reportable")
 		})
 	}
 }
@@ -434,8 +435,25 @@ func TestDecompressUPX_HeaderWithoutDecodableBlocksAllocatesNothing(t *testing.T
 		_, err := decompressUPX(bytes.NewReader(data))
 		require.Error(t, err)
 		assert.ErrorIs(t, err, errUPXImplausibleHeader)
+		assert.NotErrorIs(t, err, errUPXDecompress, "nothing was packed, so there is nothing to report")
 	})
 	assert.Less(t, allocated, uint64(256<<10), "no block survived validation, so no output buffer is due")
+}
+
+func TestDecompressUPX_UnsupportedMethodIsNotReportable(t *testing.T) {
+	// upx defaults to NRV2B unless --lzma is passed, and only LZMA is implemented here. A packed non-Go
+	// binary must not turn into an SBOM unknown from the golang cataloger, so the unsupported-method error
+	// must stay clear of errUPXDecompress.
+	block := make([]byte, 12)
+	binary.LittleEndian.PutUint32(block[0:4], 256) // sz_unc
+	binary.LittleEndian.PutUint32(block[4:8], 32)  // sz_cpr
+	block[8] = 2                                   // b_method = NRV2B
+	data := padTo(append(buildUPXHeader(4096, 4096), block...), 128)
+
+	_, err := decompressUPX(bytes.NewReader(data))
+	require.Error(t, err)
+	assert.ErrorIs(t, err, errUnsupportedUPXMethod)
+	assert.NotErrorIs(t, err, errUPXDecompress, "an unimplemented method is a capability gap, not a gap in the SBOM")
 }
 
 // TestGetBuildInfo_MaliciousUPXRejected exercises the entry point the reported vulnerability was reachable
@@ -460,5 +478,6 @@ func TestGetBuildInfo_MaliciousUPXRejected(t *testing.T) {
 	})
 	assert.Nil(t, bi)
 	assert.Error(t, err)
+	assert.ErrorIs(t, err, errUPXDecompress, "a packed binary we cannot unpack is worth reporting")
 	assert.Less(t, allocated, uint64(1<<20), "the rejection must not cost a megabyte")
 }
