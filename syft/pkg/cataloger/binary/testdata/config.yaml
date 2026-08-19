@@ -1570,8 +1570,16 @@ from-images:
 
   - version: 1.9.6
     images:
-      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:1405cc613bd95b2c6edd8b2a152510ae91c7e62aea4698500d23b2145960ab9c
+      # note: per-platform manifest digests (not the index digest) -- the extraction step creates a
+      # container from the ref alone, so each platform needs its own uniquely addressable ref
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:0939639a1f338a9eaaa490fd38b4a7881e47a7fd1a473baf8749ce15952b55b8
         platform: linux/amd64
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:5fb823cc617cbfbee4b250ad5e059c23078ea63e9a7e6acb6d4d30e4456eb0be
+        platform: linux/arm64
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:dcea8d021e15cf27f59249ee0cfd211559ef9eb60b10651c3af299499848cf8b
+        platform: linux/arm
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:fc53a604eb2d17fa0cf7a3f266d052c2f32fb97209869057d6826d1815cf622d
+        platform: linux/s390x
     paths:
       - /nginx-ingress-controller
 
