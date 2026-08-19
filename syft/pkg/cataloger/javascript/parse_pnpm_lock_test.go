@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -527,6 +530,15 @@ func Test_corruptPnpmLock(t *testing.T) {
 		TestParser(t, adapter.parsePnpmLock)
 }
 
+// yamlDocument decodes a single YAML document for the parsers, which take the node the
+// lockfile stream decoder hands them rather than raw bytes.
+func yamlDocument(t *testing.T, data string) *yaml.Node {
+	t.Helper()
+	var doc yaml.Node
+	require.NoError(t, yaml.Unmarshal([]byte(data), &doc))
+	return &doc
+}
+
 func TestParsePnpmLock_DeterministicWithCollidingPeerDeps(t *testing.T) {
 	// this test verifies that when multiple lockfile keys collapse to the same
 	// package key after peer-dep stripping (e.g., pkg@1.0.0(peer-a@1) and
@@ -535,7 +547,7 @@ func TestParsePnpmLock_DeterministicWithCollidingPeerDeps(t *testing.T) {
 	// the last key lexicographically wins.
 
 	// v9 lockfile with two entries that collapse to the same key
-	lockfileV9 := []byte(`
+	lockfileV9 := `
 lockfileVersion: '9.0'
 packages:
   some-pkg@1.0.0(peer-b@2.0.0):
@@ -545,12 +557,12 @@ packages:
 snapshots:
   some-pkg@1.0.0(peer-b@2.0.0): {}
   some-pkg@1.0.0(peer-a@1.0.0): {}
-`)
+`
 
 	// run multiple times to catch nondeterminism
 	for range 10 {
 		parser := &pnpmV9LockYaml{}
-		pkgs, err := parser.Parse(9.0, lockfileV9)
+		pkgs, err := parser.Parse(9.0, yamlDocument(t, lockfileV9))
 		require.NoError(t, err)
 		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
 
@@ -561,18 +573,18 @@ snapshots:
 	}
 
 	// v6 lockfile with two entries that collapse to the same key
-	lockfileV6 := []byte(`
+	lockfileV6 := `
 lockfileVersion: '6.0'
 packages:
   /some-pkg@1.0.0(peer-b@2.0.0):
     resolution: {integrity: sha512-BBB}
   /some-pkg@1.0.0(peer-a@1.0.0):
     resolution: {integrity: sha512-AAA}
-`)
+`
 
 	for range 10 {
 		parser := &pnpmV6LockYaml{}
-		pkgs, err := parser.Parse(6.0, lockfileV6)
+		pkgs, err := parser.Parse(6.0, yamlDocument(t, lockfileV6))
 		require.NoError(t, err)
 		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
 
@@ -617,4 +629,202 @@ func setupNpmRegistry() (mux *http.ServeMux, serverURL string, teardown func()) 
 	server := httptest.NewServer(apiHandler)
 
 	return mux, server.URL, server.Close
+}
+
+// covers a real two-document lockfile end to end; parsePnpmLock explains why every
+// document is cataloged
+func TestParsePnpmLock_MultiDocument(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/pnpm-multi-doc/pnpm-lock.yaml"
+
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "@pnpm/exe.linux-x64",
+			Version:   "12.0.0-rc.3",
+			PURL:      "pkg:npm/%40pnpm/exe.linux-x64@12.0.0-rc.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-/6xWaYfp6MEaJF+7AZIfCMp/fZX2jZlTLh2KVBEH0QOWk1ktaBlKNIJEgT4m6mieOLhNYMzCfLJImMbJDK1IwA=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			// The project's actual dependency, which lives in the second document.
+			Name:      "minimist",
+			Version:   "1.2.0",
+			PURL:      "pkg:npm/minimist@1.2.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-7Wl+Jz+IGWuSdgsQEJ4JunV0si/iMhg42MnQQG6h1R6TNeVenp4U9x5CC5v/gYqz/fENLQITAWXidNtVL0NNbw=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "pnpm",
+			Version:   "12.0.0-rc.3",
+			PURL:      "pkg:npm/pnpm@12.0.0-rc.3",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-JZ9fDGH+WLdRdTEikN3UxeZe6bpDY7dYwV0RX0+OrJ927vc72XbId4IJXeT++ebNFA9cF3IQ1swiXHEd/Maq0Q=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
+// pnpmDoc renders a minimal v9 lockfile document holding a single package.
+func pnpmDoc(version, name, ver, integrity string) string {
+	doc := ""
+	if version != "" {
+		doc += "lockfileVersion: '" + version + "'\n"
+	}
+	return doc + "packages:\n  " + name + "@" + ver + ":\n    resolution: {integrity: " + integrity + "}\nsnapshots:\n  " + name + "@" + ver + ": {}\n"
+}
+
+func TestParsePnpmLock_MultiDocumentStream(t *testing.T) {
+	project := pnpmDoc("9.0", "minimist", "1.2.0", "sha512-AAA")
+
+	tests := []struct {
+		name     string
+		lockfile string
+		wantPkgs []string
+		wantErr  bool
+	}{
+		{
+			// a stream may open with a separator, which decodes to a null document; it must
+			// not take down the documents that follow it
+			name:     "leading comment-only document is skipped",
+			lockfile: "---\n# generated by pnpm\n---\n" + project,
+			wantPkgs: []string{"minimist@1.2.0"},
+		},
+		{
+			name:     "trailing separator is skipped",
+			lockfile: project + "---\n",
+			wantPkgs: []string{"minimist@1.2.0"},
+		},
+		{
+			// documents after the first inherit the established lockfileVersion rather than
+			// being dropped for omitting one
+			name:     "later document inherits lockfileVersion",
+			lockfile: project + "---\n" + pnpmDoc("", "left-pad", "1.0.0", "sha512-BBB"),
+			wantPkgs: []string{"left-pad@1.0.0", "minimist@1.2.0"},
+		},
+		{
+			// a broken document is reported, but the documents that already parsed are kept
+			name:     "corrupt later document keeps earlier packages",
+			lockfile: project + "---\nlockfileVersion: '9.0'\npackages:\n  bad@: {oops\n",
+			wantPkgs: []string{"minimist@1.2.0"},
+			wantErr:  true,
+		},
+		{
+			name:     "single document is unchanged",
+			lockfile: project,
+			wantPkgs: []string{"minimist@1.2.0"},
+		},
+		{
+			name:     "empty file yields no packages",
+			lockfile: "",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+			pkgs, _, err := adapter.parsePnpmLock(context.Background(), nil, nil, file.LocationReadCloser{
+				Location:   file.NewLocation("pnpm-lock.yaml"),
+				ReadCloser: io.NopCloser(strings.NewReader(tt.lockfile)),
+			})
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			var got []string
+			for _, p := range pkgs {
+				got = append(got, p.Name+"@"+p.Version)
+			}
+			sort.Strings(got)
+			assert.Equal(t, tt.wantPkgs, got)
+		})
+	}
+}
+
+func Test_mergePnpmPackages(t *testing.T) {
+	// the whole stream shares one collision rule, the same one used within a document:
+	// the last entry to appear wins
+	first := pnpmPackage{Name: "a", Version: "1.0.0", Integrity: "sha512-AAA", Dev: true, Dependencies: map[string]string{"b": "2.0.0"}}
+	second := pnpmPackage{Name: "a", Version: "1.0.0", Integrity: "sha512-BBB"}
+
+	tests := []struct {
+		name string
+		docs [][]pnpmPackage
+		want []pnpmPackage
+	}{
+		{
+			name: "disjoint documents are unioned",
+			docs: [][]pnpmPackage{{first}, {{Name: "c", Version: "3.0.0"}}},
+			want: []pnpmPackage{first, {Name: "c", Version: "3.0.0"}},
+		},
+		{
+			name: "later document wins on a colliding name@version",
+			docs: [][]pnpmPackage{{first}, {second}},
+			want: []pnpmPackage{second},
+		},
+		{
+			name: "same package in one document only",
+			docs: [][]pnpmPackage{{first}},
+			want: []pnpmPackage{first},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := make(map[string]pnpmPackage)
+			for i, doc := range tt.docs {
+				mergePnpmPackages(got, doc, i)
+			}
+			assert.Equal(t, tt.want, toSortedSlice(got))
+		})
+	}
+}
+
+func Test_pnpmDocumentVersion(t *testing.T) {
+	tests := []struct {
+		name        string
+		doc         string
+		established float64
+		want        float64
+		wantErr     bool
+	}{
+		{name: "reads its own version", doc: "lockfileVersion: '9.0'\n", want: 9.0},
+		{name: "inherits when omitted", doc: "packages: {}\n", established: 9.0, want: 9.0},
+		{name: "own version beats the established one", doc: "lockfileVersion: '6.0'\n", established: 9.0, want: 6.0},
+		{name: "first document must carry a version", doc: "packages: {}\n", wantErr: true},
+		{name: "first document must carry a usable version", doc: "lockfileVersion: 'nope'\n", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := pnpmDocumentVersion(yamlDocument(t, tt.doc), tt.established)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
