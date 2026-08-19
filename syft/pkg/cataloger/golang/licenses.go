@@ -111,8 +111,9 @@ func (c *goLicenseResolver) getLicenses(ctx context.Context, resolver file.Resol
 		}
 	}
 
-	// download from remote sources
-	if c.opts.SearchRemoteLicenses {
+	// download from remote sources; standard library and toolchain paths are not publishable
+	// module paths, so neither a proxy nor a repository has anything to resolve for them
+	if c.opts.SearchRemoteLicenses && !isStandardImportPath(moduleName) {
 		pkgLicenses, err = c.getLicensesFromRemote(ctx, moduleName, moduleVersion)
 		if err != nil {
 			log.WithFields("error", err, "module", moduleName, "version", moduleVersion).Debug("unable to read golang licenses remote")
