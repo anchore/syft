@@ -32,7 +32,7 @@ jobs:
     if: ${{ github.event.inputs.phase == 'all' }}
     permissions:
       contents: read # required for fetching tags
-    uses: anchore/workflows/.github/workflows/check-version-available.yaml@b0c30a80409130d329aaa356fd64a34d8c0b3375 # v0.7.2
+    uses: anchore/workflows/.github/workflows/check-version-available.yaml@7212994dc8fc3a53fe9c8e766ab5b4ddd16ea3d4 # v0.8.0
     with:
       version: ${{ github.event.inputs.version }}
 
@@ -89,13 +89,13 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Login to Docker Hub
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 #v4.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f #v4.6.0
         with:
           username: ${{ secrets.ANCHOREOSSWRITE_DH_USERNAME }}
           password: ${{ secrets.ANCHOREOSSWRITE_DH_PAT }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 #v4.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f #v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

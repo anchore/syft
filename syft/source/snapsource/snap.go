@@ -77,20 +77,31 @@ func getRemoteSnapFile(ctx context.Context, fs afero.Fs, getter intFile.Getter, 
 	return newSnapFileFromRemote(ctx, fs, cfg, getter, info)
 }
 
-func newSnapFileFromRemote(ctx context.Context, fs afero.Fs, cfg Config, getter intFile.Getter, info *remoteSnap) (*snapFile, error) {
+func newSnapFileFromRemote(ctx context.Context, fs afero.Fs, cfg Config, getter intFile.Getter, info *remoteSnap) (_ *snapFile, err error) {
 	t, err := afero.TempDir(fs, "", "syft-snap-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
 
+	closer := func() error {
+		return fs.RemoveAll(t)
+	}
+
+	// any failure past this point must not leave the temp directory (or a partially downloaded snap)
+	// behind. On success the caller owns the directory by way of snapFile.Cleanup.
+	defer func() {
+		if err == nil {
+			return
+		}
+		if closeErr := closer(); closeErr != nil {
+			log.WithFields("error", closeErr, "directory", t).Warn("unable to remove temp directory for snap")
+		}
+	}()
+
 	snapFilePath := path.Join(t, path.Base(info.URL))
 	err = downloadSnap(getter, info, snapFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download snap file: %w", err)
-	}
-
-	closer := func() error {
-		return fs.RemoveAll(t)
 	}
 
 	mimeType, digests, err := getSnapFileInfo(ctx, fs, snapFilePath, cfg.DigestAlgorithms)

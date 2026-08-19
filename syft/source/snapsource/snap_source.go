@@ -3,6 +3,7 @@ package snapsource
 import (
 	"context"
 	"crypto"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -119,7 +120,21 @@ func newFromPath(cfg Config, f *snapFile) (source.Source, error) {
 		closer:       f.Cleanup,
 	}
 
-	return s, s.extractManifest()
+	if err := s.extractManifest(); err != nil {
+		// It is tried on any path ending in .snap or .squashfs, so declining one is routine and
+		// a later provider usually succeeds. When the user asked for --from snap there is no
+		// fallback and this error reaches them intact.
+		log.WithFields("error", err, "path", f.Path).Debug("unable to read snap")
+
+		// never hand back a source alongside an error: callers that discard the source on error would
+		// leave behind the open squashfs file and the temp directory holding a downloaded snap
+		if closeErr := s.Close(); closeErr != nil {
+			log.WithFields("error", closeErr, "path", f.Path).Warn("unable to clean up snap source")
+		}
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (s *snapSource) extractManifest() error {
@@ -128,13 +143,26 @@ func (s *snapSource) extractManifest() error {
 		return fmt.Errorf("unable to create snap file resolver: %w", err)
 	}
 
+	// a manifest problem must never fail the source. this source is the only provider that can descend
+	// into squashfs (filesource cannot), so returning an error here would fall through to a provider
+	// that reports zero packages for a payload that has plenty. describe what we can instead.
 	manifest, err := parseManifest(r)
-	if err != nil {
-		return fmt.Errorf("unable to parse snap manifest file: %w", err)
+	switch {
+	case errors.Is(err, errNoManifest):
+		// not every squashfs payload is a snap, and one without a manifest is still worth cataloging
+		log.WithFields("path", s.squashfsPath).Debug("no snap manifest file found")
+		return nil
+	case err != nil:
+		// the manifest is there but unusable, which is worth surfacing: the SBOM will have no source
+		// name or version to show for it
+		log.WithFields("error", err, "path", s.squashfsPath).Warn("unable to parse snap manifest file")
+		return nil
 	}
 
-	if manifest != nil {
-		s.manifest = *manifest
+	s.manifest = *manifest
+
+	if s.manifest.Name == "" || s.manifest.Version == "" {
+		log.WithFields("path", s.squashfsPath).Warn("snap manifest is missing name or version")
 	}
 	return nil
 }
@@ -176,25 +204,34 @@ func (s snapSource) Describe() source.Description {
 	}
 }
 
+// Close releases everything the source holds. Every step runs even if an earlier one fails, since
+// bailing early would skip the temp directory removal and leave a downloaded snap on disk. Safe to
+// call more than once.
 func (s *snapSource) Close() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	var errs error
 	if s.squashFileCloser != nil {
 		if err := s.squashFileCloser(); err != nil {
-			return fmt.Errorf("unable to close snap resolver: %w", err)
+			errs = errors.Join(errs, fmt.Errorf("unable to close snap resolver: %w", err))
 		}
 		s.squashFileCloser = nil
 	}
 	s.resolver = nil
 	if s.fs != nil {
 		if err := s.fs.Close(); err != nil {
-			return fmt.Errorf("unable to close snap squashfs: %w", err)
+			errs = errors.Join(errs, fmt.Errorf("unable to close snap squashfs: %w", err))
 		}
+		s.fs = nil
 	}
 	if s.closer != nil {
 		if err := s.closer(); err != nil {
-			return fmt.Errorf("unable to close snap source: %w", err)
+			errs = errors.Join(errs, fmt.Errorf("unable to close snap source: %w", err))
 		}
+		s.closer = nil
 	}
-	return nil
+	return errs
 }
 
 func (s *snapSource) FileResolver(_ source.Scope) (file.Resolver, error) {

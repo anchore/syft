@@ -32,6 +32,11 @@ func candidateVendorsForPE(p pkg.Package) fieldCandidateSet {
 		candidates.addValue("artifex")
 	}
 
+	if product == "git" || fileDesc == "git setup" || company == "the git development community" {
+		candidates.addValue("git_for_windows_project")
+		candidates.addValue("gitforwindows")
+	}
+
 	return candidates
 }
 
@@ -57,6 +62,11 @@ func candidateProductsForPE(p pkg.Package) fieldCandidateSet {
 
 	if strings.Contains(product, "ghostscript") || strings.Contains(fileDesc, "ghostscript") {
 		candidates.addValue("ghostscript")
+	}
+
+	if product == "git" || fileDesc == "git setup" {
+		candidates.addValue("git_for_windows")
+		candidates.addValue("git")
 	}
 
 	return candidates

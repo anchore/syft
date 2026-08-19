@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
 )
@@ -203,7 +204,7 @@ const (
 )
 
 func getPlatformElf(f *os.File) string {
-	elfFile, err := elf.NewFile(f)
+	elfFile, err := elfutil.NewFile(f)
 	if err != nil {
 		return ""
 	}

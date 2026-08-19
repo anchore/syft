@@ -90,3 +90,16 @@ func packagesInRelationshipsAsValues(m dsl.Matcher) {
 		Where(isRelationship(m) && hasPointerType(m)).
 		Report("pointer used as a value for From/To field in artifact.Relationship (use values instead)")
 }
+
+// nolint:unused
+func noDirectELFOpen(m dsl.Matcher) {
+	// debug/elf sizes a compressed section's buffer from that section's own header, so opening an
+	// attacker-supplied binary with it directly is an unbounded allocation. elfutil.NewFile is a
+	// drop-in that bounds the sections syft can actually reach.
+	m.Match(
+		`elf.NewFile($_)`,
+		`elf.Open($_)`,
+	).
+		Where(!m.File().PkgPath.Matches(`/syft/internal/elfutil$`)).
+		Report("do not open ELF files with debug/elf directly; use elfutil.NewFile, which bounds declared decompressed section sizes")
+}

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/anchore/clio"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 )
@@ -19,6 +20,7 @@ type golangConfig struct {
 	MainModuleVersion           golangMainModuleVersionConfig `json:"main-module-version" yaml:"main-module-version" mapstructure:"main-module-version"`
 	UsePackagesLib              *bool                         `json:"use-packages-lib" yaml:"use-packages-lib" mapstructure:"use-packages-lib"`
 	CaptureSymbols              cataloging.SymbolScope        `json:"capture-symbols" yaml:"capture-symbols" mapstructure:"capture-symbols"`
+	CaptureSymbolsModules       []string                      `json:"capture-symbols-modules" yaml:"capture-symbols-modules" mapstructure:"capture-symbols-modules"`
 }
 
 var _ interface {
@@ -42,8 +44,16 @@ if unset this defaults to $GONOPROXY`)
 always show (devel) as the version. Use these options to control heuristics to guess
 a more accurate version from the binary.`)
 	descriptions.Add(&o.UsePackagesLib, `use the golang.org/x/tools/go/packages library, which executes golang tooling found on the path in addition to potential network access to get the most accurate results`)
+	// note: descriptions must be static string literals; the app config discovery that generates the
+	// capability docs reads them straight out of the AST
 	descriptions.Add(&o.CaptureSymbols, `capture function symbols from the binary symbol table (pclntab). valid values are:
-"none" (disabled), "stdlib" (only the synthetic stdlib package), and "all" (all module packages plus stdlib)`)
+"none" (disabled), "stdlib" (only the synthetic stdlib package), "extended-stdlib" (stdlib plus every
+module under golang.org/x/), and "all" (all module packages plus stdlib)`)
+	descriptions.Add(&o.CaptureSymbolsModules, `glob patterns matched against go module paths (e.g. github.com/klauspost/**) that should have symbols
+captured in addition to whatever capture-symbols selects. ** crosses path separators, * does not.
+a trailing major version suffix is ignored when matching, so github.com/foo/* covers github.com/foo/bar/v2;
+spelling a suffix out in the pattern selects only that major version.
+this can only widen the selection, never narrow it, and is inert when capture-symbols is none`)
 	descriptions.Add(&o.MainModuleVersion.FromLDFlags, `look for LD flags that appear to be setting a version (e.g. -X main.version=1.0.0)`)
 	descriptions.Add(&o.MainModuleVersion.FromBuildSettings, `use the build settings (e.g. vcs.version & vcs.time) to craft a v0 pseudo version
 (e.g. v0.0.0-20220308212642-53e6d0aaf6fb) when a more accurate version cannot be found otherwise`)
@@ -51,7 +61,24 @@ a more accurate version from the binary.`)
 }
 
 func (o *golangConfig) PostLoad() error {
+	raw := strings.TrimSpace(string(o.CaptureSymbols))
 	o.CaptureSymbols = o.CaptureSymbols.Parse()
+
+	// an unrecognized value still resolves to "none", but say so rather than silently capturing nothing.
+	// stay quiet for unset and an explicit "none", which is the default and would otherwise warn on nearly
+	// every scan.
+	if o.CaptureSymbols == cataloging.SymbolScopeNone && raw != "" && !strings.EqualFold(raw, string(cataloging.SymbolScopeNone)) {
+		log.Warnf("unknown golang.capture-symbols value %q, defaulting to %q (valid values: none, stdlib, extended-stdlib, all)", raw, cataloging.SymbolScopeNone)
+	}
+
+	// trim only, deliberately not Flatten: viper already splits a comma-separated scalar (env var or a bare
+	// yaml string) into a slice before this point, and there is no CLI flag feeding this key. The one thing
+	// Flatten would add is splitting commas *inside* a list entry, which silently breaks doublestar brace
+	// alternation like github.com/{foo,bar}/**. Viper's split does not trim, so that part is still needed.
+	for i, pattern := range o.CaptureSymbolsModules {
+		o.CaptureSymbolsModules[i] = strings.TrimSpace(pattern)
+	}
+
 	return nil
 }
 
@@ -76,7 +103,8 @@ func defaultGolangConfig() golangConfig {
 			FromContents:      def.MainModuleVersion.FromContents,
 			FromBuildSettings: def.MainModuleVersion.FromBuildSettings,
 		},
-		UsePackagesLib: nil, // this defaults to true, which is the API default
-		CaptureSymbols: def.CaptureSymbols,
+		UsePackagesLib:        nil, // this defaults to true, which is the API default
+		CaptureSymbols:        def.CaptureSymbols,
+		CaptureSymbolsModules: def.CaptureSymbolsModules,
 	}
 }
