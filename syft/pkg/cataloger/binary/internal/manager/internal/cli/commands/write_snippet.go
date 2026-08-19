@@ -218,6 +218,10 @@ func getPlatformElf(f *os.File) string {
 		arch = "arm"
 	case elf.EM_S390:
 		arch = "s390x"
+	case elf.EM_386:
+		arch = "386"
+	case elf.EM_RISCV:
+		arch = "riscv64"
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", elfFile.Machine)
