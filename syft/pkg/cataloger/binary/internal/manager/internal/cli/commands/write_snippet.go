@@ -214,6 +214,10 @@ func getPlatformElf(f *os.File) string {
 		arch = amd64
 	case elf.EM_AARCH64:
 		arch = arm64
+	case elf.EM_ARM:
+		arch = "arm"
+	case elf.EM_S390:
+		arch = "s390x"
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", elfFile.Machine)

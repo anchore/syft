@@ -2625,7 +2625,7 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
-			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm-v7",
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm",
 			expected: pkg.Package{
 				Name:      "nginx-ingress-controller",
 				Version:   "1.9.6",

@@ -1153,8 +1153,11 @@ func DefaultClassifiers() []binutils.Classifier {
 			Class:    "ingress-nginx-binary",
 			FileGlob: "**/nginx-ingress-controller",
 			EvidenceMatcher: binutils.MatchAny(
-				// v1.9.6[NUL][NUL][NUL][NUL]...[NUL][NUL][NUL]go1.21.5[NUL][NUL]
-				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta)\.?[0-9]+)?)\x00+(?s:.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000}.{0,1000})go[0-9]+\.[0-9]+(\.[0-9]+)?\x00+`),
+				// the release is injected with -ldflags -X, which lands it in its own NUL-padded data symbol.
+				// the surrounding bytes are an arch-specific float constant pool, so only the padding is portable.
+				// e.g. v1.9.6[NUL][NUL] on each of linux/amd64, linux/arm, linux/arm64, and linux/s390x
+				// note: one trailing NUL is not enough -- on s390x that matches a vendored "v1.19.0" earlier in the file
+				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9]+)?)\x00\x00`),
 				// [NUL][NUL]v1.15.1[NUL][NUL]@e[ETX][NUL][NUL][NUL][NUL]go1.26.1[NUL][NUL][NUL]
 				// �v1.15.1[NUL][NUL]�z[ETX][NUL][NUL][NUL][NUL]go1.24.4[NUL][NUL][NUL]
 				m.FileContentsVersionMatcher(`v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)\x00+.{0,50}go[0-9]+\.[0-9]+(\-(alpha|beta)\.[0-9])?\.[0-9]+\x00+`),
