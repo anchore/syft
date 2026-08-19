@@ -631,13 +631,8 @@ func setupNpmRegistry() (mux *http.ServeMux, serverURL string, teardown func()) 
 	return mux, server.URL, server.Close
 }
 
-// pnpm-lock.yaml can be a two-document YAML stream: pnpm records config
-// dependencies and the pinned package-manager version in the leading document
-// and the project's dependency graph in the next one. Reading only the first
-// document produces a well-formed SBOM holding pnpm's own release binaries and
-// none of the project's dependencies, with nothing to signal it is wrong.
-//
-// See https://github.com/anchore/syft/issues/5168
+// covers a real two-document lockfile end to end; parsePnpmLock explains why every
+// document is cataloged
 func TestParsePnpmLock_MultiDocument(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "testdata/pnpm-multi-doc/pnpm-lock.yaml"
