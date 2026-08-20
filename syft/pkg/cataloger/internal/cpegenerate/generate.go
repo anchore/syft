@@ -184,9 +184,13 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 }
 
 func candidateTargetSw(p pkg.Package) []string {
-	if p.Type == pkg.WordpressPluginPkg {
+	switch p.Type {
+	case pkg.WordpressPluginPkg:
 		return []string{"wordpress"}
+	case pkg.RustPkg:
+		return []string{"rust"}
 	}
+
 	return []string{cpe.Any}
 }
 
@@ -217,6 +221,50 @@ func candidateVendors(p pkg.Package) []string {
 		}
 	}
 
+	vendors = candidateVendorsByType(p, vendors)
+
+	if p.Type == pkg.BinaryPkg && endsWithNumber(p.Name) {
+		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
+		addBinaryPackageDigitVariations(vendors)
+	}
+
+	// We should no longer be generating vendor candidates with these values ["" and "*"]
+	// (since CPEs will match any other value)
+	vendors.removeByValue("")
+	vendors.removeByValue("*")
+
+	// try swapping hyphens for underscores, vice versa, and removing separators altogether
+	addDelimiterVariations(vendors)
+
+	// rust vendor name needs to be added after the `addDelimiterVariations` call as `-project` suffix is used otherwise
+	if p.Language == pkg.Rust {
+		vendors.addValue(p.Name + "_project")
+	}
+
+	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
+	addAllSubSelections(vendors)
+
+	// add more candidates based on the package info for each vendor candidate
+	for _, vendor := range vendors.uniqueValues() {
+		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
+	}
+
+	// remove known mis
+	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
+
+	uniqueVendors := vendors.uniqueValues()
+
+	// if any known vendor was detected, pick that one.
+	for _, vendor := range uniqueVendors {
+		if knownVendors.Has(vendor) {
+			return []string{vendor}
+		}
+	}
+
+	return uniqueVendors
+}
+
+func candidateVendorsByType(p pkg.Package, vendors fieldCandidateSet) fieldCandidateSet {
 	switch p.Metadata.(type) {
 	case pkg.DotnetDepsEntry, pkg.DotnetPackagesLockEntry, pkg.DotnetPortableExecutableEntry:
 		vendors.clear()
@@ -240,41 +288,7 @@ func candidateVendors(p pkg.Package) []string {
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
 	}
-
-	if p.Type == pkg.BinaryPkg && endsWithNumber(p.Name) {
-		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
-		addBinaryPackageDigitVariations(vendors)
-	}
-
-	// We should no longer be generating vendor candidates with these values ["" and "*"]
-	// (since CPEs will match any other value)
-	vendors.removeByValue("")
-	vendors.removeByValue("*")
-
-	// try swapping hyphens for underscores, vice versa, and removing separators altogether
-	addDelimiterVariations(vendors)
-
-	// generate sub-selections of each candidate based on separators (e.g. jenkins-ci -> [jenkins, jenkins-ci])
-	addAllSubSelections(vendors)
-
-	// add more candidates based on the package info for each vendor candidate
-	for _, vendor := range vendors.uniqueValues() {
-		vendors.addValue(findAdditionalVendors(defaultCandidateAdditions, p.Type, p.Name, vendor)...)
-	}
-
-	// remove known mis
-	vendors.removeByValue(findVendorsToRemove(defaultCandidateRemovals, p.Type, p.Name)...)
-
-	uniqueVendors := vendors.uniqueValues()
-
-	// if any known vendor was detected, pick that one.
-	for _, vendor := range uniqueVendors {
-		if knownVendors.Has(vendor) {
-			return []string{vendor}
-		}
-	}
-
-	return uniqueVendors
+	return vendors
 }
 
 func candidateProducts(p pkg.Package) []string {
