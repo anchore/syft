@@ -188,7 +188,10 @@ func parseVersion(version string, guessFromConstraint bool) string {
 
 func parsePinnedVersion(version string) string {
 	version = strings.TrimSpace(version)
-	if strings.ContainsAny(version, "*,<>!") {
+	// a wildcard, range, or list of constraints is not a single pinned version. the "!=" exclusion
+	// operator is checked as a substring rather than by the bare "!" character, since a lone "!"
+	// is also the PEP 440 epoch separator (e.g. "1!2.0.0") and must not disqualify an exact pin.
+	if strings.ContainsAny(version, "*,<>") || strings.Contains(version, "!=") {
 		return ""
 	}
 
