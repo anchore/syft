@@ -221,29 +221,7 @@ func candidateVendors(p pkg.Package) []string {
 		}
 	}
 
-	switch p.Metadata.(type) {
-	case pkg.DotnetDepsEntry, pkg.DotnetPackagesLockEntry, pkg.DotnetPortableExecutableEntry:
-		vendors.clear()
-		vendors.union(candidateVendorsForDotnet(p))
-	case pkg.RpmDBEntry, pkg.RpmArchive:
-		vendors.union(candidateVendorsForRPM(p))
-	case pkg.RubyGemspec:
-		vendors.union(candidateVendorsForRuby(p))
-	case pkg.PythonPackage:
-		vendors.union(candidateVendorsForPython(p))
-	case pkg.JavaArchive:
-		vendors.union(candidateVendorsForJava(p))
-	case pkg.ApkDBEntry:
-		vendors.union(candidateVendorsForAPK(p))
-	case pkg.NpmPackage:
-		vendors.union(candidateVendorsForJavascript(p))
-	case pkg.PEBinary:
-		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
-		vendors.union(candidateVendorsForPE(p))
-	case pkg.WordpressPluginEntry:
-		vendors.clear()
-		vendors.union(candidateVendorsForWordpressPlugin(p))
-	}
+	vendors = candidateVendorsByType(p, vendors)
 
 	if p.Type == pkg.BinaryPkg && endsWithNumber(p.Name) {
 		// add binary package digit-suffix variations (e.g. Qt5 -> Qt)
@@ -284,6 +262,33 @@ func candidateVendors(p pkg.Package) []string {
 	}
 
 	return uniqueVendors
+}
+
+func candidateVendorsByType(p pkg.Package, vendors fieldCandidateSet) fieldCandidateSet {
+	switch p.Metadata.(type) {
+	case pkg.DotnetDepsEntry, pkg.DotnetPackagesLockEntry, pkg.DotnetPortableExecutableEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForDotnet(p))
+	case pkg.RpmDBEntry, pkg.RpmArchive:
+		vendors.union(candidateVendorsForRPM(p))
+	case pkg.RubyGemspec:
+		vendors.union(candidateVendorsForRuby(p))
+	case pkg.PythonPackage:
+		vendors.union(candidateVendorsForPython(p))
+	case pkg.JavaArchive:
+		vendors.union(candidateVendorsForJava(p))
+	case pkg.ApkDBEntry:
+		vendors.union(candidateVendorsForAPK(p))
+	case pkg.NpmPackage:
+		vendors.union(candidateVendorsForJavascript(p))
+	case pkg.PEBinary:
+		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
+		vendors.union(candidateVendorsForPE(p))
+	case pkg.WordpressPluginEntry:
+		vendors.clear()
+		vendors.union(candidateVendorsForWordpressPlugin(p))
+	}
+	return vendors
 }
 
 func candidateProducts(p pkg.Package) []string {

@@ -865,6 +865,7 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:rust-package_project:rust-package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust-package_project:rust_package:0.5.0:*:*:*:*:rust:*:*",
 				"cpe:2.3:a:rust-package:rust-package:0.5.0:*:*:*:*:rust:*:*",
 				"cpe:2.3:a:rust-package:rust_package:0.5.0:*:*:*:*:rust:*:*",
 				"cpe:2.3:a:rust:rust-package:0.5.0:*:*:*:*:rust:*:*",
