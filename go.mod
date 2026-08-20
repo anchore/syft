@@ -334,3 +334,5 @@ retract (
 	v0.53.2
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
+
+replace github.com/anchore/stereoscope => github.com/jasonpaulos/stereoscope v0.0.0-20260730181851-bfc8d18a601a
