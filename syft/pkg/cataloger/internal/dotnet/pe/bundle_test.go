@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	intFile "github.com/anchore/syft/internal/file"
 )
 
 func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
@@ -90,7 +92,7 @@ func TestExtractDepsJSONFromBundle_MalformedSectionSizesDoNotOverAllocate(t *tes
 
 	// sanity: the headers really do describe an end offset far past the file, so the bound is what keeps
 	// the allocation small rather than the input being small
-	require.Greater(t, calculatePEEndOffset(sections), int64(8*1024*1024*1024))
+	require.Greater(t, calculatePEEndOffset(sections), int64(8*intFile.GB))
 
 	const fileSize = 512 // a small "file" with no bundle signature
 	r := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, fileSize))}

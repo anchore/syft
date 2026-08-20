@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	intFile "github.com/anchore/syft/internal/file"
 )
 
 // readSeekCloser adapts a *bytes.Reader to the unionreader.UnionReader interface (adds Close).
@@ -22,10 +24,10 @@ func (readSeekCloser) Close() error { return nil }
 // FindSignatureOffset must keep the allocation tied to the real file.
 //
 // note: 8GB rather than something astronomical on purpose. `make([]byte, 1<<60)` panics on its own, so a
-// test built on that value passes whether or not the bound exists; `make([]byte, 8<<30)` succeeds on any
-// 64-bit host from untouched anonymous mmap, so only the requested read size distinguishes them.
+// test built on that value passes whether or not the bound exists; `make([]byte, 8*intFile.GB)` succeeds
+// on any 64-bit host from untouched anonymous mmap, so only the requested read size distinguishes them.
 func buildELFWithHugeFilesz() []byte {
-	return buildELFWithProgHeader(0, 8<<30)
+	return buildELFWithProgHeader(0, 8*intFile.GB)
 }
 
 // readSizeRecorder records the largest single Read length requested of it, which is what tells a buffer
@@ -106,7 +108,7 @@ func TestExtractDepsJSONFromELFBundle_MalformedFileszDoesNotOverAllocate(t *test
 
 	// sanity: the headers really do describe an end offset far past the file, so the bound is what keeps
 	// the allocation small rather than the input being small
-	require.Greater(t, calculateELFEndOffset(mustParseELF(t, data)), int64(8*1024*1024*1024))
+	require.Greater(t, calculateELFEndOffset(mustParseELF(t, data)), int64(8*intFile.GB))
 
 	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
 

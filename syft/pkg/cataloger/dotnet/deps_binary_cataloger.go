@@ -503,6 +503,11 @@ func findPEFiles(resolver file.Resolver) ([]logicalPE, error, error) {
 		if ldpe == nil {
 			continue
 		}
+		if ldpe.ParseErr != nil {
+			// the file parsed well enough to catalog but not completely, so record what we could not read
+			// and still keep the package
+			unknownErr = unknown.Append(unknownErr, loc, ldpe.ParseErr)
+		}
 		peFiles = append(peFiles, *ldpe)
 	}
 
