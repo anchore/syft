@@ -654,18 +654,18 @@ packages:
 	}
 
 	// v5 lockfile with two entries that collapse to the same key (underscore peer-dep suffixes)
-	lockfileV5 := []byte(`
+	lockfileV5 := `
 lockfileVersion: 5.4
 packages:
   /some-pkg/1.0.0_peer-b@2.0.0:
     resolution: {integrity: sha512-BBB}
   /some-pkg/1.0.0_peer-a@1.0.0:
     resolution: {integrity: sha512-AAA}
-`)
+`
 
 	for range 10 {
 		parser := &pnpmV6LockYaml{}
-		pkgs, err := parser.Parse(5.4, lockfileV5)
+		pkgs, err := parser.Parse(5.4, yamlDocument(t, lockfileV5))
 		require.NoError(t, err)
 		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
 
