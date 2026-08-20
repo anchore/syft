@@ -5,7 +5,11 @@
     <tools>
       <components>
         <component type="application">
-          <author>anchore</author>
+          <authors>
+            <author>
+              <name>anchore</name>
+            </author>
+          </authors>
           <name>syft</name>
           <version>v0.42.0-bogus</version>
         </component>

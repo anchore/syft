@@ -196,3 +196,56 @@ func defaultFormatEncoders() []sbom.FormatEncoder {
 	}
 	return encs
 }
+
+// Test_ComponentAuthorByVersion asserts which of the two author fields a document is written with, and that
+// either one is read back to the same package. The author field on a component is deprecated as of CycloneDX
+// 1.6 in favor of a list of authors, and the two do not coexist in syft's output.
+//
+// see anchore/syft#4580
+func Test_ComponentAuthorByVersion(t *testing.T) {
+	subject := testutil.DirectoryInputWithAuthorField(t)
+
+	for _, version := range SupportedVersions() {
+		t.Run("v"+version, func(t *testing.T) {
+			enc, err := NewFormatEncoderWithConfig(EncoderConfig{Version: version})
+			require.NoError(t, err)
+
+			var buf bytes.Buffer
+			require.NoError(t, enc.Encode(&buf, subject))
+
+			doc := buf.String()
+
+			if version < "1.6" {
+				assert.Contains(t, doc, `"author":"test-author"`, "the deprecated field is all this version has")
+				assert.NotContains(t, doc, `"authors":`, "the authors list does not exist before 1.6")
+			} else {
+				assert.Contains(t, doc, `"authors":[{"name":"test-author"}]`)
+				assert.NotContains(t, doc, `"author":`, "the deprecated field should not be written when the list can be")
+			}
+
+			if version == "1.2" {
+				// package metadata is carried in component properties, which 1.2 has no place for, so there is
+				// no metadata to read an author back into
+				return
+			}
+
+			decoded, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+			require.NoError(t, err)
+
+			assert.Equal(t, "test-author", decodedPythonAuthor(t, decoded), "the author did not survive the round trip")
+		})
+	}
+}
+
+func decodedPythonAuthor(t *testing.T, s *sbom.SBOM) string {
+	t.Helper()
+
+	for p := range s.Artifacts.Packages.Enumerate() {
+		if metadata, ok := p.Metadata.(pkg.PythonPackage); ok {
+			return metadata.Author
+		}
+	}
+
+	t.Fatal("no python package in the decoded document")
+	return ""
+}
