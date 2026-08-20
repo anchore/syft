@@ -310,6 +310,66 @@ func TestParsePnpmV6Lock(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePnpmLockV5PeerSuffix(t *testing.T) {
+	// pnpm v5 lockfiles encode resolved peer dependencies as an underscore-delimited
+	// suffix of the dependency path, either readable (e.g. "5.3.2_acorn@8.8.0") or
+	// hashed (e.g. "4.10.0_fzn43tb6bdtdxy2s3aqevve2su"). The suffix must be stripped
+	// from reported versions, just like the parenthesized form in v6+ lockfiles.
+	fixture := "testdata/pnpm-v5-peer-suffix/pnpm-lock.yaml"
+
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "acorn",
+			Version:   "8.8.0",
+			PURL:      "pkg:npm/acorn@8.8.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-QOxyigPVrpZ2GXT+PFyZTl6TtOFc5egxHIP9IlQ+RbupQuX4RkT/Bee4/kQuC02Xkzg84JcT7oLYtDIQxp+v7w=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "acorn-jsx",
+			Version:   "5.3.2",
+			PURL:      "pkg:npm/acorn-jsx@5.3.2",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution: pkg.PnpmLockResolution{Integrity: "sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ=="},
+				Dependencies: map[string]string{
+					"acorn": "8.8.0",
+				},
+			},
+		},
+		{
+			Name:      "webpack-cli",
+			Version:   "4.10.0",
+			PURL:      "pkg:npm/webpack-cli@4.10.0",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-NLhDfH/h4O6UOy+0LSso42xvYypClINuMNBVVzX4vX98TmTaTUxwRbXdhucbFMd2qLaCTcLq/PdYrvi8onw90w=="},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: expectedPkgs[0],
+			To:   expectedPkgs[1],
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
 func TestParsePnpmLockV9(t *testing.T) {
 	var expectedRelationships []artifact.Relationship
 	fixture := "testdata/pnpm-v9/pnpm-lock.yaml"
@@ -585,6 +645,27 @@ packages:
 	for range 10 {
 		parser := &pnpmV6LockYaml{}
 		pkgs, err := parser.Parse(6.0, yamlDocument(t, lockfileV6))
+		require.NoError(t, err)
+		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
+
+		assert.Equal(t, "some-pkg", pkgs[0].Name)
+		assert.Equal(t, "1.0.0", pkgs[0].Version)
+		assert.Equal(t, "sha512-BBB", pkgs[0].Integrity, "expected last lexicographic key to win")
+	}
+
+	// v5 lockfile with two entries that collapse to the same key (underscore peer-dep suffixes)
+	lockfileV5 := []byte(`
+lockfileVersion: 5.4
+packages:
+  /some-pkg/1.0.0_peer-b@2.0.0:
+    resolution: {integrity: sha512-BBB}
+  /some-pkg/1.0.0_peer-a@1.0.0:
+    resolution: {integrity: sha512-AAA}
+`)
+
+	for range 10 {
+		parser := &pnpmV6LockYaml{}
+		pkgs, err := parser.Parse(5.4, lockfileV5)
 		require.NoError(t, err)
 		require.Len(t, pkgs, 1, "expected exactly one package after key collision")
 

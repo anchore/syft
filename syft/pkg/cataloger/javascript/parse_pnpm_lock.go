@@ -89,6 +89,8 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 		return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
 	}
 
+	isV5 := version < 6.0
+
 	packages := make(map[string]pnpmPackage)
 
 	// Direct dependencies — use sorted keys for deterministic output
@@ -97,6 +99,9 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 		if err != nil {
 			log.WithFields("package", name, "error", err).Trace("unable to parse pnpm dependency")
 			continue
+		}
+		if isV5 {
+			ver = stripPnpmV5PeerSuffix(ver)
 		}
 		key := name + "@" + ver
 		packages[key] = pnpmPackage{Name: name, Version: ver}
@@ -114,6 +119,9 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
+		if isV5 {
+			ver = stripPnpmV5PeerSuffix(ver)
+		}
 		pkgKey := name + "@" + ver
 
 		integrity := ""
@@ -124,6 +132,9 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 		dependencies := make(map[string]string)
 		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
 			var normalizedVersion = strings.SplitN(depVersion, "(", 2)[0]
+			if isV5 {
+				normalizedVersion = stripPnpmV5PeerSuffix(normalizedVersion)
+			}
 			dependencies[depName] = normalizedVersion
 		}
 
@@ -313,6 +324,22 @@ func parseVersionField(name string, info any) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported dependency type %T for %q", info, name)
 	}
+}
+
+// stripPnpmV5PeerSuffix removes the underscore-delimited peer dependency suffix used by
+// pnpm v5 lockfiles, e.g. "5.3.2_acorn@8.8.0" or "4.10.0_fzn43tb6bdtdxy2s3aqevve2su" -> "5.3.2" / "4.10.0".
+// Lockfile v6+ encodes the same information in parentheses, which is stripped separately.
+// Only values that look like a registry version (leading digit) are stripped, so that
+// link:/file:/git specifiers are left untouched.
+func stripPnpmV5PeerSuffix(version string) string {
+	idx := strings.Index(version, "_")
+	if idx <= 0 {
+		return version
+	}
+	if version[0] < '0' || version[0] > '9' {
+		return version
+	}
+	return version[:idx]
 }
 
 // parsePnpmPackageKey extracts the package name and version from a lockfile package key.
