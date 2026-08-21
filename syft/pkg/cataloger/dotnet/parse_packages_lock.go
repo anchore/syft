@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 
+	"github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
@@ -76,36 +78,43 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		}
 	}
 
-	// fill up relationships
-	for depNameVersion, dep := range allDependencies {
-		parentPkg, ok := pkgMap[depNameVersion]
-		if !ok {
-			log.Debugf("package \"%s\" not found in map of all packages", depNameVersion)
-			continue
-		}
+	// fill up relationships, resolving each dependency within its own target framework so that
+	// lockfiles pinning multiple versions of the same package resolve to the correct one
+	seen := make(map[string]struct{})
+	for _, targetFramework := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
+		frameworkDeps := lockFile.Dependencies[targetFramework]
 
-		for childDepName, childDepVersion := range dep.Dependencies {
-			childDepNameVersion := createNameAndVersion(childDepName, childDepVersion)
+		for _, name := range slices.Sorted(maps.Keys(frameworkDeps)) {
+			dep := frameworkDeps[name]
+			depNameVersion := createNameAndVersion(name, dep.Resolved)
 
-			// try and find pkg for dependency with exact name and version
-			childPkg, ok := pkgMap[childDepNameVersion]
+			parentPkg, ok := pkgMap[depNameVersion]
 			if !ok {
-				// no exact match found, lets match on name only, lockfile will contain other version of pkg
-				cpkg, ok := findPkgByName(childDepName, pkgMap)
+				log.Debugf("package \"%s\" not found in map of all packages", depNameVersion)
+				continue
+			}
+
+			for _, childDepName := range slices.Sorted(maps.Keys(dep.Dependencies)) {
+				childDepVersion := dep.Dependencies[childDepName]
+
+				childPkg, ok := findDependencyPkg(childDepName, childDepVersion, frameworkDeps, pkgMap)
 				if !ok {
-					log.Debugf("dependency \"%s\" of package \"%s\" not found in map of all packages", childDepNameVersion, depNameVersion)
+					log.Debugf("dependency \"%s\" of package \"%s\" not found in map of all packages", createNameAndVersion(childDepName, childDepVersion), depNameVersion)
 					continue
 				}
 
-				childPkg = *cpkg
-			}
+				key := string(childPkg.ID()) + string(parentPkg.ID())
+				if _, exists := seen[key]; exists {
+					continue
+				}
+				seen[key] = struct{}{}
 
-			rel := artifact.Relationship{
-				From: childPkg,
-				To:   parentPkg,
-				Type: artifact.DependencyOfRelationship,
+				relationships = append(relationships, artifact.Relationship{
+					From: *childPkg,
+					To:   parentPkg,
+					Type: artifact.DependencyOfRelationship,
+				})
 			}
-			relationships = append(relationships, rel)
 		}
 	}
 
@@ -151,13 +160,52 @@ func packagesLockPackageURL(name, version string) string {
 	).ToString()
 }
 
-func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
-	for pkgNameVersion, pkg := range pkgMap {
-		name, _ := extractNameAndVersion(pkgNameVersion)
-		if name == pkgName {
-			return &pkg, true
+// findDependencyPkg resolves a declared dependency to a package, preferring the version resolved within the
+// same target framework, since the declared version is only a lower bound and the same package may be resolved
+// to different versions across target frameworks.
+func findDependencyPkg(name, declaredVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
+	if dep, ok := frameworkDeps[name]; ok {
+		if p, ok := pkgMap[createNameAndVersion(name, dep.Resolved)]; ok {
+			return &p, true
 		}
 	}
 
-	return nil, false
+	if p, ok := pkgMap[createNameAndVersion(name, declaredVersion)]; ok {
+		return &p, true
+	}
+
+	return findPkgByName(name, pkgMap)
+}
+
+// findPkgByName returns the lowest-versioned package matching the given name, which is the version NuGet would
+// select for a lower-bound requirement. Candidates are sorted so that the result is deterministic.
+func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
+	var candidates []string
+	for pkgNameVersion := range pkgMap {
+		name, _ := extractNameAndVersion(pkgNameVersion)
+		if name == pkgName {
+			candidates = append(candidates, pkgNameVersion)
+		}
+	}
+
+	if len(candidates) == 0 {
+		return nil, false
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		_, vi := extractNameAndVersion(candidates[i])
+		_, vj := extractNameAndVersion(candidates[j])
+
+		si, erri := version.NewVersion(vi)
+		sj, errj := version.NewVersion(vj)
+		if erri == nil && errj == nil && !si.Equal(sj) {
+			return si.LessThan(sj)
+		}
+
+		return candidates[i] < candidates[j]
+	})
+
+	p := pkgMap[candidates[0]]
+
+	return &p, true
 }

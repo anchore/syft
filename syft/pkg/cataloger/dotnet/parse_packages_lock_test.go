@@ -197,3 +197,75 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseDotnetPackagesLock, expectedPkgs, expectedRelationships)
 }
+
+func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
+	fixture := "testdata/packages.lock-multi-framework.json"
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	myLibPkg := pkg.Package{
+		Name:      "MyLib",
+		Version:   "1.0.0",
+		PURL:      "pkg:nuget/MyLib@1.0.0",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "MyLib",
+			Version:     "1.0.0",
+			ContentHash: "mylibhash==",
+			Type:        "Direct",
+		},
+	}
+
+	log4net2Pkg := pkg.Package{
+		Name:      "log4net",
+		Version:   "2.0.5",
+		PURL:      "pkg:nuget/log4net@2.0.5",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "log4net",
+			Version:     "2.0.5",
+			ContentHash: "log4net205hash==",
+			Type:        "Transitive",
+		},
+	}
+
+	log4net1Pkg := pkg.Package{
+		Name:      "log4net",
+		Version:   "1.2.15",
+		PURL:      "pkg:nuget/log4net@1.2.15",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "log4net",
+			Version:     "1.2.15",
+			ContentHash: "log4net1215hash==",
+			Type:        "Transitive",
+		},
+	}
+
+	expectedPkgs := []pkg.Package{
+		myLibPkg,
+		log4net1Pkg,
+		log4net2Pkg,
+	}
+
+	// the same package is resolved to a different version per target framework, so both edges must be captured
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: log4net1Pkg,
+			To:   myLibPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: log4net2Pkg,
+			To:   myLibPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	pkgtest.TestFileParser(t, fixture, parseDotnetPackagesLock, expectedPkgs, expectedRelationships)
+}
