@@ -221,6 +221,14 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 		supplier = meta.Supplier.Name
 	}
 
+	// the component name and version describe the source, so they are always preserved (regardless of
+	// component type) to survive a decode-then-encode round trip.
+	desc := source.Description{
+		Name:     c.Name,
+		Version:  c.Version,
+		Supplier: supplier,
+	}
+
 	switch c.Type {
 	case cyclonedx.ComponentTypeContainer:
 		var labels map[string]string
@@ -229,29 +237,18 @@ func extractComponents(meta *cyclonedx.Metadata) source.Description {
 			labels = decodeProperties(*meta.Properties, "syft:image:labels:")
 		}
 
-		return source.Description{
-			ID:       "",
-			Supplier: supplier,
-			// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
-
-			Metadata: source.ImageMetadata{
-				UserInput:      c.Name,
-				ID:             c.BOMRef,
-				ManifestDigest: c.Version,
-				Labels:         labels,
-			},
+		desc.Metadata = source.ImageMetadata{
+			UserInput:      c.Name,
+			ID:             c.BOMRef,
+			ManifestDigest: c.Version,
+			Labels:         labels,
 		}
 	case cyclonedx.ComponentTypeFile:
-		// TODO: can we decode alias name-version somehow? (it isn't be encoded in the first place yet)
-
 		// TODO: this is lossy... we can't know if this is a file or a directory
-		return source.Description{
-			ID:       "",
-			Supplier: supplier,
-			Metadata: source.FileMetadata{Path: c.Name},
-		}
+		desc.Metadata = source.FileMetadata{Path: c.Name}
 	}
-	return source.Description{}
+
+	return desc
 }
 
 // if there is more than one tool in meta.Tools' list the last item will be used
