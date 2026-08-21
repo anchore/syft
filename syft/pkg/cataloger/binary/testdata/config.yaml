@@ -1327,7 +1327,7 @@ from-images:
     version: 12.4.3-security-02
     images:
       - ref: grafana/grafana:12.4.3-security-02@sha256:fe5bc62ae401120c48b4cd50db122a632bfca8d48a7115a32cc7c9b80c19dc48
-        platform: linux/arm/v7
+        platform: linux/arm
     paths:
       - /usr/share/grafana/bin/grafana
 
