@@ -20,6 +20,9 @@ import (
 
 var _ generic.Parser = parseDotnetPackagesLock
 
+// directDependencyType is the "type" NuGet writes for a package the project references directly.
+const directDependencyType = "Direct"
+
 type dotnetPackagesLock struct {
 	Version      int                                         `json:"version"`
 	Dependencies map[string]map[string]dotnetPackagesLockDep `json:"dependencies"`
@@ -33,11 +36,7 @@ type dotnetPackagesLockDep struct {
 	Dependencies map[string]string `json:"dependencies,omitempty"`
 }
 
-func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) { //nolint:funlen
-	var pkgs []pkg.Package
-	var pkgMap = make(map[string]pkg.Package)
-	var relationships []artifact.Relationship
-
+func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	dec := json.NewDecoder(reader)
 
 	// unmarshal file
@@ -46,27 +45,12 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		return nil, nil, fmt.Errorf("failed to parse packages.lock.json file: %w", err)
 	}
 
-	// collect all deps here
-	allDependencies := make(map[string]dotnetPackagesLockDep)
-
-	var names []string
-	for _, dependencies := range lockFile.Dependencies {
-		for name, dep := range dependencies {
-			depNameVersion := createNameAndVersion(name, dep.Resolved)
-
-			if slices.Contains(names, depNameVersion) {
-				continue
-			}
-
-			names = append(names, depNameVersion)
-			allDependencies[depNameVersion] = dep
-		}
-	}
-
-	// sort the names so that the order of the packages is deterministic
-	sort.Strings(names)
+	names, allDependencies := collectPackagesLockDeps(lockFile)
 
 	// create artifact for each pkg
+	var pkgs []pkg.Package
+	pkgMap := make(map[string]pkg.Package)
+
 	for _, nameVersion := range names {
 		name, _ := extractNameAndVersion(nameVersion)
 
@@ -78,8 +62,49 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		}
 	}
 
-	// fill up relationships, resolving each dependency within its own target framework so that
-	// lockfiles pinning multiple versions of the same package resolve to the correct one
+	relationships := packagesLockRelationships(lockFile, pkgMap)
+
+	// sort the relationships for deterministic output
+	relationship.Sort(relationships)
+
+	return pkgs, relationships, nil
+}
+
+// collectPackagesLockDeps flattens the per-target-framework entries into one entry per name and version, returning
+// the sorted keys alongside the entries so that package order is deterministic. A package may appear under several
+// target frameworks, and "Direct" wins when it does: some target framework references the package directly.
+func collectPackagesLockDeps(lockFile dotnetPackagesLock) ([]string, map[string]dotnetPackagesLockDep) {
+	allDependencies := make(map[string]dotnetPackagesLockDep)
+
+	var names []string
+	for _, targetFramework := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
+		for _, name := range slices.Sorted(maps.Keys(lockFile.Dependencies[targetFramework])) {
+			dep := lockFile.Dependencies[targetFramework][name]
+			depNameVersion := createNameAndVersion(name, dep.Resolved)
+
+			if existing, ok := allDependencies[depNameVersion]; ok {
+				if existing.Type != directDependencyType && dep.Type == directDependencyType {
+					allDependencies[depNameVersion] = dep
+				}
+				continue
+			}
+
+			names = append(names, depNameVersion)
+			allDependencies[depNameVersion] = dep
+		}
+	}
+
+	// sort the names so that the order of the packages is deterministic
+	sort.Strings(names)
+
+	return names, allDependencies
+}
+
+// packagesLockRelationships resolves each dependency within its own target framework so that lockfiles pinning
+// multiple versions of the same package resolve to the correct one.
+func packagesLockRelationships(lockFile dotnetPackagesLock, pkgMap map[string]pkg.Package) []artifact.Relationship {
+	var relationships []artifact.Relationship
+
 	seen := make(map[string]struct{})
 	for _, targetFramework := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
 		frameworkDeps := lockFile.Dependencies[targetFramework]
@@ -94,34 +119,41 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 				continue
 			}
 
-			for _, childDepName := range slices.Sorted(maps.Keys(dep.Dependencies)) {
-				childDepVersion := dep.Dependencies[childDepName]
-
-				childPkg, ok := findDependencyPkg(childDepName, childDepVersion, frameworkDeps, pkgMap)
-				if !ok {
-					log.Debugf("dependency \"%s\" of package \"%s\" not found in map of all packages", createNameAndVersion(childDepName, childDepVersion), depNameVersion)
-					continue
-				}
-
-				key := string(childPkg.ID()) + string(parentPkg.ID())
-				if _, exists := seen[key]; exists {
-					continue
-				}
-				seen[key] = struct{}{}
-
-				relationships = append(relationships, artifact.Relationship{
-					From: *childPkg,
-					To:   parentPkg,
-					Type: artifact.DependencyOfRelationship,
-				})
-			}
+			relationships = append(relationships, packagesLockDepRelationships(dep, parentPkg, depNameVersion, frameworkDeps, pkgMap, seen)...)
 		}
 	}
 
-	// sort the relationships for deterministic output
-	relationship.Sort(relationships)
+	return relationships
+}
 
-	return pkgs, relationships, nil
+// packagesLockDepRelationships returns the edges declared by a single package under one target framework, skipping
+// any edge already recorded in seen -- frameworks that resolve to the same versions would otherwise repeat it.
+func packagesLockDepRelationships(dep dotnetPackagesLockDep, parentPkg pkg.Package, depNameVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package, seen map[string]struct{}) []artifact.Relationship {
+	var relationships []artifact.Relationship
+
+	for _, childDepName := range slices.Sorted(maps.Keys(dep.Dependencies)) {
+		childDepVersion := dep.Dependencies[childDepName]
+
+		childPkg, ok := findDependencyPkg(childDepName, childDepVersion, frameworkDeps, pkgMap)
+		if !ok {
+			log.Debugf("dependency \"%s\" of package \"%s\" not found in map of all packages", createNameAndVersion(childDepName, childDepVersion), depNameVersion)
+			continue
+		}
+
+		key := string(childPkg.ID()) + string(parentPkg.ID())
+		if _, exists := seen[key]; exists {
+			continue
+		}
+		seen[key] = struct{}{}
+
+		relationships = append(relationships, artifact.Relationship{
+			From: *childPkg,
+			To:   parentPkg,
+			Type: artifact.DependencyOfRelationship,
+		})
+	}
+
+	return relationships
 }
 
 func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locations ...file.Location) *pkg.Package {
@@ -160,9 +192,8 @@ func packagesLockPackageURL(name, version string) string {
 	).ToString()
 }
 
-// findDependencyPkg resolves a declared dependency to a package, preferring the version resolved within the
-// same target framework, since the declared version is only a lower bound and the same package may be resolved
-// to different versions across target frameworks.
+// findDependencyPkg finds the package a dependency points at. The version of a dependency edge is the lower bound
+// of a version range, not a pin, so prefer whatever version this target framework actually resolved to.
 func findDependencyPkg(name, declaredVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
 	if dep, ok := frameworkDeps[name]; ok {
 		if p, ok := pkgMap[createNameAndVersion(name, dep.Resolved)]; ok {
@@ -177,8 +208,8 @@ func findDependencyPkg(name, declaredVersion string, frameworkDeps map[string]do
 	return findPkgByName(name, pkgMap)
 }
 
-// findPkgByName returns the lowest-versioned package matching the given name, which is the version NuGet would
-// select for a lower-bound requirement. Candidates are sorted so that the result is deterministic.
+// findPkgByName returns the lowest-versioned package with the given name. This is a last-resort fallback for
+// lockfiles where a dependency edge names a package that is absent from its own target framework
 func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
 	var candidates []string
 	for pkgNameVersion := range pkgMap {
@@ -192,13 +223,19 @@ func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package,
 		return nil, false
 	}
 
+	// versions that don't parse sort after those that do
 	sort.Slice(candidates, func(i, j int) bool {
 		_, vi := extractNameAndVersion(candidates[i])
 		_, vj := extractNameAndVersion(candidates[j])
 
 		si, erri := version.NewVersion(vi)
 		sj, errj := version.NewVersion(vj)
-		if erri == nil && errj == nil && !si.Equal(sj) {
+
+		if (erri == nil) != (errj == nil) {
+			return erri == nil
+		}
+
+		if erri == nil && !si.Equal(sj) {
 			return si.LessThan(sj)
 		}
 

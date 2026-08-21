@@ -247,8 +247,25 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 		},
 	}
 
+	// resolved to the same version under both frameworks, but declared "Direct" by only one of them
+	newtonsoftPkg := pkg.Package{
+		Name:      "Newtonsoft.Json",
+		Version:   "13.0.3",
+		PURL:      "pkg:nuget/Newtonsoft.Json@13.0.3",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "Newtonsoft.Json",
+			Version:     "13.0.3",
+			ContentHash: "newtonsoft1303hash==",
+			Type:        "Direct",
+		},
+	}
+
 	expectedPkgs := []pkg.Package{
 		myLibPkg,
+		newtonsoftPkg,
 		log4net1Pkg,
 		log4net2Pkg,
 	}
@@ -262,6 +279,11 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 		},
 		{
 			From: log4net2Pkg,
+			To:   myLibPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: newtonsoftPkg,
 			To:   myLibPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
