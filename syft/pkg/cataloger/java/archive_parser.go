@@ -56,6 +56,25 @@ var javaArchiveHashes = []crypto.Hash{
 	crypto.SHA1,
 }
 
+// maxNestedArchiveDepth is how many archives deep the cataloger will descend before it stops. Real archives nest a
+// few levels at most (a war holding jars, a spring boot fat jar), so this is well above anything legitimate. Without
+// a limit an archive that only contains a slightly smaller copy of itself makes syft copy and hash the remaining
+// bytes to temp space once per level, and a long enough chain overflows the stack, which is not recoverable.
+const maxNestedArchiveDepth = 32
+
+type nestedArchiveDepthCtxKey struct{}
+
+// nestedArchiveDepth returns how many archives the cataloger descended into to reach the current one.
+func nestedArchiveDepth(ctx context.Context) int {
+	depth, _ := ctx.Value(nestedArchiveDepthCtxKey{}).(int)
+	return depth
+}
+
+// incrementNestedArchiveDepth returns a context marking that the cataloger is descending one archive deeper.
+func incrementNestedArchiveDepth(ctx context.Context) context.Context {
+	return context.WithValue(ctx, nestedArchiveDepthCtxKey{}, nestedArchiveDepth(ctx)+1)
+}
+
 type archiveParser struct {
 	fileManifest intFile.ZipFileManifest
 	location     file.Location
@@ -181,13 +200,17 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 
 	var errs error
 	if j.detectNested {
-		// find nested java archive packages
-		nestedPkgs, nestedRelationships, err := j.discoverPkgsFromNestedArchives(ctx, mainPkg)
-		if err != nil {
-			errs = unknown.Append(errs, j.location, err)
+		if nestedArchiveDepth(ctx) >= maxNestedArchiveDepth {
+			errs = unknown.Appendf(errs, j.location, "nested archives not cataloged: maximum nested archive depth (%v) reached", maxNestedArchiveDepth)
+		} else {
+			// find nested java archive packages
+			nestedPkgs, nestedRelationships, err := j.discoverPkgsFromNestedArchives(ctx, mainPkg)
+			if err != nil {
+				errs = unknown.Append(errs, j.location, err)
+			}
+			pkgs = append(pkgs, nestedPkgs...)
+			relationships = append(relationships, nestedRelationships...)
 		}
-		pkgs = append(pkgs, nestedPkgs...)
-		relationships = append(relationships, nestedRelationships...)
 	} else {
 		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
 		nestedArchives := j.fileManifest.GlobMatch(true, "**/*.jar", "**/*.war")
@@ -671,7 +694,7 @@ func discoverPkgsFromOpener(ctx context.Context, location file.Location, pathWit
 	nestedLocation := file.NewLocationFromCoordinates(location.Coordinates)
 	nestedLocation.AccessPath = nestedPath
 	gap := newGenericArchiveParserAdapter(cfg)
-	nestedPkgs, nestedRelationships, err := gap.processJavaArchive(ctx, file.LocationReadCloser{
+	nestedPkgs, nestedRelationships, err := gap.processJavaArchive(incrementNestedArchiveDepth(ctx), file.LocationReadCloser{
 		Location:   nestedLocation,
 		ReadCloser: archiveReadCloser,
 	}, parentPkg)
