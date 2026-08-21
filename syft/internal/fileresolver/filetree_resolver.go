@@ -34,8 +34,21 @@ func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
+// requestPath takes a path in the context of the resolver root and converts it to a path that can be looked up
+// in the file tree.
 func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
-	return r.Chroot.ToNativePath(userPath)
+	requestPath, err := r.Chroot.ToNativePath(userPath)
+	if err != nil {
+		return "", err
+	}
+
+	// the file tree is indexed with posix paths (see the directory indexer), so a native windows path cannot be
+	// used to look anything up in it
+	if windows.HostRunningOnWindows() {
+		requestPath = windows.ToPosix(requestPath)
+	}
+
+	return requestPath, nil
 }
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
@@ -83,10 +96,6 @@ func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 		// don't consider directories
 		if entry.IsDir() {
 			continue
-		}
-
-		if windows.HostRunningOnWindows() {
-			userStrPath = windows.ToPosix(userStrPath)
 		}
 
 		if ref.HasReference() {
