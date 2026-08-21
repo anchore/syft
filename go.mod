@@ -102,6 +102,7 @@ require (
 )
 
 require (
+	github.com/canonical/chisel-manifest v1.2.0
 	github.com/pb33f/ordered-map/v2 v2.3.1
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
 	howett.net/plist v1.0.1

@@ -309,6 +309,7 @@ func TestCataloger_Globs(t *testing.T) {
 				"usr/lib/dpkg/info/libpam-runtime.conffiles",
 				"usr/lib/dpkg/info/libpam-runtime.md5sums",
 				"usr/share/doc/libpam-runtime/copyright",
+				"var/lib/chisel/manifest.wall",
 			},
 		},
 	}
