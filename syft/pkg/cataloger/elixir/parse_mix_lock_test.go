@@ -267,3 +267,27 @@ func TestParseMixLock(t *testing.T) {
 
 	pkgtest.TestFileParser(t, fixture, parseMixLock, expected, expectedRelationships)
 }
+
+func TestParseMixLockHexAliasUsesPackageName(t *testing.T) {
+	fixture := "testdata/mix-alias.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+
+	expected := []pkg.Package{
+		{
+			Name:      "jason",
+			Version:   "1.3.0",
+			Language:  pkg.Elixir,
+			Type:      pkg.HexPkg,
+			Locations: locations,
+			PURL:      "pkg:hex/jason@1.3.0",
+			Metadata: pkg.ElixirMixLockEntry{
+				Name:       "jason",
+				Version:    "1.3.0",
+				PkgHash:    "aaa",
+				PkgHashExt: "bbb",
+			},
+		},
+	}
+
+	pkgtest.TestFileParser(t, fixture, parseMixLock, expected, nil)
+}

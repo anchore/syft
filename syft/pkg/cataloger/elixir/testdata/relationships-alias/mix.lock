@@ -1,0 +1,4 @@
+%{
+  "my_json": {:hex, :jason, "1.3.0", "aaa", [:mix], [], "hexpm", "bbb"},
+  "consumer": {:hex, :consumer, "1.0.0", "ccc", [:mix], [{:my_json, "~> 1.3", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "ddd"},
+}
