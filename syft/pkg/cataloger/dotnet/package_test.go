@@ -370,6 +370,24 @@ func Test_NewDotnetBinaryPackage(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Microsoft assembly with ProductVersion semver metadata wins over greater FileVersion",
+			versionResources: map[string]string{
+				"CompanyName":    "Microsoft Corporation",
+				"ProductName":    "Microsoft Test",
+				"FileVersion":    "9.0.99.0",
+				"ProductVersion": "8.0.3+9f4b1f5d664afdfc80e1508ab7ed099dff210fbd",
+			},
+			expectedPackage: pkg.Package{
+				Name:    "Microsoft Test",
+				Version: "8.0.3+9f4b1f5d664afdfc80e1508ab7ed099dff210fbd",
+				Metadata: pkg.DotnetPortableExecutableEntry{
+					CompanyName:    "Microsoft Corporation",
+					ProductName:    "Microsoft Test",
+					ProductVersion: "8.0.3+9f4b1f5d664afdfc80e1508ab7ed099dff210fbd",
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
