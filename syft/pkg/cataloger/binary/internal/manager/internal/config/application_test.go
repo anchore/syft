@@ -19,6 +19,9 @@ func TestReadAndValidate(t *testing.T) {
 			name: "valid-2.yaml",
 		},
 		{
+			name: "valid-with-urls.yaml",
+		},
+		{
 			name:      "bad-implicit-name-collision.yaml",
 			expectErr: true,
 		},
@@ -48,6 +51,23 @@ func TestReadAndValidate(t *testing.T) {
 		},
 		{
 			name:      "bad-missing-paths.yaml",
+			expectErr: true,
+		},
+
+		{
+			name:      "bad-urls-missing-version.yaml",
+			expectErr: true,
+		},
+		{
+			name:      "bad-urls-missing-targets.yaml",
+			expectErr: true,
+		},
+		{
+			name:      "bad-urls-missing-path-in-archive.yaml",
+			expectErr: true,
+		},
+		{
+			name:      "bad-urls-missing-format.yaml",
 			expectErr: true,
 		},
 	}

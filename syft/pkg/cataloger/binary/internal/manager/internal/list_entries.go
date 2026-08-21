@@ -73,7 +73,9 @@ func ListAllBinaries(appConfig config.Application) (Entries, error) {
 
 	cases := make(map[LogicalEntryKey]EntryInfo)
 	for _, storePath := range binaries {
-		isConfigured := appConfig.GetBinaryFromImageByPath(storePath) != nil
+		// A path is "configured" if it matches a from-images or from-urls entry.
+		isConfigured := appConfig.GetBinaryFromImageByPath(storePath) != nil ||
+			appConfig.GetBinaryFromURLByPath(storePath) != nil
 
 		relativePath, err := filepath.Rel(appConfig.DownloadPath, storePath)
 		if err != nil {
@@ -115,6 +117,26 @@ func ListAllEntries(appConfig config.Application) (Entries, error) {
 				cases[key] = EntryInfo{
 					IsConfigured: true,
 				}
+			}
+		}
+	}
+
+	// from-urls: create placeholder entries for targets that haven't been downloaded yet.
+	// platform is always explicitly specified in the config (it's required).
+	for _, cfg := range appConfig.FromURLs {
+		for _, target := range cfg.Targets {
+			platform := config.PlatformAsValue(target.Platform)
+
+			placeholderKey := LogicalEntryKey{
+				OrgName:  cfg.Name(),
+				Version:  cfg.Version,
+				Platform: platform,
+				Filename: cfg.Filename(),
+			}
+
+			// Add the placeholder only if no downloaded file already matches this key.
+			if _, ok := cases[placeholderKey]; !ok {
+				cases[placeholderKey] = EntryInfo{IsConfigured: true}
 			}
 		}
 	}
@@ -194,6 +216,25 @@ func (e Entries) BinaryFromImageHasSnippet(cfg config.BinaryFromImage) bool {
 				if v.SnippetPath == "" {
 					return false
 				}
+			}
+		}
+	}
+	return true
+}
+
+// BinaryFromURLHasSnippet returns true when a snippet exists for every target
+// in the given from-urls config entry. Platform is required for all targets.
+func (e Entries) BinaryFromURLHasSnippet(cfg config.BinaryFromURL) bool {
+	for _, target := range cfg.Targets {
+		key := LogicalEntryKey{
+			OrgName:  cfg.Name(),
+			Version:  cfg.Version,
+			Platform: config.PlatformAsValue(target.Platform),
+			Filename: cfg.Filename(),
+		}
+		if v, ok := e[key]; ok {
+			if v.SnippetPath == "" {
+				return false
 			}
 		}
 	}

@@ -1881,3 +1881,158 @@ from-images:
         platform: linux/amd64
     paths:
       - /usr/local/bin/envoy
+
+  - version: 1.36.0-alpha.0
+    images:
+      - ref: registry.k8s.io/kube-apiserver:v1.36.0-alpha.0@sha256:2a94c7b85271e07ed39d9428fc67305d8d5b91cf67d976d54b2df34fc5b0a962
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/kube-apiserver
+
+  - version: 1.36.0-beta.0
+    images:
+      - ref: registry.k8s.io/kube-apiserver:v1.36.0-beta.0@sha256:f7e814b2cd228b9d50a4f45731b95e1faa0be5b2245d3f144157ab50fe9da68f
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/kube-apiserver
+
+  - version: 1.36.0-rc.0
+    images:
+      - ref: registry.k8s.io/kube-apiserver:v1.36.0-rc.0@sha256:d97665a03a73d11dcc9e5cd4ca0f30adabaa9121cad720a34fb16c7b2be6d3d6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/kube-apiserver
+
+  - version: 1.36.0
+    images:
+      - ref: registry.k8s.io/kube-apiserver:v1.36.0@sha256:9f403ee214c77442f1d7dbb88903d47e1e3157b26a438d73cfe46ebd441f23ae
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/kube-apiserver
+
+  - version: 1.28.0
+    images:
+      - ref: registry.k8s.io/kube-apiserver:v1.28.0@sha256:5356997a880431963f45143e28e9daf3ea25e40367b7de5c70da6439649f9bcb
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/kube-apiserver
+
+  - version: 1.25.0
+    images:
+      - ref: registry.k8s.io/kube-apiserver:v1.25.0@sha256:dbb5172d85126d077de1f5fd639940d540c7e75bef40391d22ce5636890ec378
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/kube-apiserver
+
+  - version: 1.35.0
+    images:
+      - ref: kindest/node:v1.35.0@sha256:986401fce0e567a9860075ba9df8c8459bd99a35f79024d8a682773fb40f0753
+        platform: linux/amd64
+    paths:
+      - /usr/bin/kubelet
+
+  - version: 1.25.0
+    images:
+      - ref: kindest/node:v1.25.0@sha256:db0089929bbf03b5c6f2a4e2a7000e0b362900dbb5395d2c5f62a5a1daf8d54b
+        platform: linux/amd64
+    paths:
+      - /usr/bin/kubelet
+
+
+
+
+# this section is for downloading binaries directly from URLs, such as GitHub release assets.
+# Use this instead of from-images when a public container image is not available for the target
+# version (e.g. old Kubernetes component releases).
+#
+# Each entry describes one logical binary (name + version). The targets list holds one URL per
+# platform variant of that binary; all URLs in the same entry must resolve to binaries that
+# represent the same name and version (different architectures are the typical use case).
+#
+# The platform field is required for each target and determines the sub-directory under
+# download-path and snippet-path (e.g. "linux/amd64" → "linux-amd64/").
+#
+# Tip: if you are unsure of the exact platform string to use, you can use a placeholder
+# (e.g. "unknown") and run the snippet writer — it will inspect the binary's file headers
+# (ELF → linux-*, Mach-O → darwin-*, PE → windows-*) and print the detected platform.
+# Use that value to update the platform field in this config before committing.
+#
+# Supported formats:
+#   raw    – download the URL as-is and store it directly (default when format is omitted)
+#   tar.gz – download a .tar.gz archive and extract the file specified by path-in-archive
+#
+# Fields:
+#   name             – logical name used as the top-level directory under download-path and
+#                      snippet-path (required; defaults to the basename of the first URL when
+#                      omitted and the binary has an obvious name)
+#   version          – version string (required)
+#   format           – archive format: "tar.gz" or "raw" (required)
+#   path-in-archive  – path of the target file inside the archive; required when format is "tar.gz"
+#   targets          – list of download targets, one per platform variant (required, at least
+#                      one target must be provided)
+#     - url          – download URL (required)
+#     - platform     – platform string (e.g. linux/amd64). Required.
+from-urls:
+
+  # tar.gz Example:
+  # The kubernetes-node tarball contains the kubelet binary at a known path.
+  # Uncomment and adjust the SHA-pinned URL when adding a real entry.
+  #
+  #  - name: kubelet
+  #    version: 1.28.0
+  #    format: tar.gz
+  #    path-in-archive: kubernetes/node/bin/kubelet
+  #    targets:
+  #      - url: https://dl.k8s.io/v1.28.0/kubernetes-node-linux-amd64.tar.gz
+  #        platform: linux/amd64
+  #      - url: https://dl.k8s.io/v1.28.0/kubernetes-node-linux-arm64.tar.gz
+  #        platform: linux/arm64
+
+  - name: kube-apiserver
+    version: 1.6.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.6.0/bin/linux/amd64/kube-apiserver
+        platform: linux/amd64
+
+  - name: kube-apiserver
+    version: 1.5.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.5.0/bin/linux/amd64/kube-apiserver
+        platform: linux/amd64
+
+  - name: kubelet
+    version: 1.36.0-alpha.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.36.0-alpha.0/bin/linux/amd64/kubelet
+        platform: linux/amd64
+
+  - name: kubelet
+    version: 1.36.0-beta.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.36.0-beta.0/bin/linux/amd64/kubelet
+        platform: linux/amd64
+
+  - name: kubelet
+    version: 1.36.0-rc.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.36.0-rc.0/bin/linux/amd64/kubelet
+        platform: linux/amd64
+
+  - name: kubelet
+    version: 1.6.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.6.0/bin/linux/amd64/kubelet
+        platform: linux/amd64
+
+  - name: kubelet
+    version: 1.5.0
+    format: raw
+    targets:
+      - url: https://dl.k8s.io/v1.5.0/bin/linux/amd64/kubelet
+        platform: linux/amd64
