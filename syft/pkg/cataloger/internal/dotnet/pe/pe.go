@@ -17,7 +17,15 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
-const peMaxAllowedDirectoryEntries = 0x1000
+const (
+	peMaxAllowedDirectoryEntries = 0x1000
+
+	// resourceLanguageLevel is the depth in the resource directory tree at which entries are keyed by LANGID.
+	// The tree is always organized as type (level 0) -> name (level 1) -> language (level 2) -> data.
+	//
+	// source: https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#the-rsrc-section
+	resourceLanguageLevel = 2
+)
 
 var imageDirectoryEntryIndexes = []int{
 	pe.IMAGE_DIRECTORY_ENTRY_RESOURCE,       // where version resources are stored
@@ -39,6 +47,8 @@ type File struct {
 	EmbeddedDepsJSON string
 
 	// VersionResources is a map of version resource keys to their values found in the VERSIONINFO resource directory.
+	// Binaries that are localized into several languages carry one set of these values per language; this holds
+	// the single set selected by versionResourceTables.preferred (never a mixture of languages).
 	VersionResources map[string]string
 }
 
@@ -162,15 +172,18 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		return nil, fmt.Errorf("unable to parse PE sections: %w", err)
 	}
 
-	dirs := u32set.New()                        // keep track of the RVAs we have already parsed (prevent infinite recursion edge cases)
-	versionResources := make(map[string]string) // map of version resource keys to their values
-	resourceNames := strset.New()               // set of resource names found in the PE file
-	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources, resourceNames)
+	walk := &resourceWalk{
+		dirs:     u32set.New(),               // keep track of the RVAs we have already parsed (prevent infinite recursion edge cases)
+		names:    strset.New(),               // set of resource names found in the PE file
+		versions: newVersionResourceTables(), // version resource values, kept separate per language
+	}
+
+	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], walk, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := parseCLR(sections[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR], resourceNames)
+	c, err := parseCLR(sections[pe.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR], walk.names)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse PE CLR directory: %w", err)
 	}
@@ -184,7 +197,7 @@ func Read(f file.LocationReadCloser) (*File, error) {
 		Location:         f.Location,
 		CLR:              c,
 		EmbeddedDepsJSON: embeddedDepsJSON,
-		VersionResources: versionResources,
+		VersionResources: walk.versions.preferred(),
 	}, nil
 }
 
@@ -364,9 +377,23 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 	return bytes.NewReader(data), nil
 }
 
+// resourceWalk is the state carried through the recursive descent of the PE resource directory tree.
+type resourceWalk struct {
+	// dirs is the set of directory RVAs already visited, used to stop the descent on files that reference
+	// their own resource directories recursively.
+	dirs *u32set.Set
+
+	// names is the set of named (as opposed to ID-keyed) resource directory entries encountered.
+	names *strset.Set
+
+	// versions collects the discovered VERSIONINFO string tables, keyed by the language each was authored in.
+	versions *versionResourceTables
+}
+
 // parseResourceDirectory recursively parses a PE resource directory. This takes a relative virtual address (offset of
-// a piece of data or code relative to the base address), the size of the resource directory, the set of RVAs already
-// parsed, and the map to populate discovered version resource values.
+// a piece of data or code relative to the base address), the size of the resource directory, the state shared across
+// the walk, and the current depth in the tree (which is what makes a directory entry's ID meaningful: entries at
+// resourceLanguageLevel are LANGIDs).
 //
 // .rsrc Section
 // +------------------------------+
@@ -388,7 +415,7 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 // sources:
 // - https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#the-rsrc-section
 // - https://learn.microsoft.com/en-us/previous-versions/ms809762(v=msdn.10)#pe-file-resources
-func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
+func parseResourceDirectory(sec *extractedSection, walk *resourceWalk, depth int) error {
 	if sec == nil || sec.Size <= 0 {
 		return nil
 	}
@@ -435,7 +462,7 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 			continue
 		}
 
-		if err := processResourceEntry(entry, baseRVA, sec, dirs, fields, names); err != nil {
+		if err := processResourceEntry(entry, baseRVA, sec, walk, depth); err != nil {
 			log.Tracef("error processing resource entry: %v", err)
 			continue
 		}
@@ -444,7 +471,7 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 	return nil
 }
 
-func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
+func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, walk *resourceWalk, depth int) error {
 	// if the high bit is set, this is a directory entry, otherwise it is a data entry
 	isDirectory := entry.OffsetToData&0x80000000 != 0
 
@@ -467,7 +494,7 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 
 		name, err := readUTF16WithLength(sec.Reader)
 		if err == nil {
-			names.Add(name)
+			walk.names.Add(name)
 		}
 
 		if _, err := sec.Reader.Seek(currentPos, io.SeekStart); err != nil {
@@ -477,12 +504,12 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 
 	if isDirectory {
 		subRVA := baseRVA + entryOffsetToData
-		if dirs.Has(subRVA) {
+		if walk.dirs.Has(subRVA) {
 			// some malware uses recursive PE references to evade analysis
 			return fmt.Errorf("recursive PE reference detected; skipping directory at baseRVA=0x%x subRVA=0x%x", baseRVA, subRVA)
 		}
 
-		dirs.Add(subRVA)
+		walk.dirs.Add(subRVA)
 		err := parseResourceDirectory(
 			&extractedSection{
 				RVA:     subRVA,
@@ -490,16 +517,24 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 				Size:    sec.Size - (sec.RVA - baseRVA),
 				Reader:  sec.Reader,
 			},
-			dirs, fields, names)
+			walk, depth+1)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	return parseResourceDataEntry(sec.Reader, baseRVA, baseRVA+entryOffsetToData, sec.Size, fields)
+
+	// data entries live at the language level of the tree, where the entry ID is the LANGID the resource was
+	// authored for. Named entries at that level state no language, which leaves the resource language-neutral.
+	var language uint16
+	if depth == resourceLanguageLevel && !nameIsString {
+		language = uint16(entry.Name)
+	}
+
+	return parseResourceDataEntry(sec.Reader, baseRVA, baseRVA+entryOffsetToData, sec.Size, walk.versions, language)
 }
 
-func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize uint32, fields map[string]string) error {
+func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize uint32, versions *versionResourceTables, language uint16) error {
 	var dataEntry peImageResourceDataEntry
 	offset := int64(rva - baseRVA)
 
@@ -524,7 +559,7 @@ func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize ui
 		return fmt.Errorf("error reading resource data: %w", err)
 	}
 
-	return parseVersionResourceSection(bytes.NewReader(data), fields)
+	return parseVersionResourceSection(bytes.NewReader(data), versions, language)
 }
 
 // parseVersionResourceSection parses a PE version resource section from within a resource directory.
@@ -580,7 +615,7 @@ func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize ui
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/varfileinfo
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/stringfileinfo
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/stringtable
-func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string) error {
+func parseVersionResourceSection(reader *bytes.Reader, versions *versionResourceTables, language uint16) error {
 	offset := 0
 
 	var info peVsVersionInfo
@@ -600,58 +635,120 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 		return fmt.Errorf("error reading PE FixedFileInfo: %v", err)
 	}
 
+	var languages []resourceLanguage
+
 	for reader.Len() > 0 {
 		if err := alignAndSeek(reader, &offset); err != nil {
 			return fmt.Errorf("error seeking to PE StringFileInfo: %w", err)
 		}
 
+		blockStart := offset
+
+		var sfiOffset int
 		var sfiHeader peStringFileInfo
-		if szKey, err := readIntoStructAndSzKey(reader, &sfiHeader, &offset); err != nil {
+		szKey, err := readIntoStructAndSzKey(reader, &sfiHeader, &offset, &sfiOffset)
+		if err != nil {
 			return fmt.Errorf("error reading PE string file info header: %v", err)
-		} else if szKey != "StringFileInfo" {
-			// we only care about extracting strings from any string tables, skip this
-			offset += int(sfiHeader.ValueLength)
+		}
+
+		if szKey != "StringFileInfo" {
+			// we only care about extracting strings from any string tables, so skip over this block entirely
+			// (VarFileInfo, or anything else a resource compiler chose to put here). A zero length gives no way
+			// to know where the block ends, in which case there is nothing further that can be read.
+			if sfiHeader.Length == 0 {
+				break
+			}
+			offset = blockStart + int(sfiHeader.Length)
 			continue
+		}
+
+		ls, err := parseStringTables(reader, sfiHeader, sfiOffset, &offset, versions, language)
+		languages = append(languages, ls...)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(languages) == 0 {
+		// there are no string tables, but the fixed file info below is still worth recording
+		languages = append(languages, resourceLanguage{directory: language})
+	}
+
+	for _, lang := range languages {
+		fields := versions.fields(lang)
+		if fields["FileVersion"] == "" {
+			// we can derive the file version from the fixed file info if it is not already specified as a string entry... neat!
+			fields["FileVersion"] = fmt.Sprintf("%d.%d.%d.%d",
+				fixedFileInfo.FileVersionMS>>16, fixedFileInfo.FileVersionMS&0xFFFF,
+				fixedFileInfo.FileVersionLS>>16, fixedFileInfo.FileVersionLS&0xFFFF)
+		}
+	}
+
+	return nil
+}
+
+// parseStringTables reads every string table held by a StringFileInfo block, returning the languages found.
+// A block holds one table per language the binary was localized into, each keyed by a language and codepage
+// (e.g. "040904b0"), and all of them use the same string keys as each other.
+func parseStringTables(reader *bytes.Reader, sfiHeader peStringFileInfo, sfiOffset int, offset *int, versions *versionResourceTables, language uint16) ([]resourceLanguage, error) {
+	var languages []resourceLanguage
+
+	for sfiOffset < int(sfiHeader.Length) && reader.Len() > 0 {
+		if err := alignAndSeek(reader, offset, &sfiOffset); err != nil {
+			return languages, fmt.Errorf("error seeking to PE string table: %w", err)
 		}
 
 		var stOffset int
 
-		// note: the szKey for the prStringTable is the language
+		// note: the szKey for the string table is the language
 		var stHeader peStringTable
-		if _, err := readIntoStructAndSzKey(reader, &stHeader, &offset, &stOffset); err != nil {
-			return fmt.Errorf("error reading PE string table header: %v", err)
+		szKey, err := readIntoStructAndSzKey(reader, &stHeader, offset, &sfiOffset, &stOffset)
+		if err != nil {
+			return languages, fmt.Errorf("error reading PE string table header: %v", err)
 		}
 
-		for stOffset < int(stHeader.Length) {
-			var stringHeader peString
-			if err := readIntoStruct(reader, &stringHeader, &offset, &stOffset); err != nil {
-				break
-			}
+		if stHeader.Length == 0 {
+			// without a length there is no way to know where this table ends, nor where the next one starts
+			break
+		}
 
-			key := readUTF16(reader, &offset, &stOffset)
+		lang := languageFromStringTableKey(szKey, language)
+		languages = append(languages, lang)
 
-			if err := alignAndSeek(reader, &offset, &stOffset); err != nil {
-				return fmt.Errorf("error aligning to next PE string table value: %w", err)
-			}
-
-			var value string
-			if stringHeader.ValueLength > 0 {
-				value = readUTF16(reader, &offset, &stOffset)
-			}
-
-			fields[key] = value
-
-			if err := alignAndSeek(reader, &offset, &stOffset); err != nil {
-				return fmt.Errorf("error aligning to next PE string table key: %w", err)
-			}
+		if err := parseStringTable(reader, stHeader, stOffset, offset, &sfiOffset, versions.fields(lang)); err != nil {
+			return languages, err
 		}
 	}
 
-	if fields["FileVersion"] == "" {
-		// we can derive the file version from the fixed file info if it is not already specified as a string entry... neat!
-		fields["FileVersion"] = fmt.Sprintf("%d.%d.%d.%d",
-			fixedFileInfo.FileVersionMS>>16, fixedFileInfo.FileVersionMS&0xFFFF,
-			fixedFileInfo.FileVersionLS>>16, fixedFileInfo.FileVersionLS&0xFFFF)
+	return languages, nil
+}
+
+// parseStringTable reads the key/value pairs of a single string table into fields.
+func parseStringTable(reader *bytes.Reader, stHeader peStringTable, stOffset int, offset, sfiOffset *int, fields map[string]string) error {
+	// note: the reader is bounded here in addition to the table length, since a truncated table would otherwise
+	// leave the offsets unchanged on every pass and never reach the end of the table
+	for stOffset < int(stHeader.Length) && reader.Len() > 0 {
+		var stringHeader peString
+		if err := readIntoStruct(reader, &stringHeader, offset, sfiOffset, &stOffset); err != nil {
+			break
+		}
+
+		key := readUTF16(reader, offset, sfiOffset, &stOffset)
+
+		if err := alignAndSeek(reader, offset, sfiOffset, &stOffset); err != nil {
+			return fmt.Errorf("error aligning to next PE string table value: %w", err)
+		}
+
+		var value string
+		if stringHeader.ValueLength > 0 {
+			value = readUTF16(reader, offset, sfiOffset, &stOffset)
+		}
+
+		fields[key] = value
+
+		if err := alignAndSeek(reader, offset, sfiOffset, &stOffset); err != nil {
+			return fmt.Errorf("error aligning to next PE string table key: %w", err)
+		}
 	}
 
 	return nil
