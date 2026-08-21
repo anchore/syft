@@ -5,6 +5,7 @@ import (
 
 	"github.com/anchore/syft/internal/relationship"
 	"github.com/anchore/syft/internal/relationship/binary"
+	javaRelationship "github.com/anchore/syft/internal/relationship/java"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
@@ -54,6 +55,9 @@ func finalizeRelationships(resolver file.Resolver, builder sbomsync.Builder, cfg
 	if cfg.ExcludeBinaryPackagesWithFileOwnershipOverlap {
 		relationship.ExcludeBinariesByFileOwnershipOverlap(accessor)
 	}
+
+	// resolve hierarchical Java dependency relationships (deferred parent resolution + enrichment)
+	javaRelationship.ResolveHierarchicalDependencies(accessor, cfg)
 
 	// add the new relationships for executables to the SBOM
 	newBinaryRelationships := binary.NewDependencyRelationships(resolver, accessor)
