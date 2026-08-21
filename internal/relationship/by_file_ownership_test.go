@@ -279,6 +279,60 @@ func TestOwnershipByFilesRelationship(t *testing.T) {
 				return []pkg.Package{parent, child}, nil
 			},
 		},
+		{
+			name: "conda-owns-python-package-by-dist-info",
+			setup: func(t testing.TB) ([]pkg.Package, []artifact.Relationship) {
+				condaPkg := pkg.Package{
+					Name:    "jupyterlab",
+					Version: "4.4.3",
+					Type:    pkg.CondaPkg,
+					Locations: file.NewLocationSet(
+						file.NewLocation("prefix/conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json"),
+					),
+					Metadata: pkg.CondaMetaPackage{
+						Name:    "jupyterlab",
+						Prefix:  "prefix",
+						Version: "4.4.3",
+						Files: []string{
+							"lib/python3.13/site-packages/jupyterlab-4.4.3.dist-info/METADATA",
+							"lib/python3.13/site-packages/jupyterlab-4.4.3.dist-info/RECORD",
+							"lib/python3.13/site-packages/jupyterlab/__init__.py",
+							"lib/python3.13/site-packages/jupyterlab/app.py",
+						},
+					},
+				}
+				condaPkg.SetID()
+
+				pythonPkg := pkg.Package{
+					Name:    "jupyterlab",
+					Version: "4.4.3",
+					Type:    pkg.PythonPkg,
+					Locations: file.NewLocationSet(
+						file.NewLocation(
+							"prefix/lib/python3.13/site-packages/jupyterlab-4.4.3.dist-info/METADATA",
+						),
+					),
+					Metadata: pkg.PythonPackage{
+						Name:    "jupyterlab",
+						Version: "4.4.3",
+					},
+				}
+				pythonPkg.SetID()
+
+				relationship := artifact.Relationship{
+					From: condaPkg,
+					To:   pythonPkg,
+					Type: artifact.OwnershipByFileOverlapRelationship,
+					Data: ownershipByFilesMetadata{
+						Files: []string{
+							"prefix/lib/python3.13/site-packages/jupyterlab-4.4.3.dist-info/METADATA",
+						},
+					},
+				}
+
+				return []pkg.Package{condaPkg, pythonPkg}, []artifact.Relationship{relationship}
+			},
+		},
 	}
 
 	for _, test := range tests {
