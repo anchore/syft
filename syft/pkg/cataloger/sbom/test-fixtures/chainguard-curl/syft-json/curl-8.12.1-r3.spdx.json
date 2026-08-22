@@ -1,0 +1,87 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "apk-curl-8.12.1-r3",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-04-29T02:58:45Z",
+    "creators": [
+      "Tool: melange (v0.23.11+dirty)",
+      "Organization: Chainguard, Inc"
+    ],
+    "licenseListVersion": "3.22"
+  },
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://spdx.org/spdxdocs/chainguard/melange/c525b82e42eaf3615235f6336e38b4d2",
+  "documentDescribes": [
+    "SPDXRef-Package-curl-8.12.1-r3"
+  ],
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-curl-8.12.1-r3",
+      "name": "curl",
+      "versionInfo": "8.12.1-r3",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: Wolfi",
+      "supplier": "Organization: Wolfi",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:apk/wolfi/curl@8.12.1-r3?arch=x86_64",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-curl.yaml-eca16600635a2ab921dbbe6998712c68fc8b6460",
+      "name": "curl.yaml",
+      "versionInfo": "eca16600635a2ab921dbbe6998712c68fc8b6460",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: Wolfi",
+      "supplier": "Organization: Wolfi",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/wolfi-dev/os@eca16600635a2ab921dbbe6998712c68fc8b6460#curl.yaml",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-curl-8.12.1-0",
+      "name": "curl",
+      "versionInfo": "8.12.1",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: Wolfi",
+      "supplier": "Organization: Wolfi",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:generic/curl@8.12.1?checksum=sha256%3A0341f1ed97a26c811abaebd37d62b833956792b7607ea3f15d001613c76de202\u0026download_url=https%3A%2F%2Fcurl.se%2Fdownload%2Fcurl-8.12.1.tar.xz",
+          "referenceType": "purl"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-curl-8.12.1-r3",
+      "relationshipType": "DESCRIBED_BY",
+      "relatedSpdxElement": "SPDXRef-Package-curl.yaml-eca16600635a2ab921dbbe6998712c68fc8b6460"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-curl-8.12.1-r3",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-Package-curl-8.12.1-0"
+    }
+  ]
+}
