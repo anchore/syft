@@ -38,7 +38,7 @@ runs:
 
     - name: Install binny-managed tools
       shell: bash
-      run: make binny:install
+      run: go run -C .make . binny:install
 
     - name: Install apt packages
       if: inputs.bootstrap-apt-packages != ''
@@ -68,4 +68,4 @@ runs:
     - name: Download test fixture cache
       if: inputs.download-test-fixture-cache == 'true'
       shell: bash
-      run: make download-test-fixture-cache
+      run: go run -C .make . download-test-fixture-cache
