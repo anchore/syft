@@ -554,6 +554,16 @@ func TestCreateSBOMConfig_validate(t *testing.T) {
 				),
 			wantErr: assert.Error,
 		},
+		{
+			name: "incompatible ExcludeLanguagePackagesWithFileOwnershipOverlap selection",
+			cfg: DefaultCreateSBOMConfig().
+				WithRelationshipsConfig(
+					cataloging.DefaultRelationshipsConfig().
+						WithExcludeLanguagePackagesWithFileOwnershipOverlap(true).
+						WithPackageFileOwnershipOverlap(false),
+				),
+			wantErr: assert.Error,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
