@@ -11,17 +11,17 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.5.3
-	github.com/anchore/bubbly v0.2.1
-	github.com/anchore/clio v0.1.1
-	github.com/anchore/fangs v0.1.1
-	github.com/anchore/go-collections v0.1.1
+	github.com/anchore/bubbly v0.2.2-0.20260814055429-a2c79178a368
+	github.com/anchore/clio v0.1.2-0.20260814204530-874ecfa80594
+	github.com/anchore/fangs v0.1.2-0.20260814223432-d9f7358ffc5f
+	github.com/anchore/go-collections v0.1.2-0.20260814083610-d0811ebacee7
 	github.com/anchore/go-homedir v0.1.1
-	github.com/anchore/go-logger v0.1.1
-	github.com/anchore/go-macholibre v0.1.1
+	github.com/anchore/go-logger v0.1.2-0.20260814155434-cbe6cc18c6cb
+	github.com/anchore/go-macholibre v0.1.2-0.20260814232430-60e192afba91
 	github.com/anchore/go-rpmdb v0.2.0
-	github.com/anchore/go-sync v0.1.1
+	github.com/anchore/go-sync v0.1.2-0.20260814235511-1540c1348545
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/packageurl-go v0.2.0
+	github.com/anchore/packageurl-go v0.2.1-0.20260622180350-663437b4879b
 	github.com/anchore/stereoscope v0.3.1-0.20260820190420-3cd14ecb9fbf
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
@@ -127,7 +127,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/anchore/go-lzo v0.1.1 // indirect
+	github.com/anchore/go-lzo v0.1.2-0.20260814041644-9ffe5f3285bd // indirect
 	github.com/anchore/go-struct-converter v0.2.0-rc2 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
