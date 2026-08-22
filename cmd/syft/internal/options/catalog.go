@@ -17,6 +17,7 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/file/cataloger/certificate"
 	"github.com/anchore/syft/syft/file/cataloger/executable"
 	"github.com/anchore/syft/syft/file/cataloger/filecontent"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary"
@@ -157,6 +158,10 @@ func (cfg Catalog) ToFilesConfig() filecataloging.Config {
 		Executable: executable.Config{
 			MIMETypes: executable.DefaultConfig().MIMETypes,
 			Globs:     cfg.File.Executable.Globs,
+		},
+		Certificates: certificate.Config{
+			Enabled: cfg.File.Certificates.Enabled,
+			Globs:   cfg.File.Certificates.Globs,
 		},
 	}
 }
