@@ -73,19 +73,31 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 	scanner := bufio.NewScanner(contentsReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
-		fields := strings.Split(line, " ")
 
-		if fields[0] == "obj" {
-			record := pkg.PortageFileRecord{
-				Path: fields[1],
-			}
-			record.Digest = &file.Digest{
-				Algorithm: "md5",
-				Value:     fields[2],
-			}
+		if record, ok := parseContentsObjectLine(line); ok {
 			entry.Files = append(entry.Files, record)
 		}
 	}
+}
+
+// parseContentsObjectLine reads one "obj <path> <md5> <mtime>" entry of a
+// portage CONTENTS file. An installed path is allowed to contain spaces, so the
+// digest and the mtime are taken from the end of the line rather than from
+// fixed offsets.
+func parseContentsObjectLine(line string) (pkg.PortageFileRecord, bool) {
+	fields := strings.Split(line, " ")
+	// "obj", at least one path field, the digest and the mtime
+	if len(fields) < 4 || fields[0] != "obj" {
+		return pkg.PortageFileRecord{}, false
+	}
+
+	return pkg.PortageFileRecord{
+		Path: strings.Join(fields[1:len(fields)-2], " "),
+		Digest: &file.Digest{
+			Algorithm: "md5",
+			Value:     fields[len(fields)-2],
+		},
+	}, true
 }
 
 func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
