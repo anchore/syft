@@ -37,6 +37,10 @@ type DotnetPackagesLockEntry struct {
 
 	// Type is the dependency type indicating how this dependency was added (Direct=explicit in project file, Transitive=pulled in by another package, Project=project reference)
 	Type string `mapstructure:"type" json:"type"`
+
+	// Requested is the requested version range from packages.lock.json (e.g. "[13.0.3, )").
+	// It is empty for entries that do not declare one (e.g. Transitive dependencies).
+	Requested string `mapstructure:"requested" json:"requested,omitempty"`
 }
 
 // DotnetPortableExecutableEntry is a struct that represents a single entry found within "VersionResources" section of a .NET Portable Executable binary file.
