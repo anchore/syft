@@ -41,7 +41,8 @@ func NewPomCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 // Note: Older versions of lockfiles aren't supported yet
 func NewGradleLockfileCataloger() pkg.Cataloger {
 	return generic.NewCataloger("java-gradle-lockfile-cataloger").
-		WithParserByGlobs(parseGradleLockfile, "**/gradle.lockfile*")
+		WithParserByGlobs(parseGradleLockfile, "**/gradle.lockfile*").
+		WithParserByGlobs(parseGradleConsistentVersionsLockfile, "**/versions.lock")
 }
 
 // NewJvmDistributionCataloger returns packages representing JDK/JRE installations (of multiple distribution types).
