@@ -2,11 +2,13 @@ package java
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"strings"
 	"unicode"
 
+	"github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -242,6 +244,46 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 	for _, fieldName := range fieldNames {
 		if v := fieldValueFromManifest(*manifest, fieldName); v != "" {
 			return v
+		}
+	}
+
+	return ""
+}
+
+const versionPropertiesGlob = "**/version.properties"
+
+// versionFromVersionProperties reads a root-level `version.properties` file and
+// returns the value of its `tag` key (the convention used by some build tools,
+// e.g. Clojure's build.clj, that do not record the version anywhere else).
+// Returns an empty string when the file is absent or has no `tag`.
+func (j *archiveParser) versionFromVersionProperties(ctx context.Context) string {
+	matches := j.fileManifest.GlobMatch(false, versionPropertiesGlob)
+	if len(matches) == 0 {
+		return ""
+	}
+
+	contents, err := file.ContentsFromZip(ctx, j.archivePath, matches...)
+	if err != nil {
+		log.Debugf("unable to extract version.properties (%s): %w", j.location, err)
+		return ""
+	}
+
+	for _, fileContents := range contents {
+		props, err := parsePomProperties("version.properties", strings.NewReader(fileContents))
+		if err != nil || props == nil {
+			continue
+		}
+		// parsePomProperties keys are decoded via mapstructure; the `tag` key is
+		// not a standard Maven coordinate, so it is captured into Extra (via the
+		// ",remain" directive). Some generic version.properties files instead use
+		// the `version` key, which lands on props.Version.
+		if props.Extra != nil {
+			if tag, ok := props.Extra["tag"]; ok && tag != "" {
+				return tag
+			}
+		}
+		if props.Version != "" {
+			return props.Version
 		}
 	}
 
