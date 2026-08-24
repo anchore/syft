@@ -8,9 +8,42 @@ import (
 	"github.com/scylladb/go-set/strset"
 )
 
-type factory func(cfg CatalogingFactoryConfig) Task
+type Factory interface {
+	Name() string
+	Selectors() []string
+	Task(CatalogingFactoryConfig) Task
+}
 
-type Factories []factory
+type factory struct {
+	name        string
+	tags        []string
+	taskFactory func(CatalogingFactoryConfig) Task
+}
+
+type Factories []Factory
+
+func newTaskFactory(name string, taskFactory func(CatalogingFactoryConfig) Task, tags ...string) factory {
+	return factory{
+		name:        name,
+		tags:        tags,
+		taskFactory: taskFactory,
+	}
+}
+
+func (f factory) Name() string {
+	return f.name
+}
+
+func (f factory) Selectors() []string {
+	return selectors(f.name, f.tags...)
+}
+
+func (f factory) Task(cfg CatalogingFactoryConfig) Task {
+	if f.taskFactory == nil {
+		return nil
+	}
+	return f.taskFactory(cfg)
+}
 
 func (f Factories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
 	var allTasks []Task
@@ -18,7 +51,7 @@ func (f Factories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
 	duplicateTaskNames := strset.New()
 	var err error
 	for _, fact := range f {
-		tsk := fact(cfg)
+		tsk := fact.Task(cfg)
 		if tsk == nil {
 			continue
 		}
@@ -37,4 +70,12 @@ func (f Factories) Tasks(cfg CatalogingFactoryConfig) ([]Task, error) {
 	}
 
 	return allTasks, err
+}
+
+func selectors(name string, tags ...string) []string {
+	set := strset.New(tags...)
+	set.Add(name)
+	list := set.List()
+	sort.Strings(list)
+	return list
 }

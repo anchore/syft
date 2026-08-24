@@ -31,17 +31,11 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 	taskFactories := task.DefaultPackageTaskFactories()
 	taskTagsByName := make(map[string][]string)
 	for _, factory := range taskFactories {
-		tsk := factory(task.DefaultCatalogingFactoryConfig())
-		if taskTagsByName[tsk.Name()] != nil {
-			t.Fatalf("duplicate task name: %q", tsk.Name())
+		if taskTagsByName[factory.Name()] != nil {
+			t.Fatalf("duplicate task name: %q", factory.Name())
 		}
 
-		require.NotNil(t, tsk)
-		if sel, ok := tsk.(task.Selector); ok {
-			taskTagsByName[tsk.Name()] = sel.Selectors()
-		} else {
-			taskTagsByName[tsk.Name()] = []string{}
-		}
+		taskTagsByName[factory.Name()] = factory.Selectors()
 	}
 
 	var constructorCount int

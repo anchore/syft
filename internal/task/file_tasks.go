@@ -25,10 +25,10 @@ func DefaultFileTaskFactories() Factories {
 	}
 }
 
-func newFileDigestCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
+func newFileDigestCatalogerTaskFactory(tags ...string) Factory {
+	return newTaskFactory("file-digest-cataloger", func(cfg CatalogingFactoryConfig) Task {
 		return newFileDigestCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Hashers, tags...)
-	}
+	}, commonFileTags(tags)...)
 }
 
 func newFileDigestCatalogerTask(selection file.Selection, hashers []crypto.Hash, tags ...string) Task {
@@ -56,10 +56,10 @@ func newFileDigestCatalogerTask(selection file.Selection, hashers []crypto.Hash,
 	return NewTask("file-digest-cataloger", fn, commonFileTags(tags)...)
 }
 
-func newFileMetadataCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
+func newFileMetadataCatalogerTaskFactory(tags ...string) Factory {
+	return newTaskFactory("file-metadata-cataloger", func(cfg CatalogingFactoryConfig) Task {
 		return newFileMetadataCatalogerTask(cfg.FilesConfig.Selection, tags...)
-	}
+	}, commonFileTags(tags)...)
 }
 
 func newFileMetadataCatalogerTask(selection file.Selection, tags ...string) Task {
@@ -87,10 +87,10 @@ func newFileMetadataCatalogerTask(selection file.Selection, tags ...string) Task
 	return NewTask("file-metadata-cataloger", fn, commonFileTags(tags)...)
 }
 
-func newFileContentCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
+func newFileContentCatalogerTaskFactory(tags ...string) Factory {
+	return newTaskFactory("file-content-cataloger", func(cfg CatalogingFactoryConfig) Task {
 		return newFileContentCatalogerTask(cfg.FilesConfig.Content, tags...)
-	}
+	}, commonFileTags(tags)...)
 }
 
 func newFileContentCatalogerTask(cfg filecontent.Config, tags ...string) Task {
@@ -113,10 +113,10 @@ func newFileContentCatalogerTask(cfg filecontent.Config, tags ...string) Task {
 	return NewTask("file-content-cataloger", fn, commonFileTags(tags)...)
 }
 
-func newExecutableCatalogerTaskFactory(tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
+func newExecutableCatalogerTaskFactory(tags ...string) Factory {
+	return newTaskFactory("file-executable-cataloger", func(cfg CatalogingFactoryConfig) Task {
 		return newExecutableCatalogerTask(cfg.FilesConfig.Selection, cfg.FilesConfig.Executable, tags...)
-	}
+	}, commonFileTags(tags)...)
 }
 
 func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config, tags ...string) Task {

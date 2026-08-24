@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/exp"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
@@ -37,6 +38,33 @@ func (d dummyCataloger) Name() string {
 
 func (d dummyCataloger) Catalog(_ context.Context, _ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	return nil, nil, nil
+}
+
+func TestCreateSBOMConfig_expCatalogerAPI(t *testing.T) {
+	cfg := DefaultCreateSBOMConfig().WithCatalogerSelection(
+		cataloging.NewSelectionRequest().WithDefaults("all").WithSubSelections("python"),
+	)
+
+	names, err := exp.ListCatalogers(cfg)
+	require.NoError(t, err)
+	assert.Contains(t, names, "python-package-cataloger")
+	assert.Contains(t, names, "python-installed-package-cataloger")
+	assert.NotContains(t, names, "ruby-gemfile-cataloger")
+
+	info, err := exp.CatalogerInfo(cfg)
+	require.NoError(t, err)
+	require.NotEmpty(t, info)
+
+	var foundPythonPackageCataloger bool
+	for _, catalogerInfo := range info {
+		if catalogerInfo.Name != "python-package-cataloger" {
+			continue
+		}
+		foundPythonPackageCataloger = true
+		assert.Contains(t, catalogerInfo.Selectors, "python")
+		assert.NotEmpty(t, catalogerInfo.Parsers)
+	}
+	assert.True(t, foundPythonPackageCataloger)
 }
 
 func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
@@ -357,17 +385,12 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 
 func pkgCatalogerNamesWithTagOrName(t *testing.T, token string) []string {
 	var names []string
-	cfg := task.DefaultCatalogingFactoryConfig()
 	for _, factory := range task.DefaultPackageTaskFactories() {
-		cat := factory(cfg)
+		name := factory.Name()
 
-		name := cat.Name()
-
-		if selector, ok := cat.(task.Selector); ok {
-			if selector.HasAllSelectors(token) {
-				names = append(names, name)
-				continue
-			}
+		if strset.New(factory.Selectors()...).Has(token) {
+			names = append(names, name)
+			continue
 		}
 		if name == token {
 			names = append(names, name)
@@ -390,16 +413,9 @@ func pkgCatalogerNamesWithTagOrName(t *testing.T, token string) []string {
 
 func fileCatalogerNames(tokens ...string) []string {
 	var names []string
-	cfg := task.DefaultCatalogingFactoryConfig()
 topLoop:
 	for _, factory := range task.DefaultFileTaskFactories() {
-		cat := factory(cfg)
-
-		if cat == nil {
-			continue
-		}
-
-		name := cat.Name()
+		name := factory.Name()
 
 		if len(tokens) == 0 {
 			names = append(names, name)
@@ -407,12 +423,9 @@ topLoop:
 		}
 
 		for _, token := range tokens {
-			if selector, ok := cat.(task.Selector); ok {
-				if selector.HasAllSelectors(token) {
-					names = append(names, name)
-					continue topLoop
-				}
-
+			if strset.New(factory.Selectors()...).Has(token) {
+				names = append(names, name)
+				continue topLoop
 			}
 			if name == token {
 				names = append(names, name)

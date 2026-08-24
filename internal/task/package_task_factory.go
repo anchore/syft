@@ -20,21 +20,67 @@ import (
 	cpeutils "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
-func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return NewPackageTask(cfg, catalogerFactory(cfg), tags...)
+type PackageFactory interface {
+	Factory
+	Cataloger(CatalogingFactoryConfig) pkg.Cataloger
+}
+
+type packageFactory struct {
+	name             string
+	tags             []string
+	catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger
+}
+
+func newPackageTaskFactory(name string, catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) packageFactory {
+	return packageFactory{
+		name:             name,
+		tags:             tags,
+		catalogerFactory: catalogerFactory,
 	}
 }
 
-func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return NewPackageTask(cfg, catalogerFactory(), tags...)
+func newSimplePackageTaskFactory(name string, catalogerFactory func() pkg.Cataloger, tags ...string) packageFactory {
+	return newPackageTaskFactory(name, func(CatalogingFactoryConfig) pkg.Cataloger {
+		return catalogerFactory()
+	}, tags...)
+}
+
+func (f packageFactory) Name() string {
+	return f.name
+}
+
+func (f packageFactory) Selectors() []string {
+	return selectors(f.name, append(f.tags, pkgcataloging.PackageTag)...)
+}
+
+func (f packageFactory) Cataloger(cfg CatalogingFactoryConfig) pkg.Cataloger {
+	if f.catalogerFactory == nil {
+		return nil
 	}
+	return f.catalogerFactory(cfg)
+}
+
+func (f packageFactory) Task(cfg CatalogingFactoryConfig) Task {
+	return NewPackageTaskFromFactory(cfg, f.name, f.catalogerFactory, f.tags...)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
 func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
+	if c == nil {
+		return nil
+	}
+	return NewPackageTaskFromFactory(cfg, c.Name(), func(CatalogingFactoryConfig) pkg.Cataloger {
+		return c
+	}, tags...)
+}
+
+// NewPackageTaskFromFactory creates a package task that constructs its cataloger only when the task is executed.
+func NewPackageTaskFromFactory(cfg CatalogingFactoryConfig, name string, catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) Task {
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
+		c := catalogerFactory(cfg)
+		if c == nil {
+			return nil
+		}
 		catalogerName := c.Name()
 		log.WithFields("name", catalogerName).Trace("starting package cataloger")
 
@@ -69,7 +115,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 	}
 	tags = append(tags, pkgcataloging.PackageTag)
 
-	return NewTask(c.Name(), fn, tags...)
+	return NewTask(name, fn, tags...)
 }
 
 func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.PathResolver, catalogerName string, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship) {

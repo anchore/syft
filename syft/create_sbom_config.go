@@ -2,9 +2,9 @@ package syft
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime/debug"
+	"sort"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -12,7 +12,9 @@ import (
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
+	"github.com/anchore/syft/syft/exp"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -38,6 +40,7 @@ type CreateSBOMConfig struct {
 
 	packageTaskFactories       task.Factories
 	packageCatalogerReferences []pkgcataloging.CatalogerReference
+	packageCatalogerTasks      []exp.Task
 }
 
 func DefaultCreateSBOMConfig() *CreateSBOMConfig {
@@ -164,6 +167,7 @@ func (c *CreateSBOMConfig) WithCatalogerSelection(selection cataloging.Selection
 func (c *CreateSBOMConfig) WithoutCatalogers() *CreateSBOMConfig {
 	c.packageTaskFactories = nil
 	c.packageCatalogerReferences = nil
+	c.packageCatalogerTasks = nil
 	return c
 }
 
@@ -177,6 +181,22 @@ func (c *CreateSBOMConfig) WithCatalogers(catalogerRefs ...pkgcataloging.Catalog
 	c.packageCatalogerReferences = append(c.packageCatalogerReferences, catalogerRefs...)
 
 	return c
+}
+
+// WithCatalogerTasks allows adding experimental package cataloger tasks with selection metadata and capabilities.
+func (c *CreateSBOMConfig) WithCatalogerTasks(tasks ...exp.Task) *CreateSBOMConfig {
+	c.packageCatalogerTasks = append(c.packageCatalogerTasks, tasks...)
+	return c
+}
+
+// CatalogerSelectionRequest returns the requested cataloger selection for experimental cataloger APIs.
+func (c *CreateSBOMConfig) CatalogerSelectionRequest() cataloging.SelectionRequest {
+	return c.CatalogerSelection
+}
+
+// CatalogerTasks returns all package cataloger tasks available to this configuration.
+func (c *CreateSBOMConfig) CatalogerTasks() ([]exp.Task, error) {
+	return c.catalogerTasks(c.catalogingFactoryConfig())
 }
 
 // makeTaskGroups considers the entire configuration and finalizes the set of tasks to be run. Tasks are run in
@@ -256,15 +276,7 @@ func (c *CreateSBOMConfig) fileTasks(cfg task.CatalogingFactoryConfig) ([]task.T
 
 // selectTasks returns the set of tasks that should be run to catalog packages and files.
 func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []task.Task, *task.Selection, error) {
-	cfg := task.CatalogingFactoryConfig{
-		SearchConfig:         c.Search,
-		RelationshipsConfig:  c.Relationships,
-		DataGenerationConfig: c.DataGeneration,
-		PackagesConfig:       c.Packages,
-		LicenseConfig:        c.Licenses,
-		ComplianceConfig:     c.Compliance,
-		FilesConfig:          c.Files,
-	}
+	cfg := c.catalogingFactoryConfig()
 
 	persistentPkgTasks, selectablePkgTasks, err := c.allPackageTasks(cfg)
 	if err != nil {
@@ -368,40 +380,143 @@ func finalTaskSelectionRequest(req cataloging.SelectionRequest, src source.Descr
 }
 
 func (c *CreateSBOMConfig) allPackageTasks(cfg task.CatalogingFactoryConfig) ([]task.Task, []task.Task, error) {
-	persistentPackageTasks, selectablePackageTasks, err := c.userPackageTasks(cfg)
+	catalogerTasks, err := c.catalogerTasks(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tsks, err := c.packageTaskFactories.Tasks(cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to create package cataloger tasks: %w", err)
+	var persistentPackageTasks []exp.Task
+	var selectablePackageTasks []exp.Task
+	for _, catalogerTask := range catalogerTasks {
+		if catalogerTask.AlwaysEnabled() {
+			persistentPackageTasks = append(persistentPackageTasks, catalogerTask)
+			continue
+		}
+		selectablePackageTasks = append(selectablePackageTasks, catalogerTask)
 	}
 
-	return persistentPackageTasks, append(tsks, selectablePackageTasks...), nil
+	return packageTasks(persistentPackageTasks, cfg), packageTasks(selectablePackageTasks, cfg), nil
 }
 
-func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([]task.Task, []task.Task, error) {
-	var (
-		persistentPackageTasks []task.Task
-		selectablePackageTasks []task.Task
-	)
+func (c *CreateSBOMConfig) catalogingFactoryConfig() task.CatalogingFactoryConfig {
+	return task.CatalogingFactoryConfig{
+		SearchConfig:         c.Search,
+		RelationshipsConfig:  c.Relationships,
+		DataGenerationConfig: c.DataGeneration,
+		PackagesConfig:       c.Packages,
+		LicenseConfig:        c.Licenses,
+		ComplianceConfig:     c.Compliance,
+		FilesConfig:          c.Files,
+	}
+}
+
+func (c *CreateSBOMConfig) catalogerTasks(cfg task.CatalogingFactoryConfig) ([]exp.Task, error) {
+	capabilitiesByName, err := packageCatalogerCapabilitiesByName()
+	if err != nil {
+		return nil, fmt.Errorf("unable to load package cataloger capabilities: %w", err)
+	}
+
+	var catalogerTasks []exp.Task
+	for _, factory := range c.packageTaskFactories {
+		packageFactory, ok := factory.(task.PackageFactory)
+		if !ok {
+			continue
+		}
+
+		name := packageFactory.Name()
+		pf := packageFactory
+		options := []exp.TaskOption{exp.WithTags(catalogerTaskTags(name, packageFactory.Selectors())...)}
+		if capabilities, ok := capabilitiesByName[name]; ok {
+			options = append(options, exp.WithCapabilities(capabilities))
+		}
+		catalogerTasks = append(catalogerTasks, exp.NewCatalogerTaskFactory(name, func() pkg.Cataloger {
+			return pf.Cataloger(cfg)
+		}, options...))
+	}
 
 	for _, catalogerRef := range c.packageCatalogerReferences {
 		if catalogerRef.Cataloger == nil {
-			return nil, nil, errors.New("provided cataloger reference without a cataloger")
+			return nil, fmt.Errorf("provided cataloger reference without a cataloger")
 		}
+		options := []exp.TaskOption{exp.WithTags(catalogerRef.Tags...)}
 		if catalogerRef.AlwaysEnabled {
-			persistentPackageTasks = append(persistentPackageTasks, task.NewPackageTask(cfg, catalogerRef.Cataloger, catalogerRef.Tags...))
-			continue
+			options = append(options, exp.AlwaysEnabled())
 		}
-		if len(catalogerRef.Tags) == 0 {
-			return nil, nil, errors.New("provided cataloger reference without tags")
-		}
-		selectablePackageTasks = append(selectablePackageTasks, task.NewPackageTask(cfg, catalogerRef.Cataloger, catalogerRef.Tags...))
+		catalogerTasks = append(catalogerTasks, exp.NewCatalogerTask(catalogerRef.Cataloger, options...))
 	}
 
-	return persistentPackageTasks, selectablePackageTasks, nil
+	catalogerTasks = append(catalogerTasks, c.packageCatalogerTasks...)
+	if err := validateCatalogerTaskNames(catalogerTasks); err != nil {
+		return nil, err
+	}
+	return catalogerTasks, nil
+}
+
+func packageCatalogerCapabilitiesByName() (map[string]exp.Capabilities, error) {
+	allCapabilities, err := exp.PackageCatalogerCapabilities()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]exp.Capabilities, len(allCapabilities))
+	for _, capabilities := range allCapabilities {
+		result[capabilities.Name] = capabilities
+	}
+	return result, nil
+}
+
+func catalogerTaskTags(name string, selectors []string) []string {
+	tagSet := make(map[string]struct{}, len(selectors))
+	for _, selector := range selectors {
+		if selector == "" || selector == name {
+			continue
+		}
+		tagSet[selector] = struct{}{}
+	}
+
+	tags := make([]string, 0, len(tagSet))
+	for tag := range tagSet {
+		tags = append(tags, tag)
+	}
+	sort.Strings(tags)
+	return tags
+}
+
+func validateCatalogerTaskNames(tasks []exp.Task) error {
+	seen := make(map[string]struct{}, len(tasks))
+	duplicates := make(map[string]struct{})
+	for _, catalogerTask := range tasks {
+		name := catalogerTask.Name()
+		if name == "" {
+			return fmt.Errorf("cataloger task without a name")
+		}
+		if _, ok := seen[name]; ok {
+			duplicates[name] = struct{}{}
+		}
+		seen[name] = struct{}{}
+	}
+
+	if len(duplicates) == 0 {
+		return nil
+	}
+
+	names := make([]string, 0, len(duplicates))
+	for name := range duplicates {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return fmt.Errorf("duplicate cataloger task names: %s", strings.Join(names, ", "))
+}
+
+func packageTasks(catalogerTasks []exp.Task, cfg task.CatalogingFactoryConfig) []task.Task {
+	result := make([]task.Task, 0, len(catalogerTasks))
+	for _, catalogerTask := range catalogerTasks {
+		ct := catalogerTask
+		result = append(result, task.NewPackageTaskFromFactory(cfg, ct.Name(), func(task.CatalogingFactoryConfig) pkg.Cataloger {
+			return ct.Cataloger()
+		}, ct.Tags()...))
+	}
+	return result
 }
 
 // scopeTasks returns the set of tasks that should be run to generate additional scope information
