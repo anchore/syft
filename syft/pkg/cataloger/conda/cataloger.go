@@ -27,9 +27,9 @@ func parseCondaMetaJSON(ctx context.Context, _ file.Resolver, _ *generic.Environ
 	if err := dec.Decode(&meta); err != nil {
 		return nil, nil, fmt.Errorf("failed to parse conda-meta package file at %s: %w", reader.RealPath, err)
 	}
-	// Record the location of the conda environment so that paths
-	// because files are stored relative to the environment location,
-	// not relative syft's scan root.
+	// Record the location of the conda environment, because files are
+	// stored relative to the environment location, not relative to
+	// syft's scan root.
 	prefix := filepath.Dir(filepath.Dir(reader.RealPath))
 	meta.Prefix = filepath.ToSlash(prefix)
 
