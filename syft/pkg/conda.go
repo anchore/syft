@@ -119,7 +119,7 @@ func (m CondaMetaPackage) OwnedFiles() (result []string) {
 		if f == "" {
 			continue
 		}
-		if m.Prefix != "" && m.Prefix != "." {
+		if m.Prefix != "" && m.Prefix != "." && !path.IsAbs(m.Prefix) {
 			f = path.Join(m.Prefix, f)
 		}
 		s.Add(f)
