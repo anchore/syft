@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/scylladb/go-set/strset"
@@ -164,8 +165,9 @@ func Read(f file.LocationReadCloser) (*File, error) {
 
 	dirs := u32set.New()                        // keep track of the RVAs we have already parsed (prevent infinite recursion edge cases)
 	versionResources := make(map[string]string) // map of version resource keys to their values
-	resourceNames := strset.New()               // set of resource names found in the PE file
-	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources, resourceNames)
+	versionResourceLangKeys := make(map[string]string)
+	resourceNames := strset.New() // set of resource names found in the PE file
+	err = parseResourceDirectory(sections[pe.IMAGE_DIRECTORY_ENTRY_RESOURCE], dirs, versionResources, versionResourceLangKeys, resourceNames)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +390,7 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 // sources:
 // - https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#the-rsrc-section
 // - https://learn.microsoft.com/en-us/previous-versions/ms809762(v=msdn.10)#pe-file-resources
-func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
+func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[string]string, langKeys map[string]string, names *strset.Set) error {
 	if sec == nil || sec.Size <= 0 {
 		return nil
 	}
@@ -435,7 +437,7 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 			continue
 		}
 
-		if err := processResourceEntry(entry, baseRVA, sec, dirs, fields, names); err != nil {
+		if err := processResourceEntry(entry, baseRVA, sec, dirs, fields, langKeys, names); err != nil {
 			log.Tracef("error processing resource entry: %v", err)
 			continue
 		}
@@ -444,7 +446,7 @@ func parseResourceDirectory(sec *extractedSection, dirs *u32set.Set, fields map[
 	return nil
 }
 
-func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs *u32set.Set, fields map[string]string, names *strset.Set) error {
+func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, sec *extractedSection, dirs *u32set.Set, fields map[string]string, langKeys map[string]string, names *strset.Set) error {
 	// if the high bit is set, this is a directory entry, otherwise it is a data entry
 	isDirectory := entry.OffsetToData&0x80000000 != 0
 
@@ -490,16 +492,16 @@ func processResourceEntry(entry peImageResourceDirectoryEntry, baseRVA uint32, s
 				Size:    sec.Size - (sec.RVA - baseRVA),
 				Reader:  sec.Reader,
 			},
-			dirs, fields, names)
+			dirs, fields, langKeys, names)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	return parseResourceDataEntry(sec.Reader, baseRVA, baseRVA+entryOffsetToData, sec.Size, fields)
+	return parseResourceDataEntry(sec.Reader, baseRVA, baseRVA+entryOffsetToData, sec.Size, fields, langKeys)
 }
 
-func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize uint32, fields map[string]string) error {
+func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize uint32, fields map[string]string, langKeys map[string]string) error {
 	var dataEntry peImageResourceDataEntry
 	offset := int64(rva - baseRVA)
 
@@ -524,7 +526,7 @@ func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize ui
 		return fmt.Errorf("error reading resource data: %w", err)
 	}
 
-	return parseVersionResourceSection(bytes.NewReader(data), fields)
+	return parseVersionResourceSection(bytes.NewReader(data), fields, langKeys)
 }
 
 // parseVersionResourceSection parses a PE version resource section from within a resource directory.
@@ -580,7 +582,7 @@ func parseResourceDataEntry(reader *bytes.Reader, baseRVA, rva, remainingSize ui
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/varfileinfo
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/stringfileinfo
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/stringtable
-func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string) error {
+func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string, langKeys map[string]string) error {
 	offset := 0
 
 	var info peVsVersionInfo
@@ -618,8 +620,9 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 
 		// note: the szKey for the prStringTable is the language
 		var stHeader peStringTable
-		if _, err := readIntoStructAndSzKey(reader, &stHeader, &offset, &stOffset); err != nil {
-			return fmt.Errorf("error reading PE string table header: %v", err)
+		stLangKey, stErr := readIntoStructAndSzKey(reader, &stHeader, &offset, &stOffset)
+		if stErr != nil {
+			return fmt.Errorf("error reading PE string table header: %v", stErr)
 		}
 
 		for stOffset < int(stHeader.Length) {
@@ -639,7 +642,14 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 				value = readUTF16(reader, &offset, &stOffset)
 			}
 
-			fields[key] = value
+			// a single binary can contain multiple StringTable blocks, one per language (the
+			// szKey is the 8-digit language/codepage identifier). Later tables must not
+			// clobber the preferred language's strings: US-English (0x0409) wins when present,
+			// otherwise keep the first block parsed. See https://github.com/anchore/syft/issues/5177
+			if _, exists := langKeys[key]; !exists || isUSEnglishLangKey(stLangKey) && !isUSEnglishLangKey(langKeys[key]) {
+				fields[key] = value
+				langKeys[key] = stLangKey
+			}
 
 			if err := alignAndSeek(reader, &offset, &stOffset); err != nil {
 				return fmt.Errorf("error aligning to next PE string table key: %w", err)
@@ -655,6 +665,12 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 	}
 
 	return nil
+}
+
+// isUSEnglishLangKey reports whether the given StringTable szKey (an 8-digit hex
+// language-id/codepage identifier, e.g. "040904b0") refers to US-English.
+func isUSEnglishLangKey(langKey string) bool {
+	return strings.EqualFold(langKey, "040904b0") || strings.EqualFold(langKey, "040904e4")
 }
 
 // readIntoStructAndSzKey reads a struct from the reader and updates the offsets if provided, returning the szKey value.
