@@ -29,7 +29,7 @@ func parseCondaMetaJSON(ctx context.Context, _ file.Resolver, _ *generic.Environ
 	}
 	// Record the location of the conda environment so that paths
 	// because files are stored relative to the environment location,
-	// no relative syft's scan root.
+	// not relative syft's scan root.
 	prefix := filepath.Dir(filepath.Dir(reader.RealPath))
 	meta.Prefix = filepath.ToSlash(prefix)
 
