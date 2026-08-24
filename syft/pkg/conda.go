@@ -80,7 +80,7 @@ type CondaMetaPackage struct {
 
 	// Prefix is the location of the metadata file. It is not part of the metadata file itself,
 	// but is needed to accurately describe file locations derived from conda metadata.
-	Prefix string
+	Prefix string `json:"-"`
 
 	// SHA256 is the SHA-256 hash of the package archive.
 	SHA256 string `json:"sha256,omitempty"`

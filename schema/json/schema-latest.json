@@ -602,10 +602,6 @@
           "type": "string",
           "description": "MD5 is the MD5 hash of the package archive."
         },
-        "Prefix": {
-          "type": "string",
-          "description": "Prefix is the location of the metadata file. It is not part of the metadata file itself,\nbut is needed to accurately describe file locations derived from conda metadata."
-        },
         "sha256": {
           "type": "string",
           "description": "SHA256 is the SHA-256 hash of the package archive."
@@ -658,8 +654,7 @@
         "name",
         "version",
         "build",
-        "build_number",
-        "Prefix"
+        "build_number"
       ],
       "description": "CondaMetaPackage represents metadata for a Conda package extracted from the conda-meta/*.json files."
     },
