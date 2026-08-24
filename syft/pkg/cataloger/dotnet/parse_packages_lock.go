@@ -18,6 +18,18 @@ import (
 
 var _ generic.Parser = parseDotnetPackagesLock
 
+// dotnetPackagesLockTypePrecedence ranks dependency types so that when the same
+// package+version appears under more than one target framework with different
+// types, the entry describing the strongest relationship to the project wins
+// deterministically (e.g. a package referenced directly by the project under
+// one framework but pulled transitively under another is reported as Direct).
+var dotnetPackagesLockTypePrecedence = []string{
+	"Direct",
+	"Project",
+	"CentralTransitive",
+	"Transitive",
+}
+
 type dotnetPackagesLock struct {
 	Version      int                                         `json:"version"`
 	Dependencies map[string]map[string]dotnetPackagesLockDep `json:"dependencies"`
@@ -44,15 +56,37 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		return nil, nil, fmt.Errorf("failed to parse packages.lock.json file: %w", err)
 	}
 
-	// collect all deps here
+	// collect all deps here. Iterate target frameworks in sorted order and
+	// merge entries deterministically: the same package+version can appear
+	// under multiple target frameworks with different dependency types (e.g.
+	// Direct under net8.0 but Transitive under netstandard2.0), and Go map
+	// iteration order is randomized -- without sorting/merging, which entry
+	// wins (and thus the reported metadata) changes between runs (see #5211).
 	allDependencies := make(map[string]dotnetPackagesLockDep)
 
+	tfms := make([]string, 0, len(lockFile.Dependencies))
+	for tfm := range lockFile.Dependencies {
+		tfms = append(tfms, tfm)
+	}
+	sort.Strings(tfms)
+
 	var names []string
-	for _, dependencies := range lockFile.Dependencies {
-		for name, dep := range dependencies {
+	for _, tfm := range tfms {
+		dependencies := lockFile.Dependencies[tfm]
+
+		namesForTfm := make([]string, 0, len(dependencies))
+		for name := range dependencies {
+			namesForTfm = append(namesForTfm, name)
+		}
+		sort.Strings(namesForTfm)
+
+		for _, name := range namesForTfm {
+			dep := dependencies[name]
 			depNameVersion := createNameAndVersion(name, dep.Resolved)
 
-			if slices.Contains(names, depNameVersion) {
+			if existing, ok := allDependencies[depNameVersion]; ok {
+				mergeDotnetPackagesLockDep(&existing, dep)
+				allDependencies[depNameVersion] = existing
 				continue
 			}
 
@@ -149,6 +183,34 @@ func packagesLockPackageURL(name, version string) string {
 		qualifiers,
 		"",
 	).ToString()
+}
+
+// mergeDotnetPackagesLockDep folds a second target-framework entry for the
+// same package+version into the first one deterministically: the dependency
+// type with the highest precedence wins (ties keep the incumbent), and any
+// field still empty on the merged entry is filled from the new one.
+func mergeDotnetPackagesLockDep(dst *dotnetPackagesLockDep, other dotnetPackagesLockDep) {
+	if dotnetPackagesLockTypeRank(other.Type) < dotnetPackagesLockTypeRank(dst.Type) {
+		dst.Type = other.Type
+	}
+	if dst.ContentHash == "" {
+		dst.ContentHash = other.ContentHash
+	}
+	for name, version := range other.Dependencies {
+		if dst.Dependencies == nil {
+			dst.Dependencies = make(map[string]string)
+		}
+		if _, ok := dst.Dependencies[name]; !ok {
+			dst.Dependencies[name] = version
+		}
+	}
+}
+
+func dotnetPackagesLockTypeRank(typ string) int {
+	if i := slices.Index(dotnetPackagesLockTypePrecedence, typ); i >= 0 {
+		return i
+	}
+	return len(dotnetPackagesLockTypePrecedence)
 }
 
 func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
