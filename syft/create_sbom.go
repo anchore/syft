@@ -163,6 +163,9 @@ func setContextExecutors(ctx context.Context, cfg *CreateSBOMConfig) context.Con
 	if !sync.HasContextExecutor(ctx, cataloging.ExecutorFile) {
 		ctx = sync.SetContextExecutor(ctx, cataloging.ExecutorFile, sync.NewExecutor(parallelism))
 	}
+	if !sync.HasContextExecutor(ctx, cataloging.ExecutorNetwork) {
+		ctx = sync.SetContextExecutor(ctx, cataloging.ExecutorNetwork, sync.NewExecutor(parallelism))
+	}
 	return ctx
 }
 
