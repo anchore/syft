@@ -250,7 +250,7 @@ func selectVersion(manifest *pkg.JavaManifest, filenameObj archiveFilename) stri
 	return ""
 }
 
-const versionPropertiesGlob = "**/version.properties"
+const versionPropertiesGlob = "/version.properties" // exact root path only
 
 // versionFromVersionProperties reads a root-level `version.properties` file and
 // returns the value of its `tag` key (the convention used by some build tools,
@@ -258,11 +258,23 @@ const versionPropertiesGlob = "**/version.properties"
 // Returns an empty string when the file is absent or has no `tag`.
 func (j *archiveParser) versionFromVersionProperties(ctx context.Context) string {
 	matches := j.fileManifest.GlobMatch(false, versionPropertiesGlob)
-	if len(matches) == 0 {
+
+	// Defend against nested third-party files: uber-jars commonly vendor
+	// dependencies that ship their own `*/version.properties` (the real
+	// Metabase jar carries ~40 of them). Only the exact root entry may
+	// contribute a version, otherwise a dependency's version could poison
+	// the application package depending on zip entry order.
+	var rootMatches []string
+	for _, m := range matches {
+		if m == "version.properties" || m == "/version.properties" {
+			rootMatches = append(rootMatches, m)
+		}
+	}
+	if len(rootMatches) == 0 {
 		return ""
 	}
 
-	contents, err := file.ContentsFromZip(ctx, j.archivePath, matches...)
+	contents, err := file.ContentsFromZip(ctx, j.archivePath, rootMatches...)
 	if err != nil {
 		log.Debugf("unable to extract version.properties (%s): %w", j.location, err)
 		return ""
