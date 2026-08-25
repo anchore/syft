@@ -1,6 +1,9 @@
 package elixir
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -270,9 +273,29 @@ func TestParseMixLock(t *testing.T) {
 
 func TestParseMixLockHexAliasUsesPackageName(t *testing.T) {
 	fixture := "testdata/mix-alias.lock"
+
+	pkgtest.TestFileParser(t, fixture, parseMixLock, expectedMixLockAliasPackages(fixture), nil)
+}
+
+func TestParseMixLockHexAliasUsesPackageNameWithCRLF(t *testing.T) {
+	srcFixture := "testdata/mix-alias.lock"
+	content, err := os.ReadFile(srcFixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fixture := filepath.Join(t.TempDir(), "mix.lock")
+	if err = os.WriteFile(fixture, []byte(strings.ReplaceAll(string(content), "\n", "\r\n")), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	pkgtest.TestFileParser(t, fixture, parseMixLock, expectedMixLockAliasPackages(fixture), nil)
+}
+
+func expectedMixLockAliasPackages(fixture string) []pkg.Package {
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 
-	expected := []pkg.Package{
+	return []pkg.Package{
 		{
 			Name:      "jason",
 			Version:   "1.3.0",
@@ -288,6 +311,4 @@ func TestParseMixLockHexAliasUsesPackageName(t *testing.T) {
 			},
 		},
 	}
-
-	pkgtest.TestFileParser(t, fixture, parseMixLock, expected, nil)
 }

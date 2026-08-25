@@ -19,7 +19,7 @@ import (
 // integrity check
 var _ generic.Parser = parseMixLock
 
-var mixLockDelimiter = regexp.MustCompile(`[%{}\n" ,:]+`)
+var mixLockDelimiter = regexp.MustCompile(`[%{}\r\n" ,:]+`)
 
 // mixLockDependency matches each `{:name, ...` tuple on a mix.lock line. The
 // first match is the entry's own source tuple (e.g. `{:hex, :name, ...}`); the
@@ -122,6 +122,7 @@ func extractMixLockDependencies(line string) []string {
 	deps := make([]string, 0, len(matches)-1)
 	for _, m := range matches[1:] {
 		name := m[1]
+		// This rewrite is only meaningful when the dependency tuple targets a hex package.
 		if hexPackage := mixLockHexPackage.FindStringSubmatch(m[2]); len(hexPackage) == 2 {
 			name = hexPackage[1]
 		}
