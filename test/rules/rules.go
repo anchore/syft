@@ -103,3 +103,17 @@ func noDirectELFOpen(m dsl.Matcher) {
 		Where(!m.File().PkgPath.Matches(`/syft/internal/elfutil$`)).
 		Report("do not open ELF files with debug/elf directly; use elfutil.NewFile, which bounds declared decompressed section sizes")
 }
+
+// nolint:unused
+func noUnboundedELFParsers(m dsl.Matcher) {
+	// buildinfo.Read and goversion's ReadExeFromReader each open debug/elf internally and expand sections
+	// sized by the file itself, the same unbounded allocation noDirectELFOpen guards against above. They
+	// are only safe in this repo because scan_binary.go gates the reader before calling them: readBuildInfo
+	// runs elfutil.CheckSectionNameTable first, getCryptoInformation runs elfutil.CheckAllSections first.
+	m.Match(
+		`buildinfo.Read($_)`,
+		`version.ReadExeFromReader($_)`,
+	).
+		Where(!(m.File().Name.Matches(`scan_binary\.go$`) && m.File().PkgPath.Matches(`/syft/pkg/cataloger/golang$`))).
+		Report("do not call buildinfo.Read/goversion.ReadExeFromReader directly; route through the bounded wrappers in the golang cataloger (readBuildInfo, getCryptoInformation), or gate the reader with elfutil.CheckSectionNameTable/elfutil.CheckAllSections first")
+}
