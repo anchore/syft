@@ -26,7 +26,9 @@ const (
 	//      --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 \
 	//      --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65  # some comment
 
-	// namePattern matches: requests[security], celery[redis, pytest]
+	// namePattern matches: requests[security], celery[redis, pytest].
+	// Keep this narrower than arbitrary text so lines like "example archive"
+	// are treated as unparsable instead of as an unpinned package named "example".
 	namePattern = `(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*(\[[^\S\r\n]*[A-Za-z0-9._-]+([^\S\r\n]*,[^\S\r\n]*[A-Za-z0-9._-]+)*[^\S\r\n]*\])?)`
 
 	// versionConstraintPattern matches: == 2.8.*
@@ -69,6 +71,9 @@ type unprocessedRequirement struct {
 func newRequirement(raw string) *unprocessedRequirement {
 	var r unprocessedRequirement
 
+	// Match the same text parseRequirementsTxt uses after comments and
+	// continuation markers are removed. This keeps unit-level parser behavior
+	// consistent with whole-file parsing.
 	raw = trimRequirementsTxtLine(raw)
 	values := internal.MatchNamedCaptureGroups(requirementPattern, raw)
 
@@ -145,6 +150,9 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 		name := removeExtras(req.Name)
 		version := parseVersion(req.VersionConstraint, rp.cfg.GuessUnpinnedRequirements)
 
+		// Keep valid unpinned requirements in the package set with an empty
+		// version. Downstream compliance rules decide whether that is allowed,
+		// stubbed, dropped, or treated as a scan failure.
 		packages = append(
 			packages,
 			newPackageForRequirementsWithMetadata(

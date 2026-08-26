@@ -66,6 +66,8 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 		t.SetCompleted()
 		log.WithFields("name", catalogerName).Trace("package cataloger completed")
 
+		// Return both failures when cataloging succeeds partially but compliance rejects
+		// one or more discovered packages.
 		return errors.Join(err, complianceErr)
 	}
 	tags = append(tags, pkgcataloging.PackageTag)
@@ -126,6 +128,8 @@ type packageReplacement struct {
 func applyCompliance(cfg cataloging.ComplianceConfig, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship, error) {
 	remainingPkgs, droppedPkgs, replacements, complianceErr := filterNonCompliantPackages(pkgs, cfg)
 
+	// Compliance can drop packages or mutate package IDs through stubbing; keep the
+	// relationship set aligned with the package set that will be written to the SBOM.
 	relIdx := relationship.NewIndex(relationships...)
 	for _, p := range droppedPkgs {
 		relIdx.Remove(p.ID())
@@ -143,6 +147,8 @@ func filterNonCompliantPackages(pkgs []pkg.Package, cfg cataloging.ComplianceCon
 	var replacements []packageReplacement
 	var complianceErrs []error
 	for _, p := range pkgs {
+		// Evaluate every package before returning so fail mode reports all missing
+		// fields found by this cataloger, not just the first one.
 		keep, replacement, err := applyComplianceRules(&p, cfg)
 		if err != nil {
 			complianceErrs = append(complianceErrs, err)
@@ -165,6 +171,8 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool
 	var replacement *packageReplacement
 	var complianceErrs []error
 
+	// The return bool only means "stub this field"; drop/fail actions are tracked
+	// separately because one package can be missing both name and version.
 	applyComplianceRule := func(value, fieldName string, action cataloging.ComplianceAction) (bool, error) {
 		if strings.TrimSpace(value) != "" {
 			return false, nil
@@ -199,6 +207,8 @@ func applyComplianceRules(p *pkg.Package, cfg cataloging.ComplianceConfig) (bool
 
 	ogID := p.ID()
 
+	// Apply name before version so any stubbed name contributes to the final package
+	// ID and to relationship replacement below.
 	if stub, err := applyComplianceRule(p.Name, "name", cfg.MissingName); err != nil {
 		complianceErrs = append(complianceErrs, err)
 	} else if stub {
