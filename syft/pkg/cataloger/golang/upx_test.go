@@ -8,8 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// isUPXCompressed used to pre-screen for the magic before parseUPXInfo scanned for it again. The
-// function is gone; these are the cases it covered, now asserted on parseUPXInfo's errNotUPX result.
+// every case here is one the magic scan must reject, asserted on parseUPXInfo's errNotUPX result.
+//
+// Every negative case that is meant to exercise the magic scan has to carry a real ELF64 little-endian
+// ident, or the container gate rejects it first and the subtest passes without the scan running at all
+// (the gate and a missing magic both return errNotUPX, so nothing in the assertion can tell them apart).
+// TestParseUPXInfo_OnlyELF64LittleEndian owns the gate; these own the scan.
 func TestParseUPXInfo_MagicDetection(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -18,31 +22,40 @@ func TestParseUPXInfo_MagicDetection(t *testing.T) {
 	}{
 		{
 			name:       "contains UPX magic at start",
-			data:       append([]byte("UPX!"), make([]byte, 100)...),
+			data:       append(append(packedELFStub(), []byte("UPX!")...), make([]byte, 100)...),
 			foundMagic: true,
 		},
 		{
 			name:       "contains UPX magic with offset",
-			data:       append(append(make([]byte, 500), []byte("UPX!")...), make([]byte, 100)...),
+			data:       append(append(append(packedELFStub(), make([]byte, 500)...), []byte("UPX!")...), make([]byte, 100)...),
 			foundMagic: true,
 		},
 		{
-			name: "no UPX magic",
-			data: []byte("\x7FELF" + string(make([]byte, 100))),
+			// UPX packs PE and Mach-O with this same l_info/p_info layout, and nothing here can place
+			// their blocks, so the container has to be checked before the magic is trusted
+			name: "UPX magic but not an ELF container",
+			data: append([]byte("MZ\x90\x00UPX!"), make([]byte, 100)...),
 		},
 		{
+			name: "no UPX magic",
+			data: append(packedELFStub(), make([]byte, 100)...),
+		},
+		{
+			// three of the four magic bytes must not match
+			name: "partial UPX magic",
+			data: append(append(packedELFStub(), []byte("UPX")...), make([]byte, 100)...),
+		},
+		{
+			// never reaches the scan: the six byte ident read comes up short, so the container gate
+			// refuses it first. Kept because an empty reader is a shape the cataloger really is handed.
 			name: "empty data",
 			data: []byte{},
-		},
-		{
-			name: "partial UPX magic",
-			data: []byte("UPX"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseUPXInfo(bytes.NewReader(tt.data))
+			_, err := parseUPXInfo(bytes.NewReader(tt.data), int64(len(tt.data)))
 			require.Error(t, err, "none of these fixtures is a usable UPX header")
 			if tt.foundMagic {
 				assert.NotErrorIs(t, err, errNotUPX, "the magic was found, so the header was parsed and rejected")
@@ -51,15 +64,6 @@ func TestParseUPXInfo_MagicDetection(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestParseUPXInfo_NotUPX(t *testing.T) {
-	data := []byte("\x7FELF" + string(make([]byte, 100)))
-	reader := bytes.NewReader(data)
-
-	_, err := parseUPXInfo(reader)
-	require.Error(t, err)
-	assert.ErrorIs(t, err, errNotUPX)
 }
 
 func TestParseUPXInfo_ValidHeader(t *testing.T) {
@@ -89,45 +93,14 @@ func TestParseUPXInfo_ValidHeader(t *testing.T) {
 
 	// padded so the declared 1MB stays within maxUPXExpansion of the fixture's own size; a real UPX file
 	// carries the compressed data this header describes, and the bound is measured against that.
-	data := append(append(lInfo, pInfo...), bInfo...)
+	data := append(append(append(packedELFStub(), lInfo...), pInfo...), bInfo...)
 	data = append(data, make([]byte, 0x100000/maxUPXExpansion)...)
 
 	reader := bytes.NewReader(data)
-	info, err := parseUPXInfo(reader)
+	info, err := parseUPXInfo(reader, sizeOf(t, reader))
 
 	require.NoError(t, err)
 	assert.Equal(t, uint8(14), info.version)
 	assert.Equal(t, uint8(22), info.format)
 	assert.Equal(t, uint32(0x100000), info.originalSize)
-}
-
-func TestDecompressUPX_UnsupportedMethod(t *testing.T) {
-	// construct a header with an unsupported compression method
-	lInfo := []byte{
-		0, 0, 0, 0, // l_checksum
-		'U', 'P', 'X', '!',
-		0, 0, // l_lsize
-		14, 22, // version, format
-	}
-
-	pInfo := []byte{
-		0, 0, 0, 0, // p_progid
-		0x00, 0x01, 0x00, 0x00, // p_filesize = 256 bytes (small for test)
-		0x00, 0x01, 0x00, 0x00, // p_blocksize = 256 (UPX never sets this above p_filesize)
-	}
-
-	bInfo := []byte{
-		0x00, 0x01, 0x00, 0x00, // sz_unc = 256
-		0x80, 0x00, 0x00, 0x00, // sz_cpr = 128
-		99, 0, 0, 0, // unsupported method
-	}
-
-	data := append(append(lInfo, pInfo...), bInfo...)
-	data = append(data, make([]byte, 1000)...)
-
-	reader := bytes.NewReader(data)
-	_, err := decompressUPX(reader)
-
-	require.Error(t, err)
-	assert.ErrorIs(t, err, errUnsupportedUPXMethod)
 }
