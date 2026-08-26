@@ -26,8 +26,8 @@ const (
 	//      --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 \
 	//      --hash=sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65  # some comment
 
-	// namePattern matches: requests[security]
-	namePattern = `(?P<name>\w[\w\[\],\s-_\.]+)`
+	// namePattern matches: requests[security], celery[redis, pytest]
+	namePattern = `(?P<name>[A-Za-z0-9][A-Za-z0-9._-]*(\[[^\S\r\n]*[A-Za-z0-9._-]+([^\S\r\n]*,[^\S\r\n]*[A-Za-z0-9._-]+)*[^\S\r\n]*\])?)`
 
 	// versionConstraintPattern matches: == 2.8.*
 	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
@@ -49,7 +49,8 @@ var requirementPattern = regexp.MustCompile(
 		whiteSpaceNoNewlinePattern +
 		versionConstraintPattern +
 		markersPattern +
-		hashesPattern,
+		hashesPattern +
+		`$`,
 )
 
 type unprocessedRequirement struct {
@@ -63,6 +64,7 @@ type unprocessedRequirement struct {
 func newRequirement(raw string) *unprocessedRequirement {
 	var r unprocessedRequirement
 
+	raw = trimRequirementsTxtLine(raw)
 	values := internal.MatchNamedCaptureGroups(requirementPattern, raw)
 
 	if err := mapstructure.Decode(values, &r); err != nil {
@@ -94,8 +96,9 @@ func newRequirementsParser(cfg CatalogerConfig) requirementsParser {
 	}
 }
 
-// parseRequirementsTxt takes a Python requirements.txt file, returning all Python packages that are locked to a
-// specific version.
+// parseRequirementsTxt takes a Python requirements.txt file, returning all valid Python package requirements. When
+// configured, versions can be inferred from constraints; otherwise valid unpinned requirements are returned without a
+// version so compliance rules can decide how to handle them.
 func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var errs error
 	var packages []pkg.Package
