@@ -19,6 +19,13 @@ func NewDBCataloger() pkg.Cataloger {
 		WithChecks(ensureSqliteDriverAvailable)
 }
 
+// NewArchiveCataloger returns a new FreeBSD pkgng cataloger capable of parsing pkgng package archive (.pkg)
+// files.
+func NewArchiveCataloger() pkg.Cataloger {
+	return generic.NewCataloger("freebsd-pkg-cataloger").
+		WithParserByGlobs(parsePkgArchive, "**/*.pkg")
+}
+
 func ensureSqliteDriverAvailable() error {
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {

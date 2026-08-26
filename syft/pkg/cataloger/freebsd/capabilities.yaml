@@ -50,3 +50,49 @@ catalogers:
             default: true
             evidence:
               - FreeBSDPkgDBEntry.ManifestDigest
+  - ecosystem: freebsd # MANUAL
+    name: freebsd-pkg-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/freebsd/cataloger.go
+      function: NewArchiveCataloger
+    selectors: # AUTO-GENERATED
+      - declared
+      - directory
+      - freebsd
+      - os
+      - package
+      - pkgng
+    parsers: # AUTO-GENERATED structure
+      - function: parsePkgArchive
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.pkg'
+        metadata_types: # AUTO-GENERATED
+          - pkg.FreeBSDPkgArchiveEntry
+        package_types: # AUTO-GENERATED
+          - freebsd
+        purl_types: # AUTO-GENERATED
+          - freebsd
+        json_schema_types: # AUTO-GENERATED
+          - FreebsdPkgArchiveEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: true
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: true
+            evidence:
+              - FreeBSDPkgArchiveEntry.Files
+          - name: package_manager.files.digests
+            default: true
+            evidence:
+              - FreeBSDPkgArchiveEntry.Files[].Digest
+          - name: package_manager.package_integrity_hash
+            default: false

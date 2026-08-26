@@ -94,3 +94,74 @@ func (m FreeBSDPkgDBEntry) OwnedFiles() (result []string) {
 	sort.Strings(result)
 	return result
 }
+
+var _ FileOwner = (*FreeBSDPkgArchiveEntry)(nil)
+
+// FreeBSDPkgArchiveEntry represents package metadata extracted from a FreeBSD pkgng package archive (.pkg)
+// file's "+MANIFEST" entry.
+type FreeBSDPkgArchiveEntry struct {
+	// Origin is the port origin the package was built from (e.g. "www/curl").
+	Origin string `json:"origin"`
+
+	// Name is the package name as found in the manifest.
+	Name string `json:"name"`
+
+	// Version is the package version, potentially including a port revision and epoch (e.g. "1.2.3_1,1").
+	Version string `json:"version"`
+
+	// Comment is a one-line summary of the package.
+	Comment string `json:"comment,omitempty"`
+
+	// Description is the long-form package description.
+	Description string `json:"description,omitempty"`
+
+	// WWW is the upstream project website.
+	WWW string `json:"www,omitempty"`
+
+	// Maintainer is the email address of the person or team maintaining the port.
+	Maintainer string `json:"maintainer,omitempty"`
+
+	// ABI is the target platform, OS release, and architecture the package was built for
+	// (e.g. "FreeBSD:14:amd64").
+	ABI string `json:"abi,omitempty"`
+
+	// Arch is the target architecture the package was built for, in ports arch format
+	// (e.g. "freebsd:14:x86:64").
+	Arch string `json:"architecture,omitempty"`
+
+	// Prefix is the installation prefix for the package (e.g. "/usr/local").
+	Prefix string `json:"prefix,omitempty"`
+
+	// FlatSize is the total installed size of the package in bytes.
+	FlatSize int64 `json:"flatSize"`
+
+	// LicenseLogic indicates how multiple licenses combine ("single", "or", "and").
+	LicenseLogic string `json:"licenseLogic,omitempty"`
+
+	// Licenses are the license names attributed to the package.
+	Licenses []string `json:"licenses,omitempty"`
+
+	// Categories are the port categories the package is classified under (e.g. "www").
+	Categories []string `json:"categories,omitempty"`
+
+	// ShlibsRequired are the shared libraries required by the package's binaries.
+	ShlibsRequired []string `json:"shlibsRequired,omitempty"`
+
+	// Annotations are free-form key/value metadata attached to the package by the ports build.
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// Files are the file records for all files owned by this package, as recorded in the manifest.
+	Files []FreeBSDFileRecord `json:"files"`
+}
+
+func (m FreeBSDPkgArchiveEntry) OwnedFiles() (result []string) {
+	s := strset.New()
+	for _, f := range m.Files {
+		if f.Path != "" {
+			s.Add(f.Path)
+		}
+	}
+	result = s.List()
+	sort.Strings(result)
+	return result
+}

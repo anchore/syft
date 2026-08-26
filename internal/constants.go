@@ -3,7 +3,7 @@ package internal
 const (
 	// JSONSchemaVersion is the current schema version output by the JSON encoder
 	// This is roughly following the "SchemaVer" guidelines for versioning the JSON schema. Please see schema/json/README.md for details on how to increment.
-	JSONSchemaVersion = "16.1.11"
+	JSONSchemaVersion = "16.1.12"
 
 	// Changelog
 	// 16.1.0 - reformulated the python pdm fields (added "URL" and removed the unused "path" field).
@@ -18,4 +18,5 @@ const (
 	// 16.1.9 - add Symbols (grouped by owning package import path) to GolangBinaryBuildinfoEntry metadata
 	// 16.1.10 - add SafeTensorsModelInfo metadata type for the safetensors AI model cataloger
 	// 16.1.11 - add FreeBSDPkgDBEntry metadata type for the FreeBSD pkgng cataloger
+	// 16.1.12 - add FreeBSDPkgArchiveEntry metadata type for the FreeBSD pkgng package archive cataloger
 )

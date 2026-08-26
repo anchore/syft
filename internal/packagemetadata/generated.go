@@ -31,6 +31,7 @@ func AllTypes() []any {
 		pkg.ELFBinaryPackageNoteJSONPayload{},
 		pkg.ElixirMixLockEntry{},
 		pkg.ErlangRebarLockEntry{},
+		pkg.FreeBSDPkgArchiveEntry{},
 		pkg.FreeBSDPkgDBEntry{},
 		pkg.GGUFFileHeader{},
 		pkg.GitHubActionsUseStatement{},

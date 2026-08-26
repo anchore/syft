@@ -154,3 +154,65 @@ func Test_DBCataloger(t *testing.T) {
 		Expects(expectedPkgs, nil).
 		TestParser(t, parsePkgDB)
 }
+
+func Test_ArchiveCataloger_Globs(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/glob-paths").
+		ExpectsResolverContentQueries([]string{
+			"var/cache/pkg/curl-8.9.1.pkg",
+		}).
+		TestCataloger(t, NewArchiveCataloger())
+}
+
+func Test_ArchiveCataloger(t *testing.T) {
+	archiveLocation := file.NewLocation("testdata/local.pkg")
+	locations := file.NewLocationSet(archiveLocation.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+
+	curlPkg := pkg.Package{
+		Name:      "curl",
+		Version:   "8.9.1",
+		Type:      pkg.FreeBSDPkg,
+		Locations: locations,
+		FoundBy:   "freebsd-pkg-cataloger",
+		PURL:      "pkg:freebsd/curl@8.9.1?arch=FreeBSD%3A14%3Aamd64&origin=www%2Fcurl",
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromLocationWithContext(context.Background(), archiveLocation, "MIT", "ISC")...),
+		Metadata: pkg.FreeBSDPkgArchiveEntry{
+			Origin:         "www/curl",
+			Name:           "curl",
+			Version:        "8.9.1",
+			Comment:        "Command line tool and library for transferring data with URLs",
+			Description:    "cURL is a command line tool for transferring data specified with URL syntax.",
+			WWW:            "https://curl.se/",
+			Maintainer:     "jmcneill@FreeBSD.org",
+			ABI:            "FreeBSD:14:amd64",
+			Arch:           "freebsd:14:x86:64",
+			Prefix:         "/usr/local",
+			FlatSize:       3345871,
+			LicenseLogic:   "or",
+			Licenses:       []string{"MIT", "ISC"},
+			Categories:     []string{"ftp", "www"},
+			ShlibsRequired: []string{"libssl.so.111"},
+			Annotations:    map[string]string{"FreeBSD_version": "1400097"},
+			Files: []pkg.FreeBSDFileRecord{
+				{
+					Path:      "/usr/local/bin/curl",
+					Digest:    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					UserName:  "root",
+					GroupName: "wheel",
+				},
+				{
+					Path:      "/usr/local/share/doc/curl/FAQ",
+					Digest:    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+					UserName:  "root",
+					GroupName: "wheel",
+				},
+			},
+		},
+	}
+	curlPkg.SetID()
+
+	pkgtest.NewCatalogTester().
+		FromFile(t, "testdata/local.pkg").
+		Expects([]pkg.Package{curlPkg}, nil).
+		TestParser(t, parsePkgArchive)
+}
