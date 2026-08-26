@@ -142,6 +142,10 @@ func TestTypeFromPURL(t *testing.T) {
 			purl:     "pkg:generic/conda@1.2.3",
 			expected: CondaPkg,
 		},
+		{
+			purl:     "pkg:freebsd/curl@8.9.1?arch=FreeBSD%3A14%3Aamd64&origin=www%2Fcurl",
+			expected: FreeBSDPkg,
+		},
 	}
 
 	var pkgTypes = strset.New()

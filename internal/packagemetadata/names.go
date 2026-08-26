@@ -132,6 +132,7 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.GGUFFileHeader{}, "gguf-file-header"),
 	jsonNames(pkg.SafeTensorsModelInfo{}, "safetensors-model-info"),
 	jsonNames(pkg.VcpkgManifest{}, "vcpkg-manifest"),
+	jsonNames(pkg.FreeBSDPkgDBEntry{}, "freebsd-pkg-db-entry"),
 )
 
 func expandLegacyNameVariants(names ...string) []string {

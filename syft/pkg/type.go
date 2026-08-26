@@ -25,6 +25,7 @@ const (
 	DebPkg                  Type = "deb"
 	DotnetPkg               Type = "dotnet"
 	ErlangOTPPkg            Type = "erlang-otp"
+	FreeBSDPkg              Type = "freebsd"
 	GemPkg                  Type = "gem"
 	GithubActionPkg         Type = "github-action"
 	GithubActionWorkflowPkg Type = "github-action-workflow"
@@ -72,6 +73,7 @@ var AllPkgs = []Type{
 	DebPkg,
 	DotnetPkg,
 	ErlangOTPPkg,
+	FreeBSDPkg,
 	GemPkg,
 	GithubActionPkg,
 	GithubActionWorkflowPkg,
@@ -131,6 +133,8 @@ func (t Type) PackageURLType() string {
 		return packageurl.TypeNuget
 	case ErlangOTPPkg:
 		return packageurl.TypeOTP
+	case FreeBSDPkg:
+		return "freebsd"
 	case GemPkg:
 		return packageurl.TypeGem
 	case HexPkg:
@@ -248,6 +252,8 @@ func TypeByName(name string) Type {
 		return PortagePkg
 	case packageurl.TypeOTP:
 		return ErlangOTPPkg
+	case "freebsd":
+		return FreeBSDPkg
 	case "linux-kernel":
 		return LinuxKernelPkg
 	case "linux-kernel-module":
