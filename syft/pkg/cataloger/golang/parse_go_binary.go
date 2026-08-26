@@ -5,12 +5,14 @@ import (
 	"context"
 	"debug/macho"
 	"debug/pe"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -25,7 +27,6 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 )
 
 const goArch = "GOARCH"
@@ -416,11 +417,11 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 		}
 		arch = f.Cpu.String()
 	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
-		f, err := xcoff.NewFile(r)
-		if err != nil {
-			return "", fmt.Errorf("unrecognized file format: %w", err)
-		}
-		arch = fmt.Sprintf("%d", f.TargetMachine)
+		// XCOFF's target machine *is* the magic we just matched on (0737 / 0767), so there is nothing to
+		// parse: a full XCOFF walk would read the string table, every symbol and every relocation only to
+		// hand back these two bytes. Reading them directly also keeps stripped binaries working, which a
+		// walk does not since it needs a symbol table to get that far.
+		arch = strconv.Itoa(int(binary.BigEndian.Uint16(ident[:2])))
 	default:
 		return "", errUnrecognizedFormat
 	}
