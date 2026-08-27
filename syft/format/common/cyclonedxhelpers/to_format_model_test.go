@@ -134,6 +134,36 @@ func Test_relationships(t *testing.T) {
 			},
 			expected: nil,
 		},
+		{
+			name: "relationships referencing a package missing from the catalog are dropped",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					// p4 is intentionally left out of the catalog (e.g. it was filtered out by a
+					// cataloger after relationships were already built)
+					Packages: pkg.NewCollection(p1, p2, p3),
+				},
+				Relationships: []artifact.Relationship{
+					{
+						From: p2,
+						To:   p1,
+						Type: artifact.DependencyOfRelationship,
+					},
+					{
+						From: p4,
+						To:   p2,
+						Type: artifact.DependencyOfRelationship,
+					},
+				},
+			},
+			expected: &[]cyclonedx.Dependency{
+				{
+					Ref: helpers.DeriveBomRef(p1),
+					Dependencies: &[]string{
+						helpers.DeriveBomRef(p2),
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
