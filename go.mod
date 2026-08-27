@@ -22,7 +22,7 @@ require (
 	github.com/anchore/go-sync v0.1.1
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.2.0
-	github.com/anchore/stereoscope v0.3.1-0.20260820190420-3cd14ecb9fbf
+	github.com/anchore/stereoscope v0.3.1
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
@@ -82,7 +82,7 @@ require (
 	github.com/spdx/tools-golang v0.6.0-rc4
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	github.com/ulikunitz/xz v0.5.16
 	github.com/vbatts/go-mtree v0.7.0
 	github.com/vifraa/gopom v1.0.0
@@ -170,13 +170,13 @@ require (
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
 	github.com/containerd/cgroups/v3 v3.1.3 // indirect
 	github.com/containerd/containerd/api v1.11.1 // indirect
-	github.com/containerd/containerd/v2 v2.3.3 // indirect
+	github.com/containerd/containerd/v2 v2.3.4 // indirect
 	github.com/containerd/continuity v0.5.0 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
-	github.com/containerd/platforms v1.0.0-rc.4 // indirect
+	github.com/containerd/platforms v1.0.0-rc.5 // indirect
 	github.com/containerd/plugin v1.1.0 // indirect
 	github.com/containerd/ttrpc v1.2.8 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
