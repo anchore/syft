@@ -1054,6 +1054,11 @@ func DefaultClassifiers() []binutils.Classifier {
 			EvidenceMatcher: binutils.MatchAny(
 				// [NUL][NUL][NUL][NUL]12.2.0-258092[NUL][NUL][NUL][NUL]
 				m.FileContentsVersionMatcher(`\x00+(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+\-[0-9]{6,})\x00+`),
+				// security patch releases embed the raw version constant with no "release-" prefix
+				// and are not always preceded by NUL bytes (e.g. on arm builds):
+				// [NUL]11.0.5+security-01[NUL][NUL]call frame too large
+				// [NUL]12.4.3+security-02[NUL][NUL]
+				m.FileContentsVersionMatcher(`\x00(?P<version>[0-9]{1,2}\.[0-9]+\.[0-9]+)\+security-[0-9]+\x00`),
 				// [NUL][NUL][NUL][NUL]release-12.3.2+security-01[NUL][NUL][NUL][NUL]
 				// [NUL][NUL][NUL][NUL]release-12.3.1[NUL][NUL][NUL][NUL]
 				m.FileContentsVersionMatcher(`\x00+release-(?P<version>[0-9]{2}\.[0-9]+\.[0-9]+(-beta[0-9]|-test|-preview)?)(\+security-[0-9]+)?\x00+`),
