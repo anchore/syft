@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 var _ generic.Parser = parseComposerLock
@@ -71,5 +72,5 @@ func parseInstalledJSON(ctx context.Context, _ file.Resolver, _ *generic.Environ
 		}
 	}
 
-	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, dependency.Resolve(composerDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
