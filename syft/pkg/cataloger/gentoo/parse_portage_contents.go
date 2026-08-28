@@ -76,6 +76,8 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 
 		if record, ok := parseContentsObjectLine(line); ok {
 			entry.Files = append(entry.Files, record)
+		} else if strings.HasPrefix(line, "obj ") {
+			log.WithFields("path", dbLocation.RealPath, "line", line).Debug("skipping malformed portage CONTENTS entry")
 		}
 	}
 }
