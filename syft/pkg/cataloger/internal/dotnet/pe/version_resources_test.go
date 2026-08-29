@@ -102,6 +102,25 @@ func Test_Read_MultiLanguageVersionResources(t *testing.T) {
 			},
 			want: englishFields,
 		},
+		{
+			name: "a block with no string tables never displaces one that has them",
+			// installers commonly carry one VERSIONINFO per locale plus a stub block with fixed file info and
+			// no strings. The stub contributes only a derived FileVersion, so preferring it by LANGID alone
+			// would throw away every string the file actually has. 0x0411 sorts ahead of 0x0c0a on every tie-
+			// breaker the ranking applies, so this is the ordering that exposes it.
+			fixture: []languageResource{
+				{lang: 0x0c0a, fields: spanishFields},
+				{lang: 0x0411, fields: nil},
+			},
+			want: spanishFields,
+		},
+		{
+			name: "a block with no string tables is still used when it is all there is",
+			fixture: []languageResource{
+				{lang: 0x0411, fields: nil},
+			},
+			want: map[string]string{"FileVersion": "2.1.0.0"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -243,6 +262,16 @@ func Test_versionResourceTables_preferred_ignoresEmptyTables(t *testing.T) {
 	tables := newVersionResourceTables()
 	tables.fields(resourceLanguage{table: langIDEnglishUS}) // present, but empty
 	tables.fields(resourceLanguage{table: 0x0c0a})["ProductName"] = "Instalador de paquetes de controladores"
+
+	assert.Equal(t, map[string]string{"ProductName": "Instalador de paquetes de controladores"}, tables.preferred())
+}
+
+func Test_versionResourceTables_preferred_prefersAuthoredTables(t *testing.T) {
+	tables := newVersionResourceTables()
+	// a block with no string tables, contributing only the FileVersion derived from its fixed file info, and
+	// sorting ahead of the real table on every tie-breaker the ranking applies
+	tables.fields(resourceLanguage{directory: 0x0411})["FileVersion"] = "2.1.0.0"
+	tables.stringTableFields(resourceLanguage{directory: 0x0c0a, table: 0x0c0a})["ProductName"] = "Instalador de paquetes de controladores"
 
 	assert.Equal(t, map[string]string{"ProductName": "Instalador de paquetes de controladores"}, tables.preferred())
 }

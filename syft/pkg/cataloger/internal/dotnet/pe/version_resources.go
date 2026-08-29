@@ -79,46 +79,84 @@ func (l resourceLanguage) preferredOver(other resourceLanguage) bool {
 // is what allows a single language to be chosen deterministically, instead of letting whichever language happens
 // to be read last overwrite the values read from all the others.
 type versionResourceTables struct {
-	byLanguage map[resourceLanguage]map[string]string
+	byLanguage map[resourceLanguage]*versionResourceTable
+}
+
+// versionResourceTable is the set of values recorded for a single language.
+type versionResourceTable struct {
+	fields map[string]string
+
+	// authored is true when the values came from a string table the file actually carries, as opposed to a
+	// VS_VERSIONINFO block that holds only fixed file info. See preferred for why the difference matters.
+	authored bool
 }
 
 func newVersionResourceTables() *versionResourceTables {
 	return &versionResourceTables{
-		byLanguage: make(map[resourceLanguage]map[string]string),
+		byLanguage: make(map[resourceLanguage]*versionResourceTable),
 	}
 }
 
 // fields returns the string table for the given language, creating it the first time that language is seen.
 func (v *versionResourceTables) fields(lang resourceLanguage) map[string]string {
-	fields, ok := v.byLanguage[lang]
+	return v.table(lang).fields
+}
+
+// stringTableFields is fields for values read out of a string table the file carries.
+func (v *versionResourceTables) stringTableFields(lang resourceLanguage) map[string]string {
+	table := v.table(lang)
+	table.authored = true
+	return table.fields
+}
+
+func (v *versionResourceTables) table(lang resourceLanguage) *versionResourceTable {
+	table, ok := v.byLanguage[lang]
 	if !ok {
-		fields = make(map[string]string)
-		v.byLanguage[lang] = fields
+		table = &versionResourceTable{fields: make(map[string]string)}
+		v.byLanguage[lang] = table
 	}
-	return fields
+	return table
 }
 
 // preferred returns the string table that best identifies the binary: US English if it is present, then any
 // other English variant, then a language-neutral table, and only then the lowest-numbered remaining LANGID.
 // Values are never merged across languages -- a mixture of, say, an English ProductName and a Spanish
 // FileDescription describes no version resource that actually exists in the file.
+//
+// A VS_VERSIONINFO block with no string tables still contributes a FileVersion derived from its fixed file
+// info, and that is worth reporting when it is all the file has. It states no language of its own though, so
+// ranking it beside real tables would let a stub block -- which installers commonly ship alongside one fully
+// localized block per locale -- discard every string in the file on the strength of its LANGID alone. Real
+// string tables are therefore ranked among themselves first, and the derived values are the fallback.
 func (v *versionResourceTables) preferred() map[string]string {
-	var best resourceLanguage
-	var bestFields map[string]string
+	if fields := v.best(true); fields != nil {
+		return fields
+	}
+	if fields := v.best(false); fields != nil {
+		return fields
+	}
+	return make(map[string]string)
+}
 
-	for lang, fields := range v.byLanguage {
-		if len(fields) == 0 {
+// best returns the highest-ranked non-empty table, or nil if there is none. When authoredOnly is set, blocks
+// that carried no string tables are not candidates.
+func (v *versionResourceTables) best(authoredOnly bool) map[string]string {
+	var bestLang resourceLanguage
+	var best *versionResourceTable
+
+	for lang, table := range v.byLanguage {
+		if len(table.fields) == 0 || (authoredOnly && !table.authored) {
 			continue
 		}
-		if bestFields == nil || lang.preferredOver(best) {
-			best, bestFields = lang, fields
+		if best == nil || lang.preferredOver(bestLang) {
+			bestLang, best = lang, table
 		}
 	}
 
-	if bestFields == nil {
-		return make(map[string]string)
+	if best == nil {
+		return nil
 	}
-	return bestFields
+	return best.fields
 }
 
 // languageFromStringTableKey interprets the szKey of a string table as the LANGID and codepage its strings are

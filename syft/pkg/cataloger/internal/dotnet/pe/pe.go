@@ -715,7 +715,7 @@ func parseStringTables(reader *bytes.Reader, sfiHeader peStringFileInfo, sfiOffs
 		lang := languageFromStringTableKey(szKey, language)
 		languages = append(languages, lang)
 
-		if err := parseStringTable(reader, stHeader, stOffset, offset, &sfiOffset, versions.fields(lang)); err != nil {
+		if err := parseStringTable(reader, stHeader, stOffset, offset, &sfiOffset, versions.stringTableFields(lang)); err != nil {
 			return languages, err
 		}
 	}
