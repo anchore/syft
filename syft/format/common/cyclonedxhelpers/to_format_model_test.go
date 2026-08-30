@@ -164,6 +164,22 @@ func Test_relationships(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "nil package catalog does not panic and yields no dependencies",
+			sbom: sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: nil,
+				},
+				Relationships: []artifact.Relationship{
+					{
+						From: p2,
+						To:   p1,
+						Type: artifact.DependencyOfRelationship,
+					},
+				},
+			},
+			expected: nil,
+		},
 	}
 
 	for _, test := range tests {

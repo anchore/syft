@@ -251,6 +251,10 @@ func isExpressiblePackageRelationship(ty artifact.RelationshipType) bool {
 }
 
 func toDependencies(relationships []artifact.Relationship, catalog *pkg.Collection) []cyclonedx.Dependency {
+	if catalog == nil {
+		return nil
+	}
+
 	dependencies := map[string]*cyclonedx.Dependency{}
 	for _, r := range relationships {
 		exists := isExpressiblePackageRelationship(r.Type)
