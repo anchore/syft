@@ -48,7 +48,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gohugoio/hashstructure v0.6.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-containerregistry v0.21.9
+	github.com/google/go-containerregistry v0.22.0
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.1
@@ -332,4 +332,4 @@ retract (
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
 
-replace github.com/anchore/stereoscope => github.com/jasonpaulos/stereoscope v0.0.0-20260730181851-bfc8d18a601a
+replace github.com/anchore/stereoscope => github.com/jasonpaulos/stereoscope v0.0.0-20260831194130-901fbb9cea87
