@@ -6,6 +6,7 @@ import (
 	"debug/macho"
 	"debug/pe"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -22,6 +23,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -365,7 +367,17 @@ func sharedLibraries(context MatcherContext) ([]string, error) {
 	}
 	defer internal.CloseAndLogError(contents, context.Location.RealPath)
 
-	e, _ := elf.NewFile(contents)
+	e, err := elfutil.NewFile(contents)
+	if err != nil {
+		// this function tries ELF, then Mach-O, then PE, so "not an ELF" is the expected case and stays
+		// quiet. debug/elf reports a wrong magic as an *elf.FormatError, but a file too short to hold a
+		// header as a bare EOF, so both count as "not an ELF" here. Anything else means a real ELF was
+		// dropped, and nothing downstream would report it.
+		var fmtErr *elf.FormatError
+		if !errors.As(err, &fmtErr) && !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+			log.WithFields("file", context.Location.RealPath, "error", err).Debug("unable to parse ELF binary")
+		}
+	}
 	if e != nil {
 		symbols, err := e.ImportedLibraries()
 		if err != nil {

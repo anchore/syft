@@ -642,6 +642,24 @@ func TestImageResolvers_Hardlinks(t *testing.T) {
 				}
 			})
 
+			t.Run("FilesByMIMEType surfaces every hardlink name", func(t *testing.T) {
+				// this is the surface #5029 could not fix and stereoscope's index-time adoption does: MIME-driven
+				// catalogers see each name. it also pins that the names are separately addressable (distinct
+				// references), since this resolver dedups on reference and would return one entry if they shared it.
+				locs, err := resolver.FilesByMIMEType("text/plain")
+				require.NoError(t, err)
+
+				byPath := map[string]file.Location{}
+				for _, loc := range locs {
+					byPath[loc.RealPath] = loc
+				}
+				for _, path := range []string{"/file.txt", "/hardlink-a", "/hardlink-b"} {
+					loc, ok := byPath[path]
+					require.Truef(t, ok, "expected MIME search to surface %s (got %v)", path, byPath)
+					assertHardlink(t, resolver, path, loc)
+				}
+			})
+
 			t.Run("AllLocations includes every hardlink path as a regular file exactly once", func(t *testing.T) {
 				counts := map[string]int{}
 				locsByPath := map[string]file.Location{}

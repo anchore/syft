@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/scylladb/go-set/strset"
@@ -479,6 +480,76 @@ func Test_idOrderedSet_add(t *testing.T) {
 			var s orderedIDSet
 			s.add(tt.input...)
 			assert.Equal(t, tt.expected, s.slice)
+		})
+	}
+}
+
+func Test_idOrderedSet_addBeyondIndexThreshold(t *testing.T) {
+	// exercise the indexed path: sets larger than orderedIDSetIndexThreshold must still deduplicate
+	// and retain insertion ordering
+	const count = orderedIDSetIndexThreshold * 4
+
+	var expected []artifact.ID
+	var input []artifact.ID
+	for i := 0; i < count; i++ {
+		id := artifact.ID(fmt.Sprintf("id-%d", i))
+		expected = append(expected, id)
+		input = append(input, id)
+	}
+	// add every element a second time; none of these should be appended
+	input = append(input, expected...)
+
+	var s orderedIDSet
+	s.add(input...)
+
+	assert.Equal(t, expected, s.slice)
+	require.NotNil(t, s.index, "index should be built once the set grows beyond the threshold")
+	assert.Len(t, s.index, len(expected), "index and slice should agree")
+}
+
+func Test_idOrderedSet_deleteKeepsIndexInSync(t *testing.T) {
+	const count = orderedIDSetIndexThreshold * 2
+
+	var s orderedIDSet
+	for i := 0; i < count; i++ {
+		s.add(artifact.ID(fmt.Sprintf("id-%d", i)))
+	}
+	require.NotNil(t, s.index)
+
+	removed := artifact.ID("id-0")
+	s.delete(removed)
+
+	assert.Len(t, s.slice, count-1)
+	assert.NotContains(t, s.slice, removed)
+	assert.False(t, s.contains(removed), "deleted element must not remain in the index")
+
+	// re-adding must work (it would be skipped if the index still held a stale entry)
+	s.add(removed)
+	assert.Equal(t, removed, s.slice[len(s.slice)-1])
+}
+
+func BenchmarkCollectionAdd(b *testing.B) {
+	// packages sharing a type all land in the same idsByType set, which is the case that previously
+	// made insertion quadratic
+	for _, count := range []int{1_000, 10_000, 50_000} {
+		pkgs := make([]Package, count)
+		for i := range pkgs {
+			pkgs[i] = Package{
+				Name:    fmt.Sprintf("package-%d", i),
+				Version: "1.0.0",
+				Type:    NpmPkg,
+			}
+			pkgs[i].SetID()
+		}
+
+		b.Run(fmt.Sprintf("packages=%d", count), func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				c := NewCollection()
+				for _, p := range pkgs {
+					c.Add(p)
+				}
+			}
 		})
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -21,7 +22,7 @@ func ExtractDepsJSONFromELFBundle(r unionreader.UnionReader) (string, error) {
 }
 
 func findBundleHeaderOffsetInELF(r unionreader.UnionReader) (int64, error) {
-	elfFile, err := elf.NewFile(r)
+	elfFile, err := elfutil.NewFile(r)
 	if err != nil {
 		return 0, nil
 	}

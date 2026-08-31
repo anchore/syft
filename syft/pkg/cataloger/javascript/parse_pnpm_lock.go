@@ -3,6 +3,7 @@ package javascript
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -33,8 +34,10 @@ type pnpmPackage struct {
 }
 
 // pnpmLockfileParser defines the interface for parsing different versions of pnpm lockfiles.
+// Implementations decode into themselves, so a parser is single-use: construct a new one
+// per document rather than reusing one across a multi-document stream.
 type pnpmLockfileParser interface {
-	Parse(version float64, data []byte) ([]pnpmPackage, error)
+	Parse(version float64, doc *yaml.Node) ([]pnpmPackage, error)
 }
 
 type pnpmV6PackageEntry struct {
@@ -81,10 +84,12 @@ func newGenericPnpmLockAdapter(cfg CatalogerConfig) genericPnpmLockAdapter {
 }
 
 // Parse implements the pnpmLockfileParser interface for v6-v8 lockfiles.
-func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, error) {
-	if err := yaml.Unmarshal(data, p); err != nil {
+func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, error) {
+	if err := doc.Decode(p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
 	}
+
+	isV5 := version < 6.0
 
 	packages := make(map[string]pnpmPackage)
 
@@ -94,6 +99,9 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 		if err != nil {
 			log.WithFields("package", name, "error", err).Trace("unable to parse pnpm dependency")
 			continue
+		}
+		if isV5 {
+			ver = stripPnpmV5PeerSuffix(ver)
 		}
 		key := name + "@" + ver
 		packages[key] = pnpmPackage{Name: name, Version: ver}
@@ -111,6 +119,9 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
+		if isV5 {
+			ver = stripPnpmV5PeerSuffix(ver)
+		}
 		pkgKey := name + "@" + ver
 
 		integrity := ""
@@ -121,6 +132,9 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 		dependencies := make(map[string]string)
 		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
 			var normalizedVersion = strings.SplitN(depVersion, "(", 2)[0]
+			if isV5 {
+				normalizedVersion = stripPnpmV5PeerSuffix(normalizedVersion)
+			}
 			dependencies[depName] = normalizedVersion
 		}
 
@@ -131,8 +145,8 @@ func (p *pnpmV6LockYaml) Parse(version float64, data []byte) ([]pnpmPackage, err
 }
 
 // Parse implements the PnpmLockfileParser interface for v9+ lockfiles.
-func (p *pnpmV9LockYaml) Parse(_ float64, data []byte) ([]pnpmPackage, error) {
-	if err := yaml.Unmarshal(data, p); err != nil {
+func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error) {
+	if err := doc.Decode(p); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
 	}
 
@@ -183,38 +197,117 @@ func newPnpmLockfileParser(version float64) pnpmLockfileParser {
 
 // parsePnpmLock is the main parser function for pnpm-lock.yaml files.
 func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	data, err := io.ReadAll(reader) //nolint:gocritic // multi-pass parse requires []byte
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load pnpm-lock.yaml file: %w", err)
-	}
+	// pnpm-lock.yaml can be a multi-document YAML stream: pnpm keeps config dependencies
+	// and the pinned package-manager version in a leading document and the project's
+	// dependency graph in the next one. Reading only the first document yields a
+	// well-formed SBOM that contains pnpm's own release binaries and none of the
+	// project's dependencies, with nothing to signal that it is wrong.
+	// See https://github.com/anchore/syft/issues/5168.
+	//
+	// Every document is cataloged, not just the project's. The packages pnpm records for
+	// itself (pnpm and its @pnpm/exe.* release binaries) are really installed on disk, so
+	// they are reported as components like any other dependency. The alternative, keeping
+	// only the last document, would drop them from the SBOM entirely.
+	pnpmPkgs, errs := parsePnpmLockStream(reader)
 
-	var lockfile struct {
-		Version string `yaml:"lockfileVersion"`
-	}
-	if err := yaml.Unmarshal(data, &lockfile); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml version: %w", err)
-	}
-
-	version, err := strconv.ParseFloat(lockfile.Version, 64)
-	if err != nil {
-		return nil, nil, fmt.Errorf("invalid lockfile version %q: %w", lockfile.Version, err)
-	}
-
-	parser := newPnpmLockfileParser(version)
-	pnpmPkgs, err := parser.Parse(version, data)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse pnpm-lock.yaml file: %w", err)
-	}
-
-	packages := make([]pkg.Package, 0, len(pnpmPkgs))
-	for _, p := range pnpmPkgs {
+	// left nil when nothing parses, so a failed lockfile reports no packages rather than an empty set
+	var packages []pkg.Package
+	for _, p := range toSortedSlice(pnpmPkgs) {
 		if p.Dev && !a.cfg.IncludeDevDependencies {
 			continue
 		}
 		packages = append(packages, newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
 	}
 
-	return packages, dependency.Resolve(pnpmLockDependencySpecifier, packages), unknown.IfEmptyf(packages, "unable to determine packages")
+	errs = unknown.Join(errs, unknown.IfEmptyf(packages, "unable to determine packages"))
+
+	return packages, dependency.Resolve(pnpmLockDependencySpecifier, packages), errs
+}
+
+// parsePnpmLockStream reads every document of the lockfile stream, keyed by name@version.
+// A document that fails to parse is reported as unknown rather than discarding the
+// documents that did parse.
+func parsePnpmLockStream(reader file.LocationReadCloser) (map[string]pnpmPackage, error) {
+	dec := yaml.NewDecoder(reader)
+
+	pnpmPkgs := make(map[string]pnpmPackage)
+	var firstVersion float64
+	var errs error
+
+	for i := 0; ; i++ {
+		var doc yaml.Node
+		if err := dec.Decode(&doc); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			// a malformed document leaves the decoder unusable, so stop reading and keep
+			// what earlier documents contributed rather than dropping the whole lockfile
+			errs = unknown.Appendf(errs, reader, "failed to parse pnpm-lock.yaml document %d: %v", i, err)
+			break
+		}
+
+		// an empty or comment-only document decodes to a null node; skipping it keeps a
+		// leading separator from failing the stream on a missing lockfileVersion
+		if len(doc.Content) == 0 || doc.Content[0].Tag == "!!null" {
+			continue
+		}
+
+		version, err := pnpmDocumentVersion(&doc, firstVersion)
+		if err != nil {
+			// no document has yielded a usable version yet, so there is nothing to parse
+			return nil, unknown.Join(errs, err)
+		}
+		if firstVersion == 0 {
+			firstVersion = version
+		}
+
+		pkgs, err := newPnpmLockfileParser(version).Parse(version, &doc)
+		if err != nil {
+			errs = unknown.Appendf(errs, reader, "failed to parse pnpm-lock.yaml document %d: %v", i, err)
+			continue
+		}
+		mergePnpmPackages(pnpmPkgs, pkgs, i)
+	}
+
+	return pnpmPkgs, errs
+}
+
+// pnpmDocumentVersion reads lockfileVersion from a single document of the stream.
+// Documents after the first are expected to repeat it, but one that omits it inherits the
+// version already established rather than being dropped.
+func pnpmDocumentVersion(doc *yaml.Node, established float64) (float64, error) {
+	var lockfile struct {
+		Version string `yaml:"lockfileVersion"`
+	}
+	if err := doc.Decode(&lockfile); err != nil {
+		if established != 0 {
+			return established, nil
+		}
+		return 0, fmt.Errorf("failed to parse pnpm-lock.yaml version: %w", err)
+	}
+
+	version, err := strconv.ParseFloat(lockfile.Version, 64)
+	switch {
+	case err == nil:
+		return version, nil
+	case established != 0:
+		return established, nil
+	default:
+		return 0, fmt.Errorf("invalid lockfile version %q: %w", lockfile.Version, err)
+	}
+}
+
+// mergePnpmPackages folds one document's packages into the running set. The whole stream
+// follows a single collision rule, the same one used within a document: the last entry to
+// appear wins.
+func mergePnpmPackages(into map[string]pnpmPackage, pkgs []pnpmPackage, doc int) {
+	for _, p := range pkgs {
+		key := p.Name + "@" + p.Version
+		if existing, ok := into[key]; ok && existing.Integrity != "" && p.Integrity != "" && existing.Integrity != p.Integrity {
+			log.WithFields("package", key, "document", doc).Trace("conflicting integrity across pnpm-lock.yaml documents")
+		}
+		into[key] = p
+	}
 }
 
 // parseVersionField extracts the version string from a dependency entry.
@@ -231,6 +324,22 @@ func parseVersionField(name string, info any) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported dependency type %T for %q", info, name)
 	}
+}
+
+// stripPnpmV5PeerSuffix removes the underscore-delimited peer dependency suffix used by
+// pnpm v5 lockfiles, e.g. "5.3.2_acorn@8.8.0" or "4.10.0_fzn43tb6bdtdxy2s3aqevve2su" -> "5.3.2" / "4.10.0".
+// Lockfile v6+ encodes the same information in parentheses, which is stripped separately.
+// Only values that look like a registry version (leading digit) are stripped, so that
+// link:/file:/git specifiers are left untouched.
+func stripPnpmV5PeerSuffix(version string) string {
+	idx := strings.Index(version, "_")
+	if idx <= 0 {
+		return version
+	}
+	if version[0] < '0' || version[0] > '9' {
+		return version
+	}
+	return version[:idx]
 }
 
 // parsePnpmPackageKey extracts the package name and version from a lockfile package key.

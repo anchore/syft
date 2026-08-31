@@ -274,6 +274,12 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"bcutil-jdk15to18":                            "org.bouncycastle",
 	"bcutil-jdk18on":                              "org.bouncycastle",
 	"bcutil-lts8on":                               "org.bouncycastle",
+	"derby":                                       "org.apache.derby",
+	"derbyclient":                                 "org.apache.derby",
+	"derbynet":                                    "org.apache.derby",
+	"derbyoptionaltools":                          "org.apache.derby",
+	"derbyshared":                                 "org.apache.derby",
+	"derbytools":                                  "org.apache.derby",
 	"elasticsearch":                               "org.elasticsearch",
 	"elasticsearch-analysis-icu":                  "org.elasticsearch",
 	"elasticsearch-analysis-ik":                   "org.elasticsearch",
@@ -1921,4 +1927,16 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"kafka_2.8.2":                                              "org.apache.kafka",
 	"kafka_2.9.1":                                              "org.apache.kafka",
 	"kafka_2.9.2":                                              "org.apache.kafka",
+
+	// legacy "Jackson 1.x" (aka "jackson-asl") artifacts predate the convention of embedding
+	// META-INF/maven/.../pom.properties in the jar, so groupIDFromKnownPackageList is the only
+	// way to recover the correct group ID for jars built without that metadata (e.g. Ant-built
+	// jars from before ~2014). Without this, the group ID falls back to the artifact name itself,
+	// producing purls that do not match the vulnerability database's namespace.
+	// See https://github.com/anchore/syft/issues/4598
+	"jackson-core-asl":   "org.codehaus.jackson",
+	"jackson-mapper-asl": "org.codehaus.jackson",
+	"jackson-jaxrs":      "org.codehaus.jackson",
+	"jackson-xc":         "org.codehaus.jackson",
+	"jackson-smile":      "org.codehaus.jackson",
 }

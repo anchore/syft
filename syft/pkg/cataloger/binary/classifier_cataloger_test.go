@@ -2295,6 +2295,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "grafana/12.4.3-security-02/linux-arm",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.4.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.4.3",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.0.0-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.0.0",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/11.0.5-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "11.0.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@11.0.5",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
 			logicalFixture: "grafana/12.3.1/linux-amd64",
 			expected: pkg.Package{
 				Name:      "grafana",
@@ -2604,6 +2637,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 		},
 		{
 			logicalFixture: "nginx-ingress-controller/1.9.6/linux-amd64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm64",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-arm",
+			expected: pkg.Package{
+				Name:      "nginx-ingress-controller",
+				Version:   "1.9.6",
+				Type:      "binary",
+				PURL:      "pkg:generic/nginx-ingress-controller@1.9.6",
+				Locations: locations("nginx-ingress-controller"),
+				Metadata:  metadata("ingress-nginx-binary"),
+			},
+		},
+		{
+			logicalFixture: "nginx-ingress-controller/1.9.6/linux-s390x",
 			expected: pkg.Package{
 				Name:      "nginx-ingress-controller",
 				Version:   "1.9.6",

@@ -1324,6 +1324,30 @@ from-images:
       - /usr/share/grafana/bin/grafana
 
   - name: grafana
+    version: 12.4.3-security-02
+    images:
+      - ref: grafana/grafana:12.4.3-security-02@sha256:fe5bc62ae401120c48b4cd50db122a632bfca8d48a7115a32cc7c9b80c19dc48
+        platform: linux/arm
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 12.0.0-security-01
+    images:
+      - ref: grafana/grafana:12.0.0-security-01@sha256:6fc2fee54f8551a3ae452a2dd14fd524143026e46a0f06b0302c79117fe89fcf
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
+    version: 11.0.5-security-01
+    images:
+      - ref: grafana/grafana:11.0.5-security-01@sha256:0ba037897c6f22f26b7d289eb1f651ed4d9d552ea454ace60307ecd0585cbee1
+        platform: linux/amd64
+    paths:
+      - /usr/share/grafana/bin/grafana
+
+  - name: grafana
     version: 12.0.0
     images:
       - ref: grafana/grafana:12.0.0@sha256:884f0f140669a5b9dccee1baece011a3fa5dd1951f1ba158b03de8ad1d178380
@@ -1570,8 +1594,16 @@ from-images:
 
   - version: 1.9.6
     images:
-      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:1405cc613bd95b2c6edd8b2a152510ae91c7e62aea4698500d23b2145960ab9c
+      # note: per-platform manifest digests (not the index digest) -- the extraction step creates a
+      # container from the ref alone, so each platform needs its own uniquely addressable ref
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:0939639a1f338a9eaaa490fd38b4a7881e47a7fd1a473baf8749ce15952b55b8
         platform: linux/amd64
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:5fb823cc617cbfbee4b250ad5e059c23078ea63e9a7e6acb6d4d30e4456eb0be
+        platform: linux/arm64
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:dcea8d021e15cf27f59249ee0cfd211559ef9eb60b10651c3af299499848cf8b
+        platform: linux/arm
+      - ref: registry.k8s.io/ingress-nginx/controller:v1.9.6@sha256:fc53a604eb2d17fa0cf7a3f266d052c2f32fb97209869057d6826d1815cf622d
+        platform: linux/s390x
     paths:
       - /nginx-ingress-controller
 

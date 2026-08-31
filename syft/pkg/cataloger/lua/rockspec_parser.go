@@ -548,11 +548,11 @@ func skipBuildNode(data []byte, i *int) {
 			bracesCount--
 		}
 
+		*i++
+
 		if bracesCount == 0 {
 			return
 		}
-
-		*i++
 	}
 }
 
