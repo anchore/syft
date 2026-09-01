@@ -55,7 +55,7 @@ func Test_composerDependencySpecifier(t *testing.T) {
 			},
 		},
 		{
-			name: "with provides",
+			name: "with provides and replaces",
 			p: pkg.Package{
 				Name: "foo",
 				Metadata: pkg.PhpComposerLockEntry{
@@ -66,17 +66,20 @@ func Test_composerDependencySpecifier(t *testing.T) {
 					Provide: map[string]string{
 						"baz": "1.2.3",
 					},
+					Replace: map[string]string{
+						"qux": "1.2.3",
+					},
 				},
 			},
 			want: dependency.Specification{
 				ProvidesRequires: dependency.ProvidesRequires{
-					Provides: []string{"foo", "baz"},
+					Provides: []string{"foo", "baz",	"qux"},
 					Requires: []string{"bar"},
 				},
 			},
 		},
 		{
-			name: "no dependencies",
+			name: "installed no dependencies",
 			p: pkg.Package{
 				Name: "foo",
 				Metadata: pkg.PhpComposerInstalledEntry{
@@ -91,7 +94,7 @@ func Test_composerDependencySpecifier(t *testing.T) {
 			},
 		},
 		{
-			name: "with required dependencies",
+			name: "installed with required dependencies",
 			p: pkg.Package{
 				Name: "foo",
 				Metadata: pkg.PhpComposerInstalledEntry{
@@ -109,7 +112,7 @@ func Test_composerDependencySpecifier(t *testing.T) {
 			},
 		},
 		{
-			name: "with provides",
+			name: "installed with provides and replaces",
 			p: pkg.Package{
 				Name: "foo",
 				Metadata: pkg.PhpComposerInstalledEntry{
@@ -120,11 +123,14 @@ func Test_composerDependencySpecifier(t *testing.T) {
 					Provide: map[string]string{
 						"baz": "1.2.3",
 					},
+					Replace: map[string]string{
+						"qux": "1.2.3",
+					},
 				},
 			},
 			want: dependency.Specification{
 				ProvidesRequires: dependency.ProvidesRequires{
-					Provides: []string{"foo", "baz"},
+					Provides: []string{"foo", "baz",	"qux"},
 					Requires: []string{"bar"},
 				},
 			},
@@ -157,6 +163,31 @@ func Test_composerLockDependencySpecifier_lockfile(t *testing.T) {
 					ProvidesRequires: dependency.ProvidesRequires{
 						Provides: []string{"alcaeus/mongo-php-adapter", "ext-mongo"},
 						Requires: []string{"ext-ctype", "ext-hash", "ext-mongodb", "mongodb/mongodb", "php"},
+					},
+				},
+			},
+		},
+		{
+			name:    "composer.lock with replace",
+			fixture: "./testdata/composer.replace.lock",
+			want: []dependency.Specification{
+				// packages are in the order they appear in the lock file
+				{
+					ProvidesRequires:	dependency.ProvidesRequires{
+						Provides: []string{"paragonie/random_compat"},
+						Requires: []string{"php"},
+					},
+				},
+				{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"ramsey/uuid", "rhumsaa/uuid"},
+						Requires: []string{"paragonie/random_compat", "php"},
+					},
+				},
+				{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"zircote/rhubarb"},
+						Requires: []string{"rhumsaa/uuid"},
 					},
 				},
 			},
@@ -229,6 +260,31 @@ func Test_composerInstalledDependencySpecifier_lockfile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "composer v2 installed.json replace",
+			fixture: "./testdata/vendor/composer_2/installed.replace.json",
+			want: []dependency.Specification{
+				// packages are in the order they appear in the lock file
+				{
+					ProvidesRequires:	dependency.ProvidesRequires{
+						Provides: []string{"paragonie/random_compat"},
+						Requires: []string{"php"},
+					},
+				},
+				{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"ramsey/uuid", "rhumsaa/uuid"},
+						Requires: []string{"paragonie/random_compat", "php"},
+					},
+				},
+				{
+					ProvidesRequires: dependency.ProvidesRequires{
+						Provides: []string{"zircote/rhubarb"},
+						Requires: []string{"rhumsaa/uuid"},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -252,4 +308,3 @@ func Test_composerInstalledDependencySpecifier_lockfile(t *testing.T) {
 		})
 	}
 }
-
