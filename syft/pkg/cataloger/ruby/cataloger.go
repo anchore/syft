@@ -6,12 +6,14 @@ package ruby
 import (
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 // NewGemFileLockCataloger returns a new Bundler cataloger object tailored for parsing index-oriented files (e.g. Gemfile.lock).
 func NewGemFileLockCataloger() pkg.Cataloger {
 	return generic.NewCataloger("ruby-gemfile-cataloger").
-		WithParserByGlobs(parseGemFileLockEntries, "**/Gemfile.lock", "**/Gemfile.next.lock")
+		WithParserByGlobs(parseGemFileLockEntries, "**/Gemfile.lock", "**/Gemfile.next.lock").
+		WithProcessors(dependency.Processor(gemfileLockDependencySpecifier))
 }
 
 // NewInstalledGemSpecCataloger returns a new Bundler cataloger object tailored for detecting installations of gems (e.g. Gemspec).
