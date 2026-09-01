@@ -144,6 +144,119 @@ func Test_encodeExternalReferences(t *testing.T) {
 	}
 }
 
+func Test_encodeSourcePackage(t *testing.T) {
+	rpm_epoch := 32
+	tests := []struct {
+		name     string
+		input    pkg.Package
+		expected *cyclonedx.ExternalReference
+	}{
+		{
+			name:     "no metadata",
+			input:    pkg.Package{},
+			expected: nil,
+		},
+		{
+			name: "from apk",
+			input: pkg.Package{
+				Name:    "libc-utils",
+				Version: "0.7.2-r3",
+				Type:    pkg.ApkPkg,
+				PURL:    "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&distro=alpine-3.16.3&upstream=libc-dev",
+				Metadata: pkg.ApkDBEntry{
+					Package:       "libc-utils",
+					OriginPackage: "libc-dev",
+					Version:       "0.7.2-r3",
+					Architecture:  "x86_64",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:apk/alpine/libc-dev@0.7.2-r3&arch=source&distro=alpine-3.16.3",
+			},
+		},
+		{
+			name: "from dpkg",
+			input: pkg.Package{
+				Name:    "libpam-runtime",
+				Version: "1.5.2-6+deb12u1",
+				Type:    pkg.DebPkg,
+				PURL:    "pkg:deb/debian/libpam-runtime@1.5.2-6%2Bdeb12u1?arch=all&distro=debian-12&upstream=pam",
+				Metadata: pkg.DpkgDBEntry{
+					Package:      "libpam-runtime",
+					Version:      "1.5.2-6+deb12u1",
+					Source:       "pam",
+					Architecture: "all",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:deb/debian/pam@1.5.2-6%2Bdeb12u1?arch=source&distro=debian-12",
+			},
+		},
+		{
+			name: "from dpkg with source version",
+			input: pkg.Package{
+				Name:    "attr",
+				Version: "1:2.4.47-2+b1",
+				Type:    pkg.DebPkg,
+				PURL:    "pkg:deb/debian/attr@1%3A2.4.47-2%2Bb1?arch=amd64&distro=debian-12&upstream=attr%401%3A2.4.47-2",
+				Metadata: pkg.DpkgDBEntry{
+					Package:       "attr",
+					Version:       "1:2.4.47-2+b1",
+					Source:        "attr",
+					SourceVersion: "1:2.4.47-2",
+					Architecture:  "amd64",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:deb/debian/attr@1%3A2.4.47-2?arch=source&distro=debian-12",
+			},
+		},
+		{
+			name: "from rpm",
+			input: pkg.Package{
+				Name:    "bind-export-libs",
+				Version: "32:9.11.13-3.el8",
+				Type:    pkg.RpmPkg,
+				PURL:    "pkg:rpm/centos/bind-export-libs@9.11.13-3.el8?arch=x86_64&distro=centos-8&epoch=32&upstream=bind-9.11.13-3.el8.src.rpm",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "bind-export-libs",
+					Version:   "9.11.13",
+					Release:   "3.el8",
+					Epoch:     &rpm_epoch,
+					Arch:      "x86_64",
+					SourceRpm: "bind-9.11.13-3.el8.src.rpm",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/bind@9.11.13-3.el8?arch=source&distro=centos-8&epoch=32",
+			},
+		},
+		{
+			name: "from alpm",
+			input: pkg.Package{
+				Name:    "gcc-libs",
+				Version: "13.2.1-3",
+				Type:    pkg.AlpmPkg,
+				PURL:    "pkg:alpm/arch/gcc-libs@13.2.1-3?arch=x86_64&distro=arch-rolling&upstream=gcc",
+				Metadata: pkg.AlpmDBEntry{
+					Package:      "gcc-libs",
+					Version:      "13.2.1-3",
+					BasePackage:  "gcc",
+					Architecture: "x86_64",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/gcc@13.2.1-3?arch=source&distro=arch-rolling",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, encodeSourcePackageExternalReference(test.input))
+		})
+	}
+}
+
 func Test_isValidExternalRef(t *testing.T) {
 	tests := []struct {
 		name     string
