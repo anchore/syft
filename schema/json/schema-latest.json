@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.12/document",
+  "$id": "anchore.io/schema/syft/json/16.1.13/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -2997,6 +2997,9 @@
               "$ref": "#/$defs/RpmDbEntry"
             },
             {
+              "$ref": "#/$defs/RubyGemfileLockEntry"
+            },
+            {
               "$ref": "#/$defs/RubyGemspec"
             },
             {
@@ -4203,6 +4206,31 @@
         "issuer"
       ],
       "description": "RpmSignature represents a GPG signature for an RPM package used for authenticity verification."
+    },
+    "RubyGemfileLockEntry": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the gem name as locked in the Gemfile.lock"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the resolved gem version as locked in the Gemfile.lock"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Dependencies are the names of the gems this entry depends on, as declared\nin the entry's indented dependency list. Used to derive dependency-of\nrelationships between the locked gems."
+        }
+      },
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "description": "RubyGemfileLockEntry represents a single gem entry parsed from a Gemfile.lock file."
     },
     "RubyGemspec": {
       "properties": {

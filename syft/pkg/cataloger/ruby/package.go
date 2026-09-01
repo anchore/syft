@@ -9,14 +9,15 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/licenses"
 )
 
-func newGemfileLockPackage(name, version string, locations ...file.Location) pkg.Package {
+func newGemfileLockPackage(entry pkg.RubyGemfileLockEntry, locations ...file.Location) pkg.Package {
 	p := pkg.Package{
-		Name:      name,
-		Version:   version,
-		PURL:      packageURL(name, version),
+		Name:      entry.Name,
+		Version:   entry.Version,
+		PURL:      packageURL(entry.Name, entry.Version),
 		Locations: file.NewLocationSet(locations...),
 		Language:  pkg.Ruby,
 		Type:      pkg.GemPkg,
+		Metadata:  entry,
 	}
 
 	p.SetID()
