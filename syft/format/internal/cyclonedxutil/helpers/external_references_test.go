@@ -157,6 +157,21 @@ func Test_encodeSourcePackage(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name: "no PURL",
+			input: pkg.Package{
+				Name:    "some-package",
+				Version: "1.0.0-r1",
+				Type:    pkg.ApkPkg,
+				Metadata: pkg.ApkDBEntry{
+					Package:       "some-package",
+					OriginPackage: "some-package",
+					Version:       "1.0.0-r1",
+					Architecture:  "x86_64",
+				},
+			},
+			expected: nil,
+		},
+		{
 			name: "from apk",
 			input: pkg.Package{
 				Name:    "libc-utils",
@@ -171,11 +186,28 @@ func Test_encodeSourcePackage(t *testing.T) {
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:apk/alpine/libc-dev@0.7.2-r3&arch=source&distro=alpine-3.16.3",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:apk/alpine/libc-dev@0.7.2-r3?arch=source&distro=alpine-3.16.3",
 			},
 		},
 		{
-			name: "from dpkg",
+			// Matching existing implementation where upstream qualifier is omitted when OriginPackage = Package for Alpine
+			name: "from apk with source = bin",
+			input: pkg.Package{
+				Name:    "some-package",
+				Version: "1.0.0-r1",
+				Type:    pkg.ApkPkg,
+				PURL:    "pkg:apk/alpine/some-package@1.0.0-r1?arch=x86_64&distro=alpine-3.16.3",
+				Metadata: pkg.ApkDBEntry{
+					Package:       "some-package",
+					OriginPackage: "some-package",
+					Version:       "1.0.0-r1",
+					Architecture:  "x86_64",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "from deb",
 			input: pkg.Package{
 				Name:    "libpam-runtime",
 				Version: "1.5.2-6+deb12u1",
@@ -193,7 +225,7 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 		},
 		{
-			name: "from dpkg with source version",
+			name: "from deb with source version",
 			input: pkg.Package{
 				Name:    "attr",
 				Version: "1:2.4.47-2+b1",
@@ -209,6 +241,39 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 			expected: &cyclonedx.ExternalReference{
 				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:deb/debian/attr@1%3A2.4.47-2?arch=source&distro=debian-12",
+			},
+		},
+		{
+			name: "from deb with empty source",
+			input: pkg.Package{
+				Name:    "some-package",
+				Version: "1.0.0",
+				Type:    pkg.DebPkg,
+				PURL:    "pkg:deb/debian/some-package@1.0.0?arch=all&distro=debian-12",
+				Metadata: pkg.DpkgDBEntry{
+					Package:      "some-package",
+					Version:      "1.0.0",
+					Architecture: "all",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "from deb archive",
+			input: pkg.Package{
+				Name:    "libpam-runtime",
+				Version: "1.5.2-6+deb12u1",
+				Type:    pkg.DebPkg,
+				PURL:    "pkg:deb/libpam-runtime@1.5.2-6%2Bdeb12u1?arch=all&upstream=pam",
+				Metadata: pkg.DpkgArchiveEntry{
+					Package:      "libpam-runtime",
+					Version:      "1.5.2-6+deb12u1",
+					Source:       "pam",
+					Architecture: "all",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:deb/pam@1.5.2-6%2Bdeb12u1?arch=source",
 			},
 		},
 		{
@@ -232,6 +297,46 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 		},
 		{
+			name: "from rpm with source = bin",
+			input: pkg.Package{
+				Name:    "some-package",
+				Version: "32:1.0.0-1.el8",
+				Type:    pkg.RpmPkg,
+				PURL:    "pkg:rpm/centos/some-package@1.0.0-1.el8?arch=x86_64&distro=centos-8&epoch=32&upstream=some-package-1.0.0-1.el8.src.rpm",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "some-package",
+					Version:   "1.0.0",
+					Release:   "1.el8",
+					Epoch:     &rpm_epoch,
+					Arch:      "x86_64",
+					SourceRpm: "some-package-1.0.0-1.el8.src.rpm",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/some-package@1.0.0-1.el8?arch=source&distro=centos-8&epoch=32",
+			},
+		},
+		{
+			name: "from rpm archive",
+			input: pkg.Package{
+				Name:    "bind-export-libs",
+				Version: "32:9.11.13-3.el8",
+				Type:    pkg.RpmPkg,
+				PURL:    "pkg:rpm/bind-export-libs@9.11.13-3.el8?arch=x86_64&epoch=32&upstream=bind-9.11.13-3.el8.src.rpm",
+				Metadata: pkg.RpmArchive{
+					Name:      "bind-export-libs",
+					Version:   "9.11.13",
+					Release:   "3.el8",
+					Epoch:     &rpm_epoch,
+					Arch:      "x86_64",
+					SourceRpm: "bind-9.11.13-3.el8.src.rpm",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/bind@9.11.13-3.el8?arch=source&epoch=32",
+			},
+		},
+		{
 			name: "from alpm",
 			input: pkg.Package{
 				Name:    "gcc-libs",
@@ -247,6 +352,26 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 			expected: &cyclonedx.ExternalReference{
 				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/gcc@13.2.1-3?arch=source&distro=arch-rolling",
+			},
+		},
+		{
+			// Matching existing implementation where upstream qualifier is *not* omitted when BasePackage == Package for Alpm
+			// This differs from the Alpine case where it is omitted.
+			name: "from alpm with source = bin",
+			input: pkg.Package{
+				Name:    "some-package",
+				Version: "1.0.0",
+				Type:    pkg.AlpmPkg,
+				PURL:    "pkg:alpm/arch/some-package@1.0.0?arch=x86_64&distro=arch-rolling&upstream=some-package",
+				Metadata: pkg.AlpmDBEntry{
+					Package:      "some-package",
+					Version:      "1.0.0",
+					BasePackage:  "some-package",
+					Architecture: "x86_64",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/some-package@1.0.0?arch=source&distro=arch-rolling",
 			},
 		},
 	}
