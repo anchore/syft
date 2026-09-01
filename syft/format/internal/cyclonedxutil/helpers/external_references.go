@@ -80,6 +80,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 			}
 		}
 	}
+
 	if len(refs) > 0 {
 		return &refs
 	}
