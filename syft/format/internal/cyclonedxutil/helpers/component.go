@@ -47,6 +47,14 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 		componentType = cyclonedx.ComponentTypeMachineLearningModel
 	}
 
+	externalRefs := encodeExternalReferences(p)
+	if srcRef := encodeSourcePackageExternalReference(p); srcRef != nil {
+		if externalRefs == nil {
+			externalRefs = &[]cyclonedx.ExternalReference{}
+		}
+		*externalRefs = append(*externalRefs, *srcRef)
+	}
+
 	return cyclonedx.Component{
 		Type:               componentType,
 		Name:               p.Name,
@@ -59,7 +67,7 @@ func EncodeComponent(p pkg.Package, supplier string, locationSorter func(a, b fi
 		Author:             encodeAuthor(p),
 		Publisher:          encodePublisher(p),
 		Description:        encodeDescription(p),
-		ExternalReferences: encodeExternalReferences(p),
+		ExternalReferences: externalRefs,
 		Properties:         properties,
 		BOMRef:             DeriveBomRef(p),
 	}
