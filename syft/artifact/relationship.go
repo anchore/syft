@@ -21,6 +21,9 @@ const (
 
 	// DescribedByRelationship is a proxy for the SPDX 2.2.2 DESCRIBED_BY relationship.
 	DescribedByRelationship RelationshipType = "described-by"
+
+	// GeneratedFromRelationship is a proxy for the SPDX 2.2.2 GENERATED_FROM relationship.
+	GeneratedFromRelationship RelationshipType = "generated-from"
 )
 
 func AllRelationshipTypes() []RelationshipType {
@@ -29,6 +32,7 @@ func AllRelationshipTypes() []RelationshipType {
 		ContainsRelationship,
 		DependencyOfRelationship,
 		DescribedByRelationship,
+		GeneratedFromRelationship,
 	}
 }
 
