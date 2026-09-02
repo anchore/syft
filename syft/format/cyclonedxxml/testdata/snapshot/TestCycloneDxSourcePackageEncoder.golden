@@ -41,7 +41,7 @@
       <purl>pkg:rpm/centos/bind-export-libs@9.11.13-3.el8?arch=x86_64&amp;distro=centos-8&amp;epoch=32&amp;upstream=bind-9.11.13-3.el8.src.rpm</purl>
       <externalReferences>
         <reference type="source-distribution">
-          <url>pkg:rpm/centos/bind@9.11.13-3.el8?arch=source&amp;distro=centos-8&amp;epoch=32</url>
+          <url>pkg:rpm/centos/bind@9.11.13-3.el8?arch=src&amp;distro=centos-8&amp;epoch=32</url>
         </reference>
       </externalReferences>
       <properties>
@@ -75,7 +75,7 @@
       <purl>pkg:alpm/arch/gcc-libs@13.2.1-3?arch=x86_64&amp;distro=arch-rolling&amp;upstream=gcc</purl>
       <externalReferences>
         <reference type="source-distribution">
-          <url>pkg:alpm/arch/gcc@13.2.1-3?arch=source&amp;distro=arch-rolling</url>
+          <url>pkg:alpm/arch/gcc@13.2.1-3?distro=arch-rolling</url>
         </reference>
       </externalReferences>
       <properties>
@@ -96,7 +96,7 @@
       <purl>pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&amp;distro=alpine-3.16.3&amp;upstream=libc-dev</purl>
       <externalReferences>
         <reference type="source-distribution">
-          <url>pkg:apk/alpine/libc-dev@0.7.2-r3?arch=source&amp;distro=alpine-3.16.3</url>
+          <url>pkg:apk/alpine/libc-dev@0.7.2-r3?distro=alpine-3.16.3</url>
         </reference>
       </externalReferences>
       <properties>
