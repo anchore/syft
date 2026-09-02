@@ -2,7 +2,6 @@ package elixir
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -284,12 +283,10 @@ func TestParseMixLockHexAliasUsesPackageNameWithCRLF(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fixture := filepath.Join(t.TempDir(), "mix.lock")
-	if err = os.WriteFile(fixture, []byte(strings.ReplaceAll(string(content), "\n", "\r\n")), 0600); err != nil {
-		t.Fatal(err)
-	}
-
-	pkgtest.TestFileParser(t, fixture, parseMixLock, expectedMixLockAliasPackages(fixture), nil)
+	pkgtest.NewCatalogTester().
+		FromString(srcFixture, strings.ReplaceAll(string(content), "\n", "\r\n")).
+		Expects(expectedMixLockAliasPackages(srcFixture), nil).
+		TestParser(t, parseMixLock)
 }
 
 func expectedMixLockAliasPackages(fixture string) []pkg.Package {
