@@ -74,7 +74,7 @@
       "purl": "pkg:rpm/centos/bind-export-libs@9.11.13-3.el8?arch=x86_64&distro=centos-8&epoch=32&upstream=bind-9.11.13-3.el8.src.rpm",
       "externalReferences": [
         {
-          "url": "pkg:rpm/centos/bind@9.11.13-3.el8?arch=source&distro=centos-8&epoch=32",
+          "url": "pkg:rpm/centos/bind@9.11.13-3.el8?arch=src&distro=centos-8&epoch=32",
           "type": "source-distribution"
         }
       ],
@@ -158,7 +158,7 @@
       "purl": "pkg:alpm/arch/gcc-libs@13.2.1-3?arch=x86_64&distro=arch-rolling&upstream=gcc",
       "externalReferences": [
         {
-          "url": "pkg:alpm/arch/gcc@13.2.1-3?arch=source&distro=arch-rolling",
+          "url": "pkg:alpm/arch/gcc@13.2.1-3?distro=arch-rolling",
           "type": "source-distribution"
         }
       ],
@@ -209,7 +209,7 @@
       "purl": "pkg:apk/alpine/libc-utils@0.7.2-r3?arch=x86_64&distro=alpine-3.16.3&upstream=libc-dev",
       "externalReferences": [
         {
-          "url": "pkg:apk/alpine/libc-dev@0.7.2-r3?arch=source&distro=alpine-3.16.3",
+          "url": "pkg:apk/alpine/libc-dev@0.7.2-r3?distro=alpine-3.16.3",
           "type": "source-distribution"
         }
       ],

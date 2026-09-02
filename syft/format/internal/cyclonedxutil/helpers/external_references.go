@@ -88,7 +88,7 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 }
 
 func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalReference {
-	name, version := sourceCoordinates(p)
+	name, version, arch := sourceCoordinates(p)
 	if name == "" || version == "" {
 		return nil
 	}
@@ -103,7 +103,11 @@ func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalRefe
 
 	qualifiers := pkgPurl.Qualifiers.Map()
 	delete(qualifiers, pkg.PURLQualifierUpstream)
-	qualifiers[pkg.PURLQualifierArch] = "source"
+	delete(qualifiers, pkg.PURLQualifierArch)
+
+	if arch != "" {
+		qualifiers[pkg.PURLQualifierArch] = arch
+	}
 
 	srcPurl := packageurl.NewPackageURL(
 		pkgPurl.Type,
@@ -120,11 +124,11 @@ func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalRefe
 	}
 }
 
-func sourceCoordinates(p pkg.Package) (name, version string) {
+func sourceCoordinates(p pkg.Package) (name, version, arch string) {
 	switch metadata := p.Metadata.(type) {
 	case pkg.ApkDBEntry:
 		if metadata.OriginPackage != "" && metadata.OriginPackage != metadata.Package {
-			return metadata.OriginPackage, metadata.Version
+			return metadata.OriginPackage, metadata.Version, ""
 		}
 	case pkg.DpkgDBEntry:
 		return dpkgSourceCoordinates(metadata)
@@ -136,35 +140,35 @@ func sourceCoordinates(p pkg.Package) (name, version string) {
 		return rpmSourceCoordinates(metadata.SourceRpm)
 	case pkg.AlpmDBEntry:
 		if metadata.BasePackage != "" {
-			return metadata.BasePackage, metadata.Version
+			return metadata.BasePackage, metadata.Version, ""
 		}
 	}
-	return "", ""
+	return "", "", ""
 }
 
-func dpkgSourceCoordinates(entry pkg.DpkgDBEntry) (name, version string) {
+func dpkgSourceCoordinates(entry pkg.DpkgDBEntry) (name, version, arch string) {
 	if entry.Source == "" {
-		return "", ""
+		return "", "", ""
 	}
 	if entry.SourceVersion != "" {
-		return entry.Source, entry.SourceVersion
+		return entry.Source, entry.SourceVersion, "source"
 	}
-	return entry.Source, entry.Version
+	return entry.Source, entry.Version, "source"
 }
 
-func rpmSourceCoordinates(sourceRpm string) (name, version string) {
+func rpmSourceCoordinates(sourceRpm string) (name, version, arch string) {
 	// <name>-<version>-<release>.src.rpm
 	sourceRpm = strings.TrimSuffix(sourceRpm, ".rpm")
 	sourceRpm = strings.TrimSuffix(strings.TrimSuffix(sourceRpm, ".src"), ".nosrc")
 	release := strings.LastIndex(sourceRpm, "-")
 	if release < 0 {
-		return "", ""
+		return "", "", ""
 	}
 	ver := strings.LastIndex(sourceRpm[:release], "-")
 	if ver < 0 {
-		return "", ""
+		return "", "", ""
 	}
-	return sourceRpm[:ver], sourceRpm[ver+1:]
+	return sourceRpm[:ver], sourceRpm[ver+1:], "src"
 }
 
 // supported algorithm in cycloneDX as of 1.4

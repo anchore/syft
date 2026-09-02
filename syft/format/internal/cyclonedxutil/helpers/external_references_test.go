@@ -145,7 +145,7 @@ func Test_encodeExternalReferences(t *testing.T) {
 }
 
 func Test_encodeSourcePackage(t *testing.T) {
-	rpm_epoch := 32
+	rpmEpoch := 32
 	tests := []struct {
 		name     string
 		input    pkg.Package
@@ -186,7 +186,7 @@ func Test_encodeSourcePackage(t *testing.T) {
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:apk/alpine/libc-dev@0.7.2-r3?arch=source&distro=alpine-3.16.3",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:apk/alpine/libc-dev@0.7.2-r3?distro=alpine-3.16.3",
 			},
 		},
 		{
@@ -287,13 +287,13 @@ func Test_encodeSourcePackage(t *testing.T) {
 					Name:      "bind-export-libs",
 					Version:   "9.11.13",
 					Release:   "3.el8",
-					Epoch:     &rpm_epoch,
+					Epoch:     &rpmEpoch,
 					Arch:      "x86_64",
 					SourceRpm: "bind-9.11.13-3.el8.src.rpm",
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/bind@9.11.13-3.el8?arch=source&distro=centos-8&epoch=32",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/bind@9.11.13-3.el8?arch=src&distro=centos-8&epoch=32",
 			},
 		},
 		{
@@ -307,13 +307,13 @@ func Test_encodeSourcePackage(t *testing.T) {
 					Name:      "some-package",
 					Version:   "1.0.0",
 					Release:   "1.el8",
-					Epoch:     &rpm_epoch,
+					Epoch:     &rpmEpoch,
 					Arch:      "x86_64",
 					SourceRpm: "some-package-1.0.0-1.el8.src.rpm",
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/some-package@1.0.0-1.el8?arch=source&distro=centos-8&epoch=32",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/some-package@1.0.0-1.el8?arch=src&distro=centos-8&epoch=32",
 			},
 		},
 		{
@@ -327,13 +327,13 @@ func Test_encodeSourcePackage(t *testing.T) {
 					Name:      "bind-export-libs",
 					Version:   "9.11.13",
 					Release:   "3.el8",
-					Epoch:     &rpm_epoch,
+					Epoch:     &rpmEpoch,
 					Arch:      "x86_64",
 					SourceRpm: "bind-9.11.13-3.el8.src.rpm",
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/bind@9.11.13-3.el8?arch=source&epoch=32",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/bind@9.11.13-3.el8?arch=src&epoch=32",
 			},
 		},
 		{
@@ -351,7 +351,7 @@ func Test_encodeSourcePackage(t *testing.T) {
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/gcc@13.2.1-3?arch=source&distro=arch-rolling",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/gcc@13.2.1-3?distro=arch-rolling",
 			},
 		},
 		{
@@ -371,7 +371,7 @@ func Test_encodeSourcePackage(t *testing.T) {
 				},
 			},
 			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/some-package@1.0.0?arch=source&distro=arch-rolling",
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/some-package@1.0.0?distro=arch-rolling",
 			},
 		},
 	}
