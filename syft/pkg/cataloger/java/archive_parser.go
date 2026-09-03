@@ -301,6 +301,13 @@ func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest
 	if version == "" {
 		version = selectVersion(manifest, j.fileInfo)
 	}
+	if version == "" {
+		// Some build tools (e.g. Clojure's build.clj, used by Metabase) do not
+		// record the version in the manifest, filename, or pom.properties, but
+		// instead ship it in a root-level `version.properties` file (key `tag`).
+		// See https://github.com/anchore/syft/issues/5163.
+		version = j.versionFromVersionProperties(ctx)
+	}
 
 	if len(lics) == 0 {
 		fileLicenses := j.getLicenseFromFileInArchive(ctx)

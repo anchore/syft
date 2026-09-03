@@ -15,6 +15,7 @@ MULTIPLE_MATCHING = multiple-matching-2.11.5
 ORG_MULTIPLE_THENAME = org.multiple-thename
 MICRONAUT_AOP = micronaut-aop-4.9.11
 COMMONS_LANG3 = commons-lang3-3.12.0
+METABASE_VERSION_PROPERTIES = metabase-version-properties
 
 .DEFAULT_GOAL := fixtures
 
@@ -24,7 +25,7 @@ fixtures: $(CACHE_DIR)
 # requirement 2: 'fingerprint' goal to determine if the fixture input that indicates any existing cache should be busted
 fingerprint: $(FINGERPRINT_FILE)
 
-$(CACHE_DIR): $(CACHE_DIR)/$(JACKSON_CORE).jar $(CACHE_DIR)/$(SBT_JACKSON_CORE).jar $(CACHE_DIR)/$(OPENSAML_CORE).jar  $(CACHE_DIR)/$(API_ALL_SOURCES).jar $(CACHE_DIR)/$(SPRING_INSTRUMENTATION).jar $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar $(CACHE_DIR)/$(MICRONAUT_AOP).jar $(CACHE_DIR)/$(COMMONS_LANG3).jar
+$(CACHE_DIR): $(CACHE_DIR)/$(JACKSON_CORE).jar $(CACHE_DIR)/$(SBT_JACKSON_CORE).jar $(CACHE_DIR)/$(OPENSAML_CORE).jar  $(CACHE_DIR)/$(API_ALL_SOURCES).jar $(CACHE_DIR)/$(SPRING_INSTRUMENTATION).jar $(CACHE_DIR)/$(MULTIPLE_MATCHING).jar $(CACHE_DIR)/$(MICRONAUT_AOP).jar $(CACHE_DIR)/$(COMMONS_LANG3).jar $(CACHE_DIR)/$(METABASE_VERSION_PROPERTIES).jar
 
 $(CACHE_DIR)/$(JACKSON_CORE).jar:
 	mkdir -p $(CACHE_DIR)
@@ -61,6 +62,10 @@ $(CACHE_DIR)/$(MICRONAUT_AOP).jar:
 $(CACHE_DIR)/$(COMMONS_LANG3).jar:
 	mkdir -p $(CACHE_DIR)
 	cd $(COMMONS_LANG3) && zip -r $(CACHE_PATH)/$(COMMONS_LANG3).jar .
+
+$(CACHE_DIR)/$(METABASE_VERSION_PROPERTIES).jar:
+	mkdir -p $(CACHE_DIR)
+	cd $(METABASE_VERSION_PROPERTIES) && zip -r $(CACHE_PATH)/$(METABASE_VERSION_PROPERTIES).jar .
 
 # Jenkins plugins typically do not have the version included in the archive name,
 # so it is important to not include it in the generated test fixture

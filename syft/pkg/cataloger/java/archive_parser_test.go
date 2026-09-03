@@ -1473,6 +1473,30 @@ func Test_parseJavaArchive_regressions(t *testing.T) {
 			expectedPkgs: nil, // we expect no packages to be discovered when Weave-Classes present in the manifest
 		},
 		{
+			name:        "uber-jar version from root version.properties (issue #5163)",
+			fixtureName: "metabase-version-properties",
+			expectedPkgs: []pkg.Package{
+				{
+					Name:      "metabase-version-properties",
+					Version:   "v0.63.5",
+					Type:      pkg.JavaPkg,
+					Language:  pkg.Java,
+					PURL:      "pkg:maven/metabase-version-properties/metabase-version-properties@v0.63.5",
+					Locations: file.NewLocationSet(file.NewLocation("testdata/jar-metadata/cache/metabase-version-properties.jar")),
+					Metadata: pkg.JavaArchive{
+						VirtualPath: "testdata/jar-metadata/cache/metabase-version-properties.jar",
+						Manifest: &pkg.JavaManifest{
+							Main: pkg.KeyValues{
+								{Key: "Manifest-Version", Value: "1.0"},
+								{Key: "Created-By", Value: "Metabase"},
+								{Key: "Main-Class", Value: "metabase.server.core"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:          "Jenkins plugins assigned jenkins-plugin package type",
 			fixtureName:   "gradle",
 			fileExtension: "hpi",
