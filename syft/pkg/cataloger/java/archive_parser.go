@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -50,6 +51,8 @@ var archiveFormatGlobs = []string{
 	"**/*.rar", // Java Resource Adapter Archive
 	"**/*.zap", // ZAP add-ons https://github.com/zaproxy/zaproxy/wiki/ZapAddOns
 }
+
+const eclipseClasspathDualLicense = "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0"
 
 // javaArchiveHashes are all the current hash algorithms used to calculate archive digests
 var javaArchiveHashes = []crypto.Hash{
@@ -286,7 +289,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 func (j *archiveParser) discoverNameVersionLicense(ctx context.Context, manifest *pkg.JavaManifest) (string, string, []pkg.License, *parsedPomProject) {
 	// we use j.location because we want to associate the license declaration with where we discovered the contents in the manifest
 	// TODO: when we support locations of paths within archives we should start passing the specific manifest location object instead of the top jar
-	lics := pkg.NewLicensesFromLocationWithContext(ctx, j.location, selectLicenses(manifest)...)
+	lics := combineEclipseClasspathAlternatives(pkg.NewLicensesFromLocationWithContext(ctx, j.location, selectLicenses(manifest)...))
 	/*
 		We should name and version from, in this order:
 		1. pom.properties if we find exactly 1
@@ -375,9 +378,90 @@ func toPkgLicenses(ctx context.Context, location *file.Location, licenses []mave
 		if name == "" && url == "" {
 			continue
 		}
-		out = append(out, pkg.NewLicenseFromFieldsWithContext(ctx, name, url, location))
+		candidate := pkg.NewLicenseFromFieldsWithContext(ctx, name, url, location)
+		out = append(out, candidate)
 	}
-	return out
+	return combineMavenLicenseAlternatives(out)
+}
+
+func combineMavenLicenseAlternatives(licenses []pkg.License) []pkg.License {
+	if len(licenses) < 2 {
+		return licenses
+	}
+
+	enriched := slices.Clone(licenses)
+	for i := range enriched {
+		if enriched[i].SPDXExpression == "" && len(enriched[i].URLs) > 0 {
+			if info, found := spdxlicense.LicenseByURL(enriched[i].URLs[0]); found {
+				enriched[i].SPDXExpression = info.ID
+			}
+		}
+	}
+
+	return combineLicenseAlternatives(enriched)
+}
+
+func combineEclipseClasspathAlternatives(licenses []pkg.License) []pkg.License {
+	if len(licenses) != 2 {
+		return licenses
+	}
+
+	hasEPL := false
+	hasGPLClasspath := false
+	for _, candidate := range licenses {
+		switch candidate.SPDXExpression {
+		case "EPL-2.0":
+			hasEPL = true
+		case "GPL-2.0-only WITH Classpath-exception-2.0":
+			hasGPLClasspath = true
+		}
+	}
+	if !hasEPL || !hasGPLClasspath {
+		return licenses
+	}
+
+	return combineLicenseAlternatives(licenses)
+}
+
+func combineLicenseAlternatives(licenses []pkg.License) []pkg.License {
+	if len(licenses) < 2 {
+		return licenses
+	}
+
+	var values []string
+	var expressions []string
+	var locations []file.Location
+	urls := strset.New()
+	seenExpressions := strset.New()
+
+	for _, candidate := range licenses {
+		if candidate.SPDXExpression == "" {
+			return licenses
+		}
+
+		if candidate.Value != "" {
+			values = append(values, candidate.Value)
+		}
+		if !seenExpressions.Has(candidate.SPDXExpression) {
+			expressions = append(expressions, candidate.SPDXExpression)
+			seenExpressions.Add(candidate.SPDXExpression)
+		}
+		urls.Add(candidate.URLs...)
+		locations = append(locations, candidate.Locations.ToSlice()...)
+	}
+
+	combinedURLs := urls.List()
+	slices.Sort(combinedURLs)
+
+	return []pkg.License{
+		{
+			Value:          strings.Join(values, " OR "),
+			SPDXExpression: strings.Join(expressions, " OR "),
+			Type:           licenses[0].Type,
+			URLs:           combinedURLs,
+			Locations:      file.NewLocationSet(locations...),
+		},
+	}
 }
 
 type parsedPomProject struct {
@@ -586,6 +670,7 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 				licenseContents := contents[licenseMatch]
 				r := strings.NewReader(licenseContents)
 				foundLicenses := pkg.NewLicensesFromReadCloserWithContext(ctx, file.NewLocationReadCloser(j.location, io.NopCloser(r)))
+				foundLicenses = normalizeClasspathExceptionLicenses(foundLicenses, licenseContents)
 				for _, l := range foundLicenses {
 					if l.SPDXExpression != "" {
 						identified = append(identified, l)
@@ -607,6 +692,35 @@ func (j *archiveParser) getLicenseFromFileInArchive(ctx context.Context) []pkg.L
 	}
 
 	return identified
+}
+
+func normalizeClasspathExceptionLicenses(found []pkg.License, contents string) []pkg.License {
+	if len(found) != 2 || !strings.Contains(strings.ToLower(contents), "classpath exception") {
+		return found
+	}
+
+	var epl *pkg.License
+	var gpl *pkg.License
+	for i := range found {
+		switch found[i].SPDXExpression {
+		case "EPL-2.0":
+			epl = &found[i]
+		case "GPL-2.0-only":
+			gpl = &found[i]
+		}
+	}
+	if epl == nil || gpl == nil {
+		return found
+	}
+
+	return []pkg.License{
+		{
+			Value:          eclipseClasspathDualLicense,
+			SPDXExpression: eclipseClasspathDualLicense,
+			Type:           epl.Type,
+			Locations:      file.NewLocationSet(append(epl.Locations.ToSlice(), gpl.Locations.ToSlice()...)...),
+		},
+	}
 }
 
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
