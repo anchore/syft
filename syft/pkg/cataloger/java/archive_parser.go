@@ -728,6 +728,11 @@ func pomProjectByParentPath(ctx context.Context, archivePath string, location fi
 		if pom == nil {
 			continue
 		}
+		if pom.Licenses == nil || len(*pom.Licenses) == 0 {
+			if licenses := maven.ExtractLicensesFromComments(fileContents); len(licenses) > 0 {
+				pom.Licenses = &licenses
+			}
+		}
 
 		projectByParentPath[path.Dir(filePath)] = &parsedPomProject{
 			path:    filePath,
