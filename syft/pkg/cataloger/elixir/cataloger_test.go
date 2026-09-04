@@ -42,3 +42,14 @@ func TestCataloger_Relationships(t *testing.T) {
 		ExpectsRelationshipStrings(expectedRelationships).
 		TestCataloger(t, NewMixLockCataloger())
 }
+
+func TestCataloger_RelationshipsWithHexAlias(t *testing.T) {
+	expectedRelationships := []string{
+		"jason @ 1.3.0 (mix.lock) [dependency-of] consumer @ 1.0.0 (mix.lock)",
+	}
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/relationships-alias").
+		ExpectsRelationshipStrings(expectedRelationships).
+		TestCataloger(t, NewMixLockCataloger())
+}
