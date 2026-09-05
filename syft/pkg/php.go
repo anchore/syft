@@ -23,6 +23,9 @@ type PhpComposerLockEntry struct {
 	// Provide is virtual packages/functionality provided by this package (allows other packages to depend on capabilities)
 	Provide map[string]string `json:"provide,omitempty"`
 
+	// Replace is a list of packages that this package replaces
+	Replace map[string]string `json:"replace,omitempty"`
+
 	// RequireDev is development-only dependencies (not installed in production, only when developing this package or running tests)
 	RequireDev map[string]string `json:"require-dev,omitempty"`
 
