@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -85,7 +84,7 @@ func defaultAttestOptions() attestOptions {
 
 func defaultAttestOutputOptions() options.Output {
 	return options.Output{
-		AllowMultipleOutputs: false,
+		AllowMultipleOutputs: true,
 		AllowToFile:          false,
 		AllowableOptions: []string{
 			string(syftjson.ID),
@@ -100,64 +99,58 @@ func defaultAttestOutputOptions() options.Output {
 }
 
 func runAttest(ctx context.Context, id clio.Identification, opts *attestOptions, userInput string) error {
-	// TODO: what other validation here besides binary name?
 	if !commandExists(cosignBinName) {
 		return fmt.Errorf("'syft attest' requires cosign to be installed, however it does not appear to be on PATH")
 	}
-
-	// this is the file that will contain the SBOM being attested
-	f, err := os.CreateTemp("", "syft-attest-")
-	if err != nil {
-		return fmt.Errorf("unable to create temp file: %w", err)
-	}
-	defer os.Remove(f.Name())
 
 	s, err := generateSBOMForAttestation(ctx, id, &opts.Catalog, userInput)
 	if err != nil {
 		return fmt.Errorf("unable to build SBOM: %w", err)
 	}
 
-	if err = writeSBOMToFormattedFile(s, f, opts); err != nil {
-		return fmt.Errorf("unable to write SBOM to file: %w", err)
-	}
-
-	if err = createAttestation(f.Name(), opts, userInput); err != nil {
-		return err
-	}
-
-	bus.Notify("Attestation has been created, please check your registry for the output or use the cosign command:")
-	bus.Notify(fmt.Sprintf("cosign download attestation %s", userInput))
-	return nil
-}
-
-func writeSBOMToFormattedFile(s *sbom.SBOM, sbomFile io.Writer, opts *attestOptions) error {
-	if sbomFile == nil {
-		return fmt.Errorf("no output file provided")
-	}
-
 	encs, err := opts.Encoders()
 	if err != nil {
 		return fmt.Errorf("unable to create encoders: %w", err)
 	}
-
 	encoders := format.NewEncoderCollection(encs...)
-	encoder := encoders.GetByString(opts.Outputs[0])
-	if encoder == nil {
-		return fmt.Errorf("unable to find encoder for %q", opts.Outputs[0])
+
+	for _, output := range opts.Outputs {
+		outputName := strings.SplitN(output, "=", 2)[0]
+		if err := attestSingleFormat(s, encoders, outputName, opts, userInput); err != nil {
+			return fmt.Errorf("attestation failed for format %q: %w", outputName, err)
+		}
 	}
 
-	if err = encoder.Encode(sbomFile, *s); err != nil {
-		return fmt.Errorf("unable to encode SBOM: %w", err)
-	}
-
+	bus.Notify("Attestation(s) created, please check your registry for the output or use the cosign command:")
+	bus.Notify(fmt.Sprintf("cosign download attestation %s", userInput))
 	return nil
 }
 
-func createAttestation(sbomFilepath string, opts *attestOptions, userInput string) error {
-	execCmd, err := attestCommand(sbomFilepath, opts, userInput)
-	if err != nil {
-		return fmt.Errorf("unable to craft attest command: %w", err)
+func attestSingleFormat(s *sbom.SBOM, encoders *format.EncoderCollection, outputName string, opts *attestOptions, userInput string) error {
+	encoder := encoders.GetByString(outputName)
+	if encoder == nil {
+		return fmt.Errorf("unable to find encoder for %q", outputName)
 	}
+
+	f, err := os.CreateTemp("", "syft-attest-")
+	if err != nil {
+		return fmt.Errorf("unable to create temp file: %w", err)
+	}
+	defer os.Remove(f.Name())
+
+	if err = encoder.Encode(f, *s); err != nil {
+		return fmt.Errorf("unable to encode SBOM: %w", err)
+	}
+
+	if err = f.Close(); err != nil {
+		return fmt.Errorf("unable to close temp file: %w", err)
+	}
+
+	return createAttestation(f.Name(), outputName, opts, userInput)
+}
+
+func createAttestation(sbomFilepath string, outputName string, opts *attestOptions, userInput string) error {
+	execCmd := attestCommand(sbomFilepath, outputName, opts, userInput)
 
 	log.WithFields("cmd", strings.Join(execCmd.Args, " ")).Trace("creating attestation")
 
@@ -175,9 +168,9 @@ func createAttestation(sbomFilepath string, opts *attestOptions, userInput strin
 			Type: event.AttestationStarted,
 			Source: monitor.GenericTask{
 				Title: monitor.Title{
-					Default:      "Create attestation",
-					WhileRunning: "Creating attestation",
-					OnSuccess:    "Created attestation",
+					Default:      fmt.Sprintf("Create attestation [%s]", outputName),
+					WhileRunning: fmt.Sprintf("Creating attestation [%s]", outputName),
+					OnSuccess:    fmt.Sprintf("Created attestation [%s]", outputName),
 				},
 				Context: "cosign",
 			},
@@ -191,29 +184,17 @@ func createAttestation(sbomFilepath string, opts *attestOptions, userInput strin
 	execCmd.Stdout = w
 	execCmd.Stderr = w
 
-	// attest the SBOM
 	err = execCmd.Run()
 	if err != nil {
 		mon.SetError(err)
-		return fmt.Errorf("unable to attest SBOM: %w", err)
+		return fmt.Errorf("unable to attest SBOM as %q: %w", outputName, err)
 	}
 
 	mon.SetCompleted()
 	return nil
 }
 
-func attestCommand(sbomFilepath string, opts *attestOptions, userInput string) (*exec.Cmd, error) {
-	outputNames := opts.OutputNameSet()
-	var outputName string
-	switch outputNames.Size() {
-	case 0:
-		return nil, fmt.Errorf("no output format specified")
-	case 1:
-		outputName = outputNames.List()[0]
-	default:
-		return nil, fmt.Errorf("multiple output formats specified: %s", strings.Join(outputNames.List(), ", "))
-	}
-
+func attestCommand(sbomFilepath string, outputName string, opts *attestOptions, userInput string) *exec.Cmd {
 	args := []string{"attest", userInput, "--predicate", sbomFilepath, "--type", predicateType(outputName), "-y"}
 	if opts.Attest.Key != "" {
 		args = append(args, "--key", opts.Attest.Key.String())
@@ -224,11 +205,10 @@ func attestCommand(sbomFilepath string, opts *attestOptions, userInput string) (
 	if opts.Attest.Key != "" {
 		execCmd.Env = append(execCmd.Env, fmt.Sprintf("COSIGN_PASSWORD=%s", opts.Attest.Password))
 	} else {
-		// no key provided, use cosign's keyless mode
 		execCmd.Env = append(execCmd.Env, "COSIGN_EXPERIMENTAL=1")
 	}
 
-	return execCmd, nil
+	return execCmd
 }
 
 func predicateType(outputName string) string {
