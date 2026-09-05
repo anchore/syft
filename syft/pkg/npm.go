@@ -27,10 +27,10 @@ type NpmPackage struct {
 // NpmPackageLockEntry represents a single entry within the "packages" section of a package-lock.json file.
 type NpmPackageLockEntry struct {
 	// Resolved is URL where this package was downloaded from (registry source)
-	Resolved string `mapstructure:"resolved" json:"resolved"`
+	Resolved string `mapstructure:"resolved" json:"resolved" cyclonedx:"resolved"`
 
 	// Integrity is Subresource Integrity hash for verification using standard SRI format (sha512-... or sha1-...). npm changed from SHA-1 to SHA-512 in newer versions. For registry sources this is the integrity from registry, for remote tarballs it's SHA-512 of the file. npm verifies tarball matches this hash before unpacking, throwing EINTEGRITY error if mismatch detected.
-	Integrity string `mapstructure:"integrity" json:"integrity"`
+	Integrity string `mapstructure:"integrity" json:"integrity" cyclonedx:"integrity"`
 
 	// Dependencies is a map of dependencies and their version markers, i.e. "lodash": "^1.0.0"
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
@@ -39,10 +39,10 @@ type NpmPackageLockEntry struct {
 // YarnLockEntry represents a single entry section of a yarn.lock file.
 type YarnLockEntry struct {
 	// Resolved is URL where this package was downloaded from
-	Resolved string `mapstructure:"resolved" json:"resolved"`
+	Resolved string `mapstructure:"resolved" json:"resolved" cyclonedx:"resolved"`
 
 	// Integrity is Subresource Integrity hash for verification (SRI format)
-	Integrity string `mapstructure:"integrity" json:"integrity"`
+	Integrity string `mapstructure:"integrity" json:"integrity" cyclonedx:"integrity"`
 
 	// Dependencies is a map of dependencies and their versions
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
@@ -51,7 +51,7 @@ type YarnLockEntry struct {
 // PnpmLockResolution contains package resolution metadata from pnpm lockfiles, including the integrity hash used for verification.
 type PnpmLockResolution struct {
 	// Integrity is Subresource Integrity hash for verification (SRI format)
-	Integrity string `mapstructure:"integrity" json:"integrity"`
+	Integrity string `mapstructure:"integrity" json:"integrity" cyclonedx:"integrity"`
 }
 
 // PnpmLockEntry represents a single entry in the "packages" section of a pnpm-lock.yaml file.
@@ -66,7 +66,7 @@ type PnpmLockEntry struct {
 // BunLockEntry represents a single entry in the "packages" section of a bun.lock file
 type BunLockEntry struct {
 	// Integrity is Subresource Integrity hash for verification (SRI format)
-	Integrity string `mapstructure:"integrity" json:"integrity"`
+	Integrity string `mapstructure:"integrity" json:"integrity" cyclonedx:"integrity"`
 
 	// Dependencies is a map of runtime dependencies and their version specifiers
 	Dependencies map[string]string `mapstructure:"dependencies" json:"dependencies"`
