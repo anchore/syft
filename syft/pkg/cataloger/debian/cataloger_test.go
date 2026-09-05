@@ -276,6 +276,36 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 					},
 				},
 			},
+		}, {
+			name: "image-single-ipk",
+			expected: []pkg.Package{
+				{
+					Name:    "libz1",
+					Version: "1.3.2-r0",
+					FoundBy: "deb-archive-cataloger",
+					Locations: file.NewLocationSet(
+						file.NewLocation("/libz1_1.3.2-r0_x86-64-v3.ipk"),
+					),
+					PURL: "pkg:deb/libz1@1.3.2-r0?arch=x86-64-v3&upstream=zlib_1.3.2.bb",
+					Type: pkg.DebPkg,
+					Metadata: pkg.DpkgArchiveEntry{
+						Package:       "libz1",
+						Source:        "zlib_1.3.2.bb",
+						Version:       "1.3.2-r0",
+						Architecture:  "x86-64-v3",
+						Maintainer:    "Poky Maintainers <poky@lists.yoctoproject.org>",
+						InstalledSize: 0,
+						Description: `Zlib Compression Library
+ Zlib is a general-purpose, patent-free, lossless data compression library
+ which is used by many different programs.`,
+						Provides: []string{"zlib"},
+						Depends:  []string{"musl (>= 1.2.6+git0+9fa28ece75)"},
+					},
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib"),
+					),
+				},
+			},
 		},
 	}
 

@@ -3,22 +3,26 @@ package debian
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/file"
 )
 
 func TestProcessControlTar(t *testing.T) {
 	tarBytes := createTestTarWithControlFiles(t)
 
-	metadata, err := processControlTar(io.NopCloser(bytes.NewReader(tarBytes)))
+	metadata, licenses, err := processControlTar(io.NopCloser(bytes.NewReader(tarBytes)))
 
 	require.NoError(t, err)
 	require.NotNil(t, metadata)
 
 	assert.Equal(t, "test-package", metadata.Package)
+	assert.Equal(t, []string{"MIT"}, licenses)
 	assert.Equal(t, "1.0.0", metadata.Version)
 
 	// md5sums should have been parsed into file records
@@ -28,6 +32,14 @@ func TestProcessControlTar(t *testing.T) {
 
 	// conffiles should have marked config files
 	assert.True(t, metadata.Files[0].IsConfigFile, "file listed in conffiles should be marked as config")
+}
+
+func TestParseDebArchive_RejectsInvalidArchiveHeader(t *testing.T) {
+	reader := file.NewLocationReadCloser(file.NewLocation("test.deb"), io.NopCloser(bytes.NewReader([]byte("not-an-ar-archive"))))
+
+	_, _, err := parseDebArchive(context.Background(), nil, nil, reader)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "ar archive")
 }
 
 func TestProcessControlTar_ConfigFileMarking(t *testing.T) {
@@ -48,9 +60,10 @@ func TestProcessControlTar_ConfigFileMarking(t *testing.T) {
 
 	require.NoError(t, tw.Close())
 
-	metadata, err := processControlTar(io.NopCloser(bytes.NewReader(buf.Bytes())))
+	metadata, licenses, err := processControlTar(io.NopCloser(bytes.NewReader(buf.Bytes())))
 	require.NoError(t, err)
 	require.Len(t, metadata.Files, 3)
+	assert.Empty(t, licenses)
 
 	assert.True(t, metadata.Files[0].IsConfigFile, "first file should be marked as config file")
 	assert.True(t, metadata.Files[1].IsConfigFile, "second file should be marked as config file")
@@ -62,7 +75,7 @@ func createTestTarWithControlFiles(t *testing.T) []byte {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
-	controlContent := "Package: test-package\nVersion: 1.0.0\nArchitecture: all\nMaintainer: Test <test@example.com>\nDescription: Test package\n"
+	controlContent := "Package: test-package\nVersion: 1.0.0\nArchitecture: all\nMaintainer: Test <test@example.com>\nDescription: Test package\nLicense: MIT\n"
 	writeTarEntry(t, tw, "control", controlContent)
 
 	md5Content := "d41d8cd98f00b204e9800998ecf8427e  usr/bin/test-command\n"
@@ -84,4 +97,19 @@ func writeTarEntry(t *testing.T, tw *tar.Writer, name, content string) {
 	}))
 	_, err := tw.Write([]byte(content))
 	require.NoError(t, err)
+}
+
+func TestProcessControlTar_NormalizesLicenseList(t *testing.T) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	controlContent := "Package: test-package\nVersion: 1.0.0\nArchitecture: all\nLicense: MIT & (BSD-3-Clause | Apache-2.0) & ( GPL-2.0-or-later )\n"
+	writeTarEntry(t, tw, "control", controlContent)
+
+	require.NoError(t, tw.Close())
+
+	metadata, licenses, err := processControlTar(io.NopCloser(bytes.NewReader(buf.Bytes())))
+	require.NoError(t, err)
+	require.NotNil(t, metadata)
+	assert.Equal(t, []string{"MIT", "BSD-3-Clause or Apache-2.0", "GPL-2.0-or-later"}, licenses)
 }
