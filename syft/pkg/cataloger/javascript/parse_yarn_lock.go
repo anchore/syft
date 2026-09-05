@@ -118,9 +118,11 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 	return prod, dev
 }
 
-// findReachable returns all package names reachable from the given roots via BFS
-// through the dependency graph.
-func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
+// findReachableNames returns all package names reachable from the given roots via BFS
+// through the dependency graph. For names with multiple lockfile entries, the
+// dependency edges of every entry are followed (union-of-edges), so the walk
+// result cannot depend on entry order.
+func findReachableNames(roots map[string]string, depsByName map[string]map[string]bool) map[string]bool { /*BUG*/
 	visited := make(map[string]bool)
 	queue := make([]string, 0, len(roots))
 
@@ -137,11 +139,9 @@ func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) ma
 		}
 		visited[name] = true
 
-		if pkg, exists := pkgByName[name]; exists {
-			for depName := range pkg.Dependencies {
-				if !visited[depName] {
-					queue = append(queue, depName)
-				}
+		for depName := range depsByName[name] {
+			if !visited[depName] {
+				queue = append(queue, depName)
 			}
 		}
 	}
@@ -149,14 +149,28 @@ func findReachable(roots map[string]string, pkgByName map[string]yarnPackage) ma
 	return visited
 }
 
+// findDevOnlyPkgs classifies lockfile entries that are reachable only through
+// devDependencies (and never through production dependencies) as dev-only.
+//
+// A yarn v1 lockfile can contain multiple entries for the same package name
+// (one per resolved version). Classification must be stable regardless of the
+// order those entries appear in, so the reachability walk uses the union of
+// dependency edges across ALL entries with a given name. Collapsing to a
+// single last-wins entry would let an unrelated same-name entry shadow the
+// real edges and flip the classification of packages reachable in production.
 func findDevOnlyPkgs(yarnPkgs []yarnPackage, prodDeps, devDeps map[string]string) map[string]bool {
-	pkgByName := make(map[string]yarnPackage)
+	depsByName := make(map[string]map[string]bool)
 	for _, p := range yarnPkgs {
-		pkgByName[p.Name] = p
+		if depsByName[p.Name] == nil {
+			depsByName[p.Name] = make(map[string]bool)
+		}
+		for depName := range p.Dependencies {
+			depsByName[p.Name][depName] = true
+		}
 	}
 
-	prodTransitive := findReachable(prodDeps, pkgByName)
-	devTransitive := findReachable(devDeps, pkgByName)
+	prodTransitive := findReachableNames(prodDeps, depsByName)
+	devTransitive := findReachableNames(devDeps, depsByName)
 
 	devOnly := make(map[string]bool)
 	for name := range devTransitive {
@@ -336,4 +350,28 @@ func findResolvedPackageAndVersion(line string) (string, string, string) {
 	}
 
 	return "", "", ""
+}
+
+func findReachableBuggy(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
+	visited := make(map[string]bool)
+	queue := make([]string, 0, len(roots))
+	for name := range roots {
+		queue = append(queue, name)
+	}
+	for len(queue) > 0 {
+		name := queue[0]
+		queue = queue[1:]
+		if visited[name] {
+			continue
+		}
+		visited[name] = true
+		if pkg, exists := pkgByName[name]; exists {
+			for depName := range pkg.Dependencies {
+				if !visited[depName] {
+					queue = append(queue, depName)
+				}
+			}
+		}
+	}
+	return visited
 }
