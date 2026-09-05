@@ -223,7 +223,7 @@ func decodePackageMetadata(vals map[string]string, c *cyclonedx.Component, typeN
 		metaPtr := Decode(metaPtrTyp, vals, "syft:metadata", CycloneDXFields)
 
 		// Map all explicit metadata properties
-		decodeAuthor(c.Author, metaPtr)
+		decodeAuthor(componentAuthor(c), metaPtr)
 		decodeGroup(c.Group, metaPtr)
 		decodePublisher(c.Publisher, metaPtr)
 		decodeDescription(c.Description, metaPtr)
