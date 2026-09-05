@@ -3,6 +3,7 @@ package relationship
 import (
 	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
@@ -75,6 +76,15 @@ func excludeByFileOwnershipOverlap(r artifact.Relationship, c *pkg.Collection) a
 	return ""
 }
 
+// isSamePackageName indicates whether both packages refer to the same software by name.
+func isSamePackageName(parent *pkg.Package, child *pkg.Package) bool {
+	if parent == nil || child == nil {
+		return false
+	}
+
+	return strings.EqualFold(parent.Name, child.Name)
+}
+
 // identifyOverlappingJVMRelationship indicates the package to remove if this is a binary -> binary pkg relationship
 // with a java binary signature package and a more authoritative JVM release package.
 func identifyOverlappingJVMRelationship(parent *pkg.Package, child *pkg.Package) artifact.ID {
@@ -112,8 +122,19 @@ func identifyOverlappingJVMRelationship(parent *pkg.Package, child *pkg.Package)
 
 // identifyOverlappingOSRelationship indicates the package ID to remove if this is an OS pkg -> bin pkg relationship.
 // This was implemented as a way to help resolve: https://github.com/anchore/syft/issues/931
+//
+// The exclusion only applies when the OS package and the binary package refer to the
+// same software (identical names), e.g. an "openssl" RPM that owns an "openssl" binary
+// detection. When the owning OS package is unrelated software (e.g. a vendor product
+// RPM bundling its own copy of a library), the binary detection must be preserved,
+// otherwise vulnerabilities in vendored libraries go unreported:
+// https://github.com/anchore/syft/issues/5214
 func identifyOverlappingOSRelationship(parent *pkg.Package, child *pkg.Package) artifact.ID {
 	if !slices.Contains(osCatalogerTypes, parent.Type) {
+		return ""
+	}
+
+	if !isSamePackageName(parent, child) {
 		return ""
 	}
 
@@ -133,8 +154,17 @@ func identifyOverlappingOSRelationship(parent *pkg.Package, child *pkg.Package) 
 }
 
 // identifyOverlappingBitnamiRelationship indicates the package ID to remove if this is a Bitnami pkg -> bin pkg relationship.
+// This was implemented as a way to help resolve: https://github.com/anchore/syft/issues/931
+//
+// As with the OS-package exclusion, the exclusion only applies when the Bitnami
+// package and the binary package refer to the same software (identical names):
+// https://github.com/anchore/syft/issues/5214
 func identifyOverlappingBitnamiRelationship(parent *pkg.Package, child *pkg.Package) artifact.ID {
 	if !slices.Contains(bitnamiCatalogerTypes, parent.Type) {
+		return ""
+	}
+
+	if !isSamePackageName(parent, child) {
 		return ""
 	}
 
