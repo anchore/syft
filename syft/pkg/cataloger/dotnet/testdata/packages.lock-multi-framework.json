@@ -1,0 +1,49 @@
+{
+    "version": 1,
+    "dependencies": {
+        "net8.0": {
+            "MyLib": {
+                "type": "Direct",
+                "requested": "[1.0.0, )",
+                "resolved": "1.0.0",
+                "contentHash": "mylibhash==",
+                "dependencies": {
+                    "log4net": "2.0.5"
+                }
+            },
+            "log4net": {
+                "type": "Transitive",
+                "resolved": "2.0.5",
+                "contentHash": "log4net205hash=="
+            },
+            "Newtonsoft.Json": {
+                "type": "Direct",
+                "requested": "[13.0.3, )",
+                "resolved": "13.0.3",
+                "contentHash": "newtonsoft1303hash=="
+            }
+        },
+        "netstandard2.0": {
+            "MyLib": {
+                "type": "Direct",
+                "requested": "[1.0.0, )",
+                "resolved": "1.0.0",
+                "contentHash": "mylibhash==",
+                "dependencies": {
+                    "log4net": "1.2.15",
+                    "Newtonsoft.Json": "13.0.3"
+                }
+            },
+            "log4net": {
+                "type": "Transitive",
+                "resolved": "1.2.15",
+                "contentHash": "log4net1215hash=="
+            },
+            "Newtonsoft.Json": {
+                "type": "Transitive",
+                "resolved": "13.0.3",
+                "contentHash": "newtonsoft1303hash=="
+            }
+        }
+    }
+}
