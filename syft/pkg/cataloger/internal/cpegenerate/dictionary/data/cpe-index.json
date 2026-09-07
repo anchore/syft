@@ -2532,6 +2532,9 @@
       "@fastify/accepts-serializer": [
         "cpe:2.3:a:fastify:fastify\\/accepts-serializer:*:*:*:*:*:node.js:*:*"
       ],
+      "@fastify/aws-lambda": [
+        "cpe:2.3:a:fastify:fastify\\/aws-lambda:*:*:*:*:*:node.js:*:*"
+      ],
       "@fastify/express": [
         "cpe:2.3:a:fastify:fastify\\/express:*:*:*:*:*:node.js:*:*"
       ],
@@ -2543,6 +2546,9 @@
       ],
       "@fastify/middie": [
         "cpe:2.3:a:fastify:fastify\\/middie:*:*:*:*:*:node.js:*:*"
+      ],
+      "@fastify/oauth2": [
+        "cpe:2.3:a:fastify:fastify\\/oauth2:*:*:*:*:*:node.js:*:*"
       ],
       "@fastify/rate-limit": [
         "cpe:2.3:a:fastify:fastify\\/rate-limit:*:*:*:*:*:node.js:*:*"
@@ -2904,6 +2910,9 @@
       ],
       "appium-chromedriver": [
         "cpe:2.3:a:appium:appium-chromedriver:*:*:*:*:*:node.js:*:*"
+      ],
+      "appium-mcp": [
+        "cpe:2.3:a:appium:appium-mcp:*:*:*:*:*:node.js:*:*"
       ],
       "arcanist": [
         "cpe:2.3:a:hujiang:arcanist:*:*:*:*:*:node.js:*:*"
@@ -4411,6 +4420,9 @@
       ],
       "koa-remove-trailing-slashes": [
         "cpe:2.3:a:koa-remove-trailing-slashes_project:koa-remove-trailing-slashes:*:*:*:*:*:node.js:*:*"
+      ],
+      "ky": [
+        "cpe:2.3:a:sindresorhus:ky:*:*:*:*:*:node.js:*:*"
       ],
       "kysely": [
         "cpe:2.3:a:kysely:kysely:*:*:*:*:*:node.js:*:*"
@@ -6765,6 +6777,9 @@
       ],
       "idna": [
         "cpe:2.3:a:kjd:internationalized_domain_names_in_applications:*:*:*:*:*:python:*:*"
+      ],
+      "intel-transfer-learning-tool": [
+        "cpe:2.3:a:intel:transfer_learning_tool:*:*:*:*:*:python:*:*"
       ],
       "invenio-records": [
         "cpe:2.3:a:inveniosoftware:invenio-records:*:*:*:*:*:*:*:*"
@@ -16619,6 +16634,9 @@
       "pagerank-tools": [
         "cpe:2.3:a:mahype:pagerank_tools:*:*:*:*:*:wordpress:*:*"
       ],
+      "pagerestrict": [
+        "cpe:2.3:a:sivel:page_restrict:*:*:*:*:*:wordpress:*:*"
+      ],
       "pagination": [
         "cpe:2.3:a:bestwebsoft:pagination:*:*:*:*:*:wordpress:*:*"
       ],
@@ -16758,6 +16776,9 @@
       ],
       "peepso-core": [
         "cpe:2.3:a:peepso:peepso:*:*:*:*:*:wordpress:*:*"
+      ],
+      "peoplepond": [
+        "cpe:2.3:a:solidcode:peoplepond:*:*:*:*:*:wordpress:*:*"
       ],
       "pepro-cf7-database": [
         "cpe:2.3:a:peprodev:peprodev_cf7_database:*:*:*:*:*:wordpress:*:*"
