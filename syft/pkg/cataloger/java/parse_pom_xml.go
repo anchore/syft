@@ -3,6 +3,7 @@ package java
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -73,6 +74,16 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	for _, pom := range poms {
 		location := pomLocations[pom] // should always exist
 
+		if isArchiveMetaPom(location) {
+			// This pom is the copy that maven-archiver embeds into a built artifact
+			// (META-INF/maven/<groupId>/<artifactId>/pom.xml). Its main package is real --
+			// it is the artifact that was unpacked -- but its <dependencies> describe what
+			// the artifact was compiled against, not what ships next to it: test, provided
+			// and optional dependencies are listed just the same, and none of them is
+			// necessarily present. Reporting them would invent packages.
+			continue
+		}
+
 		id := r.ResolveID(ctx, pom)
 		mainPkg := resolved[id]
 
@@ -83,6 +94,19 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	}
 
 	return pkgs, relationships, errs
+}
+
+// isArchiveMetaPom reports whether the pom.xml sits under a META-INF/maven/ directory, i.e. it is
+// the copy that maven-archiver embeds into a built artifact rather than a project pom. The match is
+// anchored on a directory boundary ("/META-INF/maven/" or a "META-INF/maven/" prefix) so that paths
+// which merely contain the substring (e.g. "X-META-INF/maven/") are not affected.
+//
+// The detector is shared with the approach in anchore/syft#4832 by Thomas Bechtold; the difference
+// is what is done with a match: the artifact's own package is still cataloged here, only its
+// declared dependencies are not.
+func isArchiveMetaPom(location file.Location) bool {
+	p := filepath.ToSlash(location.Path())
+	return strings.Contains(p, "/META-INF/maven/") || strings.HasPrefix(p, "META-INF/maven/")
 }
 
 func readPomFromLocation(fileResolver file.Resolver, pomLocation file.Location) (*maven.Project, error) {
