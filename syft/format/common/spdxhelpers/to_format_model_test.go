@@ -677,6 +677,11 @@ func Test_lookupRelationship(t *testing.T) {
 			ty:     helpers.ContainsRelationship,
 		},
 		{
+			input:  artifact.GeneratedFromRelationship,
+			exists: true,
+			ty:     helpers.GeneratedFromRelationship,
+		},
+		{
 			input:   artifact.OwnershipByFileOverlapRelationship,
 			exists:  true,
 			ty:      helpers.OtherRelationship,
