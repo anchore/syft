@@ -293,6 +293,10 @@ func getLicenseFromNpmRegistry(baseURL, packageName, version string) (string, er
 		}
 	}()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return "", fmt.Errorf("package not found in npm registry: %s:%s", packageName, version)
+	}
+
 	// Read "license" from the response
 	var license struct {
 		License string `json:"license"`

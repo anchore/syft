@@ -66,6 +66,7 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 	}
 
 	var pkgs []pkg.Package
+	var lockPkgs [][2]string
 	dec := json.NewDecoder(reader)
 
 	var lock packageLock
@@ -79,6 +80,43 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 
 	if lock.LockfileVersion == 1 {
 		pkgs = append(pkgs, a.packageLockV1Packages(ctx, resolver, reader.Location, lock.Dependencies)...)
+	}
+
+	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
+		for name, pkgMeta := range lock.Packages {
+			if name == "" {
+				if pkgMeta.Name == "" {
+					continue
+				}
+				name = pkgMeta.Name
+			}
+
+			// skip packages that are only present as a dev dependency
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+				continue
+			}
+
+			// handles alias names
+			if pkgMeta.Name != "" {
+				name = pkgMeta.Name
+			}
+
+			lockPkgs = append(lockPkgs, [2]string{getNameFromPath(name), pkgMeta.Version})
+		}
+	}
+
+	// warm the per-parse license cache with bounded-concurrency registry lookups so
+	// the per-package constructors below do not serialize on HTTP round-trips
+	// (see https://github.com/anchore/syft/issues/5193)
+	ctx = withLicenseCache(ctx)
+	if a.cfg.SearchRemoteLicenses && len(lockPkgs) > 0 {
+		var pairs [][2]string
+		for _, p := range lockPkgs {
+			if _, cached := cacheGet(ctx, p[0], p[1]); !cached {
+				pairs = append(pairs, p)
+			}
+		}
+		prefetchNpmLicenses(ctx, a.cfg, pairs)
 	}
 
 	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {

@@ -210,6 +210,23 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 	// only the last document, would drop them from the SBOM entirely.
 	pnpmPkgs, errs := parsePnpmLockStream(reader)
 
+	// warm the per-parse license cache with bounded-concurrency registry lookups so
+	// the per-package constructors below do not serialize on HTTP round-trips
+	// (see https://github.com/anchore/syft/issues/5193)
+	ctx = withLicenseCache(ctx)
+	if a.cfg.SearchRemoteLicenses {
+		var pairs [][2]string
+		for _, p := range toSortedSlice(pnpmPkgs) {
+			if p.Dev && !a.cfg.IncludeDevDependencies {
+				continue
+			}
+			if _, cached := cacheGet(ctx, p.Name, p.Version); !cached {
+				pairs = append(pairs, [2]string{p.Name, p.Version})
+			}
+		}
+		prefetchNpmLicenses(ctx, a.cfg, pairs)
+	}
+
 	// left nil when nothing parses, so a failed lockfile reports no packages rather than an empty set
 	var packages []pkg.Package
 	for _, p := range toSortedSlice(pnpmPkgs) {

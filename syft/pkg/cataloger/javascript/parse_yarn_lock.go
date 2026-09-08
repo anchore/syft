@@ -302,6 +302,23 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 
 	devOnlyPkgs := findDevOnlyPkgs(yarnPkgs, prodDeps, devDeps)
 
+	// warm the per-parse license cache with bounded-concurrency registry lookups so
+	// the per-package constructors below do not serialize on HTTP round-trips
+	// (see https://github.com/anchore/syft/issues/5193)
+	ctx = withLicenseCache(ctx)
+	if a.cfg.SearchRemoteLicenses {
+		var pairs [][2]string
+		for _, p := range yarnPkgs {
+			if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
+				continue
+			}
+			if _, cached := cacheGet(ctx, p.Name, p.Version); !cached {
+				pairs = append(pairs, [2]string{p.Name, p.Version})
+			}
+		}
+		prefetchNpmLicenses(ctx, a.cfg, pairs)
+	}
+
 	packages := make([]pkg.Package, 0, len(yarnPkgs))
 	for _, p := range yarnPkgs {
 		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
