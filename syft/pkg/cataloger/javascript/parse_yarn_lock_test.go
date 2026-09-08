@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1051,6 +1052,91 @@ func TestParseYarnLock_DevDependencies(t *testing.T) {
 				FromFile(t, fixture).
 				Expects(expectedPkgs, expectedRels).
 				TestParser(t, adapter.parseYarnLock)
+		})
+	}
+}
+
+// TestFindDevOnlyPkgs_MultiVersionNameShadowing covers the yarn v1 case where
+// the same package name has multiple lockfile entries (one per resolved
+// version). The dev-only classification must be stable regardless of the
+// order the entries appear in: dependency edges from every same-name entry
+// must be followed, not just those of whichever entry happens to come last.
+// Before the union-of-edges fix (anchore/syft#5204), a trailing same-name
+// entry without dependency edges shadowed the real ones, so a production-
+// reachable transitive dependency was misclassified as dev-only and dropped.
+func TestFindDevOnlyPkgs_MultiVersionNameShadowing(t *testing.T) {
+	tests := []struct {
+		name     string
+		yarnPkgs []yarnPackage
+		prod     map[string]string
+		dev      map[string]string
+		expected []string // names classified dev-only
+	}{
+		{
+			name: "prod reaches shared through one of two same-name entries; shared must NOT be dev-only",
+			yarnPkgs: []yarnPackage{
+				{
+					Name:    "multi",
+					Version: "1.0.0",
+					Dependencies: map[string]string{
+						"shared": "^1.0.0",
+					},
+				},
+				{
+					Name:         "multi",
+					Version:      "2.0.0",
+					Dependencies: map[string]string{},
+				},
+				{
+					Name:         "shared",
+					Version:      "1.0.0",
+					Dependencies: map[string]string{},
+				},
+			},
+			prod:     map[string]string{"multi": "*"},
+			dev:      map[string]string{"shared": "*"},
+			expected: nil,
+		},
+		{
+			name: "same graph with the two same-name entries swapped classifies identically",
+			yarnPkgs: []yarnPackage{
+				{
+					Name:         "multi",
+					Version:      "2.0.0",
+					Dependencies: map[string]string{},
+				},
+				{
+					Name:    "multi",
+					Version: "1.0.0",
+					Dependencies: map[string]string{
+						"shared": "^1.0.0",
+					},
+				},
+				{
+					Name:         "shared",
+					Version:      "1.0.0",
+					Dependencies: map[string]string{},
+				},
+			},
+			prod:     map[string]string{"multi": "*"},
+			dev:      map[string]string{"shared": "*"},
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			devOnly := findDevOnlyPkgs(tt.yarnPkgs, tt.prod, tt.dev)
+
+			var got []string
+			for name, isDevOnly := range devOnly {
+				if isDevOnly {
+					got = append(got, name)
+				}
+			}
+			sort.Strings(got)
+
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
