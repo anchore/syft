@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
@@ -41,7 +42,7 @@ func Test_getDepsJSONFilePrefix(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getDepsJSONFilePrefix(tt.path), "getDepsJSONFilePrefix(%v)", tt.path)
+			require.Equalf(t, tt.want, getDepsJSONFilePrefix(tt.path), "getDepsJSONFilePrefix(%v)", tt.path)
 		})
 	}
 }
@@ -420,7 +421,7 @@ func Test_extractVersion(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
 			got := extractVersionFromResourcesValue(test.input)
-			assert.Equal(t, test.expected, got)
+			require.Equal(t, test.expected, got)
 		})
 	}
 }
@@ -443,7 +444,7 @@ func Test_spaceNormalize(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.expected, func(t *testing.T) {
 			got := spaceNormalize(test.input)
-			assert.Equal(t, test.expected, got)
+			require.Equal(t, test.expected, got)
 		})
 	}
 }
