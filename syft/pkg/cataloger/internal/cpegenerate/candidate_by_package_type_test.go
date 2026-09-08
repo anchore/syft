@@ -245,3 +245,10 @@ func Test_defaultCandidateAdditions_conan_libxml2(t *testing.T) {
 	vendors := findAdditionalVendors(defaultCandidateAdditions, pkg.ConanPkg, "libxml2", "")
 	assert.Contains(t, vendors, "xmlsoft")
 }
+
+func Test_defaultCandidateAdditions_conan_expat(t *testing.T) {
+	vendors := findAdditionalVendors(defaultCandidateAdditions, pkg.ConanPkg, "expat", "")
+	assert.Contains(t, vendors, "libexpat_project")
+	products := findAdditionalProducts(defaultCandidateAdditions, pkg.ConanPkg, "expat")
+	assert.Contains(t, products, "libexpat")
+}
