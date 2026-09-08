@@ -72,17 +72,20 @@ func validateConvertArgs(cmd *cobra.Command, args []string) error {
 func RunConvert(opts *ConvertOptions, userInput string) error {
 	log.Warn("convert is an experimental feature, run `syft convert -h` for help")
 
-	content, err := readConvertInput(userInput)
+	reader, inputPath, err := openConvertInput(userInput)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = reader.Close()
+	}()
 
 	outputs := opts.Outputs
 	var unchanged []string
 	if opts.Convert.PassthroughExactFormat {
 		log.Warn("convert.passthrough-exact-format is enabled: syft-json input that already exactly matches a requested output format and schema version will be copied to that output unchanged (this does not apply to any other input format)")
 
-		unchanged, outputs, err = partitionOutputsBySourceFormat(opts.Output, content)
+		unchanged, outputs, err = partitionOutputsBySourceFormat(opts.Output, reader)
 		if err != nil {
 			return err
 		}
@@ -101,7 +104,7 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 	}
 
 	for _, output := range unchanged {
-		if err := writeUnchanged(output, opts.LegacyFile, content); err != nil {
+		if err := writeUnchanged(output, opts.LegacyFile, inputPath, reader); err != nil {
 			return err
 		}
 	}
@@ -110,7 +113,11 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 		return nil
 	}
 
-	s, _, _, err := format.Decode(bytes.NewReader(content))
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("unable to seek to start of SBOM: %w", err)
+	}
+
+	s, _, _, err := format.Decode(reader)
 	if err != nil {
 		return fmt.Errorf("failed to decode SBOM: %w", err)
 	}
@@ -126,30 +133,60 @@ func RunConvert(opts *ConvertOptions, userInput string) error {
 	return nil
 }
 
-// readConvertInput reads the whole SBOM document from the given path (or STDIN when "-"). The document is held in
-// memory so it can be identified, copied, and decoded independently without relying on the input being seekable.
-func readConvertInput(userInput string) ([]byte, error) {
+// openConvertInput opens the SBOM document at the given path, or STDIN when "-". The returned reader is seekable so
+// the document can be identified, copied, and decoded in turn without being loaded into memory. The returned path
+// is empty when reading from STDIN.
+func openConvertInput(userInput string) (io.ReadSeekCloser, string, error) {
 	if userInput == "-" {
-		content, err := io.ReadAll(os.Stdin)
+		reader, err := openStdin()
 		if err != nil {
-			return nil, fmt.Errorf("failed to read SBOM from STDIN: %w", err)
+			return nil, "", err
 		}
-		return content, nil
+		return reader, "", nil
 	}
 
-	content, err := os.ReadFile(userInput)
+	f, err := os.Open(userInput)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open SBOM file: %w", err)
+		return nil, "", fmt.Errorf("failed to open SBOM file: %w", err)
 	}
-	return content, nil
+	return f, userInput, nil
+}
+
+// openStdin returns a seekable view of STDIN. When STDIN is a regular file (such as a shell redirect) it is read in
+// place; a pipe or terminal cannot seek (you will get errors such as "seek /dev/stdin: illegal seek"), so it is
+// read fully into memory instead.
+func openStdin() (io.ReadSeekCloser, error) {
+	if info, err := os.Stdin.Stat(); err == nil && info.Mode().IsRegular() {
+		if start, err := os.Stdin.Seek(0, io.SeekCurrent); err == nil {
+			return readSeekNopCloser{io.NewSectionReader(os.Stdin, start, info.Size()-start)}, nil
+		}
+	}
+
+	content, err := io.ReadAll(os.Stdin) //nolint:gocritic // a piped SBOM has no known size and must be buffered to be seekable
+	if err != nil {
+		return nil, fmt.Errorf("failed to read SBOM from STDIN: %w", err)
+	}
+	return readSeekNopCloser{bytes.NewReader(content)}, nil
+}
+
+type readSeekNopCloser struct {
+	io.ReadSeeker
+}
+
+func (readSeekNopCloser) Close() error {
+	return nil
 }
 
 // partitionOutputsBySourceFormat splits the requested outputs (in "<format>[@<version>][=<path>]" form) into those
 // that exactly match the format and schema version of a syft-json input document (which can be written out
 // unchanged) and those that still require conversion. Input in any other format is always converted. Outputs that
 // cannot be resolved to an encoder are left for the writer to report on.
-func partitionOutputsBySourceFormat(output options.Output, content []byte) (unchanged []string, toConvert []string, err error) {
-	id, version := format.Identify(bytes.NewReader(content))
+func partitionOutputsBySourceFormat(output options.Output, reader io.ReadSeeker) (unchanged []string, toConvert []string, err error) {
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		return nil, nil, fmt.Errorf("unable to seek to start of SBOM: %w", err)
+	}
+
+	id, version := format.Identify(reader)
 	if id == "" || version == "" {
 		// let decoding surface the appropriate error
 		return nil, output.Outputs, nil
@@ -180,15 +217,25 @@ func partitionOutputsBySourceFormat(output options.Output, content []byte) (unch
 	return unchanged, toConvert, nil
 }
 
-// writeUnchanged writes the SBOM document as-is to the destination described by the given "<format>[=<path>]"
-// output value, falling back to the (deprecated) --file path, and finally to the report bus (STDOUT).
-func writeUnchanged(output string, defaultFile string, content []byte) error {
+// writeUnchanged copies the SBOM document as-is to the destination described by the given "<format>[=<path>]"
+// output value, falling back to the (deprecated) --file path, and finally to the report bus (STDOUT). When the
+// destination is the input file itself there is nothing to do.
+func writeUnchanged(output string, defaultFile string, inputPath string, reader io.ReadSeeker) error {
+	if _, err := reader.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("unable to seek to start of SBOM: %w", err)
+	}
+
 	_, path, _ := strings.Cut(strings.TrimSpace(output), "=")
 	if path == "" {
 		path = defaultFile
 	}
 
 	if path == "" {
+		// the report bus only carries strings, so STDOUT output must be materialized in memory
+		content, err := io.ReadAll(reader) //nolint:gocritic // the whole SBOM is the report; there is no meaningful bound
+		if err != nil {
+			return fmt.Errorf("unable to read SBOM: %w", err)
+		}
 		bus.Report(string(content))
 		return nil
 	}
@@ -199,15 +246,36 @@ func writeUnchanged(output string, defaultFile string, content []byte) error {
 		expandedPath = path
 	}
 
-	if dir := filepath.Dir(expandedPath); dir != "" {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("unable to create report directory: %w", err)
-		}
+	if inputPath != "" && isSameFile(inputPath, expandedPath) {
+		log.WithFields("path", expandedPath).Info("output is the input file, leaving it as-is")
+		return nil
 	}
 
-	if err := os.WriteFile(expandedPath, content, 0644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(expandedPath), 0755); err != nil {
+		return fmt.Errorf("unable to create report directory: %w", err)
+	}
+
+	f, err := os.OpenFile(expandedPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
 		return fmt.Errorf("unable to create report file: %w", err)
 	}
 
-	return nil
+	if _, err := io.Copy(f, reader); err != nil {
+		_ = f.Close()
+		return fmt.Errorf("unable to write report file: %w", err)
+	}
+
+	return f.Close()
+}
+
+func isSameFile(a, b string) bool {
+	aInfo, err := os.Stat(a)
+	if err != nil {
+		return false
+	}
+	bInfo, err := os.Stat(b)
+	if err != nil {
+		return false
+	}
+	return os.SameFile(aInfo, bInfo)
 }

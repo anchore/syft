@@ -5,11 +5,15 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/syft/cmd/syft/internal/options"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
@@ -153,7 +157,7 @@ func Test_partitionOutputsBySourceFormat(t *testing.T) {
 			output := options.DefaultOutput()
 			output.Outputs = tt.outputs
 
-			unchanged, toConvert, err := partitionOutputsBySourceFormat(output, tt.content)
+			unchanged, toConvert, err := partitionOutputsBySourceFormat(output, bytes.NewReader(tt.content))
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantUnchanged, unchanged)
 			assert.Equal(t, tt.wantToConvert, toConvert)
@@ -333,4 +337,25 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		err := RunConvert(opts, writeInput(t, []byte("definitely not an sbom")))
 		require.ErrorContains(t, err, "failed to decode SBOM")
 	})
+}
+
+func Test_writeUnchanged_stdout(t *testing.T) {
+	// with no output path the document is published on the report bus, which is how the CLI writes to STDOUT
+	b := partybus.NewBus()
+	subscription := b.Subscribe()
+	bus.Set(b)
+	t.Cleanup(func() {
+		bus.Set(nil)
+	})
+
+	content := []byte(`{"some":"document"}`)
+	require.NoError(t, writeUnchanged("syft-json", "", "", bytes.NewReader(content)))
+
+	select {
+	case e := <-subscription.Events():
+		assert.Equal(t, event.CLIReport, e.Type)
+		assert.Equal(t, string(content), e.Value)
+	case <-time.After(time.Second):
+		t.Fatal("no report was published")
+	}
 }
