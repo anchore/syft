@@ -1204,6 +1204,22 @@ from-images:
       - /usr/local/bin/pilot-discovery
 
   - name: istio_pilot-discovery
+    version: 1.19.0-rc.0
+    images:
+      - ref: istio/pilot:1.19.0-rc.0@sha256:09c3c80be369a9724f11e1edfc60cc0b4d58612a6a99ac7314f620254986b159
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.15.0-beta.0
+    images:
+      - ref: istio/pilot:1.15.0-beta.0@sha256:07a1fd1b14ce51c47f0051f597e9b581020a2e5cc53d144592e85f3fa07bbef6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
     version: 1.10-dev
     images:
       - ref: istio/pilot:377977f494e3a37d4c77818a77fe677a4e3eb1a5@sha256:c4466fe97d981d31e84a367f1a1df1f7f976b45b96a73483ba04725414aa96e9
@@ -1220,6 +1236,14 @@ from-images:
       - /usr/local/bin/pilot-discovery
 
   - name: istio_pilot-discovery
+    version: 1.5.0-alpha.0
+    images:
+      - ref: istio/pilot:1.5.0-alpha.0@sha256:b372bcbacd5af241afe097bd017e16773514b6ba17152ca02b7d5285e290b110
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
     version: 1.3.8
     images:
       - ref: istio/pilot:1.3.8@sha256:e86394d237e1626f117cadea3588c5182d63b6a8712f9763ee419d4c72e7669b
@@ -1231,6 +1255,14 @@ from-images:
     version: 1.1.17
     images:
       - ref: istio/pilot:1.1.17@sha256:79a39ea04dbf7f9e36be80439d44f82968073eea307a58a6b073b551063ec629
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-discovery
+
+  - name: istio_pilot-discovery
+    version: 1.0.0-snapshot.0
+    images:
+      - ref: istio/pilot:1.0.0-snapshot.0@sha256:3b32619b36014eeafaad8199d8af48f7725e9e75a01c0b1abfba1d7166e53b66
         platform: linux/amd64
     paths:
       - /usr/local/bin/pilot-discovery
@@ -1268,6 +1300,22 @@ from-images:
       - /usr/local/bin/pilot-agent
 
   - name: istio_pilot-agent
+    version: 1.19.0-rc.0
+    images:
+      - ref: istio/proxyv2:1.19.0-rc.0@sha256:8c23abb1663e83ec19cac1e3de46c3cf7e942329936463646ca7a8d8088806b4
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
+    version: 1.15.0-beta.0
+    images:
+      - ref: istio/proxyv2:1.15.0-beta.0@sha256:9f54e6fa64c6ef6bb8b3e72e513c4f0415f1576ae755b4fe9a5be8c8b38694de
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
     version: 1.10-dev
     images:
       - ref: istio/proxyv2:377977f494e3a37d4c77818a77fe677a4e3eb1a5@sha256:336fd56493fb69a260483adc6a77d773e8c2cba42ac116bfd52d56c16d91f92b
@@ -1284,9 +1332,25 @@ from-images:
       - /usr/local/bin/pilot-agent
 
   - name: istio_pilot-agent
+    version: 1.5.0-alpha.0
+    images:
+      - ref: istio/proxyv2:1.5.0-alpha.0@sha256:6d31b7e373622b2d483124bdc46974ff7b39c9b3fff8a9dc73a47d91344a24f6
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
     version: 1.1.17
     images:
       - ref: istio/proxyv2:1.1.17@sha256:f97470c9b3124c19069ce9b773198da0efddbeea85dd33f88e2fb4f3b0c55e31
+        platform: linux/amd64
+    paths:
+      - /usr/local/bin/pilot-agent
+
+  - name: istio_pilot-agent
+    version: 1.0.0-snapshot.0
+    images:
+      - ref: istio/proxyv2:1.0.0-snapshot.0@sha256:13c352cd8b82c326d6e36a8d0a1eed9debe6b1816e30cfe79970d316c9e59714
         platform: linux/amd64
     paths:
       - /usr/local/bin/pilot-agent
