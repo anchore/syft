@@ -2,14 +2,21 @@ package commands
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/syft/cmd/syft/internal/options"
+	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/spillbuf"
+	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format"
 	"github.com/anchore/syft/syft/format/cyclonedxjson"
@@ -153,7 +160,7 @@ func Test_partitionOutputsBySourceFormat(t *testing.T) {
 			output := options.DefaultOutput()
 			output.Outputs = tt.outputs
 
-			unchanged, toConvert, err := partitionOutputsBySourceFormat(output, tt.content)
+			unchanged, toConvert, err := partitionOutputsBySourceFormat(output, bytes.NewReader(tt.content))
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantUnchanged, unchanged)
 			assert.Equal(t, tt.wantToConvert, toConvert)
@@ -187,7 +194,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		spdxOut := filepath.Join(dir, "out.spdx.json")
 
 		opts := newOpts(true, "syft-json="+syftOut, "spdx-json="+spdxOut)
-		require.NoError(t, RunConvert(opts, writeInput(t, syftContent)))
+		require.NoError(t, RunConvert(context.Background(), opts, writeInput(t, syftContent)))
 
 		got, err := os.ReadFile(syftOut)
 		require.NoError(t, err)
@@ -213,7 +220,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		t.Cleanup(func() { os.Stdin = originalStdin })
 
 		opts := newOpts(true, "syft-json="+syftOut, "spdx-json="+spdxOut)
-		require.NoError(t, RunConvert(opts, "-"))
+		require.NoError(t, RunConvert(context.Background(), opts, "-"))
 
 		got, err := os.ReadFile(syftOut)
 		require.NoError(t, err)
@@ -243,7 +250,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		t.Cleanup(func() { os.Stdin = originalStdin })
 
 		opts := newOpts(true, "syft-json="+syftOut, "spdx-json="+spdxOut)
-		require.NoError(t, RunConvert(opts, "-"))
+		require.NoError(t, RunConvert(context.Background(), opts, "-"))
 
 		got, err := os.ReadFile(syftOut)
 		require.NoError(t, err)
@@ -259,7 +266,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		syftOut := filepath.Join(t.TempDir(), "out.syft.json")
 
 		opts := newOpts(false, "syft-json="+syftOut)
-		require.NoError(t, RunConvert(opts, writeInput(t, syftContent)))
+		require.NoError(t, RunConvert(context.Background(), opts, writeInput(t, syftContent)))
 
 		got, err := os.ReadFile(syftOut)
 		require.NoError(t, err)
@@ -274,7 +281,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		cdxOut := filepath.Join(t.TempDir(), "out.cdx.json")
 
 		opts := newOpts(true, "cyclonedx-json="+cdxOut)
-		require.NoError(t, RunConvert(opts, writeInput(t, cdxContent)))
+		require.NoError(t, RunConvert(context.Background(), opts, writeInput(t, cdxContent)))
 
 		got, err := os.ReadFile(cdxOut)
 		require.NoError(t, err)
@@ -289,7 +296,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 
 		opts := newOpts(true, "syft-json")
 		opts.LegacyFile = syftOut
-		require.NoError(t, RunConvert(opts, writeInput(t, syftContent)))
+		require.NoError(t, RunConvert(context.Background(), opts, writeInput(t, syftContent)))
 
 		got, err := os.ReadFile(syftOut)
 		require.NoError(t, err)
@@ -300,7 +307,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		input := writeInput(t, syftContent)
 
 		opts := newOpts(true, "syft-json="+input)
-		require.NoError(t, RunConvert(opts, input))
+		require.NoError(t, RunConvert(context.Background(), opts, input))
 
 		got, err := os.ReadFile(input)
 		require.NoError(t, err)
@@ -311,7 +318,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		syftOut := filepath.Join(t.TempDir(), "out.syft.json")
 
 		opts := newOpts(true, "syft-json="+syftOut, "bogus")
-		require.Error(t, RunConvert(opts, writeInput(t, syftContent)))
+		require.Error(t, RunConvert(context.Background(), opts, writeInput(t, syftContent)))
 
 		assert.NoFileExists(t, syftOut)
 	})
@@ -320,7 +327,7 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		syftOut := filepath.Join(t.TempDir(), "out.syft.json")
 
 		opts := newOpts(true, "syft-json="+syftOut)
-		err := RunConvert(opts, filepath.Join(t.TempDir(), "does-not-exist.json"))
+		err := RunConvert(context.Background(), opts, filepath.Join(t.TempDir(), "does-not-exist.json"))
 		require.ErrorContains(t, err, "failed to open SBOM file")
 
 		assert.NoFileExists(t, syftOut)
@@ -330,7 +337,93 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		syftOut := filepath.Join(t.TempDir(), "out.syft.json")
 
 		opts := newOpts(true, "syft-json="+syftOut)
-		err := RunConvert(opts, writeInput(t, []byte("definitely not an sbom")))
+		err := RunConvert(context.Background(), opts, writeInput(t, []byte("definitely not an sbom")))
 		require.ErrorContains(t, err, "failed to decode SBOM")
 	})
+}
+
+// largeSyftJSON returns a pretty-printed syft-json document of at least minBytes, built from many small packages.
+func largeSyftJSON(t *testing.T, minBytes int64) []byte {
+	catalog := pkg.NewCollection()
+	for i := 0; i < int(minBytes/100); i++ {
+		catalog.Add(pkg.Package{
+			Name:    fmt.Sprintf("pkg-%d", i),
+			Version: "1.0.0",
+			Type:    pkg.ApkPkg,
+			PURL:    fmt.Sprintf("pkg:apk/alpine/pkg-%d@1.0.0", i),
+		})
+	}
+	s := convertTestSBOM()
+	s.Artifacts.Packages = catalog
+
+	cfg := syftjson.DefaultEncoderConfig()
+	cfg.Pretty = true
+	enc := mustConvertEncoder(syftjson.NewFormatEncoderWithConfig(cfg))
+
+	buf := &bytes.Buffer{}
+	require.NoError(t, enc.Encode(buf, s))
+	require.Greater(t, int64(buf.Len()), minBytes)
+	return buf.Bytes()
+}
+
+func Test_RunConvert_pipedInputLargerThanMemoryLimitSpillsToDisk(t *testing.T) {
+	// a piped document bigger than the spill buffer's in-memory tier is written to a temp file under TMPDIR;
+	// the conversion must identify, copy and clean up from there rather than holding the document in memory
+	dir := t.TempDir()
+	syftOut := filepath.Join(dir, "out.syft.json")
+	spillRoot := filepath.Join(dir, "spill")
+	require.NoError(t, os.Mkdir(spillRoot, 0o755))
+	t.Setenv("TMPDIR", spillRoot)
+
+	content := largeSyftJSON(t, 2*spillbuf.DefaultMemLimit)
+
+	pipeReader, pipeWriter, err := os.Pipe()
+	require.NoError(t, err)
+	defer pipeReader.Close()
+	go func() {
+		defer pipeWriter.Close()
+		_, _ = pipeWriter.Write(content)
+	}()
+
+	originalStdin := os.Stdin
+	os.Stdin = pipeReader
+	t.Cleanup(func() { os.Stdin = originalStdin })
+
+	opts := &ConvertOptions{
+		Output: options.DefaultOutput(),
+		Convert: options.Convert{
+			PassthroughExactFormat: true,
+		},
+	}
+	opts.Outputs = []string{"syft-json=" + syftOut}
+	require.NoError(t, RunConvert(context.Background(), opts, "-"))
+
+	got, err := os.ReadFile(syftOut)
+	require.NoError(t, err)
+	assert.Equal(t, content, got)
+
+	entries, err := os.ReadDir(spillRoot)
+	require.NoError(t, err)
+	assert.Empty(t, entries, "the spill directory must be removed once the conversion finishes")
+}
+
+func Test_writeUnchanged_stdout(t *testing.T) {
+	// with no output path the document is published on the report bus, which is how the CLI writes to STDOUT
+	b := partybus.NewBus()
+	subscription := b.Subscribe()
+	bus.Set(b)
+	t.Cleanup(func() {
+		bus.Set(nil)
+	})
+
+	content := []byte(`{"some":"document"}`)
+	require.NoError(t, writeUnchanged("syft-json", "", "", bytes.NewReader(content)))
+
+	select {
+	case e := <-subscription.Events():
+		assert.Equal(t, event.CLIReport, e.Type)
+		assert.Equal(t, string(content), e.Value)
+	case <-time.After(time.Second):
+		t.Fatal("no report was published")
+	}
 }
