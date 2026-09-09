@@ -1,6 +1,7 @@
 package java
 
 import (
+	"archive/zip"
 	"bufio"
 	"fmt"
 	"io"
@@ -87,6 +88,54 @@ func TestSearchMavenForLicenses(t *testing.T) {
 			assert.Equal(t, tc.expectedLicenses, toPkgLicenses(ctx, nil, resolvedLicenses))
 		})
 	}
+}
+
+func TestPomProjectByParentPath_enrichesMissingLicensesFromComments(t *testing.T) {
+	tmpDir := t.TempDir()
+	archivePath := filepath.Join(tmpDir, "comment-license.jar")
+
+	fh, err := os.Create(archivePath)
+	require.NoError(t, err)
+
+	zw := zip.NewWriter(fh)
+	w, err := zw.Create("META-INF/maven/com.example/demo/pom.xml")
+	require.NoError(t, err)
+
+	_, err = io.WriteString(w, `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Oracle licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License. You may obtain a copy of the License at
+ http://www.apache.org/licenses/LICENSE-2.0
+-->
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>demo</artifactId>
+  <version>1.0.0</version>
+</project>`)
+	require.NoError(t, err)
+	require.NoError(t, zw.Close())
+	require.NoError(t, fh.Close())
+
+	projects, err := pomProjectByParentPath(t.Context(), archivePath, file.NewLocation(archivePath), []string{"META-INF/maven/com.example/demo/pom.xml"})
+	require.NoError(t, err)
+
+	parsed := projects["META-INF/maven/com.example/demo"]
+	require.NotNil(t, parsed)
+	require.NotNil(t, parsed.project)
+	require.NotNil(t, parsed.project.Licenses)
+	require.Len(t, *parsed.project.Licenses, 1)
+	require.NotNil(t, (*parsed.project.Licenses)[0].Name)
+	require.Equal(t, "Apache-2.0", *(*parsed.project.Licenses)[0].Name)
+
+	licenses, err := maven.NewResolver(nil, maven.DefaultConfig()).ResolveLicenses(t.Context(), parsed.project)
+	require.NoError(t, err)
+	require.Len(t, licenses, 1)
+	require.NotNil(t, licenses[0].Name)
+	require.Equal(t, "Apache-2.0", *licenses[0].Name)
+	require.NotNil(t, licenses[0].URL)
+	require.Equal(t, "http://www.apache.org/licenses/LICENSE-2.0", *licenses[0].URL)
 }
 
 func TestParseJar(t *testing.T) {
