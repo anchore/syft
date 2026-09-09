@@ -1,5 +1,14 @@
 # Cataloger capabilities. See ../README.md for documentation.
 
+configs: # AUTO-GENERATED - config structs and their fields
+  terraform.CatalogerConfig:
+    fields:
+      - key: SearchRemoteLicenses
+        description: SearchRemoteLicenses enables downloading provider archives from the Terraform Registry to extract license information.
+        app_key: terraform.search-remote-licenses
+      - key: RegistryBaseURL
+        description: RegistryBaseURL specifies the base URL for the Terraform Registry API used when searching for remote license information.
+        app_key: terraform.registry-base-url
 catalogers:
   - ecosystem: terraform # MANUAL
     name: terraform-lock-cataloger # AUTO-GENERATED
@@ -7,6 +16,7 @@ catalogers:
     source: # AUTO-GENERATED
       file: syft/pkg/cataloger/terraform/cataloger.go
       function: NewLockCataloger
+    config: terraform.CatalogerConfig # AUTO-GENERATED
     selectors: # AUTO-GENERATED
       - declared
       - directory
@@ -28,7 +38,7 @@ catalogers:
           - TerraformLockProviderEntry
         capabilities: # MANUAL - preserved across regeneration
           - name: license
-            default: false
+            default: true
           - name: dependency.depth
             default:
               - direct

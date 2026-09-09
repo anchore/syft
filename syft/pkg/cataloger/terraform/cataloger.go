@@ -5,7 +5,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-func NewLockCataloger() pkg.Cataloger {
+func NewLockCataloger(cfg CatalogerConfig) pkg.Cataloger {
+	lr := newTerraformLicenseResolver(cfg)
 	return generic.NewCataloger("terraform-lock-cataloger").
-		WithParserByGlobs(parseTerraformLock, "**/.terraform.lock.hcl")
+		WithParserByGlobs(lr.parseTerraformLock, "**/.terraform.lock.hcl")
 }
