@@ -903,10 +903,12 @@ func parseELFPTLoadOffsets(elfHeader []byte) []uint64 {
 	var offsets []uint64
 	for i := range phnum {
 		phStart := phoff + uint64(i)*uint64(phentsize)
-		// subtraction form so a large phoff cannot overflow phStart+phentsize past the buffer end.
-		// note: the `break` is load-bearing for that argument. It guarantees phoff <= hdrLen before any
-		// i >= 1 is reached, which is what keeps phStart itself from wrapping; a `continue` here would
-		// let phoff near 2^64 wrap into a small in-range phStart and read a bogus p_offset.
+
+		// the bounds test below is written as `hdrLen-phStart` rather than `phStart+phentsize > hdrLen`
+		// so that a large phoff cannot overflow the sum past the buffer end. The `break` is load-bearing
+		// for that argument too: it guarantees phoff <= hdrLen before any i >= 1 is reached, which is what
+		// keeps phStart itself from wrapping; a `continue` here would let phoff near 2^64 wrap into a
+		// small in-range phStart and read a bogus p_offset.
 		//
 		// Not covered by a test, and worth knowing why before trying to write one: reaching the wrap needs
 		// phoff >= 2^64-phentsize, so the wrapped phStart always lands inside the first 56 bytes of the
