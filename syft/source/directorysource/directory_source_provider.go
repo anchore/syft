@@ -10,22 +10,20 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
-func NewSourceProvider(path string, exclude source.ExcludeConfig, alias source.Alias, basePath string, maxArchiveRecursiveIndexDepth int) source.Provider {
+func NewSourceProvider(path string, exclude source.ExcludeConfig, alias source.Alias, basePath string) source.Provider {
 	return &directorySourceProvider{
-		path:                          path,
-		basePath:                      basePath,
-		exclude:                       exclude,
-		alias:                         alias,
-		maxArchiveRecursiveIndexDepth: maxArchiveRecursiveIndexDepth,
+		path:     path,
+		basePath: basePath,
+		exclude:  exclude,
+		alias:    alias,
 	}
 }
 
 type directorySourceProvider struct {
-	path                          string
-	basePath                      string
-	exclude                       source.ExcludeConfig
-	alias                         source.Alias
-	maxArchiveRecursiveIndexDepth int
+	path     string
+	basePath string
+	exclude  source.ExcludeConfig
+	alias    source.Alias
 }
 
 func (l directorySourceProvider) Name() string {
@@ -50,11 +48,10 @@ func (l directorySourceProvider) Provide(_ context.Context) (source.Source, erro
 
 	return New(
 		Config{
-			Path:                          location,
-			Base:                          basePath(l.basePath, location),
-			Exclude:                       l.exclude,
-			Alias:                         l.alias,
-			MaxArchiveRecursiveIndexDepth: l.maxArchiveRecursiveIndexDepth,
+			Path:    location,
+			Base:    basePath(l.basePath, location),
+			Exclude: l.exclude,
+			Alias:   l.alias,
 		},
 	)
 }

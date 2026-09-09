@@ -9,13 +9,12 @@ import (
 
 // Config is the uber-configuration for all Syft source providers
 type Config struct {
-	Platform                      *image.Platform
-	Alias                         source.Alias
-	RegistryOptions               *image.RegistryOptions
-	Exclude                       source.ExcludeConfig
-	DigestAlgorithms              []crypto.Hash
-	BasePath                      string
-	MaxArchiveRecursiveIndexDepth int
+	Platform         *image.Platform
+	Alias            source.Alias
+	RegistryOptions  *image.RegistryOptions
+	Exclude          source.ExcludeConfig
+	DigestAlgorithms []crypto.Hash
+	BasePath         string
 }
 
 func (c *Config) WithAlias(alias source.Alias) *Config {
@@ -45,11 +44,6 @@ func (c *Config) WithDigestAlgorithms(algorithms ...crypto.Hash) *Config {
 
 func (c *Config) WithBasePath(basePath string) *Config {
 	c.BasePath = basePath
-	return c
-}
-
-func (c *Config) WithMaxArchiveRecursiveIndexDepth(maxArchiveRecursiveIndexDepth int) *Config {
-	c.MaxArchiveRecursiveIndexDepth = maxArchiveRecursiveIndexDepth
 	return c
 }
 

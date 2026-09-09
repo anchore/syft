@@ -27,12 +27,11 @@ import (
 var _ source.Source = (*fileSource)(nil)
 
 type Config struct {
-	Path                          string
-	Exclude                       source.ExcludeConfig
-	DigestAlgorithms              []crypto.Hash
-	Alias                         source.Alias
-	SkipExtractArchive            bool
-	MaxArchiveRecursiveIndexDepth int
+	Path               string
+	Exclude            source.ExcludeConfig
+	DigestAlgorithms   []crypto.Hash
+	Alias              source.Alias
+	SkipExtractArchive bool
 }
 
 type fileSource struct {
@@ -154,19 +153,12 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	if isArchiveAnalysis := fi.IsDir(); isArchiveAnalysis {
 		// this is an analysis of an archive file... we should scan the directory where the archive contents
-		res, cleanupFn, err := fileresolver.NewFromDirectory(s.analysisPath, "", s.config.MaxArchiveRecursiveIndexDepth, exclusionFunctions...)
+		res, err := fileresolver.NewFromDirectory(s.analysisPath, "", exclusionFunctions...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create directory resolver: %w", err)
 		}
 
 		s.resolver = res
-		s.closer = func() error {
-			if err := cleanupFn(); err != nil {
-				return err
-			}
-
-			return s.closer()
-		}
 		return s.resolver, nil
 	}
 

@@ -10,8 +10,6 @@ import (
 )
 
 func TestArchiveScan(t *testing.T) {
-	archive := createArchive(t, "testdata/archive", t.TempDir())
-	nestedArchive := createArchive(t, filepath.Dir(archive), t.TempDir())
 	tests := []struct {
 		name           string
 		args           []string
@@ -25,21 +23,7 @@ func TestArchiveScan(t *testing.T) {
 				"scan",
 				"-o",
 				"json",
-				"file:" + archive,
-			},
-			assertions: []traitAssertion{
-				assertSuccessfulReturnCode,
-				assertJsonReport,
-				assertPackageCount(1),
-			},
-		},
-		{
-			name: "scan an nested archive within the temp dir",
-			args: []string{
-				"scan",
-				"-o",
-				"json",
-				"file:" + nestedArchive,
+				"file:" + createArchive(t, "testdata/archive", t.TempDir()),
 			},
 			assertions: []traitAssertion{
 				assertSuccessfulReturnCode,

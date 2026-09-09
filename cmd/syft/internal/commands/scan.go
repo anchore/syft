@@ -227,7 +227,6 @@ func getSource(ctx context.Context, opts *options.Catalog, userInput string, sou
 			Paths: opts.Exclusions,
 		}).
 		WithBasePath(opts.Source.BasePath).
-		WithMaxArchiveRecursiveIndexDepth(opts.Source.Directory.MaxArchiveRecursiveIndexDepth).
 		WithSources(sources...).
 		WithDefaultImagePullSource(opts.Source.Image.DefaultPullSource)
 

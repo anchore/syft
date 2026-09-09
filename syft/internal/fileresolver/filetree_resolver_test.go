@@ -505,12 +505,9 @@ func TestDirectoryResolver_FilesByPath_request_response(t *testing.T) {
 				require.NoError(t, os.Chdir(testDir))
 			})
 
-			resolver, cleanupFn, err := NewFromDirectory(c.root, c.base, 0)
+			resolver, err := NewFromDirectory(c.root, c.base)
 			require.NoError(t, err)
 			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
 
 			refs, err := resolver.FilesByPath(c.input)
 			require.NoError(t, err)
@@ -560,12 +557,8 @@ func TestDirectoryResolver_FilesByPath_relativeRoot(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory(c.relativeRoot, "", 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
+			resolver, err := NewFromDirectory(c.relativeRoot, "")
+			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(c.input)
 			require.NoError(t, err)
@@ -619,12 +612,8 @@ func TestDirectoryResolver_FilesByPath_absoluteRoot(t *testing.T) {
 			absRoot, err := filepath.Abs(c.relativeRoot)
 			require.NoError(t, err)
 
-			resolver, cleanupFn, err := NewFromDirectory(absRoot, "", 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
+			resolver, err := NewFromDirectory(absRoot, "")
+			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(c.input)
 			require.NoError(t, err)
@@ -684,12 +673,8 @@ func TestDirectoryResolver_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory(c.root, "", 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
+			resolver, err := NewFromDirectory(c.root, "")
+			assert.NoError(t, err)
 
 			hasPath := resolver.HasPath(c.input)
 			if !c.forcePositiveHasPath {
@@ -736,13 +721,8 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory("./testdata", "", 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
-
+			resolver, err := NewFromDirectory("./testdata", "")
+			assert.NoError(t, err)
 			refs, err := resolver.FilesByPath(c.input...)
 			assert.NoError(t, err)
 
@@ -754,13 +734,8 @@ func TestDirectoryResolver_MultipleFilesByPath(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata", "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
-
+	resolver, err := NewFromDirectory("./testdata", "")
+	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/file*")
 	assert.NoError(t, err)
 
@@ -768,26 +743,16 @@ func TestDirectoryResolver_FilesByGlobMultiple(t *testing.T) {
 }
 
 func TestDirectoryResolver_FilesByGlobRecursive(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/image-symlinks", "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
-
+	resolver, err := NewFromDirectory("./testdata/image-symlinks", "")
+	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/*.txt")
 	assert.NoError(t, err)
 	assert.Len(t, refs, 6)
 }
 
 func TestDirectoryResolver_FilesByGlobSingle(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata", "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
-
+	resolver, err := NewFromDirectory("./testdata", "")
+	assert.NoError(t, err)
 	refs, err := resolver.FilesByGlob("**/image-symlinks/*1.txt")
 	assert.NoError(t, err)
 
@@ -813,12 +778,8 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-simple", "", 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
+			resolver, err := NewFromDirectory("./testdata/symlinks-simple", "")
+			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(test.fixture)
 			require.NoError(t, err)
@@ -840,12 +801,8 @@ func TestDirectoryResolver_FilesByPath_ResolvesSymlinks(t *testing.T) {
 
 func TestDirectoryResolverDoesNotIgnoreRelativeSystemPaths(t *testing.T) {
 	// let's make certain that "dev/place" is not ignored, since it is not "/dev/place"
-	resolver, cleanupFn, err := NewFromDirectory("testdata/system_paths/target", "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
+	resolver, err := NewFromDirectory("testdata/system_paths/target", "")
+	assert.NoError(t, err)
 
 	// all paths should be found (non filtering matches a path)
 	locations, err := resolver.FilesByGlob("**/place")
@@ -883,13 +840,8 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.fixturePath, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory(test.fixturePath, "", 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
-
+			resolver, err := NewFromDirectory(test.fixturePath, "")
+			assert.NoError(t, err)
 			locations, err := resolver.FilesByMIMEType(test.mimeType)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expectedPaths.Size(), len(locations))
@@ -901,12 +853,8 @@ func Test_directoryResolver_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinks(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-simple", "", 0)
+	resolver, err := NewFromDirectory("./testdata/symlinks-simple", "")
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
 
 	// check that we can get the real path
 	locations, err := resolver.FilesByPath("./readme")
@@ -961,12 +909,8 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 		return nil
 	}
 
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-simple", "", 0, filterFn)
+	resolver, err := NewFromDirectory("./testdata/symlinks-simple", "", filterFn)
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
 
 	// the path to the real file is PRUNED from the index, so we should NOT expect a location returned
 	locations, err := resolver.FilesByPath("./readme")
@@ -985,12 +929,8 @@ func Test_IndexingNestedSymLinks_ignoredIndexes(t *testing.T) {
 }
 
 func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-multiple-roots/root", "", 0)
+	resolver, err := NewFromDirectory("./testdata/symlinks-multiple-roots/root", "")
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
 
 	// check that we can get the real path
 	locations, err := resolver.FilesByPath("./readme")
@@ -1007,12 +947,8 @@ func Test_IndexingNestedSymLinksOutsideOfRoot(t *testing.T) {
 }
 
 func Test_RootViaSymlink(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinked-root/nested/link-root", "", 0)
+	resolver, err := NewFromDirectory("./testdata/symlinked-root/nested/link-root", "")
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
 
 	locations, err := resolver.FilesByPath("./file1.txt")
 	require.NoError(t, err)
@@ -1031,14 +967,10 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 
-	resolver, cleanupFn, err := NewFromDirectory(".", "", 0)
+	r, err := NewFromDirectory(".", "")
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
 
-	exists, existingPath, err := resolver.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "testdata/image-simple/file-1.txt")))
+	exists, existingPath, err := r.Tree.File(stereoscopeFile.Path(filepath.Join(cwd, "testdata/image-simple/file-1.txt")))
 	require.True(t, exists)
 	require.NoError(t, err)
 	require.True(t, existingPath.HasReference())
@@ -1062,7 +994,8 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := resolver.FileContentsByLocation(test.location)
+
+			actual, err := r.FileContentsByLocation(test.location)
 			if test.err {
 				require.Error(t, err)
 				return
@@ -1080,12 +1013,8 @@ func Test_directoryResolver_FileContentsByLocation(t *testing.T) {
 
 func Test_SymlinkLoopWithGlobsShouldResolve(t *testing.T) {
 	test := func(t *testing.T) {
-		resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-loop", "", 0)
+		resolver, err := NewFromDirectory("./testdata/symlinks-loop", "")
 		require.NoError(t, err)
-		require.NotNil(t, resolver)
-		t.Cleanup(func() {
-			require.NoError(t, cleanupFn())
-		})
 
 		locations, err := resolver.FilesByGlob("**/file.target")
 		require.NoError(t, err)
@@ -1155,12 +1084,8 @@ func TestDirectoryResolver_FilesByPath_baseRoot(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory(c.root, c.root, 0)
-			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
+			resolver, err := NewFromDirectory(c.root, c.root)
+			assert.NoError(t, err)
 
 			refs, err := resolver.FilesByPath(c.input)
 			require.NoError(t, err)
@@ -1303,12 +1228,9 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "", 0)
+			resolver, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "")
 			require.NoError(t, err)
-			require.NotNil(t, resolver)
-			t.Cleanup(func() {
-				require.NoError(t, cleanupFn())
-			})
+			assert.NoError(t, err)
 
 			actual := test.runner(resolver)
 
@@ -1318,12 +1240,8 @@ func Test_directoryResolver_resolvesLinks(t *testing.T) {
 }
 
 func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-prune-indexing", "", 0)
+	resolver, err := NewFromDirectory("./testdata/symlinks-prune-indexing", "")
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
 
 	var allRealPaths []stereoscopeFile.Path
 	for l := range resolver.AllLocations(context.Background()) {
@@ -1345,12 +1263,8 @@ func TestDirectoryResolver_DoNotAddVirtualPathsToTree(t *testing.T) {
 
 func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 	defer goleak.VerifyNone(t)
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/system_paths", "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
+	resolver, err := NewFromDirectory("./testdata/system_paths", "")
+	assert.NoError(t, err)
 
 	var dirLoc *file.Location
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1372,12 +1286,8 @@ func TestDirectoryResolver_FilesContents_errorOnDirRequest(t *testing.T) {
 }
 
 func TestDirectoryResolver_AllLocations(t *testing.T) {
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "", 0)
-	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
+	resolver, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "")
+	assert.NoError(t, err)
 
 	paths := strset.New()
 	for loc := range resolver.AllLocations(context.Background()) {
@@ -1409,13 +1319,8 @@ func TestDirectoryResolver_AllLocations(t *testing.T) {
 
 func TestAllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 	defer goleak.VerifyNone(t)
-	resolver, cleanupFn, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "", 0)
+	resolver, err := NewFromDirectory("./testdata/symlinks-from-image-symlinks-fixture", "")
 	require.NoError(t, err)
-	require.NotNil(t, resolver)
-	t.Cleanup(func() {
-		require.NoError(t, cleanupFn())
-	})
-
 	ctx, cancel := context.WithCancel(context.Background())
 	for range resolver.AllLocations(ctx) {
 		break
@@ -1648,7 +1553,6 @@ func Test_fileResolver_FileContentsByLocation(t *testing.T) {
 }
 
 func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
-	defer goleak.VerifyNone(t)
 	filePath := "./testdata/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
@@ -1675,10 +1579,11 @@ func TestFileResolver_AllLocations_errorOnDirRequest(t *testing.T) {
 	reader, err := resolver.FileContentsByLocation(*dirLoc)
 	require.Error(t, err)
 	require.Nil(t, reader)
+
+	goleak.VerifyNone(t)
 }
 
 func TestFileResolver_AllLocations(t *testing.T) {
-	defer goleak.VerifyNone(t)
 	// Verify both the parent and the file itself are indexed
 	filePath := "./testdata/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
@@ -1703,10 +1608,11 @@ func TestFileResolver_AllLocations(t *testing.T) {
 	sort.Strings(pathsList)
 
 	assert.ElementsMatchf(t, expected, pathsList, "expected all paths to be indexed, but found different paths: \n%s", cmp.Diff(expected, paths.List()))
+
+	goleak.VerifyNone(t)
 }
 
 func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
-	defer goleak.VerifyNone(t)
 	filePath := "./testdata/system_paths/target/home/place"
 	parentPath, err := absoluteSymlinkFreePathToParent(filePath)
 	require.NoError(t, err)
@@ -1723,4 +1629,6 @@ func Test_FileResolver_AllLocationsDoesNotLeakGoRoutine(t *testing.T) {
 		break
 	}
 	cancel()
+
+	goleak.VerifyNone(t)
 }
