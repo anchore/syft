@@ -112,12 +112,21 @@ func NewFile(r io.ReaderAt) (*elf.File, error) {
 	return f, nil
 }
 
-// CheckAllSections bounds every section syft can drive debug/elf into decompressing, without keeping the
-// parse. It is a strict superset of CheckSectionNameTable, which is what "All" in the name marks: reach
-// for that narrower one only where a full elf.NewFile parse on every file is not worth paying for. Like
-// it, this is for a caller whose debug/elf call is made inside another
-// package, but it is the whole check rather than the eager half: goversion reads .symtab and the string
-// table it links, and those are expanded lazily, so the name table bound alone leaves them unbounded.
+// CheckAllSections rejects ELF decompression bombs before debug/elf can expand one, without keeping the
+// parse.
+//
+// The attack it stops: a compressed section's header declares its own decompressed size, and debug/elf
+// believes that number, allocating it up front when the section is opened. Nothing forces the declared
+// size to match what the compressed bytes actually yield, so a small file can name an enormous one. In
+// the case this was written for, a 260KB ELF declaring a compressed .symtab drove 1.3GB of allocation.
+// This walks the section headers and refuses any reachable section declaring more than
+// maxDeclaredSectionSize, returning ErrDeclaredSizeExceeded.
+//
+// It is a strict superset of CheckSectionNameTable, which is what "All" in the name marks: reach for that
+// narrower one only where a full elf.NewFile parse on every file is not worth paying for. Like it, this
+// is for a caller whose debug/elf call is made inside another package, but it is the whole check rather
+// than the eager half: goversion reads .symtab and the string table it links, and those are expanded
+// lazily, so the name table bound alone leaves them unbounded.
 //
 // Anything that is not an ELF this package understands passes through untouched, since a caller reaching
 // for this parses other containers too (goversion takes PE and Mach-O). A file elf.NewFile cannot parse

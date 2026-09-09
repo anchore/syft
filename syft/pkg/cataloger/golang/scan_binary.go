@@ -180,7 +180,9 @@ func reportableGap(err error) bool {
 func getCryptoInformation(reader io.ReaderAt) ([]string, error) {
 	// goversion opens the file with debug/elf itself and reads .symtab plus the string table it links.
 	// Those are expanded lazily, so the section-name table bound getBuildInfo already applied does not
-	// reach them: without this gate a 260KB ELF declaring a compressed .symtab drove 1.3GB of allocation.
+	// reach them. CheckAllSections is the decompression-bomb gate: a compressed section declares its own
+	// decompressed size and debug/elf allocates that much on open, so a 260KB ELF declaring a compressed
+	// .symtab drove 1.3GB of allocation before this was here.
 	if err := elfutil.CheckAllSections(reader); err != nil {
 		return nil, err
 	}
