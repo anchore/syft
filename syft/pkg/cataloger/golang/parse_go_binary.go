@@ -126,7 +126,7 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	// below want it too, so ownership ends here and not inside the scan.
 	defer func() {
 		for _, mod := range mods {
-			mod.unpacked.Close()
+			closeUnpacked(mod.unpacked)
 		}
 	}()
 

@@ -331,7 +331,7 @@ func TestScanFile_FakeUPXHeaderStillYieldsPackages(t *testing.T) {
 	for _, b := range builds {
 		assert.Nil(t, b.unpacked,
 			"the reconstruction carried nothing, so the scan has to fall back to the bytes as they were found")
-		_ = b.unpacked.Close()
+		closeUnpacked(b.unpacked)
 	}
 }
 
@@ -464,7 +464,7 @@ func TestReadContentsAndBuildInfo_FallbackToFoundBytesReportsNoGap(t *testing.T)
 	spiked := spliceUPXChain(t, goELF64Fixture(t), 64<<10, chain)
 
 	unpacked, bi, err := readContentsAndBuildInfo(ctx, bytes.NewReader(spiked))
-	t.Cleanup(func() { _ = unpacked.Close() })
+	t.Cleanup(func() { closeUnpacked(unpacked) })
 
 	require.NotNil(t, bi, "the fallback still finds the build info")
 	require.Nil(t, unpacked, "the reconstruction was released; the caller reads the bytes as they were found")
@@ -518,7 +518,7 @@ func TestReadContentsAndBuildInfo_GapSurvivesBuildInfoFromTheReconstruction(t *t
 	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(t.TempDir()))
 	contents, bi, err := readContentsAndBuildInfo(ctx, bytes.NewReader(data))
 	require.NotNil(t, contents)
-	t.Cleanup(func() { _ = contents.Close() })
+	t.Cleanup(func() { closeUnpacked(contents) })
 
 	require.NotNil(t, contents, "the build info has to come from the reconstruction here")
 	require.NotNil(t, bi, "the rebuilt binary is a whole Go binary")
@@ -541,7 +541,7 @@ func TestScanReader_PartialReconstructionStillYieldsItsPackages(t *testing.T) {
 	build, err := scanReader(ctx, file.NewLocation("/partial-but-usable"), bytes.NewReader(data), false)
 
 	require.NotNil(t, build, "a reported gap must not cost the packages that did come through")
-	t.Cleanup(func() { _ = build.unpacked.Close() })
+	t.Cleanup(func() { closeUnpacked(build.unpacked) })
 	assert.NotNil(t, build.BuildInfo)
 
 	require.Error(t, err)
@@ -583,7 +583,7 @@ func TestUnpackUPX_ContainerGateComesBeforeTheSizeProbe(t *testing.T) {
 			spy := &sizeProbeSpy{Reader: bytes.NewReader(tt.data)}
 			out, err := unpackUPX(context.Background(), spy)
 			require.NoError(t, err)
-			t.Cleanup(func() { _ = out.Close() })
+			t.Cleanup(func() { closeUnpacked(out) })
 
 			if tt.probed {
 				assert.Positive(t, spy.probes, "a candidate container does get measured")
@@ -638,7 +638,7 @@ func TestScanReader_SizeRefusalOnAnUnpackedBinaryIsNotReported(t *testing.T) {
 	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(t.TempDir()))
 	build, err := scanReader(ctx, file.NewLocation("/spiked"), bytes.NewReader(spiked), false)
 	if build != nil {
-		t.Cleanup(func() { _ = build.unpacked.Close() })
+		t.Cleanup(func() { closeUnpacked(build.unpacked) })
 	}
 
 	require.NotNil(t, build, "the binary is a complete Go binary and must still be cataloged")

@@ -132,14 +132,14 @@ func filteredBlockFor(t *testing.T, payload []byte, filterID, cto8 byte) []byte 
 }
 
 // unpack runs decompressUPX against a throwaway temp directory.
-func unpack(t *testing.T, data []byte) (*spillbuf.Buffer, error) {
+func unpack(t *testing.T, data []byte) (unpackedContents, error) {
 	t.Helper()
 	return unpackIn(t, t.TempDir(), data)
 }
 
 // unpackIn is unpack with a caller-chosen temp directory, so a test can look at the file that was left in
 // it. Parses the header the same way unpackUPX does so a fixture that is not UPX at all still reports it.
-func unpackIn(t *testing.T, dir string, data []byte) (*spillbuf.Buffer, error) {
+func unpackIn(t *testing.T, dir string, data []byte) (unpackedContents, error) {
 	t.Helper()
 	r := bytes.NewReader(data)
 	info, err := parseUPXInfo(r, sizeOf(t, r))
@@ -147,15 +147,13 @@ func unpackIn(t *testing.T, dir string, data []byte) (*spillbuf.Buffer, error) {
 		return nil, err
 	}
 	out, err := decompressUPX(context.Background(), tmpdir.FromPath(dir), r, info)
-	if out != nil {
-		t.Cleanup(func() { _ = out.Close() })
-	}
+	t.Cleanup(func() { closeUnpacked(out) })
 	return out, err
 }
 
 // readAll drains the reconstruction returned by decompressUPX. Size is the contiguous run rebuilt, so
 // this is exactly what the buffer is willing to stand behind.
-func readAll(t *testing.T, b *spillbuf.Buffer) []byte {
+func readAll(t *testing.T, b unpackedContents) []byte {
 	t.Helper()
 	require.NotNil(t, b)
 	out := make([]byte, b.Size())
@@ -590,7 +588,7 @@ func TestParseUPXInfo_UnsizedInputRefused(t *testing.T) {
 	// and the caller declines to unpack rather than running the bounds against a zero
 	contents, err := unpackUPX(context.Background(), plain)
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = contents.Close() })
+	t.Cleanup(func() { closeUnpacked(contents) })
 	assert.Nil(t, contents)
 }
 
@@ -630,7 +628,7 @@ func TestDecompressUPX_OutputIsNeverResident(t *testing.T) {
 	fixture := padTo(buildUPXFile(t, payload, payload, [][]byte{block}, nil), inputLen)
 	require.LessOrEqual(t, len(fixture), inputLen, "the fixture must stay small enough for the ratio to bind")
 
-	var out *spillbuf.Buffer
+	var out unpackedContents
 	allocated := measureAlloc(t, func() {
 		var err error
 		out, err = unpackIn(t, t.TempDir(), fixture)
@@ -814,12 +812,13 @@ func TestUnpackUPX_MissingTempDirIsNotReportedForEveryBinary(t *testing.T) {
 }
 
 // assertNothingUnpacked pins what a "nothing to unpack" answer owes its caller. The nil is the signal, so
-// what matters is that it never reaches an interface unresolved: readerFor and seekerFor are the only two
-// places allowed to widen it, and both must hand back the input as it was found.
-func assertNothingUnpacked(t *testing.T, in io.ReaderAt, out *spillbuf.Buffer, msgAndArgs ...any) {
+// what matters is that every place that resolves it copes: readerFor and seekerFor must hand back the
+// input as it was found, and closeUnpacked must have nothing to do.
+func assertNothingUnpacked(t *testing.T, in io.ReaderAt, out unpackedContents, msgAndArgs ...any) {
 	t.Helper()
 	assert.Nil(t, out, msgAndArgs...)
-	assert.NoError(t, out.Close(), "Close must be safe when there is nothing to release")
+	assert.NotPanics(t, func() { closeUnpacked(out); closeUnpacked(out) },
+		"closing must be safe when there is nothing to release, and a defer over every build calls it")
 
 	assert.Same(t, in, readerFor(out, in), "nothing to unpack means the caller reads the file as it found it")
 

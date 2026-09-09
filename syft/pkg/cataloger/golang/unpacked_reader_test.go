@@ -25,7 +25,7 @@ import (
 // only symptom was the go-binary cataloger reporting nothing at all.
 //
 // The nil is now the signal rather than a hazard: unpacked is nil when there was nothing to unpack, and
-// readerFor and seekerFor are the only two places that widen it into an interface.
+// readerFor, seekerFor and closeUnpacked are the only places that resolve it.
 //
 // Docker-gated like everything else that needs a real Go binary; the point is that a plain binary reads
 // from the file it was handed, which needs a real one.
@@ -44,8 +44,8 @@ func TestScanFile_UnpackedBinaryReadsTheFileItWasGiven(t *testing.T) {
 	for _, b := range builds {
 		assert.Nil(t, b.unpacked, "an unpacked binary must not have left a reconstruction behind")
 		assert.Same(t, ur, seekerFor(b.unpacked, ur), "the readers after the scan must get the file itself")
-		assert.NoError(t, b.unpacked.Close(), "Close is nil-safe, and a defer over every build calls it")
-		assert.NoError(t, b.unpacked.Close(), "and it has to be idempotent")
+		assert.NotPanics(t, func() { closeUnpacked(b.unpacked); closeUnpacked(b.unpacked) },
+			"closing nothing has to be safe and idempotent, since a defer over every build calls it")
 	}
 }
 

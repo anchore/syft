@@ -381,8 +381,8 @@ func unfilter49(data []byte, cto8 byte, base uint32, final bool) int {
 // Resolve that with readerFor rather than widening the nil into an io.ReaderAt, which yields a non-nil
 // interface holding a nil pointer.
 //
-// The caller owns the buffer and must Close it; Close is nil-safe.
-func unpackUPX(ctx context.Context, r io.ReaderAt) (*spillbuf.Buffer, error) {
+// The caller owns the contents and must Close them, which closeUnpacked does for the nil case too.
+func unpackUPX(ctx context.Context, r io.ReaderAt) (unpackedContents, error) {
 	// the container gate first: this runs over every file in an image and almost none are packed ELF, so
 	// nothing above it should cost more than six bytes. ReaderSize seeks to the end and reads the last
 	// byte back, which over a squashfs or tar-backed reader is a real seek-and-decompress.
@@ -421,8 +421,9 @@ func unpackUPX(ctx context.Context, r io.ReaderAt) (*spillbuf.Buffer, error) {
 		return out, err
 	}
 	if err != nil {
-		// Close is nil-safe; decompressUPX already released it
-		_ = out.Close()
+		// decompressUPX already released it on every path that returns an error, so this is for the one
+		// that does not: errUPXPartial is handled above, and out is nil here
+		closeUnpacked(out)
 		// cancellation is not a decompression failure and not a gap in the SBOM, but it does mean stop:
 		// swallowing it here sent the caller on to parse the packed bytes and build packages after the
 		// scan had been called off.
@@ -438,6 +439,26 @@ func unpackUPX(ctx context.Context, r io.ReaderAt) (*spillbuf.Buffer, error) {
 	return out, nil
 }
 
+// blockSink is where decompression places the blocks it decodes. Writes land at offsets the packed file
+// names, Size is the contiguous run rebuilt from offset zero, and FirstGap is where a block that declares
+// no home of its own fits. spillbuf.Buffer is what implements it, and naming that type here would say the
+// decoder cares whether those bytes are in memory or on disk, which is the one thing it must not care
+// about.
+type blockSink interface {
+	io.WriterAt
+
+	// read back as well as written: the first block carries the ELF program headers that place every
+	// block after the second, so a write-only sink would place those by hole-filling alone
+	io.ReaderAt
+
+	// Size is the contiguous run rebuilt from offset zero, not the furthest offset written: see upx.go's
+	// header and the spillbuf package doc for why the two are not interchangeable.
+	Size() int64
+
+	// FirstGap returns the earliest unwritten run of at least size bytes lying within [0, within).
+	FirstGap(size, within int64) (int64, bool)
+}
+
 // decompressUPX reconstructs the original file from a UPX-compressed ELF binary: it walks the b_info
 // chain and decodes each block into the offset it occupied in the original, which blockDestination works
 // out from the PT_LOAD segments in the first decoded block. Simply concatenating the blocks produces
@@ -450,7 +471,7 @@ func unpackUPX(ctx context.Context, r io.ReaderAt) (*spillbuf.Buffer, error) {
 //
 // errUPXImplausibleHeader means the file is not really packed, errUPXPartial a reconstruction that came up
 // short but is still worth reading, and only errUPXDecompress a packed file we could not read at all.
-func decompressUPX(ctx context.Context, td *tmpdir.TempDir, r io.ReaderAt, info *upxInfo) (*spillbuf.Buffer, error) {
+func decompressUPX(ctx context.Context, td *tmpdir.TempDir, r io.ReaderAt, info *upxInfo) (unpackedContents, error) {
 	out := spillbuf.New(td)
 
 	// errUPXPartial means the chain gave something up but what it rebuilt is worth reading, so it comes
@@ -500,7 +521,7 @@ func (l *loaderSkip) past(offset int64) (int64, bool) {
 // say where the rest belong, so a write-only sink would place every later block by hole-filling and hand
 // back a plausible but wrongly shaped file. Size is the contiguous run rebuilt from offset zero, which is
 // what the reconstruction can deliver, and FirstGap is where a block fits in the earliest hole left behind.
-func decompressUPXBlocks(ctx context.Context, r io.ReaderAt, info *upxInfo, out *spillbuf.Buffer) error {
+func decompressUPXBlocks(ctx context.Context, r io.ReaderAt, info *upxInfo, out blockSink) error {
 	// UPX packs the original file as a series of blocks that together reconstruct p_filesize. Track the
 	// unclaimed remainder so the block headers cannot drive more decompression than the file itself
 	// declares: without this, every block may individually claim the whole original size, and the total
@@ -710,7 +731,7 @@ func readChainBlock(r io.ReaderAt, offset int64, blockNum int, inputLen int64) (
 //
 // Block 3 indexes ptLoadOffsets[1], not [0]: block 2 is the first loadable extent and was already placed
 // sequentially, which is where the first PT_LOAD lives. The offset is not an off-by-one.
-func blockDestination(blockNum int, size uint32, sequential uint64, ptLoadOffsets []uint64, out *spillbuf.Buffer, total uint64) (uint64, bool) {
+func blockDestination(blockNum int, size uint32, sequential uint64, ptLoadOffsets []uint64, out blockSink, total uint64) (uint64, bool) {
 	switch {
 	case blockNum > 2 && blockNum-2 < len(ptLoadOffsets):
 		dest := ptLoadOffsets[blockNum-2]

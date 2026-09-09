@@ -12,7 +12,6 @@ import (
 	"github.com/kastenhq/goversion/version"
 
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/spillbuf"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/elfutil"
@@ -28,7 +27,24 @@ type extendedBuildInfo struct {
 	// unpacked is the reconstruction when this binary was UPX-packed, and nil when it was not. It is
 	// carried on the build info because the readers downstream of the scan want it too, since the packed
 	// bytes hold no readable version strings either. The caller of scanFile owns it and must Close it.
-	unpacked *spillbuf.Buffer
+	unpacked unpackedContents
+}
+
+// unpackedContents is the reconstruction of a UPX-packed binary, as everything downstream of the unpack
+// uses it: bytes at offsets, the length it is willing to stand behind, and the temp file underneath to
+// release when the scan is done with it. internal/spillbuf is what implements it, and naming that type in
+// these signatures would say the readers care where the bytes live, which they do not.
+//
+// A nil value means the binary was not packed, and unpackUPX only ever returns a literal nil for that: a
+// nil *spillbuf.Buffer widened into this interface is a non-nil interface holding a nil pointer, so it
+// reads as present everywhere it is checked and then panics on first use. readerFor, seekerFor and
+// closeUnpacked are the only places that check.
+type unpackedContents interface {
+	io.ReaderAt
+	io.Closer
+
+	// Size is the contiguous run rebuilt from offset zero, which is all the reconstruction stands behind.
+	Size() int64
 }
 
 // scanFile scans file to try to report the Go and module versions.
@@ -72,7 +88,7 @@ func scanReader(ctx context.Context, location file.Location, r io.ReaderAt, capt
 	ownContents := true
 	defer func() {
 		if ownContents {
-			unpacked.Close()
+			closeUnpacked(unpacked)
 		}
 	}()
 
@@ -224,7 +240,7 @@ func getNativeFIPSSettings(settings []debug.BuildSetting) []string {
 // a partial reconstruction lost are exactly the non-loadable tail those depend on. That only holds when
 // the contents are a reconstruction: a gap read off the bytes as they were found is not a gap at all, and
 // both places below that hand those bytes back drop it.
-func readContentsAndBuildInfo(ctx context.Context, r io.ReaderAt) (*spillbuf.Buffer, *debug.BuildInfo, error) {
+func readContentsAndBuildInfo(ctx context.Context, r io.ReaderAt) (unpackedContents, *debug.BuildInfo, error) {
 	unpacked, unpackErr := unpackUPX(ctx, r)
 	if isCancelled(unpackErr) {
 		return unpacked, nil, unpackErr
@@ -248,7 +264,7 @@ func readContentsAndBuildInfo(ctx context.Context, r io.ReaderAt) (*spillbuf.Buf
 		if foundBI, foundErr := getBuildInfo(r); foundErr == nil && foundBI != nil {
 			log.WithFields("error", err, "unpackError", unpackErr).
 				Trace("UPX reconstruction carried no build info, reading the binary as it was found")
-			_ = unpacked.Close()
+			closeUnpacked(unpacked)
 			// unpackErr is deliberately dropped. Every reader after this one reads the bytes as they were
 			// found, not the reconstruction, so nothing downstream is short: the header this binary
 			// carried was not describing real UPX output in the first place. Returning the gap here would
@@ -274,10 +290,9 @@ func isCancelled(err error) bool {
 // readerFor returns where a scanned binary should be read from: the reconstruction when it was packed,
 // the input as it was found otherwise.
 //
-// The nil check lives here, in one place, on purpose. A nil *spillbuf.Buffer widened into an io.ReaderAt
-// is a non-nil interface holding a nil pointer, so it reads as present everywhere it is checked and then
-// panics on first use. Every reader below the scan goes through here, so the widening happens once.
-func readerFor(unpacked *spillbuf.Buffer, found io.ReaderAt) io.ReaderAt {
+// The nil check lives here, in one place, on purpose: every reader below the scan goes through here, so no
+// parser has to ask whether this binary was packed.
+func readerFor(unpacked unpackedContents, found io.ReaderAt) io.ReaderAt {
 	if unpacked == nil {
 		return found
 	}
@@ -286,13 +301,22 @@ func readerFor(unpacked *spillbuf.Buffer, found io.ReaderAt) io.ReaderAt {
 
 // seekerFor is readerFor for the readers after the scan, which seek. found belongs to the caller and is
 // reused for every later module, so this deliberately hands back no Closer.
-func seekerFor(unpacked *spillbuf.Buffer, found io.ReadSeeker) io.ReadSeeker {
+func seekerFor(unpacked unpackedContents, found io.ReadSeeker) io.ReadSeeker {
 	if unpacked == nil {
 		return found
 	}
 	// the SectionReader snapshots Size() here, which is correct: the reconstruction is complete by the time
-	// anything seeks it.
+	// anything seeks it. It also gives each caller its own cursor over the same contents.
 	return io.NewSectionReader(unpacked, 0, unpacked.Size())
+}
+
+// closeUnpacked releases a reconstruction, if the binary turned out to be packed at all. Nothing to unpack
+// is the common case rather than an edge one, so every owner of an unpackedContents closes through here.
+func closeUnpacked(unpacked unpackedContents) {
+	if unpacked == nil {
+		return
+	}
+	_ = unpacked.Close()
 }
 
 // readBuildInfo bounds the reader before handing it to debug/buildinfo, which opens ELF files with
