@@ -4,6 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
@@ -11,7 +15,7 @@ import (
 )
 
 func TestTerraformCataloger(t *testing.T) {
-	c := NewLockCataloger()
+	c := NewLockCataloger(DefaultCatalogerConfig())
 
 	fileLoc := file.NewLocation(".terraform.lock.hcl")
 	location := fileLoc.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
@@ -100,4 +104,35 @@ func TestTerraformCataloger(t *testing.T) {
 				TestCataloger(t, c)
 		})
 	}
+}
+
+func TestTerraformCatalogerWithLicenses(t *testing.T) {
+	c := NewLockCataloger(DefaultCatalogerConfig())
+
+	pkgtest.NewCatalogTester().
+		WithResolver(fileresolver.NewFromUnindexedDirectory(filepath.Join("testdata", "with-licenses"))).
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, relationships []artifact.Relationship) {
+			require.Len(t, pkgs, 2)
+
+			var awsPkg, gcpPkg pkg.Package
+			for _, p := range pkgs {
+				switch p.Name {
+				case "registry.terraform.io/hashicorp/aws":
+					awsPkg = p
+				case "registry.terraform.io/hashicorp/google":
+					gcpPkg = p
+				}
+			}
+
+			require.Equal(t, "5.72.1", awsPkg.Version)
+			require.Equal(t, "6.8.0", gcpPkg.Version)
+
+			awsLicenses := awsPkg.Licenses.ToSlice()
+			require.Len(t, awsLicenses, 1, "expected AWS provider to have one license from local .terraform cache")
+			assert.Equal(t, "MIT", awsLicenses[0].SPDXExpression)
+			assert.Equal(t, "MIT", awsLicenses[0].Value)
+
+			assert.True(t, gcpPkg.Licenses.Empty(), "expected Google provider to have no licenses")
+		}).
+		TestCataloger(t, c)
 }

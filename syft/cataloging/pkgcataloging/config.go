@@ -10,6 +10,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/terraform"
 )
 
 type Config struct {
@@ -22,6 +23,7 @@ type Config struct {
 	LinuxKernel kernel.LinuxKernelCatalogerConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Nix         nix.Config                        `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      python.CatalogerConfig            `yaml:"python" json:"python" mapstructure:"python"`
+	Terraform   terraform.CatalogerConfig         `yaml:"terraform" json:"terraform" mapstructure:"terraform"`
 }
 
 func DefaultConfig() Config {
@@ -34,6 +36,7 @@ func DefaultConfig() Config {
 		LinuxKernel: kernel.DefaultLinuxKernelCatalogerConfig(),
 		Nix:         nix.DefaultConfig(),
 		Python:      python.DefaultCatalogerConfig(),
+		Terraform:   terraform.DefaultCatalogerConfig(),
 	}
 }
 
@@ -79,5 +82,10 @@ func (c Config) WithPythonConfig(cfg python.CatalogerConfig) Config {
 
 func (c Config) WithJavaArchiveConfig(cfg java.ArchiveCatalogerConfig) Config {
 	c.JavaArchive = cfg
+	return c
+}
+
+func (c Config) WithTerraformConfig(cfg terraform.CatalogerConfig) Config {
+	c.Terraform = cfg
 	return c
 }

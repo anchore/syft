@@ -28,6 +28,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/kernel"
 	"github.com/anchore/syft/syft/pkg/cataloger/nix"
 	"github.com/anchore/syft/syft/pkg/cataloger/python"
+	"github.com/anchore/syft/syft/pkg/cataloger/terraform"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -53,6 +54,7 @@ type Catalog struct {
 	LinuxKernel linuxKernelConfig `yaml:"linux-kernel" json:"linux-kernel" mapstructure:"linux-kernel"`
 	Nix         nixConfig         `yaml:"nix" json:"nix" mapstructure:"nix"`
 	Python      pythonConfig      `yaml:"python" json:"python" mapstructure:"python"`
+	Terraform   terraformConfig   `yaml:"terraform" json:"terraform" mapstructure:"terraform"`
 
 	// configuration for the source (the subject being analyzed)
 	Registry   registryConfig `yaml:"registry" json:"registry" mapstructure:"registry"`
@@ -84,6 +86,7 @@ func DefaultCatalog() Catalog {
 		Nix:           defaultNixConfig(),
 		Cpp:           defaultCppConfig(),
 		Dotnet:        defaultDotnetConfig(),
+		Terraform:     defaultTerraformConfig(),
 		Golang:        defaultGolangConfig(),
 		Java:          defaultJavaConfig(),
 		File:          defaultFileConfig(),
@@ -214,6 +217,9 @@ func (cfg Catalog) ToPackagesConfig() pkgcataloging.Config {
 			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.SearchRemoteLicenses)).
 			WithPypiBaseURL(cfg.Python.PypiBaseURL).
 			WithGuessUnpinnedRequirements(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Python), cfg.Python.GuessUnpinnedRequirements)),
+		Terraform: terraform.DefaultCatalogerConfig().
+			WithSearchRemoteLicenses(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Terraform), cfg.Terraform.SearchRemoteLicenses)).
+			WithRegistryBaseURL(cfg.Terraform.RegistryBaseURL),
 		JavaArchive: java.DefaultArchiveCatalogerConfig().
 			WithUseMavenLocalRepository(*multiLevelOption(false, enrichmentEnabled(cfg.Enrich, task.Java, task.Maven), cfg.Java.UseMavenLocalRepository)).
 			WithMavenLocalRepositoryDir(cfg.Java.MavenLocalRepositoryDir).
@@ -308,6 +314,7 @@ var publicisedEnrichmentOptions = []string{
 	task.Java,
 	task.JavaScript,
 	task.Python,
+	task.Terraform,
 	task.Vcpkg,
 }
 
