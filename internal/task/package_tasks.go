@@ -58,6 +58,9 @@ const (
 	// Python ecosystem labels
 	Python = "python"
 
+	// Terraform ecosystem labels
+	Terraform = "terraform"
+
 	// C/C++ ecosystem labels
 	Cpp   = "cpp"
 	Vcpkg = "vcpkg"
@@ -185,7 +188,12 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(sbomCataloger.NewCataloger, "sbom"), // note: not evidence of installed packages
 		newSimplePackageTaskFactory(bitnamiSbomCataloger.NewCataloger, "bitnami", pkgcataloging.InstalledTag, pkgcataloging.ImageTag),
 		newSimplePackageTaskFactory(wordpress.NewWordpressPluginCataloger, pkgcataloging.DirectoryTag, pkgcataloging.ImageTag, "wordpress"),
-		newSimplePackageTaskFactory(terraform.NewLockCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, "terraform"),
+		newPackageTaskFactory(
+			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				return terraform.NewLockCataloger(cfg.PackagesConfig.Terraform)
+			},
+			pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, Terraform,
+		),
 		newSimplePackageTaskFactory(homebrew.NewCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "homebrew"),
 		newSimplePackageTaskFactory(apple.NewAppBundleCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, "apple"),
 		newSimplePackageTaskFactory(conda.NewCondaMetaCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.PackageTag, "conda"),
