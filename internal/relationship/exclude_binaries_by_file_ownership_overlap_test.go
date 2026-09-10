@@ -10,11 +10,12 @@ import (
 )
 
 func TestExcludeByFileOwnershipOverlap(t *testing.T) {
-	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg}
+	packageA := pkg.Package{Name: "libopenssl3", Type: pkg.ApkPkg}
 	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg, Metadata: pkg.JavaVMInstallation{}}
-	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
+	packageC := pkg.Package{Name: "openssl", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.BitnamiPkg}
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
+	packageE := pkg.Package{Name: "vendor-product", Type: pkg.RpmPkg}
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
 		p.SetID()
 	}
 
@@ -34,6 +35,19 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 			},
 			packages:      pkg.NewCollection(packageA, packageC),
 			shouldExclude: true,
+		},
+		{
+			// prove that an OS package unrelated to the binary does NOT exclude it
+			// (a vendor RPM bundling its own copy of a library must not hide the
+			// binary's vulnerabilities: https://github.com/anchore/grype/issues/3670)
+			name: "no exclusion from unrelated os pkg -> elf binary",
+			relationship: artifact.Relationship{
+				Type: artifact.OwnershipByFileOverlapRelationship,
+				From: packageE, // unrelated RPM
+				To:   packageC, // ELF binary
+			},
+			packages:      pkg.NewCollection(packageE, packageC),
+			shouldExclude: false,
 		},
 		{
 			// prove that bin -> JVM exclusions are wired
@@ -72,13 +86,15 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 }
 
 func TestIdentifyOverlappingOSRelationship(t *testing.T) {
-	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg} // OS package
-	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg}
-	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
+	packageA := pkg.Package{Name: "libopenssl3", Type: pkg.ApkPkg} // OS package shipping the binary
+	packageB := pkg.Package{Name: "openssl", Type: pkg.BinaryPkg}
+	packageC := pkg.Package{Name: "openssl", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.PythonPkg} // Language package
-	packageE := pkg.Package{Name: "package-e", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
+	packageE := pkg.Package{Name: "openssl", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
+	packageF := pkg.Package{Name: "vendor-product", Type: pkg.RpmPkg} // unrelated OS owner
+	packageG := pkg.Package{Name: "gc", Type: pkg.BinaryPkg}          // very short binary name
 
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE, &packageF, &packageG} {
 		p.SetID()
 	}
 
@@ -92,13 +108,13 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 			name:       "OS -> binary without metadata",
 			parent:     &packageA,
 			child:      &packageB,
-			expectedID: packageB.ID(), // OS package to binary package, should return child ID
+			expectedID: packageB.ID(), // OS package shipping the binary, should return child ID
 		},
 		{
 			name:       "OS -> binary with binary metadata",
 			parent:     &packageA,
 			child:      &packageC,
-			expectedID: packageC.ID(), // OS package to binary package with binary metadata, should return child ID
+			expectedID: packageC.ID(), // OS package shipping the binary with binary metadata, should return child ID
 		},
 		{
 			name:       "OS -> non-binary package",
@@ -110,13 +126,26 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 			name:       "OS -> binary with ELF metadata",
 			parent:     &packageA,
 			child:      &packageE,
-			expectedID: packageE.ID(), // OS package to binary package with ELF metadata, should return child ID
+			expectedID: packageE.ID(), // OS package shipping the binary with ELF metadata, should return child ID
 		},
 		{
 			name:       "non-OS parent",
 			parent:     &packageD, // non-OS package
 			child:      &packageC,
 			expectedID: "", // non-OS parent, no exclusion
+		},
+		{
+			// https://github.com/anchore/grype/issues/3670
+			name:       "unrelated OS owner does not exclude the binary",
+			parent:     &packageF,
+			child:      &packageB,
+			expectedID: "", // vendor RPM bundling its own copy must not suppress the finding
+		},
+		{
+			name:       "very short binary name only matches exactly",
+			parent:     &packageF, // "vendor-product" contains no "gc"
+			child:      &packageG,
+			expectedID: "",
 		},
 	}
 
