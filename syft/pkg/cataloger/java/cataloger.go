@@ -15,16 +15,21 @@ func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	c := generic.NewCataloger("java-archive-cataloger").
 		WithParserByGlobs(gap.parseJavaArchive, archiveFormatGlobs...)
 
-	if cfg.IncludeIndexedArchives {
-		// java archives wrapped within zip files
-		gzp := newGenericZipWrappedJavaArchiveParser(cfg)
-		c.WithParserByGlobs(gzp.parseZipWrappedJavaArchive, genericZipGlobs...)
-	}
+	// when the generic archive cataloger task owns recursion into archives, it extracts zip/tar
+	// archives generically and this cataloger meets any java archives within them at the next
+	// nesting level, so the wrapped-archive parsers would only duplicate that work
+	if !cfg.nestedArchivesHandledExternally() {
+		if cfg.IncludeIndexedArchives {
+			// java archives wrapped within zip files
+			gzp := newGenericZipWrappedJavaArchiveParser(cfg)
+			c.WithParserByGlobs(gzp.parseZipWrappedJavaArchive, genericZipGlobs...)
+		}
 
-	if cfg.IncludeUnindexedArchives {
-		// java archives wrapped within tar files
-		gtp := newGenericTarWrappedJavaArchiveParser(cfg)
-		c.WithParserByGlobs(gtp.parseTarWrappedJavaArchive, genericTarGlobs...)
+		if cfg.IncludeUnindexedArchives {
+			// java archives wrapped within tar files
+			gtp := newGenericTarWrappedJavaArchiveParser(cfg)
+			c.WithParserByGlobs(gtp.parseTarWrappedJavaArchive, genericTarGlobs...)
+		}
 	}
 	return c
 }

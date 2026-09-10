@@ -20,7 +20,15 @@ type Directory struct {
 }
 
 func NewFromDirectory(root, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
-	resolver, err := newFromDirectoryWithoutIndex(root, base, pathFilters...)
+	return NewFromDirectoryWithFS(root, base, "", pathFilters...)
+}
+
+// NewFromDirectoryWithFS builds an indexed directory resolver whose Locations are stamped with the
+// given fileSystemID. Pass a non-empty id when the directory is an archive that has been extracted
+// to a temp dir and is being treated as its own standalone filesystem (see the archive cataloger);
+// pass "" for an ordinary directory scan.
+func NewFromDirectoryWithFS(root, base, fileSystemID string, pathFilters ...PathIndexVisitor) (*Directory, error) {
+	resolver, err := newFromDirectoryWithoutIndex(root, base, fileSystemID, pathFilters...)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +36,7 @@ func NewFromDirectory(root, base string, pathFilters ...PathIndexVisitor) (*Dire
 	return resolver, resolver.buildIndex()
 }
 
-func newFromDirectoryWithoutIndex(root, base string, pathFilters ...PathIndexVisitor) (*Directory, error) {
+func newFromDirectoryWithoutIndex(root, base, fileSystemID string, pathFilters ...PathIndexVisitor) (*Directory, error) {
 	chroot, err := NewChrootContextFromCWD(root, base)
 	if err != nil {
 		return nil, fmt.Errorf("unable to interpret chroot context: %w", err)
@@ -40,10 +48,11 @@ func newFromDirectoryWithoutIndex(root, base string, pathFilters ...PathIndexVis
 	return &Directory{
 		path: cleanRoot,
 		FiletreeResolver: FiletreeResolver{
-			Chroot: *chroot,
-			Tree:   filetree.New(),
-			Index:  filetree.NewIndex(),
-			Opener: nativeOSFileOpener,
+			Chroot:       *chroot,
+			Tree:         filetree.New(),
+			Index:        filetree.NewIndex(),
+			Opener:       nativeOSFileOpener,
+			FileSystemID: fileSystemID,
 		},
 		indexer: newDirectoryIndexer(cleanRoot, cleanBase, pathFilters...),
 	}, nil

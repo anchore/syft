@@ -44,7 +44,7 @@ func NewCataloger(cfg Config) *Cataloger {
 	}
 }
 
-func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file.Coordinates]string, error) {
+func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver) (map[file.Coordinates]string, error) {
 	results := make(map[file.Coordinates]string)
 	var locations []file.Location
 	var errs error
@@ -54,7 +54,7 @@ func (i *Cataloger) Catalog(_ context.Context, resolver file.Resolver) (map[file
 		return nil, err
 	}
 
-	prog := catalogingProgress(int64(len(locations)))
+	prog := catalogingProgress(ctx, int64(len(locations)))
 
 	for _, location := range locations {
 		prog.AtomicStage.Set(location.Path())
@@ -113,7 +113,7 @@ func (i *Cataloger) catalogLocation(resolver file.Resolver, location file.Locati
 	return buf.String(), nil
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File contents",
@@ -121,5 +121,5 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }

@@ -99,6 +99,7 @@ func (cfg Catalog) ToSBOMConfig(id clio.Identification) *syft.CreateSBOMConfig {
 		WithComplianceConfig(cfg.ToComplianceConfig()).
 		WithUnknownsConfig(cfg.ToUnknownsConfig()).
 		WithSearchConfig(cfg.ToSearchConfig()).
+		WithArchiveConfig(cfg.ToArchiveConfig()).
 		WithPackagesConfig(cfg.ToPackagesConfig()).
 		WithLicenseConfig(cfg.ToLicenseConfig()).
 		WithFilesConfig(cfg.ToFilesConfig()).
@@ -113,6 +114,19 @@ func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
 	return cataloging.SearchConfig{
 		Scope: source.ParseScope(cfg.Scope),
 	}
+}
+
+func (cfg Catalog) ToArchiveConfig() cataloging.ArchiveSearchConfig {
+	// the exclusion patterns come from the same --exclude flag that reaches the source, narrowed to
+	// the ones whose shape reaches inside an archive. CreateSBOM fills the field from the source only
+	// when it is empty, so this value wins.
+	return cataloging.DefaultArchiveSearchConfig().
+		WithIncludeIndexedArchives(cfg.Package.SearchIndexedArchives).
+		WithIncludeUnindexedArchives(cfg.Package.SearchUnindexedArchives).
+		WithMaxDepth(cfg.Package.NestedArchiveMaxDepth).
+		WithMaxMemoryBytes(cfg.Package.NestedArchiveMaxMemoryBytes).
+		WithMaxDiskBytes(cfg.Package.NestedArchiveMaxDiskBytes).
+		WithExclusionPatterns(cataloging.ArchiveExclusionPatterns(cfg.Exclusions))
 }
 
 func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {
