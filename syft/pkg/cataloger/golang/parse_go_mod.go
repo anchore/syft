@@ -132,9 +132,9 @@ func (c *goModCataloger) loadPackages(modDir string, loc file.Location) (pkgs ma
 	for _, p := range rootPkgs {
 		if len(p.Errors) > 0 {
 			// Log errors but continue processing
-			for _, e := range p.Errors {
-				log.Debugf("package load error for %s: %v", p.PkgPath, e)
-				unknownErr = unknown.Append(unknownErr, loc, err)
+			for _, pe := range p.Errors {
+				log.Debugf("package load error for %s: %v", p.PkgPath, pe)
+				unknownErr = unknown.Append(unknownErr, loc, pe)
 			}
 		}
 	}
