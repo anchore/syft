@@ -85,10 +85,13 @@ func TestFindSignatureOffset(t *testing.T) {
 			wantErr:     require.Error,
 		},
 		{
-			name:        "header offset of zero is rejected",
+			// every apphost carries the signature with a zero offset placeholder; only publishing as a
+			// single file fills it in. Rejecting it would report a spurious parse failure against every
+			// ordinary framework-dependent .NET executable.
+			name:        "header offset of zero means not bundled",
 			data:        fileWithSignatureAt(withMarker, 64, 0),
 			searchLimit: withMarker,
-			wantErr:     require.Error,
+			want:        0,
 		},
 		{
 			// a uint64 offset read into an int64 can land negative, which would seek backwards

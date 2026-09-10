@@ -62,7 +62,13 @@ func ExtractDepsJSON(r io.ReadSeeker, searchLimit int64) (string, error) {
 }
 
 // findSignatureOffset searches the start of r for the .NET single-file bundle signature and returns the
-// bundle header offset stored in the 8 bytes immediately before it, or 0 if the signature is not found.
+// bundle header offset stored in the 8 bytes immediately before it.
+//
+// Three outcomes are distinct on purpose, because collapsing any two of them loses information the caller
+// needs: 0 means there is no bundle here, an error means we could not tell, and a positive offset is the
+// answer. In particular the apphost ships the signature compiled in with a zero offset placeholder and only
+// gets a real one written when it is published as a single file, so a zero offset is the ordinary
+// framework-dependent executable rather than a malformed one.
 func findSignatureOffset(r io.ReadSeeker, searchLimit int64) (int64, error) {
 	end, err := r.Seek(0, io.SeekEnd)
 	if err != nil {
@@ -109,9 +115,14 @@ func findSignatureOffset(r io.ReadSeeker, searchLimit int64) (int64, error) {
 
 	headerOffset := int64(binary.LittleEndian.Uint64(searchData[idx-8 : idx]))
 
+	if headerOffset == 0 {
+		// the marker is compiled into every apphost; only publishing as a single file fills in the offset
+		return 0, nil
+	}
+
 	// the offset comes straight out of the file, so it is the least trustworthy value here: everything
 	// downstream seeks to it and reads structures from it
-	if headerOffset <= 0 || headerOffset >= end {
+	if headerOffset < 0 || headerOffset >= end {
 		return 0, fmt.Errorf("bundle header offset %d lies outside the file (%d bytes)", headerOffset, end)
 	}
 
