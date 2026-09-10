@@ -501,7 +501,7 @@ func rvaToFileOffset(rva uint32, sections []pe.SectionHeader32) (uint32, error) 
 }
 
 // readDataFromRVA will read data from a specific RVA in the PE file
-func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.SectionHeader32) (*bytes.Reader, error) {
+func readDataFromRVA(file io.ReaderAt, rva, size uint32, sections []pe.SectionHeader32) (*bytes.Reader, error) {
 	if size == 0 {
 		return nil, fmt.Errorf("zero size specified")
 	}
@@ -521,21 +521,21 @@ func readDataFromRVA(file io.ReadSeeker, rva, size uint32, sections []pe.Section
 		return nil, fmt.Errorf("error reading data: %d bytes declared at offset %d exceeds the %d byte limit", size, offset, maxDirectorySectionSize)
 	}
 
-	end, err := file.Seek(0, io.SeekEnd)
-	if err != nil {
-		return nil, fmt.Errorf("error measuring file: %w", err)
+	// the length has to come from something the reader can back up rather than from what it claims, since
+	// the whole point here is weighing a declared size against the bytes that are really present
+	end, ok := intFile.ReaderSize(file)
+	if !ok {
+		return nil, errors.New("error measuring file")
 	}
 
 	if remaining := end - int64(offset); remaining < int64(size) {
 		return nil, fmt.Errorf("error reading data: %d bytes declared at offset %d but only %d remain", size, offset, max(remaining, 0))
 	}
 
-	if _, err := file.Seek(int64(offset), io.SeekStart); err != nil {
-		return nil, fmt.Errorf("error seeking to data: %w", err)
-	}
-
 	data := make([]byte, size)
-	if _, err := io.ReadFull(file, data); err != nil {
+	// ReadAt may report a full read as io.EOF when it lands on the end of the file, so the count is what
+	// says whether the whole section was there
+	if n, err := file.ReadAt(data, int64(offset)); err != nil && n < len(data) {
 		return nil, fmt.Errorf("error reading data: %w", err)
 	}
 

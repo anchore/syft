@@ -86,6 +86,16 @@ func (r *readSizeRecorder) Read(p []byte) (int, error) {
 	return r.Reader.Read(p)
 }
 
+// note: ReadAt is recorded too, since the bounded reads go through it to leave the caller's cursor alone.
+func (r *readSizeRecorder) ReadAt(p []byte, off int64) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func (r *readSizeRecorder) Close() error { return nil }
+
 func TestExtractDepsJSONFromBundle_MalformedSectionSizesDoNotOverAllocate(t *testing.T) {
 	// PointerToRawData and SizeOfRawData are user-controlled and unrelated to the real file size
 	sections := []pe.SectionHeader32{{PointerToRawData: 0xFFFFFFFF, SizeOfRawData: 0xFFFFFFFF}}

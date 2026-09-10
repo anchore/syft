@@ -20,7 +20,7 @@ func fileWithSignatureAt(size, sigStart int, headerOffset uint64) []byte {
 	return data
 }
 
-func TestFindSignatureOffset(t *testing.T) {
+func TestFindBundleHeaderOffset(t *testing.T) {
 	// large enough that the marker's declared header offset lands inside the file
 	const withMarker = 8192
 	const headerOffset = 0x1234
@@ -108,7 +108,7 @@ func TestFindSignatureOffset(t *testing.T) {
 				tt.wantErr = require.NoError
 			}
 
-			got, err := findSignatureOffset(bytes.NewReader(tt.data), tt.searchLimit)
+			got, err := findBundleHeaderOffset(readSeekCloser{bytes.NewReader(tt.data)}, tt.searchLimit)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
@@ -118,13 +118,45 @@ func TestFindSignatureOffset(t *testing.T) {
 	}
 }
 
-// shortReader reports a size larger than what Read will hand back, which is what unionreader does for a
-// squashfs block that decompresses short. The marker may well be in the bytes we did get.
+// shortReader hands back fewer bytes than were asked for, which is what unionreader does for a squashfs
+// block that decompresses short. Its size is honest; only the read comes up short, so the marker may well
+// be in the bytes we did get.
 type shortReader struct {
 	data []byte
 	size int64
 	pos  int64
 }
+
+func (r *shortReader) ReadAt(p []byte, off int64) (int, error) {
+	if off >= int64(len(r.data)) {
+		return 0, io.EOF
+	}
+	n := copy(p, r.data[off:])
+	if n < len(p) {
+		return n, io.EOF
+	}
+	return n, nil
+}
+
+func (r *shortReader) Close() error { return nil }
+
+// lyingReader claims a size it cannot deliver a byte at. Nothing derived from that number can be trusted,
+// which is the case intFile.ReaderSize exists to catch.
+type lyingReader struct {
+	*bytes.Reader
+	size int64
+}
+
+func (r *lyingReader) Size() int64 { return r.size }
+
+func (r *lyingReader) ReadAt(p []byte, off int64) (int, error) {
+	if off >= r.Reader.Size() {
+		return 0, io.EOF
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func (r *lyingReader) Close() error { return nil }
 
 func (r *shortReader) Read(p []byte) (int, error) {
 	if r.pos >= int64(len(r.data)) {
@@ -148,16 +180,27 @@ func (r *shortReader) Seek(offset int64, whence int) (int64, error) {
 	return r.pos, nil
 }
 
-func TestFindSignatureOffset_ShortReadStillSearchesWhatWasRead(t *testing.T) {
+func TestFindBundleHeaderOffset_ShortReadStillSearchesWhatWasRead(t *testing.T) {
 	data := fileWithSignatureAt(8192, 64, 0x1234)
 
-	// claims twice the bytes it will actually produce
-	r := &shortReader{data: data, size: int64(len(data)) * 2}
+	// honest about its length, but every read stops early
+	r := &shortReader{data: data, size: int64(len(data))}
 
-	got, err := findSignatureOffset(r, int64(len(data))*2)
+	got, err := findBundleHeaderOffset(r, int64(len(data)))
 	require.NoError(t, err)
 	assert.Equal(t, int64(0x1234), got,
 		"a short read must not abort the search; the marker was in the bytes that were returned")
+}
+
+func TestFindBundleHeaderOffset_UnbackedSizeIsReported(t *testing.T) {
+	data := fileWithSignatureAt(8192, 64, 0x1234)
+
+	// claims twice the bytes it holds, so nothing sized or bounds-checked against that number means anything
+	r := &lyingReader{Reader: bytes.NewReader(data), size: int64(len(data)) * 2}
+
+	_, err := findBundleHeaderOffset(r, int64(len(data))*2)
+	require.Error(t, err,
+		"a reader that cannot back the length it reports must be reported, not read as an absent bundle")
 }
 
 func TestRead7BitEncodedInt(t *testing.T) {
@@ -227,7 +270,7 @@ func TestFindDepsJSONInManifest_ImpossibleEntryCountIsRejected(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := bytes.NewReader(make([]byte, 512))
 
-			_, err := findDepsJSONInManifest(r, tt.numFiles, tt.majorVersion)
+			_, err := findDepsJSONInManifest(readSeekCloser{r}, tt.numFiles, tt.majorVersion)
 			require.Error(t, err)
 		})
 	}
@@ -244,7 +287,7 @@ func TestFindDepsJSONInManifest_PlausibleEntryCountIsWalked(t *testing.T) {
 		require.NoError(t, binary.Write(&buf, binary.LittleEndian, uint8('a'))) // path
 	}
 
-	got, err := findDepsJSONInManifest(bytes.NewReader(buf.Bytes()), 2, 1)
+	got, err := findDepsJSONInManifest(readSeekCloser{bytes.NewReader(buf.Bytes())}, 2, 1)
 	require.NoError(t, err)
 	assert.Empty(t, got, "no deps.json entry in this manifest")
 }

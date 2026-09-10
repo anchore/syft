@@ -2,12 +2,12 @@ package pe
 
 import (
 	"debug/pe"
-	"io"
 
+	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/bundle"
 )
 
-// ExtractDepsJSONFromBundle searches for an embedded deps.json file in a .NET single-file bundle.
+// extractDepsJSONFromBundle searches for an embedded deps.json file in a .NET single-file bundle.
 // When built with PublishSingleFile=true, .NET embeds the application and all dependencies into
 // the AppHost executable. The bundle marker (8-byte header offset + 32-byte signature) is placed
 // in a placeholder location within the PE structure, pointing to the bundle header which contains
@@ -39,7 +39,7 @@ import (
 // - https://github.com/dotnet/runtime/blob/main/src/native/corehost/bundle/header.h
 // - https://github.com/dotnet/runtime/blob/main/src/native/corehost/bundle/file_entry.h
 // - https://github.com/dotnet/runtime/blob/main/src/native/corehost/bundle/file_type.h
-func extractDepsJSONFromBundle(r io.ReadSeeker, sections []pe.SectionHeader32) (string, error) {
+func extractDepsJSONFromBundle(r unionreader.UnionReader, sections []pe.SectionHeader32) (string, error) {
 	return bundle.ExtractDepsJSON(r, calculatePEEndOffset(sections))
 }
 

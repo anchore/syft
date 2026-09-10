@@ -2,6 +2,7 @@ package bundle
 
 import (
 	"debug/elf"
+	"errors"
 
 	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -12,7 +13,12 @@ import (
 func ExtractDepsJSONFromELFBundle(r unionreader.UnionReader) (string, error) {
 	elfFile, err := elfutil.NewFile(r)
 	if err != nil {
-		// not an ELF, so not an ELF bundle
+		// a refusal is not the same as "this is not an ELF": elfutil exports this error precisely so the
+		// gap it leaves in the SBOM can be reported rather than read as an absence of evidence
+		if errors.Is(err, elfutil.ErrDeclaredSizeExceeded) {
+			return "", err
+		}
+		// not an ELF we can parse, so not an ELF bundle
 		return "", nil //nolint:nilerr
 	}
 
