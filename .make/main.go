@@ -1,27 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
-
-	"github.com/goccy/go-yaml"
+	"strconv"
 
 	. "github.com/anchore/go-make"
+	"github.com/anchore/go-make/config"
 	"github.com/anchore/go-make/file"
-	"github.com/anchore/go-make/git"
 	"github.com/anchore/go-make/lang"
 	"github.com/anchore/go-make/run"
 	"github.com/anchore/go-make/tasks/golint"
 	"github.com/anchore/go-make/tasks/goreleaser"
+	"github.com/anchore/go-make/tasks/gotask"
 	"github.com/anchore/go-make/tasks/gotest"
 )
-
-// taskfileDescriptions maps Taskfile.yaml task names to their `desc:` field.
-// Loaded at package init so wrap() can use Taskfile.yaml as the single source
-// of truth for wrapped-task descriptions.
-var taskfileDescriptions = mustReadTaskfileDescriptions()
 
 func main() {
 	Makefile(
@@ -36,31 +29,55 @@ func main() {
 			gotest.Name("unit"),
 			gotest.ExcludeGlob("**/test/**"),
 			gotest.CoverageThreshold(62),
+			race(),
 		),
 
-		// integration tests: native go-make Task. The race-detector smoke against a
-		// real image stays bundled here (RunsOn integration) so `make integration`
-		// behaves like the Taskfile version did.
-		gotest.Tasks(
-			gotest.Name("integration"),
-			gotest.IncludeGlob("./cmd/syft/internal/test/integration/..."),
-			gotest.Verbose(),
-			gotest.NoCoverage(),
-		),
+		// integration tests: run `go test` directly instead of via gotest.Tasks(), which
+		// has no way to set a timeout. The suite is a single package of ~36 sequential
+		// tests over 18 docker fixture images, so with a cold fixture cache (every image
+		// built + saved inline, under -race) it runs well past `go test`'s default 10m
+		// timeout -- which is exactly the case when regenerating the fixture cache from
+		// scratch. -count=1 keeps the go test cache from short-circuiting a run whose
+		// side effect (the built fixtures) is the thing we're after.
+		//
+		// The race-detector smoke against a real image stays bundled here (RunsOn
+		// integration) so `make integration` behaves like the Taskfile version did.
+		Task{
+			Name:        "integration",
+			Description: "run integration tests",
+			RunsOn:      lang.List("test"),
+			Run: func() {
+				raceFlag := ""
+				if raceEnabled() {
+					raceFlag = " -race"
+				}
+				Run(
+					"go test -count=1 -timeout=30m -v"+raceFlag+" ./cmd/syft/internal/test/integration/...",
+					run.Env("GODEBUG", "dontfreezetheworld=1"),
+				)
+			},
+		},
 		Task{
 			Name:        "integration:race-smoke",
 			Description: "exercise the CLI with the race detector",
 			RunsOn:      lang.List("integration"),
 			Run: func() {
+				if !raceEnabled() {
+					Log("race detector disabled (RACE=false); skipping race smoke")
+					return
+				}
 				Run("go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2")
 			},
 		},
 
-		// cli tests: native go-make Task. Requires SYFT_BINARY_LOCATION pointing at
-		// an *absolute* path to the snapshot binary. Intentionally does NOT depend
-		// on snapshot: in CI we download a pre-built snapshot artifact and re-running
-		// goreleaser here would both burn ~10m and clobber the downloaded binary.
-		// Locally, the failure message tells you to run `make snapshot` first.
+		// cli tests: native go-make Task. Runs SYFT_BINARY_LOCATION at an *absolute*
+		// path to the snapshot binary. Builds the snapshot only when the binary is
+		// missing rather than depending on the snapshot task unconditionally: in
+		// validations.yaml CI we download a pre-built snapshot artifact, so the binary
+		// already exists and rebuilding would both burn ~10m and clobber it. When
+		// `make test` runs cold (e.g. the release pipeline) or locally with no
+		// snapshot, we build a single-target snapshot (current OS/arch only) since
+		// that's all the CLI tests need.
 		Task{
 			Name:        "cli",
 			Description: "Run CLI tests",
@@ -68,7 +85,8 @@ func main() {
 			Run: func() {
 				bin := snapshotBinPath()
 				if !file.Exists(bin) {
-					panic(fmt.Sprintf("snapshot binary not found at %s; run `make snapshot` first", bin))
+					Log("snapshot binary not found at %s; building single-target snapshot", bin)
+					Run("make snapshot:single-target")
 				}
 				Log("testing binary: %s", bin)
 				Run(
@@ -85,108 +103,76 @@ func main() {
 			Dependencies: Deps("static-analysis", "test", "install-test"),
 		},
 
-		// --- everything below is implemented in Taskfile.yaml and surfaced here
-		// via wrap(). Descriptions come from Taskfile.yaml (single source of truth).
+		// --- everything else is implemented in Taskfile.yaml. gotask.Tasks()
+		// discovers every (non-internal) Taskfile task — including the namespaced
+		// `generate:cpe-index:*` tasks from the included task.d file — and surfaces
+		// them as first-class go-make tasks (with their canonical names and `desc:`)
+		// that forward to `task <name>`. Descriptions live in Taskfile.yaml as the
+		// single source of truth; no per-task wrapping needed here.
+		gotask.Tasks(),
 
-		// static analysis extras
-		wrap("check-json-schema-drift").RunOn("static-analysis"),
-		wrap("check-capability-drift"),
-		wrap("check-binary-fixture-size").RunOn("static-analysis"),
+		// gotask.Tasks() discovers canonical task names only, not Taskfile aliases,
+		// so re-expose `refresh-fixtures`'s `fixtures` alias for manual use.
+		Task{
+			Name:         "fixtures",
+			Description:  "Clear and fetch all test fixture cache (alias of refresh-fixtures)",
+			Dependencies: Deps("refresh-fixtures"),
+		},
 
-		// test extras
-		wrap("validate-cyclonedx-schema").RunOn("test"),
-		wrap("test-utils").RunOn("test"),
-		wrap("check-docker-cache").RunOn("test"),
-		wrap("snapshot-smoke-test"),
-
-		// update commands
-		wrap("update-format-golden-files"),
-
-		// fixture cache plumbing (heavy ORAS logic, lives in Taskfile).
-		// refresh-fixtures hooks into "unit" so `make unit` triggers the
-		// stale-cache detection + download just like `task unit` did on main
-		// (its `deps: [tmpdir, fixtures]` is what kept the fixture cache fresh).
-		wrap("fingerprints"),
-		wrap("refresh-fixtures").RunOn("unit"),
-		wrap("fixtures"),
-		wrap("build-fixtures"),
-		wrap("download-test-fixture-cache"),
-		wrap("upload-test-fixture-cache"),
-		wrap("show-test-image-cache"),
-
-		// install-script tests (delegates to test/install/Makefile)
-		wrap("install-test"),
-		wrap("install-test-cache-save"),
-		wrap("install-test-cache-load"),
-		wrap("install-test-ci-mac"),
-
-		// compare tests
-		wrap("generate-compare-file"),
-		wrap("compare-mac"),
-		wrap("compare-linux"),
-		wrap("compare-test-deb-package-install"),
-		wrap("compare-test-rpm-package-install"),
-
-		// code/data generation (umbrella + per-target; each lives in Taskfile)
-		wrap("generate"),
-		wrap("generate-json-schema"),
-		wrap("generate-license-list"),
-		wrap("generate-cpe-dictionary-index"),
-		wrap("generate-capabilities"),
-
-		// cleanup (each hooks into go-make's built-in `clean` label)
-		wrap("clean-snapshot").RunOn("clean"),
-		wrap("clean-docker-cache").RunOn("clean"),
-		wrap("clean-oras-cache").RunOn("clean"),
-		wrap("clean-cache").RunOn("clean"),
-		wrap("clean-test-observations").RunOn("clean"),
+		// gotask.Tasks() can't attach RunsOn labels, so wire the syft-specific
+		// Taskfile tasks into go-make's native phases here. These thin hooks have
+		// no body and no description (hidden from `make help`); they only pull the
+		// discovered tasks in when the labeled phase runs.
+		Task{
+			Name:         "static-analysis:syft",
+			RunsOn:       lang.List("static-analysis"),
+			Dependencies: Deps("check-json-schema-drift", "check-binary-fixture-size"),
+		},
+		Task{
+			Name:         "test:syft",
+			RunsOn:       lang.List("test"),
+			Dependencies: Deps("validate-cyclonedx-schema", "test-utils", "check-docker-cache"),
+		},
+		// refresh-fixtures hooks into "unit" so `make unit` triggers the stale-cache
+		// detection + download just like `task unit` did on main (its
+		// `deps: [tmpdir, fixtures]` is what kept the fixture cache fresh).
+		Task{
+			Name:         "unit:syft",
+			RunsOn:       lang.List("unit"),
+			Dependencies: Deps("refresh-fixtures"),
+		},
+		Task{
+			Name:   "clean:syft",
+			RunsOn: lang.List("clean"),
+			Dependencies: Deps(
+				"clean-snapshot",
+				"clean-docker-cache",
+				"clean-oras-cache",
+				"clean-cache",
+				"clean-test-observations",
+			),
+		},
 	)
 }
 
-// wrap creates a go-make Task that delegates execution to `task <name>`. The
-// task's description is pulled from Taskfile.yaml's `desc:` field — descriptions
-// for wrapped tasks must always live in Taskfile.yaml, never here.
-func wrap(name string) Task {
-	desc, ok := taskfileDescriptions[name]
-	if !ok || desc == "" {
-		// loud-fail at startup so missing descs can't sneak through review.
-		panic(fmt.Sprintf("Taskfile.yaml task %q is missing a `desc:` field; please add one", name))
+// raceEnabled is the single switch for the race detector across every test suite.
+// Unset it and we keep go-make's behavior (on in CI, off locally and on windows);
+// set RACE=false to turn it off everywhere -- worth doing when rebuilding the test
+// fixture cache from scratch, where every suite is dominated by building docker
+// fixtures and the race detector only adds wall clock. RACE=true forces it on.
+func raceEnabled() bool {
+	if enabled, err := strconv.ParseBool(config.Env("RACE", "")); err == nil {
+		return enabled
 	}
-	return Task{
-		Name:        name,
-		Description: desc,
-		Run:         func() { Run("task " + name) },
-	}
+	return config.CI && !config.Windows
 }
 
-// mustReadTaskfileDescriptions parses Taskfile.yaml at the repo root and returns
-// a map of task name -> desc. Runs at package init time so wrap() can use it.
-func mustReadTaskfileDescriptions() map[string]string {
-	root := git.Root()
-	if root == "" {
-		return nil
+// race applies raceEnabled() to a gotest suite. gotest exposes no functional option
+// for the race detector, but gotest.Config.Race is exported.
+func race() gotest.Option {
+	return func(c *gotest.Config) {
+		c.Race = raceEnabled()
 	}
-	path := filepath.Join(root, "Taskfile.yaml")
-	data, err := os.ReadFile(path) //nolint:gosec // G304: path resolved from git.Root()
-	if err != nil {
-		return nil
-	}
-	var tf struct {
-		Tasks map[string]struct {
-			Desc    string   `yaml:"desc"`
-			Aliases []string `yaml:"aliases"`
-		} `yaml:"tasks"`
-	}
-	lang.Throw(yaml.Unmarshal(data, &tf))
-	out := make(map[string]string, len(tf.Tasks))
-	for name, t := range tf.Tasks {
-		out[name] = t.Desc
-		// aliases inherit the canonical task's description so wrap() can find them.
-		for _, alias := range t.Aliases {
-			out[alias] = t.Desc
-		}
-	}
-	return out
 }
 
 // snapshotBinPath replicates the SNAPSHOT_BIN computation from the prior Taskfile:

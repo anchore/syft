@@ -435,6 +435,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/bun'
+        packages:
+          - class: bun-binary
+            name: bun
+            purl: pkg:generic/bun
+            cpes:
+              - cpe:2.3:a:oven-sh:bun:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ghc*'
         packages:
           - class: haskell-ghc-binary
@@ -668,6 +678,16 @@ catalogers:
             type: BinaryPkg
       - method: glob
         criteria:
+          - '**/{firefox,firefox.exe}'
+        packages:
+          - class: firefox-binary
+            name: firefox
+            purl: pkg:generic/firefox
+            cpes:
+              - cpe:2.3:a:mozilla:firefox:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
           - '**/ffmpeg'
         packages:
           - class: ffmpeg-binary
@@ -785,6 +805,86 @@ catalogers:
             purl: pkg:generic/nginx-ingress-controller
             cpes:
               - cpe:2.3:a:kubernetes:ingress-nginx:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/filebeat'
+        packages:
+          - class: filebeat-binary
+            name: filebeat
+            purl: pkg:generic/filebeat
+            cpes:
+              - cpe:2.3:a:elastic:filebeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/metricbeat'
+        packages:
+          - class: metricbeat-binary
+            name: metricbeat
+            purl: pkg:generic/metricbeat
+            cpes:
+              - cpe:2.3:a:elastic:metricbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/heartbeat'
+        packages:
+          - class: heartbeat-binary
+            name: heartbeat
+            purl: pkg:generic/heartbeat
+            cpes:
+              - cpe:2.3:a:elastic:heartbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/packetbeat'
+        packages:
+          - class: packetbeat-binary
+            name: packetbeat
+            purl: pkg:generic/packetbeat
+            cpes:
+              - cpe:2.3:a:elastic:packetbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/auditbeat'
+        packages:
+          - class: auditbeat-binary
+            name: auditbeat
+            purl: pkg:generic/auditbeat
+            cpes:
+              - cpe:2.3:a:elastic:auditbeat:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/elastic-agent'
+        packages:
+          - class: elastic-agent-binary
+            name: elastic-agent
+            purl: pkg:generic/elastic-agent
+            cpes:
+              - cpe:2.3:a:elastic:elastic_agent:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libkrb5.so*'
+        packages:
+          - class: krb5-library
+            name: krb5
+            purl: pkg:generic/krb5
+            cpes:
+              - cpe:2.3:a:mit:kerberos_5:*:*:*:*:*:*:*:*
+            type: BinaryPkg
+      - method: glob
+        criteria:
+          - '**/libkrb5.so*'
+        packages:
+          - class: heimdal-krb5-library
+            name: heimdal-krb5
+            purl: pkg:generic/heimdal-krb5
+            cpes:
+              - cpe:2.3:a:heimdal_project:heimdal:*:*:*:*:*:*:*:*
             type: BinaryPkg
       - method: glob
         criteria:
@@ -932,6 +1032,9 @@ catalogers:
       - apk
       - binary
       - rpm
+    purl_types: # AUTO-GENERATED
+      - apk
+      - rpm
     json_schema_types: # AUTO-GENERATED
       - ElfBinaryPackageNoteJsonPayload
     capabilities: # MANUAL - edit capabilities here
@@ -972,6 +1075,9 @@ catalogers:
         detector: # AUTO-GENERATED
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
+            - '**/*.DLL'
+            - '**/*.EXE'
+            - '**/*.BPL'
             - '**/*.dll'
             - '**/*.exe'
             - '**/*.bpl'

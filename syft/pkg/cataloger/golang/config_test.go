@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/go-homedir"
+	"github.com/anchore/syft/syft/cataloging"
 )
 
 func Test_Config(t *testing.T) {
@@ -58,6 +59,7 @@ func Test_Config(t *testing.T) {
 				NoProxy:                     []string{"my.private", "no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				UsePackagesLib:              true,
+				CaptureSymbols:              cataloging.SymbolScopeNone,
 			},
 		},
 		{
@@ -86,6 +88,7 @@ func Test_Config(t *testing.T) {
 				NoProxy:                     []string{"alt.no.proxy"},
 				MainModuleVersion:           DefaultMainModuleVersionConfig(),
 				UsePackagesLib:              true,
+				CaptureSymbols:              cataloging.SymbolScopeNone,
 			},
 		},
 	}

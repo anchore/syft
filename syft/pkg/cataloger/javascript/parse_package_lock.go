@@ -27,10 +27,11 @@ type packageLock struct {
 
 // lockDependency represents a single package dependency listed in the package.lock json file
 type lockDependency struct {
-	Version   string `json:"version"`
-	Resolved  string `json:"resolved"`
-	Integrity string `json:"integrity"`
-	Dev       bool   `json:"dev"`
+	Version      string                    `json:"version"`
+	Resolved     string                    `json:"resolved"`
+	Integrity    string                    `json:"integrity"`
+	Dev          bool                      `json:"dev"`
+	Dependencies map[string]lockDependency `json:"dependencies"`
 }
 
 type lockPackage struct {
@@ -77,14 +78,7 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 	}
 
 	if lock.LockfileVersion == 1 {
-		for name, pkgMeta := range lock.Dependencies {
-			// skip packages that are only present as a dev dependency
-			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
-				continue
-			}
-
-			pkgs = append(pkgs, newPackageLockV1Package(ctx, a.cfg, resolver, reader.Location, name, pkgMeta))
-		}
+		pkgs = append(pkgs, a.packageLockV1Packages(ctx, resolver, reader.Location, lock.Dependencies)...)
 	}
 
 	if lock.LockfileVersion == 2 || lock.LockfileVersion == 3 {
@@ -114,6 +108,32 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 	pkg.Sort(pkgs)
 
 	return pkgs, dependency.Resolve(packageLockDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
+}
+
+func (a genericPackageLockAdapter) packageLockV1Packages(ctx context.Context, resolver file.Resolver, location file.Location, dependencies map[string]lockDependency) []pkg.Package {
+	var pkgs []pkg.Package
+	seen := make(map[string]struct{})
+
+	var walk func(map[string]lockDependency)
+	walk = func(dependencies map[string]lockDependency) {
+		for name, pkgMeta := range dependencies {
+			// Skipping a dev-only dependency also skips its dev-only subtree.
+			if !a.cfg.IncludeDevDependencies && pkgMeta.Dev {
+				continue
+			}
+
+			p := newPackageLockV1Package(ctx, a.cfg, resolver, location, name, pkgMeta)
+			if _, exists := seen[p.PURL]; !exists {
+				pkgs = append(pkgs, p)
+				seen[p.PURL] = struct{}{}
+			}
+
+			walk(pkgMeta.Dependencies)
+		}
+	}
+
+	walk(dependencies)
+	return pkgs
 }
 
 func (licenses *packageLockLicense) UnmarshalJSON(data []byte) (err error) {

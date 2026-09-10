@@ -1,0 +1,42 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: apple # MANUAL
+    name: apple-app-bundle-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/apple/cataloger.go
+      function: NewAppBundleCataloger
+    selectors: # AUTO-GENERATED
+      - apple
+      - directory
+      - image
+      - installed
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseInfoPlist
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/*.app/Contents/Info.plist'
+        metadata_types: # AUTO-GENERATED
+          - pkg.AppleAppBundleEntry
+        package_types: # AUTO-GENERATED
+          - apple-app-bundle
+        json_schema_types: # AUTO-GENERATED
+          - AppleAppBundleEntry
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
+          - name: package_manager.files.listing
+            default: false
+          - name: package_manager.files.digests
+            default: false
+          - name: package_manager.package_integrity_hash
+            default: false

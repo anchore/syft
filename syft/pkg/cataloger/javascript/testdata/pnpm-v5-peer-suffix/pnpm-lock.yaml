@@ -1,0 +1,27 @@
+lockfileVersion: 5.4
+
+specifiers:
+  acorn: ^8.8.0
+  acorn-jsx: ^5.3.2
+  webpack-cli: ^4.10.0
+
+dependencies:
+  acorn: 8.8.0
+  acorn-jsx: 5.3.2_acorn@8.8.0
+  webpack-cli: 4.10.0_fzn43tb6bdtdxy2s3aqevve2su
+
+packages:
+  /acorn/8.8.0:
+    resolution: {integrity: sha512-QOxyigPVrpZ2GXT+PFyZTl6TtOFc5egxHIP9IlQ+RbupQuX4RkT/Bee4/kQuC02Xkzg84JcT7oLYtDIQxp+v7w==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
+
+  /acorn-jsx/5.3.2_acorn@8.8.0:
+    resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
+    peerDependencies:
+      acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
+    dependencies:
+      acorn: 8.8.0
+
+  /webpack-cli/4.10.0_fzn43tb6bdtdxy2s3aqevve2su:
+    resolution: {integrity: sha512-NLhDfH/h4O6UOy+0LSso42xvYypClINuMNBVVzX4vX98TmTaTUxwRbXdhucbFMd2qLaCTcLq/PdYrvi8onw90w==}

@@ -30,6 +30,8 @@ catalogers:
           - pkg.RustBinaryAuditEntry
         package_types: # AUTO-GENERATED
           - rust-crate
+        purl_types: # AUTO-GENERATED
+          - cargo
         json_schema_types: # AUTO-GENERATED
           - RustCargoAuditEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -73,6 +75,8 @@ catalogers:
           - pkg.RustCargoLockEntry
         package_types: # AUTO-GENERATED
           - rust-crate
+        purl_types: # AUTO-GENERATED
+          - cargo
         json_schema_types: # AUTO-GENERATED
           - RustCargoLockEntry
         capabilities: # MANUAL - preserved across regeneration

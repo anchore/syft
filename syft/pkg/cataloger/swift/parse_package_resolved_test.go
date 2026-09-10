@@ -20,7 +20,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-algorithms",
 			Version:   "1.0.0",
-			PURL:      "pkg:swift/github.com/apple/swift-algorithms.git/swift-algorithms@1.0.0",
+			PURL:      "pkg:swift/github.com/apple/swift-algorithms@1.0.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -31,7 +31,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-async-algorithms",
 			Version:   "0.1.0",
-			PURL:      "pkg:swift/github.com/apple/swift-async-algorithms.git/swift-async-algorithms@0.1.0",
+			PURL:      "pkg:swift/github.com/apple/swift-async-algorithms@0.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -42,7 +42,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-atomics",
 			Version:   "1.1.0",
-			PURL:      "pkg:swift/github.com/apple/swift-atomics.git/swift-atomics@1.1.0",
+			PURL:      "pkg:swift/github.com/apple/swift-atomics@1.1.0",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -53,7 +53,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-collections",
 			Version:   "1.0.4",
-			PURL:      "pkg:swift/github.com/apple/swift-collections.git/swift-collections@1.0.4",
+			PURL:      "pkg:swift/github.com/apple/swift-collections@1.0.4",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -64,7 +64,7 @@ func TestParsePackageResolved(t *testing.T) {
 		{
 			Name:      "swift-numerics",
 			Version:   "1.0.2",
-			PURL:      "pkg:swift/github.com/apple/swift-numerics/swift-numerics@1.0.2",
+			PURL:      "pkg:swift/github.com/apple/swift-numerics@1.0.2",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -87,7 +87,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 		{
 			Name:      "swift-mmio",
 			Version:   "",
-			PURL:      "pkg:swift/github.com/apple/swift-mmio/swift-mmio",
+			PURL:      "pkg:swift/github.com/apple/swift-mmio",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,
@@ -98,7 +98,7 @@ func TestParsePackageResolvedV3(t *testing.T) {
 		{
 			Name:      "swift-syntax",
 			Version:   "509.1.1",
-			PURL:      "pkg:swift/github.com/apple/swift-syntax.git/swift-syntax@509.1.1",
+			PURL:      "pkg:swift/github.com/apple/swift-syntax@509.1.1",
 			Locations: locations,
 			Language:  pkg.Swift,
 			Type:      pkg.SwiftPkg,

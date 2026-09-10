@@ -1,0 +1,6 @@
+# Written by ubuntu-advantage-tools
+deb https://esm.ubuntu.com/infra/ubuntu focal-infra-security main
+# deb-src https://esm.ubuntu.com/infra/ubuntu focal-infra-security main
+
+deb https://esm.ubuntu.com/infra/ubuntu focal-infra-updates main
+# deb-src https://esm.ubuntu.com/infra/ubuntu focal-infra-updates main

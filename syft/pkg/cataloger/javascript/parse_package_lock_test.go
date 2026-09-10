@@ -111,6 +111,66 @@ func TestParsePackageLock(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePackageLockV1NestedDependencies(t *testing.T) {
+	fixture := "testdata/pkg-lock/nested-package-lock-1.json"
+	expectedPkgs := []pkg.Package{
+		{
+			Name:     "duplicate",
+			Version:  "1.0.0",
+			PURL:     "pkg:npm/duplicate@1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/duplicate/-/duplicate-1.0.0.tgz", Integrity: "sha512-duplicate"},
+		},
+		{
+			Name:     "middle",
+			Version:  "1.0.0",
+			PURL:     "pkg:npm/middle@1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/middle/-/middle-1.0.0.tgz", Integrity: "sha512-middle"},
+		},
+		{
+			Name:     "parent",
+			Version:  "1.0.0",
+			PURL:     "pkg:npm/parent@1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/parent/-/parent-1.0.0.tgz", Integrity: "sha512-parent"},
+		},
+		{
+			Name:     "shared",
+			Version:  "0.5.0",
+			PURL:     "pkg:npm/shared@0.5.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/shared/-/shared-0.5.0.tgz", Integrity: "sha512-shared-0.5"},
+		},
+		{
+			Name:     "shared",
+			Version:  "1.0.0",
+			PURL:     "pkg:npm/shared@1.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/shared/-/shared-1.0.0.tgz", Integrity: "sha512-shared-1"},
+		},
+		{
+			Name:     "shared",
+			Version:  "2.0.0",
+			PURL:     "pkg:npm/shared@2.0.0",
+			Language: pkg.JavaScript,
+			Type:     pkg.NpmPkg,
+			Metadata: pkg.NpmPackageLockEntry{Resolved: "https://registry.npmjs.org/shared/-/shared-2.0.0.tgz", Integrity: "sha512-shared-2"},
+		},
+	}
+	for i := range expectedPkgs {
+		expectedPkgs[i].Locations.Add(file.NewLocation(fixture))
+	}
+
+	adapter := newGenericPackageLockAdapter(CatalogerConfig{})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePackageLock, expectedPkgs, nil)
+}
+
 func TestParsePackageLockV2(t *testing.T) {
 	ctx := context.TODO()
 	fixture := "testdata/pkg-lock/package-lock-2.json"

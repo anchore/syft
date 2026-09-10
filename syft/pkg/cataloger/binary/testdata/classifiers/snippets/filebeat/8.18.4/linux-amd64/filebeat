@@ -1,0 +1,8 @@
+name: filebeat
+offset: 140231767
+length: 100
+snippetSha256: a35df402d58dd12b8b993d52f991fabbe8f842d5f1ed22706ead99b2682d0bbc
+fileSha256: 4d9fbee3eb1c1610f3692e2e5519e6e84e09a5606a49e169897b849061106a28
+
+### byte snippet to follow ###
+leexportconfigcreateplugin8.18.4globalclient%v{%v}aws-s3rdtscppopcntuint16uint32uint64structcmd/gone

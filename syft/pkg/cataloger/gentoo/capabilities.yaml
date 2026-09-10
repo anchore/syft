@@ -26,6 +26,8 @@ catalogers:
           - pkg.PortageEntry
         package_types: # AUTO-GENERATED
           - portage
+        purl_types: # AUTO-GENERATED
+          - portage
         json_schema_types: # AUTO-GENERATED
           - PortageDbEntry
         capabilities: # MANUAL - preserved across regeneration

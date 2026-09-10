@@ -1,6 +1,12 @@
 FROM gcc:9.5.0
 
-RUN apt update -y && apt install -y clang cmake git make m4 pkg-config zlib1g-dev
+# bullseye is EOL: deb.debian.org dropped it, so pull from archive.debian.org (whose Release files are
+# permanently expired, hence Check-Valid-Until). bullseye-security is deliberately omitted -- its index is
+# still served but the pool behind it 404s, and it has not been moved to the archive yet. These are throwaway
+# fixture build tools, so base bullseye package versions are fine.
+RUN printf 'deb http://archive.debian.org/debian bullseye main\ndeb http://archive.debian.org/debian bullseye-updates main\n' > /etc/apt/sources.list \
+    && apt -o Acquire::Check-Valid-Until=false update -y \
+    && apt install -y clang cmake git make m4 pkg-config zlib1g-dev
 
 ## from https://github.com/runsafesecurity/selfrando/blob/tb-v0.4.2/docs/linux-build-instructions.md
 #RUN git clone https://github.com/runsafesecurity/selfrando.git && \

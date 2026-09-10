@@ -216,6 +216,10 @@ func redactor(values ...string) testutil.Redactor {
 				// each SBOM reports a unique documentNamespace when generated, this is not useful for snapshot testing
 				`"documentNamespace":\s+"[^"]*"`: `"documentNamespace":"redacted"`,
 
+				// spdx3 IDs are URI with the documentnamespace spdxId containing a UID; namespace is the equivalent documentNamespace with the same value
+				`"spdxId":\s+"[^"]*"`:    `"spdxId":"https://redacted"`,
+				`"namespace":\s+"[^"]*"`: `"namespace":"https://redacted/"`,
+
 				// the license list will be updated periodically, the value here should not be directly tested in snapshot tests
 				`"licenseListVersion":\s+"[^"]*"`: `"licenseListVersion":"redacted"`,
 			},
@@ -239,12 +243,14 @@ func TestSupportedVersions(t *testing.T) {
 		"2.2": 2,
 		// the source-to-package relationships can be removed since the primaryPackagePurpose info is available in 2.3
 		"2.3": 0,
+		"3.0": 0,
 	}
 
 	pkgCountOffsetPerVersion := map[string]int{
 		"2.1": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
 		"2.2": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
 		"2.3": 0, // the source package can be removed since the primaryPackagePurpose info is available
+		"3.0": 0,
 	}
 
 	for _, enc := range encs {

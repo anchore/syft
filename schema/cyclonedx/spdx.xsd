@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            elementFormDefault="qualified"
            targetNamespace="http://cyclonedx.org/schema/spdx"
-           version="1.0-3.27.0">
+           version="1.0-3.28.0">
 
     <xs:simpleType name="licenseId">
         <xs:restriction base="xs:string">
@@ -55,6 +55,11 @@
             <xs:enumeration value="ADSL">
                 <xs:annotation>
                     <xs:documentation>Amazon Digital Services License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Advanced-Cryptics-Dictionary">
+                <xs:annotation>
+                    <xs:documentation>Advanced Cryptics Dictionary License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="AFL-1.1">
@@ -120,6 +125,11 @@
             <xs:enumeration value="Aladdin">
                 <xs:annotation>
                     <xs:documentation>Aladdin Free Public License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ALGLIB-Documentation">
+                <xs:annotation>
+                    <xs:documentation>ALGLIB Documentation License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="AMD-newlib">
@@ -327,6 +337,11 @@
                     <xs:documentation>Boehm-Demers-Weiser GC License (without fee)</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="BOLA-1.1">
+                <xs:annotation>
+                    <xs:documentation>Buena Onda License Agreement v1.1</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="Borceux">
                 <xs:annotation>
                     <xs:documentation>Borceux license</xs:documentation>
@@ -457,6 +472,11 @@
                     <xs:documentation>BSD 3-Clause Sun Microsystems</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="BSD-3-Clause-Tso">
+                <xs:annotation>
+                    <xs:documentation>BSD 3-Clause Tso variant</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="BSD-4-Clause">
                 <xs:annotation>
                     <xs:documentation>BSD 4-Clause &quot;Original&quot; or &quot;Old&quot; License</xs:documentation>
@@ -497,6 +517,11 @@
                     <xs:documentation>BSD-Inferno-Nettverk</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="BSD-Mark-Modifications">
+                <xs:annotation>
+                    <xs:documentation>BSD Mark Modifications License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="BSD-Protection">
                 <xs:annotation>
                     <xs:documentation>BSD Protection License</xs:documentation>
@@ -525,6 +550,11 @@
             <xs:enumeration value="BSL-1.0">
                 <xs:annotation>
                     <xs:documentation>Boost Software License 1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Buddy">
+                <xs:annotation>
+                    <xs:documentation>Buddy License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="BUSL-1.1">
@@ -565,6 +595,11 @@
             <xs:enumeration value="Caldera-no-preamble">
                 <xs:annotation>
                     <xs:documentation>Caldera License (without preamble)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="CAPEC-tou">
+                <xs:annotation>
+                    <xs:documentation>Common Attack    Pattern Enumeration and Classification License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Catharon">
@@ -1212,6 +1247,21 @@
                     <xs:documentation>Erlang Public License v1.1</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="ESA-PL-permissive-2.4">
+                <xs:annotation>
+                    <xs:documentation>European Space Agency Public License – v2.4 – Permissive (Type 3)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ESA-PL-strong-copyleft-2.4">
+                <xs:annotation>
+                    <xs:documentation>European Space Agency Public License (ESA-PL) - V2.4 - Strong Copyleft (Type 1)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ESA-PL-weak-copyleft-2.4">
+                <xs:annotation>
+                    <xs:documentation>European Space Agency Public License – v2.4 – Weak Copyleft (Type 2)</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="etalab-2.0">
                 <xs:annotation>
                     <xs:documentation>Etalab Open License 2.0</xs:documentation>
@@ -1737,6 +1787,11 @@
                     <xs:documentation>Historical Permission Notice and Disclaimer - sell variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="HPND-sell-variant-critical-systems">
+                <xs:annotation>
+                    <xs:documentation>HPND - sell variant with safety critical systems clause</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="HPND-sell-variant-MIT-disclaimer">
                 <xs:annotation>
                     <xs:documentation>HPND sell variant with MIT disclaimer</xs:documentation>
@@ -1745,6 +1800,11 @@
             <xs:enumeration value="HPND-sell-variant-MIT-disclaimer-rev">
                 <xs:annotation>
                     <xs:documentation>HPND sell variant with MIT disclaimer - reverse</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="HPND-SMC">
+                <xs:annotation>
+                    <xs:documentation>Historical Permission Notice and Disclaimer - SMC variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="HPND-UC">
@@ -1760,6 +1820,11 @@
             <xs:enumeration value="HTMLTIDY">
                 <xs:annotation>
                     <xs:documentation>HTML Tidy License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="hyphen-bulgarian">
+                <xs:annotation>
+                    <xs:documentation>hyphen-bulgarian License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="IBM-pibs">
@@ -1850,6 +1915,11 @@
             <xs:enumeration value="ISC-Veillard">
                 <xs:annotation>
                     <xs:documentation>ISC Veillard variant</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ISO-permission">
+                <xs:annotation>
+                    <xs:documentation>ISO permission notice</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Jam">
@@ -2237,6 +2307,11 @@
                     <xs:documentation>MIT Open Group variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="MIT-STK">
+                <xs:annotation>
+                    <xs:documentation>MIT-STK License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="MIT-testregex">
                 <xs:annotation>
                     <xs:documentation>MIT testregex Variant</xs:documentation>
@@ -2255,6 +2330,11 @@
             <xs:enumeration value="MMIXware">
                 <xs:annotation>
                     <xs:documentation>MMIXware License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="MMPL-1.0.1">
+                <xs:annotation>
+                    <xs:documentation>Minecraft Mod Public License v1.0.1</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Motosoto">
@@ -2420,6 +2500,11 @@
             <xs:enumeration value="NIST-PD-fallback">
                 <xs:annotation>
                     <xs:documentation>NIST Public Domain Notice with license fallback</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="NIST-PD-TNT">
+                <xs:annotation>
+                    <xs:documentation>NIST    Public Domain Notice TNT variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="NIST-Software">
@@ -2687,6 +2772,11 @@
                     <xs:documentation>Open Market License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="OpenMDW-1.0">
+                <xs:annotation>
+                    <xs:documentation>OpenMDW License Agreement v1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="OpenPBS-2.3">
                 <xs:annotation>
                     <xs:documentation>OpenPBS v2.3 Software License</xs:documentation>
@@ -2722,6 +2812,11 @@
                     <xs:documentation>Open Publication License v1.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="OSC-1.0">
+                <xs:annotation>
+                    <xs:documentation>OSC License 1.0</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="OSET-PL-2.1">
                 <xs:annotation>
                     <xs:documentation>OSET Public License version 2.1</xs:documentation>
@@ -2752,9 +2847,19 @@
                     <xs:documentation>Open Software License 3.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="OSSP">
+                <xs:annotation>
+                    <xs:documentation>OSSP License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="PADL">
                 <xs:annotation>
                     <xs:documentation>PADL License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="ParaType-Free-Font-1.3">
+                <xs:annotation>
+                    <xs:documentation>ParaType Free Font Licensing Agreement v1.3</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="Parity-6.0.0">
@@ -2977,6 +3082,11 @@
                     <xs:documentation>SGI OpenGL License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="SGMLUG-PM">
+                <xs:annotation>
+                    <xs:documentation>SGMLUG Parser Materials License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="SGP4">
                 <xs:annotation>
                     <xs:documentation>SGP4 Permission Notice</xs:documentation>
@@ -3162,6 +3272,11 @@
                     <xs:documentation>TCP Wrappers License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="TekHVC">
+                <xs:annotation>
+                    <xs:documentation>TekHVC License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="TermReadKey">
                 <xs:annotation>
                     <xs:documentation>TermReadKey License</xs:documentation>
@@ -3297,6 +3412,11 @@
                     <xs:documentation>Unlicense - libwhirlpool variant</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="UnRAR">
+                <xs:annotation>
+                    <xs:documentation>UnRAR License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="UPL-1.0">
                 <xs:annotation>
                     <xs:documentation>Universal Permissive License v1.0</xs:documentation>
@@ -3310,6 +3430,11 @@
             <xs:enumeration value="Vim">
                 <xs:annotation>
                     <xs:documentation>Vim License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Vixie-Cron">
+                <xs:annotation>
+                    <xs:documentation>Vixie Cron License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="VOSTROM">
@@ -3352,9 +3477,19 @@
                     <xs:documentation>Widget Workshop License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="WordNet">
+                <xs:annotation>
+                    <xs:documentation>WordNet License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="Wsuipa">
                 <xs:annotation>
                     <xs:documentation>Wsuipa License</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="WTFNMFPL">
+                <xs:annotation>
+                    <xs:documentation>Do What The F*ck You Want To But It&apos;s Not My Fault Public License</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="WTFPL">
@@ -3380,6 +3515,11 @@
             <xs:enumeration value="X11-distribute-modifications-variant">
                 <xs:annotation>
                     <xs:documentation>X11 License Distribution Modification Variant</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="X11-no-permit-persons">
+                <xs:annotation>
+                    <xs:documentation>X11 no permit persons clause</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="X11-swapped">
@@ -3568,6 +3708,11 @@
                     <xs:documentation>Classpath exception 2.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="Classpath-exception-2.0-short">
+                <xs:annotation>
+                    <xs:documentation>Classpath exception 2.0 - short</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="CLISP-exception-2.0">
                 <xs:annotation>
                     <xs:documentation>CLISP exception 2.0</xs:documentation>
@@ -3718,6 +3863,11 @@
                     <xs:documentation>KiCad Libraries Exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="kvirc-openssl-exception">
+                <xs:annotation>
+                    <xs:documentation>kvirc OpenSSL Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="LGPL-3.0-linking-exception">
                 <xs:annotation>
                     <xs:documentation>LGPL-3.0 Linking Exception</xs:documentation>
@@ -3833,6 +3983,11 @@
                     <xs:documentation>RRDtool FLOSS exception 2.0</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="rsync-linking-exception">
+                <xs:annotation>
+                    <xs:documentation>rsync Linking Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
             <xs:enumeration value="SANE-exception">
                 <xs:annotation>
                     <xs:documentation>SANE Exception</xs:documentation>
@@ -3846,6 +4001,16 @@
             <xs:enumeration value="SHL-2.1">
                 <xs:annotation>
                     <xs:documentation>Solderpad Hardware License v2.1</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="Simple-Library-Usage-exception">
+                <xs:annotation>
+                    <xs:documentation>Simple Library Usage Exception</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="sqlitestudio-OpenSSL-exception">
+                <xs:annotation>
+                    <xs:documentation>sqlitestudio OpenSSL exception</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
             <xs:enumeration value="stunnel-exception">

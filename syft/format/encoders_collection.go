@@ -14,12 +14,22 @@ import (
 )
 
 type EncoderCollection struct {
-	encoders []sbom.FormatEncoder
+	defaultVersions map[sbom.FormatID]string
+	encoders        []sbom.FormatEncoder
 }
 
 func NewEncoderCollection(encoders ...sbom.FormatEncoder) *EncoderCollection {
+	defaultVersions := map[sbom.FormatID]string{}
+	for _, encoder := range encoders {
+		if defaultVersion, ok := encoder.(defaultVersionIndicator); ok {
+			if defaultVersion.DefaultVersion() {
+				defaultVersions[encoder.ID()] = encoder.Version()
+			}
+		}
+	}
 	return &EncoderCollection{
-		encoders: encoders,
+		defaultVersions: defaultVersions,
+		encoders:        encoders,
 	}
 }
 
@@ -77,13 +87,20 @@ func (e EncoderCollection) Get(name string, version string) sbom.FormatEncoder {
 	var mostRecentFormat sbom.FormatEncoder
 
 	for _, f := range e.encoders {
+		defaultVersion := e.defaultVersions[f.ID()]
 		log.WithFields("name", f.ID(), "version", f.Version(), "aliases", f.Aliases()).Trace("considering format")
 		names := []string{string(f.ID())}
 		names = append(names, f.Aliases()...)
 		for _, n := range names {
-			if cleanFormatName(n) == name && versionMatches(f.Version(), version) {
-				if mostRecentFormat == nil || f.Version() > mostRecentFormat.Version() {
-					mostRecentFormat = f
+			if cleanFormatName(n) == name {
+				// if the name or alias matches, and the requested version is any-version, use the default
+				if version == sbom.AnyVersion && defaultVersion != "" {
+					version = defaultVersion
+				}
+				if versionMatches(f.Version(), version) {
+					if mostRecentFormat == nil || f.Version() > mostRecentFormat.Version() {
+						mostRecentFormat = f
+					}
 				}
 			}
 		}
@@ -140,4 +157,10 @@ func Encode(s sbom.SBOM, f sbom.FormatEncoder) ([]byte, error) {
 	}
 
 	return buff.Bytes(), nil
+}
+
+type defaultVersionIndicator interface {
+	// DefaultVersion a sbom.FormatEncoder may indicate it is the default version to be used
+	// when no version is specified for the type
+	DefaultVersion() bool
 }

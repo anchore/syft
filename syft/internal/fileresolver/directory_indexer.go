@@ -126,6 +126,14 @@ func (r *directoryIndexer) indexTree(root string, stager *progress.AtomicStage) 
 
 	shouldIndexFullTree, err := isRealPath(root)
 	if err != nil {
+		// a symlink can resolve into a directory we don't have permission to traverse (or into a path
+		// that no longer exists). Like any other inaccessible path, this should be recorded and skipped
+		// with a warning rather than aborting the entire scan (see #3286).
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) {
+			r.isFileAccessErr(root, err)
+			return nil, nil
+		}
 		return nil, err
 	}
 

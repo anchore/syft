@@ -286,6 +286,42 @@ func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestDirectoryIndexer_index_survive_inaccessibleSymlinkTarget(t *testing.T) {
+	// a symlink that resolves into a directory we don't have permission to traverse should be skipped
+	// with a warning like any other inaccessible path, not abort the entire scan (see #3286).
+	if os.Geteuid() == 0 {
+		t.Skip("cannot run as root: root bypasses the directory permissions that trigger the bug")
+	}
+
+	// resolve any symlinks in the temp path (e.g. macOS /var -> /private/var) so the indexer root is a
+	// real path -- otherwise indexing takes the symlinked-branch code path and never reaches the bug.
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+
+	// root/
+	// ├── restricted/           (chmod 0000 -- cannot be traversed)
+	// │   └── nested/
+	// │       └── target.txt
+	// └── link -> root/restricted/nested/target.txt
+	nested := filepath.Join(root, "restricted", "nested")
+	require.NoError(t, os.MkdirAll(nested, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(nested, "target.txt"), []byte("hello"), 0o644))
+	require.NoError(t, os.Symlink(filepath.Join(root, "restricted", "nested", "target.txt"), filepath.Join(root, "link")))
+
+	restricted := filepath.Join(root, "restricted")
+	require.NoError(t, os.Chmod(restricted, 0o000))
+	// restore permissions so t.TempDir cleanup can remove the tree
+	t.Cleanup(func() { _ = os.Chmod(restricted, 0o755) })
+
+	// base is empty, matching a plain `syft <path>` invocation (the reporter's scenario)
+	indexer := newDirectoryIndexer(root, "")
+	_, _, err = indexer.build()
+	require.NoError(t, err)
+
+	// the inaccessible path should be recorded rather than silently dropped
+	require.NotEmpty(t, indexer.errPaths)
+}
+
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
 	var observedPaths []string
 	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {

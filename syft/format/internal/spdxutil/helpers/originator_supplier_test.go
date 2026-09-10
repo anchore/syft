@@ -31,6 +31,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.GolangModuleEntry{},
 		pkg.GolangSourceEntry{},
 		pkg.HomebrewFormula{},
+		pkg.AppleAppBundleEntry{},
 		pkg.HackageStackYamlLockEntry{},
 		pkg.HackageStackYamlEntry{},
 		pkg.LinuxKernel{},
@@ -57,6 +58,10 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.YarnLockEntry{},
 		pkg.TerraformLockProviderEntry{},
 		pkg.GGUFFileHeader{},
+		pkg.SafeTensorsModelInfo{},
+		pkg.DenoLockEntry{},
+		pkg.DenoRemoteLockEntry{},
+		pkg.VcpkgManifest{},
 	)
 	tests := []struct {
 		name       string

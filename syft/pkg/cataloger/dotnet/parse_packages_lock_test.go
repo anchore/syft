@@ -169,28 +169,28 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 
 	expectedRelationships := []artifact.Relationship{
 		{
-			From: autoMapperPkg,
+			From: extensionOptionsPkg,
+			To:   autoMapperPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: dependencyInjectionAbstractionsPkg,
 			To:   extensionOptionsPkg,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: extensionOptionsPkg,
-			To:   dependencyInjectionAbstractionsPkg,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: extensionOptionsPkg,
-			To:   extensionPrimitivesPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
 			From: extensionPrimitivesPkg,
-			To:   compilerServicesUnsafePkg,
+			To:   extensionOptionsPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
-			From: microsoftLoggingPkg,
-			To:   extensionOptionsPkg,
+			From: compilerServicesUnsafePkg,
+			To:   extensionPrimitivesPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: extensionOptionsPkg,
+			To:   microsoftLoggingPkg,
 			Type: artifact.DependencyOfRelationship,
 		},
 	}

@@ -24,6 +24,8 @@ catalogers:
           - pkg.OpamPackage
         package_types: # AUTO-GENERATED
           - opam
+        purl_types: # AUTO-GENERATED
+          - opam
         json_schema_types: # AUTO-GENERATED
           - OpamPackage
         capabilities: # MANUAL - preserved across regeneration

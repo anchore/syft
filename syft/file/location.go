@@ -152,6 +152,26 @@ func NewLocationFromImage(accessPath string, ref file.Reference, img *image.Imag
 	}
 }
 
+// NewVirtualLocationFromImage creates a new Location surfaced at realPath but whose contents and metadata are
+// described by the given reference. Note that RealPath may differ from ref.RealPath; callers must not assume the two
+// agree for these locations. The FileSystemID comes from the given ref's layer.
+func NewVirtualLocationFromImage(realPath, accessPath string, ref file.Reference, img *image.Image) Location {
+	layer := img.FileCatalog.Layer(ref)
+	return Location{
+		LocationData: LocationData{
+			Coordinates: Coordinates{
+				RealPath:     realPath,
+				FileSystemID: layer.Metadata.Digest,
+			},
+			AccessPath: accessPath,
+			ref:        ref,
+		},
+		LocationMetadata: LocationMetadata{
+			Annotations: map[string]string{},
+		},
+	}
+}
+
 // NewLocationFromDirectory creates a new Location representing the given path (extracted from the Reference) relative to the given directory.
 func NewLocationFromDirectory(responsePath string, fd string, ref file.Reference) Location {
 	return Location{

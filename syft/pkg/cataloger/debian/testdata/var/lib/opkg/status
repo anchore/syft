@@ -1,0 +1,30 @@
+Package: dropbear
+Version: 2024.85-r0
+Depends: libc, zlib
+Status: install user installed
+Architecture: x86_64
+Installed-Time: 1714492800
+License: MIT
+Section: net
+Description: Small SSH server and client.
+
+Package: busybox
+Version: 1.36.1-r3
+Depends: libc
+Status: install user installed
+Architecture: x86_64
+Installed-Time: 1714492800
+License: GPL-2.0-only
+Section: base
+Description: Single executable providing many common UNIX utilities.
+
+Package: kernel-modules
+Version: 6.6.0-r0
+Depends: kmod
+Status: install user installed
+Architecture: x86_64
+Installed-Time: 1714492800
+License: GPL-2.0 BSD-3-Clause
+Section: kernel
+Description: Loadable kernel modules with mixed licensing.
+

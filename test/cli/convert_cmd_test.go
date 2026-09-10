@@ -28,6 +28,7 @@ func TestConvertCmd(t *testing.T) {
 	}{
 		{from: "syft-json", to: "spdx-tag-value", expect: mustEncoder(spdxtagvalue.NewFormatEncoderWithConfig(spdxtagvalue.DefaultEncoderConfig()))},
 		{from: "syft-json", to: "spdx-json", expect: mustEncoder(spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig()))},
+		{from: "syft-json", to: "spdx-json@3.0", expect: mustEncoder(spdxjson.NewFormatEncoderWithConfig(spdxjson.DefaultEncoderConfig()))},
 		{from: "syft-json", to: "cyclonedx-json", expect: mustEncoder(cyclonedxjson.NewFormatEncoderWithConfig(cyclonedxjson.DefaultEncoderConfig()))},
 		{from: "syft-json", to: "cyclonedx-xml", expect: mustEncoder(cyclonedxxml.NewFormatEncoderWithConfig(cyclonedxxml.DefaultEncoderConfig()))},
 	}

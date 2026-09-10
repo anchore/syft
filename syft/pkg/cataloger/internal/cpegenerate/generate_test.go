@@ -855,6 +855,25 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{},
 		},
+		{
+			name: "rust package",
+			p: pkg.Package{
+				Name:     "rust-package",
+				Version:  "0.5.0",
+				Type:     pkg.RustPkg,
+				Language: pkg.Rust,
+			},
+			expected: []string{
+				"cpe:2.3:a:rust-package_project:rust-package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust-package_project:rust_package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust-package:rust-package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust-package:rust_package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust:rust-package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust:rust_package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust_package:rust-package:0.5.0:*:*:*:*:rust:*:*",
+				"cpe:2.3:a:rust_package:rust_package:0.5.0:*:*:*:*:rust:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {

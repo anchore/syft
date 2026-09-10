@@ -1,0 +1,28 @@
+{
+  "_doc": "Content provided in json response is currently considered Experimental and may change",
+  "_schema_version": "0.1",
+  "attached": true,
+  "services": [
+    {
+      "name": "esm-apps",
+      "description": "Expanded Security Maintenance for Applications",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "enabled"
+    },
+    {
+      "name": "esm-infra",
+      "description": "Expanded Security Maintenance for Infrastructure",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "enabled"
+    },
+    {
+      "name": "fips",
+      "description": "NIST-certified FIPS crypto packages",
+      "available": "no",
+      "entitled": "no",
+      "status": "n/a"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_schema_version": "0.1",
+  "attached": true,
+  "execution_status": "success",
+  "services": [
+    {
+      "name": "esm-apps",
+      "description": "Expanded Security Maintenance for Applications",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "disabled"
+    },
+    {
+      "name": "esm-infra",
+      "description": "Expanded Security Maintenance for Infrastructure",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "disabled"
+    },
+    {
+      "name": "fips",
+      "description": "NIST-certified FIPS crypto packages",
+      "available": "yes",
+      "entitled": "yes",
+      "status": "enabled"
+    }
+  ]
+}

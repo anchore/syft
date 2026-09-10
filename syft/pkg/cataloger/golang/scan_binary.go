@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"io"
 	"runtime/debug"
+	"strings"
 
 	"github.com/kastenhq/goversion/version"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
@@ -18,10 +20,11 @@ type extendedBuildInfo struct {
 	*debug.BuildInfo
 	cryptoSettings []string
 	arch           string
+	symbols        []binarySymbol
 }
 
 // scanFile scans file to try to report the Go and module versions.
-func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extendedBuildInfo, error) {
+func scanFile(location file.Location, reader unionreader.UnionReader, captureSymbols bool) ([]*extendedBuildInfo, error) {
 	// NOTE: multiple readers are returned to cover universal binaries, which are files
 	// with more than one binary
 	readers, errs := unionreader.GetReaders(reader)
@@ -50,6 +53,7 @@ func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extend
 			// we can still catalog packages, even if we can't get the crypto information
 			errs = unknown.Appendf(errs, location, "unable to read golang version info: %w", err)
 		}
+		v = append(v, getNativeFIPSSettings(bi.Settings)...)
 		arch := getGOARCH(bi.Settings)
 		if arch == "" {
 			arch, err = getGOARCHFromBin(r)
@@ -61,7 +65,18 @@ func scanFile(location file.Location, reader unionreader.UnionReader) ([]*extend
 			}
 		}
 
-		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch})
+		var symbols []binarySymbol
+		if captureSymbols {
+			symbols, err = getSymbols(r)
+			if err != nil {
+				log.WithFields("file", location.RealPath, "error", err).Trace("unable to read golang symbol info")
+				// don't skip this build info.
+				// we can still catalog packages, even if we can't get the symbol information
+				errs = unknown.Appendf(errs, location, "unable to read golang symbol info: %w", err)
+			}
+		}
+
+		builds = append(builds, &extendedBuildInfo{BuildInfo: bi, cryptoSettings: v, arch: arch, symbols: symbols})
 	}
 	return builds, errs
 }
@@ -89,6 +104,36 @@ func getCryptoSettingsFromVersion(v version.Version) []string {
 	return cryptoSettings
 }
 
+func getNativeFIPSSettings(settings []debug.BuildSetting) []string {
+	var cryptoSettings []string
+	for _, s := range settings {
+		switch s.Key {
+		case "GOFIPS140":
+			if s.Value != "" {
+				cryptoSettings = append(cryptoSettings, "GOFIPS140="+s.Value)
+			}
+		case "DefaultGODEBUG":
+			for _, kv := range strings.Split(s.Value, ",") {
+				if setting, val, ok := strings.Cut(kv, "="); ok && setting == "fips140" {
+					cryptoSettings = append(cryptoSettings, "GODEBUG=fips140="+val)
+				}
+			}
+		}
+	}
+	return cryptoSettings
+}
+
+// readBuildInfo bounds the reader before handing it to debug/buildinfo, which opens ELF files with
+// debug/elf itself rather than through elfutil. elf.NewFile expands the section-name string table as it
+// parses, so an unbounded read here is reachable no matter how little of the file buildinfo goes on to
+// look at.
+func readBuildInfo(r io.ReaderAt) (*debug.BuildInfo, error) {
+	if err := elfutil.CheckSectionNameTable(r); err != nil {
+		return nil, err
+	}
+	return buildinfo.Read(r)
+}
+
 func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -100,7 +145,7 @@ func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, e
 	}()
 
 	// try to read buildinfo from the binary directly
-	bi, err = buildinfo.Read(r)
+	bi, err = readBuildInfo(r)
 	if err == nil {
 		return bi, nil
 	}
@@ -111,7 +156,7 @@ func getBuildInfo(r io.ReaderAt, location file.Location) (bi *debug.BuildInfo, e
 		log.WithFields("path", location.RealPath).Trace("detected UPX-compressed Go binary, attempting decompression to read the build info")
 		decompressed, decompErr := decompressUPX(r)
 		if decompErr == nil {
-			bi, err = buildinfo.Read(decompressed)
+			bi, err = readBuildInfo(decompressed)
 			if err == nil {
 				return bi, nil
 			}

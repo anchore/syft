@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/CycloneDX/cyclonedx-go v0.11.0
+	github.com/CycloneDX/cyclonedx-go v0.12.0
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/OneOfOne/xxhash v1.2.8
@@ -22,7 +22,7 @@ require (
 	github.com/anchore/go-sync v0.1.1
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.2.0
-	github.com/anchore/stereoscope v0.3.1-0.20260820190420-3cd14ecb9fbf
+	github.com/anchore/stereoscope v0.3.1
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
 	github.com/bitnami/go-version v0.0.0-20250131085805-b1f57a8634ef
@@ -48,11 +48,11 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/gohugoio/hashstructure v0.6.0
 	github.com/google/go-cmp v0.7.0
-	github.com/google/go-containerregistry v0.21.9
+	github.com/google/go-containerregistry v0.22.0
 	github.com/google/licensecheck v0.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.1
-	github.com/gpustack/gguf-parser-go v0.25.0
+	github.com/gpustack/gguf-parser-go v0.26.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-getter v1.8.8
 	github.com/hashicorp/go-multierror v1.1.1
@@ -82,7 +82,7 @@ require (
 	github.com/spdx/tools-golang v0.6.0-rc4
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	github.com/ulikunitz/xz v0.5.16
 	github.com/vbatts/go-mtree v0.7.0
 	github.com/vifraa/gopom v1.0.0
@@ -98,12 +98,13 @@ require (
 	golang.org/x/time v0.15.0
 	golang.org/x/tools v0.49.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.56.0
+	modernc.org/sqlite v1.57.0
 )
 
 require (
 	github.com/pb33f/ordered-map/v2 v2.3.1
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
+	howett.net/plist v1.0.1
 )
 
 require (
@@ -169,13 +170,13 @@ require (
 	github.com/cncf/xds/go v0.0.0-20260202195803-dba9d589def2 // indirect
 	github.com/containerd/cgroups/v3 v3.1.3 // indirect
 	github.com/containerd/containerd/api v1.11.1 // indirect
-	github.com/containerd/containerd/v2 v2.3.3 // indirect
+	github.com/containerd/containerd/v2 v2.3.4 // indirect
 	github.com/containerd/continuity v0.5.0 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
-	github.com/containerd/platforms v1.0.0-rc.4 // indirect
+	github.com/containerd/platforms v1.0.0-rc.5 // indirect
 	github.com/containerd/plugin v1.1.0 // indirect
 	github.com/containerd/ttrpc v1.2.8 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
@@ -317,7 +318,7 @@ require (
 	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
-	google.golang.org/grpc v1.83.0 // indirect
+	google.golang.org/grpc v1.83.1 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	modernc.org/libc v1.74.4 // indirect

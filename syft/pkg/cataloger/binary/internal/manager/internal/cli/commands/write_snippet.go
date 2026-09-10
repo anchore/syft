@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal"
 	"github.com/anchore/syft/syft/pkg/cataloger/binary/internal/manager/internal/config"
 )
@@ -203,7 +204,7 @@ const (
 )
 
 func getPlatformElf(f *os.File) string {
-	elfFile, err := elf.NewFile(f)
+	elfFile, err := elfutil.NewFile(f)
 	if err != nil {
 		return ""
 	}
@@ -214,6 +215,14 @@ func getPlatformElf(f *os.File) string {
 		arch = amd64
 	case elf.EM_AARCH64:
 		arch = arm64
+	case elf.EM_ARM:
+		arch = "arm"
+	case elf.EM_S390:
+		arch = "s390x"
+	case elf.EM_386:
+		arch = "386"
+	case elf.EM_RISCV:
+		arch = "riscv64"
 	// TODO...
 	default:
 		arch = fmt.Sprintf("unknown-%x", elfFile.Machine)

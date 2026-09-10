@@ -23,7 +23,10 @@ func NewPackageCataloger(cfg CatalogerConfig) pkg.Cataloger {
 		WithParserByGlobs(poetryLockParser.parsePoetryLock, "**/poetry.lock").
 		WithParserByGlobs(pipfileLockParser.parsePipfileLock, "**/Pipfile.lock").
 		WithParserByGlobs(setupFileParser.parseSetupFile, "**/setup.py").
-		WithParserByGlobs(uvLockParser.parseUvLock, "**/uv.lock").
+		// uv lock files are named "uv.lock", but PEP 723 script lock files
+		// (created by "uv lock --script <name>.py") are named "<name>.py.lock"
+		// and use the same format, so catalog both.
+		WithParserByGlobs(uvLockParser.parseUvLock, "**/uv.lock", "**/*.py.lock").
 		WithParserByGlobs(pdmLockParser.parsePdmLock, "**/pdm.lock")
 }
 

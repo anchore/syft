@@ -25,6 +25,8 @@ catalogers:
           - pkg.RpmArchive
         package_types: # AUTO-GENERATED
           - rpm
+        purl_types: # AUTO-GENERATED
+          - rpm
         json_schema_types: # AUTO-GENERATED
           - RpmArchive
         capabilities: # MANUAL - preserved across regeneration
@@ -71,6 +73,8 @@ catalogers:
           - pkg.RpmDBEntry
         package_types: # AUTO-GENERATED
           - rpm
+        purl_types: # AUTO-GENERATED
+          - rpm
         json_schema_types: # AUTO-GENERATED
           - RpmDbEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -99,6 +103,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.RpmDBEntry
         package_types: # AUTO-GENERATED
+          - rpm
+        purl_types: # AUTO-GENERATED
           - rpm
         json_schema_types: # AUTO-GENERATED
           - RpmDbEntry

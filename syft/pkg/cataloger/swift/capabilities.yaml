@@ -24,6 +24,8 @@ catalogers:
           - pkg.CocoaPodfileLockEntry
         package_types: # AUTO-GENERATED
           - pod
+        purl_types: # AUTO-GENERATED
+          - cocoapods
         json_schema_types: # AUTO-GENERATED
           - CocoaPodfileLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -69,6 +71,8 @@ catalogers:
         metadata_types: # AUTO-GENERATED
           - pkg.SwiftPackageManagerResolvedEntry
         package_types: # AUTO-GENERATED
+          - swift
+        purl_types: # AUTO-GENERATED
           - swift
         json_schema_types: # AUTO-GENERATED
           - SwiftPackageManagerLockEntry

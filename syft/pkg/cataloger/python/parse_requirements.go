@@ -29,8 +29,13 @@ const (
 	// namePattern matches: requests[security]
 	namePattern = `(?P<name>\w[\w\[\],\s-_\.]+)`
 
-	// versionConstraintPattern matches: == 2.8.* (including local version identifiers, e.g. == 1.2.3+gcr.2)
-	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*+]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
+	// versionConstraintPattern matches: == 2.8.*
+	// the version token accepts every character PEP 440 versions can contain: digits and letters,
+	// '.' (release/segment separator), '!' (epoch), '+' (local version), '*' (wildcard), and the
+	// alternate segment separators '-' and '_'. See:
+	// https://packaging.python.org/en/latest/specifications/version-specifiers/#version-scheme
+	//   1!2.0   1.0rc1   1.0-alpha-1   1.0_beta_2   1.0.post1   1.0.dev1   1.2.3+gcr.2   2.8.*
+	versionConstraintPattern = `(?P<versionConstraint>([^\S\r\n]*[~=>!<]+\s*[0-9a-zA-Z.*+!_-]+[^\S\r\n]*,?)+)?(@[^\S\r\n]*(?P<url>[^;]*))?`
 
 	// markersPattern matches: python_version < "2.7" and sys_platform == "linux"
 	markersPattern = `(;(?P<markers>.*))?`
@@ -183,7 +188,10 @@ func parseVersion(version string, guessFromConstraint bool) string {
 
 func parsePinnedVersion(version string) string {
 	version = strings.TrimSpace(version)
-	if strings.ContainsAny(version, "*,<>!") {
+	// a wildcard, range, or list of constraints is not a single pinned version. the "!=" exclusion
+	// operator is checked as a substring rather than by the bare "!" character, since a lone "!"
+	// is also the PEP 440 epoch separator (e.g. "1!2.0.0") and must not disqualify an exact pin.
+	if strings.ContainsAny(version, "*,<>") || strings.Contains(version, "!=") {
 		return ""
 	}
 

@@ -2,7 +2,7 @@ package dotnet
 
 import (
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/syft/pkg/cataloger/internal/pe"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dotnet/pe"
 )
 
 // logicalPE represents a PE file within the context of a .NET project (considering the deps.json file).

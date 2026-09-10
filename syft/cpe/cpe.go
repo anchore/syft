@@ -201,7 +201,7 @@ func (c Attributes) String() string {
 
 // sanitize is a modified version of WFNize function from nvdtools
 // that quotes all the allowed punctation chars with a slash and replaces
-// spaces with underscores. It differs from the upstream implmentation as
+// spaces with underscores. It differs from the upstream implementation as
 // it does not use the buggy nvdtools implementation, specifically the "addSlashesAt" part of the
 // function which stops the loop as soon as it encounters ":" a valid
 // character for a WFN attribute after quoting, but the way nvdtools

@@ -22,6 +22,8 @@ catalogers:
           - pkg.CondaMetaPackage
         package_types: # AUTO-GENERATED
           - conda
+        purl_types: # AUTO-GENERATED
+          - generic
         json_schema_types: # AUTO-GENERATED
           - CondaMetadataEntry
         capabilities: # MANUAL - preserved across regeneration

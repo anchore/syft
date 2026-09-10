@@ -35,7 +35,8 @@ is_command() (
 )
 
 echo_stderr() (
-  echo "$@" 1>&2
+  IFS=" "
+  printf "%b\n" "$*" 1>&2
 )
 
 _logp=2
@@ -75,12 +76,12 @@ init_colors
 
 log_tag() (
   case $1 in
-    0) echo "${RED}${BOLD}[error]${RESET}" ;;
-    1) echo "${RED}[warn]${RESET}" ;;
-    2) echo "[info]${RESET}" ;;
-    3) echo "${BLUE}[debug]${RESET}" ;;
-    4) echo "${PURPLE}[trace]${RESET}" ;;
-    *) echo "[$1]" ;;
+    0) printf "%b" "${RED}${BOLD}[error]${RESET}" ;;
+    1) printf "%b" "${RED}[warn]${RESET}" ;;
+    2) printf "%b" "[info]${RESET}" ;;
+    3) printf "%b" "${BLUE}[debug]${RESET}" ;;
+    4) printf "%b" "${PURPLE}[trace]${RESET}" ;;
+    *) printf "[%s]" "$1" ;;
   esac
 )
 

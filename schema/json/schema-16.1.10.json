@@ -720,7 +720,7 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. When nested archive cataloging is enabled, a file found inside an archive carries the chain naming that archive's filesystem instead: the ID of the filesystem the archive itself was found in (a layer digest, or blank) joined with the path of each containing archive, e.g. \"sha256:1a2b.../app.war/WEB-INF/lib/dep.jar\". It is a path there rather than a digest, and it is what keeps identically-named files in different archives apart."
+          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
         }
       },
       "type": "object",
@@ -2482,7 +2482,7 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. When nested archive cataloging is enabled, a file found inside an archive carries the chain naming that archive's filesystem instead: the ID of the filesystem the archive itself was found in (a layer digest, or blank) joined with the path of each containing archive, e.g. \"sha256:1a2b.../app.war/WEB-INF/lib/dep.jar\". It is a path there rather than a digest, and it is what keeps identically-named files in different archives apart."
+          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
         },
         "accessPath": {
           "type": "string",

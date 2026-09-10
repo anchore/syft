@@ -26,6 +26,8 @@ catalogers:
           - pkg.ApkDBEntry
         package_types: # AUTO-GENERATED
           - apk
+        purl_types: # AUTO-GENERATED
+          - apk
         json_schema_types: # AUTO-GENERATED
           - ApkDbEntry
         capabilities: # MANUAL - preserved across regeneration

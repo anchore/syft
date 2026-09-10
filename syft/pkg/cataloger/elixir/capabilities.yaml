@@ -23,6 +23,8 @@ catalogers:
           - pkg.ElixirMixLockEntry
         package_types: # AUTO-GENERATED
           - hex
+        purl_types: # AUTO-GENERATED
+          - hex
         json_schema_types: # AUTO-GENERATED
           - ElixirMixLockEntry
         capabilities: # MANUAL - preserved across regeneration

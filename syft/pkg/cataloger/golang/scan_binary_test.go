@@ -110,3 +110,50 @@ func Test_getCryptoSettingsFromVersion(t *testing.T) {
 		})
 	}
 }
+
+func Test_getNativeFIPSSettings(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		settings []debug.BuildSetting
+		result   []string
+	}{
+		{
+			name:     "not set",
+			settings: []debug.BuildSetting{{Key: "GOARCH", Value: "arm64"}},
+			result:   nil,
+		},
+		{
+			name:     "GOFIPS140=off is reported verbatim",
+			settings: []debug.BuildSetting{{Key: "GOFIPS140", Value: "off"}},
+			result:   []string{"GOFIPS140=off"},
+		},
+		{
+			name: "pinned module version with mode on",
+			settings: []debug.BuildSetting{
+				{Key: "GOFIPS140", Value: "v1.0.0"},
+				{Key: "DefaultGODEBUG", Value: "fips140=on"},
+			},
+			result: []string{"GOFIPS140=v1.0.0", "GODEBUG=fips140=on"},
+		},
+		{ // GOFIPS140=latest enables FIPS mode without pinning a module version
+			name: "latest with mode on",
+			settings: []debug.BuildSetting{
+				{Key: "GOFIPS140", Value: "latest"},
+				{Key: "DefaultGODEBUG", Value: "fips140=on"},
+			},
+			result: []string{"GOFIPS140=latest", "GODEBUG=fips140=on"},
+		},
+		{ // fips140 is one entry among many in DefaultGODEBUG
+			name: "fips140 among other godebug defaults",
+			settings: []debug.BuildSetting{
+				{Key: "DefaultGODEBUG", Value: "asynctimerchan=1,fips140=on,tlssha1=1"},
+			},
+			result: []string{"GODEBUG=fips140=on"},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			res := getNativeFIPSSettings(tt.settings)
+			assert.ElementsMatch(t, res, tt.result)
+		})
+	}
+}

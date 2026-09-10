@@ -552,3 +552,48 @@ func TestConvertToJSONSchemaTypesFromMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestPURLTypesFromPackageTypes(t *testing.T) {
+	tests := []struct {
+		name         string
+		packageTypes []string
+		want         []string
+	}{
+		{
+			name:         "nil slice returns nil",
+			packageTypes: nil,
+			want:         nil,
+		},
+		{
+			name:         "single package type maps to purl type",
+			packageTypes: []string{"go-module"},
+			want:         []string{"golang"},
+		},
+		{
+			name:         "multiple package types are sorted",
+			packageTypes: []string{"npm", "go-module"},
+			want:         []string{"golang", "npm"},
+		},
+		{
+			// java and jenkins-plugin both map to maven, so the result is deduplicated
+			name:         "distinct package types collapsing to one purl type are deduplicated",
+			packageTypes: []string{"java-archive", "jenkins-plugin"},
+			want:         []string{"maven"},
+		},
+		{
+			// unknown package types have no purl mapping and are skipped
+			name:         "package type without a purl mapping is skipped",
+			packageTypes: []string{"UnknownPackage"},
+			want:         nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := purlTypesFromPackageTypes(tt.packageTypes)
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("purlTypesFromPackageTypes() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

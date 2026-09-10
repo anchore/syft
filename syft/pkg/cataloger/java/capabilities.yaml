@@ -91,6 +91,8 @@ catalogers:
       - pkg.JavaArchive
     package_types: # AUTO-GENERATED
       - java-archive
+    purl_types: # AUTO-GENERATED
+      - maven
     json_schema_types: # AUTO-GENERATED
       - JavaArchive
     capabilities: # MANUAL - edit capabilities here
@@ -137,6 +139,8 @@ catalogers:
           - pkg.JavaArchive
         package_types: # AUTO-GENERATED
           - java-archive
+        purl_types: # AUTO-GENERATED
+          - maven
         json_schema_types: # AUTO-GENERATED
           - JavaArchive
         capabilities: # MANUAL - preserved across regeneration
@@ -179,6 +183,8 @@ catalogers:
       - pkg.JavaArchive
     package_types: # AUTO-GENERATED
       - java-archive
+    purl_types: # AUTO-GENERATED
+      - maven
     json_schema_types: # AUTO-GENERATED
       - JavaArchive
     capabilities: # MANUAL - edit capabilities here

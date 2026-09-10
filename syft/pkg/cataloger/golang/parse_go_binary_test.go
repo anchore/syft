@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -18,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -1421,4 +1424,221 @@ type alwaysErrorReader struct{}
 
 func (alwaysErrorReader) Read(_ []byte) (int, error) {
 	return 0, errors.New("read from always error reader")
+}
+
+func Test_buildGoPkgInfo_symbolScope(t *testing.T) {
+	location := file.NewLocationFromCoordinates(file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"})
+
+	// the symbols a binary would carry once scanFile has extracted them: one main-package symbol, two
+	// dependency symbols from distinct packages within the same module (so the per-package keying of the
+	// emitted map is visible), and one standard-library symbol. For the "none" scope scanFile never runs,
+	// so the build info carries no symbols at all.
+	populatedSymbols := []binarySymbol{
+		{packagePath: "main", name: "main.main"},
+		{packagePath: "github.com/foo/bar", name: "github.com/foo/bar.Parse"},
+		{packagePath: "github.com/foo/bar/baz", name: "github.com/foo/bar/baz.Helper"},
+		{packagePath: "net/http", name: "net/http.(*Client).Do"},
+	}
+
+	tests := []struct {
+		name           string
+		scope          cataloging.SymbolScope
+		modules        []string
+		extraDeps      []*debug.Module
+		symbols        []binarySymbol
+		wantMainSyms   map[string][]string
+		wantDepSyms    map[string][]string
+		wantExtraSyms  []map[string][]string
+		wantStdlibSyms map[string][]string
+	}{
+		{
+			name:    "none captures nothing",
+			scope:   cataloging.SymbolScopeNone,
+			symbols: nil,
+		},
+		{
+			name:           "stdlib captures only the stdlib package",
+			scope:          cataloging.SymbolScopeStdlib,
+			symbols:        populatedSymbols,
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			name:         "all captures module and stdlib packages",
+			scope:        cataloging.SymbolScopeAll,
+			symbols:      populatedSymbols,
+			wantMainSyms: map[string][]string{"main": {"main"}},
+			wantDepSyms: map[string][]string{
+				"github.com/foo/bar":     {"Parse"},
+				"github.com/foo/bar/baz": {"Helper"},
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			// golang.org/x/net is reached through a vendored import path here, which must still be
+			// attributed to (and selected by) the module that owns it
+			name:      "extended-stdlib captures golang.org/x modules and stdlib only",
+			scope:     cataloging.SymbolScopeExtendedStdlib,
+			extraDeps: extendedDeps,
+			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
+			wantExtraSyms: []map[string][]string{
+				{"golang.org/x/net/http2": {"NewClientConn"}},
+				nil,
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			name:      "module patterns widen extended-stdlib",
+			scope:     cataloging.SymbolScopeExtendedStdlib,
+			modules:   []string{"github.com/klauspost/**"},
+			extraDeps: extendedDeps,
+			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
+			wantExtraSyms: []map[string][]string{
+				{"golang.org/x/net/http2": {"NewClientConn"}},
+				{"github.com/klauspost/compress/zstd": {"NewReader"}},
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			name:      "module patterns can select the main module",
+			scope:     cataloging.SymbolScopeStdlib,
+			modules:   []string{"github.com/anchore/**"},
+			extraDeps: extendedDeps,
+			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
+			// the main package is keyed by the "main" import path the linker assigns, not its real path
+			wantMainSyms:   map[string][]string{"main": {"main"}},
+			wantExtraSyms:  []map[string][]string{nil, nil},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			name:      "module patterns are inert under the none scope",
+			scope:     cataloging.SymbolScopeNone,
+			modules:   []string{"github.com/**", "golang.org/x/**"},
+			extraDeps: extendedDeps,
+			// scanFile never runs under "none", so the build info carries no symbols to begin with
+			symbols:       nil,
+			wantExtraSyms: []map[string][]string{nil, nil},
+		},
+		{
+			// all short-circuits ahead of the pattern walk, so a narrow module pattern list cannot subtract
+			// from it. this is also the guard on that short-circuit still existing.
+			name:         "module patterns cannot narrow the all scope",
+			scope:        cataloging.SymbolScopeAll,
+			modules:      []string{"golang.org/x/**"},
+			extraDeps:    extendedDeps,
+			symbols:      slices.Concat(populatedSymbols, extendedSymbols),
+			wantMainSyms: map[string][]string{"main": {"main"}},
+			wantDepSyms: map[string][]string{
+				"github.com/foo/bar":     {"Parse"},
+				"github.com/foo/bar/baz": {"Helper"},
+			},
+			wantExtraSyms: []map[string][]string{
+				{"golang.org/x/net/http2": {"NewClientConn"}},
+				{"github.com/klauspost/compress/zstd": {"NewReader"}},
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+		{
+			// a module pattern that restates what the preset already covers must not duplicate or drop anything:
+			// selection is a per-module boolean, so overlap is idempotent
+			name:      "a module pattern overlapping the preset changes nothing",
+			scope:     cataloging.SymbolScopeExtendedStdlib,
+			modules:   []string{"golang.org/x/**"},
+			extraDeps: extendedDeps,
+			symbols:   slices.Concat(populatedSymbols, extendedSymbols),
+			wantExtraSyms: []map[string][]string{
+				{"golang.org/x/net/http2": {"NewClientConn"}},
+				nil,
+			},
+			wantStdlibSyms: map[string][]string{"net/http": {"(*Client).Do"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mod := &extendedBuildInfo{
+				BuildInfo: &debug.BuildInfo{
+					GoVersion: "go1.22.0",
+					Main:      debug.Module{Path: "github.com/anchore/syft", Version: "v1.0.0"},
+					Deps:      append([]*debug.Module{{Path: "github.com/foo/bar", Version: "v1.2.3"}}, tt.extraDeps...),
+				},
+				arch:    "amd64",
+				symbols: tt.symbols,
+			}
+
+			c := newGoBinaryCataloger(CatalogerConfig{CaptureSymbols: tt.scope, CaptureSymbolsModules: tt.modules})
+			reader, err := unionreader.GetUnionReader(io.NopCloser(strings.NewReader("")))
+			require.NoError(t, err)
+
+			mainPkg, pkgs := c.buildGoPkgInfo(context.Background(), fileresolver.Empty{}, location, mod, mod.arch, reader)
+			require.NotNil(t, mainPkg)
+			require.Len(t, pkgs, 1+len(tt.extraDeps))
+
+			assert.Equal(t, tt.wantMainSyms, mainPkg.Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "main module symbols")
+			assert.Equal(t, tt.wantDepSyms, pkgs[0].Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "dependency symbols")
+			for i, want := range tt.wantExtraSyms {
+				assert.Equal(t, want, pkgs[1+i].Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols, "symbols for %s", pkgs[1+i].Name)
+			}
+			assert.Equal(t, tt.wantStdlibSyms, c.stdlibSymbolsFor(location.Coordinates), "recorded stdlib symbols")
+
+			// a module selected by nothing must carry no symbols key at all: assert on the serialized form,
+			// since an empty (non-nil) map would still emit "symbols":{} despite the omitempty tag
+			for _, p := range append([]pkg.Package{*mainPkg}, pkgs...) {
+				encoded, err := json.Marshal(p.Metadata)
+				require.NoError(t, err)
+				if p.Metadata.(pkg.GolangBinaryBuildinfoEntry).Symbols == nil {
+					assert.NotContains(t, string(encoded), `"symbols"`, "expected no symbols key for %s", p.Name)
+				}
+			}
+		})
+	}
+}
+
+var (
+	extendedDeps = []*debug.Module{
+		{Path: "golang.org/x/net", Version: "v0.30.0"},
+		{Path: "github.com/klauspost/compress", Version: "v1.17.0"},
+	}
+
+	extendedSymbols = []binarySymbol{
+		{packagePath: "vendor/golang.org/x/net/http2", name: "vendor/golang.org/x/net/http2.NewClientConn"},
+		{packagePath: "github.com/klauspost/compress/zstd", name: "github.com/klauspost/compress/zstd.NewReader"},
+	}
+)
+
+// Test_recordStdlibSymbols_merge covers the merge path where the same binary location records stdlib
+// symbols more than once. This happens in production for universal/fat Mach-O binaries: scanFile yields
+// one build info per architecture and each is recorded under the same location coordinates.
+func Test_recordStdlibSymbols_merge(t *testing.T) {
+	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	c := newGoBinaryCataloger(CatalogerConfig{})
+
+	c.recordStdlibSymbols(coord, map[string][]string{
+		"net/http": {"(*Client).Do", "Get"},
+		"net/url":  {"Parse"},
+	})
+	// a second architecture: overlapping names (must dedup), a new name for an existing package, and a new package
+	c.recordStdlibSymbols(coord, map[string][]string{
+		"net/http": {"Get", "Post"},
+		"os":       {"Open"},
+	})
+
+	assert.Equal(t, map[string][]string{
+		"net/http": {"(*Client).Do", "Get", "Post"},
+		"net/url":  {"Parse"},
+		"os":       {"Open"},
+	}, c.stdlibSymbolsFor(coord))
+}
+
+// Test_stdlibSymbolsFor_isolation asserts the returned map is a deep copy: mutating it (or its slices)
+// must not corrupt the cataloger's guarded internal state.
+func Test_stdlibSymbolsFor_isolation(t *testing.T) {
+	coord := file.Coordinates{RealPath: "/a-path", FileSystemID: "layer-id"}
+	c := newGoBinaryCataloger(CatalogerConfig{})
+	c.recordStdlibSymbols(coord, map[string][]string{"net/http": {"Get"}})
+
+	got := c.stdlibSymbolsFor(coord)
+	got["net/http"] = append(got["net/http"], "MUTATED")
+	got["net/url"] = []string{"Parse"}
+
+	assert.Equal(t, map[string][]string{"net/http": {"Get"}}, c.stdlibSymbolsFor(coord), "internal state must be unaffected by caller mutation")
 }

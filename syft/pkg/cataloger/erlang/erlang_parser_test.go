@@ -96,6 +96,11 @@ func Test_parseErlang(t *testing.T) {
 	{ foo, bar }
 ]}`,
 		},
+		{
+			name: "string with an escaped quote",
+			content: `
+{escaped, ["a\"b"]}`,
+		},
 	}
 
 	for _, test := range tests {
@@ -111,4 +116,15 @@ func Test_parseErlang(t *testing.T) {
 			assert.IsType(t, erlangNode{}, value)
 		})
 	}
+}
+
+func Test_parseErlangString_escapedByte(t *testing.T) {
+	// a backslash escape mid-string used to always error out, since the bounds
+	// check at the escape site was inverted (len(data) >= *i is true for
+	// almost every position, not just an out-of-range one).
+	data := []byte(`"a\"b"`)
+	i := 0
+	got, err := parseErlangString(data, &i)
+	require.NoError(t, err)
+	assert.Equal(t, `a"b`, got.String())
 }

@@ -40,6 +40,8 @@ catalogers:
           - pkg.PythonPackage
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         json_schema_types: # AUTO-GENERATED
           - PythonPackage
         capabilities: # MANUAL - preserved across regeneration
@@ -86,6 +88,8 @@ catalogers:
           - pkg.PythonPdmLockEntry
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         json_schema_types: # AUTO-GENERATED
           - PythonPdmLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -113,10 +117,13 @@ catalogers:
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/uv.lock'
+            - '**/*.py.lock'
         metadata_types: # AUTO-GENERATED
           - pkg.PythonUvLockEntry
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         json_schema_types: # AUTO-GENERATED
           - PythonUvLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -146,6 +153,8 @@ catalogers:
             - '**/setup.py'
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: false
@@ -172,6 +181,8 @@ catalogers:
           - pkg.PythonPipfileLockEntry
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         json_schema_types: # AUTO-GENERATED
           - PythonPipfileLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -203,6 +214,8 @@ catalogers:
           - pkg.PythonPoetryLockEntry
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         json_schema_types: # AUTO-GENERATED
           - PythonPoetryLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -234,6 +247,8 @@ catalogers:
           - pkg.PythonRequirementsEntry
         package_types: # AUTO-GENERATED
           - python
+        purl_types: # AUTO-GENERATED
+          - pypi
         json_schema_types: # AUTO-GENERATED
           - PythonPipRequirementsEntry
         capabilities: # MANUAL - preserved across regeneration

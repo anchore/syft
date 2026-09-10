@@ -39,12 +39,19 @@ catalogers:
           - '**/*.deps.json'
           - '**/*.dll'
           - '**/*.exe'
+          - '**/*.bpl'
+          - '**/*.DLL'
+          - '**/*.EXE'
+          - '**/*.BPL'
     metadata_types: # AUTO-GENERATED
       - pkg.DotnetDepsEntry
       - pkg.DotnetPortableExecutableEntry
     package_types: # AUTO-GENERATED
       - dotnet
       - npm
+    purl_types: # AUTO-GENERATED
+      - npm
+      - nuget
     json_schema_types: # AUTO-GENERATED
       - DotnetDepsEntry
       - DotnetPortableExecutableEntry
@@ -83,6 +90,8 @@ catalogers:
       - pkg.DotnetDepsEntry
     package_types: # AUTO-GENERATED
       - dotnet
+    purl_types: # AUTO-GENERATED
+      - nuget
     json_schema_types: # AUTO-GENERATED
       - DotnetDepsEntry
     capabilities: # MANUAL - edit capabilities here
@@ -127,6 +136,8 @@ catalogers:
           - pkg.DotnetPackagesLockEntry
         package_types: # AUTO-GENERATED
           - dotnet
+        purl_types: # AUTO-GENERATED
+          - nuget
         json_schema_types: # AUTO-GENERATED
           - DotnetPackagesLockEntry
         capabilities: # MANUAL - preserved across regeneration
@@ -166,10 +177,16 @@ catalogers:
         criteria:
           - '**/*.dll'
           - '**/*.exe'
+          - '**/*.bpl'
+          - '**/*.DLL'
+          - '**/*.EXE'
+          - '**/*.BPL'
     metadata_types: # AUTO-GENERATED
       - pkg.DotnetPortableExecutableEntry
     package_types: # AUTO-GENERATED
       - dotnet
+    purl_types: # AUTO-GENERATED
+      - nuget
     json_schema_types: # AUTO-GENERATED
       - DotnetPortableExecutableEntry
     capabilities: # MANUAL - edit capabilities here

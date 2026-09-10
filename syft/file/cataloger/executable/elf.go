@@ -10,11 +10,12 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
 )
 
 func findELFFeatures(data *file.Executable, reader unionreader.UnionReader) error {
-	f, err := elf.NewFile(reader)
+	f, err := elfutil.NewFile(reader)
 	if err != nil {
 		return err
 	}

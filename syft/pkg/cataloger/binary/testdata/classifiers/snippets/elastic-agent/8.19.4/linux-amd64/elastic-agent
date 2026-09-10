@@ -1,0 +1,8 @@
+name: elastic-agent
+offset: 345016607
+length: 100
+snippetSha256: f66476e828071ae2211f9b279d18a4b23c247bd52cb2bc86cfbe611ec48c88e4
+fileSha256: c7d7bcf1e43ede7b8c5e55537b382ec02b4d8d1493eedb072bfd5f180442ee43
+
+### byte snippet to follow ###
+atspliceconfig/statsenroll8.19.4headeruint16secret%s: %sinputseventsfollownumbersourcereexecstatusou

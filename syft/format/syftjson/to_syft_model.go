@@ -175,6 +175,8 @@ func toSyftFileType(ty string) stereoscopeFile.Type {
 	case "SymbolicLink":
 		return stereoscopeFile.TypeSymLink
 	case "HardLink":
+		// kept for reading SBOMs written before stereoscope adopted hardlinks at index time (they are emitted as
+		// regular files now, except for malformed link entries)
 		return stereoscopeFile.TypeHardLink
 	case "Directory":
 		return stereoscopeFile.TypeDirectory

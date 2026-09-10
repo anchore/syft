@@ -1,0 +1,8 @@
+name: packetbeat
+offset: 101048442
+length: 100
+snippetSha256: ebdfd10ab740f479a0aa2260349109b114607873f49ff27f11edcc1b71ae5476
+fileSha256: 06d820e76dcbc4fe34a33bee19e1f68021ba34de1098875691bc44247814f992
+
+### byte snippet to follow ###
+COBRAforcestdinsetupTest 9.4.2input%s %w8.0.0agentindexeventerroraddedblockmutexdebugFetchFOUNDINPUT

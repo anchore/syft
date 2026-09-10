@@ -1,0 +1,8 @@
+name: heartbeat
+offset: 97948236
+length: 100
+snippetSha256: 88c46b68ddc495a24baee84a04b70ad23285725a5d214a216d28904db7bb24ec
+fileSha256: ecf50b047a5461a736164566a3d19b6fbe9f1f9f4cbfb086f0c168c93e94b108
+
+### byte snippet to follow ###
+8.0.0forcestdinsetupTest 9.4.2inputerroraddedblockmutexdebugFetchFOUNDINPUTERRORDEBUGTRACEStoreindex
