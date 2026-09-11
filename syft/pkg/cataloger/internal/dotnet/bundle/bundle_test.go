@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"io"
 	"math"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,6 +128,15 @@ type shortReader struct {
 	pos  int64
 }
 
+func (r *shortReader) Read(p []byte) (int, error) {
+	if r.pos >= int64(len(r.data)) {
+		return 0, io.EOF
+	}
+	n := copy(p, r.data[r.pos:])
+	r.pos += int64(n)
+	return n, nil
+}
+
 func (r *shortReader) ReadAt(p []byte, off int64) (int, error) {
 	if off >= int64(len(r.data)) {
 		return 0, io.EOF
@@ -138,35 +148,6 @@ func (r *shortReader) ReadAt(p []byte, off int64) (int, error) {
 	return n, nil
 }
 
-func (r *shortReader) Close() error { return nil }
-
-// lyingReader claims a size it cannot deliver a byte at. Nothing derived from that number can be trusted,
-// which is the case intFile.ReaderSize exists to catch.
-type lyingReader struct {
-	*bytes.Reader
-	size int64
-}
-
-func (r *lyingReader) Size() int64 { return r.size }
-
-func (r *lyingReader) ReadAt(p []byte, off int64) (int, error) {
-	if off >= r.Reader.Size() {
-		return 0, io.EOF
-	}
-	return r.Reader.ReadAt(p, off)
-}
-
-func (r *lyingReader) Close() error { return nil }
-
-func (r *shortReader) Read(p []byte) (int, error) {
-	if r.pos >= int64(len(r.data)) {
-		return 0, io.EOF
-	}
-	n := copy(p, r.data[r.pos:])
-	r.pos += int64(n)
-	return n, nil
-}
-
 func (r *shortReader) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
 	case io.SeekStart:
@@ -174,10 +155,49 @@ func (r *shortReader) Seek(offset int64, whence int) (int64, error) {
 	case io.SeekCurrent:
 		r.pos += offset
 	case io.SeekEnd:
-		// the lie: the file claims more than Read will produce
+		// the size is what the reader reports; Read is what comes up short
 		r.pos = r.size + offset
 	}
 	return r.pos, nil
+}
+
+func (r *shortReader) Close() error { return nil }
+
+// unbackedSizeReader reports a size it cannot deliver the last byte of.
+//
+// These readers do not all come from us. debug/elf and debug/pe hand out io.NewSectionReader(r, 0, 1<<63-1),
+// whose Size() is a nominal 8EB rather than a measured one, so a reader that answers a size directly is not
+// on its own evidence the bytes exist. intFile.ReaderSize confirms the count by reading the last byte, and
+// the case below pins that failing that check surfaces here as an error rather than as "no bundle present".
+type unbackedSizeReader struct {
+	*bytes.Reader
+	size int64
+}
+
+func (r *unbackedSizeReader) Size() int64 { return r.size }
+
+func (r *unbackedSizeReader) ReadAt(p []byte, off int64) (int, error) {
+	if off >= r.Reader.Size() {
+		return 0, io.EOF
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func (r *unbackedSizeReader) Close() error { return nil }
+
+// measureAlloc reports the bytes allocated while fn runs. Only a byte count states "a small file cannot
+// make us reserve a large buffer"; asserting an error comes back would keep passing if the allocation
+// were hoisted above the check.
+func measureAlloc(t *testing.T, fn func()) uint64 {
+	t.Helper()
+
+	var before, after runtime.MemStats
+	runtime.GC()
+	runtime.ReadMemStats(&before)
+	fn()
+	runtime.ReadMemStats(&after)
+
+	return after.TotalAlloc - before.TotalAlloc
 }
 
 func TestFindBundleHeaderOffset_ShortReadStillSearchesWhatWasRead(t *testing.T) {
@@ -196,7 +216,7 @@ func TestFindBundleHeaderOffset_UnbackedSizeIsReported(t *testing.T) {
 	data := fileWithSignatureAt(8192, 64, 0x1234)
 
 	// claims twice the bytes it holds, so nothing sized or bounds-checked against that number means anything
-	r := &lyingReader{Reader: bytes.NewReader(data), size: int64(len(data)) * 2}
+	r := &unbackedSizeReader{Reader: bytes.NewReader(data), size: int64(len(data)) * 2}
 
 	_, err := findBundleHeaderOffset(r, int64(len(data))*2)
 	require.Error(t, err,

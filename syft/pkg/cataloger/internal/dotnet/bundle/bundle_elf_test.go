@@ -120,9 +120,16 @@ func TestExtractDepsJSONFromELFBundle_MalformedFileszDoesNotOverAllocate(t *test
 
 	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
 
-	content, err := ExtractDepsJSONFromELFBundle(r)
+	var content string
+	var err error
+	allocated := measureAlloc(t, func() {
+		content, err = ExtractDepsJSONFromELFBundle(r)
+	})
 	require.NoError(t, err)
 	assert.Empty(t, content)
+
+	assert.Less(t, allocated, uint64(intFile.MB),
+		"the search buffer must be sized by the file, not by what the program headers claim")
 	assert.LessOrEqual(t, r.maxRead, len(data),
-		"the search must be bounded by the file, not by what the program headers claim")
+		"no read may request more than the file holds")
 }

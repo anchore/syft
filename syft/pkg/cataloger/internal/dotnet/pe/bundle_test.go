@@ -107,9 +107,19 @@ func TestExtractDepsJSONFromBundle_MalformedSectionSizesDoNotOverAllocate(t *tes
 	const fileSize = 512 // a small "file" with no bundle signature
 	r := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, fileSize))}
 
-	content, err := extractDepsJSONFromBundle(r, sections)
+	var content string
+	var err error
+	allocated := measureAlloc(t, func() {
+		content, err = extractDepsJSONFromBundle(r, sections)
+	})
 	require.NoError(t, err)
 	assert.Empty(t, content)
+
+	// the byte count is the assertion that matters. make([]byte, 8.6e9) does not crash on a 64-bit host:
+	// it comes back from fresh anonymous mmap and never touches the pages, so a test that only checked for
+	// a panic would pass with the bound removed.
+	assert.Less(t, allocated, uint64(intFile.MB),
+		"the search buffer must be sized by the file, not by what the section headers claim")
 	assert.LessOrEqual(t, r.maxRead, fileSize,
-		"the search must be bounded by the file, not by what the section headers claim")
+		"no read may request more than the file holds")
 }
