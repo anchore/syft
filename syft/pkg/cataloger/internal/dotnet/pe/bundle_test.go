@@ -13,28 +13,31 @@ func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
 		fixture         string
 		path            string
 		wantDepsJSON    bool   // true if deps.json should be found
-		wantJSONContain string // string that should be in the JSON (varies by .NET version)
+		wantJSONContain string // a string unique to the deps.json (and not the runtimeconfig.json) of this fixture
 	}{
 		{
-			name:            "V1 bundle (.NET Core 3.1)",
-			fixture:         "image-dotnet31-single-file",
-			path:            "/app/hello.exe",
-			wantDepsJSON:    true,
-			wantJSONContain: "runtimeOptions", // .NET Core 3.1 uses runtimeOptions
+			name:         "V1 bundle (.NET Core 3.1)",
+			fixture:      "image-dotnet31-single-file",
+			path:         "/app/hello.exe",
+			wantDepsJSON: true,
+			wantJSONContain: `"runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.1/win-x64"`,
 		},
 		{
-			name:            "V2 bundle (.NET 5)",
-			fixture:         "image-dotnet5-single-file",
-			path:            "/app/hello.exe",
-			wantDepsJSON:    true,
-			wantJSONContain: "runtimeTarget", // .NET 5+ uses runtimeTarget
+			name:         "V2 bundle (.NET 5)",
+			fixture:      "image-dotnet5-single-file",
+			path:         "/app/hello.exe",
+			wantDepsJSON: true,
+			wantJSONContain: `"runtimeTarget": {
+    "name": ".NETCoreApp,Version=v5.0/win-x64"`,
 		},
 		{
-			name:            "V6 bundle (.NET 6)",
-			fixture:         "image-dotnet6-single-file",
-			path:            "/app/hello.exe",
-			wantDepsJSON:    true,
-			wantJSONContain: "runtimeTarget", // .NET 6+ uses runtimeTarget
+			name:         "V6 bundle (.NET 6)",
+			fixture:      "image-dotnet6-single-file",
+			path:         "/app/hello.exe",
+			wantDepsJSON: true,
+			wantJSONContain: `"runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0/win-x64"`,
 		},
 	}
 
