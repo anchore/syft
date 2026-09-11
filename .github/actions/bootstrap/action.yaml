@@ -47,7 +47,17 @@ runs:
         APT_PACKAGES: ${{ inputs.bootstrap-apt-packages }}
       run: |
         IFS=' ' read -ra packages <<< "$APT_PACKAGES"
-        DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${packages[@]}"
+        # the AMI already ships most of these, and `apt update` costs ~40MB of index (minutes,
+        # when archive.ubuntu.com throttles us) to find that out. only touch apt if we must.
+        missing=()
+        for pkg in "${packages[@]}"; do
+          dpkg -s "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+        done
+        if [ ${#missing[@]} -eq 0 ]; then
+          echo "all apt packages already present: ${packages[*]}"
+          exit 0
+        fi
+        DEBIAN_FRONTEND=noninteractive sudo apt update && sudo -E apt install -y "${missing[@]}"
 
     # ORAS cache: restore-only on non-default branches / forks
     - name: Restore ORAS cache from github actions

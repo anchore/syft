@@ -21,10 +21,12 @@ jobs:
     name: "Static analysis"
     # runs-on.com: memory & general purpose instances for testing
     #   spot enabled: ok to interrupt non-production workloads
-    #   tmpfs: faster io-intensive workflows
+    #   tmpfs intentionally omitted -- it RAM-backs /home/runner, /tmp and /var/lib/docker at
+    #   100% of instance memory, leaving no headroom for `make unit` to link ~400 race-enabled
+    #   test binaries. volume gets the IO back on disk.
     #   note: s3-cache intentionally omitted -- PR runs are untrusted and must not write to the
     #   shared cache backend that the trusted release workflow reads from (cache poisoning).
-    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/extras=tmpfs"
+    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/volume=80gb:gp3:500mbs:4000iops"
     permissions:
       contents: read
     steps:
