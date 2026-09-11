@@ -86,19 +86,23 @@ func Test_Read_DotNetDetection(t *testing.T) {
 			wantErr: require.NoError,
 		},
 		{
-			name:    "jruby",
-			path:    "/app/jruby_windows_9_3_15_0.exe",
+			// the apphost is a native launcher, not a managed assembly, so there is no CLR evidence to find in it.
+			// note the contrast with the single file deployment case below, which is the same apphost with the app
+			// (and the CLRDEBUGINFO resource) bundled into it.
+			name:    "apphost",
+			path:    "/app/dotnetapp.exe",
 			fixture: "image-net8-app",
 			wantCLR: false, // important!
 			wantVR: map[string]string{
-				"CompanyName":      "JRuby Dev Team",
-				"FileDescription":  "JRuby",
-				"FileVersion":      "9.3.15.0",
-				"InternalName":     "jruby",
-				"LegalCopyright":   "JRuby Dev Team",
-				"OriginalFilename": "jruby_windows-x32_9_3_15_0.exe",
-				"ProductName":      "JRuby",
-				"ProductVersion":   "9.3.15.0",
+				"CompanyName":      "dotnetapp",
+				"FileDescription":  "dotnetapp",
+				"FileVersion":      "1.0.0.0",
+				"InternalName":     "dotnetapp.dll",
+				"LegalCopyright":   " ",
+				"OriginalFilename": "dotnetapp.dll",
+				"ProductName":      "dotnetapp",
+				"ProductVersion":   "1.0.0",
+				"Assembly Version": "1.0.0.0",
 			},
 			wantErr: require.NoError,
 		},
