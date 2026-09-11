@@ -38,9 +38,15 @@ func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
 		},
 	}
 
+	var fixtures []string
+	for _, tt := range tests {
+		fixtures = append(fixtures, tt.fixture)
+	}
+	resolvers := fixtureResolvers(t, fixtures...)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reader := fixtureFile(t, tt.fixture, tt.path)
+			reader := fixtureFile(t, resolvers[tt.fixture], tt.path)
 			defer reader.Close()
 
 			got, err := Read(reader)

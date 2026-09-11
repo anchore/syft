@@ -125,13 +125,19 @@ func Test_Read_DotNetDetection(t *testing.T) {
 		},
 	}
 
+	var fixtures []string
+	for _, tt := range tests {
+		fixtures = append(fixtures, tt.fixture)
+	}
+	resolvers := fixtureResolvers(t, fixtures...)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
 
-			reader := fixtureFile(t, tt.fixture, tt.path)
+			reader := fixtureFile(t, resolvers[tt.fixture], tt.path)
 
 			got, err := Read(reader)
 			tt.wantErr(t, err)
@@ -153,16 +159,31 @@ func Test_Read_DotNetDetection(t *testing.T) {
 	}
 }
 
-func fixtureFile(t *testing.T, fixture, path string) file.LocationReadCloser {
-	img := imagetest.GetFixtureImage(t, "docker-archive", fixture)
+// fixtureResolvers loads each distinct image fixture once, from the parent test, so that subtests reading multiple
+// files out of the same image don't each pay for loading the docker archive again (which dominates the runtime of
+// these tests, especially under -race).
+func fixtureResolvers(t *testing.T, fixtures ...string) map[string]file.Resolver {
+	resolvers := make(map[string]file.Resolver)
+	for _, fixture := range fixtures {
+		if _, ok := resolvers[fixture]; ok {
+			continue
+		}
 
-	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
-		Reference: fixture,
-	})
+		img := imagetest.GetFixtureImage(t, "docker-archive", fixture)
 
-	r, err := s.FileResolver(source.SquashedScope)
-	require.NoError(t, err)
+		s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+			Reference: fixture,
+		})
 
+		r, err := s.FileResolver(source.SquashedScope)
+		require.NoError(t, err)
+
+		resolvers[fixture] = r
+	}
+	return resolvers
+}
+
+func fixtureFile(t *testing.T, r file.Resolver, path string) file.LocationReadCloser {
 	locs, err := r.FilesByPath(path)
 	require.NoError(t, err)
 
