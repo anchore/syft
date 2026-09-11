@@ -31,7 +31,9 @@ type dotNetBundleHeaderV2 struct {
 	Flags                   uint64
 }
 
-// dotNetFileType represents the type of bundled file in the manifest
+// dotNetFileType represents the type of bundled file in the manifest, as of V2 bundles (.NET 5+).
+// note: V1 bundles (.NET Core 3.x) predate the unknown member at the head of this enum, so every type there is
+// one less than the values below (e.g. deps.json is 2, not 3). see depsJSONFileType().
 type dotNetFileType uint8
 
 const (
@@ -121,8 +123,20 @@ func readDepsJSONAtOffset(r io.ReadSeeker, offset, size int64) (string, error) {
 	return string(data), nil
 }
 
+// depsJSONFileType returns the manifest file type that marks deps.json for the given bundle version. V1 bundles
+// (.NET Core 3.x) have no unknown member in the file type enum, so all of their types are shifted down by one --
+// reading them with the V2+ values silently matches runtimeconfig.json instead.
+func depsJSONFileType(majorVersion uint32) dotNetFileType {
+	if majorVersion < 2 {
+		return dotNetFileTypeDepsJSON - 1
+	}
+	return dotNetFileTypeDepsJSON
+}
+
 // findDepsJSONInManifest parses manifest entries to find deps.json (for V1 bundles or fallback)
 func findDepsJSONInManifest(r io.ReadSeeker, numFiles int32, majorVersion uint32) (string, error) {
+	depsJSONType := depsJSONFileType(majorVersion)
+
 	for i := int32(0); i < numFiles; i++ {
 		var offset, size int64
 
@@ -151,7 +165,7 @@ func findDepsJSONInManifest(r io.ReadSeeker, numFiles int32, majorVersion uint32
 			return "", err
 		}
 
-		if fileType == dotNetFileTypeDepsJSON && size > 0 {
+		if fileType == depsJSONType && size > 0 {
 			// save current position to resume manifest parsing if needed
 			currentPos, err := r.Seek(0, io.SeekCurrent)
 			if err != nil {

@@ -86,19 +86,23 @@ func Test_Read_DotNetDetection(t *testing.T) {
 			wantErr: require.NoError,
 		},
 		{
-			name:    "jruby",
-			path:    "/app/jruby_windows_9_3_15_0.exe",
+			// the apphost is a native launcher, not a managed assembly, so there is no CLR evidence to find in it.
+			// note the contrast with the single file deployment case below, which is the same apphost with the app
+			// (and the CLRDEBUGINFO resource) bundled into it.
+			name:    "apphost",
+			path:    "/app/dotnetapp.exe",
 			fixture: "image-net8-app",
 			wantCLR: false, // important!
 			wantVR: map[string]string{
-				"CompanyName":      "JRuby Dev Team",
-				"FileDescription":  "JRuby",
-				"FileVersion":      "9.3.15.0",
-				"InternalName":     "jruby",
-				"LegalCopyright":   "JRuby Dev Team",
-				"OriginalFilename": "jruby_windows-x32_9_3_15_0.exe",
-				"ProductName":      "JRuby",
-				"ProductVersion":   "9.3.15.0",
+				"CompanyName":      "dotnetapp",
+				"FileDescription":  "dotnetapp",
+				"FileVersion":      "1.0.0.0",
+				"InternalName":     "dotnetapp.dll",
+				"LegalCopyright":   " ",
+				"OriginalFilename": "dotnetapp.dll",
+				"ProductName":      "dotnetapp",
+				"ProductVersion":   "1.0.0",
+				"Assembly Version": "1.0.0.0",
 			},
 			wantErr: require.NoError,
 		},
@@ -125,13 +129,19 @@ func Test_Read_DotNetDetection(t *testing.T) {
 		},
 	}
 
+	var fixtures []string
+	for _, tt := range tests {
+		fixtures = append(fixtures, tt.fixture)
+	}
+	resolvers := fixtureResolvers(t, fixtures...)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wantErr == nil {
 				tt.wantErr = require.NoError
 			}
 
-			reader := fixtureFile(t, tt.fixture, tt.path)
+			reader := fixtureFile(t, resolvers[tt.fixture], tt.path)
 
 			got, err := Read(reader)
 			tt.wantErr(t, err)
@@ -153,16 +163,31 @@ func Test_Read_DotNetDetection(t *testing.T) {
 	}
 }
 
-func fixtureFile(t *testing.T, fixture, path string) file.LocationReadCloser {
-	img := imagetest.GetFixtureImage(t, "docker-archive", fixture)
+// fixtureResolvers loads each distinct image fixture once, from the parent test, so that subtests reading multiple
+// files out of the same image don't each pay for loading the docker archive again (which dominates the runtime of
+// these tests, especially under -race).
+func fixtureResolvers(t *testing.T, fixtures ...string) map[string]file.Resolver {
+	resolvers := make(map[string]file.Resolver)
+	for _, fixture := range fixtures {
+		if _, ok := resolvers[fixture]; ok {
+			continue
+		}
 
-	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
-		Reference: fixture,
-	})
+		img := imagetest.GetFixtureImage(t, "docker-archive", fixture)
 
-	r, err := s.FileResolver(source.SquashedScope)
-	require.NoError(t, err)
+		s := stereoscopesource.New(img, stereoscopesource.ImageConfig{
+			Reference: fixture,
+		})
 
+		r, err := s.FileResolver(source.SquashedScope)
+		require.NoError(t, err)
+
+		resolvers[fixture] = r
+	}
+	return resolvers
+}
+
+func fixtureFile(t *testing.T, r file.Resolver, path string) file.LocationReadCloser {
 	locs, err := r.FilesByPath(path)
 	require.NoError(t, err)
 
