@@ -65,6 +65,7 @@ func AllTypes() []any {
 		pkg.RDescription{},
 		pkg.RpmArchive{},
 		pkg.RpmDBEntry{},
+		pkg.RubyGemfileLockEntry{},
 		pkg.RubyGemspec{},
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},

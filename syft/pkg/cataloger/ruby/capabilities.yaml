@@ -21,10 +21,14 @@ catalogers:
           criteria: # AUTO-GENERATED
             - '**/Gemfile.lock'
             - '**/Gemfile.next.lock'
+        metadata_types: # AUTO-GENERATED
+          - pkg.RubyGemfileLockEntry
         package_types: # AUTO-GENERATED
           - gem
         purl_types: # AUTO-GENERATED
           - gem
+        json_schema_types: # AUTO-GENERATED
+          - RubyGemfileLockEntry
         capabilities: # MANUAL - preserved across regeneration
           - name: license
             default: false
@@ -33,7 +37,7 @@ catalogers:
               - direct
               - indirect
           - name: dependency.edges
-            default: ""
+            default: complete
           - name: dependency.kinds
             default:
               - runtime
