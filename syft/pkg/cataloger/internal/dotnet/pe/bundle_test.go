@@ -1,10 +1,14 @@
 package pe
 
 import (
+	"bytes"
+	"debug/pe"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	intFile "github.com/anchore/syft/internal/file"
 )
 
 func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
@@ -64,4 +68,58 @@ func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
 			}
 		})
 	}
+}
+
+// readSizeRecorder records the largest single Read length requested of it. The worst end offset PE
+// headers can describe is about 8.6GB, and `make([]byte, 8.6e9)` succeeds on any 64-bit host from fresh
+// anonymous mmap without touching the pages, so asserting "no panic" would pass with or without the
+// bound. The requested read size is what actually distinguishes them.
+type readSizeRecorder struct {
+	*bytes.Reader
+	maxRead int
+}
+
+func (r *readSizeRecorder) Read(p []byte) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.Read(p)
+}
+
+// note: ReadAt is recorded too, since the bounded reads go through it to leave the caller's cursor alone.
+func (r *readSizeRecorder) ReadAt(p []byte, off int64) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func (r *readSizeRecorder) Close() error { return nil }
+
+func TestExtractDepsJSONFromBundle_MalformedSectionSizesDoNotOverAllocate(t *testing.T) {
+	// PointerToRawData and SizeOfRawData are user-controlled and unrelated to the real file size
+	sections := []pe.SectionHeader32{{PointerToRawData: 0xFFFFFFFF, SizeOfRawData: 0xFFFFFFFF}}
+
+	// sanity: the headers really do describe an end offset far past the file, so the bound is what keeps
+	// the allocation small rather than the input being small
+	require.Greater(t, calculatePEEndOffset(sections), int64(8*intFile.GB))
+
+	const fileSize = 512 // a small "file" with no bundle signature
+	r := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, fileSize))}
+
+	var content string
+	var err error
+	allocated := measureAlloc(t, func() {
+		content, err = extractDepsJSONFromBundle(r, sections)
+	})
+	require.NoError(t, err)
+	assert.Empty(t, content)
+
+	// the byte count is the assertion that matters. make([]byte, 8.6e9) does not crash on a 64-bit host:
+	// it comes back from fresh anonymous mmap and never touches the pages, so a test that only checked for
+	// a panic would pass with the bound removed.
+	assert.Less(t, allocated, uint64(intFile.MB),
+		"the search buffer must be sized by the file, not by what the section headers claim")
+	assert.LessOrEqual(t, r.maxRead, fileSize,
+		"no read may request more than the file holds")
 }

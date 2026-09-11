@@ -107,6 +107,28 @@ func Test_Read_DotNetDetection(t *testing.T) {
 			wantErr: require.NoError,
 		},
 		{
+			// the framework-dependent apphost, which carries the bundle signature with a zero offset
+			// placeholder because it was never published as a single file. This is the most common shape a
+			// .NET executable takes, so anything it reports as a parse failure is reported against nearly
+			// every .NET binary that exists.
+			name:    "framework dependent apphost",
+			path:    "/app/dotnetapp.exe",
+			fixture: "image-net8-app",
+			wantCLR: false, // the CLR metadata lives in the sibling dotnetapp.dll
+			wantVR: map[string]string{
+				"Assembly Version": "1.0.0.0",
+				"CompanyName":      "dotnetapp",
+				"FileDescription":  "dotnetapp",
+				"FileVersion":      "1.0.0.0",
+				"InternalName":     "dotnetapp.dll",
+				"LegalCopyright":   " ",
+				"OriginalFilename": "dotnetapp.dll",
+				"ProductName":      "dotnetapp",
+				"ProductVersion":   "1.0.0",
+			},
+			wantErr: require.NoError,
+		},
+		{
 			name:    "single file deployment",
 			path:    "/app/dotnetapp.exe",
 			fixture: "image-net8-app-single-file",
@@ -148,6 +170,10 @@ func Test_Read_DotNetDetection(t *testing.T) {
 			if err != nil {
 				return
 			}
+
+			// a real binary must parse completely. ParseErr is how a partial parse reaches the unknowns
+			// channel, so anything non-nil here is a field we silently failed to read on stock input.
+			require.NoError(t, got.ParseErr, "a well-formed binary must not report a partial parse")
 
 			if d := cmp.Diff(tt.wantVR, got.VersionResources); d != "" {
 				t.Errorf("unexpected version resources (-want +got): %s", d)

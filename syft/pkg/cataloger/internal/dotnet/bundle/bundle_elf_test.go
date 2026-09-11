@@ -2,11 +2,14 @@ package bundle
 
 import (
 	"bytes"
+	"debug/elf"
 	"encoding/binary"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	intFile "github.com/anchore/syft/internal/file"
 )
 
 // readSeekCloser adapts a *bytes.Reader to the unionreader.UnionReader interface (adds Close).
@@ -16,10 +19,44 @@ type readSeekCloser struct {
 
 func (readSeekCloser) Close() error { return nil }
 
-// buildELFWithHugeFilesz returns a minimal, parseable ELF64 whose single program header
-// declares an absurd p_filesz. calculateELFEndOffset will compute a huge end offset; the
-// clamp in findBundleHeaderOffsetInELF must keep the allocation bounded to the real file.
+// buildELFWithHugeFilesz returns a minimal, parseable ELF64 whose single program header declares a
+// p_filesz far past the real file. calculateELFEndOffset will compute an 8GB end offset; the bound in
+// FindSignatureOffset must keep the allocation tied to the real file.
+//
+// note: 8GB rather than something astronomical on purpose. `make([]byte, 1<<60)` panics on its own, so a
+// test built on that value passes whether or not the bound exists; `make([]byte, 8*intFile.GB)` succeeds
+// on any 64-bit host from untouched anonymous mmap, so only the requested read size distinguishes them.
 func buildELFWithHugeFilesz() []byte {
+	return buildELFWithProgHeader(0, 8*intFile.GB)
+}
+
+// readSizeRecorder records the largest single Read length requested of it, which is what tells a buffer
+// sized from the file apart from one sized from the headers.
+type readSizeRecorder struct {
+	*bytes.Reader
+	maxRead int
+}
+
+func (r *readSizeRecorder) Read(p []byte) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.Read(p)
+}
+
+// note: ReadAt is recorded too, since the bounded reads go through it to leave the caller's cursor alone.
+func (r *readSizeRecorder) ReadAt(p []byte, off int64) (int, error) {
+	if len(p) > r.maxRead {
+		r.maxRead = len(p)
+	}
+	return r.Reader.ReadAt(p, off)
+}
+
+func (r *readSizeRecorder) Close() error { return nil }
+
+// buildELFWithProgHeader returns a minimal, parseable ELF64 with a single PT_LOAD program header
+// carrying the given p_offset and p_filesz. debug/elf does not validate either field.
+func buildELFWithProgHeader(pOffset, pFilesz uint64) []byte {
 	const (
 		ehSize  = 64
 		phSize  = 56
@@ -45,19 +82,54 @@ func buildELFWithHugeFilesz() []byte {
 	// e_shoff/e_shnum left zero so no sections are parsed
 
 	ph := buf[phOff:]
-	le.PutUint32(ph[0:], 1)      // p_type = PT_LOAD
-	le.PutUint64(ph[16:], 0)     // p_offset
-	le.PutUint64(ph[32:], 1<<60) // p_filesz (bogus, attacker-controlled)
-	le.PutUint64(ph[40:], 1<<60) // p_memsz
+	le.PutUint32(ph[0:], 1)        // p_type = PT_LOAD
+	le.PutUint64(ph[8:], pOffset)  // p_offset (user-controlled)
+	le.PutUint64(ph[32:], pFilesz) // p_filesz (user-controlled)
+	le.PutUint64(ph[40:], pFilesz) // p_memsz
 	return buf
+}
+
+func TestExtractDepsJSONFromELFBundle_EndOffsetOverflowDoesNotPanic(t *testing.T) {
+	// calculateELFEndOffset sums these two uint64 header fields into an int64 and adds 4096, which
+	// overflows to a negative search limit. A negative is not greater than the file size, so it slips
+	// unnoticed into the search window unless a non-positive limit reads nothing.
+	data := buildELFWithProgHeader(0x7FFFFFFFFFFFF000, 0)
+	require.Negative(t, calculateELFEndOffset(mustParseELF(t, data)),
+		"expected these header values to overflow the end offset; the guard below is what this test pins")
+
+	r := readSeekCloser{bytes.NewReader(data)}
+
+	content, err := ExtractDepsJSONFromELFBundle(r)
+	require.NoError(t, err)
+	assert.Empty(t, content)
+}
+
+func mustParseELF(t *testing.T, data []byte) *elf.File {
+	t.Helper()
+	f, err := elf.NewFile(bytes.NewReader(data))
+	require.NoError(t, err)
+	return f
 }
 
 func TestExtractDepsJSONFromELFBundle_MalformedFileszDoesNotOverAllocate(t *testing.T) {
 	data := buildELFWithHugeFilesz()
-	r := readSeekCloser{bytes.NewReader(data)}
 
-	// must not OOM/panic on the bogus p_filesz, and find no bundle signature
-	content, err := ExtractDepsJSONFromELFBundle(r)
+	// sanity: the headers really do describe an end offset far past the file, so the bound is what keeps
+	// the allocation small rather than the input being small
+	require.Greater(t, calculateELFEndOffset(mustParseELF(t, data)), int64(8*intFile.GB))
+
+	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
+
+	var content string
+	var err error
+	allocated := measureAlloc(t, func() {
+		content, err = ExtractDepsJSONFromELFBundle(r)
+	})
 	require.NoError(t, err)
 	assert.Empty(t, content)
+
+	assert.Less(t, allocated, uint64(intFile.MB),
+		"the search buffer must be sized by the file, not by what the program headers claim")
+	assert.LessOrEqual(t, r.maxRead, len(data),
+		"no read may request more than the file holds")
 }
