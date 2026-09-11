@@ -7,15 +7,78 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
+
+// archiveResolverFactory returns a factory that builds an indexed resolver over an extracted-archive
+// directory whose Locations are stamped with the given (nesting-chain) fileSystemID. It is passed to
+// the archive cataloger task so the internal/task and internal/archive packages do not need to
+// import the syft-subtree internal fileresolver package directly.
+//
+// exclusions are the scan's own exclusion patterns, carried here on cataloging.ArchiveSearchConfig's
+// derived ExclusionPatterns field rather than passed in from the source directly; this capability has
+// no exclusion setting of its own. Those whose shape reaches inside an archive are applied as index
+// visitors, which is why an excluded file ends up absent from the archive's filesystem rather than
+// present and skipped: an excluded archive is then never found to extract in the first place.
+func archiveResolverFactory(exclusions []string) archive.ResolverFactory {
+	patterns := cataloging.ArchiveExclusionPatterns(exclusions)
+
+	return func(overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
+		visitor, err := newArchiveExclusionVisitor(overflow.RootDir, patterns)
+		if err != nil {
+			return nil, archive.IndexResult{}, err
+		}
+
+		var filters []fileresolver.PathIndexVisitor
+		if visitor != nil {
+			filters = append(filters, visitor)
+		}
+
+		resolver, err := fileresolver.NewFromArchiveTar(overflow.RootDir, overflow.TarPath, overflow.FileSystemID, overflow.ArchivePath, filters...)
+		if err != nil {
+			return nil, archive.IndexResult{}, err
+		}
+		return resolver, archive.IndexResult{Records: resolver.Records(), Truncated: resolver.IndexTruncated()}, nil
+	}
+}
+
+// archiveEntryResolverFactory returns a factory that builds a resolver over an archive's entries
+// rather than over a tar of them.
+//
+// This is the store-backed path: an archive small enough to stay in memory never reaches the disk, and
+// one that outgrows memory moves its bytes without the index being rebuilt. It stands beside the
+// tar-backed factory rather than replacing it so the two can be measured against each other on the
+// same corpus.
+func archiveEntryResolverFactory(exclusions []string) archive.StoreResolverFactory {
+	patterns := cataloging.ArchiveExclusionPatterns(exclusions)
+
+	return func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
+		visitor, err := newArchiveExclusionVisitor(overflow.RootDir, patterns)
+		if err != nil {
+			return nil, archive.IndexResult{}, err
+		}
+
+		var filters []fileresolver.PathIndexVisitor
+		if visitor != nil {
+			filters = append(filters, visitor)
+		}
+
+		resolver, err := fileresolver.NewFromArchiveEntries(overflow.RootDir, overflow.FileSystemID, overflow.ArchivePath, store, false, filters...)
+		if err != nil {
+			return nil, archive.IndexResult{}, err
+		}
+		return resolver, archive.IndexResult{Records: resolver.Records(), Truncated: resolver.IndexTruncated()}, nil
+	}
+}
 
 // CreateSBOMConfig specifies all parameters needed for creating an SBOM.
 type CreateSBOMConfig struct {
@@ -28,6 +91,7 @@ type CreateSBOMConfig struct {
 	Packages           pkgcataloging.Config
 	Licenses           cataloging.LicenseConfig
 	Files              filecataloging.Config
+	Archive            cataloging.ArchiveSearchConfig
 	Parallelism        int
 	CatalogerSelection cataloging.SelectionRequest
 
@@ -49,6 +113,7 @@ func DefaultCreateSBOMConfig() *CreateSBOMConfig {
 		Packages:             pkgcataloging.DefaultConfig(),
 		Licenses:             cataloging.DefaultLicenseConfig(),
 		Files:                filecataloging.DefaultConfig(),
+		Archive:              cataloging.DefaultArchiveSearchConfig(),
 		Parallelism:          0, // use default: run in parallel based on number of CPUs
 		packageTaskFactories: task.DefaultPackageTaskFactories(),
 
@@ -144,6 +209,14 @@ func (c *CreateSBOMConfig) WithFilesConfig(cfg filecataloging.Config) *CreateSBO
 	return c
 }
 
+// WithArchiveConfig allows for defining recursive archive cataloging parameters (e.g. max depth and
+// extraction limits). When the configured MaxDepth is 0 (the default), recursive archive cataloging
+// is disabled.
+func (c *CreateSBOMConfig) WithArchiveConfig(cfg cataloging.ArchiveSearchConfig) *CreateSBOMConfig {
+	c.Archive = cfg
+	return c
+}
+
 // WithoutFiles allows for disabling file cataloging altogether.
 func (c *CreateSBOMConfig) WithoutFiles() *CreateSBOMConfig {
 	c.Files = filecataloging.Config{
@@ -183,7 +256,12 @@ func (c *CreateSBOMConfig) WithCatalogers(catalogerRefs ...pkgcataloging.Catalog
 // groups, where each task in a group can be run concurrently, while tasks in different groups must be run serially.
 // The final set of task groups is returned along with a cataloger manifest that describes the catalogers that were
 // selected and the tokens that were sensitive to this selection (both for adding and removing from the final set).
-func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task, *catalogerManifest, error) {
+//
+// archiveCfg is c.Archive with ExclusionPatterns derived and populated by the caller (CreateSBOM,
+// the only place that holds the source and can read source.PathExcluder off it). It is passed in
+// rather than read off c so that deriving the field never mutates the CreateSBOMConfig the library
+// consumer supplied.
+func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, archiveCfg cataloging.ArchiveSearchConfig) ([][]task.Task, *catalogerManifest, error) {
 	var taskGroups [][]task.Task
 
 	// generate package and file tasks based on the configuration
@@ -204,6 +282,16 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description) ([][]task.Task
 		taskGroups = append(taskGroups, pkgTasks, fileTasks)
 	} else {
 		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
+	}
+
+	// recursively catalog archives as standalone indexed filesystems (opt-in via Archive.MaxDepth).
+	// the sub-pipeline is the package/file cataloger set so the same catalogers run against archive contents;
+	// it must run after the base scan group and before relationship/unknowns post-processing.
+	var subPipeline []task.Task
+	subPipeline = append(subPipeline, pkgTasks...)
+	subPipeline = append(subPipeline, fileTasks...)
+	if archiveTask := task.NewArchiveCatalogerTask(archiveCfg, subPipeline, archiveResolverFactory(archiveCfg.ExclusionPatterns), archiveEntryResolverFactory(archiveCfg.ExclusionPatterns), archive.LogNotify); archiveTask != nil {
+		taskGroups = append(taskGroups, []task.Task{archiveTask})
 	}
 
 	// all scope work must be done after all nodes (files and packages) have been cataloged and before the relationship
@@ -265,6 +353,13 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 		ComplianceConfig:     c.Compliance,
 		FilesConfig:          c.Files,
 	}
+
+	// nested archive cataloging is controlled by a single knob (Archive.MaxDepth): when enabled, the
+	// archive cataloger task recurses into all archives (including JAR-family), and the java
+	// cataloger must not unarchive nested archives itself. This is the ONE place the two sides are
+	// coupled, and it writes a field that exists only for this purpose, so no value a caller
+	// supplied through WithPackagesConfig is overwritten.
+	cfg.PackagesConfig.JavaArchive.NestedArchivesHandledExternally = c.Archive.MaxDepth > 0
 
 	persistentPkgTasks, selectablePkgTasks, err := c.allPackageTasks(cfg)
 	if err != nil {

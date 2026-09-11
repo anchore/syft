@@ -150,6 +150,13 @@ func DefaultPackageTaskFactories() Factories {
 		),
 		newPackageTaskFactory(
 			func(cfg CatalogingFactoryConfig) pkg.Cataloger {
+				// once the archive cataloger task owns extraction, java archives arrive as extracted
+				// filesystems rather than as files, and the cataloger that reads them is a different
+				// one. The archive-reading cataloger is what runs when nothing else extracts, which is
+				// the default; it is deprecated in the sense that it has no role in the enabled path.
+				if cfg.PackagesConfig.JavaArchive.NestedArchivesHandledExternally {
+					return java.NewArchiveContentsCataloger(cfg.PackagesConfig.JavaArchive)
+				}
 				return java.NewArchiveCataloger(cfg.PackagesConfig.JavaArchive)
 			},
 			pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, Java, Maven,

@@ -38,7 +38,21 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	srcMetadata := src.Describe()
 
-	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata)
+	// read before the source builds its own resolver: exclusions belong to the source, and the
+	// archive cataloger needs them to index each archive it finds the way the scan indexes itself.
+	// This is the one type assertion (source.PathExcluder) left in the whole path. A local copy, so
+	// the CreateSBOMConfig the caller supplied is never mutated by deriving it.
+	//
+	// A value already present is never overwritten: cmd/syft/internal/options.ToArchiveConfig is the
+	// other boundary that populates this field, from the CLI's --exclude flag, and its value wins
+	// when set. The source is consulted only to fill an empty field, which is what makes
+	// "configure only your source" keep working for a library consumer who never touches this field.
+	archiveCfg := cfg.Archive
+	if len(archiveCfg.ExclusionPatterns) == 0 {
+		archiveCfg = archiveCfg.WithExclusionPatterns(sourceExclusions(src))
+	}
+
+	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata, archiveCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +102,8 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 		}
 	}
 
-	catalogingProgress := monitorCatalogingTask(src.ID(), taskGroups)
-	packageCatalogingProgress := monitorPackageCatalogingTask()
+	catalogingProgress := monitorCatalogingTask(ctx, src.ID(), taskGroups)
+	packageCatalogingProgress := monitorPackageCatalogingTask(ctx)
 
 	builder := sbomsync.NewBuilder(&s, monitorPackageCount(packageCatalogingProgress))
 	for i := range taskGroups {
@@ -173,7 +187,7 @@ func monitorPackageCount(prog *monitor.TaskProgress) func(s *sbom.SBOM) {
 	}
 }
 
-func monitorPackageCatalogingTask() *monitor.TaskProgress {
+func monitorPackageCatalogingTask(ctx context.Context) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Packages",
@@ -183,10 +197,10 @@ func monitorPackageCatalogingTask() *monitor.TaskProgress {
 		ParentID:      monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, -1, "")
+	return bus.StartCatalogerTask(ctx, info, -1, "")
 }
 
-func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.TaskProgress {
+func monitorCatalogingTask(ctx context.Context, srcID artifact.ID, tasks [][]task.Task) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default:      "Catalog contents",
@@ -203,7 +217,7 @@ func monitorCatalogingTask(srcID artifact.ID, tasks [][]task.Task) *monitor.Task
 		length += int64(len(tg))
 	}
 
-	return bus.StartCatalogerTask(info, length, "")
+	return bus.StartCatalogerTask(ctx, info, length, "")
 }
 
 func formatTaskNames(tasks []task.Task) []string {

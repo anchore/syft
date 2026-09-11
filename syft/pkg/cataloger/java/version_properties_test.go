@@ -18,7 +18,7 @@ import (
 func readManifest(t *testing.T, ctx context.Context, parser *archiveParser) *pkg.JavaManifest {
 	t.Helper()
 
-	matches := parser.fileManifest.GlobMatch(false, manifestGlob)
+	matches := parser.entries.glob(false, manifestGlob)
 	require.Len(t, matches, 1)
 
 	contents, err := intFile.ContentsFromZip(ctx, parser.archivePath, matches...)

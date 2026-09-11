@@ -1155,7 +1155,7 @@ func Test_newPackageFromMavenData(t *testing.T) {
 			test.expectedParent.Locations = locations
 
 			r := maven.NewResolver(nil, maven.DefaultConfig())
-			actualPackage := newPackageFromMavenData(pkgtest.Context(t), r, test.props, test.project, test.parent, file.NewLocation(virtualPath))
+			actualPackage := newPackageFromMavenData(pkgtest.Context(t), r, test.props, test.project, test.parent, file.NewLocation(virtualPath), virtualPath)
 			if test.expectedPackage == nil {
 				require.Nil(t, actualPackage)
 			} else {

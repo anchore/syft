@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -18,7 +19,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*directorySource)(nil)
+var (
+	_ source.Source       = (*directorySource)(nil)
+	_ source.PathExcluder = (*directorySource)(nil)
+)
 
 type Config struct {
 	Path    string
@@ -114,6 +118,13 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
+// ExcludedPaths returns a copy of the exclusion patterns this source was configured with, so a
+// consumer indexing content taken from it can honor the same patterns. A copy, because
+// GetDirectoryExclusionFunctions rewrites the patterns it is given.
+func (s directorySource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
+}
+
 func (s *directorySource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -127,7 +138,18 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		return nil, nil
 	}
 
-	// this is what directoryResolver.indexTree is doing to get the absolute path:
+	// the indexer reports an absolute, symlink-resolved path to every visitor: the resolver normalizes
+	// its root with EvalSymlinks (fileresolver.NormalizeRootDirectory, via the chroot context) and the
+	// walk then takes filepath.Abs of it. The root these patterns are anchored to has to be derived
+	// the same way or they anchor to a path the walk never reports - on macOS a scan of a directory
+	// under /var, a symlink to /private/var, would exclude nothing at all.
+	//
+	// A root that cannot be resolved is left as it was rather than failing the scan: EvalSymlinks
+	// wants the path to exist, and the resolver reports a missing root far better than this can.
+	if resolved, err := filepath.EvalSymlinks(root); err == nil {
+		root = resolved
+	}
+
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
@@ -140,15 +162,20 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		root += "/"
 	}
 
+	// the rooted patterns are built into a new slice rather than written back over the caller's:
+	// the patterns belong to the source's configuration, which is read elsewhere (see
+	// source.PathExcluder), and rewriting them in place would replace what the user configured with
+	// scan-root-absolute patterns as a side effect of building the resolver
+	rooted := make([]string, 0, len(exclusions))
 	var errors []string
-	for idx, exclusion := range exclusions {
+	for _, exclusion := range exclusions {
 		// check exclusions for supported paths, these are all relative to the "scan root"
 		if strings.HasPrefix(exclusion, "./") || strings.HasPrefix(exclusion, "*/") || strings.HasPrefix(exclusion, "**/") {
 			exclusion = strings.TrimPrefix(exclusion, "./")
 			// a trailing slash signals a directory but is otherwise discarded by doublestar.Match,
 			// causing the pattern to silently match nothing (see issue #4839)
 			exclusion = strings.TrimSuffix(exclusion, "/")
-			exclusions[idx] = root + exclusion
+			rooted = append(rooted, root+exclusion)
 		} else {
 			errors = append(errors, exclusion)
 		}
@@ -160,7 +187,7 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 
 	return []fileresolver.PathIndexVisitor{
 		func(_, path string, info os.FileInfo, _ error) error {
-			for _, exclusion := range exclusions {
+			for _, exclusion := range rooted {
 				// this is required to handle Windows filepaths
 				path = filepath.ToSlash(path)
 				matches, err := doublestar.Match(exclusion, path)

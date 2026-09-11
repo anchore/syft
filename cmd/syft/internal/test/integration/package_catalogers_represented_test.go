@@ -50,7 +50,13 @@ func TestAllPackageCatalogersReachableInTasks(t *testing.T) {
 		constructorCount += constructors.Size()
 	}
 
-	assert.Equal(t, len(taskTagsByName), constructorCount, "mismatch in number of cataloger constructors and task names")
+	// java has two archive catalogers - one that reads an archive file and one that reads an archive
+	// already extracted to a filesystem - and the java archive slot in the task list yields whichever
+	// the config selects, never both. So exactly one constructor has no task under the default config.
+	const configSelectedAlternates = 1
+
+	assert.Equal(t, len(taskTagsByName)+configSelectedAlternates, constructorCount,
+		"mismatch in number of cataloger constructors and task names")
 
 	exceptions := strset.New(
 		// not reachable since they are deprecated
