@@ -283,7 +283,7 @@ func candidateVendorsByType(p pkg.Package, vendors fieldCandidateSet) fieldCandi
 		vendors.union(candidateVendorsForJavascript(p))
 	case pkg.PEBinary:
 		// Add PE-specific vendor hints (e.g. ghostscript -> artifex)
-		vendors.union(candidateVendorsForPE(p))
+		candidateVendorsForPE(p, vendors)
 	case pkg.WordpressPluginEntry:
 		vendors.clear()
 		vendors.union(candidateVendorsForWordpressPlugin(p))
@@ -328,7 +328,7 @@ func candidateProductSet(p pkg.Package) fieldCandidateSet {
 		products.union(candidateProductsForAPK(p))
 	case pkg.PEBinary:
 		// Add PE-specific product hints (e.g. ghostscript)
-		products.union(candidateProductsForPE(p))
+		candidateProductsForPE(p, products)
 	case pkg.WordpressPluginEntry:
 		products.clear()
 		products.union(candidateProductsForWordpressPlugin(p))
