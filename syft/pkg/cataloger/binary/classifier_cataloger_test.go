@@ -408,6 +408,30 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// regression test: big-endian architectures (e.g. s390x) previously matched an unrelated
+			// single-NUL-terminated numeric string elsewhere in the binary instead of the real version
+			logicalFixture: "traefik/3.6.8/linux-s390x",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "3.6.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@3.6.8",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.11.1/linux-arm",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.11.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.11.1",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
 			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
 				Name:      "memcached",
