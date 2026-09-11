@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	hashiVersion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/clio"
-	hashiVersion "github.com/anchore/go-version"
 	"github.com/anchore/syft/cmd/syft/internal"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
