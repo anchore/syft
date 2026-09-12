@@ -19,15 +19,17 @@ import (
 // integrity check
 var _ generic.Parser = parseMixLock
 
-var mixLockDelimiter = regexp.MustCompile(`[%{}\n" ,:]+`)
+var mixLockDelimiter = regexp.MustCompile(`[%{}\r\n" ,:]+`)
 
-// mixLockDependency matches each `{:name,` tuple opener on a mix.lock line. The
+// mixLockDependency matches each `{:name, ...` tuple on a mix.lock line. The
 // first match is the entry's own source tuple (e.g. `{:hex, :name, ...}`); the
-// remaining matches are the entry's dependency tuples within its dependency
-// list (e.g. `[{:cowlib, ...}, {:ranch, ...}]`). Build-tool lists like
-// `[:mix]` or `[:make, :rebar3]` and option keyword lists like
-// `[hex: :cowlib, ...]` use bare atoms, not `{:atom,`, so they don't match.
-var mixLockDependency = regexp.MustCompile(`\{\s*:(\w+)\s*,`)
+// remaining matches are dependency tuples within the dependency list. Dependency
+// tuples can carry a `hex: :real_package` option when the local app name is an
+// alias for a different Hex package.
+var (
+	mixLockDependency = regexp.MustCompile(`\{\s*:(\w+)\s*,([^{}]*)`)
+	mixLockHexPackage = regexp.MustCompile(`\bhex:\s*:(\w+)`)
+)
 
 // parseMixLock parses a mix.lock and returns the discovered Elixir packages.
 func parseMixLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
@@ -76,9 +78,13 @@ func parseMixLock(_ context.Context, _ file.Resolver, _ *generic.Environment, re
 			// A path dependency has no version or checksum; tokens[4] is the empty
 			// dependency list `[]`, not a version.
 			name = tokens[1]
+		case "hex":
+			// e.g. `"app_alias": {:hex, :actual_package, "1.0.0", ...}`
+			// tokens[1] is the local application/alias key; tokens[3] is the
+			// package name in the Hex registry.
+			name, version, hash, hashExt = tokens[3], tokens[4], tokens[5], tokens[len(tokens)-2]
 		default:
-			// hex (and any registry-style tuple): keep the original behavior.
-			// tokens: ["", name, "hex", name, version, hash, ..., hashExt, ""]
+			// Any unknown registry-style tuple: keep the original behavior.
 			name, version, hash, hashExt = tokens[1], tokens[4], tokens[5], tokens[len(tokens)-2]
 		}
 
@@ -115,7 +121,12 @@ func extractMixLockDependencies(line string) []string {
 	}
 	deps := make([]string, 0, len(matches)-1)
 	for _, m := range matches[1:] {
-		deps = append(deps, m[1])
+		name := m[1]
+		// This rewrite is only meaningful when the dependency tuple targets a hex package.
+		if hexPackage := mixLockHexPackage.FindStringSubmatch(m[2]); len(hexPackage) == 2 {
+			name = hexPackage[1]
+		}
+		deps = append(deps, name)
 	}
 	return deps
 }
