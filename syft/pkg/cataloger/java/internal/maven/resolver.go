@@ -186,7 +186,7 @@ func (r *Resolver) resolveProjectProperty(ctx context.Context, resolutionContext
 					if pom.Version == nil && pom.Parent.Version != nil {
 						return r.resolveExpression(ctx, resolutionContext, *pom.Parent.Version, resolving)
 					}
-				case "groupID":
+				case "groupId":
 					if pom.GroupID == nil && pom.Parent.GroupID != nil {
 						return r.resolveExpression(ctx, resolutionContext, *pom.Parent.GroupID, resolving)
 					}
