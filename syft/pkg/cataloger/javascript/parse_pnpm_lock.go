@@ -41,7 +41,10 @@ type pnpmLockfileParser interface {
 }
 
 type pnpmV6PackageEntry struct {
-	Resolution   map[string]string `yaml:"resolution"`
+	// Resolution values are usually strings (integrity, tarball), but pnpm can
+	// also record a nested "variations" object for provisioned runtimes. Keep
+	// this as map[string]any so one unrepresentable entry cannot abort decoding.
+	Resolution   map[string]any    `yaml:"resolution"`
 	Dependencies map[string]string `yaml:"dependencies"`
 	Dev          bool              `yaml:"dev"`
 }
@@ -60,7 +63,9 @@ type pnpmV9SnapshotEntry struct {
 }
 
 type pnpmV9PackageEntry struct {
-	Resolution       map[string]string `yaml:"resolution"`
+	// See pnpmV6PackageEntry.Resolution: nested variation resolutions must not
+	// force the whole lockfile decode to fail (anchore/syft#5241).
+	Resolution       map[string]any    `yaml:"resolution"`
 	PeerDependencies map[string]string `yaml:"peerDependencies"`
 	Dev              bool              `yaml:"dev"`
 }
@@ -86,7 +91,14 @@ func newGenericPnpmLockAdapter(cfg CatalogerConfig) genericPnpmLockAdapter {
 // Parse implements the pnpmLockfileParser interface for v6-v8 lockfiles.
 func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
+		var typeErr *yaml.TypeError
+		if errors.As(err, &typeErr) {
+			// yaml.v3 still fills fields it could decode; keep those packages
+			// rather than dropping the whole document for one bad entry.
+			log.WithFields("error", err).Trace("partial pnpm v6 lockfile decode; keeping successfully decoded entries")
+		} else {
+			return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
+		}
 	}
 
 	isV5 := version < 6.0
@@ -124,10 +136,7 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 		}
 		pkgKey := name + "@" + ver
 
-		integrity := ""
-		if value, ok := pkgInfo.Resolution["integrity"]; ok {
-			integrity = value
-		}
+		integrity := integrityFromResolution(pkgInfo.Resolution)
 
 		dependencies := make(map[string]string)
 		for depName, depVersion := range sortedIter(pkgInfo.Dependencies) {
@@ -147,7 +156,12 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 // Parse implements the PnpmLockfileParser interface for v9+ lockfiles.
 func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
+		var typeErr *yaml.TypeError
+		if errors.As(err, &typeErr) {
+			log.WithFields("error", err).Trace("partial pnpm v9 lockfile decode; keeping successfully decoded entries")
+		} else {
+			return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
+		}
 	}
 
 	packages := make(map[string]pnpmPackage)
@@ -162,7 +176,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 			continue
 		}
 		pkgKey := name + "@" + ver
-		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: entry.Resolution["integrity"], Dev: entry.Dev}
+		packages[pkgKey] = pnpmPackage{Name: name, Version: ver, Integrity: integrityFromResolution(entry.Resolution), Dev: entry.Dev}
 	}
 
 	for key, snapshotInfo := range sortedIter(p.Snapshots) {
@@ -308,6 +322,21 @@ func mergePnpmPackages(into map[string]pnpmPackage, pkgs []pnpmPackage, doc int)
 		}
 		into[key] = p
 	}
+}
+
+
+// integrityFromResolution reads the integrity string from a pnpm resolution map.
+// Nested variation resolutions have no top-level integrity field; those packages
+// are still cataloged with an empty integrity rather than aborting the lockfile.
+func integrityFromResolution(resolution map[string]any) string {
+	if resolution == nil {
+		return ""
+	}
+	value, ok := resolution["integrity"].(string)
+	if !ok {
+		return ""
+	}
+	return value
 }
 
 // parseVersionField extracts the version string from a dependency entry.
