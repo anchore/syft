@@ -3087,6 +3087,182 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Metadata:  metadata("envoy-binary"),
 			},
 		},
+		{
+			logicalFixture: "kube-apiserver/1.36.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.36.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.36.0-alpha.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.36.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.36.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.36.0-beta.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.36.0-rc.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.36.0-rc.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.36.0-rc.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.36.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.36.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.36.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.28.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.28.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.28.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.25.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.25.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.25.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.6.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kube-apiserver/1.5.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kube-apiserver",
+				Version:   "1.5.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kube-apiserver@1.5.0",
+				Locations: locations("kube-apiserver"),
+				Metadata:  metadata("kube-apiserver-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.36.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.36.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.36.0-alpha.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.36.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.36.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.36.0-beta.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.36.0-rc.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.36.0-rc.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.36.0-rc.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.35.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.35.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.35.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.28.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.28.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.28.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.25.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.25.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.25.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.6.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.6.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.6.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
+		{
+			logicalFixture: "kubelet/1.5.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "kubelet",
+				Version:   "1.5.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/kubelet@1.5.0",
+				Locations: locations("kubelet"),
+				Metadata:  metadata("kubelet-binary"),
+			},
+		},
 	}
 
 	for _, test := range tests {
