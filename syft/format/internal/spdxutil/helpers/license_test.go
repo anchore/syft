@@ -170,6 +170,46 @@ func Test_joinLicenses(t *testing.T) {
 			args: []SPDXLicense{{ID: "MIT AND Apache"}, {ID: "GPL-3.0-only"}},
 			want: "(MIT AND Apache) AND GPL-3.0-only",
 		},
+		{
+			// without the parens this reads as "MIT OR (Apache-2.0 AND BSD-3-Clause AND GPL-3.0-only)",
+			// which allows MIT on its own and drops the GPL-3.0-only obligation
+			name: "expression ending in a paren is still wrapped",
+			args: []SPDXLicense{{ID: "MIT OR (Apache-2.0 AND BSD-3-Clause)"}, {ID: "GPL-3.0-only"}},
+			want: "(MIT OR (Apache-2.0 AND BSD-3-Clause)) AND GPL-3.0-only",
+		},
+		{
+			name: "expression starting with a paren is still wrapped",
+			args: []SPDXLicense{{ID: "(MIT OR Apache-2.0) OR GPL-3.0-only"}, {ID: "LGPL-2.1-only"}},
+			want: "((MIT OR Apache-2.0) OR GPL-3.0-only) AND LGPL-2.1-only",
+		},
+		{
+			name: "separate groups joined at the top level are wrapped",
+			args: []SPDXLicense{{ID: "(MIT OR Apache-2.0) OR (GPL-3.0-only AND LGPL-2.1-only)"}, {ID: "GPL-3.0-only"}},
+			want: "((MIT OR Apache-2.0) OR (GPL-3.0-only AND LGPL-2.1-only)) AND GPL-3.0-only",
+		},
+		{
+			name: "a single parenthesised group is not wrapped again",
+			args: []SPDXLicense{{ID: "(MIT OR Apache-2.0)"}, {ID: "GPL-3.0-only"}},
+			want: "(MIT OR Apache-2.0) AND GPL-3.0-only",
+		},
+		{
+			// top-level operator is AND, so joining is already safe and the text must not move
+			name: "expression whose top-level operator is AND keeps its text",
+			args: []SPDXLicense{{ID: "ISC AND (BSD-3-Clause OR MIT)"}, {ID: "MIT"}},
+			want: "ISC AND (BSD-3-Clause OR MIT) AND MIT",
+		},
+		{
+			// nothing is joined onto it, so the parens are redundant, but a lone compound
+			// expression is already wrapped today and this keeps the two shapes consistent
+			name: "single expression with a top-level OR is wrapped",
+			args: []SPDXLicense{{ID: "(GPL-2.0-only WITH Linux-syscall-note) OR MIT"}},
+			want: "((GPL-2.0-only WITH Linux-syscall-note) OR MIT)",
+		},
+		{
+			name: "single expression without parens keeps the wrapping it has today",
+			args: []SPDXLicense{{ID: "MIT OR Apache-2.0"}},
+			want: "(MIT OR Apache-2.0)",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

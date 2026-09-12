@@ -62,3 +62,30 @@ func stripScheme(url string) string {
 	url = strings.TrimPrefix(url, "http://")
 	return url
 }
+
+// HasTopLevelOr reports whether the expression has an OR operator outside of every parenthesised
+// group.
+//
+// It matters when an expression is joined onto others with AND, because SPDX applies AND before
+// OR: joining "MIT OR (Apache-2.0 AND BSD-3-Clause)" unwrapped gives
+// "MIT OR (Apache-2.0 AND BSD-3-Clause) AND GPL-3.0-only", which reads as
+// "MIT OR ((Apache-2.0 AND BSD-3-Clause) AND GPL-3.0-only)" and drops GPL-3.0-only from the first
+// choice. Testing only the first and last character misses that, and misses
+// "(MIT OR Apache-2.0) OR (GPL-3.0-only AND MIT)" as well.
+func HasTopLevelOr(expression string) bool {
+	depth := 0
+	for i, c := range expression {
+		switch c {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		default:
+			if depth <= 0 && strings.HasPrefix(expression[i:], " OR ") {
+				return true
+			}
+		}
+	}
+
+	return false
+}

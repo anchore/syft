@@ -42,20 +42,31 @@ func joinLicenses(licenses []SPDXLicense) string {
 
 	for _, l := range licenses {
 		v := l.ID
-		// check if license does not start or end with parens
-		if !strings.HasPrefix(v, "(") && !strings.HasSuffix(v, ")") {
-			// if license contains AND, OR, or WITH, then wrap in parens
-			if strings.Contains(v, " AND ") ||
-				strings.Contains(v, " OR ") ||
-				strings.Contains(v, " WITH ") {
-				newLicenses = append(newLicenses, "("+v+")")
-				continue
-			}
+		if needsParens(v) {
+			v = "(" + v + ")"
 		}
 		newLicenses = append(newLicenses, v)
 	}
 
 	return strings.Join(newLicenses, " AND ")
+}
+
+// needsParens reports whether an expression has to be wrapped before it is joined onto the others
+// with AND. An expression carrying a top-level OR has to be, or the join changes what it means.
+// The rest is the rule this used before, so expressions that are already emitted correctly keep
+// the text they have today.
+func needsParens(expression string) bool {
+	if spdxlicense.HasTopLevelOr(expression) {
+		return true
+	}
+
+	if strings.HasPrefix(expression, "(") || strings.HasSuffix(expression, ")") {
+		return false
+	}
+
+	return strings.Contains(expression, " AND ") ||
+		strings.Contains(expression, " OR ") ||
+		strings.Contains(expression, " WITH ")
 }
 
 type SPDXLicense struct {
