@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- reproducer from https://github.com/anchore/syft/issues/5269:
+     never-active and explicit-off profiles must NOT contribute packages,
+     while a satisfiable activation (jdk 9+) must still contribute -->
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>probe-app</artifactId>
+  <version>1.0.0</version>
+  <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>32.1.2-jre</version>
+    </dependency>
+  </dependencies>
+  <profiles>
+    <profile>
+      <id>never-active</id>
+      <activation>
+        <jdk>[99,)</jdk>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.example</groupId>
+          <artifactId>only-on-jdk99</artifactId>
+          <version>9.9.9</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>explicit-off</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.example</groupId>
+          <artifactId>off-by-default</artifactId>
+          <version>0.0.1</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>satisfiable</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.example</groupId>
+          <artifactId>on-modern-jdk</artifactId>
+          <version>2.0.0</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>
