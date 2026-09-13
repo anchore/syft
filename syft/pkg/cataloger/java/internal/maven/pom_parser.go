@@ -18,6 +18,8 @@ type (
 	Parent     = gopom.Parent
 	Dependency = gopom.Dependency
 	License    = gopom.License
+	Profile    = gopom.Profile
+	Activation = gopom.Activation
 )
 
 // ParsePomXML decodes a pom XML file, detecting and converting non-UTF-8 charsets. this DOES NOT perform any logic to resolve properties such as groupID, artifactID, and version
