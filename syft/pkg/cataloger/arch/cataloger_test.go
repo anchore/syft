@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -26,6 +28,7 @@ func TestAlpmCataloger(t *testing.T) {
 	emacsDbLocation := file.NewLocation("var/lib/pacman/local/emacs-29.3-3/desc")
 	fuzzyDbLocation := file.NewLocation("var/lib/pacman/local/fuzzy-1.2-3/desc")
 	madeupDbLocation := file.NewLocation("var/lib/pacman/local/madeup-20.30-4/desc")
+	bombDbLocation := file.NewLocation("var/lib/pacman/local/bombpkg-1.0-1/desc")
 	ctx := context.TODO()
 
 	treeSitterPkg := pkg.Package{
@@ -116,6 +119,27 @@ func TestAlpmCataloger(t *testing.T) {
 			Files:   []pkg.AlpmFileRecord{},
 			Backup:  []pkg.AlpmFileRecord{},
 			Depends: []string{"libtree-sitter.so"},
+		},
+	}
+
+	// bombPkg's mtree listing exceeds maxMtreeLines, so fetchPkgFiles rejects it and the package
+	// emits with an empty file list rather than being dropped.
+	bombPkg := pkg.Package{
+		Name:      "bombpkg",
+		Version:   "1.0-1",
+		Type:      pkg.AlpmPkg,
+		FoundBy:   "alpm-db-cataloger",
+		Locations: file.NewLocationSet(bombDbLocation),
+		Metadata: pkg.AlpmDBEntry{
+			BasePackage:  "bombpkg",
+			Package:      "bombpkg",
+			Version:      "1.0-1",
+			Description:  "Package whose mtree listing exceeds the parser's line bound",
+			Architecture: "x86_64",
+			Size:         1,
+			Reason:       1,
+			Files:        []pkg.AlpmFileRecord{},
+			Backup:       []pkg.AlpmFileRecord{},
 		},
 	}
 
@@ -283,6 +307,7 @@ func TestAlpmCataloger(t *testing.T) {
 		fuzzyPkg,
 		madeupPkg,
 		gmpPkg,
+		bombPkg,
 	}
 
 	expectedRelationships := []artifact.Relationship{
@@ -309,6 +334,27 @@ func TestAlpmCataloger(t *testing.T) {
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewDBCataloger())
 
+}
+
+// TestAlpmCataloger_MtreeBoundRejection is the property that matters when an mtree listing trips
+// a bound: the package must still be cataloged with the file list left empty, not dropped entirely.
+func TestAlpmCataloger_MtreeBoundRejection(t *testing.T) {
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/installed").
+		WithError().
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			for _, p := range pkgs {
+				if p.Name != "bombpkg" {
+					continue
+				}
+				meta, ok := p.Metadata.(pkg.AlpmDBEntry)
+				require.True(t, ok, "expected AlpmDBEntry metadata")
+				assert.Empty(t, meta.Files, "package with a rejected mtree listing should have an empty file list")
+				return
+			}
+			t.Fatal("expected bombpkg to be cataloged despite its mtree listing exceeding the line bound")
+		}).
+		TestCataloger(t, NewDBCataloger())
 }
 
 func TestCataloger_Globs(t *testing.T) {
