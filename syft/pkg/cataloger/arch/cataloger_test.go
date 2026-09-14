@@ -18,9 +18,9 @@ import (
 
 const bombFixture = "testdata/installed/var/lib/pacman/local/bombpkg-1.0-1/mtree"
 
-// writeBombFixture generates bombpkg's mtree listing: one line over maxMtreeLines, so the cataloger
-// rejects it while walking testdata/installed. Generated rather than committed so the size that
-// makes it a bomb is visible and tracks the constant, instead of sitting in an opaque gzip member.
+// writeBombFixture generates bombpkg's mtree: one line over maxMtreeLines, so the cataloger rejects
+// it while walking testdata/installed. Generated rather than committed so the size that makes it a
+// bomb tracks the constant instead of hiding in a gzip blob.
 func writeBombFixture(t *testing.T) {
 	t.Helper()
 

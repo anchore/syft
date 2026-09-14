@@ -218,7 +218,7 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 			var backup []map[string]any
 			for _, f := range strings.Split(value, "\n") {
 				fields := strings.SplitN(f, "\t", 2)
-				// a line without the tab would index past the end of the split
+				// without the tab there is no digest, and fields[1] would panic
 				if len(fields) < 2 {
 					continue
 				}
@@ -247,8 +247,8 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 		}
 	}
 
-	// without this, a field over the scanner's 1MB token cap ends the scan and hands back a
-	// half-populated package with a nil error
+	// a field over the scanner's 1MB token cap ends the scan early, which would otherwise look
+	// like a complete package
 	if err := b.Err(); err != nil {
 		return nil, err
 	}
@@ -289,33 +289,44 @@ func parsePkgFiles(pkgFields map[string]any) (*parsedData, error) {
 	return &entry, nil
 }
 
-// maxMtreeSize bounds the decompressed listing, sized against texlive-fontsextra (the largest
-// package Arch ships) whose listing runs 16 to 27MB.
+// maxMtreeSize bounds the decompressed listing. texlive-fontsextra, the largest package Arch
+// ships, runs 16 to 27MB.
 //
-// This bounds bytes, not heap. go-mtree allocates per whitespace-delimited field, so a crafted
-// listing of minimal fields still costs roughly a gigabyte here, times cataloger parallelism.
+// this caps bytes, not memory: go-mtree allocates per field, so a crafted listing can still cost
+// about a gigabyte, times cataloger parallelism.
 const maxMtreeSize = 64 * intFile.MB
 
-// maxMtreeLines bounds retained entries, which the byte cap does not: go-mtree keeps a 128 byte
-// entry per line, blank lines included. 300k is ~2.8x the largest package Arch ships.
+// maxMtreeLines bounds entry count, which the byte cap does not: go-mtree keeps a ~128 byte entry
+// per line, blanks included. 300k is ~2.8x the largest package Arch ships.
 const maxMtreeLines = 300_000
 
 var (
-	errMtreeTooLarge      = errors.New("mtree file is larger than the max allowed size")
-	errTooManyMtreeLines  = errors.New("mtree file has more lines than allowed")
+	errMtreeTooLarge     = errors.New("mtree file is larger than the max allowed size")
+	errTooManyMtreeLines = errors.New("mtree file has more lines than allowed")
+
+	// errMtreeLineContinued rejects a line ending in a backslash, which readers treat as "join with
+	// the next line". We refuse the file instead, for two reasons.
+	//
+	// cost: go-mtree joins with a quadratic string concat, so work grows as lines squared. 100k
+	// continued lines is a 1.2MB listing costing ~3.7s and ~52GB of churn. The bounds above are
+	// linear and never see it, and no line cap helps, since real packages reach ~107k lines.
+	//
+	// spec: mtree(5) says "Each line is interpreted independently" and documents no continuation,
+	// nor does Arch's ALPM-MTREEv2(5). Readers accept them anyway (BSD mtree via fparseln(3),
+	// libarchive in readline()), but no writer emits one: libarchive escapes a literal backslash as
+	// \134, and Arch builds .MTREE with it. So a continuation here is crafted, not a package.
 	errMtreeLineContinued = errors.New("mtree file uses line continuations")
 )
 
 // lineLimitedReader fails the read once the stream carries more than max newlines, or a line
-// continuation. Counting as the bytes flow is what bounds the entries: the parser materializes one
-// per line before returning any of them.
+// continuation. Counting while the bytes flow is what bounds entries: the parser builds one per
+// line before returning any of them.
 //
-// Continuations are refused rather than counted. go-mtree collapses a line ending in a backslash
-// into the next one with a quadratic string concat, so the cost is lines times bytes and neither
-// bound above can see it. Its scanner drops a trailing carriage return before testing for the
-// backslash, so both line endings count. Nothing that writes these listings emits continuations.
+// continuations are refused rather than joined, unlike every other mtree reader. See
+// errMtreeLineContinued. Both \n and \r\n count, since go-mtree strips a trailing carriage return
+// before testing for the backslash.
 //
-// A tripped bound is latched, so a caller that reads past the first error does not come back clean.
+// a tripped bound is latched, so reading past the first error does not come back clean.
 type lineLimitedReader struct {
 	reader   io.Reader
 	lines    int
@@ -331,8 +342,8 @@ func (l *lineLimitedReader) Read(p []byte) (int, error) {
 
 	n, err := l.reader.Read(p)
 
-	// prev carries the previous chunk's last byte, so a backslash and the line ending it continues
-	// are still seen when a read splits them
+	// prev carries over the last byte of the previous read, so a backslash split from its line
+	// ending is still caught
 	prev := l.lastByte
 	for _, c := range p[:n] {
 		if (c == '\n' || c == '\r') && prev == '\\' {
@@ -358,7 +369,7 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 	return parseMtreeWithLimits(r, maxMtreeSize, maxMtreeLines)
 }
 
-// parseMtreeWithLimits lets the boundary tests be exact without allocating up to the shipped caps.
+// parseMtreeWithLimits lets the boundary tests use small exact limits instead of the shipped caps.
 // maxSize must be below math.MaxInt64, since the limiter carries a byte of headroom.
 func parseMtreeWithLimits(r io.Reader, maxSize int64, maxLines int) ([]pkg.AlpmFileRecord, error) {
 	var entries []pkg.AlpmFileRecord
@@ -369,13 +380,13 @@ func parseMtreeWithLimits(r io.Reader, maxSize int64, maxLines int) ([]pkg.AlpmF
 	}
 	defer internal.CloseAndLogError(gzReader, "mtree")
 
-	// the line cap trips while the listing streams. The byte cap cannot: io.LimitedReader signals a
-	// drained budget with io.EOF, which the parser reads as a complete listing, so it is checked
-	// after the parse. The extra byte is what tells a drained budget from a listing ending at the cap.
+	// the line cap trips mid-stream, the byte cap cannot: io.LimitedReader reports a drained budget
+	// as io.EOF, which the parser reads as a complete listing, so it is checked after the parse. The
+	// extra byte tells a drained budget from a listing ending exactly at the cap.
 	sizeLimited := &io.LimitedReader{R: gzReader, N: maxSize + 1}
 	specDh, err := mtree.ParseSpec(&lineLimitedReader{reader: sizeLimited, max: maxLines})
 
-	// ahead of err: a drained budget means the parser saw only part of the listing, whatever it returned
+	// before err: a drained budget means the parser saw only part of the listing
 	if sizeLimited.N <= 0 {
 		return nil, fmt.Errorf("%w (%d bytes)", errMtreeTooLarge, maxSize)
 	}
