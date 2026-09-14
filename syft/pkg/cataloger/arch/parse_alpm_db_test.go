@@ -212,8 +212,7 @@ func TestMtreeParse(t *testing.T) {
 
 			reader := bufio.NewReader(f)
 
-			// a normal listing must not be misidentified as a line continuation or otherwise rejected;
-			// this is also the regression guard for the continuation refusal
+			// a normal listing must not be misidentified as a line continuation or otherwise rejected
 			entry, err := parseMtree(reader)
 			require.NoError(t, err)
 

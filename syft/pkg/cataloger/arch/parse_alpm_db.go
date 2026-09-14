@@ -279,28 +279,23 @@ func parsePkgFiles(pkgFields map[string]any) (*parsedData, error) {
 	return &entry, nil
 }
 
-// maxMtreeSize bounds the decompressed mtree listing. Three bounds apply to this parse and each
-// covers a shape the others miss: go-mtree reads with a default bufio.Scanner, so a single line over
-// 64KB is already rejected as "token too long"; maxMtreeLines bounds a listing of many short lines;
-// and this bounds the band between, where lines are individually small but numerous.
+// maxMtreeSize bounds the decompressed mtree listing, covering the band the other two bounds miss:
+// lines individually small but numerous. The other two are maxMtreeLines below, and go-mtree's own
+// default bufio.Scanner, which rejects a single line over 64KB as "token too long".
 //
-// Sized against the largest package Arch ships: texlive-fontsextra is 105,847 files and 1,978
-// directories, so roughly 108k lines, and at the 150 to 250 bytes per line a real listing runs that
-// is a 16 to 27MB listing. This leaves better than 2x headroom over it.
+// Sized against the largest package Arch ships, texlive-fontsextra, whose listing runs 16 to 27MB.
+// A cap that a real package trips is worse than no cap, so this keeps better than 2x headroom.
 //
-// Note the ceiling this implies. go-mtree allocates per whitespace-delimited field (mtree.KeyVal is
-// a string and StringToKeyVals builds a fresh slice per line), so the cost runs well above the byte
-// count either way: a real texlive-sized listing measured ~840MB of transient heap, and a crafted
-// listing of minimal two-byte fields reaches ~1.1GB at this cap. Bounding that further means
-// bounding fields rather than bytes, and since legitimate input is already within ~1.3x of the
-// crafted worst case, there is little to win. The effective ceiling is this times cataloger
-// parallelism, which defaults to NumCPU*4.
+// This does not bound heap, only bytes. go-mtree allocates per whitespace-delimited field, so a
+// crafted listing of minimal fields costs roughly a gigabyte at this cap, and the effective ceiling
+// is that times cataloger parallelism. Bounding it properly means bounding fields rather than bytes,
+// which is not worth doing while legitimate input sits within ~1.3x of the crafted worst case.
 const maxMtreeSize = 64 * intFile.MB
 
-// maxMtreeLines bounds how many lines the listing may hold, which the byte cap alone does not.
-// go-mtree v0.7.0 retains one 128 byte mtree.Entry per line, blank lines included, so maxMtreeSize
-// of bare newlines would be 8.6GB of entries on its own. 300k is ~2.8x the ~108k lines of the
-// largest package Arch ships, and costs 38MB of entries if a listing ever reaches it.
+// maxMtreeLines bounds how many lines the listing may hold, which the byte cap alone does not:
+// go-mtree retains a 128 byte entry per line, blank lines included, so maxMtreeSize of bare newlines
+// would be 8.6GB of entries on its own. 300k is ~2.8x the largest package Arch ships, and costs
+// 38MB of entries if a listing ever reaches it.
 const maxMtreeLines = 300_000
 
 var (
@@ -317,8 +312,9 @@ var (
 //
 // Continuations are refused rather than counted. go-mtree collapses a line ending in a backslash
 // into the next one with a quadratic string concat, so the cost is lines times bytes and neither
-// bound above can see it: 199k continued lines sitting inside both caps measured 4m34s and 6.1TB of
-// allocation churn, and returned no error. The mtree writers pacman uses do not emit continuations.
+// bound above can see it: a listing of continued lines sitting inside both caps ran for minutes and
+// returned no error. Nothing that writes these listings emits continuations (pacman's come from
+// libarchive's mtree writer), so refusing them costs nothing.
 //
 // The refusal has to match on what go-mtree sees rather than on the bytes as written. Its scanner
 // splits with bufio.ScanLines, which drops a trailing carriage return before testing the line for a
@@ -369,6 +365,9 @@ func parseMtree(r io.Reader) ([]pkg.AlpmFileRecord, error) {
 	return parseMtreeWithLimits(r, maxMtreeSize, maxMtreeLines)
 }
 
+// parseMtreeWithLimits exists so the boundary tests can be exact on both sides without allocating
+// their way up to the shipped caps. maxSize must be below math.MaxInt64, since the limiter carries a
+// byte of headroom.
 func parseMtreeWithLimits(r io.Reader, maxSize int64, maxLines int) ([]pkg.AlpmFileRecord, error) {
 	var entries []pkg.AlpmFileRecord
 
@@ -376,17 +375,19 @@ func parseMtreeWithLimits(r io.Reader, maxSize int64, maxLines int) ([]pkg.AlpmF
 	if err != nil {
 		return nil, err
 	}
+	defer internal.CloseAndLogError(gzReader, "mtree")
 
-	// the bounds apply while the listing streams rather than after it is buffered, so the line cap can
-	// trip before the parser materializes the listing. Allowing one byte past the cap is what makes
-	// tripping it distinguishable from a listing that simply ends there. Truncating instead would hand
-	// back a package silently missing files rather than one reported as unparsed.
+	// the line cap applies while the listing streams, so it can trip before the parser materializes
+	// the listing. The byte cap cannot: io.LimitedReader signals a drained budget with io.EOF, which
+	// the parser reads as the end of a complete listing, so it is checked below instead. The byte of
+	// headroom is what makes a drained budget distinguishable from a listing that simply ends at the
+	// cap. Truncating instead would hand back a package silently missing files rather than one
+	// reported as unparsed.
 	sizeLimited := &io.LimitedReader{R: gzReader, N: maxSize + 1}
 	specDh, err := mtree.ParseSpec(&lineLimitedReader{reader: sizeLimited, max: maxLines})
 
-	// the size bound is checked first because overrunning it looks like a clean EOF to the parser, so
-	// the parser either succeeds on a truncated listing or fails for some downstream reason. Either way
-	// the size is the useful error.
+	// checked ahead of err because a drained budget means the parser either succeeded on a listing it
+	// only saw part of, or failed for some downstream reason. Either way the size is the useful error.
 	if sizeLimited.N <= 0 {
 		return nil, fmt.Errorf("%w (%d bytes)", errMtreeTooLarge, maxSize)
 	}
