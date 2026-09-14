@@ -3,6 +3,7 @@ package syftjson
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -50,6 +51,12 @@ func (d decoder) Decode(r io.Reader) (*sbom.SBOM, sbom.FormatID, string, error) 
 
 	if err = dec.Decode(&doc); err != nil {
 		return nil, "", "", fmt.Errorf("unable to decode syft-json document: %w", err)
+	}
+
+	if doc.Schema.Version == "" {
+		// Identify found a schema block that the parsed document does not have, so it was describing something
+		// else in the stream; returning the empty document it decoded into would be a silently wrong answer
+		return nil, "", "", fmt.Errorf("not a syft-json document")
 	}
 
 	if err := checkSupportedSchema(doc.Schema.Version, internal.JSONSchemaVersion); err != nil {
@@ -102,19 +109,7 @@ func identifyFromTail(rs io.ReadSeeker) (sbom.FormatID, string, bool) {
 		return "", "", false
 	}
 
-	end, err := rs.Seek(0, io.SeekEnd)
-	if err != nil || end <= start {
-		_, _ = rs.Seek(start, io.SeekStart)
-		return "", "", false
-	}
-
-	tailLen := min(end-start, int64(identifyTailSize))
-	tail := make([]byte, tailLen)
-	if _, err := rs.Seek(end-tailLen, io.SeekStart); err != nil {
-		_, _ = rs.Seek(start, io.SeekStart)
-		return "", "", false
-	}
-	_, readErr := io.ReadFull(rs, tail)
+	id, version, ok := readTail(rs, start)
 
 	if _, err := rs.Seek(start, io.SeekStart); err != nil {
 		// without the original position the caller cannot safely parse the document afterwards
@@ -122,11 +117,49 @@ func identifyFromTail(rs io.ReadSeeker) (sbom.FormatID, string, bool) {
 		return "", "", false
 	}
 
-	if readErr != nil {
+	return id, version, ok
+}
+
+// readTail does the seeking and reading for identifyFromTail, leaving the reader wherever it ends up.
+func readTail(rs io.ReadSeeker, start int64) (sbom.FormatID, string, bool) {
+	end, err := rs.Seek(0, io.SeekEnd)
+	if err != nil || end <= start {
+		return "", "", false
+	}
+
+	// the tail only describes the document the reader is pointed at if that document starts where the reader is,
+	// so check the first byte: bytes ahead of it (a byte order mark, a log line prepended by a wrapper) would
+	// otherwise be accepted silently, leaving Identify claiming a document that cannot be decoded
+	if !opensObject(rs, start) {
+		return "", "", false
+	}
+
+	tailLen := min(end-start, int64(identifyTailSize))
+	tail := make([]byte, tailLen)
+	if _, err := rs.Seek(end-tailLen, io.SeekStart); err != nil {
+		return "", "", false
+	}
+	if _, err := io.ReadFull(rs, tail); err != nil {
 		return "", "", false
 	}
 
 	return identifyFromTailBytes(tail)
+}
+
+// opensObject reports whether the document at the given offset begins with a JSON object.
+func opensObject(rs io.ReadSeeker, start int64) bool {
+	if _, err := rs.Seek(start, io.SeekStart); err != nil {
+		return false
+	}
+
+	head := make([]byte, 64)
+	n, err := io.ReadFull(rs, head)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return false
+	}
+
+	head = bytes.TrimLeft(head[:n], " \t\r\n")
+	return len(head) > 0 && head[0] == '{'
 }
 
 // identifyFromTailBytes looks for a syft schema block among the trailing bytes of a JSON document and, when one is

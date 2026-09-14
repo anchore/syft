@@ -108,6 +108,12 @@ func Test_identifyFromTailBytes(t *testing.T) {
 			doc:    "",
 			wantOK: false,
 		},
+		{
+			// the key's text is: he said "schema
+			name:   "an escaped quote does not make a string into the schema key",
+			doc:    `{"he said \"schema":{"version":"1.0","url":"https://example.com/anchore/syft"}}`,
+			wantOK: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -170,6 +176,60 @@ func Test_Identify_largeDocument(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(0), pos)
 	})
+}
+
+func Test_Identify_agreesWithFullParse(t *testing.T) {
+	// the tail is only a shortcut: whatever it decides must match what parsing the whole document says, including
+	// for documents it has to decline.
+	//
+	// note: a stream holding several concatenated documents is deliberately not covered. Identifying the document
+	// at the reader's position would mean proving no other document ends before the stream does, which means
+	// reading all of it, which is the cost the tail path exists to avoid. Decode still reports the document it
+	// actually parsed (see Test_Decode_rejectsADocumentTheTailDidNotDescribe).
+	syftDoc := `{"artifacts":[],` + testIdentifySchemaBlock + `}`
+
+	tests := []struct {
+		name        string
+		doc         string
+		wantVersion string
+	}{
+		{name: "plain document", doc: syftDoc, wantVersion: "16.0.0"},
+		{name: "byte order mark before the document", doc: "\xef\xbb\xbf" + syftDoc},
+		{name: "content before the document", doc: "WARN something happened\n" + syftDoc},
+		{name: "not a syft document", doc: `{"bomFormat":"CycloneDX","specVersion":"1.6","components":[]}`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := NewFormatDecoder()
+
+			// a bytes.Reader is seekable, so this takes the tail path
+			fastID, fastVersion := d.Identify(bytes.NewReader([]byte(tt.doc)))
+
+			// readerOnly hides Seek, so this takes the full parse
+			slowID, slowVersion := d.Identify(readerOnly{strings.NewReader(tt.doc)})
+
+			assert.Equal(t, slowID, fastID, "fast and slow paths disagree on the format")
+			assert.Equal(t, slowVersion, fastVersion, "fast and slow paths disagree on the version")
+			assert.Equal(t, tt.wantVersion, fastVersion)
+		})
+	}
+}
+
+// readerOnly hides any Seek method the underlying reader has, forcing the full parse.
+type readerOnly struct {
+	io.Reader
+}
+
+func Test_Decode_rejectsADocumentTheTailDidNotDescribe(t *testing.T) {
+	// the tail can find a schema block belonging to a later document in the stream; whatever it decides, Decode
+	// must not hand back the empty SBOM that parsing the first document into model.Document would produce
+	doc := `{"bomFormat":"CycloneDX","specVersion":"1.6","components":[{"type":"library","name":"pkg-a"}]}` +
+		"\n" + `{"artifacts":[],` + testIdentifySchemaBlock + `}`
+
+	s, _, _, err := NewFormatDecoder().Decode(bytes.NewReader([]byte(doc)))
+	require.Error(t, err)
+	assert.Nil(t, s)
 }
 
 func Test_encoderWritesSchemaLast(t *testing.T) {
