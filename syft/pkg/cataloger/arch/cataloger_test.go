@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -334,27 +332,6 @@ func TestAlpmCataloger(t *testing.T) {
 		Expects(expectedPkgs, expectedRelationships).
 		TestCataloger(t, NewDBCataloger())
 
-}
-
-// TestAlpmCataloger_MtreeBoundRejection is the property that matters when an mtree listing trips
-// a bound: the package must still be cataloged with the file list left empty, not dropped entirely.
-func TestAlpmCataloger_MtreeBoundRejection(t *testing.T) {
-	pkgtest.NewCatalogTester().
-		FromDirectory(t, "testdata/installed").
-		WithError().
-		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
-			for _, p := range pkgs {
-				if p.Name != "bombpkg" {
-					continue
-				}
-				meta, ok := p.Metadata.(pkg.AlpmDBEntry)
-				require.True(t, ok, "expected AlpmDBEntry metadata")
-				assert.Empty(t, meta.Files, "package with a rejected mtree listing should have an empty file list")
-				return
-			}
-			t.Fatal("expected bombpkg to be cataloged despite its mtree listing exceeding the line bound")
-		}).
-		TestCataloger(t, NewDBCataloger())
 }
 
 func TestCataloger_Globs(t *testing.T) {

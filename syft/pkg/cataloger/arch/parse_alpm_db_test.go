@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -270,31 +271,6 @@ func gzipOfRepeated(t *testing.T, payload byte, n int64) *bytes.Reader {
 	return bytes.NewReader(buf.Bytes())
 }
 
-// gzipOfRepeatedLines returns a gzip member decompressing to a valid mtree listing (header plus a file
-// line repeated with a padded digest) that runs past minSize. It streams the lines straight into the
-// gzip writer rather than building the listing in memory first, since the repeated line compresses to
-// almost nothing; only the small compressed result is ever buffered. The digest is padded rather than
-// adding more keywords so each line stays well over maxMtreeSize/maxMtreeLines bytes, which keeps the
-// byte cap the one that trips rather than the line cap.
-func gzipOfRepeatedLines(t *testing.T, minSize int64) *bytes.Reader {
-	t.Helper()
-
-	var buf bytes.Buffer
-	w := gzip.NewWriter(&buf)
-	_, err := w.Write([]byte("#mtree\n/set type=file uid=0 gid=0 mode=644\n"))
-	require.NoError(t, err)
-
-	var written int64
-	for i := 0; written < minSize; i++ {
-		n, err := fmt.Fprintf(w, "./file%d time=1649595592.0 size=10 sha256digest=%0400x\n", i, i)
-		require.NoError(t, err)
-		written += int64(n)
-	}
-	require.NoError(t, w.Close())
-
-	return bytes.NewReader(buf.Bytes())
-}
-
 func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
 	// the limits come from the fixture rather than the production constants so both sides of the
 	// boundary are exact and neither case has to allocate its way up to the shipped cap
@@ -318,17 +294,14 @@ func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
 	})
 }
 
-// Test_parseMtree_enforcesShippedSizeCap pins the actual production constant rather than a fixture
-// value. The boundary tests above parameterize maxSize on the spec they build, so they would still
-// pass unchanged even if maxMtreeSize regressed to something far smaller; this drives parseMtree,
-// which uses the real constants, with a listing generated on the fly so exceeding it doesn't mean
-// holding tens of megabytes in the test.
-func Test_parseMtree_enforcesShippedSizeCap(t *testing.T) {
-	bomb := gzipOfRepeatedLines(t, maxMtreeSize+1)
-
-	_, err := parseMtree(bomb)
-
-	require.ErrorIs(t, err, errMtreeTooLarge)
+// Test_parseMtree_shippedConstants pins the production values. The boundary tests parameterize the
+// limits on the fixture they build, so they would pass unchanged if either constant regressed.
+// Asserting the constants directly catches any change rather than only a loosening, and it costs
+// nothing; driving a real 64MB listing through the parser to prove the same thing was 12s of the
+// package's 16s race run. parseMtree's wiring to these is covered by the bomb subtest below.
+func Test_parseMtree_shippedConstants(t *testing.T) {
+	require.Equal(t, int64(64*intFile.MB), int64(maxMtreeSize))
+	require.Equal(t, 300_000, maxMtreeLines)
 }
 
 func Test_parseMtree_boundsLineCount(t *testing.T) {
