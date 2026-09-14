@@ -86,16 +86,13 @@ func readerFromFixture(t *testing.T, path string) unionreader.UnionReader {
 	return reader
 }
 
-// fetchPkgs is the package-level entry point, and commit f140ff0e's `break` lives at the end of its
-// format loop. Neither fixture is a native image, so both exercise the path where a format matches and
-// its fetchPkgs then fails, which the break makes final.
+// neither fixture is a native image, so both exercise the path where a format matches and its fetchPkgs
+// then fails, which the break at the end of the format loop makes final.
 //
-// two things are deliberately not asserted here. The break cannot be distinguished from the old
-// fall-through behavior, because ELF, Mach-O and PE magic bytes are mutually exclusive at offset 0, so
-// no fixture can validly parse as two formats. And nothing reaches the branch that attaches `location`
-// to each package, because no committed fixture is a real native image with an embedded SBOM (testdata
-// holds the SBOM JSON, covered directly by TestParseNativeImageSbom, plus a build script for a binary
-// that is not committed).
+// the break itself cannot be distinguished from the old fall-through here: ELF, Mach-O and PE magics are
+// mutually exclusive, so no fixture can validly parse as two formats. Nothing reaches the branch that
+// attaches location to each package either, since no committed fixture is a real native image with an
+// embedded SBOM.
 func TestFetchPkgs(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -125,10 +122,8 @@ func TestFetchPkgs(t *testing.T) {
 	}
 }
 
-// TestNewMachO_TruncatedFileIsARealFailure covers the branch where macho.NewFile fails with something
-// other than *macho.FormatError. Garbage bytes take the FormatError branch above and return (nil, nil);
-// a valid magic with nothing behind it does not, and silently dropping it would lose every package the
-// binary carries with no error and no log.
+// covers macho.NewFile failing with something other than *macho.FormatError. Garbage bytes take the
+// FormatError branch and return (nil, nil); a valid magic with nothing behind it does not.
 func TestNewMachO_TruncatedFileIsARealFailure(t *testing.T) {
 	// a valid Mach-O magic with nothing behind it yields io.ErrUnexpectedEOF, not a *macho.FormatError
 	_, err := newMachO("truncated", bytes.NewReader([]byte{0xcf, 0xfa, 0xed, 0xfe}))

@@ -270,12 +270,11 @@ func verifyRelationshipFields(t *testing.T, expected, actual []artifact.Relation
 	}
 }
 
-// buildMinimalPE64 assembles the smallest PE64 that debug/pe will parse, with DataDirectory[0] (the
-// export directory) set to the given RVA and size. totalSize is how large the resulting file is; the
-// point of the fixture is that size can claim far more than that.
+// buildMinimalPE64 assembles the smallest PE64 debug/pe will parse, with DataDirectory[0] set to the
+// given RVA and size. The point of the fixture is that size can claim far more than totalSize.
 //
-// newPE uses the directory's VirtualAddress directly as a file offset rather than translating it, so the
-// fixture needs no sections and exportRVA doubles as the offset the read starts from.
+// newPE uses the directory's VirtualAddress directly as a file offset, so no sections are needed and
+// exportRVA doubles as the offset the read starts from.
 func buildMinimalPE64(exportRVA, exportSize uint32, totalSize int) []byte {
 	const peHdrOff = 0x40
 	buf := make([]byte, totalSize)
@@ -301,7 +300,7 @@ func buildMinimalPE64(exportRVA, exportSize uint32, totalSize int) []byte {
 }
 
 // measureAlloc reports the bytes allocated while fn runs. TotalAlloc is process-wide, so a test using
-// this must not call t.Parallel: another test's allocations would land in the measurement.
+// this must not call t.Parallel.
 func measureAlloc(t *testing.T, fn func()) uint64 {
 	t.Helper()
 
@@ -314,9 +313,8 @@ func measureAlloc(t *testing.T, fn func()) uint64 {
 	return after.TotalAlloc - before.TotalAlloc
 }
 
-// readSizeRecorder records the largest single read requested of it. A declared size the headers claim
-// can be far larger than the file, so an allocation staying small is not enough on its own; no single read
-// may exceed the file size either, regardless of what the headers say.
+// readSizeRecorder records the largest single read requested of it. A small allocation is not enough on
+// its own; no single read may exceed the file size either, whatever the headers claim.
 type readSizeRecorder struct {
 	*bytes.Reader
 	maxRead int
@@ -337,8 +335,8 @@ func (r *readSizeRecorder) ReadAt(p []byte, off int64) (int, error) {
 }
 
 func TestNewPE_ExportDirectorySizeIsNotAllocatedUpFront(t *testing.T) {
-	// exportSymbolsDataDirectory.Size is a user-controlled uint32 from the PE optional header, and it used
-	// to size a make([]byte, Size) before the read, so a small file claiming 4GB reserved 4GB.
+	// Size is a user-controlled uint32 that used to size a make([]byte, Size) before the read, so a small
+	// file claiming 4GB reserved 4GB.
 	const totalSize = 8192
 	data := buildMinimalPE64(0x1000, 0xFFFFFFFF, totalSize)
 	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
@@ -392,9 +390,8 @@ func TestNewPE_ExportDirectoryWithinFileIsRead(t *testing.T) {
 }
 
 func TestDecompressSbom_RejectsOutOfRangeOffsets(t *testing.T) {
-	// every offset and length below is read out of the binary, so each has to be rejected rather than
-	// wrapped into a value that passes a bound and then panics on the slice that follows. wantErrMsg pins
-	// which guard fires, since require.Error alone is satisfied by any of the three checks in decompressSbom
+	// every offset and length here is read out of the binary, so each must be rejected rather than wrapped
+	// into a value that passes a bound and panics on the slice. wantErrMsg pins which of the three guards fires
 	const sbomLengthOverflowsMsg = "the 'sbom_length' symbol overflows the binary"
 	const sbomOverflowsMsg = "the sbom symbol overflows the binary"
 
@@ -452,8 +449,8 @@ func TestDecompressSbom_RejectsOutOfRangeOffsets(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dataBuf := make([]byte, tt.bufLen)
-			// subtract from the length rather than adding to the offset, for the same reason the code
-			// under test has to: tt.lengthStart is deliberately large enough to wrap
+			// subtract rather than add, for the same reason the code under test has to: lengthStart is deliberately
+			// large enough to wrap
 			if tt.lengthStart <= uint64(tt.bufLen) && uint64(tt.bufLen)-tt.lengthStart >= 8 {
 				binary.LittleEndian.PutUint64(dataBuf[tt.lengthStart:], tt.storedLength)
 			}
@@ -468,9 +465,8 @@ func TestDecompressSbom_RejectsOutOfRangeOffsets(t *testing.T) {
 }
 
 func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
-	// the compressed bytes are bounded by the file, but what they expand to is not, and the decoder
-	// buffers the whole stream before it can tell whether the payload is even CycloneDX. Zeros stand in
-	// for any uniform, highly compressible payload: they expand about 1000x, far past what real JSON does
+	// zeros stand in for any uniform, highly compressible payload: they expand about 1000x, far past what
+	// real JSON does
 	tests := []struct {
 		name             string
 		decompressedSize int
@@ -482,8 +478,7 @@ func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
 			wantRejected:     true,
 		},
 		{
-			// pins the other side of the bound: tightening the LimitedReader by one byte would reject a
-			// legal payload with every other test still passing
+			// pins the other side: tightening the LimitedReader by one byte would reject a legal payload
 			name:             "exactly at the limit falls through to the decoder",
 			decompressedSize: nativeImageMaxDecompressedSbomSize,
 			wantRejected:     false,
@@ -515,8 +510,8 @@ func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
 				require.Contains(t, err.Error(), "decompresses past",
 					"hitting the bound should say so, not report a parse failure")
 				t.Logf("allocated %d bytes rejecting a stream past the limit", allocated)
-				// a generous margin: -race roughly doubles the allocation counted here, and the point is
-				// catching an unbounded blowup, not pinning the exact multiple
+				// generous on purpose: -race roughly doubles the allocation counted here, and the point is catching an
+				// unbounded blowup, not pinning a multiple
 				require.Less(t, allocated, uint64(8*nativeImageMaxDecompressedSbomSize),
 					"rejecting an oversized stream must not retain multiples of the limit in memory")
 				return
@@ -527,18 +522,16 @@ func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
 	}
 }
 
-// TestNativeImageMaxDecompressedSbomSize_Ceiling pins the constant itself, independent of anything
-// derived from it. Other tests in this file compute their sizes FROM nativeImageMaxDecompressedSbomSize,
-// so raising it leaves them green; this is the one assertion that does not.
+// the other tests compute their sizes FROM nativeImageMaxDecompressedSbomSize, so raising it leaves them
+// green. This is the one assertion that does not.
 func TestNativeImageMaxDecompressedSbomSize_Ceiling(t *testing.T) {
 	require.LessOrEqual(t, int64(nativeImageMaxDecompressedSbomSize), int64(64*intFile.MB),
 		"the ceiling is what stands between a gzip bomb and an OOM; raising it needs a new argument here")
 }
 
 func TestDecompressSbom_AcceptsLargeSbom(t *testing.T) {
-	// guards the risk the size limit introduces: a genuinely large SBOM must still be cataloged.
-	// Components carry distinct names, versions, purls and hashes, so this is shaped like a real
-	// CycloneDX document rather than a uniform payload.
+	// the size limit must not truncate a genuinely large SBOM. Distinct names, versions, purls and hashes
+	// keep this shaped like a real CycloneDX document rather than a uniform payload.
 	const components = 20000
 
 	var sb bytes.Buffer

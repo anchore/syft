@@ -18,9 +18,8 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
-// TestFetchExportAttribute pins the fetchExportAttribute bound at exactly the byte where an attribute
-// ends flush with the directory: `j+4 > n` (not `>=`) is what lets attribute 3 be read out of a 36-byte
-// exports buffer, since bytes 32:36 are entirely present there.
+// pins the bound at the byte where an attribute ends flush with the directory: `j+sz > n` (not `>=`) is
+// what lets attribute 3 be read out of a 36-byte exports buffer, since bytes 32:36 are entirely present.
 func TestFetchExportAttribute(t *testing.T) {
 	// the four attributes fetchExportContent reads start right after this header
 	require.EqualValues(t, 20, unsafe.Sizeof(exportPrefixPE{}))
@@ -74,8 +73,8 @@ func TestFetchExportAttribute(t *testing.T) {
 	}
 }
 
-// TestFetchExportFunctionPointer pins the uint32->uint64 widening fix: functionsBase is a file-controlled
-// RVA, and computing `functionsBase + i*sz` in uint32 wraps a huge base back into range instead of erroring.
+// pins the uint32->uint64 widening: computing `functionsBase + i*sz` in uint32 wraps a huge base back
+// into range instead of erroring.
 func TestFetchExportFunctionPointer(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -141,11 +140,8 @@ func TestFetchExportFunctionPointer(t *testing.T) {
 	}
 }
 
-// TestFetchSbomSymbols_NameArrayPrecedingDirectoryGuard covers content.addressOfNames below the export
-// directory's VirtualAddress. VirtualAddress is deliberately huge here (rather than a small, realistic
-// RVA) because that is what makes the underflow land back in range instead of on an enormous offset a
-// downstream bound would also reject: a small VirtualAddress would let a later, unrelated bound mask this
-// guard's absence.
+// addressOfNames below the directory's VirtualAddress. VirtualAddress is deliberately huge so the
+// underflow lands back in range; a small one would let an unrelated bound mask this guard's absence.
 func TestFetchSbomSymbols_NameArrayPrecedingDirectoryGuard(t *testing.T) {
 	va := uint32(0xFFFFFFF0)
 	addressOfNames := uint32(5)
@@ -169,10 +165,7 @@ func TestFetchSbomSymbols_NameArrayPrecedingDirectoryGuard(t *testing.T) {
 	assert.Zero(t, content.addressOfSvmVersion)
 }
 
-// TestFetchSbomSymbols_SymbolAddressPrecedingDirectoryGuard covers a name pointer table entry resolving
-// to a symbolAddress below the export directory. Same reasoning as the addressOfNames guard above: a huge
-// VirtualAddress is what makes the underflow land in range instead of on a value a downstream bound would
-// also reject.
+// a name pointer entry resolving below the directory. Same reasoning as the addressOfNames guard above.
 func TestFetchSbomSymbols_SymbolAddressPrecedingDirectoryGuard(t *testing.T) {
 	va := uint32(0xFFFFFFF0)
 	exports := make([]byte, 32)
@@ -194,9 +187,8 @@ func TestFetchSbomSymbols_SymbolAddressPrecedingDirectoryGuard(t *testing.T) {
 	assert.Zero(t, content.addressOfSvmVersion)
 }
 
-// TestFetchSbomSymbols_SymbolBaseOutOfRangeGuard covers a symbolBase landing past the end of exports.
-// Unlike the two guards above this needs no wraparound to demonstrate: without the guard, the resulting
-// slice expression is simply out of range and panics.
+// a symbolBase past the end of exports. Needs no wraparound: without the guard the slice is simply out
+// of range and panics.
 func TestFetchSbomSymbols_SymbolBaseOutOfRangeGuard(t *testing.T) {
 	const va = uint32(0x2000)
 	exports := make([]byte, 8)
@@ -211,12 +203,8 @@ func TestFetchSbomSymbols_SymbolBaseOutOfRangeGuard(t *testing.T) {
 	assert.Zero(t, content.addressOfSvmVersion)
 }
 
-// TestFetchSbomSymbols_FindsAllThreeSymbols is the happy path: a name pointer table whose entries resolve
-// to the three SBOM symbol names. fetchSbomSymbols records the loop index of a match, not its address.
-// TestFetchSbomSymbols_AddressBaseOutOfRangeGuard covers addressBase landing past the end of exports.
-// Every other fetchSbomSymbols fixture has addressBase == 0, so this is the only case that reaches the
-// `k > n` half of the bound: without it, `n-k` underflows in uint64 arithmetic and wraps to a value that
-// clears the size check, and the slice expression that follows panics.
+// addressBase past the end of exports. Every other fixture has addressBase == 0, so this is the only case
+// reaching the `k > n` half: without it `n-k` underflows, clears the size check, and the slice panics.
 func TestFetchSbomSymbols_AddressBaseOutOfRangeGuard(t *testing.T) {
 	const va = uint32(0x2000)
 	exports := make([]byte, 16)
@@ -230,15 +218,16 @@ func TestFetchSbomSymbols_AddressBaseOutOfRangeGuard(t *testing.T) {
 	assert.Zero(t, content.addressOfSvmVersion)
 }
 
+// TestFetchSbomSymbols_FindsAllThreeSymbols is the happy path. fetchSbomSymbols records the loop index
+// of a match, not its address.
 func TestFetchSbomSymbols_FindsAllThreeSymbols(t *testing.T) {
 	const va = 0x2000
 	exports := make([]byte, 96)
 	le := binary.LittleEndian
 
 	// name pointer table: one uint32 RVA per name, in loop order.
-	// note: fetchPkgs treats a stored index of 0 as "symbol not found", so none of the three symbols can
-	// sit at index 0 here or this test would pass for the wrong reason. that overloading is a real defect,
-	// just not one this test is about.
+	// name pointer table: one uint32 RVA per name, in loop order. note fetchPkgs treats a stored index of 0
+	// as "symbol not found", so no symbol may sit at index 0 or this would pass for the wrong reason
 	le.PutUint32(exports[0:4], va+52)   // index 0: an unrelated name
 	le.PutUint32(exports[4:8], va+57)   // index 1: "sbom"
 	le.PutUint32(exports[8:12], va+62)  // index 2: "sbom_length"
@@ -258,9 +247,8 @@ func TestFetchSbomSymbols_FindsAllThreeSymbols(t *testing.T) {
 	assert.EqualValues(t, 3, content.addressOfSvmVersion)
 }
 
-// TestFetchSbomSymbols_HugeNameCountTerminatesQuickly guards against numberOfNames being read straight
-// out of the file: a hostile binary can claim close to 4 billion names, and the scan must stop as soon as
-// the name pointer table runs off the end of exports rather than actually iterating that far.
+// numberOfNames is read straight out of the file, so a hostile binary can claim ~4 billion names. The
+// scan must stop when the name pointer table runs off the end of exports, not iterate that far.
 func TestFetchSbomSymbols_HugeNameCountTerminatesQuickly(t *testing.T) {
 	exports := make([]byte, 16) // room for exactly 4 name pointer table entries
 	ni := nativeImagePE{exports: exports, exportSymbols: pe.DataDirectory{VirtualAddress: 0}}
@@ -272,9 +260,8 @@ func TestFetchSbomSymbols_HugeNameCountTerminatesQuickly(t *testing.T) {
 		"the scan must stop at the end of exports, not loop numberOfNames times")
 }
 
-// TestFetchPkgs_AddressOfFunctionsPrecedingDirectoryErrors covers the one guard in fetchPkgs reachable
-// without a real *pe.File: content.addressOfFunctions below the export directory's base must error
-// rather than underflow into a huge functionsBase.
+// the one guard in fetchPkgs reachable without a real *pe.File: addressOfFunctions below the export
+// directory base must error rather than underflow into a huge functionsBase.
 func TestFetchPkgs_AddressOfFunctionsPrecedingDirectoryErrors(t *testing.T) {
 	const va = 0x2000
 	exports := make([]byte, 96)
@@ -313,8 +300,7 @@ func TestFetchPkgs_AddressOfFunctionsPrecedingDirectoryErrors(t *testing.T) {
 	assert.Empty(t, rels)
 }
 
-// TestReadExportDirectory covers the three outcomes of weighing a declared directory size against both
-// the absolute cap and the bytes the file really has.
+// the three outcomes of weighing a declared size against both the cap and the bytes the file really has.
 func TestReadExportDirectory(t *testing.T) {
 	t.Run("size over the cap is rejected", func(t *testing.T) {
 		dir := pe.DataDirectory{VirtualAddress: 0, Size: nativeImageMaxExportDirectorySize + 1}
@@ -351,11 +337,8 @@ func TestReadExportDirectory(t *testing.T) {
 	})
 }
 
-// TestReadExportDirectory_DoesNotReadThePhantomBytes proves the declared-size guard, not just the
-// absolute cap: a small, cheap file can still declare a directory size up to that cap, and the bytes the
-// file really has is what has to reject it before the read (and the allocation backing it) happens.
-//
-// readSizeRecorder and measureAlloc are defined in graalvm_native_image_cataloger_test.go (same package).
+// proves the remaining-bytes guard, not just the cap: a small, cheap file can still declare a size under
+// the cap, and only the bytes really present can reject it before the read and its allocation.
 func TestReadExportDirectory_DoesNotReadThePhantomBytes(t *testing.T) {
 	const realSize = 4096
 	rec := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, realSize))}
@@ -392,9 +375,8 @@ func (s shortReader) ReadAt(p []byte, off int64) (int, error) {
 	return copy(p[:s.perRead], s.b[off:off+int64(s.perRead)]), nil
 }
 
-// TestReadExportDirectory_RejectsShortReadWithNilError is the regression for the one real defect this
-// campaign left behind: a ReadAt that hands back fewer bytes than asked with a nil error used to be
-// accepted, and the tail of the buffer was parsed as valid export directory data.
+// regression for the real defect: a ReadAt handing back fewer bytes than asked with a nil error used to
+// be accepted, and the zeroed tail of the buffer parsed as export directory data.
 func TestReadExportDirectory_RejectsShortReadWithNilError(t *testing.T) {
 	tests := []struct {
 		name    string

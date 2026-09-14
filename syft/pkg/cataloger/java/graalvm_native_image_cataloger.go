@@ -64,7 +64,7 @@ type exportContentPE struct {
 	addressOfSvmVersion uint32
 }
 
-// A nativeImagePE must maintain the underlying reader to fetch information unavailable in the Golang API.
+// nativeImagePE carries the raw export directory, which debug/pe does not expose.
 type nativeImagePE struct {
 	file          *pe.File
 	exportSymbols pe.DataDirectory
@@ -83,31 +83,14 @@ const nativeImageMissingSymbolsError = "one or more symbols are missing from the
 const nativeImageInvalidIndexError = "parsing the executable file generated an invalid index"
 const nativeImageMissingExportedDataDirectoryError = "exported data directory is missing"
 
-// nativeImageMaxDecompressedSbomSize bounds how far the embedded SBOM may decompress.
-//
-// It has to bound the decompressed stream rather than the compressed bytes, since gzip will happily
-// turn a few kilobytes into gigabytes. A native-image SBOM enumerating thousands of Java dependencies
-// comes to single-digit megabytes (20k components is ~4MB, see TestDecompressSbom_AcceptsLargeSbom),
-// so this leaves a ~4x margin over anything real; truncating a genuine SBOM silently drops packages,
-// so some margin is deliberate.
-//
-// The ceiling is nowhere near free, which is why it is not larger. The decoded bytes are unmarshalled
-// into a cyclonedx.BOM graph and then converted into a second graph of pkg.Package values, so the real
-// cost is several times the decompressed size, and catalogers run concurrently. Same role as
-// maxDirectorySectionSize in syft/pkg/cataloger/internal/dotnet/pe and maxDeclaredSectionSize in
-// syft/internal/elfutil, set tighter because a native-image SBOM is much smaller than an arbitrary
-// PE data directory or ELF section.
+// nativeImageMaxDecompressedSbomSize bounds the decompressed SBOM rather than the compressed bytes,
+// since gzip turns a few kilobytes into gigabytes. Real SBOMs run to single-digit MB even at 20k
+// components, and decoding costs several times that again in graph allocation.
 const nativeImageMaxDecompressedSbomSize = 16 * intFile.MB
 
-// nativeImageMaxExportDirectorySize bounds the bytes the export data directory may declare.
-//
-// A real export directory is metadata: the symbol count, the name and address tables, and the symbol
-// names themselves, which for a native image runs to a few KB. Clamping to the bytes remaining in the
-// file is not on its own enough, because a mostly empty file compresses to almost nothing in a layer,
-// so an attacker can hand us a small artifact that still authorizes reading a multi-gigabyte file into
-// memory only to discard it. Same role as maxDirectorySectionSize in
-// syft/pkg/cataloger/internal/dotnet/pe, set tighter because an export directory is smaller than an
-// arbitrary PE data directory. Unrelated to the SBOM ceiling above, which happens to share this value.
+// nativeImageMaxExportDirectorySize bounds the export directory, which is symbol metadata and runs to a
+// few KB. Bounding by the bytes remaining is not enough on its own: a mostly empty multi-gigabyte file
+// is cheap to ship in a layer and would still authorize reading all of it.
 const nativeImageMaxExportDirectorySize = 16 * intFile.MB
 
 // NewNativeImageCataloger returns a new Native Image cataloger object.
@@ -122,9 +105,8 @@ func (c *nativeImageCataloger) Name() string {
 
 // decompressSbom returns the packages given within a native image executable's SBOM.
 //
-// Both offsets and the stored length come from the binary being parsed, so every bound below subtracts
-// from the known-good buffer length rather than adding to a user-controlled value: `start+n` wraps, and a
-// wrapped sum compares as in-range while the slice that follows it panics.
+// Offsets and the stored length all come from the binary, so the bounds below subtract from the buffer
+// length rather than adding to a file-controlled value, which wraps and then panics on the slice.
 func decompressSbom(dataBuf []byte, sbomStart, lengthStart uint64) ([]pkg.Package, []artifact.Relationship, error) {
 	bufLen := uint64(len(dataBuf))
 	if lengthStart > bufLen || bufLen-lengthStart < 8 {
@@ -145,9 +127,8 @@ func decompressSbom(dataBuf []byte, sbomStart, lengthStart uint64) ([]pkg.Packag
 	}
 	defer gzreader.Close()
 
-	// sbomCompressed is bounded by the file, but the decompressed stream is not, so bound it too. Read one
-	// byte past the ceiling: that is what distinguishes a stream sitting exactly on the limit (legal) from
-	// one that runs past it, and it lets an oversized payload be rejected before the decoder is invoked.
+	// the compressed bytes are bounded by the file, the decompressed stream is not. one byte past the
+	// ceiling, so a stream sitting exactly on it is still legal
 	raw, err := io.ReadAll(io.LimitReader(gzreader, nativeImageMaxDecompressedSbomSize+1))
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
@@ -167,10 +148,8 @@ func decompressSbom(dataBuf []byte, sbomStart, lengthStart uint64) ([]pkg.Packag
 	return pkgs, sbom.Relationships, nil
 }
 
-// symbolOffset converts an SBOM symbol address into an offset within the section data that should hold
-// it. The address comes from the binary, and the subtraction is unsigned, so an address below the
-// section base underflows into a huge offset instead of a negative one. Takes one address rather than
-// both, so a call site converts one symbol at a time; the two parameters are still order-sensitive.
+// symbolOffset converts an SBOM symbol address into an offset within the section that should hold it.
+// The subtraction is unsigned, so an address below the section base underflows into a huge offset.
 func symbolOffset(addr, sectionBase uint64) (uint64, error) {
 	if addr < sectionBase {
 		return 0, errors.New("an SBOM symbol precedes the section that should contain it")
@@ -219,8 +198,7 @@ func newMachO(filename string, r io.ReaderAt) (nativeImage, error) {
 			log.WithFields("filename", filename, "error", err).Trace("not a MachO binary")
 			return nil, nil
 		}
-		// anything else is a real failure to read a file that may well be a MachO, and returning nil here
-		// would drop it with no error and no log at all
+		// a real read failure, not a format mismatch; returning nil here would drop the file silently
 		return fileError(filename, err)
 	}
 	if bi == nil {
@@ -231,19 +209,17 @@ func newMachO(filename string, r io.ReaderAt) (nativeImage, error) {
 	}, nil
 }
 
-// readExportDirectory reads the export data directory, weighing the size the file declares against
-// both an absolute cap and the bytes really present before it allocates anything.
+// readExportDirectory weighs the size the file declares against both an absolute cap and the bytes
+// really present before allocating.
 //
-// note: dir.VirtualAddress is an RVA and is used here directly as a file offset without translating it
-// through the section table. That is long-standing behavior this function preserves rather than fixes;
-// see rvaToFileOffset in syft/pkg/cataloger/internal/dotnet/pe for what a translation looks like.
+// note: dir.VirtualAddress is an RVA used directly as a file offset, with no section-table translation.
+// Long-standing behavior this preserves rather than fixes; see rvaToFileOffset in dotnet/pe.
 func readExportDirectory(r io.ReaderAt, dir pe.DataDirectory) ([]byte, error) {
 	if dir.Size > nativeImageMaxExportDirectorySize {
 		return nil, fmt.Errorf("export directory declares %d bytes, over the %d byte limit", dir.Size, nativeImageMaxExportDirectorySize)
 	}
 
-	// the length has to come from something the reader can back up rather than from what the file
-	// claims, since the whole point is weighing a declared size against the bytes that are really there
+	// the size has to come from the reader, not from what the file claims
 	end, ok := intFile.ReaderSize(r)
 	if !ok {
 		return nil, errors.New("unable to measure the binary")
@@ -253,10 +229,8 @@ func readExportDirectory(r io.ReaderAt, dir pe.DataDirectory) ([]byte, error) {
 			dir.Size, dir.VirtualAddress, max(remaining, 0))
 	}
 
-	// one exact allocation. the count decides, not the error: io.ReaderAt permits reporting a full read
-	// alongside io.EOF, and syft has seen readers return a short one with no error at all (see the squashfs
-	// adapter in syft/internal/unionreader). io.ReadFull would also cover both, but it spins forever on a
-	// reader that keeps answering (0, nil), which is the same hostile input this function exists to reject
+	// the count decides, not the error: a ReadAt may report a full read as io.EOF, or a short one with no
+	// error at all. io.ReadFull covers both but spins forever on a reader that keeps answering (0, nil)
 	exports := make([]byte, dir.Size)
 	if n, err := r.ReadAt(exports, int64(dir.VirtualAddress)); n < len(exports) {
 		return nil, fmt.Errorf("could not read the exported symbols data directory: read %d of %d bytes (%v)", n, len(exports), err)
@@ -453,8 +427,8 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, relationships []arti
 func (ni nativeImagePE) fetchExportAttribute(i int) (uint32, error) {
 	n := len(ni.exports)
 	sz := int(unsafe.Sizeof(ni.t.headerAttribute))
-	// i is only ever 0-3, so this arithmetic cannot overflow; the bound is > rather than >= because an
-	// attribute ending flush with the directory is still entirely present
+	// i is only ever 0-3, so this cannot overflow; > not >= because an attribute ending flush with the
+	// directory is still entirely present
 	j := int(unsafe.Sizeof(ni.header)) + i*sz
 	if j+sz > n {
 		log.Tracef("invalid index to export directory entry attribute: %v", j)
@@ -465,8 +439,7 @@ func (ni nativeImagePE) fetchExportAttribute(i int) (uint32, error) {
 
 // fetchExportFunctionPointer obtains a function pointer from the exported symbols directory entry.
 func (ni nativeImagePE) fetchExportFunctionPointer(functionsBase uint32, i uint32) (uint32, error) {
-	// functionsBase derives from a file-controlled RVA, so widen to uint64 before indexing: in uint32 the
-	// sum wraps to a small value that passes the bound and then panics on the slice
+	// functionsBase is a file-controlled RVA: in uint32 the sum wraps under the bound, then panics
 	n := uint64(len(ni.exports))
 	sz := uint64(unsafe.Sizeof(ni.t.functionPointer))
 	j := uint64(functionsBase) + uint64(i)*sz
@@ -509,8 +482,7 @@ func (ni nativeImagePE) fetchSbomSymbols(content *exportContentPE) {
 	n := uint64(len(ni.exports))
 	sz := uint64(unsafe.Sizeof(ni.t.namePointer))
 
-	// the name array must start inside the directory we read; an RVA below it would underflow the
-	// subtraction into a huge offset that then wraps back into range on the bound below
+	// an RVA below the directory would underflow into a huge offset that wraps back into range below
 	if content.addressOfNames < ni.exportSymbols.VirtualAddress {
 		log.Tracef("exported name array precedes the export directory: %v", content.addressOfNames)
 		return
@@ -619,8 +591,8 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
 			if err != nil {
-				// this covers both "not this format" and a real rejection of a file that is one; the latter
-				// drops every package the binary carries, which is only visible at trace level today
+				// both "not this format" and a real rejection of a file that is one, which drops every
+				// package the binary carries and is only visible at trace level
 				log.WithFields("file", filename, "error", err).Trace("unable to read possible java native-image")
 				continue
 			}
@@ -638,9 +610,8 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 				pkgs = append(pkgs, newPkgs...)
 				relationships = append(relationships, newRelationships...)
 			}
-			// this reader parsed as this format, so no later format applies to it. nothing parses as two of
-			// these today; stopping makes that explicit rather than relying on it. note this also means a
-			// format that parses but whose fetchPkgs fails is not retried as another format
+			// nothing parses as two of these today; stopping makes that explicit rather than relying on it.
+			// note a format that parses but whose fetchPkgs fails is not retried as another format
 			break
 		}
 	}
