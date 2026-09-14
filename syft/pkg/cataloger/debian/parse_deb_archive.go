@@ -66,7 +66,7 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 				// record why it is partial. The unknown above is removed from the SBOM by default once a
 				// package is reported at these coordinates, so warn too since that's the channel a user
 				// actually sees
-				log.Warnf("deb archive %q: partial control.tar.* file: %v", reader.Location.RealPath, err)
+				log.Warnf("deb archive %q: partial control.tar.* file: %v", reader.RealPath, err)
 				unknownErr = unknown.Append(unknownErr, reader.Location, fmt.Errorf("partial control.tar.* file: %w", err))
 			}
 		case !sawData && strings.HasPrefix(header.Name, "data.tar"):
