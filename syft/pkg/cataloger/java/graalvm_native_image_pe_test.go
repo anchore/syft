@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"debug/pe"
 	"encoding/binary"
+	"io"
 	"math"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -112,6 +114,13 @@ func TestFetchExportFunctionPointer(t *testing.T) {
 			index:         0,
 			wantValue:     0x11223344,
 		},
+		{
+			name:          "a pointer straddling the end of exports",
+			exports:       make([]byte, 64),
+			functionsBase: 62,
+			index:         0,
+			wantErr:       true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -204,12 +213,32 @@ func TestFetchSbomSymbols_SymbolBaseOutOfRangeGuard(t *testing.T) {
 
 // TestFetchSbomSymbols_FindsAllThreeSymbols is the happy path: a name pointer table whose entries resolve
 // to the three SBOM symbol names. fetchSbomSymbols records the loop index of a match, not its address.
+// TestFetchSbomSymbols_AddressBaseOutOfRangeGuard covers addressBase landing past the end of exports.
+// Every other fetchSbomSymbols fixture has addressBase == 0, so this is the only case that reaches the
+// `k > n` half of the bound: without it, `n-k` underflows in uint64 arithmetic and wraps to a value that
+// clears the size check, and the slice expression that follows panics.
+func TestFetchSbomSymbols_AddressBaseOutOfRangeGuard(t *testing.T) {
+	const va = uint32(0x2000)
+	exports := make([]byte, 16)
+
+	ni := nativeImagePE{exports: exports, exportSymbols: pe.DataDirectory{VirtualAddress: va}}
+	content := &exportContentPE{addressOfNames: 0x2064, numberOfNames: 1} // addressBase = 0x64 = 100, past exports
+
+	require.NotPanics(t, func() { ni.fetchSbomSymbols(content) })
+	assert.Zero(t, content.addressOfSbom)
+	assert.Zero(t, content.addressOfSbomLength)
+	assert.Zero(t, content.addressOfSvmVersion)
+}
+
 func TestFetchSbomSymbols_FindsAllThreeSymbols(t *testing.T) {
 	const va = 0x2000
 	exports := make([]byte, 96)
 	le := binary.LittleEndian
 
-	// name pointer table: one uint32 RVA per name, in loop order
+	// name pointer table: one uint32 RVA per name, in loop order.
+	// note: fetchPkgs treats a stored index of 0 as "symbol not found", so none of the three symbols can
+	// sit at index 0 here or this test would pass for the wrong reason. that overloading is a real defect,
+	// just not one this test is about.
 	le.PutUint32(exports[0:4], va+52)   // index 0: an unrelated name
 	le.PutUint32(exports[4:8], va+57)   // index 1: "sbom"
 	le.PutUint32(exports[8:12], va+62)  // index 2: "sbom_length"
@@ -288,7 +317,7 @@ func TestFetchPkgs_AddressOfFunctionsPrecedingDirectoryErrors(t *testing.T) {
 // the absolute cap and the bytes the file really has.
 func TestReadExportDirectory(t *testing.T) {
 	t.Run("size over the cap is rejected", func(t *testing.T) {
-		dir := pe.DataDirectory{VirtualAddress: 0, Size: maxExportDirectorySize + 1}
+		dir := pe.DataDirectory{VirtualAddress: 0, Size: nativeImageMaxExportDirectorySize + 1}
 		_, err := readExportDirectory(bytes.NewReader(make([]byte, 1024)), dir)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "byte limit")
@@ -304,12 +333,21 @@ func TestReadExportDirectory(t *testing.T) {
 	t.Run("a size the file can exactly satisfy succeeds", func(t *testing.T) {
 		data := make([]byte, 200)
 		binary.LittleEndian.PutUint32(data[100:104], 0xABCDEF01)
-		dir := pe.DataDirectory{VirtualAddress: 100, Size: 50}
+		dir := pe.DataDirectory{VirtualAddress: 100, Size: 100} // remaining bytes (200-100) exactly
 
 		got, err := readExportDirectory(bytes.NewReader(data), dir)
 		require.NoError(t, err)
-		require.Len(t, got, 50)
+		require.Len(t, got, 100)
 		assert.Equal(t, uint32(0xABCDEF01), binary.LittleEndian.Uint32(got[0:4]))
+	})
+
+	t.Run("a reader that cannot report its size is rejected", func(t *testing.T) {
+		data := make([]byte, 64)
+		r := struct{ io.ReaderAt }{bytes.NewReader(data)} // promotes ReadAt only, no Size() or Seek
+		dir := pe.DataDirectory{VirtualAddress: 0, Size: 32}
+
+		_, err := readExportDirectory(r, dir)
+		require.ErrorContains(t, err, "unable to measure the binary")
 	})
 }
 
@@ -321,16 +359,58 @@ func TestReadExportDirectory(t *testing.T) {
 func TestReadExportDirectory_DoesNotReadThePhantomBytes(t *testing.T) {
 	const realSize = 4096
 	rec := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, realSize))}
-	dir := pe.DataDirectory{VirtualAddress: 0, Size: maxExportDirectorySize}
+	dir := pe.DataDirectory{VirtualAddress: 0, Size: nativeImageMaxExportDirectorySize}
 
 	allocated := measureAlloc(t, func() {
 		_, err := readExportDirectory(rec, dir)
-		require.Error(t, err)
+		// a Size exactly at the cap must fall through to the remaining-bytes check, not be capped away;
+		// pins the `>` (not `>=`) in the cap comparison
+		require.ErrorContains(t, err, "remain")
 	})
 
 	t.Logf("allocated %d bytes for a directory declaring %d against a %d byte file", allocated, dir.Size, realSize)
-	assert.Less(t, allocated, uint64(realSize*4),
+	assert.Less(t, allocated, uint64(intFile.MB),
 		"rejecting an oversized declaration must not first allocate against it")
 	assert.LessOrEqual(t, rec.maxRead, realSize,
 		"no read should ask for more than the file actually holds")
+}
+
+// shortReader has 64 addressable bytes but hands back fewer than asked with a nil error, the
+// non-conforming shape syft/internal/unionreader documents for squashfs
+type shortReader struct {
+	b       []byte
+	perRead int
+}
+
+func (s shortReader) Size() int64 { return int64(len(s.b)) }
+
+func (s shortReader) ReadAt(p []byte, off int64) (int, error) {
+	if len(p) == 1 { // intFile.ReaderSize probes the last byte, and that probe has to succeed
+		p[0] = s.b[off]
+		return 1, nil
+	}
+	return copy(p[:s.perRead], s.b[off:off+int64(s.perRead)]), nil
+}
+
+// TestReadExportDirectory_RejectsShortReadWithNilError is the regression for the one real defect this
+// campaign left behind: a ReadAt that hands back fewer bytes than asked with a nil error used to be
+// accepted, and the tail of the buffer was parsed as valid export directory data.
+func TestReadExportDirectory_RejectsShortReadWithNilError(t *testing.T) {
+	tests := []struct {
+		name    string
+		perRead int
+	}{
+		{name: "reader answers with zero bytes and a nil error", perRead: 0},
+		{name: "reader answers with a partial read and a nil error", perRead: 4},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := shortReader{b: make([]byte, 64), perRead: tt.perRead}
+			dir := pe.DataDirectory{VirtualAddress: 0, Size: 32}
+
+			_, err := readExportDirectory(r, dir)
+			require.ErrorContains(t, err, "read")
+		})
+	}
 }

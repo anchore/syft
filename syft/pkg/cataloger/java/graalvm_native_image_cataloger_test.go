@@ -339,38 +339,24 @@ func (r *readSizeRecorder) ReadAt(p []byte, off int64) (int, error) {
 func TestNewPE_ExportDirectorySizeIsNotAllocatedUpFront(t *testing.T) {
 	// exportSymbolsDataDirectory.Size is a user-controlled uint32 from the PE optional header, and it used
 	// to size a make([]byte, Size) before the read, so a small file claiming 4GB reserved 4GB.
-	tests := []struct {
-		name      string
-		totalSize int
-	}{
-		{name: "8KB file", totalSize: 8192},
-		// large enough that the old io.ReadAll(io.LimitReader(...)) path this guards against would have
-		// allocated a multiple of the file size (~2.2x, from ReadAll's own growth), rather than a multiple
-		// of the cap; an 8KB fixture is too cheap to tell the two apart
-		{name: "64MB file", totalSize: 64 * intFile.MB},
-	}
+	const totalSize = 8192
+	data := buildMinimalPE64(0x1000, 0xFFFFFFFF, totalSize)
+	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			data := buildMinimalPE64(0x1000, 0xFFFFFFFF, tt.totalSize)
-			r := &readSizeRecorder{Reader: bytes.NewReader(data)}
+	var err error
+	allocated := measureAlloc(t, func() {
+		_, err = newPE("oversized-export-dir.exe", r)
+	})
 
-			var err error
-			allocated := measureAlloc(t, func() {
-				_, err = newPE("oversized-export-dir.exe", r)
-			})
+	require.Error(t, err, "an export directory the file cannot satisfy must not read as successful")
+	require.ErrorContains(t, err, "byte limit")
 
-			require.Error(t, err, "an export directory the file cannot satisfy must not read as successful")
-			require.ErrorContains(t, err, "byte limit")
-
-			t.Logf("allocated %d bytes for a directory declaring %d in a %d byte file",
-				allocated, uint64(0xFFFFFFFF), tt.totalSize)
-			require.Less(t, allocated, uint64(intFile.MB),
-				"the declared size must not be reserved before the read confirms the bytes exist")
-			assert.LessOrEqual(t, r.maxRead, tt.totalSize,
-				"no single read may exceed the file size, regardless of what the headers claim")
-		})
-	}
+	t.Logf("allocated %d bytes for a directory declaring %d in a %d byte file",
+		allocated, uint64(0xFFFFFFFF), totalSize)
+	require.Less(t, allocated, uint64(intFile.MB),
+		"the declared size must not be reserved before the read confirms the bytes exist")
+	assert.LessOrEqual(t, r.maxRead, totalSize,
+		"no single read may exceed the file size, regardless of what the headers claim")
 }
 
 func TestNewPE_ExportDirectoryWithinFileIsRead(t *testing.T) {
@@ -455,6 +441,12 @@ func TestDecompressSbom_RejectsOutOfRangeOffsets(t *testing.T) {
 			lengthStart: 0,
 			wantErrMsg:  sbomOverflowsMsg,
 		},
+		{
+			name:        "length field straddles the end of the buffer",
+			bufLen:      64,
+			lengthStart: 60,
+			wantErrMsg:  sbomLengthOverflowsMsg,
+		},
 	}
 
 	for _, tt := range tests {
@@ -466,10 +458,11 @@ func TestDecompressSbom_RejectsOutOfRangeOffsets(t *testing.T) {
 				binary.LittleEndian.PutUint64(dataBuf[tt.lengthStart:], tt.storedLength)
 			}
 
+			var err error
 			require.NotPanics(t, func() {
-				_, _, err := decompressSbom(dataBuf, tt.sbomStart, tt.lengthStart)
-				require.ErrorContains(t, err, tt.wantErrMsg)
+				_, _, err = decompressSbom(dataBuf, tt.sbomStart, tt.lengthStart)
 			})
+			require.ErrorContains(t, err, tt.wantErrMsg)
 		})
 	}
 }
@@ -512,17 +505,34 @@ func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
 			lengthStart := uint64(compressed.Len())
 			binary.LittleEndian.PutUint64(dataBuf[lengthStart:], lengthStart)
 
-			_, _, err = decompressSbom(dataBuf, 0, lengthStart)
+			var decompressErr error
+			allocated := measureAlloc(t, func() {
+				_, _, decompressErr = decompressSbom(dataBuf, 0, lengthStart)
+			})
+			err = decompressErr
 			require.Error(t, err, "zeros are never a valid SBOM, so this errors either way")
 			if tt.wantRejected {
 				require.Contains(t, err.Error(), "decompresses past",
 					"hitting the bound should say so, not report a parse failure")
+				t.Logf("allocated %d bytes rejecting a stream past the limit", allocated)
+				// a generous margin: -race roughly doubles the allocation counted here, and the point is
+				// catching an unbounded blowup, not pinning the exact multiple
+				require.Less(t, allocated, uint64(8*nativeImageMaxDecompressedSbomSize),
+					"rejecting an oversized stream must not retain multiples of the limit in memory")
 				return
 			}
 			require.NotContains(t, err.Error(), "decompresses past",
 				"a stream sitting exactly on the limit must reach the decoder, not be capped away")
 		})
 	}
+}
+
+// TestNativeImageMaxDecompressedSbomSize_Ceiling pins the constant itself, independent of anything
+// derived from it. Other tests in this file compute their sizes FROM nativeImageMaxDecompressedSbomSize,
+// so raising it leaves them green; this is the one assertion that does not.
+func TestNativeImageMaxDecompressedSbomSize_Ceiling(t *testing.T) {
+	require.LessOrEqual(t, int64(nativeImageMaxDecompressedSbomSize), int64(64*intFile.MB),
+		"the ceiling is what stands between a gzip bomb and an OOM; raising it needs a new argument here")
 }
 
 func TestDecompressSbom_AcceptsLargeSbom(t *testing.T) {

@@ -67,7 +67,6 @@ type exportContentPE struct {
 // A nativeImagePE must maintain the underlying reader to fetch information unavailable in the Golang API.
 type nativeImagePE struct {
 	file          *pe.File
-	reader        io.ReaderAt
 	exportSymbols pe.DataDirectory
 	exports       []byte
 	t             exportTypesPE
@@ -92,14 +91,24 @@ const nativeImageMissingExportedDataDirectoryError = "exported data directory is
 // so this leaves a ~4x margin over anything real; truncating a genuine SBOM silently drops packages,
 // so some margin is deliberate.
 //
-// The ceiling is nowhere near free, which is why it is not larger. The decoder buffers the whole
-// stream before it can even tell whether the payload is CycloneDX, then unmarshals it into a
-// cyclonedx.BOM graph, then converts that into a second graph of pkg.Package values. Measured on the
-// 20k-component fixture, decoding costs ~48x the JSON size in cumulative allocation and ~6x in
-// retained heap, so this bound is worth a few hundred MB of churn per file, and catalogers run
-// concurrently. This mirrors maxDirectorySectionSize in syft/pkg/cataloger/internal/dotnet/pe and
-// maxDeclaredSectionSize in syft/internal/elfutil.
+// The ceiling is nowhere near free, which is why it is not larger. The decoded bytes are unmarshalled
+// into a cyclonedx.BOM graph and then converted into a second graph of pkg.Package values, so the real
+// cost is several times the decompressed size, and catalogers run concurrently. Same role as
+// maxDirectorySectionSize in syft/pkg/cataloger/internal/dotnet/pe and maxDeclaredSectionSize in
+// syft/internal/elfutil, set tighter because a native-image SBOM is much smaller than an arbitrary
+// PE data directory or ELF section.
 const nativeImageMaxDecompressedSbomSize = 16 * intFile.MB
+
+// nativeImageMaxExportDirectorySize bounds the bytes the export data directory may declare.
+//
+// A real export directory is metadata: the symbol count, the name and address tables, and the symbol
+// names themselves, which for a native image runs to a few KB. Clamping to the bytes remaining in the
+// file is not on its own enough, because a mostly empty file compresses to almost nothing in a layer,
+// so an attacker can hand us a small artifact that still authorizes reading a multi-gigabyte file into
+// memory only to discard it. Same role as maxDirectorySectionSize in
+// syft/pkg/cataloger/internal/dotnet/pe, set tighter because an export directory is smaller than an
+// arbitrary PE data directory. Unrelated to the SBOM ceiling above, which happens to share this value.
+const nativeImageMaxExportDirectorySize = 16 * intFile.MB
 
 // NewNativeImageCataloger returns a new Native Image cataloger object.
 func NewNativeImageCataloger() pkg.Cataloger {
@@ -134,20 +143,20 @@ func decompressSbom(dataBuf []byte, sbomStart, lengthStart uint64) ([]pkg.Packag
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
 	}
+	defer gzreader.Close()
 
-	// sbomCompressed is bounded by the file, but the decompressed stream is not, so bound it too. The
-	// decoder buffers everything it is handed before it can even tell whether the payload is CycloneDX,
-	// so a payload that is not an SBOM at all still costs whatever we allow here. The extra byte is what
-	// distinguishes a stream sitting exactly on the limit (legal) from one that runs past it.
-	limited := &io.LimitedReader{R: gzreader, N: nativeImageMaxDecompressedSbomSize + 1}
-
-	sbom, _, _, err := cyclonedxjson.NewFormatDecoder().Decode(limited)
-	// N reaching 0 is only a reliable signal because the decoder drains the whole stream through
-	// stream.SeekableReader before it parses anything; checked before err, since hitting the bound
-	// surfaces as an unhelpful "not a cyclonedx json document" rather than as anything about size
-	if limited.N == 0 {
+	// sbomCompressed is bounded by the file, but the decompressed stream is not, so bound it too. Read one
+	// byte past the ceiling: that is what distinguishes a stream sitting exactly on the limit (legal) from
+	// one that runs past it, and it lets an oversized payload be rejected before the decoder is invoked.
+	raw, err := io.ReadAll(io.LimitReader(gzreader, nativeImageMaxDecompressedSbomSize+1))
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not decompress the java native-image SBOM: %w", err)
+	}
+	if len(raw) > nativeImageMaxDecompressedSbomSize {
 		return nil, nil, fmt.Errorf("the java native-image SBOM decompresses past %d bytes", nativeImageMaxDecompressedSbomSize)
 	}
+
+	sbom, _, _, err := cyclonedxjson.NewFormatDecoder().Decode(bytes.NewReader(raw))
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not unmarshal the java native-image SBOM: %w", err)
 	}
@@ -161,7 +170,7 @@ func decompressSbom(dataBuf []byte, sbomStart, lengthStart uint64) ([]pkg.Packag
 // symbolOffset converts an SBOM symbol address into an offset within the section data that should hold
 // it. The address comes from the binary, and the subtraction is unsigned, so an address below the
 // section base underflows into a huge offset instead of a negative one. Takes one address rather than
-// both, so that two same-typed arguments cannot be transposed at a call site.
+// both, so a call site converts one symbol at a time; the two parameters are still order-sensitive.
 func symbolOffset(addr, sectionBase uint64) (uint64, error) {
 	if addr < sectionBase {
 		return 0, errors.New("an SBOM symbol precedes the section that should contain it")
@@ -222,16 +231,6 @@ func newMachO(filename string, r io.ReaderAt) (nativeImage, error) {
 	}, nil
 }
 
-// maxExportDirectorySize bounds the bytes the export data directory may declare.
-//
-// A real export directory is metadata: the symbol count, the name and address tables, and the symbol
-// names themselves, which for a native image runs to a few KB. Clamping to the bytes remaining in the
-// file is not on its own enough, because a mostly empty file compresses to almost nothing in a layer,
-// so an attacker can hand us a small artifact that still authorizes reading a multi-gigabyte file into
-// memory only to discard it. This mirrors maxDirectorySectionSize in
-// syft/pkg/cataloger/internal/dotnet/pe.
-const maxExportDirectorySize = 16 * intFile.MB
-
 // readExportDirectory reads the export data directory, weighing the size the file declares against
 // both an absolute cap and the bytes really present before it allocates anything.
 //
@@ -239,8 +238,8 @@ const maxExportDirectorySize = 16 * intFile.MB
 // through the section table. That is long-standing behavior this function preserves rather than fixes;
 // see rvaToFileOffset in syft/pkg/cataloger/internal/dotnet/pe for what a translation looks like.
 func readExportDirectory(r io.ReaderAt, dir pe.DataDirectory) ([]byte, error) {
-	if dir.Size > maxExportDirectorySize {
-		return nil, fmt.Errorf("export directory declares %d bytes, over the %d byte limit", dir.Size, maxExportDirectorySize)
+	if dir.Size > nativeImageMaxExportDirectorySize {
+		return nil, fmt.Errorf("export directory declares %d bytes, over the %d byte limit", dir.Size, nativeImageMaxExportDirectorySize)
 	}
 
 	// the length has to come from something the reader can back up rather than from what the file
@@ -250,16 +249,17 @@ func readExportDirectory(r io.ReaderAt, dir pe.DataDirectory) ([]byte, error) {
 		return nil, errors.New("unable to measure the binary")
 	}
 	if remaining := end - int64(dir.VirtualAddress); remaining < int64(dir.Size) {
-		return nil, fmt.Errorf("export directory declares %d bytes at offset %d but only %d remain",
+		return nil, fmt.Errorf("export directory declares %d bytes at RVA %d but only %d remain",
 			dir.Size, dir.VirtualAddress, max(remaining, 0))
 	}
 
-	// one exact allocation: an append-growing read holds both arrays at its final growth
+	// one exact allocation. the count decides, not the error: io.ReaderAt permits reporting a full read
+	// alongside io.EOF, and syft has seen readers return a short one with no error at all (see the squashfs
+	// adapter in syft/internal/unionreader). io.ReadFull would also cover both, but it spins forever on a
+	// reader that keeps answering (0, nil), which is the same hostile input this function exists to reject
 	exports := make([]byte, dir.Size)
-	// ReadAt may report a full read as io.EOF when it lands on the end of the file, so the count is what
-	// says whether the whole directory was there
-	if n, err := r.ReadAt(exports, int64(dir.VirtualAddress)); err != nil && n < len(exports) {
-		return nil, fmt.Errorf("could not read the exported symbols data directory: %w", err)
+	if n, err := r.ReadAt(exports, int64(dir.VirtualAddress)); n < len(exports) {
+		return nil, fmt.Errorf("could not read the exported symbols data directory: read %d of %d bytes (%v)", n, len(exports), err)
 	}
 	return exports, nil
 }
@@ -298,7 +298,6 @@ func newPE(filename string, r io.ReaderAt) (nativeImage, error) {
 	}
 	return nativeImagePE{
 		file:          bi,
-		reader:        r,
 		exportSymbols: exportSymbolsDataDirectory,
 		exports:       exports,
 		t: exportTypesPE{
@@ -453,14 +452,15 @@ func (ni nativeImageMachO) fetchPkgs() (pkgs []pkg.Package, relationships []arti
 // fetchExportAttribute obtains an attribute from the exported symbols directory entry.
 func (ni nativeImagePE) fetchExportAttribute(i int) (uint32, error) {
 	n := len(ni.exports)
+	sz := int(unsafe.Sizeof(ni.t.headerAttribute))
 	// i is only ever 0-3, so this arithmetic cannot overflow; the bound is > rather than >= because an
 	// attribute ending flush with the directory is still entirely present
-	j := int(unsafe.Sizeof(ni.header)) + i*int(unsafe.Sizeof(ni.t.headerAttribute))
-	if j+4 > n {
+	j := int(unsafe.Sizeof(ni.header)) + i*sz
+	if j+sz > n {
 		log.Tracef("invalid index to export directory entry attribute: %v", j)
 		return uint32(0), errors.New(nativeImageInvalidIndexError)
 	}
-	return binary.LittleEndian.Uint32(ni.exports[j : j+4]), nil
+	return binary.LittleEndian.Uint32(ni.exports[j : j+sz]), nil
 }
 
 // fetchExportFunctionPointer obtains a function pointer from the exported symbols directory entry.
@@ -619,8 +619,8 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 		for _, makeNativeImage := range imageFormats {
 			ni, err := makeNativeImage(filename, r)
 			if err != nil {
-				// this covers both "not this format" and a real rejection of a file that is one, and the
-				// latter drops every package the binary carries, so it cannot go unrecorded
+				// this covers both "not this format" and a real rejection of a file that is one; the latter
+				// drops every package the binary carries, which is only visible at trace level today
 				log.WithFields("file", filename, "error", err).Trace("unable to read possible java native-image")
 				continue
 			}
@@ -638,8 +638,9 @@ func fetchPkgs(reader unionreader.UnionReader, location file.Location) ([]pkg.Pa
 				pkgs = append(pkgs, newPkgs...)
 				relationships = append(relationships, newRelationships...)
 			}
-			// this reader parsed as this format, so no later format applies to it; without stopping, a
-			// file that parses as more than one contributes its packages once per format
+			// this reader parsed as this format, so no later format applies to it. nothing parses as two of
+			// these today; stopping makes that explicit rather than relying on it. note this also means a
+			// format that parses but whose fetchPkgs fails is not retried as another format
 			break
 		}
 	}

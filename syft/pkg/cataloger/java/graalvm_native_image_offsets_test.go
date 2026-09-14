@@ -102,7 +102,7 @@ func TestFetchPkgs(t *testing.T) {
 		fixture string
 	}{
 		{
-			name:    "real ELF that is not a native image",
+			name:    "real native image without SBOM symbols",
 			fixture: "testdata/java-builds/packages/example-java-app",
 		},
 		{
@@ -123,6 +123,16 @@ func TestFetchPkgs(t *testing.T) {
 			})
 		})
 	}
+}
+
+// TestNewMachO_TruncatedFileIsARealFailure covers the branch where macho.NewFile fails with something
+// other than *macho.FormatError. Garbage bytes take the FormatError branch above and return (nil, nil);
+// a valid magic with nothing behind it does not, and silently dropping it would lose every package the
+// binary carries with no error and no log.
+func TestNewMachO_TruncatedFileIsARealFailure(t *testing.T) {
+	// a valid Mach-O magic with nothing behind it yields io.ErrUnexpectedEOF, not a *macho.FormatError
+	_, err := newMachO("truncated", bytes.NewReader([]byte{0xcf, 0xfa, 0xed, 0xfe}))
+	require.ErrorContains(t, err, "unable to read executable")
 }
 
 func TestFetchPkgs_GarbageBytesYieldsNothing(t *testing.T) {
