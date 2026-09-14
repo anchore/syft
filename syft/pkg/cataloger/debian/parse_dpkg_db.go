@@ -144,8 +144,8 @@ func (d *dpkgExtractedMetadata) toDpkgEntry() pkg.DpkgDBEntry {
 		var err error
 		entry.Files, err = parseDpkgConffileInfo(strings.NewReader(d.Conffiles))
 		if err != nil {
-			// toDpkgEntry has no error return, a warning is all that's available here
-			log.Warnf("dpkg status conffiles field for package %q: %v", d.Package, err)
+			// toDpkgEntry has no error return, a log line is all that's available here
+			log.Debugf("dpkg status conffiles field for package %q: %v", d.Package, err)
 		}
 	}
 

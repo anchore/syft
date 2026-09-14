@@ -16,7 +16,6 @@ import (
 
 	"github.com/anchore/syft/internal"
 	intFile "github.com/anchore/syft/internal/file"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -63,10 +62,7 @@ func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environmen
 				return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to process control.tar.* file: %w", err))
 			case err != nil:
 				// metadata came back usable but incomplete (a clipped file listing); keep the package and
-				// record why it is partial. The unknown above is removed from the SBOM by default once a
-				// package is reported at these coordinates, so warn too since that's the channel a user
-				// actually sees
-				log.Warnf("deb archive %q: partial control.tar.* file: %v", reader.RealPath, err)
+				// record why it is partial
 				unknownErr = unknown.Append(unknownErr, reader.Location, fmt.Errorf("partial control.tar.* file: %w", err))
 			}
 		case !sawData && strings.HasPrefix(header.Name, "data.tar"):
