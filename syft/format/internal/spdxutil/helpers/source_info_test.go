@@ -217,6 +217,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.HadronPkg,
+			},
+			expected: []string{
+				"from Hadron components.json file",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.HackagePkg,
 			},
 			expected: []string{
