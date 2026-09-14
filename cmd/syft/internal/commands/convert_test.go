@@ -314,6 +314,25 @@ func Test_RunConvert_passthroughExactFormat(t *testing.T) {
 		assert.Equal(t, syftContent, got)
 	})
 
+	t.Run("writing over a redirected STDIN input leaves it intact", func(t *testing.T) {
+		input := writeInput(t, syftContent)
+
+		stdin, err := os.Open(input)
+		require.NoError(t, err)
+		defer stdin.Close()
+
+		originalStdin := os.Stdin
+		os.Stdin = stdin
+		t.Cleanup(func() { os.Stdin = originalStdin })
+
+		opts := newOpts(true, "syft-json="+input)
+		require.NoError(t, RunConvert(context.Background(), opts, "-"))
+
+		got, err := os.ReadFile(input)
+		require.NoError(t, err)
+		assert.Equal(t, syftContent, got)
+	})
+
 	t.Run("an invalid output fails before anything is written", func(t *testing.T) {
 		syftOut := filepath.Join(t.TempDir(), "out.syft.json")
 
@@ -417,7 +436,7 @@ func Test_writeUnchanged_stdout(t *testing.T) {
 	})
 
 	content := []byte(`{"some":"document"}`)
-	require.NoError(t, writeUnchanged("syft-json", "", "", bytes.NewReader(content)))
+	require.NoError(t, writeUnchanged("syft-json", "", nil, bytes.NewReader(content)))
 
 	select {
 	case e := <-subscription.Events():

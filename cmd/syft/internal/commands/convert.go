@@ -85,7 +85,7 @@ func RunConvert(ctx context.Context, opts *ConvertOptions, userInput string) err
 		}()
 	}
 
-	reader, inputPath, err := openConvertInput(userInput, td)
+	reader, inputInfo, err := openConvertInput(userInput, td)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func RunConvert(ctx context.Context, opts *ConvertOptions, userInput string) err
 	}
 
 	for _, output := range unchanged {
-		if err := writeUnchanged(output, opts.LegacyFile, inputPath, reader); err != nil {
+		if err := writeUnchanged(output, opts.LegacyFile, inputInfo, reader); err != nil {
 			return err
 		}
 	}
@@ -147,45 +147,49 @@ func RunConvert(ctx context.Context, opts *ConvertOptions, userInput string) err
 }
 
 // openConvertInput opens the SBOM document at the given path, or STDIN when "-". The returned reader is seekable so
-// the document can be identified, copied, and decoded in turn without being loaded into memory. The returned path
-// is empty when reading from STDIN.
-func openConvertInput(userInput string, td *tmpdir.TempDir) (io.ReadSeekCloser, string, error) {
+// the document can be identified, copied, and decoded in turn without being loaded into memory. The returned
+// os.FileInfo describes the file the document is being read from, so that writing back over it can be recognized;
+// it is nil when the input is not a file (a pipe or a terminal on STDIN).
+func openConvertInput(userInput string, td *tmpdir.TempDir) (io.ReadSeekCloser, os.FileInfo, error) {
 	if userInput == "-" {
-		reader, err := openStdin(td)
-		if err != nil {
-			return nil, "", err
-		}
-		return reader, "", nil
+		return openStdin(td)
 	}
 
 	f, err := os.Open(userInput)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to open SBOM file: %w", err)
+		return nil, nil, fmt.Errorf("failed to open SBOM file: %w", err)
 	}
-	return f, userInput, nil
+
+	info, err := f.Stat()
+	if err != nil {
+		// the document is readable, we just cannot recognize it as an output destination
+		log.WithFields("error", err, "path", userInput).Debug("unable to stat SBOM file")
+	}
+	return f, info, nil
 }
 
 // openStdin returns a seekable view of STDIN. When STDIN is a regular file (such as a shell redirect) it is read in
 // place. A pipe or terminal cannot seek (you will get errors such as "seek /dev/stdin: illegal seek"), so its
 // contents are drained into a spill buffer: a small head stays in memory and everything beyond it goes to a temp
 // file under td, so an arbitrarily large piped SBOM never has to be held in memory to be made seekable.
-func openStdin(td *tmpdir.TempDir) (io.ReadSeekCloser, error) {
+func openStdin(td *tmpdir.TempDir) (io.ReadSeekCloser, os.FileInfo, error) {
 	if info, err := os.Stdin.Stat(); err == nil && info.Mode().IsRegular() {
 		if start, err := os.Stdin.Seek(0, io.SeekCurrent); err == nil {
-			return readSeekNopCloser{io.NewSectionReader(os.Stdin, start, info.Size()-start)}, nil
+			// a redirect reads the file in place, so it is just as much an input file as a path argument is
+			return readSeekNopCloser{io.NewSectionReader(os.Stdin, start, info.Size()-start)}, info, nil
 		}
 	}
 
 	buf := spillbuf.New(td)
 	if _, err := io.Copy(io.NewOffsetWriter(buf, 0), os.Stdin); err != nil {
 		_ = buf.Close()
-		return nil, fmt.Errorf("failed to read SBOM from STDIN: %w", err)
+		return nil, nil, fmt.Errorf("failed to read SBOM from STDIN: %w", err)
 	}
 
 	return &spilledReader{
 		SectionReader: io.NewSectionReader(buf, 0, buf.Size()),
 		buf:           buf,
-	}, nil
+	}, nil, nil
 }
 
 type readSeekNopCloser struct {
@@ -249,7 +253,7 @@ func partitionOutputsBySourceFormat(output options.Output, reader io.ReadSeeker)
 // writeUnchanged copies the SBOM document as-is to the destination described by the given "<format>[=<path>]"
 // output value, falling back to the (deprecated) --file path, and finally to the report bus (STDOUT). When the
 // destination is the input file itself there is nothing to do.
-func writeUnchanged(output string, defaultFile string, inputPath string, reader io.ReadSeeker) error {
+func writeUnchanged(output string, defaultFile string, inputInfo os.FileInfo, reader io.ReadSeeker) error {
 	if _, err := reader.Seek(0, io.SeekStart); err != nil {
 		return fmt.Errorf("unable to seek to start of SBOM: %w", err)
 	}
@@ -275,7 +279,7 @@ func writeUnchanged(output string, defaultFile string, inputPath string, reader 
 		expandedPath = path
 	}
 
-	if inputPath != "" && isSameFile(inputPath, expandedPath) {
+	if isSameFile(inputInfo, expandedPath) {
 		log.WithFields("path", expandedPath).Info("output is the input file, leaving it as-is")
 		return nil
 	}
@@ -297,14 +301,15 @@ func writeUnchanged(output string, defaultFile string, inputPath string, reader 
 	return f.Close()
 }
 
-func isSameFile(a, b string) bool {
-	aInfo, err := os.Stat(a)
+// isSameFile reports whether the given path names the file the input is being read from. Comparing the input's
+// os.FileInfo rather than its path covers a shell redirect onto STDIN, which has no path to compare.
+func isSameFile(inputInfo os.FileInfo, path string) bool {
+	if inputInfo == nil {
+		return false
+	}
+	pathInfo, err := os.Stat(path)
 	if err != nil {
 		return false
 	}
-	bInfo, err := os.Stat(b)
-	if err != nil {
-		return false
-	}
-	return os.SameFile(aInfo, bInfo)
+	return os.SameFile(inputInfo, pathInfo)
 }
