@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -158,6 +159,28 @@ func TestDatabaseParser(t *testing.T) {
 
 		})
 	}
+}
+
+func Test_parseAlpmDBEntry_malformedDatabase(t *testing.T) {
+	t.Run("backup line with no tab", func(t *testing.T) {
+		// the database is attacker-controlled and this used to index past the end of the split, which
+		// takes down the whole cataloger rather than the one package
+		entry, err := parseAlpmDBEntry(strings.NewReader("%NAME%\nfoo\n\n%BACKUP%\nnotabhere\n\n"))
+
+		require.NoError(t, err)
+		require.NotNil(t, entry)
+		require.Empty(t, entry.Backup)
+	})
+
+	t.Run("field over the scanner's token cap", func(t *testing.T) {
+		// everything after the oversize field is lost, so the entry has to be reported as unparsed
+		// rather than handed back looking complete
+		db := "%NAME%\nfoo\n\n%DESC%\n" + strings.Repeat("x", 2*intFile.MB) + "\n\n%ARCH%\nx86_64\n\n"
+
+		_, err := parseAlpmDBEntry(strings.NewReader(db))
+
+		require.ErrorIs(t, err, bufio.ErrTooLong)
+	})
 }
 
 func parseTime(stime string) time.Time {

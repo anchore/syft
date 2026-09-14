@@ -218,6 +218,11 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 			var backup []map[string]any
 			for _, f := range strings.Split(value, "\n") {
 				fields := strings.SplitN(f, "\t", 2)
+				// a backup line is "path\tmd5"; the database is attacker-controlled, so a line without
+				// the tab has to be skipped rather than indexed into
+				if len(fields) < 2 {
+					continue
+				}
 				p := fmt.Sprintf("/%s", fields[0])
 				if ok := ignoredFiles[p]; !ok {
 					backup = append(backup, map[string]any{
@@ -241,6 +246,12 @@ func parseDatabase(b *bufio.Scanner) (*parsedData, error) {
 		default:
 			pkgFields[key] = value
 		}
+	}
+
+	// the scanner stops on a field over its 1MB token cap, which without this returns a package
+	// populated up to that field and empty after it, with no error to say so
+	if err := b.Err(); err != nil {
+		return nil, err
 	}
 
 	return parsePkgFiles(pkgFields)
