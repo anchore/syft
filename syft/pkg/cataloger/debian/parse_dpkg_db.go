@@ -141,7 +141,12 @@ func (d *dpkgExtractedMetadata) toDpkgEntry() pkg.DpkgDBEntry {
 
 	// there may be an optional conffiles section that we should persist as files
 	if d.Conffiles != "" {
-		entry.Files = parseDpkgConffileInfo(strings.NewReader(d.Conffiles))
+		var err error
+		entry.Files, err = parseDpkgConffileInfo(strings.NewReader(d.Conffiles))
+		if err != nil {
+			// toDpkgEntry has no error return, a log line is all that's available here
+			log.Debugf("dpkg status conffiles field for package %q: %v", d.Package, err)
+		}
 	}
 
 	if entry.Files == nil {
