@@ -1,10 +1,14 @@
 package arch
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -12,7 +16,23 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
+const bombFixture = "testdata/installed/var/lib/pacman/local/bombpkg-1.0-1/mtree"
+
+// writeBombFixture generates bombpkg's mtree listing: one line over maxMtreeLines, so the cataloger
+// rejects it while walking testdata/installed. Generated rather than committed so the size that
+// makes it a bomb is visible and tracks the constant, instead of sitting in an opaque gzip member.
+func writeBombFixture(t *testing.T) {
+	t.Helper()
+
+	listing := append([]byte("#mtree\n"), bytes.Repeat([]byte("./f\n"), maxMtreeLines+1)...)
+	compressed, err := io.ReadAll(gzipOf(t, listing))
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(bombFixture, compressed, 0o600))
+}
+
 func TestAlpmUnknowns(t *testing.T) {
+	writeBombFixture(t)
+
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/installed").
 		WithCompareOptions(cmpopts.IgnoreFields(pkg.AlpmFileRecord{}, "Time")).
@@ -21,6 +41,8 @@ func TestAlpmUnknowns(t *testing.T) {
 }
 
 func TestAlpmCataloger(t *testing.T) {
+	writeBombFixture(t)
+
 	gmpDbLocation := file.NewLocation("var/lib/pacman/local/gmp-6.2.1-2/desc")
 	treeSitterDbLocation := file.NewLocation("var/lib/pacman/local/tree-sitter-0.22.6-1/desc")
 	emacsDbLocation := file.NewLocation("var/lib/pacman/local/emacs-29.3-3/desc")
