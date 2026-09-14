@@ -834,3 +834,134 @@ func expectedTransientPackageData() expected {
 		},
 	}
 }
+
+func Test_isArchiveMetaPom(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected bool
+	}{
+		{name: "META-INF maven pom", path: "META-INF/maven/com.example/my-lib/pom.xml", expected: true},
+		{name: "nested META-INF maven pom", path: "some/path/META-INF/maven/org.apache/commons/pom.xml", expected: true},
+		{name: "exploded spring boot app", path: "app/BOOT-INF/classes/META-INF/maven/com.example/app/pom.xml", expected: true},
+		{name: "project pom.xml", path: "pom.xml", expected: false},
+		{name: "module pom.xml", path: "submodule/pom.xml", expected: false},
+		{name: "META-INF but not maven", path: "META-INF/pom.xml", expected: false},
+		{name: "substring only, not a directory boundary", path: "X-META-INF/maven/com.example/my-lib/pom.xml", expected: false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, isArchiveMetaPom(file.NewLocation(test.path)))
+		})
+	}
+}
+
+func embeddedPomCatalogerForTest() pkg.Cataloger {
+	return NewPomCataloger(ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   true,
+			IncludeUnindexedArchives: true,
+		},
+	})
+}
+
+func Test_pomCatalogerKeepsEmbeddedArtifactButNotItsDeclaredDependencies(t *testing.T) {
+	// A pom.xml under META-INF/maven/ is the copy maven-archiver embeds into a built
+	// artifact. The artifact itself is real (it is what was unpacked), so it is cataloged;
+	// what it merely declares -- an unresolvable phantom and a test-scoped dependency -- is not.
+	myLibLocation := file.NewLocationSet(file.NewLocation("META-INF/maven/com.example/my-lib/pom.xml"))
+
+	myLib := pkg.Package{
+		Name:      "my-lib",
+		Version:   "1.0.0",
+		PURL:      "pkg:maven/com.example/my-lib@1.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: myLibLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "com.example",
+				ArtifactID: "my-lib",
+				Version:    "1.0.0",
+			},
+		},
+	}
+	finalizePackage(&myLib)
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/meta-inf-archive").
+		Expects([]pkg.Package{myLib}, nil).
+		TestCataloger(t, embeddedPomCatalogerForTest())
+}
+
+func Test_pomCatalogerEmbeddedPomNextToProjectPom(t *testing.T) {
+	// A project pom.xml keeps its dependencies; the embedded pom beside it contributes
+	// only the artifact it describes.
+	projectLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
+	embeddedLocation := file.NewLocationSet(file.NewLocation("META-INF/maven/com.example/embedded-lib/pom.xml"))
+
+	myApp := pkg.Package{
+		Name:      "my-app",
+		Version:   "2.0.0",
+		PURL:      "pkg:maven/org.anchore/my-app@2.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: projectLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "org.anchore",
+				ArtifactID: "my-app",
+				Version:    "2.0.0",
+			},
+		},
+	}
+	finalizePackage(&myApp)
+
+	guava := pkg.Package{
+		Name:      "guava",
+		Version:   "31.1-jre",
+		PURL:      "pkg:maven/com.google.guava/guava@31.1-jre",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: projectLocation,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.google.guava",
+				ArtifactID: "guava",
+			},
+		},
+	}
+	finalizePackage(&guava)
+
+	embeddedLib := pkg.Package{
+		Name:      "embedded-lib",
+		Version:   "3.0.0",
+		PURL:      "pkg:maven/com.example/embedded-lib@3.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: embeddedLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "com.example",
+				ArtifactID: "embedded-lib",
+				Version:    "3.0.0",
+			},
+		},
+	}
+	finalizePackage(&embeddedLib)
+
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/mixed-meta-inf-and-project").
+		Expects(
+			[]pkg.Package{myApp, guava, embeddedLib},
+			[]artifact.Relationship{
+				{From: guava, To: myApp, Type: artifact.DependencyOfRelationship},
+			},
+		).
+		TestCataloger(t, embeddedPomCatalogerForTest())
+}
