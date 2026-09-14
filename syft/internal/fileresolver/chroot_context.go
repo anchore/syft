@@ -123,7 +123,7 @@ func (r *ChrootContext) ChangeDirectory(dir string) error {
 		return fmt.Errorf("could not determine absolute path to CWD: %w", err)
 	}
 
-	if path.IsAbs(r.root) {
+	if filepath.IsAbs(r.root) {
 		cwdRelativeToRoot, err = filepath.Rel(dir, r.root)
 		if err != nil {
 			return fmt.Errorf("could not determine given root path to CWD: %w", err)
