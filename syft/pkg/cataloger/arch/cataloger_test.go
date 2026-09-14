@@ -120,8 +120,7 @@ func TestAlpmCataloger(t *testing.T) {
 		},
 	}
 
-	// bombPkg's mtree listing exceeds maxMtreeLines, so fetchPkgFiles rejects it and the package
-	// emits with an empty file list rather than being dropped.
+	// bombPkg's listing exceeds maxMtreeLines, so it emits with an empty file list, not dropped
 	bombPkg := pkg.Package{
 		Name:      "bombpkg",
 		Version:   "1.0-1",
