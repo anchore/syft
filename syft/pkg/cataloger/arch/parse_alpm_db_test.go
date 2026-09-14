@@ -393,13 +393,19 @@ func Test_parseMtree_sizeCapTakesPrecedenceOverLineCap(t *testing.T) {
 }
 
 func Test_parseMtree_rejectsLineContinuations(t *testing.T) {
-	spec := mtreeSpec(5)
-	// splice in a continuation, the shape go-mtree's own quadratic collapse triggers on
-	spec = bytes.Replace(spec, []byte("size=10 sha256digest="), []byte("size=10 \\\nsha256digest="), 1)
+	// go-mtree's scanner drops a trailing carriage return before testing the line for a backslash
+	// suffix, so both spellings reach its quadratic collapse and both have to be refused. Matching
+	// only the LF spelling leaves the CRLF one costing minutes inside both other bounds.
+	for _, lineEnding := range []string{"\\\n", "\\\r\n"} {
+		t.Run(fmt.Sprintf("%q", lineEnding), func(t *testing.T) {
+			spec := mtreeSpec(5)
+			spec = bytes.Replace(spec, []byte("size=10 sha256digest="), []byte("size=10 "+lineEnding+"sha256digest="), 1)
 
-	_, err := parseMtree(gzipOf(t, spec))
+			_, err := parseMtree(gzipOf(t, spec))
 
-	require.ErrorIs(t, err, errMtreeLineContinued)
+			require.ErrorIs(t, err, errMtreeLineContinued)
+		})
+	}
 }
 
 // scriptedReader replays a fixed sequence of Read results, letting the straddling case be driven
@@ -413,22 +419,56 @@ func (r *scriptedReader) Read(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 	n := copy(p, r.chunks[0])
-	r.chunks = r.chunks[1:]
+	// keep whatever did not fit rather than dropping it, so the helper obeys the io.Reader contract
+	// even when a caller hands it a buffer shorter than a scripted chunk
+	if n < len(r.chunks[0]) {
+		r.chunks[0] = r.chunks[0][n:]
+	} else {
+		r.chunks = r.chunks[1:]
+	}
 	return n, nil
 }
 
 func Test_lineLimitedReader_rejectsStraddlingContinuation(t *testing.T) {
-	// the backslash and the newline it continues arrive in separate Read calls; lineLimitedReader has
-	// to remember the trailing byte of the previous chunk to catch this
-	lr := &lineLimitedReader{reader: &scriptedReader{chunks: []string{"...\\", "\n..."}}, max: 100}
-
-	var err error
-	buf := make([]byte, 16)
-	for err == nil {
-		_, err = lr.Read(buf)
+	// the backslash and the line ending it continues arrive in separate Read calls; lineLimitedReader
+	// has to remember the trailing byte of the previous chunk to catch this. Reachable in production:
+	// the io.LimitedReader truncates the buffer and flate returns short reads at window boundaries.
+	tests := []struct {
+		name   string
+		chunks []string
+	}{
+		{name: "lf", chunks: []string{"...\\", "\n..."}},
+		{name: "crlf", chunks: []string{"...\\", "\r\n..."}},
+		{name: "crlf split at the carriage return", chunks: []string{"...\\\r", "\n..."}},
 	}
 
-	require.ErrorIs(t, err, errMtreeLineContinued)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lr := &lineLimitedReader{reader: &scriptedReader{chunks: tt.chunks}, max: 100}
+
+			var err error
+			buf := make([]byte, 16)
+			for err == nil {
+				_, err = lr.Read(buf)
+			}
+
+			require.ErrorIs(t, err, errMtreeLineContinued)
+		})
+	}
+}
+
+func Test_lineLimitedReader_latchesTheError(t *testing.T) {
+	// a tripped bound must not come back clean on the next read, whatever that chunk holds
+	lr := &lineLimitedReader{reader: &scriptedReader{chunks: []string{"a\\\nb", "clean"}}, max: 100}
+
+	buf := make([]byte, 16)
+	_, first := lr.Read(buf)
+	require.ErrorIs(t, first, errMtreeLineContinued)
+
+	n, second := lr.Read(buf)
+
+	require.ErrorIs(t, second, errMtreeLineContinued)
+	require.Zero(t, n)
 }
 
 func Test_parseMtree_malformedInput(t *testing.T) {

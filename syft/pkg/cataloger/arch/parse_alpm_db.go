@@ -2,7 +2,6 @@ package arch
 
 import (
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"context"
 	"errors"
@@ -319,30 +318,48 @@ var (
 // Continuations are refused rather than counted. go-mtree collapses a line ending in a backslash
 // into the next one with a quadratic string concat, so the cost is lines times bytes and neither
 // bound above can see it: 199k continued lines sitting inside both caps measured 4m34s and 6.1TB of
-// allocation churn, and returned no error. pacman does not emit continuations.
+// allocation churn, and returned no error. The mtree writers pacman uses do not emit continuations.
+//
+// The refusal has to match on what go-mtree sees rather than on the bytes as written. Its scanner
+// splits with bufio.ScanLines, which drops a trailing carriage return before testing the line for a
+// backslash suffix, so a backslash before either line ending is a continuation to it.
+//
+// A tripped bound is latched. bufio.Scanner stops at the first error today, but nothing about this
+// type says the caller has to, and a recomputed-per-chunk refusal would come back clean on the next
+// read.
 type lineLimitedReader struct {
 	reader   io.Reader
 	lines    int
 	max      int
 	lastByte byte
+	err      error
 }
 
 func (l *lineLimitedReader) Read(p []byte) (int, error) {
-	n, err := l.reader.Read(p)
-	chunk := p[:n]
-
-	l.lines += bytes.Count(chunk, []byte{'\n'})
-
-	switch {
-	case l.lines > l.max:
-		return n, fmt.Errorf("%w (max %d)", errTooManyMtreeLines, l.max)
-	// the second case catches a continuation split across two reads
-	case bytes.Contains(chunk, []byte("\\\n")), l.lastByte == '\\' && n > 0 && chunk[0] == '\n':
-		return n, errMtreeLineContinued
+	if l.err != nil {
+		return 0, l.err
 	}
 
-	if n > 0 {
-		l.lastByte = chunk[n-1]
+	n, err := l.reader.Read(p)
+
+	// one pass counts the newlines and catches a backslash before any line ending. prev carries the
+	// previous chunk's last byte, so a sequence split across two reads is still seen.
+	prev := l.lastByte
+	for _, c := range p[:n] {
+		if (c == '\n' || c == '\r') && prev == '\\' {
+			l.err = errMtreeLineContinued
+			return n, l.err
+		}
+		if c == '\n' {
+			l.lines++
+		}
+		prev = c
+	}
+	l.lastByte = prev
+
+	if l.lines > l.max {
+		l.err = fmt.Errorf("%w (max %d)", errTooManyMtreeLines, l.max)
+		return n, l.err
 	}
 
 	return n, err
