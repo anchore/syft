@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // readSeekCloser adapts a *bytes.Reader to the unionreader.UnionReader interface (adds Close).
@@ -122,7 +123,7 @@ func TestExtractDepsJSONFromELFBundle_MalformedFileszDoesNotOverAllocate(t *test
 
 	var content string
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		content, err = ExtractDepsJSONFromELFBundle(r)
 	})
 	require.NoError(t, err)

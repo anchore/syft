@@ -16,6 +16,7 @@ import (
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // pins the bound at the byte where an attribute ends flush with the directory: `j+sz > n` (not `>=`) is
@@ -344,7 +345,7 @@ func TestReadExportDirectory_DoesNotReadThePhantomBytes(t *testing.T) {
 	rec := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, realSize))}
 	dir := pe.DataDirectory{VirtualAddress: 0, Size: nativeImageMaxExportDirectorySize}
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err := readExportDirectory(rec, dir)
 		// a Size exactly at the cap must fall through to the remaining-bytes check, not be capped away;
 		// pins the `>` (not `>=`) in the cap comparison

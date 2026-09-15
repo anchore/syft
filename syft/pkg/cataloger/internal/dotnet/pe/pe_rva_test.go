@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 func TestReadDataFromRVA_BogusSizeDoesNotOverAllocate(t *testing.T) {
@@ -21,7 +22,7 @@ func TestReadDataFromRVA_BogusSizeDoesNotOverAllocate(t *testing.T) {
 	r := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, fileSize))}
 
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err = readDataFromRVA(r, 0x1000, 0xFFFFFFFF, sections)
 	})
 
@@ -73,7 +74,7 @@ func TestReadDataFromRVA_SizePastTheAbsoluteCapIsRejected(t *testing.T) {
 	r := &readSizeRecorder{Reader: bytes.NewReader(make([]byte, size+1))}
 
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err = readDataFromRVA(r, 0x1000, size, sections)
 	})
 

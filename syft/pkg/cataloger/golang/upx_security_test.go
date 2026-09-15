@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // buildUPXLZMAStream encodes data into the compressed-block form decompressLZMA expects: UPX's custom
@@ -602,7 +603,7 @@ func TestDecompressUPX_RefusingATinyClaimIsCheap(t *testing.T) {
 	tiny := padTo(buildUPXFile(t, 1<<30, 1<<30,
 		[][]byte{bytes.Repeat([]byte("A"), 32)}, nil), 128)
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err := unpackIn(t, t.TempDir(), tiny)
 		require.Error(t, err, "a 128 byte file may not claim a gigabyte")
 	})
@@ -629,7 +630,7 @@ func TestDecompressUPX_OutputIsNeverResident(t *testing.T) {
 	require.LessOrEqual(t, len(fixture), inputLen, "the fixture must stay small enough for the ratio to bind")
 
 	var out unpackedContents
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		var err error
 		out, err = unpackIn(t, t.TempDir(), fixture)
 		require.NoError(t, err)
@@ -702,7 +703,7 @@ func TestDecompressUPX_CompressedSizeCannotOutrunTheInput(t *testing.T) {
 	b[8] = 14                                         // b_method = LZMA
 	data := padTo(append(buildUPXHeader(4096, 4096), b...), 128)
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err := unpackIn(t, t.TempDir(), data)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, errUPXImplausibleHeader, "no block was readable, so nothing was packed")
@@ -842,7 +843,7 @@ func TestScanReader_MaliciousUPXRejected(t *testing.T) {
 	// assert on an already-finished test if it ever fired.
 	var build *extendedBuildInfo
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		build, err = scanReader(ctx, file.NewLocation("/malicious"), bytes.NewReader(data), false)
 	})
 	assert.Nil(t, build)
@@ -873,7 +874,7 @@ func TestCopyUnfiltered_WindowIsNotResident(t *testing.T) {
 	const size = 16 * intFile.MB
 	block := bytes.Repeat([]byte{0xE8, cto8, 0x11, 0x22, 0x33, 0x0F}, size/6+1)[:size]
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		require.NoError(t, copyUnfiltered(io.Discard, bytes.NewReader(block), size, cto8))
 	})
 

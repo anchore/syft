@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"io"
 	"math"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -184,21 +183,6 @@ func (r *unbackedSizeReader) ReadAt(p []byte, off int64) (int, error) {
 }
 
 func (r *unbackedSizeReader) Close() error { return nil }
-
-// measureAlloc reports the bytes allocated while fn runs. Only a byte count states "a small file cannot
-// make us reserve a large buffer"; asserting an error comes back would keep passing if the allocation
-// were hoisted above the check.
-func measureAlloc(t *testing.T, fn func()) uint64 {
-	t.Helper()
-
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	fn()
-	runtime.ReadMemStats(&after)
-
-	return after.TotalAlloc - before.TotalAlloc
-}
 
 func TestFindBundleHeaderOffset_ShortReadStillSearchesWhatWasRead(t *testing.T) {
 	data := fileWithSignatureAt(8192, 64, 0x1234)

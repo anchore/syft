@@ -20,6 +20,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // the reconstruction's storage, its Close semantics and the contiguous-prefix rule it reports as Size all
@@ -112,7 +113,7 @@ func TestDecompressUPX_SparsePlacementIsNotAnAllocationKnob(t *testing.T) {
 	require.ErrorIs(t, err, errUPXPartial)
 	require.NotNil(t, out)
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, _ = getBuildInfo(out)
 	})
 
