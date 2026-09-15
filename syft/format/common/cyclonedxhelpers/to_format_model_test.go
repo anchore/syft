@@ -180,7 +180,7 @@ func Test_FileComponents(t *testing.T) {
 				},
 				{
 					BOMRef: "3f31cb2d98be6c1e",
-					Name:   "/test",
+					Name:   "test",
 					Type:   cyclonedx.ComponentTypeFile,
 					Hashes: &[]cyclonedx.Hash{
 						{Algorithm: "SHA-256", Value: "xyz12345"},
@@ -214,7 +214,7 @@ func Test_FileComponents(t *testing.T) {
 			want: []cyclonedx.Component{
 				{
 					BOMRef: "3f31cb2d98be6c1e",
-					Name:   "/test",
+					Name:   "test",
 					Type:   cyclonedx.ComponentTypeFile,
 					Hashes: &[]cyclonedx.Hash{
 						{Algorithm: "SHA-256", Value: "xyz12345"},
@@ -246,7 +246,7 @@ func Test_FileComponents(t *testing.T) {
 			want: []cyclonedx.Component{
 				{
 					BOMRef: "3f31cb2d98be6c1e",
-					Name:   "/test",
+					Name:   "test",
 					Type:   cyclonedx.ComponentTypeFile,
 					Hashes: &[]cyclonedx.Hash{
 						{Algorithm: "SHA-256", Value: "xyz678910"},
@@ -282,7 +282,7 @@ func Test_FileComponents(t *testing.T) {
 			want: []cyclonedx.Component{
 				{
 					BOMRef: "3f31cb2d98be6c1e",
-					Name:   "/test",
+					Name:   "test",
 					Type:   cyclonedx.ComponentTypeFile,
 					Hashes: &[]cyclonedx.Hash{
 						{Algorithm: "SHA-256", Value: "xyz12345"},
@@ -313,6 +313,57 @@ func Test_FileComponents(t *testing.T) {
 			if diff := cmp.Diff(test.want, got); diff != "" {
 				t.Errorf("cdx file components mismatch (-want +got):\n%s", diff)
 			}
+		})
+	}
+}
+
+func TestToFormatModel_FileComponentName_BasePathParity(t *testing.T) {
+	tests := []struct {
+		name         string
+		realPath     string
+		metadataPath string
+		wantName     string
+	}{
+		{
+			name:         "base-relative path strips leading slash (SPDX parity)",
+			realPath:     "/usr/bin/foo",
+			metadataPath: "/absolute/scanner/path/usr/bin/foo",
+			wantName:     "usr/bin/foo",
+		},
+		{
+			name:         "path without leading slash is preserved as-is",
+			realPath:     "relative/path/bar",
+			metadataPath: "/absolute/scanner/path/relative/path/bar",
+			wantName:     "relative/path/bar",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			coordinate := file.Coordinates{RealPath: tt.realPath}
+			s := sbom.SBOM{
+				Artifacts: sbom.Artifacts{
+					Packages: pkg.NewCollection(),
+					FileMetadata: map[file.Coordinates]file.Metadata{
+						coordinate: {Path: tt.metadataPath, Type: stfile.TypeRegular},
+					},
+					FileDigests: map[file.Coordinates][]file.Digest{
+						coordinate: {},
+					},
+				},
+			}
+			result := ToFormatModel(s)
+			require.NotNil(t, result.Components)
+			var fileComp *cyclonedx.Component
+			for i := range *result.Components {
+				c := (*result.Components)[i]
+				if c.Type == cyclonedx.ComponentTypeFile {
+					fileComp = &c
+					break
+				}
+			}
+			require.NotNil(t, fileComp, "expected a file component in CycloneDX output")
+			assert.Equal(t, tt.wantName, fileComp.Name)
 		})
 	}
 }
