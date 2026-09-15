@@ -101,10 +101,6 @@ func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
 // TestMultiPlatformOCIImageSelection_DefaultPlatform verifies that not specifying a platform results
 // in the current platform being selected.
 func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
-	if runtime.GOOS != "linux" {
-		t.Skip("skipping test on non-linux platforms")
-	}
-
 	remoteImage := "docker.io/library/busybox:1.38.0"
 
 	sources := map[string]image.Source{
