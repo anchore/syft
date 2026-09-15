@@ -468,6 +468,85 @@ type expected struct {
 	relationships []artifact.Relationship
 }
 
+func Test_parsePomXMLSkipsInactiveProfiles(t *testing.T) {
+	pomLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
+
+	probeApp := pkg.Package{
+		Name:      "probe-app",
+		Version:   "1.0.0",
+		PURL:      "pkg:maven/com.example/probe-app@1.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProject: &pkg.JavaPomProject{
+				GroupID:    "com.example",
+				ArtifactID: "probe-app",
+				Version:    "1.0.0",
+			},
+		},
+	}
+	finalizePackage(&probeApp)
+
+	guava := pkg.Package{
+		Name:      "guava",
+		Version:   "32.1.2-jre",
+		PURL:      "pkg:maven/com.google.guava/guava@32.1.2-jre",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.google.guava",
+				ArtifactID: "guava",
+			},
+		},
+	}
+	finalizePackage(&guava)
+
+	onModernJdk := pkg.Package{
+		Name:      "on-modern-jdk",
+		Version:   "2.0.0",
+		PURL:      "pkg:maven/com.example/on-modern-jdk@2.0.0",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.example",
+				ArtifactID: "on-modern-jdk",
+			},
+		},
+	}
+	finalizePackage(&onModernJdk)
+
+	expectedPkgs := []pkg.Package{probeApp, guava, onModernJdk}
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: guava,
+			To:   probeApp,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: onModernJdk,
+			To:   probeApp,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	cat := NewPomCataloger(ArchiveCatalogerConfig{
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   true,
+			IncludeUnindexedArchives: true,
+		},
+	})
+
+	pkgtest.TestCataloger(t, "testdata/pom/inactive-profiles", cat, expectedPkgs, expectedRelationships)
+}
+
 func getCommonsTextExpectedPackages(resolved bool) expected {
 	pomXmlLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
 
