@@ -15,8 +15,8 @@ import (
 	"github.com/anchore/clio"
 	"github.com/anchore/syft/cmd/syft/internal/options"
 	"github.com/anchore/syft/internal/bus"
-	"github.com/anchore/syft/internal/capabilities"
 	"github.com/anchore/syft/internal/task"
+
 	"github.com/anchore/syft/syft/cataloging"
 )
 
@@ -305,7 +305,7 @@ func formatToken(token string, selection *task.TokenSelection, included bool, de
 }
 
 func extractTaskInfo(tasks []task.Task) ([]string, map[string][]string) {
-	infos := capabilities.ExtractCatalogerInfo(tasks)
+	infos := task.ExtractCatalogerInfo(tasks)
 
 	tagsByName := make(map[string][]string)
 	var names []string

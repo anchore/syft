@@ -17,7 +17,10 @@ func AllPackageCatalogerInfo() ([]capabilities.CatalogerInfo, error) {
 		return nil, fmt.Errorf("unable to create pkg cataloger tasks: %w", err)
 	}
 
-	infos := capabilities.ExtractCatalogerInfo(allPkgTasks)
+	var infos []capabilities.CatalogerInfo
+	for _, info := range task.ExtractCatalogerInfo(allPkgTasks) {
+		infos = append(infos, capabilities.CatalogerInfo(info))
+	}
 
 	// sort by name for consistency
 	sort.Slice(infos, func(i, j int) bool {
