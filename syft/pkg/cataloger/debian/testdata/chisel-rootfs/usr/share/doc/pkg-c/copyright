@@ -1,0 +1,6 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: pkg-c
+
+Files: *
+Copyright: 2024 Example Maintainers
+License: MIT
