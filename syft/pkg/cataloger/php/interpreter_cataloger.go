@@ -233,7 +233,10 @@ func (p interpreterCataloger) getClassifier(realPath string) (string, *binutils.
 					Vendor:  fmt.Sprintf("php-%s", name),
 					Product: fmt.Sprintf("php-%s", name),
 				},
-				Source: cpe.GeneratedSource,
+				// note: we must use a declared source here so that this CPE is treated as authoritative and no
+				// further CPEs are generated from the (misleading) package name alone, e.g. cpe:...:openssl:openssl
+				// for the openssl PHP extension, which would imply this is the upstream OpenSSL project.
+				Source: cpe.DeclaredSource,
 			},
 		},
 	}
