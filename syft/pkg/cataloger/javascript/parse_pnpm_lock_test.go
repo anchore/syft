@@ -764,6 +764,47 @@ func TestParsePnpmLock_MultiDocument(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
 }
 
+
+// pnpm can record a provisioned Node runtime with a nested "variations" resolution.
+// That used to abort the whole v9 decode (map[string]string cannot hold the sequence),
+// which silently dropped every other package from the SBOM (anchore/syft#5241).
+func TestParsePnpmLock_V9VariationsResolution(t *testing.T) {
+	var expectedRelationships []artifact.Relationship
+	fixture := "testdata/pnpm-v9-variations/pnpm-lock.yaml"
+
+	locationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "is-odd",
+			Version:   "3.0.1",
+			PURL:      "pkg:npm/is-odd@3.0.1",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{Integrity: "sha512-CQpnWPrDwmP1+SMHXZhtLtJv90yiyVfluGsX5iNCVkrhQtU3TQHsUWPG9wkdk9Lgd5yNpAg9jQEo90CBaXgWMA=="},
+				Dependencies: map[string]string{},
+			},
+		},
+		{
+			Name:      "node",
+			Version:   "runtime:26.8.1",
+			PURL:      "pkg:npm/node@runtime%3A26.8.1",
+			Locations: locationSet,
+			Language:  pkg.JavaScript,
+			Type:      pkg.NpmPkg,
+			Metadata: pkg.PnpmLockEntry{
+				Resolution:   pkg.PnpmLockResolution{},
+				Dependencies: map[string]string{},
+			},
+		},
+	}
+
+	adapter := newGenericPnpmLockAdapter(CatalogerConfig{IncludeDevDependencies: true})
+	pkgtest.TestFileParser(t, fixture, adapter.parsePnpmLock, expectedPkgs, expectedRelationships)
+}
+
 // pnpmDoc renders a minimal v9 lockfile document holding a single package.
 func pnpmDoc(version, name, ver, integrity string) string {
 	doc := ""
