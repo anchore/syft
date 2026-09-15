@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/testutils"
+	"github.com/anchore/syft/internal/tmpdir"
 )
 
 func newTestBuffer(t *testing.T, opts ...Option) *Buffer {

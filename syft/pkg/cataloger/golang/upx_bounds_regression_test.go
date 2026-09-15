@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
-	"github.com/anchore/syft/internal/testutils"
 )
 
 // the reconstruction's storage, its Close semantics and the contiguous-prefix rule it reports as Size all

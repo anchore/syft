@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
-	"github.com/anchore/syft/internal/testutils"
 )
 
 // pins the bound at the byte where an attribute ends flush with the directory: `j+sz > n` (not `>=`) is

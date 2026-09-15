@@ -17,10 +17,10 @@ import (
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/spillbuf"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
-	"github.com/anchore/syft/internal/testutils"
 )
 
 // buildUPXLZMAStream encodes data into the compressed-block form decompressLZMA expects: UPX's custom

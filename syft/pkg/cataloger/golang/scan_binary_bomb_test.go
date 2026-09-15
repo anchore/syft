@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/internal/testutils"
+	"github.com/anchore/syft/syft/internal/elfutil"
 )
 
 // Test_getBuildInfo_compressedSectionBomb covers the reason readBuildInfo exists: debug/buildinfo opens

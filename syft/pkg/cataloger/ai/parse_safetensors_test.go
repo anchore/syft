@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -1199,4 +1200,65 @@ func TestDockerAIModelConfigMediaTypes(t *testing.T) {
 			assert.Equal(t, tt.want, supported(tt.mediaType))
 		})
 	}
+}
+
+// TestReadSafeTensorsHeader_capBoundsHeap pins maxSafeTensorsHeaderSize as bytes rather than as an
+// error string. The existing over-cap case omits the body precisely because the guard rejects before
+// allocating, which means it would keep passing if the guard moved after the read. This one delivers
+// the bytes, so moving the check shows up as heap.
+func TestReadSafeTensorsHeader_capBoundsHeap(t *testing.T) {
+	const declared = maxSafeTensorsHeaderSize + 1
+
+	body := bytes.Repeat([]byte{'x'}, declared)
+	file := make([]byte, 8, 8+len(body))
+	binary.LittleEndian.PutUint64(file, uint64(declared))
+	file = append(file, body...)
+
+	// the unguarded shape: honor the declared length without weighing it against a ceiling first.
+	// This is what readSafeTensorsHeader does once the cap is passed, so it is what the cap prevents.
+	unbounded := testutils.MeasureAlloc(t, func() {
+		b, err := io.ReadAll(io.LimitReader(bytes.NewReader(file[8:]), declared))
+		require.NoError(t, err)
+		require.Len(t, b, declared)
+	})
+	require.Greater(t, unbounded, uint64(declared),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		_, err := readSafeTensorsHeader(bytes.NewReader(file))
+		require.ErrorContains(t, err, "exceeds maximum")
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	assert.Less(t, bounded, uint64(8*1024*1024),
+		"the declared-size check has to reject before the body is read, not after")
+}
+
+// TestCopyHeader_boundIsTheCallersLimitedReader pins where the GGUF bound actually lives. copyHeader
+// io.Copy's whatever it is handed, so maxHeaderSize only holds because every caller wraps the reader
+// first. A caller that stops doing that reads the whole file, and nothing in copyHeader would object.
+func TestCopyHeader_boundIsTheCallersLimitedReader(t *testing.T) {
+	const payload = 256 * 1024 * 1024
+
+	file := make([]byte, 24, 24+payload)
+	binary.LittleEndian.PutUint32(file[0:4], ggufMagicNumber)
+	file = append(file, bytes.Repeat([]byte{'x'}, payload)...)
+
+	unbounded := testutils.MeasureAlloc(t, func() {
+		var buf bytes.Buffer
+		require.NoError(t, copyHeader(&buf, bytes.NewReader(file)))
+		require.Equal(t, len(file), buf.Len())
+	})
+	require.Greater(t, unbounded, uint64(payload),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		var buf bytes.Buffer
+		require.NoError(t, copyHeader(&buf, &io.LimitedReader{R: bytes.NewReader(file), N: maxHeaderSize}))
+		require.Equal(t, maxHeaderSize, buf.Len(), "the limit is what decides how much is kept")
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	assert.Less(t, bounded, uint64(4*maxHeaderSize),
+		"a wrapped reader must cap the copy at maxHeaderSize")
 }
