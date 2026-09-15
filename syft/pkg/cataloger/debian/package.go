@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -242,7 +241,7 @@ func fetchMd5Contents(resolver file.Resolver, dbLocation file.Location, m pkg.Dp
 	// and the md5sum information is under /var/lib/dpkg/info/; however, for distroless the installed
 	// package info is across multiple files under /var/lib/dpkg/status.d/ and the md5sums are contained in
 	// the same directory
-	searchPath := filepath.Dir(dbLocation.RealPath)
+	searchPath := path.Dir(dbLocation.RealPath)
 
 	if !strings.HasSuffix(searchPath, "status.d") {
 		searchPath = path.Join(searchPath, "info")
@@ -281,7 +280,7 @@ func fetchConffileContents(resolver file.Resolver, dbLocation file.Location, m p
 		return nil, nil
 	}
 
-	parentPath := filepath.Dir(dbLocation.RealPath)
+	parentPath := path.Dir(dbLocation.RealPath)
 
 	// look for /var/lib/dpkg/info/NAME:ARCH.conffiles
 	name := md5Key(m)
