@@ -349,8 +349,8 @@ func renderCatalogerInfoTable(_ *capabilities.Document, catalogers []capabilitie
 		})),
 		tablewriter.WithConfig(tablewriter.Config{
 			Row: tw.CellConfig{
-				Formatting: tw.CellFormatting{MergeMode: tw.MergeHierarchical},
-				Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+				Merging:   tw.CellMerging{Mode: tw.MergeHierarchical},
+				Alignment: tw.CellAlignment{Global: tw.AlignLeft},
 			},
 		}),
 	)
