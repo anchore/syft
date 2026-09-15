@@ -13,6 +13,7 @@ import (
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
+	syftcrypto "github.com/anchore/syft/syft/crypto"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/format/internal/cyclonedxutil/helpers"
 	"github.com/anchore/syft/syft/linux"
@@ -51,6 +52,7 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 		components[i] = helpers.EncodeComponent(p, s.Source.Supplier, locationSorter)
 	}
 	components = append(components, toOSComponent(s.Artifacts.LinuxDistribution)...)
+	components = append(components, toCertificateComponents(s.Artifacts.Certificates)...)
 
 	artifacts := s.Artifacts
 
@@ -94,6 +96,44 @@ func ToFormatModel(s sbom.SBOM) *cyclonedx.BOM {
 	}
 
 	return cdxBOM
+}
+
+func toCertificateComponents(certificates syftcrypto.Certificates) []cyclonedx.Component {
+	components := make([]cyclonedx.Component, 0, len(certificates))
+	for _, certificate := range certificates {
+		name := certificate.Subject
+		if name == "" {
+			name = certificate.Fingerprint
+		}
+		properties := []cyclonedx.Property{
+			{Name: "syft:certificate:public-key-algorithm", Value: certificate.PublicKeyAlgorithm},
+			{Name: "syft:certificate:public-key-details", Value: certificate.PublicKeyDetails},
+			{Name: "syft:certificate:signature-algorithm", Value: certificate.SignatureAlgorithm},
+			{Name: "syft:certificate:is-ca", Value: fmt.Sprintf("%t", certificate.IsCA)},
+		}
+		for _, usage := range certificate.KeyUsage {
+			properties = append(properties, cyclonedx.Property{Name: "syft:certificate:key-usage", Value: usage})
+		}
+		for _, usage := range certificate.ExtendedKeyUsage {
+			properties = append(properties, cyclonedx.Property{Name: "syft:certificate:extended-key-usage", Value: usage})
+		}
+		for _, location := range certificate.Locations {
+			properties = append(properties, cyclonedx.Property{Name: "syft:location:path", Value: location.RealPath})
+		}
+		components = append(components, cyclonedx.Component{
+			BOMRef: "certificate:sha256:" + certificate.Fingerprint, Type: cyclonedx.ComponentTypeCryptographicAsset,
+			Name: name, Properties: &properties,
+			CryptoProperties: &cyclonedx.CryptoProperties{
+				AssetType: cyclonedx.CryptoAssetTypeCertificate,
+				CertificateProperties: &cyclonedx.CertificateProperties{
+					SerialNumber: certificate.SerialNumber, SubjectName: certificate.Subject, IssuerName: certificate.Issuer,
+					NotValidBefore: certificate.NotBefore.UTC().Format(time.RFC3339), NotValidAfter: certificate.NotAfter.UTC().Format(time.RFC3339),
+					CertificateFormat: certificate.Format,
+				},
+			},
+		})
+	}
+	return components
 }
 
 func getCoordinates(s sbom.SBOM) ([]file.Coordinates, func(a, b file.Location) int) {
