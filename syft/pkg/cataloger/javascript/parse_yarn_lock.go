@@ -67,12 +67,14 @@ type yarnV2PackageEntry struct {
 }
 
 type genericYarnLockAdapter struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver javascriptLicenseResolver
 }
 
 func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	return genericYarnLockAdapter{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newJavascriptLicenseResolver(cfg),
 	}
 }
 
@@ -307,7 +309,7 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
 			continue
 		}
-		packages = append(packages, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies))
+		packages = append(packages, newYarnLockPackage(ctx, a.licenseResolver, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies))
 	}
 
 	pkg.Sort(packages)
