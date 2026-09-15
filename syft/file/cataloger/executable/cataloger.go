@@ -63,7 +63,7 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 		return nil, err
 	}
 
-	prog := catalogingProgress(int64(len(locs)))
+	prog := catalogingProgress(ctx, int64(len(locs)))
 
 	results := make(map[file.Coordinates]file.Executable)
 	errs := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locs), func(loc file.Location) (*file.Executable, error) {
@@ -106,7 +106,7 @@ func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file
 	return processExecutable(loc, uReader)
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "Executables",
@@ -114,7 +114,7 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }
 
 func filterByGlobs(locs []file.Location, globs []string) ([]file.Location, error) {

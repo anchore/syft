@@ -29,7 +29,7 @@ func (r *errReader) Read(p []byte) (int, error) {
 func TestSafeCopy(t *testing.T) {
 	t.Run("clean copy returns nil", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := safeCopy(&buf, strings.NewReader("hello")); err != nil {
+		if err := SafeCopy(&buf, strings.NewReader("hello")); err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if got := buf.String(); got != "hello" {
@@ -38,12 +38,12 @@ func TestSafeCopy(t *testing.T) {
 	})
 
 	t.Run("propagates decompression error", func(t *testing.T) {
-		// #4806: safeCopy used to drop non-EOF errors, so the caller
+		// #4806: SafeCopy used to drop non-EOF errors, so the caller
 		// would persist a partial buffer as a successful extract and
 		// downstream catalogers silently read empty manifests.
 		sentinel := errors.New("flate: corrupt input before offset 42")
 		var buf bytes.Buffer
-		err := safeCopy(&buf, &errReader{data: []byte("partial"), err: sentinel})
+		err := SafeCopy(&buf, &errReader{data: []byte("partial"), err: sentinel})
 		if err == nil {
 			t.Fatalf("expected error to be returned, got nil")
 		}
@@ -56,7 +56,7 @@ func TestSafeCopy(t *testing.T) {
 		// The old code had a dead io.EOF branch that labelled clean
 		// reads as decompression bombs; keep the happy path clean.
 		var buf bytes.Buffer
-		err := safeCopy(&buf, io.LimitReader(strings.NewReader("abc"), 3))
+		err := SafeCopy(&buf, io.LimitReader(strings.NewReader("abc"), 3))
 		if err != nil {
 			t.Fatalf("unexpected error on clean copy: %v", err)
 		}

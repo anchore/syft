@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -21,6 +22,30 @@ type FiletreeResolver struct {
 	Index         filetree.IndexReader
 	SearchContext filetree.Searcher
 	Opener        func(stereoscopeFile.Reference) (io.ReadCloser, error)
+
+	// FileSystemID, when non-empty, is stamped onto the Coordinates of every Location this
+	// resolver returns. For container images this is a layer digest; for an extracted archive
+	// treated as its own standalone filesystem it is the FileSystemID of the archive file's own
+	// filesystem (inherited unchanged down the nesting chain); for a plain root directory scan it
+	// is empty.
+	FileSystemID string
+
+	// ArchivePath, when non-empty, is stamped onto the Coordinates of every Location this resolver
+	// returns. For an archive extracted and indexed as its own standalone filesystem it is the
+	// colon-delimited chain of archive paths from the scan root to that archive (e.g.
+	// "app.war:WEB-INF/lib/dep.jar"); for a plain root directory scan it is empty. This keeps
+	// identically-named files in different archives from colliding in the coordinate-keyed SBOM
+	// tables.
+	ArchivePath string
+}
+
+// newVirtualLocation builds a directory location with a distinct access path, stamped with this
+// resolver's FileSystemID and ArchivePath.
+func (r FiletreeResolver) newVirtualLocation(responsePath, responseAccessPath string, ref stereoscopeFile.Reference) file.Location {
+	loc := file.NewVirtualLocationFromDirectory(responsePath, responseAccessPath, ref)
+	loc.FileSystemID = r.FileSystemID
+	loc.ArchivePath = r.ArchivePath
+	return loc
 }
 
 func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
@@ -91,7 +116,7 @@ func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 
 		if ref.HasReference() {
 			references = append(references,
-				file.NewVirtualLocationFromDirectory(
+				r.newVirtualLocation(
 					r.responsePath(string(ref.RealPath)), // the actual path relative to the resolver root
 					r.responsePath(userStrPath),          // the path used to access this file, relative to the resolver root
 					*ref.Reference,
@@ -135,7 +160,7 @@ func (r FiletreeResolver) FilesByGlob(patterns ...string) ([]file.Location, erro
 				continue
 			}
 
-			loc := file.NewVirtualLocationFromDirectory(
+			loc := r.newVirtualLocation(
 				r.responsePath(string(refVia.RealPath)),    // the actual path relative to the resolver root
 				r.responsePath(string(refVia.RequestPath)), // the path used to access this file, relative to the resolver root
 				*refVia.Reference,
@@ -187,10 +212,24 @@ func (r *FiletreeResolver) AllLocations(ctx context.Context) <-chan file.Locatio
 	go func() {
 		defer close(results)
 		for _, ref := range r.Tree.AllFiles(stereoscopeFile.AllTypes()...) {
+			responsePath := r.responsePath(string(ref.RealPath))
+			if r.FileSystemID != "" && filepath.IsAbs(responsePath) {
+				// ToChrootPath relativizes by trimming the prefix root + "/", which cannot match
+				// the root path itself, so the resolver's own root arrives here still absolute.
+				// For a directory scan that is the path the user asked for and is left alone. For a
+				// filesystem this capability invented - an archive extracted into a directory
+				// created fresh per run - it is a path that must not reach a coordinate: it would
+				// make two scans of identical input produce different output, and it names a
+				// directory that no longer exists by the time the scan finishes. Gated on
+				// FileSystemID so directory and image scans behave exactly as before.
+				continue
+			}
+			loc := file.NewLocationFromDirectory(responsePath, r.FileSystemID, ref)
+			loc.ArchivePath = r.ArchivePath
 			select {
 			case <-ctx.Done():
 				return
-			case results <- file.NewLocationFromDirectory(r.responsePath(string(ref.RealPath)), "", ref):
+			case results <- loc:
 				continue
 			}
 		}
@@ -222,7 +261,7 @@ func (r *FiletreeResolver) FilesByMIMEType(types ...string) ([]file.Location, er
 		if uniqueFileIDs.Contains(*refVia.Reference) {
 			continue
 		}
-		location := file.NewVirtualLocationFromDirectory(
+		location := r.newVirtualLocation(
 			r.responsePath(string(refVia.RealPath)),
 			r.responsePath(string(refVia.RequestPath)),
 			*refVia.Reference,

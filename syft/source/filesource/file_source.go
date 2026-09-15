@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sync"
 
 	"github.com/mholt/archives"
@@ -24,7 +25,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*fileSource)(nil)
+var (
+	_ source.Source       = (*fileSource)(nil)
+	_ source.PathExcluder = (*fileSource)(nil)
+)
 
 type Config struct {
 	Path               string
@@ -170,6 +174,13 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 
 	s.resolver = res
 	return s.resolver, nil
+}
+
+// ExcludedPaths returns a copy of the exclusion patterns this source was configured with, so a
+// consumer indexing content taken from it can honor the same patterns. A copy, because
+// directorysource.GetDirectoryExclusionFunctions rewrites the patterns it is given.
+func (s fileSource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
 }
 
 func (s *fileSource) Close() error {

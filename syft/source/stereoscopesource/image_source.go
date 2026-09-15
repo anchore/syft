@@ -2,6 +2,7 @@ package stereoscopesource
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/distribution/reference"
@@ -15,7 +16,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*stereoscopeImageSource)(nil)
+var (
+	_ source.Source       = (*stereoscopeImageSource)(nil)
+	_ source.PathExcluder = (*stereoscopeImageSource)(nil)
+)
 
 type ImageConfig struct {
 	Reference       string
@@ -120,6 +124,18 @@ func (s stereoscopeImageSource) FileResolver(scope source.Scope) (file.Resolver,
 	}
 
 	return res, nil
+}
+
+// ExcludedPaths returns a copy of the exclusion patterns this source was configured with, so a
+// consumer indexing content taken from it can honor the same patterns.
+//
+// An image filters its own tree after indexing, with NewExcludingDecorator above rather than an
+// index visitor, because the tree is built by stereoscope and not walked here. That is a fact about
+// the image's own filesystem: content taken out of it and indexed separately - an archive extracted
+// to a directory - is a directory index like any other and is filtered like one. So the patterns
+// travel, and the shape of each one still decides whether it reaches inside an archive.
+func (s stereoscopeImageSource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
 }
 
 func (s stereoscopeImageSource) Close() error {
