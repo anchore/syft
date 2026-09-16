@@ -1237,28 +1237,24 @@ func TestReadSafeTensorsHeader_capBoundsHeap(t *testing.T) {
 // TestCopyHeader_boundIsTheCallersLimitedReader pins where the GGUF bound actually lives. copyHeader
 // io.Copy's whatever it is handed, so maxHeaderSize only holds because every caller wraps the reader
 // first. A caller that stops doing that reads the whole file, and nothing in copyHeader would object.
+//
+// Bytes retained is asserted directly rather than through testutils.MeasureAlloc: the destination is a
+// bytes.Buffer, whose doubling growth costs a multiple of what it holds and lands on a different power
+// of two depending on the platform. buf.Len() is the same property without that noise.
 func TestCopyHeader_boundIsTheCallersLimitedReader(t *testing.T) {
-	const payload = 256 * 1024 * 1024
+	const payload = 2*maxHeaderSize + 1
 
 	file := make([]byte, 24, 24+payload)
 	binary.LittleEndian.PutUint32(file[0:4], ggufMagicNumber)
 	file = append(file, bytes.Repeat([]byte{'x'}, payload)...)
 
-	unbounded := testutils.MeasureAlloc(t, func() {
-		var buf bytes.Buffer
-		require.NoError(t, copyHeader(&buf, bytes.NewReader(file)))
-		require.Equal(t, len(file), buf.Len())
-	})
-	require.Greater(t, unbounded, uint64(payload),
-		"fixture did not actually cost more than its own size; it is no longer a bomb")
+	var unbounded bytes.Buffer
+	require.NoError(t, copyHeader(&unbounded, bytes.NewReader(file)))
+	require.Equal(t, len(file), unbounded.Len(),
+		"an unwrapped reader is copied whole; copyHeader applies no limit of its own")
 
-	bounded := testutils.MeasureAlloc(t, func() {
-		var buf bytes.Buffer
-		require.NoError(t, copyHeader(&buf, &io.LimitedReader{R: bytes.NewReader(file), N: maxHeaderSize}))
-		require.Equal(t, maxHeaderSize, buf.Len(), "the limit is what decides how much is kept")
-	})
-
-	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
-	assert.Less(t, bounded, uint64(4*maxHeaderSize),
+	var bounded bytes.Buffer
+	require.NoError(t, copyHeader(&bounded, &io.LimitedReader{R: bytes.NewReader(file), N: maxHeaderSize}))
+	assert.Equal(t, maxHeaderSize, bounded.Len(),
 		"a wrapped reader must cap the copy at maxHeaderSize")
 }
