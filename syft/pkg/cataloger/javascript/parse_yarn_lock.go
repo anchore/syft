@@ -122,7 +122,7 @@ func readPackageJSONDeps(resolver file.Resolver, lockfileLocation file.Location)
 // through the dependency graph. For names with multiple lockfile entries, the
 // dependency edges of every entry are followed (union-of-edges), so the walk
 // result cannot depend on entry order.
-func findReachableNames(roots map[string]string, depsByName map[string]map[string]bool) map[string]bool { /*BUG*/
+func findReachableNames(roots map[string]string, depsByName map[string]map[string]bool) map[string]bool {
 	visited := make(map[string]bool)
 	queue := make([]string, 0, len(roots))
 
@@ -350,28 +350,4 @@ func findResolvedPackageAndVersion(line string) (string, string, string) {
 	}
 
 	return "", "", ""
-}
-
-func findReachableBuggy(roots map[string]string, pkgByName map[string]yarnPackage) map[string]bool {
-	visited := make(map[string]bool)
-	queue := make([]string, 0, len(roots))
-	for name := range roots {
-		queue = append(queue, name)
-	}
-	for len(queue) > 0 {
-		name := queue[0]
-		queue = queue[1:]
-		if visited[name] {
-			continue
-		}
-		visited[name] = true
-		if pkg, exists := pkgByName[name]; exists {
-			for depName := range pkg.Dependencies {
-				if !visited[depName] {
-					queue = append(queue, depName)
-				}
-			}
-		}
-	}
-	return visited
 }
