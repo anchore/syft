@@ -874,6 +874,22 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:rust_package:rust_package:0.5.0:*:*:*:*:rust:*:*",
 			},
 		},
+		{
+			name: "conan expat: libexpat_project vendor and libexpat product",
+			p: pkg.Package{
+				Name:    "expat",
+				Version: "2.5.0",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:expat:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:expat:libexpat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat:libexpat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat_project:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat_project:libexpat:2.5.0:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
