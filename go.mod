@@ -20,7 +20,6 @@ require (
 	github.com/anchore/go-macholibre v0.1.1
 	github.com/anchore/go-rpmdb v0.2.0
 	github.com/anchore/go-sync v0.1.1
-	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
 	github.com/anchore/packageurl-go v0.2.0
 	github.com/anchore/stereoscope v0.3.1
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
@@ -56,6 +55,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-getter v1.8.9
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-version v1.9.0
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/invopop/jsonschema v0.14.0
@@ -209,7 +209,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.24.0 // indirect
 	github.com/hashicorp/aws-sdk-go-base/v2 v2.0.0-beta.74 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-version v1.9.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/henvic/httpretty v0.1.4 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
