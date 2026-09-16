@@ -60,6 +60,8 @@ func TestMultiPlatformOCIImageSelection(t *testing.T) {
 
 					// The raw config of the selected image must match the requested platform...
 					assertConfigPlatform(t, meta.RawConfig, "linux", arch)
+					assert.Equal(t, "linux", meta.OS)
+					assert.Equal(t, arch, meta.Architecture)
 					// ...and it must be the exact per-platform image from the multi-platform index.
 					assert.Equal(t, expectedDigest[arch], meta.ID)
 				})
@@ -125,6 +127,8 @@ func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
 
 			// The raw config of the selected image must match the current platform
 			assertConfigPlatform(t, meta.RawConfig, "linux", runtime.GOARCH)
+			assert.Equal(t, "linux", meta.OS)
+			assert.Equal(t, runtime.GOARCH, meta.Architecture)
 		})
 	}
 }
