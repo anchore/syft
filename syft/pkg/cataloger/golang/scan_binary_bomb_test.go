@@ -7,13 +7,13 @@ import (
 	"debug/elf"
 	"encoding/binary"
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/kastenhq/goversion/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/internal/elfutil"
 )
 
@@ -28,13 +28,13 @@ func Test_getBuildInfo_compressedSectionBomb(t *testing.T) {
 	t.Logf("%d byte fixture declares a %d byte section name table", len(bomb), declared)
 
 	// the unguarded path is the thing being defended against: prove the fixture really is a bomb
-	unguarded := measureAlloc(t, func() {
+	unguarded := testutils.MeasureAlloc(t, func() {
 		_, err := buildinfo.Read(bytes.NewReader(bomb))
 		t.Logf("buildinfo.Read err: %v", err)
 	})
 	assert.Greater(t, unguarded, uint64(declared), "fixture did not actually deliver the declared bytes")
 
-	guarded := measureAlloc(t, func() {
+	guarded := testutils.MeasureAlloc(t, func() {
 		_, err := getBuildInfo(bytes.NewReader(bomb))
 		require.Error(t, err)
 		assert.ErrorIs(t, err, elfutil.ErrDeclaredSizeExceeded)
@@ -53,13 +53,13 @@ func Test_getCryptoInformation_compressedSymtabBomb(t *testing.T) {
 	t.Logf("%d byte fixture declares a %d byte symbol table", len(bomb), declared)
 
 	// the unguarded path is the thing being defended against: prove the fixture really is a bomb
-	unguarded := measureAlloc(t, func() {
+	unguarded := testutils.MeasureAlloc(t, func() {
 		_, err := version.ReadExeFromReader(bytes.NewReader(bomb))
 		t.Logf("goversion err: %v", err)
 	})
 	assert.Greater(t, unguarded, uint64(declared), "fixture did not actually deliver the declared bytes")
 
-	guarded := measureAlloc(t, func() {
+	guarded := testutils.MeasureAlloc(t, func() {
 		_, err := getCryptoInformation(bytes.NewReader(bomb))
 		require.ErrorIs(t, err, elfutil.ErrDeclaredSizeExceeded)
 	})
@@ -147,18 +147,6 @@ func elfWithCompressedSymtab(t *testing.T, declared uint64) []byte {
 	buf.Write([]byte{0})
 
 	return buf.Bytes()
-}
-
-// measureAlloc reports the bytes allocated while fn ran. TotalAlloc is process-wide, so a test using this
-// must not call t.Parallel: another test's allocations would land in the measurement.
-func measureAlloc(t *testing.T, fn func()) uint64 {
-	t.Helper()
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	fn()
-	runtime.ReadMemStats(&after)
-	return after.TotalAlloc - before.TotalAlloc
 }
 
 // elfWithCompressedNameTable builds a minimal ELF64 whose only real section is a SHF_COMPRESSED .shstrtab

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 func Test_extractDepsJSONFromBundle_Versions(t *testing.T) {
@@ -109,7 +110,7 @@ func TestExtractDepsJSONFromBundle_MalformedSectionSizesDoNotOverAllocate(t *tes
 
 	var content string
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		content, err = extractDepsJSONFromBundle(r, sections)
 	})
 	require.NoError(t, err)

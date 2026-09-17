@@ -19,6 +19,7 @@ import (
 	"github.com/anchore/syft/syft/source/stereoscopesource"
 )
 
+//nolint:goconst // fixture data: the repeated names and versions are what the golden files assert against, so they read better spelled out than behind constants
 func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBOM {
 	t.Helper()
 	catalog := pkg.NewCollection()
@@ -95,6 +96,7 @@ func changeToDirectoryWithGoldenFixture(t testing.TB, testImage string) func() {
 	return fn
 }
 
+//nolint:goconst // fixture data: the repeated names and versions are what the golden files assert against, so they read better spelled out than behind constants
 func populateImageCatalog(catalog *pkg.Collection, img *image.Image) {
 	// TODO: this helper function is coupled to the image-simple fixture, which seems like a bad idea
 	_, ref1, _ := img.SquashedTree().File("/somefile-1.txt", filetree.FollowBasenameLinks)

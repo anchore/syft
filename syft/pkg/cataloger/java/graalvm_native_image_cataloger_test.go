@@ -10,13 +10,13 @@ import (
 	"io"
 	"os"
 	"path"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -299,20 +299,6 @@ func buildMinimalPE64(exportRVA, exportSize uint32, totalSize int) []byte {
 	return buf
 }
 
-// measureAlloc reports the bytes allocated while fn runs. TotalAlloc is process-wide, so a test using
-// this must not call t.Parallel.
-func measureAlloc(t *testing.T, fn func()) uint64 {
-	t.Helper()
-
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	fn()
-	runtime.ReadMemStats(&after)
-
-	return after.TotalAlloc - before.TotalAlloc
-}
-
 // readSizeRecorder records the largest single read requested of it. A small allocation is not enough on
 // its own; no single read may exceed the file size either, whatever the headers claim.
 type readSizeRecorder struct {
@@ -342,7 +328,7 @@ func TestNewPE_ExportDirectorySizeIsNotAllocatedUpFront(t *testing.T) {
 	r := &readSizeRecorder{Reader: bytes.NewReader(data)}
 
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err = newPE("oversized-export-dir.exe", r)
 	})
 
@@ -501,7 +487,7 @@ func TestDecompressSbom_RejectsStreamExpandingPastTheLimit(t *testing.T) {
 			binary.LittleEndian.PutUint64(dataBuf[lengthStart:], lengthStart)
 
 			var decompressErr error
-			allocated := measureAlloc(t, func() {
+			allocated := testutils.MeasureAlloc(t, func() {
 				_, _, decompressErr = decompressSbom(dataBuf, 0, lengthStart)
 			})
 			err = decompressErr

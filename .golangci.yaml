@@ -32,6 +32,10 @@ linters:
     funlen:
       lines: 70
       statements: 50
+    goconst:
+      # the default of 3 turns every repeated literal in a lookup table or a test fixture into a finding.
+      # 5 keeps the ones worth hoisting without flagging data that reads better written out.
+      min-occurrences: 5
     gocritic:
       enabled-checks:
         - deferInLoop
@@ -54,6 +58,12 @@ linters:
       - linters:
           - revive
         text: "var-naming: avoid package names that conflict"
+      # cpegenerate is almost entirely lookup tables mapping artifact names to vendors, products, and
+      # maven group ids. The repeated strings are the data itself, so hoisting them to constants would
+      # replace a readable table with indirection for no gain.
+      - linters:
+          - goconst
+        path: syft/pkg/cataloger/internal/cpegenerate/
     paths:
       - third_party$
       - builtin$

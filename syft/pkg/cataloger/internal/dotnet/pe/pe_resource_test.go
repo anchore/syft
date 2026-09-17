@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"runtime"
 	"testing"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 )
 
 const (
@@ -40,21 +40,6 @@ func putResourceDirN(buf []byte, at, n int, offsetToData uint32, isDir bool) {
 // boundWalk returns a walk over data as its resource section, as parseResourceDirectory would.
 func boundWalk(data []byte) *resourceWalk {
 	return newResourceWalk(bytes.NewReader(data), testSectionRVA)
-}
-
-// measureAlloc reports the bytes allocated while fn runs. The property these guards exist for is "a small
-// section cannot make us reserve a large buffer", and only a byte count states that: asserting an error
-// comes back would keep passing if the allocation were hoisted above the check.
-func measureAlloc(t *testing.T, fn func()) uint64 {
-	t.Helper()
-
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	fn()
-	runtime.ReadMemStats(&after)
-
-	return after.TotalAlloc - before.TotalAlloc
 }
 
 func TestParseResourceDataEntry_SizePastSectionIsRejected(t *testing.T) {
@@ -150,7 +135,7 @@ func TestParseResourceDirectory_AliasedEntriesCannotAmplifyWork(t *testing.T) {
 
 	var err error
 	var timedOut bool
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		done := make(chan error, 1)
 		go func() { done <- parseResourceDirectoryAt(testSectionRVA, w) }()
 		select {
@@ -360,7 +345,7 @@ func TestParseResourceDirectory_NestedOffsetsCannotUnderflow(t *testing.T) {
 	w := boundWalk(buf)
 
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		err = parseResourceDirectoryAt(testSectionRVA, w)
 	})
 
@@ -441,7 +426,7 @@ func TestProcessResourceEntry_HostileNameLengthIsRejected(t *testing.T) {
 
 			w := boundWalk(buf)
 
-			allocated := measureAlloc(t, func() {
+			allocated := testutils.MeasureAlloc(t, func() {
 				_ = processResourceEntry(entry, w)
 			})
 

@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
@@ -112,7 +113,7 @@ func TestDecompressUPX_SparsePlacementIsNotAnAllocationKnob(t *testing.T) {
 	require.ErrorIs(t, err, errUPXPartial)
 	require.NotNil(t, out)
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, _ = getBuildInfo(out)
 	})
 

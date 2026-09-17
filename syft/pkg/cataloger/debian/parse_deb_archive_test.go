@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -365,4 +367,50 @@ func Test_processDataTar_capsCopyrightFiles(t *testing.T) {
 	_, err := processDataTar(io.NopCloser(bytes.NewReader(tarBuf.Bytes())))
 
 	require.Error(t, err)
+}
+
+// Test_decompressionStream_failsEarlyInsteadOfBuffering pins that the bound is spent on read rather
+// than after the fact. The existing bounds test uses a payload small enough that buffering the whole
+// thing would pass anyway; this one is large enough that the difference shows up as bytes.
+func Test_decompressionStream_failsEarlyInsteadOfBuffering(t *testing.T) {
+	const expanded = 512 * intFile.MB
+
+	// a few KB of input expanding to 512MB, so heap is what separates a streaming bound from a
+	// bound checked after the read completes
+	var gz bytes.Buffer
+	gw := gzip.NewWriter(&gz)
+	chunk := make([]byte, 32*1024)
+	for remaining := int64(expanded); remaining > 0; {
+		n, err := gw.Write(chunk[:min(remaining, int64(len(chunk)))])
+		require.NoError(t, err)
+		remaining -= int64(n)
+	}
+	require.NoError(t, gw.Close())
+	require.Less(t, gz.Len(), 1024*1024, "compressed payload should be tiny relative to what it expands to")
+
+	// both arms use io.ReadAll on purpose. The stream itself never holds much whatever the cap says,
+	// so copying to io.Discard measures nothing; what the cap actually protects is a consumer that
+	// buffers, and the real one (a tar reader building entries) does.
+	unbounded := testutils.MeasureAlloc(t, func() {
+		rc, err := decompressionStream(context.Background(), bytes.NewReader(gz.Bytes()), "control.tar.gz", expanded*2)
+		require.NoError(t, err)
+		defer rc.Close()
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.Len(t, b, expanded)
+	})
+	require.Greater(t, unbounded, uint64(expanded),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		rc, err := decompressionStream(context.Background(), bytes.NewReader(gz.Bytes()), "control.tar.gz", 64*1024)
+		require.NoError(t, err)
+		defer rc.Close()
+		_, err = io.ReadAll(rc)
+		require.ErrorIs(t, err, errDecompressedTooLarge)
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	assert.Less(t, bounded, uint64(8*intFile.MB),
+		"a bounded stream must stop at the cap, not buffer the whole member and check afterwards")
 }

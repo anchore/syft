@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
@@ -309,4 +310,48 @@ func TestParseKernelChangelog(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestParseKernelChangelog_gzipBombStaysBounded pins a bound nothing in this file states out loud.
+// parseKernelChangelog reads the decompressed changelog through a bufio.Scanner, and Scanner refuses a
+// token past MaxScanTokenSize, so a gzip member expanding to gigabytes costs 64KB. That is the only
+// thing holding this path, and it is incidental: switching to io.ReadAll or a bufio.Reader to pick up
+// long lines would remove it silently, which is what this test is here to catch.
+func TestParseKernelChangelog_gzipBombStaysBounded(t *testing.T) {
+	const expanded = 512 * 1024 * 1024
+
+	// one enormous line with no newline, the worst case for a line scanner
+	var gz bytes.Buffer
+	gw := gzip.NewWriter(&gz)
+	chunk := bytes.Repeat([]byte{'a'}, 32*1024)
+	for remaining := expanded; remaining > 0; {
+		n, err := gw.Write(chunk[:min(remaining, len(chunk))])
+		require.NoError(t, err)
+		remaining -= n
+	}
+	require.NoError(t, gw.Close())
+	require.Less(t, gz.Len(), 1024*1024, "compressed payload should be tiny relative to what it expands to")
+
+	// prove the fixture is a bomb: the same stream read without a line bound costs its full size
+	unbounded := testutils.MeasureAlloc(t, func() {
+		zr, err := gzip.NewReader(bytes.NewReader(gz.Bytes()))
+		require.NoError(t, err)
+		defer zr.Close()
+		b, err := io.ReadAll(zr)
+		require.NoError(t, err)
+		require.Len(t, b, expanded)
+	})
+	require.Greater(t, unbounded, uint64(expanded),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		_, _, err := parseKernelChangelog(context.Background(), nil, nil,
+			file.NewLocationReadCloser(file.NewLocation("/changelog.gz"), io.NopCloser(bytes.NewReader(gz.Bytes()))))
+		// the scanner refuses the oversized line, so this fails rather than parsing a version out of it
+		require.Error(t, err)
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	assert.Less(t, bounded, uint64(8*1024*1024),
+		"the changelog scan must stay bounded by the line limit, not by what the member expands to")
 }

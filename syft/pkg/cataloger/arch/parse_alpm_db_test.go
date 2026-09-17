@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -483,4 +485,80 @@ func Test_parseMtree_malformedInput(t *testing.T) {
 
 		require.ErrorContains(t, err, "token too long")
 	})
+}
+
+// Test_parseMtree_lineCapBoundsHeap pins the measurement that maxMtreeLines exists for. The byte cap
+// alone does not bound this path: go-mtree keeps an entry per line, so a listing well inside 64MB of
+// bytes still costs multiples of its own size in heap. Asserting the error would keep passing if the
+// line cap were removed, because the byte cap would still reject a large enough input eventually.
+func Test_parseMtree_lineCapBoundsHeap(t *testing.T) {
+	// newline-only lines are the worst case: minimum bytes per entry, so the most entries per byte
+	const payloadSize = 16 * intFile.MB
+	spec := bytes.Repeat([]byte{'\n'}, payloadSize)
+
+	// well inside the byte cap, so only the line cap can stop this
+	require.Less(t, int64(payloadSize), int64(maxMtreeSize))
+
+	unbounded := testutils.MeasureAlloc(t, func() {
+		// the same listing with the line cap lifted, to prove the fixture is really a bomb
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, payloadSize+1)
+		t.Logf("unbounded parse err: %v", err)
+	})
+	require.Greater(t, unbounded, uint64(payloadSize),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, maxMtreeLines)
+		require.ErrorIs(t, err, errTooManyMtreeLines)
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+
+	// measured at ~238MB against ~16.5GB uncapped, so the cap is doing its job, but note what it
+	// actually buys: 300k entries still cost a few hundred MB, and that is per concurrent cataloger.
+	// The budget is set to catch the cap being removed or raised by an order of magnitude, not to pin
+	// the exact figure.
+	assert.Less(t, bounded, uint64(512*intFile.MB),
+		"the line cap has to stop the parse before it builds an entry per line")
+}
+
+// Test_parseMtree_sizeCapBoundsHeap is the byte-cap counterpart to the line-cap budget above.
+// Test_parseMtree_boundsDecompressedSize already covers the cap behaviorally, but with a spec small
+// enough that buffering the whole listing would pass anyway. This one expands well past the cap, so a
+// bound checked after the read instead of during it shows up as heap.
+//
+// The line length matters: go-mtree runs its own bufio.Scanner, which refuses a token past 64KB, so a
+// single enormous line fails as "token too long" before the byte cap is ever consulted. Lines have to
+// be ordinary for the byte cap to be the thing under test, and there have to be few enough of them
+// that the line cap does not fire first.
+func Test_parseMtree_sizeCapBoundsHeap(t *testing.T) {
+	const (
+		lineLen  = 1024
+		numLines = 96 * 1024 // ~96MB across ~98k lines: past the 64MB cap, well under the 300k line cap
+	)
+
+	var raw bytes.Buffer
+	line := append(bytes.Repeat([]byte{'a'}, lineLen-1), '\n')
+	for range numLines {
+		raw.Write(line)
+	}
+	require.Greater(t, int64(raw.Len()), int64(maxMtreeSize), "fixture must exceed the byte cap")
+	require.Less(t, numLines, maxMtreeLines, "and must not trip the line cap first")
+
+	unbounded := testutils.MeasureAlloc(t, func() {
+		// the same listing with the byte cap lifted past it, to prove the fixture is really a bomb
+		_, err := parseMtreeWithLimits(gzipOf(t, raw.Bytes()), int64(raw.Len())*2, maxMtreeLines)
+		t.Logf("unbounded parse err: %v", err)
+	})
+	require.Greater(t, unbounded, uint64(raw.Len()),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		_, err := parseMtreeWithLimits(gzipOf(t, raw.Bytes()), maxMtreeSize, maxMtreeLines)
+		require.ErrorIs(t, err, errMtreeTooLarge)
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	assert.Less(t, bounded, uint64(512*intFile.MB),
+		"the size cap has to stop the read at the cap, not after the member is drained")
 }

@@ -16,6 +16,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
+// phpCPEName is the vendor and product used for every PHP interpreter CPE below.
+const phpCPEName = "php"
+
 type interpreterCataloger struct {
 	name                   string
 	extensionsGlob         string
@@ -49,8 +52,8 @@ func NewInterpreterCataloger() pkg.Cataloger { //nolint:funlen
 					{
 						Attributes: cpe.Attributes{
 							Part:    "a",
-							Vendor:  "php",
-							Product: "php",
+							Vendor:  phpCPEName,
+							Product: phpCPEName,
 						},
 						Source: cpe.NVDDictionaryLookupSource,
 					},
@@ -71,8 +74,8 @@ func NewInterpreterCataloger() pkg.Cataloger { //nolint:funlen
 					{
 						Attributes: cpe.Attributes{
 							Part:    "a",
-							Vendor:  "php",
-							Product: "php",
+							Vendor:  phpCPEName,
+							Product: phpCPEName,
 						},
 						Source: cpe.NVDDictionaryLookupSource,
 					},
@@ -86,15 +89,15 @@ func NewInterpreterCataloger() pkg.Cataloger { //nolint:funlen
 				Package: "libphp",
 				PURL: packageurl.PackageURL{
 					Type: packageurl.TypeGeneric,
-					Name: "php",
+					Name: phpCPEName,
 					// the version will be filled in dynamically
 				},
 				CPEs: []cpe.CPE{
 					{
 						Attributes: cpe.Attributes{
 							Part:    "a",
-							Vendor:  "php",
-							Product: "php",
+							Vendor:  phpCPEName,
+							Product: phpCPEName,
 						},
 						Source: cpe.NVDDictionaryLookupSource,
 					},
