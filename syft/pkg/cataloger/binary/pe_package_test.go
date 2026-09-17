@@ -53,6 +53,18 @@ func Test_findVersionFromVR(t *testing.T) {
 			want:             "1.2.3",
 		},
 		{
+			name: "comma separated version keeps a trailing build tag, as the dotted form does",
+			// "10.0.19041.1 (WinBuild.160101.0800)" reaches this function unchanged today;
+			// the comma-separated spelling of the same thing must not be treated differently
+			versionResources: map[string]string{"FileVersion": "1, 0, 0, 1 (WinBuild.160101.0800)"},
+			want:             "1.0.0.1 (WinBuild.160101.0800)",
+		},
+		{
+			name:             "comma separated version with a non numeric suffix is normalized and trimmed",
+			versionResources: map[string]string{"ProductVersion": "2, 5, 0, 0 built by: WinDDK"},
+			want:             "2.5.0.0",
+		},
+		{
 			name:             "non numeric comma separated value is kept as-is",
 			versionResources: map[string]string{"ProductVersion": "1.0, beta"},
 			want:             "1.0,",
