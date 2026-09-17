@@ -84,6 +84,11 @@ func parseStepUsageStatement(use, comment string) (string, string) {
 }
 
 func packageURL(name, version string) string {
+	if strings.HasPrefix(name, "docker://") {
+		// a docker:// use statement references an OCI image, not a GitHub repo
+		return ociPackageURL(strings.TrimPrefix(name, "docker://"), version)
+	}
+
 	var qualifiers packageurl.Qualifiers
 	var subPath string
 	var namespace string
@@ -114,5 +119,47 @@ func packageURL(name, version string) string {
 		version,
 		qualifiers,
 		subPath,
+	).ToString()
+}
+
+// ociPackageURL builds a pkg:oci PURL for a docker:// use statement. The image
+// reference may carry a tag (e.g. ghcr.io/org/image:latest) and the digest
+// arrives as the version (e.g. sha256:deadbeef...). A PURL is only emitted
+// when the image can be identified, either by digest or by tag; an untagged
+// image without a digest has no identifying token, so it returns "".
+func ociPackageURL(image, version string) string {
+	qualifiers := make([]packageurl.Qualifier, 0, 2)
+
+	// split a trailing tag off the reference (a "tag" is the segment after the
+	// last colon that is not followed by a slash, so registries with ports
+	// like host:5000/image are handled correctly)
+	var tag string
+	if i := strings.LastIndex(image, ":"); i > 0 && !strings.Contains(image[i+1:], "/") {
+		image, tag = image[:i], image[i+1:]
+	}
+
+	if image == "" || (tag == "" && version == "") {
+		return ""
+	}
+
+	// use the last path segment as the PURL name and keep the remainder
+	// (registry and any organization path) in the repository_url qualifier
+	name := image
+	if i := strings.LastIndex(image, "/"); i >= 0 {
+		name = image[i+1:]
+		qualifiers = append(qualifiers, packageurl.Qualifier{Key: "repository_url", Value: image[:i]})
+	}
+
+	if tag != "" {
+		qualifiers = append(qualifiers, packageurl.Qualifier{Key: "tag", Value: tag})
+	}
+
+	return packageurl.NewPackageURL(
+		packageurl.TypeOCI,
+		"",
+		name,
+		version,
+		qualifiers,
+		"",
 	).ToString()
 }
