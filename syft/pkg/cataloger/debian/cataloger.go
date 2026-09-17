@@ -15,6 +15,7 @@ func NewDBCataloger() pkg.Cataloger {
 		// note: these globs have been intentionally split up in order to improve search performance,
 		// please do NOT combine into: "**/var/lib/dpkg/{status,status.d/*}"
 		WithParserByGlobs(parseDpkgDB, "**/lib/dpkg/status", "**/lib/dpkg/status.d/*", "**/lib/opkg/info/*.control", "**/lib/opkg/status").
+		WithParserByGlobs(parseChiselManifest, "**/chisel/manifest.wall").
 		WithProcessors(dependency.Processor(dbEntryDependencySpecifier))
 }
 
