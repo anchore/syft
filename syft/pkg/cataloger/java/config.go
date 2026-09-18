@@ -33,6 +33,15 @@ type ArchiveCatalogerConfig struct {
 	// ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
 	// app-config: java.resolve-transitive-dependencies
 	ResolveTransitiveDependencies bool `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+
+	// NestedArchivesHandledExternally indicates that some other mechanism owns recursion into
+	// nested archives, so this cataloger must not unarchive them itself. It is deliberately not a
+	// yaml/json/mapstructure key: no config file, flag, or environment variable reaches it.
+	//
+	// It is written ONLY by syft.CreateSBOMConfig, which derives it from the nested-archive
+	// cataloging depth so the two sides cannot disagree. Callers building this config should leave
+	// it alone; the zero value is this cataloger's long-standing behavior of recursing itself.
+	NestedArchivesHandledExternally bool `yaml:"-" json:"-" mapstructure:"-"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -79,6 +88,13 @@ func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSe
 	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
 	return j
+}
+
+// nestedArchivesHandledExternally indicates another mechanism (the generic archive cataloger task)
+// owns recursion into all archives, in which case this cataloger must not unarchive nested archives
+// itself. See the field of the same name for why this is not derived from MaxDepth.
+func (j ArchiveCatalogerConfig) nestedArchivesHandledExternally() bool {
+	return j.NestedArchivesHandledExternally
 }
 
 func (j ArchiveCatalogerConfig) mavenConfig() maven.Config {

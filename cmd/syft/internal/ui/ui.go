@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -184,7 +185,15 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m UI) View() string {
-	return m.frame.View()
+	v := m.frame.View()
+	// always end on an empty line: bubbletea erases the line the cursor rests on when the program stops, so
+	// a frame whose last line carries content loses it as the run finishes. Until now a log line in
+	// the footer happened to supply that newline, which is why this only showed on sources that log
+	// nothing at all.
+	if !strings.HasSuffix(v, "\n") {
+		return v + "\n"
+	}
+	return v
 }
 
 func runWithTimeout(timeout time.Duration, fn func() error) (err error) {

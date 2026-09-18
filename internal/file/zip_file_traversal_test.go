@@ -305,6 +305,45 @@ func TestSafeJoin(t *testing.T) {
 			expected:     "",
 			errAssertion: assertErrorAs(&errZipSlipDetected{}),
 		},
+		// a legitimate nested path, several components deep
+		{
+			prefix: "/a/place",
+			args: []string{
+				"lib",
+				"sub",
+				"file.txt",
+			},
+			expected:     "/a/place/lib/sub/file.txt",
+			errAssertion: assert.NoError,
+		},
+		// the prefix itself is inside the prefix
+		{
+			prefix: "/a/place",
+			args: []string{
+				".",
+			},
+			expected:     "/a/place",
+			errAssertion: assert.NoError,
+		},
+		// siblings that share the prefix as a STRING are not inside it. A string-prefix comparison
+		// accepted these, so an archive entry could write into a directory next to the one it was
+		// being extracted into.
+		{
+			prefix: "/a/place",
+			args: []string{
+				"../place-evil/x",
+			},
+			expected:     "",
+			errAssertion: assertErrorAs(&errZipSlipDetected{}),
+		},
+		{
+			prefix: "/tmp/syft-archive-abc/contents",
+			args: []string{
+				"../contents-evil/x",
+			},
+			expected:     "",
+			errAssertion: assertErrorAs(&errZipSlipDetected{}),
+		},
 	}
 
 	for _, test := range tests {

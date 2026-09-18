@@ -48,7 +48,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 			HideOnSuccess: true,
 		}
 
-		t := bus.StartCatalogerTask(info, -1, "")
+		t := bus.StartCatalogerTask(ctx, info, -1, "")
 
 		pkgs, relationships, err := c.Catalog(ctx, resolver)
 
