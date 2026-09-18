@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"path"
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
@@ -77,6 +78,10 @@ type CondaMetaPackage struct {
 	// MD5 is the MD5 hash of the package archive.
 	MD5 string `json:"md5,omitempty"`
 
+	// Prefix is the location of the metadata file. It is not part of the metadata file itself,
+	// but is needed to accurately describe file locations derived from conda metadata.
+	Prefix string `json:"-"`
+
 	// SHA256 is the SHA-256 hash of the package archive.
 	SHA256 string `json:"sha256,omitempty"`
 
@@ -111,9 +116,13 @@ type CondaMetaPackage struct {
 func (m CondaMetaPackage) OwnedFiles() (result []string) {
 	s := strset.New()
 	for _, f := range m.Files {
-		if f != "" {
-			s.Add(f)
+		if f == "" {
+			continue
 		}
+		if m.Prefix != "" && m.Prefix != "." && !path.IsAbs(f) {
+			f = path.Join(m.Prefix, f)
+		}
+		s.Add(f)
 	}
 	result = s.List()
 	sort.Strings(result)
