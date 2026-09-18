@@ -274,6 +274,85 @@ func TestParsePodfileLock(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parsePodfileLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParsePodfileLock_externalSources(t *testing.T) {
+	// A pod under EXTERNAL SOURCES with a `:path:` is built from a podspec in
+	// the working tree, so its version is generated rather than released --
+	// Flutter hardcodes `s.version = '1.0.0'`. A `:git:` pod names a real
+	// upstream revision, and a pod from a spec repo has no external source at
+	// all. Consumers of the SBOM need to tell the three apart.
+	fixture := "testdata/Podfile-external-sources.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+	expectedPkgs := []pkg.Package{
+		{
+			Name:      "Analytics",
+			Version:   "1.4.0",
+			PURL:      "pkg:cocoapods/Analytics@1.4.0",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.CocoapodsPkg,
+			Metadata: pkg.CocoaPodfileLockEntry{
+				Checksum:               "3b7a1bf0b8e4b0c6f3c2d1a09e8f7b6c5d4e3f21",
+				ExternalSourceKind:     "git",
+				ExternalSourceLocation: "https://github.com/example/analytics.git",
+			},
+		},
+		{
+			Name:      "Flutter",
+			Version:   "1.0.0",
+			PURL:      "pkg:cocoapods/Flutter@1.0.0",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.CocoapodsPkg,
+			Metadata: pkg.CocoaPodfileLockEntry{
+				Checksum:               "e0871f40cf51350855a761d2e70bf5af5b9b5de7",
+				ExternalSourceKind:     "path",
+				ExternalSourceLocation: "Flutter",
+			},
+		},
+		{
+			Name:      "GlossButtonNode",
+			Version:   "3.1.2",
+			PURL:      "pkg:cocoapods/GlossButtonNode@3.1.2",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.CocoapodsPkg,
+			Metadata: pkg.CocoaPodfileLockEntry{
+				Checksum: "4ea1197a744f2fb5fb875fe31caf17ded4762e8f",
+			},
+		},
+		{
+			// a subspec inherits the external source of its root pod
+			Name:      "Flutter/Core",
+			Version:   "1.0.0",
+			PURL:      "pkg:cocoapods/Flutter%2FCore@1.0.0",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.CocoapodsPkg,
+			Metadata: pkg.CocoaPodfileLockEntry{
+				Checksum:               "e0871f40cf51350855a761d2e70bf5af5b9b5de7",
+				ExternalSourceKind:     "path",
+				ExternalSourceLocation: "Flutter",
+			},
+		},
+		{
+			// a subspec of a spec-repo pod stays free of an external source
+			Name:      "GlossButtonNode/Core",
+			Version:   "3.1.2",
+			PURL:      "pkg:cocoapods/GlossButtonNode%2FCore@3.1.2",
+			Locations: locations,
+			Language:  pkg.Swift,
+			Type:      pkg.CocoapodsPkg,
+			Metadata: pkg.CocoaPodfileLockEntry{
+				Checksum: "4ea1197a744f2fb5fb875fe31caf17ded4762e8f",
+			},
+		},
+	}
+
+	var expectedRelationships []artifact.Relationship
+
+	pkgtest.TestFileParser(t, fixture, parsePodfileLock, expectedPkgs, expectedRelationships)
+}
+
 func Test_corruptPodfile(t *testing.T) {
 	pkgtest.NewCatalogTester().
 		FromFile(t, "testdata/glob-paths/src/Podfile.lock").
