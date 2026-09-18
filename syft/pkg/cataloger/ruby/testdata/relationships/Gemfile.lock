@@ -1,0 +1,17 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    cowboy (2.9.0)
+      cowlib (= 2.11.0)
+      ranch (= 1.8.0)
+    cowlib (2.11.0)
+    ranch (1.8.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  cowboy
+
+BUNDLED WITH
+   2.3.7
