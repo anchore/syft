@@ -102,6 +102,17 @@ func TestParseStackYaml(t *testing.T) {
 				PkgHash: "e4dc6473faaa75fbd7eccab4e3ee1d651d75bb0e49946ef0b8b751ccde771a55",
 			},
 		},
+		{
+			Name:      "acme-missiles",
+			Version:   "0.3",
+			PURL:      "pkg:hackage/acme-missiles@0.3",
+			Locations: locationSet,
+			Language:  pkg.Haskell,
+			Type:      pkg.HackagePkg,
+			Metadata: pkg.HackageStackYamlEntry{
+				PkgHash: "",
+			},
+		},
 	}
 
 	// TODO: relationships are not under test yet
