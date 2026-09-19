@@ -68,6 +68,10 @@ syft <image> -o spdx-json=./spdx.json -o cyclonedx-json=./cdx.json
 > **Want to know all of the ins-and-outs of Syft?** Check out the [CLI docs](https://oss.anchore.com/docs/reference/syft/cli/),  [configuration docs](https://oss.anchore.com/docs/reference/syft/configuration/), and [JSON schema](https://oss.anchore.com/docs/reference/syft/json/latest/).
 
 
+## Syft in other tools
+
+Syft also powers SBOM generation in other open-source projects. For example, [MegaLinter](https://megalinter.io/) (a linters aggregator for CI) uses Syft to [generate an SBOM](https://megalinter.io/latest/descriptors/repository_syft/) of each repository it analyzes.
+
 ## Contributing
 
 We encourage users to help make these tools better by [submitting issues](https://github.com/anchore/syft/issues) when you find a bug or want a new feature. 
