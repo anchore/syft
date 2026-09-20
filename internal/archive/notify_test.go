@@ -10,23 +10,15 @@ import (
 )
 
 // recorder is what a consumer of these events looks like: one func, a type assertion for what it
-// cares about, and silence for everything else.
+// cares about, silence for everything else.
 type recorder struct {
 	overflows []EntriesOverflowed
 	other     int
 }
 
-func (r *recorder) notify(msg any) {
-	if e, ok := msg.(EntriesOverflowed); ok {
-		r.overflows = append(r.overflows, e)
-		return
-	}
-	r.other++
-}
-
 func TestNotify_reportsWhichArchiveSpilledAndWhy(t *testing.T) {
 	rec := &recorder{}
-	s := NewEntryStore(t.TempDir(), "lib/app.jar", rec.notify)
+	s := NewEntryStore(WorkDirAt(t.TempDir()), "lib/app.jar", rec.notify)
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
 	charge := memCharge(8)
@@ -44,9 +36,9 @@ func TestNotify_reportsWhichArchiveSpilledAndWhy(t *testing.T) {
 
 func TestNotify_distinguishesPressureFromPolicy(t *testing.T) {
 	// a scan at its memory bound and a scan whose bound is zero are different findings: the first says
-	// the limit is biting, the second says nothing was ever going to be held
+	// the limit is biting, the second that nothing was ever going to be held
 	rec := &recorder{}
-	s := NewEntryStore(t.TempDir(), "app.jar", rec.notify)
+	s := NewEntryStore(WorkDirAt(t.TempDir()), "app.jar", rec.notify)
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
 	_, err := s.Add(regularHeader("a.txt", 3), bytes.NewReader([]byte("abc")), memCharge(0))
@@ -57,42 +49,28 @@ func TestNotify_distinguishesPressureFromPolicy(t *testing.T) {
 }
 
 func TestNotify_nilHandlerIsTheNoOp(t *testing.T) {
-	s := NewEntryStore(t.TempDir(), "app.jar", nil)
+	s := NewEntryStore(WorkDirAt(t.TempDir()), "app.jar", nil)
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
 	_, err := s.Add(regularHeader("a.txt", 3), bytes.NewReader([]byte("abc")), memCharge(0))
 	assert.NoError(t, err, "no handler must not mean no extraction")
 }
 
-func TestNotify_teeDeliversToEveryLiveHandler(t *testing.T) {
-	first, second := &recorder{}, &recorder{}
-	tee := Tee(nil, first.notify, nil, second.notify)
-	require.NotNil(t, tee)
-
-	tee(EntriesOverflowed{Archive: "app.jar", Entries: 1})
-
-	assert.Len(t, first.overflows, 1)
-	assert.Len(t, second.overflows, 1)
-}
-
-func TestNotify_teeOfNothingIsNil(t *testing.T) {
-	// a tee that would deliver to no one stays nil, so the guard at every call site keeps it free
-	assert.Nil(t, Tee())
-	assert.Nil(t, Tee(nil, nil))
-}
-
-func TestNotify_sendIsNilSafe(t *testing.T) {
-	var n Notify
-	n.Send(EntriesOverflowed{})
-}
-
 func TestNotify_directoryEntriesDoNotSpill(t *testing.T) {
 	// a directory carries no content, so it can never be the thing that pushes a store to disk
 	rec := &recorder{}
-	s := NewEntryStore(t.TempDir(), "app.jar", rec.notify)
+	s := NewEntryStore(WorkDirAt(t.TempDir()), "app.jar", rec.notify)
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
 	_, err := s.Add(tar.Header{Name: "lib/", Typeflag: tar.TypeDir, Mode: 0o755}, nil, memCharge(0))
 	require.NoError(t, err)
 	assert.Empty(t, rec.overflows)
+}
+
+func (r *recorder) notify(msg any) {
+	if e, ok := msg.(EntriesOverflowed); ok {
+		r.overflows = append(r.overflows, e)
+		return
+	}
+	r.other++
 }

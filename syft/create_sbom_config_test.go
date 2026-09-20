@@ -605,10 +605,9 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 	})
 
 	t.Run("enabling the feature does not mutate the caller's package config", func(t *testing.T) {
-		// the java side's yield flag is derived from the archive depth, but it must be derived into
-		// the cataloging factory's own copy: a consumer who handed us a package config gets it back
-		// exactly as they supplied it. Nothing user-settable is overwritten, and nothing the
-		// framework sets leaks back out.
+		// the java side's yield flag is derived from the archive depth, into the cataloging factory's
+		// own copy: a consumer who handed us a package config gets it back exactly as supplied.
+		// Nothing user-settable is overwritten, and nothing the framework sets leaks back out.
 		supplied := java.DefaultArchiveCatalogerConfig().WithUseNetwork(true)
 		require.False(t, supplied.NestedArchivesHandledExternally)
 

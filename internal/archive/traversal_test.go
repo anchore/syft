@@ -15,24 +15,18 @@ func TestTraversalContextRoundTrip(t *testing.T) {
 	assert.Nil(t, TraversalFromContext(context.Background()))
 
 	trav := &Traversal{
-		Location:     file.NewLocation("app.war"),
-		VirtualPath:  "app.war",
-		FileSystemID: "",
-		Depth:        1,
+		Location:    file.NewLocation("app.war"),
+		VirtualPath: "app.war",
 	}
 	ctx := WithTraversal(context.Background(), trav)
 	require.Same(t, trav, TraversalFromContext(ctx))
 
 	child := &Traversal{
-		Location:     file.NewLocation("/WEB-INF/lib/dep.jar"),
-		VirtualPath:  trav.VirtualPathOf("/WEB-INF/lib/dep.jar"),
-		FileSystemID: "",
-		Depth:        2,
-		Parent:       trav,
+		Location:    file.NewLocation("/WEB-INF/lib/dep.jar"),
+		VirtualPath: trav.VirtualPathOf("/WEB-INF/lib/dep.jar"),
 	}
 	ctx = WithTraversal(ctx, child)
 	require.Same(t, child, TraversalFromContext(ctx))
-	assert.Same(t, trav, TraversalFromContext(ctx).Parent)
 }
 
 func TestTraversal_VirtualPathOf(t *testing.T) {
@@ -73,8 +67,8 @@ func TestTraversal_VirtualPathOf(t *testing.T) {
 			expected:  "app.war:WEB-INF/lib/dep.jar:inner/most.jar",
 		},
 		{
-			// a colon in the entry name itself must not be mistaken for a chain delimiter -
-			// see decisions.md#colon-in-an-entry-path-is-escaped
+			// a colon in the entry name must not be mistaken for a chain delimiter - see
+			// decisions.md#colon-in-an-entry-path-is-escaped
 			name:      "colon in entry path is escaped",
 			traversal: &Traversal{VirtualPath: "app.war"},
 			entryPath: "WEB-INF/lib/dep:special.jar",
@@ -87,8 +81,8 @@ func TestTraversal_VirtualPathOf(t *testing.T) {
 			expected:  "app.war:lib/a%3Ab%3Ac.jar",
 		},
 		{
-			// a traversal carrying no virtual path (as distinct from a nil traversal) still
-			// yields the entry path alone, never a bare leading colon
+			// a traversal carrying no virtual path (as distinct from a nil traversal) still yields
+			// the entry path alone, never a bare leading colon
 			name:      "empty virtual path yields the entry path alone, no leading colon",
 			traversal: &Traversal{VirtualPath: ""},
 			entryPath: "WEB-INF/lib/dep.jar",
@@ -102,13 +96,11 @@ func TestTraversal_VirtualPathOf(t *testing.T) {
 	}
 }
 
-// TestTraversal_VirtualPathOf_noColonIsByteIdenticalToPreEscaping is the assertion that carries
-// the compatibility guarantee behind java-virtual-path-identity-preserved
-// (decisions.md#colon-in-an-entry-path-is-escaped): escaping a colon in an entry path must not
-// alter the result for any entry path that does not contain one. Every case below has no colon,
-// and every expected value is exactly what VirtualPathOf produced before escaping existed - do
-// not "fix" a failure here by updating the expected string, since that is precisely the
-// regression this test exists to catch.
+// TestTraversal_VirtualPathOf_noColonIsByteIdenticalToPreEscaping carries the compatibility guarantee
+// behind java-virtual-path-identity-preserved (decisions.md#colon-in-an-entry-path-is-escaped):
+// escaping a colon must not alter the result for any entry path without one. Every case below is
+// colon-free, and every expected value is what VirtualPathOf produced before escaping existed. Do not
+// fix a failure here by updating the expected string - that is the regression this test catches.
 func TestTraversal_VirtualPathOf_noColonIsByteIdenticalToPreEscaping(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -154,19 +146,13 @@ func TestTraversal_VirtualPathOf_noColonIsByteIdenticalToPreEscaping(t *testing.
 	}
 }
 
-// TestTraversal_VirtualPathOf_escapingComposesAcrossNestingLevels asserts that escaping is
-// applied at every level of a chain, not only the first: a colon in an entry name at a deeper
-// nesting level is just as ambiguous as one at the outermost level, so it gets the same
-// treatment. After composing, splitting the result on ':' must yield exactly one segment per
-// real archive boundary - none of the escaped colons survive as a literal ':' byte, so they
-// cannot be mistaken for delimiters by a naive splitter.
+// TestTraversal_VirtualPathOf_escapingComposesAcrossNestingLevels asserts escaping applies at every
+// level of a chain, not only the first: splitting the composed result on ':' yields exactly one
+// segment per archive boundary, since no escaped colon survives as a literal ':' byte.
 func TestTraversal_VirtualPathOf_theEscapeCharacterIsNotItselfEscaped(t *testing.T) {
-	// a known and accepted limit, not a defect: an entry path holding the literal text %3A is
-	// indistinguishable from one holding a colon. Escaping % as %25 would close it and is
-	// deliberately not done, because % is far more common in real paths than : and closing this
-	// would move a large number of well-defined identities to resolve a collision between two
-	// inputs both already assumed absent. Asserted so the limit is a decision on the record
-	// rather than something a later reader discovers and "fixes".
+	// a known and accepted limit: an entry path holding the literal text %3A is indistinguishable from
+	// one holding a colon. Escaping % as %25 would close it and is deliberately not done, since % is far
+	// more common in real paths than : and doing so would move many well-defined identities.
 	t.Parallel()
 
 	outer := &Traversal{VirtualPath: "outer.zip"}

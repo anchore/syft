@@ -5,12 +5,10 @@ import (
 	"sync"
 )
 
-// lockable is a read-write lock that hands back its own unlock function.
+// lockable is a read-write lock that returns its own unlock function.
 //
-// Returning the unlocker rather than exposing Unlock is what makes the index's lock upgrades safe to
-// write: a caller holds an opaque `unlock`, and the node it is walking can tell whether that unlock
-// belongs to the write lock or the read lock and upgrade only when it has to. Carried over from the
-// prototype this index came from, where the pattern is used throughout.
+// Handing back an opaque unlocker (rather than exposing Unlock) lets a node tell whether the caller
+// holds the read or write lock and upgrade only when needed. Carried over from the prototype index.
 type lockable struct {
 	lock sync.RWMutex
 }

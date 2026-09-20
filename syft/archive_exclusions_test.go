@@ -1,6 +1,7 @@
 package syft
 
 import (
+	"archive/tar"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,80 +15,59 @@ import (
 )
 
 func Test_newArchiveExclusionVisitor(t *testing.T) {
+	// entry paths are archive-relative, the frame the index hands every filter; nothing here is a path
+	// on the host, so the fixtures are plain strings rather than files in a temp directory
+	dir := entryInfo(tar.TypeDir)
+	regular := entryInfo(tar.TypeReg)
+
 	t.Run("no patterns means no visitor", func(t *testing.T) {
 		// so the archive resolver is built exactly as it was before this existed
-		visitor, err := newArchiveExclusionVisitor(t.TempDir(), nil)
-		require.NoError(t, err)
-		assert.Nil(t, visitor)
+		assert.Nil(t, newArchiveExclusionVisitor(nil))
 	})
 
-	t.Run("matching is relative to the extraction directory", func(t *testing.T) {
-		// and NOT against a pattern rewritten to be absolute, which is what the directory source does
-		// with the scan root. The two are only distinguishable when the temp directory holding the
-		// extraction has a segment the pattern would match, which is why the check below builds one.
-		root := filepath.Join(t.TempDir(), "vendor")
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "keep"), 0o755))
-
-		// the paths handed to a visitor are the symlink-resolved ones the indexer walks, so the test
-		// has to speak in those too: on macOS t.TempDir sits under /var, a symlink to /private/var,
-		// and an unresolved path would strip no prefix and match the temp directory's own segments
-		root, err := filepath.EvalSymlinks(root)
-		require.NoError(t, err)
-
-		visitor, err := newArchiveExclusionVisitor(root, []string{"**/vendor"})
-		require.NoError(t, err)
+	t.Run("matching is relative to the archive, not to any host path", func(t *testing.T) {
+		// an archive is indexed in memory, so a pattern can only be satisfied by what the archive holds;
+		// there is no scratch directory whose own segments could match
+		visitor := newArchiveExclusionVisitor([]string{"**/vendor"})
 		require.NotNil(t, visitor)
 
-		assert.NoError(t, visitor("", root, dirInfo(t, root), nil),
-			"the extraction directory itself is the archive, not something in it")
-		assert.NoError(t, visitor("", filepath.Join(root, "keep"), dirInfo(t, filepath.Join(root, "keep")), nil),
-			"a path under a matching temp directory must not inherit the match")
+		assert.ErrorIs(t, visitor("/", "vendor", dir, nil), filepath.SkipDir)
+		assert.NoError(t, visitor("/", "keep/vendored.txt", regular, nil),
+			"a path that merely contains the word must not match")
+		assert.NoError(t, visitor("/", "vendor-ish", regular, nil))
 	})
 
 	t.Run("a matching file is skipped and a matching directory is pruned", func(t *testing.T) {
-		root := t.TempDir()
-		dir := filepath.Join(root, "a", "vendor")
-		require.NoError(t, os.MkdirAll(dir, 0o755))
-		file := filepath.Join(root, "a", "pkg.rpm")
-		require.NoError(t, os.WriteFile(file, []byte("x"), 0o644))
-
-		visitor, err := newArchiveExclusionVisitor(root, []string{"**/vendor", "**/*.rpm"})
-		require.NoError(t, err)
+		visitor := newArchiveExclusionVisitor([]string{"**/vendor", "**/*.rpm"})
 		require.NotNil(t, visitor)
 
-		assert.ErrorIs(t, visitor("", file, fileInfo(t, file), nil), fileresolver.ErrSkipPath)
-		assert.ErrorIs(t, visitor("", dir, dirInfo(t, dir), nil), filepath.SkipDir)
+		assert.ErrorIs(t, visitor("/", "a/pkg.rpm", regular, nil), fileresolver.ErrSkipPath)
+		assert.ErrorIs(t, visitor("/", "a/vendor", dir, nil), filepath.SkipDir)
 	})
 
 	t.Run("an any-depth pattern reaches the archive's own root", func(t *testing.T) {
-		// `**/x` matches x at zero depth as well as below it, which is what makes "exclude .rpm
-		// everywhere" stop an .rpm sitting directly inside another archive
-		root := t.TempDir()
-		file := filepath.Join(root, "pkg.rpm")
-		require.NoError(t, os.WriteFile(file, []byte("x"), 0o644))
+		// `**/x` matches x at zero depth as well as below it, so "exclude .rpm everywhere" stops an .rpm
+		// sitting directly inside another archive
+		visitor := newArchiveExclusionVisitor([]string{"**/*.rpm"})
+		require.NotNil(t, visitor)
 
-		visitor, err := newArchiveExclusionVisitor(root, []string{"**/*.rpm"})
-		require.NoError(t, err)
-
-		assert.ErrorIs(t, visitor("", file, fileInfo(t, file), nil), fileresolver.ErrSkipPath)
+		assert.ErrorIs(t, visitor("/", "pkg.rpm", regular, nil), fileresolver.ErrSkipPath)
+		assert.ErrorIs(t, visitor("/", "deep/down/pkg.rpm", regular, nil), fileresolver.ErrSkipPath)
 	})
 
 	t.Run("a non-matching path is kept", func(t *testing.T) {
-		root := t.TempDir()
-		file := filepath.Join(root, "keep.txt")
-		require.NoError(t, os.WriteFile(file, []byte("x"), 0o644))
+		visitor := newArchiveExclusionVisitor([]string{"**/*.rpm"})
+		require.NotNil(t, visitor)
 
-		visitor, err := newArchiveExclusionVisitor(root, []string{"**/*.rpm"})
-		require.NoError(t, err)
-
-		assert.NoError(t, visitor("", file, fileInfo(t, file), nil))
+		assert.NoError(t, visitor("/", "keep.txt", regular, nil))
 	})
 
-	t.Run("an unresolvable directory is an error rather than a silent no-match", func(t *testing.T) {
-		// the failure mode this guards against is invisible: a prefix that cannot be resolved strips
-		// nothing, every pattern then matches nothing, and the scan looks like it had no exclusions
-		_, err := newArchiveExclusionVisitor(filepath.Join(t.TempDir(), "does-not-exist"), []string{"**/x"})
-		assert.Error(t, err)
+	t.Run("a malformed pattern excludes nothing rather than failing the archive", func(t *testing.T) {
+		visitor := newArchiveExclusionVisitor([]string{"[", "**/*.rpm"})
+		require.NotNil(t, visitor)
+
+		assert.NoError(t, visitor("/", "keep.txt", regular, nil))
+		assert.ErrorIs(t, visitor("/", "pkg.rpm", regular, nil), fileresolver.ErrSkipPath)
 	})
 }
 
@@ -104,10 +84,9 @@ func Test_sourceExclusions(t *testing.T) {
 	})
 
 	t.Run("building the source's own resolver does not rewrite them", func(t *testing.T) {
-		// the source rewrites exclusions to be absolute against the scan root while building its
-		// resolver. If that rewriting reached the configured patterns, none would begin "**/" any
-		// more and an archive's exclusions would degrade to "none configured" - which reads as a
-		// feature that was never switched on rather than as a bug
+		// the source rewrites exclusions absolute against the scan root while building its resolver. If that
+		// reached the configured patterns, none would begin "**/" any more and an archive's exclusions would
+		// silently degrade to none.
 		src, err := directorysource.New(directorysource.Config{
 			Path:    t.TempDir(),
 			Exclude: source.ExcludeConfig{Paths: []string{"**/*.rpm"}},
@@ -126,18 +105,12 @@ func Test_sourceExclusions(t *testing.T) {
 	})
 }
 
-func dirInfo(t *testing.T, path string) os.FileInfo {
-	t.Helper()
-	info, err := os.Stat(path)
-	require.NoError(t, err)
-	require.True(t, info.IsDir())
-	return info
-}
-
-func fileInfo(t *testing.T, path string) os.FileInfo {
-	t.Helper()
-	info, err := os.Stat(path)
-	require.NoError(t, err)
-	require.False(t, info.IsDir())
-	return info
+// entryInfo is the FileInfo an archive entry carries, which is what the index hands every filter -
+// derived from the entry's header, not from anything on the filesystem.
+func entryInfo(typeflag byte) os.FileInfo {
+	mode := int64(0o600)
+	if typeflag == tar.TypeDir {
+		mode = 0o755
+	}
+	return (&tar.Header{Typeflag: typeflag, Mode: mode}).FileInfo()
 }

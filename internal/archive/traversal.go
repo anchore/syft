@@ -7,11 +7,10 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-// Traversal describes one level of archive nesting during recursive archive cataloging. The archive
-// cataloger task places one on the context before running the cataloger sub-pipeline against an
-// archive's contents, so ecosystem catalogers (e.g. java) can reconstruct nesting-aware identity
-// such as colon-delimited virtual paths (e.g. "app.war:WEB-INF/lib/dep.jar") without owning the
-// recursion themselves.
+// Traversal describes one level of archive nesting. The archive cataloger task places one on the
+// context before running the sub-pipeline against an archive's contents, so ecosystem catalogers
+// (e.g. java) can reconstruct nesting-aware identity like "app.war:WEB-INF/lib/dep.jar" without
+// owning the recursion.
 type Traversal struct {
 	// Location is the archive file's location within its parent filesystem.
 	Location file.Location
@@ -20,28 +19,14 @@ type Traversal struct {
 	// e.g. "app.war:WEB-INF/lib/dep.jar".
 	VirtualPath string
 
-	// FileSystemID is the identifier of the filesystem the archive file itself lives on (a container
-	// image layer digest, or empty for a directory source), inherited unchanged down the nesting
-	// chain. The nesting chain is carried by VirtualPath, not by this field.
-	FileSystemID string
-
-	// Depth is 1 for an archive found directly in the scan source, incrementing per nesting level.
-	Depth int
-
-	// Digests are the digests of the archive file itself. They are carried here because they are a
-	// property of the file and not of its contents: a cataloger running against an archive's extracted
-	// filesystem cannot compute them, since the archive is not inside itself. Taken once by the
-	// extraction, which already has the bytes in hand.
+	// Digests are of the archive file itself, taken once during extraction. A cataloger running against
+	// the extracted filesystem cannot compute them, since the archive is not inside itself.
 	Digests []file.Digest
-
-	// Parent is the traversal for the containing archive; nil at depth 1.
-	Parent *Traversal
 }
 
-// VirtualPathOf returns the colon-delimited virtual path for an entry within this archive. It is
-// nil-safe: with no traversal the entry path is returned unchanged, matching non-nested behavior.
-// The entry path's leading slash is trimmed so chains match the historical java cataloger format,
-// which joins slash-less zip entry names onto the containing archive's path.
+// VirtualPathOf returns the colon-delimited virtual path for an entry within this archive, or the
+// entry path unchanged on a nil traversal. The leading slash is trimmed to match the java cataloger
+// format, which joins slash-less zip entry names onto the containing archive's path.
 func (t *Traversal) VirtualPathOf(entryPath string) string {
 	if t == nil {
 		return entryPath
@@ -55,16 +40,14 @@ func (t *Traversal) VirtualPathOf(entryPath string) string {
 
 type limiterCtxKey struct{}
 
-// WithLimiter returns a context carrying the scan's archive limiter, so a cataloger running within
-// the recursive walk can read the scan's live draw on the memory and disk budgets (Limiter.InUse) -
-// the same totals the limits are enforced against. Carried on the context rather than copied onto
-// each Traversal so there is one source of truth for the charge, not a snapshot per level.
+// WithLimiter returns a context carrying the scan's archive limiter, so a cataloger inside the walk
+// can read the live draw on the budgets (Limiter.InUse). It rides the context rather than each
+// Traversal so every level reads one shared total.
 func WithLimiter(ctx context.Context, l *Limiter) context.Context {
 	return context.WithValue(ctx, limiterCtxKey{}, l)
 }
 
-// LimiterFromContext returns the scan's archive limiter, or nil when the current pass is not running
-// within the recursive archive walk.
+// LimiterFromContext returns the scan's archive limiter, or nil outside the recursive archive walk.
 func LimiterFromContext(ctx context.Context) *Limiter {
 	l, _ := ctx.Value(limiterCtxKey{}).(*Limiter)
 	return l
@@ -77,8 +60,7 @@ func WithTraversal(ctx context.Context, t *Traversal) context.Context {
 	return context.WithValue(ctx, traversalCtxKey{}, t)
 }
 
-// TraversalFromContext returns the archive traversal on the context, or nil when the current
-// cataloging pass is not running within an archive.
+// TraversalFromContext returns the archive traversal on the context, or nil outside an archive.
 func TraversalFromContext(ctx context.Context) *Traversal {
 	t, _ := ctx.Value(traversalCtxKey{}).(*Traversal)
 	return t

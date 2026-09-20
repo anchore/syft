@@ -732,8 +732,8 @@ func Test_isArchiveMetaPom(t *testing.T) {
 }
 
 func Test_pomCatalogerSkipsMetaInfPoms(t *testing.T) {
-	// A directory that only contains a pom.xml under META-INF/maven/ should produce
-	// no packages, since these are archive metadata not project files.
+	// a pom.xml under META-INF/maven/ alone yields no packages: that is archive metadata, not a
+	// project file
 	cat := NewPomCataloger(ArchiveCatalogerConfig{
 		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
 			IncludeIndexedArchives:   true,
@@ -748,9 +748,8 @@ func Test_pomCatalogerSkipsMetaInfPoms(t *testing.T) {
 }
 
 func Test_pomCatalogerSkipsMetaInfButKeepsProjectPom(t *testing.T) {
-	// When a directory contains both a project pom.xml and a META-INF/maven pom.xml,
-	// only the project pom.xml should be cataloged. The META-INF pom.xml and its
-	// dependencies should be ignored.
+	// with both a project pom.xml and a META-INF/maven one, only the project pom.xml is
+	// cataloged; the META-INF pom and its dependencies are ignored
 	pomLocation := file.NewLocationSet(file.NewLocation("pom.xml"))
 
 	myApp := pkg.Package{

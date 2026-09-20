@@ -28,6 +28,16 @@ func (f *PrefixSuffix[T]) BySuffix(suffix string) []T {
 	return f.reverseIndex.ByPrefix(reverse(suffix))
 }
 
+// ByPrefixUpTo and BySuffixUpTo are the bounded forms, reporting false rather than returning more than
+// limit values, so a caller can take whichever side is selective without paying for the other.
+func (f *PrefixSuffix[T]) ByPrefixUpTo(prefix string, limit int) ([]T, bool) {
+	return f.forwardIndex.ByPrefixUpTo(prefix, limit)
+}
+
+func (f *PrefixSuffix[T]) BySuffixUpTo(suffix string, limit int) ([]T, bool) {
+	return f.reverseIndex.ByPrefixUpTo(reverse(suffix), limit)
+}
+
 func reverse(s string) string {
 	runes := []rune(s)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {

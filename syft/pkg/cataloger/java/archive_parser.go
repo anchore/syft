@@ -17,10 +17,8 @@ import (
 	"golang.org/x/exp/maps"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/archive"
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
-	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -58,16 +56,25 @@ var javaArchiveHashes = []crypto.Hash{
 	crypto.SHA1,
 }
 
+// archiveParser reads one java archive, whichever source it came from: everything it does is logic
+// over an archiveSource's entries and identity, so it does not know whether this cataloger opened an
+// archive file or the archive cataloger task already extracted one.
 type archiveParser struct {
-	entries      archiveEntries
-	location     file.Location
-	virtualPath  string
-	archivePath  string
-	contentPath  string
-	fileInfo     archiveFilename
+	archiveSource
 	detectNested bool
 	cfg          ArchiveCatalogerConfig
 	maven        *maven.Resolver
+}
+
+// newArchiveParser builds the parser for one archive. detectNested is whether this parser recurses
+// into the java archives inside this one, which only a file-backed source can do.
+func newArchiveParser(src archiveSource, detectNested bool, cfg ArchiveCatalogerConfig) *archiveParser {
+	return &archiveParser{
+		archiveSource: src,
+		detectNested:  detectNested,
+		cfg:           cfg,
+		maven:         maven.NewResolver(nil, cfg.mavenConfig()),
+	}
 }
 
 type genericArchiveParserAdapter struct {
@@ -85,9 +92,9 @@ func (gap genericArchiveParserAdapter) parseJavaArchive(ctx context.Context, _ f
 
 // processJavaArchive processes an archive for java contents, returning all Java libraries and nested archives
 func (gap genericArchiveParserAdapter) processJavaArchive(ctx context.Context, reader file.LocationReadCloser, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
-	// when the generic archive cataloger task owns recursion into archives, this parser must not
-	// also unarchive nested archives, otherwise they would be cataloged twice
-	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, !gap.cfg.nestedArchivesHandledExternally(), gap.cfg)
+	// when the archive cataloger task owns recursion, unarchiving here would catalog nested archives
+	// twice
+	parser, cleanupFn, err := newJavaArchiveParser(ctx, reader, !gap.cfg.NestedArchivesHandledExternally, gap.cfg)
 	// note: even on error, we should always run cleanup functions
 	defer cleanupFn()
 	if err != nil {
@@ -104,43 +111,14 @@ func uniquePkgKey(groupID string, p *pkg.Package) string {
 	return fmt.Sprintf("%s|%s|%s", groupID, p.Name, p.Version)
 }
 
-// newJavaArchiveParser returns a new java archive parser object for the given archive. Can be configured to discover
-// and parse nested archives or ignore them.
+// newJavaArchiveParser returns a new java archive parser for an archive file this cataloger opens
+// itself. Can be configured to discover and parse nested archives or ignore them.
 func newJavaArchiveParser(ctx context.Context, reader file.LocationReadCloser, detectNested bool, cfg ArchiveCatalogerConfig) (*archiveParser, func(), error) {
-	// establish the full virtual path of this archive: when the generic archive cataloger task drove
-	// us here, the context traversal supplies the containing archive chain; otherwise the reader
-	// path already carries any colon-delimited nesting from this cataloger's own recursion
-	virtualPath := archive.TraversalFromContext(ctx).VirtualPathOf(reader.Path())
-
-	// fetch the last element of the virtual path
-	virtualElements := strings.Split(virtualPath, ":")
-	currentFilepath := virtualElements[len(virtualElements)-1]
-
-	td := tmpdir.FromContext(ctx)
-	if td == nil {
-		return nil, func() {}, fmt.Errorf("no temp dir factory in context")
-	}
-	contentPath, archivePath, cleanupFn, err := saveArchiveToTmp(td, currentFilepath, reader)
-	if err != nil {
-		return nil, cleanupFn, fmt.Errorf("unable to process java archive: %w", err)
-	}
-
-	entries, err := newZipEntries(ctx, archivePath)
+	src, cleanupFn, err := newFileArchiveSource(ctx, reader)
 	if err != nil {
 		return nil, cleanupFn, err
 	}
-
-	return &archiveParser{
-		entries:      entries,
-		location:     reader.Location,
-		virtualPath:  virtualPath,
-		archivePath:  archivePath,
-		contentPath:  contentPath,
-		fileInfo:     newJavaArchiveFilename(currentFilepath),
-		detectNested: detectNested,
-		cfg:          cfg,
-		maven:        maven.NewResolver(nil, cfg.mavenConfig()),
-	}, cleanupFn, nil
+	return newArchiveParser(src, detectNested, cfg), cleanupFn, nil
 }
 
 // parse the loaded archive and return all packages found.
@@ -199,9 +177,9 @@ func (j *archiveParser) parse(ctx context.Context, parentPkg *pkg.Package) ([]pk
 		}
 		pkgs = append(pkgs, nestedPkgs...)
 		relationships = append(relationships, nestedRelationships...)
-	} else if !j.cfg.nestedArchivesHandledExternally() {
-		// nested archives will not be cataloged by anything: this parser is not recursing and the
-		// generic archive cataloger task is disabled
+	} else if !j.cfg.NestedArchivesHandledExternally {
+		// nothing will catalog these: this parser is not recursing and the archive cataloger task is
+		// disabled, so record them as unknowns
 		// .jar and .war files are present in archives, are others? or generally just consider them top-level?
 		nestedArchives := j.entries.glob(true, "**/*.jar", "**/*.war")
 		if len(nestedArchives) > 0 {
@@ -252,7 +230,7 @@ func (j *archiveParser) discoverMainPackage(ctx context.Context) (*pkg.Package, 
 
 	// parse the manifest file into a rich object
 	manifestContents := contents[manifestMatches[0]]
-	manifest, err := parseJavaManifest(j.archivePath, strings.NewReader(manifestContents))
+	manifest, err := parseJavaManifest(j.virtualPath, strings.NewReader(manifestContents))
 	if err != nil {
 		log.Debugf("failed to parse java manifest (%s): %+v", j.location, err)
 		return nil, nil
@@ -641,7 +619,7 @@ func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest 
 		return ""
 	}
 
-	contents, err := intFile.ContentsFromZip(ctx, j.archivePath, matches...)
+	contents, err := j.entries.contents(ctx, matches...)
 	if err != nil {
 		log.Debugf("unable to extract version.properties (%s): %v", j.location, err)
 		return ""
@@ -663,10 +641,9 @@ func (j *archiveParser) versionFromPropertiesFile(ctx context.Context, manifest 
 	return ""
 }
 
-// discoverPkgsFromNestedArchives recurses into the java archives inside this one. It exists only for
-// the zip-backed source: recursion needs an archive file to unzip, and the resolver-backed source has
-// no file - by the time it runs, the archive cataloger task has already extracted everything and will
-// meet those nested archives itself.
+// discoverPkgsFromNestedArchives recurses into the java archives inside this one. Only zipEntries
+// applies, since recursion needs an archive file to unzip; with resolverEntries the archive cataloger
+// task has already extracted everything and meets those nested archives itself.
 func (j *archiveParser) discoverPkgsFromNestedArchives(ctx context.Context, parentPkg *pkg.Package) ([]pkg.Package, []artifact.Relationship, error) {
 	zipped, ok := j.entries.(*zipEntries)
 	if !ok {

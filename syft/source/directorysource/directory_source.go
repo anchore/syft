@@ -138,14 +138,13 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		return nil, nil
 	}
 
-	// the indexer reports an absolute, symlink-resolved path to every visitor: the resolver normalizes
-	// its root with EvalSymlinks (fileresolver.NormalizeRootDirectory, via the chroot context) and the
-	// walk then takes filepath.Abs of it. The root these patterns are anchored to has to be derived
-	// the same way or they anchor to a path the walk never reports - on macOS a scan of a directory
-	// under /var, a symlink to /private/var, would exclude nothing at all.
+	// the indexer reports an absolute, symlink-resolved path to every visitor (the resolver normalizes
+	// its root with EvalSymlinks and the walk takes filepath.Abs of it), so patterns must anchor to a
+	// root derived the same way. Otherwise on macOS - where a directory under /var is really under
+	// /private/var - they exclude nothing.
 	//
-	// A root that cannot be resolved is left as it was rather than failing the scan: EvalSymlinks
-	// wants the path to exist, and the resolver reports a missing root far better than this can.
+	// An unresolvable root is left alone rather than failing the scan: EvalSymlinks needs the path to
+	// exist, and the resolver reports a missing root better than this can.
 	if resolved, err := filepath.EvalSymlinks(root); err == nil {
 		root = resolved
 	}
@@ -162,10 +161,9 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		root += "/"
 	}
 
-	// the rooted patterns are built into a new slice rather than written back over the caller's:
-	// the patterns belong to the source's configuration, which is read elsewhere (see
-	// source.PathExcluder), and rewriting them in place would replace what the user configured with
-	// scan-root-absolute patterns as a side effect of building the resolver
+	// a new slice, not a rewrite in place: these patterns belong to the source's config and are read
+	// elsewhere (see source.PathExcluder), so building the resolver must not replace what the user
+	// configured with scan-root-absolute patterns
 	rooted := make([]string, 0, len(exclusions))
 	var errors []string
 	for _, exclusion := range exclusions {

@@ -20,26 +20,6 @@ import (
 	"github.com/anchore/syft/syft/source/directorysource"
 )
 
-// makeTestZip builds a zip in memory so the parser can be exercised without the
-// java-toolchain-built fixtures.
-func makeTestZip(t *testing.T, entries map[string][]byte) []byte {
-	t.Helper()
-	var buf bytes.Buffer
-	zw := zip.NewWriter(&buf)
-	for name, content := range entries {
-		w, err := zw.Create(name)
-		require.NoError(t, err)
-		_, err = w.Write(content)
-		require.NoError(t, err)
-	}
-	require.NoError(t, zw.Close())
-	return buf.Bytes()
-}
-
-func testManifest(title, version string) []byte {
-	return fmt.Appendf(nil, "Manifest-Version: 1.0\nImplementation-Title: %s\nImplementation-Version: %s\n", title, version)
-}
-
 func Test_virtualPathFromArchiveTraversal(t *testing.T) {
 	jarBytes := makeTestZip(t, map[string][]byte{
 		"META-INF/MANIFEST.MF": testManifest("example-app", "1.0.0"),
@@ -71,10 +51,8 @@ func Test_virtualPathFromArchiveTraversal(t *testing.T) {
 
 	t.Run("traversal prepends containing archive chain", func(t *testing.T) {
 		trav := &archive.Traversal{
-			Location:     file.NewLocation("/app.war"),
-			VirtualPath:  "/app.war",
-			FileSystemID: "app.war",
-			Depth:        1,
+			Location:    file.NewLocation("/app.war"),
+			VirtualPath: "/app.war",
 		}
 		p := parse(t, trav, "/WEB-INF/lib/example-app-1.0.0.jar")
 		metadata, ok := p.Metadata.(pkg.JavaArchive)
@@ -86,12 +64,9 @@ func Test_virtualPathFromArchiveTraversal(t *testing.T) {
 	})
 
 	t.Run("multi-level traversal chains all parents", func(t *testing.T) {
-		outer := &archive.Traversal{VirtualPath: "/dist.zip", FileSystemID: "dist.zip", Depth: 1}
+		outer := &archive.Traversal{VirtualPath: "/dist.zip"}
 		inner := &archive.Traversal{
-			VirtualPath:  outer.VirtualPathOf("/app.war"),
-			FileSystemID: "dist.zip/app.war",
-			Depth:        2,
-			Parent:       outer,
+			VirtualPath: outer.VirtualPathOf("/app.war"),
 		}
 		p := parse(t, inner, "/WEB-INF/lib/example-app-1.0.0.jar")
 		metadata, ok := p.Metadata.(pkg.JavaArchive)
@@ -100,12 +75,12 @@ func Test_virtualPathFromArchiveTraversal(t *testing.T) {
 	})
 }
 
-// Test_virtualPathFromArchiveTraversal_colonInEntryPath is the java-cataloger-level counterpart
-// of internal/archive's escaping tests: a package reached through an entry whose own path
-// contains a colon must carry that colon escaped as %3A end to end in its virtual path
-// (decisions.md#colon-in-an-entry-path-is-escaped), and the maven-derived
-// ":groupID:artifactID" suffix that distinguishes a pom.properties package from its containing
-// archive must still be appended using real, unescaped delimiters.
+// Test_virtualPathFromArchiveTraversal_colonInEntryPath is the java-cataloger-level counterpart of
+// internal/archive's escaping tests: a package reached through an entry whose path contains a colon
+// must carry it escaped as %3A end to end in its virtual path
+// (decisions.md#colon-in-an-entry-path-is-escaped), while the maven-derived ":groupID:artifactID"
+// suffix that distinguishes a pom.properties package from its containing archive is still appended
+// with real, unescaped delimiters.
 func Test_virtualPathFromArchiveTraversal_colonInEntryPath(t *testing.T) {
 	jarBytes := makeTestZip(t, map[string][]byte{
 		"META-INF/MANIFEST.MF": testManifest("outer-app", "1.0.0"),
@@ -115,10 +90,8 @@ func Test_virtualPathFromArchiveTraversal_colonInEntryPath(t *testing.T) {
 	})
 
 	trav := &archive.Traversal{
-		Location:     file.NewLocation("/outer.zip"),
-		VirtualPath:  "outer.zip",
-		FileSystemID: "outer.zip",
-		Depth:        1,
+		Location:    file.NewLocation("/outer.zip"),
+		VirtualPath: "outer.zip",
 	}
 	ctx := archive.WithTraversal(pkgtest.Context(t), trav)
 
@@ -201,12 +174,12 @@ func Test_nestedArchiveOwnershipSwitch(t *testing.T) {
 	})
 
 	t.Run("java's own archive-search depth does not hand off recursion", func(t *testing.T) {
-		// a library consumer setting java's squash-inlined MaxDepth must neither enable nor
-		// disable nested archive cataloging: that knob is Archive.MaxDepth on CreateSBOMConfig.
-		// Getting this wrong silently drops nested jars for every consumer that is not the CLI.
+		// a library consumer setting java's squash-inlined MaxDepth must neither enable nor disable
+		// nested archive cataloging: that knob is Archive.MaxDepth on CreateSBOMConfig. Getting it
+		// wrong silently drops nested jars for every consumer that is not the CLI.
 		cfg := DefaultArchiveCatalogerConfig()
 		cfg.ArchiveSearchConfig = cfg.ArchiveSearchConfig.WithMaxDepth(2)
-		require.False(t, cfg.nestedArchivesHandledExternally())
+		require.False(t, cfg.NestedArchivesHandledExternally)
 
 		pkgs := parse(t, cfg)
 		require.Len(t, pkgs, 2, "this cataloger must still recurse itself")
@@ -214,12 +187,11 @@ func Test_nestedArchiveOwnershipSwitch(t *testing.T) {
 }
 
 func Test_NewArchiveCataloger_wrappedParserRegistration(t *testing.T) {
-	// the wrapped-archive parsers exist only because the generic archive cataloger did not. When it
-	// is enabled it extracts zip and tar containers itself and this cataloger meets the same JARs
-	// one nesting level down, so registering them would double the work.
+	// the wrapped-archive parsers exist only because the archive cataloger did not. When it is enabled
+	// it extracts zip and tar containers itself and this cataloger meets the same jars one nesting level
+	// down, so registering them would double the work.
 	//
-	// asserted through the globs the cataloger actually queries, since that is the observable
-	// consequence of a parser being registered
+	// Asserted through the globs the cataloger queries, the observable consequence of a registration.
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "placeholder.txt"), []byte("x"), 0o600))
 
@@ -243,11 +215,11 @@ func Test_NewArchiveCataloger_wrappedParserRegistration(t *testing.T) {
 		cfg.NestedArchivesHandledExternally = true
 
 		observed := queriedGlobs(t, cfg)
+		// outside a traversal the cataloger opens no files at all: the task brings every archive back
+		// as an extracted filesystem, and each is described there
 		assert.False(t, observed.ObservedPathQuery("**/*.zip"), "no generic zip parser may be registered")
 		assert.False(t, observed.ObservedPathQuery("**/*.tar"), "no generic tar parser may be registered")
-
-		// the JAR-family globs are still registered: this cataloger is still the java parser
-		assert.True(t, observed.ObservedPathQuery("**/*.jar"))
+		assert.False(t, observed.ObservedPathQuery("**/*.jar"), "archive files are the task's to open")
 	})
 
 	t.Run("wrapped parsers stay registered when the feature is off", func(t *testing.T) {
@@ -272,11 +244,10 @@ func Test_NewArchiveCataloger_wrappedParserRegistration(t *testing.T) {
 }
 
 func Test_mavenVirtualPathSuffixUnderTraversal(t *testing.T) {
-	// a package derived from a pom.properties whose artifact does not match the containing archive
-	// gets a trailing ":<groupID>:<artifactID>" appended to the archive's virtual path. That suffix
-	// form is in published SBOMs, and once the archive cataloger drives the parser the base it is
-	// appended to comes from the traversal rather than from the reader path - so this asserts the
-	// two compose rather than one clobbering the other.
+	// a package derived from a pom.properties whose artifact does not match the containing archive gets
+	// a trailing ":<groupID>:<artifactID>" appended to the archive's virtual path. That suffix form is in
+	// published SBOMs, and once the archive cataloger drives the parser the base comes from the traversal
+	// rather than the reader path - so the two must compose rather than one clobbering the other.
 	jarBytes := makeTestZip(t, map[string][]byte{
 		"META-INF/MANIFEST.MF": testManifest("example-app", "1.0.0"),
 		"META-INF/maven/com.example.other/other-lib/pom.properties": []byte(
@@ -320,8 +291,28 @@ func Test_mavenVirtualPathSuffixUnderTraversal(t *testing.T) {
 	})
 
 	t.Run("under traversal: suffix hangs off the archive chain", func(t *testing.T) {
-		pkgs := parse(t, &archive.Traversal{VirtualPath: "app.war", Depth: 1}, "/WEB-INF/lib/example-app-1.0.0.jar")
+		pkgs := parse(t, &archive.Traversal{VirtualPath: "app.war"}, "/WEB-INF/lib/example-app-1.0.0.jar")
 		assert.Equal(t, "app.war:WEB-INF/lib/example-app-1.0.0.jar:com.example.other:other-lib",
 			virtualPathOf(t, pkgs, "other-lib"))
 	})
+}
+
+// makeTestZip builds a zip in memory so the parser can be exercised without the java-toolchain-built
+// fixtures.
+func makeTestZip(t *testing.T, entries map[string][]byte) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	for name, content := range entries {
+		w, err := zw.Create(name)
+		require.NoError(t, err)
+		_, err = w.Write(content)
+		require.NoError(t, err)
+	}
+	require.NoError(t, zw.Close())
+	return buf.Bytes()
+}
+
+func testManifest(title, version string) []byte {
+	return fmt.Appendf(nil, "Manifest-Version: 1.0\nImplementation-Title: %s\nImplementation-Version: %s\n", title, version)
 }

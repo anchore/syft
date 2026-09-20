@@ -29,51 +29,47 @@ import (
 const ArchiveCatalogerTaskName = "archive-cataloger"
 
 // NewArchiveCatalogerTask returns a task that recursively extracts archives (including JAR-family
-// archives, whose cataloger skips its own unarchiving when this task is enabled), treats each as
-// its own standalone indexed filesystem, runs the given cataloger sub-pipeline against each, and
-// records file-level CONTAINS relationships from the archive to the packages and files discovered
-// inside it. Returns nil when archive cataloging is disabled (MaxDepth <= 0), so a disabled feature
-// registers no task at all rather than a task that runs and does nothing.
+// ones, whose cataloger skips its own unarchiving when this task is enabled), treats each as its own
+// standalone indexed filesystem, runs subPipeline against each, and records file-level CONTAINS
+// relationships from the archive to what was found inside it.
 //
-// subPipeline is the set of package/file cataloger tasks to run against each extracted archive; it
-// must NOT include this task, so recursion is driven only by the explicit depth-limited walk here.
-// newResolver builds an FSID-stamped indexed resolver over an extracted archive directory (injected
-// so this package does not depend on the syft-subtree internal fileresolver package).
-func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []Task, newResolver archive.ResolverFactory, newStoreResolver archive.StoreResolverFactory, notify archive.Notify) Task {
-	if cfg.MaxDepth == 0 || newResolver == nil {
+// Returns nil when archive cataloging is disabled (MaxDepth == 0; negative means unbounded).
+//
+// subPipeline must not include this task, so recursion is driven only by the depth-limited walk here.
+// newStoreResolver is injected so this package does not depend on the internal fileresolver package.
+func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []Task, newStoreResolver archive.StoreResolverFactory, notify archive.Notify) Task {
+	if cfg.MaxDepth == 0 || newStoreResolver == nil {
 		return nil
 	}
 
-	// this task drives recursion itself via an explicit depth-bounded walk, so it must never appear
-	// in its own sub-pipeline: each nesting level would then be processed once by the walk and
-	// again by the nested copy. Enforced rather than left to a comment, since the caller assembles
-	// the sub-pipeline from whatever package and file tasks are selected.
+	// this task drives recursion itself: in its own sub-pipeline, each nesting level would be processed
+	// once by the walk and again by the nested copy
 	subPipeline = withoutArchiveCataloger(subPipeline)
 	if len(subPipeline) == 0 {
 		return nil
 	}
 	fn := func(ctx context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
-		// one progress row for the whole recursive walk, updated as each archive is entered. The
-		// sub-pipeline underneath it reports into this same row rather than starting rows of its own:
-		// those catalogers have already started (and finished) a row for the scan root, and starting
-		// them again per archive is what both floods the display and strands the rows it replaces
-		// (see bus.WithCatalogerTaskProgress).
+		// this task re-runs catalogers, so it must ensure each keeps to one row; a scan installs the
+		// registry up front, this covers a pipeline assembled without one
+		ctx = bus.WithCatalogerTaskRegistry(ctx)
+
+		// one progress row for the whole walk; the sub-pipeline's catalogers each report into the row
+		// they already own (see bus.WithCatalogerTaskRegistry), not this one
 		prog := bus.StartCatalogerTask(ctx, archiveCatalogerProgressInfo(), -1, "")
 		c := &archiveCataloger{
 			cfg:              cfg,
 			subPipeline:      subPipeline,
 			extractors:       archive.DefaultExtractors(),
-			limits:           archive.DefaultExtractionLimits(cfg),
 			limiter:          archive.NewLimiter(archive.DefaultLimits(cfg)),
-			newResolver:      newResolver,
 			newStoreResolver: newStoreResolver,
 			notify:           notify,
 			prog:             prog,
 		}
-		err := c.catalog(archive.WithLimiter(bus.WithCatalogerTaskProgress(ctx, prog), c.limiter), resolver, nil, 0, builder)
-		c.left()
+		err := c.catalog(archive.WithLimiter(ctx, c.limiter), resolver, nil, 0, builder)
+		c.left(nil)
 		c.logStats()
 		prog.SetCompleted()
+
 		return err
 	}
 	return NewTask(ArchiveCatalogerTaskName, fn, pkgcataloging.PackageTag, "archive")
@@ -91,7 +87,6 @@ func archiveCatalogerProgressInfo() monitor.GenericTask {
 	}
 }
 
-// withoutArchiveCataloger returns the given tasks with any archive-cataloger task removed.
 func withoutArchiveCataloger(tasks []Task) []Task {
 	out := make([]Task, 0, len(tasks))
 	for _, t := range tasks {
@@ -112,30 +107,22 @@ type archiveCataloger struct {
 	cfg              cataloging.ArchiveSearchConfig
 	subPipeline      []Task
 	extractors       []archive.Extractor
-	limits           archive.ExtractionLimits
-	newResolver      archive.ResolverFactory
 	newStoreResolver archive.StoreResolverFactory
 
-	// notify carries structured extraction events - which archive overflowed to disk and why, which was
-	// skipped - to whoever asked for them. Nil is the no-op, and nil is what a scan that wants nothing
-	// instrumented passes.
+	// notify carries structured extraction events - which archive spilled to disk and why, which was
+	// skipped. Nil is the no-op.
 	notify archive.Notify
 
-	// limiter measures the archive content this scan is holding right now, falling as each archive is
-	// released. One instance per task run, because one task run is one scan and that is the only
-	// scoping under which "held at once" means anything. It replaces a monotonic byte counter, which
-	// bounded a number matching no state that ever existed: every archive's extraction directory is
-	// removed on the way out while the counter only ever rose.
+	// limiter measures the archive content held right now, falling as each archive is released. One
+	// instance per task run, since one task run is one scan.
 	limiter *archive.Limiter
 
-	// prog is the single progress row for the whole walk: its stage names the archive currently being
-	// cataloged and its count is the number of archives entered so far. The recursion reports through
-	// this one row rather than letting the sub-pipeline start rows of its own at every level.
+	// prog is the single progress row for the whole walk: its count and stage are how many archives have
+	// been entered, its context names the one being cataloged right now.
 	prog *monitor.TaskProgress
 
-	// slowest is the archive that spent the most time on its own extraction and cataloging, named by
-	// its full virtual path. Guarded for the same reason the limiter is: the walk is sequential today
-	// and lives in a concurrent neighbourhood.
+	// slowest is the archive that spent the most time on its own extraction and cataloging, by virtual
+	// path. Guarded because the walk runs alongside the top-level catalogers.
 	statsMu      sync.Mutex
 	slowest      time.Duration
 	slowestPath  string
@@ -143,8 +130,7 @@ type archiveCataloger struct {
 }
 
 // recordArchiveTime keeps the longest self time seen and the archive that spent it. Self time
-// excludes the archives nested inside this one, which are timed against themselves - inclusive time
-// would name the outermost archive every run and say nothing.
+// excludes nested archives; inclusive time would name the outermost archive every run.
 func (c *archiveCataloger) recordArchiveTime(virtualPath string, took time.Duration) {
 	c.statsMu.Lock()
 	defer c.statsMu.Unlock()
@@ -155,11 +141,9 @@ func (c *archiveCataloger) recordArchiveTime(virtualPath string, took time.Durat
 	}
 }
 
-// logStats reports what the walk cost, once, when it is done. The two peaks are the high-water marks
-// of the gauges the limits are enforced against, so they are directly comparable to the configured
-// bounds - they are not process memory and not filesystem usage. Reported at info rather than debug
-// because it is one line per scan and it is what someone tuning the limits is looking for; the
-// per-archive skip and truncation lines around it stay at debug.
+// logStats reports what the walk cost, once, when it is done. The peaks are high-water marks of the
+// gauges the limits are enforced against - comparable to the configured bounds, not process memory or
+// filesystem usage. One line per scan, so it logs at info; per-archive lines stay at debug.
 func (c *archiveCataloger) logStats() {
 	c.statsMu.Lock()
 	slowest, slowestPath, seen := c.slowest, c.slowestPath, c.archivesSeen
@@ -178,7 +162,7 @@ func (c *archiveCataloger) logStats() {
 }
 
 // catalog discovers archives in the given resolver and processes each, recursing up to MaxDepth.
-// parent is the traversal for the archive whose contents are being searched (nil at the scan root).
+// parent is the traversal for the archive being searched (nil at the scan root).
 func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, parent *archive.Traversal, depth int, builder sbomsync.Builder) error {
 	if c.cfg.MaxDepth >= 0 && depth >= c.cfg.MaxDepth {
 		return nil
@@ -186,9 +170,8 @@ func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, 
 
 	var errs error
 	for _, candidate := range c.discoverArchives(resolver) {
-		// there is no between-archives check: a limit falls when an archive is released, so an
-		// archive that does not fit says nothing about the next one, and reaching a bound skips only
-		// the archive that reached it.
+		// no between-archives check: a limit falls when an archive is released, so reaching a bound skips
+		// only the archive that reached it
 		if err := c.processArchive(ctx, resolver, candidate, parent, depth, builder); err != nil {
 			errs = unknown.Append(errs, candidate.location, err)
 		}
@@ -204,10 +187,8 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	}
 	defer internal.CloseAndLogError(content, archiveLoc.AccessPath)
 
-	// a candidate that is only a candidate is checked cheaply before its bytes are read in full: an
-	// archive wearing a stub carries an entry signature near the front, and almost nothing else does.
-	// Reading every executable in a scan to its end to ask the authoritative question instead doubled
-	// a stock ruby image.
+	// check a non-sniffing candidate cheaply before reading it in full: an appended archive carries an
+	// entry signature near the front, and almost nothing else does
 	var archiveContent io.Reader = content
 	if !candidate.sniffedAsArchive {
 		var mayHide bool
@@ -217,23 +198,18 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		}
 	}
 
-	// self time for this archive: its extraction, its sub-pipeline and its merge, stopped before the
-	// recursive descent so a containing archive is not charged for what it contains
+	// self time: extraction, sub-pipeline and merge, stopped before the recursive descent so a
+	// containing archive is not charged for what it contains
 	started := time.Now()
 
-	// the extracted files inherit the filesystem id of the location the archive was found at,
-	// uniformly at every level: for an image source that is the layer digest, for a directory source
-	// it is empty, and inside another archive the enclosing resolver stamped it there already. The
-	// nesting chain is carried separately as the archive path (the colon-delimited chain of archive
-	// access paths from the scan root). Together these keep identically-named files in different
-	// archives - and the same archive path in different layers - apart in the coordinate-keyed tables.
+	// extracted files inherit the filesystem id of where the archive was found (a layer digest for an
+	// image source, empty for a directory source). The nesting chain rides separately as the archive
+	// path, so same-named files in different archives - and the same archive path in different layers -
+	// stay distinct in coordinate-keyed tables.
 	archivePath := parent.VirtualPathOf(accessPath(archiveLoc))
-	extracted, err := archive.ExtractToResolver(ctx, archiveContent, archiveLoc.AccessPath, archiveLoc.FileSystemID, archivePath, c.extractors, c.limiter, c.limits, c.newResolver, c.newStoreResolver, c.notify)
+	extracted, err := archive.ExtractToResolver(ctx, archiveContent, archiveLoc.AccessPath, archiveLoc.FileSystemID, archivePath, c.extractors, c.limiter, c.newStoreResolver, c.notify)
 	if errors.Is(err, archive.ErrDiskLimitReached) {
-		// the disk limit is terminal and nothing will be released while this archive waits, since
-		// the walk descends before it unwinds - so the archive is skipped and the scan continues.
-		// Attributed to the archive, because a log line carrying only the bound says nothing about
-		// what was lost.
+		// terminal: nothing is released while this archive waits, so skip it and continue the scan
 		log.WithFields("archive", accessPath(archiveLoc), "limit", c.cfg.MaxDiskBytes).
 			Debug("skipping archive whose content would exceed the disk limit")
 		return nil
@@ -242,29 +218,20 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		return err
 	}
 	if extracted == nil {
-		// nothing could open it: a format with no extractor (an ar archive, a bare gzip that is not a
-		// tar), or a candidate whose head could have been hiding an archive and was not. Logged, not
-		// returned as an error.
-		//
-		// Returning one was measured at 3x the scan on a stock ruby image, whose 3,679 gzip files are
-		// mostly man pages with no extractor: every one produced an error, and appending thousands of
-		// them into one chain that is then walked for coordinate errors is quadratic. A file syft
-		// cannot open is also not the failure `#archive-failure-is-not-fatal` is about - that is a
-		// corrupt archive, which fails during extraction and still returns an error from there.
+		// nothing could open it: a format with no extractor (ar, a bare non-tar gzip), or a candidate
+		// whose head only looked like it hid an archive. Logged rather than returned: an image can hold
+		// thousands, and accumulating an error each into a chain later walked for coordinate errors is
+		// quadratic. A corrupt archive does return an error.
 		log.WithFields("archive", accessPath(archiveLoc), "sniffed-as-archive", candidate.sniffedAsArchive).
 			Trace("no extractor could read this candidate; skipping")
 		return nil
 	}
-	// releases the extraction directory and gives back everything this archive charged to the
-	// limiter, after the sub-pipeline and after recursion
+	// releases the extraction directory and this archive's charges, after the sub-pipeline and recursion
 	defer extracted.Cleanup()
 
 	if extracted.Result.Truncated() {
-		// a bound stopped the extraction early: catalog what was written rather than discarding the
-		// archive, but say so, since the packages found here are not the full set. Recorded in the
-		// SBOM's unknowns and not only in the logs, because "syft saw part of this archive" is a fact
-		// about the SBOM's completeness that outlives the run that produced it - which is exactly what
-		// unknowns are for.
+		// catalog what was stored rather than discarding the archive, and record it in the SBOM's
+		// unknowns as well as the log, since the packages found here are not the full set
 		log.WithFields("archive", accessPath(archiveLoc), "limit", string(extracted.Result.Truncation)).
 			Debug("archive extraction truncated by a configured limit; cataloging partial contents")
 
@@ -275,58 +242,50 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		}})
 	}
 
-	// expose the nesting chain to catalogers in the sub-pipeline (and deeper recursion) so they can
-	// reconstruct nesting-aware identity (e.g. the java cataloger's colon-delimited virtual paths)
+	// expose the nesting chain to the sub-pipeline and deeper recursion, so catalogers can reconstruct
+	// nesting-aware identity such as the java cataloger's colon-delimited virtual paths
 	trav := &archive.Traversal{
-		Location:     archiveLoc,
-		VirtualPath:  archivePath,
-		FileSystemID: extracted.FileSystemID,
-		Depth:        depth + 1,
-		Parent:       parent,
-		Digests:      extracted.Digests,
+		Location:    archiveLoc,
+		VirtualPath: archivePath,
+		Digests:     extracted.Digests,
 	}
 	subCtx := archive.WithTraversal(ctx, trav)
 
-	c.entering(trav.VirtualPath)
+	c.entering()
 
-	// run the package/file cataloger sub-pipeline against the archive's standalone filesystem
 	scratch := c.runSubPipeline(subCtx, extracted.Resolver, archiveLoc.Coordinates)
 
-	// merge results into the shared SBOM and record file-level CONTAINS edges from this archive
 	mergeArchiveResults(archiveLoc.Coordinates, scratch, builder)
 
-	c.left()
+	c.left(trav)
 	c.recordArchiveTime(trav.VirtualPath, time.Since(started))
 
-	// recurse into archives nested within this one
 	return c.catalog(subCtx, extracted.Resolver, trav, depth+1, builder)
 }
 
-// entering records on the walk's single progress row that this archive is now being cataloged, and
-// left takes that row's stage back once it is done. Both are nil-safe, so a cataloger assembled
-// without a progress row simply reports nothing.
+// entering counts this archive onto the walk's single progress row; left takes the row's stage back
+// once the archive is done, naming it unless the whole walk has finished. Both are nil-safe.
 //
-// The row is taken back because the sub-pipeline shares its stage - that is what makes the nested
-// catalogers' progress visible - and each of them signs off with a summary of its own ("0
-// executables"). Left to stand, that summary is what the row reads while the next archive is being
-// extracted, which is both wrong and unchanging. The count of archives entered is the one thing the
-// row can say that is always true of the walk as a whole.
-func (c *archiveCataloger) entering(virtualPath string) {
+// The stage is reset because each sub-pipeline signs off with its own summary, which would otherwise
+// stand while the next archive is extracted. The count of archives entered is always true.
+func (c *archiveCataloger) entering() {
 	if c.prog == nil {
 		return
 	}
 	c.prog.Increment()
-	c.prog.AtomicStage.Set(virtualPath)
 }
 
-func (c *archiveCataloger) left() {
+func (c *archiveCataloger) left(traversal *archive.Traversal) {
 	if c.prog == nil {
 		return
 	}
-	c.prog.AtomicStage.Set(fmt.Sprintf("%s archives", humanize.Comma(c.prog.Current())))
+	if traversal == nil {
+		c.prog.AtomicStage.Set(fmt.Sprintf("%s archives", humanize.Comma(c.prog.Current())))
+	} else {
+		c.prog.AtomicStage.Set(fmt.Sprintf("%s archives (%s)", humanize.Comma(c.prog.Current()), traversal.VirtualPath))
+	}
 }
 
-// accessPath returns the location's access path, falling back to the real path when unset.
 func accessPath(loc file.Location) string {
 	if loc.AccessPath != "" {
 		return loc.AccessPath
@@ -334,14 +293,12 @@ func accessPath(loc file.Location) string {
 	return loc.RealPath
 }
 
-// runSubPipeline runs every cataloger task against the given resolver into a throwaway SBOM so the
-// results can be attributed to the containing archive before being merged into the shared SBOM.
+// runSubPipeline runs every cataloger task against the given resolver into a throwaway SBOM, so
+// results can be attributed to the containing archive before merging into the shared SBOM.
 //
-// A task's failure is recorded the same way RunTask records one at the top level (executor.go), so a
-// cataloger that fails inside an archive is visible in the SBOM's unknowns rather than only in the
-// logs: errors carrying their own coordinates keep them, and anything left has no location of its
-// own, so it is attributed to archiveCoord - the archive that was being cataloged. A failure here
-// never fails the archive or the scan.
+// Failures are recorded as RunTask records them at the top level (executor.go), so they land in the
+// SBOM's unknowns rather than only the logs: errors carrying coordinates keep them, anything left is
+// attributed to archiveCoord. A failure here never fails the archive or the scan.
 func (c *archiveCataloger) runSubPipeline(ctx context.Context, resolver file.Resolver, archiveCoord file.Coordinates) *sbom.SBOM {
 	scratch := &sbom.SBOM{
 		Artifacts: sbom.Artifacts{
@@ -376,50 +333,35 @@ type archiveCandidate struct {
 	location file.Location
 
 	// sniffedAsArchive is true when the file's own content types it as an archive. Such a file that
-	// then cannot be extracted is a broken archive and is reported; a candidate that got here only
-	// because its head could be hiding one is simply not an archive, and is passed over in silence.
+	// cannot be extracted is a broken archive and is reported; a candidate here only because its head
+	// might hide one is passed over silently.
 	sniffedAsArchive bool
 }
 
-// zipArchiveGlobs find the files worth a second look: those that claim to be zip archives by name
-// and whose content did not say so. A self-extracting archive is one - a launcher stub with a zip
-// concatenated onto it, typed by the stub - and the canonical case is a Spring Boot executable jar,
-// which sniffs as a shell script.
+// zipArchiveGlobs find files worth a second look: those named like zip archives whose content did not
+// sniff as one, such as a Spring Boot executable jar - a launcher stub with a zip appended, which
+// sniffs as a shell script.
 //
-// This is not a detection rule. Whether a candidate is an archive is settled by the
-// end-of-central-directory record and by nothing else, so a file named `.jar` that holds prose is
-// refused exactly as it is today. The name decides only what gets looked at.
+// Not a detection rule: the end-of-central-directory record settles whether a candidate is an
+// archive, so a `.jar` holding prose is still refused. The name decides only what gets opened, which
+// is why a self-extracting archive with no telling extension is not found.
 //
-// It is a glob rather than a MIME lookup because the MIME lookup was the whole cost. Asking the
-// resolver for every file that sniffs as executable, script, or unrecognized returns 3,274 locations
-// on a stock ruby image - all of which this then discarded, since none of them were named like
-// archives - and that one call took the scan from 15 seconds to 45. Asking for the names directly
-// returns the handful that matter.
-//
-// The limit this accepts is that a self-extracting archive with no telling extension is not found.
-// That is deliberate, and it is the one place here where a name decides whether syft looks.
-//
-// One pattern per extension, not one pattern with brace alternation: the alternation form matched
-// nothing, and the cost of the extra patterns is not measurable - the whole lookup is about a
-// millisecond and returns nothing on an image with no self-extracting archives in it.
+// A glob rather than a MIME lookup because asking for every file sniffed as executable, script or
+// unrecognized returns thousands of locations that are all discarded, which tripled the scan on a
+// stock ruby image. One pattern per extension because brace alternation matched nothing.
 var zipArchiveGlobs = []string{
 	"**/*.jar", "**/*.war", "**/*.ear", "**/*.par", "**/*.sar", "**/*.nar", "**/*.kar",
 	"**/*.hpi", "**/*.jpi", "**/*.far", "**/*.rar", "**/*.zip", "**/*.apk", "**/*.aar",
 	"**/*.egg", "**/*.whl", "**/*.lpkg", "**/*.zap", "**/*.exe",
 }
 
-// discoverArchives returns every location worth opening, in two groups.
+// discoverArchives returns every location worth opening: files that are archives by their own
+// content, plus files named like zip archives whose head says script or executable but whose tail may
+// still be a whole zip. The second group is only opened; the extractor refuses anything with no
+// end-of-central-directory record.
 //
-// There is no exclusion filter here on purpose. The scan's exclusion patterns are applied where each
-// filesystem is indexed - the source's own index for the scan root, and the extraction directory's
-// index for an archive's contents - so an excluded archive is not in the resolver to be returned in
-// the first place. Filtering again here would be a second mechanism answering the same question.
-//
-// The archive MIME types are archives by their own content. The appended set are files whose head
-// says script or executable and whose tail may still be a whole zip: a self-extracting archive is
-// typed by its stub, so nothing sniffed at offset zero can see it. Membership in the second set
-// decides only that a file is worth opening - whether it is an archive is decided by the extractor,
-// which refuses anything with no end-of-central-directory record.
+// No exclusion filter here: exclusion patterns are applied where each filesystem is indexed, so an
+// excluded archive is not in the resolver to begin with.
 func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCandidate {
 	archives, err := resolver.FilesByMIMEType(mimetype.ArchiveMIMETypeSet.List()...)
 	if err != nil {
@@ -443,10 +385,7 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 		seen[c.location.Coordinates] = struct{}{}
 	}
 	for _, loc := range appended {
-		// a location reached by both lookups is one file and must be opened once. The two sets are
-		// disjoint today, so this guards the invariant rather than a known overlap - and processing
-		// an archive twice would double every package it holds, which is the failure this whole
-		// design exists to prevent.
+		// one file reached by both lookups must be opened once, or every package it holds is doubled
 		if _, dup := seen[loc.Coordinates]; dup {
 			continue
 		}
@@ -456,9 +395,8 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 	return candidates
 }
 
-// mergeArchiveResults copies the throwaway SBOM's packages, files, and relationships into the shared
-// SBOM, and adds a file-level CONTAINS relationship from the archive's coordinates to every package
-// and file discovered inside it.
+// mergeArchiveResults copies the throwaway SBOM's packages, files and relationships into the shared
+// SBOM, adding a file-level CONTAINS relationship from the archive to everything found inside it.
 func mergeArchiveResults(archiveCoord file.Coordinates, scratch *sbom.SBOM, builder sbomsync.Builder) {
 	pkgs := scratch.Artifacts.Packages.Sorted()
 	if len(pkgs) > 0 {

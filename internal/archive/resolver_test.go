@@ -1,13 +1,12 @@
 package archive
 
 import (
-	"archive/tar"
 	"archive/zip"
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -19,48 +18,75 @@ import (
 )
 
 func TestExtractToResolver_writesUnderTheScansTempRoot(t *testing.T) {
-	// where an archive's scratch space lands is the scan's decision, not this package's: the root on
-	// the context is what a caller configured and what gets cleaned up if an archive's own cleanup is
-	// ever missed. Reaching for os.MkdirTemp instead put archive work outside all of that.
+	// where an archive's scratch space lands is the scan's decision: the root on the context is what the
+	// caller configured, and what gets cleaned up if an archive's own cleanup is missed
 	root := t.TempDir()
 	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(root))
 
-	var got Overflow
-	factory := func(overflow Overflow) (file.Resolver, IndexResult, error) {
-		got = overflow
-		return nil, IndexResult{Records: 1}, nil
+	factory := func(_ *EntryStore, _ Overflow) (file.Resolver, IndexResult, error) {
+		return nil, IndexResult{}, nil
 	}
 
+	// a zero memory bound, so this archive really does write: a work directory exists only once
+	// something has spilled into it
 	extracted, err := ExtractToResolver(
 		ctx, newTestZip(t, map[string]string{"hello.txt": "hi"}), "app.zip", "", "app.zip",
-		DefaultExtractors(), nil, ExtractionLimits{}, factory, nil, nil,
+		DefaultExtractors(), NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1}), factory, nil,
 	)
 	require.NoError(t, err)
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
 
-	assert.True(t, strings.HasPrefix(got.TarPath, root+string(os.PathSeparator)),
-		"the archive's entries must be written under the scan's temp root, got %q", got.TarPath)
+	// the work directory is not named by anything the resolver is handed, so it is observed where it
+	// lands: under the temp root the scan configured
+	workDirs := workDirsUnder(t, root)
+	require.Len(t, workDirs, 1, "expected one archive work directory under the scan's temp root")
 
 	// and the archive still cleans up after itself, so the root is a safety net rather than the only
 	// thing reclaiming the space
 	extracted.Cleanup()
-	_, statErr := os.Stat(got.RootDir)
+	_, statErr := os.Stat(workDirs[0])
 	assert.True(t, os.IsNotExist(statErr), "expected the archive work directory to be removed by Cleanup")
+}
+
+func TestExtractToResolver_anArchiveThatNeverWritesCreatesNoWorkDir(t *testing.T) {
+	// the scratch directory is created at the point of writing, so an archive held entirely in memory -
+	// which is most of them - costs no directory on the filesystem at all
+	root := t.TempDir()
+	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(root))
+
+	factory := func(_ *EntryStore, _ Overflow) (file.Resolver, IndexResult, error) {
+		return nil, IndexResult{}, nil
+	}
+
+	extracted, err := ExtractToResolver(
+		ctx, newTestZip(t, map[string]string{"hello.txt": "hi"}), "app.zip", "", "app.zip",
+		DefaultExtractors(), NewLimiter(Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}), factory, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, extracted)
+	t.Cleanup(extracted.Cleanup)
+
+	assert.Empty(t, workDirsUnder(t, root), "nothing was written, so no work directory was created")
+
+	// and cleanup of an archive that created nothing is still safe
+	extracted.Cleanup()
+	assert.Empty(t, workDirsUnder(t, root))
 }
 
 func TestExtractToResolver(t *testing.T) {
 	content := newTestZip(t, map[string]string{"dir/hello.txt": "hello world"})
 
 	var got Overflow
-	factory := func(overflow Overflow) (file.Resolver, IndexResult, error) {
-		got = overflow
-		return nil, IndexResult{Records: 1}, nil
+	var gotStore *EntryStore
+	factory := func(store *EntryStore, overflow Overflow) (file.Resolver, IndexResult, error) {
+		got, gotStore = overflow, store
+		return nil, IndexResult{}, nil
 	}
 
 	extracted, err := ExtractToResolver(
 		context.Background(), content, "some/path/app.zip", "parentFS", "app.war:some/path/app.zip",
-		DefaultExtractors(), nil, ExtractionLimits{}, factory, nil, nil,
+		DefaultExtractors(), nil, factory, nil,
 	)
 	require.NoError(t, err)
 	require.NotNil(t, extracted)
@@ -70,64 +96,106 @@ func TestExtractToResolver(t *testing.T) {
 	// separately as the archive path, and both are handed to the resolver factory
 	assert.Equal(t, "parentFS", extracted.FileSystemID)
 	assert.Equal(t, "parentFS", got.FileSystemID)
-	assert.Equal(t, "app.war:some/path/app.zip", extracted.ArchivePath)
 	assert.Equal(t, "app.war:some/path/app.zip", got.ArchivePath)
 
-	// the archive's entries are in the one tar handed to the factory, and its logical root is an
-	// empty directory beside it: an entry's path is reported relative to that root, and nothing is
-	// written into it
-	entries, err := os.ReadDir(got.RootDir)
-	require.NoError(t, err)
-	assert.Empty(t, entries, "the archive root holds no files: the entries are in the tar")
+	// the archive's entries are in the store handed to the factory, keyed by their archive-relative
+	// path: nothing was unpacked to a directory for the resolver to be pointed at
+	assert.Equal(t, "hello world", readStoreEntry(t, gotStore, "dir/hello.txt"))
 
-	body := readTarEntry(t, got.TarPath, "dir/hello.txt")
-	assert.Equal(t, "hello world", body)
-
-	// the count of entries this archive contributes is the index's answer, not the extractor's
-	assert.Equal(t, 1, extracted.Result.FilesExtracted)
-
-	// Cleanup removes the temp tree
 	extracted.Cleanup()
-	_, statErr := os.Stat(got.TarPath)
-	assert.True(t, os.IsNotExist(statErr), "expected the overflow tar to be removed by Cleanup")
-	_, statErr = os.Stat(got.RootDir)
-	assert.True(t, os.IsNotExist(statErr), "expected temp dir to be removed by Cleanup")
-}
-
-// readTarEntry returns the content of one entry of a tar on disk.
-func readTarEntry(t *testing.T, tarPath, name string) string {
-	t.Helper()
-	f, err := os.Open(tarPath)
-	require.NoError(t, err)
-	defer f.Close()
-
-	tr := tar.NewReader(f)
-	for {
-		hdr, err := tr.Next()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		require.NoError(t, err)
-		if hdr.Name != name {
-			continue
-		}
-		body, err := io.ReadAll(tr)
-		require.NoError(t, err)
-		return string(body)
-	}
-	t.Fatalf("no entry %q in %q", name, tarPath)
-	return ""
 }
 
 func TestExtractToResolver_notAnArchive(t *testing.T) {
-	factory := func(Overflow) (file.Resolver, IndexResult, error) { return nil, IndexResult{}, nil }
+	factory := func(*EntryStore, Overflow) (file.Resolver, IndexResult, error) { return nil, IndexResult{}, nil }
 
 	extracted, err := ExtractToResolver(
 		context.Background(), strings.NewReader("this is not an archive"), "notes.txt", "", "notes.txt",
-		DefaultExtractors(), nil, ExtractionLimits{}, factory, nil, nil,
+		DefaultExtractors(), nil, factory, nil,
 	)
 	require.NoError(t, err)
 	assert.Nil(t, extracted, "non-archive content should yield a nil ExtractedArchive")
+}
+
+func TestExtractToResolver_passesTheArchivesChargeToTheIndex(t *testing.T) {
+	// the index keeps more per entry than the store can measure - one node per path component - so it
+	// charges the scan's limiter itself, against this archive's handle
+	limiter := NewLimiter(Limits{MaxMemoryBytes: 1 << 20, MaxDiskBytes: 1 << 20})
+
+	var got Overflow
+	factory := func(_ *EntryStore, overflow Overflow) (file.Resolver, IndexResult, error) {
+		got = overflow
+		return nil, IndexResult{}, nil
+	}
+
+	extracted, err := ExtractToResolver(
+		context.Background(), newTestZip(t, map[string]string{"hello.txt": "hi"}), "app.zip", "", "app.zip",
+		DefaultExtractors(), limiter, factory, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, extracted)
+	t.Cleanup(extracted.Cleanup)
+
+	require.NotNil(t, got.Charge, "the index must be handed this archive's charge, not left unbounded")
+
+	// and it is this archive's handle, so Cleanup gives back whatever the index charged through it
+	require.True(t, got.Charge.Memory(4096))
+	before, _ := limiter.InUse()
+	require.Positive(t, before)
+
+	extracted.Cleanup()
+	after, _ := limiter.InUse()
+	assert.Zero(t, after, "everything the archive charged, the index included, is released with it")
+}
+
+func TestExtractToResolver_reportsAnIndexThatRanOutOfBudget(t *testing.T) {
+	// an index that stops part way is a truncation, not a failure: the archive is cataloged from what was
+	// indexed, and the reason names the index rather than the disk, which nothing was written to
+	factory := func(_ *EntryStore, _ Overflow) (file.Resolver, IndexResult, error) {
+		return nil, IndexResult{Truncated: true}, nil
+	}
+
+	extracted, err := ExtractToResolver(
+		context.Background(), newTestZip(t, map[string]string{"a.txt": "a", "b.txt": "b"}), "app.zip", "", "app.zip",
+		DefaultExtractors(), nil, factory, nil,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, extracted)
+	t.Cleanup(extracted.Cleanup)
+
+	assert.True(t, extracted.Result.Truncated())
+	assert.Equal(t, TruncatedByIndexLimit, extracted.Result.Truncation)
+}
+
+// workDirsUnder returns the archive work directories directly under the scan's temp root.
+func workDirsUnder(t *testing.T, root string) []string {
+	t.Helper()
+	children, err := os.ReadDir(root)
+	require.NoError(t, err)
+
+	var out []string
+	for _, child := range children {
+		if child.IsDir() && strings.HasPrefix(child.Name(), workDirName) {
+			out = append(out, filepath.Join(root, child.Name()))
+		}
+	}
+	return out
+}
+
+func readStoreEntry(t *testing.T, store *EntryStore, name string) string {
+	t.Helper()
+	require.NotNil(t, store)
+	for _, entry := range store.Entries() {
+		if entry.Header.Name != name {
+			continue
+		}
+		reader, err := store.Open(entry)
+		require.NoError(t, err)
+		body, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		return string(body)
+	}
+	t.Fatalf("no entry %q in the store", name)
+	return ""
 }
 
 func newTestZip(t *testing.T, files map[string]string) *bytes.Buffer {

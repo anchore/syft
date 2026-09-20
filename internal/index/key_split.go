@@ -1,12 +1,10 @@
 // Package index provides a concurrent key-split (radix) index and a forward/reverse pair over it.
 //
-// Ported from a prototype dir scan package whose search strategy this
-// exists to serve: a path index that answers "which entries end in .jar" and "which entries live
-// under this directory" without walking a tree, so a cataloger's `**/*.ext` glob is a lookup keyed
-// on the extension rather than a scan of every path.
+// It answers path queries like "which entries end in .jar" or "live under this directory" as keyed
+// lookups rather than tree walks, so a cataloger's `**/*.ext` glob need not scan every path.
 //
-// Kept close to the original so the two can be diffed. The lock type is local (see lock.go) rather
-// than pulled in from the prototype's sync/atomic package, which carries unrelated helpers.
+// Ported from a prototype dir-scan package and kept close to the original for diffing. The lock type
+// is local (see lock.go) rather than the prototype's, which carries unrelated helpers.
 package index
 
 import (
@@ -81,11 +79,6 @@ func (n *Node[T]) Value() (v T) {
 	return
 }
 
-func (n *Node[T]) Contains(s string) bool {
-	_, equal := n._find(s)
-	return equal
-}
-
 func (n *Node[T]) Get(s string) (out T) {
 	v, equal := n._find(s)
 	if !equal || v == nil {
@@ -108,6 +101,41 @@ func (n *Node[T]) ByPrefix(s string) []T {
 	return v.Collect()
 }
 
+// ByPrefixUpTo returns the values under s, or false once there are more than limit of them. It lets a
+// caller choosing between two lookups take whichever is selective without paying for the other: a
+// complete result costs at most limit. The values returned alongside false are partial; discard them.
+func (n *Node[T]) ByPrefixUpTo(s string, limit int) (values []T, complete bool) {
+	v, _ := n._find(s)
+	if v == nil {
+		return nil, true
+	}
+	return v.CollectUpTo(limit)
+}
+
+// CollectUpTo gathers this node's values, giving up as soon as there are more than limit.
+func (n *Node[T]) CollectUpTo(limit int) (values []T, complete bool) {
+	complete = n._collectUpTo(&values, limit)
+	return values, complete
+}
+
+func (n *Node[T]) _collectUpTo(values *[]T, limit int) bool {
+	defer n.RLock()()
+
+	if n.set {
+		if len(*values) >= limit {
+			return false
+		}
+		*values = append(*values, n.value)
+	}
+
+	for _, v := range n.keyMap {
+		if !v._collectUpTo(values, limit) {
+			return false
+		}
+	}
+	return true
+}
+
 func (n *Node[T]) Update(name string, f NodeUpdateFunc[T]) {
 	unlock := n.Lock()
 	node := n._makeNodeP(&unlock, name, nil)
@@ -120,14 +148,6 @@ func (n *Node[T]) SetValue(value T) {
 	unlock := n.Lock()
 	n.value = value
 	n.set = true
-	unlock()
-}
-
-func (n *Node[T]) UnsetValue() {
-	unlock := n.Lock()
-	var zero T
-	n.value = zero
-	n.set = false
 	unlock()
 }
 
@@ -149,7 +169,7 @@ func (n *Node[T]) _collect(values *[]T) {
 	unlock()
 }
 
-// _startsWith returns the node starting with the given string
+// _find returns the node for s and whether it matched exactly.
 func (n *Node[T]) _find(s string) (node *Node[T], equal bool) {
 	defer n.RLock()()
 

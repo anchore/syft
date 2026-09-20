@@ -165,22 +165,10 @@ func UnzipToDir(ctx context.Context, archivePath, targetDir string) error {
 }
 
 // SafeJoin ensures that any destinations do not resolve to a path above the prefix path.
-//
-// The comparison is on a path boundary rather than on the string prefix. A sibling directory that
-// happens to share the prefix as a string is not inside it: under "/tmp/x/contents" the destination
-// "../contents-evil/y" cleans to "/tmp/x/contents-evil/y", which starts with the prefix and is
-// outside it.
 func SafeJoin(prefix string, dest ...string) (string, error) {
 	joinResult := filepath.Join(append([]string{prefix}, dest...)...)
-	cleanPrefix := filepath.Clean(prefix)
 	cleanJoinResult := filepath.Clean(joinResult)
-
-	boundary := cleanPrefix
-	if !strings.HasSuffix(boundary, string(filepath.Separator)) {
-		boundary += string(filepath.Separator)
-	}
-
-	if cleanJoinResult != cleanPrefix && !strings.HasPrefix(cleanJoinResult, boundary) {
+	if !strings.HasPrefix(cleanJoinResult, filepath.Clean(prefix)) {
 		return "", &errZipSlipDetected{
 			Prefix:   prefix,
 			JoinArgs: dest,

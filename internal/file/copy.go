@@ -8,8 +8,7 @@ import (
 
 const perFileReadLimit = 2 * GB
 
-// SafeCopy limits the copy from the reader. This is useful when extracting files from archives to
-// protect against decompression bomb attacks.
+// SafeCopy bounds the copy to guard against decompression bombs when extracting from archives.
 func SafeCopy(writer io.Writer, reader io.Reader) error {
 	numBytes, err := io.Copy(writer, io.LimitReader(reader, perFileReadLimit))
 	if numBytes >= perFileReadLimit {

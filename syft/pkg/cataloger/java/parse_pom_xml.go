@@ -303,17 +303,13 @@ func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.
 	}
 }
 
-// isArchiveMetaPom returns true if the pom.xml location is inside a META-INF/maven directory,
-// indicating it is archive metadata embedded by the Maven build process rather than a project
-// pom.xml. These embedded pom.xml files are verbatim copies of the original build POM with
-// potentially unresolved ${property} references and dependency versions inherited from parent
-// POMs that are not available inside the archive. The java-archive-cataloger already uses
-// pom.properties (which always contains resolved values) to identify these archives, so the
-// pom cataloger should skip them to avoid creating phantom dependency packages.
+// isArchiveMetaPom reports whether a pom.xml sits under META-INF/maven, making it build metadata
+// Maven embedded rather than a project pom.xml. Such a pom is a verbatim copy of the build POM, with
+// unresolved ${property} references and versions inherited from parent POMs absent from the archive.
+// The java-archive-cataloger identifies these archives from pom.properties, whose values are always
+// resolved, so skipping them here avoids phantom dependency packages.
 func isArchiveMetaPom(location file.Location) bool {
-	p := location.Path()
-	// normalize to forward slashes for consistent matching
-	p = filepath.ToSlash(p)
+	p := filepath.ToSlash(location.Path())
 	return strings.Contains(p, "META-INF/maven/")
 }
 

@@ -11,8 +11,6 @@ import (
 )
 
 func Test_packageConfigDefaultsMatchArchiveSearchConfig(t *testing.T) {
-	// the nested-archive settings must default to the values in syft/cataloging rather than
-	// restating them, so a config round trip with nothing set is a no-op
 	want := cataloging.DefaultArchiveSearchConfig()
 	got := defaultPackageConfig()
 
@@ -24,9 +22,9 @@ func Test_packageConfigDefaultsMatchArchiveSearchConfig(t *testing.T) {
 }
 
 func Test_packageConfigNamesNoArchiveExclusionSetting(t *testing.T) {
-	// nested archive cataloging honors the scan's own --exclude patterns, so the application config
-	// must name no archive-specific exclusion key. Asserted over the yaml tags rather than over the
-	// Go field names, because the key is what a user writes and what a config dump shows.
+	// nested archive cataloging honors the scan's own --exclude patterns, so the application config must
+	// name no archive-specific exclusion key. Asserted over the yaml tags rather than the Go field names:
+	// the key is what a user writes and what a config dump shows.
 	var keys []string
 	typ := reflect.TypeOf(packageConfig{})
 	for i := 0; i < typ.NumField(); i++ {
@@ -56,8 +54,8 @@ func Test_ToArchiveConfig(t *testing.T) {
 	})
 
 	t.Run("every setting is threaded through", func(t *testing.T) {
-		// a key that parses but is not carried into the archive config is invisible in a
-		// config dump, so assert each one arrives
+		// a key that parses but is not carried into the archive config is invisible in a config
+		// dump, so assert each one arrives
 		cfg := Catalog{Package: packageConfig{
 			NestedArchiveMaxDepth:       3,
 			NestedArchiveMaxMemoryBytes: 111,
@@ -75,11 +73,10 @@ func Test_ToArchiveConfig(t *testing.T) {
 	})
 
 	t.Run("--exclude patterns arrive already filtered to the in-scope subset, with no source involved", func(t *testing.T) {
-		// every-boundary-populates-the-patterns: the CLI is one of the two boundaries that fills
-		// ExclusionPatterns, from Catalog.Exclusions, applying the same shape rule the library
-		// entry point applies to what the source publishes - only a pattern that reaches inside an
-		// archive (any-depth, "**/") is in scope. A root-anchored or one-level pattern is not, and
-		// no source is consulted to produce this: Catalog carries no source at all.
+		// every-boundary-populates-the-patterns: the CLI is one of the two boundaries filling
+		// ExclusionPatterns, from Catalog.Exclusions, applying the same shape rule the library entry
+		// point applies to what the source publishes - only an any-depth ("**/") pattern is in scope.
+		// A root-anchored or one-level pattern is not, and no source is consulted: Catalog carries none.
 		cfg := Catalog{Exclusions: []string{"./root-anchored", "**/*.rpm", "*/one-level", "**/vendor"}}
 		assert.Equal(t, []string{"**/*.rpm", "**/vendor"}, cfg.ToArchiveConfig().ExclusionPatterns)
 	})

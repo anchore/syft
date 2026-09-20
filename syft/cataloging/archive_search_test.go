@@ -18,15 +18,14 @@ func TestDefaultArchiveSearchConfig(t *testing.T) {
 }
 
 func TestArchiveSearchConfig_namesNoSeparateOverflowSize(t *testing.T) {
-	// two things are asserted by one list. The boundary between memory and disk is decided by the
-	// memory limit alone, so the surface must never grow a field naming a separate size at which
-	// content overflows. And nested archive cataloging honors the scan's own exclusion patterns, so the
-	// surface must name no exclusion setting of its own - an archive extension list here would be a
-	// second mechanism for a question the scan already answers.
-	// ExclusionPatterns is on the struct but is NOT config surface: it is derived, written only by
-	// CreateSBOM from what the source published, and reachable from no file, flag or variable. So it
-	// is listed here and separately asserted to carry no tags - which is what keeps this test able to
-	// catch a SETTABLE addition rather than merely any addition.
+	// one list, two assertions. The memory limit alone decides the boundary between memory and disk, so
+	// the surface must never grow a field naming a separate overflow size. And nested archive cataloging
+	// honors the scan's own exclusion patterns, so the surface must name no exclusion setting of its own
+	// - an archive extension list here would be a second mechanism for a question the scan answers.
+	// ExclusionPatterns is on the struct but is not config surface: derived, written only by CreateSBOM
+	// from what the source published, reachable from no file, flag or variable. It is listed here and
+	// separately asserted to carry no tags, which keeps this test catching a settable addition rather
+	// than any addition.
 	var settable, derived []string
 	typ := reflect.TypeOf(ArchiveSearchConfig{})
 	for i := 0; i < typ.NumField(); i++ {

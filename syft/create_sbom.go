@@ -38,15 +38,10 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	srcMetadata := src.Describe()
 
-	// read before the source builds its own resolver: exclusions belong to the source, and the
-	// archive cataloger needs them to index each archive it finds the way the scan indexes itself.
-	// This is the one type assertion (source.PathExcluder) left in the whole path. A local copy, so
-	// the CreateSBOMConfig the caller supplied is never mutated by deriving it.
-	//
-	// A value already present is never overwritten: cmd/syft/internal/options.ToArchiveConfig is the
-	// other boundary that populates this field, from the CLI's --exclude flag, and its value wins
-	// when set. The source is consulted only to fill an empty field, which is what makes
-	// "configure only your source" keep working for a library consumer who never touches this field.
+	// the archive cataloger needs the source's exclusions to index each archive the way the scan
+	// indexes itself. Copied locally so the caller's config is not mutated, and only when empty:
+	// options.ToArchiveConfig fills the same field from --exclude and wins when set, while a consumer
+	// who configures only their source still gets theirs.
 	archiveCfg := cfg.Archive
 	if len(archiveCfg.ExclusionPatterns) == 0 {
 		archiveCfg = archiveCfg.WithExclusionPatterns(sourceExclusions(src))
@@ -125,6 +120,11 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, error) {
 	// configure parallel executors
 	ctx = setContextExecutors(ctx, cfg)
+
+	// one progress row per cataloger for the whole scan, however many times it runs: the archive
+	// cataloger re-runs the pipeline against every archive it walks, and those findings belong on the
+	// row that cataloger already owns
+	ctx = bus.WithCatalogerTaskRegistry(ctx)
 
 	// configure temp dir factory for catalogers (if not already set)
 	if tmpdir.FromContext(ctx) == nil {

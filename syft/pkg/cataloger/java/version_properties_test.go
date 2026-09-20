@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
@@ -21,10 +20,10 @@ func readManifest(t *testing.T, ctx context.Context, parser *archiveParser) *pkg
 	matches := parser.entries.glob(false, manifestGlob)
 	require.Len(t, matches, 1)
 
-	contents, err := intFile.ContentsFromZip(ctx, parser.archivePath, matches...)
+	contents, err := parser.entries.contents(ctx, matches...)
 	require.NoError(t, err)
 
-	manifest, err := parseJavaManifest(parser.archivePath, strings.NewReader(contents[matches[0]]))
+	manifest, err := parseJavaManifest(parser.virtualPath, strings.NewReader(contents[matches[0]]))
 	require.NoError(t, err)
 
 	return manifest

@@ -120,9 +120,8 @@ func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
 }
 
 func (cfg Catalog) ToArchiveConfig() cataloging.ArchiveSearchConfig {
-	// the exclusion patterns come from the same --exclude flag that reaches the source, narrowed to
-	// the ones whose shape reaches inside an archive. CreateSBOM fills the field from the source only
-	// when it is empty, so this value wins.
+	// exclusion patterns come from --exclude, narrowed to those that reach inside an archive. CreateSBOM
+	// fills this field from the source only when empty, so this value wins.
 	return cataloging.DefaultArchiveSearchConfig().
 		WithIncludeIndexedArchives(cfg.Package.SearchIndexedArchives).
 		WithIncludeUnindexedArchives(cfg.Package.SearchUnindexedArchives).
