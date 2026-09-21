@@ -131,6 +131,10 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 			log.WithFields("key", key).Trace("unable to parse pnpm package key")
 			continue
 		}
+		if isPnpmToolchainEntry(pkgInfo.Resolution) {
+			log.WithFields("key", key).Trace("skipping pnpm toolchain entry")
+			continue
+		}
 		if isV5 {
 			ver = stripPnpmV5PeerSuffix(ver)
 		}
@@ -173,6 +177,10 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 		name, ver, ok := parsePnpmPackageKey(key, "@")
 		if !ok {
 			log.WithFields("key", key).Trace("unable to parse pnpm v9 package key")
+			continue
+		}
+		if isPnpmToolchainEntry(entry.Resolution) {
+			log.WithFields("key", key).Trace("skipping pnpm toolchain entry")
 			continue
 		}
 		pkgKey := name + "@" + ver
@@ -324,10 +332,23 @@ func mergePnpmPackages(into map[string]pnpmPackage, pkgs []pnpmPackage, doc int)
 	}
 }
 
+// isPnpmToolchainEntry reports whether a lockfile entry describes a toolchain pnpm
+// provisioned for the project (a devEngines.runtime Node, for instance) rather than an
+// npm package. pnpm records these with a "binary" resolution, or a "variations"
+// resolution holding one per-platform binary resolution each. They have no npm
+// coordinates, so cataloging one yields a purl such as pkg:npm/node@runtime%3A26.8.1
+// that identifies nothing.
+func isPnpmToolchainEntry(resolution map[string]any) bool {
+	switch resolution["type"] {
+	case "binary", "variations":
+		return true
+	}
+	return false
+}
 
 // integrityFromResolution reads the integrity string from a pnpm resolution map.
-// Nested variation resolutions have no top-level integrity field; those packages
-// are still cataloged with an empty integrity rather than aborting the lockfile.
+// A resolution can hold nested values rather than a flat set of strings, so a missing
+// or non-string integrity leaves the package with none rather than failing the entry.
 func integrityFromResolution(resolution map[string]any) string {
 	if resolution == nil {
 		return ""
