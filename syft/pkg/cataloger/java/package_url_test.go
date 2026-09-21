@@ -144,6 +144,7 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 	tests := []struct {
 		name     string
 		pkgName  string
+		version  string
 		metadata pkg.JavaArchive
 		expect   string
 	}{
@@ -219,6 +220,93 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 			expect:   "org.apache.derby",
 		},
 		{
+			// Groovy 4.0 moved from the Codehaus coordinates to the Apache Software
+			// Foundation. JARs that ship no pom metadata fall through to the known
+			// package list, whose groovy entries carry the 3.x-era group ID, so a
+			// major-version migration keeps 4.x artifacts under org.apache.groovy
+			// (github.com/anchore/syft/issues/5311).
+			name:     "known package list groovy 4",
+			pkgName:  "groovy",
+			version:  "4.0.33",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.apache.groovy",
+		},
+		{
+			name:     "known package list groovy 4 family",
+			pkgName:  "groovy-json",
+			version:  "4.0.33",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.apache.groovy",
+		},
+		{
+			name:     "groovy bare major version migrates",
+			pkgName:  "groovy",
+			version:  "4",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.apache.groovy",
+		},
+		{
+			name:     "groovy snapshot with numeric leading major migrates",
+			pkgName:  "groovy",
+			version:  "4.1-SNAPSHOT",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.apache.groovy",
+		},
+		{
+			name:     "groovy v-prefixed version is not a maven version and keeps the historical group",
+			pkgName:  "groovy",
+			version:  "v4.0.33",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.codehaus.groovy",
+		},
+		{
+			// The Eclipse-hosted groovy-eclipse-* artifacts share the groovy prefix
+			// but kept the Codehaus coordinates, so the migration must not capture
+			// them even at 4.x and newer.
+			name:     "groovy-eclipse artifacts keep the Codehaus group",
+			pkgName:  "groovy-eclipse-batch",
+			version:  "4.0.0",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.codehaus.groovy",
+		},
+		{
+			// The migration only applies where the static map attributes the
+			// artifact to the previous group; other mapped artifacts are untouched.
+			name:     "other mapped artifacts are unaffected by the migration",
+			pkgName:  "spring-boot-starter-groovy-templates",
+			version:  "4.0.33",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.springframework.boot",
+		},
+		{
+			name:     "known package list groovy 3 keeps the Codehaus group",
+			pkgName:  "groovy",
+			version:  "3.0.7",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.codehaus.groovy",
+		},
+		{
+			name:    "groovy 4 manifest without a dotted group falls through to the migration",
+			pkgName: "groovy",
+			version: "4.0.33",
+			metadata: pkg.JavaArchive{
+				Manifest: &pkg.JavaManifest{
+					Main: []pkg.KeyValue{
+						{Key: "Bundle-SymbolicName", Value: "groovy"},
+						{Key: "Implementation-Vendor", Value: "The Apache Software Foundation"},
+						{Key: "Automatic-Module-Name", Value: "org.apache.groovy"},
+					},
+				},
+			},
+			expect: "org.apache.groovy",
+		},
+		{
+			name:     "groovy without a parseable version keeps the historical group",
+			pkgName:  "groovy",
+			metadata: pkg.JavaArchive{},
+			expect:   "org.codehaus.groovy",
+		},
+		{
 			name: "java manifest",
 			metadata: pkg.JavaArchive{
 				Manifest: &pkg.JavaManifest{
@@ -241,7 +329,7 @@ func Test_groupIDFromJavaMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expect, groupIDFromJavaMetadata(tt.pkgName, tt.metadata))
+			assert.Equal(t, tt.expect, groupIDFromJavaMetadata(tt.pkgName, tt.version, tt.metadata))
 		})
 	}
 }
