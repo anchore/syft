@@ -91,14 +91,13 @@ func newGenericPnpmLockAdapter(cfg CatalogerConfig) genericPnpmLockAdapter {
 // Parse implements the pnpmLockfileParser interface for v6-v8 lockfiles.
 func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
+		// a type error means yaml.v3 filled every field it could and collected the rest,
+		// so keep those packages rather than dropping the document for one bad entry
 		var typeErr *yaml.TypeError
-		if errors.As(err, &typeErr) {
-			// yaml.v3 still fills fields it could decode; keep those packages
-			// rather than dropping the whole document for one bad entry.
-			log.WithFields("error", err).Trace("partial pnpm v6 lockfile decode; keeping successfully decoded entries")
-		} else {
+		if !errors.As(err, &typeErr) {
 			return nil, fmt.Errorf("failed to unmarshal pnpm v6 lockfile: %w", err)
 		}
+		log.WithFields("error", err).Trace("unable to fully decode pnpm lockfile, keeping the entries that decoded")
 	}
 
 	isV5 := version < 6.0
@@ -132,7 +131,7 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 			continue
 		}
 		if isPnpmToolchainEntry(pkgInfo.Resolution) {
-			log.WithFields("key", key).Trace("skipping pnpm toolchain entry")
+			log.WithFields("key", key, "resolution", pkgInfo.Resolution["type"]).Trace("skipping pnpm toolchain entry")
 			continue
 		}
 		if isV5 {
@@ -160,12 +159,12 @@ func (p *pnpmV6LockYaml) Parse(version float64, doc *yaml.Node) ([]pnpmPackage, 
 // Parse implements the PnpmLockfileParser interface for v9+ lockfiles.
 func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error) {
 	if err := doc.Decode(p); err != nil {
+		// see pnpmV6LockYaml.Parse: a type error is a partial decode, not a failed one
 		var typeErr *yaml.TypeError
-		if errors.As(err, &typeErr) {
-			log.WithFields("error", err).Trace("partial pnpm v9 lockfile decode; keeping successfully decoded entries")
-		} else {
+		if !errors.As(err, &typeErr) {
 			return nil, fmt.Errorf("failed to unmarshal pnpm v9 lockfile: %w", err)
 		}
+		log.WithFields("error", err).Trace("unable to fully decode pnpm v9 lockfile, keeping the entries that decoded")
 	}
 
 	packages := make(map[string]pnpmPackage)
@@ -180,7 +179,7 @@ func (p *pnpmV9LockYaml) Parse(_ float64, doc *yaml.Node) ([]pnpmPackage, error)
 			continue
 		}
 		if isPnpmToolchainEntry(entry.Resolution) {
-			log.WithFields("key", key).Trace("skipping pnpm toolchain entry")
+			log.WithFields("key", key, "resolution", entry.Resolution["type"]).Trace("skipping pnpm v9 toolchain entry")
 			continue
 		}
 		pkgKey := name + "@" + ver
