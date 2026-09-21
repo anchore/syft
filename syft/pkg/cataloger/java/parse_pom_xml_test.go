@@ -523,7 +523,26 @@ func Test_parsePomXMLSkipsInactiveProfiles(t *testing.T) {
 	}
 	finalizePackage(&onModernJdk)
 
-	expectedPkgs := []pkg.Package{probeApp, guava, onModernJdk}
+	// [99,) has an open upper bound: satisfied by a high enough JDK, whether or not one has shipped
+	// yet, so the profile's dependencies are kept
+	onlyOnJdk99 := pkg.Package{
+		Name:      "only-on-jdk99",
+		Version:   "9.9.9",
+		PURL:      "pkg:maven/com.example/only-on-jdk99@9.9.9",
+		Language:  pkg.Java,
+		Type:      pkg.JavaPkg,
+		FoundBy:   pomCatalogerName,
+		Locations: pomLocation,
+		Metadata: pkg.JavaArchive{
+			PomProperties: &pkg.JavaPomProperties{
+				GroupID:    "com.example",
+				ArtifactID: "only-on-jdk99",
+			},
+		},
+	}
+	finalizePackage(&onlyOnJdk99)
+
+	expectedPkgs := []pkg.Package{probeApp, guava, onModernJdk, onlyOnJdk99}
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: guava,
@@ -532,6 +551,11 @@ func Test_parsePomXMLSkipsInactiveProfiles(t *testing.T) {
 		},
 		{
 			From: onModernJdk,
+			To:   probeApp,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: onlyOnJdk99,
 			To:   probeApp,
 			Type: artifact.DependencyOfRelationship,
 		},
