@@ -5,25 +5,6 @@ import (
 	"strings"
 )
 
-// maxKnownJDKMajorVersion is the highest major version of a released JDK at the time of writing. It is used
-// to detect <jdk> activation requirements that no released JDK can satisfy (e.g. "[99,)"). This is
-// deliberately conservative: as newer JDKs ship, this bound only becomes more permissive (never drops
-// profiles it previously kept), and profiles keyed on unreleased JDKs are rare in practice.
-const maxKnownJDKMajorVersion = 26
-
-// jdkProbeVersions is the set of released JDK versions, in both legacy ("1.8") and modern ("17") notation,
-// used to test whether a <jdk> activation requirement is satisfiable by any build.
-var jdkProbeVersions = func() [][]int {
-	var probes [][]int
-	for major := 1; major <= 8; major++ {
-		probes = append(probes, []int{1, major}) // legacy notation: JDK 8 == "1.8"
-	}
-	for major := 1; major <= maxKnownJDKMajorVersion; major++ {
-		probes = append(probes, []int{major}) // modern notation (also matches legacy for 1-8)
-	}
-	return probes
-}()
-
 // profileCanBeActive indicates whether a pom profile could be active in some build, judging only from the
 // pom itself (a minimal subset of Maven profile activation semantics):
 //
@@ -68,23 +49,39 @@ func jdkRequirementSatisfiable(requirement string) bool {
 	}
 
 	if !strings.ContainsAny(requirement, "[]()") {
-		// bare version: treated as a minimum, satisfiable if any released JDK is at or above it
-		minimum, ok := parseVersionParts(requirement)
-		if !ok {
-			return true // unparseable: assume satisfiable rather than dropping dependencies
-		}
-		return anyProbeMatches(func(probe []int) bool {
-			return compareVersionParts(probe, minimum) >= 0
-		})
+		// bare version: treated as a minimum, and any minimum is met by a high enough JDK, whether
+		// or not one has shipped yet; unparseable values (e.g. negations like "!1.4") are assumed
+		// satisfiable rather than dropping dependencies
+		return true
 	}
 
-	// version range: probe the set of released JDKs against it
+	// version range
 	r := parseRangeSet(requirement)
 	if r == nil {
 		return true // unparseable: assume satisfiable rather than dropping dependencies
 	}
+	if r.upper == nil {
+		// open upper bound: satisfiable by a high enough JDK, whether or not one has shipped yet;
+		// only an upper bound can make the range empty
+		return true
+	}
 	return anyProbeMatches(r.matches)
 }
+
+// jdkProbeVersions is the set of released JDK versions, in both legacy ("1.8") and modern ("17") notation,
+// used to test whether a <jdk> activation requirement with an upper bound is satisfiable by any build.
+// Only ranges with an upper bound reach this: an open upper bound is treated as satisfiable without
+// probing, so this set does not need to track newly released JDK majors.
+var jdkProbeVersions = func() [][]int {
+	var probes [][]int
+	for major := 1; major <= 8; major++ {
+		probes = append(probes, []int{1, major}) // legacy notation: JDK 8 == "1.8"
+	}
+	for major := 1; major <= 26; major++ {
+		probes = append(probes, []int{major}) // modern notation (also matches legacy for 1-8)
+	}
+	return probes
+}()
 
 func anyProbeMatches(matches func(probe []int) bool) bool {
 	for _, probe := range jdkProbeVersions {

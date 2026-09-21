@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- reproducer from https://github.com/anchore/syft/issues/5269:
-     never-active and explicit-off profiles must NOT contribute packages,
-     while a satisfiable activation (jdk 9+) must still contribute -->
+     explicit-off profile must NOT contribute packages,
+     a satisfiable activation (jdk 9+) must contribute,
+     and an open upper bound ([99,)) is treated as satisfiable (a high enough JDK), so it contributes too -->
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.example</groupId>
@@ -16,7 +17,7 @@
   </dependencies>
   <profiles>
     <profile>
-      <id>never-active</id>
+      <id>future-jdk</id>
       <activation>
         <jdk>[99,)</jdk>
       </activation>

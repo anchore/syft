@@ -67,12 +67,12 @@ func Test_profileCanBeActive(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "jdk unsatisfiable lower bound",
+			name: "jdk open upper bound beyond any released JDK",
 			profile: `<profile>
-				<id>never-active</id>
+				<id>future-jdk</id>
 				<activation><jdk>[99,)</jdk></activation>
 			</profile>`,
-			expected: false,
+			expected: true, // satisfied by a high enough JDK, whether or not one has shipped yet
 		},
 		{
 			name: "jdk empty range",
@@ -91,12 +91,12 @@ func Test_profileCanBeActive(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "jdk exact version beyond any release",
+			name: "jdk bare version beyond any released JDK",
 			profile: `<profile>
-				<id>jdk-99-exact</id>
+				<id>jdk-99-minimum</id>
 				<activation><jdk>99</jdk></activation>
 			</profile>`,
-			expected: false,
+			expected: true, // a bare version is a minimum, satisfiable by a high enough JDK
 		},
 		{
 			name: "os activator not evaluated",
@@ -147,8 +147,10 @@ func Test_DirectPomDependencies_skipsInactiveProfiles(t *testing.T) {
 	</dependencies>
 	<profiles>
 		<profile>
-			<id>never-active</id>
-			<activation><jdk>[99,)</jdk></activation>
+			<id>future-jdk</id>
+			<activation>
+				<jdk>[99,)</jdk>
+			</activation>
 			<dependencies>
 				<dependency>
 					<groupId>com.example</groupId>
@@ -189,5 +191,5 @@ func Test_DirectPomDependencies_skipsInactiveProfiles(t *testing.T) {
 	for _, dep := range DirectPomDependencies(pom) {
 		names = append(names, deref(dep.ArtifactID))
 	}
-	assert.ElementsMatch(t, []string{"guava", "on-modern-jdk"}, names)
+	assert.ElementsMatch(t, []string{"guava", "on-modern-jdk", "only-on-jdk99"}, names)
 }
