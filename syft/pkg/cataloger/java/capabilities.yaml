@@ -7,6 +7,12 @@ configs: # AUTO-GENERATED - config structs and their fields
         description: IncludeIndexedArchives indicates whether to search within indexed archive files (e.g., .zip).
       - key: IncludeUnindexedArchives
         description: IncludeUnindexedArchives indicates whether to search within unindexed archive files (e.g., .tar*).
+      - key: MaxDepth
+        description: 'MaxDepth is how many levels of nested archives to catalog: 0 disables it, negative is unbounded.'
+      - key: MaxMemoryBytes
+        description: MaxMemoryBytes bounds the archive content held in memory at once; content that does not fit is written to disk. Zero writes everything to disk, negative is unbounded.
+      - key: MaxDiskBytes
+        description: MaxDiskBytes bounds the archive content written to disk at once; an archive whose content does not fit is skipped or truncated. Zero writes nothing to disk, negative is unbounded.
       - key: UseNetwork
         description: UseNetwork enables network operations for java package metadata enrichment, such as fetching parent POMs and license information.
         app_key: java.use-network
