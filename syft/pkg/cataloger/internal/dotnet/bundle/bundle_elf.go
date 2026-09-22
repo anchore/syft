@@ -1,11 +1,8 @@
 package bundle
 
 import (
-	"bytes"
 	"debug/elf"
-	"encoding/binary"
 	"errors"
-	"io"
 
 	"github.com/anchore/syft/syft/internal/elfutil"
 	"github.com/anchore/syft/syft/internal/unionreader"
@@ -14,51 +11,18 @@ import (
 // ExtractDepsJSONFromELFBundle extracts the deps.json content from a .net singlefile
 // bundle contained within an ELF bin
 func ExtractDepsJSONFromELFBundle(r unionreader.UnionReader) (string, error) {
-	headerOffset, err := findBundleHeaderOffsetInELF(r)
-	if err != nil || headerOffset == 0 {
-		return "", err
-	}
-	return ReadDepsJSONFromBundleHeader(r, headerOffset)
-}
-
-func findBundleHeaderOffsetInELF(r unionreader.UnionReader) (int64, error) {
 	elfFile, err := elfutil.NewFile(r)
 	if err != nil {
-		return 0, nil
+		// a refusal is not the same as "this is not an ELF": elfutil exports this error precisely so the
+		// gap it leaves in the SBOM can be reported rather than read as an absence of evidence
+		if errors.Is(err, elfutil.ErrDeclaredSizeExceeded) {
+			return "", err
+		}
+		// not an ELF we can parse, so not an ELF bundle
+		return "", nil //nolint:nilerr
 	}
 
-	elfEndOffset := calculateELFEndOffset(elfFile)
-	if elfEndOffset == 0 {
-		return 0, nil
-	}
-
-	// clamp to the actual file size so a malformed ELF (with bogus segment/section
-	// offsets+sizes) can't drive an arbitrarily large allocation below.
-	fileSize, err := r.Seek(0, io.SeekEnd)
-	if err != nil {
-		return 0, err
-	}
-	if elfEndOffset > fileSize {
-		elfEndOffset = fileSize
-	}
-
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return 0, err
-	}
-
-	searchData := make([]byte, elfEndOffset)
-	n, err := io.ReadFull(r, searchData)
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
-		return 0, err
-	}
-	searchData = searchData[:n]
-
-	idx := bytes.Index(searchData, dotNetBundleSignature)
-	if idx == -1 || idx < 8 {
-		return 0, nil
-	}
-
-	return int64(binary.LittleEndian.Uint64(searchData[idx-8 : idx])), nil
+	return ExtractDepsJSON(r, calculateELFEndOffset(elfFile))
 }
 
 func calculateELFEndOffset(f *elf.File) int64 {

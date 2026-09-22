@@ -205,7 +205,7 @@ func (r *Resolver) resolveProjectProperty(ctx context.Context, resolutionContext
 
 				pomValue = pomValue.Field(fieldNum)
 				pomValueType = pomValue.Type()
-				if pomValueType.Kind() == reflect.Ptr {
+				if pomValueType.Kind() == reflect.Pointer {
 					// we were recursing down the nested structs, but one of the steps
 					// we need to take is a nil pointer, so give up
 					if pomValue.IsNil() {

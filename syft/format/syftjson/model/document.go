@@ -5,6 +5,14 @@ import (
 	"fmt"
 )
 
+// Field order matters: encoding/json writes struct fields in declaration order, and Schema must remain the last
+// field so that the schema block is always the final key of the encoded document. Format identification relies on
+// finding the schema block by reading only the tail of a (potentially very large) document; moving Schema earlier
+// would not break decoding but would silently force a full parse of the whole document to identify it.
+//
+// (This block is deliberately separated from the doc comment below: the JSON schema generator lifts doc comments
+// into schema descriptions, and changing the description would alter the published schema.)
+
 // Document represents the syft cataloging findings as a JSON document
 type Document struct {
 	Artifacts             []Package      `json:"artifacts"` // Artifacts is the list of packages discovered and placed into the catalog

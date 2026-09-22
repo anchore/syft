@@ -83,20 +83,30 @@ func removeRelationships(relationships []*spdx.Relationship, spdxID spdx.Element
 }
 
 func findRootPackages(doc *spdx.Document) (out []*spdx.Package) {
+	// index the DESCRIBES / DESCRIBED_BY relationships once, counting how many
+	// times each element is described by the document, so that the result
+	// matches the previous packages x relationships scan exactly (one entry per
+	// matching relationship) without the quadratic cost.
+	describedCount := make(map[spdx.ElementID]int)
+	for _, r := range doc.Relationships {
+		if r == nil {
+			continue
+		}
+		switch {
+		case r.RefA.ElementRefID == "DOCUMENT" && r.Relationship == spdx.RelationshipDescribes:
+			describedCount[r.RefB.ElementRefID]++
+		case r.RefB.ElementRefID == "DOCUMENT" && r.Relationship == spdx.RelationshipDescribedBy:
+			describedCount[r.RefA.ElementRefID]++
+		}
+	}
+	if len(describedCount) == 0 {
+		return nil
+	}
 	for _, p := range doc.Packages {
-		for _, r := range doc.Relationships {
-			describes := r.RefA.ElementRefID == "DOCUMENT" &&
-				r.Relationship == spdx.RelationshipDescribes &&
-				r.RefB.ElementRefID == p.PackageSPDXIdentifier
-
-			describedBy := r.RefB.ElementRefID == "DOCUMENT" &&
-				r.Relationship == spdx.RelationshipDescribedBy &&
-				r.RefA.ElementRefID == p.PackageSPDXIdentifier
-
-			if !describes && !describedBy {
-				continue
-			}
-
+		if p == nil {
+			continue
+		}
+		for i := 0; i < describedCount[p.PackageSPDXIdentifier]; i++ {
 			out = append(out, p)
 		}
 	}

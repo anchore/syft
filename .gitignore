@@ -20,6 +20,7 @@ bin/
 /.tool
 /.task
 /generate
+/spec
 /specs
 mise.toml
 .make/.make

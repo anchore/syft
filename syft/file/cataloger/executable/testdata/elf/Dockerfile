@@ -19,4 +19,4 @@ RUN printf 'deb http://archive.debian.org/debian bullseye main\ndeb http://archi
 #RUN cd selfrando && make -j`nprocs --all`
 #RUN cd selfrando && make install
 
-RUN curl -o /bin/checksec https://raw.githubusercontent.com/slimm609/checksec.sh/2.6.0/checksec && chmod +x /bin/checksec
+RUN curl -f -o /bin/checksec https://raw.githubusercontent.com/slimm609/checksec.sh/2.6.0/checksec && chmod +x /bin/checksec

@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/source/directorysource"
 )
 
+//nolint:goconst // fixture data: the repeated names and versions are what the golden files assert against, so they read better spelled out than behind constants
 func DirectoryInput(t testing.TB, dir string) sbom.SBOM {
 	catalog := newDirectoryCatalog()
 
@@ -97,6 +98,7 @@ func DirectoryInputWithAuthorField(t testing.TB) sbom.SBOM {
 	}
 }
 
+//nolint:goconst // fixture data: the repeated names and versions are what the golden files assert against, so they read better spelled out than behind constants
 func newDirectoryCatalog() *pkg.Collection {
 	catalog := pkg.NewCollection()
 	ctx := context.TODO()

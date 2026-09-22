@@ -2415,6 +2415,9 @@
       "@azure/ms-rest-nodeauth": [
         "cpe:2.3:a:microsoft:ms-rest-nodeauth:*:*:*:*:*:node.js:*:*"
       ],
+      "@azure/msal-node": [
+        "cpe:2.3:a:microsoft:azure\\/msal-node:*:*:*:*:*:node.js:*:*"
+      ],
       "@backstage/backend-common": [
         "cpe:2.3:a:linuxfoundation:backstage_backend-common:*:*:*:*:*:node.js:*:*"
       ],
@@ -2729,6 +2732,9 @@
       "@saltcorn/server": [
         "cpe:2.3:a:saltcorn:saltcorn:*:*:*:*:*:*:*:*"
       ],
+      "@sap/approuter": [
+        "cpe:2.3:a:sap:approuter:*:*:*:*:*:node.js:*:*"
+      ],
       "@sap/xssec": [
         "cpe:2.3:a:sap:\\@sap\\/xssec:*:*:*:*:*:node.js:*:*"
       ],
@@ -2958,6 +2964,9 @@
       ],
       "auth0-js": [
         "cpe:2.3:a:auth0:auth0.js:*:*:*:*:*:node.js:*:*"
+      ],
+      "auth0-lock": [
+        "cpe:2.3:a:auth0:lock:*:*:*:*:*:node.js:*:*"
       ],
       "aws-lambda-multipart-parser": [
         "cpe:2.3:a:aws-lambda-multipart-parser_project:aws-lambda-multipart-parser:*:*:*:*:*:node.js:*:*"
@@ -5915,6 +5924,9 @@
       "stimulsoft-dashboards-js": [
         "cpe:2.3:a:stimulsoft:dashboard.js:*:*:*:*:*:node.js:*:*"
       ],
+      "store2": [
+        "cpe:2.3:a:nbubna:store:*:*:*:*:*:node.js:*:*"
+      ],
       "storybook": [
         "cpe:2.3:a:storybook:storybook:*:*:*:*:*:node.js:*:*"
       ],
@@ -6852,6 +6864,9 @@
       ],
       "marshmallow": [
         "cpe:2.3:a:marshmallow_project:marshmallow:*:*:*:*:*:python:*:*"
+      ],
+      "mcp-contextforge-gateway": [
+        "cpe:2.3:a:ibm:contextforge:*:*:*:*:*:python:*:*"
       ],
       "mcp-memory-service": [
         "cpe:2.3:a:doobidoo:mcp-memory-service:*:*:*:*:*:*:*:*"

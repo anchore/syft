@@ -2,13 +2,21 @@ package arch
 
 import (
 	"bufio"
+	"bytes"
+	"compress/gzip"
+	"fmt"
+	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 )
@@ -155,6 +163,26 @@ func TestDatabaseParser(t *testing.T) {
 	}
 }
 
+func Test_parseAlpmDBEntry_malformedDatabase(t *testing.T) {
+	t.Run("backup line with no tab", func(t *testing.T) {
+		// this used to panic, which drops every package rather than the one
+		entry, err := parseAlpmDBEntry(strings.NewReader("%NAME%\nfoo\n\n%BACKUP%\nnotabhere\n\n"))
+
+		require.NoError(t, err)
+		require.NotNil(t, entry)
+		require.Empty(t, entry.Backup)
+	})
+
+	t.Run("field over the scanner's token cap", func(t *testing.T) {
+		// everything after the oversize field is lost, so this has to error rather than look complete
+		db := "%NAME%\nfoo\n\n%DESC%\n" + strings.Repeat("x", 2*intFile.MB) + "\n\n%ARCH%\nx86_64\n\n"
+
+		_, err := parseAlpmDBEntry(strings.NewReader(db))
+
+		require.ErrorIs(t, err, bufio.ErrTooLong)
+	})
+}
+
 func parseTime(stime string) time.Time {
 	t, _ := time.Parse(time.RFC3339, stime)
 	return t
@@ -207,6 +235,7 @@ func TestMtreeParse(t *testing.T) {
 
 			reader := bufio.NewReader(f)
 
+			// a normal listing must not trip any of the bounds
 			entry, err := parseMtree(reader)
 			require.NoError(t, err)
 
@@ -216,4 +245,320 @@ func TestMtreeParse(t *testing.T) {
 		})
 	}
 
+}
+
+// mtreeSpec builds a valid listing of n files. Boundary tests need the parser to reach the end of
+// it, which filler bytes never do.
+func mtreeSpec(n int) []byte {
+	var buf bytes.Buffer
+	buf.WriteString("#mtree\n")
+	buf.WriteString("/set type=file uid=0 gid=0 mode=644\n")
+	for i := range n {
+		fmt.Fprintf(&buf, "./file%d time=1649595592.0 size=10 sha256digest=%064x\n", i, i)
+	}
+	return buf.Bytes()
+}
+
+func gzipOf(t *testing.T, data []byte) io.Reader {
+	t.Helper()
+
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	_, err := w.Write(data)
+	require.NoError(t, err)
+	require.NoError(t, w.Close())
+
+	return bytes.NewReader(buf.Bytes())
+}
+
+// gzipOfRepeated builds a gzip member decompressing to n bytes of one repeated byte, so a few KB of
+// input expands to whatever size the caller asks for.
+func gzipOfRepeated(t *testing.T, payload byte, n int64) *bytes.Reader {
+	t.Helper()
+
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	chunk := bytes.Repeat([]byte{payload}, 32*1024)
+	for remaining := n; remaining > 0; {
+		size := min(remaining, int64(len(chunk)))
+		written, err := w.Write(chunk[:size])
+		require.NoError(t, err)
+		remaining -= int64(written)
+	}
+	require.NoError(t, w.Close())
+
+	return bytes.NewReader(buf.Bytes())
+}
+
+func Test_parseMtree_boundsDecompressedSize(t *testing.T) {
+	// limits come from the fixture, so both sides of the boundary are exact
+	spec := mtreeSpec(50)
+
+	t.Run("a listing at the cap parses whole", func(t *testing.T) {
+		records, err := parseMtreeWithLimits(gzipOf(t, spec), int64(len(spec)), maxMtreeLines)
+
+		// records, not just no error: landing exactly on the cap must not truncate
+		require.NoError(t, err)
+		require.Len(t, records, 50)
+		require.Equal(t, "/file0", records[0].Path)
+		require.Equal(t, "/file49", records[49].Path)
+	})
+
+	t.Run("rejects a listing one byte past the cap", func(t *testing.T) {
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), int64(len(spec))-1, maxMtreeLines)
+
+		require.ErrorIs(t, err, errMtreeTooLarge)
+	})
+}
+
+// Test_parseMtree_shippedConstants pins the production values. The boundary tests parameterize the
+// limits, so they would pass unchanged if a constant regressed. Driving a real 64MB listing through
+// the parser instead cost 12s of a 16s race run.
+func Test_parseMtree_shippedConstants(t *testing.T) {
+	require.Equal(t, int64(64*intFile.MB), int64(maxMtreeSize))
+	require.Equal(t, 300_000, maxMtreeLines)
+}
+
+func Test_parseMtree_boundsLineCount(t *testing.T) {
+	// the byte cap does not bound memory: the parser keeps an entry per line, blanks included
+	spec := mtreeSpec(50)
+	lines := bytes.Count(spec, []byte("\n")) // the two header lines get entries of their own
+
+	t.Run("a listing at the cap parses whole", func(t *testing.T) {
+		records, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, lines)
+
+		require.NoError(t, err)
+		require.Len(t, records, 50)
+	})
+
+	t.Run("rejects a listing one line past the cap", func(t *testing.T) {
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, lines-1)
+
+		require.ErrorIs(t, err, errTooManyMtreeLines)
+	})
+
+	t.Run("rejects a bomb at the production limits without reading all of it", func(t *testing.T) {
+		// what the cap exists for: a few KB expanding past the line cap while inside the byte cap
+		bomb := gzipOfRepeated(t, '\n', 4*1024*1024)
+		require.Less(t, bomb.Size(), int64(64*1024), "payload should be small enough to be worth rejecting")
+
+		counted := &countingReader{reader: bomb}
+
+		_, err := parseMtree(counted)
+
+		require.ErrorIs(t, err, errTooManyMtreeLines)
+
+		// what matters is giving up mid-read, not after building the whole listing. Bytes consumed is
+		// the stable way to check that; an allocation delta drifts with GC and parallelism.
+		require.Less(t, counted.n, bomb.Size(),
+			"the whole bomb was read, so the cap tripped after the parse rather than during it")
+	})
+}
+
+// countingReader records how many bytes were pulled through it.
+type countingReader struct {
+	reader io.Reader
+	n      int64
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.reader.Read(p)
+	c.n += int64(n)
+	return n, err
+}
+
+// Test_parseMtree_sizeCapTakesPrecedenceOverLineCap pins which error wins when one read exceeds both
+// bounds. No other test exceeds both at once, so a reorder would go unnoticed.
+func Test_parseMtree_sizeCapTakesPrecedenceOverLineCap(t *testing.T) {
+	spec := mtreeSpec(50)
+
+	// maxLines=0 trips on the first newline; maxSize=20 is drained by that same read
+	_, err := parseMtreeWithLimits(gzipOf(t, spec), 20, 0)
+
+	require.ErrorIs(t, err, errMtreeTooLarge)
+	require.NotErrorIs(t, err, errTooManyMtreeLines)
+}
+
+func Test_parseMtree_rejectsLineContinuations(t *testing.T) {
+	// go-mtree strips a trailing carriage return before testing for the backslash, so CRLF continues
+	// a line too
+	for _, lineEnding := range []string{"\\\n", "\\\r\n"} {
+		t.Run(fmt.Sprintf("%q", lineEnding), func(t *testing.T) {
+			spec := mtreeSpec(5)
+			spec = bytes.Replace(spec, []byte("size=10 sha256digest="), []byte("size=10 "+lineEnding+"sha256digest="), 1)
+
+			_, err := parseMtree(gzipOf(t, spec))
+
+			require.ErrorIs(t, err, errMtreeLineContinued)
+		})
+	}
+}
+
+// scriptedReader replays a fixed sequence of Read results, driving the straddling case directly.
+type scriptedReader struct {
+	chunks []string
+}
+
+func (r *scriptedReader) Read(p []byte) (int, error) {
+	if len(r.chunks) == 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, r.chunks[0])
+	// keep what did not fit, so a short buffer still obeys io.Reader
+	if n < len(r.chunks[0]) {
+		r.chunks[0] = r.chunks[0][n:]
+	} else {
+		r.chunks = r.chunks[1:]
+	}
+	return n, nil
+}
+
+func Test_lineLimitedReader_rejectsStraddlingContinuation(t *testing.T) {
+	// the backslash and its line ending land in separate Read calls, which happens for real: the
+	// io.LimitedReader truncates the buffer and flate returns short reads.
+	tests := []struct {
+		name   string
+		chunks []string
+	}{
+		{name: "lf", chunks: []string{"...\\", "\n..."}},
+		{name: "crlf", chunks: []string{"...\\", "\r\n..."}},
+		{name: "crlf split at the carriage return", chunks: []string{"...\\\r", "\n..."}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lr := &lineLimitedReader{reader: &scriptedReader{chunks: tt.chunks}, max: 100}
+
+			var err error
+			buf := make([]byte, 16)
+			for err == nil {
+				_, err = lr.Read(buf)
+			}
+
+			require.ErrorIs(t, err, errMtreeLineContinued)
+		})
+	}
+}
+
+func Test_lineLimitedReader_latchesTheError(t *testing.T) {
+	// a tripped bound must not come back clean on the next read
+	lr := &lineLimitedReader{reader: &scriptedReader{chunks: []string{"a\\\nb", "clean"}}, max: 100}
+
+	buf := make([]byte, 16)
+	_, first := lr.Read(buf)
+	require.ErrorIs(t, first, errMtreeLineContinued)
+
+	n, second := lr.Read(buf)
+
+	require.ErrorIs(t, second, errMtreeLineContinued)
+	require.Zero(t, n)
+}
+
+func Test_parseMtree_malformedInput(t *testing.T) {
+	t.Run("not gzip", func(t *testing.T) {
+		_, err := parseMtree(bytes.NewReader(mtreeSpec(2)))
+
+		require.ErrorIs(t, err, gzip.ErrHeader)
+	})
+
+	t.Run("truncated gzip", func(t *testing.T) {
+		spec := mtreeSpec(50)
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, gzipOf(t, spec))
+		require.NoError(t, err)
+
+		// the cap sits just above what the truncated stream delivers, so the size check and the
+		// truncation actually race. The shipped 64MB cap could never fire here.
+		_, err = parseMtreeWithLimits(bytes.NewReader(buf.Bytes()[:buf.Len()/2]), int64(len(spec)), maxMtreeLines)
+
+		// must fail, but not as a size-bound trip
+		require.Error(t, err)
+		require.NotErrorIs(t, err, errMtreeTooLarge)
+	})
+
+	t.Run("single line over the scanner's token cap", func(t *testing.T) {
+		// the third bound is go-mtree's scanner, at the default 64KB token limit. Nothing else here
+		// would catch a dependency bump that calls scanner.Buffer.
+		spec := append([]byte("#mtree\n./big "), bytes.Repeat([]byte("a"), 128*1024)...)
+
+		_, err := parseMtree(gzipOf(t, append(spec, '\n')))
+
+		require.ErrorContains(t, err, "token too long")
+	})
+}
+
+// Test_parseMtree_lineCapBoundsHeap pins the measurement that maxMtreeLines exists for. The byte cap
+// alone does not bound this path: go-mtree keeps an entry per line, so a listing well inside 64MB of
+// bytes still costs multiples of its own size in heap. Asserting the error would keep passing if the
+// line cap were removed, because the byte cap would still reject a large enough input eventually.
+func Test_parseMtree_lineCapBoundsHeap(t *testing.T) {
+	// newline-only lines are the worst case: minimum bytes per entry, so the most entries per byte
+	const payloadSize = 16 * intFile.MB
+	spec := bytes.Repeat([]byte{'\n'}, payloadSize)
+
+	// well inside the byte cap, so only the line cap can stop this
+	require.Less(t, int64(payloadSize), int64(maxMtreeSize))
+
+	unbounded := testutils.MeasureAlloc(t, func() {
+		// the same listing with the line cap lifted, to prove the fixture is really a bomb
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, payloadSize+1)
+		t.Logf("unbounded parse err: %v", err)
+	})
+	require.Greater(t, unbounded, uint64(payloadSize),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, maxMtreeLines)
+		require.ErrorIs(t, err, errTooManyMtreeLines)
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+
+	// measured at ~238MB against ~16.5GB uncapped, so the cap is doing its job, but note what it
+	// actually buys: 300k entries still cost a few hundred MB, and that is per concurrent cataloger.
+	// The budget is set to catch the cap being removed or raised by an order of magnitude, not to pin
+	// the exact figure.
+	assert.Less(t, bounded, uint64(512*intFile.MB),
+		"the line cap has to stop the parse before it builds an entry per line")
+}
+
+// Test_parseMtree_sizeCapBoundsHeap is the byte-cap counterpart to the line-cap budget above.
+// Test_parseMtree_boundsDecompressedSize already covers the cap behaviorally, but with a spec small
+// enough that buffering the whole listing would pass anyway. This one expands well past the cap, so a
+// bound checked after the read instead of during it shows up as heap.
+//
+// The line length matters: go-mtree runs its own bufio.Scanner, which refuses a token past 64KB, so a
+// single enormous line fails as "token too long" before the byte cap is ever consulted. Lines have to
+// be ordinary for the byte cap to be the thing under test, and there have to be few enough of them
+// that the line cap does not fire first.
+func Test_parseMtree_sizeCapBoundsHeap(t *testing.T) {
+	const (
+		lineLen  = 1024
+		numLines = 96 * 1024 // ~96MB across ~98k lines: past the 64MB cap, well under the 300k line cap
+	)
+
+	var raw bytes.Buffer
+	line := append(bytes.Repeat([]byte{'a'}, lineLen-1), '\n')
+	for range numLines {
+		raw.Write(line)
+	}
+	require.Greater(t, int64(raw.Len()), int64(maxMtreeSize), "fixture must exceed the byte cap")
+	require.Less(t, numLines, maxMtreeLines, "and must not trip the line cap first")
+
+	unbounded := testutils.MeasureAlloc(t, func() {
+		// the same listing with the byte cap lifted past it, to prove the fixture is really a bomb
+		_, err := parseMtreeWithLimits(gzipOf(t, raw.Bytes()), int64(raw.Len())*2, maxMtreeLines)
+		t.Logf("unbounded parse err: %v", err)
+	})
+	require.Greater(t, unbounded, uint64(raw.Len()),
+		"fixture did not actually cost more than its own size; it is no longer a bomb")
+
+	bounded := testutils.MeasureAlloc(t, func() {
+		_, err := parseMtreeWithLimits(gzipOf(t, raw.Bytes()), maxMtreeSize, maxMtreeLines)
+		require.ErrorIs(t, err, errMtreeTooLarge)
+	})
+
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	assert.Less(t, bounded, uint64(512*intFile.MB),
+		"the size cap has to stop the read at the cap, not after the member is drained")
 }
