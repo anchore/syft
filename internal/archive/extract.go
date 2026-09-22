@@ -1,7 +1,6 @@
 package archive
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
 	"crypto"
@@ -18,32 +17,6 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-// Extracted is one archive opened as its own filesystem.
-type Extracted struct {
-	// Resolver reads the archive's entries. Its locations carry the archive's FileSystemID and
-	// ArchivePath.
-	Resolver file.Resolver
-
-	// Digests are of the archive file itself.
-	Digests []file.Digest
-
-	// Truncated reports that the disk limit stopped extraction early. Resolver covers the entries
-	// stored before that.
-	Truncated bool
-
-	cleanup func()
-}
-
-// Cleanup removes everything the archive holds on disk and releases its charge against the limiter.
-// Safe to call more than once.
-func (e *Extracted) Cleanup() {
-	if e == nil || e.cleanup == nil {
-		return
-	}
-	e.cleanup()
-	e.cleanup = nil
-}
-
 // Extract opens the archive read from r as its own filesystem, holding its bytes and entries within
 // the limiter's bounds. It returns nil when the content is not an archive it can read, and
 // ErrDiskLimitReached when the archive's own bytes cannot be placed within the disk limit. The caller
@@ -51,46 +24,49 @@ func (e *Extracted) Cleanup() {
 //
 // fileSystemID and archivePath are stamped onto every location the resolver returns: the filesystem
 // the archive was found on, and the colon-delimited chain of archives from the scan root to this one.
-func Extract(ctx context.Context, r io.Reader, fileSystemID, archivePath string, limiter *Limiter, exclusions Exclusions) (*Extracted, error) {
-	workDir := NewWorkDir(ctx)
-	charge := limiter.Charge()
-	store := NewEntryStore(archivePath, workDir, charge)
-	var content Content
-	release := func() {
-		content.Release()
-		if err := store.Close(); err != nil {
-			log.WithFields("archive", archivePath, "error", err).Trace("unable to close archive entries file")
-		}
-		workDir.Remove()
-		charge.Release()
-	}
+func Extract(ctx context.Context, r io.Reader, fileSystemID, archivePath string, limiter *Limiter, exclusions Exclusions) (*Resolver, error) {
+	charge := limiter.charge()
+	resolver := newResolver(ctx, fileSystemID, archivePath, charge)
 
-	content, err := acquireContent(r, archivePath, workDir, charge)
+	content, release, err := resolver.acquire(r)
 	if err != nil {
-		release()
+		resolver.Cleanup()
 		return nil, err
 	}
 	// the archive's own bytes are needed only until they are extracted and digested
-	defer content.Release()
+	defer release()
 
 	format := identifyFormat(ctx, archiveFileName(archivePath), content)
 	if format == nil {
-		release()
+		resolver.Cleanup()
 		return nil, nil
 	}
 
-	truncated, err := extractInto(ctx, format, content, store, exclusions)
-	if err != nil {
-		release()
+	if err := resolver.extract(ctx, format, content, exclusions); err != nil {
+		resolver.Cleanup()
 		return nil, fmt.Errorf("unable to extract archive %q: %w", archivePath, err)
 	}
+	resolver.Digests = digestsOf(ctx, content, archivePath)
+	return resolver, nil
+}
 
-	return &Extracted{
-		Resolver:  NewIndex(store, fileSystemID, archivePath),
-		Digests:   digestsOf(ctx, content, archivePath),
-		Truncated: truncated,
-		cleanup:   release,
-	}, nil
+// acquire makes the archive's own bytes random-access, which identifying, extracting and digesting
+// them needs. Bytes that already are, such as a file on disk or an entry of a parent archive, are
+// read in place and cost nothing. Anything else is held within the limits like an entry, and the
+// returned release gives back what memory it takes; bytes spilled to disk stay until Cleanup.
+// Reaching the disk limit yields ErrDiskLimitReached.
+func (r *Resolver) acquire(content io.Reader) (ReaderAtSeeker, func(), error) {
+	if ras, ok := content.(ReaderAtSeeker); ok {
+		return ras, func() {}, nil
+	}
+	var b blob
+	if err := r.put(&b, content); err != nil {
+		if errors.Is(err, ErrDiskLimitReached) {
+			return nil, nil, err
+		}
+		return nil, nil, fmt.Errorf("unable to read archive content: %w", err)
+	}
+	return r.open(&b), func() { r.discard(&b) }, nil
 }
 
 // archiveFileName returns the archive's own file name from the end of its archive path, which format
@@ -121,40 +97,38 @@ func identifyFormat(ctx context.Context, name string, content ReaderAtSeeker) ar
 	return nil
 }
 
-// extractInto reads every entry of the archive into the store. Reaching the disk limit stops the
-// walk and reports truncation rather than an error.
-func extractInto(ctx context.Context, format archives.Extractor, content ReaderAtSeeker, store *EntryStore, exclusions Exclusions) (truncated bool, err error) {
+// extract adds every entry of the archive. Reaching the disk limit stops the walk and marks the
+// resolver truncated rather than failing.
+func (r *Resolver) extract(ctx context.Context, format archives.Extractor, content ReaderAtSeeker, exclusions Exclusions) error {
 	if _, err := content.Seek(0, io.SeekStart); err != nil {
-		return false, err
+		return err
 	}
-	err = format.Extract(ctx, content, func(_ context.Context, f archives.FileInfo) error {
+	err := format.Extract(ctx, content, func(_ context.Context, f archives.FileInfo) error {
 		hdr, ok := entryHeader(f)
 		if !ok || exclusions.Excludes(hdr.Name) {
 			return nil
 		}
-		return storeEntry(store, hdr, f)
+		if !f.Mode().IsRegular() {
+			return r.add(hdr, nil)
+		}
+		entry, err := f.Open()
+		if err != nil {
+			log.WithFields("entry", hdr.Name, "error", err).Trace("unable to open archive entry, skipping it")
+			return nil
+		}
+		defer func() {
+			if err := entry.Close(); err != nil {
+				log.WithFields("entry", hdr.Name, "error", err).Trace("unable to close archive entry")
+			}
+		}()
+		return r.add(hdr, entry)
 	})
+	r.finish()
 	if errors.Is(err, ErrDiskLimitReached) {
-		return true, nil
-	}
-	return false, err
-}
-
-func storeEntry(store *EntryStore, hdr tar.Header, f archives.FileInfo) error {
-	if !f.Mode().IsRegular() {
-		return store.Add(hdr, nil)
-	}
-	content, err := f.Open()
-	if err != nil {
-		log.WithFields("entry", hdr.Name, "error", err).Trace("unable to open archive entry, skipping it")
+		r.Truncated = true
 		return nil
 	}
-	defer func() {
-		if err := content.Close(); err != nil {
-			log.WithFields("entry", hdr.Name, "error", err).Trace("unable to close archive entry")
-		}
-	}()
-	return store.Add(hdr, content)
+	return err
 }
 
 // archiveDigestHashes are the digests taken of an archive as a whole: SHA-1, matching what the java

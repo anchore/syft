@@ -6,59 +6,64 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/tmpdir"
+	"github.com/anchore/syft/syft/file"
 )
 
-// WorkDirAt returns a WorkDir over a directory that already exists, so a test can inspect it
-// afterwards; Remove leaves it alone.
-func WorkDirAt(dir string) *WorkDir {
-	return &WorkDir{created: true, path: dir}
-}
-
-func (w *WorkDir) wasCreated() bool {
-	return w != nil && w.remove != nil
-}
-
-// heldInMemory reports the entry content the store is still holding in memory.
-func (s *EntryStore) heldInMemory() int64 {
-	var total int64
-	for _, entry := range s.entries {
-		total += int64(len(entry.mem))
-	}
-	return total
-}
-
 // held reports what this charge is currently holding, in memory and on disk.
-func (c *Charge) held() (memory, disk int64) {
+func (c *charge) held() (memory, disk int64) {
 	if c == nil {
 		return 0, 0
 	}
 	c.limiter.mu.Lock()
 	defer c.limiter.mu.Unlock()
-	return c.memory, c.disk
+	return c.inMemory, c.onDisk
+}
+
+// heldInMemory reports the content the resolver is still holding in memory.
+func (r *Resolver) heldInMemory() int64 {
+	var total int64
+	for _, b := range r.held {
+		total += int64(len(b.mem))
+	}
+	return total
 }
 
 // unseekable hides a reader's Seek and ReadAt, forcing content through the held path.
 type unseekable struct{ io.Reader }
 
-// testEntry is one entry of a fixture archive: a directory when dir is set, a symlink when link is
-// set, otherwise a regular file.
+// testEntry is one entry of a fixture archive: a directory when dir is set, a link when link is set
+// (hard when hard is set, otherwise symbolic), otherwise a regular file.
 type testEntry struct {
 	name string
 	body string
 	link string
+	hard bool
 	dir  bool
 	mode fs.FileMode
+}
+
+// header is the tar header this entry would carry.
+func (e testEntry) header() tar.Header {
+	switch {
+	case e.dir:
+		return tar.Header{Name: e.name, Mode: int64(e.modeOr(0o755)), Typeflag: tar.TypeDir}
+	case e.link != "" && e.hard:
+		return tar.Header{Name: e.name, Mode: 0o644, Typeflag: tar.TypeLink, Linkname: e.link}
+	case e.link != "":
+		return tar.Header{Name: e.name, Mode: 0o777, Typeflag: tar.TypeSymlink, Linkname: e.link}
+	}
+	return tar.Header{Name: e.name, Mode: int64(e.modeOr(0o644)), Size: int64(len(e.body)), Typeflag: tar.TypeReg}
 }
 
 func fileEntries(files map[string]string) []testEntry {
@@ -114,14 +119,8 @@ func tarGzFromEntries(t testing.TB, entries []testEntry) []byte {
 	gw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gw)
 	for _, e := range entries {
-		hdr := &tar.Header{Name: e.name, Mode: int64(e.modeOr(0o644)), Size: int64(len(e.body))}
-		switch {
-		case e.dir:
-			hdr.Typeflag, hdr.Mode, hdr.Size = tar.TypeDir, int64(e.modeOr(0o755)), 0
-		case e.link != "":
-			hdr.Typeflag, hdr.Linkname, hdr.Mode, hdr.Size = tar.TypeSymlink, e.link, 0o777, 0
-		}
-		require.NoError(t, tw.WriteHeader(hdr))
+		hdr := e.header()
+		require.NoError(t, tw.WriteHeader(&hdr))
 		_, err := tw.Write([]byte(e.body))
 		require.NoError(t, err)
 	}
@@ -141,71 +140,11 @@ func regularHeader(name string, size int64) tar.Header {
 	return tar.Header{Name: name, Size: size, Mode: 0o600, Typeflag: tar.TypeReg}
 }
 
-// storeFor makes a store in the test's own temp space with the given charge.
-func storeFor(t testing.TB, charge *Charge) *EntryStore {
+// scanContext returns a context whose temp root is a fresh directory, and that directory.
+func scanContext(t testing.TB) (context.Context, string) {
 	t.Helper()
-	s := NewEntryStore("test-archive", WorkDirAt(t.TempDir()), charge)
-	t.Cleanup(func() { _ = s.Close() })
-	return s
-}
-
-// storeDir is the directory a store spills into.
-func storeDir(t testing.TB, s *EntryStore) string {
-	t.Helper()
-	dir, err := s.workDir.Path()
-	require.NoError(t, err)
-	return dir
-}
-
-func readEntry(t testing.TB, r ReaderAtSeeker) string {
-	t.Helper()
-	_, err := r.Seek(0, io.SeekStart)
-	require.NoError(t, err)
-	b, err := io.ReadAll(r)
-	require.NoError(t, err)
-	return string(b)
-}
-
-// storedEntry is one entry read back out of a store.
-type storedEntry struct {
-	body       string
-	linkTarget string
-	mode       fs.FileMode
-	typeflag   byte
-}
-
-func readStore(t testing.TB, s *EntryStore) map[string]storedEntry {
-	t.Helper()
-	out := map[string]storedEntry{}
-	for _, entry := range s.Entries() {
-		out[entry.Header.Name] = storedEntry{
-			body:       readEntry(t, s.Open(entry)),
-			linkTarget: entry.Header.Linkname,
-			mode:       entry.Header.FileInfo().Mode(),
-			typeflag:   entry.Header.Typeflag,
-		}
-	}
-	return out
-}
-
-func storedNames(t testing.TB, s *EntryStore) []string {
-	t.Helper()
-	var names []string
-	for _, entry := range s.Entries() {
-		names = append(names, entry.Header.Name)
-	}
-	sort.Strings(names)
-	return names
-}
-
-// memCharge is a charge against a memory bound with disk unbounded.
-func memCharge(maxMemory int64) *Charge {
-	return NewLimiter(Limits{MaxMemoryBytes: maxMemory, MaxDiskBytes: -1}).Charge()
-}
-
-// diskCharge is a charge against a disk bound with memory refusing everything.
-func diskCharge(maxDisk int64) *Charge {
-	return NewLimiter(Limits{MaxDiskBytes: maxDisk}).Charge()
+	root := t.TempDir()
+	return tmpdir.WithValue(context.Background(), tmpdir.FromPath(root)), root
 }
 
 // filesIn lists the regular files directly in dir.
@@ -222,35 +161,186 @@ func filesIn(t testing.TB, dir string) []string {
 	return names
 }
 
-// scanContext returns a context whose temp root is a fresh directory, and that directory.
-func scanContext(t testing.TB) (context.Context, string) {
+// spillFile is the one file a resolver has written, or "" when it has not.
+func spillFile(t testing.TB, dir string) string {
 	t.Helper()
-	root := t.TempDir()
-	return tmpdir.WithValue(context.Background(), tmpdir.FromPath(root)), root
+	files := filesIn(t, dir)
+	require.LessOrEqual(t, len(files), 1)
+	if len(files) == 0 {
+		return ""
+	}
+	return files[0]
 }
 
-// workDirsUnder returns the archive work directories directly under a scan temp root.
-func workDirsUnder(t testing.TB, root string) []string {
+// resolverIn makes an empty resolver over the given charge that spills into dir, along with that
+// directory. Its entries are added by the test.
+func resolverIn(t testing.TB, charge *charge) (*Resolver, string) {
 	t.Helper()
-	children, err := os.ReadDir(root)
+	root := t.TempDir()
+	ctx := tmpdir.WithValue(context.Background(), tmpdir.FromPath(root))
+	r := newResolver(ctx, "", "test-archive", charge)
+	t.Cleanup(r.Cleanup)
+	return r, root
+}
+
+// addAll adds entries in the order given and finishes the resolver.
+func addAll(t testing.TB, r *Resolver, entries []testEntry) {
+	t.Helper()
+	for _, e := range entries {
+		require.NoError(t, r.add(e.header(), bytes.NewReader([]byte(e.body))))
+	}
+	r.finish()
+}
+
+// resolverOver builds a resolver holding the given files within a memory bound.
+func resolverOver(t testing.TB, maxInMemory int64, files map[string]string) *Resolver {
+	t.Helper()
+	r, _ := resolverIn(t, memCharge(maxInMemory))
+	r.archivePath = "outer.jar"
+	addAll(t, r, fileEntries(files))
+	return r
+}
+
+// resolverFrom builds a resolver holding the given entries, links and directories included, with
+// ample memory.
+func resolverFrom(t testing.TB, entries ...testEntry) *Resolver {
+	t.Helper()
+	r, _ := resolverIn(t, memCharge(1<<20))
+	r.archivePath = "outer.jar"
+	addAll(t, r, entries)
+	return r
+}
+
+// indexCostOf is what add charges for the given entries in name order: every listed node and every
+// directory their paths imply.
+func indexCostOf(entries map[string]string) int64 {
+	names := make([]string, 0, len(entries))
+	for name := range entries {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	seen := map[string]bool{}
+	var total int64
+	for _, name := range names {
+		p := path.Clean("/" + name)
+		for i := 1; i < len(p); i++ {
+			if p[i] == '/' && !seen[p[:i]] {
+				seen[p[:i]] = true
+				total += approxIndexBytesPerEntry
+			}
+		}
+		seen[p] = true
+		total += approxIndexBytes(tar.Header{Name: name})
+	}
+	return total
+}
+
+// extractBytes extracts an archive into a resolver built over the given charge.
+func extractBytes(t testing.TB, data []byte, name string, charge *charge) (*Resolver, string) {
+	t.Helper()
+	r, root := resolverIn(t, charge)
+	content := bytes.NewReader(data)
+	format := identifyFormat(context.Background(), name, content)
+	require.NotNil(t, format, "fixture must identify as an archive")
+	require.NoError(t, r.extract(context.Background(), format, content, nil))
+	return r, root
+}
+
+func readEntry(t testing.TB, r ReaderAtSeeker) string {
+	t.Helper()
+	_, err := r.Seek(0, io.SeekStart)
 	require.NoError(t, err)
-	var out []string
-	for _, child := range children {
-		if child.IsDir() && strings.HasPrefix(child.Name(), workDirName) {
-			out = append(out, filepath.Join(root, child.Name()))
+	b, err := io.ReadAll(r)
+	require.NoError(t, err)
+	return string(b)
+}
+
+// storedEntry is one entry read back out of a resolver.
+type storedEntry struct {
+	body       string
+	linkTarget string
+	mode       fs.FileMode
+	typeflag   byte
+}
+
+// readStore reads every listed entry, files and directories alike, by name.
+func readStore(t testing.TB, r *Resolver) map[string]storedEntry {
+	t.Helper()
+	out := map[string]storedEntry{}
+	for _, n := range r.byPath {
+		if n.header == nil {
+			continue
+		}
+		out[n.header.Name] = storedEntry{
+			body:       readEntry(t, r.open(&n.content)),
+			linkTarget: n.header.Linkname,
+			mode:       n.header.FileInfo().Mode(),
+			typeflag:   n.header.Typeflag,
 		}
 	}
 	return out
 }
 
-// extractBytes extracts an archive into a store built over the given charge.
-func extractBytes(t testing.TB, data []byte, name string, charge *Charge) (*EntryStore, bool) {
+// storedNames lists every listed entry's name, files and directories alike.
+func storedNames(t testing.TB, r *Resolver) []string {
 	t.Helper()
-	store := storeFor(t, charge)
-	content := bytes.NewReader(data)
-	format := identifyFormat(context.Background(), name, content)
-	require.NotNil(t, format, "fixture must identify as an archive")
-	truncated, err := extractInto(context.Background(), format, content, store, nil)
-	require.NoError(t, err)
-	return store, truncated
+	var names []string
+	for _, n := range r.byPath {
+		if n.header != nil {
+			names = append(names, n.header.Name)
+		}
+	}
+	sort.Strings(names)
+	return names
 }
+
+// memCharge is a charge against a memory bound with disk unbounded.
+func memCharge(maxMemory int64) *charge {
+	return NewLimiter(Limits{MaxMemoryBytes: maxMemory, MaxDiskBytes: -1}).charge()
+}
+
+// diskCharge is a charge against a disk bound with memory refusing everything.
+func diskCharge(maxDisk int64) *charge {
+	return NewLimiter(Limits{MaxDiskBytes: maxDisk}).charge()
+}
+
+// realPaths lists the real path of every location, sorted.
+func realPaths(locations []file.Location) []string {
+	var out []string
+	for _, loc := range locations {
+		out = append(out, loc.RealPath)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// manyEntryZip is a zip of count one-byte files.
+func manyEntryZip(t testing.TB, count int) []byte {
+	t.Helper()
+	files := make(map[string]string, count)
+	for i := range count {
+		files[fmt.Sprintf("e%06d.txt", i)] = "x"
+	}
+	return zipBytes(t, files)
+}
+
+// extractedResolver extracts one archive through Extract and returns the resolver, along with the scan
+// temp root its spill file would appear under.
+func extractedResolver(t testing.TB, data []byte, limits Limits) (*Resolver, string) {
+	t.Helper()
+	ctx, root := scanContext(t)
+
+	r, err := Extract(ctx, bytes.NewReader(data), "", "app.zip", NewLimiter(limits), nil)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	t.Cleanup(r.Cleanup)
+
+	return r, root
+}
+
+var (
+	unboundedLimits = Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}
+
+	// spillingLimits hold nothing in memory, so every entry lands in the spill file
+	spillingLimits = Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1}
+)

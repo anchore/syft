@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,46 +14,228 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	unboundedLimits = Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}
+func TestResolver_put_holdsSmallContentInMemory(t *testing.T) {
+	s, dir := resolverIn(t, memCharge(1024))
 
-	// spillingLimits hold nothing in memory, so every entry lands in the overflow file
-	spillingLimits = Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1}
-)
+	var b blob
+	require.NoError(t, s.put(&b, bytes.NewReader([]byte("hello"))))
+
+	assert.Equal(t, int64(5), s.heldInMemory())
+	assert.Empty(t, filesIn(t, dir))
+	assert.Equal(t, "hello", readEntry(t, s.open(&b)))
+}
+
+func TestResolver_put_spillsToDiskAndKeepsTheSameBlobs(t *testing.T) {
+	// nodes pointing at a blob are not rebuilt when its content moves
+	s, dir := resolverIn(t, memCharge(8))
+
+	var first, second blob
+	require.NoError(t, s.put(&first, bytes.NewReader([]byte("aaaa"))))
+	require.Equal(t, int64(4), s.heldInMemory())
+
+	require.NoError(t, s.put(&second, bytes.NewReader([]byte("bbbbbb"))))
+
+	assert.Zero(t, s.heldInMemory(), "everything moves out, not just the blob that did not fit")
+	assert.NotEmpty(t, spillFile(t, dir))
+	assert.Equal(t, int64(10), s.written)
+	assert.Equal(t, "aaaa", readEntry(t, s.open(&first)))
+	assert.Equal(t, "bbbbbb", readEntry(t, s.open(&second)))
+}
+
+func TestResolver_put_threeStateLimits(t *testing.T) {
+	body := []byte(strings.Repeat("e", 500))
+
+	t.Run("a zero memory limit sends everything to disk", func(t *testing.T) {
+		charge := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: 10_000}).charge()
+		s, dir := resolverIn(t, charge)
+
+		var b blob
+		require.NoError(t, s.put(&b, bytes.NewReader(body)))
+
+		assert.Zero(t, s.heldInMemory())
+		assert.NotEmpty(t, spillFile(t, dir))
+		assert.Equal(t, body, []byte(readEntry(t, s.open(&b))))
+		mem, disk := charge.held()
+		assert.Zero(t, mem)
+		assert.Equal(t, int64(500), disk)
+	})
+
+	t.Run("a negative memory limit holds content regardless of how much is already held", func(t *testing.T) {
+		charge := NewLimiter(Limits{MaxMemoryBytes: -1, MaxDiskBytes: 10_000}).charge()
+		require.True(t, charge.memory(1_000_000))
+		s, dir := resolverIn(t, charge)
+
+		var b blob
+		require.NoError(t, s.put(&b, bytes.NewReader(body)))
+
+		assert.Empty(t, filesIn(t, dir))
+		mem, disk := charge.held()
+		assert.Equal(t, int64(1_000_000+len(body)), mem)
+		assert.Zero(t, disk)
+	})
+
+	t.Run("a zero disk limit still holds what memory admits", func(t *testing.T) {
+		charge := NewLimiter(Limits{MaxMemoryBytes: 10_000, MaxDiskBytes: 0}).charge()
+		s, dir := resolverIn(t, charge)
+
+		var b blob
+		require.NoError(t, s.put(&b, bytes.NewReader(body)))
+
+		assert.Empty(t, filesIn(t, dir))
+		mem, disk := charge.held()
+		assert.Equal(t, int64(len(body)), mem)
+		assert.Zero(t, disk)
+	})
+
+	t.Run("a negative disk limit writes with no ceiling", func(t *testing.T) {
+		s, dir := resolverIn(t, NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1}).charge())
+
+		var b blob
+		require.NoError(t, s.put(&b, bytes.NewReader(body)))
+
+		assert.NotEmpty(t, spillFile(t, dir))
+		assert.Equal(t, body, []byte(readEntry(t, s.open(&b))))
+	})
+
+	t.Run("a nil charge holds everything in memory", func(t *testing.T) {
+		s, dir := resolverIn(t, nil)
+
+		var b blob
+		require.NoError(t, s.put(&b, bytes.NewReader(body)))
+
+		assert.Empty(t, filesIn(t, dir))
+		assert.Equal(t, body, []byte(readEntry(t, s.open(&b))))
+	})
+}
+
+func TestResolver_put_bytesReadBeforeTheLimitRefusedAreNotLost(t *testing.T) {
+	body := []byte(strings.Repeat("b", 250))
+	charge := NewLimiter(Limits{MaxMemoryBytes: 100, MaxDiskBytes: 10_000}).charge()
+	s, _ := resolverIn(t, charge)
+
+	var b blob
+	require.NoError(t, s.put(&b, bytes.NewReader(body)))
+
+	assert.Equal(t, body, []byte(readEntry(t, s.open(&b))))
+	mem, disk := charge.held()
+	assert.Zero(t, mem, "nothing stays charged to a limit that refused")
+	assert.Equal(t, int64(250), disk)
+}
+
+// peakTrackingReader records the highest memory charge observed while being read.
+type peakTrackingReader struct {
+	r      io.Reader
+	charge *charge
+	peak   int64
+}
+
+func (p *peakTrackingReader) Read(b []byte) (int, error) {
+	n, err := p.r.Read(b)
+	if mem, _ := p.charge.held(); mem > p.peak {
+		p.peak = mem
+	}
+	return n, err
+}
+
+func TestResolver_put_neverBuffersBeyondTheMemoryLimit(t *testing.T) {
+	const limit = int64(3 * copyChunkSize)
+	body := []byte(strings.Repeat("c", 10*copyChunkSize))
+	charge := NewLimiter(Limits{MaxMemoryBytes: limit, MaxDiskBytes: int64(len(body)) + 1}).charge()
+	tracked := &peakTrackingReader{r: bytes.NewReader(body), charge: charge}
+	s, _ := resolverIn(t, charge)
+
+	var b blob
+	require.NoError(t, s.put(&b, tracked))
+
+	assert.Equal(t, body, []byte(readEntry(t, s.open(&b))))
+	assert.LessOrEqual(t, tracked.peak, limit, "memory charged must never exceed the limit, even transiently")
+	mem, disk := charge.held()
+	assert.Zero(t, mem)
+	assert.Equal(t, int64(len(body)), disk)
+}
+
+func TestResolver_put_diskLimitIsTerminal(t *testing.T) {
+	tests := []struct {
+		name   string
+		limits Limits
+	}{
+		{"a disk limit that is exceeded", Limits{MaxDiskBytes: 100}},
+		{"a zero disk limit", Limits{MaxMemoryBytes: 10, MaxDiskBytes: 0}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			charge := NewLimiter(tt.limits).charge()
+			s, dir := resolverIn(t, charge)
+
+			var b blob
+			err := s.put(&b, bytes.NewReader([]byte(strings.Repeat("d", 500))))
+			require.ErrorIs(t, err, ErrDiskLimitReached)
+
+			s.Cleanup()
+			assert.Empty(t, filesIn(t, dir), "cleanup removes the partial file")
+			mem, disk := charge.held()
+			assert.Zero(t, mem)
+			assert.Zero(t, disk, "and refunds it")
+		})
+	}
+}
+
+func TestResolver_cleanupRefundsEverythingAndIsIdempotent(t *testing.T) {
+	charge := NewLimiter(Limits{MaxMemoryBytes: 8, MaxDiskBytes: -1}).charge()
+	s, dir := resolverIn(t, charge)
+
+	var spilled, held blob
+	require.NoError(t, s.put(&spilled, bytes.NewReader([]byte("spilled to disk"))))
+	require.NoError(t, s.put(&held, bytes.NewReader([]byte("held"))))
+	mem, disk := charge.held()
+	require.Equal(t, int64(4), mem)
+	require.Equal(t, int64(15), disk)
+	require.Equal(t, "held", readEntry(t, s.open(&held)))
+
+	s.Cleanup()
+
+	assert.Empty(t, filesIn(t, dir))
+	mem, disk = charge.held()
+	assert.Zero(t, mem)
+	assert.Zero(t, disk)
+	_, err := io.ReadAll(s.open(&spilled))
+	assert.Error(t, err, "readers over the spill file are no longer valid")
+	s.Cleanup()
+	mem, disk = charge.held()
+	assert.Zero(t, mem, "a second cleanup refunds nothing twice")
+	assert.Zero(t, disk)
+}
+
+func TestResolver_put_discardRefundsWhatIsHeldInMemory(t *testing.T) {
+	charge := memCharge(1024)
+	s, _ := resolverIn(t, charge)
+
+	var keep, drop blob
+	require.NoError(t, s.put(&keep, bytes.NewReader([]byte("keep"))))
+	require.NoError(t, s.put(&drop, bytes.NewReader([]byte("dropped"))))
+
+	s.discard(&drop)
+
+	mem, _ := charge.held()
+	assert.Equal(t, int64(4), mem)
+	assert.Equal(t, int64(4), s.heldInMemory())
+	assert.Empty(t, readEntry(t, s.open(&drop)))
+	assert.Equal(t, "keep", readEntry(t, s.open(&keep)))
+}
 
 func TestStorage_filesystemCostDoesNotTrackEntryCount(t *testing.T) {
-	_, smallStore, smallRoot := extractedStore(t, manyEntryZip(t, 2), spillingLimits)
-	_, largeStore, largeRoot := extractedStore(t, manyEntryZip(t, 5000), spillingLimits)
+	small, smallRoot := extractedResolver(t, manyEntryZip(t, 2), spillingLimits)
+	large, largeRoot := extractedResolver(t, manyEntryZip(t, 5000), spillingLimits)
 
-	want := []string{entriesFileName}
-	assert.Equal(t, want, filesystemEntries(t, workDirIn(t, smallRoot)))
-	assert.Equal(t, want, filesystemEntries(t, workDirIn(t, largeRoot)), "5000 entries cost the same filesystem entries as 2")
+	assert.Len(t, filesIn(t, smallRoot), 1)
+	assert.Len(t, filesIn(t, largeRoot), 1, "5000 entries cost the same filesystem entries as 2")
 
-	assert.Len(t, smallStore.Entries(), 2)
-	assert.Len(t, largeStore.Entries(), 5000)
+	assert.Len(t, small.files, 2)
+	assert.Len(t, large.files, 5000)
 
 	// entries cost their content and nothing else on disk: no headers, no padding
-	assert.Equal(t, int64(2), smallStore.OnDisk())
-	assert.Equal(t, int64(5000), largeStore.OnDisk())
-}
-
-func TestStorage_anArchiveWithinTheMemoryBoundTouchesNoFilesystemAtAll(t *testing.T) {
-	_, store, root := extractedStore(t, manyEntryZip(t, 5000), unboundedLimits)
-
-	assert.Len(t, store.Entries(), 5000)
-	assert.Zero(t, store.OnDisk())
-	assert.Empty(t, filesystemEntries(t, root))
-}
-
-func TestStorage_cleanupRemovesTheWorkDirectory(t *testing.T) {
-	extracted, _, root := extractedStore(t, manyEntryZip(t, 5000), spillingLimits)
-	workDir := workDirIn(t, root)
-	require.Len(t, filesystemEntries(t, workDir), 1)
-
-	extracted.Cleanup()
-
-	assert.NoDirExists(t, workDir)
-	extracted.Cleanup()
+	assert.Equal(t, int64(2), small.written)
+	assert.Equal(t, int64(5000), large.written)
 }
 
 func TestStorage_anEntryAtTheEndIsReadBySeeking(t *testing.T) {
@@ -76,18 +257,17 @@ func TestStorage_anEntryAtTheEndIsReadBySeeking(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, zw.Close())
 
-	_, store, root := extractedStore(t, buf.Bytes(), spillingLimits)
+	r, root := extractedResolver(t, buf.Bytes(), spillingLimits)
 
-	body, err := os.ReadFile(filepath.Join(workDirIn(t, root), entriesFileName))
+	body, err := os.ReadFile(filepath.Join(root, spillFile(t, root)))
 	require.NoError(t, err)
 	offset := int64(bytes.Index(body, []byte(wanted)))
 	require.Greater(t, offset, int64(len(body))*9/10, "the last entry must really be at the end of the file")
 
-	entries := store.Entries()
-	entry := entries[len(entries)-1]
-	require.Equal(t, "zz-last.txt", entry.Header.Name)
+	n := r.byPath["/zz-last.txt"]
+	require.NotNil(t, n)
 
-	reader := store.Open(entry)
+	reader := r.open(&n.content)
 	end, err := reader.Seek(0, io.SeekEnd)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(wanted)), end)
@@ -96,50 +276,4 @@ func TestStorage_anEntryAtTheEndIsReadBySeeking(t *testing.T) {
 	_, err = reader.ReadAt(head, 0)
 	require.NoError(t, err)
 	assert.Equal(t, wanted[:8], string(head))
-}
-
-func manyEntryZip(t *testing.T, count int) []byte {
-	t.Helper()
-	files := make(map[string]string, count)
-	for i := range count {
-		files[fmt.Sprintf("e%06d.txt", i)] = "x"
-	}
-	return zipBytes(t, files)
-}
-
-// extractedStore extracts one archive and returns the store its entries went into, along with the
-// scan temp root its work directory would appear under.
-func extractedStore(t *testing.T, data []byte, limits Limits) (*Extracted, *EntryStore, string) {
-	t.Helper()
-	ctx, root := scanContext(t)
-
-	extracted, err := Extract(ctx, bytes.NewReader(data), "", "app.zip", NewLimiter(limits), nil)
-	require.NoError(t, err)
-	require.NotNil(t, extracted)
-	t.Cleanup(extracted.Cleanup)
-
-	return extracted, extracted.Resolver.(*Index).store, root
-}
-
-func workDirIn(t *testing.T, root string) string {
-	t.Helper()
-	dirs := workDirsUnder(t, root)
-	require.Len(t, dirs, 1)
-	return dirs[0]
-}
-
-// filesystemEntries is every directory entry under dir, recursively.
-func filesystemEntries(t *testing.T, dir string) []string {
-	t.Helper()
-	var out []string
-	require.NoError(t, filepath.WalkDir(dir, func(p string, _ fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if rel, _ := filepath.Rel(dir, p); rel != "." {
-			out = append(out, filepath.ToSlash(rel))
-		}
-		return nil
-	}))
-	return out
 }

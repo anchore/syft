@@ -175,7 +175,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	if extracted.Truncated {
 		appendUnknowns(builder, ArchiveCatalogerTaskName, []unknown.CoordinateError{{
 			Coordinates: location.Coordinates,
-			Reason:      fmt.Errorf("archive cataloged from part of its contents: extraction stopped at the disk limit"),
+			Reason:      fmt.Errorf("archive cataloged from part of its contents: extraction stopped at the configured memory or disk limit"),
 		}})
 	}
 
@@ -183,7 +183,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	ctx = archive.WithTraversal(ctx, traversal)
 
 	c.progress.Increment()
-	scratch := c.runSubPipeline(ctx, extracted.Resolver, location.Coordinates)
+	scratch := c.runSubPipeline(ctx, extracted, location.Coordinates)
 	mergeArchiveResults(location.Coordinates, scratch, builder)
 	c.progress.AtomicStage.Set(fmt.Sprintf("%s archives (%s)", humanize.Comma(c.progress.Current()), archivePath))
 
@@ -192,7 +192,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		c.slowest, c.slowestPath = took, archivePath
 	}
 
-	return c.catalog(ctx, extracted.Resolver, depth+1, builder)
+	return c.catalog(ctx, extracted, depth+1, builder)
 }
 
 // runSubPipeline runs every task against the resolver into a throwaway SBOM, so results can be

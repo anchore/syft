@@ -88,9 +88,9 @@ type nestingRow struct {
 type nestingVisit struct {
 	virtualPath string
 	depth       int
-	// heldFiles are the basenames of the files in the live extraction work directories at this moment,
-	// sampled only when the probe was given a temp dir to look in. An archive's own bytes are read where
-	// they lie, so only "entries" files appear, one per archive whose entries did not fit in memory.
+	// heldFiles are the spill files live at this moment, sampled only when the probe was given a temp
+	// dir to look in. A nested archive's own bytes are read where they lie, so one appears per archive
+	// whose entries did not fit in memory.
 	heldFiles []string
 }
 
@@ -316,15 +316,16 @@ func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing
 	})
 
 	t.Run("with a memory limit the outermost archive's entries do not fit in", func(t *testing.T) {
+		// room for every level's index estimate, which must stay in memory, but not the outer entries
 		probe := &nestingProbe{tempDir: tempDir}
 		bounds := cataloging.DefaultArchiveSearchConfig().
-			WithMaxMemoryBytes(int64(nested.sizes[2])).
+			WithMaxMemoryBytes(int64(nested.sizes[2] + 32*1024)).
 			WithMaxDiskBytes(-1)
 		s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 		deepest := probe.deepestVisit()
 		require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
-		assert.Contains(t, deepest.heldFiles, "entries", "entries that do not fit in memory are written to disk")
+		assert.Contains(t, deepest.heldFiles, "archive-spill", "entries that do not fit in memory are written to disk")
 
 		assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(), "and every level is still cataloged")
 		locs := leafLocations(s)
@@ -335,8 +336,8 @@ func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing
 
 func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
 	// an archive's own bytes are read where they lie: a scanned file from disk, a nested archive from
-	// its parent's entries. Nothing copies them, so no "archive" file ever appears in a work directory
-	// whatever the memory limit; only entries are held, and only they can be written out.
+	// its parent's entries. Nothing copies them, so at most one spill file per level appears whatever
+	// the memory limit; only entries are held, and only they can be written out.
 	scanDir := t.TempDir()
 	tempDir := isolatedTempDir(t)
 	nested := writeNestedArchive(t, scanDir, gradedChain())
@@ -353,7 +354,7 @@ func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
 		{
 			name:          "with a memory limit of zero, so every level's entries are written out",
 			memoryBytes:   0,
-			wantHeldFiles: []string{"entries", "entries", "entries"},
+			wantHeldFiles: []string{"archive-spill", "archive-spill", "archive-spill"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -725,24 +726,17 @@ func (p *nestingProbe) deepestVisit() nestingVisit {
 	return best
 }
 
-// heldFiles names the files in the live extraction work directories under tempDir. Meaningful only
-// while the archives are still held, so it is sampled from inside the sub-pipeline rather than after
-// the scan.
+// heldFiles names the spill files live under tempDir, one "archive-spill" per archive holding content
+// that did not fit in memory. Meaningful only while the archives are still held, so it is sampled from
+// inside the sub-pipeline rather than after the scan.
 func heldFiles(tempDir string) (names []string) {
-	_ = filepath.WalkDir(tempDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || !d.IsDir() || !strings.HasPrefix(d.Name(), "syft-archive-") {
+	_ = filepath.WalkDir(tempDir, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasPrefix(d.Name(), "archive-") {
 			return nil //nolint:nilerr // an unreadable directory holds nothing this probe can report
 		}
-		held, err := os.ReadDir(path)
-		if err != nil {
-			return filepath.SkipDir
-		}
-		for _, entry := range held {
-			if !entry.IsDir() {
-				names = append(names, entry.Name())
-			}
-		}
-		return filepath.SkipDir
+		// the name is the pattern with os.CreateTemp's random suffix in place of the "*"
+		names = append(names, d.Name()[:strings.LastIndexByte(d.Name(), '-')])
+		return nil
 	})
 	sort.Strings(names)
 	return names
