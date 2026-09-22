@@ -720,11 +720,11 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file found inside an archive carries the FileSystemID of the filesystem the archive itself was found in (a layer digest, or blank), inherited unchanged down the nesting chain; the nesting chain is carried by ArchivePath instead."
+          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
         },
         "archivePath": {
           "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, of every archive traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). It is blank for files not found within an archive. It disambiguates identically-named files residing in different archives on the same filesystem."
+          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem."
         }
       },
       "type": "object",
@@ -2486,11 +2486,11 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file found inside an archive carries the FileSystemID of the filesystem the archive itself was found in (a layer digest, or blank), inherited unchanged down the nesting chain; the nesting chain is carried by ArchivePath instead."
+          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
         },
         "archivePath": {
           "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, of every archive traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). It is blank for files not found within an archive. It disambiguates identically-named files residing in different archives on the same filesystem."
+          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem."
         },
         "accessPath": {
           "type": "string",
