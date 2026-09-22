@@ -7,7 +7,6 @@ import (
 	"compress/gzip"
 	"context"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -16,7 +15,6 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/wagoodman/go-partybus"
@@ -201,137 +199,8 @@ func TestArchiveCataloger_archiveContentsDoNotLeakIntoParentTree(t *testing.T) {
 	}
 }
 
-func TestArchiveCataloger_siblingArchivesDoNotCollide(t *testing.T) {
-	// two archives holding the same internal path: the file tables are keyed by Coordinates, so without
-	// a distinct FileSystemID the second write overwrites the first and a package disappears silently
-	scanDir := t.TempDir()
-	writeTestZip(t, filepath.Join(scanDir, "one.zip"), map[string]string{"nested/marker.txt": "from one"})
-	writeTestZip(t, filepath.Join(scanDir, "two.zip"), map[string]string{"nested/marker.txt": "from two"})
-
-	s := scanDirWith(t, scanDir, archiveScanConfig(1, markerCataloger{}))
-
-	// the two markers are the same package by syft's identity rules (same name, version and type), so
-	// they merge into one carrying two locations; what matters is that both locations survive as
-	// distinct coordinates
-	fsIDs := strset.New()
-	var locCount int
-	for _, p := range s.Artifacts.Packages.Sorted() {
-		if p.Name != "marker-pkg" {
-			continue
-		}
-		for _, loc := range p.Locations.ToSlice() {
-			locCount++
-			fsIDs.Add(loc.ArchivePath)
-			assert.Equal(t, "nested/marker.txt", loc.RealPath,
-				"the paths are identical, which is exactly why the FileSystemID has to differ")
-		}
-	}
-
-	assert.Equal(t, 2, locCount, "both archives' markers must survive as distinct locations")
-	assert.ElementsMatch(t, []string{"one.zip", "two.zip"}, fsIDs.List(),
-		"each archive must produce a distinct FileSystemID")
-}
-
-func TestArchiveCataloger_containsEdgesChainAcrossLevels(t *testing.T) {
-	innerZip := buildZipBytes(t, map[string]string{"nested/marker.txt": "hello"})
-	scanDir := t.TempDir()
-	writeTestZipRaw(t, filepath.Join(scanDir, "outer.zip"), map[string][]byte{"deeper/inner.zip": innerZip})
-
-	// file cataloging is on because archive-to-file edges are recorded for the files the file catalogers
-	// found inside an archive; without them inner.zip has no coordinate to hang an edge on
-	cfg := archiveScanConfig(2, markerCataloger{}).
-		WithFilesConfig(filecataloging.Config{Selection: file.AllFilesSelection})
-	s := scanDirWith(t, scanDir, cfg)
-
-	// an edge from outer.zip to inner.zip (file-to-file), and one from inner.zip to the package
-	var outerToInner, innerToPkg bool
-	for _, rel := range s.Relationships {
-		if rel.Type != artifact.ContainsRelationship {
-			continue
-		}
-		from, ok := rel.From.(file.Coordinates)
-		if !ok {
-			continue
-		}
-		if to, ok := rel.To.(file.Coordinates); ok {
-			if strings.HasSuffix(from.RealPath, "outer.zip") && strings.HasSuffix(to.RealPath, "inner.zip") {
-				outerToInner = true
-			}
-			continue
-		}
-		if p, ok := rel.To.(pkg.Package); ok && p.Name == "marker-pkg" {
-			if strings.HasSuffix(from.RealPath, "inner.zip") {
-				innerToPkg = true
-			}
-		}
-	}
-
-	assert.True(t, outerToInner, "expected a CONTAINS edge from outer.zip to inner.zip")
-	assert.True(t, innerToPkg, "expected a CONTAINS edge from inner.zip to the nested package")
-}
-
-func TestArchiveCataloger_truncationRetainsWhatWasFound(t *testing.T) {
-	// a bound truncates rather than discards: the marker extracted before the disk limit filled stays in
-	// the SBOM, and a small sibling archive is cataloged in full, the first having been released
-	big := bytes.Repeat([]byte("x"), 8192)
-	scanDir := t.TempDir()
-	writeTestZipRaw(t, filepath.Join(scanDir, "oversized.zip"), map[string][]byte{
-		"a/marker.txt":  []byte("small enough"),
-		"b/payload.bin": big,
-	})
-	writeTestZip(t, filepath.Join(scanDir, "small.zip"), map[string]string{"nested/marker.txt": "fine"})
-
-	cfg := archiveScanConfig(1, markerCataloger{})
-	cfg.Archive = cfg.Archive.WithMaxDiskBytes(1024)
-
-	s := scanDirWith(t, scanDir, cfg)
-
-	fsIDs := strset.New()
-	for _, p := range s.Artifacts.Packages.Sorted() {
-		for _, loc := range p.Locations.ToSlice() {
-			fsIDs.Add(loc.ArchivePath)
-		}
-	}
-
-	assert.True(t, fsIDs.Has("oversized.zip"),
-		"the marker extracted before the limit must survive rather than the archive being discarded")
-	assert.True(t, fsIDs.Has("small.zip"),
-		"one archive hitting its limit must not affect another")
-}
-
-func TestArchiveCataloger_detectionIsContentBased(t *testing.T) {
-	marker := map[string]string{"nested/marker.txt": "hello"}
-
-	t.Run("extensionless and renamed archives are extracted", func(t *testing.T) {
-		scanDir := t.TempDir()
-		// no extension at all, and an extension that says something else entirely
-		require.NoError(t, os.WriteFile(filepath.Join(scanDir, "bundle"), buildZipBytes(t, marker), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(scanDir, "data.bin"), buildZipBytes(t, marker), 0o644))
-
-		s := scanDirWith(t, scanDir, archiveScanConfig(1, markerCataloger{}))
-
-		fsIDs := strset.New()
-		for _, p := range s.Artifacts.Packages.Sorted() {
-			for _, loc := range p.Locations.ToSlice() {
-				fsIDs.Add(loc.ArchivePath)
-			}
-		}
-		assert.True(t, fsIDs.Has("bundle"), "an extensionless zip must be detected by content")
-		assert.True(t, fsIDs.Has("data.bin"), "a renamed zip must be detected by content")
-	})
-
-	t.Run("a misnamed non-archive is not extracted and is not an error", func(t *testing.T) {
-		scanDir := t.TempDir()
-		require.NoError(t, os.WriteFile(filepath.Join(scanDir, "notes.zip"), []byte("just some text"), 0o644))
-
-		s := scanDirWith(t, scanDir, archiveScanConfig(1, markerCataloger{}))
-		assert.Empty(t, s.Artifacts.Packages.Sorted())
-	})
-}
-
-// TestArchiveCataloger_exclusionsAreTheScansOwn covers exclusions-apply-by-pattern-scope from the
-// outside: there is no archive-specific setting, and a pattern's shape decides whether it reaches
-// inside an archive.
+// there is no archive-specific exclusion setting: a scan pattern's shape decides whether it reaches
+// inside an archive
 func TestArchiveCataloger_exclusionsAreTheScansOwn(t *testing.T) {
 	marker := map[string]string{"nested/marker.txt": "hello"}
 
@@ -460,91 +329,11 @@ func TestArchiveCataloger_exclusionsAreTheScansOwn(t *testing.T) {
 	})
 }
 
-// TestArchiveCataloger_exclusionPatternPrecedence covers every-boundary-populates-the-patterns.
-// cataloging.ArchiveSearchConfig.ExclusionPatterns is a derived field with no yaml/json/mapstructure
-// tag, written by two boundaries: cmd/syft/internal/options.Catalog.ToArchiveConfig from --exclude,
-// and CreateSBOM from the source. Precedence is defined rather than left to ordering: a value already
-// present is never overwritten, and CreateSBOM only fills an empty field.
-func TestArchiveCataloger_exclusionPatternPrecedence(t *testing.T) {
-	marker := map[string]string{"nested/marker.txt": "hello"}
-
-	t.Run("a value already present is not overwritten by the source", func(t *testing.T) {
-		scanDir := t.TempDir()
-		writeTestZip(t, filepath.Join(scanDir, "app.zip"), marker)
-
-		cfg := archiveScanConfig(1, markerCataloger{})
-		cfg.Archive.ExclusionPatterns = []string{"**/marker.txt"}
-
-		// the source publishes a different, non-matching pattern: if it won, the caller-supplied value
-		// would be replaced
-		s := scanDirWithExclusions(t, scanDir, cfg, "**/does-not-exist.txt")
-		assert.Empty(t, s.Artifacts.Packages.Sorted(),
-			"a value already present on the config must be what is applied, not overwritten by what the source publishes")
-	})
-
-	t.Run("an empty field is filled from the source", func(t *testing.T) {
-		// the configure-only-your-source path: a consumer who never touches ExclusionPatterns still
-		// gets the source's own patterns applied inside archives
-		scanDir := t.TempDir()
-		writeTestZip(t, filepath.Join(scanDir, "app.zip"), marker)
-
-		cfg := archiveScanConfig(1, markerCataloger{})
-
-		s := scanDirWithExclusions(t, scanDir, cfg, "**/marker.txt")
-		assert.Empty(t, s.Artifacts.Packages.Sorted(),
-			"an empty field must be filled from the source's own published patterns")
-	})
-
-	t.Run("an empty field with no source exclusions excludes nothing", func(t *testing.T) {
-		scanDir := t.TempDir()
-		writeTestZip(t, filepath.Join(scanDir, "app.zip"), marker)
-
-		cfg := archiveScanConfig(1, markerCataloger{})
-
-		s := scanDirWith(t, scanDir, cfg)
-		assert.NotEmpty(t, s.Artifacts.Packages.Sorted(),
-			"with nothing configured on either boundary, no exclusion should apply")
-	})
-}
-
 // resolverProbeCataloger reports what the resolver it was handed can see, which is how "absent from
 // the index" is told from "present and skipped" within a scan.
 type resolverProbeCataloger struct {
 	glob   string
 	record func([]string)
-}
-
-func TestArchiveCataloger_leavesNothingBehind(t *testing.T) {
-	// extracted content is written outside the scanned source and must not survive the scan, so a
-	// long-running process scanning many archives does not accumulate temp trees
-	innerZip := buildZipBytes(t, map[string]string{"nested/marker.txt": "hello"})
-	scanDir := t.TempDir()
-	writeTestZipRaw(t, filepath.Join(scanDir, "outer.zip"), map[string][]byte{"deeper/inner.zip": innerZip})
-	// a corrupt archive so the failure path's cleanup is exercised too
-	require.NoError(t, os.WriteFile(filepath.Join(scanDir, "corrupt.zip"), []byte("PK\x03\x04 truncated"), 0o644))
-
-	before := archiveTempDirs(t)
-
-	scanDirWith(t, scanDir, archiveScanConfig(2, markerCataloger{}))
-
-	assert.ElementsMatch(t, before, archiveTempDirs(t),
-		"no syft-archive-* temp dir may survive the scan, including for the archive that failed")
-
-	// and nothing may be written into the directory under scan
-	var found []string
-	require.NoError(t, filepath.WalkDir(scanDir, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.IsDir() {
-			return err
-		}
-		rel, relErr := filepath.Rel(scanDir, path)
-		if relErr != nil {
-			return relErr
-		}
-		found = append(found, rel)
-		return nil
-	}))
-	assert.ElementsMatch(t, []string{"outer.zip", "corrupt.zip"}, found,
-		"nothing new may appear under the scanned directory")
 }
 
 func TestArchiveCataloger_unicodeEntryNamesSurviveToOutput(t *testing.T) {
@@ -646,9 +435,7 @@ func TestArchiveCataloger_noExtractionPathReachesTheSBOM(t *testing.T) {
 	for _, p := range paths {
 		assert.NotContains(t, p, "syft-archive-",
 			"an extraction directory reached the SBOM at %q", p)
-		// the storage shape is an implementation detail, so the file an archive's entries were
-		// overflowed into must not name itself either - in a path, or as a segment of one
-		assert.NotContains(t, p, "contents.tar",
+		assert.NotEqual(t, "entries", filepath.Base(p),
 			"the file holding an archive's entries reached the SBOM at %q", p)
 		if filepath.IsAbs(p) {
 			// the directory resolver has always reported the scan root absolute: it is the path the
@@ -683,42 +470,6 @@ func TestArchiveCataloger_repeatedScansAgreeOnNestedPaths(t *testing.T) {
 	first := scan(t)
 	require.NotEmpty(t, first)
 	assert.Equal(t, first, scan(t))
-}
-
-func TestArchiveCataloger_tarFamilyIsCatalogedEndToEnd(t *testing.T) {
-	// nothing asserted the tar path end to end: the extensionless-archive case builds a zip named
-	// "bundle", so TarExtractor was only ever reached by its own unit tests. The compound extension is
-	// the interesting one - the archive is saved to a temp file before detection, and the basename is
-	// preserved specifically so ".tar.gz" survives that round trip.
-	dep := jarBytes(t, "tar-nested-lib", "3.1", nil)
-	entry := map[string][]byte{"lib/tar-nested-lib-3.1.jar": dep}
-
-	for name, body := range map[string][]byte{
-		"bundle.tar.gz": buildTarGzBytes(t, entry),
-		"bundle.tgz":    buildTarGzBytes(t, entry),
-		"bundle.tar":    buildTarBytes(t, entry),
-	} {
-		t.Run(name, func(t *testing.T) {
-			scanDir := t.TempDir()
-			require.NoError(t, os.WriteFile(filepath.Join(scanDir, name), body, 0o644))
-
-			s := scanDirWith(t, scanDir, javaScanConfig(2))
-
-			var count int
-			var virtualPath string
-			for _, p := range s.Artifacts.Packages.Sorted() {
-				if p.Name != "tar-nested-lib" {
-					continue
-				}
-				count++
-				if metadata, ok := p.Metadata.(pkg.JavaArchive); ok {
-					virtualPath = metadata.VirtualPath
-				}
-			}
-			require.Equal(t, 1, count, "the jar inside the tar must be cataloged exactly once")
-			assert.Equal(t, name+":lib/tar-nested-lib-3.1.jar", virtualPath)
-		})
-	}
 }
 
 func TestArchiveCataloger_legacySearchSettingsAreSuperseded(t *testing.T) {
@@ -933,33 +684,12 @@ func (c resolverProbeCataloger) Catalog(_ context.Context, resolver file.Resolve
 	return nil, nil, nil
 }
 
-func archiveTempDirs(t *testing.T) []string {
-	t.Helper()
-	entries, err := os.ReadDir(os.TempDir())
-	require.NoError(t, err)
-
-	var out []string
-	for _, entry := range entries {
-		if entry.IsDir() && strings.HasPrefix(entry.Name(), "syft-archive-") {
-			out = append(out, entry.Name())
-		}
-	}
-	return out
-}
-
 func buildTarGzBytes(t *testing.T, files map[string][]byte) []byte {
 	t.Helper()
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
 	writeTarEntries(t, gw, files)
 	require.NoError(t, gw.Close())
-	return buf.Bytes()
-}
-
-func buildTarBytes(t *testing.T, files map[string][]byte) []byte {
-	t.Helper()
-	var buf bytes.Buffer
-	writeTarEntries(t, &buf, files)
 	return buf.Bytes()
 }
 

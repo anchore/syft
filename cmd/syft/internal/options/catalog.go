@@ -120,15 +120,12 @@ func (cfg Catalog) ToSearchConfig() cataloging.SearchConfig {
 }
 
 func (cfg Catalog) ToArchiveConfig() cataloging.ArchiveSearchConfig {
-	// exclusion patterns come from --exclude, narrowed to those that reach inside an archive. CreateSBOM
-	// fills this field from the source only when empty, so this value wins.
 	return cataloging.DefaultArchiveSearchConfig().
 		WithIncludeIndexedArchives(cfg.Package.SearchIndexedArchives).
 		WithIncludeUnindexedArchives(cfg.Package.SearchUnindexedArchives).
 		WithMaxDepth(cfg.Package.NestedArchiveMaxDepth).
 		WithMaxMemoryBytes(cfg.Package.NestedArchiveMaxMemoryBytes).
-		WithMaxDiskBytes(cfg.Package.NestedArchiveMaxDiskBytes).
-		WithExclusionPatterns(cataloging.ArchiveExclusionPatterns(cfg.Exclusions))
+		WithMaxDiskBytes(cfg.Package.NestedArchiveMaxDiskBytes)
 }
 
 func (cfg Catalog) ToRelationshipsConfig() cataloging.RelationshipsConfig {

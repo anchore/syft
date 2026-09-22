@@ -1,20 +1,12 @@
-package fileresolver
+package archive
 
 import (
 	"fmt"
 	"testing"
 )
 
-// BenchmarkArchiveIndex_FilesByGlob covers the shapes a cataloger asks for: the ones the name index
-// answers outright, the ones reducing to a finite set of lookups, and the ones reaching doublestar
-// over whatever the literal bounds narrow them to.
-//
-// Every pattern but the last two is one syft's own catalogers register, verbatim. That matters because
-// a benchmark of invented patterns measures the wrong thing: no cataloger glob uses a character class,
-// so `class-in-extension` is kept for coverage rather than as a cost anyone pays, and `many-matches`
-// is a control - it matches thousands of files, so it measures building and sorting locations rather
-// than finding them, and is expected to stay flat while the others improve.
-func BenchmarkArchiveIndex_FilesByGlob(b *testing.B) {
+// every pattern but the last two is one syft's own catalogers register
+func BenchmarkIndex_FilesByGlob(b *testing.B) {
 	r := benchArchive(b)
 
 	patterns := map[string]string{
@@ -43,14 +35,9 @@ func BenchmarkArchiveIndex_FilesByGlob(b *testing.B) {
 	}
 }
 
-// benchArchive is shaped like a fat application image layer: thousands of entries with thousands of
-// distinct base names, spread over nested directories.
-//
-// The names must be distinct: an archive whose files are all called README.md puts two keys in the
-// name index and makes every lookup look free. The decoys serve the same purpose - names ending "ar"
-// that are not archives, names beginning "go" that are not the go binary - separating a lookup keyed
-// on a whole extension from one keyed on the two characters a weak bound fixes.
-func benchArchive(tb testing.TB) *ArchiveIndex {
+// benchArchive is shaped like a fat application image layer: thousands of entries with distinct base
+// names, plus decoys sharing the prefixes and suffixes the patterns fix, so no lookup looks free.
+func benchArchive(tb testing.TB) *Index {
 	tb.Helper()
 	entries := map[string]string{
 		"usr/local/go/bin/go":                        "binary",
@@ -64,16 +51,12 @@ func benchArchive(tb testing.TB) *ArchiveIndex {
 		"usr/lib/jvm/java-21/release":                "jvm",
 	}
 	for i := range 1500 {
-		// decoys for the weak tail bound "ar" that `*.[jw]ar` and `*.{jar,war}` would share
 		entries[fmt.Sprintf("var/cache/archive%04d.tar", i)] = "data"
 		entries[fmt.Sprintf("var/cache/bundle%04d.rar", i)] = "data"
 		entries[fmt.Sprintf("usr/share/cal%04dendar", i)] = "data"
-		// decoys for the head bound "go"
 		entries[fmt.Sprintf("usr/share/gopher%04d.md", i)] = "docs"
-		// decoys for the head bounds "l" and "m", and for "libstd-"
 		entries[fmt.Sprintf("usr/lib/libstd-%04d.a", i)] = "archive"
 		entries[fmt.Sprintf("usr/lib/mod%04d.py", i)] = "code"
-		// ordinary bulk, with distinct names
 		entries[fmt.Sprintf("usr/share/doc/pkg%04d/NOTES%04d.md", i, i)] = "docs"
 	}
 	return indexOver(tb, 1<<26, entries)

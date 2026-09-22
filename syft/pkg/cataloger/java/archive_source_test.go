@@ -55,9 +55,8 @@ func Test_archiveContentsCataloger_agreesWithTheArchiveReadingCataloger(t *testi
 
 	digests := digestsOfFile(t, jarPath)
 	trav := &archive.Traversal{
-		Location:    file.NewLocation(archivePath),
-		VirtualPath: archivePath,
-		Digests:     digests,
+		Location: file.NewLocation(archivePath),
+		Digests:  digests,
 	}
 	ctx := archive.WithTraversal(context.Background(), trav)
 	fromContents, _, err := NewArchiveCataloger(cfg).Catalog(ctx, contentsResolver)
@@ -70,16 +69,14 @@ func Test_archiveContentsCataloger_reportsNothingOutsideAnArchive(t *testing.T) 
 	// with the archive cataloger task owning extraction, every archive comes back with a traversal
 	// naming it. Outside one there is nothing to describe: opening archive files here as well would
 	// catalog each of them a second time.
-	cfg := DefaultArchiveCatalogerConfig()
-	cfg.NestedArchivesHandledExternally = true
-
 	dir := t.TempDir()
 	jarPath := writeJar(t, dir, "example-lib-1.2.3.jar", jarEntries())
 	require.FileExists(t, jarPath)
 	resolver, err := fileresolver.NewFromDirectory(dir, "")
 	require.NoError(t, err)
 
-	pkgs, _, err := NewArchiveCataloger(cfg).Catalog(context.Background(), resolver)
+	ctx := archive.WithNestedCataloging(context.Background())
+	pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(ctx, resolver)
 	require.NoError(t, err)
 	assert.Empty(t, pkgs)
 }
@@ -93,8 +90,7 @@ func Test_archiveContentsCataloger_reportsNothingForAnArchiveThatIsNotJava(t *te
 	require.NoError(t, err)
 
 	ctx := archive.WithTraversal(context.Background(), &archive.Traversal{
-		Location:    file.NewLocation("/bundle.zip"),
-		VirtualPath: "/bundle.zip",
+		Location: file.NewLocation("/bundle.zip"),
 	})
 	pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(ctx, resolver)
 	require.NoError(t, err)
@@ -117,8 +113,7 @@ func Test_archiveContentsCataloger_noManifestIsNoPackage(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := archive.WithTraversal(context.Background(), &archive.Traversal{
-		Location:    file.NewLocation("no-manifest-1.0.0.jar"),
-		VirtualPath: "no-manifest-1.0.0.jar",
+		Location: file.NewLocation("no-manifest-1.0.0.jar"),
 	})
 	pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(ctx, resolver)
 	assert.Empty(t, pkgs)
@@ -135,11 +130,6 @@ func Test_archiveContentsCataloger_readsWhatWasExtractedAndNoMore(t *testing.T) 
 	// extraction produced. An archive truncated by a limit yields a package built from the entries that
 	// were written, so identity degrades rather than disappearing - the manifest is there, the maven
 	// metadata is not.
-	//
-	// Observed on a real artifact: jenkins-core-2.578.jar holds more than the default 10,000-entry bound,
-	// so its META-INF/maven pom is never extracted and its group id falls back from org.jenkins-ci.main
-	// to the artifact id. The archive-reading cataloger never felt this, reading the archive's own
-	// central directory with no bound on it.
 	entries := map[string]string{
 		"META-INF/MANIFEST.MF": "Manifest-Version: 1.0\n" +
 			"Implementation-Title: example-lib\nImplementation-Version: 1.2.3\n",
@@ -153,8 +143,7 @@ func Test_archiveContentsCataloger_readsWhatWasExtractedAndNoMore(t *testing.T) 
 	require.NoError(t, err)
 
 	ctx := archive.WithTraversal(context.Background(), &archive.Traversal{
-		Location:    file.NewLocation("example-lib-1.2.3.jar"),
-		VirtualPath: "example-lib-1.2.3.jar",
+		Location: file.NewLocation("example-lib-1.2.3.jar"),
 	})
 	pkgs, _, err := NewArchiveCataloger(DefaultArchiveCatalogerConfig()).Catalog(ctx, resolver)
 	require.NoError(t, err)
@@ -249,9 +238,7 @@ func joinSorted(in []string) string {
 
 func digestsOfFile(t *testing.T, path string) []file.Digest {
 	t.Helper()
-	entries, err := newZipEntries(context.Background(), path)
-	require.NoError(t, err)
-	digests, err := entries.digests(context.Background())
+	digests, err := getDigestsFromArchive(context.Background(), path)
 	require.NoError(t, err)
 	require.NotEmpty(t, digests)
 	return digests

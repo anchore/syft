@@ -6,147 +6,153 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
-	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/log"
 )
 
-// copyChunkSize is the read/charge/write chunk size, bounding how far a charge runs ahead of what is
-// written. Matches io.Copy's buffer size.
+// copyChunkSize is how many bytes are read and charged at a time, bounding how far a charge runs
+// ahead of what is actually held.
 const copyChunkSize = 32 * 1024
 
-// ReaderAtSeeker is the random access an archive format needs: a zip reads its central directory from
-// the end of the stream, so a plain io.Reader will not do.
+// ReaderAtSeeker is the random access an archive format needs: a zip is read from its central
+// directory at the end of the stream.
 type ReaderAtSeeker interface {
 	io.Reader
 	io.ReaderAt
 	io.Seeker
 }
 
-// Content is one archive's bytes, wherever the limiter routed them.
+// Content is one archive's bytes, ready for random access.
 type Content struct {
-	Name   string
-	Reader ReaderAtSeeker
+	ReaderAtSeeker
 
-	// closer releases the overflow file's handle; nil for content held in memory.
-	closer io.Closer
+	// release gives back what holding the bytes cost; nil when they are read in place
+	release func()
 }
 
-// Close releases the handle on overflow content. It is a no-op for content held in memory.
-func (c Content) Close() error {
-	if c.closer == nil {
-		return nil
+// Release drops the held bytes and refunds their charge. Safe to call more than once.
+func (c *Content) Release() {
+	if c.release != nil {
+		c.release()
+		c.release = nil
 	}
-	return c.closer.Close()
 }
 
-// holdContent holds one archive's bytes in memory while the memory limit admits them, and spills into
-// workDir against the disk limit once it does not. Reads and charges copyChunkSize at a time so an
-// oversized archive is never held past the limit. A zero memory limit spills in full; a negative one
-// never refuses.
-//
-// On a refused chunk, held bytes and the rest of the stream spill without re-reading, and the memory
-// charge is refunded as it is charged to disk. The disk limit is terminal: exceeding it yields
-// ErrDiskLimitReached and the archive is skipped (see ExtractToResolver).
-func holdContent(r io.Reader, workDir *WorkDir, name string, charge *Charge, notify Notify) (Content, error) {
-	var held bytes.Buffer
+// acquireContent makes an archive's bytes random-access. Bytes that already are, such as a file on
+// disk or an entry of a parent archive, are read in place and cost nothing. Anything else is held
+// in memory or written to disk within the limits.
+func acquireContent(r io.Reader, name string, workDir *WorkDir, charge *Charge) (Content, error) {
+	if ras, ok := r.(ReaderAtSeeker); ok {
+		return Content{ReaderAtSeeker: ras}, nil
+	}
+	return holdContent(r, name, workDir, charge)
+}
+
+// holdContent holds an archive's bytes in memory while the memory limit admits them and writes them
+// to disk once it does not. Reaching the disk limit yields ErrDiskLimitReached.
+func holdContent(r io.Reader, name string, workDir *WorkDir, charge *Charge) (Content, error) {
+	held, rest, err := readWhileMemoryAdmits(r, charge)
+	if err != nil {
+		return Content{}, fmt.Errorf("unable to read archive content: %w", err)
+	}
+	if rest == nil {
+		return Content{
+			ReaderAtSeeker: bytes.NewReader(held),
+			release:        func() { charge.RefundMemory(int64(len(held))) },
+		}, nil
+	}
+
+	log.WithFields("archive", name).Debug("archive content does not fit in memory; writing it to disk")
+	charge.RefundMemory(int64(len(held)))
+	return writeContentToDisk(io.MultiReader(bytes.NewReader(held), rest), workDir, charge)
+}
+
+// readWhileMemoryAdmits reads r into memory, charging each chunk before holding it so a stream larger
+// than the memory limit is never held in full. When a chunk is refused it returns what is held so
+// far, still charged, and a reader over the refused chunk followed by the rest of r. rest is nil when
+// all of r fit.
+func readWhileMemoryAdmits(r io.Reader, charge *Charge) (held []byte, rest io.Reader, err error) {
 	chunk := make([]byte, copyChunkSize)
 	for {
 		n, readErr := r.Read(chunk)
 		if n > 0 {
 			if !charge.Memory(int64(n)) {
-				// spill held bytes, this chunk, and the rest without re-reading
-				if notify != nil {
-					notify(ContentOverflowed{Archive: name, Bytes: int64(held.Len() + n), Reason: overflowReason(charge)})
-				}
-				charge.RefundMemory(int64(held.Len()))
-				return overflowContent(io.MultiReader(&held, bytes.NewReader(chunk[:n]), r), workDir, name, charge)
+				return held, io.MultiReader(bytes.NewReader(chunk[:n]), r), nil
 			}
-			held.Write(chunk[:n])
+			held = append(held, chunk[:n]...)
+		}
+		if errors.Is(readErr, io.EOF) {
+			return held, nil, nil
 		}
 		if readErr != nil {
-			if errors.Is(readErr, io.EOF) {
-				return Content{Name: name, Reader: bytes.NewReader(held.Bytes())}, nil
-			}
-			return Content{}, fmt.Errorf("unable to read archive content: %w", readErr)
+			return nil, nil, readErr
 		}
 	}
 }
 
-// overflowContent writes an archive's bytes into its work directory, charging the disk limit as they
-// land, and returns a reader over the file positioned at its start. The work directory is created
-// here on first write, so an in-memory archive never creates one.
-//
-// This is the only filesystem write in the extraction path, and the name derives from where the
-// archive was found - attacker-controlled inside another archive - so the destination is checked
-// both lexically and against where it really lands.
-func overflowContent(r io.Reader, workDir *WorkDir, name string, charge *Charge) (Content, error) {
+// contentFileName is the file an archive's own bytes are written to when they do not fit in memory.
+const contentFileName = "archive"
+
+// writeContentToDisk writes r into the work directory, charging the disk limit as bytes land, and
+// returns a reader over the file. Reaching the disk limit removes the file and yields
+// ErrDiskLimitReached.
+func writeContentToDisk(r io.Reader, workDir *WorkDir, charge *Charge) (Content, error) {
 	dir, err := workDir.Path()
 	if err != nil {
 		return Content{}, err
 	}
-
-	dest, err := intFile.SafeJoin(dir, name)
+	path := filepath.Join(dir, contentFileName)
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
-		return Content{}, fmt.Errorf("refusing to overflow archive content to %q: %w", name, err)
-	}
-	if inside, err := resolvesInsideRoot(dir, dest); err != nil || !inside {
-		return Content{}, fmt.Errorf("refusing to overflow archive content outside its work directory: %q", name)
-	}
-	f, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
-	if err != nil {
-		return Content{}, fmt.Errorf("unable to create temp archive file: %w", err)
+		return Content{}, fmt.Errorf("unable to create archive content file: %w", err)
 	}
 
-	written, limitReached, err := copyCharged(f, r, charge)
-	if err == nil && limitReached {
-		err = ErrDiskLimitReached
+	written, err := copyCharged(f, r, charge)
+	release := func() {
+		charge.RefundDisk(written)
+		if err := f.Close(); err != nil {
+			log.WithFields("path", path, "error", err).Trace("unable to close archive content file")
+		}
+		if err := os.Remove(path); err != nil {
+			log.WithFields("path", path, "error", err).Trace("unable to remove archive content file")
+		}
 	}
 	if err == nil {
 		_, err = f.Seek(0, io.SeekStart)
 	}
 	if err != nil {
-		charge.RefundDisk(written)
-		if closeErr := f.Close(); closeErr != nil {
-			log.WithFields("path", dest, "error", closeErr).Trace("unable to close overflow archive file")
-		}
-		if rmErr := os.Remove(dest); rmErr != nil {
-			log.WithFields("path", dest, "error", rmErr).Trace("unable to remove overflow archive file")
-		}
+		release()
 		if errors.Is(err, ErrDiskLimitReached) {
 			return Content{}, err
 		}
-		return Content{}, fmt.Errorf("unable to write temp archive file: %w", err)
+		return Content{}, fmt.Errorf("unable to write archive content file: %w", err)
 	}
-
-	return Content{Name: name, Reader: f, closer: f}, nil
+	return Content{ReaderAtSeeker: f, release: release}, nil
 }
 
-// copyCharged copies src into dst, charging each chunk to the disk limit before writing, so the copy
-// is bounded by what lands rather than any declared size. It stops at the first refused charge and
-// reports it; the caller decides whether that truncates one entry or skips the archive.
-func copyCharged(dst io.Writer, src io.Reader, charge *Charge) (written int64, limitReached bool, err error) {
-	buf := make([]byte, copyChunkSize)
+// copyCharged copies src to dst, charging each chunk to the disk limit before writing it. It stops
+// with ErrDiskLimitReached at the first refused chunk; bytes written before that stay charged.
+func copyCharged(dst io.Writer, src io.Reader, charge *Charge) (written int64, err error) {
+	chunk := make([]byte, copyChunkSize)
 	for {
-		n, readErr := src.Read(buf)
+		n, readErr := src.Read(chunk)
 		if n > 0 {
 			if !charge.Disk(int64(n)) {
-				return written, true, nil
+				return written, ErrDiskLimitReached
 			}
-			w, writeErr := dst.Write(buf[:n])
+			w, writeErr := dst.Write(chunk[:n])
 			written += int64(w)
-			if w < n {
-				charge.RefundDisk(int64(n - w))
-			}
+			charge.RefundDisk(int64(n - w))
 			if writeErr != nil {
-				return written, false, writeErr
+				return written, writeErr
 			}
 		}
+		if errors.Is(readErr, io.EOF) {
+			return written, nil
+		}
 		if readErr != nil {
-			if errors.Is(readErr, io.EOF) {
-				return written, false, nil
-			}
-			return written, false, readErr
+			return written, readErr
 		}
 	}
 }

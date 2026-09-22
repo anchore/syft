@@ -17,13 +17,13 @@ import (
 func readManifest(t *testing.T, ctx context.Context, parser *archiveParser) *pkg.JavaManifest {
 	t.Helper()
 
-	matches := parser.entries.glob(false, manifestGlob)
+	matches := parser.entries.glob(manifestGlob)
 	require.Len(t, matches, 1)
 
 	contents, err := parser.entries.contents(ctx, matches...)
 	require.NoError(t, err)
 
-	manifest, err := parseJavaManifest(parser.virtualPath, strings.NewReader(contents[matches[0]]))
+	manifest, err := parseJavaManifest(parser.virtualPath(), strings.NewReader(contents[matches[0]]))
 	require.NoError(t, err)
 
 	return manifest

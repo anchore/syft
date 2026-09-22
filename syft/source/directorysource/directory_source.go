@@ -118,9 +118,7 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
-// ExcludedPaths returns a copy of the exclusion patterns this source was configured with, so a
-// consumer indexing content taken from it can honor the same patterns. A copy, because
-// GetDirectoryExclusionFunctions rewrites the patterns it is given.
+// ExcludedPaths returns the exclusion patterns this source was configured with.
 func (s directorySource) ExcludedPaths() []string {
 	return slices.Clone(s.config.Exclude.Paths)
 }
@@ -138,13 +136,8 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		return nil, nil
 	}
 
-	// the indexer reports an absolute, symlink-resolved path to every visitor (the resolver normalizes
-	// its root with EvalSymlinks and the walk takes filepath.Abs of it), so patterns must anchor to a
-	// root derived the same way. Otherwise on macOS - where a directory under /var is really under
-	// /private/var - they exclude nothing.
-	//
-	// An unresolvable root is left alone rather than failing the scan: EvalSymlinks needs the path to
-	// exist, and the resolver reports a missing root better than this can.
+	// the indexer reports symlink-resolved absolute paths to every visitor, so the patterns must be
+	// anchored to a root resolved the same way, or a root under a symlink (macOS's /var) excludes nothing
 	if resolved, err := filepath.EvalSymlinks(root); err == nil {
 		root = resolved
 	}
@@ -161,9 +154,7 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		root += "/"
 	}
 
-	// a new slice, not a rewrite in place: these patterns belong to the source's config and are read
-	// elsewhere (see source.PathExcluder), so building the resolver must not replace what the user
-	// configured with scan-root-absolute patterns
+	// the given patterns are the source's configuration (see source.PathExcluder), so they are not rewritten in place
 	rooted := make([]string, 0, len(exclusions))
 	var errors []string
 	for _, exclusion := range exclusions {

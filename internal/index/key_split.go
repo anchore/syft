@@ -1,10 +1,5 @@
-// Package index provides a concurrent key-split (radix) index and a forward/reverse pair over it.
-//
-// It answers path queries like "which entries end in .jar" or "live under this directory" as keyed
-// lookups rather than tree walks, so a cataloger's `**/*.ext` glob need not scan every path.
-//
-// Ported from a prototype dir-scan package and kept close to the original for diffing. The lock type
-// is local (see lock.go) rather than the prototype's, which carries unrelated helpers.
+// Package index provides a concurrent key-split (radix) index, and a forward/reverse pair over it
+// that answers prefix and suffix lookups such as "which names end in .jar".
 package index
 
 import (
@@ -99,41 +94,6 @@ func (n *Node[T]) ByPrefix(s string) []T {
 		return nil
 	}
 	return v.Collect()
-}
-
-// ByPrefixUpTo returns the values under s, or false once there are more than limit of them. It lets a
-// caller choosing between two lookups take whichever is selective without paying for the other: a
-// complete result costs at most limit. The values returned alongside false are partial; discard them.
-func (n *Node[T]) ByPrefixUpTo(s string, limit int) (values []T, complete bool) {
-	v, _ := n._find(s)
-	if v == nil {
-		return nil, true
-	}
-	return v.CollectUpTo(limit)
-}
-
-// CollectUpTo gathers this node's values, giving up as soon as there are more than limit.
-func (n *Node[T]) CollectUpTo(limit int) (values []T, complete bool) {
-	complete = n._collectUpTo(&values, limit)
-	return values, complete
-}
-
-func (n *Node[T]) _collectUpTo(values *[]T, limit int) bool {
-	defer n.RLock()()
-
-	if n.set {
-		if len(*values) >= limit {
-			return false
-		}
-		*values = append(*values, n.value)
-	}
-
-	for _, v := range n.keyMap {
-		if !v._collectUpTo(values, limit) {
-			return false
-		}
-	}
-	return true
 }
 
 func (n *Node[T]) Update(name string, f NodeUpdateFunc[T]) {

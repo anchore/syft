@@ -1,7 +1,6 @@
 package options
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,26 +18,6 @@ func Test_packageConfigDefaultsMatchArchiveSearchConfig(t *testing.T) {
 	assert.Equal(t, want.MaxDiskBytes, got.NestedArchiveMaxDiskBytes)
 
 	require.Zero(t, got.NestedArchiveMaxDepth, "nested archive cataloging must be off by default")
-}
-
-func Test_packageConfigNamesNoArchiveExclusionSetting(t *testing.T) {
-	// nested archive cataloging honors the scan's own --exclude patterns, so the application config must
-	// name no archive-specific exclusion key. Asserted over the yaml tags rather than the Go field names:
-	// the key is what a user writes and what a config dump shows.
-	var keys []string
-	typ := reflect.TypeOf(packageConfig{})
-	for i := 0; i < typ.NumField(); i++ {
-		keys = append(keys, typ.Field(i).Tag.Get("yaml"))
-	}
-
-	assert.Equal(t, []string{
-		"search-unindexed-archives",
-		"search-indexed-archives",
-		"exclude-binary-overlap-by-ownership",
-		"nested-archive-max-depth",
-		"nested-archive-max-memory-bytes",
-		"nested-archive-max-disk-bytes",
-	}, keys)
 }
 
 func Test_ToArchiveConfig(t *testing.T) {
@@ -70,19 +49,5 @@ func Test_ToArchiveConfig(t *testing.T) {
 		assert.Equal(t, int64(3333), got.MaxDiskBytes)
 		assert.True(t, got.IncludeIndexedArchives)
 		assert.True(t, got.IncludeUnindexedArchives)
-	})
-
-	t.Run("--exclude patterns arrive already filtered to the in-scope subset, with no source involved", func(t *testing.T) {
-		// every-boundary-populates-the-patterns: the CLI is one of the two boundaries filling
-		// ExclusionPatterns, from Catalog.Exclusions, applying the same shape rule the library entry
-		// point applies to what the source publishes - only an any-depth ("**/") pattern is in scope.
-		// A root-anchored or one-level pattern is not, and no source is consulted: Catalog carries none.
-		cfg := Catalog{Exclusions: []string{"./root-anchored", "**/*.rpm", "*/one-level", "**/vendor"}}
-		assert.Equal(t, []string{"**/*.rpm", "**/vendor"}, cfg.ToArchiveConfig().ExclusionPatterns)
-	})
-
-	t.Run("no --exclude patterns leaves the field empty", func(t *testing.T) {
-		cfg := Catalog{}
-		assert.Empty(t, cfg.ToArchiveConfig().ExclusionPatterns)
 	})
 }

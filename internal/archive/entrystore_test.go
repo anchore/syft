@@ -13,187 +13,131 @@ import (
 
 func TestEntryStore_holdsSmallContentInMemory(t *testing.T) {
 	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	charge := memCharge(1024)
+	s := NewEntryStore("app.zip", WorkDirAt(dir), memCharge(1024))
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
-	entry, err := s.Add(regularHeader("a.txt", 5), bytes.NewReader([]byte("hello")), charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(regularHeader("a.txt", 5), bytes.NewReader([]byte("hello"))))
 
 	assert.Equal(t, int64(5), s.heldInMemory())
-	assert.NoFileExists(t, filepath.Join(dir, overflowBlobName),
-		"a small archive must not touch the disk at all - that is the whole point of the store")
-
-	r, err := s.Open(entry)
-	require.NoError(t, err)
-	assert.Equal(t, "hello", readEntry(t, r))
+	assert.NoFileExists(t, filepath.Join(dir, entriesFileName))
+	assert.Equal(t, "hello", readEntry(t, s.Open(s.Entries()[0])))
 }
 
-func TestEntryStore_spillsToDiskAndKeepsTheSameEntries(t *testing.T) {
-	// the index over these entries is not rebuilt when content moves, so the entry pointers and their
-	// contents must survive it
+func TestEntryStore_overflowsToDiskAndKeepsTheSameEntries(t *testing.T) {
+	// an index over these entries is not rebuilt when content moves
 	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	charge := memCharge(8)
+	s := NewEntryStore("app.zip", WorkDirAt(dir), memCharge(8))
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
-	first, err := s.Add(regularHeader("a.txt", 4), bytes.NewReader([]byte("aaaa")), charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(regularHeader("a.txt", 4), bytes.NewReader([]byte("aaaa"))))
+	first := s.Entries()[0]
 	require.Equal(t, int64(4), s.heldInMemory())
 
-	// the second entry takes the store past its memory bound, so everything held moves out
-	second, err := s.Add(regularHeader("b.txt", 6), bytes.NewReader([]byte("bbbbbb")), charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(regularHeader("b.txt", 6), bytes.NewReader([]byte("bbbbbb"))))
 
-	assert.Zero(t, s.heldInMemory(), "everything must have moved out, not just the entry that did not fit")
-	assert.FileExists(t, filepath.Join(dir, overflowBlobName))
+	assert.Zero(t, s.heldInMemory(), "everything moves out, not just the entry that did not fit")
+	assert.FileExists(t, filepath.Join(dir, entriesFileName))
+	assert.Equal(t, int64(10), s.OnDisk())
 
-	// the same entry pointers still read their own content, from their new home
-	firstReader, err := s.Open(first)
-	require.NoError(t, err)
-	assert.Equal(t, "aaaa", readEntry(t, firstReader))
-
-	secondReader, err := s.Open(second)
-	require.NoError(t, err)
-	assert.Equal(t, "bbbbbb", readEntry(t, secondReader))
-
-	assert.Equal(t, []*Entry{first, second}, s.Entries(), "order and identity must be unchanged by the move")
+	entries := s.Entries()
+	require.Len(t, entries, 2)
+	assert.Same(t, first, entries[0], "entry identity survives the move")
+	assert.Equal(t, "aaaa", readEntry(t, s.Open(entries[0])))
+	assert.Equal(t, "bbbbbb", readEntry(t, s.Open(entries[1])))
 }
 
 func TestEntryStore_zeroMemoryHoldsNothing(t *testing.T) {
-	// the reading a zero memory limit has everywhere else: none of that resource may be used
 	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	charge := memCharge(0)
+	s := NewEntryStore("app.zip", WorkDirAt(dir), memCharge(0))
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
-	entry, err := s.Add(regularHeader("a.txt", 3), bytes.NewReader([]byte("abc")), charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(regularHeader("a.txt", 3), bytes.NewReader([]byte("abc"))))
 
 	assert.Zero(t, s.heldInMemory())
-	assert.FileExists(t, filepath.Join(dir, overflowBlobName))
-
-	r, err := s.Open(entry)
-	require.NoError(t, err)
-	assert.Equal(t, "abc", readEntry(t, r))
+	assert.FileExists(t, filepath.Join(dir, entriesFileName))
+	assert.Equal(t, "abc", readEntry(t, s.Open(s.Entries()[0])))
 }
 
-func TestEntryStore_negativeMemoryNeverSpills(t *testing.T) {
+func TestEntryStore_negativeMemoryNeverOverflows(t *testing.T) {
 	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	charge := memCharge(-1)
+	s := NewEntryStore("app.zip", WorkDirAt(dir), memCharge(-1))
 	t.Cleanup(func() { require.NoError(t, s.Close()) })
 
 	for _, body := range []string{"one", "two", "three"} {
-		_, err := s.Add(regularHeader(body+".txt", int64(len(body))), bytes.NewReader([]byte(body)), charge)
-		require.NoError(t, err)
+		require.NoError(t, s.Add(regularHeader(body+".txt", int64(len(body))), bytes.NewReader([]byte(body))))
 	}
 
 	assert.Equal(t, int64(11), s.heldInMemory())
-	assert.NoFileExists(t, filepath.Join(dir, overflowBlobName))
+	assert.NoFileExists(t, filepath.Join(dir, entriesFileName))
 }
 
-func TestEntryStore_spillIsRefusedWhenDiskIsNotAvailable(t *testing.T) {
-	// content that does not fit in memory and cannot be written has nowhere to go, so the archive is
-	// skipped rather than cataloged as if it were empty
-	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	t.Cleanup(func() { require.NoError(t, s.Close()) })
+func TestEntryStore_refusedEntryIsNotStored(t *testing.T) {
+	// a half-stored pom a cataloger parses is worse than an absent one
+	s := storeFor(t, NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: 0}).Charge())
 
-	nowhereToPutIt := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: 0}).Charge()
-	_, err := s.Add(regularHeader("a.txt", 3), bytes.NewReader([]byte("abc")), nowhereToPutIt)
+	err := s.Add(regularHeader("a.txt", 3), bytes.NewReader([]byte("abc")))
 	assert.ErrorIs(t, err, ErrDiskLimitReached)
+	assert.Empty(t, s.Entries())
 }
 
 func TestEntryStore_directoryEntriesHoldNoContent(t *testing.T) {
-	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	charge := memCharge(1024)
-	t.Cleanup(func() { require.NoError(t, s.Close()) })
+	s := storeFor(t, memCharge(1024))
 
-	entry, err := s.Add(tar.Header{Name: "lib/", Typeflag: tar.TypeDir, Mode: 0o755}, nil, charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(tar.Header{Name: "lib", Typeflag: tar.TypeDir, Mode: 0o755}, nil))
 
 	assert.Zero(t, s.heldInMemory())
-	r, err := s.Open(entry)
-	require.NoError(t, err)
-	assert.Empty(t, readEntry(t, r))
+	assert.Empty(t, readEntry(t, s.Open(s.Entries()[0])))
 }
 
-func TestEntryStore_chargesIndexRecordEvenForEmptyContent(t *testing.T) {
-	// an empty entry still charges its index record - the header and node held to reach it - which bounds
-	// entry count, the dimension the content-byte budgets do not cover
-	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
+func TestEntryStore_indexCostIsChargedEvenForEmptyContent(t *testing.T) {
+	// the index estimate is what bounds an archive of many empty entries
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 1 << 20, MaxDiskBytes: -1})
-	charge := limiter.Charge()
-	t.Cleanup(func() { require.NoError(t, s.Close()) })
+	s := storeFor(t, limiter.Charge())
 
 	hdr := regularHeader("a.txt", 0)
-	_, err := s.Add(hdr, bytes.NewReader(nil), charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(hdr, bytes.NewReader(nil)))
 
 	mem, _ := limiter.InUse()
-	assert.Equal(t, indexRecordCost(hdr), mem, "the index record is charged to memory")
-	assert.Equal(t, int64(0), s.heldInMemory(), "no content was held")
+	assert.Equal(t, approxIndexBytes(hdr), mem)
+	assert.Zero(t, s.heldInMemory())
 }
 
-func TestEntryStore_indexOverflowsToDiskWhenMemoryIsZero(t *testing.T) {
-	// the index cannot be refused just because memory is zero: a resolver needs the records to reach
-	// content living entirely on disk. With disk unbounded, every entry is admitted and its record
-	// charged to disk instead.
-	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
+func TestEntryStore_indexCostFallsBackToDiskWhenMemoryIsZero(t *testing.T) {
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1})
-	charge := limiter.Charge()
-	t.Cleanup(func() { require.NoError(t, s.Close()) })
+	s := storeFor(t, limiter.Charge())
 
 	hdr := regularHeader("a.txt", 0)
-	_, err := s.Add(hdr, bytes.NewReader(nil), charge)
-	require.NoError(t, err)
+	require.NoError(t, s.Add(hdr, bytes.NewReader(nil)))
 
 	mem, disk := limiter.InUse()
-	assert.Equal(t, int64(0), mem, "memory budget is zero, so nothing is charged there")
-	assert.Equal(t, indexRecordCost(hdr), disk, "the index record overflows to the disk budget")
+	assert.Zero(t, mem)
+	assert.Equal(t, approxIndexBytes(hdr), disk)
 }
 
 func TestEntryStore_refusesEntriesWhenNoBudgetAdmitsTheIndex(t *testing.T) {
-	// with memory zero and only a few index records' worth of disk, the store admits a bounded number of
-	// entries and then refuses, so an archive of millions of empty entries cannot grow the index without
-	// limit
-	dir := t.TempDir()
-	s := NewEntryStore(WorkDirAt(dir), "app.zip", nil)
-	room := indexRecordCost(regularHeader("x", 0)) * 3
-	charge := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: room}).Charge()
-	t.Cleanup(func() { require.NoError(t, s.Close()) })
+	room := approxIndexBytes(regularHeader("x", 0)) * 3
+	s := storeFor(t, NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: room}).Charge())
 
 	var err error
 	admitted := 0
-	for i := 0; i < 100; i++ {
-		if _, err = s.Add(regularHeader("x", 0), bytes.NewReader(nil), charge); err != nil {
-			break
+	for i := 0; i < 100 && err == nil; i++ {
+		if err = s.Add(regularHeader("x", 0), bytes.NewReader(nil)); err == nil {
+			admitted++
 		}
-		admitted++
 	}
 	require.ErrorIs(t, err, ErrDiskLimitReached)
-	assert.Equal(t, 3, admitted, "exactly the index records that fit the disk budget were admitted")
+	assert.Equal(t, 3, admitted)
 }
 
-func regularHeader(name string, size int64) tar.Header {
-	return tar.Header{Name: name, Size: size, Mode: 0o600, Typeflag: tar.TypeReg}
-}
+func TestEntryStore_readsAfterCloseFail(t *testing.T) {
+	s := storeFor(t, memCharge(0))
+	require.NoError(t, s.Add(regularHeader("a.txt", 5), bytes.NewReader([]byte("hello"))))
+	entry := s.Entries()[0]
+	require.Equal(t, "hello", readEntry(t, s.Open(entry)))
 
-func readEntry(t *testing.T, r ReaderAtSeeker) string {
-	t.Helper()
-	_, err := r.Seek(0, io.SeekStart)
-	require.NoError(t, err)
-	b, err := io.ReadAll(r)
-	require.NoError(t, err)
-	return string(b)
-}
+	require.NoError(t, s.Close())
 
-// memCharge is a charge against a memory bound with disk unbounded, the shape the store reads: hold
-// while memory admits, move out when it does not.
-func memCharge(maxMemory int64) *Charge {
-	return NewLimiter(Limits{MaxMemoryBytes: maxMemory, MaxDiskBytes: -1}).Charge()
+	_, err := io.ReadAll(s.Open(entry))
+	assert.Error(t, err)
+	assert.NoError(t, s.Close(), "Close is idempotent")
 }

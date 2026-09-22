@@ -176,9 +176,7 @@ func (s fileSource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
-// ExcludedPaths returns a copy of the exclusion patterns this source was configured with, so a
-// consumer indexing content taken from it can honor the same patterns. A copy, because
-// directorysource.GetDirectoryExclusionFunctions rewrites the patterns it is given.
+// ExcludedPaths returns the exclusion patterns this source was configured with.
 func (s fileSource) ExcludedPaths() []string {
 	return slices.Clone(s.config.Exclude.Paths)
 }

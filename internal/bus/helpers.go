@@ -41,24 +41,17 @@ func Notify(message string) {
 
 type catalogerTaskRegistryKey struct{}
 
-// catalogerTaskRegistry remembers the row each cataloger publishes, keyed by the publishing task's
-// identity.
-//
-// A cataloger runs more than once per scan: once over the scan root, then again inside every archive
-// the archive cataloger walks. A row per run floods the display, and reusing a published ID replaces
-// the live row - which is then never completed, hanging a UI (like the syft CLI) that waits on every
-// row it started. So a re-run reports into the row it already owns, and its count covers the whole
-// scan rather than the root alone.
+// catalogerTaskRegistry remembers the progress row each cataloger publishes. A cataloger runs once
+// over the scan root and again inside every archive the archive cataloger walks; a re-run reports
+// into the row it already owns rather than publishing another, and republishing an ID would replace
+// the live row with one the UI never sees completed.
 type catalogerTaskRegistry struct {
 	mu   sync.Mutex
 	rows map[string]*monitor.TaskProgress
 }
 
-// WithCatalogerTaskRegistry returns a context under which each cataloger publishes one row no matter
-// how many times it runs; without it every run publishes, which suits a single-pass caller.
-//
-// Install once per scan before any task runs, so a re-run finds the first run's row. Idempotent: a
-// second registry would hold none of the existing rows, so every re-run would publish again.
+// WithCatalogerTaskRegistry returns a context under which each cataloger publishes one progress row
+// however many times it runs. A context that already carries a registry is returned unchanged.
 func WithCatalogerTaskRegistry(ctx context.Context) context.Context {
 	if catalogerTaskRegistryFromContext(ctx) != nil {
 		return ctx
@@ -73,8 +66,8 @@ func catalogerTaskRegistryFromContext(ctx context.Context) *catalogerTaskRegistr
 	return reg
 }
 
-// catalogerTaskKey identifies the row a task owns: its ID where it has one (a package cataloger's ID
-// is its name), otherwise its parent and title (as every file cataloger, which publishes no ID).
+// catalogerTaskKey identifies the row a task owns: its ID when it has one, otherwise its parent and
+// title (file catalogers publish no ID).
 func catalogerTaskKey(info monitor.GenericTask) string {
 	if info.ID != "" {
 		return "id:" + info.ID
@@ -104,14 +97,7 @@ func StartCatalogerTask(ctx context.Context, info monitor.GenericTask, size int6
 }
 
 // resumeCatalogerTask reopens a row an earlier run completed and grows its total by what this run
-// adds.
-//
-// Growing the total matters: a row completes once its count reaches its total, so incrementing a row
-// whose total covers only the first run makes it read as finished mid-walk. An indeterminate total on
-// either side stays indeterminate.
-//
-// Only a completed row is reopened; one carrying a real failure keeps it, since a later clean run
-// does not mean the earlier one succeeded.
+// adds, so the row does not read as finished mid-walk. A row carrying a real failure keeps it.
 func resumeCatalogerTask(row *monitor.TaskProgress, size int64, initialStage string) {
 	if size < 0 || row.Size() < 0 {
 		row.SetTotal(-1)

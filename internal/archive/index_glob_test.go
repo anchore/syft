@@ -1,4 +1,4 @@
-package fileresolver
+package archive
 
 import (
 	"sort"
@@ -9,12 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test_FilesByGlob_agreesWithBruteForce is the safety net under every index shortcut.
-//
-// Each shortcut - the exact-name lookup, the prefix and suffix lookups, and the literal bounds that
-// narrow what doublestar is shown - answers a pattern from the index rather than the archive. A
-// shortcut that is too eager fails silently, returning fewer files, so every shape is checked against
-// matching every path the slow way.
+// every pattern shape is checked against matching every path the slow way, since a name-index
+// shortcut that is too eager fails silently by returning fewer files
 func Test_FilesByGlob_agreesWithBruteForce(t *testing.T) {
 	paths := []string{
 		"LICENSE",
@@ -58,9 +54,7 @@ func Test_FilesByGlob_agreesWithBruteForce(t *testing.T) {
 	r := indexOver(t, 1<<20, entries)
 
 	patterns := []string{
-		// the shapes the index answers outright
 		"**/pom.xml", "**/*.jar", "**/pom*", "**/*", "/*", "/opt/*",
-		// the shapes that reach doublestar, with and without usable bounds
 		"**/{go,go.exe}",
 		"**/libstd-????????????????.so",
 		"**/*.[jw]ar",
@@ -69,7 +63,6 @@ func Test_FilesByGlob_agreesWithBruteForce(t *testing.T) {
 		"**/*o*",
 		"**/?o",
 		"**/{a,b}.{jar,war}",
-		// segments that reduce to a finite set of names, answered by exact lookups
 		"**/{mariadb,mysql}",
 		"**/[lm]*",
 		"**/*.{jar,war}",
@@ -78,34 +71,28 @@ func Test_FilesByGlob_agreesWithBruteForce(t *testing.T) {
 		"**/[a-c]*",
 		"**/libstd-[s0]*.so",
 		"**/x[!y]z",
-		// alternations where only some branches reduce to a lookup: dropping the rest would silently
-		// lose every file those branches match
 		"**/{go,*}",
 		"**/{lib,l}*",
 		"**/{lo,m}*",
 		"**/{*.jar,pom.xml}",
-		// metacharacters in a middle segment, where only the leading bound is usable
 		"/{META-INF,WEB-INF}/**/*.xml",
 		"/usr/{bin,lib}/*",
 		"/opt/*/lib/*.jar",
 		"/us?/lib/libstd-*.so",
 		"**/lib/**/*.jar",
-		// a `**` below a selected directory, where the name it looks up also exists outside that
-		// directory - the lookup is archive-wide, so only the subtree filter keeps the stranger out
+		// the name looked up also exists outside the selected directory
 		"/opt/**/*.jar",
 		"/opt/**/lib/*.jar",
 		"/usr/**/go",
 		"/{opt,WEB-INF}/**/*.jar",
 		"/META-INF/**/pom.*",
 		"/usr/**/lib*.so",
-		// the alternations syft's catalogers actually write, whose branches carry separators of their
-		// own - splitting the pattern into segments before expanding these cuts a group in half
+		// alternations whose branches carry separators, as syft's catalogers write them
 		"**/var/lib/dpkg/{status,status.d/**}",
 		"**/var/lib/dpkg/{status,status.d/*}",
 		"**/{var/lib,usr/share,usr/lib/sysimage}/rpm/{Packages,Packages.db,rpmdb.sqlite}",
 		"**/{firefox,firefox.exe}",
 		"**/{java,jvm}/*/release",
-		// and the degenerate ones
 		"**", "**/**", "/**/*.so",
 	}
 
@@ -125,8 +112,6 @@ func Test_FilesByGlob_agreesWithBruteForce(t *testing.T) {
 	}
 }
 
-// bruteForceMatches is what the index computes faster: every path in the archive, matched one at a
-// time. Patterns and paths are both archive-relative, so the leading slash is dropped from both.
 func bruteForceMatches(t *testing.T, pattern string, paths []string) []string {
 	t.Helper()
 	trimmed := trimArchiveRoot(pattern)

@@ -38,7 +38,6 @@ func TestLimiter_chargeAndRelease(t *testing.T) {
 }
 
 func TestLimiter_refund(t *testing.T) {
-	// a partial entry dropped at a bound is no longer on disk, so the limiter must not still hold it
 	limiter := NewLimiter(Limits{MaxDiskBytes: 100})
 	charge := limiter.Charge()
 
@@ -55,8 +54,6 @@ func TestLimiter_refund(t *testing.T) {
 }
 
 func TestLimiter_boundsAreIndependent(t *testing.T) {
-	// a caller may bound one limit without the other: a limit on one side does not change how the other
-	// reads its own value
 	memoryBounded := NewLimiter(Limits{MaxMemoryBytes: 10, MaxDiskBytes: -1}).Charge()
 	assert.False(t, memoryBounded.Memory(50))
 	assert.True(t, memoryBounded.Disk(1_000_000), "a negative disk limit admits anything")
@@ -67,8 +64,6 @@ func TestLimiter_boundsAreIndependent(t *testing.T) {
 }
 
 func TestLimiter_threeStateReadingIsUniform(t *testing.T) {
-	// Memory and Disk read their limit the same way: positive is the limit, zero refuses, negative
-	// admits
 	t.Run("positive is the limit", func(t *testing.T) {
 		c := NewLimiter(Limits{MaxMemoryBytes: 100, MaxDiskBytes: 100}).Charge()
 		assert.True(t, c.Memory(100))
@@ -91,8 +86,6 @@ func TestLimiter_threeStateReadingIsUniform(t *testing.T) {
 }
 
 func TestLimiter_nilIsUnbounded(t *testing.T) {
-	// what an extraction with no configured bounds gets: charges succeed and nothing is measured.
-	// Distinct from a configured but non-positive MaxMemoryBytes, which refuses instead.
 	var limiter *Limiter
 	charge := limiter.Charge()
 	assert.Nil(t, charge)
@@ -112,9 +105,6 @@ func TestLimiter_nilIsUnbounded(t *testing.T) {
 }
 
 func TestLimiter_concurrentChargesAgree(t *testing.T) {
-	// the walk is sequential today, but the archive task merges into a shared builder while top-level
-	// catalogers run, so the accounting is guarded. Both limits need an explicit value, since zero
-	// refuses every charge: memory is set above what this test charges and disk is negative.
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 1_000_000, MaxDiskBytes: -1})
 
 	var wg sync.WaitGroup
@@ -145,8 +135,6 @@ func TestLimiter_concurrentChargesAgree(t *testing.T) {
 }
 
 func Test_Limiter_peakIsAHighWaterMark(t *testing.T) {
-	// the peak is what the scan held at its worst moment, so it must survive the release that takes the
-	// in-use gauge back down
 	l := NewLimiter(Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1})
 
 	first := l.Charge()
@@ -163,12 +151,11 @@ func Test_Limiter_peakIsAHighWaterMark(t *testing.T) {
 	assert.Equal(t, int64(50), disk)
 
 	peakMemory, peakDisk := l.Peak()
-	assert.Equal(t, int64(100), peakMemory, "peak memory is the most held at once, not the most recently held")
-	assert.Equal(t, int64(300), peakDisk, "and the same for disk")
+	assert.Equal(t, int64(100), peakMemory, "the peak is the most held at once, not the most recently held")
+	assert.Equal(t, int64(300), peakDisk)
 }
 
 func Test_Limiter_peakCountsConcurrentHoldersTogether(t *testing.T) {
-	// two archives held at once peak at their sum, the number the limits are enforced against
 	l := NewLimiter(Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1})
 
 	outer := l.Charge()
@@ -190,8 +177,6 @@ func Test_Limiter_peakOfANilLimiterIsZero(t *testing.T) {
 }
 
 func Test_Limiter_refusedChargeDoesNotMoveThePeak(t *testing.T) {
-	// nothing is charged when a limit refuses, so nothing may be recorded: a peak that rose on refusal
-	// would report bytes the scan never held
 	l := NewLimiter(Limits{MaxMemoryBytes: 50, MaxDiskBytes: 50})
 
 	c := l.Charge()
@@ -201,4 +186,16 @@ func Test_Limiter_refusedChargeDoesNotMoveThePeak(t *testing.T) {
 	peakMemory, peakDisk := l.Peak()
 	assert.Zero(t, peakMemory)
 	assert.Zero(t, peakDisk)
+}
+
+func TestCharge_indexFallsBackToDisk(t *testing.T) {
+	memoryOnly := NewLimiter(Limits{MaxMemoryBytes: 100, MaxDiskBytes: 0}).Charge()
+	assert.True(t, memoryOnly.Index(100))
+	assert.False(t, memoryOnly.Index(1), "neither budget admits it")
+
+	diskOnly := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: 100}).Charge()
+	assert.True(t, diskOnly.Index(100))
+	mem, disk := diskOnly.held()
+	assert.Zero(t, mem)
+	assert.Equal(t, int64(100), disk)
 }

@@ -12,7 +12,7 @@ type Coordinates struct {
 	// RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed).
 	RealPath string `json:"path" cyclonedx:"path"`
 
-	// FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in; the nesting chain itself is carried by ArchivePath.
+	// FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in.
 	FileSystemID string `json:"layerID,omitempty" cyclonedx:"layerID"`
 
 	// ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. "app.war:WEB-INF/lib/dep.jar"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem.
@@ -53,10 +53,8 @@ func (c Coordinates) GetCoordinates() Coordinates {
 	return c
 }
 
-// HashInclude controls which fields participate in the artifact ID hash (see artifact.IDByHash). An
-// empty ArchivePath is excluded, so non-archive coordinates keep the identity they had before the
-// field existed; a non-empty one is included, keeping identically-named files in different archives
-// from sharing an ID.
+// HashInclude keeps an empty ArchivePath out of the artifact ID hash (see artifact.IDByHash), so
+// coordinates outside archives keep the IDs they had before the field existed.
 func (c Coordinates) HashInclude(field string, _ any) (bool, error) {
 	if field == "ArchivePath" && c.ArchivePath == "" {
 		return false, nil

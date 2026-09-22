@@ -7,55 +7,34 @@ import (
 	"github.com/anchore/syft/syft/file"
 )
 
-// Traversal describes one level of archive nesting. The archive cataloger task places one on the
-// context before running the sub-pipeline against an archive's contents, so ecosystem catalogers
-// (e.g. java) can reconstruct nesting-aware identity like "app.war:WEB-INF/lib/dep.jar" without
-// owning the recursion.
+// Traversal describes the archive whose contents a cataloger is running against. The archive
+// cataloger task puts one on the context before running catalogers inside an archive, so a cataloger
+// such as java can describe the archive it is inside without owning the recursion.
 type Traversal struct {
-	// Location is the archive file's location within its parent filesystem.
+	// Location is the archive file's location within its parent filesystem. Its ArchivePath names the
+	// archives above it, so VirtualPath(Location) is the full chain from the scan root.
 	Location file.Location
 
-	// VirtualPath is the colon-delimited chain of archive paths from the scan root to this archive,
-	// e.g. "app.war:WEB-INF/lib/dep.jar".
-	VirtualPath string
-
-	// Digests are of the archive file itself, taken once during extraction. A cataloger running against
-	// the extracted filesystem cannot compute them, since the archive is not inside itself.
+	// Digests are of the archive file itself, taken during extraction; a cataloger running inside the
+	// archive cannot compute them since the archive is not inside itself.
 	Digests []file.Digest
 }
 
-// VirtualPathOf returns the colon-delimited virtual path for an entry within this archive, or the
-// entry path unchanged on a nil traversal. The leading slash is trimmed to match the java cataloger
-// format, which joins slash-less zip entry names onto the containing archive's path.
-func (t *Traversal) VirtualPathOf(entryPath string) string {
-	if t == nil {
-		return entryPath
+// VirtualPath returns the colon-delimited chain of archives from the scan root to loc, ending in loc
+// itself: "app.war:WEB-INF/lib/dep.jar". Outside any archive it is the location's path unchanged. A
+// colon in an entry name is escaped so splitting on ':' recovers the archive boundaries; the leading
+// slash is dropped to match the java cataloger, which joins slash-less zip entry names onto the
+// containing archive's path.
+func VirtualPath(loc file.Location) string {
+	if loc.ArchivePath == "" {
+		return loc.Path()
 	}
-	entryPath = strings.ReplaceAll(entryPath, ":", "%3A")
-	if t.VirtualPath == "" {
-		return entryPath
-	}
-	return t.VirtualPath + ":" + strings.TrimPrefix(entryPath, "/")
-}
-
-type limiterCtxKey struct{}
-
-// WithLimiter returns a context carrying the scan's archive limiter, so a cataloger inside the walk
-// can read the live draw on the budgets (Limiter.InUse). It rides the context rather than each
-// Traversal so every level reads one shared total.
-func WithLimiter(ctx context.Context, l *Limiter) context.Context {
-	return context.WithValue(ctx, limiterCtxKey{}, l)
-}
-
-// LimiterFromContext returns the scan's archive limiter, or nil outside the recursive archive walk.
-func LimiterFromContext(ctx context.Context) *Limiter {
-	l, _ := ctx.Value(limiterCtxKey{}).(*Limiter)
-	return l
+	entryPath := strings.ReplaceAll(loc.Path(), ":", "%3A")
+	return loc.ArchivePath + ":" + strings.TrimPrefix(entryPath, "/")
 }
 
 type traversalCtxKey struct{}
 
-// WithTraversal returns a context carrying the given archive traversal.
 func WithTraversal(ctx context.Context, t *Traversal) context.Context {
 	return context.WithValue(ctx, traversalCtxKey{}, t)
 }
@@ -64,4 +43,19 @@ func WithTraversal(ctx context.Context, t *Traversal) context.Context {
 func TraversalFromContext(ctx context.Context) *Traversal {
 	t, _ := ctx.Value(traversalCtxKey{}).(*Traversal)
 	return t
+}
+
+type nestedCatalogingCtxKey struct{}
+
+// WithNestedCataloging marks the context of a scan whose archive cataloger task will extract every
+// archive and run the catalogers inside it. syft.CreateSBOM sets it before any task runs, so a
+// cataloger that would otherwise open archives itself can leave them to the task instead.
+func WithNestedCataloging(ctx context.Context) context.Context {
+	return context.WithValue(ctx, nestedCatalogingCtxKey{}, true)
+}
+
+// NestedCatalogingEnabled reports whether the archive cataloger task is extracting archives in this scan.
+func NestedCatalogingEnabled(ctx context.Context) bool {
+	enabled, _ := ctx.Value(nestedCatalogingCtxKey{}).(bool)
+	return enabled
 }

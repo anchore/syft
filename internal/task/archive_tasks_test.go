@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -39,45 +38,63 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-// dirTestResolver is a minimal file.Resolver over a directory: FilesByMIMEType reports any zip-family
-// file (ignoring the MIME arguments) and FileContentsByLocation reads from disk. Other methods are
-// unimplemented.
+// dirTestResolver is a minimal file.Resolver over a directory. FilesByMIMEType sniffs each file's
+// content as a real resolver does; FileContentsByLocation opens the file, which is random-access.
 type dirTestResolver struct {
 	file.Resolver
 	dir  string
 	fsid string
 }
 
-// storeTestResolver is a minimal file.Resolver over one archive's entry store, standing in for the
-// real one so these tests need not import the fileresolver package.
-//
-// FilesByMIMEType reports any zip-family entry (ignoring the MIME arguments) and
-// FileContentsByLocation opens it from the store. The reader carries the marker the extraction path
-// looks for, so a nested archive is exercised through the read-in-place route rather than a copy.
-type storeTestResolver struct {
-	file.Resolver
-	store       *archive.EntryStore
-	entries     map[string]*archive.Entry
-	fsid        string
-	archivePath string
+// streamingDirResolver is dirTestResolver handing out plain streams, so an archive's own bytes must be
+// held in memory or written to disk rather than read in place.
+type streamingDirResolver struct {
+	dirTestResolver
 }
 
-// nopCloserAt gives a store reader the Close the resolver interface asks for; the store owns the
-// bytes, so closing a reader over them must close nothing.
-type nopCloserAt struct {
-	archive.ReaderAtSeeker
+func (d streamingDirResolver) FileContentsByLocation(loc file.Location) (io.ReadCloser, error) {
+	f, err := d.dirTestResolver.FileContentsByLocation(loc)
+	if err != nil {
+		return nil, err
+	}
+	return struct {
+		io.Reader
+		io.Closer
+	}{f, f}, nil
 }
 
-type randomAccessReadCloser interface {
-	io.ReadCloser
-	io.ReaderAt
-	io.Seeker
+func newTestTask(t *testing.T, cfg cataloging.ArchiveSearchConfig, subPipeline ...Task) Task {
+	t.Helper()
+	tsk := NewArchiveCatalogerTask(cfg, subPipeline, nil)
+	require.NotNil(t, tsk)
+	return tsk
 }
 
-// testOverflowEntry carries the marker method saying "already random access on a file this scan
-// wrote", which is how a nested archive gets read where it lies.
-type testOverflowEntry struct {
-	randomAccessReadCloser
+func newTestSBOM() *sbom.SBOM {
+	return &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+}
+
+func countingTask(ran *int) Task {
+	return NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
+		*ran++
+		return nil
+	})
+}
+
+// capturingTask records the virtual path of every archive the sub-pipeline is run against and how many
+// files its resolver holds.
+func capturingTask(t *testing.T, seen *[]string, fileCounts *map[string]int) Task {
+	return NewTask("capture", func(ctx context.Context, r file.Resolver, _ sbomsync.Builder) error {
+		trav := archive.TraversalFromContext(ctx)
+		require.NotNil(t, trav)
+		*seen = append(*seen, archive.VirtualPath(trav.Location))
+		if fileCounts != nil {
+			locs, err := r.FilesByGlob("**")
+			require.NoError(t, err)
+			(*fileCounts)[archive.VirtualPath(trav.Location)] = len(locs)
+		}
+		return nil
+	})
 }
 
 func Test_archiveCataloger_traversalThreading(t *testing.T) {
@@ -92,40 +109,21 @@ func Test_archiveCataloger_traversalThreading(t *testing.T) {
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
-	var captured []*archive.Traversal
-	captureTask := NewTask("capture-traversal", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		captured = append(captured, archive.TraversalFromContext(ctx))
-		return nil
-	})
+	var seen []string
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3), capturingTask(t, &seen, nil))
 
-	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3)
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM())))
 
-	newResolver := newStoreTestResolver
-
-	tsk := NewArchiveCatalogerTask(cfg, []Task{captureTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
-	require.NoError(t, err)
-
-	var chains []string
-	for _, trav := range captured {
-		require.NotNil(t, trav)
-		chains = append(chains, trav.VirtualPath)
-	}
 	// java archives are traversed like any other archive when the task is enabled
 	assert.ElementsMatch(t, []string{
 		"/outer.zip",
 		"/outer.zip:lib/inner.jar",
 		"/outer.zip:nested/inner.zip",
-	}, chains)
+	}, seen)
 }
 
 func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
-	// a limit is a truncation, not a failure: the sub-pipeline still runs over what was written, so
-	// packages found before the limit survive. Discarding the whole archive silently lost every package
-	// in an oversized one.
+	// reaching a limit is a truncation, not a failure: the sub-pipeline still runs over what was stored
 	big := bytes.Repeat([]byte("x"), 4096)
 	outerZip := makeZip(t, map[string][]byte{
 		"a/small.txt": []byte("small"),
@@ -135,32 +133,23 @@ func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
-	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
-
-	// nothing is held in memory, so every entry is charged to disk as it lands: the archive's own bytes
-	// spill first, then small.txt, and big.txt is refused part way through
+	// nothing is held in memory, so each entry is charged to disk: small.txt lands, big.txt is refused
 	cfg := cataloging.DefaultArchiveSearchConfig().
 		WithMaxDepth(1).
 		WithMaxMemoryBytes(0).
-		WithMaxDiskBytes(int64(len(outerZip)) + 1500)
+		WithMaxDiskBytes(6000)
 
-	newResolver := newStoreTestResolver
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
 
-	tsk := NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	s := newTestSBOM()
 	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
 
 	require.NoError(t, err, "a truncated extraction must not fail the scan")
-	assert.Equal(t, 1, ran, "the sub-pipeline must run over the partial contents")
+	assert.Equal(t, []string{"/outer.zip"}, seen, "the sub-pipeline must run over the partial contents")
+	assert.Equal(t, 1, fileCounts["/outer.zip"], "only the entry stored before the limit is visible")
 
-	// and the SBOM records, at the archive's coordinates, that it was read in part: a scan that saw only
-	// some of an archive is not the same SBOM as one that saw all of it
 	reasons, ok := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
 	require.True(t, ok, "the truncation must be recorded against the archive; got %v", s.Artifacts.Unknowns)
 	require.Len(t, reasons, 1)
@@ -169,13 +158,9 @@ func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 }
 
 func Test_archiveCataloger_failureIsRecordedAndSkipsSubPipeline(t *testing.T) {
-	// a genuine failure is not a truncation: nothing usable was produced, so the sub-pipeline must not
-	// run over an empty tree, and the failure must reach the SBOM rather than only the logs
 	rootDir := t.TempDir()
-	// a zip whose entry data has been overwritten: the header and end-of-central-directory record are
-	// intact, so it is detected as an archive and fails when the entry is read. Prose named `.zip` is a
-	// different case - not detected as an archive at all - see
-	// Test_archiveCataloger_aMisnamedNonArchiveIsNotAnError.
+	// entry data overwritten but header and end-of-central-directory intact: detected as an archive,
+	// fails when the entry is read
 	corrupt := makeZip(t, map[string][]byte{"data.bin": incompressible(4096)})
 	require.Greater(t, len(corrupt), 1024)
 	for i := 100; i < 600; i++ {
@@ -183,86 +168,61 @@ func Test_archiveCataloger_failureIsRecordedAndSkipsSubPipeline(t *testing.T) {
 	}
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "corrupt.zip"), corrupt, 0o600))
 
-	// a second, healthy archive proves the failure does not stop the walk
 	goodZip := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "good.zip"), goodZip, 0o600))
 
 	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), countingTask(&ran))
 
-	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1)
-	newResolver := newStoreTestResolver
+	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
 
-	tsk := NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
-
-	// the failure must be a CoordinateError: that is what executor.go's
-	// unknown.ExtractCoordinateErrors pulls out into sbom.Artifacts.Unknowns. A plain error would
-	// propagate as a scan failure instead of being reported against the archive
+	// a coordinate error is what executor.go pulls out into sbom.Artifacts.Unknowns; a plain error would
+	// fail the scan instead
 	require.Error(t, err)
 	coordErrs, remaining := unknown.ExtractCoordinateErrors(err)
 	assert.NoError(t, remaining, "nothing may escape as a non-coordinate error")
 	require.Len(t, coordErrs, 1)
 	assert.Equal(t, "/corrupt.zip", coordErrs[0].Coordinates.RealPath)
 
-	// and the healthy archive was still cataloged: one bad archive must not stop the walk
 	assert.Equal(t, 1, ran, "the sub-pipeline must still run for the archive that extracted cleanly")
 }
 
 func Test_NewArchiveCatalogerTask_gating(t *testing.T) {
-	newResolver := newStoreTestResolver
 	someTask := NewTask("noop", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error { return nil })
 
 	tests := []struct {
 		name        string
 		cfg         cataloging.ArchiveSearchConfig
 		subPipeline []Task
-		resolver    archive.StoreResolverFactory
 		wantTask    bool
 	}{
 		{
 			name:        "disabled at depth 0",
 			cfg:         cataloging.DefaultArchiveSearchConfig(),
 			subPipeline: []Task{someTask},
-			resolver:    newResolver,
 		},
 		{
 			name:        "no sub-pipeline",
 			cfg:         cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2),
 			subPipeline: nil,
-			resolver:    newResolver,
-		},
-		{
-			name:        "no resolver factory",
-			cfg:         cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2),
-			subPipeline: []Task{someTask},
-			resolver:    nil,
 		},
 		{
 			name:        "enabled",
 			cfg:         cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2),
 			subPipeline: []Task{someTask},
-			resolver:    newResolver,
 			wantTask:    true,
 		},
 		{
 			name:        "enabled at negative depth",
 			cfg:         cataloging.DefaultArchiveSearchConfig().WithMaxDepth(-1),
 			subPipeline: []Task{someTask},
-			resolver:    newResolver,
 			wantTask:    true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewArchiveCatalogerTask(tt.cfg, tt.subPipeline, tt.resolver, nil)
+			got := NewArchiveCatalogerTask(tt.cfg, tt.subPipeline, nil)
 			if tt.wantTask {
 				require.NotNil(t, got)
 				assert.Equal(t, ArchiveCatalogerTaskName, got.Name())
@@ -274,30 +234,17 @@ func Test_NewArchiveCatalogerTask_gating(t *testing.T) {
 }
 
 func Test_archiveCataloger_depthBoundIsExact(t *testing.T) {
-	// an archive in the scan source is depth 1, so MaxDepth 1 must catalog it and not descend
 	innerZip := makeZip(t, map[string][]byte{"deep.txt": []byte("deep")})
 	outerZip := makeZip(t, map[string][]byte{"nested/inner.zip": innerZip})
 
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
-	newResolver := newStoreTestResolver
-
 	run := func(t *testing.T, depth int) []string {
 		t.Helper()
 		var seen []string
-		captureTask := NewTask("capture", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-			trav := archive.TraversalFromContext(ctx)
-			require.NotNil(t, trav)
-			seen = append(seen, trav.VirtualPath)
-			return nil
-		})
-
-		tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth), []Task{captureTask}, newResolver, nil)
-		require.NotNil(t, tsk)
-
-		s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
+		tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth), capturingTask(t, &seen, nil))
+		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM())),
 			"reaching the depth bound must not be an error")
 		return seen
 	}
@@ -307,10 +254,7 @@ func Test_archiveCataloger_depthBoundIsExact(t *testing.T) {
 }
 
 func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
-	// the task drives recursion with its own depth-bounded walk, so a copy of itself in the sub-pipeline
-	// would process every nesting level twice. The depth bound still terminates, so the symptom is
-	// duplicated packages rather than a hang - the kind of failure nobody notices in a large SBOM.
-	newResolver := newStoreTestResolver
+	// a copy of itself in the sub-pipeline would process every nesting level twice
 	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2)
 
 	innerZip := makeZip(t, map[string][]byte{"leaf.txt": []byte("leaf")})
@@ -319,36 +263,25 @@ func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
 	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
+	countTask := countingTask(&ran)
 
-	// a sub-pipeline that (incorrectly) carries an archive cataloger task alongside real work
-	poisoned := []Task{countTask, NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)}
+	poisoned := []Task{countTask, NewArchiveCatalogerTask(cfg, []Task{countTask}, nil)}
 	require.NotNil(t, poisoned[1])
 
-	tsk := NewArchiveCatalogerTask(cfg, poisoned, newResolver, nil)
-	require.NotNil(t, tsk)
+	tsk := newTestTask(t, cfg, poisoned...)
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM())))
 
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
-
-	// two archives, one sub-pipeline task each: the nested archive task was dropped, so no level is
-	// processed twice
-	assert.Equal(t, 2, ran)
+	assert.Equal(t, 2, ran, "two archives, one sub-pipeline task each")
 
 	t.Run("a sub-pipeline of nothing but itself yields no task", func(t *testing.T) {
-		only := []Task{NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)}
-		assert.Nil(t, NewArchiveCatalogerTask(cfg, only, newResolver, nil))
+		only := []Task{NewArchiveCatalogerTask(cfg, []Task{countTask}, nil)}
+		assert.Nil(t, NewArchiveCatalogerTask(cfg, only, nil))
 	})
 }
 
 func Test_archiveCataloger_chainStartsAtTheArchivesOwnFileSystemID(t *testing.T) {
-	// covers syft/archive-content-identity#nested-filesystem-id-chain, scenario "image source chain
-	// extends the layer digest": extracted files keep the layer digest as their FileSystemID at every
-	// level, while the nesting chain rides on the traversal's VirtualPath and the coordinate's
-	// ArchivePath
+	// extracted files keep the layer digest as their FileSystemID at every level; the nesting chain
+	// rides on the traversal's VirtualPath and the coordinate's ArchivePath
 	innerZip := makeZip(t, map[string][]byte{"leaf.txt": []byte("leaf")})
 	outerZip := makeZip(t, map[string][]byte{"nested/inner.zip": innerZip})
 
@@ -357,37 +290,24 @@ func Test_archiveCataloger_chainStartsAtTheArchivesOwnFileSystemID(t *testing.T)
 
 	const layerDigest = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
 
-	var chains []string
-	var fsids []string
+	var chains, fsids []string
 	captureTask := NewTask("capture-fsid", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
 		trav := archive.TraversalFromContext(ctx)
 		require.NotNil(t, trav)
-		chains = append(chains, trav.VirtualPath)
+		chains = append(chains, archive.VirtualPath(trav.Location))
 		fsids = append(fsids, trav.Location.FileSystemID)
 		return nil
 	})
 
-	newResolver := newStoreTestResolver
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2), captureTask)
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir, fsid: layerDigest}, sbomsync.NewBuilder(newTestSBOM())))
 
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2), []Task{captureTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir, fsid: layerDigest}, sbomsync.NewBuilder(s)))
-
-	// the layer digest is preserved unchanged at every level as the filesystem the archive lives on
 	assert.Equal(t, []string{layerDigest, layerDigest}, fsids)
-
-	// exact strings: the archive path is serialized into the SBOM, so its shape is output format
-	assert.ElementsMatch(t, []string{
-		"/outer.zip",
-		"/outer.zip:nested/inner.zip",
-	}, chains)
+	assert.ElementsMatch(t, []string{"/outer.zip", "/outer.zip:nested/inner.zip"}, chains)
 }
 
-// twoLayerResolver reports the same archive path twice under two different filesystem ids, each with
-// different content - what an all-layers image scan yields for an archive rewritten in a later layer.
-// FilesByMIMEType dedupes on the file reference rather than the path, so both survive.
+// twoLayerResolver reports the same archive path under two filesystem ids with different content, as an
+// all-layers image scan does for an archive rewritten in a later layer.
 type twoLayerResolver struct {
 	file.Resolver
 	path      string
@@ -395,8 +315,6 @@ type twoLayerResolver struct {
 }
 
 func Test_archiveCataloger_sameArchivePathInTwoLayersDoesNotCollide(t *testing.T) {
-	// the collision the chain exists to prevent: two layers holding /app/bundle.zip would otherwise
-	// compose the same identifier and overwrite each other in the coordinate-keyed file tables
 	resolver := twoLayerResolver{
 		path: "/app/bundle.zip",
 		contentBy: map[string][]byte{
@@ -406,8 +324,6 @@ func Test_archiveCataloger_sameArchivePathInTwoLayersDoesNotCollide(t *testing.T
 	}
 
 	var chains []string
-	// record a file artifact per location the way a file cataloger does, so the merge into the shared
-	// SBOM exercises the coordinate-keyed tables rather than only the traversal
 	fileTask := NewTask("record-files", func(ctx context.Context, r file.Resolver, builder sbomsync.Builder) error {
 		trav := archive.TraversalFromContext(ctx)
 		require.NotNil(t, trav)
@@ -415,19 +331,17 @@ func Test_archiveCataloger_sameArchivePathInTwoLayersDoesNotCollide(t *testing.T
 
 		locs, err := r.FilesByGlob("**")
 		require.NoError(t, err)
-		accessor := builder.(sbomsync.Accessor)
-		accessor.WriteToSBOM(func(s *sbom.SBOM) {
-			for _, loc := range locs {
-				s.Artifacts.FileMetadata[loc.Coordinates] = file.Metadata{Path: loc.RealPath}
-			}
+		metadata := map[file.Coordinates]file.Metadata{}
+		for _, loc := range locs {
+			metadata[loc.Coordinates] = file.Metadata{Path: loc.RealPath}
+		}
+		builder.(sbomsync.Accessor).WriteToSBOM(func(s *sbom.SBOM) {
+			s.Artifacts.FileMetadata = metadata
 		})
 		return nil
 	})
 
-	newResolver := newStoreTestResolver
-
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), []Task{fileTask}, newResolver, nil)
-	require.NotNil(t, tsk)
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), fileTask)
 
 	s := &sbom.SBOM{Artifacts: sbom.Artifacts{
 		Packages:     pkg.NewCollection(),
@@ -435,29 +349,20 @@ func Test_archiveCataloger_sameArchivePathInTwoLayersDoesNotCollide(t *testing.T
 	}}
 	require.NoError(t, tsk.Execute(context.Background(), resolver, sbomsync.NewBuilder(s)))
 
-	assert.ElementsMatch(t, []string{"layer-one", "layer-two"}, chains,
-		"the two archives keep the distinct filesystem ids of the layers they were found in")
-
-	// asserted as a count: the tables are keyed by Coordinates, so a collision is a silently missing
-	// entry rather than an error. The two stay distinct by FileSystemID (the layer); their ArchivePath
-	// is identical here.
+	assert.ElementsMatch(t, []string{"layer-one", "layer-two"}, chains)
+	// the tables are keyed by Coordinates, so a collision is a silently missing entry
 	assert.Len(t, s.Artifacts.FileMetadata, 2)
 }
 
 func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T) {
-	// syft/nested-archive-cataloging#archive-failure-is-not-fatal wants a catalog failure inside an
-	// archive "visible in output rather than only in logs". runSubPipeline bypasses RunTask, where the
-	// coordinate-error to unknown conversion lives, so it does that conversion itself.
+	// runSubPipeline bypasses RunTask, where the coordinate-error to unknown conversion lives
 	outerZip := makeZip(t, map[string][]byte{"lib/broken.json": []byte("{")})
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
-	newResolver := newStoreTestResolver
 	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1)
 
 	t.Run("a coordinate error keeps the coordinates the cataloger named", func(t *testing.T) {
-		// a failure attributed to a file the cataloger was reading is more precise than the archive, so
-		// it must not be flattened onto the archive's coordinates
 		failing := NewTask("failing-cataloger", func(_ context.Context, r file.Resolver, _ sbomsync.Builder) error {
 			locs, err := r.FilesByGlob("**")
 			require.NoError(t, err)
@@ -469,16 +374,14 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 			return errs
 		})
 
-		tsk := NewArchiveCatalogerTask(cfg, []Task{failing}, newResolver, nil)
-		require.NotNil(t, tsk)
-
-		s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+		tsk := newTestTask(t, cfg, failing)
+		s := newTestSBOM()
 		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
 			"a cataloger failing inside an archive must not fail the archive or the scan")
 
 		require.Len(t, s.Artifacts.Unknowns, 1)
 		for coords, reasons := range s.Artifacts.Unknowns {
-			assert.Equal(t, "/lib/broken.json", coords.RealPath, "the inner coordinates must survive the merge")
+			assert.Equal(t, "lib/broken.json", coords.RealPath, "the inner coordinates must survive the merge")
 			assert.Equal(t, "/outer.zip", coords.ArchivePath, "and must be addressable per archive")
 			assert.Equal(t, []string{"failing-cataloger: unable to parse"}, reasons)
 		}
@@ -489,10 +392,8 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 			return errors.New("cataloger blew up")
 		})
 
-		tsk := NewArchiveCatalogerTask(cfg, []Task{failing}, newResolver, nil)
-		require.NotNil(t, tsk)
-
-		s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+		tsk := newTestTask(t, cfg, failing)
+		s := newTestSBOM()
 		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
 		require.Len(t, s.Artifacts.Unknowns, 1)
@@ -502,15 +403,12 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 	})
 
 	t.Run("a panicking cataloger is recovered and recorded", func(t *testing.T) {
-		// runTaskSafely converts the panic to an error, which now has somewhere to go
 		panicking := NewTask("panicking-cataloger", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
 			panic("nope")
 		})
 
-		tsk := NewArchiveCatalogerTask(cfg, []Task{panicking}, newResolver, nil)
-		require.NotNil(t, tsk)
-
-		s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+		tsk := newTestTask(t, cfg, panicking)
+		s := newTestSBOM()
 		require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
 			"a panic inside an archive must not fail the scan")
 
@@ -522,15 +420,16 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 }
 
 func Test_archiveCataloger_subPipelineUnknownsAreAddedNotReplaced(t *testing.T) {
-	// mergeFileArtifacts appends to the shared SBOM's unknowns, so the ones a sub-cataloger wrote into
-	// the scratch SBOM must survive alongside the one the failure produced
 	outerZip := makeZip(t, map[string][]byte{"lib/thing.json": []byte("{}")})
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
-	preexisting := file.Coordinates{RealPath: "/lib/thing.json", ArchivePath: "outer.zip"}
+	preexisting := file.Coordinates{RealPath: "lib/thing.json", ArchivePath: "/outer.zip"}
 	writer := NewTask("scratch-writer", func(_ context.Context, _ file.Resolver, builder sbomsync.Builder) error {
 		builder.(sbomsync.Accessor).WriteToSBOM(func(s *sbom.SBOM) {
+			if s.Artifacts.Unknowns == nil {
+				s.Artifacts.Unknowns = map[file.Coordinates][]string{}
+			}
 			s.Artifacts.Unknowns[preexisting] = append(s.Artifacts.Unknowns[preexisting], "recorded by the cataloger itself")
 		})
 		return nil
@@ -539,11 +438,8 @@ func Test_archiveCataloger_subPipelineUnknownsAreAddedNotReplaced(t *testing.T) 
 		return errors.New("boom")
 	})
 
-	newResolver := newStoreTestResolver
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), []Task{writer, failing}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), writer, failing)
+	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
 	assert.Equal(t, []string{"recorded by the cataloger itself"}, s.Artifacts.Unknowns[preexisting])
@@ -551,8 +447,8 @@ func Test_archiveCataloger_subPipelineUnknownsAreAddedNotReplaced(t *testing.T) 
 }
 
 func Test_archiveCataloger_manySmallArchivesAreEachCataloged(t *testing.T) {
-	// the case a monotonic counter wrongly rejected: every archive is released before the next begins,
-	// so a scan whose archives sum well past the disk limit never holds more than one at a time
+	// every archive is released before the next begins, so a scan whose archives sum well past a limit
+	// never holds more than one at a time
 	entry := bytes.Repeat([]byte("z"), 400)
 	entries := map[string][]byte{}
 	for i := range 5 {
@@ -565,32 +461,27 @@ func Test_archiveCataloger_manySmallArchivesAreEachCataloged(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), makeZip(t, entries), 0o600))
 	}
 
-	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
-
-	// one archive extracts 2000 bytes, so the limit holds one comfortably and the five together would be
-	// four times over a counter that never fell
+	// room for one archive's entries and their index cost, not for two
 	cfg := cataloging.DefaultArchiveSearchConfig().
 		WithMaxDepth(1).
-		WithMaxDiskBytes(4000)
+		WithMaxMemoryBytes(0).
+		WithMaxDiskBytes(20000)
 
-	newResolver := newStoreTestResolver
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
 
-	tsk := NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
-	assert.Equal(t, len(names), ran, "every archive must be cataloged: no two were ever held at once")
+	assert.Len(t, seen, len(names), "every archive must be cataloged: no two were ever held at once")
+	for _, archivePath := range seen {
+		assert.Equal(t, 5, fileCounts[archivePath], "%s must extract in full", archivePath)
+	}
+	assert.Empty(t, s.Artifacts.Unknowns)
 }
 
 func Test_archiveCataloger_limitsFallWhenAnArchiveIsReleased(t *testing.T) {
-	// a second archive the same size as the first is cataloged in full, which a counter would have
-	// refused, and both limits are back at zero once the walk unwinds
 	entry := bytes.Repeat([]byte("z"), 400)
 	entries := map[string][]byte{}
 	for i := range 5 {
@@ -602,96 +493,46 @@ func Test_archiveCataloger_limitsFallWhenAnArchiveIsReleased(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), makeZip(t, entries), 0o600))
 	}
 
-	// each entry costs a header block plus a padded data block, plus the tar's end-of-archive marker:
-	// five entries of 400 bytes is 11 blocks. Room for one archive's tar, not two at once.
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxDiskBytes(15 * 512)
+	// room in memory for one archive's entries and their index cost, not for two at once
+	limiter := archive.NewLimiter(archive.Limits{MaxMemoryBytes: 20000, MaxDiskBytes: 0})
 
-	limiter := archive.NewLimiter(archive.DefaultLimits(cfg))
-
-	// measured while the archive is still held: the resolver is built straight after extraction, before
-	// anything is cleaned up
+	// sampled while the archive is still held
 	var extracted []int
 	var peakMemory int64
-	newResolver := func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-		resolver, indexed, err := newStoreTestResolver(store, overflow)
-		extracted = append(extracted, len(store.Entries()))
+	sample := NewTask("sample", func(_ context.Context, r file.Resolver, _ sbomsync.Builder) error {
+		locs, err := r.FilesByGlob("**")
+		require.NoError(t, err)
+		extracted = append(extracted, len(locs))
 		if mem, _ := limiter.InUse(); mem > peakMemory {
 			peakMemory = mem
 		}
-		return resolver, indexed, err
-	}
+		return nil
+	})
 
-	c := &archiveCataloger{
-		cfg:              cfg,
-		subPipeline:      []Task{NewTask("noop", func(context.Context, file.Resolver, sbomsync.Builder) error { return nil })},
-		extractors:       archive.DefaultExtractors(),
-		limiter:          limiter,
-		newStoreResolver: newResolver,
-	}
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, nil, 0, sbomsync.NewBuilder(s)))
+	c := newTestCataloger(1, limiter, sample)
+	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, 0, sbomsync.NewBuilder(newTestSBOM())))
 
 	assert.Equal(t, []int{5, 5}, extracted,
 		"both archives must extract in full: the first is released before the second is admitted")
-	assert.Positive(t, peakMemory,
-		"an archive within the memory limit is held in memory, so memory in use must rise")
+	assert.Positive(t, peakMemory, "entries within the memory limit are held in memory")
 
 	mem, disk := limiter.InUse()
 	assert.Zero(t, mem, "the memory limit must fall back to nothing once the walk unwinds")
 	assert.Zero(t, disk, "and so must the disk limit")
 }
 
-func Test_archiveCataloger_archiveExceedingTheDiskLimitIsSkipped(t *testing.T) {
-	// the disk limit is terminal, so an archive whose content will not fit is skipped rather than waited
-	// for, and a sibling that does fit is cataloged in full
-	oversized := makeZip(t, map[string][]byte{"payload.bin": incompressible(8000)})
-	small := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
-
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "oversized.zip"), oversized, 0o600))
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "small.zip"), small, 0o600))
-
-	// room for the small archive's own bytes and the tar its one entry is written into - a header block,
-	// a padded data block and an end-of-archive marker - and nowhere near the oversized one
-	diskLimit := int64(len(small)) + 8*512
-	require.Greater(t, int64(len(oversized)), diskLimit, "the fixture must actually exceed the limit")
-
-	var sawArchivePaths []string
-	newResolver := func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-		sawArchivePaths = append(sawArchivePaths, overflow.ArchivePath)
-		return newStoreTestResolver(store, overflow)
+func newTestCataloger(maxDepth int, limiter *archive.Limiter, subPipeline ...Task) *archiveCataloger {
+	return &archiveCataloger{
+		maxDepth:    maxDepth,
+		subPipeline: subPipeline,
+		limiter:     limiter,
+		progress:    bus.StartCatalogerTask(context.Background(), archiveCatalogerProgressInfo(), -1, ""),
 	}
-
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxMemoryBytes(0). // every archive overflows, so its own bytes are charged to disk
-		WithMaxDiskBytes(diskLimit)
-
-	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
-
-	tsk := NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
-		"reaching a limit must not fail the scan")
-
-	assert.Equal(t, []string{"/small.zip"}, sawArchivePaths,
-		"the oversized archive is skipped and the sibling is still cataloged")
-	assert.Equal(t, 1, ran)
 }
 
-func Test_archiveCataloger_zeroDiskLimitSkipsWhatWillNotFitInMemory(t *testing.T) {
-	// with a zero disk limit there is nowhere to overflow, so an archive is cataloged exactly when it
-	// and its entries fit in memory. The memory limit below admits the small archive and not the
-	// oversized one; the scan still succeeds and the skip names the archive that could not be placed.
+func Test_archiveCataloger_archiveWhoseOwnBytesExceedTheDiskLimitIsSkipped(t *testing.T) {
+	// a streamed archive's own bytes must be placed before it can be opened; when they do not fit on
+	// disk the archive is skipped rather than waited for, and a sibling that fits is cataloged in full
 	oversized := makeZip(t, map[string][]byte{"payload.bin": incompressible(8000)})
 	small := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
 
@@ -699,121 +540,129 @@ func Test_archiveCataloger_zeroDiskLimitSkipsWhatWillNotFitInMemory(t *testing.T
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "oversized.zip"), oversized, 0o600))
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "small.zip"), small, 0o600))
 
-	// room for the small archive and its entries, and not for the oversized one
-	memoryLimit := int64(len(small) + 1000)
-
-	var sawArchivePaths []string
-	newResolver := func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-		sawArchivePaths = append(sawArchivePaths, overflow.ArchivePath)
-		return newStoreTestResolver(store, overflow)
-	}
+	// room for the small archive's bytes, its one entry and that entry's index cost
+	diskLimit := int64(len(small)) + 3000
+	require.Greater(t, int64(len(oversized)), diskLimit, "the fixture must actually exceed the limit")
 
 	cfg := cataloging.DefaultArchiveSearchConfig().
 		WithMaxDepth(1).
-		WithMaxMemoryBytes(memoryLimit).
-		WithMaxDiskBytes(0) // nowhere to overflow what memory will not hold
+		WithMaxMemoryBytes(0).
+		WithMaxDiskBytes(diskLimit)
 
-	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
 
-	tsk := NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)
-	require.NotNil(t, tsk)
+	s := newTestSBOM()
+	require.NoError(t, tsk.Execute(context.Background(), streamingDirResolver{dirTestResolver{dir: rootDir}}, sbomsync.NewBuilder(s)),
+		"reaching a limit must not fail the scan")
 
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	assert.Equal(t, []string{"/small.zip"}, seen, "the oversized archive is skipped and the sibling is still cataloged")
+	assert.Equal(t, 1, fileCounts["/small.zip"])
+
+	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/oversized.zip"}]
+	require.Len(t, reasons, 1, "the skip must be recorded against the archive; got %v", s.Artifacts.Unknowns)
+	assert.Contains(t, reasons[0], "archive skipped")
+}
+
+func Test_archiveCataloger_zeroDiskLimitTruncatesWhatWillNotFitInMemory(t *testing.T) {
+	// with a zero disk limit there is nowhere to overflow, so an archive's entries are stored exactly
+	// while they fit in memory
+	oversized := makeZip(t, map[string][]byte{"payload.bin": incompressible(8000)})
+	small := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
+
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "oversized.zip"), oversized, 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "small.zip"), small, 0o600))
+
+	// room for the small archive's entry and its index cost, not for the oversized one's
+	cfg := cataloging.DefaultArchiveSearchConfig().
+		WithMaxDepth(1).
+		WithMaxMemoryBytes(3000).
+		WithMaxDiskBytes(0)
+
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
+
+	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
 		"reaching the disk limit must not fail the scan")
 
-	assert.Equal(t, []string{"/small.zip"}, sawArchivePaths,
-		"the archive that fits in memory needs no disk at all and is still cataloged")
-	assert.Equal(t, 1, ran)
+	assert.ElementsMatch(t, []string{"/oversized.zip", "/small.zip"}, seen)
+	assert.Equal(t, 1, fileCounts["/small.zip"], "the archive that fits in memory needs no disk at all")
+	assert.Equal(t, 0, fileCounts["/oversized.zip"], "the entry that does not fit is refused")
+
+	assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/oversized.zip"})
+	assert.NotContains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/small.zip"})
 }
 
-func Test_archiveCataloger_bothLimitsZeroSkipsEveryArchiveAndSucceeds(t *testing.T) {
-	// the degenerate configuration where nothing is admitted anywhere: every archive is skipped, which
-	// is a well-defined success rather than a failure
+func Test_archiveCataloger_bothLimitsZeroTruncatesEveryArchiveAndSucceeds(t *testing.T) {
 	entries := map[string][]byte{"ok.txt": []byte("ok")}
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "one.zip"), makeZip(t, entries), 0o600))
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "two.zip"), makeZip(t, entries), 0o600))
-
-	var sawArchivePaths []string
-	newResolver := func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-		sawArchivePaths = append(sawArchivePaths, overflow.ArchivePath)
-		return newStoreTestResolver(store, overflow)
-	}
 
 	cfg := cataloging.DefaultArchiveSearchConfig().
 		WithMaxDepth(1).
 		WithMaxMemoryBytes(0).
 		WithMaxDiskBytes(0)
 
-	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
 
-	tsk := NewArchiveCatalogerTask(cfg, []Task{countTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
 		"both limits at zero is a real configuration, not a failure")
 
-	assert.Empty(t, sawArchivePaths, "no archive content can be admitted anywhere, so every archive is skipped")
-	assert.Zero(t, ran, "the sub-pipeline never runs since nothing was extracted")
+	assert.ElementsMatch(t, []string{"/one.zip", "/two.zip"}, seen)
+	for _, archivePath := range seen {
+		assert.Equal(t, 0, fileCounts[archivePath], "no entry can be admitted anywhere")
+		assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: archivePath})
+	}
+	assert.Empty(t, s.Artifacts.Packages.Sorted())
 }
 
-func Test_archiveCataloger_nestedArchiveExceedingALimitIsSkippedNotBlocked(t *testing.T) {
-	// the walk descends before it unwinds, so a parent still holds its content while its children are
-	// cataloged and nothing is released while a child waits. Waiting for capacity would deadlock, so a
-	// child that does not fit is skipped and the scan finishes.
+func Test_archiveCataloger_nestedArchiveExceedingALimitIsTruncatedNotBlocked(t *testing.T) {
+	// the walk descends before it unwinds, so nothing is released while a child waits; a child that does
+	// not fit is truncated and the scan finishes
 	inner := makeZip(t, map[string][]byte{"payload.bin": incompressible(3000)})
 	outer := makeZip(t, map[string][]byte{"inner.zip": inner})
 
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outer, 0o600))
 
-	// enough for the outer archive's own bytes plus the inner.zip it extracts, and not enough for the
-	// inner archive's bytes on top of them
-	diskLimit := int64(len(outer)+len(inner)) + 500
-	require.Greater(t, int64(len(inner)), int64(500), "the inner archive must not fit in the slack")
-
-	var sawArchivePaths []string
-	newResolver := func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-		sawArchivePaths = append(sawArchivePaths, overflow.ArchivePath)
-		return newStoreTestResolver(store, overflow)
-	}
+	// enough for the outer archive's one entry and its index cost, plus the inner's index cost, and not
+	// the inner's payload on top
+	diskLimit := int64(len(inner)) + 2*2100 + 500
+	require.Greater(t, 3000, 500, "the inner payload must not fit in the slack")
 
 	cfg := cataloging.DefaultArchiveSearchConfig().
 		WithMaxDepth(2).
-		WithMaxMemoryBytes(0). // every archive overflows, so its own bytes are charged to disk
+		WithMaxMemoryBytes(0).
 		WithMaxDiskBytes(diskLimit)
 
-	noop := NewTask("noop", func(context.Context, file.Resolver, sbomsync.Builder) error { return nil })
-	tsk := NewArchiveCatalogerTask(cfg, []Task{noop}, newResolver, nil)
-	require.NotNil(t, tsk)
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
 
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
+	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
-	assert.Equal(t, []string{"/outer.zip"}, sawArchivePaths,
-		"the parent is cataloged and the child it cannot afford is skipped rather than blocking")
+	assert.Equal(t, []string{"/outer.zip", "/outer.zip:inner.zip"}, seen)
+	assert.Equal(t, 1, fileCounts["/outer.zip"], "the parent is cataloged in full")
+	assert.Equal(t, 0, fileCounts["/outer.zip:inner.zip"], "the child it cannot afford is truncated")
+	assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "inner.zip", ArchivePath: "/outer.zip"})
 }
 
-// allFilesResolver is dirTestResolver without a filesystem id. Both sniff content the way a real
-// resolver does, so which files reach the task is decided by what they are.
+// allFilesResolver is dirTestResolver without a filesystem id.
 type allFilesResolver struct {
 	file.Resolver
 	dir string
 }
 
 func Test_archiveCataloger_discoverArchivesSelectsTarFamily(t *testing.T) {
-	// every other task-level fixture is a zip, so the tar branch of FindExtractor had never been reached
-	// through the task's own discovery
 	marker := map[string][]byte{"nested/marker.txt": []byte("hello")}
 
 	scanDir := t.TempDir()
@@ -828,34 +677,17 @@ func Test_archiveCataloger_discoverArchivesSelectsTarFamily(t *testing.T) {
 	}
 
 	var seen []string
-	captureTask := NewTask("capture", func(ctx context.Context, r file.Resolver, _ sbomsync.Builder) error {
-		trav := archive.TraversalFromContext(ctx)
-		require.NotNil(t, trav)
-
-		// the contents are there, so extraction really happened rather than the traversal being built
-		// over an empty tree
-		locs, err := r.FilesByGlob("**")
-		require.NoError(t, err)
-		assert.NotEmpty(t, locs, "expected contents inside %s", trav.VirtualPath)
-
-		seen = append(seen, trav.VirtualPath)
-		return nil
-	})
-
-	newResolver := newStoreTestResolver
-
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), []Task{captureTask}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, tsk.Execute(context.Background(), allFilesResolver{dir: scanDir}, sbomsync.NewBuilder(s)))
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), capturingTask(t, &seen, &fileCounts))
+	require.NoError(t, tsk.Execute(context.Background(), allFilesResolver{dir: scanDir}, sbomsync.NewBuilder(newTestSBOM())))
 
 	assert.ElementsMatch(t, []string{"/bundle.tar.gz", "/bundle.tgz", "/bundle.tar", "/bundle.zip"}, seen,
 		"every tar-family archive must be reached, and the plain text file must not be")
+	for _, archivePath := range seen {
+		assert.Equal(t, 1, fileCounts[archivePath], "%s must have been extracted", archivePath)
+	}
 
 	t.Run("the MIME types the tar family is sniffed as are in the set discovery asks for", func(t *testing.T) {
-		// discoverArchives passes mimetype.ArchiveMIMETypeSet to FilesByMIMEType, so a tar type missing
-		// from it makes the whole tar path unreachable whatever the extractor can do
 		for _, mt := range []string{"application/x-tar", "application/gzip", "application/x-gtar", "application/zip"} {
 			assert.True(t, mimetype.ArchiveMIMETypeSet.Has(mt), "%s must be a candidate archive type", mt)
 		}
@@ -867,11 +699,8 @@ type recordingPublisher struct {
 }
 
 func Test_archiveCatalogerTask_publishesOneProgressRowPerCataloger(t *testing.T) {
-	// the sub-pipeline re-runs catalogers that start progress rows keyed by cataloger name. Publishing
-	// those again per archive floods the UI, and a consumer that keys rows by ID (as the syft CLI does)
-	// replaces the live row, never renders the replaced one again, and so never observes its
-	// completion - hanging teardown. Each cataloger keeps to the one row it already owns instead, and
-	// what it finds inside archives is counted onto that row.
+	// a consumer keying rows by ID (as the syft CLI does) replaces a republished row and never sees it
+	// complete, so each cataloger keeps to the one row it already owns
 	inner := makeZip(t, map[string][]byte{"inner/file.txt": []byte("hello")})
 	scanDir := t.TempDir()
 	for _, name := range []string{"one.zip", "two.zip"} {
@@ -882,9 +711,12 @@ func Test_archiveCatalogerTask_publishesOneProgressRowPerCataloger(t *testing.T)
 	bus.Set(publisher)
 	t.Cleanup(func() { bus.Set(nil) })
 
-	// a task that starts a progress row and counts what it found, the way a file cataloger does
+	// the archive row's stage as each archive's sub-pipeline starts: the previous archive is done by then,
+	// so the row must read the walk's own count rather than anything a nested cataloger left behind
 	var rows []*monitor.TaskProgress
+	var stageAtEntry []string
 	noisy := NewTask("noisy", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
+		stageAtEntry = append(stageAtEntry, publisher.events[0].Value.(progress.StagedProgressable).Stage())
 		p := bus.StartCatalogerTask(ctx, monitor.GenericTask{ID: "noisy"}, 3, "")
 		rows = append(rows, p)
 		p.AtomicStage.Set("working on something")
@@ -893,21 +725,8 @@ func Test_archiveCatalogerTask_publishesOneProgressRowPerCataloger(t *testing.T)
 		return nil
 	})
 
-	// the archive row's stage as each archive is about to be extracted: the previous archive's
-	// sub-pipeline has finished by then, so the row must read the walk's own count and the archive it
-	// last finished, rather than anything a nested cataloger left behind
-	var stageAtExtraction []string
-	newResolver := func(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-		row := publisher.events[0].Value.(progress.StagedProgressable)
-		stageAtExtraction = append(stageAtExtraction, row.Stage())
-		return newStoreTestResolver(store, overflow)
-	}
-
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), []Task{noisy}, newResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: scanDir}, sbomsync.NewBuilder(s)))
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), noisy)
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: scanDir}, sbomsync.NewBuilder(newTestSBOM())))
 
 	var started []string
 	for _, e := range publisher.events {
@@ -934,14 +753,12 @@ func Test_archiveCatalogerTask_publishesOneProgressRowPerCataloger(t *testing.T)
 	assert.Equal(t, "2 archives", prog.Stage(), "and says so once the walk is done")
 
 	// one.zip sorts before two.zip, and the resolver walks the scan directory in lexical order
-	assert.Equal(t, []string{"", "1 archives (/one.zip)"}, stageAtExtraction,
+	assert.Equal(t, []string{"", "1 archives (/one.zip)"}, stageAtEntry,
 		"the row must take its stage back from the sub-pipeline once an archive is done")
 }
 
 func Test_archiveCataloger_reportsPeakUsageAndTheSlowestArchive(t *testing.T) {
-	// the slowest archive is the one that spent the time itself. Inclusive time would name the outer
-	// archive every scan, so here the outer's own sub-pipeline is fast and the inner's slow: the report
-	// must name the inner.
+	// self time excludes nested archives, or the outer archive would be named every scan
 	innerJar := makeZip(t, map[string][]byte{"README.txt": []byte("inner")})
 	outerZip := makeZip(t, map[string][]byte{"lib/inner.jar": innerJar})
 
@@ -950,89 +767,59 @@ func Test_archiveCataloger_reportsPeakUsageAndTheSlowestArchive(t *testing.T) {
 
 	const innerWork = 40 * time.Millisecond
 	slow := NewTask("slow-inside-the-inner-archive", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		if trav := archive.TraversalFromContext(ctx); trav != nil && strings.HasSuffix(trav.VirtualPath, "inner.jar") {
+		if trav := archive.TraversalFromContext(ctx); trav != nil && strings.HasSuffix(archive.VirtualPath(trav.Location), "inner.jar") {
 			time.Sleep(innerWork)
 		}
 		return nil
 	})
 
-	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3)
-	limiter := archive.NewLimiter(archive.DefaultLimits(cfg))
-	c := &archiveCataloger{
-		cfg:              cfg,
-		subPipeline:      []Task{slow},
-		extractors:       archive.DefaultExtractors(),
-		limiter:          limiter,
-		newStoreResolver: newStoreTestResolver,
-	}
+	limiter := archive.NewLimiter(archive.Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1})
+	c := newTestCataloger(3, limiter, slow)
+	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, 0, sbomsync.NewBuilder(newTestSBOM())))
 
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, nil, 0, sbomsync.NewBuilder(s)))
-
-	assert.Equal(t, "/outer.zip:lib/inner.jar", c.slowestPath,
-		"the slowest archive is named by its full chain, not by its base name, and self time must exclude the archives nested inside")
+	assert.Equal(t, "/outer.zip:lib/inner.jar", c.slowestPath, "the slowest archive is named by its full chain")
 	assert.GreaterOrEqual(t, c.slowest, innerWork)
-	assert.Equal(t, int64(2), c.archivesSeen)
+	assert.Equal(t, int64(2), c.progress.Current())
 
-	// the peaks outlive the walk that set them, so they are still readable once everything is released
+	// the peaks outlive the walk that set them
 	peakMemory, _ := limiter.Peak()
-	assert.Positive(t, peakMemory, "content held in memory must show on the peak")
+	assert.Positive(t, peakMemory, "entries held in memory must show on the peak")
 	memory, disk := limiter.InUse()
 	assert.Zero(t, memory)
 	assert.Zero(t, disk)
 }
 
 func Test_archiveCataloger_slowestIsUnsetWhenNoArchiveIsCataloged(t *testing.T) {
-	// a directory with nothing extractable in it: there is no archive to name
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "notes.txt"), []byte("not an archive"), 0o600))
 
-	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2)
-	c := &archiveCataloger{
-		cfg:              cfg,
-		subPipeline:      []Task{NewTask("noop", func(context.Context, file.Resolver, sbomsync.Builder) error { return nil })},
-		extractors:       archive.DefaultExtractors(),
-		limiter:          archive.NewLimiter(archive.DefaultLimits(cfg)),
-		newStoreResolver: newStoreTestResolver,
-	}
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, nil, 0, sbomsync.NewBuilder(s)))
+	noop := NewTask("noop", func(context.Context, file.Resolver, sbomsync.Builder) error { return nil })
+	c := newTestCataloger(2, archive.NewLimiter(archive.Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}), noop)
+	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, 0, sbomsync.NewBuilder(newTestSBOM())))
 
 	assert.Empty(t, c.slowestPath)
-	assert.Zero(t, c.archivesSeen)
+	assert.Zero(t, c.progress.Current())
 	c.logStats() // must not panic with nothing to report
 }
 
 func Test_archiveCataloger_aMisnamedNonArchiveIsNotAnError(t *testing.T) {
-	// `syft/nested-archive-cataloging#content-based-archive-detection`, scenario "misnamed non-archive
-	// is not extracted": the name says archive, the content does not, and it never becomes a candidate
-	// because its content types it as text
+	// the name says archive, the content does not: it is never opened
 	rootDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "notes.zip"),
 		[]byte("this is prose, not an archive, whatever the extension claims\n"), 0o600))
 
 	var ran int
-	countTask := NewTask("count-runs", func(_ context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		ran++
-		return nil
-	})
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), countingTask(&ran))
 
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1),
-		[]Task{countTask}, newStoreTestResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
+	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
 
 	assert.NoError(t, err, "a file that is not an archive is not a failure to report")
 	assert.Zero(t, ran, "and nothing is cataloged inside it")
 }
 
 func Test_archiveCataloger_catalogsAZipBehindALauncherScript(t *testing.T) {
-	// end to end for the Spring Boot executable jar shape: a launcher script with a zip appended.
-	// Content sniffing types it text/x-shellscript, so it reaches the walk only through the
-	// appended-archive candidate set, and qualifies only by its end-of-central-directory record.
+	// the Spring Boot executable jar shape: content sniffing types it as a shell script, so it reaches
+	// the walk only by name and qualifies only by its end-of-central-directory record
 	inner := makeZip(t, map[string][]byte{"nested/marker.txt": []byte("found me")})
 	prefixed := append([]byte("#!/bin/bash\nexec java -jar \"$0\" \"$@\"\nexit 0\n"),
 		makeZip(t, map[string][]byte{"BOOT-INF/lib/inner.jar": inner})...)
@@ -1041,19 +828,8 @@ func Test_archiveCataloger_catalogsAZipBehindALauncherScript(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "app.jar"), prefixed, 0o600))
 
 	var seen []string
-	capture := NewTask("capture", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
-		if trav := archive.TraversalFromContext(ctx); trav != nil {
-			seen = append(seen, trav.VirtualPath)
-		}
-		return nil
-	})
-
-	tsk := NewArchiveCatalogerTask(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3),
-		[]Task{capture}, newStoreTestResolver, nil)
-	require.NotNil(t, tsk)
-
-	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3), capturingTask(t, &seen, nil))
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM())))
 
 	assert.Equal(t, []string{"/app.jar", "/app.jar:BOOT-INF/lib/inner.jar"}, seen,
 		"the stub must not hide the archive, and the walk must carry on into what it holds")
@@ -1063,9 +839,6 @@ func (d dirTestResolver) FilesByMIMEType(types ...string) ([]file.Location, erro
 	return filesByMIMEType(d.dir, d.fsid, types...)
 }
 
-// filesByMIMEType sniffs each file's content and returns the ones whose type was asked for, as a real
-// resolver does. Returning everything would make every caller look like it was handed archives,
-// hiding that the task asks two different questions with two different consequences.
 func filesByMIMEType(dir, fsid string, types ...string) ([]file.Location, error) {
 	wanted := strset.New(types...)
 	var locs []file.Location
@@ -1099,86 +872,8 @@ func (d dirTestResolver) FileContentsByLocation(loc file.Location) (io.ReadClose
 	return os.Open(filepath.Join(d.dir, filepath.FromSlash(loc.RealPath)))
 }
 
-// newStoreTestResolver is an archive.StoreResolverFactory over the archive's entries.
-func newStoreTestResolver(store *archive.EntryStore, overflow archive.Overflow) (file.Resolver, archive.IndexResult, error) {
-	r := &storeTestResolver{
-		store:       store,
-		entries:     map[string]*archive.Entry{},
-		fsid:        overflow.FileSystemID,
-		archivePath: overflow.ArchivePath,
-	}
-	for _, entry := range store.Entries() {
-		r.entries[path.Clean("/"+entry.Header.Name)] = entry
-	}
-	return r, archive.IndexResult{}, nil
-}
-
-func (r *storeTestResolver) sortedNames() []string {
-	names := make([]string, 0, len(r.entries))
-	for name := range r.entries {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return names
-}
-
-func (r *storeTestResolver) location(name string) file.Location {
-	return file.NewLocationFromCoordinates(file.Coordinates{RealPath: name, FileSystemID: r.fsid, ArchivePath: r.archivePath})
-}
-
-func (r *storeTestResolver) FilesByMIMEType(_ ...string) ([]file.Location, error) {
-	var locs []file.Location
-	for _, name := range r.sortedNames() {
-		switch strings.ToLower(filepath.Ext(name)) {
-		case ".zip", ".jar", ".war":
-			locs = append(locs, r.location(name))
-		}
-	}
-	return locs, nil
-}
-
-func (r *storeTestResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
-	var locs []file.Location
-	for _, name := range r.sortedNames() {
-		for _, pattern := range patterns {
-			if matched, err := doublestar.Match(pattern, strings.TrimPrefix(name, "/")); err == nil && matched {
-				locs = append(locs, r.location(name))
-				break
-			}
-		}
-	}
-	return locs, nil
-}
-
-func (r *storeTestResolver) FilesByPath(paths ...string) ([]file.Location, error) {
-	var locs []file.Location
-	for _, p := range paths {
-		name := path.Clean("/" + p)
-		if _, ok := r.entries[name]; ok {
-			locs = append(locs, r.location(name))
-		}
-	}
-	return locs, nil
-}
-
-func (r *storeTestResolver) FileContentsByLocation(loc file.Location) (io.ReadCloser, error) {
-	entry, ok := r.entries[loc.RealPath]
-	if !ok {
-		return nil, fmt.Errorf("no entry %q", loc.RealPath)
-	}
-	contents, err := r.store.Open(entry)
-	if err != nil {
-		return nil, err
-	}
-	return testOverflowEntry{nopCloserAt{contents}}, nil
-}
-
-func (nopCloserAt) Close() error { return nil }
-
-func (testOverflowEntry) OverflowArchiveEntry() {}
-
-// makeZip builds a zip in sorted entry-name order rather than map order: limits are enforced as the
-// walk proceeds, so entry order decides which entries land before a truncation.
+// makeZip builds a zip in sorted entry-name order: limits are enforced as the walk proceeds, so entry
+// order decides which entries land before a truncation.
 func makeZip(t *testing.T, entries map[string][]byte) []byte {
 	t.Helper()
 	names := make([]string, 0, len(entries))
@@ -1199,8 +894,8 @@ func makeZip(t *testing.T, entries map[string][]byte) []byte {
 	return buf.Bytes()
 }
 
-// matchesAnyGlob reports whether the path matches one of the patterns, against the resolver-relative
-// path with a leading slash, the form a real resolver globs over. No patterns matches everything.
+// matchesAnyGlob matches the resolver-relative path with a leading slash, the form a real resolver
+// globs over. No patterns matches everything.
 func matchesAnyGlob(root, path string, patterns []string) bool {
 	if len(patterns) == 0 {
 		return true
@@ -1218,8 +913,6 @@ func matchesAnyGlob(root, path string, patterns []string) bool {
 	return false
 }
 
-// FilesByGlob for the resolvers that otherwise only stand in for a MIME lookup: the archive walk also
-// asks them for archive-named files, and an unimplemented method on an embedded nil resolver panics.
 func (a allFilesResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	return dirTestResolver{dir: a.dir}.FilesByGlob(patterns...)
 }
@@ -1228,9 +921,6 @@ func (r twoLayerResolver) FilesByGlob(_ ...string) ([]file.Location, error) {
 	return nil, nil
 }
 
-// FilesByGlob lists the matching files under the resolver's directory, stamped with its filesystem id,
-// so a sub-pipeline task can record file artifacts the way a real file cataloger does. No patterns
-// lists everything, which is what the sub-pipeline tasks here want.
 func (d dirTestResolver) FilesByGlob(patterns ...string) ([]file.Location, error) {
 	var locs []file.Location
 	err := filepath.WalkDir(d.dir, func(path string, entry fs.DirEntry, err error) error {
@@ -1267,8 +957,8 @@ func (r twoLayerResolver) FileContentsByLocation(loc file.Location) (io.ReadClos
 	return io.NopCloser(bytes.NewReader(body)), nil
 }
 
-// incompressible returns n bytes deflate cannot shrink, so an archive built from them has a size on
-// disk predictable enough to size a limit against.
+// incompressible returns n bytes deflate cannot shrink, so an archive built from them has a
+// predictable size to set a limit against.
 func incompressible(n int) []byte {
 	b := make([]byte, n)
 	x := uint32(12345)
@@ -1279,7 +969,6 @@ func incompressible(n int) []byte {
 	return b
 }
 
-// makeTarGz builds a gzipped tar in memory, in sorted entry order for the same reason makeZip does.
 func makeTarGz(t *testing.T, entries map[string][]byte) []byte {
 	t.Helper()
 	var buf bytes.Buffer

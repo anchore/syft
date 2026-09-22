@@ -6,6 +6,8 @@ package java
 import (
 	"context"
 
+	"github.com/bmatcuk/doublestar/v4"
+
 	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -14,46 +16,39 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-const ArchiveCatalogerName = "java-archive-cataloger"
-
 // NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
 func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
 	gap := newGenericArchiveParserAdapter(cfg)
 
-	files := generic.NewCataloger(ArchiveCatalogerName).
+	c := generic.NewCataloger("java-archive-cataloger").
 		WithParserByGlobs(gap.parseJavaArchive, archiveFormatGlobs...)
 
 	if cfg.IncludeIndexedArchives {
 		// java archives wrapped within zip files
 		gzp := newGenericZipWrappedJavaArchiveParser(cfg)
-		files.WithParserByGlobs(gzp.parseZipWrappedJavaArchive, genericZipGlobs...)
+		c.WithParserByGlobs(gzp.parseZipWrappedJavaArchive, genericZipGlobs...)
 	}
 
 	if cfg.IncludeUnindexedArchives {
 		// java archives wrapped within tar files
 		gtp := newGenericTarWrappedJavaArchiveParser(cfg)
-		files.WithParserByGlobs(gtp.parseTarWrappedJavaArchive, genericTarGlobs...)
+		c.WithParserByGlobs(gtp.parseTarWrappedJavaArchive, genericTarGlobs...)
 	}
 
-	return &archiveCataloger{cfg: cfg, files: files}
+	return &archiveCataloger{cfg: cfg, extractingCataloger: c}
 }
 
-// archiveCataloger describes java archives from whichever source this scan makes them available in.
-//
-// Which source that is turns on who owns extraction, and there are only two answers. Inside an
-// archive the archive cataloger task extracted, the resolver is that archive's contents and the
-// traversal names the file it came from, so the archive to describe is the one this resolver *is*.
-// Everywhere else the archives are files in the resolver, and the cataloger opens each itself.
-//
-// One cataloger rather than one per source, so a package carries the same FoundBy and answers to the
-// same --select-catalogers name however the scan was configured.
+// archiveCataloger catalogs java archives two ways. Inside an archive the archive cataloger task has
+// extracted, the resolver is that archive's contents and the traversal on the context names the
+// archive, so the archive to describe is the one the resolver holds. Everywhere else, archives are
+// files in the resolver that this cataloger opens itself.
 type archiveCataloger struct {
-	cfg   ArchiveCatalogerConfig
-	files *generic.Cataloger
+	cfg                 ArchiveCatalogerConfig
+	extractingCataloger *generic.Cataloger
 }
 
 func (c *archiveCataloger) Name() string {
-	return ArchiveCatalogerName
+	return c.extractingCataloger.Name()
 }
 
 func (c *archiveCataloger) Catalog(ctx context.Context, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
@@ -61,40 +56,44 @@ func (c *archiveCataloger) Catalog(ctx context.Context, resolver file.Resolver) 
 		return c.catalogExtracted(ctx, trav, resolver)
 	}
 
-	if c.cfg.NestedArchivesHandledExternally {
-		// every archive in this scan comes back through the archive cataloger task with a traversal
-		// naming it, and is described above. Opening archive files here as well would catalog each of
-		// them a second time.
+	if archive.NestedCatalogingEnabled(ctx) {
+		// the archive cataloger task extracts every archive and runs this cataloger inside each; opening
+		// them here too would catalog each twice
 		return nil, nil, nil
 	}
 
-	return c.files.Catalog(ctx, resolver)
+	// process archives directly, using the original locally managed java archive extraction
+	return c.extractingCataloger.Catalog(ctx, resolver)
 }
 
-// catalogExtracted reports the java package of the archive whose contents this resolver holds, if it
-// is a java archive at all.
-//
-// It does not glob for the archives inside it: the task that extracted this one meets those on its
-// own, at the next nesting level. See syft/java-archive-nesting#single-owner-of-archive-recursion.
+// catalogExtracted reports the java package of the archive whose contents the resolver holds, if it
+// is a java archive. Archives nested inside it are left to the archive cataloger task.
 func (c *archiveCataloger) catalogExtracted(ctx context.Context, trav *archive.Traversal, resolver file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
 	if !isJavaArchiveName(trav.Location.Path()) {
-		// the rule the globs apply when this cataloger opens files: a .zip is an archive but not a java
-		// archive
 		return nil, nil, nil
 	}
 
-	src, err := newExtractedArchiveSource(trav, resolver)
+	parser, err := newExtractedArchiveParser(trav, resolver, c.cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pkgs, relationships, err := newArchiveParser(src, false, c.cfg).parse(ctx, nil)
+	pkgs, relationships, err := parser.parse(ctx, nil)
 	if err != nil {
-		// attributed to the archive rather than returned bare, as the generic cataloger attributes a
-		// parser's failure to the file it was parsing, so the scan carries on
+		// attributed to the archive, as the generic cataloger attributes a parser failure to its file
 		return pkgs, relationships, unknown.New(trav.Location, err)
 	}
 	return pkgs, relationships, nil
+}
+
+// isJavaArchiveName reports whether the path matches the globs this cataloger opens files by.
+func isJavaArchiveName(path string) bool {
+	for _, glob := range archiveFormatGlobs {
+		if ok, _ := doublestar.Match(glob, path); ok {
+			return true
+		}
+	}
+	return false
 }
 
 // NewPomCataloger returns a cataloger capable of parsing dependencies from a pom.xml file.

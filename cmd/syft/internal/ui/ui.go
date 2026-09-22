@@ -186,8 +186,7 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m UI) View() string {
 	v := m.frame.View()
-	// bubbletea erases the line the cursor rests on at exit, so end on a newline or a frame's last line
-	// of content is lost
+	// bubbletea erases the line the cursor rests on at exit, which would drop the frame's last line
 	if !strings.HasSuffix(v, "\n") {
 		return v + "\n"
 	}

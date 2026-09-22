@@ -1,4 +1,4 @@
-package syft
+package task
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -17,18 +16,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/go-logger"
-	"github.com/anchore/go-logger/adapter/discard"
 	"github.com/anchore/syft/internal/archive"
-	"github.com/anchore/syft/internal/log"
+	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
-	"github.com/anchore/syft/syft/cataloging/filecataloging"
-	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/sbom"
-	"github.com/anchore/syft/syft/source/directorysource"
 )
 
 // This file covers nesting across archive families. The other nested-archive fixtures are all zips,
@@ -73,7 +68,8 @@ type nestedArchive struct {
 	// sizes is each archive's size in bytes, outermost first. A container is never smaller than what it
 	// holds, so these decrease, and the limit cases place a bound between two of them.
 	sizes []int
-	// paths is each archive's path within its parent, outermost first; paths[0] is name.
+	// paths is each archive's path within its parent, outermost first; paths[0] is the outermost archive
+	// as the scan's resolver reports it.
 	paths []string
 	// fileSystemIDs is the composed chain each archive's own contents carry, outermost first.
 	fileSystemIDs []string
@@ -92,30 +88,21 @@ type nestingRow struct {
 type nestingVisit struct {
 	virtualPath string
 	depth       int
-	// overflowed names the archives whose content was on disk at this moment, sampled only when the
-	// probe was given a temp dir to look in.
-	overflowed []string
-	// diskBytes is the scan's draw on the disk budget at this moment, read from the limiter on the
-	// context (Limiter.InUse): spilled archive content, entry blobs, and index records charged to disk.
-	// It exceeds the bytes in the work directories, since index records are charged too.
-	diskBytes int64
+	// heldFiles are the basenames of the files in the live extraction work directories at this moment,
+	// sampled only when the probe was given a temp dir to look in. An archive's own bytes are read where
+	// they lie, so only "entries" files appear, one per archive whose entries did not fit in memory.
+	heldFiles []string
 }
 
-// nestingProbe is a stub cataloger recording one visit per filesystem the archive cataloger runs its
-// sub-pipeline against, reading the chain off the traversal on the context. It lets a case assert
-// which archives were cataloged rather than inferring it from the SBOM.
+// nestingProbe records one visit per filesystem the archive cataloger runs its sub-pipeline against,
+// reading the chain off the traversal on the context.
 type nestingProbe struct {
-	// tempDir, when set, is where extraction work directories live, so each visit can record which
-	// archives were overflowed to disk while they were all still held.
+	// tempDir, when set, is where extraction work directories live
 	tempDir string
 
 	mu     sync.Mutex
 	visits []nestingVisit
 }
-
-// entryStorageFiles are the basenames internal/archive gives the file one archive's entries are stored
-// in. Which appears depends on the resolver under test, not on the routing this probe reports.
-var entryStorageFiles = []string{"contents.tar", "contents.blob"}
 
 func Test_mixedFamilyNesting_leafIsCatalogedOnceWithTheFullChain(t *testing.T) {
 	// family order must not change the result: the same package, addressed by a chain naming its own
@@ -126,7 +113,7 @@ func Test_mixedFamilyNesting_leafIsCatalogedOnceWithTheFullChain(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := scanDirWith(t, scanDir, nestingScanConfig(3, markerCataloger{}, probe))
+			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), probe.task())
 
 			assert.Equal(t, 1, packageCount(s, "marker-pkg"), "%s: the leaf package must be cataloged exactly once", row.why)
 
@@ -152,8 +139,7 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
-			cfg := withFileCataloging(nestingScanConfig(3, markerCataloger{}))
-			s := scanDirWith(t, scanDir, cfg)
+			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), fileMetadataTask())
 
 			// each archive's coordinates as seen in its parent; the outermost sits in the scanned
 			// directory, so it carries no filesystem id of its own
@@ -211,7 +197,7 @@ func Test_mixedFamilyNesting_javaLeafVirtualPathIsTheColonJoinedChain(t *testing
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
-			s := scanDirWith(t, scanDir, nestingScanConfig(3, markerCataloger{}))
+			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), javaTask())
 
 			// the innermost archive is the jar, so its own package is the java leaf and the chain of
 			// all three archives is exactly its virtual path
@@ -242,7 +228,7 @@ func Test_mixedFamilyNesting_jarIsExercisedAsAContainer(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := scanDirWith(t, scanDir, nestingScanConfig(3, markerCataloger{}, probe))
+			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), javaTask(), probe.task())
 
 			for _, level := range containerLevels {
 				name := fmt.Sprintf("level%d", level)
@@ -270,8 +256,7 @@ func Test_mixedFamilyNesting_depthCountsLevelsNotFamilies(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			cfg := withFileCataloging(nestingScanConfig(2, markerCataloger{}, probe))
-			s := scanDirWith(t, scanDir, cfg)
+			s := runNesting(t, scanDir, 2, cataloging.DefaultArchiveSearchConfig(), markerTask(), fileMetadataTask(), probe.task())
 
 			assert.Equal(t, nested.fileSystemIDs[:2], probe.archiveFileSystemIDs(),
 				"at depth 2 the outer and middle archives are cataloged and the innermost is not")
@@ -302,7 +287,7 @@ func Test_mixedFamilyNesting_defaultBoundsCatalogEveryRow(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := scanDirWith(t, scanDir, nestingScanConfig(3, markerCataloger{}, probe))
+			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(),
 				"every level of the chain must be cataloged at the default bounds")
@@ -314,47 +299,34 @@ func Test_mixedFamilyNesting_defaultBoundsCatalogEveryRow(t *testing.T) {
 }
 
 func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing.T) {
-	// memory pressure degrades to disk: an archive that will not fit spills rather than being refused,
-	// and the memory limit alone decides where that boundary falls
+	// entries that will not fit in memory are written to disk rather than refused
 	scanDir := t.TempDir()
 	tempDir := isolatedTempDir(t)
 	nested := writeNestedArchive(t, scanDir, gradedChain())
 
-	t.Run("with a generous memory limit nothing overflows", func(t *testing.T) {
+	t.Run("with a generous memory limit nothing is written to disk", func(t *testing.T) {
 		probe := &nestingProbe{tempDir: tempDir}
-		cfg := nestingScanConfig(3, markerCataloger{}, probe)
-		// all three levels are held at once at the deepest point, so the limit must admit their sum
-		generous := int64(nested.sizes[0]+nested.sizes[1]+nested.sizes[2]) + 1
-		cfg = cfg.WithArchiveConfig(cfg.Archive.WithMaxMemoryBytes(generous))
-		scanDirWith(t, scanDir, cfg)
+		bounds := cataloging.DefaultArchiveSearchConfig().
+			WithMaxMemoryBytes(int64(2 * (nested.sizes[0] + nested.sizes[1] + nested.sizes[2])))
+		runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 		deepest := probe.deepestVisit()
 		require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
-		assert.Empty(t, deepest.overflowed, "with room in memory for every level, nothing is written to disk")
+		assert.Empty(t, deepest.heldFiles)
 	})
 
-	t.Run("a memory limit the outermost archive does not fit in", func(t *testing.T) {
-		// only the outermost archive is routed by the memory limit, being the one whose bytes are copied
-		// out of the scanned filesystem. Every archive below it is already an entry of its parent's store
-		// and is read where it lies, taking neither memory nor a second copy. This pins the remaining
-		// half: too large for memory means spilled, not failed, with the same outcome as a run with room.
+	t.Run("with a memory limit the outermost archive's entries do not fit in", func(t *testing.T) {
 		probe := &nestingProbe{tempDir: tempDir}
-		cfg := nestingScanConfig(3, markerCataloger{}, probe)
-		cfg = cfg.WithArchiveConfig(cfg.Archive.
+		bounds := cataloging.DefaultArchiveSearchConfig().
 			WithMaxMemoryBytes(int64(nested.sizes[2])).
-			WithMaxDiskBytes(-1)) // unbounded: the disk limit must not be what decides anything here
-		s := scanDirWith(t, scanDir, cfg)
+			WithMaxDiskBytes(-1)
+		s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 		deepest := probe.deepestVisit()
 		require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
-		require.Less(t, int64(nested.sizes[2]), int64(nested.sizes[0]),
-			"the outermost archive must be the one that does not fit, or this case asserts nothing")
-		assert.Equal(t, []string{"level0.tar.gz"}, deepest.overflowed,
-			"the archive that does not fit in memory spills rather than failing, and the levels inside "+
-				"it are read where they lie rather than being copied anywhere")
+		assert.Contains(t, deepest.heldFiles, "entries", "entries that do not fit in memory are written to disk")
 
-		// and the outcome is identical to the default-bounds run
-		assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs())
+		assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(), "and every level is still cataloged")
 		locs := leafLocations(s)
 		require.Len(t, locs, 1)
 		assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
@@ -362,53 +334,41 @@ func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing
 }
 
 func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
-	// a nested archive is an entry of its parent's store, already charged to that parent, and its reader
-	// supports Read, Seek and ReadAt - everything a zip's central directory needs - so it is handed to
-	// the archive format where it lies. Nothing is copied, so nothing competes for the memory limit.
-	//
-	// Asserted at both ends of that limit: generous or zero, the nested levels neither hold memory nor
-	// put a second copy of themselves on disk, and the whole chain is cataloged either way.
+	// an archive's own bytes are read where they lie: a scanned file from disk, a nested archive from
+	// its parent's entries. Nothing copies them, so no "archive" file ever appears in a work directory
+	// whatever the memory limit; only entries are held, and only they can be written out.
 	scanDir := t.TempDir()
 	tempDir := isolatedTempDir(t)
 	nested := writeNestedArchive(t, scanDir, gradedChain())
 
 	for _, tc := range []struct {
-		name               string
-		memoryBytes        int64
-		outerAlsoOverflows bool
+		name          string
+		memoryBytes   int64
+		wantHeldFiles []string
 	}{
 		{
-			name:        "with room in memory for the outermost archive",
-			memoryBytes: int64(nested.sizes[0]),
+			name:        "with room in memory for every level's entries",
+			memoryBytes: int64(2 * (nested.sizes[0] + nested.sizes[1] + nested.sizes[2])),
 		},
 		{
-			name:               "with a memory limit of zero, so even the outermost overflows",
-			memoryBytes:        0,
-			outerAlsoOverflows: true,
+			name:          "with a memory limit of zero, so every level's entries are written out",
+			memoryBytes:   0,
+			wantHeldFiles: []string{"entries", "entries", "entries"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			probe := &nestingProbe{tempDir: tempDir}
-			cfg := nestingScanConfig(3, markerCataloger{}, probe)
-			cfg = cfg.WithArchiveConfig(cfg.Archive.
+			bounds := cataloging.DefaultArchiveSearchConfig().
 				WithMaxMemoryBytes(tc.memoryBytes).
-				WithMaxDiskBytes(-1)) // unbounded: only the memory limit is under test
+				WithMaxDiskBytes(-1)
 
-			s := scanDirWith(t, scanDir, cfg)
+			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 			deepest := probe.deepestVisit()
 			require.Equal(t, 3, deepest.depth, "the sample must be taken with all three levels still held")
+			assert.Equal(t, tc.wantHeldFiles, deepest.heldFiles)
 
-			var want []string
-			if tc.outerAlsoOverflows {
-				want = []string{"level0.tar.gz"}
-			}
-			assert.Equal(t, want, deepest.overflowed,
-				"no copy of a nested archive is written anywhere: level1.zip and level2.jar are read "+
-					"out of the tar of the archive holding them")
-
-			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(),
-				"and every level is still cataloged")
+			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs())
 			locs := leafLocations(s)
 			require.Len(t, locs, 1)
 			assert.Equal(t, nested.leafFileSystemID(), locs[0].ArchivePath)
@@ -416,65 +376,53 @@ func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
 	}
 }
 
-func Test_mixedFamilyNesting_diskLimitSkipsTheLevelItCannotAdmit(t *testing.T) {
-	// the disk limit is terminal and the walk descends before it unwinds, so when the innermost level
-	// cannot be admitted the outer and middle archives still hold everything they took: that level is
-	// skipped, the shallower ones keep what they found, and the scan finishes. An implementation that
-	// waited for capacity would deadlock, hence the timeout.
+func Test_mixedFamilyNesting_diskLimitTruncatesTheLevelItCannotAdmit(t *testing.T) {
+	// the walk descends before it unwinds, so the outer and middle archives still hold their entries
+	// when the innermost level's do not fit in memory. With nothing admitted on disk that level is
+	// cataloged from nothing, the shallower ones keep what they found, and the scan finishes. An
+	// implementation that waited for capacity would deadlock, hence the timeout.
 	scanDir := t.TempDir()
-	tempDir := isolatedTempDir(t)
 	nested := writeNestedArchive(t, scanDir, deepChain())
 
-	// a sibling of a different family, to show the bound is per archive: it is processed once the chain
-	// has been released, so it is cataloged in full
+	// a sibling of a different family, processed once the chain has been released, so cataloged in full
 	require.NoError(t, os.WriteFile(
 		filepath.Join(scanDir, "sibling.tgz"),
-		buildTarGzBytes(t, map[string][]byte{"nested/marker.txt": []byte("sibling")}),
+		makeTarGz(t, map[string][]byte{"nested/marker.txt": []byte("sibling")}),
 		0o644,
 	))
 
-	// the limit is measured rather than computed: what the chain holds on disk at a given level is a
-	// fact about this corpus, so the chain runs once with no disk ceiling and the probe reports what was
-	// on disk while two levels were held.
-	//
-	// The real run gets that figure with no slack, making this a skip rather than a truncation. Entries
-	// are stored without framing, so any slack would admit some of the innermost level's content, and an
-	// archive that stored some entries is truncated instead - covered elsewhere.
-	measuring := &nestingProbe{tempDir: tempDir}
-	measureCfg := nestingScanConfig(3, markerCataloger{}, measuring)
-	measureCfg = measureCfg.WithArchiveConfig(measureCfg.Archive.WithMaxMemoryBytes(0).WithMaxDiskBytes(-1))
-	scanDirWith(t, scanDir, measureCfg)
-
-	twoLevelsHeld := measuring.visitAtDepth(2).diskBytes
-	require.Positive(t, twoLevelsHeld, "the measuring run must have reached the second level")
-	diskLimit := twoLevelsHeld
+	// room for the outer two levels' entries (each about the size of the archive it holds) but not the
+	// innermost's payload, which is half an archive larger than the slack
+	memoryLimit := int64(nested.sizes[0] + nested.sizes[1] + deepChainPayloadBytes/2)
 
 	probe := &nestingProbe{}
-	cfg := nestingScanConfig(3, markerCataloger{}, probe)
-	cfg = cfg.WithArchiveConfig(cfg.Archive.
-		WithMaxMemoryBytes(0). // every archive spills, so its own bytes are charged to disk
-		WithMaxDiskBytes(diskLimit))
+	bounds := cataloging.DefaultArchiveSearchConfig().
+		WithMaxMemoryBytes(memoryLimit).
+		WithMaxDiskBytes(0)
 
-	logs := captureLogs(t)
-	s := scanWithinTimeout(t, scanDir, cfg, 60*time.Second)
+	s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
-	want := append(append([]string{}, nested.fileSystemIDs[:2]...), "sibling.tgz")
+	want := append(append([]string{}, nested.fileSystemIDs...), "/sibling.tgz")
 	assert.ElementsMatch(t, want, probe.archiveFileSystemIDs(),
-		"the level that would exceed the limit is skipped, the shallower ones are still cataloged, "+
-			"and a sibling of another family is unaffected")
-
-	// the skip names the archive that triggered it, not just the bound
-	assert.True(t, logs.sawFields(map[string]any{
-		"archive": nested.paths[2],
-		"limit":   diskLimit,
-	}), "the skip must be attributed to the archive that reached the limit; saw %v", logs.eventsWith("archive"))
+		"every level is visited, the truncated one with nothing inside it")
 
 	fsIDs := strset.New()
 	for _, loc := range leafLocations(s) {
 		fsIDs.Add(loc.ArchivePath)
 	}
-	assert.False(t, fsIDs.Has(nested.leafFileSystemID()), "the skipped level's contents must be absent")
-	assert.True(t, fsIDs.Has("sibling.tgz"), "the sibling of a different family must be cataloged fully")
+	assert.False(t, fsIDs.Has(nested.leafFileSystemID()), "the truncated level's contents must be absent")
+	assert.True(t, fsIDs.Has("/sibling.tgz"), "the sibling of a different family must be cataloged fully")
+
+	var truncated []string
+	for coords, reasons := range s.Artifacts.Unknowns {
+		for _, reason := range reasons {
+			if strings.Contains(reason, "disk limit") {
+				truncated = append(truncated, coords.ArchivePath+":"+coords.RealPath)
+			}
+		}
+	}
+	assert.Equal(t, []string{nested.fileSystemIDs[1] + ":" + nested.paths[2]}, truncated,
+		"the truncation is recorded against the archive that reached the limit")
 }
 
 func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
@@ -486,12 +434,11 @@ func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			cfg := nestingScanConfig(3, markerCataloger{}, probe)
-			cfg = cfg.WithArchiveConfig(cfg.Archive.
+			bounds := cataloging.DefaultArchiveSearchConfig().
 				WithMaxMemoryBytes(-1).
-				WithMaxDiskBytes(-1))
+				WithMaxDiskBytes(-1)
 
-			s := scanWithinTimeout(t, scanDir, cfg, 60*time.Second)
+			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs())
 			locs := leafLocations(s)
@@ -501,161 +448,90 @@ func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
 	}
 }
 
-func Test_mixedFamilyNesting_bothLimitsZeroSkipsEveryArchive(t *testing.T) {
-	// the degenerate but well-defined configuration where nothing is admitted anywhere: unlike negative
-	// (unbounded), zero on both limits skips every archive, and the scan still succeeds rather than
-	// failing or finding anything inside the archives
+func Test_mixedFamilyNesting_bothLimitsZeroCatalogsNothingInsideAnyArchive(t *testing.T) {
+	// unlike negative (unbounded), zero on both limits admits no entry anywhere: the outermost archive is
+	// cataloged from nothing, so the level inside it is never found, and the scan still succeeds
 	for _, row := range nestingRows() {
 		t.Run(row.name, func(t *testing.T) {
 			scanDir := t.TempDir()
-			writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
+			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			cfg := nestingScanConfig(3, markerCataloger{}, probe)
-			cfg = cfg.WithArchiveConfig(cfg.Archive.
+			bounds := cataloging.DefaultArchiveSearchConfig().
 				WithMaxMemoryBytes(0).
-				WithMaxDiskBytes(0))
+				WithMaxDiskBytes(0)
 
-			s := scanWithinTimeout(t, scanDir, cfg, 60*time.Second)
+			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
-			assert.Empty(t, probe.archiveFileSystemIDs(), "no archive content can be admitted anywhere")
-			assert.Empty(t, leafLocations(s), "the leaf is never reached since every archive is skipped")
+			assert.Equal(t, nested.fileSystemIDs[:1], probe.archiveFileSystemIDs())
+			assert.Empty(t, leafLocations(s))
 		})
 	}
 }
 
-// A skip is reported by a log line alone - reaching a bound must not fail the scan - so asserting the
-// attribution means capturing what was logged. cmd/syft/internal/ui/log_writer_test.go uses the same
-// log.Set/log.Get pair; this adds the field-carrying half, where the attribution lives.
-
-// logCapture collects the field-carrying log events emitted while it is installed.
-type logCapture struct {
-	mu        sync.Mutex
-	collected []map[string]any
-}
-
-// captureLogs installs a capturing logger for the test and restores the previous one afterwards.
-func captureLogs(t *testing.T) *logCapture {
+// runNesting runs the archive cataloger task over scanDir with the given sub-pipeline and returns the
+// SBOM it built. It runs on its own goroutine and fails if the task has not finished in time.
+//
+// The depth-3 limit cases need the timeout: the walk descends before it unwinds, so the outer and
+// middle archives still hold their content when the inner one is refused. An implementation that
+// waited for capacity would deadlock, and a test asserting only the result would hang rather than fail.
+func runNesting(t *testing.T, scanDir string, depth int, bounds cataloging.ArchiveSearchConfig, subPipeline ...Task) *sbom.SBOM {
 	t.Helper()
-	capture := &logCapture{}
-	previous := log.Get()
-	t.Cleanup(func() { log.Set(previous) })
-	log.Set(&capturingLogger{Logger: discard.New(), capture: capture})
-	return capture
-}
+	tsk := newTestTask(t, bounds.WithMaxDepth(depth), subPipeline...)
+	s := &sbom.SBOM{Artifacts: sbom.Artifacts{
+		Packages:     pkg.NewCollection(),
+		FileMetadata: map[file.Coordinates]file.Metadata{},
+	}}
 
-func (c *logCapture) record(event map[string]any) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.collected = append(c.collected, event)
-}
+	done := make(chan error, 1)
+	go func() {
+		done <- tsk.Execute(context.Background(), dirTestResolver{dir: scanDir}, sbomsync.NewBuilder(s))
+	}()
 
-func (c *logCapture) events() []map[string]any {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return append([]map[string]any(nil), c.collected...)
-}
-
-// eventsWith is the captured events carrying the given field. A scan logs thousands of lines, so a
-// failure message shows this subset rather than all of them.
-func (c *logCapture) eventsWith(field string) []map[string]any {
-	var out []map[string]any
-	for _, event := range c.events() {
-		if _, ok := event[field]; ok {
-			out = append(out, event)
-		}
+	select {
+	case err := <-done:
+		require.NoError(t, err, "reaching a bound must not fail the scan")
+		return s
+	case <-time.After(60 * time.Second):
+		t.Fatal("the scan did not finish in time: reaching a limit must skip the archive that " +
+			"reached it, never wait for capacity that nothing in the chain will release")
+		return nil
 	}
-	return out
 }
 
-// sawFields reports whether any captured event carried every given field with exactly the given
-// value.
-func (c *logCapture) sawFields(want map[string]any) bool {
-	for _, got := range c.events() {
-		matched := true
-		for key, value := range want {
-			if !reflect.DeepEqual(got[key], value) {
-				matched = false
-				break
+// markerTask emits one package per "marker.txt" found, so the matrix asserts behavior without
+// depending on any real cataloger's fixture format.
+func markerTask() Task {
+	return NewTask("marker-cataloger", func(_ context.Context, resolver file.Resolver, builder sbomsync.Builder) error {
+		locations, err := resolver.FilesByGlob("**/marker.txt")
+		if err != nil {
+			return err
+		}
+		for _, loc := range locations {
+			p := pkg.Package{
+				Name:      "marker-pkg",
+				Version:   "1.0.0",
+				Type:      pkg.BinaryPkg,
+				Locations: file.NewLocationSet(loc),
 			}
+			p.SetID()
+			builder.AddPackages(p)
 		}
-		if matched {
-			return true
-		}
-	}
-	return false
+		return nil
+	})
 }
 
-// capturingLogger discards every message but records the fields attached to those that carry any.
-// Nested is left to the embedded discard logger, since nothing under test uses it.
-type capturingLogger struct {
-	logger.Logger
-	capture *logCapture
+// javaTask is the java archive cataloger as the cataloging factory builds it, so a jar is met as a jar
+// wherever it sits in a chain.
+func javaTask() Task {
+	return NewPackageTask(CatalogingFactoryConfig{}, java.NewArchiveCataloger(java.DefaultArchiveCatalogerConfig()))
 }
 
-func (l *capturingLogger) WithFields(fields ...any) logger.MessageLogger {
-	return &capturingMessageLogger{
-		MessageLogger: l.Logger.WithFields(fields...),
-		capture:       l.capture,
-		fields:        fieldMap(fields),
-	}
-}
-
-type capturingMessageLogger struct {
-	logger.MessageLogger
-	capture *logCapture
-	fields  map[string]any
-}
-
-func (l *capturingMessageLogger) emit(message string) {
-	event := map[string]any{"message": message}
-	for key, value := range l.fields {
-		event[key] = value
-	}
-	l.capture.record(event)
-}
-
-func (l *capturingMessageLogger) Error(args ...any) { l.emit(fmt.Sprint(args...)) }
-func (l *capturingMessageLogger) Warn(args ...any)  { l.emit(fmt.Sprint(args...)) }
-func (l *capturingMessageLogger) Info(args ...any)  { l.emit(fmt.Sprint(args...)) }
-func (l *capturingMessageLogger) Debug(args ...any) { l.emit(fmt.Sprint(args...)) }
-func (l *capturingMessageLogger) Trace(args ...any) { l.emit(fmt.Sprint(args...)) }
-
-func (l *capturingMessageLogger) Errorf(format string, args ...any) {
-	l.emit(fmt.Sprintf(format, args...))
-}
-func (l *capturingMessageLogger) Warnf(format string, args ...any) {
-	l.emit(fmt.Sprintf(format, args...))
-}
-func (l *capturingMessageLogger) Infof(format string, args ...any) {
-	l.emit(fmt.Sprintf(format, args...))
-}
-func (l *capturingMessageLogger) Debugf(format string, args ...any) {
-	l.emit(fmt.Sprintf(format, args...))
-}
-func (l *capturingMessageLogger) Tracef(format string, args ...any) {
-	l.emit(fmt.Sprintf(format, args...))
-}
-
-// fieldMap turns the alternating key/value form log.WithFields takes into a map, folding in any
-// logger.Fields passed as a whole.
-func fieldMap(fields []any) map[string]any {
-	out := map[string]any{}
-	for i := 0; i < len(fields); i++ {
-		if asMap, ok := fields[i].(logger.Fields); ok {
-			for key, value := range asMap {
-				out[key] = value
-			}
-			continue
-		}
-		key, ok := fields[i].(string)
-		if !ok || i+1 >= len(fields) {
-			continue
-		}
-		out[key] = fields[i+1]
-		i++
-	}
-	return out
+// fileMetadataTask records every file, which the CONTAINS chain needs: archive-to-file edges key on
+// coordinates the file catalogers recorded, so without them an inner archive has no coordinate to
+// hang an edge on.
+func fileMetadataTask() Task {
+	return newFileMetadataCatalogerTask(file.AllFilesSelection)
 }
 
 // pack builds one archive of this family holding the given entries.
@@ -663,18 +539,31 @@ func (f archiveFamily) pack(t *testing.T, base string, entries map[string][]byte
 	t.Helper()
 	switch f {
 	case familyZip:
-		return buildZipBytesRaw(t, entries)
+		return makeZip(t, entries)
 	case familyJar:
 		// a manifest makes it a real jar to the java cataloger at any level; the package java reports is
 		// named after the file, not the manifest title
-		return jarBytes(t, base, "1.0", entries)
+		return makeJar(t, base, "1.0", entries)
 	case familyTar:
-		return buildTarBytes(t, entries)
+		return makeTar(t, entries)
 	case familyTarGz, familyTgz:
-		return buildTarGzBytes(t, entries)
+		return makeTarGz(t, entries)
 	}
 	t.Fatalf("unknown archive family %q", f)
 	return nil
+}
+
+func makeJar(t *testing.T, title, version string, extra map[string][]byte) []byte {
+	t.Helper()
+	entries := map[string][]byte{
+		"META-INF/MANIFEST.MF": []byte(
+			"Manifest-Version: 1.0\nImplementation-Title: " + title + "\nImplementation-Version: " + version + "\n",
+		),
+	}
+	for k, v := range extra {
+		entries[k] = v
+	}
+	return makeZip(t, entries)
 }
 
 // leafFileSystemID is the chain the innermost archive's contents carry: every archive, outer to
@@ -701,13 +590,14 @@ func buildNestedArchive(t *testing.T, plan nestPlan) nestedArchive {
 	for i, family := range plan.families {
 		base := fmt.Sprintf("level%d", i)
 		if i == 0 {
-			out.paths[i] = base + string(family)
+			// the outermost archive is a file in the scanned directory, which the resolver reports rooted
+			out.name = base + string(family)
+			out.paths[i] = "/" + out.name
 			continue
 		}
 		out.paths[i] = fmt.Sprintf("nest%d/%s%s", i, base, family)
 	}
 
-	out.name = out.paths[0]
 	for i := range plan.families {
 		if i == 0 {
 			out.fileSystemIDs[i] = out.paths[0]
@@ -749,22 +639,10 @@ func writeNestedArchive(t *testing.T, dir string, plan nestPlan) nestedArchive {
 }
 
 // markerLeaf is the family-agnostic leaf payload: one file no archive format has an opinion about,
-// found by markerCataloger. It keeps the rows comparable - the same package must come out whichever
+// found by markerTask. It keeps the rows comparable - the same package must come out whichever
 // families the chain is made of.
 func markerLeaf() map[string][]byte {
 	return map[string][]byte{"nested/marker.txt": []byte("leaf")}
-}
-
-// incompressibleBytes returns n bytes deflate and gzip cannot shrink, so per-level sizes are
-// predictable enough to place a bound between two of them.
-func incompressibleBytes(n int) []byte {
-	b := make([]byte, n)
-	x := uint32(0x9e3779b9)
-	for i := range b {
-		x = x*1664525 + 1013904223
-		b[i] = byte(x >> 24)
-	}
-	return b
 }
 
 // nestingRows is the depth-3 matrix. Each row covers a case the others do not.
@@ -798,30 +676,26 @@ func nestingRows() []nestingRow {
 	}
 }
 
-func (p *nestingProbe) Name() string { return "nesting-probe" }
+func (p *nestingProbe) task() Task {
+	return NewTask("nesting-probe", func(ctx context.Context, _ file.Resolver, _ sbomsync.Builder) error {
+		trav := archive.TraversalFromContext(ctx)
+		visit := nestingVisit{}
+		if trav != nil {
+			visit.virtualPath = archive.VirtualPath(trav.Location)
+			visit.depth = strings.Count(archive.VirtualPath(trav.Location), ":") + 1
+		}
+		if p.tempDir != "" {
+			visit.heldFiles = heldFiles(p.tempDir)
+		}
 
-func (p *nestingProbe) Catalog(ctx context.Context, _ file.Resolver) ([]pkg.Package, []artifact.Relationship, error) {
-	trav := archive.TraversalFromContext(ctx)
-	visit := nestingVisit{}
-	if trav != nil {
-		visit.virtualPath = trav.VirtualPath
-		visit.depth = strings.Count(trav.VirtualPath, ":") + 1
-	}
-	if lim := archive.LimiterFromContext(ctx); lim != nil {
-		_, visit.diskBytes = lim.InUse()
-	}
-	if p.tempDir != "" {
-		visit.overflowed = overflowArchives(p.tempDir)
-	}
-
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.visits = append(p.visits, visit)
-	return nil, nil, nil
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		p.visits = append(p.visits, visit)
+		return nil
+	})
 }
 
-// archiveFileSystemIDs is the chain of every archive whose contents were cataloged, in visit order,
-// with the scan root dropped.
+// archiveFileSystemIDs is the chain of every archive whose contents were cataloged, in visit order.
 func (p *nestingProbe) archiveFileSystemIDs() []string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -833,19 +707,6 @@ func (p *nestingProbe) archiveFileSystemIDs() []string {
 		out = append(out, v.virtualPath)
 	}
 	return out
-}
-
-// visitAtDepth is the visit at the given nesting depth, for a case measuring what a run held while a
-// particular level was being cataloged.
-func (p *nestingProbe) visitAtDepth(depth int) nestingVisit {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	for _, v := range p.visits {
-		if v.depth == depth {
-			return v
-		}
-	}
-	return nestingVisit{}
 }
 
 // deepestVisit is the visit at the innermost level reached, the only moment at which every level of a
@@ -864,40 +725,10 @@ func (p *nestingProbe) deepestVisit() nestingVisit {
 	return best
 }
 
-// overflowArchives names the archive files in the live extraction work directories under tempDir.
-// Content held in memory writes nothing there; content spilled to disk is written beside the archive's
-// logical root under the archive's own name, which makes the routing observable without a hook into
-// the limiter. Meaningful only while the archives are still held, so it is sampled from inside the
-// sub-pipeline rather than after the scan.
-//
-// The file an archive's entries are stored in is skipped: it says nothing about where the archive's
-// own bytes were routed.
-func overflowArchives(tempDir string) []string {
-	var out []string
-	forEachHeldFile(tempDir, func(name string, _ os.FileInfo) {
-		if isEntryStorageFile(name) {
-			return
-		}
-		out = append(out, name)
-	})
-	sort.Strings(out)
-	return out
-}
-
-func isEntryStorageFile(name string) bool {
-	for _, storage := range entryStorageFiles {
-		if name == storage {
-			return true
-		}
-	}
-	return false
-}
-
-// forEachHeldFile visits every file an archive work directory is holding, wherever under tempDir those
-// directories were created. It walks the tree rather than reading one level, since an archive's work
-// directory sits under the scan's own temp root (internal/tmpdir), whose name this probe does not
-// choose.
-func forEachHeldFile(tempDir string, visit func(name string, info os.FileInfo)) {
+// heldFiles names the files in the live extraction work directories under tempDir. Meaningful only
+// while the archives are still held, so it is sampled from inside the sub-pipeline rather than after
+// the scan.
+func heldFiles(tempDir string) (names []string) {
 	_ = filepath.WalkDir(tempDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || !d.IsDir() || !strings.HasPrefix(d.Name(), "syft-archive-") {
 			return nil //nolint:nilerr // an unreadable directory holds nothing this probe can report
@@ -907,17 +738,14 @@ func forEachHeldFile(tempDir string, visit func(name string, info os.FileInfo)) 
 			return filepath.SkipDir
 		}
 		for _, entry := range held {
-			if entry.IsDir() {
-				continue
+			if !entry.IsDir() {
+				names = append(names, entry.Name())
 			}
-			info, err := entry.Info()
-			if err != nil {
-				continue
-			}
-			visit(entry.Name(), info)
 		}
 		return filepath.SkipDir
 	})
+	sort.Strings(names)
+	return names
 }
 
 // isolatedTempDir points archive extraction at a directory of this test's own, so an overflow sample
@@ -928,25 +756,6 @@ func isolatedTempDir(t *testing.T) string {
 	t.Setenv("TMPDIR", dir)
 	require.Equal(t, dir, os.TempDir(), "extraction must be writing where the probe is looking")
 	return dir
-}
-
-// nestingScanConfig selects the java catalogers - so a jar is met as a jar wherever it sits - and
-// always runs the given catalogers. Selected by tag rather than the whole default set, which includes
-// the RPM cataloger and its sqlite driver this test binary does not register.
-func nestingScanConfig(depth int, catalogers ...pkg.Cataloger) *CreateSBOMConfig {
-	cfg := DefaultCreateSBOMConfig().
-		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java"))
-	for _, c := range catalogers {
-		cfg = cfg.WithCatalogers(pkgcataloging.NewAlwaysEnabledCatalogerReference(c))
-	}
-	return cfg.WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth))
-}
-
-// withFileCataloging turns on file cataloging, which the CONTAINS chain needs: archive-to-file edges
-// key on coordinates the file catalogers recorded, so without them an inner archive has no coordinate
-// to hang an edge on.
-func withFileCataloging(cfg *CreateSBOMConfig) *CreateSBOMConfig {
-	return cfg.WithFilesConfig(filecataloging.Config{Selection: file.AllFilesSelection})
 }
 
 func leafLocations(s *sbom.SBOM) []file.Location {
@@ -980,38 +789,6 @@ func packageCount(s *sbom.SBOM, name string) int {
 	return n
 }
 
-// scanWithinTimeout runs the scan on its own goroutine and fails if it has not finished in time.
-//
-// The depth-3 limit cases need it: the walk descends before it unwinds, so the outer and middle
-// archives still hold their content when the inner one is refused. An implementation that waited for
-// capacity would deadlock, and a test asserting only the result would hang rather than fail.
-func scanWithinTimeout(t *testing.T, dir string, cfg *CreateSBOMConfig, timeout time.Duration) *sbom.SBOM {
-	t.Helper()
-	src, err := directorysource.New(directorysource.Config{Path: dir})
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = src.Close() })
-
-	type outcome struct {
-		s   *sbom.SBOM
-		err error
-	}
-	done := make(chan outcome, 1)
-	go func() {
-		s, err := cfg.Create(context.Background(), src)
-		done <- outcome{s: s, err: err}
-	}()
-
-	select {
-	case got := <-done:
-		require.NoError(t, got.err, "reaching a bound must not fail the scan")
-		return got.s
-	case <-time.After(timeout):
-		t.Fatalf("the scan did not finish within %s: reaching a limit must skip the archive that "+
-			"reached it, never wait for capacity that nothing in the chain will release", timeout)
-		return nil
-	}
-}
-
 func coordKey(c file.Coordinates) string {
 	return c.ArchivePath + "|" + c.RealPath
 }
@@ -1024,22 +801,25 @@ func gradedChain() nestPlan {
 		families: []archiveFamily{familyTarGz, familyZip, familyJar},
 		leaf:     markerLeaf(),
 		extra: map[int]map[string][]byte{
-			0: {"pad0.bin": incompressibleBytes(24 * 1024)},
-			1: {"pad1.bin": incompressibleBytes(24 * 1024)},
-			2: {"pad2.bin": incompressibleBytes(8 * 1024)},
+			0: {"pad0.bin": incompressible(24 * 1024)},
+			1: {"pad1.bin": incompressible(24 * 1024)},
+			2: {"pad2.bin": incompressible(8 * 1024)},
 		},
 	}
 }
 
+// deepChainPayloadBytes is the size of deepChain's leaf payload.
+const deepChainPayloadBytes = 64 * 1024
+
 // deepChain is the headline row with one large, incompressible payload at the leaf and no other
-// padding. The payload dominates every level, so the three archives are about the same size, giving
-// the disk limit arithmetic below slack of half an archive rather than a few hundred bytes.
+// padding. The payload dominates every level, so the three archives are about the same size. It sorts
+// before the marker so it is the first entry refused when the leaf archive's entries do not fit.
 func deepChain() nestPlan {
 	return nestPlan{
 		families: []archiveFamily{familyTarGz, familyZip, familyJar},
 		leaf: map[string][]byte{
+			"0-payload.bin":     incompressible(deepChainPayloadBytes),
 			"nested/marker.txt": []byte("leaf"),
-			"payload.bin":       incompressibleBytes(64 * 1024),
 		},
 	}
 }

@@ -330,7 +330,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			require.NotEmpty(t, tt.wantTaskNames)
 
 			// test the subject
-			gotTasks, gotManifest, err := tt.cfg.makeTaskGroups(tt.src, tt.cfg.Archive)
+			gotTasks, gotManifest, err := tt.cfg.makeTaskGroups(tt.src, nil)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
@@ -583,7 +583,7 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 	t.Run("no archive task by default", func(t *testing.T) {
 		// the feature is off by default, and off must mean no task at all rather than a registered
 		// task that does nothing: a registered task is reported as a selected cataloger
-		groups, _, err := DefaultCreateSBOMConfig().makeTaskGroups(src, DefaultCreateSBOMConfig().Archive)
+		groups, _, err := DefaultCreateSBOMConfig().makeTaskGroups(src, nil)
 		require.NoError(t, err)
 		assert.False(t, archiveTaskIn(groups))
 	})
@@ -591,7 +591,7 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 	t.Run("archive task is present at negative depth", func(t *testing.T) {
 		cfg := DefaultCreateSBOMConfig().
 			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(-1))
-		groups, _, err := cfg.makeTaskGroups(src, cfg.Archive)
+		groups, _, err := cfg.makeTaskGroups(src, nil)
 		require.NoError(t, err)
 		assert.True(t, archiveTaskIn(groups))
 	})
@@ -599,23 +599,21 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 	t.Run("archive task is present when enabled", func(t *testing.T) {
 		cfg := DefaultCreateSBOMConfig().
 			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2))
-		groups, _, err := cfg.makeTaskGroups(src, cfg.Archive)
+		groups, _, err := cfg.makeTaskGroups(src, nil)
 		require.NoError(t, err)
 		assert.True(t, archiveTaskIn(groups))
 	})
 
 	t.Run("enabling the feature does not mutate the caller's package config", func(t *testing.T) {
-		// the java side's yield flag is derived from the archive depth, into the cataloging factory's
-		// own copy: a consumer who handed us a package config gets it back exactly as supplied.
-		// Nothing user-settable is overwritten, and nothing the framework sets leaks back out.
+		// the java side learns the archive task is running from the context, not from its config: a
+		// consumer who handed us a package config gets it back exactly as supplied.
 		supplied := java.DefaultArchiveCatalogerConfig().WithUseNetwork(true)
-		require.False(t, supplied.NestedArchivesHandledExternally)
 
 		cfg := DefaultCreateSBOMConfig().
 			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2)).
 			WithPackagesConfig(pkgcataloging.Config{JavaArchive: supplied})
 
-		_, _, err := cfg.makeTaskGroups(src, cfg.Archive)
+		_, _, err := cfg.makeTaskGroups(src, nil)
 		require.NoError(t, err)
 
 		assert.Equal(t, supplied, cfg.Packages.JavaArchive,

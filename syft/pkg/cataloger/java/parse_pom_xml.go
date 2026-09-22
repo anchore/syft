@@ -3,7 +3,6 @@ package java
 import (
 	"context"
 	"errors"
-	"path/filepath"
 	"strings"
 
 	"github.com/anchore/syft/internal"
@@ -309,8 +308,7 @@ func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.
 // The java-archive-cataloger identifies these archives from pom.properties, whose values are always
 // resolved, so skipping them here avoids phantom dependency packages.
 func isArchiveMetaPom(location file.Location) bool {
-	p := filepath.ToSlash(location.Path())
-	return strings.Contains(p, "META-INF/maven/")
+	return strings.Contains(location.Path(), "META-INF/maven/")
 }
 
 func cleanDescription(original string) (cleaned string) {

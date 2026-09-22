@@ -123,10 +123,6 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 			[]string{"some-dir/a-file.txt"},
 		},
 		{
-			"**/A-file.txt",
-			[]string{"some-dir/a-file.txt"},
-		},
-		{
 			"**/*.zip",
 			[]string{"nested.zip"},
 		},
@@ -136,7 +132,7 @@ func TestZipFileManifest_GlobMatch(t *testing.T) {
 		t.Run(tc.glob, func(t *testing.T) {
 			glob := tc.glob
 
-			results := z.GlobMatch(true, glob)
+			results := z.GlobMatch(glob)
 
 			require.ElementsMatch(t, tc.expected, results)
 		})

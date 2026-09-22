@@ -5,52 +5,41 @@ import (
 	"sync"
 )
 
-// ErrDiskLimitReached reports that placing an archive's content would exceed the disk limit. Not a
-// scan failure: the archive is skipped and the walk continues.
+// ErrDiskLimitReached reports that placing an archive's content would exceed the disk limit.
 var ErrDiskLimitReached = errors.New("archive content would exceed the disk limit")
 
-// Limits bounds how much archive content one scan may hold at once, and so where content is held.
+// Limits bound how much archive content one scan holds at once. Each limit falls as archives are
+// released, so it bounds peak usage rather than the total ever written.
 //
-// These are in-use limits, not counters: each measures what is held right now and falls when an
-// archive is released, bounding peak concurrent usage. Work directories are removed on release, so a
-// bound on bytes ever written would measure state that never exists at once.
-//
-// Both fields read three states the same way: positive is the limit, zero forbids that resource, and
-// negative is unbounded. Unbounded is a real hazard, so it must be asked for explicitly.
+// For both limits: positive is the bound, zero forbids the resource, negative is unbounded.
 type Limits struct {
-	// MaxMemoryBytes bounds archive content held in memory at once; content spills to disk when it does
-	// not admit more, so there is no separate spill threshold. Zero sends all content to disk; negative
-	// is unbounded.
+	// MaxMemoryBytes bounds archive content held in memory. Content that does not fit is written to
+	// disk instead.
 	MaxMemoryBytes int64
 
-	// MaxDiskBytes bounds archive content on disk at once: content spilled there plus the entry bytes
-	// extracted from it. Zero writes nothing, so content that does not fit in memory has nowhere to go
-	// and its archive is skipped; negative is unbounded.
+	// MaxDiskBytes bounds archive content written to disk. Content that does not fit is dropped and
+	// the archive is skipped or truncated.
 	MaxDiskBytes int64
 }
 
-// Limiter measures how much archive content a scan is holding right now. One instance per task run
-// (one scan), the only scope under which "held at once" means anything. A nil *Limiter enforces
-// nothing. Mutex-guarded because the archive task merges into a shared builder while top-level
-// catalogers run.
+// Limiter tracks how much archive content a scan holds right now against its Limits. A nil *Limiter
+// enforces nothing.
 type Limiter struct {
 	limits Limits
+
 	mu     sync.Mutex
 	memory int64
 	disk   int64
 
-	// peaks are high-water marks of the two gauges above: the most held at any one moment, not the sum
-	// across archives. They only rise.
 	peakMemory int64
 	peakDisk   int64
 }
 
-// NewLimiter returns a limiter enforcing the given limits.
 func NewLimiter(limits Limits) *Limiter {
 	return &Limiter{limits: limits}
 }
 
-// Peak reports the most archive content held at any one moment, the quantities the limits bound.
+// Peak reports the most memory and disk held at any one moment.
 func (l *Limiter) Peak() (memory, disk int64) {
 	if l == nil {
 		return 0, 0
@@ -60,7 +49,7 @@ func (l *Limiter) Peak() (memory, disk int64) {
 	return l.peakMemory, l.peakDisk
 }
 
-// InUse reports the archive content held right now, in memory and on disk.
+// InUse reports the memory and disk held right now.
 func (l *Limiter) InUse() (memory, disk int64) {
 	if l == nil {
 		return 0, 0
@@ -70,7 +59,7 @@ func (l *Limiter) InUse() (memory, disk int64) {
 	return l.memory, l.disk
 }
 
-// Charge starts one archive's accounting. Releasing the returned charge gives back what it took.
+// Charge starts accounting for one archive. Releasing the charge gives back everything it took.
 func (l *Limiter) Charge() *Charge {
 	if l == nil {
 		return nil
@@ -78,19 +67,16 @@ func (l *Limiter) Charge() *Charge {
 	return &Charge{limiter: l}
 }
 
-// Charge is one archive's accumulated draw on the limiter. A nil *Charge charges and refuses nothing.
+// Charge is one archive's draw on a Limiter. A nil *Charge admits everything.
 //
-// Bytes are charged as they land, never from a declared size: tar and zip headers both carry a size a
-// crafted archive can lie about, so reserving against it would bound the claim, not the usage.
+// Bytes are charged as they land, never from the sizes an archive declares, since those can lie.
 type Charge struct {
 	limiter *Limiter
 	memory  int64
 	disk    int64
 }
 
-// admitsThreeState reports whether n more bytes may be charged against a limit already holding held.
-// Shared by Memory and Disk so the two readings of Limits cannot drift.
-func admitsThreeState(limit, held, n int64) bool {
+func admits(limit, held, n int64) bool {
 	switch {
 	case limit < 0:
 		return true
@@ -101,100 +87,78 @@ func admitsThreeState(limit, held, n int64) bool {
 	}
 }
 
-// Memory charges n bytes held in memory, reporting false when the memory limit does not admit it (for
-// a zero limit, always). Nothing is charged when it reports false.
+// Memory charges n bytes held in memory, or reports false (charging nothing) when the memory limit
+// does not admit them.
 func (c *Charge) Memory(n int64) bool {
-	if c == nil || c.limiter == nil || n <= 0 {
+	if c == nil || n <= 0 {
 		return true
 	}
 	l := c.limiter
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if !admitsThreeState(l.limits.MaxMemoryBytes, l.memory, n) {
+	if !admits(l.limits.MaxMemoryBytes, l.memory, n) {
 		return false
 	}
 	l.memory += n
 	c.memory += n
-	if l.memory > l.peakMemory {
-		l.peakMemory = l.memory
-	}
+	l.peakMemory = max(l.peakMemory, l.memory)
 	return true
 }
 
-// Disk charges n bytes placed on disk, reporting false when the disk limit does not admit it (for a
-// zero limit, always, which skips the archive). Nothing is charged when it reports false.
+// Disk charges n bytes written to disk, or reports false (charging nothing) when the disk limit does
+// not admit them.
 func (c *Charge) Disk(n int64) bool {
-	if c == nil || c.limiter == nil || n <= 0 {
+	if c == nil || n <= 0 {
 		return true
 	}
 	l := c.limiter
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if !admitsThreeState(l.limits.MaxDiskBytes, l.disk, n) {
+	if !admits(l.limits.MaxDiskBytes, l.disk, n) {
 		return false
 	}
 	l.disk += n
 	c.disk += n
-	if l.disk > l.peakDisk {
-		l.peakDisk = l.disk
-	}
+	l.peakDisk = max(l.peakDisk, l.disk)
 	return true
 }
 
-// IndexRecord charges the memory an archive's index records keep regardless of content weight,
-// preferring the memory budget and falling back to disk. It reports false only when neither budget
-// admits the record, truncating the archive.
-//
-// It bounds the dimension the byte budgets miss: an archive of many empty entries, or one entry named
-// a thousand components deep, weighs almost nothing as content yet would grow the index without limit.
-//
-// The disk fallback exists because a resolver needs an entry's record to reach its bytes at all, and
-// MaxMemoryBytes may legitimately be zero (the configuration that spills every archive). So records
-// are bounded by the disk budget once memory is full, though they are only ever held in memory.
-func (c *Charge) IndexRecord(n int64) bool {
-	if c == nil || c.limiter == nil || n <= 0 {
-		return true
-	}
-	if c.Memory(n) {
-		return true
-	}
-	return c.Disk(n)
+// Index charges n bytes of index bookkeeping. The index always lives in memory, but a zero memory
+// limit is a valid configuration that must still index archives, so it falls back to the disk
+// budget when memory does not admit it. Reports false only when neither does.
+func (c *Charge) Index(n int64) bool {
+	return c.Memory(n) || c.Disk(n)
 }
 
-// RefundDisk gives back n bytes charged for content since removed, so a partial file dropped at a
-// limit does not leave the limiter holding bytes no longer on disk.
-func (c *Charge) RefundDisk(n int64) {
-	if c == nil || c.limiter == nil || n <= 0 {
-		return
-	}
-	l := c.limiter
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	if n > c.disk {
-		n = c.disk
-	}
-	l.disk -= n
-	c.disk -= n
-}
-
-// RefundMemory gives back n bytes charged for content no longer held in memory.
+// RefundMemory gives back n bytes no longer held in memory.
 func (c *Charge) RefundMemory(n int64) {
-	if c == nil || c.limiter == nil || n <= 0 {
+	if c == nil || n <= 0 {
 		return
 	}
 	l := c.limiter
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if n > c.memory {
-		n = c.memory
-	}
+	n = min(n, c.memory)
 	l.memory -= n
 	c.memory -= n
 }
 
-// Release returns everything this charge took. Safe to call more than once.
+// RefundDisk gives back n bytes no longer on disk.
+func (c *Charge) RefundDisk(n int64) {
+	if c == nil || n <= 0 {
+		return
+	}
+	l := c.limiter
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	n = min(n, c.disk)
+	l.disk -= n
+	c.disk -= n
+}
+
+// Release gives back everything this charge took. Safe to call more than once.
 func (c *Charge) Release() {
-	if c == nil || c.limiter == nil {
+	if c == nil {
 		return
 	}
 	l := c.limiter

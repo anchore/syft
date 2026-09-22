@@ -33,15 +33,6 @@ type ArchiveCatalogerConfig struct {
 	// ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
 	// app-config: java.resolve-transitive-dependencies
 	ResolveTransitiveDependencies bool `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
-
-	// NestedArchivesHandledExternally indicates that another mechanism owns recursion into nested
-	// archives, so this cataloger must not unarchive them itself. It has no yaml/json/mapstructure
-	// key, so no config file, flag or environment variable reaches it.
-	//
-	// Only syft.CreateSBOMConfig writes it, deriving it from the nested-archive cataloging depth so
-	// the two cannot disagree. Callers building this config should leave it alone; the zero value
-	// recurses, this cataloger's default.
-	NestedArchivesHandledExternally bool `yaml:"-" json:"-" mapstructure:"-"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {

@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/go-sync"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/bus"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/log"
@@ -38,16 +39,7 @@ func CreateSBOM(ctx context.Context, src source.Source, cfg *CreateSBOMConfig) (
 
 	srcMetadata := src.Describe()
 
-	// the archive cataloger needs the source's exclusions to index each archive the way the scan
-	// indexes itself. Copied locally so the caller's config is not mutated, and only when empty:
-	// options.ToArchiveConfig fills the same field from --exclude and wins when set, while a consumer
-	// who configures only their source still gets theirs.
-	archiveCfg := cfg.Archive
-	if len(archiveCfg.ExclusionPatterns) == 0 {
-		archiveCfg = archiveCfg.WithExclusionPatterns(sourceExclusions(src))
-	}
-
-	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata, archiveCfg)
+	taskGroups, audit, err := cfg.makeTaskGroups(srcMetadata, sourceExclusions(src))
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +113,13 @@ func setupContext(ctx context.Context, cfg *CreateSBOMConfig) (context.Context, 
 	// configure parallel executors
 	ctx = setContextExecutors(ctx, cfg)
 
-	// one progress row per cataloger for the whole scan, however many times it runs: the archive
-	// cataloger re-runs the pipeline against every archive it walks, and those findings belong on the
-	// row that cataloger already owns
+	// one progress row per cataloger for the whole scan, however many archives it is run against
 	ctx = bus.WithCatalogerTaskRegistry(ctx)
+
+	// the archive cataloger task recurses into jars too, so the java cataloger must not unarchive them itself
+	if cfg.Archive.MaxDepth != 0 {
+		ctx = archive.WithNestedCataloging(ctx)
+	}
 
 	// configure temp dir factory for catalogers (if not already set)
 	if tmpdir.FromContext(ctx) == nil {
@@ -231,4 +226,13 @@ func formatTaskNames(tasks []task.Task) []string {
 	list := set.List()
 	sort.Strings(list)
 	return list
+}
+
+// sourceExclusions returns the exclusion patterns the source was configured with, so the same
+// exclusions apply inside the archives found in it.
+func sourceExclusions(src source.Source) []string {
+	if excluder, ok := src.(source.PathExcluder); ok {
+		return excluder.ExcludedPaths()
+	}
+	return nil
 }
