@@ -12,7 +12,7 @@ import (
 func packageURL(name, version string, metadata pkg.JavaArchive) string {
 	var groupID = name
 
-	if gID := groupIDFromJavaMetadata(name, metadata); gID != "" {
+	if gID := groupIDFromJavaMetadata(name, version, metadata); gID != "" {
 		groupID = gID
 	}
 
@@ -30,9 +30,9 @@ func packageURL(name, version string, metadata pkg.JavaArchive) string {
 // The order of precedence is:
 // 1. The group ID from the POM properties
 // 2. The group ID from the POM project
-// 3. The group ID from a select map of known group IDs
+// 3. The group ID from a select map of known group IDs (see cpegenerate.ArtifactIDToGroupID)
 // 4. The group ID from the Java manifest
-func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupID string) {
+func groupIDFromJavaMetadata(pkgName, version string, metadata pkg.JavaArchive) (groupID string) {
 	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
 	}
@@ -41,21 +41,14 @@ func groupIDFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupID 
 		return groupID
 	}
 
-	if groupID = groupIDFromKnownPackageList(pkgName); groupID != "" {
-		return groupID
+	if gID, ok := cpegenerate.ArtifactIDToGroupID(pkgName, version); ok {
+		return gID
 	}
 
 	if groupID = groupIDFromJavaManifest(metadata.Manifest); groupID != "" {
 		return groupID
 	}
 
-	return groupID
-}
-
-func groupIDFromKnownPackageList(pkgName string) (groupID string) {
-	if groupID, ok := cpegenerate.DefaultArtifactIDToGroupID[pkgName]; ok {
-		return groupID
-	}
 	return groupID
 }
 

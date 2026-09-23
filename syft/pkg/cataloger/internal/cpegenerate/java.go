@@ -190,16 +190,16 @@ func GroupIDsFromJavaPackage(p pkg.Package) (groupIDs []string) {
 		return nil
 	}
 
-	return GroupIDsFromJavaMetadata(p.Name, metadata)
+	return GroupIDsFromJavaMetadata(p.Name, p.Version, metadata)
 }
 
 // GroupIDsFromJavaMetadata returns the possible group IDs for a Java package
 // This function is similar to GroupIDFromJavaPackage, but returns all possible group IDs and is less strict
 // It is used as a way to generate possible candidates for CPE matching.
-func GroupIDsFromJavaMetadata(pkgName string, metadata pkg.JavaArchive) (groupIDs []string) {
+func GroupIDsFromJavaMetadata(pkgName, version string, metadata pkg.JavaArchive) (groupIDs []string) {
 	groupIDs = append(groupIDs, groupIDsFromPomProperties(metadata.PomProperties)...)
 	groupIDs = append(groupIDs, groupIDsFromPomProject(metadata.PomProject)...)
-	groupIDs = append(groupIDs, groupIDsFromJavaManifest(pkgName, metadata.Manifest)...)
+	groupIDs = append(groupIDs, groupIDsFromJavaManifest(pkgName, version, metadata.Manifest)...)
 
 	return groupIDs
 }
@@ -253,8 +253,8 @@ func addGroupIDsFromGroupIDsAndArtifactID(groupID, artifactID string) (groupIDs 
 	return groupIDs
 }
 
-func groupIDsFromJavaManifest(pkgName string, manifest *pkg.JavaManifest) []string {
-	if groupID, ok := DefaultArtifactIDToGroupID[pkgName]; ok {
+func groupIDsFromJavaManifest(pkgName, version string, manifest *pkg.JavaManifest) []string {
+	if groupID, ok := ArtifactIDToGroupID(pkgName, version); ok {
 		return []string{groupID}
 	}
 
@@ -303,7 +303,7 @@ func GetManifestFieldGroupIDs(manifest *pkg.JavaManifest, fields []string) (grou
 
 func cleanGroupID(groupID string) string {
 	groupID = strings.TrimSpace(strings.Split(removeOSCIDirectives(groupID), "#")[0])
-	if replacement, ok := GroupIDCorrections[groupID]; ok {
+	if replacement, ok := groupIDCorrections[groupID]; ok {
 		return replacement
 	}
 	return groupID

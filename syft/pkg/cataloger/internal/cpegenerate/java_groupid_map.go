@@ -1,10 +1,17 @@
 package cpegenerate
 
-var GroupIDCorrections = map[string]string{
+import (
+	"strconv"
+	"strings"
+)
+
+var groupIDCorrections = map[string]string{
 	"org.lz4.java": "org.lz4",
 }
 
-var DefaultArtifactIDToGroupID = map[string]string{
+// defaultArtifactIDToGroupID holds artifacts that always map to the same group ID. Look up group IDs with
+// ArtifactIDToGroupID instead of reading this map directly, since migratedArtifactIDToGroupID takes precedence.
+var defaultArtifactIDToGroupID = map[string]string{
 	"ant":                                         "org.apache.ant",
 	"ant-antlr":                                   "org.apache.ant",
 	"ant-antunit":                                 "org.apache.ant",
@@ -1832,104 +1839,83 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"commons-jelly-tags-velocity":                              "commons-jelly",
 	"commons-jelly-tags-xml":                                   "commons-jelly",
 	"commons-jelly-tags-xmlunit":                               "commons-jelly",
-	"groovy":                                                   "org.codehaus.groovy",
-	"groovy-all":                                               "org.codehaus.groovy",
-	"groovy-all-jdk14":                                         "org.codehaus.groovy",
-	"groovy-all-minimal":                                       "org.codehaus.groovy",
-	"groovy-all-tests":                                         "org.codehaus.groovy",
-	"groovy-ant":                                               "org.codehaus.groovy",
-	"groovy-astbuilder":                                        "org.codehaus.groovy",
-	"groovy-backports-compat23":                                "org.codehaus.groovy",
-	"groovy-binary":                                            "org.codehaus.groovy",
-	"groovy-bom":                                               "org.codehaus.groovy",
-	"groovy-bsf":                                               "org.codehaus.groovy",
-	"groovy-cli-commons":                                       "org.codehaus.groovy",
-	"groovy-cli-picocli":                                       "org.codehaus.groovy",
-	"groovy-console":                                           "org.codehaus.groovy",
-	"groovy-datetime":                                          "org.codehaus.groovy",
-	"groovy-dateutil":                                          "org.codehaus.groovy",
-	"groovy-docgenerator":                                      "org.codehaus.groovy",
-	"groovy-eclipse-batch":                                     "org.codehaus.groovy",
-	"groovy-eclipse-compiler":                                  "org.codehaus.groovy",
-	"groovy-groovydoc":                                         "org.codehaus.groovy",
-	"groovy-groovysh":                                          "org.codehaus.groovy",
-	"groovy-jaxb":                                              "org.codehaus.groovy",
-	"groovy-jdk14":                                             "org.codehaus.groovy",
-	"groovy-jmx":                                               "org.codehaus.groovy",
-	"groovy-json":                                              "org.codehaus.groovy",
-	"groovy-json-direct":                                       "org.codehaus.groovy",
-	"groovy-jsr223":                                            "org.codehaus.groovy",
-	"groovy-macro":                                             "org.codehaus.groovy",
-	"groovy-nio":                                               "org.codehaus.groovy",
-	"groovy-servlet":                                           "org.codehaus.groovy",
-	"groovy-sql":                                               "org.codehaus.groovy",
-	"groovy-swing":                                             "org.codehaus.groovy",
-	"groovy-templates":                                         "org.codehaus.groovy",
-	"groovy-test":                                              "org.codehaus.groovy",
-	"groovy-test-junit5":                                       "org.codehaus.groovy",
-	"groovy-testng":                                            "org.codehaus.groovy",
-	"groovy-tests-vm8":                                         "org.codehaus.groovy",
-	"groovy-xml":                                               "org.codehaus.groovy",
-	"groovy-xmlrpc":                                            "org.codehaus.groovy",
-	"groovy-yaml":                                              "org.codehaus.groovy",
-	"kafka-clients":                                            "org.apache.kafka",
-	"kafka-examples":                                           "org.apache.kafka",
-	"kafka-group-coordinator":                                  "org.apache.kafka",
-	"kafka-hadoop-consumer":                                    "org.apache.kafka",
-	"kafka-hadoop-producer":                                    "org.apache.kafka",
-	"kafka-java-examples":                                      "org.apache.kafka",
-	"kafka-log4j-appender":                                     "org.apache.kafka",
-	"kafka-metadata":                                           "org.apache.kafka",
-	"kafka-perf_2.10":                                          "org.apache.kafka",
-	"kafka-perf_2.8.0":                                         "org.apache.kafka",
-	"kafka-perf_2.8.2":                                         "org.apache.kafka",
-	"kafka-perf_2.9.1":                                         "org.apache.kafka",
-	"kafka-perf_2.9.2":                                         "org.apache.kafka",
-	"kafka-raft":                                               "org.apache.kafka",
-	"kafka-server-common":                                      "org.apache.kafka",
-	"kafka-shell":                                              "org.apache.kafka",
-	"kafka-storage":                                            "org.apache.kafka",
-	"kafka-storage-api":                                        "org.apache.kafka",
-	"kafka-streams":                                            "org.apache.kafka",
-	"kafka-streams-examples":                                   "org.apache.kafka",
-	"kafka-streams-scala_2.11":                                 "org.apache.kafka",
-	"kafka-streams-scala_2.12":                                 "org.apache.kafka",
-	"kafka-streams-scala_2.13":                                 "org.apache.kafka",
-	"kafka-streams-test-utils":                                 "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-0100":                  "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-0101":                  "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-0102":                  "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-0110":                  "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-10":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-11":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-20":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-21":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-22":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-23":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-24":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-25":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-26":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-27":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-28":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-30":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-31":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-32":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-33":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-34":                    "org.apache.kafka",
-	"kafka-streams-upgrade-system-tests-35":                    "org.apache.kafka",
-	"kafka-tools":                                              "org.apache.kafka",
-	"kafka-tools-api":                                          "org.apache.kafka",
-	"kafka_2.10":                                               "org.apache.kafka",
-	"kafka_2.11":                                               "org.apache.kafka",
-	"kafka_2.12":                                               "org.apache.kafka",
-	"kafka_2.13":                                               "org.apache.kafka",
-	"kafka_2.8.0":                                              "org.apache.kafka",
-	"kafka_2.8.2":                                              "org.apache.kafka",
-	"kafka_2.9.1":                                              "org.apache.kafka",
-	"kafka_2.9.2":                                              "org.apache.kafka",
+	// the Eclipse-hosted groovy-eclipse-* artifacts stayed on codehaus past 4.0, and the org.apache.groovy modules
+	// below were added in 4.0+ and only exist under apache. See https://github.com/anchore/syft/issues/5311
+	"groovy-eclipse-batch":                    "org.codehaus.groovy",
+	"groovy-eclipse-compiler":                 "org.codehaus.groovy",
+	"groovy-callsite":                         "org.apache.groovy",
+	"groovy-concurrent-java":                  "org.apache.groovy",
+	"groovy-contracts":                        "org.apache.groovy",
+	"groovy-csv":                              "org.apache.groovy",
+	"groovy-ginq":                             "org.apache.groovy",
+	"groovy-grape-ivy":                        "org.apache.groovy",
+	"groovy-grape-maven":                      "org.apache.groovy",
+	"groovy-http-builder":                     "org.apache.groovy",
+	"groovy-macro-library":                    "org.apache.groovy",
+	"groovy-markdown":                         "org.apache.groovy",
+	"groovy-reactor":                          "org.apache.groovy",
+	"groovy-rxjava":                           "org.apache.groovy",
+	"groovy-test-junit6":                      "org.apache.groovy",
+	"groovy-toml":                             "org.apache.groovy",
+	"groovy-typecheckers":                     "org.apache.groovy",
+	"kafka-clients":                           "org.apache.kafka",
+	"kafka-examples":                          "org.apache.kafka",
+	"kafka-group-coordinator":                 "org.apache.kafka",
+	"kafka-hadoop-consumer":                   "org.apache.kafka",
+	"kafka-hadoop-producer":                   "org.apache.kafka",
+	"kafka-java-examples":                     "org.apache.kafka",
+	"kafka-log4j-appender":                    "org.apache.kafka",
+	"kafka-metadata":                          "org.apache.kafka",
+	"kafka-perf_2.10":                         "org.apache.kafka",
+	"kafka-perf_2.8.0":                        "org.apache.kafka",
+	"kafka-perf_2.8.2":                        "org.apache.kafka",
+	"kafka-perf_2.9.1":                        "org.apache.kafka",
+	"kafka-perf_2.9.2":                        "org.apache.kafka",
+	"kafka-raft":                              "org.apache.kafka",
+	"kafka-server-common":                     "org.apache.kafka",
+	"kafka-shell":                             "org.apache.kafka",
+	"kafka-storage":                           "org.apache.kafka",
+	"kafka-storage-api":                       "org.apache.kafka",
+	"kafka-streams":                           "org.apache.kafka",
+	"kafka-streams-examples":                  "org.apache.kafka",
+	"kafka-streams-scala_2.11":                "org.apache.kafka",
+	"kafka-streams-scala_2.12":                "org.apache.kafka",
+	"kafka-streams-scala_2.13":                "org.apache.kafka",
+	"kafka-streams-test-utils":                "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-0100": "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-0101": "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-0102": "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-0110": "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-10":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-11":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-20":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-21":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-22":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-23":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-24":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-25":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-26":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-27":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-28":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-30":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-31":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-32":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-33":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-34":   "org.apache.kafka",
+	"kafka-streams-upgrade-system-tests-35":   "org.apache.kafka",
+	"kafka-tools":                             "org.apache.kafka",
+	"kafka-tools-api":                         "org.apache.kafka",
+	"kafka_2.10":                              "org.apache.kafka",
+	"kafka_2.11":                              "org.apache.kafka",
+	"kafka_2.12":                              "org.apache.kafka",
+	"kafka_2.13":                              "org.apache.kafka",
+	"kafka_2.8.0":                             "org.apache.kafka",
+	"kafka_2.8.2":                             "org.apache.kafka",
+	"kafka_2.9.1":                             "org.apache.kafka",
+	"kafka_2.9.2":                             "org.apache.kafka",
 
 	// legacy "Jackson 1.x" (aka "jackson-asl") artifacts predate the convention of embedding
-	// META-INF/maven/.../pom.properties in the jar, so groupIDFromKnownPackageList is the only
+	// META-INF/maven/.../pom.properties in the jar, so ArtifactIDToGroupID is the only
 	// way to recover the correct group ID for jars built without that metadata (e.g. Ant-built
 	// jars from before ~2014). Without this, the group ID falls back to the artifact name itself,
 	// producing purls that do not match the vulnerability database's namespace.
@@ -1939,4 +1925,84 @@ var DefaultArtifactIDToGroupID = map[string]string{
 	"jackson-jaxrs":      "org.codehaus.jackson",
 	"jackson-xc":         "org.codehaus.jackson",
 	"jackson-smile":      "org.codehaus.jackson",
+}
+
+// groupIDMigration describes an artifact that moved from one group ID to another at a major version.
+type groupIDMigration struct {
+	before, after string
+	atMajor       int
+}
+
+// groovy moved from org.codehaus.groovy to org.apache.groovy at 4.0
+var groovyMigration = groupIDMigration{before: "org.codehaus.groovy", after: "org.apache.groovy", atMajor: 4}
+
+// migratedArtifactIDToGroupID holds artifacts whose group ID depends on the version. It takes precedence over
+// defaultArtifactIDToGroupID; use ArtifactIDToGroupID rather than reading it directly.
+var migratedArtifactIDToGroupID = map[string]groupIDMigration{
+	// groovy artifacts published under both coordinates. Without these, jars that ship no pom metadata get a
+	// stale codehaus group or one guessed from the per-module Automatic-Module-Name (e.g. org.apache.groovy.json).
+	// See https://github.com/anchore/syft/issues/5311
+	"groovy":                    groovyMigration,
+	"groovy-all":                groovyMigration,
+	"groovy-all-jdk14":          groovyMigration,
+	"groovy-all-minimal":        groovyMigration,
+	"groovy-all-tests":          groovyMigration,
+	"groovy-ant":                groovyMigration,
+	"groovy-astbuilder":         groovyMigration,
+	"groovy-backports-compat23": groovyMigration,
+	"groovy-binary":             groovyMigration,
+	"groovy-bom":                groovyMigration,
+	"groovy-bsf":                groovyMigration,
+	"groovy-cli-commons":        groovyMigration,
+	"groovy-cli-picocli":        groovyMigration,
+	"groovy-console":            groovyMigration,
+	"groovy-datetime":           groovyMigration,
+	"groovy-dateutil":           groovyMigration,
+	"groovy-docgenerator":       groovyMigration,
+	"groovy-groovydoc":          groovyMigration,
+	"groovy-groovysh":           groovyMigration,
+	"groovy-jaxb":               groovyMigration,
+	"groovy-jdk14":              groovyMigration,
+	"groovy-jmx":                groovyMigration,
+	"groovy-json":               groovyMigration,
+	"groovy-json-direct":        groovyMigration,
+	"groovy-jsr223":             groovyMigration,
+	"groovy-macro":              groovyMigration,
+	"groovy-nio":                groovyMigration,
+	"groovy-servlet":            groovyMigration,
+	"groovy-sql":                groovyMigration,
+	"groovy-swing":              groovyMigration,
+	"groovy-templates":          groovyMigration,
+	"groovy-test":               groovyMigration,
+	"groovy-test-junit5":        groovyMigration,
+	"groovy-testng":             groovyMigration,
+	"groovy-tests-vm8":          groovyMigration,
+	"groovy-xml":                groovyMigration,
+	"groovy-xmlrpc":             groovyMigration,
+	"groovy-yaml":               groovyMigration,
+}
+
+// ArtifactIDToGroupID returns the known group ID for the given artifact ID at the given version. For migrated
+// artifacts an empty or unparseable version resolves to the pre-migration group ID.
+func ArtifactIDToGroupID(artifactID, version string) (string, bool) {
+	if m, ok := migratedArtifactIDToGroupID[artifactID]; ok {
+		if majorVersion(version) >= m.atMajor {
+			return m.after, true
+		}
+		return m.before, true
+	}
+	groupID, ok := defaultArtifactIDToGroupID[artifactID]
+	return groupID, ok
+}
+
+// majorVersion returns the leading numeric component of a version (e.g. "4.0.33" and "4-SNAPSHOT"
+// resolve to 4), or 0 when the version does not start with a number.
+func majorVersion(version string) int {
+	leading, _, _ := strings.Cut(version, ".")
+	leading, _, _ = strings.Cut(leading, "-")
+	n, err := strconv.Atoi(leading)
+	if err != nil {
+		return 0
+	}
+	return n
 }
