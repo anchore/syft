@@ -183,6 +183,24 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			// groovy moved to org.apache.groovy at 4.0 and real jars ship no pom metadata, so the known package
+			// list drives the vendor. See https://github.com/anchore/syft/issues/5311
+			name: "groovy 4 module without pom metadata",
+			p: pkg.Package{
+				Name:     "groovy-json",
+				Version:  "4.0.33",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{Manifest: &pkg.JavaManifest{}},
+			},
+			expected: []string{
+				"cpe:2.3:a:apache:groovy-json:4.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:apache:groovy_json:4.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:apache:groovy:4.0.33:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "java language with groupID",
 			p: pkg.Package{
 				Name:     "name",

@@ -1,7 +1,6 @@
 package java
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/anchore/packageurl-go"
@@ -31,9 +30,8 @@ func packageURL(name, version string, metadata pkg.JavaArchive) string {
 // The order of precedence is:
 // 1. The group ID from the POM properties
 // 2. The group ID from the POM project
-// 3. A major-version group ID migration, when one applies
-// 4. The group ID from a select map of known group IDs
-// 5. The group ID from the Java manifest
+// 3. The group ID from a select map of known group IDs (see cpegenerate.ArtifactIDToGroupID)
+// 4. The group ID from the Java manifest
 func groupIDFromJavaMetadata(pkgName, version string, metadata pkg.JavaArchive) (groupID string) {
 	if groupID = groupIDFromPomProperties(metadata.PomProperties); groupID != "" {
 		return groupID
@@ -43,8 +41,8 @@ func groupIDFromJavaMetadata(pkgName, version string, metadata pkg.JavaArchive) 
 		return groupID
 	}
 
-	if groupID = groupIDFromKnownPackageList(pkgName, version); groupID != "" {
-		return groupID
+	if gID, ok := cpegenerate.ArtifactIDToGroupID(pkgName, version); ok {
+		return gID
 	}
 
 	if groupID = groupIDFromJavaManifest(metadata.Manifest); groupID != "" {
@@ -52,60 +50,6 @@ func groupIDFromJavaMetadata(pkgName, version string, metadata pkg.JavaArchive) 
 	}
 
 	return groupID
-}
-
-// javaGroupIDMigrations records artifact families whose published group ID
-// changed with a new major version. The static cpegenerate.DefaultArtifactIDToGroupID
-// map keeps the historical coordinates, so when that map attributes an artifact to
-// the migration's previous group ID, the listed major version and newer resolve to
-// the new group instead. Groovy 4.0 (2022) moved from the Codehaus coordinates
-// (org.codehaus.groovy) to the Apache Software Foundation (org.apache.groovy); the
-// Eclipse-hosted groovy-eclipse-* artifacts share the prefix but kept their Codehaus
-// coordinates, so they are excluded.
-var javaGroupIDMigrations = []struct {
-	artifactPrefix string
-	excludePrefix  string
-	previousGroup  string
-	fromMajor      int
-	groupID        string
-}{
-	{
-		artifactPrefix: "groovy",
-		excludePrefix:  "groovy-eclipse",
-		previousGroup:  "org.codehaus.groovy",
-		fromMajor:      4,
-		groupID:        "org.apache.groovy",
-	},
-}
-
-func groupIDFromKnownPackageList(pkgName, version string) (groupID string) {
-	knownGroupID, known := cpegenerate.DefaultArtifactIDToGroupID[pkgName]
-	if !known {
-		return ""
-	}
-
-	for _, migration := range javaGroupIDMigrations {
-		if strings.HasPrefix(pkgName, migration.artifactPrefix) &&
-			(migration.excludePrefix == "" || !strings.HasPrefix(pkgName, migration.excludePrefix)) &&
-			knownGroupID == migration.previousGroup &&
-			majorVersion(version) >= migration.fromMajor {
-			return migration.groupID
-		}
-	}
-
-	return knownGroupID
-}
-
-// majorVersion extracts the leading numeric component of a dotted version
-// (for example "4.0.33" resolves to 4). It returns 0 when the version does not
-// start with a number.
-func majorVersion(version string) int {
-	leading, _, _ := strings.Cut(version, ".")
-	n, err := strconv.Atoi(leading)
-	if err != nil {
-		return 0
-	}
-	return n
 }
 
 func groupIDFromJavaManifest(manifest *pkg.JavaManifest) (groupID string) {
