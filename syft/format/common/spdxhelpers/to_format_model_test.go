@@ -810,12 +810,29 @@ func Test_fileIDsForPackage(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name: "ignore file-to-package",
+			name: "include an archive file containing a package",
 			relationships: []artifact.Relationship{
 				{
 					From: c,
 					To:   p,
 					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship: "CONTAINS",
+					RefA:         docElementId(c),
+					RefB:         docElementId(p),
+				},
+			},
+		},
+		{
+			name: "ignore other file-to-package",
+			relationships: []artifact.Relationship{
+				{
+					From: c,
+					To:   p,
+					Type: artifact.DependencyOfRelationship,
 				},
 			},
 			expected: nil,

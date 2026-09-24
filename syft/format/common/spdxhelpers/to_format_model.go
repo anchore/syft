@@ -644,8 +644,11 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			continue
 		}
 
-		// FIXME: we are only currently including Package -> * relationships
-		if _, ok := r.From.(pkg.Package); !ok {
+		// FIXME: we are only currently including Package -> * relationships, plus an archive containing a
+		// package found inside it, which is the only structure nested archive cataloging records for
+		// non-java packages. Every file-side From is in the document: toFiles covers every coordinate a
+		// relationship names.
+		if _, ok := r.From.(pkg.Package); !ok && !isFileContainsPackage(r) {
 			log.Debugf("skipping non-package relationship: %+v", r)
 			continue
 		}
@@ -662,6 +665,12 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 		})
 	}
 	return result
+}
+
+func isFileContainsPackage(r artifact.Relationship) bool {
+	_, fromFile := r.From.(file.Coordinates)
+	_, toPkg := r.To.(pkg.Package)
+	return fromFile && toPkg && r.Type == artifact.ContainsRelationship
 }
 
 func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.RelationshipType, string) {
