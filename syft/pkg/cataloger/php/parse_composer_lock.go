@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
+	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
 
 var _ generic.Parser = parseComposerLock
@@ -50,5 +51,5 @@ func parseComposerLock(ctx context.Context, _ file.Resolver, _ *generic.Environm
 		}
 	}
 
-	return pkgs, nil, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, dependency.Resolve(composerDependencySpecifier, pkgs), unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
