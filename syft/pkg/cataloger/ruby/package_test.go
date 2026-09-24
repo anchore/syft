@@ -18,6 +18,11 @@ func Test_packageURL(t *testing.T) {
 			version:  "v",
 			expected: "pkg:gem/p@v",
 		},
+		{
+			name:     "nokogiri",
+			version:  "1.16.0-x86_64-linux",
+			expected: "pkg:gem/nokogiri@1.16.0",
+		},
 	}
 
 	for _, test := range tests {

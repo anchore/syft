@@ -2,6 +2,7 @@ package ruby
 
 import (
 	"context"
+	"strings"
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/syft/file"
@@ -46,11 +47,21 @@ func newGemspecPackage(ctx context.Context, resolver file.Resolver, m gemData, g
 func packageURL(name, version string) string {
 	var qualifiers packageurl.Qualifiers
 
+	// Gemfile.lock records a platform-specific gem as "<version>-<platform>"
+	// (e.g. "1.16.0-x86_64-linux"). A RubyGems version never contains a "-"
+	// (pre-release segments use "."), so a "-" only ever introduces the platform.
+	// Keep the full version on the package, but use only the version (without the
+	// platform) in the PURL so it matches vulnerability data.
+	purlVersion := version
+	if base, _, found := strings.Cut(version, "-"); found {
+		purlVersion = base
+	}
+
 	return packageurl.NewPackageURL(
 		packageurl.TypeGem,
 		"",
 		name,
-		version,
+		purlVersion,
 		qualifiers,
 		"",
 	).ToString()
