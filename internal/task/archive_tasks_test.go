@@ -369,6 +369,33 @@ func Test_archiveCataloger_stopsWhenTheContextIsCancelled(t *testing.T) {
 	assert.Zero(t, ran)
 }
 
+func Test_archiveCataloger_decompressionBudgetIsSharedByATreeAndFreshPerTopLevelArchive(t *testing.T) {
+	// a recursive bomb fits the limits one level at a time, so what bounds it is the total decompressed
+	// under one top-level archive
+	origRatio, origFloor := archiveTreeRatio, archiveTreeFloorBytes
+	archiveTreeRatio, archiveTreeFloorBytes = 0, 100_000
+	t.Cleanup(func() { archiveTreeRatio, archiveTreeFloorBytes = origRatio, origFloor })
+
+	zeros := make([]byte, 60_000)
+	nested := makeZip(t, map[string][]byte{"zeros.bin": zeros})
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "bomb.zip"), makeZip(t, map[string][]byte{"a.zip": nested, "b.zip": nested}), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "sibling.zip"), makeZip(t, map[string][]byte{"zeros.bin": zeros}), 0o600))
+
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2), capturingTask(t, &seen, &fileCounts))
+	s := newTestSBOM()
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
+
+	assert.Equal(t, 1, fileCounts["/bomb.zip:a.zip"], "the first nested archive fits the tree's budget")
+	assert.Equal(t, 0, fileCounts["/bomb.zip:b.zip"], "the second does not: the budget is shared, not per archive")
+	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "b.zip", ArchivePath: "/bomb.zip"}]
+	require.Len(t, reasons, 1)
+	assert.Contains(t, reasons[0], "possible decompression bomb")
+	assert.Equal(t, 1, fileCounts["/sibling.zip"], "another top-level archive starts with a fresh budget")
+}
+
 func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
 	// a copy of itself in the sub-pipeline would process every nesting level twice
 	cfg := cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2)
@@ -949,6 +976,11 @@ func (d dirTestResolver) FileContentsByLocation(loc file.Location) (io.ReadClose
 	return os.Open(filepath.Join(d.dir, filepath.FromSlash(loc.RealPath)))
 }
 
+func (d dirTestResolver) FileMetadataByLocation(loc file.Location) (file.Metadata, error) {
+	info, err := os.Stat(filepath.Join(d.dir, filepath.FromSlash(loc.RealPath)))
+	return file.Metadata{FileInfo: info}, err
+}
+
 // makeZip builds a zip in sorted entry-name order: limits are enforced as the walk proceeds, so entry
 // order decides which entries land before a truncation.
 func makeZip(t *testing.T, entries map[string][]byte) []byte {
@@ -1034,6 +1066,11 @@ func (r twoLayerResolver) FileContentsByLocation(loc file.Location) (io.ReadClos
 	return io.NopCloser(bytes.NewReader(body)), nil
 }
 
+// FileMetadataByLocation reports no metadata, so the archive falls back to the minimum budget.
+func (r twoLayerResolver) FileMetadataByLocation(file.Location) (file.Metadata, error) {
+	return file.Metadata{}, os.ErrNotExist
+}
+
 // incompressible returns n bytes deflate cannot shrink, so an archive built from them has a
 // predictable size to set a limit against.
 func incompressible(n int) []byte {
@@ -1089,6 +1126,10 @@ func (a allFilesResolver) FilesByMIMEType(types ...string) ([]file.Location, err
 
 func (a allFilesResolver) FileContentsByLocation(loc file.Location) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(a.dir, filepath.FromSlash(loc.RealPath)))
+}
+
+func (a allFilesResolver) FileMetadataByLocation(loc file.Location) (file.Metadata, error) {
+	return dirTestResolver{dir: a.dir}.FileMetadataByLocation(loc)
 }
 
 func (p *recordingPublisher) Publish(e partybus.Event) {

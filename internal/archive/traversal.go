@@ -52,6 +52,19 @@ func TraversalFromContext(ctx context.Context) *Traversal {
 	return t
 }
 
+type budgetCtxKey struct{}
+
+// WithBudget sets the decompression budget that Extract spends from, for this archive and every archive
+// extracted beneath it.
+func WithBudget(ctx context.Context, b *Budget) context.Context {
+	return context.WithValue(ctx, budgetCtxKey{}, b)
+}
+
+func budgetFromContext(ctx context.Context) *Budget {
+	b, _ := ctx.Value(budgetCtxKey{}).(*Budget)
+	return b
+}
+
 type nestedCatalogingCtxKey struct{}
 
 // WithNestedCataloging marks the context of a scan whose archive cataloger task will extract every

@@ -152,6 +152,10 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 		r.truncate("extraction stopped at the configured memory or disk limit")
 		return nil
 	}
+	if errors.Is(err, errBudgetSpent) {
+		r.truncate("extraction stopped: the archive and those nested in it decompressed to far more than its size (possible decompression bomb)")
+		return nil
+	}
 	return err
 }
 

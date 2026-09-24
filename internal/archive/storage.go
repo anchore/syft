@@ -43,6 +43,9 @@ func (r *Resolver) put(b *blob, content io.Reader) error {
 	for {
 		n, readErr := content.Read(r.chunk)
 		if n > 0 {
+			if !r.budget.take(int64(n)) {
+				return errBudgetSpent
+			}
 			if err := r.write(b, r.chunk[:n]); err != nil {
 				return err
 			}

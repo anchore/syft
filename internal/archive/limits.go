@@ -5,6 +5,35 @@ import (
 	"sync"
 )
 
+// Budget bounds the bytes decompressed under one top-level archive, summed over every archive nested in
+// it. Unlike Limits it never refills as archives are released: it bounds work, not what is held at once,
+// which is what stops a recursive bomb (42.zip) whose every level fits the limits on its own. A nil
+// *Budget admits everything.
+//
+// ponytail: no lock, since the archive walk is sequential; guard it if the walk ever runs concurrently.
+type Budget struct {
+	remaining int64
+}
+
+func NewBudget(bytes int64) *Budget {
+	return &Budget{remaining: bytes}
+}
+
+// take spends n bytes, or reports false (and spends the rest) when fewer than n remain.
+func (b *Budget) take(n int64) bool {
+	if b == nil {
+		return true
+	}
+	if n > b.remaining {
+		b.remaining = 0
+		return false
+	}
+	b.remaining -= n
+	return true
+}
+
+var errBudgetSpent = errors.New("archive tree decompression budget spent")
+
 // ErrDiskLimitReached reports that placing an archive's content would exceed the disk limit.
 var ErrDiskLimitReached = errors.New("archive content would exceed the disk limit")
 

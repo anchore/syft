@@ -184,6 +184,11 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 
 	started := time.Now()
 
+	if depth == 0 {
+		// one budget for this archive and everything nested in it, however deep
+		ctx = archive.WithBudget(ctx, archive.NewBudget(archiveTreeBudget(parentResolver, location)))
+	}
+
 	// extracted files keep the filesystem ID of where the archive was found; the nesting chain is
 	// carried separately as the archive path. The chain names real paths, not the link the archive was
 	// reached by, so it is stable and joins to the archive's package location by prefix.
@@ -232,6 +237,22 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	}
 
 	return c.catalog(ctx, extracted, depth+1, builder)
+}
+
+// a top-level archive and everything nested in it may decompress to archiveTreeRatio times its size, or
+// archiveTreeFloorBytes if that is more. Real trees (a war of jars, a layer of tarballs) expand a few
+// times over; a recursive bomb expands by orders of magnitude at every level.
+var (
+	archiveTreeRatio      int64 = 100
+	archiveTreeFloorBytes int64 = 1 << 30
+)
+
+func archiveTreeBudget(resolver file.Resolver, location file.Location) int64 {
+	var size int64
+	if m, err := resolver.FileMetadataByLocation(location); err == nil && m.FileInfo != nil {
+		size = m.Size()
+	}
+	return max(archiveTreeRatio*size, archiveTreeFloorBytes)
 }
 
 func (c *archiveCataloger) isAncestor(digests []file.Digest) bool {

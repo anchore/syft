@@ -35,13 +35,14 @@ type Resolver struct {
 	Digests []file.Digest
 
 	// Truncated reports that the resolver covers only part of the archive, and TruncatedReason says why:
-	// the disk limit stopped extraction early, or an entry was too large to store.
+	// the disk limit or the decompression budget stopped extraction early, or an entry was too large.
 	Truncated       bool
 	TruncatedReason string
 
 	fileSystemID string
 	archivePath  string
 	charge       *charge
+	budget       *Budget
 
 	// content is held in memory while the memory limit admits it and in one spill file once it does
 	// not. The file is created on first use, so an archive that stays in memory never touches the
@@ -92,6 +93,7 @@ func newResolver(ctx context.Context, fileSystemID, archivePath string, charge *
 		fileSystemID: fileSystemID,
 		archivePath:  archivePath,
 		charge:       charge,
+		budget:       budgetFromContext(ctx),
 		tempDir:      tmpdir.FromContext(ctx),
 		byPath:       map[string]*node{"/": {path: "/", isDir: true}},
 	}
