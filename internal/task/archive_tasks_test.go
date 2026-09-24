@@ -32,6 +32,7 @@ import (
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/internal/unknown"
+	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/event"
 	"github.com/anchore/syft/syft/event/monitor"
@@ -394,6 +395,29 @@ func Test_archiveCataloger_decompressionBudgetIsSharedByATreeAndFreshPerTopLevel
 	require.Len(t, reasons, 1)
 	assert.Contains(t, reasons[0], "possible decompression bomb")
 	assert.Equal(t, 1, fileCounts["/sibling.zip"], "another top-level archive starts with a fresh budget")
+}
+
+func Test_archiveCataloger_noSelfContainsEdge(t *testing.T) {
+	// a jar java cannot identify records an unknown at its own coordinates; that must not turn into
+	// "x.jar CONTAINS x.jar", which a graph walker would loop on
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "x.jar"), makeZip(t, map[string][]byte{"readme.txt": []byte("no manifest")}), 0o600))
+
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), javaTask(), fileMetadataTask())
+	s := newTestSBOM()
+	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
+	_ = tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
+
+	require.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/x.jar"}, "the fixture must reproduce the unknown")
+	var contains int
+	for _, rel := range s.Relationships {
+		if rel.Type != artifact.ContainsRelationship {
+			continue
+		}
+		contains++
+		assert.NotEqual(t, rel.From.ID(), rel.To.ID(), "self-referential CONTAINS edge: %+v", rel)
+	}
+	assert.Positive(t, contains, "the archive still contains its files")
 }
 
 func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {

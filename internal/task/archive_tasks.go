@@ -140,6 +140,10 @@ const unboundedArchiveDepth = 16
 
 // catalog processes every archive in the resolver, recursing into each up to maxDepth.
 func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, depth int, builder sbomsync.Builder) error {
+	return c.catalogCandidates(ctx, resolver, c.discoverArchives(resolver), depth, builder)
+}
+
+func (c *archiveCataloger) catalogCandidates(ctx context.Context, resolver file.Resolver, candidates []archiveCandidate, depth int, builder sbomsync.Builder) error {
 	maxDepth := c.maxDepth
 	if maxDepth < 0 {
 		maxDepth = unboundedArchiveDepth
@@ -147,7 +151,7 @@ func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, 
 	if depth >= maxDepth {
 		// java's own recursion is off while this task runs, so an archive left here is otherwise lost
 		// without a trace
-		for _, candidate := range c.discoverArchives(resolver) {
+		for _, candidate := range candidates {
 			if candidate.sniffedAsArchive {
 				recordArchiveUnknown(builder, candidate.location.Coordinates, "nested archive not cataloged: the nested archive depth limit was reached")
 			}
@@ -155,7 +159,7 @@ func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, 
 		return nil
 	}
 	var errs error
-	for _, candidate := range c.discoverArchives(resolver) {
+	for _, candidate := range candidates {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -235,7 +239,8 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 
 	c.progress.Increment()
 	scratch := c.runSubPipeline(ctx, extracted, location.Coordinates)
-	mergeArchiveResults(location.Coordinates, scratch, builder)
+	children := c.discoverArchives(extracted)
+	mergeArchiveResults(location.Coordinates, archivePath, children, scratch, builder)
 	c.progress.AtomicStage.Set(fmt.Sprintf("%s archives (%s)", humanize.Comma(c.progress.Current()), archivePath))
 
 	// self time stops before descending, so a containing archive is not charged for what it contains
@@ -243,7 +248,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		c.slowest, c.slowestPath = took, archivePath
 	}
 
-	return c.catalog(ctx, extracted, depth+1, builder)
+	return c.catalogCandidates(ctx, extracted, children, depth+1, builder)
 }
 
 // a top-level archive and everything nested in it may decompress to archiveTreeRatio times its size, or
@@ -359,7 +364,12 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 
 // mergeArchiveResults copies the throwaway SBOM's packages, files and relationships into the shared
 // SBOM, adding a CONTAINS relationship from the archive to everything found inside it.
-func mergeArchiveResults(archiveCoordinates file.Coordinates, scratch *sbom.SBOM, builder sbomsync.Builder) {
+//
+// Files inside the archive are those whose ArchivePath is the archive's own chain, which leaves out the
+// archive itself (a java package or an unknown recorded at its coordinates would otherwise become a
+// self-loop). The nested archives are always included, so the chain of archives is navigable whatever
+// file selection is configured.
+func mergeArchiveResults(archiveCoordinates file.Coordinates, archivePath string, children []archiveCandidate, scratch *sbom.SBOM, builder sbomsync.Builder) {
 	pkgs := scratch.Artifacts.Packages.Sorted()
 	if len(pkgs) > 0 {
 		builder.AddPackages(pkgs...)
@@ -375,7 +385,16 @@ func mergeArchiveResults(archiveCoordinates file.Coordinates, scratch *sbom.SBOM
 	for _, p := range pkgs {
 		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: p, Type: artifact.ContainsRelationship})
 	}
+	contained := file.NewCoordinateSet()
+	for _, child := range children {
+		contained.Add(child.location.Coordinates)
+	}
 	for _, coordinates := range scratch.AllCoordinates() {
+		if coordinates.ArchivePath == archivePath {
+			contained.Add(coordinates)
+		}
+	}
+	for _, coordinates := range contained.ToSlice() {
 		rels = append(rels, artifact.Relationship{From: archiveCoordinates, To: coordinates, Type: artifact.ContainsRelationship})
 	}
 	rels = append(rels, scratch.Relationships...)

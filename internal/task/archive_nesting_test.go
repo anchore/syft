@@ -132,14 +132,14 @@ func Test_mixedFamilyNesting_leafIsCatalogedOnceWithTheFullChain(t *testing.T) {
 }
 
 func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
-	// the edges make the chain navigable in the SBOM and key on coordinates the file catalogers
-	// recorded, so file cataloging has to be on for the inner archives to have any
+	// the edges make the chain navigable in the SBOM. The archive-to-archive edges must not depend on
+	// the file catalogers having recorded the inner archives, since the default file selection does not
 	for _, row := range nestingRows() {
 		t.Run(row.name, func(t *testing.T) {
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
-			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), fileMetadataTask())
+			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask())
 
 			// each archive's coordinates as seen in its parent; the outermost sits in the scanned
 			// directory, so it carries no filesystem id of its own
@@ -178,10 +178,16 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 			innermost := archiveCoords[len(archiveCoords)-1]
 			assert.True(t, pkgEdges.Has(coordKey(innermost)+" -> marker-pkg"),
 				"expected a CONTAINS edge from %s to the leaf package", nested.paths[len(nested.paths)-1])
-			assert.True(t, fileEdges.Has(coordKey(innermost)+" -> "+coordKey(file.Coordinates{
-				RealPath:    "nested/marker.txt",
-				ArchivePath: nested.leafFileSystemID(),
-			})), "expected a CONTAINS edge from the innermost archive to the leaf file")
+
+			// with file cataloging on, files inside an archive get an edge from it too
+			s = runNesting(t, scanDir, 3, defaultLimits(), markerTask(), fileMetadataTask())
+			var leafEdge bool
+			for _, rel := range s.Relationships {
+				from, _ := rel.From.(file.Coordinates)
+				to, _ := rel.To.(file.Coordinates)
+				leafEdge = leafEdge || (from == innermost && to == file.Coordinates{RealPath: "nested/marker.txt", ArchivePath: nested.leafFileSystemID()})
+			}
+			assert.True(t, leafEdge, "expected a CONTAINS edge from the innermost archive to the leaf file")
 		})
 	}
 }
@@ -508,9 +514,7 @@ func javaTask() Task {
 	return NewPackageTask(CatalogingFactoryConfig{}, java.NewArchiveCataloger(java.DefaultArchiveCatalogerConfig()))
 }
 
-// fileMetadataTask records every file, which the CONTAINS chain needs: archive-to-file edges key on
-// coordinates the file catalogers recorded, so without them an inner archive has no coordinate to
-// hang an edge on.
+// fileMetadataTask records every file, so each file inside an archive gets an archive-to-file edge.
 func fileMetadataTask() Task {
 	return newFileMetadataCatalogerTask(file.AllFilesSelection)
 }
