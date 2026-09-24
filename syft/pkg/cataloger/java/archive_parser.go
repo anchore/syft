@@ -898,6 +898,12 @@ func updateParentPackage(p pkg.Package, parentPkg *pkg.Package) {
 	// we may have learned more about the type via data in the pom properties
 	parentPkg.Type = p.Type
 
+	// licenses resolved from a pom.xml (including licenses inherited from parent poms) are typically more
+	// accurate than those from a MANIFEST.MF; keep what we already have and add the pom-derived licenses,
+	// merging duplicates by value (see LicenseSet.Add)
+	// https://github.com/anchore/syft/issues/4747
+	parentPkg.Licenses.Add(p.Licenses.ToSlice()...)
+
 	metadata, ok := p.Metadata.(pkg.JavaArchive)
 	if !ok {
 		return
