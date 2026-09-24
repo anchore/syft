@@ -85,20 +85,38 @@ func archiveFileName(archivePath string) string {
 //
 // Identification from the head of the stream wins: a tar holding one jar ends in that jar's central
 // directory, and reading the tar as a zip would lose the rest. The end of the stream is consulted
-// only when the head identifies nothing, which is how a zip appended to a launcher script (a Spring
-// Boot executable jar) is found.
+// only when the head identifies nothing supported, which is how a zip appended to a launcher script (a
+// Spring Boot executable jar) is found, and how a java resource adapter (a zip named .rar) is read.
 func identifyFormat(ctx context.Context, name string, content ReaderAtSeeker) archives.Extractor {
 	if _, err := content.Seek(0, io.SeekStart); err != nil {
 		return nil
 	}
 	format, _, err := intFile.IdentifyArchive(ctx, name, content)
 	if err == nil {
-		// a bare compression format, such as a gzipped file that is not a tar, is not extractable
-		extractor, _ := format.(archives.Extractor)
-		return extractor
+		if extractor := supportedExtractor(format); extractor != nil {
+			return extractor
+		}
 	}
 	if HasZipEndOfCentralDirectory(content) {
 		return archives.Zip{}
+	}
+	return nil
+}
+
+// supportedExtractor admits only the zip and tar families, the tar family optionally compressed. Other
+// formats mholt identifies, such as 7z and rar, pull in decoders that have not been exercised against
+// untrusted input here, so they are not opened until they are deliberately supported. A bare
+// compression format, such as a gzipped file that is not a tar, is not extractable either.
+func supportedExtractor(format archives.Format) archives.Extractor {
+	switch f := format.(type) {
+	case archives.Zip:
+		return f
+	case archives.Tar:
+		return f
+	case archives.CompressedArchive:
+		if _, ok := f.Extraction.(archives.Tar); ok {
+			return f
+		}
 	}
 	return nil
 }

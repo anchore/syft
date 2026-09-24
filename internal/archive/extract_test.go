@@ -38,6 +38,11 @@ func Test_identifyFormat(t *testing.T) {
 		{"test.zip", zipBytes(t, sampleFiles), archives.Zip{}},
 		{"test.tar.gz", tarGzBytes(t, sampleFiles), archives.CompressedArchive{}},
 		{"plain.txt", []byte("just text"), nil},
+		// identified by mholt, but not opened until their decoders are deliberately supported
+		{"test.7z", []byte("7z\xbc\xaf\x27\x1c\x00\x04"), nil},
+		{"test.rar", []byte("Rar!\x1a\x07\x01\x00"), nil},
+		// a java resource adapter archive is a zip that shares rar's extension
+		{"adapter.rar", zipBytes(t, sampleFiles), archives.Zip{}},
 		// the name can be claimed by identification, so the probe alone must not admit prose
 		{"app.jar", []byte("plain text, no central directory anywhere in it"), nil},
 		{"bundle", []byte("plain text, no central directory anywhere in it"), nil},
