@@ -361,6 +361,14 @@ func Test_SourceInfo(t *testing.T) {
 		},
 		{
 			input: pkg.Package{
+				Type: pkg.FreeBSDPkg,
+			},
+			expected: []string{
+				"acquired package info from FreeBSD pkgng DB",
+			},
+		},
+		{
+			input: pkg.Package{
 				Type: pkg.TerraformPkg,
 			},
 			expected: []string{

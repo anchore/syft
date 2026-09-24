@@ -16,6 +16,8 @@ func SourceInfo(p pkg.Package) string {
 		answer = "acquired package info from RPM DB"
 	case pkg.ApkPkg:
 		answer = "acquired package info from APK DB"
+	case pkg.FreeBSDPkg:
+		answer = "acquired package info from FreeBSD pkgng DB"
 	case pkg.BitnamiPkg:
 		answer = "acquired package info from a Bitnami SBOM"
 	case pkg.DartPubPkg:
