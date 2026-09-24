@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -87,6 +88,30 @@ func TestEscapeHTML(t *testing.T) {
 		assert.Contains(t, actual, "<html-package>")
 		assert.NotContains(t, actual, "\\u003chtml-package\\u003e")
 	})
+}
+
+func TestEncode_sameFileInManyArchivesIsReproducible(t *testing.T) {
+	// files and package locations that differ only by archive path come out of map iteration, so the
+	// output is reproducible only if the sort breaks that tie
+	s := testutil.DirectoryInput(t, t.TempDir())
+	s.Artifacts.FileMetadata = map[file.Coordinates]file.Metadata{}
+	p := pkg.Package{Name: "shared", Version: "1.0"}
+	for i := range 20 {
+		c := file.Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: fmt.Sprintf("/app.war:WEB-INF/lib/%02d.jar", i)}
+		s.Artifacts.FileMetadata[c] = file.Metadata{}
+		p.Locations.Add(file.NewLocationFromCoordinates(c))
+	}
+	s.Artifacts.Packages.Add(p)
+
+	encode := func() string {
+		var buffer bytes.Buffer
+		require.NoError(t, NewFormatEncoder().Encode(&buffer, s))
+		return buffer.String()
+	}
+	first := encode()
+	for range 10 {
+		require.Equal(t, first, encode())
+	}
 }
 
 func TestDirectoryEncoder(t *testing.T) {
