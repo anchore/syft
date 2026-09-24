@@ -8,6 +8,9 @@ import (
 )
 
 type ArchiveCatalogerConfig struct {
+	// Deprecated: use syft.CreateSBOMConfig.Archive. Only the two Include* booleans are read here, and
+	// setting MaxDepth, MaxMemoryBytes or MaxDiskBytes is a configuration error. This will be removed in a
+	// future release.
 	cataloging.ArchiveSearchConfig `yaml:",inline" json:"" mapstructure:",squash"`
 
 	// 	UseNetwork enables network operations for java package metadata enrichment, such as fetching parent POMs and license information.
@@ -37,8 +40,13 @@ type ArchiveCatalogerConfig struct {
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 	mavenCfg := maven.DefaultConfig()
+	search := cataloging.DefaultArchiveSearchConfig()
 	return ArchiveCatalogerConfig{
-		ArchiveSearchConfig:           cataloging.DefaultArchiveSearchConfig(),
+		// only the booleans: depth and limits are not java settings
+		ArchiveSearchConfig: cataloging.ArchiveSearchConfig{
+			IncludeIndexedArchives:   search.IncludeIndexedArchives,
+			IncludeUnindexedArchives: search.IncludeUnindexedArchives,
+		},
 		UseNetwork:                    mavenCfg.UseNetwork,
 		UseMavenLocalRepository:       mavenCfg.UseLocalRepository,
 		MavenLocalRepositoryDir:       mavenCfg.LocalRepositoryDir,
@@ -75,9 +83,16 @@ func (j ArchiveCatalogerConfig) WithResolveTransitiveDependencies(resolveTransit
 	return j
 }
 
+// Deprecated: set archive search with syft.CreateSBOMConfig.Archive and the parent depth with
+// WithMaxParentRecursiveDepth. This will be removed in a future release.
 func (j ArchiveCatalogerConfig) WithArchiveTraversal(search cataloging.ArchiveSearchConfig, maxDepth int) ArchiveCatalogerConfig {
 	j.MaxParentRecursiveDepth = maxDepth
 	j.ArchiveSearchConfig = search
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithMaxParentRecursiveDepth(depth int) ArchiveCatalogerConfig {
+	j.MaxParentRecursiveDepth = depth
 	return j
 }
 

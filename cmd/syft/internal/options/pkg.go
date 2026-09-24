@@ -20,10 +20,10 @@ var _ interface {
 
 func (o *packageConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.SearchIndexedArchives, `search within archives that do contain a file index to search against (zip)
-note: for now this only applies to the java package cataloger`)
+note: this only applies to the java package cataloger, and is ignored when nested-archive-max-depth is not 0 (every archive is searched)`)
 	descriptions.Add(&o.SearchUnindexedArchives, `search within archives that do not contain a file index to search against (tar, tar.gz, tar.bz2, etc)
 note: enabling this may result in a performance impact since all discovered compressed tars will be decompressed
-note: for now this only applies to the java package cataloger`)
+note: this only applies to the java package cataloger, and is ignored when nested-archive-max-depth is not 0 (every archive is searched)`)
 	descriptions.Add(&o.ExcludeBinaryOverlapByOwnership, `allows users to exclude synthetic binary packages from the sbom
 these packages are removed if an overlap with a non-synthetic package is found`)
 	descriptions.Add(&o.NestedArchiveMaxDepth, `maximum depth to recursively catalog nested archives (0 = disabled, -1 = unlimited)`)

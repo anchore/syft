@@ -9,6 +9,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 
 	"github.com/anchore/syft/internal/archive"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -18,6 +19,9 @@ import (
 
 // NewArchiveCataloger returns a new Java archive cataloger object for detecting packages with archives (jar, war, ear, par, sar, jpi, hpi, and native-image formats)
 func NewArchiveCataloger(cfg ArchiveCatalogerConfig) pkg.Cataloger {
+	if a := cfg.ArchiveSearchConfig; a.MaxDepth != 0 || a.MaxMemoryBytes != 0 || a.MaxDiskBytes != 0 {
+		log.Debug("java archive cataloger ignores nested archive depth and limits, set them with syft.CreateSBOMConfig.Archive")
+	}
 	gap := newGenericArchiveParserAdapter(cfg)
 
 	c := generic.NewCataloger("java-archive-cataloger").

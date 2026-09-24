@@ -305,13 +305,8 @@ func TestArchiveCataloger(t *testing.T) {
 func TestArchiveCataloger_featureOff(t *testing.T) {
 	scanDir := writeFixture(t)
 
-	// java's squash-inlined MaxDepth is a config field a consumer can set: it must not enable the
-	// feature and must not be overwritten
-	supplied := java.DefaultArchiveCatalogerConfig()
-	supplied.ArchiveSearchConfig = supplied.ArchiveSearchConfig.WithMaxDepth(3)
 	cfg := DefaultCreateSBOMConfig().
-		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
-		WithPackagesConfig(pkgcataloging.Config{JavaArchive: supplied})
+		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java"))
 
 	s := scanDirWithExclusions(t, scanDir, cfg, fixtureExclusions...)
 
@@ -321,7 +316,41 @@ func TestArchiveCataloger_featureOff(t *testing.T) {
 		"war-lib": {"app.war:WEB-INF/lib/war-lib-2.0.jar"},
 		"zip-lib": {"bundle.zip:lib/zip-lib-1.2.jar"},
 	}, javaVirtualPaths(s), "java's own recursion finds each once, under the virtual path the task also reports")
-	assert.Equal(t, 3, cfg.Packages.JavaArchive.MaxDepth, "the consumer's value must survive")
+
+	t.Run("the top-level archive search booleans reach java", func(t *testing.T) {
+		cfg := DefaultCreateSBOMConfig().
+			WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithIncludeUnindexedArchives(true))
+
+		s := scanDirWithExclusions(t, scanDir, cfg, fixtureExclusions...)
+
+		assert.Contains(t, javaVirtualPaths(s), "tgz-lib")
+		assert.False(t, cfg.Packages.JavaArchive.IncludeUnindexedArchives, "the caller's config is not written to")
+	})
+}
+
+func TestArchiveCataloger_javaArchiveDepthIsAConfigError(t *testing.T) {
+	// depth and limits are not java settings; setting them on java's deprecated copy must fail fast
+	// rather than be silently ignored
+	for name, set := range map[string]func(*cataloging.ArchiveSearchConfig){
+		"max depth":        func(c *cataloging.ArchiveSearchConfig) { c.MaxDepth = 3 },
+		"max memory bytes": func(c *cataloging.ArchiveSearchConfig) { c.MaxMemoryBytes = 1 },
+		"max disk bytes":   func(c *cataloging.ArchiveSearchConfig) { c.MaxDiskBytes = 1 },
+	} {
+		t.Run(name, func(t *testing.T) {
+			supplied := java.DefaultArchiveCatalogerConfig()
+			supplied.ArchiveSearchConfig = cataloging.ArchiveSearchConfig{}
+			set(&supplied.ArchiveSearchConfig)
+			cfg := DefaultCreateSBOMConfig().WithPackagesConfig(pkgcataloging.Config{JavaArchive: supplied})
+
+			src, err := directorysource.New(directorysource.Config{Path: t.TempDir()})
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = src.Close() })
+
+			_, err = cfg.Create(context.Background(), src)
+			require.ErrorContains(t, err, "set them with CreateSBOMConfig.Archive")
+		})
+	}
 }
 
 // packageLocations lists "archivePath|realPath" for every location of every package with the name.

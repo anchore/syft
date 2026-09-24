@@ -114,17 +114,6 @@ func Test_nestedArchiveOwnershipSwitch(t *testing.T) {
 		require.Len(t, pkgs, 1)
 		assert.Equal(t, "example-app", pkgs[0].Name)
 	})
-
-	t.Run("java's own archive-search depth does not hand off recursion", func(t *testing.T) {
-		// a library consumer setting java's squash-inlined MaxDepth must neither enable nor disable
-		// nested archive cataloging: that knob is Archive.MaxDepth on CreateSBOMConfig. Getting it
-		// wrong silently drops nested jars for every consumer that is not the CLI.
-		cfg := DefaultArchiveCatalogerConfig()
-		cfg.ArchiveSearchConfig = cfg.ArchiveSearchConfig.WithMaxDepth(2)
-
-		pkgs := parse(t, pkgtest.Context(t), cfg)
-		require.Len(t, pkgs, 2, "this cataloger must still recurse itself")
-	})
 }
 
 func Test_NewArchiveCataloger_wrappedParserRegistration(t *testing.T) {

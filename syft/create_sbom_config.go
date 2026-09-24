@@ -279,7 +279,7 @@ func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []t
 		SearchConfig:         c.Search,
 		RelationshipsConfig:  c.Relationships,
 		DataGenerationConfig: c.DataGeneration,
-		PackagesConfig:       c.Packages,
+		PackagesConfig:       c.packagesWithArchiveSearch(),
 		LicenseConfig:        c.Licenses,
 		ComplianceConfig:     c.Compliance,
 		FilesConfig:          c.Files,
@@ -480,11 +480,32 @@ func (c *CreateSBOMConfig) osFeatureDetectionTasks() []task.Task {
 	return tasks
 }
 
+// packagesWithArchiveSearch returns a copy of the packages config with the top-level archive search
+// booleans applied to java, which is still the only cataloger that reads them.
+//
+// ponytail: a top-level boolean wins only when it differs from the default, so callers who set just
+// java's deprecated copy see no change. Delete this along with that field.
+func (c *CreateSBOMConfig) packagesWithArchiveSearch() pkgcataloging.Config {
+	pkgs := c.Packages
+	def := cataloging.DefaultArchiveSearchConfig()
+	java := &pkgs.JavaArchive.ArchiveSearchConfig
+	if c.Archive.IncludeIndexedArchives != def.IncludeIndexedArchives {
+		java.IncludeIndexedArchives = c.Archive.IncludeIndexedArchives
+	}
+	if c.Archive.IncludeUnindexedArchives != def.IncludeUnindexedArchives {
+		java.IncludeUnindexedArchives = c.Archive.IncludeUnindexedArchives
+	}
+	return pkgs
+}
+
 func (c *CreateSBOMConfig) validate() error {
 	if c.Relationships.ExcludeBinaryPackagesWithFileOwnershipOverlap {
 		if !c.Relationships.PackageFileOwnershipOverlap {
 			return fmt.Errorf("invalid configuration: to exclude binary packages based on file ownership overlap relationships, cataloging file ownership overlap relationships must be enabled")
 		}
+	}
+	if j := c.Packages.JavaArchive.ArchiveSearchConfig; j.MaxDepth != 0 || j.MaxMemoryBytes != 0 || j.MaxDiskBytes != 0 {
+		return fmt.Errorf("invalid configuration: nested archive depth and limits are not java cataloger settings, set them with CreateSBOMConfig.Archive")
 	}
 	return nil
 }
