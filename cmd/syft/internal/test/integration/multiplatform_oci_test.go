@@ -16,19 +16,21 @@ import (
 	"github.com/anchore/syft/syft/source"
 )
 
+// multiplatformImage is busybox:1.38.0 pinned by index digest, since docker hub periodically rebuilds and
+// re-pushes official image tags, which changes the per-platform digests asserted below.
+const multiplatformImage = "docker.io/library/busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e"
+
 // TestMultiPlatformOCIImageSelection verifies that syft can load a single platform out of a
 // multi-platform OCI image on disk (both --from oci-dir and --from oci-archive) by selecting the
 // image that matches the requested platform.
 func TestMultiPlatformOCIImageSelection(t *testing.T) {
-	remoteImage := "docker.io/library/busybox:1.38.0"
-
 	// Per-platform image config digests within the multi-platform index, obtained from the OCI layout
 	// (see anchore/stereoscope integration tests: TestPlatformSelectionWithOciLocalSources).
 	expectedDigest := map[string]string{
-		"arm64":   "sha256:e0e8b3cbfed68a90084781e2962f9c0deead51c5a3f11a488eef0283a4284bc2",
-		"s390x":   "sha256:0cf160e720a8e4f20883b72276a6eaded83b79539f3f1d39e35a3336154b9960",
-		"amd64":   "sha256:c6348fa86ba0fb2108c9334f5fe913ddc6d853313e655891f133a0127c30099f",
-		"ppc64le": "sha256:b144fc0e06537d07956cde340b878a81a717e394edb736d3110858a12a6635cb",
+		"arm64":   "sha256:d2482869a6b838d3b4c9cad0c8085c06277909482771eb525d298fc3a7d07927",
+		"s390x":   "sha256:e55a0fa55032cceac2d983f4b4a25b28e42303b46a2f1915fc0fa45051e6ca70",
+		"amd64":   "sha256:aaef90e065235eb0b2d9938be85d1b81add2902cf89affe2cdfa19be33476ac0",
+		"ppc64le": "sha256:8158829b015d1c5285d63d54d37e95998ef0af4177e3f416678decbcaff3170c",
 	}
 
 	// syft --from source tag -> stereoscope OCI source used to prepare the local fixture
@@ -39,7 +41,7 @@ func TestMultiPlatformOCIImageSelection(t *testing.T) {
 
 	for from, imageSource := range sources {
 		t.Run(from, func(t *testing.T) {
-			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, remoteImage)
+			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, multiplatformImage)
 			for _, arch := range []string{"amd64", "arm64", "s390x", "ppc64le"} {
 				t.Run(fmt.Sprintf("linux/%s", arch), func(t *testing.T) {
 					platform, err := image.NewPlatform("linux/" + arch)
@@ -73,8 +75,6 @@ func TestMultiPlatformOCIImageSelection(t *testing.T) {
 // TestMultiPlatformOCIImageSelection_UnavailablePlatform verifies that requesting a platform not present
 // in the multi-platform OCI image results in an error rather than silently selecting the wrong image.
 func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
-	remoteImage := "docker.io/library/busybox:1.38.0"
-
 	// windows/amd64 is not present in this linux-only multi-platform image
 	platform, err := image.NewPlatform("windows/amd64")
 	require.NoError(t, err)
@@ -86,7 +86,7 @@ func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
 
 	for from, imageSource := range sources {
 		t.Run(from, func(t *testing.T) {
-			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, remoteImage)
+			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, multiplatformImage)
 
 			_, err := syft.GetSource(
 				context.Background(),
@@ -101,8 +101,6 @@ func TestMultiPlatformOCIImageSelection_UnavailablePlatform(t *testing.T) {
 // TestMultiPlatformOCIImageSelection_DefaultPlatform verifies that not specifying a platform results
 // in the current platform being selected.
 func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
-	remoteImage := "docker.io/library/busybox:1.38.0"
-
 	sources := map[string]image.Source{
 		"oci-dir":     image.OciDirectorySource,
 		"oci-archive": image.OciTarballSource,
@@ -110,7 +108,7 @@ func TestMultiPlatformOCIImageSelection_DefaultPlatform(t *testing.T) {
 
 	for from, imageSource := range sources {
 		t.Run(from, func(t *testing.T) {
-			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, remoteImage)
+			localPath := imagetest.PrepareMultiplatformFixtureImage(t, imageSource, multiplatformImage)
 
 			src, err := syft.GetSource(
 				context.Background(),
