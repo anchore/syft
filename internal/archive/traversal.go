@@ -11,8 +11,10 @@ import (
 // cataloger task puts one on the context before running catalogers inside an archive, so a cataloger
 // such as java can describe the archive it is inside without owning the recursion.
 type Traversal struct {
-	// Location is the archive file's location within its parent filesystem. Its ArchivePath names the
-	// archives above it, so VirtualPath(Location) is the full chain from the scan root.
+	// Location is the archive file's location within its parent filesystem, including the access path
+	// it was reached by. Its ArchivePath names the archives above it, so VirtualPath(Location) is the
+	// full chain from the scan root as seen through that access path. The ArchivePath of the files
+	// inside it is built from the real path instead.
 	Location file.Location
 
 	// Digests are of the archive file itself, taken during extraction; a cataloger running inside the

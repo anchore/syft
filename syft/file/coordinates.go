@@ -15,7 +15,7 @@ type Coordinates struct {
 	// FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in.
 	FileSystemID string `json:"layerID,omitempty" cyclonedx:"layerID"`
 
-	// ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. "app.war:WEB-INF/lib/dep.jar"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as "%25" and ':' as "%3A", so splitting on ':' recovers the archive boundaries.
+	// ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. "app.war:WEB-INF/lib/dep.jar"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as "%25" and ':' as "%3A", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it.
 	ArchivePath string `json:"archivePath,omitempty" cyclonedx:"archivePath"`
 }
 

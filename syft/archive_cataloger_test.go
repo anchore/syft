@@ -349,10 +349,15 @@ func TestArchiveCataloger_jarReachedThroughALinkIsIdentified(t *testing.T) {
 
 	cfg := DefaultCreateSBOMConfig().
 		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+		WithFilesConfig(filecataloging.DefaultConfig().WithSelection(file.AllFilesSelection)).
 		WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2))
 	s := scanDirWithExclusions(t, dir, cfg)
 
 	assert.Equal(t, []string{"bundle.tar.gz|store/3f9a1c"}, packageLocations(s, "json-simple"))
+
+	// the jar's own files are addressed by its real path, the same one its package location names
+	manifest := file.Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: "bundle.tar.gz:store/3f9a1c"}
+	assert.Contains(t, s.Artifacts.FileMetadata, manifest)
 }
 
 func TestArchiveCataloger_descriptorRecordsArchiveConfig(t *testing.T) {
