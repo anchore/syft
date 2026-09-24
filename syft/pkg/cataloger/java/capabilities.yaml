@@ -8,7 +8,7 @@ configs: # AUTO-GENERATED - config structs and their fields
       - key: IncludeUnindexedArchives
         description: IncludeUnindexedArchives indicates whether to search within unindexed archive files (e.g., .tar*).
       - key: MaxDepth
-        description: 'MaxDepth is how many levels of nested archives to catalog: 0 disables it, negative is unbounded.'
+        description: 'MaxDepth is how many levels of nested archives to catalog: 0 disables it, negative goes as deep as 16 levels.'
       - key: MaxMemoryBytes
         description: MaxMemoryBytes bounds the archive content held in memory at once; content that does not fit is written to disk. Zero means DefaultArchiveMaxMemoryBytes, negative is unbounded.
       - key: MaxDiskBytes

@@ -8,6 +8,7 @@ import (
 	"io"
 	"maps"
 	"runtime/debug"
+	"slices"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -36,7 +37,7 @@ const ArchiveCatalogerTaskName = "archive-cataloger"
 // cfg.MaxDepth; the task drops itself from subPipeline so that is the only recursion.
 //
 // exclusions are the scan's exclusion patterns, applied inside each archive. Returns nil when archive
-// cataloging is disabled (MaxDepth == 0; negative means unbounded).
+// cataloging is disabled (MaxDepth == 0; negative means as deep as unboundedArchiveDepth).
 func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []Task, exclusions []string) Task {
 	return newArchiveCatalogerTask(cfg.MaxDepth, archiveLimits(cfg), subPipeline, exclusions)
 }
@@ -109,6 +110,10 @@ type archiveCataloger struct {
 	// progress is the one row for the whole walk: its count is how many archives have been entered
 	progress *monitor.TaskProgress
 
+	// ancestors are the digests of the archives the walk is currently inside. The walk is depth-first
+	// and sequential, so this is a stack.
+	ancestors []file.Digest
+
 	// the archive that spent the longest on its own extraction and cataloging, excluding nested archives
 	slowest     time.Duration
 	slowestPath string
@@ -129,13 +134,24 @@ func (c *archiveCataloger) logStats() {
 	log.WithFields(fields...).Info("nested archive cataloging complete")
 }
 
+// unboundedArchiveDepth is the depth a negative MaxDepth stops at. No real nesting comes close, and a
+// hostile archive (a zip quine, a recursive bomb) must still end.
+const unboundedArchiveDepth = 16
+
 // catalog processes every archive in the resolver, recursing into each up to maxDepth.
 func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, depth int, builder sbomsync.Builder) error {
-	if c.maxDepth >= 0 && depth >= c.maxDepth {
+	maxDepth := c.maxDepth
+	if maxDepth < 0 {
+		maxDepth = unboundedArchiveDepth
+	}
+	if depth >= maxDepth {
 		return nil
 	}
 	var errs error
 	for _, candidate := range c.discoverArchives(resolver) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if err := c.processArchive(ctx, resolver, candidate, depth, builder); err != nil {
 			errs = unknown.Append(errs, candidate.location, err)
 		}
@@ -175,10 +191,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	extracted, err := archive.Extract(ctx, archiveContent, location.FileSystemID, archivePath, c.limiter, c.exclusions)
 	if errors.Is(err, archive.ErrDiskLimitReached) {
 		// nothing is released while this archive waits, so skip it rather than block the scan
-		appendUnknowns(builder, ArchiveCatalogerTaskName, []unknown.CoordinateError{{
-			Coordinates: location.Coordinates,
-			Reason:      fmt.Errorf("archive skipped: its content would exceed the disk limit"),
-		}})
+		recordArchiveUnknown(builder, location.Coordinates, "archive skipped: its content would exceed the disk limit")
 		return nil
 	}
 	if err != nil {
@@ -193,11 +206,16 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	}
 	defer extracted.Cleanup()
 
+	// an archive whose bytes match one it is nested in (a zip quine) would recurse forever
+	if c.isAncestor(extracted.Digests) {
+		recordArchiveUnknown(builder, location.Coordinates, "archive not cataloged: it is identical to an archive that contains it")
+		return nil
+	}
+	c.ancestors = append(c.ancestors, extracted.Digests...)
+	defer func() { c.ancestors = c.ancestors[:len(c.ancestors)-len(extracted.Digests)] }()
+
 	if extracted.Truncated {
-		appendUnknowns(builder, ArchiveCatalogerTaskName, []unknown.CoordinateError{{
-			Coordinates: location.Coordinates,
-			Reason:      fmt.Errorf("archive cataloged from part of its contents: extraction stopped at the configured memory or disk limit"),
-		}})
+		recordArchiveUnknown(builder, location.Coordinates, "archive cataloged from part of its contents: extraction stopped at the configured memory or disk limit")
 	}
 
 	traversal := &archive.Traversal{Location: location, Digests: extracted.Digests}
@@ -214,6 +232,19 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	}
 
 	return c.catalog(ctx, extracted, depth+1, builder)
+}
+
+func (c *archiveCataloger) isAncestor(digests []file.Digest) bool {
+	for _, d := range digests {
+		if slices.Contains(c.ancestors, d) {
+			return true
+		}
+	}
+	return false
+}
+
+func recordArchiveUnknown(builder sbomsync.Builder, coordinates file.Coordinates, reason string) {
+	appendUnknowns(builder, ArchiveCatalogerTaskName, []unknown.CoordinateError{{Coordinates: coordinates, Reason: errors.New(reason)}})
 }
 
 // runSubPipeline runs every task against the resolver into a throwaway SBOM, so results can be

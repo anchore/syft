@@ -23,7 +23,7 @@ type ArchiveSearchConfig struct {
 	// IncludeUnindexedArchives indicates whether to search within unindexed archive files (e.g., .tar*).
 	IncludeUnindexedArchives bool `yaml:"include-unindexed-archives" json:"include-unindexed-archives" mapstructure:"include-unindexed-archives"`
 
-	// MaxDepth is how many levels of nested archives to catalog: 0 disables it, negative is unbounded.
+	// MaxDepth is how many levels of nested archives to catalog: 0 disables it, negative goes as deep as 16 levels.
 	MaxDepth int `yaml:"max-depth" json:"max-depth" mapstructure:"max-depth"`
 
 	// MaxMemoryBytes bounds the archive content held in memory at once; content that does not fit is

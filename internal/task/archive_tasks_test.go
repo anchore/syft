@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -312,6 +314,59 @@ func Test_archiveCataloger_depthBoundIsExact(t *testing.T) {
 
 	assert.Equal(t, []string{"/outer.zip"}, run(t, 1), "depth 1 catalogs the top-level archive and does not descend")
 	assert.ElementsMatch(t, []string{"/outer.zip", "/outer.zip:nested/inner.zip"}, run(t, 2), "depth 2 descends one level")
+}
+
+func Test_archiveCataloger_negativeDepthStopsAtTheCeiling(t *testing.T) {
+	// "unbounded" must still end, or a zip quine or recursive bomb runs forever
+	chain := makeZip(t, map[string][]byte{"deep.txt": []byte("deep")})
+	for range unboundedArchiveDepth + 4 {
+		chain = makeZip(t, map[string][]byte{"n.zip": chain})
+	}
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), chain, 0o600))
+
+	var seen []string
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(-1), capturingTask(t, &seen, nil))
+	_ = tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
+
+	assert.Len(t, seen, unboundedArchiveDepth)
+}
+
+func Test_archiveCataloger_anArchiveIdenticalToAnAncestorIsNotEntered(t *testing.T) {
+	// a zip quine contains itself. Building one is impractical, so the walk is started as if it were
+	// already inside an archive with these exact bytes, which is the state a quine reaches one level down
+	outerZip := makeZip(t, map[string][]byte{"a.txt": []byte("a")})
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
+
+	var ran int
+	c := newTestCataloger(-1, archive.NewLimiter(archive.Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}), countingTask(&ran))
+	sum := sha1.Sum(outerZip)
+	c.ancestors = []file.Digest{{Algorithm: "sha1", Value: hex.EncodeToString(sum[:])}}
+
+	s := newTestSBOM()
+	require.NoError(t, c.catalog(context.Background(), dirTestResolver{dir: rootDir}, 0, sbomsync.NewBuilder(s)))
+
+	assert.Zero(t, ran, "the sub-pipeline must not run inside a repeat of an ancestor")
+	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
+	require.Len(t, reasons, 1)
+	assert.Contains(t, reasons[0], "identical to an archive that contains it")
+	assert.Len(t, c.ancestors, 1, "the walk leaves the ancestor stack as it found it")
+}
+
+func Test_archiveCataloger_stopsWhenTheContextIsCancelled(t *testing.T) {
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), makeZip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	var ran int
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), countingTask(&ran))
+	err := tsk.Execute(ctx, dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
+
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Zero(t, ran)
 }
 
 func Test_NewArchiveCatalogerTask_dropsItselfFromSubPipeline(t *testing.T) {
