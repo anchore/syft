@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/wagoodman/go-partybus"
 
 	"github.com/anchore/bubbly"
@@ -52,7 +54,7 @@ func New(out io.Writer, quiet bool, handlers ...bubbly.EventHandler) *UI {
 func (m *UI) Setup(subscription partybus.Unsubscribable) error {
 	// we still want to collect log messages, however, we also the logger shouldn't write to the screen directly
 	if logWrapper, ok := log.Get().(logger.Controller); ok {
-		logWrapper.SetOutput(m.frame.(*frame.Frame).Footer())
+		logWrapper.SetOutput(&logFooter{w: m.frame.(*frame.Frame).Footer()})
 	}
 
 	m.subscription = subscription
@@ -186,6 +188,48 @@ func (m *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m UI) View() string {
 	return m.frame.View()
 }
+
+var (
+	logTitleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("8")) // dark grey
+	// the first log line gets a branch pointing at it from the title, the rest are indented to match
+	logBranch = logTitleStyle.Render("└─▶") + " "
+	logIndent = "    "
+)
+
+// logFooter decorates log entries drawn below the TUI with a one-time title (written when the first entry arrives)
+// and a branch from the title to the first log line. Writes are serialized by the logger.
+type logFooter struct {
+	w       io.Writer
+	started bool
+}
+
+func (l *logFooter) Write(p []byte) (int, error) {
+	var buf bytes.Buffer
+	first := !l.started
+	if first {
+		buf.WriteString(logTitleStyle.Render("Logs (non-fatal, see -v for more):") + "\n")
+		l.started = true
+	}
+	for i, line := range bytes.SplitAfter(p, []byte("\n")) {
+		if len(line) == 0 {
+			continue
+		}
+		if first && i == 0 {
+			buf.WriteString(logBranch)
+		} else {
+			buf.WriteString(logIndent)
+		}
+		buf.Write(line)
+	}
+	if _, err := l.w.Write(buf.Bytes()); err != nil {
+		return 0, err
+	}
+	return len(p), nil
+}
+
+// IsTerminal marks the footer as terminal-bound (it is drawn by the TUI) so the logger keeps colors. NO_COLOR is
+// still honored by the formatter.
+func (*logFooter) IsTerminal() bool { return true }
 
 func runWithTimeout(timeout time.Duration, fn func() error) (err error) {
 	c := make(chan struct{}, 1)
