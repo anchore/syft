@@ -13,9 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/mholt/archives"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
+	intFile "github.com/anchore/syft/internal/file"
 	syftindex "github.com/anchore/syft/internal/index"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
@@ -32,9 +34,10 @@ type Resolver struct {
 	// Digests are of the archive file itself.
 	Digests []file.Digest
 
-	// Truncated reports that the disk limit stopped extraction early; the resolver covers the entries
-	// stored before that.
-	Truncated bool
+	// Truncated reports that the resolver covers only part of the archive, and TruncatedReason says why:
+	// the disk limit stopped extraction early, or an entry was too large to store.
+	Truncated       bool
+	TruncatedReason string
 
 	fileSystemID string
 	archivePath  string
@@ -148,10 +151,19 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 	}
 
 	if hdr.Typeflag == tar.TypeReg && content != nil {
-		if err := r.put(&n.content, content); err != nil {
+		// reading one byte past the cap is how an entry over it is told apart from one exactly at it
+		err := r.put(&n.content, io.LimitReader(content, maxEntryBytes+1))
+		if err == nil && n.content.size > maxEntryBytes {
+			err = errEntryTooLarge
+		}
+		if err != nil {
 			r.discard(&n.content)
 			if !existed {
 				delete(r.byPath, entryPath)
+			}
+			if errors.Is(err, errEntryTooLarge) {
+				r.truncate(fmt.Sprintf("an entry larger than %s was skipped", humanize.IBytes(uint64(maxEntryBytes))))
+				return nil
 			}
 			if !errors.Is(err, ErrDiskLimitReached) {
 				return fmt.Errorf("unable to read archive entry %q: %w", hdr.Name, err)
@@ -170,6 +182,19 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 		return append(current.Value(), n)
 	})
 	return nil
+}
+
+// maxEntryBytes caps any one entry, as the legacy java extraction did (see intFile.SafeCopy): without it
+// a single entry of an overlapping-entry zip bomb can decompress up to the disk limit.
+var maxEntryBytes int64 = intFile.PerFileReadLimit
+
+var errEntryTooLarge = errors.New("archive entry exceeds the per-entry size cap")
+
+// truncate marks the resolver as covering part of the archive, keeping the first reason given.
+func (r *Resolver) truncate(reason string) {
+	if !r.Truncated {
+		r.Truncated, r.TruncatedReason = true, reason
+	}
 }
 
 // chargeIndex charges index bookkeeping, which lives in memory. Content held in memory can move to

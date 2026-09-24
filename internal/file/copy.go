@@ -6,12 +6,13 @@ import (
 	"io"
 )
 
-const perFileReadLimit = 2 * GB
+// PerFileReadLimit is the most read from any one archive entry, guarding against decompression bombs.
+const PerFileReadLimit = 2 * GB
 
 // SafeCopy bounds the copy to guard against decompression bombs when extracting from archives.
 func SafeCopy(writer io.Writer, reader io.Reader) error {
-	numBytes, err := io.Copy(writer, io.LimitReader(reader, perFileReadLimit))
-	if numBytes >= perFileReadLimit {
+	numBytes, err := io.Copy(writer, io.LimitReader(reader, PerFileReadLimit))
+	if numBytes >= PerFileReadLimit {
 		return fmt.Errorf("zip read limit hit (potential decompression bomb attack)")
 	}
 	// Propagate decompression / read errors up to the caller. io.Copy

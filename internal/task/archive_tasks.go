@@ -215,7 +215,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	defer func() { c.ancestors = c.ancestors[:len(c.ancestors)-len(extracted.Digests)] }()
 
 	if extracted.Truncated {
-		recordArchiveUnknown(builder, location.Coordinates, "archive cataloged from part of its contents: extraction stopped at the configured memory or disk limit")
+		recordArchiveUnknown(builder, location.Coordinates, "archive cataloged from part of its contents: "+extracted.TruncatedReason)
 	}
 
 	traversal := &archive.Traversal{Location: location, Digests: extracted.Digests}

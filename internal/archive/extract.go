@@ -149,7 +149,7 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 	})
 	r.finish()
 	if errors.Is(err, ErrDiskLimitReached) {
-		r.Truncated = true
+		r.truncate("extraction stopped at the configured memory or disk limit")
 		return nil
 	}
 	return err

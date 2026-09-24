@@ -510,3 +510,35 @@ func TestResolver_allLocationsKeepsEveryPath(t *testing.T) {
 	assert.Equal(t, []string{"opt/gone.jar", "opt/real.jar", "opt/sym.jar"}, got,
 		"every path the archive names, links included")
 }
+
+func TestResolver_add_anEntryOverTheCapIsSkippedAndReadNoFurther(t *testing.T) {
+	// one entry of an overlapping-entry bomb can inflate without bound; it must stop at the cap, cost
+	// the archive only that entry, and say so
+	orig := maxEntryBytes
+	maxEntryBytes = 1024
+	t.Cleanup(func() { maxEntryBytes = orig })
+
+	r, _ := resolverIn(t, memCharge(-1))
+	endless := &countingReader{r: zeroSource{}}
+	require.NoError(t, r.add(tar.Header{Name: "bomb.bin", Typeflag: tar.TypeReg, Mode: 0o644}, endless))
+	require.NoError(t, r.add(tar.Header{Name: "ok.txt", Typeflag: tar.TypeReg, Mode: 0o644}, strings.NewReader("ok")))
+	r.finish()
+
+	assert.LessOrEqual(t, endless.n, 1024+copyChunkSize, "reading stops just past the cap")
+	assert.True(t, r.Truncated)
+	assert.Contains(t, r.TruncatedReason, "an entry larger than 1.0 KiB was skipped")
+	locations, err := r.FilesByGlob("**")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"ok.txt"}, realPaths(locations))
+}
+
+type countingReader struct {
+	r io.Reader
+	n int
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.n += n
+	return n, err
+}
