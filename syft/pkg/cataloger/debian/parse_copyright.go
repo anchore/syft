@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/spdxlicense"
 )
 
 // For more information see: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-syntax
@@ -19,6 +20,11 @@ var (
 	commonLicensePathPattern       = regexp.MustCompile(`/usr/share/common-licenses/(?P<license>[0-9A-Za-z_.\-]+)`)
 	licenseAgreementHeadingPattern = regexp.MustCompile(`(?i)^\s*(?P<license>LICENSE AGREEMENT(?: FOR .+?)?)\s*$`)
 	formatHeaderPattern            = regexp.MustCompile(`^Format:\s*https?://www\.debian\.org/doc/packaging-manuals/copyright-format/`)
+
+	// urlPattern matches URLs that may point at a license text. We intentionally
+	// stop at common non-URL trailing punctuation (.,;:)) so that ".html.", "(URL)"
+	// etc. don't pollute the lookup key.
+	urlPattern = regexp.MustCompile(`https?://[^\s<>"\\)\]]+`)
 )
 
 // heading-detection states. Replaces licenseFirstSentenceAfterHeadingPattern,
@@ -61,6 +67,13 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 			if value := findLicenseClause(p, line); value != "" {
 				findings.Add(value)
 			}
+		}
+
+		// resolve any URLs on the line against the SPDX seeAlso URL table so that
+		// references like "License: Apache-2.0\n see http://www.apache.org/licenses/LICENSE-2.0"
+		// surface a concrete SPDX ID even when the short-name field is missing.
+		for _, id := range licenseIDsFromURLs(line) {
+			findings.Add(id)
 		}
 
 		var found string
@@ -133,6 +146,24 @@ func findLicenseClause(pattern *regexp.Regexp, line string) string {
 	}
 
 	return ensureIsSingleLicense(candidate)
+}
+
+// licenseIDsFromURLs returns SPDX license IDs for any URLs on the given line
+// that match an entry in the SPDX seeAlso URL table.
+func licenseIDsFromURLs(line string) []string {
+	matches := urlPattern.FindAllString(line, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+	var ids []string
+	for _, raw := range matches {
+		// strip common trailing punctuation that a URL would not legitimately end with
+		trimmed := strings.TrimRight(raw, ".,;:")
+		if info, ok := spdxlicense.LicenseByURL(trimmed); ok && info.ID != "" {
+			ids = append(ids, info.ID)
+		}
+	}
+	return ids
 }
 
 var multiLicenseExceptions = []string{
