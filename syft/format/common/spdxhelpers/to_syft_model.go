@@ -15,6 +15,7 @@ import (
 	"github.com/spdx/tools-golang/spdx/v2/common"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/spdxlicense"
 	"github.com/anchore/syft/syft/artifact"
@@ -470,23 +471,28 @@ func collectPackageFileRelationships(spdxIDMap map[string]any, doc *spdx.Documen
 }
 
 func toSyftCoordinates(f *spdx.File) file.Coordinates {
-	const layerIDPrefix = "layerID: "
-	var fileSystemID string
-	if strings.HasPrefix(f.FileComment, layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(f.FileComment, layerIDPrefix)
+	c := file.Coordinates{RealPath: f.FileName}
+	for _, line := range strings.Split(f.FileComment, "\n") {
+		if v, ok := strings.CutPrefix(line, layerIDCommentPrefix); ok {
+			c.FileSystemID = v
+		}
+		if v, ok := strings.CutPrefix(line, archivePathCommentPrefix); ok {
+			c.ArchivePath = v
+		}
 	}
-	if strings.HasPrefix(string(f.FileSPDXIdentifier), layerIDPrefix) {
-		fileSystemID = strings.TrimPrefix(string(f.FileSPDXIdentifier), layerIDPrefix)
+	if v, ok := strings.CutPrefix(string(f.FileSPDXIdentifier), layerIDCommentPrefix); ok {
+		c.FileSystemID = v
 	}
-	return file.Coordinates{
-		RealPath:     f.FileName,
-		FileSystemID: fileSystemID,
+	if c.ArchivePath != "" {
+		// the name is the chain; the file's own path is its last, escaped, segment
+		c.RealPath = archive.UnescapeEntryPath(f.FileName[strings.LastIndexByte(f.FileName, ':')+1:])
 	}
+	return c
 }
 
 func toSyftLocation(f *spdx.File) file.Location {
-	l := file.NewVirtualLocationFromCoordinates(toSyftCoordinates(f), f.FileName)
-	return l
+	c := toSyftCoordinates(f)
+	return file.NewVirtualLocationFromCoordinates(c, c.RealPath)
 }
 
 func requireAndTrimPrefix(val any, prefix string) string {

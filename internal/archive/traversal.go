@@ -52,10 +52,18 @@ func VirtualPath(loc file.Location) string {
 	return loc.ArchivePath + ":" + strings.TrimPrefix(escapeEntryPath(loc.Path()), "/")
 }
 
-var entryPathEscaper = strings.NewReplacer("%", "%25", ":", "%3A")
+var (
+	entryPathEscaper   = strings.NewReplacer("%", "%25", ":", "%3A")
+	entryPathUnescaper = strings.NewReplacer("%3A", ":", "%25", "%")
+)
 
 func escapeEntryPath(p string) string {
 	return entryPathEscaper.Replace(p)
+}
+
+// UnescapeEntryPath reverses the escaping VirtualPath applies to one segment of the chain.
+func UnescapeEntryPath(p string) string {
+	return entryPathUnescaper.Replace(p)
 }
 
 type traversalCtxKey struct{}
