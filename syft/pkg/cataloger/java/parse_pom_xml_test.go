@@ -1,12 +1,14 @@
 package java
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/file"
@@ -726,9 +728,21 @@ func Test_isArchiveMetaPom(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			loc := file.NewLocation(test.path)
-			assert.Equal(t, test.expected, isArchiveMetaPom(loc))
+			assert.Equal(t, test.expected, isArchiveMetaPom(insideJar(t), loc))
 		})
 	}
+
+	t.Run("only inside an extracted java archive", func(t *testing.T) {
+		loc := file.NewLocation("WEB-INF/classes/META-INF/maven/com.example/my-lib/pom.xml")
+		assert.False(t, isArchiveMetaPom(context.Background(), loc), "outside any archive, e.g. an exploded war")
+		inTarball := archive.WithTraversal(context.Background(), &archive.Traversal{Location: file.NewLocation("/src.tar.gz")})
+		assert.False(t, isArchiveMetaPom(inTarball, loc), "inside an archive java does not describe")
+	})
+}
+
+// insideJar is a context as the archive cataloger task sets it up while cataloging a jar's contents.
+func insideJar(t *testing.T) context.Context {
+	return archive.WithTraversal(pkgtest.Context(t), &archive.Traversal{Location: file.NewLocation("/app.jar")})
 }
 
 func Test_pomCatalogerSkipsMetaInfPoms(t *testing.T) {
@@ -743,7 +757,16 @@ func Test_pomCatalogerSkipsMetaInfPoms(t *testing.T) {
 
 	pkgtest.NewCatalogTester().
 		FromDirectory(t, "testdata/pom/meta-inf-archive").
+		WithContext(insideJar(t)).
 		Expects(nil, nil).
+		TestCataloger(t, cat)
+
+	// the same pom outside a jar is a project file like any other
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/meta-inf-archive").
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			assert.NotEmpty(t, pkgs)
+		}).
 		TestCataloger(t, cat)
 }
 
@@ -803,7 +826,11 @@ func Test_pomCatalogerSkipsMetaInfButKeepsProjectPom(t *testing.T) {
 		},
 	})
 
-	pkgtest.TestCataloger(t, "testdata/pom/mixed-meta-inf-and-project", cat, expectedPkgs, expectedRelationships)
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/pom/mixed-meta-inf-and-project").
+		WithContext(insideJar(t)).
+		Expects(expectedPkgs, expectedRelationships).
+		TestCataloger(t, cat)
 }
 
 func expectedTransientPackageData() expected {

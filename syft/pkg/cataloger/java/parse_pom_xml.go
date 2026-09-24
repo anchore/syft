@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
@@ -40,7 +41,7 @@ func (p pomXMLCataloger) Catalog(ctx context.Context, fileResolver file.Resolver
 	var poms []*maven.Project
 	pomLocations := map[*maven.Project]file.Location{}
 	for _, pomLocation := range locations {
-		if isArchiveMetaPom(pomLocation) {
+		if isArchiveMetaPom(ctx, pomLocation) {
 			continue
 		}
 		pom, err := readPomFromLocation(fileResolver, pomLocation)
@@ -307,7 +308,14 @@ func pomParent(ctx context.Context, r *maven.Resolver, pom *maven.Project) *pkg.
 // unresolved ${property} references and versions inherited from parent POMs absent from the archive.
 // The java-archive-cataloger identifies these archives from pom.properties, whose values are always
 // resolved, so skipping them here avoids phantom dependency packages.
-func isArchiveMetaPom(location file.Location) bool {
+//
+// This only holds inside an extracted java archive. Anywhere else (an exploded war, test fixtures under
+// src/test/resources, a tarball of a source tree) nothing else reads these poms, so they are cataloged.
+func isArchiveMetaPom(ctx context.Context, location file.Location) bool {
+	trav := archive.TraversalFromContext(ctx)
+	if trav == nil || !isJavaArchiveName(trav.Location.Path()) {
+		return false
+	}
 	return strings.Contains(location.Path(), "META-INF/maven/")
 }
 
