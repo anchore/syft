@@ -203,7 +203,8 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	// extracted files keep the filesystem ID of where the archive was found; the nesting chain is
 	// carried separately as the archive path. The chain names real paths, not the link the archive was
 	// reached by, so it is stable and joins to the archive's package location by prefix.
-	archivePath := archive.VirtualPath(file.NewLocationFromCoordinates(location.Coordinates))
+	traversal := &archive.Traversal{Location: location}
+	archivePath := traversal.ContentsArchivePath()
 	extracted, err := archive.Extract(ctx, archiveContent, location.FileSystemID, archivePath, c.limiter, c.exclusions)
 	if errors.Is(err, archive.ErrDiskLimitReached) {
 		// nothing is released while this archive waits, so skip it rather than block the scan
@@ -234,7 +235,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 		recordArchiveUnknown(builder, location.Coordinates, "archive cataloged from part of its contents: "+extracted.TruncatedReason)
 	}
 
-	traversal := &archive.Traversal{Location: location, Digests: extracted.Digests}
+	traversal.Digests = extracted.Digests
 	ctx = archive.WithTraversal(ctx, traversal)
 
 	c.progress.Increment()

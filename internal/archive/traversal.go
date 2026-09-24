@@ -22,6 +22,15 @@ type Traversal struct {
 	Digests []file.Digest
 }
 
+// ContentsArchivePath is the ArchivePath every file inside the archive carries: the chain to it, built
+// from real paths. Outside any archive (a nil Traversal) it is blank, as for files at the scan root.
+func (t *Traversal) ContentsArchivePath() string {
+	if t == nil {
+		return ""
+	}
+	return VirtualPath(file.NewLocationFromCoordinates(t.Location.Coordinates))
+}
+
 // VirtualPath returns the colon-delimited chain of archives from the scan root to loc, ending in loc
 // itself: "app.war:WEB-INF/lib/dep.jar". Outside any archive it is the location's path unchanged. In an
 // entry name '%' is escaped as "%25" and then ':' as "%3A", so splitting on ':' recovers the archive

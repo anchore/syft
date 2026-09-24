@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
@@ -39,7 +40,7 @@ func newFileDigestCatalogerTask(selection file.Selection, hashers []crypto.Hash,
 
 		accessor := builder.(sbomsync.Accessor)
 
-		coordinates, ok := coordinatesForSelection(selection, builder.(sbomsync.Accessor))
+		coordinates, ok := coordinatesForSelection(ctx, selection, builder.(sbomsync.Accessor))
 		if !ok {
 			return nil
 		}
@@ -70,7 +71,7 @@ func newFileMetadataCatalogerTask(selection file.Selection, tags ...string) Task
 
 		accessor := builder.(sbomsync.Accessor)
 
-		coordinates, ok := coordinatesForSelection(selection, builder.(sbomsync.Accessor))
+		coordinates, ok := coordinatesForSelection(ctx, selection, builder.(sbomsync.Accessor))
 		if !ok {
 			return nil
 		}
@@ -141,7 +142,12 @@ func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config,
 
 // TODO: this should be replaced with a fix that allows passing a coordinate or location iterator to the cataloger
 // Today internal to both cataloger this functions differently: a slice of coordinates vs a channel of locations
-func coordinatesForSelection(selection file.Selection, accessor sbomsync.Accessor) ([]file.Coordinates, bool) {
+//
+// Only coordinates in the resolver's own frame are returned: inside an archive, the files of that archive,
+// and at the scan root, files outside any archive. A package's location can be in another frame (a nested
+// java package is located at the archive in its parent), and looking that path up here would miss or,
+// worse, hit an unrelated file of the same name.
+func coordinatesForSelection(ctx context.Context, selection file.Selection, accessor sbomsync.Accessor) ([]file.Coordinates, bool) {
 	if selection == file.AllFilesSelection {
 		return nil, true
 	}
@@ -169,7 +175,13 @@ func coordinatesForSelection(selection file.Selection, accessor sbomsync.Accesso
 			}
 		})
 
-		coords := coordinates.ToSlice()
+		frame := archive.TraversalFromContext(ctx).ContentsArchivePath()
+		var coords []file.Coordinates
+		for _, c := range coordinates.ToSlice() {
+			if c.ArchivePath == frame {
+				coords = append(coords, c)
+			}
+		}
 
 		if len(coords) == 0 {
 			return nil, false
