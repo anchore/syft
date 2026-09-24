@@ -1,0 +1,6 @@
+# example versions.lock file from the palantir/gradle-consistent-versions plugin
+# empty lines and comments should be skipped
+
+com.fasterxml.jackson.core:jackson-annotations:2.12.3 (3 constraints: f311b512)
+com.google.guava:guava:30.1.1-jre (12 constraints: b290ec5e)
+com.squareup.okhttp3:okhttp:3.12.0 (1 constraints: 38053b3b)
