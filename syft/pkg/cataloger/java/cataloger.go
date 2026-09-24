@@ -82,12 +82,39 @@ func (c *archiveCataloger) catalogExtracted(ctx context.Context, trav *archive.T
 		return nil, nil, err
 	}
 
-	pkgs, relationships, err := parser.parse(ctx, nil)
+	// link to the jar this one is nested in, as the legacy recursion does: a DEPENDENCY_OF edge from
+	// parse, and Parent on whatever does not already have one
+	parent := enclosingJavaPackage(trav)
+	pkgs, relationships, err := parser.parse(ctx, parent)
+	if parent != nil {
+		for i := range pkgs {
+			if metadata, ok := pkgs[i].Metadata.(pkg.JavaArchive); ok && metadata.Parent == nil {
+				metadata.Parent = parent
+				pkgs[i].Metadata = metadata
+			}
+		}
+	}
 	if err != nil {
 		// attributed to the archive, as the generic cataloger attributes a parser failure to its file
 		return pkgs, relationships, unknown.New(trav.Location, err)
 	}
 	return pkgs, relationships, nil
+}
+
+// enclosingJavaPackage returns the main java package of the archive the traversal's archive is nested
+// in, if there is one. Of the java packages located at an archive, the main one carries the archive's
+// own virtual path; those found from embedded pom files carry it with their group and artifact appended.
+func enclosingJavaPackage(trav *archive.Traversal) *pkg.Package {
+	if trav.Parent == nil {
+		return nil
+	}
+	virtualPath := archive.VirtualPath(trav.Parent.Location)
+	for _, p := range trav.Parent.Packages {
+		if metadata, ok := p.Metadata.(pkg.JavaArchive); ok && metadata.VirtualPath == virtualPath {
+			return &p
+		}
+	}
+	return nil
 }
 
 // isJavaArchiveName reports whether the path matches the globs this cataloger opens files by.

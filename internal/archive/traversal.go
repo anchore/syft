@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 )
 
 // Traversal describes the archive whose contents a cataloger is running against. The archive
@@ -20,6 +21,14 @@ type Traversal struct {
 	// Digests are of the archive file itself, taken during extraction; a cataloger running inside the
 	// archive cannot compute them since the archive is not inside itself.
 	Digests []file.Digest
+
+	// Parent is the traversal of the archive this one is nested in, nil for an archive at the scan root.
+	Parent *Traversal
+
+	// Packages are those the catalogers found describing this archive (located at it), filled in once
+	// they have run. Catalogers inside a nested archive read them through Parent, as java does to link a
+	// nested jar to the jar that holds it.
+	Packages []pkg.Package
 }
 
 // ContentsArchivePath is the ArchivePath every file inside the archive carries: the chain to it, built

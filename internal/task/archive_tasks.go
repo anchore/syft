@@ -203,7 +203,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	// extracted files keep the filesystem ID of where the archive was found; the nesting chain is
 	// carried separately as the archive path. The chain names real paths, not the link the archive was
 	// reached by, so it is stable and joins to the archive's package location by prefix.
-	traversal := &archive.Traversal{Location: location}
+	traversal := &archive.Traversal{Location: location, Parent: archive.TraversalFromContext(ctx)}
 	archivePath := traversal.ContentsArchivePath()
 	extracted, err := archive.Extract(ctx, archiveContent, location.FileSystemID, archivePath, c.limiter, c.exclusions)
 	if errors.Is(err, archive.ErrDiskLimitReached) {
@@ -240,6 +240,7 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 
 	c.progress.Increment()
 	scratch := c.runSubPipeline(ctx, extracted, location.Coordinates)
+	traversal.Packages = packagesAt(scratch, location.Coordinates)
 	children := c.discoverArchives(extracted)
 	mergeArchiveResults(location.Coordinates, archivePath, children, scratch, builder)
 	c.progress.AtomicStage.Set(fmt.Sprintf("%s archives (%s)", humanize.Comma(c.progress.Current()), archivePath))
@@ -275,6 +276,17 @@ func (c *archiveCataloger) isAncestor(digests []file.Digest) bool {
 		}
 	}
 	return false
+}
+
+// packagesAt returns the packages located at the given coordinates, i.e. those describing the file there.
+func packagesAt(s *sbom.SBOM, coordinates file.Coordinates) []pkg.Package {
+	var out []pkg.Package
+	for _, p := range s.Artifacts.Packages.Sorted() {
+		if p.Locations.CoordinateSet().Contains(coordinates) {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func recordArchiveUnknown(builder sbomsync.Builder, coordinates file.Coordinates, reason string) {

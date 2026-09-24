@@ -381,6 +381,44 @@ func TestArchiveCataloger_defaultFileSelectionCoversRootJars(t *testing.T) {
 	}
 }
 
+func TestArchiveCataloger_javaParentLinkageMatchesTheLegacyPath(t *testing.T) {
+	// a consumer walking java DEPENDENCY_OF edges (the only structure SPDX and CycloneDX keep) must see
+	// the same war-to-jar linkage whether or not the archive task does the recursion
+	dir := t.TempDir()
+	war := buildZipBytesRaw(t, map[string][]byte{
+		"META-INF/MANIFEST.MF":    []byte("Manifest-Version: 1.0\nImplementation-Title: app\nImplementation-Version: 1.0\n"),
+		"WEB-INF/lib/lib-2.0.jar": jarBytes(t, "lib", "2.0"),
+	})
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "app.war"), war, 0o644))
+
+	for name, depth := range map[string]int{"feature off": 0, "feature on": 2} {
+		t.Run(name, func(t *testing.T) {
+			cfg := DefaultCreateSBOMConfig().
+				WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+				WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth))
+			s := scanDirWithExclusions(t, dir, cfg)
+
+			var edges []string
+			for _, rel := range s.Relationships {
+				from, fromOK := rel.From.(pkg.Package)
+				to, toOK := rel.To.(pkg.Package)
+				if fromOK && toOK && rel.Type == artifact.DependencyOfRelationship {
+					edges = append(edges, from.Name+" -> "+to.Name)
+				}
+			}
+			assert.Equal(t, []string{"lib -> app"}, edges)
+
+			var parent string
+			for _, p := range s.Artifacts.Packages.Sorted() {
+				if m, ok := p.Metadata.(pkg.JavaArchive); ok && p.Name == "lib" && m.Parent != nil {
+					parent = m.Parent.Name
+				}
+			}
+			assert.Equal(t, "app", parent)
+		})
+	}
+}
+
 func TestArchiveCataloger_descriptorRecordsArchiveConfig(t *testing.T) {
 	// a consumer must be able to tell from the SBOM alone how deep archive contents were searched
 	cfg := DefaultCreateSBOMConfig().
