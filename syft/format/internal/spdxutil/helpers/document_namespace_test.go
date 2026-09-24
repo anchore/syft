@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/anchore/syft/internal/sourcemetadata"
@@ -78,7 +79,7 @@ func Test_DocumentNamespace(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			actual := DocumentNamespace(test.inputName, test.src, sbom.Descriptor{
 				Name: "syft",
-			})
+			}, uuid.Must(uuid.NewRandom()))
 
 			// note: since the namespace ends with a UUID we check the prefix
 			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("expected prefix: '%s' got: '%s'", test.expected, actual))

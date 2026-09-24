@@ -41,6 +41,9 @@ func getNonZeroExampleValue(t testing.TB, v any, name string) any {
 		return &val
 	case string:
 		return name
+	case *int64:
+		val := int64(1)
+		return &val
 	}
 	t.Fatalf("unsupported type: %T", v)
 	return nil
