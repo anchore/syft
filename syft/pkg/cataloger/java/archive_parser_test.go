@@ -1,7 +1,10 @@
 package java
 
 import (
+	"archive/zip"
 	"bufio"
+	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -1724,4 +1727,76 @@ func Test_jarPomPropertyResolutionDoesNotPanic(t *testing.T) {
 
 	_, _, err = ap.parse(ctx, nil)
 	require.NoError(t, err)
+}
+
+// buildDeeplyNestedJar returns the path to a jar containing a jar containing a jar... to the given depth. Every level
+// is a valid archive with a manifest, so every level yields exactly one package, which makes the number of packages
+// found equal to the number of levels descended into.
+func buildDeeplyNestedJar(t *testing.T, depth int) string {
+	t.Helper()
+
+	var payload []byte
+	for level := depth; level >= 1; level-- {
+		buf := &bytes.Buffer{}
+		zw := zip.NewWriter(buf)
+
+		manifest, err := zw.Create("META-INF/MANIFEST.MF")
+		require.NoError(t, err)
+		_, err = manifest.Write([]byte(fmt.Sprintf("Manifest-Version: 1.0\nImplementation-Title: level-%d\nImplementation-Version: 1.0.%d\n\n", level, level)))
+		require.NoError(t, err)
+
+		if payload != nil {
+			// stored, not deflated, so the fixture stays cheap to build and does not rely on compression
+			nested, err := zw.CreateHeader(&zip.FileHeader{Name: fmt.Sprintf("nested-%d.jar", level+1), Method: zip.Store})
+			require.NoError(t, err)
+			_, err = nested.Write(payload)
+			require.NoError(t, err)
+		}
+
+		require.NoError(t, zw.Close())
+		payload = buf.Bytes()
+	}
+
+	jarPath := filepath.Join(t.TempDir(), "deeply-nested.jar")
+	require.NoError(t, os.WriteFile(jarPath, payload, 0600))
+	return jarPath
+}
+
+func Test_maxNestedArchiveDepth(t *testing.T) {
+	jarPath := buildDeeplyNestedJar(t, maxNestedArchiveDepth+10)
+
+	fixture, err := os.Open(jarPath)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, fixture.Close()) })
+
+	gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
+	pkgs, _, err := gap.processJavaArchive(pkgtest.Context(t), file.LocationReadCloser{
+		Location:   file.NewLocation(fixture.Name()),
+		ReadCloser: fixture,
+	}, nil)
+	require.NoError(t, err)
+
+	// the deepest archive we descend into reports an unknown rather than cataloging its own contents, so its package
+	// is dropped along with everything below it
+	assert.Len(t, pkgs, maxNestedArchiveDepth)
+}
+
+func Test_maxNestedArchiveDepth_reportsUnknown(t *testing.T) {
+	jarPath := buildDeeplyNestedJar(t, 2)
+
+	fixture, err := os.Open(jarPath)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, fixture.Close()) })
+
+	ctx := context.WithValue(pkgtest.Context(t), nestedArchiveDepthCtxKey{}, maxNestedArchiveDepth)
+
+	gap := newGenericArchiveParserAdapter(ArchiveCatalogerConfig{})
+	pkgs, _, err := gap.processJavaArchive(ctx, file.LocationReadCloser{
+		Location:   file.NewLocation(fixture.Name()),
+		ReadCloser: fixture,
+	}, nil)
+
+	require.ErrorContains(t, err, "maximum nested archive depth (32) reached")
+	// the archive at the limit is still cataloged, we just don't open what's inside it
+	assert.Len(t, pkgs, 1)
 }
