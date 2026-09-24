@@ -211,19 +211,23 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 		return nil, nil, err
 	}
 
-	// combine the user-provided and configured tasks
-	if c.Files.Selection == file.FilesOwnedByPackageSelection {
-		// special case: we need the package info when we are cataloging files owned by packages
-		taskGroups = append(taskGroups, pkgTasks, fileTasks)
-	} else {
-		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
-	}
-
 	// the same package and file catalogers run against the contents of every archive, after the scan
 	// root and before relationship and unknowns post-processing
 	archiveTask := task.NewArchiveCatalogerTask(c.Archive, append(slices.Clone(pkgTasks), fileTasks...), exclusions)
-	if archiveTask != nil {
-		taskGroups = append(taskGroups, []task.Task{archiveTask})
+
+	// combine the user-provided and configured tasks
+	switch {
+	case c.Files.Selection == file.FilesOwnedByPackageSelection && archiveTask != nil:
+		// the archive task describes archives at the root too (java leaves them to it), so the root file
+		// catalogers must run after it to see those packages
+		taskGroups = append(taskGroups, pkgTasks, []task.Task{archiveTask}, fileTasks)
+	case c.Files.Selection == file.FilesOwnedByPackageSelection:
+		// special case: we need the package info when we are cataloging files owned by packages
+		taskGroups = append(taskGroups, pkgTasks, fileTasks)
+	case archiveTask != nil:
+		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...), []task.Task{archiveTask})
+	default:
+		taskGroups = append(taskGroups, append(pkgTasks, fileTasks...))
 	}
 
 	// all scope work must be done after all nodes (files and packages) have been cataloged and before the relationship

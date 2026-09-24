@@ -48,7 +48,7 @@ func newFileDigestCatalogerTask(selection file.Selection, hashers []crypto.Hash,
 		result, err := filedigest.NewCataloger(hashers).Catalog(ctx, resolver, coordinates...)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
-			sbom.Artifacts.FileDigests = result
+			mergeInto(&sbom.Artifacts.FileDigests, result)
 		})
 
 		return err
@@ -79,7 +79,7 @@ func newFileMetadataCatalogerTask(selection file.Selection, tags ...string) Task
 		result, err := filemetadata.NewCataloger().Catalog(ctx, resolver, coordinates...)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
-			sbom.Artifacts.FileMetadata = result
+			mergeInto(&sbom.Artifacts.FileMetadata, result)
 		})
 
 		return err
@@ -105,7 +105,7 @@ func newFileContentCatalogerTask(cfg filecontent.Config, tags ...string) Task {
 		result, err := filecontent.NewCataloger(cfg).Catalog(ctx, resolver)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
-			sbom.Artifacts.FileContents = result
+			mergeInto(&sbom.Artifacts.FileContents, result)
 		})
 
 		return err
@@ -131,7 +131,7 @@ func newExecutableCatalogerTask(selection file.Selection, cfg executable.Config,
 		result, err := executable.NewCataloger(cfg).CatalogCtx(ctx, resolver)
 
 		accessor.WriteToSBOM(func(sbom *sbom.SBOM) {
-			sbom.Artifacts.Executables = result
+			mergeInto(&sbom.Artifacts.Executables, result)
 		})
 
 		return err

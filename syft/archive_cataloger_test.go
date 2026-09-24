@@ -360,6 +360,27 @@ func TestArchiveCataloger_jarReachedThroughALinkIsIdentified(t *testing.T) {
 	assert.Contains(t, s.Artifacts.FileMetadata, manifest)
 }
 
+func TestArchiveCataloger_defaultFileSelectionCoversRootJars(t *testing.T) {
+	// with the default owned-by-package selection, a jar at the root is described by the archive task,
+	// so the root file catalogers must run after it or the jar gets no file entries at all
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "app.jar"), jarBytes(t, "app", "1.0"), 0o644))
+
+	for name, depth := range map[string]int{"feature off": 0, "feature on": 1} {
+		t.Run(name, func(t *testing.T) {
+			cfg := DefaultCreateSBOMConfig().
+				WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+				WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(depth))
+			s := scanDirWithExclusions(t, dir, cfg)
+
+			require.Equal(t, []string{"|app.jar"}, packageLocations(s, "app"))
+			jar := file.Coordinates{RealPath: "app.jar"}
+			assert.Contains(t, s.Artifacts.FileMetadata, jar)
+			assert.Contains(t, s.Artifacts.FileDigests, jar)
+		})
+	}
+}
+
 func TestArchiveCataloger_descriptorRecordsArchiveConfig(t *testing.T) {
 	// a consumer must be able to tell from the SBOM alone how deep archive contents were searched
 	cfg := DefaultCreateSBOMConfig().
