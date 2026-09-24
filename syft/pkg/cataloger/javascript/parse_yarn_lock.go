@@ -304,6 +304,15 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 
 	devOnlyPkgs := findDevOnlyPkgs(yarnPkgs, prodDeps, devDeps)
 
+	var pairs [][2]string
+	for _, p := range yarnPkgs {
+		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
+			continue
+		}
+		pairs = append(pairs, [2]string{p.Name, p.Version})
+	}
+	prefetchNpmLicenses(ctx, a.licenseResolver, pairs)
+
 	packages := make([]pkg.Package, 0, len(yarnPkgs))
 	for _, p := range yarnPkgs {
 		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
