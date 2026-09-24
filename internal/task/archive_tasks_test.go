@@ -221,34 +221,29 @@ func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	assert.Contains(t, reasons[0], ArchiveCatalogerTaskName, "the unknown names the task that recorded it")
 }
 
-func Test_archiveCataloger_failureIsRecordedAndSkipsSubPipeline(t *testing.T) {
+func Test_archiveCataloger_aDamagedEntryCostsOnlyThatEntry(t *testing.T) {
 	rootDir := t.TempDir()
-	// entry data overwritten but header and end-of-central-directory intact: detected as an archive,
-	// fails when the entry is read
-	corrupt := makeZip(t, map[string][]byte{"data.bin": incompressible(4096)})
+	// entry data overwritten but headers and end-of-central-directory intact: detected as an archive,
+	// and data.bin fails when it is read. ok.txt comes after it and is intact.
+	corrupt := makeZip(t, map[string][]byte{"data.bin": incompressible(4096), "ok.txt": []byte("ok")})
 	require.Greater(t, len(corrupt), 1024)
 	for i := 100; i < 600; i++ {
 		corrupt[i] ^= 0xff
 	}
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "corrupt.zip"), corrupt, 0o600))
 
-	goodZip := makeZip(t, map[string][]byte{"ok.txt": []byte("ok")})
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "good.zip"), goodZip, 0o600))
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), capturingTask(t, &seen, &fileCounts))
 
-	var ran int
-	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), countingTask(&ran))
+	s := newTestSBOM()
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
 
-	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(newTestSBOM()))
-
-	// a coordinate error is what executor.go pulls out into sbom.Artifacts.Unknowns; a plain error would
-	// fail the scan instead
-	require.Error(t, err)
-	coordErrs, remaining := unknown.ExtractCoordinateErrors(err)
-	assert.NoError(t, remaining, "nothing may escape as a non-coordinate error")
-	require.Len(t, coordErrs, 1)
-	assert.Equal(t, "/corrupt.zip", coordErrs[0].Coordinates.RealPath)
-
-	assert.Equal(t, 1, ran, "the sub-pipeline must still run for the archive that extracted cleanly")
+	assert.Equal(t, []string{"/corrupt.zip"}, seen, "the archive is still cataloged")
+	assert.Equal(t, 1, fileCounts["/corrupt.zip"], "from the entries that could be read")
+	reasons := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/corrupt.zip"}]
+	require.Len(t, reasons, 1)
+	assert.Contains(t, reasons[0], `entry "data.bin" could not be read`)
 }
 
 func Test_NewArchiveCatalogerTask_gating(t *testing.T) {

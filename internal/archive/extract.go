@@ -156,6 +156,11 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 		r.truncate("extraction stopped: the archive and those nested in it decompressed to far more than its size (possible decompression bomb)")
 		return nil
 	}
+	if err != nil && ctx.Err() == nil && len(r.files) > 0 {
+		// the stream broke partway (a truncated .tar.gz); what was read before that is still good
+		r.truncate(fmt.Sprintf("extraction stopped early: %v", err))
+		return nil
+	}
 	return err
 }
 

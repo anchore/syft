@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -342,6 +343,25 @@ func TestExtract_heldContentWrittenToDiskStaysUntilCleanup(t *testing.T) {
 	assert.Empty(t, filesIn(t, root))
 	_, disk = limiter.InUse()
 	assert.Zero(t, disk)
+}
+
+func TestExtract_aTruncatedStreamKeepsWhatWasRead(t *testing.T) {
+	// a .tar.gz cut off partway breaks the stream for every entry after the cut; the ones before it are
+	// still good and must not be thrown away
+	noise := make([]byte, 64*1024)
+	rand.New(rand.NewSource(1)).Read(noise)
+	data := tarGzBytes(t, map[string]string{"a.txt": "first", "b.bin": string(noise)})
+	cut := data[:len(data)/2]
+
+	extracted, err := Extract(context.Background(), bytes.NewReader(cut), "", "app.tar.gz", NewLimiter(unboundedLimits), nil)
+	require.NoError(t, err)
+	require.NotNil(t, extracted)
+	t.Cleanup(extracted.Cleanup)
+
+	assert.True(t, extracted.Truncated)
+	locations, err := extracted.FilesByGlob("**")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"a.txt"}, realPaths(locations))
 }
 
 func TestExtract_aPanicStillReleasesEverything(t *testing.T) {

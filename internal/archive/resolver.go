@@ -167,10 +167,12 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 				r.truncate(fmt.Sprintf("an entry larger than %s was skipped", humanize.IBytes(uint64(maxEntryBytes))))
 				return nil
 			}
-			if !errors.Is(err, ErrDiskLimitReached) {
-				return fmt.Errorf("unable to read archive entry %q: %w", hdr.Name, err)
+			if errors.Is(err, ErrDiskLimitReached) || errors.Is(err, errBudgetSpent) {
+				return err
 			}
-			return err
+			// a damaged entry (a CRC mismatch, a corrupt deflate stream) costs only that entry
+			r.truncate(fmt.Sprintf("entry %q could not be read: %v", hdr.Name, err))
+			return nil
 		}
 	}
 
