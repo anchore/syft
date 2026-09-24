@@ -85,14 +85,14 @@ func TestVirtualPath(t *testing.T) {
 	}
 }
 
-func TestVirtualPath_theEscapeCharacterIsNotItselfEscaped(t *testing.T) {
-	// an accepted limit: an entry path holding the literal text %3A is indistinguishable from one holding
-	// a colon. Escaping % too would move many more real identities than it protects.
+func TestVirtualPath_theEscapeCharacterIsItselfEscaped(t *testing.T) {
+	// an entry path holding the literal text %3A must not collide with one holding a colon, or their
+	// contents share an ArchivePath and overwrite each other's file metadata
 	fromColon := VirtualPath(locationIn("outer.zip", "a:b.jar"))
 	fromLiteral := VirtualPath(locationIn("outer.zip", "a%3Ab.jar"))
 
 	assert.Equal(t, "outer.zip:a%3Ab.jar", fromColon)
-	assert.Equal(t, fromColon, fromLiteral)
+	assert.Equal(t, "outer.zip:a%253Ab.jar", fromLiteral)
 }
 
 func TestVirtualPath_escapingComposesAcrossNestingLevels(t *testing.T) {

@@ -724,7 +724,7 @@
         },
         "archivePath": {
           "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem."
+          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries."
         }
       },
       "type": "object",
@@ -2490,7 +2490,7 @@
         },
         "archivePath": {
           "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem."
+          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries."
         },
         "accessPath": {
           "type": "string",

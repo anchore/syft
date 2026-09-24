@@ -21,16 +21,21 @@ type Traversal struct {
 }
 
 // VirtualPath returns the colon-delimited chain of archives from the scan root to loc, ending in loc
-// itself: "app.war:WEB-INF/lib/dep.jar". Outside any archive it is the location's path unchanged. A
-// colon in an entry name is escaped so splitting on ':' recovers the archive boundaries; the leading
-// slash is dropped to match the java cataloger, which joins slash-less zip entry names onto the
-// containing archive's path.
+// itself: "app.war:WEB-INF/lib/dep.jar". Outside any archive it is the location's path unchanged. In an
+// entry name '%' is escaped as "%25" and then ':' as "%3A", so splitting on ':' recovers the archive
+// boundaries and no two entry names share an escaped form. The leading slash is dropped to match the
+// java cataloger, which joins slash-less zip entry names onto the containing archive's path.
 func VirtualPath(loc file.Location) string {
 	if loc.ArchivePath == "" {
 		return loc.Path()
 	}
-	entryPath := strings.ReplaceAll(loc.Path(), ":", "%3A")
-	return loc.ArchivePath + ":" + strings.TrimPrefix(entryPath, "/")
+	return loc.ArchivePath + ":" + strings.TrimPrefix(escapeEntryPath(loc.Path()), "/")
+}
+
+var entryPathEscaper = strings.NewReplacer("%", "%25", ":", "%3A")
+
+func escapeEntryPath(p string) string {
+	return entryPathEscaper.Replace(p)
 }
 
 type traversalCtxKey struct{}
