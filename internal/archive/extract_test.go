@@ -339,6 +339,34 @@ func TestExtract_heldContentWrittenToDiskStaysUntilCleanup(t *testing.T) {
 	assert.Zero(t, disk)
 }
 
+func TestExtract_aPanicStillReleasesEverything(t *testing.T) {
+	// a decoder panicking on hostile bytes must not leak the charge or the spill file
+	ctx, root := scanContext(t)
+	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: -1})
+
+	require.Panics(t, func() {
+		_, _ = Extract(ctx, &panicsAfter{n: 4096}, "", "app.zip", limiter, nil)
+	})
+
+	mem, disk := limiter.InUse()
+	assert.Zero(t, mem)
+	assert.Zero(t, disk)
+	assert.Empty(t, filesIn(t, root))
+}
+
+// panicsAfter hands out n zero bytes, then panics.
+type panicsAfter struct{ n int }
+
+func (p *panicsAfter) Read(b []byte) (int, error) {
+	if p.n <= 0 {
+		panic("decoder blew up")
+	}
+	n := min(len(b), p.n)
+	clear(b[:n])
+	p.n -= n
+	return n, nil
+}
+
 func TestExtract_archiveBytesThatCannotBePlacedAreSkipped(t *testing.T) {
 	data := zipBytes(t, sampleFiles)
 	limiter := NewLimiter(Limits{MaxMemoryBytes: 0, MaxDiskBytes: 0})

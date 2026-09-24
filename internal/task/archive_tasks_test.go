@@ -63,6 +63,45 @@ func (d streamingDirResolver) FileContentsByLocation(loc file.Location) (io.Read
 	}{f, f}, nil
 }
 
+// panickingDirResolver is dirTestResolver whose reads of one file panic, standing in for a decoder
+// that panics on hostile bytes.
+type panickingDirResolver struct {
+	dirTestResolver
+	path string
+}
+
+func (d panickingDirResolver) FileContentsByLocation(loc file.Location) (io.ReadCloser, error) {
+	if loc.RealPath == d.path {
+		return io.NopCloser(panicReader{}), nil
+	}
+	return d.dirTestResolver.FileContentsByLocation(loc)
+}
+
+type panicReader struct{}
+
+func (panicReader) Read([]byte) (int, error) { panic("decoder blew up") }
+
+func Test_archiveCataloger_aPanicCostsOnlyThatArchive(t *testing.T) {
+	rootDir := t.TempDir()
+	for _, name := range []string{"bad.zip", "good.zip"} {
+		require.NoError(t, os.WriteFile(filepath.Join(rootDir, name), makeZip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
+	}
+
+	var seen []string
+	tsk := newTestTask(t, cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1), capturingTask(t, &seen, nil))
+
+	resolver := panickingDirResolver{dirTestResolver: dirTestResolver{dir: rootDir}, path: "/bad.zip"}
+	err := tsk.Execute(context.Background(), resolver, sbomsync.NewBuilder(newTestSBOM()))
+
+	// a coordinate error becomes an unknown; a plain error (or an escaped panic) would fail the scan
+	coordErrs, remaining := unknown.ExtractCoordinateErrors(err)
+	require.NoError(t, remaining)
+	require.Len(t, coordErrs, 1)
+	assert.Equal(t, "/bad.zip", coordErrs[0].Coordinates.RealPath)
+	assert.ErrorContains(t, coordErrs[0].Reason, "panic while cataloging archive: decoder blew up")
+	assert.Equal(t, []string{"/good.zip"}, seen, "the sibling is still cataloged")
+}
+
 func newTestTask(t *testing.T, cfg cataloging.ArchiveSearchConfig, subPipeline ...Task) Task {
 	t.Helper()
 	tsk := NewArchiveCatalogerTask(cfg, subPipeline, nil)

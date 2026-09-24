@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"runtime/debug"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -142,7 +143,14 @@ func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, 
 	return errs
 }
 
-func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver file.Resolver, candidate archiveCandidate, depth int, builder sbomsync.Builder) error {
+func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver file.Resolver, candidate archiveCandidate, depth int, builder sbomsync.Builder) (err error) {
+	// the decoders run on untrusted bytes; a panic in one costs this archive, not the scan
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic while cataloging archive: %v at:\n%s", r, debug.Stack())
+		}
+	}()
+
 	location := candidate.location
 	content, err := parentResolver.FileContentsByLocation(location)
 	if err != nil {

@@ -28,9 +28,16 @@ func Extract(ctx context.Context, r io.Reader, fileSystemID, archivePath string,
 	charge := limiter.charge()
 	resolver := newResolver(ctx, fileSystemID, archivePath, charge)
 
+	// deferred so that a panic in a decoder still gives back the charge and removes any spill file
+	succeeded := false
+	defer func() {
+		if !succeeded {
+			resolver.Cleanup()
+		}
+	}()
+
 	content, release, err := resolver.acquire(r)
 	if err != nil {
-		resolver.Cleanup()
 		return nil, err
 	}
 	// the archive's own bytes are needed only until they are extracted and digested
@@ -38,15 +45,14 @@ func Extract(ctx context.Context, r io.Reader, fileSystemID, archivePath string,
 
 	format := identifyFormat(ctx, archiveFileName(archivePath), content)
 	if format == nil {
-		resolver.Cleanup()
 		return nil, nil
 	}
 
 	if err := resolver.extract(ctx, format, content, exclusions); err != nil {
-		resolver.Cleanup()
 		return nil, fmt.Errorf("unable to extract archive %q: %w", archivePath, err)
 	}
 	resolver.Digests = digestsOf(ctx, content, archivePath)
+	succeeded = true
 	return resolver, nil
 }
 
