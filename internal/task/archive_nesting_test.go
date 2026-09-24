@@ -270,6 +270,11 @@ func Test_mixedFamilyNesting_depthCountsLevelsNotFamilies(t *testing.T) {
 			}
 			_, ok := s.Artifacts.FileMetadata[innermost]
 			assert.True(t, ok, "the undescended archive must still be recorded as a file at %s", coordKey(innermost))
+
+			// and what was left unexplored is said out loud, not silently dropped
+			reasons := s.Artifacts.Unknowns[innermost]
+			require.Len(t, reasons, 1, "unknowns: %v", s.Artifacts.Unknowns)
+			assert.Contains(t, reasons[0], "depth limit was reached")
 		})
 	}
 }

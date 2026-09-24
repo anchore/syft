@@ -145,6 +145,13 @@ func (c *archiveCataloger) catalog(ctx context.Context, resolver file.Resolver, 
 		maxDepth = unboundedArchiveDepth
 	}
 	if depth >= maxDepth {
+		// java's own recursion is off while this task runs, so an archive left here is otherwise lost
+		// without a trace
+		for _, candidate := range c.discoverArchives(resolver) {
+			if candidate.sniffedAsArchive {
+				recordArchiveUnknown(builder, candidate.location.Coordinates, "nested archive not cataloged: the nested archive depth limit was reached")
+			}
+		}
 		return nil
 	}
 	var errs error

@@ -26,7 +26,8 @@ note: enabling this may result in a performance impact since all discovered comp
 note: this only applies to the java package cataloger, and is ignored when nested-archive-max-depth is not 0 (every archive is searched)`)
 	descriptions.Add(&o.ExcludeBinaryOverlapByOwnership, `allows users to exclude synthetic binary packages from the sbom
 these packages are removed if an overlap with a non-synthetic package is found`)
-	descriptions.Add(&o.NestedArchiveMaxDepth, `maximum depth to recursively catalog nested archives (0 = disabled, -1 = as deep as 16 levels)`)
+	descriptions.Add(&o.NestedArchiveMaxDepth, `maximum depth to recursively catalog nested archives (0 = disabled, -1 = as deep as 16 levels)
+note: when enabled this replaces the java cataloger's own unbounded jar-in-jar recursion, so archives deeper than this are reported as unknowns rather than cataloged`)
 	descriptions.Add(&o.NestedArchiveMaxMemoryBytes, `maximum bytes of nested archive content held in memory at once (0 = default, -1 = unbounded)`)
 	descriptions.Add(&o.NestedArchiveMaxDiskBytes, `maximum bytes of nested archive content on disk at once (0 = default, -1 = unbounded)`)
 }
