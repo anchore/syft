@@ -221,7 +221,8 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 
 	// the same package and file catalogers run against the contents of every archive, after the scan
 	// root and before relationship and unknowns post-processing
-	if archiveTask := task.NewArchiveCatalogerTask(c.Archive, append(slices.Clone(pkgTasks), fileTasks...), exclusions); archiveTask != nil {
+	archiveTask := task.NewArchiveCatalogerTask(c.Archive, append(slices.Clone(pkgTasks), fileTasks...), exclusions)
+	if archiveTask != nil {
 		taskGroups = append(taskGroups, []task.Task{archiveTask})
 	}
 
@@ -256,6 +257,9 @@ func (c *CreateSBOMConfig) makeTaskGroups(src source.Description, exclusions []s
 	var allTasks []task.Task
 	allTasks = append(allTasks, pkgTasks...)
 	allTasks = append(allTasks, fileTasks...)
+	if archiveTask != nil {
+		allTasks = append(allTasks, archiveTask)
+	}
 
 	return taskGroups, &catalogerManifest{
 		Requested: selectionEvidence.Request,

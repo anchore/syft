@@ -583,9 +583,10 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 	t.Run("no archive task by default", func(t *testing.T) {
 		// the feature is off by default, and off must mean no task at all rather than a registered
 		// task that does nothing: a registered task is reported as a selected cataloger
-		groups, _, err := DefaultCreateSBOMConfig().makeTaskGroups(src, nil)
+		groups, manifest, err := DefaultCreateSBOMConfig().makeTaskGroups(src, nil)
 		require.NoError(t, err)
 		assert.False(t, archiveTaskIn(groups))
+		assert.NotContains(t, manifest.Used, task.ArchiveCatalogerTaskName)
 	})
 
 	t.Run("archive task is present at negative depth", func(t *testing.T) {
@@ -599,9 +600,10 @@ func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
 	t.Run("archive task is present when enabled", func(t *testing.T) {
 		cfg := DefaultCreateSBOMConfig().
 			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2))
-		groups, _, err := cfg.makeTaskGroups(src, nil)
+		groups, manifest, err := cfg.makeTaskGroups(src, nil)
 		require.NoError(t, err)
 		assert.True(t, archiveTaskIn(groups))
+		assert.Contains(t, manifest.Used, task.ArchiveCatalogerTaskName, "the manifest must say archive contents were searched")
 	})
 
 	t.Run("enabling the feature does not mutate the caller's package config", func(t *testing.T) {

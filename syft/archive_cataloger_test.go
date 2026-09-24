@@ -19,6 +19,7 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/syft/internal/bus"
+	"github.com/anchore/syft/internal/task"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/cataloging"
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
@@ -327,6 +328,19 @@ func TestArchiveCataloger_featureOff(t *testing.T) {
 		assert.Contains(t, javaVirtualPaths(s), "tgz-lib")
 		assert.False(t, cfg.Packages.JavaArchive.IncludeUnindexedArchives, "the caller's config is not written to")
 	})
+}
+
+func TestArchiveCataloger_descriptorRecordsArchiveConfig(t *testing.T) {
+	// a consumer must be able to tell from the SBOM alone how deep archive contents were searched
+	cfg := DefaultCreateSBOMConfig().
+		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+		WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(3))
+	s := scanDirWithExclusions(t, t.TempDir(), cfg)
+
+	trail, ok := s.Descriptor.Configuration.(configurationAuditTrail)
+	require.True(t, ok)
+	assert.Equal(t, 3, trail.Archive.MaxDepth)
+	assert.Contains(t, trail.Catalogers.Used, task.ArchiveCatalogerTaskName)
 }
 
 func TestArchiveCataloger_javaArchiveDepthIsAConfigError(t *testing.T) {
