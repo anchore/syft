@@ -70,6 +70,14 @@ func newTestTask(t *testing.T, cfg cataloging.ArchiveSearchConfig, subPipeline .
 	return tsk
 }
 
+// newLimitedTestTask builds the task with the limiter's own limits, where zero forbids the resource.
+func newLimitedTestTask(t *testing.T, maxDepth int, limits archive.Limits, subPipeline ...Task) Task {
+	t.Helper()
+	tsk := newArchiveCatalogerTask(maxDepth, limits, subPipeline, nil)
+	require.NotNil(t, tsk)
+	return tsk
+}
+
 func newTestSBOM() *sbom.SBOM {
 	return &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
 }
@@ -122,6 +130,23 @@ func Test_archiveCataloger_traversalThreading(t *testing.T) {
 	}, seen)
 }
 
+func Test_archiveCataloger_zeroLimitsMeanDefault(t *testing.T) {
+	// a config literal naming only the depth must catalog archives, not forbid both memory and disk
+	rootDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), makeZip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
+
+	var seen []string
+	fileCounts := map[string]int{}
+	tsk := newTestTask(t, cataloging.ArchiveSearchConfig{MaxDepth: 1}, capturingTask(t, &seen, &fileCounts))
+
+	s := newTestSBOM()
+	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
+
+	assert.Equal(t, []string{"/outer.zip"}, seen)
+	assert.Equal(t, 1, fileCounts["/outer.zip"])
+	assert.Empty(t, s.Artifacts.Unknowns)
+}
+
 func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	// reaching a limit is a truncation, not a failure: the sub-pipeline still runs over what was stored
 	big := bytes.Repeat([]byte("x"), 4096)
@@ -134,14 +159,11 @@ func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), outerZip, 0o600))
 
 	// nothing is held in memory, so each entry is charged to disk: small.txt lands, big.txt is refused
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxMemoryBytes(0).
-		WithMaxDiskBytes(6000)
+	limits := archive.Limits{MaxMemoryBytes: 0, MaxDiskBytes: 6000}
 
 	var seen []string
 	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
+	tsk := newLimitedTestTask(t, 1, limits, capturingTask(t, &seen, &fileCounts))
 
 	s := newTestSBOM()
 	err := tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s))
@@ -462,14 +484,11 @@ func Test_archiveCataloger_manySmallArchivesAreEachCataloged(t *testing.T) {
 	}
 
 	// room for one archive's entries and their index cost, not for two
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxMemoryBytes(0).
-		WithMaxDiskBytes(20000)
+	limits := archive.Limits{MaxMemoryBytes: 0, MaxDiskBytes: 20000}
 
 	var seen []string
 	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
+	tsk := newLimitedTestTask(t, 1, limits, capturingTask(t, &seen, &fileCounts))
 
 	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
@@ -544,14 +563,11 @@ func Test_archiveCataloger_archiveWhoseOwnBytesExceedTheDiskLimitIsSkipped(t *te
 	diskLimit := int64(len(small)) + 3000
 	require.Greater(t, int64(len(oversized)), diskLimit, "the fixture must actually exceed the limit")
 
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxMemoryBytes(0).
-		WithMaxDiskBytes(diskLimit)
+	limits := archive.Limits{MaxMemoryBytes: 0, MaxDiskBytes: diskLimit}
 
 	var seen []string
 	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
+	tsk := newLimitedTestTask(t, 1, limits, capturingTask(t, &seen, &fileCounts))
 
 	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), streamingDirResolver{dirTestResolver{dir: rootDir}}, sbomsync.NewBuilder(s)),
@@ -576,14 +592,11 @@ func Test_archiveCataloger_zeroDiskLimitTruncatesWhatWillNotFitInMemory(t *testi
 	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "small.zip"), small, 0o600))
 
 	// room for the small archive's entry and its index cost, not for the oversized one's
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxMemoryBytes(3000).
-		WithMaxDiskBytes(0)
+	limits := archive.Limits{MaxMemoryBytes: 3000, MaxDiskBytes: 0}
 
 	var seen []string
 	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
+	tsk := newLimitedTestTask(t, 1, limits, capturingTask(t, &seen, &fileCounts))
 
 	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
@@ -595,33 +608,6 @@ func Test_archiveCataloger_zeroDiskLimitTruncatesWhatWillNotFitInMemory(t *testi
 
 	assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/oversized.zip"})
 	assert.NotContains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: "/small.zip"})
-}
-
-func Test_archiveCataloger_bothLimitsZeroTruncatesEveryArchiveAndSucceeds(t *testing.T) {
-	entries := map[string][]byte{"ok.txt": []byte("ok")}
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "one.zip"), makeZip(t, entries), 0o600))
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "two.zip"), makeZip(t, entries), 0o600))
-
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(1).
-		WithMaxMemoryBytes(0).
-		WithMaxDiskBytes(0)
-
-	var seen []string
-	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
-
-	s := newTestSBOM()
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)),
-		"both limits at zero is a real configuration, not a failure")
-
-	assert.ElementsMatch(t, []string{"/one.zip", "/two.zip"}, seen)
-	for _, archivePath := range seen {
-		assert.Equal(t, 0, fileCounts[archivePath], "no entry can be admitted anywhere")
-		assert.Contains(t, s.Artifacts.Unknowns, file.Coordinates{RealPath: archivePath})
-	}
-	assert.Empty(t, s.Artifacts.Packages.Sorted())
 }
 
 func Test_archiveCataloger_nestedArchiveExceedingALimitIsTruncatedNotBlocked(t *testing.T) {
@@ -638,14 +624,11 @@ func Test_archiveCataloger_nestedArchiveExceedingALimitIsTruncatedNotBlocked(t *
 	diskLimit := int64(len(inner)) + 2*2100 + 500
 	require.Greater(t, 3000, 500, "the inner payload must not fit in the slack")
 
-	cfg := cataloging.DefaultArchiveSearchConfig().
-		WithMaxDepth(2).
-		WithMaxMemoryBytes(0).
-		WithMaxDiskBytes(diskLimit)
+	limits := archive.Limits{MaxMemoryBytes: 0, MaxDiskBytes: diskLimit}
 
 	var seen []string
 	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cfg, capturingTask(t, &seen, &fileCounts))
+	tsk := newLimitedTestTask(t, 2, limits, capturingTask(t, &seen, &fileCounts))
 
 	s := newTestSBOM()
 	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))

@@ -148,7 +148,8 @@ func (c *CreateSBOMConfig) WithFilesConfig(cfg filecataloging.Config) *CreateSBO
 }
 
 // WithArchiveConfig sets how archives are cataloged: how deep to recurse into nested archives (MaxDepth
-// 0, the default, does not recurse) and how much extracted content the scan may hold at once.
+// 0, the default, does not recurse) and how much extracted content the scan may hold at once (a zero
+// limit means the default).
 func (c *CreateSBOMConfig) WithArchiveConfig(cfg cataloging.ArchiveSearchConfig) *CreateSBOMConfig {
 	c.Archive = cfg
 	return c

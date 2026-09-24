@@ -1,6 +1,7 @@
 package task
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -36,7 +37,20 @@ const ArchiveCatalogerTaskName = "archive-cataloger"
 // exclusions are the scan's exclusion patterns, applied inside each archive. Returns nil when archive
 // cataloging is disabled (MaxDepth == 0; negative means unbounded).
 func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []Task, exclusions []string) Task {
-	if cfg.MaxDepth == 0 {
+	return newArchiveCatalogerTask(cfg.MaxDepth, archiveLimits(cfg), subPipeline, exclusions)
+}
+
+// archiveLimits maps the configured limits onto the limiter's. Zero means the default, so the limiter's
+// own zero (which forbids the resource) is not reachable from configuration.
+func archiveLimits(cfg cataloging.ArchiveSearchConfig) archive.Limits {
+	return archive.Limits{
+		MaxMemoryBytes: cmp.Or(cfg.MaxMemoryBytes, int64(cataloging.DefaultArchiveMaxMemoryBytes)),
+		MaxDiskBytes:   cmp.Or(cfg.MaxDiskBytes, int64(cataloging.DefaultArchiveMaxDiskBytes)),
+	}
+}
+
+func newArchiveCatalogerTask(maxDepth int, limits archive.Limits, subPipeline []Task, exclusions []string) Task {
+	if maxDepth == 0 {
 		return nil
 	}
 	subPipeline = withoutArchiveCataloger(subPipeline)
@@ -49,9 +63,9 @@ func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []T
 		ctx = bus.WithCatalogerTaskRegistry(ctx)
 
 		c := &archiveCataloger{
-			maxDepth:    cfg.MaxDepth,
+			maxDepth:    maxDepth,
 			subPipeline: subPipeline,
-			limiter:     archive.NewLimiter(archive.Limits{MaxMemoryBytes: cfg.MaxMemoryBytes, MaxDiskBytes: cfg.MaxDiskBytes}),
+			limiter:     archive.NewLimiter(limits),
 			exclusions:  archive.NewExclusions(exclusions),
 			progress:    bus.StartCatalogerTask(ctx, archiveCatalogerProgressInfo(), -1, ""),
 		}

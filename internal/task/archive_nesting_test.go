@@ -113,7 +113,7 @@ func Test_mixedFamilyNesting_leafIsCatalogedOnceWithTheFullChain(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), probe.task())
+			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), probe.task())
 
 			assert.Equal(t, 1, packageCount(s, "marker-pkg"), "%s: the leaf package must be cataloged exactly once", row.why)
 
@@ -139,7 +139,7 @@ func Test_mixedFamilyNesting_containsEdgesChainAtEveryLevel(t *testing.T) {
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
-			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), fileMetadataTask())
+			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), fileMetadataTask())
 
 			// each archive's coordinates as seen in its parent; the outermost sits in the scanned
 			// directory, so it carries no filesystem id of its own
@@ -197,7 +197,7 @@ func Test_mixedFamilyNesting_javaLeafVirtualPathIsTheColonJoinedChain(t *testing
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
-			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), javaTask())
+			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), javaTask())
 
 			// the innermost archive is the jar, so its own package is the java leaf and the chain of
 			// all three archives is exactly its virtual path
@@ -228,7 +228,7 @@ func Test_mixedFamilyNesting_jarIsExercisedAsAContainer(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := runNesting(t, scanDir, 3, cataloging.DefaultArchiveSearchConfig(), markerTask(), javaTask(), probe.task())
+			s := runNesting(t, scanDir, 3, defaultLimits(), markerTask(), javaTask(), probe.task())
 
 			for _, level := range containerLevels {
 				name := fmt.Sprintf("level%d", level)
@@ -256,7 +256,7 @@ func Test_mixedFamilyNesting_depthCountsLevelsNotFamilies(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := runNesting(t, scanDir, 2, cataloging.DefaultArchiveSearchConfig(), markerTask(), fileMetadataTask(), probe.task())
+			s := runNesting(t, scanDir, 2, defaultLimits(), markerTask(), fileMetadataTask(), probe.task())
 
 			assert.Equal(t, nested.fileSystemIDs[:2], probe.archiveFileSystemIDs(),
 				"at depth 2 the outer and middle archives are cataloged and the innermost is not")
@@ -287,7 +287,7 @@ func Test_mixedFamilyNesting_defaultBoundsCatalogEveryRow(t *testing.T) {
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
+			s := runNesting(t, scanDir, 3, archiveLimits(bounds), markerTask(), probe.task())
 
 			assert.Equal(t, nested.fileSystemIDs, probe.archiveFileSystemIDs(),
 				"every level of the chain must be cataloged at the default bounds")
@@ -306,8 +306,8 @@ func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing
 
 	t.Run("with a generous memory limit nothing is written to disk", func(t *testing.T) {
 		probe := &nestingProbe{tempDir: tempDir}
-		bounds := cataloging.DefaultArchiveSearchConfig().
-			WithMaxMemoryBytes(int64(2 * (nested.sizes[0] + nested.sizes[1] + nested.sizes[2])))
+		bounds := defaultLimits()
+		bounds.MaxMemoryBytes = int64(2 * (nested.sizes[0] + nested.sizes[1] + nested.sizes[2]))
 		runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 		deepest := probe.deepestVisit()
@@ -318,9 +318,7 @@ func Test_mixedFamilyNesting_memoryPressureOverflowsRatherThanFailing(t *testing
 	t.Run("with a memory limit the outermost archive's entries do not fit in", func(t *testing.T) {
 		// room for every level's index estimate, which must stay in memory, but not the outer entries
 		probe := &nestingProbe{tempDir: tempDir}
-		bounds := cataloging.DefaultArchiveSearchConfig().
-			WithMaxMemoryBytes(int64(nested.sizes[2] + 32*1024)).
-			WithMaxDiskBytes(-1)
+		bounds := archive.Limits{MaxMemoryBytes: int64(nested.sizes[2] + 32*1024), MaxDiskBytes: -1}
 		s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
 		deepest := probe.deepestVisit()
@@ -359,9 +357,7 @@ func Test_mixedFamilyNesting_aNestedArchiveIsReadWhereItLies(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			probe := &nestingProbe{tempDir: tempDir}
-			bounds := cataloging.DefaultArchiveSearchConfig().
-				WithMaxMemoryBytes(tc.memoryBytes).
-				WithMaxDiskBytes(-1)
+			bounds := archive.Limits{MaxMemoryBytes: tc.memoryBytes, MaxDiskBytes: -1}
 
 			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
@@ -397,9 +393,7 @@ func Test_mixedFamilyNesting_diskLimitTruncatesTheLevelItCannotAdmit(t *testing.
 	memoryLimit := int64(nested.sizes[0] + nested.sizes[1] + deepChainPayloadBytes/2)
 
 	probe := &nestingProbe{}
-	bounds := cataloging.DefaultArchiveSearchConfig().
-		WithMaxMemoryBytes(memoryLimit).
-		WithMaxDiskBytes(0)
+	bounds := archive.Limits{MaxMemoryBytes: memoryLimit, MaxDiskBytes: 0}
 
 	s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
@@ -428,16 +422,14 @@ func Test_mixedFamilyNesting_diskLimitTruncatesTheLevelItCannotAdmit(t *testing.
 
 func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
 	// a caller can opt out of one bound without the other, and opting out of both must still find the
-	// deepest leaf. Both opt out with a negative value, since zero means "none of that resource".
+	// deepest leaf. Both opt out with a negative value, since zero means the default.
 	for _, row := range nestingRows() {
 		t.Run(row.name, func(t *testing.T) {
 			scanDir := t.TempDir()
 			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
 
 			probe := &nestingProbe{}
-			bounds := cataloging.DefaultArchiveSearchConfig().
-				WithMaxMemoryBytes(-1).
-				WithMaxDiskBytes(-1)
+			bounds := archive.Limits{MaxMemoryBytes: -1, MaxDiskBytes: -1}
 
 			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
 
@@ -449,25 +441,8 @@ func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
 	}
 }
 
-func Test_mixedFamilyNesting_bothLimitsZeroCatalogsNothingInsideAnyArchive(t *testing.T) {
-	// unlike negative (unbounded), zero on both limits admits no entry anywhere: the outermost archive is
-	// cataloged from nothing, so the level inside it is never found, and the scan still succeeds
-	for _, row := range nestingRows() {
-		t.Run(row.name, func(t *testing.T) {
-			scanDir := t.TempDir()
-			nested := writeNestedArchive(t, scanDir, nestPlan{families: row.families, leaf: markerLeaf()})
-
-			probe := &nestingProbe{}
-			bounds := cataloging.DefaultArchiveSearchConfig().
-				WithMaxMemoryBytes(0).
-				WithMaxDiskBytes(0)
-
-			s := runNesting(t, scanDir, 3, bounds, markerTask(), probe.task())
-
-			assert.Equal(t, nested.fileSystemIDs[:1], probe.archiveFileSystemIDs())
-			assert.Empty(t, leafLocations(s))
-		})
-	}
+func defaultLimits() archive.Limits {
+	return archiveLimits(cataloging.DefaultArchiveSearchConfig())
 }
 
 // runNesting runs the archive cataloger task over scanDir with the given sub-pipeline and returns the
@@ -476,9 +451,9 @@ func Test_mixedFamilyNesting_bothLimitsZeroCatalogsNothingInsideAnyArchive(t *te
 // The depth-3 limit cases need the timeout: the walk descends before it unwinds, so the outer and
 // middle archives still hold their content when the inner one is refused. An implementation that
 // waited for capacity would deadlock, and a test asserting only the result would hang rather than fail.
-func runNesting(t *testing.T, scanDir string, depth int, bounds cataloging.ArchiveSearchConfig, subPipeline ...Task) *sbom.SBOM {
+func runNesting(t *testing.T, scanDir string, depth int, bounds archive.Limits, subPipeline ...Task) *sbom.SBOM {
 	t.Helper()
-	tsk := newTestTask(t, bounds.WithMaxDepth(depth), subPipeline...)
+	tsk := newLimitedTestTask(t, depth, bounds, subPipeline...)
 	s := &sbom.SBOM{Artifacts: sbom.Artifacts{
 		Packages:     pkg.NewCollection(),
 		FileMetadata: map[file.Coordinates]file.Metadata{},

@@ -27,8 +27,8 @@ note: for now this only applies to the java package cataloger`)
 	descriptions.Add(&o.ExcludeBinaryOverlapByOwnership, `allows users to exclude synthetic binary packages from the sbom
 these packages are removed if an overlap with a non-synthetic package is found`)
 	descriptions.Add(&o.NestedArchiveMaxDepth, `maximum depth to recursively catalog nested archives (0 = disabled, -1 = unlimited)`)
-	descriptions.Add(&o.NestedArchiveMaxMemoryBytes, `maximum bytes of nested archive content held in memory at once (0 = none, always overflow to disk; -1 = unbounded)`)
-	descriptions.Add(&o.NestedArchiveMaxDiskBytes, `maximum bytes of nested archive content on disk at once (0 = none, nothing overflows; -1 = unbounded)`)
+	descriptions.Add(&o.NestedArchiveMaxMemoryBytes, `maximum bytes of nested archive content held in memory at once (0 = default, -1 = unbounded)`)
+	descriptions.Add(&o.NestedArchiveMaxDiskBytes, `maximum bytes of nested archive content on disk at once (0 = default, -1 = unbounded)`)
 }
 
 func defaultPackageConfig() packageConfig {
