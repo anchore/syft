@@ -32,6 +32,7 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 			Version:     "13.0.1",
 			ContentHash: "/Fx1SbJ16qS7dU4i604Sle+U9VLX+WSNVJggk6MupKVkYvvBm4XqYaeFuf67diHefHKHs50uQIS2YEDFhPCakQ==",
 			Type:        "Direct",
+			Requested:   "[13.0.1, )",
 		},
 	}
 
@@ -47,6 +48,7 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 			Version:     "5.0.0",
 			ContentHash: "NKQFzFwrfWOMjTwr+X/2iJyCveuAGF+fNzkxyB0YW45+InVhcE9PUxoL1a8Vmc/Lq9E/CQd4DjO8kU32P4w/Gg==",
 			Type:        "Direct",
+			Requested:   "[5.0.0, )",
 		},
 	}
 
@@ -62,6 +64,7 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 			Version:     "2.0.5",
 			ContentHash: "AEqPZz+v+OikfnR2SqRVdQPnSaLq5y9Iz1CfRQZ9kTKPYCXHG6zYmDHb7wJotICpDLMr/JqokyjiqKAjUKp0ng==",
 			Type:        "Direct",
+			Requested:   "[2.0.5, )",
 		},
 	}
 
@@ -77,6 +80,7 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 			Version:     "1.2.15",
 			ContentHash: "KPajjkU1rbF6uY2rnakbh36LB9z9FVcYlciyOi6C5SJ3AMNywxjCGxBTN/Hl5nQEinRLuWvHWPF8W7YHh9sONw==",
 			Type:        "Direct",
+			Requested:   "[1.2.15, )",
 		},
 	}
 
@@ -152,6 +156,7 @@ func TestParseDotnetPackagesLock(t *testing.T) {
 			Version:     "9.0.0",
 			ContentHash: "crjWyORoug0kK7RSNJBTeSE6VX8IQgLf3nUpTB9m62bPXp/tzbnOsnbe8TXEG0AASNaKZddnpHKw7fET8E++Pg==",
 			Type:        "Direct",
+			Requested:   "[9.0.0, )",
 		},
 	}
 
