@@ -281,6 +281,11 @@ func toRootPackage(s source.Description) *spdx.Package {
 		}
 	}
 
+	// the SPDX package name is mandatory, and a source read from another SBOM may not have one
+	if name == "" {
+		name = helpers.DocumentName(s)
+	}
+
 	p := &spdx.Package{
 		PackageName:               name,
 		PackageSPDXIdentifier:     spdx.ElementID(helpers.SanitizeElementID(fmt.Sprintf("DocumentRoot-%s-%s", prefix, name))),

@@ -3,6 +3,7 @@ package spdxtagvalue
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -208,4 +209,37 @@ func defaultFormatEncoders() []sbom.FormatEncoder {
 		encs = append(encs, enc)
 	}
 	return encs
+}
+
+func TestEncodeDecodeSourceWithoutName(t *testing.T) {
+	// a source read from another SBOM (a purl list, a CycloneDX document without metadata.component) may have no name,
+	// but the SPDX package name is mandatory and the tag-value decoder needs it to start the root package section
+	p := pkg.Package{Name: "left-pad", Version: "1.3.0", Type: pkg.NpmPkg}
+	p.SetID()
+
+	for _, src := range []source.Description{
+		{},
+		{Metadata: source.FileMetadata{}},
+		{Metadata: source.DirectoryMetadata{}},
+		{Metadata: source.ImageMetadata{}},
+	} {
+		for _, enc := range defaultFormatEncoders() {
+			t.Run(fmt.Sprintf("%T/%s", src.Metadata, enc.Version()), func(t *testing.T) {
+				var buf bytes.Buffer
+				require.NoError(t, enc.Encode(&buf, sbom.SBOM{
+					Source:    src,
+					Artifacts: sbom.Artifacts{Packages: pkg.NewCollection(p)},
+				}))
+
+				s, _, _, err := NewFormatDecoder().Decode(bytes.NewReader(buf.Bytes()))
+				require.NoError(t, err, "encoded document:\n%s", buf.String())
+
+				var names []string
+				for _, decoded := range s.Artifacts.Packages.Sorted() {
+					names = append(names, decoded.Name)
+				}
+				assert.Contains(t, names, "left-pad")
+			})
+		}
+	}
 }
