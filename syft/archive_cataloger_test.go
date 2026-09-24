@@ -330,6 +330,31 @@ func TestArchiveCataloger_featureOff(t *testing.T) {
 	})
 }
 
+func TestArchiveCataloger_jarReachedThroughALinkIsIdentified(t *testing.T) {
+	// a content-addressed layout (pnpm, nix, bazel): the jar is stored under a hash and only the link
+	// to it is named like a jar
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+	jar := jarBytes(t, "json-simple", "1.1.1")
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "store/3f9a1c", Mode: 0o644, Size: int64(len(jar))}))
+	_, err := tw.Write(jar)
+	require.NoError(t, err)
+	require.NoError(t, tw.WriteHeader(&tar.Header{Name: "app/lib/json-simple-1.1.1.jar", Typeflag: tar.TypeSymlink, Linkname: "../../store/3f9a1c"}))
+	require.NoError(t, tw.Close())
+	require.NoError(t, gw.Close())
+
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "bundle.tar.gz"), buf.Bytes(), 0o644))
+
+	cfg := DefaultCreateSBOMConfig().
+		WithCatalogerSelection(cataloging.NewSelectionRequest().WithDefaults("java")).
+		WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2))
+	s := scanDirWithExclusions(t, dir, cfg)
+
+	assert.Equal(t, []string{"bundle.tar.gz|store/3f9a1c"}, packageLocations(s, "json-simple"))
+}
+
 func TestArchiveCataloger_descriptorRecordsArchiveConfig(t *testing.T) {
 	// a consumer must be able to tell from the SBOM alone how deep archive contents were searched
 	cfg := DefaultCreateSBOMConfig().

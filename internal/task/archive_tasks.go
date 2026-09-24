@@ -263,9 +263,9 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 	}
 
 	var candidates []archiveCandidate
-	seen := map[file.Coordinates]struct{}{}
+	seen := map[file.Coordinates]int{}
 	for _, loc := range archives {
-		seen[loc.Coordinates] = struct{}{}
+		seen[loc.Coordinates] = len(candidates)
 		candidates = append(candidates, archiveCandidate{location: loc, sniffedAsArchive: true})
 	}
 
@@ -275,10 +275,15 @@ func (c *archiveCataloger) discoverArchives(resolver file.Resolver) []archiveCan
 		return candidates
 	}
 	for _, loc := range namedLikeZips {
-		if _, dup := seen[loc.Coordinates]; dup {
+		if i, dup := seen[loc.Coordinates]; dup {
+			// a MIME hit is the bare real path; the name it is reached by (a link such as
+			// lib/dep.jar -> ../store/3f9a1c) is what name-based catalogers like java key off
+			if prev := candidates[i].location; prev.AccessPath == "" || prev.AccessPath == prev.RealPath {
+				candidates[i].location = loc
+			}
 			continue
 		}
-		seen[loc.Coordinates] = struct{}{}
+		seen[loc.Coordinates] = len(candidates)
 		candidates = append(candidates, archiveCandidate{location: loc})
 	}
 	return candidates
