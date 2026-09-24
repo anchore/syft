@@ -67,9 +67,7 @@ func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []T
 func archiveCatalogerProgressInfo() monitor.GenericTask {
 	return monitor.GenericTask{
 		Title: monitor.Title{
-			Default:      "Archives",
-			WhileRunning: "Cataloging archives",
-			OnSuccess:    "Cataloged archives",
+			Default: "Archives",
 		},
 		ID:       ArchiveCatalogerTaskName,
 		ParentID: monitor.TopLevelCatalogingTaskID,
