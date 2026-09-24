@@ -1,7 +1,6 @@
 package index
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -129,33 +128,6 @@ func Test_KeySplitIndex_Get(t *testing.T) {
 	requireHasAll(t, []int{}, fi.ByPrefix("twos")...)
 
 	require.Equal(t, 0, fi.Get("invalid")) // returns the zero value
-}
-
-func Test_KeySplitIndex_serialization(t *testing.T) {
-	index1 := KeySplitIndex[int]{}
-
-	const (
-		one    = 1
-		two    = 2
-		once   = 11
-		onesie = 111
-	)
-
-	index1.Set("one", one)
-	index1.Set("two", two)
-	index1.Set("once", once)
-	index1.Set("onesie", onesie)
-
-	serialized, err := json.Marshal(&index1)
-	require.NoError(t, err)
-
-	require.JSONEq(t, `{"one":1,"two":2,"once":11,"onesie":111}`, string(serialized))
-
-	var index2 KeySplitIndex[int]
-	err = json.Unmarshal(serialized, &index2)
-	require.NoError(t, err)
-
-	require.Equal(t, &index1, &index2)
 }
 
 // requireHasAll asserts the values are exactly the required ones, in any order. Carried over with the

@@ -1,10 +1,9 @@
-// Package index provides a concurrent key-split (radix) index, and a forward/reverse pair over it
-// that answers prefix and suffix lookups such as "which names end in .jar".
+// Package index provides a key-split (radix) index, and a forward/reverse pair over it that answers
+// prefix and suffix lookups such as "which names end in .jar". It is not safe for concurrent writes: the
+// only consumer builds an index once and then only reads it.
 package index
 
 import (
-	"bytes"
-	"encoding/json"
 	"strings"
 )
 
@@ -14,51 +13,11 @@ type KeySplitIndex[T any] struct {
 	Node[T]
 }
 
-var _ interface {
-	json.Marshaler
-	json.Unmarshaler
-} = (*KeySplitIndex[int])(nil)
-
-func (n *KeySplitIndex[T]) MarshalJSON() ([]byte, error) {
-	values := map[string]T{}
-	collectValues(values, "", &n.Node)
-	buf := &bytes.Buffer{}
-	enc := json.NewEncoder(buf)
-	enc.SetEscapeHTML(false)
-	err := enc.Encode(values)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func (n *KeySplitIndex[T]) UnmarshalJSON(bytes []byte) error {
-	values := map[string]T{}
-	err := json.Unmarshal(bytes, &values)
-	if err != nil {
-		return err
-	}
-	for k, v := range values {
-		n.Set(k, v)
-	}
-	return nil
-}
-
-func collectValues[T any](values map[string]T, key string, node *Node[T]) {
-	if node.set {
-		values[key] = node.value
-	}
-	for segment, child := range node.keyMap {
-		collectValues(values, key+segment, child)
-	}
-}
-
 // ----------------------- Node -----------------------
 
 type NodeMap[T any] map[string]*Node[T]
 
 type Node[T any] struct {
-	lockable
 	set       bool
 	value     T
 	keyMap    NodeMap[T]
@@ -67,11 +26,8 @@ type Node[T any] struct {
 
 type NodeUpdateFunc[T any] func(current *Node[T]) (newValue T)
 
-func (n *Node[T]) Value() (v T) {
-	unlock := n.RLock()
-	v = n.value
-	unlock()
-	return
+func (n *Node[T]) Value() T {
+	return n.value
 }
 
 func (n *Node[T]) Get(s string) (out T) {
@@ -84,8 +40,7 @@ func (n *Node[T]) Get(s string) (out T) {
 }
 
 func (n *Node[T]) Set(name string, value T) {
-	node := n._makeNodeP(nil, name, nil)
-	node.SetValue(value)
+	n._makeNodeP(name, nil).SetValue(value)
 }
 
 func (n *Node[T]) ByPrefix(s string) []T {
@@ -97,18 +52,13 @@ func (n *Node[T]) ByPrefix(s string) []T {
 }
 
 func (n *Node[T]) Update(name string, f NodeUpdateFunc[T]) {
-	unlock := n.Lock()
-	node := n._makeNodeP(&unlock, name, nil)
-	v := f(node)
-	node.SetValue(v)
-	unlock()
+	node := n._makeNodeP(name, nil)
+	node.SetValue(f(node))
 }
 
 func (n *Node[T]) SetValue(value T) {
-	unlock := n.Lock()
 	n.value = value
 	n.set = true
-	unlock()
 }
 
 func (n *Node[T]) Collect() (values []T) {
@@ -117,7 +67,6 @@ func (n *Node[T]) Collect() (values []T) {
 }
 
 func (n *Node[T]) _collect(values *[]T) {
-	unlock := n.RLock()
 	if n.set {
 		*values = append(*values, n.value)
 	}
@@ -125,14 +74,10 @@ func (n *Node[T]) _collect(values *[]T) {
 	for _, v := range n.keyMap {
 		v._collect(values)
 	}
-
-	unlock()
 }
 
 // _find returns the node for s and whether it matched exactly.
 func (n *Node[T]) _find(s string) (node *Node[T], equal bool) {
-	defer n.RLock()()
-
 	if s == "" {
 		return n, true
 	}
@@ -170,139 +115,67 @@ func (n *Node[T]) _find(s string) (node *Node[T], equal bool) {
 	return next._find(s[offset:])
 }
 
-//nolint:funlen,gocognit
-func (n *Node[T]) _makeNodeP(unlock *func(), name string, nodeIfEmpty *Node[T]) *Node[T] {
+// _makeNodeP returns the node for name, creating it (as nodeIfEmpty when given) and splitting existing
+// keys on their longest common prefix as needed.
+func (n *Node[T]) _makeNodeP(name string, nodeIfEmpty *Node[T]) *Node[T] {
 	if name == "" {
 		return n
 	}
 
-	if unlock == nil {
-		rUnlock := n.RLock()
-		n = n._makeNodeP(&rUnlock, name, nodeIfEmpty)
-		rUnlock()
-		return n
-	}
-
 	ch := rune(name[0])
-
-	if n.keyByChar == nil || n.keyMap == nil {
-		n._exclusiveLock(unlock)
-
-		if n.keyByChar == nil {
-			n.keyByChar = map[rune]string{}
-		}
-		if n.keyMap == nil {
-			n.keyMap = NodeMap[T]{}
-		}
+	if n.keyByChar == nil {
+		n.keyByChar = map[rune]string{}
+		n.keyMap = NodeMap[T]{}
 	}
 
 	key, ok := n.keyByChar[ch]
-
-	// no entry for the given character
-	if !ok {
-		// check again with an exclusive lock before creating a new entry
-		n._exclusiveLock(unlock)
-
-		key, ok = n.keyByChar[ch]
-		if !ok {
-			// no entry for the given character, create one; this is all we have to do
-			newNode := nodeIfEmpty
-			if newNode == nil {
-				newNode = &Node[T]{}
-			}
-			n.keyMap[name] = newNode
-			n.keyByChar[ch] = name
-
-			return newNode
-		}
-	}
-
 	switch {
-	case key == name:
-		existingNode := n.keyMap[key]
-		if existingNode == nil {
-			// try this again, something changed between read checks and exclusive lock
-			return n._makeNodeP(unlock, name, nodeIfEmpty)
-		}
-
-		return existingNode
-	case strings.HasPrefix(key, name):
-		// existing key is longer than my key, we can just use the existing and make a new sub-entry for the longer key
-		n._exclusiveLock(unlock)
-
-		existingNode := n.keyMap[key]
-		if existingNode == nil {
-			// try this again, something changed between read checks and exclusive lock
-			return n._makeNodeP(unlock, name, nodeIfEmpty)
-		}
-		delete(n.keyMap, key)
-
-		newNode := nodeIfEmpty
-		if newNode == nil {
-			newNode = &Node[T]{}
-		}
+	case !ok:
+		// no entry for the given character, create one; this is all we have to do
+		newNode := orNewNode(nodeIfEmpty)
 		n.keyMap[name] = newNode
 		n.keyByChar[ch] = name
-
-		next := key[len(name):]
-		_ = newNode._makeNodeP(nil, next, existingNode)
-
+		return newNode
+	case key == name:
+		return n.keyMap[key]
+	case strings.HasPrefix(key, name):
+		// existing key is longer than my key, we can just use the existing and make a new sub-entry for the longer key
+		existingNode := n.keyMap[key]
+		delete(n.keyMap, key)
+		newNode := orNewNode(nodeIfEmpty)
+		n.keyMap[name] = newNode
+		n.keyByChar[ch] = name
+		newNode._makeNodeP(key[len(name):], existingNode)
 		return newNode
 	case strings.HasPrefix(name, key):
 		// existing key is shorter than my key, we can just take the substring to remove the
 		// existing string prefix and set the new node as a child of the existing node
-		n._exclusiveLock(unlock)
-
-		existingNode := n.keyMap[key]
-		if existingNode == nil {
-			// try this again, something changed between read checks and exclusive lock
-			return n._makeNodeP(unlock, name, nodeIfEmpty)
-		}
-
-		next := name[len(key):]
-		return existingNode._makeNodeP(nil, next, nodeIfEmpty)
+		return n.keyMap[key]._makeNodeP(name[len(key):], nodeIfEmpty)
 	default:
 		// neither the existing key nor my key contains a prefix of the other, so we find
 		// the longest common prefix and split BOTH entries as children of a new entry with this common prefix
-		n._exclusiveLock(unlock)
-
 		commonLength := 1 // the first character already matches
-		minLength := len(key)
-		if len(name) < minLength {
-			minLength = len(name)
-		}
-		for ; commonLength < minLength; commonLength++ {
-			if key[commonLength] != name[commonLength] {
-				break
-			}
+		for commonLength < min(len(key), len(name)) && key[commonLength] == name[commonLength] {
+			commonLength++
 		}
 
 		existingNode := n.keyMap[key]
-		if existingNode == nil {
-			// try this again, something changed between read checks and exclusive lock
-			return n._makeNodeP(unlock, name, nodeIfEmpty)
-		}
 		delete(n.keyMap, key)
-
-		newNode := nodeIfEmpty
-		if newNode == nil {
-			newNode = &Node[T]{}
-		}
+		newNode := orNewNode(nodeIfEmpty)
 		parentNode := &Node[T]{}
-		parentNode._makeNodeP(nil, key[commonLength:], existingNode)
-		parentNode._makeNodeP(nil, name[commonLength:], newNode)
+		parentNode._makeNodeP(key[commonLength:], existingNode)
+		parentNode._makeNodeP(name[commonLength:], newNode)
 
 		common := key[:commonLength]
 		n.keyMap[common] = parentNode
 		n.keyByChar[ch] = common
-
 		return newNode
 	}
 }
 
-func (n *Node[T]) _exclusiveLock(unlocker *func()) {
-	if !n.isExclusiveLock(*unlocker) {
-		(*unlocker)()
-		*unlocker = n.Lock()
+func orNewNode[T any](n *Node[T]) *Node[T] {
+	if n == nil {
+		return &Node[T]{}
 	}
+	return n
 }
