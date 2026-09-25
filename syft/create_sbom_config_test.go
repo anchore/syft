@@ -18,6 +18,7 @@ import (
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
+	"github.com/anchore/syft/syft/pkg/cataloger/java"
 	"github.com/anchore/syft/syft/source"
 )
 
@@ -329,7 +330,7 @@ func TestCreateSBOMConfig_makeTaskGroups(t *testing.T) {
 			require.NotEmpty(t, tt.wantTaskNames)
 
 			// test the subject
-			gotTasks, gotManifest, err := tt.cfg.makeTaskGroups(tt.src)
+			gotTasks, gotManifest, err := tt.cfg.makeTaskGroups(tt.src, nil)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
@@ -563,4 +564,65 @@ func TestCreateSBOMConfig_validate(t *testing.T) {
 			tt.wantErr(t, tt.cfg.validate())
 		})
 	}
+}
+
+func TestCreateSBOMConfig_archiveTaskGroup(t *testing.T) {
+	src := source.Description{Metadata: source.DirectoryMetadata{}}
+
+	archiveTaskIn := func(groups [][]task.Task) bool {
+		for _, group := range groups {
+			for _, tsk := range group {
+				if tsk.Name() == task.ArchiveCatalogerTaskName {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	t.Run("no archive task by default", func(t *testing.T) {
+		// the feature is off by default, and off must mean no task at all rather than a registered
+		// task that does nothing: a registered task is reported as a selected cataloger
+		groups, manifest, err := DefaultCreateSBOMConfig().makeTaskGroups(src, nil)
+		require.NoError(t, err)
+		assert.False(t, archiveTaskIn(groups))
+		assert.NotContains(t, manifest.Used, task.ArchiveCatalogerTaskName)
+	})
+
+	t.Run("archive task is present at negative depth", func(t *testing.T) {
+		cfg := DefaultCreateSBOMConfig().
+			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(-1))
+		groups, _, err := cfg.makeTaskGroups(src, nil)
+		require.NoError(t, err)
+		assert.True(t, archiveTaskIn(groups))
+	})
+
+	t.Run("archive task is present when enabled", func(t *testing.T) {
+		cfg := DefaultCreateSBOMConfig().
+			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2))
+		groups, manifest, err := cfg.makeTaskGroups(src, nil)
+		require.NoError(t, err)
+		assert.True(t, archiveTaskIn(groups))
+		assert.Contains(t, manifest.Used, task.ArchiveCatalogerTaskName, "the manifest must say archive contents were searched")
+	})
+
+	t.Run("enabling the feature does not mutate the caller's package config", func(t *testing.T) {
+		// the java side learns the archive task is running from the context, not from its config: a
+		// consumer who handed us a package config gets it back exactly as supplied.
+		supplied := java.DefaultArchiveCatalogerConfig().WithUseNetwork(true)
+
+		cfg := DefaultCreateSBOMConfig().
+			WithArchiveConfig(cataloging.DefaultArchiveSearchConfig().WithMaxDepth(2)).
+			WithPackagesConfig(pkgcataloging.Config{JavaArchive: supplied})
+
+		_, _, err := cfg.makeTaskGroups(src, nil)
+		require.NoError(t, err)
+
+		assert.Equal(t, supplied, cfg.Packages.JavaArchive,
+			"the caller's java config must come back byte-identical")
+		assert.True(t, cfg.Packages.JavaArchive.UseNetwork,
+			"a caller-supplied field must survive untouched")
+		assert.Zero(t, cfg.Packages.JavaArchive.MaxDepth,
+			"java's own squash-inlined depth must not be written to either")
+	})
 }

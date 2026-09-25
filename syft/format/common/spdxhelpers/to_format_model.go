@@ -14,6 +14,7 @@ import (
 	"github.com/spdx/tools-golang/spdx"
 
 	"github.com/anchore/packageurl-go"
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/mimetype"
 	"github.com/anchore/syft/internal/relationship"
@@ -643,8 +644,11 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 			continue
 		}
 
-		// FIXME: we are only currently including Package -> * relationships
-		if _, ok := r.From.(pkg.Package); !ok {
+		// FIXME: we are only currently including Package -> * relationships, plus an archive containing a
+		// package found inside it, which is the only structure nested archive cataloging records for
+		// non-java packages. Every file-side From is in the document: toFiles covers every coordinate a
+		// relationship names.
+		if _, ok := r.From.(pkg.Package); !ok && !isFileContainsPackage(r) {
 			log.Debugf("skipping non-package relationship: %+v", r)
 			continue
 		}
@@ -663,6 +667,12 @@ func toRelationships(relationships []artifact.Relationship) (result []*spdx.Rela
 	return result
 }
 
+func isFileContainsPackage(r artifact.Relationship) bool {
+	_, fromFile := r.From.(file.Coordinates)
+	_, toPkg := r.To.(pkg.Package)
+	return fromFile && toPkg && r.Type == artifact.ContainsRelationship
+}
+
 func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.RelationshipType, string) {
 	switch ty {
 	case artifact.ContainsRelationship:
@@ -676,6 +686,12 @@ func lookupRelationship(ty artifact.RelationshipType) (bool, helpers.Relationshi
 	}
 	return false, "", ""
 }
+
+// file comments carry what an SPDX file has no field for, one "key: value" per line
+const (
+	layerIDCommentPrefix     = "layerID: "
+	archivePathCommentPrefix = "archivePath: "
+)
 
 func toFiles(s sbom.SBOM) (results []*spdx.File) {
 	artifacts := s.Artifacts
@@ -707,16 +723,26 @@ func toFiles(s sbom.SBOM) (results []*spdx.File) {
 
 		// TODO: add file classifications (?) and content as a snippet
 
-		var comment string
+		var comments []string
 		if c.FileSystemID != "" {
-			comment = fmt.Sprintf("layerID: %s", c.FileSystemID)
+			comments = append(comments, layerIDCommentPrefix+c.FileSystemID)
 		}
 
-		relativePath, err := convertAbsoluteToRelative(c.RealPath)
-		if err != nil {
-			log.Debugf("unable to convert relative path '%s' to absolute path: %s", c.RealPath, err)
-			relativePath = c.RealPath
+		// a file inside an archive is named by its full chain ("app.war:WEB-INF/lib/a.jar:META-INF/MANIFEST.MF"),
+		// so a consumer reading only the name does not mistake it for a file at that path in the scan
+		// root. The archive path is also kept in the comment so decoding need not guess where it ends.
+		name := c.RealPath
+		if c.ArchivePath != "" {
+			name = archive.VirtualPath(file.NewLocationFromCoordinates(c))
+			comments = append(comments, archivePathCommentPrefix+c.ArchivePath)
 		}
+
+		relativePath, err := convertAbsoluteToRelative(name)
+		if err != nil {
+			log.Debugf("unable to convert relative path '%s' to absolute path: %s", name, err)
+			relativePath = name
+		}
+		comment := strings.Join(comments, "\n")
 
 		results = append(results, &spdx.File{
 			FileSPDXIdentifier: toSPDXID(c),

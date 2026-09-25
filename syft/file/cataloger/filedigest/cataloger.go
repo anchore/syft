@@ -49,7 +49,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		}
 	}
 
-	prog := catalogingProgress(int64(len(locations)))
+	prog := catalogingProgress(ctx, int64(len(locations)))
 
 	err := sync.Collect(&ctx, cataloging.ExecutorFile, sync.ToSeq(locations), func(location file.Location) ([]file.Digest, error) {
 		result, err := i.catalogLocation(ctx, resolver, location)
@@ -112,7 +112,7 @@ func (i *Cataloger) catalogLocation(ctx context.Context, resolver file.Resolver,
 	return digests, nil
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File digests",
@@ -120,5 +120,5 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }

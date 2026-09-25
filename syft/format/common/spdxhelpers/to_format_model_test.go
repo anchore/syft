@@ -810,12 +810,29 @@ func Test_fileIDsForPackage(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name: "ignore file-to-package",
+			name: "include an archive file containing a package",
 			relationships: []artifact.Relationship{
 				{
 					From: c,
 					To:   p,
 					Type: artifact.ContainsRelationship,
+				},
+			},
+			expected: []*spdx.Relationship{
+				{
+					Relationship: "CONTAINS",
+					RefA:         docElementId(c),
+					RefB:         docElementId(p),
+				},
+			},
+		},
+		{
+			name: "ignore other file-to-package",
+			relationships: []artifact.Relationship{
+				{
+					From: c,
+					To:   p,
+					Type: artifact.DependencyOfRelationship,
 				},
 			},
 			expected: nil,
@@ -1130,4 +1147,30 @@ func Test_otherLicenses(t *testing.T) {
 			require.Equal(t, test.expected, got.OtherLicenses)
 		})
 	}
+}
+
+func Test_toFiles_nestedFilesAreNamedByTheirChainAndRoundTrip(t *testing.T) {
+	// two archives' META-INF/MANIFEST.MF must not come out as two files with the same name and nothing
+	// saying which archive each is in
+	root := file.Coordinates{RealPath: "/etc/os-release", FileSystemID: "sha256:layer"}
+	inA := file.Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: "/app.war:WEB-INF/lib/a.jar", FileSystemID: "sha256:layer"}
+	inB := file.Coordinates{RealPath: "odd:na%me.txt", ArchivePath: "/app.war:WEB-INF/lib/b.jar"}
+	s := sbom.SBOM{Artifacts: sbom.Artifacts{FileMetadata: map[file.Coordinates]file.Metadata{root: {}, inA: {}, inB: {}}}}
+
+	byName := map[string]*spdx.File{}
+	for _, f := range toFiles(s) {
+		byName[f.FileName] = f
+	}
+	require.Len(t, byName, 3)
+
+	assert.Equal(t, "layerID: sha256:layer", byName["etc/os-release"].FileComment, "files outside archives are unchanged")
+
+	a := byName["app.war:WEB-INF/lib/a.jar:META-INF/MANIFEST.MF"]
+	require.NotNil(t, a)
+	assert.Equal(t, "layerID: sha256:layer\narchivePath: /app.war:WEB-INF/lib/a.jar", a.FileComment)
+	assert.Equal(t, inA, toSyftCoordinates(a))
+
+	b := byName["app.war:WEB-INF/lib/b.jar:odd%3Ana%25me.txt"]
+	require.NotNil(t, b, "names: %v", byName)
+	assert.Equal(t, inB, toSyftCoordinates(b), "the entry path's escaping is undone on decode")
 }

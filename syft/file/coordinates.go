@@ -12,8 +12,11 @@ type Coordinates struct {
 	// RealPath is the canonical absolute form of the path accessed (all symbolic links have been followed and relative path components like '.' and '..' have been removed).
 	RealPath string `json:"path" cyclonedx:"path"`
 
-	// FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank.
+	// FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in.
 	FileSystemID string `json:"layerID,omitempty" cyclonedx:"layerID"`
+
+	// ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. "app.war:WEB-INF/lib/dep.jar"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as "%25" and ':' as "%3A", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it.
+	ArchivePath string `json:"archivePath,omitempty" cyclonedx:"archivePath"`
 }
 
 func NewCoordinates(realPath, fsID string) Coordinates {
@@ -40,9 +43,21 @@ func (c Coordinates) String() string {
 	if c.FileSystemID != "" {
 		str += fmt.Sprintf(" Layer=%q", c.FileSystemID)
 	}
+	if c.ArchivePath != "" {
+		str += fmt.Sprintf(" Archive=%q", c.ArchivePath)
+	}
 	return fmt.Sprintf("Location<%s>", str)
 }
 
 func (c Coordinates) GetCoordinates() Coordinates {
 	return c
+}
+
+// HashInclude keeps an empty ArchivePath out of the artifact ID hash (see artifact.IDByHash), so
+// coordinates outside archives keep the IDs they had before the field existed.
+func (c Coordinates) HashInclude(field string, _ any) (bool, error) {
+	if field == "ArchivePath" && c.ArchivePath == "" {
+		return false, nil
+	}
+	return true, nil
 }
