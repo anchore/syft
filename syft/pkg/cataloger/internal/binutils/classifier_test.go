@@ -12,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/internal/unionreader"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
 )
@@ -186,6 +187,54 @@ func TestFileContentsVersionMatcher(t *testing.T) {
 	}
 }
 
+func TestMatchNone(t *testing.T) {
+	alwaysMatch := func(_ Classifier, _ MatcherContext) ([]pkg.Package, error) {
+		return []pkg.Package{{}}, nil
+	}
+	neverMatch := func(_ Classifier, _ MatcherContext) ([]pkg.Package, error) {
+		return nil, nil
+	}
+
+	tests := []struct {
+		name     string
+		matchers []EvidenceMatcher
+		wantNil  bool
+	}{
+		{
+			name:     "no matchers — always passes",
+			matchers: nil,
+			wantNil:  false,
+		},
+		{
+			name:     "none of the matchers match — passes",
+			matchers: []EvidenceMatcher{neverMatch, neverMatch},
+			wantNil:  false,
+		},
+		{
+			name:     "one matcher matches — blocked",
+			matchers: []EvidenceMatcher{neverMatch, alwaysMatch},
+			wantNil:  true,
+		},
+		{
+			name:     "all matchers match — blocked",
+			matchers: []EvidenceMatcher{alwaysMatch, alwaysMatch},
+			wantNil:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := MatchNone(tt.matchers...)(Classifier{}, MatcherContext{})
+			require.NoError(t, err)
+			if tt.wantNil {
+				assert.Nil(t, result)
+			} else {
+				assert.NotNil(t, result)
+			}
+		})
+	}
+}
+
 func Test_SupportingEvidenceMatcher(t *testing.T) {
 
 	tests := []struct {
@@ -244,39 +293,3 @@ func Test_SupportingEvidenceMatcher(t *testing.T) {
 	}
 }
 
-func TestMatchNone(t *testing.T) {
-	matchingMatcher := MatchPath("**")
-	notMatchingMatcher := MatchPath("will-not-match")
-
-	tests := []struct {
-		name     string
-		matcher  EvidenceMatcher
-		expected bool // true if MatchNone should succeed (inner failed)
-	}{
-		{
-			name:     "inner matches, MatchNone fails",
-			matcher:  MatchNone(matchingMatcher),
-			expected: false,
-		},
-		{
-			name:     "inner fails, MatchNone succeeds",
-			matcher:  MatchNone(notMatchingMatcher),
-			expected: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pkgs, err := tt.matcher(Classifier{}, MatcherContext{
-				Location: file.NewLocation("some/path"),
-			})
-			require.NoError(t, err)
-			if tt.expected {
-				assert.NotNil(t, pkgs)
-				assert.Empty(t, pkgs)
-			} else {
-				assert.Nil(t, pkgs)
-			}
-		})
-	}
-}
