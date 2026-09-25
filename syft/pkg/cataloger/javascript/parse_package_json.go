@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -60,6 +61,15 @@ var authorPattern = regexp.MustCompile(`^\s*(?P<name>[^<(]*)(\s+<(?P<email>.*)>)
 
 // parsePackageJSON parses a package.json and returns the discovered JavaScript packages.
 func parsePackageJSON(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+	// Composer vendor/<vendor>/<pkg>/package.json files belong to PHP
+	// packages that happen to ship a bundled JS manifest. Treating them
+	// as independent npm packages leads to false-positive npm CVEs, see
+	// anchore/grype#3279. Skip these when a sibling composer.json makes
+	// it unambiguous that the vendor tree is composer-managed.
+	if isComposerVendoredPackageJSON(resolver, reader.Location.RealPath) {
+		return nil, nil, nil
+	}
+
 	var pkgs []pkg.Package
 	dec := json.NewDecoder(reader)
 
@@ -244,4 +254,38 @@ func (p people) String() string {
 		authorStrings[i] = auth.AuthorString()
 	}
 	return strings.Join(authorStrings, ", ")
+}
+
+// isComposerVendoredPackageJSON returns true when the given package.json
+// path looks like it was installed by Composer (PHP's package manager)
+// rather than by npm. Composers install layout is:
+//
+//	<project>/vendor/<vendor>/<pkg>/...
+//
+// and a composer.json sits at the project root. When we see a
+// package.json under .../vendor/<vendor>/<pkg>/ AND the project root
+// carries a composer.json, we treat that package.json as a PHP-owned
+// artefact and skip it so its contents do not leak into the npm CVE
+// matcher (see anchore/grype#3279).
+func isComposerVendoredPackageJSON(resolver file.Resolver, p string) bool {
+	if resolver == nil || p == "" {
+		return false
+	}
+	cleaned := path.Clean(p)
+	if path.Base(cleaned) != "package.json" {
+		return false
+	}
+	pkgDir := path.Dir(cleaned)               // .../vendor/<vendor>/<pkg>
+	vendorNameDir := path.Dir(pkgDir)         // .../vendor/<vendor>
+	vendorDir := path.Dir(vendorNameDir)      // .../vendor
+	projectRoot := path.Dir(vendorDir)        // ...
+	if path.Base(vendorDir) != "vendor" || projectRoot == "" {
+		return false
+	}
+	composerPath := path.Join(projectRoot, "composer.json")
+	locs, err := resolver.FilesByPath(composerPath)
+	if err != nil || len(locs) == 0 {
+		return false
+	}
+	return true
 }
