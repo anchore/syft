@@ -314,3 +314,40 @@ func TestDecodeLicenses(t *testing.T) {
 		})
 	}
 }
+
+func Test_mergeSPDX(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected string
+	}{
+		{
+			// without the parens this reads as
+			// "((GPL-3.0-only AND MIT-0) AND MIT) OR (Apache-2.0 AND BSD-3-Clause)",
+			// so Apache-2.0 plus BSD-3-Clause alone would satisfy it
+			name:     "expression with a top-level OR is wrapped",
+			input:    []string{"MIT OR (Apache-2.0 AND BSD-3-Clause)", "GPL-3.0-only AND MIT-0"},
+			expected: "(MIT OR (Apache-2.0 AND BSD-3-Clause)) AND (GPL-3.0-only AND MIT-0)",
+		},
+		{
+			name:     "top-level AND keeps the text it has today",
+			input:    []string{"ISC AND (BSD-3-Clause OR MIT)", "GPL-3.0-only AND MIT-0"},
+			expected: "ISC AND (BSD-3-Clause OR MIT) AND (GPL-3.0-only AND MIT-0)",
+		},
+		{
+			name:     "single expression is unwrapped by reduceOuter",
+			input:    []string{"MIT OR Apache-2.0"},
+			expected: "MIT OR Apache-2.0",
+		},
+		{
+			name:     "plain ids",
+			input:    []string{"MIT", "Apache-2.0"},
+			expected: "(MIT) AND (Apache-2.0)",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, mergeSPDX(test.input))
+		})
+	}
+}
