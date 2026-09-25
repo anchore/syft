@@ -163,6 +163,7 @@ var defaultArtifactIDToGroupID = map[string]string{
 	"tomcat-catalina-jmx-remote":                  "org.apache.tomcat",
 	"tomcat-catalina-ws":                          "org.apache.tomcat",
 	"tomcat-coyote":                               "org.apache.tomcat",
+	"tomcat-coyote-ffm":                           "org.apache.tomcat",
 	"tomcat-dbcp":                                 "org.apache.tomcat",
 	"tomcat-el-api":                               "org.apache.tomcat",
 	"tomcat-i18n-cs":                              "org.apache.tomcat",

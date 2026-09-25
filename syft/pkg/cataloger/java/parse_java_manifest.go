@@ -145,6 +145,48 @@ func extractNameFromApacheMavenBundlePlugin(manifest *pkg.JavaManifest) string {
 	return ""
 }
 
+// extractNameFromOSGiBundleName returns the maven artifact ID declared by an OSGi bundle that was not
+// built with the Apache Maven Bundle Plugin. Projects that hand-write their OSGi headers set Bundle-Name
+// to the artifact ID and compose Bundle-SymbolicName as "<prefix><separator><artifact ID>". Apache Tomcat
+// does this for every jar it ships:
+//
+//	Bundle-Name:         tomcat-catalina
+//	Bundle-SymbolicName: org.apache.tomcat-catalina
+//
+// Bundle-Name on its own is not trustworthy, since it is often a human readable title (catalina.jar's
+// sibling tomcat-jdbc.jar uses "Apache Tomcat JDBC Connection Pool"), so only use it when the symbolic
+// name is built from it. When the two agree the manifest is a better source for the artifact ID than the
+// filename, which is frequently a shortened alias: catalina.jar is org.apache.tomcat:tomcat-catalina.
+func extractNameFromOSGiBundleName(manifest *pkg.JavaManifest) string {
+	if manifest == nil {
+		return ""
+	}
+
+	bundleName := manifest.Main.MustGet("Bundle-Name")
+	symbolicName := removeOSCIDirectives(manifest.Main.MustGet("Bundle-SymbolicName"))
+
+	if bundleName == "" || symbolicName == "" || bundleName == symbolicName {
+		return ""
+	}
+
+	// artifact IDs do not contain whitespace, but bundle titles do
+	if strings.ContainsFunc(bundleName, unicode.IsSpace) {
+		return ""
+	}
+
+	if !strings.HasSuffix(symbolicName, bundleName) {
+		return ""
+	}
+
+	// require a separator between the prefix and the artifact ID, otherwise this is a coincidental suffix
+	// match (Bundle-Name "log" against Bundle-SymbolicName "org.example.catalog")
+	if separator := symbolicName[len(symbolicName)-len(bundleName)-1]; separator != '.' && separator != '-' {
+		return ""
+	}
+
+	return bundleName
+}
+
 func extractNameFromArchiveFilename(a archiveFilename) string {
 	if strings.Contains(a.name, ".") {
 		// special case: this *might* be a group id + artifact id. By convention artifact ids do not have "." in them;
@@ -190,6 +232,11 @@ func isValidJavaIdentifier(field string) bool {
 
 func selectName(manifest *pkg.JavaManifest, filenameObj archiveFilename) string {
 	name := extractNameFromApacheMavenBundlePlugin(manifest)
+	if name != "" {
+		return name
+	}
+
+	name = extractNameFromOSGiBundleName(manifest)
 	if name != "" {
 		return name
 	}
