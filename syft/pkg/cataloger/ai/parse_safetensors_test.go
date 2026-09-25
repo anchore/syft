@@ -1066,6 +1066,12 @@ func TestParseFrontmatter(t *testing.T) {
 			input:   "---\nlicense: mit\n",
 			wantNil: true,
 		},
+		{
+			// https://github.com/anchore/syft/issues/5327
+			name:    "malformed frontmatter that panics the yaml decoder",
+			input:   "---\n<<:\r? 0:\n---\nbody",
+			wantNil: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1155,6 +1161,12 @@ limitations:
 		{
 			name:  "unterminated frontmatter block",
 			input: "---\nspdx-id: MIT\n(never closes)\n",
+			want:  "",
+		},
+		{
+			// https://github.com/anchore/syft/issues/5327
+			name:  "malformed frontmatter that panics the yaml decoder",
+			input: "---\n<<:\r? 0:\n---\nbody\n",
 			want:  "",
 		},
 	}
