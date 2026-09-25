@@ -34,6 +34,8 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
 	}
 
+	removeNilElements(doc)
+
 	spdxIDMap := make(map[string]any)
 
 	s := &sbom.SBOM{
@@ -53,6 +55,28 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 	s.Relationships = toSyftRelationships(spdxIDMap, doc)
 
 	return s, nil
+}
+
+// removeNilElements drops null entries from the document's lists. A JSON null (or an element the SPDX version
+// converter cannot map) decodes to a nil pointer, and the rest of the conversion dereferences these elements.
+func removeNilElements(doc *spdx.Document) {
+	doc.Packages = withoutNil(doc.Packages)
+	for _, p := range doc.Packages {
+		p.Files = withoutNil(p.Files)
+		p.PackageExternalReferences = withoutNil(p.PackageExternalReferences)
+	}
+	doc.Files = withoutNil(doc.Files)
+	doc.Relationships = withoutNil(doc.Relationships)
+}
+
+func withoutNil[T any](items []*T) []*T {
+	var out []*T
+	for _, item := range items {
+		if item != nil {
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 func isDirectory(name string) bool {
@@ -201,7 +225,7 @@ func fileSource(p *spdx.Package) source.Description {
 	}
 
 	supplier := ""
-	if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+	if p.PackageSupplier != nil && p.PackageSupplier.Supplier != helpers.NOASSERTION {
 		supplier = p.PackageSupplier.Supplier
 	}
 
