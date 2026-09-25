@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -191,12 +192,9 @@ func hasInstalledESMPackage(packages *pkg.Collection) bool {
 	if packages == nil {
 		return false
 	}
-	for p := range packages.Enumerate(pkg.DebPkg) {
-		if esmVersionPattern.MatchString(p.Version) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(packages.Sorted(pkg.DebPkg), func(p pkg.Package) bool {
+		return esmVersionPattern.MatchString(p.Version)
+	})
 }
 
 func fileMatchesAny(resolver file.Resolver, location file.Location, patterns ...*regexp.Regexp) (bool, error) {
