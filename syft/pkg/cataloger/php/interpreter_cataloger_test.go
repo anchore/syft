@@ -3,6 +3,10 @@ package php
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )
 
@@ -146,4 +150,17 @@ func Test_InterpreterCataloger(t *testing.T) {
 				TestCataloger(t, c)
 		})
 	}
+}
+
+func Test_getClassifier_declaredCPESource(t *testing.T) {
+	// regression test for https://github.com/anchore/syft/issues/5014
+	// the CPE assigned to a PHP extension must be declared (not generated) so that downstream CPE
+	// generation does not also add a misleading CPE derived from the bare extension name alone
+	// (e.g. cpe:2.3:a:openssl:openssl:... for the openssl extension, implying the upstream OpenSSL project).
+	c := interpreterCataloger{name: "php-interpreter-cataloger"}
+	name, cls := c.getClassifier("/usr/lib/php85/modules/openssl.so")
+	require.Equal(t, "openssl", name)
+	require.NotNil(t, cls)
+	require.Len(t, cls.CPEs, 1)
+	assert.Equal(t, cpe.DeclaredSource, cls.CPEs[0].Source)
 }
