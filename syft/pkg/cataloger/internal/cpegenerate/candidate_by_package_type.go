@@ -336,6 +336,17 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateAddition{AdditionalVendors: []string{"haxx"}},
 		},
 		{
+			// libpcap is maintained by the tcpdump project and NVD
+			// records the CVEs under vendor "tcpdump", e.g.
+			// cpe:2.3:a:tcpdump:libpcap:*. Without this hint syft
+			// generates cpe:2.3:a:libpcap:libpcap:* from the Alpine
+			// package name, which NVD does not match, so grype
+			// reports zero vulnerabilities for libpcap (see #4712).
+			pkg.ApkPkg,
+			candidateKey{PkgName: "libpcap"},
+			candidateAddition{AdditionalVendors: []string{"tcpdump"}},
+		},
+		{
 			pkg.ApkPkg,
 			candidateKey{PkgName: "python3"},
 			candidateAddition{AdditionalProducts: []string{"python"}, AdditionalVendors: []string{"python", "python_software_foundation"}},
