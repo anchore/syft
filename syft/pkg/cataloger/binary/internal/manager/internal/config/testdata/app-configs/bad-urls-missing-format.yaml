@@ -1,0 +1,9 @@
+download-path: classifiers/bin
+snippet-path: classifiers/snippets
+
+from-urls:
+  - name: kubelet
+    version: 1.28.0
+    targets:
+      - url: https://dl.k8s.io/v1.28.0/kubernetes-node-linux-amd64.tar.gz
+        platform: linux/amd64
