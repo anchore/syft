@@ -518,6 +518,11 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "libxml2"},
 			candidateAddition{AdditionalVendors: []string{"xmlsoft"}},
 		},
+		{
+			pkg.ConanPkg,
+			candidateKey{PkgName: "expat"},
+			candidateAddition{AdditionalVendors: []string{"libexpat_project"}, AdditionalProducts: []string{"libexpat"}},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(
