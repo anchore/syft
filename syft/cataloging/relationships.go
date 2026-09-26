@@ -13,13 +13,19 @@ type RelationshipsConfig struct {
 	// For example, if a binary package representing the /bin/python binary is discovered and there is a python RPM package installed which claims to
 	// orn /bin/python, then the binary package will be excluded from the catalog altogether if this configuration is set to true.
 	ExcludeBinaryPackagesWithFileOwnershipOverlap bool `yaml:"exclude-binary-packages-with-file-ownership-overlap" json:"exclude-binary-packages-with-file-ownership-overlap" mapstructure:"exclude-binary-packages-with-file-ownership-overlap"`
+
+	// ExcludeLanguagePackagesWithFileOwnershipOverlap will exclude language packages from the package catalog that are evident by files also owned by another package.
+	// For example, if a Python package is discovered via pip and there is a python3-django deb package installed which claims to own the same files,
+	// then the Python package will be excluded from the catalog altogether if this configuration is set to true.
+	ExcludeLanguagePackagesWithFileOwnershipOverlap bool `yaml:"exclude-language-packages-with-file-ownership-overlap" json:"exclude-language-packages-with-file-ownership-overlap" mapstructure:"exclude-language-packages-with-file-ownership-overlap"`
 }
 
 func DefaultRelationshipsConfig() RelationshipsConfig {
 	return RelationshipsConfig{
-		PackageFileOwnership:                          true,
-		PackageFileOwnershipOverlap:                   true,
-		ExcludeBinaryPackagesWithFileOwnershipOverlap: true,
+		PackageFileOwnership:                            true,
+		PackageFileOwnershipOverlap:                     true,
+		ExcludeBinaryPackagesWithFileOwnershipOverlap:   true,
+		ExcludeLanguagePackagesWithFileOwnershipOverlap: false,
 	}
 }
 
@@ -35,5 +41,10 @@ func (c RelationshipsConfig) WithPackageFileOwnershipOverlap(overlap bool) Relat
 
 func (c RelationshipsConfig) WithExcludeBinaryPackagesWithFileOwnershipOverlap(exclude bool) RelationshipsConfig {
 	c.ExcludeBinaryPackagesWithFileOwnershipOverlap = exclude
+	return c
+}
+
+func (c RelationshipsConfig) WithExcludeLanguagePackagesWithFileOwnershipOverlap(exclude bool) RelationshipsConfig {
+	c.ExcludeLanguagePackagesWithFileOwnershipOverlap = exclude
 	return c
 }
