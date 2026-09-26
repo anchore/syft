@@ -928,6 +928,39 @@ func TestGeneratePackageCPEs(t *testing.T) {
 	}
 }
 
+func TestTomcatEmbeddedCPEs(t *testing.T) {
+	packageFor := func(artifactID string) pkg.Package {
+		return pkg.Package{
+			Name:     artifactID,
+			Version:  "11.0.20",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.apache.tomcat.embed",
+					ArtifactID: artifactID,
+				},
+			},
+		}
+	}
+
+	hasCPE := func(cpes []cpe.CPE, vendor, product string) bool {
+		for _, generated := range cpes {
+			if generated.Attributes.Vendor == vendor && generated.Attributes.Product == product {
+				return true
+			}
+		}
+		return false
+	}
+
+	elCPEs := FromPackageAttributes(packageFor("tomcat-embed-el"))
+	assert.False(t, hasCPE(elCPEs, "apache", "tomcat"), "EL-only module should not inherit the server CPE")
+	assert.True(t, hasCPE(elCPEs, "apache", "tomcat-embed-el"), "keep the artifact-specific CPE candidate")
+
+	coreCPEs := FromPackageAttributes(packageFor("tomcat-embed-core"))
+	assert.True(t, hasCPE(coreCPEs, "apache", "tomcat"), "core module should retain the Tomcat server CPE")
+}
+
 func TestCandidateProducts(t *testing.T) {
 	tests := []struct {
 		name     string
