@@ -60,11 +60,136 @@ func Test_productsFromArtifactAndGroupIDs(t *testing.T) {
 			artifactID: "failureaccess",
 			expected:   []string{"failureaccess"},
 		},
+		{
+			groupIDs:   []string{"org.eclipse.jetty"},
+			artifactID: "jetty-server",
+			expected:   []string{"jetty-server", "jetty"},
+		},
+		{
+			groupIDs:   []string{"org.eclipse.jetty.ee10"},
+			artifactID: "jetty-ee10-servlet",
+			expected:   []string{"jetty-ee10-servlet", "jetty"},
+		},
+		{
+			groupIDs:   []string{"org.apache.tomcat.embed"},
+			artifactID: "tomcat-embed-core",
+			expected:   []string{"tomcat-embed-core", "tomcat"},
+		},
+		{
+			// spring-boot vs springboot
+			groupIDs:   []string{"org.apache.camel.springboot"},
+			artifactID: "camel-spring-boot",
+			expected:   []string{"camel-spring-boot", "camel"},
+		},
+		{
+			groupIDs:   []string{"org.eclipse.jetty.toolchain"},
+			artifactID: "jetty-schemas",
+			expected:   []string{"jetty-schemas"},
+		},
+		{
+			groupIDs:   []string{"org.eclipse.jetty.schemas"},
+			artifactID: "jetty-schemas",
+			expected:   []string{"jetty-schemas", "schemas"},
+		},
+		{
+			groupIDs:   []string{"org.eclipse.jetty.toolchain.setuid"},
+			artifactID: "jetty-setuid-java",
+			expected:   []string{"jetty-setuid-java"},
+		},
+		{
+			groupIDs:   []string{"org.eclipse.jetty.infinispan.common"},
+			artifactID: "infinispan-common",
+			expected:   []string{"infinispan-common", "common"},
+		},
+		{
+			groupIDs:   []string{"org.apache.hadoop.thirdparty"},
+			artifactID: "hadoop-shaded-guava",
+			expected:   []string{"hadoop-shaded-guava"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(strings.Join(test.groupIDs, ",")+":"+test.artifactID, func(t *testing.T) {
 			actual := productsFromArtifactAndGroupIDs(test.artifactID, test.groupIDs)
 			assert.ElementsMatch(t, test.expected, actual, "different products")
+		})
+	}
+}
+
+func Test_belongsToGroupIDProject(t *testing.T) {
+	tests := []struct {
+		name       string
+		artifactID string
+		field      string
+		nested     []string
+		expected   bool
+	}{
+		{
+			name:       "published directly under the project groupID",
+			artifactID: "jetty-server",
+			field:      "jetty",
+			expected:   true,
+		},
+		{
+			name:       "component naming its nested segment",
+			artifactID: "jetty-ee10-servlet",
+			field:      "jetty",
+			nested:     []string{"ee10"},
+			expected:   true,
+		},
+		{
+			name:       "tomcat embed component",
+			artifactID: "tomcat-embed-core",
+			field:      "tomcat",
+			nested:     []string{"embed"},
+			expected:   true,
+		},
+		{
+			name:       "component naming its nested segment with delimiters",
+			artifactID: "camel-spring-boot",
+			field:      "camel",
+			nested:     []string{"springboot"},
+			expected:   true,
+		},
+		{
+			name:       "nested segment not acknowledged",
+			artifactID: "jetty-schemas",
+			field:      "jetty",
+			nested:     []string{"toolchain"},
+			expected:   false,
+		},
+		{
+			name:       "artifact is the nested sub-project itself",
+			artifactID: "jetty-schemas",
+			field:      "jetty",
+			nested:     []string{"schemas"},
+			expected:   false,
+		},
+		{
+			name:       "multiple nested segments, none acknowledged",
+			artifactID: "jetty-setuid-java",
+			field:      "jetty",
+			nested:     []string{"toolchain", "setuid"},
+			expected:   false,
+		},
+		{
+			name:       "integration module is the nested sub-project itself",
+			artifactID: "infinispan-common",
+			field:      "infinispan",
+			nested:     []string{"common"},
+			expected:   false,
+		},
+		{
+			name:       "shaded third-party repackaging",
+			artifactID: "hadoop-shaded-guava",
+			field:      "hadoop",
+			nested:     []string{"thirdparty"},
+			expected:   false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := belongsToGroupIDProject(test.artifactID, test.field, test.nested)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -97,6 +222,43 @@ func Test_candidateProductsForJava(t *testing.T) {
 				},
 			},
 			expected: []string{"nexus"},
+		},
+		{
+			// both gid sources yield "jetty"
+			name: "artifact under a nested groupID does not claim the umbrella product",
+			pkg: pkg.Package{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
+						GroupID:    "org.eclipse.jetty.toolchain",
+						ArtifactID: "jetty-schemas",
+					},
+					Manifest: &pkg.JavaManifest{
+						Main: pkg.KeyValues{
+							{Key: "Bundle-Name", Value: "Jetty Servlet Schemas"},
+							{Key: "Bundle-SymbolicName", Value: "org.eclipse.jetty.schemas;singleton:=true"},
+							{Key: "Implementation-Vendor", Value: "Eclipse.org - Jetty"},
+						},
+					},
+				},
+			},
+			expected: []string{"jetty-schemas", "schemas"},
+		},
+		{
+			name: "genuine project component keeps the umbrella product",
+			pkg: pkg.Package{
+				Metadata: pkg.JavaArchive{
+					PomProperties: &pkg.JavaPomProperties{
+						GroupID:    "org.eclipse.jetty",
+						ArtifactID: "jetty-server",
+					},
+					Manifest: &pkg.JavaManifest{
+						Main: pkg.KeyValues{
+							{Key: "Bundle-SymbolicName", Value: "org.eclipse.jetty.server"},
+						},
+					},
+				},
+			},
+			expected: []string{"jetty-server", "jetty", "server"},
 		},
 	}
 	for _, test := range tests {
