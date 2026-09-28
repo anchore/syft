@@ -53,7 +53,7 @@ func main() {
 					raceFlag = " -race"
 				}
 				Run(
-					"go test -count=1 -timeout=30m -v"+raceFlag+" ./cmd/syft/internal/test/integration/...",
+					"go test -count=1 -timeout=30m"+raceFlag+" ./cmd/syft/internal/test/integration/...",
 					run.Env("GODEBUG", "dontfreezetheworld=1"),
 				)
 			},
