@@ -55,6 +55,12 @@ func finalizeRelationships(resolver file.Resolver, builder sbomsync.Builder, cfg
 		relationship.ExcludeBinariesByFileOwnershipOverlap(accessor)
 	}
 
+	// conditionally remove language packages based on file ownership overlap relationships found
+	// https://github.com/anchore/syft/issues/4760
+	if cfg.ExcludeLanguagePackagesWithFileOwnershipOverlap {
+		relationship.ExcludeLanguagePackagesByFileOwnershipOverlap(accessor)
+	}
+
 	// add the new relationships for executables to the SBOM
 	newBinaryRelationships := binary.NewDependencyRelationships(resolver, accessor)
 	accessor.WriteToSBOM(func(s *sbom.SBOM) {
