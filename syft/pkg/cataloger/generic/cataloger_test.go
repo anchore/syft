@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/anchore/go-sync"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -190,10 +189,100 @@ func TestClosesFileOnParserPanic(t *testing.T) {
 
 	_, _, err := c.Catalog(ctx, resolver)
 	require.Error(t, err)
-	var panicErr sync.PanicError
-	require.ErrorAs(t, err, &panicErr)
-	assert.Equal(t, "panic!", panicErr.Value)
+	var coordErr *unknown.CoordinateError
+	require.ErrorAs(t, err, &coordErr)
+	assert.ErrorContains(t, err, "recovered from panic while parsing file: panic!")
 	require.True(t, spy.closed)
+}
+
+func TestParserPanicBecomesUnknown(t *testing.T) {
+	tests := []struct {
+		name    string
+		doPanic func()
+		wantErr string
+	}{
+		{
+			name:    "string panic",
+			doPanic: func() { panic("boom") },
+			wantErr: "boom",
+		},
+		{
+			name: "runtime panic",
+			doPanic: func() {
+				var m map[string]int
+				m["x"] = 1
+			},
+			wantErr: "assignment to entry in nil map",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := func(_ context.Context, _ file.Resolver, _ *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+				if reader.Path() == "testdata/another-path.txt" {
+					tt.doPanic()
+				}
+				return []pkg.Package{{Name: "good", Locations: file.NewLocationSet(reader.Location)}}, nil, nil
+			}
+
+			resolver := file.NewMockResolverForPaths("testdata/a-path.txt", "testdata/another-path.txt")
+			c := NewCataloger("unit-test-cataloger").
+				WithParserByPath(parser, "testdata/a-path.txt", "testdata/another-path.txt")
+
+			pkgs, _, err := c.Catalog(context.Background(), resolver)
+
+			require.Len(t, pkgs, 1)
+			assert.Equal(t, "good", pkgs[0].Name)
+
+			unknowns, remaining := unknown.ExtractCoordinateErrors(err)
+			require.NoError(t, remaining)
+			require.Len(t, unknowns, 1)
+			assert.Equal(t, "testdata/another-path.txt", unknowns[0].Coordinates.RealPath)
+			assert.ErrorContains(t, unknowns[0].Reason, tt.wantErr)
+		})
+	}
+}
+
+func TestProcessorPanicKeepsResults(t *testing.T) {
+	parser := func(_ context.Context, _ file.Resolver, _ *Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+		return []pkg.Package{{Name: "good", Locations: file.NewLocationSet(reader.Location)}}, nil, nil
+	}
+
+	tests := []struct {
+		name      string
+		cataloger *Cataloger
+	}{
+		{
+			name: "processor",
+			cataloger: NewCataloger("unit-test-cataloger").
+				WithParserByPath(parser, "testdata/a-path.txt").
+				WithProcessors(func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error) {
+					panic("boom")
+				}),
+		},
+		{
+			name: "resolving processor",
+			cataloger: NewCataloger("unit-test-cataloger").
+				WithParserByPath(parser, "testdata/a-path.txt").
+				WithResolvingProcessors(func(context.Context, file.Resolver, []pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error) {
+					var m map[string]int
+					m["x"] = 1
+					return nil, nil, nil
+				}),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolver := file.NewMockResolverForPaths("testdata/a-path.txt")
+
+			pkgs, _, err := tt.cataloger.Catalog(context.Background(), resolver)
+
+			require.NoError(t, err)
+			require.Len(t, pkgs, 1)
+			assert.Equal(t, "good", pkgs[0].Name)
+		})
+	}
 }
 
 func Test_CatalogerWithParserByMediaType(t *testing.T) {
