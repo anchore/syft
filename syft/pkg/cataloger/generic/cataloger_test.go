@@ -248,9 +248,17 @@ func TestProcessorPanicKeepsResults(t *testing.T) {
 		return []pkg.Package{{Name: "good", Locations: file.NewLocationSet(reader.Location)}}, nil, nil
 	}
 
+	rename := func(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
+		for i := range pkgs {
+			pkgs[i].Name = "processed"
+		}
+		return pkgs, rels, err
+	}
+
 	tests := []struct {
 		name      string
 		cataloger *Cataloger
+		want      string
 	}{
 		{
 			name: "processor",
@@ -259,6 +267,17 @@ func TestProcessorPanicKeepsResults(t *testing.T) {
 				WithProcessors(func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error) {
 					panic("boom")
 				}),
+			want: "good",
+		},
+		{
+			// output from earlier processors survives a later processor panicking
+			name: "chained processors",
+			cataloger: NewCataloger("unit-test-cataloger").
+				WithParserByPath(parser, "testdata/a-path.txt").
+				WithProcessors(rename, func([]pkg.Package, []artifact.Relationship, error) ([]pkg.Package, []artifact.Relationship, error) {
+					panic("boom")
+				}),
+			want: "processed",
 		},
 		{
 			name: "resolving processor",
@@ -269,6 +288,7 @@ func TestProcessorPanicKeepsResults(t *testing.T) {
 					m["x"] = 1
 					return nil, nil, nil
 				}),
+			want: "good",
 		},
 	}
 
@@ -280,7 +300,7 @@ func TestProcessorPanicKeepsResults(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Len(t, pkgs, 1)
-			assert.Equal(t, "good", pkgs[0].Name)
+			assert.Equal(t, tt.want, pkgs[0].Name)
 		})
 	}
 }
