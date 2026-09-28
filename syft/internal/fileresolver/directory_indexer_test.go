@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -18,6 +17,7 @@ import (
 	"github.com/wagoodman/go-progress"
 
 	"github.com/anchore/stereoscope/pkg/file"
+	"github.com/anchore/syft/syft/internal/windows"
 )
 
 type indexerMock struct {
@@ -209,11 +209,7 @@ func TestDirectoryIndexer_index(t *testing.T) {
 			info, err := os.Stat(test.path)
 			assert.NoError(t, err)
 
-			// note: the index uses absolute paths, so assertions MUST keep this in mind
-			cwd, err := os.Getwd()
-			require.NoError(t, err)
-
-			p := file.Path(path.Join(cwd, test.path))
+			p := indexedPath(t, test.path)
 			assert.Equal(t, true, tree.HasPath(p))
 			exists, ref, err := tree.File(p)
 			assert.Equal(t, true, exists)
@@ -229,6 +225,9 @@ func TestDirectoryIndexer_index(t *testing.T) {
 }
 
 func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fixture relies on symlinks, which git does not check out as links on windows by default")
+	}
 	// note: this test is testing the effects from NewFromDirectory, indexTree, and addPathToIndex
 	_, filename, _, ok := runtime.Caller(0)
 	require.True(t, ok)
@@ -259,11 +258,7 @@ func TestDirectoryIndexer_index_for_AncestorSymlinks(t *testing.T) {
 			info, err := os.Stat(test.path)
 			assert.NoError(t, err)
 
-			// note: the index uses absolute paths, so assertions MUST keep this in mind
-			cwd, err := os.Getwd()
-			require.NoError(t, err)
-
-			p := file.Path(path.Join(cwd, test.path))
+			p := indexedPath(t, test.path)
 			assert.Equal(t, true, tree.HasPath(p))
 			exists, ref, err := tree.File(p)
 			assert.Equal(t, true, exists)
@@ -290,6 +285,9 @@ func TestDirectoryIndexer_index_survive_badSymlink(t *testing.T) {
 }
 
 func TestDirectoryIndexer_index_survive_inaccessibleSymlinkTarget(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("relies on symlinks and posix permissions")
+	}
 	// a symlink that resolves into a directory we don't have permission to traverse should be skipped
 	// with a warning like any other inaccessible path, not abort the entire scan (see #3286).
 	if os.Geteuid() == 0 {
@@ -326,6 +324,9 @@ func TestDirectoryIndexer_index_survive_inaccessibleSymlinkTarget(t *testing.T) 
 }
 
 func TestDirectoryIndexer_SkipsAlreadyVisitedLinkDestinations(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fixture relies on symlinks, which git does not check out as links on windows by default")
+	}
 	var observedPaths []string
 	pathObserver := func(_, p string, _ os.FileInfo, _ error) error {
 		fields := strings.Split(p, "testdata/symlinks-prune-indexing")
@@ -488,6 +489,9 @@ func Test_allContainedPaths(t *testing.T) {
 }
 
 func Test_relativePath(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("exercises a posix-only test helper")
+	}
 	tests := []struct {
 		name      string
 		basePath  string
@@ -550,4 +554,16 @@ func relativePath(basePath, givenPath string) string {
 	}
 
 	return relPath
+}
+
+// indexedPath returns how the given cwd-relative path is keyed in the index (absolute and always posix)
+func indexedPath(t *testing.T, rel string) file.Path {
+	t.Helper()
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+	p := filepath.Join(cwd, rel)
+	if windows.HostRunningOnWindows() {
+		p = windows.ToPosix(p)
+	}
+	return file.Path(p)
 }

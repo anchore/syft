@@ -245,7 +245,7 @@ func allContainedPaths(p string) []string {
 	}
 
 	// iterate through all parts of the path, replacing path elements with link resolutions where possible.
-	for idx, part := range strings.Split(filepath.Clean(cleanPath), file.DirSeparator) {
+	for idx, part := range strings.Split(path.Clean(filepath.ToSlash(cleanPath)), file.DirSeparator) {
 		if idx == 0 && part == "" {
 			currentPath = file.DirSeparator
 			continue

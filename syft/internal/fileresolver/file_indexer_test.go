@@ -3,13 +3,11 @@ package fileresolver
 import (
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/anchore/stereoscope/pkg/file"
 )
 
 // - Verify that both the parent and the path are indexed
@@ -38,11 +36,7 @@ func Test_index(t *testing.T) {
 			info, err := os.Stat(test.path)
 			assert.NoError(t, err)
 
-			// note: the index uses absolute paths, so assertions MUST keep this in mind
-			cwd, err := os.Getwd()
-			require.NoError(t, err)
-
-			p := file.Path(path.Join(cwd, test.path))
+			p := indexedPath(t, test.path)
 			assert.Equal(t, true, tree.HasPath(p))
 			exists, ref, err := tree.File(p)
 			assert.Equal(t, true, exists)
@@ -71,7 +65,7 @@ func Test_ignoresPathIfFiltered(t *testing.T) {
 	testPath := "testdata/system_paths/target/home/place"
 	cwd, cwdErr := os.Getwd()
 	require.NoError(t, cwdErr)
-	ignorePath := path.Join(cwd, testPath)
+	ignorePath := filepath.Join(cwd, testPath)
 	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path == ignorePath {
 			return ErrSkipPath
@@ -91,7 +85,7 @@ func Test_ignoresPathIfParentFiltered(t *testing.T) {
 
 	cwd, cwdErr := os.Getwd()
 	require.NoError(t, cwdErr)
-	ignorePath := path.Join(cwd, parentPath)
+	ignorePath := filepath.Join(cwd, parentPath)
 	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path == ignorePath {
 			return fs.SkipDir
