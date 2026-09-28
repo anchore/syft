@@ -138,6 +138,9 @@ func TestDirectoryIndexer_handleFileAccessErr(t *testing.T) {
 }
 
 func TestDirectoryIndexer_IncludeRootPathInIndex(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("indexes the posix filesystem root")
+	}
 	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path != "/" {
 			return fs.SkipDir

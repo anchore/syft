@@ -567,6 +567,9 @@ func TestNewChrootContext_BaseValidation(t *testing.T) {
 }
 
 func TestToNativeGlob(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chroot context and expectations are posix paths")
+	}
 	tests := []struct {
 		name           string
 		chrootContext  ChrootContext
