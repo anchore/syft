@@ -14,10 +14,8 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// Docker AI OCI media types used by Docker Model Runner artifacts. These mirror
-// the layer types in syft/source/ocimodelsource/registry_client.go.
+// Docker AI OCI media types used by Docker Model Runner artifacts.
 const (
-	dockerAIGGUFMediaType        = "application/vnd.docker.ai.gguf.v3"
 	dockerAIModelFileMediaType   = "application/vnd.docker.ai.model.file"
 	dockerAILicenseMediaType     = "application/vnd.docker.ai.license"
 	dockerAISafeTensorsMediaType = "application/vnd.docker.ai.safetensors"

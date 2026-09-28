@@ -8,7 +8,7 @@ import (
 // ggufMergeProcessor consolidates multiple GGUF packages into a single package
 // representing the AI model. When scanning OCI images with multiple layers,
 // each layer may produce a separate package. This processor finds the package
-// with a name and merges metadata from nameless packages into its GGUFFileParts field.
+// with a name and merges metadata from nameless packages into its Parts field.
 // Only packages with a non-empty name are returned in the final result.
 func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
 	// don't early-return on err: it aggregates per-file failures, and skipping the
@@ -18,7 +18,7 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 		return pkgs, rels, err
 	}
 
-	// Separate packages with names from those without
+	// separate packages with names from those without
 	var namedPkgs []pkg.Package
 	var namelessHeaders []pkg.GGUFFileHeader
 
@@ -27,14 +27,14 @@ func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err er
 			namedPkgs = append(namedPkgs, p)
 		} else {
 			if header, ok := p.Metadata.(pkg.GGUFFileHeader); ok {
-				// We do not want a kv hash for nameless headers
+				// we do not want a kv hash for nameless headers
 				header.MetadataKeyValuesHash = ""
 				namelessHeaders = append(namelessHeaders, header)
 			}
 		}
 	}
 
-	// If there are no named packages, return nothing
+	// if there are no named packages, return nothing
 	if len(namedPkgs) == 0 {
 		return nil, rels, err
 	}

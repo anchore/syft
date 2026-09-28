@@ -12,6 +12,11 @@ import (
 const (
 	catalogerName            = "gguf-cataloger"
 	safeTensorsCatalogerName = "safetensors-cataloger"
+
+	// dockerAIGGUFMediaType mirrors ggufLayerMediaType in
+	// syft/source/ocimodelsource/registry_client.go. It is matched exactly: the
+	// other application/vnd.docker.ai.* layers are not GGUF.
+	dockerAIGGUFMediaType = "application/vnd.docker.ai.gguf.v3"
 )
 
 // NewGGUFCataloger returns a new cataloger instance for GGUF model files.
