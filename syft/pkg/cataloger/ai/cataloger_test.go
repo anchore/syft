@@ -1,9 +1,15 @@
 package ai
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/syft/internal/fileresolver"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
@@ -137,4 +143,26 @@ func TestGGUFCataloger(t *testing.T) {
 				TestCataloger(t, NewGGUFCataloger())
 		})
 	}
+}
+
+func TestGGUFCataloger_ignoresNonGGUFDockerAILayers(t *testing.T) {
+	// a safetensors OCI artifact carries config, model.file, license and weight
+	// layers under application/vnd.docker.ai.*; none of them are GGUF.
+	dir := t.TempDir()
+	layers := map[string]fileresolver.LayerInfo{}
+	for digest, mediaType := range map[string]string{
+		"sha256:config":  dockerAIModelConfigMediaTypes[0],
+		"sha256:file":    dockerAIModelFileMediaType,
+		"sha256:license": dockerAILicenseMediaType,
+		"sha256:weights": dockerAISafeTensorsMediaType,
+	} {
+		p := filepath.Join(dir, digest[len("sha256:"):])
+		require.NoError(t, os.WriteFile(p, []byte("not a gguf file"), 0o600))
+		layers[digest] = fileresolver.LayerInfo{TempPath: p, MediaType: mediaType}
+	}
+	resolver := fileresolver.NewContainerImageModel(dir, layers, "example/model:latest")
+
+	pkgs, _, err := NewGGUFCataloger().Catalog(context.Background(), resolver)
+	require.NoError(t, err)
+	assert.Empty(t, pkgs)
 }

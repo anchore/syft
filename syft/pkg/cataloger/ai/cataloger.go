@@ -11,7 +11,6 @@ import (
 
 const (
 	catalogerName            = "gguf-cataloger"
-	ggufLayerMediaType       = "application/vnd.docker.ai*"
 	safeTensorsCatalogerName = "safetensors-cataloger"
 )
 
@@ -21,7 +20,7 @@ const (
 func NewGGUFCataloger() pkg.Cataloger {
 	return generic.NewCataloger(catalogerName).
 		WithParserByGlobs(parseGGUFModel, "**/*.gguf").
-		WithParserByMediaType(parseGGUFModel, ggufLayerMediaType).
+		WithParserByMediaType(parseGGUFModel, dockerAIGGUFMediaType).
 		WithProcessors(ggufMergeProcessor)
 }
 

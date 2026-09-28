@@ -8,15 +8,16 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// Docker AI OCI media types used by Docker Model Runner artifacts.
+// Docker AI OCI media types used by Docker Model Runner artifacts. These mirror
+// the layer types in syft/source/ocimodelsource/registry_client.go.
 const (
+	dockerAIGGUFMediaType        = "application/vnd.docker.ai.gguf.v3"
 	dockerAIModelFileMediaType   = "application/vnd.docker.ai.model.file"
 	dockerAILicenseMediaType     = "application/vnd.docker.ai.license"
 	dockerAISafeTensorsMediaType = "application/vnd.docker.ai.safetensors"
@@ -81,7 +82,7 @@ func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.En
 		&md,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse docker AI safetensors config")
+	return []pkg.Package{p}, nil, nil
 }
 
 // parseSafeTensorsOCILayer decodes the JSON header of a SafeTensors weight
@@ -94,11 +95,12 @@ func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Env
 		return nil, nil, fmt.Errorf("failed to read safetensors layer header: %w", err)
 	}
 
+	params, dtype := header.parameterStats()
 	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		TensorCount:  uint64(len(header.tensors)),
-		Parameters:   header.parameterCount(),
-		Quantization: normalizeDType(header.dominantDType()),
+		Parameters:   params,
+		Quantization: normalizeDType(dtype),
 		UserMetadata: userMetadataKeyValues(header.metadata),
 		MetadataHash: header.metadataHash(),
 	}
