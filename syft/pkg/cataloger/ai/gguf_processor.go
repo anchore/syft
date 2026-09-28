@@ -11,9 +11,9 @@ import (
 // with a name and merges metadata from nameless packages into its GGUFFileParts field.
 // Only packages with a non-empty name are returned in the final result.
 func ggufMergeProcessor(pkgs []pkg.Package, rels []artifact.Relationship, err error) ([]pkg.Package, []artifact.Relationship, error) {
-	if err != nil {
-		return pkgs, rels, err
-	}
+	// don't early-return on err: it aggregates per-file failures, and skipping the
+	// merge would drop every nameless layer and the named package's Parts along
+	// with it (see safeTensorsMergeProcessor).
 	if len(pkgs) == 0 {
 		return pkgs, rels, err
 	}
