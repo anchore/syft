@@ -216,5 +216,6 @@ func (r ChrootContext) ToChrootPath(nativePath string) string {
 		responsePath = strings.TrimPrefix(responsePath, prefix)
 	}
 
-	return responsePath
+	// chroot paths are posix regardless of host (these end up as location paths in the SBOM)
+	return filepath.ToSlash(responsePath)
 }

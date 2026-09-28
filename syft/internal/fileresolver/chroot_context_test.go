@@ -3,6 +3,7 @@ package fileresolver
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,9 @@ import (
 )
 
 func Test_ChrootContext_RequestResponse(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fixture relies on symlinks, which git does not check out as links on windows by default")
+	}
 	// /
 	//   somewhere/
 	//     outside.txt

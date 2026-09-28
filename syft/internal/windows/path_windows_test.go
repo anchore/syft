@@ -25,6 +25,9 @@ func TestFromPosix(t *testing.T) {
 		"/c/some/windows/place": `C:\some\windows\place`,
 		"/c/Foo/bAr":            `C:\Foo\bAr`,
 		"/c/ふー/バー":              `C:\ふー\バー`,
+		// non volume-encoded input is left alone
+		"relative/path":     "relative/path",
+		`D:\already\native`: `D:\already\native`,
 	}
 	for in, want := range tests {
 		assert.Equal(t, want, FromPosix(in), in)

@@ -216,7 +216,7 @@ func cleanDirPath(path, base string) string {
 
 			relPath, err := filepath.Rel(cleanBase, cleanRoot)
 			if err == nil {
-				path = relPath
+				path = filepath.ToSlash(relPath)
 			}
 			// this is odd, but this means we can't use base
 		}
