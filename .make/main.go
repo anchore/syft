@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -92,6 +93,23 @@ func main() {
 				Run(
 					"go test -count=1 -timeout=15m -v ./test/cli",
 					run.Env("SYFT_BINARY_LOCATION", bin),
+				)
+			},
+		},
+
+		// windows unit tests: deliberately not hooked into "test" (no RunsOn). The full unit suite leans on
+		// linux docker fixture images and posix-only assumptions, so this covers the packages that own
+		// host path handling (where windows bugs live) and skips the tests that need docker image fixtures.
+		// ponytail: curated package list, widen it as more of the suite is made windows-safe.
+		Task{
+			Name:        "unit:windows",
+			Description: "run the windows-relevant subset of unit tests",
+			Run: func() {
+				Run("go test -count=1"+
+					` -skip "Image|Squash|AllLayers|MixFileTypes|GivenCoordinates"`+
+					" ./syft/internal/windows/... ./syft/internal/fileresolver/... ./syft/source/directorysource/... ./syft/source/filesource/..."+
+					" ./syft/file ./syft/file/cataloger/filedigest/... ./syft/file/cataloger/filecontent/...",
+					run.Stdout(os.Stderr),
 				)
 			},
 		},
