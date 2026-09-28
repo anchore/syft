@@ -25,17 +25,7 @@ func parseSafeTensorsFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 		return nil, nil, fmt.Errorf("failed to read safetensors header: %w", err)
 	}
 
-	// ShardCount is intentionally not set here: the merge processor is the single
-	// owner of ShardCount and derives it from the number of shards in the group.
-	params, dtype := header.parameterStats()
-	md := pkg.SafeTensorsModelInfo{
-		Format:       "safetensors",
-		TensorCount:  uint64(len(header.tensors)),
-		Parameters:   params,
-		Quantization: normalizeDType(dtype),
-		UserMetadata: userMetadataKeyValues(header.metadata),
-		MetadataHash: header.metadataHash(),
-	}
+	md := header.modelInfo()
 
 	p := newSafeTensorsPackage(
 		&md,

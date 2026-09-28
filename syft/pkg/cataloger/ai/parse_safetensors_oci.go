@@ -95,15 +95,7 @@ func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Env
 		return nil, nil, fmt.Errorf("failed to read safetensors layer header: %w", err)
 	}
 
-	params, dtype := header.parameterStats()
-	md := pkg.SafeTensorsModelInfo{
-		Format:       "safetensors",
-		TensorCount:  uint64(len(header.tensors)),
-		Parameters:   params,
-		Quantization: normalizeDType(dtype),
-		UserMetadata: userMetadataKeyValues(header.metadata),
-		MetadataHash: header.metadataHash(),
-	}
+	md := header.modelInfo()
 
 	p := newSafeTensorsPackage(
 		&md,

@@ -86,6 +86,20 @@ func readSafeTensorsHeader(r io.Reader) (*safeTensorsHeader, error) {
 	return h, nil
 }
 
+// modelInfo returns the metadata derivable from the header bytes alone. Naming,
+// licenses and ShardCount are left to the merge processor.
+func (h *safeTensorsHeader) modelInfo() pkg.SafeTensorsModelInfo {
+	params, dtype := h.parameterStats()
+	return pkg.SafeTensorsModelInfo{
+		Format:       "safetensors",
+		TensorCount:  uint64(len(h.tensors)),
+		Parameters:   params,
+		Quantization: normalizeDType(dtype),
+		UserMetadata: userMetadataKeyValues(h.metadata),
+		MetadataHash: h.metadataHash(),
+	}
+}
+
 // parameterStats sums the element counts across all tensors and returns the
 // dtype that accounts for the largest share of them. For mixed-precision models
 // the "dominant" dtype is still a useful summary. Totals saturate rather than wrap.
