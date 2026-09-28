@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -28,11 +27,12 @@ func parseSafeTensorsFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 
 	// ShardCount is intentionally not set here: the merge processor is the single
 	// owner of ShardCount and derives it from the number of shards in the group.
+	params, dtype := header.parameterStats()
 	md := pkg.SafeTensorsModelInfo{
 		Format:       "safetensors",
 		TensorCount:  uint64(len(header.tensors)),
-		Parameters:   header.parameterCount(),
-		Quantization: normalizeDType(header.dominantDType()),
+		Parameters:   params,
+		Quantization: normalizeDType(dtype),
 		UserMetadata: userMetadataKeyValues(header.metadata),
 		MetadataHash: header.metadataHash(),
 	}
@@ -41,7 +41,7 @@ func parseSafeTensorsFile(_ context.Context, _ file.Resolver, _ *generic.Environ
 		&md,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse safetensors file")
+	return []pkg.Package{p}, nil, nil
 }
 
 // integrity check

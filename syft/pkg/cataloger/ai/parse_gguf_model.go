@@ -15,7 +15,6 @@ import (
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -79,6 +78,7 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 
 	// Create package from metadata
 	p := newGGUFPackage(
+		ctx,
 		syftMetadata,
 		metadata.Name,
 		modelVersion,
@@ -86,7 +86,7 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
 
-	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse GGUF file")
+	return []pkg.Package{p}, nil, nil
 }
 
 // computeKVMetadataHash computes a stable hash of the KV metadata for use as a global identifier

@@ -45,7 +45,7 @@ func copyHeader(w io.Writer, r io.Reader) error {
 	return nil
 }
 
-// Helper to convert gguf_parser metadata to simpler types
+// helper to convert gguf_parser metadata to simpler types
 func convertGGUFMetadataKVs(kvs gguf_parser.GGUFMetadataKVs) map[string]any {
 	result := make(map[string]any)
 
