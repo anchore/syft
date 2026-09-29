@@ -7,11 +7,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // section describes one section to place in a fixture. The compression headers are deliberately
@@ -341,6 +342,9 @@ func TestNewFile_RejectsOversizedReachableSections(t *testing.T) {
 				// the fixtures are hand-assembled ELF bytes, so a bad one would satisfy require.Error on
 				// its own. Naming the section proves the rejection is the one we set up, and naming the
 				// limit proves it came from this package rather than from debug/elf.
+				// the sentinel is what the callers key their reporting on, so it is asserted here rather
+				// than only from the packages downstream that consume it
+				assert.ErrorIs(t, err, ErrDeclaredSizeExceeded)
 				assert.Contains(t, err.Error(), tt.wantErr)
 				assert.Contains(t, err.Error(), fmt.Sprint(maxDeclaredSectionSize))
 			})
@@ -540,13 +544,10 @@ func TestNewFile_BombDoesNotAllocate(t *testing.T) {
 		{name: ".strtab", typ: elf.SHT_STRTAB},
 	}, buildOpts{})
 
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-
-	_, err := NewFile(bytes.NewReader(data))
-
-	runtime.ReadMemStats(&after)
+	var err error
+	allocated := testutils.MeasureAlloc(t, func() {
+		_, err = NewFile(bytes.NewReader(data))
+	})
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "over the")
@@ -554,7 +555,7 @@ func TestNewFile_BombDoesNotAllocate(t *testing.T) {
 	// the guard has to reject before the allocation, not after it. The margin is loose on purpose: this
 	// is asserting "nothing near the declared size was allocated", not a precise budget.
 	const margin = 32 * 1024 * 1024
-	assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(margin),
+	assert.Less(t, allocated, uint64(margin),
 		"parsing allocated far more than the input warrants")
 }
 
@@ -608,6 +609,87 @@ func TestNewFile_ExtendedShnumOverflowStillChecks(t *testing.T) {
 
 	_, err := NewFile(bytes.NewReader(data))
 	require.Error(t, err, "a bogus section count must not disable the check")
+}
+
+// TestCheckAllSections covers the standalone gate, used by callers whose debug/elf parse happens inside
+// another package (goversion, here) rather than through NewFile.
+func TestCheckAllSections(t *testing.T) {
+	tests := []struct {
+		name string
+		data func(t *testing.T) []byte
+		// wantErr is empty when CheckAllSections must return nil.
+		wantErr string
+		// nameTableMisses marks a fixture CheckSectionNameTable alone does not reject, since the oversized
+		// section here is one debug/elf only expands lazily, after the parse CheckAllSections goes on to do.
+		nameTableMisses bool
+	}{
+		{
+			name: "non-ELF reader",
+			data: func(t *testing.T) []byte { return []byte("not an elf") },
+		},
+		{
+			name: "valid ident but a body elf.NewFile cannot parse",
+			data: func(t *testing.T) []byte {
+				full := buildELF(t, elf.ELFCLASS64, binary.LittleEndian, nil, buildOpts{})
+				truncated := full[:binary.Size(elf.Header64{})+4]
+				_, err := elf.NewFile(bytes.NewReader(truncated))
+				require.Error(t, err, "fixture is supposed to be rejected by debug/elf")
+				return truncated
+			},
+		},
+		{
+			name: "clean small ELF",
+			data: func(t *testing.T) []byte {
+				data := buildELF(t, elf.ELFCLASS64, binary.LittleEndian,
+					[]section{{name: ".text", typ: elf.SHT_PROGBITS, flags: elf.SHF_ALLOC}}, buildOpts{})
+				_, err := elf.NewFile(bytes.NewReader(data))
+				require.NoError(t, err, "fixture is supposed to be a file debug/elf accepts")
+				return data
+			},
+		},
+		{
+			name: "oversized section name table",
+			data: func(t *testing.T) []byte {
+				return buildELF(t, elf.ELFCLASS64, binary.LittleEndian, nil,
+					buildOpts{nameTable: &section{compressed: true, declaredSize: overLimit}})
+			},
+			wantErr: "section name table",
+		},
+		{
+			name: "oversized .symtab, expanded lazily rather than during the parse",
+			data: func(t *testing.T) []byte {
+				data := buildELF(t, elf.ELFCLASS64, binary.LittleEndian, []section{
+					{name: ".symtab", typ: elf.SHT_SYMTAB, link: 2, compressed: true, declaredSize: overLimit},
+					{name: ".strtab", typ: elf.SHT_STRTAB},
+				}, buildOpts{})
+				_, err := elf.NewFile(bytes.NewReader(data))
+				require.NoError(t, err, "fixture is supposed to be a file debug/elf accepts")
+				return data
+			},
+			wantErr:         `".symtab"`,
+			nameTableMisses: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := tt.data(t)
+
+			if tt.nameTableMisses {
+				require.NoError(t, CheckSectionNameTable(bytes.NewReader(data)),
+					"the name table check alone doesn't reach a section debug/elf only expands lazily")
+			}
+
+			err := CheckAllSections(bytes.NewReader(data))
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrDeclaredSizeExceeded)
+			assert.Contains(t, err.Error(), tt.wantErr)
+		})
+	}
 }
 
 func TestNewFile_PassesThroughNonELF(t *testing.T) {

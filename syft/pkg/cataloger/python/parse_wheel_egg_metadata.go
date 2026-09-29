@@ -1,7 +1,6 @@
 package python
 
 import (
-	"bufio"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/go-viper/mapstructure/v2"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -68,7 +68,7 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 
 	// though this spec is governed by RFC 5322 (mail message), the metadata files are not guaranteed to be compliant.
 	// We must survive parsing as much info as possible without failing and dropping the data.
-	scanner := bufio.NewScanner(locationReader)
+	scanner := internal.NewLineScanner(locationReader)
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimRight(line, "\n")
@@ -107,6 +107,10 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 				log.Debugf("cannot parse field from path: %q from line: %q", locationReader.Path(), line)
 			}
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		// the caller discards everything on error, so keep the partial fields and log instead
+		log.WithFields("path", locationReader.Path(), "error", err).Debug("failed to fully read python wheel/egg metadata")
 	}
 	return fields, nil
 }

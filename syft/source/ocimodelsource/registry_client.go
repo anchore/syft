@@ -16,6 +16,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"github.com/anchore/stereoscope/pkg/image"
+	"github.com/anchore/syft/internal"
 )
 
 // errNotModelArtifact is returned when a reference does not point to a model artifact.
@@ -37,17 +38,20 @@ const (
 	modelFormatGGUF        = "gguf"
 	modelFormatSafeTensors = "safetensors"
 
-	// maxWeightHeaderBytes is the leading slice we range-GET from a (multi-GB)
-	// weight layer — enough to cover the GGUF/safetensors header. Note this is
-	// smaller than the ai cataloger's own maxSafeTensorsHeaderSize (100 MB) parse
-	// ceiling: a safetensors header between the two is parseable from a directory
-	// scan but truncated here, so its shard would go uncounted on an OCI scan.
-	// Keep this comfortably above real-world header sizes.
-	maxWeightHeaderBytes = 8 * 1024 * 1024 // 8 MB
+	// maxGGUFHeaderBytes is the leading slice we range-GET from a (multi-GB)
+	// GGUF weight layer, enough to cover its header. See
+	// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#file-structure
+	maxGGUFHeaderBytes = 8 * 1024 * 1024 // 8 MB
+
+	// maxSafeTensorsHeaderBytes is the leading slice we range-GET from a
+	// safetensors weight layer: the 8-byte length prefix plus the same header
+	// ceiling the ai cataloger applies to directory scans.
+	maxSafeTensorsHeaderBytes = internal.MaxSafeTensorsHeaderSize + 8
 
 	// maxCompanionBytes caps a whole companion blob (README, config.json,
-	// license); these are small by convention. Matches the 4 MB read cap in
-	// classifyOCIModelFileLayer.
+	// license); these are small by convention. It is the upper bound of the ai
+	// cataloger's per-layer caps. One extra byte is fetched so the cataloger can
+	// tell an oversized blob from one that is exactly at the cap.
 	maxCompanionBytes = 4 * 1024 * 1024 // 4 MB
 )
 
@@ -279,9 +283,6 @@ func (c *registryClient) fetchBlobRange(ctx context.Context, ref name.Reference,
 	}
 	defer reader.Close()
 
-	// Note: this is not some arbitrary number picked out of the blue.
-	// This is based on the specification of header data found here:
-	// https://github.com/ggml-org/ggml/blob/master/docs/gguf.md#file-structure
 	data := make([]byte, maxBytes)
 	n, err := io.ReadFull(reader, data)
 

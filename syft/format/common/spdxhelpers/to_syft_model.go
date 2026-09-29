@@ -34,6 +34,8 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 		return nil, errors.New("cannot convert SPDX document to Syft model because document is nil")
 	}
 
+	removeNilElements(doc)
+
 	spdxIDMap := make(map[string]any)
 
 	s := &sbom.SBOM{
@@ -53,6 +55,28 @@ func ToSyftModel(doc *spdx.Document) (*sbom.SBOM, error) {
 	s.Relationships = toSyftRelationships(spdxIDMap, doc)
 
 	return s, nil
+}
+
+// removeNilElements drops null entries from the document's lists. A JSON null (or an element the SPDX version
+// converter cannot map) decodes to a nil pointer, and the rest of the conversion dereferences these elements.
+func removeNilElements(doc *spdx.Document) {
+	doc.Packages = withoutNil(doc.Packages)
+	for _, p := range doc.Packages {
+		p.Files = withoutNil(p.Files)
+		p.PackageExternalReferences = withoutNil(p.PackageExternalReferences)
+	}
+	doc.Files = withoutNil(doc.Files)
+	doc.Relationships = withoutNil(doc.Relationships)
+}
+
+func withoutNil[T any](items []*T) []*T {
+	var out []*T
+	for _, item := range items {
+		if item != nil {
+			out = append(out, item)
+		}
+	}
+	return out
 }
 
 func isDirectory(name string) bool {
@@ -83,20 +107,30 @@ func removeRelationships(relationships []*spdx.Relationship, spdxID spdx.Element
 }
 
 func findRootPackages(doc *spdx.Document) (out []*spdx.Package) {
+	// index the DESCRIBES / DESCRIBED_BY relationships once, counting how many
+	// times each element is described by the document, so that the result
+	// matches the previous packages x relationships scan exactly (one entry per
+	// matching relationship) without the quadratic cost.
+	describedCount := make(map[spdx.ElementID]int)
+	for _, r := range doc.Relationships {
+		if r == nil {
+			continue
+		}
+		switch {
+		case r.RefA.ElementRefID == "DOCUMENT" && r.Relationship == spdx.RelationshipDescribes:
+			describedCount[r.RefB.ElementRefID]++
+		case r.RefB.ElementRefID == "DOCUMENT" && r.Relationship == spdx.RelationshipDescribedBy:
+			describedCount[r.RefA.ElementRefID]++
+		}
+	}
+	if len(describedCount) == 0 {
+		return nil
+	}
 	for _, p := range doc.Packages {
-		for _, r := range doc.Relationships {
-			describes := r.RefA.ElementRefID == "DOCUMENT" &&
-				r.Relationship == spdx.RelationshipDescribes &&
-				r.RefB.ElementRefID == p.PackageSPDXIdentifier
-
-			describedBy := r.RefB.ElementRefID == "DOCUMENT" &&
-				r.Relationship == spdx.RelationshipDescribedBy &&
-				r.RefA.ElementRefID == p.PackageSPDXIdentifier
-
-			if !describes && !describedBy {
-				continue
-			}
-
+		if p == nil {
+			continue
+		}
+		for i := 0; i < describedCount[p.PackageSPDXIdentifier]; i++ {
 			out = append(out, p)
 		}
 	}
@@ -191,7 +225,7 @@ func fileSource(p *spdx.Package) source.Description {
 	}
 
 	supplier := ""
-	if p.PackageSupplier.Supplier != helpers.NOASSERTION {
+	if p.PackageSupplier != nil && p.PackageSupplier.Supplier != helpers.NOASSERTION {
 		supplier = p.PackageSupplier.Supplier
 	}
 

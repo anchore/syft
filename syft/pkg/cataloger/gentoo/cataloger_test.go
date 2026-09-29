@@ -3,6 +3,8 @@ package gentoo
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -169,4 +171,17 @@ func TestCataloger_Globs(t *testing.T) {
 				TestCataloger(t, NewPortageCataloger())
 		})
 	}
+}
+
+func TestPortageCataloger_ShortObjLine(t *testing.T) {
+	// obj lines missing their path or digest are skipped rather than indexed past their end
+	pkgtest.NewCatalogTester().
+		FromDirectory(t, "testdata/short-obj-line").
+		ExpectsAssertion(func(t *testing.T, pkgs []pkg.Package, _ []artifact.Relationship) {
+			require.Len(t, pkgs, 1)
+			m := pkgs[0].Metadata.(pkg.PortageEntry)
+			require.Len(t, m.Files, 1)
+			require.Equal(t, "/usr/bin/bar", m.Files[0].Path)
+		}).
+		TestCataloger(t, NewPortageCataloger())
 }

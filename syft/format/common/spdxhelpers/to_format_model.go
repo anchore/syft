@@ -581,10 +581,13 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 		})
 	case pkg.OpamPackage:
 		for _, checksum := range meta.Checksums {
-			parts := strings.Split(checksum, "=")
+			algorithm, value, ok := strings.Cut(checksum, "=")
+			if !ok {
+				continue
+			}
 			checksums = append(checksums, spdx.Checksum{
-				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(parts[0])),
-				Value:     parts[1],
+				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(algorithm)),
+				Value:     value,
 			})
 		}
 	}
