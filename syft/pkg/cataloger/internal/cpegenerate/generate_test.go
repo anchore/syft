@@ -1265,3 +1265,14 @@ func TestAddBinaryPackageDigitVariations(t *testing.T) {
 		})
 	}
 }
+
+func TestFromPackageAttributes_boundsSubSelectionBlowup(t *testing.T) {
+	// a name with thousands of separators used to produce a candidate per segment, and the vendor x product
+	// cross-product of those was roughly cubic in time and memory.
+	name := strings.Repeat("a_", 256) + "a"
+	p := pkg.Package{Name: name, Version: "1.0", Type: pkg.PythonPkg, Language: pkg.Python}
+
+	cpes := FromPackageAttributes(p)
+	assert.NotEmpty(t, cpes)
+	assert.LessOrEqual(t, len(cpes), 1000)
+}

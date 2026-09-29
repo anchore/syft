@@ -359,13 +359,18 @@ func addAllSubSelections(fields fieldCandidateSet) {
 	}
 }
 
+// maxSubSelections bounds how many prefixes generateSubSelections returns. Every prefix becomes both a vendor and a
+// product candidate and FromPackageAttributes takes the cross-product of those, so an unbounded count on a name with
+// thousands of separators is roughly cubic in time and memory. Real package names are nowhere near this many segments.
+const maxSubSelections = 10
+
 // generateSubSelections attempts to split a field by hyphens and underscores and return a list of sensible sub-selections
 // that can be used as product or vendor candidates. E.g. jenkins-ci-tools -> [jenkins-ci-tools, jenkins-ci, jenkins].
 func generateSubSelections(field string) (results []string) {
 	scanner := bufio.NewScanner(strings.NewReader(field))
 	scanner.Split(scanByHyphenOrUnderscore)
 	var lastToken uint8
-	for scanner.Scan() {
+	for len(results) < maxSubSelections && scanner.Scan() {
 		rawCandidate := scanner.Text()
 		if len(rawCandidate) == 0 {
 			break
