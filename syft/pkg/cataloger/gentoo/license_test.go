@@ -181,3 +181,10 @@ func TestReplaceLicenseGroups(t *testing.T) {
 		})
 	}
 }
+
+func Test_extractLicenses_tokenTooLong(t *testing.T) {
+	// a nil location must not panic when the scan fails partway through
+	license := "MIT " + strings.Repeat("a", 2<<20)
+	_, expression := extractLicenses(nil, nil, strings.NewReader(license))
+	assert.Equal(t, "MIT", expression)
+}

@@ -70,7 +70,11 @@ func extractLicenses(resolver file.Resolver, closestLocation *file.Location, rea
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		log.WithFields("path", closestLocation.RealPath, "error", err).Debug("failed to fully read portage LICENSE")
+		fields := []any{"error", err}
+		if closestLocation != nil {
+			fields = append(fields, "path", closestLocation.RealPath)
+		}
+		log.WithFields(fields...).Debug("failed to fully read portage LICENSE")
 	}
 
 	var licenseGroups map[string][]string
