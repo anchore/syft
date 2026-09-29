@@ -129,6 +129,80 @@ func TestParseUvLock(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, uvLockParser.parseUvLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParseUvLockForkedVersions(t *testing.T) {
+	fixture := "testdata/uv/forked-versions/uv.lock"
+	locations := file.NewLocationSet(file.NewLocation(fixture))
+	index := "https://pypi.org/simple"
+
+	numpy126 := pkg.Package{
+		Name:      "numpy",
+		Version:   "1.26.4",
+		Locations: locations,
+		PURL:      "pkg:pypi/numpy@1.26.4",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  pkg.PythonUvLockEntry{Index: index},
+	}
+	numpy226 := pkg.Package{
+		Name:      "numpy",
+		Version:   "2.2.6",
+		Locations: locations,
+		PURL:      "pkg:pypi/numpy@2.2.6",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata:  pkg.PythonUvLockEntry{Index: index},
+	}
+	pandas233 := pkg.Package{
+		Name:      "pandas",
+		Version:   "2.3.3",
+		Locations: locations,
+		PURL:      "pkg:pypi/pandas@2.3.3",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata: pkg.PythonUvLockEntry{
+			Index: index,
+			Dependencies: []pkg.PythonUvLockDependencyEntry{
+				{Name: "numpy", Version: "1.26.4", Markers: "python_full_version < '3.10'"},
+			},
+		},
+	}
+	pandas306 := pkg.Package{
+		Name:      "pandas",
+		Version:   "3.0.6",
+		Locations: locations,
+		PURL:      "pkg:pypi/pandas@3.0.6",
+		Language:  pkg.Python,
+		Type:      pkg.PythonPkg,
+		Metadata: pkg.PythonUvLockEntry{
+			Index: index,
+			Dependencies: []pkg.PythonUvLockDependencyEntry{
+				{Name: "numpy", Version: "2.2.6", Markers: "python_full_version >= '3.10'"},
+			},
+		},
+	}
+
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: numpy126,
+			To:   pandas233,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
+			From: numpy226,
+			To:   pandas306,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	uvLockParser := newUvLockParser(DefaultCatalogerConfig())
+	pkgtest.TestFileParser(t, fixture, uvLockParser.parseUvLock, []pkg.Package{
+		numpy126,
+		numpy226,
+		pandas233,
+		pandas306,
+	}, expectedRelationships)
+}
+
 func TestParseUvLockWithLicenseEnrichment(t *testing.T) {
 	ctx := context.TODO()
 	fixture := "testdata/pypi-remote/uv.lock"

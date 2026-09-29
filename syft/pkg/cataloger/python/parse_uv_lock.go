@@ -47,6 +47,7 @@ type uvPackage struct {
 
 type uvDependencies []struct {
 	Name    string   `toml:"name"`
+	Version string   `toml:"version"`
 	Extras  []string `toml:"extra"`
 	Markers string   `toml:"marker"`
 }
@@ -106,12 +107,16 @@ func extractUvDependencies(p uvPackage) []pkg.PythonUvLockDependencyEntry {
 	for _, d := range p.Dependencies {
 		deps = append(deps, pkg.PythonUvLockDependencyEntry{
 			Name:    d.Name,
+			Version: d.Version,
 			Extras:  d.Extras,
 			Markers: d.Markers,
 		})
 	}
 	sort.Slice(deps, func(i, j int) bool {
-		return deps[i].Name < deps[j].Name
+		if deps[i].Name != deps[j].Name {
+			return deps[i].Name < deps[j].Name
+		}
+		return deps[i].Version < deps[j].Version
 	})
 	return deps
 }
@@ -167,14 +172,6 @@ func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.Location
 		return nil, fmt.Errorf("failed to parse uv lock packages: %w", err)
 	}
 
-	// The uv lock file doesn't store the dependency version in the dependency structure.
-	// Thus, we need a name -> version map for invoking extractUvDependencies.
-	// We then, of course, have to pass it down the call stack.
-	var pkgVerMap = make(map[string]string)
-	for _, p := range parsedLockFile.Packages {
-		pkgVerMap[p.Name] = p.Version
-	}
-
 	var pkgs []pkg.Package
 	for _, p := range parsedLockFile.Packages {
 		pkgs = append(pkgs,
@@ -208,6 +205,9 @@ func uvLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolin
 	}
 
 	provides := []string{packageRef(p.Name, "")}
+	if strings.TrimSpace(p.Version) != "" {
+		provides = append(provides, uvLockPackageRef(p.Name, p.Version, ""))
+	}
 
 	var requires []string
 
@@ -216,18 +216,22 @@ func uvLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolin
 			continue
 		}
 
-		requires = append(requires, packageRef(dep.Name, ""))
+		requires = append(requires, uvLockPackageRef(dep.Name, dep.Version, ""))
 
 		for _, extra := range dep.Extras {
-			requires = append(requires, packageRef(dep.Name, extra))
+			requires = append(requires, uvLockPackageRef(dep.Name, dep.Version, extra))
 		}
 	}
 
 	var variants []dependency.ProvidesRequires
 	for _, extra := range meta.Extras {
+		variantProvides := []string{packageRef(p.Name, extra.Name)}
+		if strings.TrimSpace(p.Version) != "" {
+			variantProvides = append(variantProvides, uvLockPackageRef(p.Name, p.Version, extra.Name))
+		}
 		variants = append(variants,
 			dependency.ProvidesRequires{
-				Provides: []string{packageRef(p.Name, extra.Name)},
+				Provides: variantProvides,
 				Requires: extractPackageNames(extra.Dependencies),
 			},
 		)
@@ -240,4 +244,13 @@ func uvLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolin
 		},
 		Variants: variants,
 	}
+}
+
+func uvLockPackageRef(name, version, extra string) string {
+	ref := packageRef(name, extra)
+	version = strings.TrimSpace(version)
+	if version == "" {
+		return ref
+	}
+	return ref + "@" + version
 }
