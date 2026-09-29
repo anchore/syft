@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/debug"
+	"runtime/metrics"
 	"runtime/pprof"
 	"sort"
 	"strconv"
@@ -169,13 +170,29 @@ func runFuzzTarget(t *testing.T, ft fuzzTarget, data []byte) {
 		done <- ft.task.Execute(ctx, resolver, sbomsync.NewBuilder(&sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}))
 	}()
 
-	select {
-	case err = <-done:
-	case <-time.After(fuzzTimeout):
-		// not every parser watches ctx, so a hung one keeps running and would skew every later input in this
-		// process. Dump where it is stuck and take the process down; the fuzz engine records that as a crasher.
-		_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)
-		panic(fmt.Sprintf("%s: input of %d bytes did not finish within %s", ft, len(data), fuzzTimeout))
+	limit := uint64(fuzzAllocBase + fuzzAllocPerByte*len(data))
+	heap := []metrics.Sample{{Name: "/memory/classes/heap/objects:bytes"}}
+	tick := time.NewTicker(50 * time.Millisecond)
+	defer tick.Stop()
+	deadline := time.After(fuzzTimeout)
+wait:
+	for {
+		select {
+		case err = <-done:
+			break wait
+		case <-tick.C:
+			// the after-the-fact TotalAlloc check below can't stop a parser that is on its way to exhausting the
+			// machine, so watch the live heap while it runs and take the process down once it passes the limit
+			if metrics.Read(heap); heap[0].Value.Uint64() > limit {
+				_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)
+				panic(fmt.Sprintf("%s: input of %d bytes grew the live heap to %d MB (limit %d MB)", ft, len(data), heap[0].Value.Uint64()>>20, limit>>20))
+			}
+		case <-deadline:
+			// not every parser watches ctx, so a hung one keeps running and would skew every later input in this
+			// process. Dump where it is stuck and take the process down; the fuzz engine records that as a crasher.
+			_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)
+			panic(fmt.Sprintf("%s: input of %d bytes did not finish within %s", ft, len(data), fuzzTimeout))
+		}
 	}
 
 	// a panic recovered further down (a go-sync PanicError, or the generic per-file recover) still surfaces as an error
@@ -186,7 +203,7 @@ func runFuzzTarget(t *testing.T, ft fuzzTarget, data []byte) {
 	// TotalAlloc is cumulative, so this bounds churn rather than peak, and it is read after the fact: a single huge
 	// allocation kills the process before this check, which the fuzz engine still records as a crasher
 	runtime.ReadMemStats(&after)
-	if alloc, limit := after.TotalAlloc-before.TotalAlloc, uint64(fuzzAllocBase+fuzzAllocPerByte*len(data)); alloc > limit {
+	if alloc := after.TotalAlloc - before.TotalAlloc; alloc > limit {
 		t.Fatalf("%s: input of %d bytes allocated %d MB (limit %d MB)", ft, len(data), alloc>>20, limit>>20)
 	}
 }
