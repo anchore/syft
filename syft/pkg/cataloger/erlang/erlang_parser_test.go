@@ -2,6 +2,7 @@ package erlang
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,4 +128,28 @@ func Test_parseErlangString_escapedByte(t *testing.T) {
 	got, err := parseErlangString(data, &i)
 	require.NoError(t, err)
 	assert.Equal(t, `a"b`, got.String())
+}
+
+func Test_parseErlang_truncated(t *testing.T) {
+	// each of these read past the end of the input before end-of-input was checked
+	tests := []struct {
+		name    string
+		content string
+		wantErr require.ErrorAssertionFunc
+	}{
+		{name: "whitespace only", content: " ", wantErr: require.Error},
+		{name: "unterminated list", content: "[a", wantErr: require.Error},
+		{name: "unterminated empty list", content: "[ ", wantErr: require.Error},
+		{name: "lone binary string opener", content: "<", wantErr: require.Error},
+		{name: "comment ending in CR", content: "%\r", wantErr: require.NoError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var err error
+			require.NotPanics(t, func() {
+				_, err = parseErlang(strings.NewReader(tt.content))
+			})
+			tt.wantErr(t, err)
+		})
+	}
 }

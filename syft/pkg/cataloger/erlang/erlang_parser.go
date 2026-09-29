@@ -15,6 +15,8 @@ type erlangNode struct {
 
 var errSkipComments = errors.New("")
 
+var errUnexpectedEnd = errors.New("unexpected end of input")
+
 func (e erlangNode) Slice() []erlangNode {
 	out, ok := e.value.([]erlangNode)
 	if ok {
@@ -91,11 +93,17 @@ func parseErlangBlock(data []byte, i *int) (erlangNode, error) {
 
 func parseErlangNode(data []byte, i *int) (erlangNode, error) {
 	parsing.SkipWhitespace(data, i)
+	if *i >= len(data) {
+		return node(nil), errUnexpectedEnd
+	}
 	c := data[*i]
 	switch c {
 	case '[', '{':
 		offset := *i + 1
 		parsing.SkipWhitespace(data, &offset)
+		if offset >= len(data) {
+			return node(nil), errUnexpectedEnd
+		}
 		c2 := data[offset]
 
 		// Add support for empty lists
@@ -145,6 +153,9 @@ func parseErlangAngleString(data []byte, i *int) (erlangNode, error) {
 }
 
 func parseErlangString(data []byte, i *int) (erlangNode, error) {
+	if *i >= len(data) {
+		return node(nil), errUnexpectedEnd
+	}
 	delim := data[*i]
 	*i++
 	var buf bytes.Buffer
@@ -183,6 +194,9 @@ func parseErlangList(data []byte, i *int) (erlangNode, error) {
 		}
 		out.value = append(out.value.([]erlangNode), item)
 		parsing.SkipWhitespace(data, i)
+		if *i >= len(data) {
+			return node(nil), errUnexpectedEnd
+		}
 		c := data[*i]
 		switch c {
 		case ',':
@@ -210,7 +224,7 @@ func parseErlangComment(data []byte, i *int) {
 		// Rest of a line is a comment. Deals with CR, LF and CR/LF
 		if c == '\n' {
 			break
-		} else if c == '\r' && data[*i] == '\n' {
+		} else if c == '\r' && *i < len(data) && data[*i] == '\n' {
 			*i++
 			break
 		}
