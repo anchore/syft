@@ -13,7 +13,6 @@ import (
 	gguf_parser "github.com/gpustack/gguf-parser-go"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -37,14 +36,20 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	defer cleanup()
 	tempPath := tempFile.Name()
 
-	// Copy and validate the GGUF file header using LimitedReader to prevent OOM
-	// We use LimitedReader to cap reads at maxHeaderSize (50MB)
-	limitedReader := &io.LimitedReader{R: reader, N: maxHeaderSize}
-	if err := copyHeader(tempFile, limitedReader); err != nil {
+	// copy and validate the GGUF file header (bounded to maxHeaderSize)
+	if err := copyHeader(tempFile, reader); err != nil {
 		tempFile.Close()
 		return nil, nil, fmt.Errorf("failed to copy GGUF header: %w", err)
 	}
+	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
+		tempFile.Close()
+		return nil, nil, fmt.Errorf("failed to rewind GGUF header: %w", err)
+	}
+	err = validateGGUFHeader(tempFile)
 	tempFile.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid GGUF header: %w", err)
+	}
 
 	// Parse using gguf-parser-go with options to skip unnecessary data
 	ggufFile, err := gguf_parser.ParseGGUFFile(tempPath,
@@ -60,6 +65,11 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	// Extract version separately (will be set on Package.Version)
 	modelVersion := extractVersion(ggufFile.Header.MetadataKV)
 
+	metadataHash, err := computeKVMetadataHash(ggufFile.Header.MetadataKV)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// Convert to syft metadata structure
 	syftMetadata := &pkg.GGUFFileHeader{
 		Architecture:          metadata.Architecture,
@@ -68,7 +78,7 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 		GGUFVersion:           uint32(ggufFile.Header.Version),
 		TensorCount:           ggufFile.Header.TensorCount,
 		RemainingKeyValues:    convertGGUFMetadataKVs(ggufFile.Header.MetadataKV),
-		MetadataKeyValuesHash: computeKVMetadataHash(ggufFile.Header.MetadataKV),
+		MetadataKeyValuesHash: metadataHash,
 	}
 
 	// If model name is not in metadata, use filename
@@ -89,11 +99,14 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	return []pkg.Package{p}, nil, nil
 }
 
-// computeKVMetadataHash computes a stable hash of the KV metadata for use as a global identifier
-func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) string {
+// computeKVMetadataHash computes a stable hash of the sanitized KV metadata for use as a global identifier
+func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) (string, error) {
 	// Sort the KV pairs by key for stable hashing
 	sortedKVs := make([]gguf_parser.GGUFMetadataKV, len(metadata))
-	copy(sortedKVs, metadata)
+	for i, kv := range metadata {
+		kv.Value = sanitizeGGUFValue(kv.Value)
+		sortedKVs[i] = kv
+	}
 	sort.Slice(sortedKVs, func(i, j int) bool {
 		return sortedKVs[i].Key < sortedKVs[j].Key
 	})
@@ -101,13 +114,12 @@ func computeKVMetadataHash(metadata gguf_parser.GGUFMetadataKVs) string {
 	// Marshal sorted KVs to JSON for stable hashing
 	jsonBytes, err := json.Marshal(sortedKVs)
 	if err != nil {
-		log.Debugf("failed to marshal metadata for hashing: %v", err)
-		return ""
+		return "", fmt.Errorf("failed to marshal GGUF metadata for hashing: %w", err)
 	}
 
 	// Compute xxhash
 	hash := xxhash.Sum64(jsonBytes)
-	return fmt.Sprintf("%016x", hash) // 16 hex chars (64 bits)
+	return fmt.Sprintf("%016x", hash), nil // 16 hex chars (64 bits)
 }
 
 // extractVersion attempts to extract version from metadata KV pairs
