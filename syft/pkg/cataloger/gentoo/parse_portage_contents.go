@@ -1,7 +1,6 @@
 package gentoo
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"path"
@@ -70,7 +69,7 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 	}
 	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
 
-	scanner := bufio.NewScanner(contentsReader)
+	scanner := internal.NewLineScanner(contentsReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
 		fields := strings.Split(line, " ")
@@ -86,6 +85,9 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 			}
 			entry.Files = append(entry.Files, record)
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fully read portage contents")
 	}
 }
 
@@ -128,13 +130,16 @@ func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.Portag
 	}
 	defer internal.CloseAndLogError(sizeReader, location.RealPath)
 
-	scanner := bufio.NewScanner(sizeReader)
+	scanner := internal.NewLineScanner(sizeReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
 		size, err := strconv.Atoi(line)
 		if err == nil {
 			entry.InstalledSize = size
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", location.RealPath, "error", err).Debug("failed to fully read portage SIZE")
 	}
 
 	return []file.Location{location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}

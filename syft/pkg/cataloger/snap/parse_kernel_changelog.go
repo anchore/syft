@@ -1,13 +1,13 @@
 package snap
 
 import (
-	"bufio"
 	"compress/gzip"
 	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -32,7 +32,7 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 	}
 	defer gzReader.Close()
 
-	scanner := bufio.NewScanner(gzReader)
+	scanner := internal.NewLineScanner(gzReader)
 
 	// read the first line to extract kernel version
 	// Format: "linux (5.4.0-195.215) focal; urgency=medium"
@@ -64,6 +64,9 @@ func parseKernelChangelog(_ context.Context, _ file.Resolver, _ *generic.Environ
 			}
 			break
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return packages, nil, fmt.Errorf("failed to read changelog content: %w", err)
 	}
 
 	return packages, nil, nil
