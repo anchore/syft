@@ -81,10 +81,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      # keep fixtures byte-identical to linux (autocrlf would rewrite line endings and change digests)
-      - name: Disable git line ending conversion
-        run: git config --global core.autocrlf false
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
         with:
           persist-credentials: false
