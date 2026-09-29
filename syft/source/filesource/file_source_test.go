@@ -1,6 +1,8 @@
 package filesource
 
 import (
+	"archive/zip"
+	"bytes"
 	"io"
 	"os"
 	"os/exec"
@@ -167,6 +169,102 @@ func TestNewFromFile_WithArchive(t *testing.T) {
 
 		})
 	}
+}
+
+func TestNewFromFile_RarExtension(t *testing.T) {
+	testutil.Chdir(t, "..") // run with source/testdata
+
+	testCases := []struct {
+		desc          string
+		input         string
+		wantExtracted bool
+		wantPaths     []string
+		wantNoPaths   []string
+	}{
+		{
+			// a Java resource adapter archive is a zip file with a .rar extension: it must not be handed to the RAR
+			// extractor, but left for the java cataloger to read as a single file (like a .jar)
+			desc:          "zip archive with a .rar name is analyzed as a single file",
+			input:         createResourceAdapterArchive(t, t.TempDir()),
+			wantExtracted: false,
+			wantPaths:     []string{"example-ra-1.0.0.rar"},
+			wantNoPaths:   []string{"META-INF/ra.xml", "example-lib-1.0.0.jar"},
+		},
+		{
+			// a RAR 5.0 archive holding one stored file (inside.txt)
+			desc:          "RAR archive is extracted",
+			input:         "testdata/rar-archive/example.rar",
+			wantExtracted: true,
+			wantPaths:     []string{"inside.txt"},
+			wantNoPaths:   []string{"example.rar"},
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			src, err := New(Config{
+				Path: test.input,
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				require.NoError(t, src.Close())
+			})
+
+			assert.Equal(t, test.wantExtracted, src.(*fileSource).analysisPath != test.input)
+
+			res, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			for _, p := range test.wantPaths {
+				refs, err := res.FilesByPath(p)
+				require.NoError(t, err)
+				assert.Len(t, refs, 1, "expected to find %q", p)
+			}
+
+			for _, p := range test.wantNoPaths {
+				refs, err := res.FilesByPath(p)
+				require.NoError(t, err)
+				assert.Empty(t, refs, "expected not to find %q", p)
+			}
+		})
+	}
+}
+
+// createResourceAdapterArchive writes a minimal Java resource adapter archive (a zip file with a .rar extension that
+// holds a deployment descriptor and a nested jar) into dir and returns its path.
+func createResourceAdapterArchive(t testing.TB, dir string) string {
+	t.Helper()
+
+	lib := zipBytes(t, [][2]string{
+		{"META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n"},
+		{"META-INF/maven/org.example/example-lib/pom.properties", "groupId=org.example\nartifactId=example-lib\nversion=1.0.0\n"},
+	})
+
+	ra := zipBytes(t, [][2]string{
+		{"META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n"},
+		{"META-INF/ra.xml", "<connector/>\n"},
+		{"example-lib-1.0.0.jar", string(lib)},
+		{"META-INF/maven/org.example/example-ra/pom.properties", "groupId=org.example\nartifactId=example-ra\nversion=1.0.0\n"},
+	})
+
+	archivePath := filepath.Join(dir, "example-ra-1.0.0.rar")
+	require.NoError(t, os.WriteFile(archivePath, ra, 0o600))
+	return archivePath
+}
+
+// zipBytes returns a zip archive holding the given (name, contents) entries, in order.
+func zipBytes(t testing.TB, entries [][2]string) []byte {
+	t.Helper()
+
+	var buf bytes.Buffer
+	w := zip.NewWriter(&buf)
+	for _, e := range entries {
+		f, err := w.Create(e[0])
+		require.NoError(t, err)
+		_, err = f.Write([]byte(e[1]))
+		require.NoError(t, err)
+	}
+	require.NoError(t, w.Close())
+	return buf.Bytes()
 }
 
 // setupArchiveTest encapsulates common test setup work for tar file tests. It returns a cleanup function,
