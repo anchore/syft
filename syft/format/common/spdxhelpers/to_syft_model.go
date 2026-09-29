@@ -147,12 +147,24 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	}
 
 	p := rootPackages[0]
+	rootType := syftRootType(p.PackageSPDXIdentifier)
 
-	switch p.PrimaryPackagePurpose {
+	purpose := p.PrimaryPackagePurpose
+	if purpose == "" {
+		// SPDX 2.1 and 2.2 have no primary package purpose, so fall back to the source type syft puts in the root's ID
+		purpose = syftRootPurpose(rootType)
+	}
+
+	switch purpose {
 	case spdxPrimaryPurposeContainer:
 		src = containerSource(p)
 	case spdxPrimaryPurposeFile:
 		src = fileSource(p)
+	case spdxPrimaryPurposeOther:
+		// syft writes a root package even for a source it knows nothing about, which is not a package in the SBOM
+		if rootType != prefixUnknown {
+			return src
+		}
 	default:
 		return src
 	}
@@ -163,6 +175,30 @@ func extractSource(spdxIDMap map[string]any, doc *spdx.Document) source.Descript
 	doc.Relationships = removeRelationships(doc.Relationships, p.PackageSPDXIdentifier)
 
 	return src
+}
+
+// syftRootType returns the source type syft encodes in a root package ID ("DocumentRoot-<type>-<name>"), or "" for
+// any other ID.
+func syftRootType(id spdx.ElementID) string {
+	rest, ok := strings.CutPrefix(string(id), "DocumentRoot-")
+	if !ok {
+		return ""
+	}
+	rootType, _, _ := strings.Cut(rest, "-")
+	return rootType
+}
+
+// syftRootPurpose returns the primary package purpose syft writes for a root package of the given source type.
+func syftRootPurpose(rootType string) string {
+	switch rootType {
+	case prefixImage, prefixOCIModel, prefixSnap:
+		return spdxPrimaryPurposeContainer
+	case prefixDirectory, prefixFile:
+		return spdxPrimaryPurposeFile
+	case prefixUnknown:
+		return spdxPrimaryPurposeOther
+	}
+	return ""
 }
 
 func containerSource(p *spdx.Package) source.Description {

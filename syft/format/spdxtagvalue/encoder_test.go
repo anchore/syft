@@ -144,21 +144,6 @@ func TestSupportedVersions(t *testing.T) {
 	subject := testutil.DirectoryInput(t, t.TempDir())
 	dec := NewFormatDecoder()
 
-	relationshipOffsetPerVersion := map[string]int{
-		// the package representing the source gets a relationship from the source package to all other packages found
-		// these relationships cannot be removed until the primaryPackagePurpose info is available in 2.3
-		"2.1": 2,
-		"2.2": 2,
-		// the source-to-package relationships can be removed since the primaryPackagePurpose info is available in 2.3
-		"2.3": 0,
-	}
-
-	pkgCountOffsetPerVersion := map[string]int{
-		"2.1": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
-		"2.2": 1, // the source is mapped as a package, but cannot distinguish it since the primaryPackagePurpose info is not available until 2.3
-		"2.3": 0, // the source package can be removed since the primaryPackagePurpose info is available
-	}
-
 	for _, enc := range encs {
 		t.Run(enc.Version(), func(t *testing.T) {
 			require.Contains(t, versions, enc.Version())
@@ -179,13 +164,9 @@ func TestSupportedVersions(t *testing.T) {
 
 			require.NotEmpty(t, s.Artifacts.Packages.PackageCount())
 
-			offset := relationshipOffsetPerVersion[enc.Version()]
+			assert.Equal(t, len(subject.Relationships), len(s.Relationships), "mismatched relationship count")
 
-			assert.Equal(t, len(subject.Relationships)+offset, len(s.Relationships), "mismatched relationship count")
-
-			offset = pkgCountOffsetPerVersion[enc.Version()]
-
-			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount()+offset, s.Artifacts.Packages.PackageCount(), "mismatched package count") {
+			if !assert.Equal(t, subject.Artifacts.Packages.PackageCount(), s.Artifacts.Packages.PackageCount(), "mismatched package count") {
 				t.Logf("expected: %d", subject.Artifacts.Packages.PackageCount())
 				for _, p := range subject.Artifacts.Packages.Sorted() {
 					t.Logf("  - %s", p.String())
@@ -222,6 +203,8 @@ func TestEncodeDecodeSourceWithoutName(t *testing.T) {
 		{Metadata: source.FileMetadata{}},
 		{Metadata: source.DirectoryMetadata{}},
 		{Metadata: source.ImageMetadata{}},
+		{Metadata: source.OCIModelMetadata{}},
+		{Metadata: source.SnapMetadata{}},
 	} {
 		for _, enc := range defaultFormatEncoders() {
 			t.Run(fmt.Sprintf("%T/%s", src.Metadata, enc.Version()), func(t *testing.T) {
@@ -238,7 +221,8 @@ func TestEncodeDecodeSourceWithoutName(t *testing.T) {
 				for _, decoded := range s.Artifacts.Packages.Sorted() {
 					names = append(names, decoded.Name)
 				}
-				assert.Contains(t, names, "left-pad")
+				// the root package describes the source, so it must not come back as a package of the SBOM
+				assert.Equal(t, []string{"left-pad"}, names)
 			})
 		}
 	}
