@@ -15,9 +15,7 @@ import (
 
 // SafeTensors file format: [8 bytes u64 LE header size] [N bytes JSON header] [tensor data].
 // Reference: https://github.com/huggingface/safetensors#format
-const (
-	maxSafeTensorsHeaderSize = 100 * 1024 * 1024 // 100MB ceiling on header JSON to prevent OOM
-)
+// The header JSON is capped at maxSafeTensorsHeaderSize (see limits.go).
 
 // safeTensorsHeader is the decoded JSON header. Tensor entries live alongside a
 // reserved "__metadata__" key holding a string-to-string producer map. We decode

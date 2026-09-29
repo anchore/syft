@@ -135,8 +135,8 @@ func fetchAndStoreModelHeaders(ctx context.Context, client *registryClient, arti
 		}
 	}
 
-	// SafeTensors weight-layer headers. We only pull the leading prefix (same
-	// budget as a GGUF header)
+	// SafeTensors weight-layer headers. We only pull the leading
+	// maxSafeTensorsHeaderBytes
 	if artifact.Format == modelFormatSafeTensors {
 		for _, layer := range artifact.SafeTensorsLayers {
 			li, err := fetchSafeTensorsLayerHeader(ctx, client, artifact.Reference, layer, tempDir)
@@ -174,7 +174,7 @@ func storeConfigBlobAsLayer(artifact *modelArtifact, tempDir string) (fileresolv
 
 // fetchCompanionLayer downloads a companion (non-weight) layer to a temp file
 func fetchCompanionLayer(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (fileresolver.LayerInfo, error) {
-	data, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxCompanionBytes)
+	data, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxCompanionBytes+1)
 	if err != nil {
 		return fileresolver.LayerInfo{}, fmt.Errorf("failed to fetch companion layer: %w", err)
 	}
@@ -191,7 +191,7 @@ func fetchCompanionLayer(ctx context.Context, client *registryClient, ref name.R
 
 // fetchSingleGGUFHeader fetches a single GGUF layer header and writes it to a temp file
 func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (fileresolver.LayerInfo, error) {
-	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxWeightHeaderBytes)
+	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxGGUFHeaderBytes)
 	if err != nil {
 		return fileresolver.LayerInfo{}, fmt.Errorf("failed to fetch GGUF layer header: %w", err)
 	}
@@ -212,7 +212,7 @@ func fetchSingleGGUFHeader(ctx context.Context, client *registryClient, ref name
 // fetchSafeTensorsLayerHeader fetches the leading bytes of a SafeTensors weight
 // layer (enough to cover the JSON header) and writes them to a temp file
 func fetchSafeTensorsLayerHeader(ctx context.Context, client *registryClient, ref name.Reference, layer v1.Descriptor, tempDir string) (fileresolver.LayerInfo, error) {
-	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxWeightHeaderBytes)
+	headerData, err := client.fetchBlobRange(ctx, ref, layer.Digest, maxSafeTensorsHeaderBytes)
 	if err != nil {
 		return fileresolver.LayerInfo{}, fmt.Errorf("failed to fetch safetensors layer header: %w", err)
 	}

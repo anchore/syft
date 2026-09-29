@@ -50,7 +50,7 @@ type dockerAIModelConfig struct {
 func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	defer internal.CloseAndLogError(reader, reader.Path())
 
-	body, err := io.ReadAll(io.LimitReader(reader, 1024*1024))
+	body, err := readBounded(reader, maxModelConfigBlobSize)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read docker AI model config: %w", err)
 	}
