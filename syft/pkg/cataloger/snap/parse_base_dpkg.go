@@ -60,10 +60,9 @@ func parseBaseDpkgYaml(_ context.Context, _ file.Resolver, _ *generic.Environmen
 		}
 
 		// Handle architecture suffixes (e.g., "libssl1.1:amd64")
-		if strings.Contains(name, ":") {
-			archParts := strings.SplitN(name, ":", 2)
-			name = archParts[0]
-			snapMetadata.Architecture = archParts[1]
+		if n, arch, ok := strings.Cut(name, ":"); ok {
+			name = n
+			snapMetadata.Architecture = arch
 		}
 
 		debPkg := newDebianPackageFromSnap(

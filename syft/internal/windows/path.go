@@ -36,6 +36,10 @@ func FromPosix(posixPath string) (windowsPath string) {
 	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
 	// The volume may be a UNC path (e.g. /\\localhost\C$\ --> \\localhost\C$\)
 	pathFields := strings.Split(posixPath, "/")
+	if len(pathFields) < 2 {
+		// no separator means no volume to decode
+		return filepath.Clean(posixPath)
+	}
 	rootPath := strings.ToUpper(pathFields[1])
 	volumeName := AppendRootTerminator(rootPath)
 
