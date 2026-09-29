@@ -40,7 +40,7 @@ func TestMalformedInputsStillProduceSBOM(t *testing.T) {
 			assertSuccessfulReturnCode(t, stdout, stderr, cmd.ProcessState.ExitCode())
 
 			if ru, ok := cmd.ProcessState.SysUsage().(*syscall.Rusage); ok {
-				rss := ru.Maxrss
+				rss := int64(ru.Maxrss) // int32 on 32-bit linux
 				if runtime.GOOS == "linux" {
 					rss *= 1024 // kilobytes on linux, bytes on darwin
 				}
@@ -53,6 +53,12 @@ func TestMalformedInputsStillProduceSBOM(t *testing.T) {
 				Artifacts []struct {
 					Name string `json:"name"`
 				} `json:"artifacts"`
+				Files []struct {
+					Location struct {
+						Path string `json:"path"`
+					} `json:"location"`
+					Unknowns []string `json:"unknowns"`
+				} `json:"files"`
 			}
 			require.NoError(t, json.Unmarshal(b, &doc), "SBOM is not valid JSON")
 			var names []string
@@ -60,6 +66,13 @@ func TestMalformedInputsStillProduceSBOM(t *testing.T) {
 				names = append(names, a.Name)
 			}
 			assert.Contains(t, names, "well-formed", "package from the well-formed file is missing")
+
+			// a per-file panic is recovered into an unknown and the scan still exits 0, so look for it explicitly
+			for _, f := range doc.Files {
+				for _, u := range f.Unknowns {
+					assert.NotContains(t, u, "recovered from panic", "parser panicked on %s", f.Location.Path)
+				}
+			}
 		})
 	}
 }

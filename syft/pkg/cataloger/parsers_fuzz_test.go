@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -39,7 +40,10 @@ import (
 const (
 	// per-input limits. These are generous on purpose: the net is for inputs that take seconds or
 	// hundreds of MB, not for small inefficiencies.
-	fuzzTimeout       = 10 * time.Second
+	fuzzTimeout = 10 * time.Second
+	// fuzzHangSlack is how long past fuzzTimeout a parser that ignores ctx gets before the process is taken down,
+	// so a ctx-aware parser always reports its timeout through the normal path first
+	fuzzHangSlack     = 5 * time.Second
 	fuzzAllocBase     = 256 << 20
 	fuzzAllocPerByte  = 1024
 	fuzzMaxSeedBytes  = 256 << 10
@@ -131,6 +135,11 @@ func FuzzGenericParsers(f *testing.F) {
 	f.Fuzz(func(t *testing.T, name string, data []byte) {
 		ft, ok := byName[name]
 		if !ok {
+			// while fuzzing, the mutator rewrites names too, and a filter deliberately drops targets. Otherwise this
+			// is a saved input whose target was renamed or removed, and skipping it would silently drop a regression.
+			if os.Getenv("SYFT_FUZZ_TARGET") == "" && flag.Lookup("test.fuzz").Value.String() == "" {
+				t.Fatalf("saved fuzz input names unknown target %q: update or remove it", name)
+			}
 			t.Skip("not a selected target")
 		}
 		runFuzzTarget(t, ft, data)
@@ -160,6 +169,12 @@ func runFuzzTarget(t *testing.T, ft fuzzTarget, data []byte) {
 	var before, after runtime.MemStats
 	runtime.ReadMemStats(&before)
 
+	// the heap metric is process-wide and counts unswept garbage, so collect first and measure growth from there
+	heap := []metrics.Sample{{Name: "/memory/classes/heap/objects:bytes"}}
+	runtime.GC()
+	metrics.Read(heap)
+	heapBase := heap[0].Value.Uint64()
+
 	done := make(chan error, 1)
 	go func() {
 		defer func() {
@@ -171,10 +186,9 @@ func runFuzzTarget(t *testing.T, ft fuzzTarget, data []byte) {
 	}()
 
 	limit := uint64(fuzzAllocBase + fuzzAllocPerByte*len(data))
-	heap := []metrics.Sample{{Name: "/memory/classes/heap/objects:bytes"}}
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
-	deadline := time.After(fuzzTimeout)
+	deadline := time.After(fuzzTimeout + fuzzHangSlack)
 wait:
 	for {
 		select {
@@ -182,17 +196,22 @@ wait:
 			break wait
 		case <-tick.C:
 			// the after-the-fact TotalAlloc check below can't stop a parser that is on its way to exhausting the
-			// machine, so watch the live heap while it runs and take the process down once it passes the limit
-			if metrics.Read(heap); heap[0].Value.Uint64() > limit {
+			// machine, so watch heap growth while it runs and take the process down once it passes the limit
+			metrics.Read(heap)
+			if grown := heap[0].Value.Uint64() - min(heapBase, heap[0].Value.Uint64()); grown > limit {
 				_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)
-				panic(fmt.Sprintf("%s: input of %d bytes grew the live heap to %d MB (limit %d MB)", ft, len(data), heap[0].Value.Uint64()>>20, limit>>20))
+				panic(fmt.Sprintf("%s: input of %d bytes grew the heap by %d MB (limit %d MB)", ft, len(data), grown>>20, limit>>20))
 			}
 		case <-deadline:
 			// not every parser watches ctx, so a hung one keeps running and would skew every later input in this
 			// process. Dump where it is stuck and take the process down; the fuzz engine records that as a crasher.
 			_ = pprof.Lookup("goroutine").WriteTo(os.Stderr, 2)
-			panic(fmt.Sprintf("%s: input of %d bytes did not finish within %s", ft, len(data), fuzzTimeout))
+			panic(fmt.Sprintf("%s: input of %d bytes did not finish within %s", ft, len(data), fuzzTimeout+fuzzHangSlack))
 		}
+	}
+
+	if ctx.Err() != nil {
+		t.Fatalf("%s: input of %d bytes did not finish within %s", ft, len(data), fuzzTimeout)
 	}
 
 	// a panic recovered further down (a go-sync PanicError, or the generic per-file recover) still surfaces as an error
