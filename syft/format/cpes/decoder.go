@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	syftinternal "github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/format/internal"
@@ -61,7 +62,7 @@ func toSyftModel(r io.Reader) (*sbom.SBOM, error) {
 	var errs []error
 	pkgs := pkg.NewCollection()
 
-	scanner := bufio.NewScanner(r)
+	scanner := syftinternal.NewLineScanner(r)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 

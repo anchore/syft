@@ -1,7 +1,6 @@
 package python
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"regexp"
@@ -105,7 +104,7 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 	var errs error
 	var packages []pkg.Package
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 	var lastLine string
 	for scanner.Scan() {
 		line := trimRequirementsTxtLine(scanner.Text())
