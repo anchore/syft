@@ -330,7 +330,9 @@ func TestParseKernelChangelog_gzipBombStaysBounded(t *testing.T) {
 		remaining -= n
 	}
 	require.NoError(t, gw.Close())
-	require.Less(t, gz.Len(), 1024*1024, "compressed payload should be tiny relative to what it expands to")
+	// compress/flate output for this input varies by Go version (about 510KB on go1.26, 1MB on go1.27), so
+	// bound the fixture by ratio rather than a fixed size
+	require.Less(t, gz.Len(), expanded/100, "compressed payload should be tiny relative to what it expands to")
 
 	// prove the fixture is a bomb: the same stream read without a line bound costs its full size
 	unbounded := testutils.MeasureAlloc(t, func() {
