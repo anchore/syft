@@ -518,6 +518,19 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "libxml2"},
 			candidateAddition{AdditionalVendors: []string{"xmlsoft"}},
 		},
+		{
+			// NVD records expat CVEs (e.g. CVE-2024-45492) under the
+			// libexpat product name, cpe:2.3:a:libexpat:libexpat:*.
+			// Without this hint the conan-derived CPE
+			// cpe:2.3:a:expat:expat:* misses every expat CVE, see
+			// anchore/syft#4771.
+			pkg.ConanPkg,
+			candidateKey{PkgName: "expat"},
+			candidateAddition{
+				AdditionalVendors:  []string{"libexpat"},
+				AdditionalProducts: []string{"libexpat"},
+			},
+		},
 	})
 
 var defaultCandidateRemovals = buildCandidateRemovalLookup(
