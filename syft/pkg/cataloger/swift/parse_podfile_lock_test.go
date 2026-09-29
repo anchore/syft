@@ -1,7 +1,12 @@
 package swift
 
 import (
+	"context"
+	"io"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -279,4 +284,16 @@ func Test_corruptPodfile(t *testing.T) {
 		FromFile(t, "testdata/glob-paths/src/Podfile.lock").
 		WithError().
 		TestParser(t, parsePodfileLock)
+}
+
+func TestParsePodfileLock_podWithoutVersion(t *testing.T) {
+	// a pod entry is "Name (version)"; one without the version used to index past the end of the split
+	contents := "PODS:\n  - Foo\nSPEC CHECKSUMS:\n  Foo: abc\n"
+	reader := file.NewLocationReadCloser(file.NewLocation("Podfile.lock"), io.NopCloser(strings.NewReader(contents)))
+
+	var err error
+	require.NotPanics(t, func() {
+		_, _, err = parsePodfileLock(context.Background(), nil, nil, reader)
+	})
+	require.ErrorContains(t, err, "has no version")
 }

@@ -75,7 +75,8 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 		line := strings.Trim(scanner.Text(), "\n")
 		fields := strings.Split(line, " ")
 
-		if fields[0] == "obj" {
+		// an obj line is "obj <path> <md5> <mtime>"
+		if len(fields) >= 3 && fields[0] == "obj" {
 			record := pkg.PortageFileRecord{
 				Path: fields[1],
 			}
