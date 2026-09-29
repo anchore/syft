@@ -69,6 +69,9 @@ func extractLicenses(resolver file.Resolver, closestLocation *file.Location, rea
 			}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", closestLocation.RealPath, "error", err).Debug("failed to fully read portage LICENSE")
+	}
 
 	var licenseGroups map[string][]string
 	if usesGroups {
@@ -80,31 +83,22 @@ func extractLicenses(resolver file.Resolver, closestLocation *file.Location, rea
 	findings.Add(conditionalLicenses...)
 	findings.Add(useflagLicenses...)
 
-	var mandatoryStatement, conditionalStatement string
+	return strings.TrimSpace(contentsWriter.String()), licenseExpression(mandatoryLicenses, conditionalLicenses)
+}
 
-	// attempt to build valid SPDX license expression
-	if len(mandatoryLicenses) > 0 {
-		mandatoryStatement = strings.Join(mandatoryLicenses, " AND ")
+// licenseExpression attempts to build a valid SPDX license expression
+func licenseExpression(mandatoryLicenses, conditionalLicenses []string) string {
+	mandatoryStatement := strings.Join(mandatoryLicenses, " AND ")
+	conditionalStatement := strings.Join(conditionalLicenses, " OR ")
+
+	switch {
+	case mandatoryStatement != "" && conditionalStatement != "":
+		return mandatoryStatement + " AND (" + conditionalStatement + ")"
+	case mandatoryStatement != "":
+		return mandatoryStatement
+	default:
+		return conditionalStatement
 	}
-	if len(conditionalLicenses) > 0 {
-		conditionalStatement = strings.Join(conditionalLicenses, " OR ")
-	}
-
-	contents := strings.TrimSpace(contentsWriter.String())
-
-	if mandatoryStatement != "" && conditionalStatement != "" {
-		return contents, mandatoryStatement + " AND (" + conditionalStatement + ")"
-	}
-
-	if mandatoryStatement != "" {
-		return contents, mandatoryStatement
-	}
-
-	if conditionalStatement != "" {
-		return contents, conditionalStatement
-	}
-
-	return contents, ""
 }
 
 func readLicenseGroups(resolver file.Resolver, closestLocation *file.Location) map[string][]string {

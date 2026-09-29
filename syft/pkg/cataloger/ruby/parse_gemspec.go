@@ -101,6 +101,7 @@ func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic
 			}
 		}
 	}
+	scanErr := scanner.Err()
 
 	resolveRubyInterpolationsInFields(fields)
 
@@ -121,6 +122,9 @@ func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic
 		)
 	}
 
+	if scanErr != nil {
+		return pkgs, nil, fmt.Errorf("unable to read gemspec: %w", scanErr)
+	}
 	return pkgs, nil, nil
 }
 

@@ -3,6 +3,7 @@ package java
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/anchore/syft/syft/artifact"
@@ -45,6 +46,7 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 			dependencies = append(dependencies, dep)
 		}
 	}
+	scanErr := scanner.Err()
 
 	// map the dependencies
 	for _, dep := range dependencies {
@@ -72,5 +74,8 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 		pkgs = append(pkgs, mappedPkg)
 	}
 
+	if scanErr != nil {
+		return pkgs, nil, fmt.Errorf("unable to read gradle lockfile: %w", scanErr)
+	}
 	return pkgs, nil, nil
 }

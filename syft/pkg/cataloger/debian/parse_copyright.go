@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 )
 
 // For more information see: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-syntax
@@ -68,6 +69,9 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 		if found != "" {
 			findings.Add(found)
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("error", err).Debug("failed to fully read debian copyright file")
 	}
 
 	if !formatVerified {

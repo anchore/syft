@@ -84,6 +84,9 @@ func toSyftModel(r io.Reader) (*sbom.SBOM, error) {
 		p.SetID()
 		pkgs.Add(p)
 	}
+	if err := scanner.Err(); err != nil {
+		errs = append(errs, err)
+	}
 
 	return &sbom.SBOM{
 		Artifacts: sbom.Artifacts{

@@ -108,6 +108,10 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 			}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		// the caller discards everything on error, so keep the partial fields and log instead
+		log.WithFields("path", locationReader.Path(), "error", err).Debug("failed to fully read python wheel/egg metadata")
+	}
 	return fields, nil
 }
 

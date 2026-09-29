@@ -449,6 +449,9 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 		hash := parts[2]
 		out[nameVersion] = hash
 	}
+	if err := scanner.Err(); err != nil {
+		return out, fmt.Errorf("unable to read go.sum: %w", err)
+	}
 
 	return out, nil
 }

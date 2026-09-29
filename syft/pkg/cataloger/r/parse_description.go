@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -138,6 +139,9 @@ func extractFieldsFromDescriptionFile(reader io.Reader) map[string]string {
 	}
 	if key != "" {
 		result[key] = valueFragment.String()
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("error", err).Debug("failed to fully read R DESCRIPTION file")
 	}
 	return result
 }

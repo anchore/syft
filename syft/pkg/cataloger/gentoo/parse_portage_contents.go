@@ -86,6 +86,9 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 			entry.Files = append(entry.Files, record)
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", dbLocation.RealPath, "error", err).Debug("failed to fully read portage contents")
+	}
 }
 
 func addLicenses(ctx context.Context, resolver file.Resolver, dbLocation file.Location, entry *pkg.PortageEntry) (pkg.LicenseSet, []file.Location) {
@@ -134,6 +137,9 @@ func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.Portag
 		if err == nil {
 			entry.InstalledSize = size
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("path", location.RealPath, "error", err).Debug("failed to fully read portage SIZE")
 	}
 
 	return []file.Location{location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation)}

@@ -3,6 +3,7 @@ package python
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -44,6 +45,9 @@ func (sp setupFileParser) parseSetupFile(ctx context.Context, _ file.Resolver, _
 
 		packages = sp.processQuotedDependencies(ctx, line, reader, packages)
 		packages = sp.processUnquotedDependency(ctx, line, reader, packages)
+	}
+	if err := scanner.Err(); err != nil {
+		return packages, nil, fmt.Errorf("unable to read setup.py: %w", err)
 	}
 
 	return packages, nil, nil
