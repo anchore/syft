@@ -49,6 +49,7 @@ func Test_OriginatorSupplier(t *testing.T) {
 		pkg.PythonRequirementsEntry{},
 		pkg.PythonPoetryLockEntry{},
 		pkg.PythonUvLockEntry{},
+		pkg.RubyGemfileLockEntry{},
 		pkg.RustBinaryAuditEntry{},
 		pkg.RustCargoLockEntry{},
 		pkg.SnapEntry{},
