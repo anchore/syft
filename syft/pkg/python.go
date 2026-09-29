@@ -179,9 +179,6 @@ type PythonUvLockDependencyEntry struct {
 	Markers string `json:"markers,omitempty"`
 	// Extras are the optional feature names from the dependency that should be installed.
 	Extras []string `json:"extras,omitempty"`
-	// Version is the locked version uv records when more than one version of this name is locked.
-	// It is excluded from SBOM JSON so relationship pairing does not require a schema bump.
-	Version string `json:"-"`
 }
 
 // PythonUvLockExtraEntry represents an optional feature group in a uv lock file.

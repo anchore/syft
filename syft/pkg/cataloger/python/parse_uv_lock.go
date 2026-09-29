@@ -5,12 +5,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -45,8 +46,11 @@ type uvPackage struct {
 	Metadata             uvMetadata                `toml:"metadata"`
 }
 
-type uvDependencies []struct {
-	Name    string   `toml:"name"`
+type uvDependencies []uvDependency
+
+type uvDependency struct {
+	Name string `toml:"name"`
+	// Version is only written by uv when more than one version of this name is locked
 	Version string   `toml:"version"`
 	Extras  []string `toml:"extra"`
 	Markers string   `toml:"marker"`
@@ -84,12 +88,16 @@ func newUvLockParser(cfg CatalogerConfig) uvLockParser {
 
 // parseUvLock is a parser function for uv.lock contents, returning all the pakcages discovered
 func (ulp uvLockParser) parseUvLock(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
-	pkgs, err := ulp.uvLockPackages(ctx, reader)
+	pkgs, specs, err := ulp.uvLockPackages(ctx, reader)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return pkgs, dependency.Resolve(uvLockDependencySpecifier, pkgs), err
+	specifier := func(p pkg.Package) dependency.Specification {
+		return specs[p.ID()]
+	}
+
+	return pkgs, dependency.Resolve(specifier, pkgs), err
 }
 
 func extractUvIndex(p uvPackage) string {
@@ -107,16 +115,12 @@ func extractUvDependencies(p uvPackage) []pkg.PythonUvLockDependencyEntry {
 	for _, d := range p.Dependencies {
 		deps = append(deps, pkg.PythonUvLockDependencyEntry{
 			Name:    d.Name,
-			Version: d.Version,
 			Extras:  d.Extras,
 			Markers: d.Markers,
 		})
 	}
 	sort.Slice(deps, func(i, j int) bool {
-		if deps[i].Name != deps[j].Name {
-			return deps[i].Name < deps[j].Name
-		}
-		return deps[i].Version < deps[j].Version
+		return deps[i].Name < deps[j].Name
 	})
 	return deps
 }
@@ -144,106 +148,107 @@ func newPythonUvLockEntry(p uvPackage) pkg.PythonUvLockEntry {
 	}
 }
 
-func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.LocationReadCloser) ([]pkg.Package, error) {
+// uvLockPackages returns the packages in the lock along with the dependency specification for each (by package ID).
+func (ulp uvLockParser) uvLockPackages(ctx context.Context, reader file.LocationReadCloser) ([]pkg.Package, map[artifact.ID]dependency.Specification, error) {
 	var parsedLockFileVersion uvLockFileVersion
 
 	// we cannot use the reader twice, so we read the contents first --uv.lock files tend to be small enough
 	contents, err := io.ReadAll(reader) //nolint:gocritic // multi-pass parse requires []byte
 	if err != nil {
-		return nil, unknown.New(reader.Location, fmt.Errorf("failed to read uv lock file: %w", err))
+		return nil, nil, unknown.New(reader.Location, fmt.Errorf("failed to read uv lock file: %w", err))
 	}
 
 	_, err = toml.NewDecoder(bytes.NewReader(contents)).Decode(&parsedLockFileVersion)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read uv lock version: %w", err)
+		return nil, nil, fmt.Errorf("failed to read uv lock version: %w", err)
 	}
 
 	// We will need to add some logic to parse and branch on different
 	// lock file versions should they arise, but this gets us
 	// started down this road for now.
 	if parsedLockFileVersion.Version > 1 {
-		return nil, fmt.Errorf("could not parse uv lock file version %d", parsedLockFileVersion.Version)
+		return nil, nil, fmt.Errorf("could not parse uv lock file version %d", parsedLockFileVersion.Version)
 	}
 
 	var parsedLockFile uvLockFile
 	_, err = toml.NewDecoder(bytes.NewReader(contents)).Decode(&parsedLockFile)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse uv lock packages: %w", err)
+		return nil, nil, fmt.Errorf("failed to parse uv lock packages: %w", err)
 	}
 
 	var pkgs []pkg.Package
+	specs := make(map[artifact.ID]dependency.Specification)
 	for _, p := range parsedLockFile.Packages {
-		pkgs = append(pkgs,
-			newPackageForIndexWithMetadata(
-				ctx,
-				ulp.licenseResolver,
-				p.Name,
-				p.Version,
-				newPythonUvLockEntry(p),
-				reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
-			),
+		np := newPackageForIndexWithMetadata(
+			ctx,
+			ulp.licenseResolver,
+			p.Name,
+			p.Version,
+			newPythonUvLockEntry(p),
+			reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 		)
+		pkgs = append(pkgs, np)
+		specs[np.ID()] = uvLockDependencySpecification(p)
 	}
 
-	return pkgs, unknown.IfEmptyf(pkgs, "unable to determine packages")
+	return pkgs, specs, unknown.IfEmptyf(pkgs, "unable to determine packages")
 }
 
-func isDependencyForUvExtra(dep pkg.PythonUvLockDependencyEntry) bool {
+func isDependencyForUvExtra(dep uvDependency) bool {
 	return strings.Contains(dep.Markers, "extra ==")
 }
 
-// This is identical to poetryLockDependencySpecifier since it operates on identical
-// data structures. Keeping it separate for now since it's always possible for data
-// structures to change down the line.
-// It *is* possible we may be able to merge the Uv and Poetry data structures
-func uvLockDependencySpecifier(p pkg.Package) dependency.Specification { //nolint:dupl // this is very similar to the poetry lock dependency specifier, but should remain separate
-	meta, ok := p.Metadata.(pkg.PythonUvLockEntry)
-	if !ok {
-		log.Tracef("cataloger failed to extract UV lock metadata for package %+v", p.Name)
-		return dependency.Specification{}
-	}
-
-	provides := []string{packageRef(p.Name, "")}
-	if strings.TrimSpace(p.Version) != "" {
-		provides = append(provides, uvLockPackageRef(p.Name, p.Version, ""))
-	}
-
+// uvLockDependencySpecification is built from the raw lock entry rather than the package metadata. When a lock
+// holds several versions of one name (a forked resolution), uv records which version each dependency entry means,
+// and that is the only way to pair a dependent with the right one. The pairing is carried by the resulting
+// relationships, so the version does not need to live on the metadata.
+func uvLockDependencySpecification(p uvPackage) dependency.Specification {
 	var requires []string
-
-	for _, dep := range meta.Dependencies {
+	for _, dep := range p.Dependencies {
 		if isDependencyForUvExtra(dep) {
 			continue
 		}
-
-		requires = append(requires, uvLockPackageRef(dep.Name, dep.Version, ""))
-
-		for _, extra := range dep.Extras {
-			requires = append(requires, uvLockPackageRef(dep.Name, dep.Version, extra))
-		}
+		requires = append(requires, uvLockRequires(dep)...)
 	}
 
 	var variants []dependency.ProvidesRequires
-	for _, extra := range meta.Extras {
-		variantProvides := []string{packageRef(p.Name, extra.Name)}
-		if strings.TrimSpace(p.Version) != "" {
-			variantProvides = append(variantProvides, uvLockPackageRef(p.Name, p.Version, extra.Name))
+	for _, extra := range slices.Sorted(maps.Keys(p.OptionalDependencies)) {
+		var extraRequires []string
+		for _, dep := range p.OptionalDependencies[extra] {
+			extraRequires = append(extraRequires, uvLockRequires(dep)...)
 		}
 		variants = append(variants,
 			dependency.ProvidesRequires{
-				Provides: variantProvides,
-				Requires: extractPackageNames(extra.Dependencies),
+				Provides: uvLockProvides(p, extra),
+				Requires: extraRequires,
 			},
 		)
 	}
 
 	return dependency.Specification{
 		ProvidesRequires: dependency.ProvidesRequires{
-			Provides: provides,
+			Provides: uvLockProvides(p, ""),
 			Requires: requires,
 		},
 		Variants: variants,
 	}
+}
+
+// uvLockProvides offers both the bare ref (for dependency entries without a version) and the versioned ref (for
+// dependency entries uv pinned to this version).
+func uvLockProvides(p uvPackage, extra string) []string {
+	return []string{packageRef(p.Name, extra), uvLockPackageRef(p.Name, p.Version, extra)}
+}
+
+// uvLockRequires always requires the base package, plus each extra individually (name[extra1] and name[extra2],
+// never name[extra1,extra2]).
+func uvLockRequires(dep uvDependency) []string {
+	refs := []string{uvLockPackageRef(dep.Name, dep.Version, "")}
+	for _, extra := range dep.Extras {
+		refs = append(refs, uvLockPackageRef(dep.Name, dep.Version, extra))
+	}
+	return refs
 }
 
 func uvLockPackageRef(name, version, extra string) string {

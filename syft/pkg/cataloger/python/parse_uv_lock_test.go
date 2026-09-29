@@ -134,70 +134,69 @@ func TestParseUvLockForkedVersions(t *testing.T) {
 	locations := file.NewLocationSet(file.NewLocation(fixture))
 	index := "https://pypi.org/simple"
 
-	numpy126 := pkg.Package{
-		Name:      "numpy",
-		Version:   "1.26.4",
-		Locations: locations,
-		PURL:      "pkg:pypi/numpy@1.26.4",
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata:  pkg.PythonUvLockEntry{Index: index},
-	}
-	numpy226 := pkg.Package{
-		Name:      "numpy",
-		Version:   "2.2.6",
-		Locations: locations,
-		PURL:      "pkg:pypi/numpy@2.2.6",
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata:  pkg.PythonUvLockEntry{Index: index},
-	}
-	pandas233 := pkg.Package{
-		Name:      "pandas",
-		Version:   "2.3.3",
-		Locations: locations,
-		PURL:      "pkg:pypi/pandas@2.3.3",
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata: pkg.PythonUvLockEntry{
-			Index: index,
-			Dependencies: []pkg.PythonUvLockDependencyEntry{
-				{Name: "numpy", Version: "1.26.4", Markers: "python_full_version < '3.10'"},
-			},
-		},
-	}
-	pandas306 := pkg.Package{
-		Name:      "pandas",
-		Version:   "3.0.6",
-		Locations: locations,
-		PURL:      "pkg:pypi/pandas@3.0.6",
-		Language:  pkg.Python,
-		Type:      pkg.PythonPkg,
-		Metadata: pkg.PythonUvLockEntry{
-			Index: index,
-			Dependencies: []pkg.PythonUvLockDependencyEntry{
-				{Name: "numpy", Version: "2.2.6", Markers: "python_full_version >= '3.10'"},
-			},
-		},
+	newPkg := func(name, version string, meta pkg.PythonUvLockEntry) pkg.Package {
+		return pkg.Package{
+			Name:      name,
+			Version:   version,
+			Locations: locations,
+			PURL:      "pkg:pypi/" + name + "@" + version,
+			Language:  pkg.Python,
+			Type:      pkg.PythonPkg,
+			Metadata:  meta,
+		}
 	}
 
+	forkdemo := newPkg("forkdemo", "0.1.0", pkg.PythonUvLockEntry{
+		Index: ".",
+		Dependencies: []pkg.PythonUvLockDependencyEntry{
+			{Name: "pandas", Markers: "python_full_version < '3.11'"},
+			{Name: "pandas", Markers: "python_full_version >= '3.11'"},
+		},
+		Extras: []pkg.PythonUvLockExtraEntry{
+			{Name: "legacy", Dependencies: []string{"numpy"}},
+		},
+	})
+	numpy1264 := newPkg("numpy", "1.26.4", pkg.PythonUvLockEntry{Index: index})
+	numpy226 := newPkg("numpy", "2.2.6", pkg.PythonUvLockEntry{Index: index})
+	numpy246 := newPkg("numpy", "2.4.6", pkg.PythonUvLockEntry{Index: index})
+	numpy253 := newPkg("numpy", "2.5.3", pkg.PythonUvLockEntry{Index: index})
+	pandas233 := newPkg("pandas", "2.3.3", pkg.PythonUvLockEntry{
+		Index: index,
+		Dependencies: []pkg.PythonUvLockDependencyEntry{
+			{Name: "numpy", Markers: "python_full_version < '3.10'"},
+			{Name: "numpy", Markers: "python_full_version == '3.10.*'"},
+		},
+	})
+	pandas306 := newPkg("pandas", "3.0.6", pkg.PythonUvLockEntry{
+		Index: index,
+		Dependencies: []pkg.PythonUvLockDependencyEntry{
+			{Name: "numpy", Markers: "python_full_version == '3.11.*'"},
+			{Name: "numpy", Markers: "python_full_version >= '3.12'"},
+		},
+	})
+
+	dependencyOf := func(from, to pkg.Package) artifact.Relationship {
+		return artifact.Relationship{From: from, To: to, Type: artifact.DependencyOfRelationship}
+	}
+
+	// each dependent links only to the versions its entries name, including through an optional dependency
 	expectedRelationships := []artifact.Relationship{
-		{
-			From: numpy126,
-			To:   pandas233,
-			Type: artifact.DependencyOfRelationship,
-		},
-		{
-			From: numpy226,
-			To:   pandas306,
-			Type: artifact.DependencyOfRelationship,
-		},
+		dependencyOf(pandas233, forkdemo),
+		dependencyOf(pandas306, forkdemo),
+		dependencyOf(numpy1264, forkdemo),
+		dependencyOf(numpy1264, pandas233),
+		dependencyOf(numpy226, pandas233),
+		dependencyOf(numpy246, pandas306),
+		dependencyOf(numpy253, pandas306),
 	}
 
 	uvLockParser := newUvLockParser(DefaultCatalogerConfig())
 	pkgtest.TestFileParser(t, fixture, uvLockParser.parseUvLock, []pkg.Package{
-		numpy126,
+		forkdemo,
+		numpy1264,
 		numpy226,
+		numpy246,
+		numpy253,
 		pandas233,
 		pandas306,
 	}, expectedRelationships)
