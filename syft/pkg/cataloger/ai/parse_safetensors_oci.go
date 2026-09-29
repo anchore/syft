@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/anchore/syft/internal"
-	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -81,7 +80,7 @@ func parseSafeTensorsOCIConfig(_ context.Context, _ file.Resolver, _ *generic.En
 		&md,
 		reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
 	)
-	return []pkg.Package{p}, nil, unknown.IfEmptyf([]pkg.Package{p}, "unable to parse docker AI safetensors config")
+	return []pkg.Package{p}, nil, nil
 }
 
 // parseSafeTensorsOCILayer decodes the JSON header of a SafeTensors weight
@@ -94,14 +93,7 @@ func parseSafeTensorsOCILayer(_ context.Context, _ file.Resolver, _ *generic.Env
 		return nil, nil, fmt.Errorf("failed to read safetensors layer header: %w", err)
 	}
 
-	md := pkg.SafeTensorsModelInfo{
-		Format:       "safetensors",
-		TensorCount:  uint64(len(header.tensors)),
-		Parameters:   header.parameterCount(),
-		Quantization: normalizeDType(header.dominantDType()),
-		UserMetadata: userMetadataKeyValues(header.metadata),
-		MetadataHash: header.metadataHash(),
-	}
+	md := header.modelInfo()
 
 	p := newSafeTensorsPackage(
 		&md,

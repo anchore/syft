@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -1146,8 +1147,9 @@ func TestSafeTensorsHeader_parameterCountAndDType(t *testing.T) {
 		"small":  {DType: "F32", Shape: []int64{16, 16}},
 		"scalar": {DType: "F32", Shape: []int64{}}, // empty shape contributes 1
 	}}
-	assert.Equal(t, uint64(1000*16+16*16+1), h.parameterCount())
-	assert.Equal(t, "BF16", h.dominantDType())
+	params, dtype := h.parameterStats()
+	assert.Equal(t, uint64(1000*16+16*16+1), params)
+	assert.Equal(t, "BF16", dtype)
 }
 
 func TestSafeTensorsHeader_parameterCount_nonPositiveDims(t *testing.T) {
@@ -1159,7 +1161,29 @@ func TestSafeTensorsHeader_parameterCount_nonPositiveDims(t *testing.T) {
 		"zero":     {DType: "F32", Shape: []int64{4, 0}},
 		"negative": {DType: "F32", Shape: []int64{-1, 8}},
 	}}
-	assert.Equal(t, uint64(16), h.parameterCount())
+	params, _ := h.parameterStats()
+	assert.Equal(t, uint64(16), params)
+}
+
+func TestSafeTensorsHeader_parameterStats_overflow(t *testing.T) {
+	// a shape whose product overflows uint64 is skipped instead of wrapping (the
+	// first tensor would wrap to 0) and can't flip the dominant dtype; the total
+	// saturates instead of wrapping.
+	h := &safeTensorsHeader{tensors: map[string]safeTensorsEntry{
+		"good":     {DType: "BF16", Shape: []int64{4, 4}},
+		"wraps":    {DType: "F32", Shape: []int64{4294967296, 4294967296}},
+		"overflow": {DType: "F32", Shape: []int64{math.MaxInt64, 3}},
+	}}
+	params, dtype := h.parameterStats()
+	assert.Equal(t, uint64(16), params)
+	assert.Equal(t, "BF16", dtype)
+
+	h = &safeTensorsHeader{tensors: map[string]safeTensorsEntry{
+		"a": {DType: "F32", Shape: []int64{math.MaxInt64, 2}},
+		"b": {DType: "F32", Shape: []int64{math.MaxInt64, 2}},
+	}}
+	params, _ = h.parameterStats()
+	assert.Equal(t, uint64(math.MaxUint64), params)
 }
 
 func TestSafeTensorsHeader_dominantDType_tieBreak(t *testing.T) {
@@ -1169,7 +1193,8 @@ func TestSafeTensorsHeader_dominantDType_tieBreak(t *testing.T) {
 		"a": {DType: "F32", Shape: []int64{4, 4}},
 		"b": {DType: "BF16", Shape: []int64{4, 4}},
 	}}
-	assert.Equal(t, "BF16", h.dominantDType())
+	_, dtype := h.parameterStats()
+	assert.Equal(t, "BF16", dtype)
 }
 
 func TestNormalizeDType(t *testing.T) {
