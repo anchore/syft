@@ -80,42 +80,51 @@ func encodeExternalReferences(p pkg.Package) *[]cyclonedx.ExternalReference {
 			}
 		}
 	}
-
+	if srcRef := encodeSourcePackageExternalReference(p); srcRef != nil {
+		refs = append(refs, *srcRef)
+	}
 	if len(refs) > 0 {
 		return &refs
 	}
 	return nil
 }
 
+// encodeSourcePackageExternalReference returns a "source-distribution" reference holding the PURL of the source
+// package that an OS package was built from. It is only emitted when the source differs from the binary package
+// (by name or version) and when the package PURL is of the type implied by the metadata.
 func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalReference {
-	name, version, arch := sourceCoordinates(p)
-	if name == "" || version == "" {
-		return nil
-	}
 	if p.PURL == "" {
 		return nil
 	}
-
-	pkgPurl, err := packageurl.FromString(p.PURL)
-	if err != nil {
+	src := sourcePackageOf(p)
+	if src == nil {
 		return nil
 	}
 
-	qualifiers := pkgPurl.Qualifiers.Map()
-	delete(qualifiers, pkg.PURLQualifierUpstream)
-	delete(qualifiers, pkg.PURLQualifierArch)
+	// the binary PURL is only consulted for the namespace and a small set of qualifiers (e.g. distro), everything
+	// else describes the binary package and must not be restated as a fact about the source package.
+	binPurl, err := packageurl.FromString(p.PURL)
+	if err != nil || binPurl.Type != src.purlType {
+		return nil
+	}
 
-	if arch != "" {
-		qualifiers[pkg.PURLQualifierArch] = arch
+	qualifiers := map[string]string{}
+	for _, q := range binPurl.Qualifiers {
+		if src.keepQualifier(q.Key) {
+			qualifiers[q.Key] = q.Value
+		}
+	}
+	if src.arch != "" {
+		qualifiers[pkg.PURLQualifierArch] = src.arch
 	}
 
 	srcPurl := packageurl.NewPackageURL(
-		pkgPurl.Type,
-		pkgPurl.Namespace,
-		name,
-		version,
+		src.purlType,
+		binPurl.Namespace,
+		src.name,
+		src.version,
 		packageurl.QualifiersFromMap(qualifiers),
-		pkgPurl.Subpath,
+		"",
 	)
 
 	return &cyclonedx.ExternalReference{
@@ -124,51 +133,91 @@ func encodeSourcePackageExternalReference(p pkg.Package) *cyclonedx.ExternalRefe
 	}
 }
 
-func sourceCoordinates(p pkg.Package) (name, version, arch string) {
-	switch metadata := p.Metadata.(type) {
+// sourcePackage is the identity of the source package a binary OS package was built from.
+type sourcePackage struct {
+	purlType string
+	name     string
+	version  string
+	// arch is the ecosystem's source architecture marker, empty when the ecosystem has no such convention
+	arch string
+}
+
+func (s sourcePackage) keepQualifier(key string) bool {
+	switch key {
+	case pkg.PURLQualifierDistro:
+		return true
+	case pkg.PURLQualifierEpoch, pkg.PURLQualifierRpmModularity:
+		return s.purlType == pkg.RpmPkg.PackageURLType()
+	}
+	return false
+}
+
+// sourcePackageOf returns the source package for p, or nil when there is none or it is the same as the binary.
+func sourcePackageOf(p pkg.Package) *sourcePackage {
+	var src sourcePackage
+	var binName, binVersion string
+	switch m := p.Metadata.(type) {
 	case pkg.ApkDBEntry:
-		if metadata.OriginPackage != "" && metadata.OriginPackage != metadata.Package {
-			return metadata.OriginPackage, metadata.Version, ""
-		}
+		// apk has no source arch convention, so the source PURL carries no arch
+		src = sourcePackage{purlType: pkg.ApkPkg.PackageURLType(), name: m.OriginPackage, version: m.Version}
+		binName, binVersion = m.Package, m.Version
 	case pkg.DpkgDBEntry:
-		return dpkgSourceCoordinates(metadata)
+		src = dpkgSourcePackage(m)
+		binName, binVersion = m.Package, m.Version
 	case pkg.DpkgArchiveEntry:
-		return dpkgSourceCoordinates(pkg.DpkgDBEntry(metadata))
+		src = dpkgSourcePackage(pkg.DpkgDBEntry(m))
+		binName, binVersion = m.Package, m.Version
 	case pkg.RpmDBEntry:
-		return rpmSourceCoordinates(metadata.SourceRpm)
+		src = rpmSourcePackage(m.SourceRpm)
+		binName, binVersion = m.Name, m.Version+"-"+m.Release
 	case pkg.RpmArchive:
-		return rpmSourceCoordinates(metadata.SourceRpm)
+		src = rpmSourcePackage(m.SourceRpm)
+		binName, binVersion = m.Name, m.Version+"-"+m.Release
 	case pkg.AlpmDBEntry:
-		if metadata.BasePackage != "" {
-			return metadata.BasePackage, metadata.Version, ""
-		}
+		// alpm has no source arch convention, so the source PURL carries no arch
+		src = sourcePackage{purlType: pkg.AlpmPkg.PackageURLType(), name: m.BasePackage, version: m.Version}
+		binName, binVersion = m.Package, m.Version
+	default:
+		return nil
 	}
-	return "", "", ""
+	if src.name == "" || src.version == "" {
+		return nil
+	}
+	if src.name == binName && src.version == binVersion {
+		return nil
+	}
+	return &src
 }
 
-func dpkgSourceCoordinates(entry pkg.DpkgDBEntry) (name, version, arch string) {
-	if entry.Source == "" {
-		return "", "", ""
+func dpkgSourcePackage(entry pkg.DpkgDBEntry) sourcePackage {
+	version := entry.SourceVersion
+	if version == "" {
+		version = entry.Version
 	}
-	if entry.SourceVersion != "" {
-		return entry.Source, entry.SourceVersion, "source"
-	}
-	return entry.Source, entry.Version, "source"
+	return sourcePackage{purlType: pkg.DebPkg.PackageURLType(), name: entry.Source, version: version, arch: "source"}
 }
 
-func rpmSourceCoordinates(sourceRpm string) (name, version, arch string) {
-	// <name>-<version>-<release>.src.rpm
-	sourceRpm = strings.TrimSuffix(sourceRpm, ".rpm")
-	sourceRpm = strings.TrimSuffix(strings.TrimSuffix(sourceRpm, ".src"), ".nosrc")
-	release := strings.LastIndex(sourceRpm, "-")
+// rpmSourcePackage parses a source RPM filename of the form <name>-<version>-<release>.(no)src.rpm.
+func rpmSourcePackage(sourceRpm string) sourcePackage {
+	var arch string
+	switch {
+	case strings.HasSuffix(sourceRpm, ".src.rpm"):
+		arch = "src"
+	case strings.HasSuffix(sourceRpm, ".nosrc.rpm"):
+		arch = "nosrc"
+	default:
+		return sourcePackage{}
+	}
+	nvr := strings.TrimSuffix(sourceRpm, "."+arch+".rpm")
+	release := strings.LastIndex(nvr, "-")
 	if release < 0 {
-		return "", "", ""
+		return sourcePackage{}
 	}
-	ver := strings.LastIndex(sourceRpm[:release], "-")
+	ver := strings.LastIndex(nvr[:release], "-")
 	if ver < 0 {
-		return "", "", ""
+		return sourcePackage{}
 	}
-	return sourceRpm[:ver], sourceRpm[ver+1:], "src"
+	return sourcePackage{purlType: pkg.RpmPkg.PackageURLType(), name: nvr[:ver], version: nvr[ver+1:], arch: arch}
 }
 
 // supported algorithm in cycloneDX as of 1.4
