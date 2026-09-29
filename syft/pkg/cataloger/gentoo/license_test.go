@@ -2,6 +2,7 @@ package gentoo
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -187,4 +188,25 @@ func Test_extractLicenses_tokenTooLong(t *testing.T) {
 	license := "MIT " + strings.Repeat("a", 2<<20)
 	_, expression := extractLicenses(nil, nil, strings.NewReader(license))
 	assert.Equal(t, "MIT", expression)
+}
+
+func TestParseLicenseGroups_hostileInput(t *testing.T) {
+	// a single wide group was quadratic to dedup, and a chain where each group references the next
+	// twice was exponential to expand; both must now finish quickly
+	var wide strings.Builder
+	wide.WriteString("WIDE")
+	for i := range 120_000 {
+		fmt.Fprintf(&wide, " L%d", i)
+	}
+
+	var chain strings.Builder
+	chain.WriteString("G0 MIT\n")
+	for i := 1; i <= 64; i++ {
+		fmt.Fprintf(&chain, "G%d @G%d @G%d\n", i, i-1, i-1)
+	}
+
+	groups, err := parseLicenseGroups(strings.NewReader(wide.String() + "\n" + chain.String()))
+	require.NoError(t, err)
+	assert.Len(t, groups["WIDE"], 120_000)
+	assert.Equal(t, []string{"MIT"}, groups["G64"])
 }
