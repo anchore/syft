@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,7 +50,7 @@ func buildSafeTensorsFile(t *testing.T, metadata map[string]string, tensors map[
 //
 // The naming precedence (owned by the merge processor's pickSafeTensorsName) is:
 //  1. config.json _name_or_path  (path.Base applied), found beside the model or
-//     by walking up parent directories to the scan root
+//     in its parent directory
 //  2. otherwise the model's immediate parent directory base name
 //     → drop (no package) when neither yields a usable name
 //
@@ -231,9 +233,9 @@ func TestSafeTensorsCataloger(t *testing.T) {
 			expectedPackages: nil,
 		},
 		{
-			// rung 1 via parent-walk: findDirHFConfig walks up from the model
-			// directory, so a config.json in an ancestor names a nested model.
-			name: "config.json in an ancestor directory names a nested model",
+			// rung 1 via the parent: findDirHFConfig also checks the model
+			// directory's parent, so a config.json there names a nested model.
+			name: "config.json in the parent directory names a nested model",
 			setup: func(t *testing.T) string {
 				dir := t.TempDir()
 				model(t, filepath.Join(dir, "dir", "someothertensor"))
@@ -243,6 +245,87 @@ func TestSafeTensorsCataloger(t *testing.T) {
 			expectedPackages: []pkg.Package{
 				{
 					Name:     "Ancestor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// the walk stops at the parent: a config.json two levels up is not used.
+			name: "config.json two levels up is not used",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				model(t, filepath.Join(dir, "a", "b", "someothertensor"))
+				writeFile(t, filepath.Join(dir, "a", "config.json"), `{"_name_or_path":"org/TooFar"}`)
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "someothertensor",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// JSON without any HF field is not treated as a model config, so the
+			// lookup keeps going to the parent.
+			name: "non-HF config.json is skipped",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				modelDir := filepath.Join(dir, "app", "sometensor")
+				model(t, modelDir)
+				writeFile(t, filepath.Join(modelDir, "config.json"), `{"port":8080}`)
+				writeFile(t, filepath.Join(dir, "app", "config.json"), `{"_name_or_path":"org/Parent"}`)
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "Parent",
+					Type:     pkg.ModelPkg,
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// an oversized config.json is skipped entirely, while a large README
+			// still yields its frontmatter (only a prefix is read).
+			name: "oversized config.json is ignored and a large README still names the model",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				modelDir := filepath.Join(dir, "sometensor")
+				model(t, modelDir)
+				writeFile(t, filepath.Join(modelDir, "config.json"),
+					`{"architectures":["X"],"_name_or_path":"`+strings.Repeat("A", maxHFConfigSize)+`"}`)
+				writeFile(t, filepath.Join(modelDir, "README.md"),
+					"---\nlicense: MIT\nbase_model: org/Readme\n---\n"+strings.Repeat("A", maxReadmePrefixSize))
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name: "Readme",
+					Type: pkg.ModelPkg,
+					Licenses: pkg.NewLicenseSet(
+						pkg.NewLicenseFromFields("MIT", "", nil),
+					),
+					Metadata: wantMetadata(""),
+				},
+			},
+		},
+		{
+			// a _name_or_path that sanitizes to nothing doesn't block README base_model.
+			name: "degenerate _name_or_path falls through to README base_model",
+			setup: func(t *testing.T) string {
+				dir := t.TempDir()
+				modelDir := filepath.Join(dir, "sometensor")
+				model(t, modelDir)
+				writeFile(t, filepath.Join(modelDir, "config.json"), `{"_name_or_path":"."}`)
+				writeFile(t, filepath.Join(modelDir, "README.md"), "---\nbase_model: org/Readme\n---\n")
+				return dir
+			},
+			expectedPackages: []pkg.Package{
+				{
+					Name:     "Readme",
 					Type:     pkg.ModelPkg,
 					Metadata: wantMetadata(""),
 				},
@@ -601,6 +684,60 @@ spdx-id: Apache-2.0
 		assertHasLicense(t, out[0], "Apache-2.0")
 	})
 
+	t.Run("OCI: config precedence is stable across layer order", func(t *testing.T) {
+		dir := t.TempDir()
+		a := filepath.Join(dir, "a.json")
+		b := filepath.Join(dir, "b.json")
+		gen := filepath.Join(dir, "generation_config.json")
+		require.NoError(t, os.WriteFile(a, []byte(`{"_name_or_path":"org/first"}`), 0o644))
+		require.NoError(t, os.WriteFile(b, []byte(`{"_name_or_path":"org/second"}`), 0o644))
+		require.NoError(t, os.WriteFile(gen, []byte(`{"max_new_tokens":10}`), 0o644))
+
+		configMd := pkg.SafeTensorsModelInfo{Format: "safetensors", TensorCount: 1}
+		for _, order := range [][]string{{a, b, gen}, {gen, b, a}} {
+			var locs []file.Location
+			for _, p := range order {
+				locs = append(locs, file.NewLocation(p))
+			}
+			resolver := file.NewMockResolverForMediaTypes(map[string][]file.Location{
+				dockerAIModelFileMediaType: locs,
+			})
+			out, _, err := safeTensorsMergeProcessor(context.Background(), resolver, []pkg.Package{ociPkg(configMd)}, nil, nil)
+			require.NoError(t, err)
+			require.Len(t, out, 1)
+			assert.Equal(t, "first", out[0].Name)
+			// the non-HF generation config is not recorded as supporting evidence
+			assert.Len(t, out[0].Locations.ToSlice(), 3)
+		}
+	})
+
+	t.Run("dir scan: non-HF config.json in the parent is not supporting evidence", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgPath := filepath.Join(dir, "config.json")
+		require.NoError(t, os.WriteFile(cfgPath, []byte(`{"port":8080}`), 0o644))
+		loc, cfg := findDirHFConfig(file.NewMockResolverForPaths(cfgPath), filepath.Join(dir, "model"))
+		assert.Nil(t, loc)
+		assert.Nil(t, cfg)
+	})
+
+	t.Run("OCI: a large license layer still yields its frontmatter spdx-id", func(t *testing.T) {
+		dir := t.TempDir()
+		licensePath := filepath.Join(dir, "LICENSE")
+		require.NoError(t, os.WriteFile(licensePath,
+			[]byte("---\nspdx-id: Apache-2.0\n---\n"+strings.Repeat("A", maxLicensePrefixSize)), 0o644))
+		assert.Equal(t, "Apache-2.0", readLicenseSPDXIDFromFrontmatter(file.NewMockResolverForPaths(licensePath), file.NewLocation(licensePath)))
+	})
+
+	t.Run("OCI: oversized model.file layer is rejected", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgPath := filepath.Join(dir, "config.json")
+		require.NoError(t, os.WriteFile(cfgPath,
+			[]byte(`{"_name_or_path":"org/x","pad":"`+strings.Repeat("A", maxModelFileLayerSize)+`"}`), 0o644))
+		cfg, fm := classifyOCIModelFileLayer(file.NewMockResolverForPaths(cfgPath), file.NewLocation(cfgPath))
+		assert.Nil(t, cfg)
+		assert.Nil(t, fm)
+	})
+
 	t.Run("names packages and still propagates an upstream error", func(t *testing.T) {
 		// A non-nil upstream error (e.g. another file in the run failed to parse)
 		// must NOT short-circuit naming. The package is still nameless at this
@@ -622,7 +759,7 @@ spdx-id: Apache-2.0
 // (or neither, asserting the drop path).
 //
 // Precedence (highest → lowest):
-//  1. config.json _name_or_path  (path.Base applied; both dir-scan and OCI)
+//  1. config.json _name_or_path  (sanitized to its last path element; both dir-scan and OCI)
 //  2. fallback name — OCI image-ref last segment, or dir-scan parent directory
 //     base name (the merge processor computes the right one per group)
 //     → drop (empty name) when nothing matches
@@ -661,6 +798,31 @@ func TestSafeTensorsNamingPrecedence(t *testing.T) {
 			name:         "rung 2: dir-scan parent directory name used when _name_or_path is empty",
 			fallbackName: "tiny-llama",
 			want:         "tiny-llama",
+		},
+
+		// sanitizing
+		{
+			name:         "windows-style path uses the last element",
+			nameOrPath:   `C:\models\win-model`,
+			fallbackName: "fallback-name",
+			want:         "win-model",
+		},
+		{
+			name:         "degenerate path falls back",
+			nameOrPath:   "..",
+			fallbackName: "fallback-name",
+			want:         "fallback-name",
+		},
+		{
+			name:         "root path falls back",
+			nameOrPath:   "/",
+			fallbackName: "fallback-name",
+			want:         "fallback-name",
+		},
+		{
+			name:       "long names are truncated",
+			nameOrPath: "org/" + strings.Repeat("x", maxModelNameLength+10),
+			want:       strings.Repeat("x", maxModelNameLength),
 		},
 
 		// drops
@@ -1036,25 +1198,78 @@ func TestParseFrontmatter(t *testing.T) {
 		name          string
 		input         string
 		wantNil       bool
-		wantLicense   string
+		wantLicenses  []string
 		wantBaseModel []string
 	}{
 		{
 			name:          "list base_model",
 			input:         "---\nlicense: mit\nbase_model:\n  - org/Model\n---\nbody",
-			wantLicense:   "mit",
+			wantLicenses:  []string{"mit"},
 			wantBaseModel: []string{"org/Model"},
 		},
 		{
 			name:          "scalar base_model",
 			input:         "---\nlicense: apache-2.0\nbase_model: org/Model\n---\n",
-			wantLicense:   "apache-2.0",
+			wantLicenses:  []string{"apache-2.0"},
 			wantBaseModel: []string{"org/Model"},
 		},
 		{
-			name:        "leading BOM",
-			input:       "\xef\xbb\xbf---\nlicense: mit\n---\n",
-			wantLicense: "mit",
+			name:          "list license keeps base_model",
+			input:         "---\nlicense: [mit, apache-2.0]\nbase_model: org/Model\n---\n",
+			wantLicenses:  []string{"mit", "apache-2.0"},
+			wantBaseModel: []string{"org/Model"},
+		},
+		{
+			name:          "mapping-valued fields are ignored, not fatal",
+			input:         "---\nlicense: {name: mit}\nbase_model: org/Model\n---\n",
+			wantBaseModel: []string{"org/Model"},
+		},
+		{
+			name:         "leading BOM",
+			input:        "\xef\xbb\xbf---\nlicense: mit\n---\n",
+			wantLicenses: []string{"mit"},
+		},
+		{
+			name:          "null license is ignored",
+			input:         "---\nlicense: null\nbase_model: ~\n---\n",
+			wantLicenses:  nil,
+			wantBaseModel: nil,
+		},
+		{
+			name:    "empty block",
+			input:   "---\n---\n",
+			wantNil: true,
+		},
+		{
+			name:    "oversized block is rejected",
+			input:   "---\nlicense: mit\n" + strings.Repeat("# pad\n", maxFrontmatterSize/6+1) + "---\n",
+			wantNil: true,
+		},
+		{
+			name:         "closing delimiter at EOF with trailing whitespace",
+			input:        "---\nlicense: mit\n--- ",
+			wantLicenses: []string{"mit"},
+		},
+		{
+			name:         "list values are capped",
+			input:        "---\nlicense: [" + strings.Repeat("mit,", maxFrontmatterValues+5) + "mit]\n---\n",
+			wantLicenses: slices.Repeat([]string{"mit"}, maxFrontmatterValues),
+		},
+		{
+			name:         "CRLF delimiters",
+			input:        "---\r\nlicense: mit\r\n---\r\nbody",
+			wantLicenses: []string{"mit"},
+		},
+		{
+			name:    "opening delimiter must be exactly ---",
+			input:   "----\nlicense: mit\n---\n",
+			wantNil: true,
+		},
+		{
+			name:          "a ---x line inside the block does not close it",
+			input:         "---\nbase_model: org/Model\n---x: 1\nlicense: mit\n---\n",
+			wantLicenses:  []string{"mit"},
+			wantBaseModel: []string{"org/Model"},
 		},
 		{
 			name:    "no frontmatter",
@@ -1082,7 +1297,7 @@ func TestParseFrontmatter(t *testing.T) {
 				return
 			}
 			require.NotNil(t, fm)
-			assert.Equal(t, tt.wantLicense, fm.License)
+			assert.Equal(t, tt.wantLicenses, fm.Licenses)
 			if tt.wantBaseModel != nil {
 				assert.Equal(t, tt.wantBaseModel, fm.BaseModel)
 			}
