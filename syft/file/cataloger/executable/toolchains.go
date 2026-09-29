@@ -10,6 +10,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/elfutil"
 )
 
 // TODO: additional toolchain detectors we'd like to add. Each entry notes the signal location and the
@@ -79,7 +80,12 @@ var (
 
 // golangToolchainEvidence attempts to extract Go toolchain information from the binary build info.
 func golangToolchainEvidence(reader io.ReaderAt) *file.Toolchain {
-	bi, err := buildinfo.Read(reader)
+	// buildinfo parses ELF with debug/elf directly, so bound the eager section-name table read first
+	// (non-ELF readers pass through untouched).
+	if err := elfutil.CheckSectionNameTable(reader); err != nil {
+		return nil
+	}
+	bi, err := buildinfo.Read(reader) //nolint:gocritic // gated by elfutil.CheckSectionNameTable above
 	if err != nil || bi == nil {
 		// not a golang binary
 		return nil
