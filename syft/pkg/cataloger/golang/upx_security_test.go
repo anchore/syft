@@ -718,6 +718,9 @@ func TestDecompressUPX_TailExtentsArePlacedPastTheLoader(t *testing.T) {
 	// front of it. Every other crafted fixture here has l_lsize == 0, so without this skipLoader was only
 	// reachable through the Docker-backed fixture.
 	//
+	// UPX pads to a 4 byte boundary before it writes the stub and l_lsize counts from there, so the head
+	// extent here deliberately ends off that boundary: its end plus l_lsize lands inside the stub.
+	//
 	// note: block 1 here is not an ELF, so there are no PT_LOAD offsets and the tail lands sequentially.
 	// The hole-filling path this feeds in production is covered by TestFirstHole and by the sparse
 	// fixtures in upx_bounds_regression_test.go.
@@ -727,6 +730,8 @@ func TestDecompressUPX_TailExtentsArePlacedPastTheLoader(t *testing.T) {
 
 	data := buildUPXHeaderWithLoader(4096, 4096, loaderSize)
 	data = append(data, blockFor(t, head)...)
+	require.NotZero(t, len(data)%4, "the head extent has to end off a 4 byte boundary for the padding to exist")
+	data = append(data, make([]byte, 4-len(data)%4)...) // the padding UPX writes in front of the stub
 	data = append(data, make([]byte, 12)...)            // end marker: closes the first run of extents
 	data = append(data, make([]byte, loaderSize-12)...) // the loader stub the chain skips over
 	data = append(data, blockFor(t, tail)...)
