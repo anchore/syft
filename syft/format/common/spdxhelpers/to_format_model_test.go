@@ -517,6 +517,20 @@ func Test_toPackageChecksums(t *testing.T) {
 			filesAnalyzed: false,
 		},
 		{
+			name: "Opam Package with a checksum missing its algorithm separator",
+			pkg: pkg.Package{
+				Name:    "test",
+				Version: "1.0.0",
+				Metadata: pkg.OpamPackage{
+					Checksums: []string{"f5f1c0b4", "md5=abc"},
+				},
+			},
+			expected: []spdx.Checksum{
+				{Algorithm: "MD5", Value: "abc"},
+			},
+			filesAnalyzed: false,
+		},
+		{
 			name: "Package with no metadata type",
 			pkg: pkg.Package{
 				Name:     "test",
