@@ -65,6 +65,8 @@ func Test_ignoresPathIfFiltered(t *testing.T) {
 	testPath := "testdata/system_paths/target/home/place"
 	cwd, cwdErr := os.Getwd()
 	require.NoError(t, cwdErr)
+	// filepath (not path): filters see the native absolute path (before posix normalization), so the
+	// expected value must be joined with the host separator to match on windows
 	ignorePath := filepath.Join(cwd, testPath)
 	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path == ignorePath {
@@ -85,6 +87,7 @@ func Test_ignoresPathIfParentFiltered(t *testing.T) {
 
 	cwd, cwdErr := os.Getwd()
 	require.NoError(t, cwdErr)
+	// filepath (not path): see Test_ignoresPathIfFiltered
 	ignorePath := filepath.Join(cwd, parentPath)
 	filterFn := func(_, path string, _ os.FileInfo, _ error) error {
 		if path == ignorePath {
