@@ -9,6 +9,10 @@ env:
   - DOCKER_CLI_EXPERIMENTAL=enabled
   - CGO_ENABLED=0
 
+before:
+  hooks:
+    - sh -c 'test ! -f CHANGELOG.md || chmod 0644 CHANGELOG.md'
+
 builds:
   - id: linux-build
     dir: ./cmd/syft
