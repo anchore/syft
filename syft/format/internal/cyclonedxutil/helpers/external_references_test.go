@@ -164,7 +164,7 @@ func Test_encodeSourcePackage(t *testing.T) {
 				Type:    pkg.ApkPkg,
 				Metadata: pkg.ApkDBEntry{
 					Package:       "some-package",
-					OriginPackage: "some-package",
+					OriginPackage: "some-origin",
 					Version:       "1.0.0-r1",
 					Architecture:  "x86_64",
 				},
@@ -190,7 +190,6 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 		},
 		{
-			// Matching existing implementation where upstream qualifier is omitted when OriginPackage = Package for Alpine
 			name: "from apk with source = bin",
 			input: pkg.Package{
 				Name:    "some-package",
@@ -312,9 +311,7 @@ func Test_encodeSourcePackage(t *testing.T) {
 					SourceRpm: "some-package-1.0.0-1.el8.src.rpm",
 				},
 			},
-			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/centos/some-package@1.0.0-1.el8?arch=src&distro=centos-8&epoch=32",
-			},
+			expected: nil,
 		},
 		{
 			name: "from rpm archive",
@@ -355,8 +352,6 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 		},
 		{
-			// Matching existing implementation where upstream qualifier is *not* omitted when BasePackage == Package for Alpm
-			// This differs from the Alpine case where it is omitted.
 			name: "from alpm with source = bin",
 			input: pkg.Package{
 				Name:    "some-package",
@@ -370,9 +365,147 @@ func Test_encodeSourcePackage(t *testing.T) {
 					Architecture: "x86_64",
 				},
 			},
-			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/some-package@1.0.0?distro=arch-rolling",
+			expected: nil,
+		},
+		{
+			name: "from rpm with dashes in the source name",
+			input: pkg.Package{
+				Name: "perl-Foo-Bar-libs",
+				Type: pkg.RpmPkg,
+				PURL: "pkg:rpm/redhat/perl-Foo-Bar-libs@1.0-1.el8?arch=x86_64&distro=rhel-8",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "perl-Foo-Bar-libs",
+					Version:   "1.0",
+					Release:   "1.el8",
+					SourceRpm: "perl-Foo-Bar-1.0-1.el8.src.rpm",
+				},
 			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/redhat/perl-Foo-Bar@1.0-1.el8?arch=src&distro=rhel-8",
+			},
+		},
+		{
+			name: "from rpm nosrc",
+			input: pkg.Package{
+				Name: "some-firmware",
+				Type: pkg.RpmPkg,
+				PURL: "pkg:rpm/redhat/some-firmware@1.0-1.el8?arch=noarch&distro=rhel-8",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "some-firmware",
+					Version:   "1.0",
+					Release:   "1.el8",
+					SourceRpm: "firmware-1.0-1.el8.nosrc.rpm",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/redhat/firmware@1.0-1.el8?arch=nosrc&distro=rhel-8",
+			},
+		},
+		{
+			name: "from rpm keeps rpmmod",
+			input: pkg.Package{
+				Name: "nodejs-libs",
+				Type: pkg.RpmPkg,
+				PURL: "pkg:rpm/redhat/nodejs-libs@18.0-1.el8?arch=x86_64&distro=rhel-8&rpmmod=nodejs%3A18",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "nodejs-libs",
+					Version:   "18.0",
+					Release:   "1.el8",
+					SourceRpm: "nodejs-18.0-1.el8.src.rpm",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:rpm/redhat/nodejs@18.0-1.el8?arch=src&distro=rhel-8&rpmmod=nodejs%3A18",
+			},
+		},
+		{
+			name: "from rpm with malformed source rpm",
+			input: pkg.Package{
+				Name: "gpg-pubkey",
+				Type: pkg.RpmPkg,
+				PURL: "pkg:rpm/redhat/gpg-pubkey@1-1?distro=rhel-8",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "gpg-pubkey",
+					Version:   "1",
+					Release:   "1",
+					SourceRpm: "(none)",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "from rpm with non-source rpm filename",
+			input: pkg.Package{
+				Name: "bash",
+				Type: pkg.RpmPkg,
+				PURL: "pkg:rpm/redhat/bash@5.1-2?arch=x86_64&distro=rhel-8",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "bash",
+					Version:   "5.1",
+					Release:   "2",
+					SourceRpm: "bash-5.1-2.x86_64.rpm",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "from rpm with too few dashes",
+			input: pkg.Package{
+				Name: "bash",
+				Type: pkg.RpmPkg,
+				PURL: "pkg:rpm/redhat/bash@5.1-2?arch=x86_64&distro=rhel-8",
+				Metadata: pkg.RpmDBEntry{
+					Name:      "bash",
+					Version:   "5.1",
+					Release:   "2",
+					SourceRpm: "bash-5.1.src.rpm",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "binary qualifiers and subpath are not carried over",
+			input: pkg.Package{
+				Name: "libssl3",
+				Type: pkg.DebPkg,
+				PURL: "pkg:deb/debian/libssl3@3.0.0-1?arch=amd64&distro=debian-12&checksum=sha256:dead&download_url=https://example.com/x.deb&cpes=cpe:2.3:a:x:x:1:*:*:*:*:*:*:*#sub/dir",
+				Metadata: pkg.DpkgDBEntry{
+					Package: "libssl3",
+					Version: "3.0.0-1",
+					Source:  "openssl",
+				},
+			},
+			expected: &cyclonedx.ExternalReference{
+				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:deb/debian/openssl@3.0.0-1?arch=source&distro=debian-12",
+			},
+		},
+		{
+			name: "PURL type does not match metadata",
+			input: pkg.Package{
+				Name: "x",
+				Type: pkg.DebPkg,
+				PURL: "pkg:npm/x@1",
+				Metadata: pkg.DpkgDBEntry{
+					Package: "x",
+					Version: "1",
+					Source:  "lodash",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "invalid PURL",
+			input: pkg.Package{
+				Name: "x",
+				Type: pkg.DebPkg,
+				PURL: "not-a-purl",
+				Metadata: pkg.DpkgDBEntry{
+					Package: "x",
+					Version: "1",
+					Source:  "y",
+				},
+			},
+			expected: nil,
 		},
 	}
 	for _, test := range tests {
