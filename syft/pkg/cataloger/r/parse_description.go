@@ -1,12 +1,12 @@
 package r
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -106,7 +106,7 @@ func extractFieldsFromDescriptionFile(reader io.Reader) map[string]string {
 	result := make(map[string]string)
 	key := ""
 	var valueFragment strings.Builder
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	for scanner.Scan() {
 		line := scanner.Text()

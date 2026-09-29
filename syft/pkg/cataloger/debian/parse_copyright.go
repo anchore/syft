@@ -1,7 +1,6 @@
 package debian
 
 import (
-	"bufio"
 	"io"
 	"regexp"
 	"sort"
@@ -35,7 +34,7 @@ const (
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	// per the DEP-5 spec, machine-readable copyright files MUST have a
 	// Format field whose value is a URI for the specification. Only files

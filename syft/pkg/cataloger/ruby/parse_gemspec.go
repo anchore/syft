@@ -1,7 +1,6 @@
 package ruby
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -75,7 +74,7 @@ func processList(s string) []string {
 func parseGemSpecEntries(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var pkgs []pkg.Package
 	var fields = make(map[string]any)
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	for scanner.Scan() {
 		line := scanner.Text()

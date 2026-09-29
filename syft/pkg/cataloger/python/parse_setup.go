@@ -1,12 +1,12 @@
 package python
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -37,7 +37,7 @@ var unquotedPinnedDependency = regexp.MustCompile(`^\s*(\w+)\s*==\s*([\w\.\-]+)`
 func (sp setupFileParser) parseSetupFile(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var packages []pkg.Package
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	for scanner.Scan() {
 		line := scanner.Text()

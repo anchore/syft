@@ -1,7 +1,6 @@
 package gentoo
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"path"
@@ -70,7 +69,7 @@ func addFiles(resolver file.Resolver, dbLocation file.Location, entry *pkg.Porta
 	}
 	defer internal.CloseAndLogError(contentsReader, dbLocation.RealPath)
 
-	scanner := bufio.NewScanner(contentsReader)
+	scanner := internal.NewLineScanner(contentsReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
 		fields := strings.Split(line, " ")
@@ -130,7 +129,7 @@ func addSize(resolver file.Resolver, dbLocation file.Location, entry *pkg.Portag
 	}
 	defer internal.CloseAndLogError(sizeReader, location.RealPath)
 
-	scanner := bufio.NewScanner(sizeReader)
+	scanner := internal.NewLineScanner(sizeReader)
 	for scanner.Scan() {
 		line := strings.Trim(scanner.Text(), "\n")
 		size, err := strconv.Atoi(line)

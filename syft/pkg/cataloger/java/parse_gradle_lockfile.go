@@ -1,11 +1,11 @@
 package java
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"strings"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -23,7 +23,7 @@ func parseGradleLockfile(_ context.Context, _ file.Resolver, _ *generic.Environm
 	var pkgs []pkg.Package
 
 	// Create a new scanner to read the file
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	// Create slices to hold the dependencies and plugins
 	dependencies := []lockfileDependency{}

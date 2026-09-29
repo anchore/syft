@@ -35,7 +35,7 @@ import (
 func extractLicenses(resolver file.Resolver, closestLocation *file.Location, reader io.Reader) (string, string) {
 	findings := strset.New()
 	contentsWriter := bytes.Buffer{}
-	scanner := bufio.NewScanner(io.TeeReader(reader, &contentsWriter))
+	scanner := internal.NewLineScanner(io.TeeReader(reader, &contentsWriter))
 	scanner.Split(bufio.ScanWords)
 	var (
 		mandatoryLicenses, conditionalLicenses, useflagLicenses []string
@@ -158,7 +158,7 @@ func parseLicenseGroups(reader io.Reader) (map[string][]string, error) {
 	result := make(map[string][]string)
 	rawGroups := make(map[string][]string)
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	// first collect all raw groups
 	for scanner.Scan() {

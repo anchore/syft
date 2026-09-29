@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"go/build"
@@ -437,7 +436,7 @@ func parseGoSumFile(resolver file.Resolver, reader file.LocationReadCloser) (map
 	// github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 	// github.com/BurntSushi/toml v0.4.1 h1:GaI7EiDXDRfa8VshkTj7Fym7ha+y8/XxIgD2okUIjLw=
 	// github.com/BurntSushi/toml v0.4.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-	scanner := bufio.NewScanner(contents)
+	scanner := internal.NewLineScanner(contents)
 	// optionally, resize scanner's capacity for lines over 64K, see next example
 	for scanner.Scan() {
 		line := scanner.Text()
