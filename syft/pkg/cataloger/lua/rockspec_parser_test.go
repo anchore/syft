@@ -284,6 +284,14 @@ hello = foo..  `,
 	}
 }
 
+func TestParseRockspec_deepNesting(t *testing.T) {
+	// deep input overflowed the goroutine stack (fatal, not recoverable) before nesting was bounded, and each level
+	// used to append its own copy of the input to the error
+	_, err := parseRockspecData(strings.NewReader(strings.Repeat("a={", 3<<20)))
+	require.ErrorIs(t, err, errTooDeep)
+	assert.Less(t, len(err.Error()), 1024)
+}
+
 func Test_parseRockspecData_truncated(t *testing.T) {
 	// each of these ends mid-statement, and used to read past the end of the input
 	tests := []struct {

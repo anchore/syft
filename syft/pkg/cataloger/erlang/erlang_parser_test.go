@@ -130,6 +130,14 @@ func Test_parseErlangString_escapedByte(t *testing.T) {
 	assert.Equal(t, `a"b`, got.String())
 }
 
+func TestParseErlang_deepNesting(t *testing.T) {
+	// 4MB of '[' overflowed the goroutine stack (fatal, not recoverable) before nesting was bounded
+	_, err := parseErlang(strings.NewReader(strings.Repeat("[a,", 4<<20)))
+	require.ErrorIs(t, err, errTooDeep)
+	// the error echoes a clipped window of the single-line input, not the whole thing
+	assert.Less(t, len(err.Error()), 1024)
+}
+
 func Test_parseErlang_truncated(t *testing.T) {
 	// each of these read past the end of the input before end-of-input was checked
 	tests := []struct {

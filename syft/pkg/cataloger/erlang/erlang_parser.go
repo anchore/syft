@@ -17,6 +17,8 @@ var errSkipComments = errors.New("")
 
 var errUnexpectedEnd = errors.New("unexpected end of input")
 
+var errTooDeep = fmt.Errorf("nesting deeper than %d levels", parsing.MaxDepth)
+
 func (e erlangNode) Slice() []erlangNode {
 	out, ok := e.value.([]erlangNode)
 	if ok {
@@ -81,7 +83,7 @@ func parseErlang(reader io.Reader) (erlangNode, error) {
 }
 
 func parseErlangBlock(data []byte, i *int) (erlangNode, error) {
-	block, err := parseErlangNode(data, i)
+	block, err := parseErlangNode(data, i, 0)
 	if err != nil {
 		return node(nil), err
 	}
@@ -91,7 +93,7 @@ func parseErlangBlock(data []byte, i *int) (erlangNode, error) {
 	return block, nil
 }
 
-func parseErlangNode(data []byte, i *int) (erlangNode, error) {
+func parseErlangNode(data []byte, i *int, depth int) (erlangNode, error) {
 	parsing.SkipWhitespace(data, i)
 	if *i >= len(data) {
 		return node(nil), errUnexpectedEnd
@@ -112,7 +114,7 @@ func parseErlangNode(data []byte, i *int) (erlangNode, error) {
 			return node(nil), nil
 		}
 
-		return parseErlangList(data, i)
+		return parseErlangList(data, i, depth+1)
 	case '"':
 		fallthrough
 	case '\'':
@@ -178,13 +180,16 @@ func parseErlangString(data []byte, i *int) (erlangNode, error) {
 	return node(nil), fmt.Errorf("unterminated string at %d", *i)
 }
 
-func parseErlangList(data []byte, i *int) (erlangNode, error) {
+func parseErlangList(data []byte, i *int, depth int) (erlangNode, error) {
+	if depth > parsing.MaxDepth {
+		return node(nil), errTooDeep
+	}
 	*i++
 	out := erlangNode{
 		value: []erlangNode{},
 	}
 	for *i < len(data) {
-		item, err := parseErlangNode(data, i)
+		item, err := parseErlangNode(data, i, depth)
 		if err != nil {
 			if err == errSkipComments {
 				parsing.SkipWhitespace(data, i)
