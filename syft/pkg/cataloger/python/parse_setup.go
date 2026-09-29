@@ -55,14 +55,14 @@ func (sp setupFileParser) parseSetupFile(ctx context.Context, _ file.Resolver, _
 
 func (sp setupFileParser) processQuotedDependencies(ctx context.Context, line string, reader file.LocationReadCloser, packages []pkg.Package) []pkg.Package {
 	for _, match := range pinnedDependency.FindAllString(line, -1) {
-		if p, ok := sp.parseQuotedDependency(ctx, match, line, reader); ok {
+		if p, ok := sp.parseQuotedDependency(ctx, match, reader); ok {
 			packages = append(packages, p)
 		}
 	}
 	return packages
 }
 
-func (sp setupFileParser) parseQuotedDependency(ctx context.Context, match, line string, reader file.LocationReadCloser) (pkg.Package, bool) {
+func (sp setupFileParser) parseQuotedDependency(ctx context.Context, match string, reader file.LocationReadCloser) (pkg.Package, bool) {
 	parts := strings.Split(match, "==")
 	if len(parts) != 2 {
 		return pkg.Package{}, false
@@ -71,7 +71,7 @@ func (sp setupFileParser) parseQuotedDependency(ctx context.Context, match, line
 	name := cleanDependencyString(parts[0])
 	version := cleanDependencyString(parts[len(parts)-1])
 
-	return sp.validateAndCreatePackage(ctx, name, version, line, reader)
+	return sp.validateAndCreatePackage(ctx, name, version, reader)
 }
 
 // processUnquotedDependency extracts and processes an unquoted dependency from a line
@@ -84,7 +84,7 @@ func (sp setupFileParser) processUnquotedDependency(ctx context.Context, line st
 	name := strings.TrimSpace(matches[1])
 	version := strings.TrimSpace(matches[2])
 
-	if p, ok := sp.validateAndCreatePackage(ctx, name, version, line, reader); ok {
+	if p, ok := sp.validateAndCreatePackage(ctx, name, version, reader); ok {
 		if !isDuplicatePackage(p, packages) {
 			packages = append(packages, p)
 		}
@@ -100,14 +100,15 @@ func cleanDependencyString(s string) string {
 	return s
 }
 
-func (sp setupFileParser) validateAndCreatePackage(ctx context.Context, name, version, line string, reader file.LocationReadCloser) (pkg.Package, bool) {
+func (sp setupFileParser) validateAndCreatePackage(ctx context.Context, name, version string, reader file.LocationReadCloser) (pkg.Package, bool) {
 	if hasTemplateDirective(name) || hasTemplateDirective(version) {
 		// this can happen in more dynamic setup.py where there is templating
 		return pkg.Package{}, false
 	}
 
 	if name == "" || version == "" {
-		log.WithFields("path", reader.RealPath).Debugf("unable to parse package in setup.py line: %q", line)
+		// the raw line is not logged since this runs once per match, which is quadratic on a long line
+		log.WithFields("path", reader.RealPath, "name", name, "version", version).Debug("unable to parse package in setup.py")
 		return pkg.Package{}, false
 	}
 
