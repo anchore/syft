@@ -2,6 +2,7 @@ package lua
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -279,6 +280,30 @@ hello = foo..  `,
 			}
 
 			assert.IsType(t, rockspec{}, value)
+		})
+	}
+}
+
+func Test_parseRockspecData_truncated(t *testing.T) {
+	// each of these ends mid-statement, and used to read past the end of the input
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{name: "unterminated long string value", content: "a=[[x]"},
+		{name: "unterminated index literal", content: `a["x"`},
+		{name: "local missing equals", content: "local a"},
+		{name: "local missing value", content: "local a="},
+		{name: "local reference at end of input", content: "local a=b"},
+		{name: "local string at end of input", content: `local a="x"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var err error
+			require.NotPanics(t, func() {
+				_, err = parseRockspecData(strings.NewReader(tt.content))
+			})
+			require.Error(t, err)
 		})
 	}
 }
