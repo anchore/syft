@@ -35,6 +35,10 @@ func ToPosix(windowsPath string) (posixPath string) {
 func FromPosix(posixPath string) (windowsPath string) {
 	// decode the volume (e.g. /c/<path> --> C:\\) - There should always be a volume name.
 	// The volume may be a UNC path (e.g. /\\localhost\C$\ --> \\localhost\C$\)
+	if !strings.HasPrefix(posixPath, "/") {
+		// not a volume-encoded posix path (e.g. relative or already native), so there is nothing to decode
+		return posixPath
+	}
 	pathFields := strings.Split(posixPath, "/")
 	if len(pathFields) < 2 {
 		// no separator means no volume to decode
