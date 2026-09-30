@@ -27,7 +27,7 @@ jobs:
     #   enough; a 4 vCPU instance can't pull much more than that anyway.
     #   note: s3-cache intentionally omitted -- PR runs are untrusted and must not write to the
     #   shared cache backend that the trusted release workflow reads from (cache poisoning).
-    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=16+32/family=m5+m6+m7+m8+c5+c6+c7+c8/spot=price-capacity-optimized/volume=100gb"
+    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=16+32/family=m6+m7+m8+c6+c7+c8/spot=price-capacity-optimized/volume=100gb"
     permissions:
       contents: read
     steps:
