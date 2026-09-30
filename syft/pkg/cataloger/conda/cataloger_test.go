@@ -24,7 +24,7 @@ func Test_CondaCataloger(t *testing.T) {
 	}{
 		{
 			name:    "multiple packages in conda meta (python, c binaries, ...)",
-			fixture: "testdata/conda-meta-python-c-etc",
+			fixture: "testdata/prefix",
 			wantErr: require.NoError,
 			expectedPackages: []pkg.Package{
 				{
@@ -32,12 +32,12 @@ func Test_CondaCataloger(t *testing.T) {
 					Version: "4.4.3",
 					FoundBy: "conda-meta-cataloger",
 					Locations: file.NewLocationSet(
-						file.NewLocation("conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json"),
+						file.NewLocation("conda-meta-python-c-etc/conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json"),
 					),
 					Language: pkg.UnknownLanguage,
 					Type:     pkg.CondaPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD-3-Clause", file.NewLocation("conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "BSD-3-Clause", file.NewLocation("conda-meta-python-c-etc/conda-meta/jupyterlab-4.4.3-pyhd8ed1ab_0.json")),
 					),
 					Metadata: pkg.CondaMetaPackage{
 						Name:                "jupyterlab",
@@ -50,6 +50,7 @@ func Test_CondaCataloger(t *testing.T) {
 						License:             "BSD-3-Clause",
 						LicenseFamily:       "BSD",
 						MD5:                 "4861a0c2a5a5d0481a450a9dfaf9febe",
+						Prefix:              "conda-meta-python-c-etc",
 						SHA256:              "fc0235a71d852734fe92183a78cb91827367573450eba82465ae522c64230736",
 						Size:                8236973,
 						Timestamp:           1748273017680,
@@ -108,12 +109,12 @@ func Test_CondaCataloger(t *testing.T) {
 					Version: "1.2.11",
 					FoundBy: "conda-meta-cataloger",
 					Locations: file.NewLocationSet(
-						file.NewLocation("conda-meta/zlib-1.2.11-h90dfc92_1014.json"),
+						file.NewLocation("conda-meta-python-c-etc/conda-meta/zlib-1.2.11-h90dfc92_1014.json"),
 					),
 					Language: pkg.UnknownLanguage,
 					Type:     pkg.CondaPkg,
 					Licenses: pkg.NewLicenseSet(
-						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib", file.NewLocation("conda-meta/zlib-1.2.11-h90dfc92_1014.json")),
+						pkg.NewLicenseFromLocationsWithContext(ctx, "Zlib", file.NewLocation("conda-meta-python-c-etc/conda-meta/zlib-1.2.11-h90dfc92_1014.json")),
 					),
 					Metadata: pkg.CondaMetaPackage{
 						Arch:                "arm64",
@@ -127,6 +128,7 @@ func Test_CondaCataloger(t *testing.T) {
 						License:             "Zlib",
 						LicenseFamily:       "Other",
 						MD5:                 "348a30b1350c9d91a4dbf05f5e46e0bb",
+						Prefix:              "conda-meta-python-c-etc",
 						SHA256:              "a70c028fd3b9af1d7ea3d7099d810f3d2588096237bb472db331a51a36f931c0",
 						Size:                86757,
 						Timestamp:           1648307332172,
