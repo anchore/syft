@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.12/document",
+  "$id": "anchore.io/schema/syft/json/16.1.11/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1577,102 +1577,6 @@
       ],
       "description": "FreeBSDFileRecord represents the file metadata for a single file attributed to a FreeBSD package, as recorded in the pkgng \"files\" table."
     },
-    "FreebsdPkgArchiveEntry": {
-      "properties": {
-        "origin": {
-          "type": "string",
-          "description": "Origin is the port origin the package was built from (e.g. \"www/curl\")."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name is the package name as found in the manifest."
-        },
-        "version": {
-          "type": "string",
-          "description": "Version is the package version, potentially including a port revision and epoch (e.g. \"1.2.3_1,1\")."
-        },
-        "comment": {
-          "type": "string",
-          "description": "Comment is a one-line summary of the package."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description is the long-form package description."
-        },
-        "www": {
-          "type": "string",
-          "description": "WWW is the upstream project website."
-        },
-        "maintainer": {
-          "type": "string",
-          "description": "Maintainer is the email address of the person or team maintaining the port."
-        },
-        "abi": {
-          "type": "string",
-          "description": "ABI is the target platform, OS release, and architecture the package was built for\n(e.g. \"FreeBSD:14:amd64\")."
-        },
-        "architecture": {
-          "type": "string",
-          "description": "Arch is the target architecture the package was built for, in ports arch format\n(e.g. \"freebsd:14:x86:64\")."
-        },
-        "prefix": {
-          "type": "string",
-          "description": "Prefix is the installation prefix for the package (e.g. \"/usr/local\")."
-        },
-        "flatSize": {
-          "type": "integer",
-          "description": "FlatSize is the total installed size of the package in bytes."
-        },
-        "licenseLogic": {
-          "type": "string",
-          "description": "LicenseLogic indicates how multiple licenses combine (\"single\", \"or\", \"and\")."
-        },
-        "licenses": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Licenses are the license names attributed to the package."
-        },
-        "categories": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Categories are the port categories the package is classified under (e.g. \"www\")."
-        },
-        "shlibsRequired": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "ShlibsRequired are the shared libraries required by the package's binaries."
-        },
-        "annotations": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object",
-          "description": "Annotations are free-form key/value metadata attached to the package by the ports build."
-        },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/FreeBSDFileRecord"
-          },
-          "type": "array",
-          "description": "Files are the file records for all files owned by this package, as recorded in the manifest."
-        }
-      },
-      "type": "object",
-      "required": [
-        "origin",
-        "name",
-        "version",
-        "flatSize",
-        "files"
-      ],
-      "description": "FreeBSDPkgArchiveEntry represents package metadata extracted from a FreeBSD pkgng package archive (.pkg) file's \"+MANIFEST\" entry."
-    },
     "FreebsdPkgDbEntry": {
       "properties": {
         "origin": {
@@ -3019,9 +2923,6 @@
             },
             {
               "$ref": "#/$defs/ErlangRebarLockEntry"
-            },
-            {
-              "$ref": "#/$defs/FreebsdPkgArchiveEntry"
             },
             {
               "$ref": "#/$defs/FreebsdPkgDbEntry"

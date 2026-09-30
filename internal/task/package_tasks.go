@@ -16,6 +16,7 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/dotnet"
 	"github.com/anchore/syft/syft/pkg/cataloger/elixir"
 	"github.com/anchore/syft/syft/pkg/cataloger/erlang"
+	"github.com/anchore/syft/syft/pkg/cataloger/freebsd"
 	"github.com/anchore/syft/syft/pkg/cataloger/gentoo"
 	"github.com/anchore/syft/syft/pkg/cataloger/githubactions"
 	"github.com/anchore/syft/syft/pkg/cataloger/golang"
@@ -72,10 +73,12 @@ func DefaultPackageTaskFactories() Factories {
 		newSimplePackageTaskFactory(debian.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "dpkg", "debian"),
 		newSimplePackageTaskFactory(gentoo.NewPortageCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "portage", "gentoo"),
 		newSimplePackageTaskFactory(redhat.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
+		newSimplePackageTaskFactory(freebsd.NewDBCataloger, pkgcataloging.DirectoryTag, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.OSTag, "freebsd", "pkgng"),
 
 		// OS package declared catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(redhat.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "rpm", "redhat"),
 		newSimplePackageTaskFactory(debian.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "linux", "deb", "debian"),
+		newSimplePackageTaskFactory(freebsd.NewArchiveCataloger, pkgcataloging.DeclaredTag, pkgcataloging.DirectoryTag, pkgcataloging.OSTag, "freebsd", "pkgng"),
 
 		// language-specific package installed catalogers ///////////////////////////////////////////////////////////////////////////
 		newSimplePackageTaskFactory(cpp.NewConanInfoCataloger, pkgcataloging.InstalledTag, pkgcataloging.ImageTag, pkgcataloging.LanguageTag, "cpp", "conan"),

@@ -91,6 +91,7 @@ func TestPkgCoverageImage(t *testing.T) {
 	definedPkgs.Remove(string(pkg.ModelPkg))
 	definedPkgs.Remove(string(pkg.VcpkgPkg))
 	definedPkgs.Remove(string(pkg.AppleAppBundlePkg))
+	definedPkgs.Remove(string(pkg.FreeBSDPkg))
 
 	var cases []testCase
 	cases = append(cases, commonTestCases...)
@@ -168,6 +169,7 @@ func TestPkgCoverageDirectory(t *testing.T) {
 	definedPkgs.Remove(string(pkg.ModelPkg))
 	definedPkgs.Remove(string(pkg.VcpkgPkg))
 	definedPkgs.Remove(string(pkg.AppleAppBundlePkg))
+	definedPkgs.Remove(string(pkg.FreeBSDPkg))
 
 	// for directory scans we should not expect to see any of the following package types
 	definedPkgs.Remove(string(pkg.KbPkg))
