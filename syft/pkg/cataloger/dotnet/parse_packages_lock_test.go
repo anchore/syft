@@ -3,6 +3,9 @@ package dotnet
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -270,7 +273,8 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 		log4net2Pkg,
 	}
 
-	// the same package is resolved to a different version per target framework, so both edges must be captured
+	// the same package is resolved to a different version per target framework, so both edges must be captured, while
+	// the Newtonsoft.Json edge declared by both frameworks must appear only once
 	expectedRelationships := []artifact.Relationship{
 		{
 			From: log4net1Pkg,
@@ -290,4 +294,67 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 	}
 
 	pkgtest.TestFileParser(t, fixture, parseDotnetPackagesLock, expectedPkgs, expectedRelationships)
+}
+
+func Test_findDependencyPkg(t *testing.T) {
+	newPkg := func(name, version string) pkg.Package {
+		return pkg.Package{Name: name, Version: version}
+	}
+
+	pkgMap := map[string]pkg.Package{
+		"log4net/1.2.15": newPkg("log4net", "1.2.15"),
+		"log4net/2.0.5":  newPkg("log4net", "2.0.5"),
+		"Serilog/1.10.0": newPkg("Serilog", "1.10.0"),
+		"Serilog/1.9.0":  newPkg("Serilog", "1.9.0"),
+		"Serilog/latest": newPkg("Serilog", "latest"),
+	}
+
+	tests := []struct {
+		name            string
+		depName         string
+		declaredVersion string
+		frameworkDeps   map[string]dotnetPackagesLockDep
+		wantVersion     string
+		wantFound       bool
+	}{
+		{
+			name:            "version resolved by the framework wins over the declared lower bound",
+			depName:         "log4net",
+			declaredVersion: "1.2.15",
+			frameworkDeps:   map[string]dotnetPackagesLockDep{"log4net": {Resolved: "2.0.5"}},
+			wantVersion:     "2.0.5",
+			wantFound:       true,
+		},
+		{
+			name:            "declared version is used when absent from the framework",
+			depName:         "log4net",
+			declaredVersion: "2.0.5",
+			wantVersion:     "2.0.5",
+			wantFound:       true,
+		},
+		{
+			name:            "falls back to the lowest version, compared semantically and ahead of unparseable versions",
+			depName:         "Serilog",
+			declaredVersion: "3.0.0",
+			wantVersion:     "1.9.0",
+			wantFound:       true,
+		},
+		{
+			name:            "unknown package",
+			depName:         "Newtonsoft.Json",
+			declaredVersion: "13.0.3",
+			wantFound:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, found := findDependencyPkg(tt.depName, tt.declaredVersion, tt.frameworkDeps, pkgMap)
+			require.Equal(t, tt.wantFound, found)
+			if !tt.wantFound {
+				return
+			}
+			assert.Equal(t, tt.wantVersion, got.Version)
+		})
+	}
 }

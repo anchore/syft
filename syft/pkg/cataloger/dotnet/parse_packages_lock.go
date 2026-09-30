@@ -100,12 +100,17 @@ func collectPackagesLockDeps(lockFile dotnetPackagesLock) ([]string, map[string]
 	return names, allDependencies
 }
 
+// packagesLockEdge identifies a dependency-of relationship between two packages.
+type packagesLockEdge struct {
+	child, parent artifact.ID
+}
+
 // packagesLockRelationships resolves each dependency within its own target framework so that lockfiles pinning
 // multiple versions of the same package resolve to the correct one.
 func packagesLockRelationships(lockFile dotnetPackagesLock, pkgMap map[string]pkg.Package) []artifact.Relationship {
 	var relationships []artifact.Relationship
 
-	seen := make(map[string]struct{})
+	seen := make(map[packagesLockEdge]struct{})
 	for _, targetFramework := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
 		frameworkDeps := lockFile.Dependencies[targetFramework]
 
@@ -128,7 +133,7 @@ func packagesLockRelationships(lockFile dotnetPackagesLock, pkgMap map[string]pk
 
 // packagesLockDepRelationships returns the edges declared by a single package under one target framework, skipping
 // any edge already recorded in seen -- frameworks that resolve to the same versions would otherwise repeat it.
-func packagesLockDepRelationships(dep dotnetPackagesLockDep, parentPkg pkg.Package, depNameVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package, seen map[string]struct{}) []artifact.Relationship {
+func packagesLockDepRelationships(dep dotnetPackagesLockDep, parentPkg pkg.Package, depNameVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package, seen map[packagesLockEdge]struct{}) []artifact.Relationship {
 	var relationships []artifact.Relationship
 
 	for _, childDepName := range slices.Sorted(maps.Keys(dep.Dependencies)) {
@@ -140,7 +145,7 @@ func packagesLockDepRelationships(dep dotnetPackagesLockDep, parentPkg pkg.Packa
 			continue
 		}
 
-		key := string(childPkg.ID()) + string(parentPkg.ID())
+		key := packagesLockEdge{child: childPkg.ID(), parent: parentPkg.ID()}
 		if _, exists := seen[key]; exists {
 			continue
 		}
@@ -209,7 +214,7 @@ func findDependencyPkg(name, declaredVersion string, frameworkDeps map[string]do
 }
 
 // findPkgByName returns the lowest-versioned package with the given name. This is a last-resort fallback for
-// lockfiles where a dependency edge names a package that is absent from its own target framework
+// lockfiles where a dependency edge names a package that is absent from its own target framework.
 func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
 	var candidates []string
 	for pkgNameVersion := range pkgMap {

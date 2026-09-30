@@ -8,7 +8,8 @@
                 "resolved": "1.0.0",
                 "contentHash": "mylibhash==",
                 "dependencies": {
-                    "log4net": "2.0.5"
+                    "log4net": "2.0.5",
+                    "Newtonsoft.Json": "13.0.3"
                 }
             },
             "log4net": {
