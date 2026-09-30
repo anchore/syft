@@ -64,7 +64,7 @@ func (c *fileConfig) PostLoad() error {
 }
 
 func (c *fileConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
-	descriptions.Add(&c.Metadata.Selection, `select which files should be captured by the file-metadata cataloger and included in the SBOM. 
+	descriptions.Add(&c.Metadata.Selection, `select which files should be captured by the file-metadata cataloger and included in the SBOM.
 Options include:
  - "all": capture all files from the search space
  - "owned-by-package": capture only files owned by packages
