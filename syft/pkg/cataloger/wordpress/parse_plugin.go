@@ -2,7 +2,9 @@ package wordpress
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -42,12 +44,13 @@ func parseWordpressPluginFiles(ctx context.Context, resolver file.Resolver, _ *g
 	var pkgs []pkg.Package
 	buffer := make([]byte, contentBufferSize)
 
-	_, err := reader.Read(buffer)
-	if err != nil {
+	// a file shorter than the buffer is expected, so only the header it does have is parsed
+	n, err := io.ReadFull(reader, buffer)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
 		return nil, nil, fmt.Errorf("failed to read %s file: %w", reader.Path(), err)
 	}
 
-	fields := extractFields(string(buffer))
+	fields := extractFields(string(buffer[:n]))
 
 	name, nameOk := fields["name"]
 	version, versionOk := fields["version"]

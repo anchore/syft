@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -229,6 +230,33 @@ func Test_findUbuntuFeatures(t *testing.T) {
 
 			require.Equal(t, test.expected, s.Artifacts.LinuxDistribution.ExtendedSupport)
 		})
+	}
+}
+
+// returning early from Collection.Enumerate leaks its goroutine and read lock, so any later write blocks forever.
+func Test_findUbuntuFeatures_releasesPackageCollectionLock(t *testing.T) {
+	resolver := fixtureResolverForDir(t, "testdata/ubuntu_plain")
+
+	s := sbom.SBOM{}
+	s.Artifacts.LinuxDistribution = &linux.Release{ID: "ubuntu"}
+	s.Artifacts.Packages = pkg.NewCollection(
+		pkg.Package{Name: "openssl", Version: "1.1.1f-1ubuntu2.19+esm1", Type: pkg.DebPkg},
+		pkg.Package{Name: "libcap2", Version: "1:2.32-1ubuntu0.1~esm1", Type: pkg.DebPkg},
+	)
+
+	require.NoError(t, os.DetectFeatures(context.Background(), resolver, sbomsync.NewBuilder(&s)))
+	require.True(t, s.Artifacts.LinuxDistribution.ExtendedSupport)
+
+	added := make(chan struct{})
+	go func() {
+		s.Artifacts.Packages.Add(pkg.Package{Name: "zlib1g", Version: "1:1.2.11.dfsg-2ubuntu1", Type: pkg.DebPkg})
+		close(added)
+	}()
+
+	select {
+	case <-added:
+	case <-time.After(5 * time.Second):
+		t.Fatal("package collection is still read-locked after feature detection")
 	}
 }
 

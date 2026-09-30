@@ -17,6 +17,7 @@ import (
 
 	intFile "github.com/anchore/syft/internal/file"
 	"github.com/anchore/syft/internal/spillbuf"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
@@ -602,7 +603,7 @@ func TestDecompressUPX_RefusingATinyClaimIsCheap(t *testing.T) {
 	tiny := padTo(buildUPXFile(t, 1<<30, 1<<30,
 		[][]byte{bytes.Repeat([]byte("A"), 32)}, nil), 128)
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err := unpackIn(t, t.TempDir(), tiny)
 		require.Error(t, err, "a 128 byte file may not claim a gigabyte")
 	})
@@ -629,7 +630,7 @@ func TestDecompressUPX_OutputIsNeverResident(t *testing.T) {
 	require.LessOrEqual(t, len(fixture), inputLen, "the fixture must stay small enough for the ratio to bind")
 
 	var out unpackedContents
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		var err error
 		out, err = unpackIn(t, t.TempDir(), fixture)
 		require.NoError(t, err)
@@ -702,7 +703,7 @@ func TestDecompressUPX_CompressedSizeCannotOutrunTheInput(t *testing.T) {
 	b[8] = 14                                         // b_method = LZMA
 	data := padTo(append(buildUPXHeader(4096, 4096), b...), 128)
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		_, err := unpackIn(t, t.TempDir(), data)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, errUPXImplausibleHeader, "no block was readable, so nothing was packed")
@@ -717,28 +718,57 @@ func TestDecompressUPX_TailExtentsArePlacedPastTheLoader(t *testing.T) {
 	// front of it. Every other crafted fixture here has l_lsize == 0, so without this skipLoader was only
 	// reachable through the Docker-backed fixture.
 	//
+	// UPX pads to a 4 byte boundary before it writes the stub and l_lsize counts from there, so each case
+	// ends the head extent the given number of bytes short of a boundary. The head is a stored block so its
+	// length alone decides where it ends; a compressed one ends wherever the encoder happens to stop.
+	//
 	// note: block 1 here is not an ELF, so there are no PT_LOAD offsets and the tail lands sequentially.
 	// The hole-filling path this feeds in production is covered by TestFirstHole and by the sparse
 	// fixtures in upx_bounds_regression_test.go.
 	const loaderSize = 64
-	head := bytes.Repeat([]byte("H"), 128)
 	tail := bytes.Repeat([]byte("T"), 32)
 
-	data := buildUPXHeaderWithLoader(4096, 4096, loaderSize)
-	data = append(data, blockFor(t, head)...)
-	data = append(data, make([]byte, 12)...)            // end marker: closes the first run of extents
-	data = append(data, make([]byte, loaderSize-12)...) // the loader stub the chain skips over
-	data = append(data, blockFor(t, tail)...)
-	data = append(data, make([]byte, 12)...) // end marker for the tail run
-	data = padTo(data, 1024)
+	tests := []struct {
+		name    string
+		padding int
+	}{
+		{name: "no padding", padding: 0},
+		{name: "1 byte of padding", padding: 1},
+		{name: "2 bytes of padding", padding: 2},
+		{name: "3 bytes of padding", padding: 3},
+	}
 
-	out, err := unpack(t, data)
-	// 160 bytes of a declared 4096, short by construction like every other crafted fixture here
-	require.ErrorIs(t, err, errUPXPartial)
-	got := readAll(t, out)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := buildUPXHeaderWithLoader(4096, 4096, loaderSize)
 
-	assert.Equal(t, head, got[:len(head)], "the head extent stays where it was placed")
-	assert.Contains(t, string(got), string(tail), "the extent behind the loader must be placed too")
+			// trim a 128 byte head so that it, plus its b_info, ends tt.padding bytes short of a boundary
+			headLen := 128 - (len(data)+12+128+tt.padding)%4
+			head := bytes.Repeat([]byte("H"), headLen)
+			stored := make([]byte, 12)
+			binary.LittleEndian.PutUint32(stored[0:4], uint32(headLen)) // sz_unc
+			binary.LittleEndian.PutUint32(stored[4:8], uint32(headLen)) // sz_cpr, equal for a stored block
+			stored[8] = upxMethodStored
+
+			data = append(data, stored...)
+			data = append(data, head...)
+			require.Equal(t, tt.padding, (4-len(data)%4)%4, "the head should end tt.padding bytes short of a boundary")
+			data = append(data, make([]byte, tt.padding)...)    // the padding UPX writes in front of the stub
+			data = append(data, make([]byte, 12)...)            // end marker: closes the first run of extents
+			data = append(data, make([]byte, loaderSize-12)...) // the loader stub the chain skips over
+			data = append(data, blockFor(t, tail)...)
+			data = append(data, make([]byte, 12)...) // end marker for the tail run
+			data = padTo(data, 1024)
+
+			out, err := unpack(t, data)
+			// a few hundred bytes of a declared 4096, short by construction like every other crafted fixture here
+			require.ErrorIs(t, err, errUPXPartial)
+			got := readAll(t, out)
+
+			assert.Equal(t, head, got[:len(head)], "the head extent stays where it was placed")
+			assert.Contains(t, string(got), string(tail), "the extent behind the loader must be placed too")
+		})
+	}
 }
 
 func TestDecompressUPX_UnsupportedMethodIsNotReportable(t *testing.T) {
@@ -842,7 +872,7 @@ func TestScanReader_MaliciousUPXRejected(t *testing.T) {
 	// assert on an already-finished test if it ever fired.
 	var build *extendedBuildInfo
 	var err error
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		build, err = scanReader(ctx, file.NewLocation("/malicious"), bytes.NewReader(data), false)
 	})
 	assert.Nil(t, build)
@@ -873,7 +903,7 @@ func TestCopyUnfiltered_WindowIsNotResident(t *testing.T) {
 	const size = 16 * intFile.MB
 	block := bytes.Repeat([]byte{0xE8, cto8, 0x11, 0x22, 0x33, 0x0F}, size/6+1)[:size]
 
-	allocated := measureAlloc(t, func() {
+	allocated := testutils.MeasureAlloc(t, func() {
 		require.NoError(t, copyUnfiltered(io.Discard, bytes.NewReader(block), size, cto8))
 	})
 

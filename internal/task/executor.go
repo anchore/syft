@@ -51,7 +51,8 @@ func runTaskSafely(ctx context.Context, t Task, resolver file.Resolver, s sbomsy
 	// handle individual cataloger panics
 	defer func() {
 		if e := recover(); e != nil {
-			err = fmt.Errorf("%v at:\n%s", e, string(debug.Stack()))
+			log.WithFields("task", t.Name()).Debugf("task panic stack:\n%s", debug.Stack())
+			err = fmt.Errorf("panic in task %q: %v", t.Name(), e)
 		}
 	}()
 

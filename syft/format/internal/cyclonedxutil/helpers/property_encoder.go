@@ -93,7 +93,7 @@ func encode(out map[string]string, value reflect.Value, prefix string, fn FieldN
 	typ := value.Type()
 
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if value.IsNil() {
 			return
 		}
@@ -158,7 +158,7 @@ func fieldName(f reflect.StructField, prefix string, fn FieldName) (string, bool
 // Decode based on the given type, applies all values to hydrate a new instance
 func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldName) any {
 	isPtr := false
-	for typ.Kind() == reflect.Ptr {
+	for typ.Kind() == reflect.Pointer {
 		typ = typ.Elem()
 		isPtr = true
 	}
@@ -188,7 +188,7 @@ func Decode(typ reflect.Type, values map[string]string, prefix string, fn FieldN
 func DecodeInto(obj any, values map[string]string, prefix string, fn FieldName) {
 	value := reflect.ValueOf(obj)
 
-	for value.Type().Kind() == reflect.Ptr {
+	for value.Type().Kind() == reflect.Pointer {
 		value = value.Elem()
 	}
 
@@ -205,7 +205,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 
 	incoming, valid := vals[prefix]
 	switch typ.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		t := typ.Elem()
 		v := value
 		if v.IsNil() {
@@ -269,13 +269,13 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 			str := fmt.Sprintf("%s:%d", prefix, idx)
 			// create new placeholder and decode values
 			newType := t
-			if t.Kind() == reflect.Ptr {
+			if t.Kind() == reflect.Pointer {
 				newType = t.Elem()
 			}
 			v := reflect.New(newType)
 			if decode(vals, v.Elem(), str, fn) {
 				// append to slice
-				if t.Kind() != reflect.Ptr {
+				if t.Kind() != reflect.Pointer {
 					v = v.Elem()
 				}
 				slice = reflect.Append(slice, v)
@@ -304,7 +304,7 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 				keyVals[key] = after
 				// create new placeholder and decode key
 				newKeyType := keyType
-				if keyType.Kind() == reflect.Ptr {
+				if keyType.Kind() == reflect.Pointer {
 					newKeyType = keyType.Elem()
 				}
 				k := reflect.New(newKeyType)
@@ -312,18 +312,18 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 					log.Debugf("unable to decode key for: %s", key)
 					continue
 				}
-				if keyType.Kind() != reflect.Ptr {
+				if keyType.Kind() != reflect.Pointer {
 					k = k.Elem()
 				}
 
 				// create new placeholder and decode value
 				newValueType := valueType
-				if valueType.Kind() == reflect.Ptr {
+				if valueType.Kind() == reflect.Pointer {
 					newValueType = valueType.Elem()
 				}
 				v := reflect.New(newValueType)
 				if decode(vals, v.Elem(), key, fn) {
-					if valueType.Kind() != reflect.Ptr {
+					if valueType.Kind() != reflect.Pointer {
 						v = v.Elem()
 					}
 
@@ -367,7 +367,7 @@ func PtrToStruct(ptr any) any {
 		return nil
 	}
 	switch v.Type().Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return PtrToStruct(v.Elem().Interface())
 	case reflect.Interface:
 		return PtrToStruct(v.Elem().Interface())

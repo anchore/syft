@@ -7,11 +7,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/anchore/syft/internal/testutils"
 )
 
 // section describes one section to place in a fixture. The compression headers are deliberately
@@ -543,13 +544,10 @@ func TestNewFile_BombDoesNotAllocate(t *testing.T) {
 		{name: ".strtab", typ: elf.SHT_STRTAB},
 	}, buildOpts{})
 
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-
-	_, err := NewFile(bytes.NewReader(data))
-
-	runtime.ReadMemStats(&after)
+	var err error
+	allocated := testutils.MeasureAlloc(t, func() {
+		_, err = NewFile(bytes.NewReader(data))
+	})
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "over the")
@@ -557,7 +555,7 @@ func TestNewFile_BombDoesNotAllocate(t *testing.T) {
 	// the guard has to reject before the allocation, not after it. The margin is loose on purpose: this
 	// is asserting "nothing near the declared size was allocated", not a precise budget.
 	const margin = 32 * 1024 * 1024
-	assert.Less(t, after.TotalAlloc-before.TotalAlloc, uint64(margin),
+	assert.Less(t, allocated, uint64(margin),
 		"parsing allocated far more than the input warrants")
 }
 

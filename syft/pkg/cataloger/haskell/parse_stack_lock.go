@@ -91,8 +91,12 @@ func parseStackPackageEncoding(pkgEncoding string) (name, version, hash string) 
 	encodingSplits := strings.Split(remainingEncoding, "@")
 	version = encodingSplits[0]
 	if len(encodingSplits) > 1 {
-		startHash, endHash := strings.Index(encodingSplits[1], ":")+1, strings.Index(encodingSplits[1], ",")
-		hash = encodingSplits[1][startHash:endHash]
+		// a pin is either "@sha256:<hash>,<size>" or "@rev:<n>", and only the first carries a
+		// hash. without the comma the end index is -1 and the slice below goes out of range.
+		colonIdx, commaIdx := strings.Index(encodingSplits[1], ":"), strings.Index(encodingSplits[1], ",")
+		if colonIdx != -1 && commaIdx > colonIdx {
+			hash = encodingSplits[1][colonIdx+1 : commaIdx]
+		}
 	}
 	return
 }

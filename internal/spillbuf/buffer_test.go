@@ -8,12 +8,12 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 )
 
@@ -161,13 +161,9 @@ func TestSparsePlacementIsNotAnAllocationKnob(t *testing.T) {
 	b := newTestBuffer(t, WithMemLimit(1<<20))
 	mustWrite(t, b, 0, repeat('A', 64))
 
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	mustWrite(t, b, far, repeat('B', 64))
-	runtime.ReadMemStats(&after)
-
-	allocated := after.TotalAlloc - before.TotalAlloc
+	allocated := testutils.MeasureAlloc(t, func() {
+		mustWrite(t, b, far, repeat('B', 64))
+	})
 	t.Logf("writing 64 bytes at offset %d allocated %d bytes", far, allocated)
 	assert.Less(t, allocated, uint64(1<<20),
 		"a far placement must cost its own bytes, not its offset")
@@ -714,15 +710,11 @@ func TestMemoryTierGrowsAmortized(t *testing.T) {
 	)
 	b := newTestBuffer(t, WithMemLimit(limit))
 
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	for off := int64(0); off < limit; off += chunk {
-		mustWrite(t, b, off, repeat('A', chunk))
-	}
-	runtime.ReadMemStats(&after)
-
-	allocated := after.TotalAlloc - before.TotalAlloc
+	allocated := testutils.MeasureAlloc(t, func() {
+		for off := int64(0); off < limit; off += chunk {
+			mustWrite(t, b, off, repeat('A', chunk))
+		}
+	})
 	t.Logf("filling a %d byte tier in %d byte chunks allocated %d bytes", limit, chunk, allocated)
 	assert.Less(t, allocated, uint64(4*limit),
 		"growth has to be amortized, not a fresh copy of the whole tier per write")

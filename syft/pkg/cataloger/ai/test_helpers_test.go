@@ -72,8 +72,32 @@ func (b *testGGUFBuilder) withUint32KV(key string, value uint32) *testGGUFBuilde
 	return b
 }
 
+// withRawKV adds a KV whose value bytes are written verbatim, for arrays and malformed values.
+func (b *testGGUFBuilder) withRawKV(key string, valueType uint32, raw []byte) *testGGUFBuilder {
+	b.kvPairs = append(b.kvPairs, testKVPair{key: key, valueType: valueType, value: raw})
+	return b
+}
+
+// ggufArray encodes an array value: item type, length, then the already encoded items.
+func ggufArray(itemType uint32, n uint64, items []byte) []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, itemType)
+	binary.Write(buf, binary.LittleEndian, n)
+	buf.Write(items)
+	return buf.Bytes()
+}
+
+// writeLen writes a count or length, which is 32-bit in GGUF v1 and 64-bit after.
+func (b *testGGUFBuilder) writeLen(n uint64) {
+	if b.version <= 1 {
+		binary.Write(b.buf, binary.LittleEndian, uint32(n))
+		return
+	}
+	binary.Write(b.buf, binary.LittleEndian, n)
+}
+
 func (b *testGGUFBuilder) writeString(s string) {
-	binary.Write(b.buf, binary.LittleEndian, uint64(len(s)))
+	b.writeLen(uint64(len(s)))
 	b.buf.WriteString(s)
 }
 
@@ -85,10 +109,10 @@ func (b *testGGUFBuilder) build() []byte {
 	binary.Write(b.buf, binary.LittleEndian, b.version)
 
 	// Write tensor count
-	binary.Write(b.buf, binary.LittleEndian, b.tensorCount)
+	b.writeLen(b.tensorCount)
 
 	// Write KV count
-	binary.Write(b.buf, binary.LittleEndian, uint64(len(b.kvPairs)))
+	b.writeLen(uint64(len(b.kvPairs)))
 
 	// Write KV pairs
 	for _, kv := range b.kvPairs {
@@ -97,6 +121,10 @@ func (b *testGGUFBuilder) build() []byte {
 		// Write value type
 		binary.Write(b.buf, binary.LittleEndian, kv.valueType)
 		// Write value based on type
+		if raw, ok := kv.value.([]byte); ok {
+			b.buf.Write(raw)
+			continue
+		}
 		switch kv.valueType {
 		case ggufTypeString:
 			b.writeString(kv.value.(string))

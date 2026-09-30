@@ -9,16 +9,21 @@ func DocumentName(src source.Description) string {
 		return src.Name
 	}
 
+	var name string
 	switch metadata := src.Metadata.(type) {
 	case source.ImageMetadata:
-		return metadata.UserInput
+		name = metadata.UserInput
 	case source.OCIModelMetadata:
-		return metadata.UserInput
+		name = metadata.UserInput
 	case source.DirectoryMetadata:
-		return metadata.Path
+		name = metadata.Path
 	case source.FileMetadata:
-		return metadata.Path
-	default:
+		name = metadata.Path
+	}
+
+	// the SPDX document name is mandatory, and a source read from another SBOM may not have one
+	if name == "" {
 		return "unknown"
 	}
+	return name
 }

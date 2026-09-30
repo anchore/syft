@@ -8,6 +8,9 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/binutils"
 )
 
+// mysqlClusterPackage is the package name shared by every MySQL Cluster classifier below.
+const mysqlClusterPackage = "mysql-cluster"
+
 // in both binaries and shared libraries, the version pattern is [NUL]3.11.2[NUL]
 var pythonVersionTemplate = `(?m)\x00(?P<version>{{ .version }}[-._a-zA-Z0-9]*)\x00`
 
@@ -381,7 +384,7 @@ func DefaultClassifiers() []binutils.Classifier {
 					Class: "mysqld-mysql-cluster-legacy-binary",
 					EvidenceMatcher: m.FileContentsVersionMatcher(
 						`cluster-gpl\x00[0-9]+(\.[0-9]+)?(\.[0-9]+)?\-ndb\-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?)`),
-					Package: "mysql-cluster",
+					Package: mysqlClusterPackage,
 					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
 					CPEs: []cpe.CPE{
 						cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -392,7 +395,7 @@ func DefaultClassifiers() []binutils.Classifier {
 					Class: "mysqld-mysql-cluster-binary",
 					EvidenceMatcher: m.FileContentsVersionMatcher(
 						`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
-					Package: "mysql-cluster",
+					Package: mysqlClusterPackage,
 					PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
 					CPEs: []cpe.CPE{
 						cpe.Must("cpe:2.3:a:oracle:mysql:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -419,7 +422,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/ndbd",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
-			Package: "mysql-cluster",
+			Package: mysqlClusterPackage,
 			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
 			CPEs: []cpe.CPE{
 				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -430,7 +433,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/ndbmtd",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
-			Package: "mysql-cluster",
+			Package: mysqlClusterPackage,
 			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
 			CPEs: []cpe.CPE{
 				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),
@@ -441,7 +444,7 @@ func DefaultClassifiers() []binutils.Classifier {
 			FileGlob: "**/ndb_mgmd",
 			EvidenceMatcher: m.FileContentsVersionMatcher(
 				`/mysql-cluster-gpl-(?P<version>[0-9]+(\.[0-9]+)?(\.[0-9]+)?(alpha[0-9]|beta[0-9]|rc[0-9])?)/`),
-			Package: "mysql-cluster",
+			Package: mysqlClusterPackage,
 			PURL:    mustPURL("pkg:generic/mysql-cluster@version"),
 			CPEs: []cpe.CPE{
 				cpe.Must("cpe:2.3:a:oracle:mysql_cluster:*:*:*:*:*:*:*:*", cpe.NVDDictionaryLookupSource),

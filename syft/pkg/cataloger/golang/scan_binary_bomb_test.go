@@ -7,34 +7,40 @@ import (
 	"debug/elf"
 	"encoding/binary"
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/kastenhq/goversion/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/internal/elfutil"
 )
 
 // Test_getBuildInfo_compressedSectionBomb covers the reason readBuildInfo exists: debug/buildinfo opens
 // ELF files with debug/elf itself, and elf.NewFile expands the section-name string table as it parses,
 // so an oversized compression header there is an unbounded allocation on a path elfutil.NewFile never
-// sees. The fixture is a real zlib stream, so it delivers every byte its header promises.
+// sees. The fixture is a real zlib stream, but it stops short of what its header promises: delivering
+// the full 256MB only made it slower to build and inflate, mostly under -race.
 func Test_getBuildInfo_compressedSectionBomb(t *testing.T) {
-	const declared = 256 << 20 // comfortably over elfutil's bound, small enough to allocate in a test
+	const (
+		declared = 256 << 20 // comfortably over elfutil's bound, which only reads the header
+		// debug/elf allocates the declared size up front today, so delivery barely matters. Twice the
+		// guarded budget keeps the fixture a bomb if it ever switches to reading in chunks.
+		delivered = 64 << 20
+	)
 
-	bomb := elfWithCompressedNameTable(t, declared)
-	t.Logf("%d byte fixture declares a %d byte section name table", len(bomb), declared)
+	bomb := elfWithCompressedNameTable(t, declared, delivered)
+	t.Logf("%d byte fixture declares a %d byte section name table and delivers %d", len(bomb), declared, delivered)
 
 	// the unguarded path is the thing being defended against: prove the fixture really is a bomb
-	unguarded := measureAlloc(t, func() {
+	unguarded := testutils.MeasureAlloc(t, func() {
 		_, err := buildinfo.Read(bytes.NewReader(bomb))
 		t.Logf("buildinfo.Read err: %v", err)
 	})
-	assert.Greater(t, unguarded, uint64(declared), "fixture did not actually deliver the declared bytes")
+	assert.Greater(t, unguarded, uint64(delivered), "fixture did not actually deliver its bytes")
 
-	guarded := measureAlloc(t, func() {
+	guarded := testutils.MeasureAlloc(t, func() {
 		_, err := getBuildInfo(bytes.NewReader(bomb))
 		require.Error(t, err)
 		assert.ErrorIs(t, err, elfutil.ErrDeclaredSizeExceeded)
@@ -47,19 +53,24 @@ func Test_getBuildInfo_compressedSectionBomb(t *testing.T) {
 // goversion opens the file itself and reads .symtab plus the string table it links, and those are
 // expanded lazily, so the section-name table bound getBuildInfo applies never reaches them.
 func Test_getCryptoInformation_compressedSymtabBomb(t *testing.T) {
-	const declared = 256 << 20 // comfortably over elfutil's bound, small enough to allocate in a test
+	const (
+		declared = 256 << 20 // comfortably over elfutil's bound, which only reads the header
+		// debug/elf allocates the declared size up front today, so delivery barely matters. Twice the
+		// guarded budget keeps the fixture a bomb if it ever switches to reading in chunks.
+		delivered = 64 << 20
+	)
 
-	bomb := elfWithCompressedSymtab(t, declared)
-	t.Logf("%d byte fixture declares a %d byte symbol table", len(bomb), declared)
+	bomb := elfWithCompressedSymtab(t, declared, delivered)
+	t.Logf("%d byte fixture declares a %d byte symbol table and delivers %d", len(bomb), declared, delivered)
 
 	// the unguarded path is the thing being defended against: prove the fixture really is a bomb
-	unguarded := measureAlloc(t, func() {
+	unguarded := testutils.MeasureAlloc(t, func() {
 		_, err := version.ReadExeFromReader(bytes.NewReader(bomb))
 		t.Logf("goversion err: %v", err)
 	})
-	assert.Greater(t, unguarded, uint64(declared), "fixture did not actually deliver the declared bytes")
+	assert.Greater(t, unguarded, uint64(delivered), "fixture did not actually deliver its bytes")
 
-	guarded := measureAlloc(t, func() {
+	guarded := testutils.MeasureAlloc(t, func() {
 		_, err := getCryptoInformation(bytes.NewReader(bomb))
 		require.ErrorIs(t, err, elfutil.ErrDeclaredSizeExceeded)
 	})
@@ -85,12 +96,12 @@ func Test_getCryptoInformation_passesThroughNonELF(t *testing.T) {
 }
 
 // elfWithCompressedSymtab builds a minimal ELF64 whose .symtab is SHF_COMPRESSED, declaring `declared`
-// decompressed bytes and genuinely delivering them. The name table is left uncompressed so the file gets
+// decompressed bytes and genuinely delivering `delivered` of them. The name table is left uncompressed so the file gets
 // past the bound getBuildInfo already applies, which is the point: this is the section that bound misses.
-func elfWithCompressedSymtab(t *testing.T, declared uint64) []byte {
+func elfWithCompressedSymtab(t *testing.T, declared, delivered uint64) []byte {
 	t.Helper()
 
-	payload := make([]byte, declared)
+	payload := make([]byte, delivered)
 	var compressed bytes.Buffer
 	zw := zlib.NewWriter(&compressed)
 	_, err := zw.Write(payload)
@@ -149,25 +160,13 @@ func elfWithCompressedSymtab(t *testing.T, declared uint64) []byte {
 	return buf.Bytes()
 }
 
-// measureAlloc reports the bytes allocated while fn ran. TotalAlloc is process-wide, so a test using this
-// must not call t.Parallel: another test's allocations would land in the measurement.
-func measureAlloc(t *testing.T, fn func()) uint64 {
-	t.Helper()
-	var before, after runtime.MemStats
-	runtime.GC()
-	runtime.ReadMemStats(&before)
-	fn()
-	runtime.ReadMemStats(&after)
-	return after.TotalAlloc - before.TotalAlloc
-}
-
 // elfWithCompressedNameTable builds a minimal ELF64 whose only real section is a SHF_COMPRESSED .shstrtab
-// declaring `declared` decompressed bytes and genuinely delivering them. Only the test that runs the
+// declaring `declared` decompressed bytes and genuinely delivering `delivered` of them. Only the test that runs the
 // unguarded path needs delivery; use elfDeclaringNameTable everywhere else, since building this one costs
-// `declared` bytes of allocation plus a zlib compress of them.
-func elfWithCompressedNameTable(t *testing.T, declared uint64) []byte {
+// `delivered` bytes of allocation plus a zlib compress of them.
+func elfWithCompressedNameTable(t *testing.T, declared, delivered uint64) []byte {
 	t.Helper()
-	return elfNameTableFixture(t, declared, true)
+	return elfNameTableFixture(t, declared, delivered)
 }
 
 // elfDeclaringNameTable declares `declared` bytes without delivering them. CheckSectionNameTable reads the
@@ -175,19 +174,15 @@ func elfWithCompressedNameTable(t *testing.T, declared uint64) []byte {
 // bound itself never needs the stream to be real.
 func elfDeclaringNameTable(t *testing.T, declared uint64) []byte {
 	t.Helper()
-	return elfNameTableFixture(t, declared, false)
+	return elfNameTableFixture(t, declared, 64)
 }
 
-func elfNameTableFixture(t *testing.T, declared uint64, deliver bool) []byte {
+func elfNameTableFixture(t *testing.T, declared, delivered uint64) []byte {
 	t.Helper()
 
 	// the decompressed name table only has to start with the section names; the rest is padding that
 	// exists purely to make the declared size real
-	size := declared
-	if !deliver {
-		size = 64
-	}
-	payload := make([]byte, size)
+	payload := make([]byte, delivered)
 	copy(payload, "\x00.shstrtab\x00")
 
 	var compressed bytes.Buffer
