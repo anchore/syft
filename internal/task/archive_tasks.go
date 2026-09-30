@@ -41,13 +41,8 @@ func NewArchiveCatalogerTask(cfg cataloging.ArchiveSearchConfig, subPipeline []T
 	return newArchiveCatalogerTask(cfg.MaxDepth, archiveLimits(cfg), subPipeline, exclusions)
 }
 
-// archiveLimits maps the configured limits onto the limiter's. Zero means the default, so the limiter's
-// own zero (which forbids the resource) is not reachable from configuration.
 func archiveLimits(cfg cataloging.ArchiveSearchConfig) archive.Limits {
-	return archive.Limits{
-		MaxMemoryBytes: cmp.Or(cfg.MaxMemoryBytes, int64(cataloging.DefaultArchiveMaxMemoryBytes)),
-		MaxDiskBytes:   cmp.Or(cfg.MaxDiskBytes, int64(cataloging.DefaultArchiveMaxDiskBytes)),
-	}
+	return archive.Limits{MaxMemoryBytes: cfg.MaxMemoryBytes, MaxDiskBytes: cfg.MaxDiskBytes}
 }
 
 func newArchiveCatalogerTask(maxDepth int, limits archive.Limits, subPipeline []Task, exclusions []string) Task {

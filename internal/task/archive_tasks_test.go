@@ -172,23 +172,6 @@ func Test_archiveCataloger_traversalThreading(t *testing.T) {
 	}, seen)
 }
 
-func Test_archiveCataloger_zeroLimitsMeanDefault(t *testing.T) {
-	// a config literal naming only the depth must catalog archives, not forbid both memory and disk
-	rootDir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(rootDir, "outer.zip"), makeZip(t, map[string][]byte{"a.txt": []byte("a")}), 0o600))
-
-	var seen []string
-	fileCounts := map[string]int{}
-	tsk := newTestTask(t, cataloging.ArchiveSearchConfig{MaxDepth: 1}, capturingTask(t, &seen, &fileCounts))
-
-	s := newTestSBOM()
-	require.NoError(t, tsk.Execute(context.Background(), dirTestResolver{dir: rootDir}, sbomsync.NewBuilder(s)))
-
-	assert.Equal(t, []string{"/outer.zip"}, seen)
-	assert.Equal(t, 1, fileCounts["/outer.zip"])
-	assert.Empty(t, s.Artifacts.Unknowns)
-}
-
 func Test_archiveCataloger_truncationStillCatalogs(t *testing.T) {
 	// reaching a limit is a truncation, not a failure: the sub-pipeline still runs over what was stored
 	big := bytes.Repeat([]byte("x"), 4096)

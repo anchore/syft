@@ -555,6 +555,31 @@ func TestCreateSBOMConfig_validate(t *testing.T) {
 				),
 			wantErr: assert.Error,
 		},
+		{
+			name: "nested archives enabled with no memory or disk",
+			cfg: DefaultCreateSBOMConfig().WithArchiveConfig(
+				cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1).WithMaxMemoryBytes(0).WithMaxDiskBytes(0),
+			),
+			wantErr: assert.Error,
+		},
+		{
+			name: "nested archives enabled with memory only",
+			cfg: DefaultCreateSBOMConfig().WithArchiveConfig(
+				cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1).WithMaxDiskBytes(0),
+			),
+		},
+		{
+			name: "nested archives enabled with disk only",
+			cfg: DefaultCreateSBOMConfig().WithArchiveConfig(
+				cataloging.DefaultArchiveSearchConfig().WithMaxDepth(1).WithMaxMemoryBytes(0),
+			),
+		},
+		{
+			name: "nested archives disabled with no memory or disk",
+			cfg: DefaultCreateSBOMConfig().WithArchiveConfig(
+				cataloging.DefaultArchiveSearchConfig().WithMaxMemoryBytes(0).WithMaxDiskBytes(0),
+			),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

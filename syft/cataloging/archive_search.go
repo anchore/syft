@@ -27,11 +27,12 @@ type ArchiveSearchConfig struct {
 	MaxDepth int `yaml:"max-depth" json:"max-depth" mapstructure:"max-depth"`
 
 	// MaxMemoryBytes bounds the archive content held in memory at once; content that does not fit is
-	// written to disk. Zero means DefaultArchiveMaxMemoryBytes, negative is unbounded.
+	// written to disk. Zero holds nothing in memory, negative is unbounded.
 	MaxMemoryBytes int64 `yaml:"max-memory-bytes" json:"max-memory-bytes" mapstructure:"max-memory-bytes"`
 
 	// MaxDiskBytes bounds the archive content written to disk at once; an archive whose content does
-	// not fit is skipped or truncated. Zero means DefaultArchiveMaxDiskBytes, negative is unbounded.
+	// not fit is skipped or truncated. Zero writes nothing to disk, negative is unbounded. MaxMemoryBytes
+	// and MaxDiskBytes cannot both be zero while MaxDepth is not.
 	MaxDiskBytes int64 `yaml:"max-disk-bytes" json:"max-disk-bytes" mapstructure:"max-disk-bytes"`
 }
 

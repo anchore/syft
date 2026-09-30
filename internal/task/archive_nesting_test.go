@@ -433,7 +433,7 @@ func Test_mixedFamilyNesting_diskLimitTruncatesTheLevelItCannotAdmit(t *testing.
 
 func Test_mixedFamilyNesting_unboundedLimitsEnforceNothing(t *testing.T) {
 	// a caller can opt out of one bound without the other, and opting out of both must still find the
-	// deepest leaf. Both opt out with a negative value, since zero means the default.
+	// deepest leaf. Opting out is a negative value; zero forbids the resource.
 	for _, row := range nestingRows() {
 		t.Run(row.name, func(t *testing.T) {
 			scanDir := t.TempDir()

@@ -148,8 +148,7 @@ func (c *CreateSBOMConfig) WithFilesConfig(cfg filecataloging.Config) *CreateSBO
 }
 
 // WithArchiveConfig sets how archives are cataloged: how deep to recurse into nested archives (MaxDepth
-// 0, the default, does not recurse) and how much extracted content the scan may hold at once (a zero
-// limit means the default).
+// 0, the default, does not recurse) and how much extracted content the scan may hold at once.
 func (c *CreateSBOMConfig) WithArchiveConfig(cfg cataloging.ArchiveSearchConfig) *CreateSBOMConfig {
 	c.Archive = cfg
 	return c
@@ -514,6 +513,9 @@ func (c *CreateSBOMConfig) validate() error {
 	}
 	if j := c.Packages.JavaArchive.ArchiveSearchConfig; j.MaxDepth != 0 || j.MaxMemoryBytes != 0 || j.MaxDiskBytes != 0 {
 		return fmt.Errorf("invalid configuration: nested archive depth and limits are not java cataloger settings, set them with CreateSBOMConfig.Archive")
+	}
+	if a := c.Archive; a.MaxDepth != 0 && a.MaxMemoryBytes == 0 && a.MaxDiskBytes == 0 {
+		return fmt.Errorf("invalid configuration: nested archive cataloging is enabled but its memory and disk limits are both 0, leaving nowhere to extract archives")
 	}
 	return nil
 }

@@ -28,8 +28,9 @@ note: this only applies to the java package cataloger, and is ignored when neste
 these packages are removed if an overlap with a non-synthetic package is found`)
 	descriptions.Add(&o.NestedArchiveMaxDepth, `maximum depth to recursively catalog nested archives (0 = disabled, -1 = as deep as 16 levels)
 note: when enabled this replaces the java cataloger's own unbounded jar-in-jar recursion, so archives deeper than this are reported as unknowns rather than cataloged`)
-	descriptions.Add(&o.NestedArchiveMaxMemoryBytes, `maximum bytes of nested archive content held in memory at once (0 = default, -1 = unbounded)`)
-	descriptions.Add(&o.NestedArchiveMaxDiskBytes, `maximum bytes of nested archive content on disk at once (0 = default, -1 = unbounded)`)
+	descriptions.Add(&o.NestedArchiveMaxMemoryBytes, `maximum bytes of nested archive content held in memory at once (0 = none, -1 = unbounded)`)
+	descriptions.Add(&o.NestedArchiveMaxDiskBytes, `maximum bytes of nested archive content on disk at once (0 = none, -1 = unbounded)
+note: this and nested-archive-max-memory-bytes cannot both be 0 when nested-archive-max-depth is not 0`)
 }
 
 func defaultPackageConfig() packageConfig {
