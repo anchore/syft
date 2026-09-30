@@ -3,7 +3,7 @@ package ai
 import (
 	"bytes"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -15,6 +15,12 @@ type hfConfig struct {
 	NameOrPath    string   `json:"_name_or_path"`
 }
 
+// looksLikeHF reports whether the config carries any field we use. Other JSON
+// (generation_config.json, unrelated app configs) is ignored.
+func (c hfConfig) looksLikeHF() bool {
+	return len(c.Architectures) > 0 || c.NameOrPath != ""
+}
+
 func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 	if md.Architecture == "" && len(cfg.Architectures) > 0 {
 		md.Architecture = cfg.Architectures[0]
@@ -23,8 +29,8 @@ func applyHFConfig(md *pkg.SafeTensorsModelInfo, cfg *hfConfig) {
 
 // readmeFrontmatter holds the subset of YAML frontmatter fields we extract.
 type readmeFrontmatter struct {
-	License   string   `yaml:"license"`
-	BaseModel []string `yaml:"base_model"`
+	Licenses  []string
+	BaseModel []string
 }
 
 type licenseFrontmatter struct {
@@ -32,21 +38,33 @@ type licenseFrontmatter struct {
 }
 
 // extractFrontmatterBlock returns the YAML bytes between the first and second
-// "---" delimiters of a file
+// "---" delimiter lines of a file
 func extractFrontmatterBlock(buf []byte) []byte {
 	trimmed := bytes.TrimLeft(buf, "\xef\xbb\xbf \t\r\n")
-	if !bytes.HasPrefix(trimmed, []byte("---")) {
+	first, rest, _ := bytes.Cut(trimmed, []byte("\n"))
+	if !isFrontmatterDelimiter(first) {
 		return nil
 	}
-	rest := trimmed[3:]
-	if i := bytes.IndexByte(rest, '\n'); i >= 0 {
-		rest = rest[i+1:]
+	for off := 0; off < len(rest); {
+		line, _, found := bytes.Cut(rest[off:], []byte("\n"))
+		if isFrontmatterDelimiter(line) {
+			if off == 0 || off > maxFrontmatterSize {
+				return nil
+			}
+			return rest[:off]
+		}
+		if !found {
+			break
+		}
+		off += len(line) + 1
 	}
-	block, _, found := bytes.Cut(rest, []byte("\n---"))
-	if !found {
-		return nil
-	}
-	return block
+	return nil
+}
+
+// isFrontmatterDelimiter reports whether a line is exactly "---", ignoring
+// trailing whitespace and \r.
+func isFrontmatterDelimiter(line []byte) bool {
+	return bytes.Equal(bytes.TrimRight(line, " \t\r"), []byte("---"))
 }
 
 // parseFrontmatter decodes a Hugging Face model card YAML frontmatter block
@@ -57,8 +75,9 @@ func parseFrontmatter(buf []byte) *readmeFrontmatter {
 		return nil
 	}
 
+	// both fields may be a scalar or a list, so decode them as nodes
 	var raw struct {
-		License   string    `yaml:"license"`
+		License   yaml.Node `yaml:"license"`
 		BaseModel yaml.Node `yaml:"base_model"`
 	}
 	if err := yaml.Unmarshal(block, &raw); err != nil {
@@ -66,16 +85,37 @@ func parseFrontmatter(buf []byte) *readmeFrontmatter {
 		return nil
 	}
 
-	fm := readmeFrontmatter{License: raw.License}
-	switch raw.BaseModel.Kind {
+	return &readmeFrontmatter{
+		Licenses:  yamlStrings(raw.License),
+		BaseModel: yamlStrings(raw.BaseModel),
+	}
+}
+
+// yamlStrings returns the non-empty, non-null values of a scalar or a sequence
+// of scalars, keeping at most maxFrontmatterValues. Anything else yields nil.
+func yamlStrings(n yaml.Node) []string {
+	switch n.Kind {
 	case yaml.ScalarNode:
-		if raw.BaseModel.Value != "" {
-			fm.BaseModel = []string{raw.BaseModel.Value}
+		if isYAMLString(&n) {
+			return []string{n.Value}
 		}
 	case yaml.SequenceNode:
-		_ = raw.BaseModel.Decode(&fm.BaseModel)
+		var out []string
+		for _, c := range n.Content {
+			if len(out) == maxFrontmatterValues {
+				break
+			}
+			if c.Kind == yaml.ScalarNode && isYAMLString(c) {
+				out = append(out, c.Value)
+			}
+		}
+		return out
 	}
-	return &fm
+	return nil
+}
+
+func isYAMLString(n *yaml.Node) bool {
+	return n.Value != "" && n.ShortTag() != "!!null"
 }
 
 // parseLicenseFrontmatter returns the producer-declared SPDX identifier

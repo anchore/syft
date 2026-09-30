@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -163,4 +164,11 @@ func TestRollupHash(t *testing.T) {
 	assert.Len(t, ab, 16, "a multi-hash rollup is a 16-char xxhash")
 	assert.NotEqual(t, "a", ab)
 	assert.NotEqual(t, "b", ab)
+}
+
+func TestMergeShardsInto_parametersSaturate(t *testing.T) {
+	var merged pkg.SafeTensorsModelInfo
+	shards := []pkg.SafeTensorsModelInfo{{Parameters: math.MaxUint64 - 1}, {Parameters: 2}}
+	mergeShardsInto(&merged, shards)
+	assert.Equal(t, uint64(math.MaxUint64), merged.Parameters)
 }

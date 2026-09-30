@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"testing"
 
@@ -96,6 +97,9 @@ func TestNewFromFile(t *testing.T) {
 }
 
 func TestNewFromFile_WithArchive(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("archive fixtures are generated with a shell script")
+	}
 	testutil.Chdir(t, "..") // run with source/testdata
 
 	testCases := []struct {
