@@ -70,6 +70,12 @@ func Resolve(specifier Specifier, pkgs []pkg.Package) (relationships []artifact.
 		for _, spec := range specs {
 			for _, resource := range deduplicate(spec.Requires) {
 				for providingPkgID := range pkgsProvidingResource[resource] {
+					// Self-referential requirements (for example, Python extras) do not
+					// represent dependencies between distinct packages.
+					if providingPkgID == dependantPkg.ID() {
+						continue
+					}
+
 					// prevent creating duplicate relationships
 					pairKey := string(providingPkgID) + "-" + string(dependantPkg.ID())
 					if seen.Has(pairKey) {

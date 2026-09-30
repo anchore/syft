@@ -70,6 +70,19 @@ func Test_resolve(t *testing.T) {
 			},
 		},
 		{
+			name: "does not create self-relationships",
+			s: newSpecifierBuilder().
+				WithProvides(a /* provides */, "a-resource").
+				WithRequires(a /* requires */, "a-resource").
+				WithRequires(b /* requires */, "a-resource").
+				Specifier(),
+			want: map[string][]string{
+				"b": /* depends on */ {"a"},
+				// note: we're NOT seeing:
+				// "a": /* depends on */ {"a"},
+			},
+		},
+		{
 			name: "deduplicates crafted relationships",
 			s: newSpecifierBuilder().
 				WithProvides(a /* provides */, "a1-resource", "a2-resource", "a3-resource").

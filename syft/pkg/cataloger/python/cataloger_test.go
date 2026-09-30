@@ -572,7 +572,6 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 			name:    "poetry - multiple extras",
 			fixture: "testdata/poetry/multiple-extras",
 			expectedRelationships: []string{
-				"anyio @ 4.3.0 (.) [dependency-of] anyio @ 4.3.0 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpcore @ 1.0.5 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpx @ 0.27.0 (.)",
 				"brotli @ 1.1.0 (.) [dependency-of] httpx @ 0.27.0 (.)",
@@ -600,7 +599,6 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 			fixture: "testdata/poetry/nested-extras",
 			expectedRelationships: []string{
 				"annotated-types @ 0.7.0 (.) [dependency-of] pydantic @ 2.7.1 (.)",
-				"anyio @ 4.3.0 (.) [dependency-of] anyio @ 4.3.0 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpcore @ 1.0.5 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpx @ 0.27.0 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] starlette @ 0.37.2 (.)",
@@ -681,7 +679,6 @@ func Test_PackageCataloger_Relationships(t *testing.T) {
 			name:    "poetry - conflicting extras",
 			fixture: "testdata/poetry/conflicting-with-extras",
 			expectedRelationships: []string{
-				"anyio @ 4.3.0 (.) [dependency-of] anyio @ 4.3.0 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpcore @ 1.0.5 (.)",
 				"anyio @ 4.3.0 (.) [dependency-of] httpx @ 0.27.0 (.)",
 				"brotli @ 1.1.0 (.) [dependency-of] httpx @ 0.27.0 (.)",
