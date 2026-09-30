@@ -159,20 +159,20 @@ func Test_encodeSourcePackage(t *testing.T) {
 		{
 			name: "no PURL",
 			input: pkg.Package{
-				Name:    "some-package",
-				Version: "1.0.0-r1",
-				Type:    pkg.ApkPkg,
-				Metadata: pkg.ApkDBEntry{
-					Package:       "some-package",
-					OriginPackage: "some-origin",
-					Version:       "1.0.0-r1",
-					Architecture:  "x86_64",
+				Name:    "libpam-runtime",
+				Version: "1.5.2-6+deb12u1",
+				Type:    pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{
+					Package: "libpam-runtime",
+					Version: "1.5.2-6+deb12u1",
+					Source:  "pam",
 				},
 			},
 			expected: nil,
 		},
 		{
-			name: "from apk",
+			// apk origins are build recipes, not published source packages, so they are not supported
+			name: "from apk is not supported",
 			input: pkg.Package{
 				Name:    "libc-utils",
 				Version: "0.7.2-r3",
@@ -182,24 +182,6 @@ func Test_encodeSourcePackage(t *testing.T) {
 					Package:       "libc-utils",
 					OriginPackage: "libc-dev",
 					Version:       "0.7.2-r3",
-					Architecture:  "x86_64",
-				},
-			},
-			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:apk/alpine/libc-dev@0.7.2-r3?distro=alpine-3.16.3",
-			},
-		},
-		{
-			name: "from apk with source = bin",
-			input: pkg.Package{
-				Name:    "some-package",
-				Version: "1.0.0-r1",
-				Type:    pkg.ApkPkg,
-				PURL:    "pkg:apk/alpine/some-package@1.0.0-r1?arch=x86_64&distro=alpine-3.16.3",
-				Metadata: pkg.ApkDBEntry{
-					Package:       "some-package",
-					OriginPackage: "some-package",
-					Version:       "1.0.0-r1",
 					Architecture:  "x86_64",
 				},
 			},
@@ -334,7 +316,8 @@ func Test_encodeSourcePackage(t *testing.T) {
 			},
 		},
 		{
-			name: "from alpm",
+			// alpm pkgbases are build recipes, not published source packages, so they are not supported
+			name: "from alpm is not supported",
 			input: pkg.Package{
 				Name:    "gcc-libs",
 				Version: "13.2.1-3",
@@ -344,24 +327,6 @@ func Test_encodeSourcePackage(t *testing.T) {
 					Package:      "gcc-libs",
 					Version:      "13.2.1-3",
 					BasePackage:  "gcc",
-					Architecture: "x86_64",
-				},
-			},
-			expected: &cyclonedx.ExternalReference{
-				Type: cyclonedx.ERTypeSourceDistribution, URL: "pkg:alpm/arch/gcc@13.2.1-3?distro=arch-rolling",
-			},
-		},
-		{
-			name: "from alpm with source = bin",
-			input: pkg.Package{
-				Name:    "some-package",
-				Version: "1.0.0",
-				Type:    pkg.AlpmPkg,
-				PURL:    "pkg:alpm/arch/some-package@1.0.0?arch=x86_64&distro=arch-rolling&upstream=some-package",
-				Metadata: pkg.AlpmDBEntry{
-					Package:      "some-package",
-					Version:      "1.0.0",
-					BasePackage:  "some-package",
 					Architecture: "x86_64",
 				},
 			},

@@ -43,7 +43,7 @@ func newSourcePackageCatalog() *pkg.Collection {
 
 	catalog := pkg.NewCollection()
 
-	// apk: the origin differs from the package name, and shares its version
+	// apk: the origin differs from the package name, but apk is not supported so no source reference is expected
 	catalog.Add(pkg.Package{
 		Name:      "libc-utils",
 		Version:   "0.7.2-r3",
@@ -59,7 +59,7 @@ func newSourcePackageCatalog() *pkg.Collection {
 		},
 	})
 
-	// apk: negative control -- the package is its own origin, so no source reference is expected
+	// apk: negative control -- the package is its own origin
 	catalog.Add(pkg.Package{
 		Name:      "busybox",
 		Version:   "1.35.0-r17",
@@ -126,7 +126,7 @@ func newSourcePackageCatalog() *pkg.Collection {
 		},
 	})
 
-	// alpm: the base package differs from the package name, and shares its version
+	// alpm: the base package differs from the package name, but alpm is not supported so no source reference is expected
 	catalog.Add(pkg.Package{
 		Name:      "gcc-libs",
 		Version:   "13.2.1-3",
