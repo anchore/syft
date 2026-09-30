@@ -19,8 +19,6 @@ import (
 
 var _ generic.Parser = parseDotnetPackagesLock
 
-// packagesLockTypePrecedence orders the "type" values NuGet writes from the most to the least direct. A package can
-// be resolved under several target frameworks with a different type in each, and the most direct one describes it.
 var packagesLockTypePrecedence = []string{"Project", "Direct", "CentralTransitive", "Transitive"}
 
 type dotnetPackagesLock struct {
@@ -36,7 +34,6 @@ type dotnetPackagesLockDep struct {
 	Dependencies map[string]string `json:"dependencies,omitempty"`
 }
 
-// packagesLockEntry is one package as resolved under a single target framework.
 type packagesLockEntry struct {
 	name string
 	dep  dotnetPackagesLockDep
@@ -46,8 +43,6 @@ func (e packagesLockEntry) nameVersion() string {
 	return createNameAndVersion(e.name, e.dep.Resolved)
 }
 
-// packagesLockFramework is one target framework section of the lockfile, such as "net8.0" or the runtime-specific
-// "net8.0/win-x64", with its entries sorted by name.
 type packagesLockFramework struct {
 	name    string
 	entries []packagesLockEntry
@@ -60,7 +55,6 @@ func (f packagesLockFramework) find(name string) (packagesLockEntry, bool) {
 	return e, ok
 }
 
-// packagesLockEdge identifies a dependency-of relationship between two packages.
 type packagesLockEdge struct {
 	child, parent artifact.ID
 }
@@ -96,8 +90,6 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 	return pkgs, relationships, nil
 }
 
-// newPackagesLockFrameworks returns the target framework sections of the lockfile sorted by name, so that everything
-// derived from them is independent of map iteration order.
 func newPackagesLockFrameworks(lockFile dotnetPackagesLock) []packagesLockFramework {
 	var frameworks []packagesLockFramework
 
@@ -120,8 +112,6 @@ func newPackagesLockFrameworks(lockFile dotnetPackagesLock) []packagesLockFramew
 	return frameworks
 }
 
-// mergePackagesLockEntries collapses the per-framework entries into one entry per name and version, sorted by name
-// and version. When target frameworks disagree on the type of a package, the most direct type wins.
 func mergePackagesLockEntries(frameworks []packagesLockFramework) []packagesLockEntry {
 	merged := make(map[string]packagesLockEntry)
 
@@ -143,8 +133,6 @@ func mergePackagesLockEntries(frameworks []packagesLockFramework) []packagesLock
 	return entries
 }
 
-// isMoreDirect reports whether dependency type a ranks ahead of b. Unknown types rank last, and ties are broken by
-// name so that the choice never depends on the order in which target frameworks are visited.
 func isMoreDirect(a, b string) bool {
 	rankA, rankB := packagesLockTypeRank(a), packagesLockTypeRank(b)
 	if rankA != rankB {
@@ -160,8 +148,6 @@ func packagesLockTypeRank(t string) int {
 	return len(packagesLockTypePrecedence)
 }
 
-// packagesLockRelationships resolves the dependencies of each package within the target framework that declares
-// them, so that lockfiles pinning a different version of the same package per framework resolve to the right one.
 func packagesLockRelationships(frameworks []packagesLockFramework, pkgMap map[string]pkg.Package) []artifact.Relationship {
 	var relationships []artifact.Relationship
 
@@ -191,8 +177,6 @@ func packagesLockRelationships(frameworks []packagesLockFramework, pkgMap map[st
 	return relationships
 }
 
-// packagesLockEntryRelationships returns the edges declared by a single entry, skipping any edge already recorded in
-// seen -- frameworks that resolve to the same versions would otherwise repeat it.
 func packagesLockEntryRelationships(entry packagesLockEntry, parentPkg pkg.Package, framework, base packagesLockFramework, pkgMap map[string]pkg.Package, seen map[packagesLockEdge]struct{}) []artifact.Relationship {
 	var relationships []artifact.Relationship
 
