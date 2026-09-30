@@ -318,7 +318,9 @@ func TestParseKernelChangelog(t *testing.T) {
 // thing holding this path, and it is incidental: switching to io.ReadAll or a bufio.Reader to pick up
 // long lines would remove it silently, which is what this test is here to catch.
 func TestParseKernelChangelog_gzipBombStaysBounded(t *testing.T) {
-	const expanded = 512 * 1024 * 1024
+	// 4x the 8MB budget below is plenty to tell bounded from unbounded. Going bigger only makes the
+	// fixture slower to build and inflate, which is most of this test's time under -race.
+	const expanded = 32 * 1024 * 1024
 
 	// one enormous line with no newline, the worst case for a line scanner
 	var gz bytes.Buffer
