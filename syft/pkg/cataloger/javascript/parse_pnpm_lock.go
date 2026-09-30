@@ -74,12 +74,14 @@ type pnpmV9LockYaml struct {
 }
 
 type genericPnpmLockAdapter struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver javascriptLicenseResolver
 }
 
 func newGenericPnpmLockAdapter(cfg CatalogerConfig) genericPnpmLockAdapter {
 	return genericPnpmLockAdapter{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newJavascriptLicenseResolver(cfg),
 	}
 }
 
@@ -216,7 +218,7 @@ func (a genericPnpmLockAdapter) parsePnpmLock(ctx context.Context, resolver file
 		if p.Dev && !a.cfg.IncludeDevDependencies {
 			continue
 		}
-		packages = append(packages, newPnpmPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
+		packages = append(packages, newPnpmPackage(ctx, a.licenseResolver, resolver, reader.Location, p.Name, p.Version, p.Integrity, p.Dependencies))
 	}
 
 	errs = unknown.Join(errs, unknown.IfEmptyf(packages, "unable to determine packages"))

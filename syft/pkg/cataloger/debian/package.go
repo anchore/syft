@@ -202,7 +202,11 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	if md5Reader != nil && md5Location != nil {
 		defer internal.CloseAndLogError(md5Reader, md5Location.AccessPath)
 		// attach the file list
-		files = append(files, parseDpkgMD5Info(md5Reader)...)
+		records, err := parseDpkgMD5Info(md5Reader)
+		if err != nil {
+			log.Debugf("dpkg md5sums file %q: %v", md5Location.RealPath, err)
+		}
+		files = append(files, records...)
 
 		// keep a record of the file where this was discovered
 		locations = append(locations, *md5Location)
@@ -213,7 +217,11 @@ func getAdditionalFileListing(resolver file.Resolver, dbLocation file.Location, 
 	if conffilesReader != nil && conffilesLocation != nil {
 		defer internal.CloseAndLogError(conffilesReader, conffilesLocation.AccessPath)
 		// attach the file list
-		files = append(files, parseDpkgConffileInfo(conffilesReader)...)
+		records, err := parseDpkgConffileInfo(conffilesReader)
+		if err != nil {
+			log.Debugf("dpkg conffiles file %q: %v", conffilesLocation.RealPath, err)
+		}
+		files = append(files, records...)
 
 		// keep a record of the file where this was discovered
 		locations = append(locations, *conffilesLocation)

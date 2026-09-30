@@ -408,6 +408,30 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			// regression test: big-endian architectures (e.g. s390x) previously matched an unrelated
+			// single-NUL-terminated numeric string elsewhere in the binary instead of the real version
+			logicalFixture: "traefik/3.6.8/linux-s390x",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "3.6.8",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@3.6.8",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
+			logicalFixture: "traefik/2.11.1/linux-arm",
+			expected: pkg.Package{
+				Name:      "traefik",
+				Version:   "2.11.1",
+				Type:      "binary",
+				PURL:      "pkg:generic/traefik@2.11.1",
+				Locations: locations("traefik"),
+				Metadata:  metadata("traefik-binary"),
+			},
+		},
+		{
 			logicalFixture: "memcached/1.6.18/linux-amd64",
 			expected: pkg.Package{
 				Name:      "memcached",
@@ -2290,6 +2314,39 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "12.3.2",
 				Type:      "binary",
 				PURL:      "pkg:generic/grafana@12.3.2",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.4.3-security-02/linux-arm",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.4.3",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.4.3",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/12.0.0-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "12.0.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@12.0.0",
+				Locations: locations("grafana"),
+				Metadata:  metadata("grafana-binary"),
+			},
+		},
+		{
+			logicalFixture: "grafana/11.0.5-security-01/linux-amd64",
+			expected: pkg.Package{
+				Name:      "grafana",
+				Version:   "11.0.5",
+				Type:      "binary",
+				PURL:      "pkg:generic/grafana@11.0.5",
 				Locations: locations("grafana"),
 				Metadata:  metadata("grafana-binary"),
 			},

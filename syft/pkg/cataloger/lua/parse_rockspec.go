@@ -74,6 +74,11 @@ func parseRockspec(ctx context.Context, resolver file.Resolver, _ *generic.Envir
 		}
 	}
 
+	if name == "" {
+		log.WithFields("path", reader.Path()).Trace("rockspec has no package name, skipping")
+		return nil, nil, nil
+	}
+
 	p := newLuaRocksPackage(
 		ctx,
 		resolver,

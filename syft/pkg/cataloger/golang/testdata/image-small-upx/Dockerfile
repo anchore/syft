@@ -9,7 +9,9 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY main.go main.go
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.Version=1.0.0" -o run-me .
+# 1.0.11 is chosen so UPX has to pad before its loader stub (1.0.0 needed none, which hid a bug).
+# TestImageSmallUPXNeedsLoaderPadding checks the padding is still there.
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.Version=1.0.11" -o run-me .
 RUN upx --best --lzma --exact run-me
 
 FROM scratch
