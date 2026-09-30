@@ -148,12 +148,7 @@ func parseAlpmDBEntry(reader io.Reader) (*parsedData, error) {
 }
 
 func newScanner(reader io.Reader) *bufio.Scanner {
-	// This is taken from the apk parser
-	// https://github.com/anchore/syft/blob/v0.47.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L37
-	const maxScannerCapacity = 1024 * 1024
-	bufScan := make([]byte, maxScannerCapacity)
-	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(bufScan, maxScannerCapacity)
+	scanner := internal.NewLineScanner(reader)
 	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		for i := range data {
 			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {

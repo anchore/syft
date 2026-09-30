@@ -15,6 +15,7 @@ import (
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	intFile "github.com/anchore/syft/internal/file"
+	"github.com/anchore/syft/internal/unknown"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
@@ -201,4 +202,28 @@ func TestFileDigestCataloger_GivenCoordinates(t *testing.T) {
 		})
 	}
 
+}
+
+type panicReader struct{}
+
+func (panicReader) Read([]byte) (int, error) { panic("boom") }
+
+type panickingContentsResolver struct {
+	*file.MockResolver
+}
+
+func (r panickingContentsResolver) FileContentsByLocation(file.Location) (io.ReadCloser, error) {
+	return io.NopCloser(panicReader{}), nil
+}
+
+func TestDigestsCataloger_panicBecomesUnknown(t *testing.T) {
+	resolver := panickingContentsResolver{file.NewMockResolverForPaths("cataloger_test.go")}
+
+	results, err := NewCataloger([]crypto.Hash{crypto.SHA256}).Catalog(context.Background(), resolver, file.NewLocation("cataloger_test.go").Coordinates)
+
+	require.Empty(t, results)
+	unknowns, remaining := unknown.ExtractCoordinateErrors(err)
+	require.NoError(t, remaining)
+	require.Len(t, unknowns, 1)
+	require.ErrorContains(t, unknowns[0].Reason, "recovered from panic while digesting file: boom")
 }

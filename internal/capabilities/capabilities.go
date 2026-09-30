@@ -9,7 +9,7 @@ import (
 	"sort"
 
 	"github.com/scylladb/go-set/strset"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/anchore/syft/internal/task"
 )

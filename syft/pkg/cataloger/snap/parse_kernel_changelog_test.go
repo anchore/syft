@@ -318,7 +318,9 @@ func TestParseKernelChangelog(t *testing.T) {
 // thing holding this path, and it is incidental: switching to io.ReadAll or a bufio.Reader to pick up
 // long lines would remove it silently, which is what this test is here to catch.
 func TestParseKernelChangelog_gzipBombStaysBounded(t *testing.T) {
-	const expanded = 512 * 1024 * 1024
+	// 4x the 8MB budget below is plenty to tell bounded from unbounded. Going bigger only makes the
+	// fixture slower to build and inflate, which is most of this test's time under -race.
+	const expanded = 32 * 1024 * 1024
 
 	// one enormous line with no newline, the worst case for a line scanner
 	var gz bytes.Buffer
@@ -330,7 +332,9 @@ func TestParseKernelChangelog_gzipBombStaysBounded(t *testing.T) {
 		remaining -= n
 	}
 	require.NoError(t, gw.Close())
-	require.Less(t, gz.Len(), 1024*1024, "compressed payload should be tiny relative to what it expands to")
+	// compress/flate output for this input varies by Go version (about 510KB on go1.26, 1MB on go1.27), so
+	// bound the fixture by ratio rather than a fixed size
+	require.Less(t, gz.Len(), expanded/100, "compressed payload should be tiny relative to what it expands to")
 
 	// prove the fixture is a bomb: the same stream read without a line bound costs its full size
 	unbounded := testutils.MeasureAlloc(t, func() {

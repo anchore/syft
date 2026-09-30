@@ -892,6 +892,22 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:rust_package:rust_package:0.5.0:*:*:*:*:rust:*:*",
 			},
 		},
+		{
+			name: "conan expat: libexpat_project vendor and libexpat product",
+			p: pkg.Package{
+				Name:    "expat",
+				Version: "2.5.0",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:expat:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:expat:libexpat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat:libexpat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat_project:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat_project:libexpat:2.5.0:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -1154,6 +1170,11 @@ func Test_generateSubSelections(t *testing.T) {
 			field:    "_",
 			expected: nil,
 		},
+		{
+			// capped at maxSubSelections, keeping the shortest prefixes (the full name is not returned)
+			field:    "a_b_c_d_e_f_g_h_i_j_k_l",
+			expected: []string{"a", "a_b", "a_b_c", "a_b_c_d", "a_b_c_d_e", "a_b_c_d_e_f", "a_b_c_d_e_f_g", "a_b_c_d_e_f_g_h", "a_b_c_d_e_f_g_h_i", "a_b_c_d_e_f_g_h_i_j"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.field, func(t *testing.T) {
@@ -1297,4 +1318,60 @@ func TestAddBinaryPackageDigitVariations(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFromPackageAttributes_boundsSubSelectionBlowup(t *testing.T) {
+	// a name with many separators used to produce a vendor candidate per segment, each O(name length), which was
+	// quadratic in time and memory.
+	name := strings.Repeat("a_", 200) + "a"
+	p := pkg.Package{Name: name, Version: "1.0", Type: pkg.PythonPkg, Language: pkg.Python}
+
+	cpes := FromPackageAttributes(p)
+	assert.NotEmpty(t, cpes)
+	assert.LessOrEqual(t, len(cpes), 1000)
+}
+
+func TestFromPackageAttributes_boundsCandidateCrossProduct(t *testing.T) {
+	// every groupID segment becomes a vendor, and with no artifactID every segment past the second also becomes a
+	// product, so the vendor x product cross-product is quadratic in segment count without a bound.
+	var segments []string
+	for i := range 1000 {
+		segments = append(segments, fmt.Sprintf("s%d", i))
+	}
+	p := pkg.Package{
+		Name:     "thing",
+		Version:  "1.0",
+		Type:     pkg.JavaPkg,
+		Language: pkg.Java,
+		Metadata: pkg.JavaArchive{
+			Manifest: &pkg.JavaManifest{
+				Main: pkg.KeyValues{{Key: "Bundle-SymbolicName", Value: "com.x." + strings.Join(segments, ".")}},
+			},
+		},
+	}
+
+	cpes := FromPackageAttributes(p)
+	assert.NotEmpty(t, cpes)
+	assert.LessOrEqual(t, len(cpes), maxCandidates*maxCandidates)
+}
+
+func TestFromPackageAttributes_skipsOversizedFields(t *testing.T) {
+	long := strings.Repeat("a", maxCandidateFieldLength+1)
+
+	assert.Empty(t, FromPackageAttributes(pkg.Package{Name: long, Version: "1.0", Type: pkg.PythonPkg}))
+	assert.Empty(t, FromPackageAttributes(pkg.Package{Name: "thing", Version: long, Type: pkg.PythonPkg}))
+	assert.NotEmpty(t, FromPackageAttributes(pkg.Package{Name: "thing", Version: "1.0", Type: pkg.PythonPkg}))
+}
+
+func Test_boundCandidates(t *testing.T) {
+	long := strings.Repeat("a", maxCandidateFieldLength+1)
+	assert.Equal(t, []string{"b", "a"}, boundCandidates([]string{"b", long, "a"}), "under the cap order is untouched")
+
+	var many []string
+	for i := range maxCandidates + 10 {
+		many = append(many, strings.Repeat("x", maxCandidates+10-i))
+	}
+	got := boundCandidates(many)
+	assert.Len(t, got, maxCandidates)
+	assert.Equal(t, "x", got[0], "shortest candidates are kept")
 }

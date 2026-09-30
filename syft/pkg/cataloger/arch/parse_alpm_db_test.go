@@ -492,12 +492,16 @@ func Test_parseMtree_malformedInput(t *testing.T) {
 // bytes still costs multiples of its own size in heap. Asserting the error would keep passing if the
 // line cap were removed, because the byte cap would still reject a large enough input eventually.
 func Test_parseMtree_lineCapBoundsHeap(t *testing.T) {
-	// newline-only lines are the worst case: minimum bytes per entry, so the most entries per byte
-	const payloadSize = 16 * intFile.MB
-	spec := bytes.Repeat([]byte{'\n'}, payloadSize)
+	// the property is linear in the cap, so it is measured at a small cap and scaled to the shipped
+	// one. Running it at 300k lines means an uncapped parse costing ~16GB, which under -race is most
+	// of a CI minute for a test with no concurrency in it.
+	const (
+		lineCap     = 4096
+		payloadSize = 64 * lineCap
+	)
 
-	// well inside the byte cap, so only the line cap can stop this
-	require.Less(t, int64(payloadSize), int64(maxMtreeSize))
+	// newline-only lines are the worst case: minimum bytes per entry, so the most entries per byte
+	spec := bytes.Repeat([]byte{'\n'}, payloadSize)
 
 	unbounded := testutils.MeasureAlloc(t, func() {
 		// the same listing with the line cap lifted, to prove the fixture is really a bomb
@@ -507,19 +511,29 @@ func Test_parseMtree_lineCapBoundsHeap(t *testing.T) {
 	require.Greater(t, unbounded, uint64(payloadSize),
 		"fixture did not actually cost more than its own size; it is no longer a bomb")
 
-	bounded := testutils.MeasureAlloc(t, func() {
-		_, err := parseMtreeWithLimits(gzipOf(t, spec), maxMtreeSize, maxMtreeLines)
-		require.ErrorIs(t, err, errTooManyMtreeLines)
-	})
+	boundedAt := func(limit int) uint64 {
+		gz := gzipOf(t, spec)
+		return testutils.MeasureAlloc(t, func() {
+			_, err := parseMtreeWithLimits(gz, maxMtreeSize, limit)
+			require.ErrorIs(t, err, errTooManyMtreeLines)
+		})
+	}
+	bounded := boundedAt(lineCap)
 
-	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
+	// the marginal cost between two caps, so fixed setup (gzip reader, parser) does not get scaled
+	perLine := (boundedAt(2*lineCap) - bounded) / lineCap
+	atShippedCap := perLine * maxMtreeLines
+	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes (%d per line, ~%d at the shipped cap)",
+		unbounded, bounded, perLine, atShippedCap)
 
-	// measured at ~238MB against ~16.5GB uncapped, so the cap is doing its job, but note what it
-	// actually buys: 300k entries still cost a few hundred MB, and that is per concurrent cataloger.
-	// The budget is set to catch the cap being removed or raised by an order of magnitude, not to pin
-	// the exact figure.
-	assert.Less(t, bounded, uint64(512*intFile.MB),
+	assert.Less(t, bounded, unbounded/10,
 		"the line cap has to stop the parse before it builds an entry per line")
+
+	// measured at ~238MB for the shipped 300k lines, so the cap is doing its job, but note what it
+	// actually buys: that is still a few hundred MB, per concurrent cataloger. The budget is set to
+	// catch the cap being raised by an order of magnitude, not to pin the exact figure.
+	assert.Less(t, atShippedCap, uint64(512*intFile.MB),
+		"the shipped line cap allows more heap than budgeted")
 }
 
 // Test_parseMtree_sizeCapBoundsHeap is the byte-cap counterpart to the line-cap budget above.
@@ -532,9 +546,12 @@ func Test_parseMtree_lineCapBoundsHeap(t *testing.T) {
 // be ordinary for the byte cap to be the thing under test, and there have to be few enough of them
 // that the line cap does not fire first.
 func Test_parseMtree_sizeCapBoundsHeap(t *testing.T) {
+	// same reasoning as the line cap: measured at a small byte cap, since the shipped 64MB cap means
+	// gzipping and parsing ~200MB of fixture, which is slow under -race and proves nothing more.
 	const (
+		sizeCap  = intFile.MB
 		lineLen  = 1024
-		numLines = 96 * 1024 // ~96MB across ~98k lines: past the 64MB cap, well under the 300k line cap
+		numLines = 2 * sizeCap / lineLen // twice the cap, and far under the line cap
 	)
 
 	var raw bytes.Buffer
@@ -542,7 +559,7 @@ func Test_parseMtree_sizeCapBoundsHeap(t *testing.T) {
 	for range numLines {
 		raw.Write(line)
 	}
-	require.Greater(t, int64(raw.Len()), int64(maxMtreeSize), "fixture must exceed the byte cap")
+	require.Greater(t, int64(raw.Len()), int64(sizeCap), "fixture must exceed the byte cap")
 	require.Less(t, numLines, maxMtreeLines, "and must not trip the line cap first")
 
 	unbounded := testutils.MeasureAlloc(t, func() {
@@ -554,11 +571,13 @@ func Test_parseMtree_sizeCapBoundsHeap(t *testing.T) {
 		"fixture did not actually cost more than its own size; it is no longer a bomb")
 
 	bounded := testutils.MeasureAlloc(t, func() {
-		_, err := parseMtreeWithLimits(gzipOf(t, raw.Bytes()), maxMtreeSize, maxMtreeLines)
+		_, err := parseMtreeWithLimits(gzipOf(t, raw.Bytes()), sizeCap, maxMtreeLines)
 		require.ErrorIs(t, err, errMtreeTooLarge)
 	})
 
 	t.Logf("unbounded allocated %d bytes, bounded allocated %d bytes", unbounded, bounded)
-	assert.Less(t, bounded, uint64(512*intFile.MB),
+
+	// the old budget was 512MB against the 64MB cap, so 8x the cap
+	assert.Less(t, bounded, uint64(8*sizeCap),
 		"the size cap has to stop the read at the cap, not after the member is drained")
 }

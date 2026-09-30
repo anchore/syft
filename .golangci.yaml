@@ -7,6 +7,7 @@ linters:
     - asciicheck
     - bodyclose
     - copyloopvar
+    - depguard
     - dogsled
     - dupl
     - errcheck
@@ -29,6 +30,13 @@ linters:
     - unused
     - whitespace
   settings:
+    depguard:
+      rules:
+        yaml:
+          deny:
+            # gopkg.in/yaml.v3 is unmaintained and panics on some malformed input (see #5327)
+            - pkg: gopkg.in/yaml.v3
+              desc: use go.yaml.in/yaml/v3 instead
     funlen:
       lines: 70
       statements: 50
@@ -71,7 +79,6 @@ linters:
 
 # do not enable...
 #    - deadcode          # The owner seems to have abandoned the linter. Replaced by "unused".
-#    - depguard          # We don't have a configuration for this yet
 #    - goprintffuncname  # does not catch all cases and there are exceptions
 #    - nakedret          # does not catch all cases and should not fail a build
 #    - gochecknoglobals
