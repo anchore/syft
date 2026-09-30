@@ -502,13 +502,14 @@ type loaderSkip struct {
 }
 
 // past reports the offset the chain resumes at, and false once the jump has been spent or there is no
-// stub to jump over.
+// stub to jump over. UPX pads to a 4 byte boundary before it writes the stub, and l_lsize counts from that
+// boundary rather than from where the last extent ended.
 func (l *loaderSkip) past(offset int64) (int64, bool) {
 	if l.done || l.size == 0 {
 		return offset, false
 	}
 	l.done = true
-	return offset + int64(l.size), true
+	return (offset+3)&^3 + int64(l.size), true
 }
 
 // decompressUPXBlocks walks the b_info chain, decoding each block into its place in the reconstructed

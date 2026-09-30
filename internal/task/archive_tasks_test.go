@@ -577,7 +577,7 @@ func Test_archiveCataloger_subPipelineFailureIsRecordedAsAnUnknown(t *testing.T)
 		reasons, ok := s.Artifacts.Unknowns[file.Coordinates{RealPath: "/outer.zip"}]
 		require.True(t, ok)
 		require.Len(t, reasons, 1)
-		assert.Contains(t, reasons[0], "panicking-cataloger: nope")
+		assert.Equal(t, "panicking-cataloger: panic: nope", reasons[0])
 	})
 }
 

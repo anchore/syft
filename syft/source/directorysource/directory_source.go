@@ -232,7 +232,8 @@ func cleanDirPath(path, base string) string {
 
 			relPath, err := filepath.Rel(cleanBase, cleanRoot)
 			if err == nil {
-				path = relPath
+				// filepath.Rel yields a native path, but source names are posix like every other path syft reports
+				path = filepath.ToSlash(relPath)
 			}
 			// this is odd, but this means we can't use base
 		}

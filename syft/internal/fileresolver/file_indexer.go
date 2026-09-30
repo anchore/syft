@@ -29,11 +29,15 @@ func newFileIndexer(path, base string, visitors ...PathIndexVisitor) *fileIndexe
 		base:  base,
 		tree:  filetree.New(),
 		index: filetree.NewIndex(),
+		// Unlike the directory indexer there is no skipPathsByMountTypeAndName here: it exists
+		// to keep a directory walk out of /proc, /sys and similar, and to do so it reads the
+		// whole mount table on construction. A file source indexes exactly one file and its
+		// parent, so there is nothing to walk into, and the mount table read is paid for
+		// every file source with nothing in return.
 		pathIndexVisitors: append(
 			[]PathIndexVisitor{
 				requireFileInfo,
 				disallowByFileType,
-				skipPathsByMountTypeAndName(path),
 			},
 			visitors...,
 		),

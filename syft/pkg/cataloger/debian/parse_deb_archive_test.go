@@ -373,9 +373,11 @@ func Test_processDataTar_capsCopyrightFiles(t *testing.T) {
 // than after the fact. The existing bounds test uses a payload small enough that buffering the whole
 // thing would pass anyway; this one is large enough that the difference shows up as bytes.
 func Test_decompressionStream_failsEarlyInsteadOfBuffering(t *testing.T) {
-	const expanded = 512 * intFile.MB
+	// 4x the 8MB budget below is plenty to tell bounded from unbounded. Going bigger only makes the
+	// fixture slower to build and inflate, which is most of this test's time under -race.
+	const expanded = 32 * intFile.MB
 
-	// a few KB of input expanding to 512MB, so heap is what separates a streaming bound from a
+	// well under 1% of input expanding to 32MB, so heap is what separates a streaming bound from a
 	// bound checked after the read completes
 	var gz bytes.Buffer
 	gw := gzip.NewWriter(&gz)
@@ -386,7 +388,9 @@ func Test_decompressionStream_failsEarlyInsteadOfBuffering(t *testing.T) {
 		remaining -= int64(n)
 	}
 	require.NoError(t, gw.Close())
-	require.Less(t, gz.Len(), 1024*1024, "compressed payload should be tiny relative to what it expands to")
+	// a ratio rather than a fixed size: deflate output for zeros is toolchain dependent (about 510KB on
+	// go1.26, about 1MB on go1.27), and only the ratio matters to the test
+	require.Less(t, gz.Len(), expanded/100, "compressed payload should be tiny relative to what it expands to")
 
 	// both arms use io.ReadAll on purpose. The stream itself never holds much whatever the cap says,
 	// so copying to io.Discard measures nothing; what the cap actually protects is a consumer that

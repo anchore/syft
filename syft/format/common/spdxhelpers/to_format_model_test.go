@@ -517,6 +517,20 @@ func Test_toPackageChecksums(t *testing.T) {
 			filesAnalyzed: false,
 		},
 		{
+			name: "Opam Package with a checksum missing its algorithm separator",
+			pkg: pkg.Package{
+				Name:    "test",
+				Version: "1.0.0",
+				Metadata: pkg.OpamPackage{
+					Checksums: []string{"f5f1c0b4", "md5=abc"},
+				},
+			},
+			expected: []spdx.Checksum{
+				{Algorithm: "MD5", Value: "abc"},
+			},
+			filesAnalyzed: false,
+		},
+		{
 			name: "Package with no metadata type",
 			pkg: pkg.Package{
 				Name:     "test",
@@ -1173,4 +1187,50 @@ func Test_toFiles_nestedFilesAreNamedByTheirChainAndRoundTrip(t *testing.T) {
 	b := byName["app.war:WEB-INF/lib/b.jar:odd%3Ana%25me.txt"]
 	require.NotNil(t, b, "names: %v", byName)
 	assert.Equal(t, inB, toSyftCoordinates(b), "the entry path's escaping is undone on decode")
+}
+
+func Test_toRootPackage_name(t *testing.T) {
+	tests := []struct {
+		name     string
+		src      source.Description
+		wantName string
+		wantPurl string
+	}{
+		{
+			name:     "source name wins",
+			src:      source.Description{Name: "named", ID: "id", Metadata: source.ImageMetadata{UserInput: "alpine:3.18"}},
+			wantName: "named",
+		},
+		{
+			// a CycloneDX container component decodes to an image source with only the user input set
+			name: "image user input without a source name",
+			src: source.Description{Metadata: source.ImageMetadata{
+				UserInput:      "alpine:3.18",
+				ManifestDigest: "sha256:0e4b2e0d6b2f3c2b1d3bb3a1c8f1c4d9e6a9b1e8c6f4d2b3a1f0e9d8c7b6a5f4",
+			}},
+			wantName: "alpine",
+			wantPurl: "pkg:oci/alpine@sha256%3A0e4b2e0d6b2f3c2b1d3bb3a1c8f1c4d9e6a9b1e8c6f4d2b3a1f0e9d8c7b6a5f4?arch=&tag=3.18",
+		},
+		{
+			name:     "id without a source name",
+			src:      source.Description{ID: "some-id"},
+			wantName: "some-id",
+		},
+		{
+			name:     "nothing to name it by",
+			src:      source.Description{Metadata: source.DirectoryMetadata{}},
+			wantName: "unknown",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := toRootPackage(tt.src)
+			assert.Equal(t, tt.wantName, p.PackageName)
+			var purl string
+			if len(p.PackageExternalReferences) > 0 {
+				purl = p.PackageExternalReferences[0].Locator
+			}
+			assert.Equal(t, tt.wantPurl, purl)
+		})
+	}
 }

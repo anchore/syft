@@ -158,6 +158,11 @@ func (l *backgroundLineReader) read(reader io.Reader, stage *progress.Stage) {
 
 		l.lock.Unlock()
 	}
+	if err := s.Err(); err != nil {
+		log.WithFields("error", err).Debug("unable to read attestation output")
+		// keep draining so the writer never blocks on a full pipe
+		_, _ = io.Copy(io.Discard, reader)
+	}
 }
 
 func (l backgroundLineReader) Lines() []string {

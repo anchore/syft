@@ -302,7 +302,7 @@ func (c *archiveCataloger) runSubPipeline(ctx context.Context, resolver file.Res
 	scratch := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection()}}
 	scratchBuilder := sbomsync.NewBuilder(scratch)
 	for _, t := range c.subPipeline {
-		err := runTaskSafely(ctx, t, resolver, scratchBuilder)
+		err := runSubTaskSafely(ctx, t, resolver, scratchBuilder)
 		if err == nil {
 			continue
 		}
@@ -315,6 +315,18 @@ func (c *archiveCataloger) runSubPipeline(ctx context.Context, resolver file.Res
 		appendUnknowns(scratchBuilder, t.Name(), unknowns)
 	}
 	return scratch
+}
+
+// runSubTaskSafely is runTaskSafely without the task name in a panic's error, since appendUnknowns
+// already prefixes it.
+func runSubTaskSafely(ctx context.Context, t Task, resolver file.Resolver, builder sbomsync.Builder) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.WithFields("task", t.Name()).Debugf("archive sub-cataloger task panic stack:\n%s", debug.Stack())
+			err = fmt.Errorf("panic: %v", r)
+		}
+	}()
+	return t.Execute(ctx, resolver, builder)
 }
 
 // archiveCandidate is one file the walk will try to open.

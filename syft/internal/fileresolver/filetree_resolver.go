@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	stereoscopeFile "github.com/anchore/stereoscope/pkg/file"
 	"github.com/anchore/stereoscope/pkg/filetree"
@@ -34,8 +35,17 @@ func nativeOSFileOpener(ref stereoscopeFile.Reference) (io.ReadCloser, error) {
 	return stereoscopeFile.NewLazyReadCloser(filePath), nil
 }
 
+// requestPath converts a user (chroot) path into the path the file tree is keyed on. The tree is always posix
+// (windows paths are volume-encoded, e.g. /c/some/path), while ToNativePath yields a native host path.
 func (r *FiletreeResolver) requestPath(userPath string) (string, error) {
-	return r.Chroot.ToNativePath(userPath)
+	nativePath, err := r.Chroot.ToNativePath(userPath)
+	if err != nil {
+		return "", err
+	}
+	if windows.HostRunningOnWindows() {
+		return windows.ToPosix(nativePath), nil
+	}
+	return nativePath, nil
 }
 
 // responsePath takes a path from the underlying fs domain and converts it to a path that is relative to the root of the file resolver.
@@ -85,10 +95,6 @@ func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 			continue
 		}
 
-		if windows.HostRunningOnWindows() {
-			userStrPath = windows.ToPosix(userStrPath)
-		}
-
 		if ref.HasReference() {
 			references = append(references,
 				file.NewVirtualLocationFromDirectory(
@@ -103,8 +109,19 @@ func (r FiletreeResolver) FilesByPath(userPaths ...string) ([]file.Location, err
 	return references, nil
 }
 
+// requestGlob is the glob equivalent of requestPath.
 func (r FiletreeResolver) requestGlob(pattern string) (string, error) {
-	return r.Chroot.ToNativeGlob(pattern)
+	glob, err := r.Chroot.ToNativeGlob(pattern)
+	if err != nil {
+		return "", err
+	}
+	// only a glob that was anchored to the root comes back native. Globs that start with a wildcard
+	// (e.g. **/foo) are returned untouched and are already posix, and ToPosix would root them at "/".
+	// This uses filepath (not path) since we are asking whether this is a native absolute path.
+	if windows.HostRunningOnWindows() && filepath.IsAbs(glob) {
+		return windows.ToPosix(glob), nil
+	}
+	return glob, nil
 }
 
 // FilesByGlob returns all file.References that match the given path glob pattern from any layer in the image.

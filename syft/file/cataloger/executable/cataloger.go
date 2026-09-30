@@ -7,6 +7,7 @@ import (
 	"debug/macho"
 	"encoding/binary"
 	"fmt"
+	"runtime/debug"
 	"sort"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -89,13 +90,22 @@ func (i *Cataloger) CatalogCtx(ctx context.Context, resolver file.Resolver) (map
 	return results, errs
 }
 
-func processExecutableLocation(loc file.Location, resolver file.Resolver) (*file.Executable, error) {
+func processExecutableLocation(loc file.Location, resolver file.Resolver) (exec *file.Executable, err error) {
 	reader, err := resolver.FileContentsByLocation(loc)
 	if err != nil {
 		log.WithFields("error", err, "path", loc.RealPath).Debug("unable to get file contents")
 		return nil, fmt.Errorf("unable to get file contents: %w", err)
 	}
 	defer internal.CloseAndLogError(reader, loc.RealPath)
+
+	defer func() {
+		if r := recover(); r != nil {
+			// a malformed binary must not take down the whole SBOM; the caller records this as an unknown
+			log.WithFields("path", loc.RealPath, "panic", r).Debug("recovered from panic while reading executable")
+			log.Tracef("executable panic stack:\n%s", debug.Stack())
+			exec, err = nil, fmt.Errorf("recovered from panic while reading executable: %v", r)
+		}
+	}()
 
 	uReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
