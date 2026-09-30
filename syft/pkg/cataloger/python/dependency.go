@@ -3,6 +3,7 @@ package python
 import (
 	"context"
 	"fmt"
+	"math"
 	"path"
 	"strings"
 
@@ -209,6 +210,9 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		if pkgsBySitePackageAndName[sitePackagesDir] == nil {
 			pkgsBySitePackageAndName[sitePackagesDir] = make(map[string]pkg.Package)
 		}
+		if existing, collision := pkgsBySitePackageAndName[sitePackagesDir][p.Name]; collision {
+			p = preferShallowest(existing, p)
+		}
 		pkgsBySitePackageAndName[sitePackagesDir][p.Name] = p
 	}
 
@@ -266,6 +270,52 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 	}
 
 	return pkgs, relationshipIndex.All(), err
+}
+
+// preferShallowest resolves duplicate names within a site-packages bucket independently
+// of catalog order. Prefer metadata closer to the root, then its path and package ID.
+// This favors a top-level installation over a nested vendored copy, but does not
+// model runtime sys.path changes, version constraints, or vendor-specific imports.
+func preferShallowest(a, b pkg.Package) pkg.Package {
+	if installRank(a).less(installRank(b)) {
+		return a
+	}
+	return b
+}
+
+type packageInstallRank struct {
+	depth int
+	path  string
+	id    string
+}
+
+func (r packageInstallRank) less(o packageInstallRank) bool {
+	if r.depth != o.depth {
+		return r.depth < o.depth
+	}
+	if r.path != o.path {
+		return r.path < o.path
+	}
+	return r.id < o.id
+}
+
+// installRank orders packages by primary metadata directory depth, path, and ID.
+func installRank(p pkg.Package) packageInstallRank {
+	locs := packagePrimaryLocations(p)
+	if len(locs) == 0 {
+		locs = p.Locations.ToSlice()
+	}
+
+	rank := packageInstallRank{depth: math.MaxInt, id: string(p.ID())}
+	for _, l := range locs {
+		dir := path.Dir(strings.Trim(l.RealPath, "/"))
+		depth := strings.Count(dir, "/")
+		if depth < rank.depth || (depth == rank.depth && dir < rank.path) {
+			rank.depth = depth
+			rank.path = dir
+		}
+	}
+	return rank
 }
 
 func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package, sites []string) []pkg.Package {

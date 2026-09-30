@@ -3,6 +3,7 @@ package python
 import (
 	"context"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/dependency"
 )
@@ -725,4 +727,152 @@ func Test_pdmLockDependencySpecifier(t *testing.T) {
 			assert.Equal(t, tt.want, pdmLockDependencySpecifier(tt.p))
 		})
 	}
+}
+
+func Test_wheelEggRelationships_duplicateDistributionName(t *testing.T) {
+	newPkg := func(name, version, metadataPath string, requires ...string) pkg.Package {
+		p := pkg.Package{
+			Name:    name,
+			Version: version,
+			Type:    pkg.PythonPkg,
+			Locations: file.NewLocationSet(
+				file.NewLocationFromCoordinates(file.Coordinates{RealPath: metadataPath}).
+					WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation),
+			),
+			Metadata: pkg.PythonPackage{
+				Name:         name,
+				Version:      version,
+				RequiresDist: requires,
+			},
+		}
+		p.SetID()
+		return p
+	}
+
+	const site = "/usr/lib/python3/dist-packages"
+
+	tests := []struct {
+		name string
+		pkgs []pkg.Package
+		// dependant package name -> versions of the packages it should depend on
+		want map[string][]string
+	}{
+		{
+			name: "single provider is unaffected",
+			pkgs: []pkg.Package{
+				newPkg("packaging", "24.0", site+"/packaging-24.0.dist-info/METADATA"),
+				newPkg("gunicorn", "23.0.0", site+"/gunicorn-23.0.0.dist-info/METADATA", "packaging"),
+			},
+			want: map[string][]string{"gunicorn": {"packaging@24.0"}},
+		},
+		{
+			name: "top level install wins over a vendored copy",
+			pkgs: []pkg.Package{
+				newPkg("packaging", "24.0", site+"/packaging-24.0.dist-info/METADATA"),
+				newPkg("packaging", "26.0", site+"/setuptools/_vendor/packaging-26.0.dist-info/METADATA"),
+				newPkg("gunicorn", "23.0.0", site+"/gunicorn-23.0.0.dist-info/METADATA", "packaging"),
+			},
+			want: map[string][]string{"gunicorn": {"packaging@24.0"}},
+		},
+		{
+			name: "target directory without a site-packages name",
+			pkgs: []pkg.Package{
+				newPkg("packaging", "26.0", "/app/python"+"/setuptools/_vendor/packaging-26.0.dist-info/METADATA"),
+				newPkg("gunicorn", "23.0.0", "/app/python"+"/gunicorn-23.0.0.dist-info/METADATA", "packaging"),
+				newPkg("packaging", "24.0", "/app/python"+"/packaging-24.0.dist-info/METADATA"),
+			},
+			want: map[string][]string{"gunicorn": {"packaging@24.0"}},
+		},
+		{
+			name: "equal depth falls back to a stable tiebreak on path",
+			pkgs: []pkg.Package{
+				newPkg("packaging", "26.0", site+"/b/packaging-26.0.dist-info/METADATA"),
+				newPkg("packaging", "24.0", site+"/a/packaging-24.0.dist-info/METADATA"),
+				newPkg("gunicorn", "23.0.0", site+"/gunicorn-23.0.0.dist-info/METADATA", "packaging"),
+			},
+			want: map[string][]string{"gunicorn": {"packaging@24.0"}},
+		},
+		{
+			name: "separate site-packages directories stay independent",
+			pkgs: []pkg.Package{
+				newPkg("packaging", "24.0", "/one/site-packages/packaging-24.0.dist-info/METADATA"),
+				newPkg("packaging", "26.0", "/two/site-packages/packaging-26.0.dist-info/METADATA"),
+				newPkg("gunicorn", "23.0.0", "/one/site-packages/gunicorn-23.0.0.dist-info/METADATA", "packaging"),
+				newPkg("build", "1.2.2", "/two/site-packages/build-1.2.2.dist-info/METADATA", "packaging"),
+			},
+			want: map[string][]string{"gunicorn": {"packaging@24.0"}, "build": {"packaging@26.0"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgs := append([]pkg.Package(nil), tt.pkgs...)
+			var checkPermutations func(int)
+			checkPermutations = func(start int) {
+				if start < len(pkgs) {
+					for i := start; i < len(pkgs); i++ {
+						pkgs[start], pkgs[i] = pkgs[i], pkgs[start]
+						checkPermutations(start + 1)
+						pkgs[start], pkgs[i] = pkgs[i], pkgs[start]
+					}
+					return
+				}
+
+				gotPkgs, rels, err := wheelEggRelationships(context.Background(), fileresolver.Empty{}, pkgs, nil, nil)
+				require.NoError(t, err)
+				require.ElementsMatch(t, tt.pkgs, gotPkgs, "retain every cataloged package")
+
+				got := make(map[string][]string)
+				for _, rel := range rels {
+					from, ok := rel.From.(pkg.Package)
+					require.True(t, ok)
+					to, ok := rel.To.(pkg.Package)
+					require.True(t, ok)
+					// DependencyOf points from the provider to the dependant.
+					got[to.Name] = append(got[to.Name], from.Name+"@"+from.Version)
+				}
+				for k := range got {
+					sort.Strings(got[k])
+				}
+				require.Equal(t, tt.want, got)
+			}
+			checkPermutations(0)
+		})
+	}
+}
+
+func Test_preferShallowest(t *testing.T) {
+	primary := func(p string) file.Location {
+		return file.NewLocation(p).WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)
+	}
+	newPkg := func(version string, locations ...file.Location) pkg.Package {
+		p := pkg.Package{Name: "example", Version: version, Locations: file.NewLocationSet(locations...)}
+		p.SetID()
+		return p
+	}
+	check := func(t *testing.T, a, b, want pkg.Package) {
+		t.Helper()
+		require.Equal(t, want.ID(), preferShallowest(a, b).ID())
+		require.Equal(t, want.ID(), preferShallowest(b, a).ID())
+	}
+
+	t.Run("supporting evidence does not outrank primary metadata", func(t *testing.T) {
+		nested := newPkg("1", primary("/site-packages/vendor/example.dist-info/METADATA"), file.NewLocation("/LICENSE"))
+		top := newPkg("2", primary("/site-packages/example.dist-info/METADATA"))
+		check(t, nested, top, top)
+	})
+	t.Run("equal paths fall back to package ID", func(t *testing.T) {
+		a := newPkg("1", primary("/site-packages/example.dist-info/METADATA"))
+		b := newPkg("2", primary("/site-packages/example.dist-info/METADATA"))
+		want := a
+		if b.ID() < a.ID() {
+			want = b
+		}
+		check(t, a, b, want)
+	})
+	t.Run("known location wins over missing location", func(t *testing.T) {
+		unknown := newPkg("1")
+		known := newPkg("2", file.NewLocation("/example.dist-info/METADATA"))
+		check(t, unknown, known, known)
+	})
 }
