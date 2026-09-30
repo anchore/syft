@@ -266,11 +266,28 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 		},
 	}
 
+	// only listed under the runtime-specific "net8.0/win-x64" section, and depends on a package from "net8.0"
+	myLibNativePkg := pkg.Package{
+		Name:      "runtime.win-x64.MyLib.Native",
+		Version:   "1.0.0",
+		PURL:      "pkg:nuget/runtime.win-x64.MyLib.Native@1.0.0",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "runtime.win-x64.MyLib.Native",
+			Version:     "1.0.0",
+			ContentHash: "mylibnativehash==",
+			Type:        "Transitive",
+		},
+	}
+
 	expectedPkgs := []pkg.Package{
 		myLibPkg,
 		newtonsoftPkg,
 		log4net1Pkg,
 		log4net2Pkg,
+		myLibNativePkg,
 	}
 
 	// the same package is resolved to a different version per target framework, so both edges must be captured, while
@@ -287,6 +304,11 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 			Type: artifact.DependencyOfRelationship,
 		},
 		{
+			From: log4net2Pkg,
+			To:   myLibNativePkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+		{
 			From: newtonsoftPkg,
 			To:   myLibPkg,
 			Type: artifact.DependencyOfRelationship,
@@ -296,65 +318,118 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parseDotnetPackagesLock, expectedPkgs, expectedRelationships)
 }
 
-func Test_findDependencyPkg(t *testing.T) {
-	newPkg := func(name, version string) pkg.Package {
-		return pkg.Package{Name: name, Version: version}
-	}
-
-	pkgMap := map[string]pkg.Package{
-		"log4net/1.2.15": newPkg("log4net", "1.2.15"),
-		"log4net/2.0.5":  newPkg("log4net", "2.0.5"),
-		"Serilog/1.10.0": newPkg("Serilog", "1.10.0"),
-		"Serilog/1.9.0":  newPkg("Serilog", "1.9.0"),
-		"Serilog/latest": newPkg("Serilog", "latest"),
-	}
+func Test_findPackagesLockDependency(t *testing.T) {
+	frameworks := newPackagesLockFrameworks(dotnetPackagesLock{
+		Dependencies: map[string]map[string]dotnetPackagesLockDep{
+			"net8.0": {
+				"log4net": {Resolved: "2.0.5"},
+			},
+			"net8.0/win-x64": {
+				"runtime.win-x64.Native": {Resolved: "1.0.0"},
+			},
+			"netstandard2.0": {
+				"log4net":         {Resolved: "1.2.15"},
+				"Newtonsoft.Json": {Resolved: "13.0.3"},
+			},
+		},
+	})
+	net8, rid, netstandard := frameworks[0], frameworks[1], frameworks[2]
 
 	tests := []struct {
-		name            string
-		depName         string
-		declaredVersion string
-		frameworkDeps   map[string]dotnetPackagesLockDep
-		wantVersion     string
-		wantFound       bool
+		name        string
+		depName     string
+		framework   packagesLockFramework
+		base        packagesLockFramework
+		wantVersion string
+		wantFound   bool
 	}{
 		{
-			name:            "version resolved by the framework wins over the declared lower bound",
-			depName:         "log4net",
-			declaredVersion: "1.2.15",
-			frameworkDeps:   map[string]dotnetPackagesLockDep{"log4net": {Resolved: "2.0.5"}},
-			wantVersion:     "2.0.5",
-			wantFound:       true,
+			name:        "resolves to the version pinned by its own target framework",
+			depName:     "log4net",
+			framework:   netstandard,
+			wantVersion: "1.2.15",
+			wantFound:   true,
 		},
 		{
-			name:            "declared version is used when absent from the framework",
-			depName:         "log4net",
-			declaredVersion: "2.0.5",
-			wantVersion:     "2.0.5",
-			wantFound:       true,
+			name:        "package names are matched case-insensitively",
+			depName:     "LOG4NET",
+			framework:   net8,
+			wantVersion: "2.0.5",
+			wantFound:   true,
 		},
 		{
-			name:            "falls back to the lowest version, compared semantically and ahead of unparseable versions",
-			depName:         "Serilog",
-			declaredVersion: "3.0.0",
-			wantVersion:     "1.9.0",
-			wantFound:       true,
+			name:        "runtime-specific sections fall back to their base target framework",
+			depName:     "log4net",
+			framework:   rid,
+			base:        net8,
+			wantVersion: "2.0.5",
+			wantFound:   true,
 		},
 		{
-			name:            "unknown package",
-			depName:         "Newtonsoft.Json",
-			declaredVersion: "13.0.3",
-			wantFound:       false,
+			name:      "a package absent from the target framework is not guessed from another one",
+			depName:   "Newtonsoft.Json",
+			framework: net8,
+			wantFound: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, found := findDependencyPkg(tt.depName, tt.declaredVersion, tt.frameworkDeps, pkgMap)
+			got, found := findPackagesLockDependency(tt.depName, tt.framework, tt.base)
 			require.Equal(t, tt.wantFound, found)
 			if !tt.wantFound {
 				return
 			}
-			assert.Equal(t, tt.wantVersion, got.Version)
+			assert.Equal(t, tt.wantVersion, got.dep.Resolved)
+		})
+	}
+}
+
+func Test_mergePackagesLockEntries_typePrecedence(t *testing.T) {
+	tests := []struct {
+		name     string
+		types    map[string]string // target framework -> type
+		wantType string
+	}{
+		{
+			name:     "direct wins over transitive",
+			types:    map[string]string{"net8.0": "Transitive", "netstandard2.0": "Direct"},
+			wantType: "Direct",
+		},
+		{
+			name:     "central transitive wins over transitive regardless of framework order",
+			types:    map[string]string{"net8.0": "Transitive", "netstandard2.0": "CentralTransitive"},
+			wantType: "CentralTransitive",
+		},
+		{
+			name:     "central transitive wins over transitive in the reverse framework order",
+			types:    map[string]string{"net8.0": "CentralTransitive", "netstandard2.0": "Transitive"},
+			wantType: "CentralTransitive",
+		},
+		{
+			name:     "direct wins over central transitive",
+			types:    map[string]string{"net472": "CentralTransitive", "net8.0": "Direct", "netstandard2.0": "Transitive"},
+			wantType: "Direct",
+		},
+		{
+			name:     "known types win over unknown ones",
+			types:    map[string]string{"net8.0": "Unknown", "netstandard2.0": "Transitive"},
+			wantType: "Transitive",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lockFile := dotnetPackagesLock{Dependencies: map[string]map[string]dotnetPackagesLockDep{}}
+			for framework, depType := range tt.types {
+				lockFile.Dependencies[framework] = map[string]dotnetPackagesLockDep{
+					"Newtonsoft.Json": {Type: depType, Resolved: "13.0.3"},
+				}
+			}
+
+			entries := mergePackagesLockEntries(newPackagesLockFrameworks(lockFile))
+			require.Len(t, entries, 1)
+			assert.Equal(t, tt.wantType, entries[0].dep.Type)
 		})
 	}
 }

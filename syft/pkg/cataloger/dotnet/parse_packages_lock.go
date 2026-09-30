@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"sort"
+	"strings"
 
-	"github.com/anchore/go-version"
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/relationship"
@@ -20,8 +19,9 @@ import (
 
 var _ generic.Parser = parseDotnetPackagesLock
 
-// directDependencyType is the "type" NuGet writes for a package the project references directly.
-const directDependencyType = "Direct"
+// packagesLockTypePrecedence orders the "type" values NuGet writes from the most to the least direct. A package can
+// be resolved under several target frameworks with a different type in each, and the most direct one describes it.
+var packagesLockTypePrecedence = []string{"Project", "Direct", "CentralTransitive", "Transitive"}
 
 type dotnetPackagesLock struct {
 	Version      int                                         `json:"version"`
@@ -36,6 +36,35 @@ type dotnetPackagesLockDep struct {
 	Dependencies map[string]string `json:"dependencies,omitempty"`
 }
 
+// packagesLockEntry is one package as resolved under a single target framework.
+type packagesLockEntry struct {
+	name string
+	dep  dotnetPackagesLockDep
+}
+
+func (e packagesLockEntry) nameVersion() string {
+	return createNameAndVersion(e.name, e.dep.Resolved)
+}
+
+// packagesLockFramework is one target framework section of the lockfile, such as "net8.0" or the runtime-specific
+// "net8.0/win-x64", with its entries sorted by name.
+type packagesLockFramework struct {
+	name    string
+	entries []packagesLockEntry
+	// byName is keyed by the lowercased package name, since NuGet package IDs are case-insensitive.
+	byName map[string]packagesLockEntry
+}
+
+func (f packagesLockFramework) find(name string) (packagesLockEntry, bool) {
+	e, ok := f.byName[strings.ToLower(name)]
+	return e, ok
+}
+
+// packagesLockEdge identifies a dependency-of relationship between two packages.
+type packagesLockEdge struct {
+	child, parent artifact.ID
+}
+
 func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	dec := json.NewDecoder(reader)
 
@@ -45,24 +74,21 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		return nil, nil, fmt.Errorf("failed to parse packages.lock.json file: %w", err)
 	}
 
-	names, allDependencies := collectPackagesLockDeps(lockFile)
+	frameworks := newPackagesLockFrameworks(lockFile)
 
 	// create artifact for each pkg
 	var pkgs []pkg.Package
 	pkgMap := make(map[string]pkg.Package)
 
-	for _, nameVersion := range names {
-		name, _ := extractNameAndVersion(nameVersion)
-
-		dep := allDependencies[nameVersion]
-		dotnetPkg := newDotnetPackagesLockPackage(name, dep, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
+	for _, entry := range mergePackagesLockEntries(frameworks) {
+		dotnetPkg := newDotnetPackagesLockPackage(entry.name, entry.dep, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
-			pkgMap[nameVersion] = *dotnetPkg
+			pkgMap[entry.nameVersion()] = *dotnetPkg
 		}
 	}
 
-	relationships := packagesLockRelationships(lockFile, pkgMap)
+	relationships := packagesLockRelationships(frameworks, pkgMap)
 
 	// sort the relationships for deterministic output
 	relationship.Sort(relationships)
@@ -70,78 +96,116 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 	return pkgs, relationships, nil
 }
 
-// collectPackagesLockDeps flattens the per-target-framework entries into one entry per name and version, returning
-// the sorted keys alongside the entries so that package order is deterministic. A package may appear under several
-// target frameworks, and "Direct" wins when it does: some target framework references the package directly.
-func collectPackagesLockDeps(lockFile dotnetPackagesLock) ([]string, map[string]dotnetPackagesLockDep) {
-	allDependencies := make(map[string]dotnetPackagesLockDep)
+// newPackagesLockFrameworks returns the target framework sections of the lockfile sorted by name, so that everything
+// derived from them is independent of map iteration order.
+func newPackagesLockFrameworks(lockFile dotnetPackagesLock) []packagesLockFramework {
+	var frameworks []packagesLockFramework
 
-	var names []string
-	for _, targetFramework := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
-		for _, name := range slices.Sorted(maps.Keys(lockFile.Dependencies[targetFramework])) {
-			dep := lockFile.Dependencies[targetFramework][name]
-			depNameVersion := createNameAndVersion(name, dep.Resolved)
+	for _, frameworkName := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
+		deps := lockFile.Dependencies[frameworkName]
+		framework := packagesLockFramework{
+			name:   frameworkName,
+			byName: make(map[string]packagesLockEntry, len(deps)),
+		}
 
-			if existing, ok := allDependencies[depNameVersion]; ok {
-				if existing.Type != directDependencyType && dep.Type == directDependencyType {
-					allDependencies[depNameVersion] = dep
-				}
+		for _, name := range slices.Sorted(maps.Keys(deps)) {
+			entry := packagesLockEntry{name: name, dep: deps[name]}
+			framework.entries = append(framework.entries, entry)
+			framework.byName[strings.ToLower(name)] = entry
+		}
+
+		frameworks = append(frameworks, framework)
+	}
+
+	return frameworks
+}
+
+// mergePackagesLockEntries collapses the per-framework entries into one entry per name and version, sorted by name
+// and version. When target frameworks disagree on the type of a package, the most direct type wins.
+func mergePackagesLockEntries(frameworks []packagesLockFramework) []packagesLockEntry {
+	merged := make(map[string]packagesLockEntry)
+
+	for _, framework := range frameworks {
+		for _, entry := range framework.entries {
+			key := entry.nameVersion()
+			if existing, ok := merged[key]; ok && !isMoreDirect(entry.dep.Type, existing.dep.Type) {
 				continue
 			}
-
-			names = append(names, depNameVersion)
-			allDependencies[depNameVersion] = dep
+			merged[key] = entry
 		}
 	}
 
-	// sort the names so that the order of the packages is deterministic
-	sort.Strings(names)
+	var entries []packagesLockEntry
+	for _, key := range slices.Sorted(maps.Keys(merged)) {
+		entries = append(entries, merged[key])
+	}
 
-	return names, allDependencies
+	return entries
 }
 
-// packagesLockEdge identifies a dependency-of relationship between two packages.
-type packagesLockEdge struct {
-	child, parent artifact.ID
+// isMoreDirect reports whether dependency type a ranks ahead of b. Unknown types rank last, and ties are broken by
+// name so that the choice never depends on the order in which target frameworks are visited.
+func isMoreDirect(a, b string) bool {
+	rankA, rankB := packagesLockTypeRank(a), packagesLockTypeRank(b)
+	if rankA != rankB {
+		return rankA < rankB
+	}
+	return a < b
 }
 
-// packagesLockRelationships resolves each dependency within its own target framework so that lockfiles pinning
-// multiple versions of the same package resolve to the correct one.
-func packagesLockRelationships(lockFile dotnetPackagesLock, pkgMap map[string]pkg.Package) []artifact.Relationship {
+func packagesLockTypeRank(t string) int {
+	if i := slices.Index(packagesLockTypePrecedence, t); i >= 0 {
+		return i
+	}
+	return len(packagesLockTypePrecedence)
+}
+
+// packagesLockRelationships resolves the dependencies of each package within the target framework that declares
+// them, so that lockfiles pinning a different version of the same package per framework resolve to the right one.
+func packagesLockRelationships(frameworks []packagesLockFramework, pkgMap map[string]pkg.Package) []artifact.Relationship {
 	var relationships []artifact.Relationship
 
+	frameworksByName := make(map[string]packagesLockFramework, len(frameworks))
+	for _, framework := range frameworks {
+		frameworksByName[framework.name] = framework
+	}
+
 	seen := make(map[packagesLockEdge]struct{})
-	for _, targetFramework := range slices.Sorted(maps.Keys(lockFile.Dependencies)) {
-		frameworkDeps := lockFile.Dependencies[targetFramework]
+	for _, framework := range frameworks {
+		base, hasBase := frameworksByName[baseFrameworkName(framework.name)]
+		if !hasBase || base.name == framework.name {
+			base = packagesLockFramework{}
+		}
 
-		for _, name := range slices.Sorted(maps.Keys(frameworkDeps)) {
-			dep := frameworkDeps[name]
-			depNameVersion := createNameAndVersion(name, dep.Resolved)
-
-			parentPkg, ok := pkgMap[depNameVersion]
+		for _, entry := range framework.entries {
+			parentPkg, ok := pkgMap[entry.nameVersion()]
 			if !ok {
-				log.Debugf("package \"%s\" not found in map of all packages", depNameVersion)
+				log.Debugf("package %q not found in map of all packages", entry.nameVersion())
 				continue
 			}
 
-			relationships = append(relationships, packagesLockDepRelationships(dep, parentPkg, depNameVersion, frameworkDeps, pkgMap, seen)...)
+			relationships = append(relationships, packagesLockEntryRelationships(entry, parentPkg, framework, base, pkgMap, seen)...)
 		}
 	}
 
 	return relationships
 }
 
-// packagesLockDepRelationships returns the edges declared by a single package under one target framework, skipping
-// any edge already recorded in seen -- frameworks that resolve to the same versions would otherwise repeat it.
-func packagesLockDepRelationships(dep dotnetPackagesLockDep, parentPkg pkg.Package, depNameVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package, seen map[packagesLockEdge]struct{}) []artifact.Relationship {
+// packagesLockEntryRelationships returns the edges declared by a single entry, skipping any edge already recorded in
+// seen -- frameworks that resolve to the same versions would otherwise repeat it.
+func packagesLockEntryRelationships(entry packagesLockEntry, parentPkg pkg.Package, framework, base packagesLockFramework, pkgMap map[string]pkg.Package, seen map[packagesLockEdge]struct{}) []artifact.Relationship {
 	var relationships []artifact.Relationship
 
-	for _, childDepName := range slices.Sorted(maps.Keys(dep.Dependencies)) {
-		childDepVersion := dep.Dependencies[childDepName]
-
-		childPkg, ok := findDependencyPkg(childDepName, childDepVersion, frameworkDeps, pkgMap)
+	for _, childName := range slices.Sorted(maps.Keys(entry.dep.Dependencies)) {
+		child, ok := findPackagesLockDependency(childName, framework, base)
 		if !ok {
-			log.Debugf("dependency \"%s\" of package \"%s\" not found in map of all packages", createNameAndVersion(childDepName, childDepVersion), depNameVersion)
+			log.Debugf("dependency %q of package %q not found under target framework %q", childName, entry.nameVersion(), framework.name)
+			continue
+		}
+
+		childPkg, ok := pkgMap[child.nameVersion()]
+		if !ok {
+			log.Debugf("package %q not found in map of all packages", child.nameVersion())
 			continue
 		}
 
@@ -152,13 +216,30 @@ func packagesLockDepRelationships(dep dotnetPackagesLockDep, parentPkg pkg.Packa
 		seen[key] = struct{}{}
 
 		relationships = append(relationships, artifact.Relationship{
-			From: *childPkg,
+			From: childPkg,
 			To:   parentPkg,
 			Type: artifact.DependencyOfRelationship,
 		})
 	}
 
 	return relationships
+}
+
+// findPackagesLockDependency finds the entry a dependency edge points at. The version on an edge is only the lower
+// bound of a version range, so the edge resolves to whatever version its target framework resolved. Runtime-specific
+// sections such as "net8.0/win-x64" may reference packages listed only in their base framework ("net8.0"). An edge
+// that resolves nowhere is dropped rather than guessed from another target framework.
+func findPackagesLockDependency(name string, framework, base packagesLockFramework) (packagesLockEntry, bool) {
+	if entry, ok := framework.find(name); ok {
+		return entry, true
+	}
+	return base.find(name)
+}
+
+// baseFrameworkName returns the target framework of a runtime-specific section, such as "net8.0" for "net8.0/win-x64".
+func baseFrameworkName(frameworkName string) string {
+	name, _, _ := strings.Cut(frameworkName, "/")
+	return name
 }
 
 func newDotnetPackagesLockPackage(name string, dep dotnetPackagesLockDep, locations ...file.Location) *pkg.Package {
@@ -195,59 +276,4 @@ func packagesLockPackageURL(name, version string) string {
 		qualifiers,
 		"",
 	).ToString()
-}
-
-// findDependencyPkg finds the package a dependency points at. The version of a dependency edge is the lower bound
-// of a version range, not a pin, so prefer whatever version this target framework actually resolved to.
-func findDependencyPkg(name, declaredVersion string, frameworkDeps map[string]dotnetPackagesLockDep, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
-	if dep, ok := frameworkDeps[name]; ok {
-		if p, ok := pkgMap[createNameAndVersion(name, dep.Resolved)]; ok {
-			return &p, true
-		}
-	}
-
-	if p, ok := pkgMap[createNameAndVersion(name, declaredVersion)]; ok {
-		return &p, true
-	}
-
-	return findPkgByName(name, pkgMap)
-}
-
-// findPkgByName returns the lowest-versioned package with the given name. This is a last-resort fallback for
-// lockfiles where a dependency edge names a package that is absent from its own target framework.
-func findPkgByName(pkgName string, pkgMap map[string]pkg.Package) (*pkg.Package, bool) {
-	var candidates []string
-	for pkgNameVersion := range pkgMap {
-		name, _ := extractNameAndVersion(pkgNameVersion)
-		if name == pkgName {
-			candidates = append(candidates, pkgNameVersion)
-		}
-	}
-
-	if len(candidates) == 0 {
-		return nil, false
-	}
-
-	// versions that don't parse sort after those that do
-	sort.Slice(candidates, func(i, j int) bool {
-		_, vi := extractNameAndVersion(candidates[i])
-		_, vj := extractNameAndVersion(candidates[j])
-
-		si, erri := version.NewVersion(vi)
-		sj, errj := version.NewVersion(vj)
-
-		if (erri == nil) != (errj == nil) {
-			return erri == nil
-		}
-
-		if erri == nil && !si.Equal(sj) {
-			return si.LessThan(sj)
-		}
-
-		return candidates[i] < candidates[j]
-	})
-
-	p := pkgMap[candidates[0]]
-
-	return &p, true
 }

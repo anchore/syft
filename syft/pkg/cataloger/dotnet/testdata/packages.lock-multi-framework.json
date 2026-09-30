@@ -24,6 +24,16 @@
                 "contentHash": "newtonsoft1303hash=="
             }
         },
+        "net8.0/win-x64": {
+            "runtime.win-x64.MyLib.Native": {
+                "type": "Transitive",
+                "resolved": "1.0.0",
+                "contentHash": "mylibnativehash==",
+                "dependencies": {
+                    "log4net": "2.0.0"
+                }
+            }
+        },
         "netstandard2.0": {
             "MyLib": {
                 "type": "Direct",
