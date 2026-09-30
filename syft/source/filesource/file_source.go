@@ -215,7 +215,7 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, nil)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
 		if isZipWithRarName(path, envelopedUnarchiver) {
-			log.Debugf("source path is a zip archive with a .rar name (a Java resource adapter archive); analyzing it as a single file")
+			log.Debugf("source path has a .rar name but zip content (e.g. a Java resource adapter archive); analyzing it as a single file")
 			return analysisPath, cleanupFn, nil
 		}
 

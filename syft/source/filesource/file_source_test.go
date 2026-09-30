@@ -191,6 +191,15 @@ func TestNewFromFile_RarExtension(t *testing.T) {
 			wantNoPaths:   []string{"META-INF/ra.xml", "example-lib-1.0.0.jar"},
 		},
 		{
+			// a self-extracting RAR has an executable stub before the RAR signature. The stub holds no "R" bytes,
+			// which is the input that made rardecode v2.2.0 loop forever in its signature search
+			desc:          "self-extracting RAR archive is extracted",
+			input:         writeSfxRar(t, t.TempDir()),
+			wantExtracted: true,
+			wantPaths:     []string{"inside.txt"},
+			wantNoPaths:   []string{"example-sfx.rar"},
+		},
+		{
 			// a RAR 5.0 archive holding one stored file (inside.txt)
 			desc:          "RAR archive is extracted",
 			input:         "testdata/rar-archive/example.rar",
@@ -249,6 +258,18 @@ func createResourceAdapterArchive(t testing.TB, dir string) string {
 	archivePath := filepath.Join(dir, "example-ra-1.0.0.rar")
 	require.NoError(t, os.WriteFile(archivePath, ra, 0o600))
 	return archivePath
+}
+
+// writeSfxRar writes testdata/rar-archive/example.rar behind a stand-in executable stub into dir and returns its path.
+func writeSfxRar(t testing.TB, dir string) string {
+	t.Helper()
+
+	rar, err := os.ReadFile("testdata/rar-archive/example.rar")
+	require.NoError(t, err)
+
+	sfxPath := filepath.Join(dir, "example-sfx.rar")
+	require.NoError(t, os.WriteFile(sfxPath, append(bytes.Repeat([]byte("MZ stub "), 1024), rar...), 0o600))
+	return sfxPath
 }
 
 // zipBytes returns a zip archive holding the given (name, contents) entries, in order.
