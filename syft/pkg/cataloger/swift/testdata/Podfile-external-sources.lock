@@ -1,0 +1,31 @@
+PODS:
+  - Analytics (1.4.0)
+  - Flutter (1.0.0)
+  - Flutter/Core (1.0.0)
+  - GlossButtonNode (3.1.2)
+  - GlossButtonNode/Core (3.1.2)
+
+DEPENDENCIES:
+  - Analytics (from `https://github.com/example/analytics.git`, tag `1.4.0`)
+  - Flutter (from `Flutter`)
+  - GlossButtonNode
+
+SPEC REPOS:
+  trunk:
+    - GlossButtonNode
+
+EXTERNAL SOURCES:
+  Analytics:
+    :git: https://github.com/example/analytics.git
+    :tag: 1.4.0
+  Flutter:
+    :path: Flutter
+
+SPEC CHECKSUMS:
+  Analytics: 3b7a1bf0b8e4b0c6f3c2d1a09e8f7b6c5d4e3f21
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  GlossButtonNode: 4ea1197a744f2fb5fb875fe31caf17ded4762e8f
+
+PODFILE CHECKSUM: 07aa55f54421f6e6d3a920c11716a89fc9243d1b
+
+COCOAPODS: 1.11.2
