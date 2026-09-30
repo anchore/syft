@@ -214,6 +214,11 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 
 	envelopedUnarchiver, _, err := intFile.IdentifyArchive(context.Background(), path, nil)
 	if unarchiver, ok := envelopedUnarchiver.(archives.Extractor); err == nil && ok {
+		if isZipWithRarName(path, envelopedUnarchiver) {
+			log.Debugf("source path has a .rar name but zip content (e.g. a Java resource adapter archive); analyzing it as a single file")
+			return analysisPath, cleanupFn, nil
+		}
+
 		analysisPath, cleanupFn, err = unarchiveToTmp(path, unarchiver)
 		if err != nil {
 			return "", cleanupFn, fmt.Errorf("unable to unarchive source file: %w", err)
@@ -223,6 +228,25 @@ func fileAnalysisPath(path string, skipExtractArchive bool) (string, func() erro
 	}
 
 	return analysisPath, cleanupFn, nil
+}
+
+// isZipWithRarName reports whether the archive format was identified as RAR from the file name while the file
+// content is a zip archive. Archive identification above uses the file name only, and ".rar" is also the extension
+// of Java resource adapter archives (JCA), which are zip files. Such a file is left for the java cataloger to read,
+// the same way .jar, .war and .ear files are, instead of being handed to the RAR extractor, which cannot read it.
+func isZipWithRarName(path string, format archives.Format) bool {
+	if _, ok := format.(archives.Rar); !ok {
+		return false
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	match, err := archives.Zip{}.Match(context.Background(), "", f)
+	return err == nil && match.ByStream
 }
 
 func digestOfFileContents(path string) string {
