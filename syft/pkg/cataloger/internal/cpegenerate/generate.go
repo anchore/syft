@@ -218,11 +218,15 @@ func boundCandidates(candidates []string) []string {
 }
 
 func candidateTargetSw(p pkg.Package) []string {
-	switch p.Type {
-	case pkg.WordpressPluginPkg:
+	switch {
+	case p.Type == pkg.WordpressPluginPkg:
 		return []string{"wordpress"}
-	case pkg.RustPkg:
+	case p.Type == pkg.RustPkg:
 		return []string{"rust"}
+	case p.Language == pkg.Perl:
+		// NVD records CPAN distributions with perl in target_sw, e.g.
+		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
+		return []string{"perl"}
 	}
 
 	return []string{cpe.Any}
