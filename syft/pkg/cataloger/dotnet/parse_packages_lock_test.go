@@ -318,6 +318,56 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 	pkgtest.TestFileParser(t, fixture, parseDotnetPackagesLock, expectedPkgs, expectedRelationships)
 }
 
+func TestParseDotnetPackagesLock_projectReference(t *testing.T) {
+	fixture := "testdata/packages.lock-project-reference.json"
+	fixtureLocationSet := file.NewLocationSet(file.NewLocation(fixture))
+
+	newtonsoftPkg := pkg.Package{
+		Name:      "Newtonsoft.Json",
+		Version:   "13.0.3",
+		PURL:      "pkg:nuget/Newtonsoft.Json@13.0.3",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "Newtonsoft.Json",
+			Version:     "13.0.3",
+			ContentHash: "newtonsoft1303hash==",
+			Type:        "Transitive",
+		},
+	}
+
+	// a project reference has no resolved version or content hash
+	myLibPkg := pkg.Package{
+		Name:      "mylib",
+		PURL:      "pkg:nuget/mylib",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name: "mylib",
+			Type: "Project",
+		},
+	}
+
+	expectedPkgs := []pkg.Package{
+		newtonsoftPkg,
+		myLibPkg,
+	}
+
+	// project references declare their dependencies as version ranges, which resolve to the version the target
+	// framework resolved
+	expectedRelationships := []artifact.Relationship{
+		{
+			From: newtonsoftPkg,
+			To:   myLibPkg,
+			Type: artifact.DependencyOfRelationship,
+		},
+	}
+
+	pkgtest.TestFileParser(t, fixture, parseDotnetPackagesLock, expectedPkgs, expectedRelationships)
+}
+
 func Test_findPackagesLockDependency(t *testing.T) {
 	frameworks := newPackagesLockFrameworks(dotnetPackagesLock{
 		Dependencies: map[string]map[string]dotnetPackagesLockDep{
