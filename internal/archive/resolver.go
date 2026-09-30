@@ -34,10 +34,9 @@ type Resolver struct {
 	// Digests are of the archive file itself.
 	Digests []file.Digest
 
-	// Truncated reports that the resolver covers only part of the archive, and TruncatedReason says why:
-	// the disk limit or the decompression budget stopped extraction early, or an entry was too large.
-	Truncated       bool
-	TruncatedReason string
+	// Truncated is non-nil when the resolver covers only part of the archive, and says why: the disk limit
+	// or the decompression budget stopped extraction early, or an entry was too large or unreadable.
+	Truncated error
 
 	fileSystemID string
 	archivePath  string
@@ -164,14 +163,14 @@ func (r *Resolver) add(hdr tar.Header, content io.Reader) error {
 				delete(r.byPath, entryPath)
 			}
 			if errors.Is(err, errEntryTooLarge) {
-				r.truncate(fmt.Sprintf("an entry larger than %s was skipped", humanize.IBytes(uint64(maxEntryBytes))))
+				r.truncate(fmt.Errorf("an entry was skipped: %w of %s", err, humanize.IBytes(uint64(maxEntryBytes))))
 				return nil
 			}
 			if errors.Is(err, ErrDiskLimitReached) || errors.Is(err, errBudgetSpent) {
 				return err
 			}
 			// a damaged entry (a CRC mismatch, a corrupt deflate stream) costs only that entry
-			r.truncate(fmt.Sprintf("entry %q could not be read: %v", hdr.Name, err))
+			r.truncate(fmt.Errorf("entry %q could not be read: %w", hdr.Name, err))
 			return nil
 		}
 	}
@@ -195,9 +194,9 @@ var maxEntryBytes int64 = intFile.PerFileReadLimit
 var errEntryTooLarge = errors.New("archive entry exceeds the per-entry size cap")
 
 // truncate marks the resolver as covering part of the archive, keeping the first reason given.
-func (r *Resolver) truncate(reason string) {
-	if !r.Truncated {
-		r.Truncated, r.TruncatedReason = true, reason
+func (r *Resolver) truncate(err error) {
+	if r.Truncated == nil {
+		r.Truncated = err
 	}
 }
 

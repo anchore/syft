@@ -69,7 +69,7 @@ func TestResolver_extract_storesEveryEntryInMemoryWhenUnbounded(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			r, root := extractBytes(t, data, name, nil)
-			assert.False(t, r.Truncated)
+			assert.NoError(t, r.Truncated)
 			assert.Zero(t, r.written)
 			assert.Empty(t, filesIn(t, root))
 
@@ -87,7 +87,7 @@ func TestResolver_extract_diskLimitTruncatesAtTheEntryThatDoesNotFit(t *testing.
 
 	r, _ := extractBytes(t, data, "test.zip", diskCharge(2*(record+1)+record))
 
-	assert.True(t, r.Truncated)
+	assert.Error(t, r.Truncated)
 	assert.Equal(t, []string{"file1.txt", "file2.txt"}, storedNames(t, r), "the refused entry is not stored")
 	entries := readStore(t, r)
 	assert.Equal(t, "a", entries["file1.txt"].body)
@@ -105,7 +105,7 @@ func TestResolver_extract_diskLimitBitesMidEntry(t *testing.T) {
 
 	r, root := extractBytes(t, data, "test.tar.gz", charge)
 
-	assert.True(t, r.Truncated)
+	assert.Error(t, r.Truncated)
 	assert.Equal(t, []string{"a/first.txt"}, storedNames(t, r))
 	assert.Greater(t, r.written, int64(40*1024), "the first entry landed whole and the second part way")
 	_, disk := charge.held()
@@ -123,11 +123,11 @@ func TestResolver_extract_diskLimitFallsWhenAnArchiveIsReleased(t *testing.T) {
 	limiter := NewLimiter(Limits{MaxDiskBytes: oneArchive * 3 / 2})
 
 	first, _ := extractBytes(t, data, "test.zip", limiter.charge())
-	require.False(t, first.Truncated)
+	require.NoError(t, first.Truncated)
 	require.Equal(t, int64(200), first.written)
 
 	second, _ := extractBytes(t, data, "test.zip", limiter.charge())
-	assert.True(t, second.Truncated, "a second archive is bounded while the first is still held")
+	assert.Error(t, second.Truncated, "a second archive is bounded while the first is still held")
 	second.Cleanup()
 
 	first.Cleanup()
@@ -135,7 +135,7 @@ func TestResolver_extract_diskLimitFallsWhenAnArchiveIsReleased(t *testing.T) {
 	require.Zero(t, disk)
 
 	third, _ := extractBytes(t, data, "test.zip", limiter.charge())
-	assert.False(t, third.Truncated, "and extracts in full once the first is released")
+	assert.NoError(t, third.Truncated, "and extracts in full once the first is released")
 	assert.Equal(t, int64(200), third.written)
 }
 
@@ -152,7 +152,7 @@ func TestResolver_extract_directoryOnlyArchivesAreBoundedByTheIndexEstimate(t *t
 	} {
 		t.Run(name, func(t *testing.T) {
 			r, _ := extractBytes(t, data, name, diskCharge(room))
-			assert.True(t, r.Truncated)
+			assert.Error(t, r.Truncated)
 			assert.Len(t, storedNames(t, r), 10)
 		})
 	}
@@ -175,7 +175,7 @@ func TestResolver_extract_entryNamesAreCleanedAndNothingIsWrittenUnderThem(t *te
 	} {
 		t.Run(name, func(t *testing.T) {
 			r, root := extractBytes(t, data, name, nil)
-			require.False(t, r.Truncated)
+			require.NoError(t, r.Truncated)
 
 			assert.Equal(t, []string{"META-INF", "META-INF/MANIFEST.MF", "bin/link.txt", "etc/hosts", "etc/passwd", "passwd", "shadow"},
 				storedNames(t, r))
@@ -205,7 +205,7 @@ func TestResolver_extract_dataEdgeCases(t *testing.T) {
 	t.Run("an empty archive is not an error", func(t *testing.T) {
 		r, _ := extractBytes(t, zipBytes(t, map[string]string{}), "test.zip", nil)
 		assert.Empty(t, r.files)
-		assert.False(t, r.Truncated)
+		assert.NoError(t, r.Truncated)
 	})
 
 	t.Run("a zero-byte entry costs no disk", func(t *testing.T) {
@@ -251,7 +251,7 @@ func TestResolver_extract_excludedEntriesAreNeverStored(t *testing.T) {
 	err := r.extract(context.Background(), identifyFormat(context.Background(), "test.zip", content), content,
 		NewExclusions([]string{"**/vendor", "**/*.rpm"}))
 	require.NoError(t, err)
-	require.False(t, r.Truncated)
+	require.NoError(t, r.Truncated)
 
 	assert.Equal(t, []string{"keep.txt"}, storedNames(t, r))
 	mem, _ := limiter.InUse()
@@ -266,7 +266,7 @@ func TestExtract_readsEntriesAndDigestsTheArchive(t *testing.T) {
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
 
-	assert.False(t, extracted.Truncated)
+	assert.NoError(t, extracted.Truncated)
 	require.Len(t, extracted.Digests, 1)
 	assert.Equal(t, "sha1", extracted.Digests[0].Algorithm)
 
@@ -358,7 +358,7 @@ func TestExtract_aTruncatedStreamKeepsWhatWasRead(t *testing.T) {
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
 
-	assert.True(t, extracted.Truncated)
+	assert.Error(t, extracted.Truncated)
 	locations, err := extracted.FilesByGlob("**")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"a.txt"}, realPaths(locations))
@@ -404,7 +404,7 @@ func TestExtract_archiveBytesThatCannotBePlacedAreSkipped(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
-	assert.True(t, extracted.Truncated)
+	assert.Error(t, extracted.Truncated)
 	locations, err := extracted.FilesByGlob("**/*")
 	require.NoError(t, err)
 	assert.Empty(t, locations)
@@ -422,7 +422,7 @@ func TestExtract_aZipBehindALauncherScript(t *testing.T) {
 	require.NotNil(t, extracted)
 	t.Cleanup(extracted.Cleanup)
 
-	assert.False(t, extracted.Truncated)
+	assert.NoError(t, extracted.Truncated)
 	locations, err := extracted.FilesByGlob("**/*")
 	require.NoError(t, err)
 	assert.Len(t, locations, 2)
@@ -525,7 +525,7 @@ func TestExtract_decompressionBombIsBoundedByTheLimits(t *testing.T) {
 			require.NotNil(t, r)
 			t.Cleanup(r.Cleanup)
 
-			assert.True(t, r.Truncated)
+			assert.Error(t, r.Truncated)
 			locations, err := r.FilesByGlob("**/*")
 			require.NoError(t, err)
 			assert.Empty(t, locations, "the entry that did not fit is not cataloged in part")
@@ -550,7 +550,7 @@ func TestExtract_entryCountBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(r.Cleanup)
 
-	assert.True(t, r.Truncated)
+	assert.Error(t, r.Truncated)
 	assert.Less(t, len(r.files), 20_000)
 	assert.LessOrEqual(t, int64(len(r.byPath))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry,
 		"nodes held must not exceed what the memory limit paid for")
@@ -578,7 +578,7 @@ func TestExtract_deepPathBombIsBoundedByTheMemoryLimit(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(r.Cleanup)
 
-	assert.True(t, r.Truncated)
+	assert.Error(t, r.Truncated)
 	assert.LessOrEqual(t, int64(len(r.byPath))*approxIndexBytesPerEntry, limits.MaxMemoryBytes+approxIndexBytesPerEntry)
 	peakMemory, _ := limiter.Peak()
 	assert.LessOrEqual(t, peakMemory, limits.MaxMemoryBytes)

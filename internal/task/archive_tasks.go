@@ -1,7 +1,6 @@
 package task
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -231,8 +230,8 @@ func (c *archiveCataloger) processArchive(ctx context.Context, parentResolver fi
 	c.ancestors = append(c.ancestors, extracted.Digests...)
 	defer func() { c.ancestors = c.ancestors[:len(c.ancestors)-len(extracted.Digests)] }()
 
-	if extracted.Truncated {
-		recordArchiveUnknown(builder, location.Coordinates, "archive cataloged from part of its contents: "+extracted.TruncatedReason)
+	if extracted.Truncated != nil {
+		recordArchiveUnknown(builder, location.Coordinates, "archive cataloged from part of its contents: "+extracted.Truncated.Error())
 	}
 
 	traversal.Digests = extracted.Digests

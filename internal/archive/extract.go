@@ -149,16 +149,16 @@ func (r *Resolver) extract(ctx context.Context, format archives.Extractor, conte
 	})
 	r.finish()
 	if errors.Is(err, ErrDiskLimitReached) {
-		r.truncate("extraction stopped at the configured memory or disk limit")
+		r.truncate(fmt.Errorf("extraction stopped: %w", err))
 		return nil
 	}
 	if errors.Is(err, errBudgetSpent) {
-		r.truncate("extraction stopped: the archive and those nested in it decompressed to far more than its size (possible decompression bomb)")
+		r.truncate(fmt.Errorf("extraction stopped, possible decompression bomb: %w", err))
 		return nil
 	}
 	if err != nil && ctx.Err() == nil && len(r.files) > 0 {
 		// the stream broke partway (a truncated .tar.gz); what was read before that is still good
-		r.truncate(fmt.Sprintf("extraction stopped early: %v", err))
+		r.truncate(fmt.Errorf("extraction stopped early: %w", err))
 		return nil
 	}
 	return err

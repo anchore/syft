@@ -525,8 +525,8 @@ func TestResolver_add_anEntryOverTheCapIsSkippedAndReadNoFurther(t *testing.T) {
 	r.finish()
 
 	assert.LessOrEqual(t, endless.n, 1024+copyChunkSize, "reading stops just past the cap")
-	assert.True(t, r.Truncated)
-	assert.Contains(t, r.TruncatedReason, "an entry larger than 1.0 KiB was skipped")
+	assert.ErrorIs(t, r.Truncated, errEntryTooLarge)
+	assert.ErrorContains(t, r.Truncated, "per-entry size cap of 1.0 KiB")
 	locations, err := r.FilesByGlob("**")
 	require.NoError(t, err)
 	assert.Equal(t, []string{"ok.txt"}, realPaths(locations))
