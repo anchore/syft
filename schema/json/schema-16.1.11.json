@@ -720,11 +720,7 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
-        },
-        "archivePath": {
-          "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it."
+          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
         }
       },
       "type": "object",
@@ -732,6 +728,72 @@
         "path"
       ],
       "description": "Coordinates contains the minimal information needed to describe how to find a file within any possible source object (e.g."
+    },
+    "CpanDistribution": {
+      "properties": {
+        "dist": {
+          "type": "string",
+          "description": "Dist is the distvname install.json recorded (e.g. URI-5.35), the raw value the package name and\nversion were recovered from"
+        },
+        "mainModule": {
+          "type": "string",
+          "description": "MainModule is the module name recovered from the .packlist path (e.g. LWP for libwww-perl).\nEmpty when the name came from install.json, which is authoritative. Set, it means the name is the\ninstaller's NAME and may not be the distribution name."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author is the PAUSE ID of the distribution author (e.g. OALDERS), parsed out of Path"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path is the raw PAUSE path of the release archive (e.g. O/OA/OALDERS/URI-5.35.tar.gz)"
+        },
+        "modules": {
+          "items": {
+            "$ref": "#/$defs/CpanModule"
+          },
+          "type": "array",
+          "description": "Modules are the modules this distribution provides, sorted by name"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Files are the paths the .packlist recorded as installed by this distribution, kept in the\npacklist's own order and unfiltered: a path the packlist claims and the filesystem lacks means the\nfile was removed or overwritten out from under the installer, which is signal rather than noise"
+        }
+      },
+      "type": "object",
+      "description": "CpanDistribution describes a CPAN distribution installed on disk, as recorded by a CPAN client's install.json and by the .packlist an installer wrote."
+    },
+    "CpanModule": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name is the module name as it would be used in a perl `use` statement (e.g. URI::Escape)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Version is the module version, which may differ from the distribution version"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "description": "CpanModule is a single perl module provided by a CPAN distribution."
+    },
+    "CpanUnpackedRelease": {
+      "properties": {
+        "modules": {
+          "items": {
+            "$ref": "#/$defs/CpanModule"
+          },
+          "type": "array",
+          "description": "Modules are the modules the release declares it provides, sorted by name"
+        }
+      },
+      "type": "object",
+      "description": "CpanUnpackedRelease describes an unpacked CPAN release found on disk, read from the release's own META.json or META.yml."
     },
     "DartPubspec": {
       "properties": {
@@ -2486,11 +2548,7 @@
         },
         "layerID": {
           "type": "string",
-          "description": "FileSystemID is an ID representing an entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank. A file inside an archive carries the FileSystemID of the filesystem the archive was found in."
-        },
-        "archivePath": {
-          "type": "string",
-          "description": "ArchivePath is the colon-delimited chain of archive paths, from the scan root, traversed to reach this file (e.g. \"app.war:WEB-INF/lib/dep.jar\"). Blank for files not found within an archive. It disambiguates identically-named files in different archives on the same filesystem. Within each segment after the first, '%' is escaped as \"%25\" and ':' as \"%3A\", so splitting on ':' recovers the archive boundaries. Each segment is an archive's real path (links resolved), relative to the segment before it."
+          "description": "FileSystemID is an ID representing and entire filesystem. For container images, this is a layer digest. For directories or a root filesystem, this is blank."
         },
         "accessPath": {
           "type": "string",
@@ -2779,6 +2837,12 @@
             },
             {
               "$ref": "#/$defs/CondaMetadataEntry"
+            },
+            {
+              "$ref": "#/$defs/CpanDistribution"
+            },
+            {
+              "$ref": "#/$defs/CpanUnpackedRelease"
             },
             {
               "$ref": "#/$defs/DartPubspec"
