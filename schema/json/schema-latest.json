@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "anchore.io/schema/syft/json/16.1.11/document",
+  "$id": "anchore.io/schema/syft/json/16.1.12/document",
   "$ref": "#/$defs/Document",
   "$defs": {
     "AlpmDbEntry": {
@@ -1464,6 +1464,13 @@
         "elfSecurityFeatures": {
           "$ref": "#/$defs/ELFSecurityFeatures",
           "description": "ELFSecurityFeatures contains ELF-specific security hardening information when Format is ELF."
+        },
+        "identifiers": {
+          "items": {
+            "$ref": "#/$defs/ExecutableIdentifier"
+          },
+          "type": "array",
+          "description": "Identifiers contains GNU build IDs from the .note.gnu.build-id section."
         }
       },
       "type": "object",
@@ -1474,6 +1481,24 @@
         "importedLibraries"
       ],
       "description": "Executable contains metadata about binary files and their security features."
+    },
+    "ExecutableIdentifier": {
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Kind identifies the source of the build ID."
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is the build ID encoded as lowercase hexadecimal."
+        }
+      },
+      "type": "object",
+      "required": [
+        "kind",
+        "value"
+      ],
+      "description": "ExecutableIdentifier is a self-declared build identifier used to correlate a binary with its build or debug information."
     },
     "File": {
       "properties": {
