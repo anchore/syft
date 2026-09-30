@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -31,8 +32,8 @@ func parseInstallJSON(ctx context.Context, resolver file.Resolver, _ *generic.En
 		return nil, nil, nil
 	}
 
-	name := distributionName(doc)
-	if name == "" || doc.Version == "" {
+	name, version := distributionNameVersion(doc)
+	if name == "" || version == "" {
 		log.WithFields("path", reader.Path()).Debug("CPAN install.json is missing a distribution name or version")
 		return nil, nil, nil
 	}
@@ -52,36 +53,49 @@ func parseInstallJSON(ctx context.Context, resolver file.Resolver, _ *generic.En
 		Modules: modulesFromProvides(doc.Provides),
 	}
 
-	return []pkg.Package{newCpanPackage(name, string(doc.Version), md.Author, md, licenses, locations...)}, nil, nil
+	return []pkg.Package{newCpanPackage(name, version, md.Author, md, licenses, locations...)}, nil, nil
 }
 
-// distributionName resolves the distribution name, which every consumer of these packages is keyed by.
-// The `name` field cannot be used: it holds the module name, so libwww-perl would be reported as LWP
-// and CGI-Session as CGI::Session, which no advisory or index is filed against.
+// distributionNameVersion resolves the distribution name and version, which every consumer of these
+// packages is keyed by. The `name` field cannot be used: it holds the module name, so libwww-perl would
+// be reported as LWP and CGI-Session as CGI::Session, which no advisory or index is filed against.
 //
-// `dist` carries the distribution with its version appended, and the version is known, so trimming the
-// suffix is exact. That also resolves the case that looks ambiguous when splitting on the last dash:
-// CPAN-02Packages-Search-v1.0.0 minus v1.0.0 leaves CPAN-02Packages-Search, where a dash rule would
-// have to guess whether v1.0.0 is one segment or three.
-func distributionName(doc installJSON) string {
-	if doc.Dist != "" {
-		if name := strings.TrimSuffix(doc.Dist, "-"+string(doc.Version)); name != "" && name != doc.Dist {
-			return name
-		}
-		// no version suffix to trim, so dist is already the bare name. cpm was checked and does append
-		// the version just as cpanm does (see TestInstallJSON_cpmFormatting), so this is a guard against
-		// records neither installer is known to write rather than a shape any of them produce.
-		return doc.Dist
+// Both come from `dist` rather than trimming `version` off it, because cpanm writes the main module's
+// $VERSION into `version` and the release's distvname into `dist`, and the two often disagree:
+// Carp-Assert-More-2.9.0 records version 2.009000, and Class-Rebirth-1.003 records 1.000. Trimming fails
+// on those, and the resulting version would never pair with the packlist record for the same install.
+func distributionNameVersion(doc installJSON) (string, string) {
+	distvname := doc.Dist
+	if distvname == "" {
+		// older cpanm and hand-rolled records omit dist; the PAUSE path basename carries the same
+		// <Dist>-<Version>.tar.gz shape
+		distvname = distvnameFromPathname(doc.Pathname)
 	}
 
-	// older cpanm and hand-rolled records omit dist; the PAUSE path basename carries the same
-	// <Dist>-<Version>.tar.gz shape
-	return distributionFromPathname(doc.Pathname, string(doc.Version))
+	if name, version := splitDistvname(distvname); name != "" {
+		return name, version
+	}
+
+	// no version suffix to split off, so dist is already the bare name
+	return distvname, string(doc.Version)
 }
 
-// distributionFromPathname recovers the distribution from a PAUSE path such as
+// distvnamePattern splits a distvname at the last dash followed by a version, the rule
+// CPAN::DistnameInfo applies. A -TRIAL suffix is a maturity flag and not part of either half: MetaCPAN
+// files Try-Tiny-0.26-TRIAL as distribution Try-Tiny, version 0.26.
+var distvnamePattern = regexp.MustCompile(`^(.+)-(v?[0-9][^-]*)(?:-TRIAL[0-9]*)?$`)
+
+func splitDistvname(distvname string) (string, string) {
+	match := distvnamePattern.FindStringSubmatch(distvname)
+	if match == nil {
+		return "", ""
+	}
+	return match[1], match[2]
+}
+
+// distvnameFromPathname recovers the distvname from a PAUSE path such as
 // G/GA/GAAS/libwww-perl-5.836.tar.gz, which is the only evidence left when `dist` is absent.
-func distributionFromPathname(pathname, version string) string {
+func distvnameFromPathname(pathname string) string {
 	base := path.Base(pathname)
 	if base == "." || base == "/" {
 		return ""
@@ -91,5 +105,5 @@ func distributionFromPathname(pathname, version string) string {
 		base = strings.TrimSuffix(base, ext)
 	}
 
-	return strings.TrimSuffix(base, "-"+version)
+	return base
 }

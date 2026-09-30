@@ -19,8 +19,7 @@ import (
 
 // the record shape here is cpanm's, reduced to the fields the parser reads. What matters is that
 // `name` is the module (CPAN::02Packages::Search) and must not become the package name, and that the
-// version is a v-string, so trimming it off `dist` is what makes the CPAN-02Packages-Search-v1.0.0
-// split unambiguous where a rule based on the last dash would have to guess.
+// version is a v-string, which the split of `dist` has to keep whole rather than treat as three segments.
 //
 // The byte-level shape of what the clients really write is covered against real files by
 // TestInstallJSON_clientFormatting.
@@ -121,6 +120,65 @@ func TestInstallJSON_clientFormatting(t *testing.T) {
 
 	assert.Equal(t, "Text-CSV-2.06", fromCpanm.Dist)
 	assert.Equal(t, "Capture-Tiny-0.48", fromCpm.Dist, "cpm does carry the version suffix on dist, just as cpanm does")
+}
+
+// cpanm writes the main module's $VERSION into `version` and the release's distvname into `dist`, so the
+// two disagree whenever the module is versioned differently from the release. Name and version must both
+// come from `dist`, or the name is the whole distvname and the version never pairs with the packlist
+// record for the same install. The cases are the ones reported on the PR, from real cpanm installs.
+func TestParseInstallJSON_nameAndVersionFromDist(t *testing.T) {
+	tests := []struct {
+		name        string
+		record      string
+		wantName    string
+		wantVersion string
+	}{
+		{
+			name:        "module version formatted differently from the release",
+			record:      `{"name":"Carp::Assert::More","version":"2.009000","dist":"Carp-Assert-More-2.9.0"}`,
+			wantName:    "Carp-Assert-More",
+			wantVersion: "2.9.0",
+		},
+		{
+			name:        "module version behind the release",
+			record:      `{"name":"Class::Rebirth","version":"1.000","dist":"Class-Rebirth-1.003"}`,
+			wantName:    "Class-Rebirth",
+			wantVersion: "1.003",
+		},
+		{
+			name:        "TRIAL is a maturity flag, not part of the name or version",
+			record:      `{"name":"Try::Tiny","version":"0.26","dist":"Try-Tiny-0.26-TRIAL"}`,
+			wantName:    "Try-Tiny",
+			wantVersion: "0.26",
+		},
+		{
+			name:        "v-string version stays whole",
+			record:      `{"name":"CPAN::02Packages::Search","version":"v1.0.0","dist":"CPAN-02Packages-Search-v1.0.0"}`,
+			wantName:    "CPAN-02Packages-Search",
+			wantVersion: "v1.0.0",
+		},
+		{
+			name:        "no dist falls back to the PAUSE path",
+			record:      `{"name":"LWP","version":"5.836","pathname":"G/GA/GAAS/libwww-perl-5.836.tar.gz"}`,
+			wantName:    "libwww-perl",
+			wantVersion: "5.836",
+		},
+		{
+			name:        "dist with no version suffix keeps the recorded version",
+			record:      `{"name":"URI","version":"5.35","dist":"URI"}`,
+			wantName:    "URI",
+			wantVersion: "5.35",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pkgs := parseString(t, "install.json", tt.record)
+			require.Len(t, pkgs, 1)
+			assert.Equal(t, tt.wantName, pkgs[0].Name)
+			assert.Equal(t, tt.wantVersion, pkgs[0].Version)
+		})
+	}
 }
 
 func parseString(t *testing.T, location, content string) []pkg.Package {
