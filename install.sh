@@ -388,8 +388,8 @@ download_github_release_checksums_files() (
   complete_url=$(github_release_asset_url "${download_url}" "${name}" "${version}" "${filename}")
   output_path="${output_dir}/${complete_filename}"
 
-  http_download "${output_path}" "${complete_url}" ""
-  asset_file_exists "${output_path}"
+  http_download "${output_path}" "${complete_url}" "" || return 1
+  asset_file_exists "${output_path}" || return 1
 
   log_trace "download_github_release_checksums_files() returned '${output_path}' for file '${complete_filename}'"
 
@@ -635,7 +635,10 @@ download_asset() (
 
   log_trace "download_asset(url=${download_url}, destination=${destination}, name=${name}, os=${os}, arch=${arch}, version=${version}, format=${format})"
 
-  checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}")
+  if ! checksums_filepath=$(download_github_release_checksums "${download_url}" "${name}" "${version}" "${destination}"); then
+    log_err "unable to download checksums file"
+    return 1
+  fi
 
   log_trace "checksums content:\n$(cat ${checksums_filepath})"
 
@@ -648,7 +651,10 @@ download_asset() (
 
   if [ "$VERIFY_SIGN" = true ]; then
     if compare_semver "${version}" "${VERIFY_SIGN_BUNDLE_VERSION}"; then
-      checksums_bundle_filepath=$(download_github_release_checksums_files "${download_url}" "${name}" "${version}" "${destination}" "checksums.txt.sigstore.json")
+      if ! checksums_bundle_filepath=$(download_github_release_checksums_files "${download_url}" "${name}" "${version}" "${destination}" "checksums.txt.sigstore.json"); then
+        log_err "unable to download checksums signature bundle"
+        return 1
+      fi
       log_trace "checksums bundle: ${checksums_bundle_filepath}"
 
       set -- --bundle "${checksums_bundle_filepath}"
@@ -671,9 +677,15 @@ download_asset() (
 
   asset_url="${download_url}/${asset_filename}"
   asset_filepath="${destination}/${asset_filename}"
-  http_download "${asset_filepath}" "${asset_url}" ""
+  if ! http_download "${asset_filepath}" "${asset_url}" ""; then
+    log_err "unable to download asset '${asset_url}'"
+    return 1
+  fi
 
-  hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"
+  # this is what ties the asset to the (optionally signature verified) checksums file, so a mismatch must stop the install
+  if ! hash_sha256_verify "${asset_filepath}" "${checksums_filepath}"; then
+    return 1
+  fi
 
   log_trace "download_asset_by_checksums_file() returned '${asset_filepath}'"
 
