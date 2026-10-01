@@ -19,6 +19,8 @@ VERIFY_SIGN=false
 VERIFY_SIGN_SUPPORTED_VERSION=v0.104.0
 # this is the earliest tag in the repo where the -v flag was introduced to this install.sh script
 VERIFY_SIGN_FLAG_VERSION=v1.6.0
+# the earliest tag signed with a sigstore bundle (.sigstore.json); earlier tags ship a separate .sig and .pem
+VERIFY_SIGN_BUNDLE_VERSION=v1.53.0
 
 # do not change the name of this parameter (this must always be backwards compatible)
 DOWNLOAD_TAG_INSTALL_SCRIPT=${DOWNLOAD_TAG_INSTALL_SCRIPT:-true}
@@ -585,23 +587,22 @@ download_and_install_asset() (
   install_asset "${asset_filepath}" "${install_path}" "${binary}"
 )
 
-# verify_sign [checksums-file-path] [certificate-reference] [signature-reference] [version]
+# verify_sign [checksums-file-path] [verification-material-flags...]
 #
 # attempts verify the signature of the checksums file from the release workflow in Github Actions run against the main branch.
+# the verification material is either "--bundle <path>" or (for older releases) "--certificate <ref> --signature <ref>".
 #
 verify_sign() {
   checksums_file=$1
-  cert_reference=$2
-  sig_reference=$3
+  shift
 
-  log_trace "verifying artifact $1"
+  log_trace "verifying artifact ${checksums_file}"
 
   log_file=$(mktemp)
 
   ${COSIGN_BINARY} \
     verify-blob "$checksums_file" \
-      --certificate "$cert_reference" \
-      --signature "$sig_reference" \
+      "$@" \
       --certificate-identity "https://github.com/${OWNER}/${REPO}/.github/workflows/release.yaml@refs/heads/main" \
       --certificate-oidc-issuer "https://token.actions.githubusercontent.com" > "${log_file}" 2>&1
 
@@ -642,13 +643,22 @@ download_asset() (
   fi
 
   if [ "$VERIFY_SIGN" = true ]; then
-    checksum_sig_file_url=$(github_release_checksums_sig_url "${download_url}" "${name}" "${version}")
-    log_trace "checksums signature url: ${checksum_sig_file_url}"
+    if compare_semver "${version}" "${VERIFY_SIGN_BUNDLE_VERSION}"; then
+      checksums_bundle_filepath=$(download_github_release_checksums_files "${download_url}" "${name}" "${version}" "${destination}" "checksums.txt.sigstore.json")
+      log_trace "checksums bundle: ${checksums_bundle_filepath}"
 
-    checksums_cert_file_url=$(github_release_checksums_cert_url "${download_url}" "${name}" "${version}")
-    log_trace "checksums certificate url: ${checksums_cert_file_url}"
+      set -- --bundle "${checksums_bundle_filepath}"
+    else
+      checksum_sig_file_url=$(github_release_checksums_sig_url "${download_url}" "${name}" "${version}")
+      log_trace "checksums signature url: ${checksum_sig_file_url}"
 
-    if ! verify_sign "${checksums_filepath}" "${checksums_cert_file_url}" "${checksum_sig_file_url}"; then
+      checksums_cert_file_url=$(github_release_checksums_cert_url "${download_url}" "${name}" "${version}")
+      log_trace "checksums certificate url: ${checksums_cert_file_url}"
+
+      set -- --certificate "${checksums_cert_file_url}" --signature "${checksum_sig_file_url}"
+    fi
+
+    if ! verify_sign "${checksums_filepath}" "$@"; then
       log_err "signature verification failed"
       return 1
     fi
