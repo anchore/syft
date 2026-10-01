@@ -51,7 +51,12 @@ jobs:
     name: "Unit tests"
     runs-on: ubuntu-latest
     needs: [Unit-Test-Linux, Unit-Test-Windows]
+    # a skipped job satisfies a required check, so this job must always run and fail explicitly
+    # when any dependency did not succeed (otherwise a failing PR can still be auto-merged)
+    if: ${{ always() }}
     steps:
+      - if: ${{ needs.Unit-Test-Linux.result != 'success' || needs.Unit-Test-Windows.result != 'success' }}
+        run: exit 1
       - run: echo All unit tests passed!
 
   Unit-Test-Linux:
