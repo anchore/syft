@@ -43,6 +43,12 @@ func (e packagesLockEntry) nameVersion() string {
 	return createNameAndVersion(e.name, e.dep.Resolved)
 }
 
+// key identifies the package an entry describes. NuGet package IDs are case-insensitive, so two spellings of the
+// same ID and version are one package.
+func (e packagesLockEntry) key() string {
+	return createNameAndVersion(strings.ToLower(e.name), e.dep.Resolved)
+}
+
 type packagesLockFramework struct {
 	name    string
 	entries []packagesLockEntry
@@ -78,7 +84,7 @@ func parseDotnetPackagesLock(_ context.Context, _ file.Resolver, _ *generic.Envi
 		dotnetPkg := newDotnetPackagesLockPackage(entry.name, entry.dep, reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation))
 		if dotnetPkg != nil {
 			pkgs = append(pkgs, *dotnetPkg)
-			pkgMap[entry.nameVersion()] = *dotnetPkg
+			pkgMap[entry.key()] = *dotnetPkg
 		}
 	}
 
@@ -117,7 +123,7 @@ func mergePackagesLockEntries(frameworks []packagesLockFramework) []packagesLock
 
 	for _, framework := range frameworks {
 		for _, entry := range framework.entries {
-			key := entry.nameVersion()
+			key := entry.key()
 			if existing, ok := merged[key]; ok && !isMoreDirect(entry.dep.Type, existing.dep.Type) {
 				continue
 			}
@@ -164,7 +170,7 @@ func packagesLockRelationships(frameworks []packagesLockFramework, pkgMap map[st
 		}
 
 		for _, entry := range framework.entries {
-			parentPkg, ok := pkgMap[entry.nameVersion()]
+			parentPkg, ok := pkgMap[entry.key()]
 			if !ok {
 				log.Debugf("package %q not found in map of all packages", entry.nameVersion())
 				continue
@@ -187,9 +193,14 @@ func packagesLockEntryRelationships(entry packagesLockEntry, parentPkg pkg.Packa
 			continue
 		}
 
-		childPkg, ok := pkgMap[child.nameVersion()]
+		childPkg, ok := pkgMap[child.key()]
 		if !ok {
 			log.Debugf("package %q not found in map of all packages", child.nameVersion())
+			continue
+		}
+
+		// a package listing itself (possibly under another casing) is not a dependency
+		if childPkg.ID() == parentPkg.ID() {
 			continue
 		}
 

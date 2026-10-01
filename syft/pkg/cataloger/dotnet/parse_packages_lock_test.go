@@ -250,7 +250,8 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 		},
 	}
 
-	// resolved to the same version under both frameworks, but declared "Direct" by only one of them
+	// resolved to the same version under both frameworks (spelled "newtonsoft.json" under one), but declared "Direct" by
+	// only one of them
 	newtonsoftPkg := pkg.Package{
 		Name:      "Newtonsoft.Json",
 		Version:   "13.0.3",
@@ -282,12 +283,29 @@ func TestParseDotnetPackagesLock_multipleTargetFrameworks(t *testing.T) {
 		},
 	}
 
+	// only listed under "net8.0", so the "netstandard2.0" edge to it must be dropped rather than guessed
+	serilogPkg := pkg.Package{
+		Name:      "Serilog",
+		Version:   "3.1.1",
+		PURL:      "pkg:nuget/Serilog@3.1.1",
+		Locations: fixtureLocationSet,
+		Language:  pkg.Dotnet,
+		Type:      pkg.DotnetPkg,
+		Metadata: pkg.DotnetPackagesLockEntry{
+			Name:        "Serilog",
+			Version:     "3.1.1",
+			ContentHash: "serilog311hash==",
+			Type:        "Transitive",
+		},
+	}
+
 	expectedPkgs := []pkg.Package{
 		myLibPkg,
 		newtonsoftPkg,
 		log4net1Pkg,
 		log4net2Pkg,
 		myLibNativePkg,
+		serilogPkg,
 	}
 
 	// the same package is resolved to a different version per target framework, so both edges must be captured, while
