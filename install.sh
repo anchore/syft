@@ -608,7 +608,8 @@ verify_sign() {
 
   if [ $? -ne 0 ]; then
     log_err "$(cat "${log_file}")"
-    if [ "$1" = "--bundle" ]; then
+    # cosign older than v2.4.2 can't read the bundle's verification material and reports a missing cert
+    if [ "$1" = "--bundle" ] && grep -q "bundle does not contain cert" "${log_file}"; then
       log_err "note: releases >= ${VERIFY_SIGN_BUNDLE_VERSION} are verified with a sigstore bundle, which requires cosign v2.5.0 or newer (check '${COSIGN_BINARY} version')"
     fi
     rm -f "${log_file}"
