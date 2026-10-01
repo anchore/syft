@@ -55,7 +55,7 @@ jobs:
     # when any dependency did not succeed (otherwise a failing PR can still be auto-merged)
     if: ${{ always() }}
     steps:
-      - if: ${{ needs.Unit-Test-Linux.result != 'success' || needs.Unit-Test-Windows.result != 'success' }}
+      - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
         run: exit 1
       - run: echo All unit tests passed!
 
