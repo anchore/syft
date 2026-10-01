@@ -52,12 +52,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: [Unit-Test-Linux, Unit-Test-Windows]
     # a skipped job satisfies a required check, so this job must always run and fail explicitly
-    # when any dependency did not succeed (otherwise a failing PR can still be auto-merged)
+    # unless every dependency succeeded (otherwise a failing PR can still be auto-merged)
     if: ${{ always() }}
     steps:
-      - if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
-        run: exit 1
-      - run: echo All unit tests passed!
+      - name: Require all unit test jobs to succeed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -e 'length > 0 and all(.[]; .result == "success")' > /dev/null || {
+            echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+            exit 1
+          }
+          echo All unit tests passed!
 
   Unit-Test-Linux:
     name: "Unit tests (Linux)"
