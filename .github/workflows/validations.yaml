@@ -21,10 +21,13 @@ jobs:
     name: "Static analysis"
     # runs-on.com: memory & general purpose instances for testing
     #   spot enabled: ok to interrupt non-production workloads
-    #   tmpfs: faster io-intensive workflows
+    #   tmpfs intentionally omitted -- it RAM-backs /home/runner, /tmp and /var/lib/docker at
+    #   100% of instance memory, starving `make unit` of headroom to link with -race.
+    #   volume: the caches and docker images tmpfs used to hold. gp3 baseline throughput is
+    #   enough; a 4 vCPU instance can't pull much more than that anyway.
     #   note: s3-cache intentionally omitted -- PR runs are untrusted and must not write to the
     #   shared cache backend that the trusted release workflow reads from (cache poisoning).
-    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=32+128/family=r5+r6+r7+r8+m4+m5+m6+m7+m8/spot=price-capacity-optimized/extras=tmpfs"
+    runs-on: &test-runner "runs-on=${{ github.run_id }}/cpu=4+8/ram=16+32/family=m6+m7+m8+c6+c7+c8/spot=price-capacity-optimized/volume=100gb"
     permissions:
       contents: read
     steps:
@@ -46,6 +49,13 @@ jobs:
   Unit-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
     name: "Unit tests"
+    runs-on: ubuntu-latest
+    needs: [Unit-Test-Linux, Unit-Test-Windows]
+    steps:
+      - run: echo All unit tests passed!
+
+  Unit-Test-Linux:
+    name: "Unit tests (Linux)"
     runs-on: *test-runner
     permissions:
       contents: read
@@ -64,6 +74,27 @@ jobs:
 
       - name: Check for capability drift
         run: make check-capability-drift
+
+  Unit-Test-Windows:
+    name: "Unit tests (Windows)"
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          persist-credentials: false
+
+      # go-make's setup only (not ./.github/actions/bootstrap): no apt, binny tools, or fixture cache are needed
+      - name: Setup go + go-make tooling
+        uses: anchore/go-make/.github/actions/setup@fa5421b3bf24c9d18f11a736c5eb4172f2b7d683 # v0.8.1
+        with:
+          # keep in sync with the go-version default in ./.github/actions/bootstrap
+          go-version: "1.26.2"
+
+      # the full unit suite leans on linux docker fixtures, so this runs the windows-relevant subset
+      - name: Run unit tests
+        run: make unit:windows
 
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline

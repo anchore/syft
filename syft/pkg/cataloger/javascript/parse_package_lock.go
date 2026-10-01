@@ -48,12 +48,14 @@ type lockPackage struct {
 type packageLockLicense []string
 
 type genericPackageLockAdapter struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver javascriptLicenseResolver
 }
 
 func newGenericPackageLockAdapter(cfg CatalogerConfig) genericPackageLockAdapter {
 	return genericPackageLockAdapter{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newJavascriptLicenseResolver(cfg),
 	}
 }
 
@@ -100,7 +102,7 @@ func (a genericPackageLockAdapter) parsePackageLock(ctx context.Context, resolve
 				name = pkgMeta.Name
 			}
 
-			newPkg := newPackageLockV2Package(ctx, a.cfg, resolver, reader.Location, getNameFromPath(name), pkgMeta)
+			newPkg := newPackageLockV2Package(ctx, a.licenseResolver, resolver, reader.Location, getNameFromPath(name), pkgMeta)
 			pkgs = append(pkgs, newPkg)
 		}
 	}
@@ -122,7 +124,7 @@ func (a genericPackageLockAdapter) packageLockV1Packages(ctx context.Context, re
 				continue
 			}
 
-			p := newPackageLockV1Package(ctx, a.cfg, resolver, location, name, pkgMeta)
+			p := newPackageLockV1Package(ctx, a.licenseResolver, resolver, location, name, pkgMeta)
 			if _, exists := seen[p.PURL]; !exists {
 				pkgs = append(pkgs, p)
 				seen[p.PURL] = struct{}{}

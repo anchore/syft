@@ -2,6 +2,7 @@
 package spdxhelpers
 
 import (
+	"cmp"
 	"crypto/sha1"
 	"fmt"
 	"path"
@@ -179,7 +180,8 @@ func toRootRelationships(rootPackage *spdx.Package, packages []*spdx.Package) (o
 func toRootPackage(s source.Description) *spdx.Package {
 	var prefix string
 
-	name := s.Name
+	// the SPDX package name is mandatory, and a source decoded from another SBOM may not carry one
+	name := cmp.Or(s.Name, imageRepoName(s.Metadata), s.ID, helpers.DocumentName(s))
 	version := s.Version
 
 	var purl *packageurl.PackageURL
@@ -210,7 +212,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 			checksums = append(checksums, *c)
 			purl = &packageurl.PackageURL{
 				Type:       "oci",
-				Name:       s.Name,
+				Name:       name,
 				Version:    m.ManifestDigest,
 				Qualifiers: qualifiers,
 			}
@@ -240,7 +242,7 @@ func toRootPackage(s source.Description) *spdx.Package {
 			checksums = append(checksums, *c)
 			purl = &packageurl.PackageURL{
 				Type:       "oci",
-				Name:       s.Name,
+				Name:       name,
 				Version:    m.ManifestDigest,
 				Qualifiers: qualifiers,
 			}
@@ -275,10 +277,6 @@ func toRootPackage(s source.Description) *spdx.Package {
 	default:
 		prefix = prefixUnknown
 		purpose = spdxPrimaryPurposeOther
-
-		if name == "" {
-			name = s.ID
-		}
 	}
 
 	p := &spdx.Package{
@@ -306,6 +304,25 @@ func toRootPackage(s source.Description) *spdx.Package {
 	}
 
 	return p
+}
+
+// imageRepoName returns the repository name from an image or model user input, the same way the image source names
+// itself, so a source decoded from another SBOM (which may only carry the user input) gets a name without the tag.
+func imageRepoName(metadata any) string {
+	var userInput string
+	switch m := metadata.(type) {
+	case source.ImageMetadata:
+		userInput = m.UserInput
+	case source.OCIModelMetadata:
+		userInput = m.UserInput
+	default:
+		return ""
+	}
+	ref, _ := reference.Parse(userInput)
+	if named, ok := ref.(reference.Named); ok {
+		return named.Name()
+	}
+	return ""
 }
 
 func toSPDXID(identifiable artifact.Identifiable) spdx.ElementID {
@@ -581,10 +598,13 @@ func toPackageChecksums(p pkg.Package) ([]spdx.Checksum, bool) {
 		})
 	case pkg.OpamPackage:
 		for _, checksum := range meta.Checksums {
-			parts := strings.Split(checksum, "=")
+			algorithm, value, ok := strings.Cut(checksum, "=")
+			if !ok {
+				continue
+			}
 			checksums = append(checksums, spdx.Checksum{
-				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(parts[0])),
-				Value:     parts[1],
+				Algorithm: spdx.ChecksumAlgorithm(strings.ToUpper(algorithm)),
+				Value:     value,
 			})
 		}
 	}

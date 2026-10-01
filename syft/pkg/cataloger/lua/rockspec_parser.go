@@ -2,6 +2,7 @@ package lua
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 
@@ -33,6 +34,10 @@ func (r rockspecNode) String() string {
 	return ""
 }
 
+var errUnexpectedEnd = errors.New("unexpected end of input")
+
+var errTooDeep = fmt.Errorf("nesting deeper than %d levels", parsing.MaxDepth)
+
 var noReturn = rockspec{
 	value: nil,
 }
@@ -46,10 +51,11 @@ func parseRockspecData(reader io.Reader) (rockspec, error) {
 
 	i := 0
 	locals := make(map[string]string)
-	blocks, err := parseRockspecBlock(data, &i, locals)
+	blocks, err := parseRockspecBlock(data, &i, locals, 0)
 
 	if err != nil {
-		return noReturn, err
+		// decorate once here rather than at every nesting level, which copied the input once per level
+		return noReturn, fmt.Errorf("%w\n%s", err, parsing.PrintError(data, i))
 	}
 
 	return rockspec{
@@ -57,9 +63,12 @@ func parseRockspecData(reader io.Reader) (rockspec, error) {
 	}, nil
 }
 
-func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rockspecNode, error) {
+func parseRockspecBlock(data []byte, i *int, locals map[string]string, depth int) ([]rockspecNode, error) {
+	if depth > parsing.MaxDepth {
+		return nil, errTooDeep
+	}
 	var out []rockspecNode
-	var iterator func(data []byte, i *int, locals map[string]string) (*rockspecNode, error)
+	var iterator func(data []byte, i *int, locals map[string]string, depth int) (*rockspecNode, error)
 
 	parsing.SkipWhitespace(data, i)
 
@@ -92,9 +101,9 @@ func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rocksp
 	}
 
 	for *i < len(data) {
-		item, err := iterator(data, i, locals)
+		item, err := iterator(data, i, locals, depth)
 		if err != nil {
-			return nil, fmt.Errorf("%w\n%s", err, parsing.PrintError(data, *i))
+			return nil, err
 		}
 
 		parsing.SkipWhitespace(data, i)
@@ -114,7 +123,7 @@ func parseRockspecBlock(data []byte, i *int, locals map[string]string) ([]rocksp
 }
 
 //nolint:funlen, gocognit
-func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspecNode, error) {
+func parseRockspecNode(data []byte, i *int, locals map[string]string, depth int) (*rockspecNode, error) {
 	parsing.SkipWhitespace(data, i)
 
 	if *i >= len(data) {
@@ -212,7 +221,7 @@ func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspec
 		*i = offset
 		parsing.SkipWhitespace(data, i)
 
-		obj, err := parseRockspecBlock(data, i, locals)
+		obj, err := parseRockspecBlock(data, i, locals, depth+1)
 
 		if err != nil {
 			return nil, err
@@ -247,6 +256,9 @@ func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspec
 		}
 		value := str.String()
 
+		if *i >= len(data) {
+			return nil, errUnexpectedEnd
+		}
 		c = data[*i]
 
 		if c != ']' {
@@ -271,7 +283,7 @@ func parseRockspecNode(data []byte, i *int, locals map[string]string) (*rockspec
 	}, nil
 }
 
-func parseRockspecListItem(data []byte, i *int, locals map[string]string) (*rockspecNode, error) {
+func parseRockspecListItem(data []byte, i *int, locals map[string]string, _ int) (*rockspecNode, error) {
 	parsing.SkipWhitespace(data, i)
 
 	if *i >= len(data) {
@@ -378,6 +390,9 @@ out:
 			if err != nil {
 				return "", err
 			}
+			if *i >= len(data) {
+				return "", errUnexpectedEnd
+			}
 			c = data[*i]
 			if c != ']' {
 				return "", fmt.Errorf("unterminated literal at %d", *i)
@@ -394,6 +409,9 @@ out:
 }
 
 func parseRockspecString(data []byte, i *int, _ map[string]string) (*rockspecNode, error) {
+	if *i >= len(data) {
+		return nil, errUnexpectedEnd
+	}
 	delim := data[*i]
 	var endDelim byte
 	switch delim {
@@ -434,6 +452,39 @@ func parseComment(data []byte, i *int) {
 	}
 }
 
+// parseLocalValue parses a single value on the right-hand side of a local assignment. Expressions
+// resolve to an empty string, and bare references resolve through locals. The caller must ensure *i < len(data).
+func parseLocalValue(data []byte, i *int, locals map[string]string) (string, error) {
+	c := data[*i]
+
+	switch c {
+	case '"', '\'':
+		value, err := parseRockspecString(data, i, locals)
+		if err != nil {
+			return "", err
+		}
+		return value.value.(string), nil
+	default:
+		ref, err := parseRockspecLiteral(data, i, locals)
+		if err != nil {
+			return "", err
+		}
+
+		// skip if it's an expression
+		skipWhitespaceNoNewLine(data, i)
+		if *i >= len(data) {
+			return "", errUnexpectedEnd
+		}
+		c := data[*i]
+
+		if c != '\n' && c != '\r' {
+			skipExpression(data, i)
+			return "", nil
+		}
+		return locals[ref], nil
+	}
+}
+
 //nolint:funlen
 func parseLocal(data []byte, i *int, locals map[string]string) error {
 	keys := []string{}
@@ -459,6 +510,9 @@ keys:
 		keys = append(keys, key)
 
 		parsing.SkipWhitespace(data, i)
+		if *i >= len(data) {
+			return errUnexpectedEnd
+		}
 
 		c := data[*i]
 
@@ -477,42 +531,22 @@ keys:
 values:
 	for {
 		skipWhitespaceNoNewLine(data, i)
-
-		c := data[*i]
-
-		switch c {
-		case '"', '\'':
-			value, err := parseRockspecString(data, i, locals)
-
-			if err != nil {
-				return err
-			}
-			values = append(values, value.value.(string))
-		default:
-			ref, err := parseRockspecLiteral(data, i, locals)
-			if err != nil {
-				return err
-			}
-
-			// Skip if it's an expression
-			skipWhitespaceNoNewLine(data, i)
-			c := data[*i]
-
-			var value string
-
-			if c != '\n' && c != '\r' {
-				skipExpression(data, i)
-				value = ""
-			} else {
-				value = locals[ref]
-			}
-
-			values = append(values, value)
+		if *i >= len(data) {
+			return errUnexpectedEnd
 		}
 
-		skipWhitespaceNoNewLine(data, i)
+		value, err := parseLocalValue(data, i, locals)
+		if err != nil {
+			return err
+		}
+		values = append(values, value)
 
-		c = data[*i]
+		skipWhitespaceNoNewLine(data, i)
+		if *i >= len(data) {
+			return errUnexpectedEnd
+		}
+
+		c := data[*i]
 
 		switch c {
 		case ',':

@@ -5,12 +5,14 @@ import (
 	"context"
 	"debug/macho"
 	"debug/pe"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -25,7 +27,6 @@ import (
 	"github.com/anchore/syft/syft/internal/unionreader"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
-	"github.com/anchore/syft/syft/pkg/cataloger/golang/internal/xcoff"
 )
 
 const goArch = "GOARCH"
@@ -120,12 +121,19 @@ func (c *goBinaryCataloger) parseGoBinary(ctx context.Context, resolver file.Res
 	}
 	defer internal.CloseAndLogError(reader.ReadCloser, reader.RealPath)
 
-	mods, errs := scanFile(reader.Location, unionReader, c.symbolSelector.enabled())
+	mods, errs := scanFile(ctx, reader.Location, unionReader, c.symbolSelector.enabled())
+	// scanFile hands back the reconstruction for each binary that turned out to be packed. The readers
+	// below want it too, so ownership ends here and not inside the scan.
+	defer func() {
+		for _, mod := range mods {
+			closeUnpacked(mod.unpacked)
+		}
+	}()
 
 	var rels []artifact.Relationship
 	for _, mod := range mods {
 		var depPkgs []pkg.Package
-		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, resolver, reader.Location, mod, mod.arch, unionReader)
+		mainPkg, depPkgs := c.buildGoPkgInfo(ctx, resolver, reader.Location, mod, mod.arch, seekerFor(mod.unpacked, unionReader))
 		if mainPkg != nil {
 			rels = createModuleRelationships(*mainPkg, depPkgs)
 			pkgs = append(pkgs, *mainPkg)
@@ -171,7 +179,7 @@ func moduleEqual(lhs, rhs *debug.Module) bool {
 var emptyModule debug.Module
 var moduleFromPartialPackageBuild = debug.Module{Path: "command-line-arguments"}
 
-func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeekCloser) (*pkg.Package, []pkg.Package) {
+func (c *goBinaryCataloger) buildGoPkgInfo(ctx context.Context, resolver file.Resolver, location file.Location, mod *extendedBuildInfo, arch string, reader io.ReadSeeker) (*pkg.Package, []pkg.Package) {
 	if mod == nil {
 		return nil, nil
 	}
@@ -240,7 +248,7 @@ func missingMainModule(mod *extendedBuildInfo) bool {
 	return mod.Main == moduleFromPartialPackageBuild
 }
 
-func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeekCloser, symbols map[string][]string) pkg.Package {
+func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file.Resolver, mod *extendedBuildInfo, arch string, location file.Location, reader io.ReadSeeker, symbols map[string][]string) pkg.Package {
 	gbs := getBuildSettings(mod.Settings)
 	lics := c.licenseResolver.getLicenses(ctx, resolver, mod.Main.Path, mod.Main.Version)
 	gover, experiments := getExperimentsFromVersion(mod.GoVersion)
@@ -283,7 +291,7 @@ func (c *goBinaryCataloger) makeGoMainPackage(ctx context.Context, resolver file
 // the only thing that seems to work is to just look for version strings following both \x00 and \x00.L for now
 var semverPattern = regexp.MustCompile(`(\x00|\x{FFFD})(.L)?(?P<version>v?(\d+\.\d+\.\d+[-\w]*[+\w]*))\x00`)
 
-func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeekCloser) string {
+func (c *goBinaryCataloger) findMainModuleVersion(metadata *pkg.GolangBinaryBuildinfoEntry, gbs pkg.KeyValues, reader io.ReadSeeker) string {
 	vcsVersion, hasVersion := gbs.Get("vcs.revision")
 	timestamp, hasTimestamp := gbs.Get("vcs.time")
 
@@ -416,11 +424,11 @@ func getGOARCHFromBin(r io.ReaderAt) (string, error) {
 		}
 		arch = f.Cpu.String()
 	case bytes.HasPrefix(ident, []byte{0x01, 0xDF}) || bytes.HasPrefix(ident, []byte{0x01, 0xF7}):
-		f, err := xcoff.NewFile(r)
-		if err != nil {
-			return "", fmt.Errorf("unrecognized file format: %w", err)
-		}
-		arch = fmt.Sprintf("%d", f.TargetMachine)
+		// XCOFF's target machine *is* the magic we just matched on (0737 / 0767), so there is nothing to
+		// parse: a full XCOFF walk would read the string table, every symbol and every relocation only to
+		// hand back these two bytes. Reading them directly also keeps stripped binaries working, which a
+		// walk does not since it needs a symbol table to get that far.
+		arch = strconv.Itoa(int(binary.BigEndian.Uint16(ident[:2])))
 	default:
 		return "", errUnrecognizedFormat
 	}
