@@ -5,6 +5,7 @@ RUN apk update && apk add ca-certificates
 # so let docker pull the image that matches the hosts architecture first and then pull the correct asset
 FROM busybox:1.36.1-musl
 
+# verifying sigstore bundles (releases >= v1.53.0) requires cosign v2.5.0 or newer
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         COSIGN_ARCH="amd64"; \

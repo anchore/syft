@@ -19,7 +19,7 @@ VERIFY_SIGN=false
 VERIFY_SIGN_SUPPORTED_VERSION=v0.104.0
 # this is the earliest tag in the repo where the -v flag was introduced to this install.sh script
 VERIFY_SIGN_FLAG_VERSION=v1.6.0
-# the earliest tag signed with a sigstore bundle (.sigstore.json); earlier tags ship a separate .sig and .pem
+# releases at or after this version are signed with a sigstore bundle (.sigstore.json); earlier releases ship a separate .sig and .pem
 VERIFY_SIGN_BUNDLE_VERSION=v1.53.0
 
 # do not change the name of this parameter (this must always be backwards compatible)
@@ -608,6 +608,9 @@ verify_sign() {
 
   if [ $? -ne 0 ]; then
     log_err "$(cat "${log_file}")"
+    if [ "$1" = "--bundle" ]; then
+      log_err "note: releases >= ${VERIFY_SIGN_BUNDLE_VERSION} are verified with a sigstore bundle, which requires cosign v2.5.0 or newer (check '${COSIGN_BINARY} version')"
+    fi
     rm -f "${log_file}"
     return 1
   fi
