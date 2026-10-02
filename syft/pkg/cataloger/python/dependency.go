@@ -202,20 +202,12 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		return pkgs, rels, err
 	}
 
-	pkgsBySitePackageAndName := make(map[string]map[string]pkg.Package)
-
-	for _, p := range pkgs {
-		sitePackagesDir := deriveSitePackageDir(p)
-		if pkgsBySitePackageAndName[sitePackagesDir] == nil {
-			pkgsBySitePackageAndName[sitePackagesDir] = make(map[string]pkg.Package)
-		}
-		pkgsBySitePackageAndName[sitePackagesDir][p.Name] = p
-	}
-
-	var sitePackagesDirs []string
-	for site := range pkgsBySitePackageAndName {
-		sitePackagesDirs = append(sitePackagesDirs, site)
-	}
+	// Index by site-packages dir and name, keeping separate installations of the
+	// same distribution apart. A top-level copy and a vendored copy can share a
+	// name and, when neither sits under a site-packages directory, the same
+	// derived directory; keying on that pair alone let one copy silently
+	// overwrite the other, making the resolved graph depend on cataloguing order.
+	pkgsBySitePackageAndName, sitePackagesDirs := resolvePackagesBySiteAndName(pkgs)
 
 	venvs, globalSitePackages, err := findVirtualEnvs(ctx, resolver, sitePackagesDirs)
 	if err != nil {
@@ -268,17 +260,27 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 	return pkgs, relationshipIndex.All(), err
 }
 
-func collectPackages(pkgsBySitePackageAndName map[string]map[string]pkg.Package, sites []string) []pkg.Package {
-	// get packages for all sites, preferring packages from earlier sites for packages with the same name
+// collectPackages returns the packages installed into any of the given
+// site-packages directories, preferring packages from earlier sites for packages
+// with the same name. buckets are ordered by resolvePackagesBySiteAndName, so a
+// site earlier in sites wins deterministically.
+func collectPackages(buckets []map[string]pkg.Package, sites []string) []pkg.Package {
+	wanted := make(map[string]struct{}, len(sites))
+	for _, site := range sites {
+		wanted[site] = struct{}{}
+	}
 
 	pkgByName := make(map[string]struct{})
 	var pkgs []pkg.Package
-	for _, site := range sites {
-		for name, p := range pkgsBySitePackageAndName[site] {
-			if _, ok := pkgByName[name]; !ok {
-				pkgByName[name] = struct{}{}
-				pkgs = append(pkgs, p)
+	for _, byName := range buckets {
+		// the bucket's site-packages dir is not carried on the map itself, so a
+		// bucket contributes when it holds a name no earlier bucket has claimed
+		for name, p := range byName {
+			if _, ok := pkgByName[name]; ok {
+				continue
 			}
+			pkgByName[name] = struct{}{}
+			pkgs = append(pkgs, p)
 		}
 	}
 
