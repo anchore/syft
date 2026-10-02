@@ -155,7 +155,7 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 	t.Cleanup(func() { _ = fixture.Close() })
 
 	p.reader = file.LocationReadCloser{
-		Location:   file.NewVirtualLocationFromDirectory(fixture.Name(), fixture.Name(), *stereofile.NewFileReference(stereofile.Path(absPath))),
+		Location:   file.NewVirtualLocationFromDirectory(filepath.ToSlash(fixture.Name()), filepath.ToSlash(fixture.Name()), *stereofile.NewFileReference(stereofile.Path(absPath))),
 		ReadCloser: fixture,
 	}
 	return p
