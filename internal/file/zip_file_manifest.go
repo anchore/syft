@@ -46,7 +46,7 @@ func (z ZipFileManifest) Add(entry string, info os.FileInfo) {
 }
 
 // GlobMatch returns the path keys to files (not directories) that match the given value(s).
-func (z ZipFileManifest) GlobMatch(caseInsensitive bool, patterns ...string) []string {
+func (z ZipFileManifest) GlobMatch(patterns ...string) []string {
 	uniqueMatches := strset.New()
 
 	for _, pattern := range patterns {
@@ -58,11 +58,7 @@ func (z ZipFileManifest) GlobMatch(caseInsensitive bool, patterns ...string) []s
 
 			// We want to match globs as if entries begin with a leading slash (akin to an absolute path)
 			// so that glob logic is consistent inside and outside of ZIP archives
-			normalizedEntry := normalizeZipEntryName(caseInsensitive, entry)
-
-			if caseInsensitive {
-				pattern = strings.ToLower(pattern)
-			}
+			normalizedEntry := normalizeZipEntryName(entry)
 
 			matches, err := doublestar.Match(pattern, normalizedEntry)
 			if err != nil {
@@ -82,10 +78,7 @@ func (z ZipFileManifest) GlobMatch(caseInsensitive bool, patterns ...string) []s
 }
 
 // normalizeZipEntryName takes the given path entry and ensures it is prefixed with "/".
-func normalizeZipEntryName(caseInsensitive bool, entry string) string {
-	if caseInsensitive {
-		entry = strings.ToLower(entry)
-	}
+func normalizeZipEntryName(entry string) string {
 	if !strings.HasPrefix(entry, "/") {
 		return "/" + entry
 	}
