@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -11,6 +12,8 @@ import (
 )
 
 // filterCpeList removes CPE items that are not applicable to software packages.
+var nameNormalizationPattern = regexp.MustCompile(`[-_.]+`)
+
 func filterCpeList(cpeList CpeList) CpeList {
 	var processedCpeList CpeList
 
@@ -230,7 +233,23 @@ func addEntryForPyPIPackage(indexed *dictionary.Indexed, ref string, cpeItemName
 	ref = strings.TrimPrefix(ref, prefixForPyPIPackages)
 	ref = strings.Split(ref, "/")[0]
 
+	// Normalise the same way the python cataloger does in
+	// pkg/cataloger/python/package.go: PEP 503 collapses [-_.] to "-"
+	// and lowercases the result. The cataloger applies that to `p.Name`
+	// before the dict.EcosystemPyPI lookup, so the dictionary key has
+	// to be the normalised form too — otherwise dictionary entries like
+	// "charset_normalizer" never match the cataloger key "charset-normalizer".
+	ref = normalizePyPIPackageName(ref)
+
 	updateIndex(indexed, dictionary.EcosystemPyPI, ref, cpeItemName)
+}
+
+// normalizePyPIPackageName mirrors the python cataloger normalisation
+// in pkg/cataloger/python/package.go so dictionary keys align with the
+// normalised package names used at lookup time.
+func normalizePyPIPackageName(name string) string {
+	normalized := nameNormalizationPattern.ReplaceAllString(name, "-")
+	return strings.ToLower(normalized)
 }
 
 func addEntryForNativeRubyGem(indexed *dictionary.Indexed, ref string, cpeItemName string) {
