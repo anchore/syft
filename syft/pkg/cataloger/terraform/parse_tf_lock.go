@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 
@@ -17,7 +18,7 @@ type terraformLockFile struct {
 	Providers []pkg.TerraformLockProviderEntry `hcl:"provider,block"`
 }
 
-func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
+func (r *terraformLicenseResolver) parseTerraformLock(ctx context.Context, resolver file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	var lockFile terraformLockFile
 
 	contents, err := io.ReadAll(reader) //nolint:gocritic // hclsimple.Decode requires []byte
@@ -30,14 +31,17 @@ func parseTerraformLock(_ context.Context, _ file.Resolver, _ *generic.Environme
 		return nil, nil, fmt.Errorf("failed to decode terraform lock file: %w", err)
 	}
 
+	lockFileDir := path.Dir(reader.Location.AccessPath)
 	pkgs := make([]pkg.Package, 0, len(lockFile.Providers))
 
 	for _, provider := range lockFile.Providers {
+		licenseSet := r.getLicenses(ctx, resolver, lockFileDir, provider.URL, provider.Version)
+
 		p := pkg.Package{
 			Name:      provider.URL,
 			Version:   provider.Version,
 			Locations: file.NewLocationSet(reader.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
-			Licenses:  pkg.NewLicenseSet(), // TODO: license could be found in .terraform/providers/${name}/${version}/${arch}/LICENSE.txt
+			Licenses:  licenseSet,
 			Language:  pkg.Go,
 			Type:      pkg.TerraformPkg,
 			Metadata:  provider,
