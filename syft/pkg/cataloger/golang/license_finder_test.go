@@ -3,6 +3,7 @@ package golang
 import (
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -210,6 +211,9 @@ func TestFindAllLicenseCandidatesUpwards(t *testing.T) {
 				setupFS = afero.NewBasePathFs(fs, `C:\`)
 				startDir, stopAt = winAbs(startDir), winAbs(stopAt)
 				expectedFiles = nil
+				if tt.expectedFiles != nil {
+					expectedFiles = []string{}
+				}
 				for _, f := range tt.expectedFiles {
 					expectedFiles = append(expectedFiles, winAbs(f))
 				}
@@ -231,8 +235,9 @@ func TestFindAllLicenseCandidatesUpwards(t *testing.T) {
 	}
 }
 
+// winAbs roots posix absolute paths on C:\, leaving relative ones relative (some cases assert they're rejected)
 func winAbs(p string) string {
-	if p == "" {
+	if !strings.HasPrefix(p, "/") {
 		return p
 	}
 	return filepath.Join(`C:\`, filepath.FromSlash(p))

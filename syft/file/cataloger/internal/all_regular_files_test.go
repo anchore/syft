@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -47,6 +48,11 @@ func Test_allRegularFiles(t *testing.T) {
 		{
 			name: "directory",
 			setup: func(t *testing.T) file.Resolver {
+				if runtime.GOOS == "windows" {
+					// file symlinks from a git checkout don't index as access paths on windows yet (same gap the
+					// fileresolver symlink fixtures skip for)
+					t.Skip("fixture relies on symlinks")
+				}
 				s, err := directorysource.NewFromPath("testdata/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(source.SquashedScope)

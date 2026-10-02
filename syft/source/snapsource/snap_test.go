@@ -181,7 +181,9 @@ func TestNewSnapFromFile(t *testing.T) {
 			name: "path is directory",
 			cfg:  Config{},
 			setup: func() string {
-				path := "/test/directory"
+				// newSnapFromFile resolves the request with filepath.Abs, which adds a volume on windows
+				path, err := filepath.Abs("/test/directory")
+				require.NoError(t, err)
 				require.NoError(t, fs.MkdirAll(path, 0755))
 				return path
 			},
@@ -473,7 +475,9 @@ func TestGetSnapFileInfo(t *testing.T) {
 		{
 			name: "path is directory",
 			setup: func() string {
-				path := "/test/directory"
+				// newSnapFromFile resolves the request with filepath.Abs, which adds a volume on windows
+				path, err := filepath.Abs("/test/directory")
+				require.NoError(t, err)
 				require.NoError(t, fs.MkdirAll(path, 0755))
 				return path
 			},
