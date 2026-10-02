@@ -22,12 +22,12 @@ type (
 
 // ParsePomXML decodes a pom XML file, detecting and converting non-UTF-8 charsets. this DOES NOT perform any logic to resolve properties such as groupID, artifactID, and version
 func ParsePomXML(content io.Reader) (project *Project, err error) {
-	inputReader, err := getUtf8Reader(content)
+	pomContents, err := getUtf8Contents(content)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read pom.xml: %w", err)
 	}
 
-	decoder := xml.NewDecoder(inputReader)
+	decoder := xml.NewDecoder(bytes.NewReader(pomContents))
 	// when an xml file has a character set declaration (e.g. '<?xml version="1.0" encoding="ISO-8859-1"?>') read that and use the correct decoder
 	decoder.CharsetReader = charset.NewReaderLabel
 
@@ -40,6 +40,14 @@ func ParsePomXML(content io.Reader) (project *Project, err error) {
 }
 
 func getUtf8Reader(content io.Reader) (io.Reader, error) {
+	pomContents, err := getUtf8Contents(content)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(pomContents), nil
+}
+
+func getUtf8Contents(content io.Reader) ([]byte, error) {
 	pomContents, err := io.ReadAll(content) //nolint:gocritic // charset detection requires full buffer
 	if err != nil {
 		return nil, err
@@ -63,5 +71,5 @@ func getUtf8Reader(content io.Reader) (io.Reader, error) {
 		// characters with the UTF-8 replacement character.
 		inputReader = strings.NewReader(strings.ToValidUTF8(string(pomContents), "�"))
 	}
-	return inputReader, nil
+	return io.ReadAll(inputReader)
 }
