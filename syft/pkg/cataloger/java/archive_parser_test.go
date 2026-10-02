@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/license"
@@ -1605,6 +1607,9 @@ func generateJavaBuildFixture(t *testing.T, fixturePath string) {
 		return
 	}
 
+	// the fixtures are built with maven/gradle inside linux containers
+	testutils.SkipWithoutLinuxContainers(t)
+
 	makeTask := strings.TrimPrefix(fixturePath, "testdata/java-builds/")
 	t.Log(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
@@ -1630,7 +1635,8 @@ func generateJavaMetadataJarFixture(t *testing.T, fixtureName string, fileExtens
 		return fixturePath
 	}
 
-	makeTask := filepath.Join("cache", fixtureName+"."+fileExtension)
+	// make targets are posix paths regardless of host
+	makeTask := path.Join("cache", fixtureName+"."+fileExtension)
 	t.Log(color.Bold.Sprintf("Generating Fixture from 'make %s'", makeTask))
 
 	cwd, err := os.Getwd()

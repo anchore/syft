@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -90,6 +91,10 @@ func TestEscapeHTML(t *testing.T) {
 }
 
 func TestDirectoryEncoder(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// the golden snapshot embeds the posix source path (and the source ID derived from it)
+		t.Skip("directory snapshot is posix path specific")
+	}
 	cfg := DefaultEncoderConfig()
 	cfg.Pretty = true
 	enc, err := NewFormatEncoderWithConfig(cfg)

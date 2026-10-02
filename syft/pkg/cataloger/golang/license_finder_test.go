@@ -1,6 +1,8 @@
 package golang
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -202,10 +204,20 @@ func TestFindAllLicenseCandidatesUpwards(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create in-memory filesystem
 			fs := afero.NewMemMapFs()
-			tt.setupFS(fs)
+			setupFS, startDir, stopAt, expectedFiles := afero.Fs(fs), tt.startDir, tt.stopAt, tt.expectedFiles
+			if runtime.GOOS == "windows" {
+				// the finder wants native absolute paths, so root the posix-style cases on a drive
+				setupFS = afero.NewBasePathFs(fs, `C:\`)
+				startDir, stopAt = winAbs(startDir), winAbs(stopAt)
+				expectedFiles = nil
+				for _, f := range tt.expectedFiles {
+					expectedFiles = append(expectedFiles, winAbs(f))
+				}
+			}
+			tt.setupFS(setupFS)
 
 			// Run the function
-			result, err := findAllLicenseCandidatesUpwards(tt.startDir, tt.stopAt, fs)
+			result, err := findAllLicenseCandidatesUpwards(startDir, stopAt, fs)
 
 			// Check error expectation
 			if tt.expectedError {
@@ -214,7 +226,14 @@ func TestFindAllLicenseCandidatesUpwards(t *testing.T) {
 			}
 
 			require.NoError(t, err, tt.description)
-			assert.Equal(t, tt.expectedFiles, result, tt.description)
+			assert.Equal(t, expectedFiles, result, tt.description)
 		})
 	}
+}
+
+func winAbs(p string) string {
+	if p == "" {
+		return p
+	}
+	return filepath.Join(`C:\`, filepath.FromSlash(p))
 }

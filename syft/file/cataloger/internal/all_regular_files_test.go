@@ -20,13 +20,13 @@ import (
 func Test_allRegularFiles(t *testing.T) {
 	tests := []struct {
 		name            string
-		setup           func() file.Resolver
+		setup           func(t *testing.T) file.Resolver
 		wantRealPaths   *strset.Set
 		wantAccessPaths *strset.Set
 	}{
 		{
 			name: "image",
-			setup: func() file.Resolver {
+			setup: func(t *testing.T) file.Resolver {
 				testImage := "image-file-type-mix"
 
 				testutils.SkipWithoutLinuxContainers(t)
@@ -46,7 +46,7 @@ func Test_allRegularFiles(t *testing.T) {
 		},
 		{
 			name: "directory",
-			setup: func() file.Resolver {
+			setup: func(t *testing.T) file.Resolver {
 				s, err := directorysource.NewFromPath("testdata/symlinked-root/nested/link-root")
 				require.NoError(t, err)
 				r, err := s.FileResolver(source.SquashedScope)
@@ -59,7 +59,7 @@ func Test_allRegularFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resolver := tt.setup()
+			resolver := tt.setup(t)
 			locations := AllRegularFiles(context.Background(), resolver)
 			realLocations := strset.New()
 			virtualLocations := strset.New()
