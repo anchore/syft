@@ -15,6 +15,11 @@ var (
 	// spaceRegex includes nbsp (#160) considered to be a space character
 	spaceRegex  = regexp.MustCompile(`[\s\xa0]+`)
 	numberRegex = regexp.MustCompile(`\d`)
+	// commaSeparatedVersionRegex matches a LEADING comma-separated version run, the form
+	// Windows VERSIONINFO resources often carry (mirroring the FILEVERSION x,y,z,w
+	// declaration in a .rc file), e.g. "3, 0, 21, 0" on its own or the
+	// "1, 0, 0, 1 (WinBuild.160101.0800)" that ships on many Microsoft binaries
+	commaSeparatedVersionRegex = regexp.MustCompile(`^\d+(?:\s*,\s*\d+)+`)
 )
 
 func newPEPackage(versionResources map[string]string, f file.Location) pkg.Package {
@@ -129,6 +134,7 @@ func findVersionFromVR(versionResources map[string]string) string {
 
 func extractVersionFromResourcesValue(version string) string {
 	version = strings.TrimSpace(version)
+	version = normalizeCommaSeparatedVersion(version)
 	out := ""
 	for i, f := range strings.Fields(version) {
 		if containsNumber(out) && !containsNumber(f) {
@@ -141,6 +147,27 @@ func extractVersionFromResourcesValue(version string) string {
 		}
 	}
 	return out
+}
+
+// normalizeCommaSeparatedVersion converts the comma-separated version form used by
+// Windows VERSIONINFO resources into the canonical dotted form, e.g. "3, 0, 21, 0"
+// becomes "3.0.21.0". Only a leading run of comma-separated numbers is rewritten, and
+// whatever follows it is left untouched, so that "1, 0, 0, 1 (WinBuild.160101.0800)"
+// becomes "1.0.0.1 (WinBuild.160101.0800)" and is then handled exactly like the dotted
+// "10.0.19041.1 (WinBuild.160101.0800)" that reaches this function today. Values that do
+// not begin with such a run are returned unchanged.
+func normalizeCommaSeparatedVersion(version string) string {
+	run := commaSeparatedVersionRegex.FindString(version)
+	if run == "" {
+		return version
+	}
+
+	fields := strings.Split(run, ",")
+	for i := range fields {
+		fields[i] = strings.TrimSpace(fields[i])
+	}
+
+	return strings.Join(fields, ".") + version[len(run):]
 }
 
 func containsNumber(s string) bool {
