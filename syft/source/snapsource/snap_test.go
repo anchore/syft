@@ -145,7 +145,9 @@ func TestNewSnapFromFile(t *testing.T) {
 				DigestAlgorithms: []crypto.Hash{crypto.SHA256},
 			},
 			setup: func() string {
-				path := "/test/valid.snap"
+				// newSnapFromFile resolves the request with filepath.Abs, which adds a volume on windows
+				path, err := filepath.Abs("/test/valid.snap")
+				require.NoError(t, err)
 				require.NoError(t, createMockSquashfsFile(fs, path))
 				return path
 			},
