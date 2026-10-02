@@ -292,6 +292,8 @@ func writeSquashfs(t *testing.T, manifest string) string {
 		require.NoError(t, err)
 		_, err = w.Write([]byte(contents))
 		require.NoError(t, err)
+		// close before finalizing: windows directory listings can report a stale (zero) size for open files
+		require.NoError(t, w.Close())
 	}
 
 	// note: go-diskfs wants paths relative to the image root, without a leading slash
