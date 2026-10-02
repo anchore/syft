@@ -2,7 +2,10 @@ package debian
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -207,5 +210,108 @@ func Test_newDpkgPackage_declaredLicense(t *testing.T) {
 			sort.Strings(got)
 			require.Equal(t, test.expected, got)
 		})
+	}
+}
+
+// Image paths must retain forward slashes on every host.
+// Using filepath.Dir breaks these metadata lookups on Windows.
+func Test_getAdditionalFileListing_usesPosixImagePaths(t *testing.T) {
+	const testDigest = "d41d8cd98f00b204e9800998ecf8427e"
+
+	tests := []struct {
+		name              string
+		dbPath            string
+		contentsByPath    map[string]string
+		expectedFiles     []pkg.DpkgFileRecord
+		expectedLocations []file.Location
+	}{
+		{
+			name:   "standard status database",
+			dbPath: "/var/lib/dpkg/status",
+			contentsByPath: map[string]string{
+				"/var/lib/dpkg/info/test-package.md5sums":   testDigest + "  usr/bin/test-package\n",
+				"/var/lib/dpkg/info/test-package.conffiles": "/etc/test-package.conf\n",
+			},
+			expectedFiles: []pkg.DpkgFileRecord{
+				{
+					Path: "/usr/bin/test-package",
+					Digest: &file.Digest{
+						Algorithm: "md5",
+						Value:     testDigest,
+					},
+				},
+				{
+					Path:         "/etc/test-package.conf",
+					IsConfigFile: true,
+				},
+			},
+			expectedLocations: []file.Location{
+				file.NewLocation("/var/lib/dpkg/info/test-package.md5sums").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+				file.NewLocation("/var/lib/dpkg/info/test-package.conffiles").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+			},
+		},
+		{
+			name:   "distroless status database",
+			dbPath: "/var/lib/dpkg/status.d/test-package",
+			contentsByPath: map[string]string{
+				"/var/lib/dpkg/status.d/test-package.md5sums": testDigest + "  usr/bin/test-package\n",
+			},
+			expectedFiles: []pkg.DpkgFileRecord{
+				{
+					Path: "/usr/bin/test-package",
+					Digest: &file.Digest{
+						Algorithm: "md5",
+						Value:     testDigest,
+					},
+				},
+			},
+			expectedLocations: []file.Location{
+				file.NewLocation("/var/lib/dpkg/status.d/test-package.md5sums").WithAnnotation(pkg.EvidenceAnnotationKey, pkg.SupportingEvidenceAnnotation),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			resolver := newDpkgMetadataResolver(test.contentsByPath)
+			actualFiles, actualLocations := getAdditionalFileListing(
+				resolver,
+				file.NewLocation(test.dbPath),
+				pkg.DpkgDBEntry{Package: "test-package"},
+			)
+
+			if diff := cmp.Diff(test.expectedFiles, actualFiles); diff != "" {
+				t.Errorf("unexpected package files (-want +got):\n%s", diff)
+			}
+			require.Equal(t, test.expectedLocations, actualLocations)
+		})
+	}
+}
+
+type dpkgMetadataResolver struct {
+	*file.MockResolver
+	contentsByPath map[string]string
+}
+
+var _ file.Resolver = (*dpkgMetadataResolver)(nil)
+
+func (r *dpkgMetadataResolver) FileContentsByLocation(location file.Location) (io.ReadCloser, error) {
+	contents, exists := r.contentsByPath[location.RealPath]
+	if !exists {
+		return nil, fmt.Errorf("no contents for path: %s", location.RealPath)
+	}
+
+	return io.NopCloser(strings.NewReader(contents)), nil
+}
+
+func newDpkgMetadataResolver(contentsByPath map[string]string) *dpkgMetadataResolver {
+	paths := make([]string, 0, len(contentsByPath))
+	for path := range contentsByPath {
+		paths = append(paths, path)
+	}
+
+	return &dpkgMetadataResolver{
+		MockResolver:   file.NewMockResolverForPaths(paths...),
+		contentsByPath: contentsByPath,
 	}
 }
