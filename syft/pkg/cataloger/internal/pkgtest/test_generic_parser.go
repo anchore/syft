@@ -24,6 +24,7 @@ import (
 	"github.com/anchore/syft/internal/cmptest"
 	"github.com/anchore/syft/internal/licenses"
 	"github.com/anchore/syft/internal/relationship"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -201,6 +202,7 @@ func (p *CatalogTester) WithImageResolver(t *testing.T, fixtureName string) *Cat
 		return p
 	}
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixtureName)
 
 	s := stereoscopesource.New(img, stereoscopesource.ImageConfig{

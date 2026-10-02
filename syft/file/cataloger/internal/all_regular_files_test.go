@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/source"
 	"github.com/anchore/syft/syft/source/directorysource"
@@ -28,6 +29,7 @@ func Test_allRegularFiles(t *testing.T) {
 			setup: func() file.Resolver {
 				testImage := "image-file-type-mix"
 
+				testutils.SkipWithoutLinuxContainers(t)
 				img := imagetest.GetFixtureImage(t, "docker-archive", testImage)
 
 				s := stereoscopesource.New(img, stereoscopesource.ImageConfig{

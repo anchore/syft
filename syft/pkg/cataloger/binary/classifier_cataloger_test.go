@@ -17,6 +17,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -3169,6 +3170,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
 			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
 				Reference: test.fixtureImage,
