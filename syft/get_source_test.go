@@ -1,6 +1,7 @@
 package syft
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,29 @@ type mockSource struct {
 
 func (s mockSource) Describe() source.Description {
 	return s.desc
+}
+
+func TestGetProviders_ContainersStorage(t *testing.T) {
+	const storageSource = "containers-storage"
+	const registrySource = "oci-registry"
+
+	providers, err := DefaultGetSourceConfig().getProviders("localhost/myimage:latest")
+	require.NoError(t, err)
+
+	var names []string
+	for _, provider := range providers {
+		names = append(names, provider.Name())
+	}
+	storageIndex := slices.Index(names, storageSource)
+	registryIndex := slices.Index(names, registrySource)
+	require.NotEqual(t, -1, storageIndex)
+	require.NotEqual(t, -1, registryIndex)
+	require.Less(t, storageIndex, registryIndex)
+
+	providers, err = DefaultGetSourceConfig().WithSources(storageSource).getProviders("localhost/myimage:latest")
+	require.NoError(t, err)
+	require.Len(t, providers, 1)
+	require.Equal(t, storageSource, providers[0].Name())
 }
 
 func TestValidateSourcePlatform_NilSource(t *testing.T) {
