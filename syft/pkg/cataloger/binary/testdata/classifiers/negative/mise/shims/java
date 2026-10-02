@@ -1,0 +1,2 @@
+#this simulates a mise shim for java — not a real JVM binary
+with: java 0.0 19.0.1+10-21
