@@ -29,6 +29,15 @@ func NewEncoder(version string, format cyclonedx.BOMFileFormat, pretty bool) (En
 
 func (e Encoder) Encode(writer io.Writer, s sbom.SBOM) error {
 	bom := cyclonedxhelpers.ToFormatModel(s)
+	if e.version < cyclonedx.SpecVersion1_6 && bom.Components != nil {
+		components := (*bom.Components)[:0]
+		for _, component := range *bom.Components {
+			if component.Type != cyclonedx.ComponentTypeCryptographicAsset {
+				components = append(components, component)
+			}
+		}
+		bom.Components = &components
+	}
 	enc := cyclonedx.NewBOMEncoder(writer, e.format)
 	enc.SetPretty(e.pretty)
 	enc.SetEscapeHTML(false)
