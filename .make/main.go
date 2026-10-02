@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -97,23 +96,6 @@ func main() {
 			},
 		},
 
-		// windows unit tests: deliberately not hooked into "test" (no RunsOn). The full unit suite leans on
-		// linux docker fixture images and posix-only assumptions, so this covers the packages that own
-		// host path handling (where windows bugs live) and skips the tests that need docker image fixtures.
-		// ponytail: curated package list, widen it as more of the suite is made windows-safe.
-		Task{
-			Name:        "unit:windows",
-			Description: "run the windows-relevant subset of unit tests",
-			Run: func() {
-				Run("go test -count=1"+
-					` -skip "Image|Squash|AllLayers|MixFileTypes|GivenCoordinates"`+
-					" ./syft/internal/windows/... ./syft/internal/fileresolver/... ./syft/source/directorysource/... ./syft/source/filesource/..."+
-					" ./syft/file ./syft/file/cataloger/filedigest/... ./syft/file/cataloger/filecontent/...",
-					run.Stdout(os.Stderr),
-				)
-			},
-		},
-
 		// default validation pipeline (replaces Taskfile `default`/`pr-validations`/`validations`).
 		Task{
 			Name:         "default",
@@ -157,7 +139,7 @@ func main() {
 		Task{
 			Name:         "unit:syft",
 			RunsOn:       lang.List("unit"),
-			Dependencies: Deps("refresh-fixtures"),
+			Dependencies: unitFixtureDeps(),
 		},
 		Task{
 			Name:   "clean:syft",
@@ -183,6 +165,15 @@ func raceEnabled() bool {
 		return enabled
 	}
 	return config.CI && !config.Windows
+}
+
+// unitFixtureDeps skips the fixture cache refresh on windows: it needs binny-managed tools (binny ships
+// no windows release) and linux docker, so fixture-backed tests there have to skip themselves instead.
+func unitFixtureDeps() []string {
+	if config.Windows {
+		return nil
+	}
+	return Deps("refresh-fixtures")
 }
 
 // race applies raceEnabled() to a gotest suite. gotest exposes no functional option

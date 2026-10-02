@@ -265,8 +265,9 @@ func TestLazyCreation(t *testing.T) {
 	// root dir is not created until needed
 	assert.Equal(t, "", td.root)
 
-	_, _, err := td.NewFile("trigger-*")
+	f, _, err := td.NewFile("trigger-*")
 	require.NoError(t, err)
+	require.NoError(t, f.Close())
 
 	assert.NotEmpty(t, td.root)
 
