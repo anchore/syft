@@ -188,7 +188,7 @@ jobs:
       - name: Install Podman
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y jq podman
+          sudo apt-get install --no-install-recommends -y jq podman uidmap
 
       - name: Scan image from Podman's local store
         run: bash test/containers-storage/source-test.sh podman
@@ -212,7 +212,7 @@ jobs:
       - name: Install Buildah
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y buildah jq
+          sudo apt-get install --no-install-recommends -y buildah jq uidmap
 
       - name: Scan image from Buildah's local store
         run: bash test/containers-storage/source-test.sh buildah
