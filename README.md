@@ -72,7 +72,7 @@ syft --from containers-storage localhost/myimage:latest
 podman unshare syft --from containers-storage localhost/myimage:latest
 ```
 
-This is included in the Linux release binaries. When building from source, add `-tags containers_image_openpgp`.
+This is included in the Linux release binaries. When building from source, add `-tags containers_image_openpgp,exclude_graphdriver_btrfs`.
 
 > [!TIP]
 > **Check out the [Getting Started guide](https://oss.anchore.com/docs/guides/sbom/getting-started/)** to explore all of the capabilities and features.

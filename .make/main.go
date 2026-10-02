@@ -19,7 +19,9 @@ import (
 
 // buildTags must match the linux build in .goreleaser.yaml so tests and lint compile the same code that ships
 // (containers_image_openpgp compiles in stereoscope's real containers-storage provider instead of its stub).
-const buildTags = "containers_image_openpgp"
+// exclude_graphdriver_btrfs drops the cgo-only btrfs driver, which needs libbtrfs headers whenever cgo is on (e.g.
+// under -race); release builds are CGO_ENABLED=0 and never include it anyway.
+const buildTags = "containers_image_openpgp,exclude_graphdriver_btrfs"
 
 func main() {
 	Makefile(

@@ -4,6 +4,7 @@ run:
   # keep in sync with buildTags in .make/main.go
   build-tags:
     - containers_image_openpgp
+    - exclude_graphdriver_btrfs
 linters:
   default: none
   enable:

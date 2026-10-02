@@ -22,12 +22,18 @@ fi
 chmod +x "$syft_binary"
 
 test_dir="$(mktemp -d)"
+# the overlay driver bind-mounts its graphroot onto itself (in the builder's user namespace when rootless), which must
+# be unmounted before the store can be removed. Cleanup is best-effort so it never masks the test result.
+cleanup_store() {
+  umount -l "$1"/*/graphroot/overlay 2>/dev/null || true
+  rm -rf "$1"
+}
 cleanup() {
   if [[ "$(id -u)" -eq 0 ]]; then
-    rm -rf "$test_dir"
+    cleanup_store "$test_dir"
   else
-    "$builder" unshare rm -rf "$test_dir"
-  fi
+    "$builder" unshare bash -c "$(declare -f cleanup_store); cleanup_store \"\$1\"" _ "$test_dir"
+  fi || printf 'warning: unable to fully clean up %s\n' "$test_dir" >&2
 }
 trap cleanup EXIT
 

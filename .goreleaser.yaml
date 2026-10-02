@@ -15,7 +15,7 @@ builds:
     binary: syft
     goos: [linux]
     goarch: [amd64, arm64, ppc64le, riscv64, s390x]
-    tags: [containers_image_openpgp]
+    tags: [containers_image_openpgp, exclude_graphdriver_btrfs]
     mod_timestamp: &build-timestamp '{{ .CommitTimestamp }}'
     ldflags: &build-ldflags |
       -w
