@@ -414,14 +414,19 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 		}
 	}
 
-	ref, err := r.tree.AddSymLink(file.Path(p), file.Path(linkTarget))
-	if err != nil {
-		return "", err
-	}
-
 	targetAbsPath := linkTarget
 	if !filepath.IsAbs(targetAbsPath) {
 		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
+	}
+
+	// the tree is posix (like p), but the joins above produce native separators on windows
+	if windows.HostRunningOnWindows() {
+		linkTarget = windows.ToPosix(linkTarget)
+	}
+
+	ref, err := r.tree.AddSymLink(file.Path(p), file.Path(linkTarget))
+	if err != nil {
+		return "", err
 	}
 
 	metadata := NewMetadataFromPath(p, info)
