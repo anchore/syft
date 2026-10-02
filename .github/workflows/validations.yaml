@@ -97,12 +97,20 @@ jobs:
           persist-credentials: false
 
       # go-make's setup only (not ./.github/actions/bootstrap): binny ships no windows release, so binny tools
-      # and the fixture cache are unavailable here (`make unit` skips the fixture refresh on windows)
+      # are unavailable here (`make unit` skips the fixture refresh on windows)
       - name: Setup go + go-make tooling
         uses: anchore/go-make/.github/actions/setup@fa5421b3bf24c9d18f11a736c5eb4172f2b7d683 # v0.8.1
         with:
           # keep in sync with the go-version default in ./.github/actions/bootstrap
           go-version: "1.26.2"
+
+      # the binny-free version of `make download-test-fixture-cache` (keep the oras version in sync with .binny.yaml)
+      - name: Download test fixture cache
+        shell: bash
+        run: |
+          curl -sSfL https://github.com/oras-project/oras/releases/download/v1.3.4/oras_1.3.4_windows_amd64.zip -o "$RUNNER_TEMP/oras.zip"
+          unzip -q "$RUNNER_TEMP/oras.zip" oras.exe -d "$RUNNER_TEMP"
+          "$RUNNER_TEMP/oras.exe" pull ghcr.io/anchore/oss-cache/syft-test-fixture-cache:v2
 
       - name: Run unit tests
         run: make unit
