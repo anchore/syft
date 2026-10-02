@@ -101,6 +101,7 @@ func validateSnippet(binaryPath, snippetPath string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	expected, err := internal.Sha256SumFile(f)
 	if err != nil {

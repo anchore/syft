@@ -151,6 +151,8 @@ func (p *CatalogTester) FromFile(t *testing.T, path string) *CatalogTester {
 
 	fixture, err := os.Open(path)
 	require.NoError(t, err)
+	// parsers don't own the reader (the generic cataloger closes it), so close it here
+	t.Cleanup(func() { _ = fixture.Close() })
 
 	p.reader = file.LocationReadCloser{
 		Location:   file.NewVirtualLocationFromDirectory(fixture.Name(), fixture.Name(), *stereofile.NewFileReference(stereofile.Path(absPath))),
