@@ -1,0 +1,36 @@
+# Cataloger capabilities. See ../README.md for documentation.
+
+catalogers:
+  - ecosystem: hadron # MANUAL
+    name: hadron-cataloger # AUTO-GENERATED
+    type: generic # AUTO-GENERATED
+    source: # AUTO-GENERATED
+      file: syft/pkg/cataloger/hadron/cataloger.go
+      function: NewCataloger
+    selectors: # AUTO-GENERATED
+      - directory
+      - hadron
+      - image
+      - installed
+      - linux
+      - os
+      - package
+    parsers: # AUTO-GENERATED structure
+      - function: parseComponents
+        detector: # AUTO-GENERATED
+          method: glob # AUTO-GENERATED
+          criteria: # AUTO-GENERATED
+            - '**/usr/lib/hadron/components.json'
+        package_types: # AUTO-GENERATED
+          - hadron
+        purl_types: # AUTO-GENERATED
+          - hadron
+        capabilities: # MANUAL - preserved across regeneration
+          - name: license
+            default: false
+          - name: dependency.depth
+            default: []
+          - name: dependency.edges
+            default: ""
+          - name: dependency.kinds
+            default: []
