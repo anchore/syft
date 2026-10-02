@@ -61,6 +61,16 @@ syft <image> -o cyclonedx-json
 syft <image> -o spdx-json=./spdx.json -o cyclonedx-json=./cdx.json
 ```
 
+### Local containers-storage images
+
+Syft's Linux release binaries can read images from the current user's local containers-storage store, such as images built with Buildah or rootless Podman. The macOS and Windows release binaries do not include this Linux-specific provider. To build the Linux CLI with containers-storage support:
+
+```bash
+GOOS=linux CGO_ENABLED=0 go build -tags containers_image_openpgp -o syft ./cmd/syft
+./syft --from containers-storage localhost/myimage:latest
+```
+
+Plain image references also try containers-storage before pulling from a registry. The provider uses the current user's default store; rootless and rootful stores are separate. Custom builds that enable cgo may require native libraries for the selected storage drivers.
 
 > [!TIP]
 > **Check out the [Getting Started guide](https://oss.anchore.com/docs/guides/sbom/getting-started/)** to explore all of the capabilities and features.
