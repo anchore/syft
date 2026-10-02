@@ -2176,6 +2176,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.19.0-rc.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.19.0-rc.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.19.0-rc.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.15.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.15.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.15.0-beta.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-discovery/1.10-dev/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-discovery",
@@ -2198,6 +2220,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-discovery/1.5.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.5.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.5.0-alpha.0",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-discovery/1.3.8/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-discovery",
@@ -2215,6 +2248,17 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 				Version:   "1.1.17",
 				Type:      "binary",
 				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-discovery"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-discovery/1.0.0-snapshot.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-discovery",
+				Version:   "1.0.0-snapshot.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.0.0-snapshot.0",
 				Locations: locations("pilot-discovery"),
 				Metadata:  metadata("istio-binary"),
 			},
@@ -2264,6 +2308,28 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-agent/1.19.0-rc.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.19.0-rc.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.19.0-rc.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.15.0-beta.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.15.0-beta.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.15.0-beta.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-agent/1.10-dev/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-agent",
@@ -2286,12 +2352,34 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			},
 		},
 		{
+			logicalFixture: "istio_pilot-agent/1.5.0-alpha.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.5.0-alpha.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.5.0-alpha.0",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
 			logicalFixture: "istio_pilot-agent/1.1.17/linux-amd64",
 			expected: pkg.Package{
 				Name:      "pilot-agent",
 				Version:   "1.1.17",
 				Type:      "binary",
 				PURL:      "pkg:generic/istio@1.1.17",
+				Locations: locations("pilot-agent"),
+				Metadata:  metadata("istio-binary"),
+			},
+		},
+		{
+			logicalFixture: "istio_pilot-agent/1.0.0-snapshot.0/linux-amd64",
+			expected: pkg.Package{
+				Name:      "pilot-agent",
+				Version:   "1.0.0-snapshot.0",
+				Type:      "binary",
+				PURL:      "pkg:generic/istio@1.0.0-snapshot.0",
 				Locations: locations("pilot-agent"),
 				Metadata:  metadata("istio-binary"),
 			},
