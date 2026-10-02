@@ -22,13 +22,21 @@ fi
 chmod +x "$syft_binary"
 
 test_dir="$(mktemp -d)"
-trap 'rm -rf "$test_dir"' EXIT
+cleanup() {
+  if [[ "$(id -u)" -eq 0 ]]; then
+    rm -rf "$test_dir"
+  else
+    "$builder" unshare rm -rf "$test_dir"
+  fi
+}
+trap cleanup EXIT
 
 export CONTAINERS_STORAGE_CONF="$test_dir/storage.conf"
 cat > "$CONTAINERS_STORAGE_CONF" <<EOF
 [storage]
 driver = "vfs"
 graphroot = "$test_dir/graphroot"
+rootless_storage_path = "$test_dir/graphroot"
 runroot = "$test_dir/runroot"
 EOF
 
