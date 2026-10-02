@@ -13,7 +13,7 @@ import (
 func TestZZWindowsDiag(t *testing.T) {
 	for _, dir := range []string{
 		"testdata/classifiers/snippets/python-duplicates/3.8.16/linux-amd64",
-		"testdata/classifiers/bin/ruby-shared-libs/2.6.10/linux-amd64",
+		"testdata/classifiers/snippets/julia/1.8.5/linux-amd64",
 	} {
 		src, err := directorysource.NewFromPath(dir)
 		if err != nil {
@@ -32,6 +32,11 @@ func TestZZWindowsDiag(t *testing.T) {
 				t.Logf("DIAG   contents %d bytes: %q", len(b), b)
 			}
 		}
+		pkgs, _, cerr := NewClassifierCataloger(DefaultClassifierCatalogerConfig()).Catalog(context.Background(), r)
+		t.Logf("DIAG %s: catalog err=%v", dir, cerr)
+		for _, p := range pkgs {
+			t.Logf("DIAG %s: pkg %s@%s locs=%v", dir, p.Name, p.Version, p.Locations.ToSlice())
+		}
 		for _, g := range []string{"**/python*", "**/libpython*.so*", "**/lib*", "**/ruby"} {
 			locs, err := r.FilesByGlob(g)
 			for _, l := range locs {
@@ -39,4 +44,5 @@ func TestZZWindowsDiag(t *testing.T) {
 			}
 		}
 	}
+	t.Error("DIAG: intentional failure to surface logs")
 }
