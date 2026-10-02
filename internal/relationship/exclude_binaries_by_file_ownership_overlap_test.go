@@ -10,10 +10,13 @@ import (
 )
 
 func TestExcludeByFileOwnershipOverlap(t *testing.T) {
-	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg}
-	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg, Metadata: pkg.JavaVMInstallation{}}
-	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
-	packageD := pkg.Package{Name: "package-d", Type: pkg.BitnamiPkg}
+	// OS package and binary detection refer to the same software by name (e.g. an
+	// "openssl" RPM owning the file behind an "openssl" binary classifier match)
+	sameName := "package-a"
+	packageA := pkg.Package{Name: sameName, Type: pkg.ApkPkg}
+	packageB := pkg.Package{Name: sameName, Type: pkg.BinaryPkg, Metadata: pkg.JavaVMInstallation{}}
+	packageC := pkg.Package{Name: sameName, Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{Type: "rpm"}}
+	packageD := pkg.Package{Name: sameName, Type: pkg.BitnamiPkg}
 	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD} {
 		p.SetID()
 	}
@@ -73,12 +76,18 @@ func TestExcludeByFileOwnershipOverlap(t *testing.T) {
 
 func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 	packageA := pkg.Package{Name: "package-a", Type: pkg.ApkPkg} // OS package
-	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg}
-	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
+	packageB := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg}
+	packageC := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.PythonPkg} // Language package
-	packageE := pkg.Package{Name: "package-e", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
+	packageE := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
 
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
+	// same software name as the OS package, but owned by an unrelated vendor RPM (e.g. vendored library)
+	vendorRPM := pkg.Package{Name: "vendor-product", Type: pkg.RpmPkg}                                    // unrelated OS package
+	vendoredBinary := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg}                                 // binary detection named after the OS package
+	unrelatedBinary := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg}                                // binary detection named differently from the OS package
+	sameNameUpper := pkg.Package{Name: "PACKAGE-A", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}} // case-insensitive match
+
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE, &vendorRPM, &vendoredBinary, &unrelatedBinary, &sameNameUpper} {
 		p.SetID()
 	}
 
@@ -118,6 +127,24 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 			child:      &packageC,
 			expectedID: "", // non-OS parent, no exclusion
 		},
+		{
+			name:       "unrelated OS package owns binary with same name as another package (vendored library)",
+			parent:     &vendorRPM, // vendor-product RPM
+			child:      &vendoredBinary,
+			expectedID: "", // names differ: vendor-product != package-a, no exclusion (issue #5214)
+		},
+		{
+			name:       "same-name unrelated OS package does not exclude differently-named binary",
+			parent:     &packageA,        // package-a OS package
+			child:      &unrelatedBinary, // package-b binary
+			expectedID: "",               // names differ: package-a != package-b, no exclusion
+		},
+		{
+			name:       "OS package excludes binary with matching name case-insensitively",
+			parent:     &packageA, // package-a OS package
+			child:      &sameNameUpper,
+			expectedID: sameNameUpper.ID(), // PACKAGE-A matches package-a, excluded
+		},
 	}
 
 	for _, tt := range tests {
@@ -130,12 +157,14 @@ func TestIdentifyOverlappingOSRelationship(t *testing.T) {
 
 func TestIdentifyOverlappingBitnamiRelationship(t *testing.T) {
 	packageA := pkg.Package{Name: "package-a", Type: pkg.BitnamiPkg} // Bitnami package
-	packageB := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg}
-	packageC := pkg.Package{Name: "package-c", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
+	packageB := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg}
+	packageC := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg, Metadata: pkg.BinarySignature{}}
 	packageD := pkg.Package{Name: "package-d", Type: pkg.PythonPkg} // Language package
-	packageE := pkg.Package{Name: "package-e", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
+	packageE := pkg.Package{Name: "package-a", Type: pkg.BinaryPkg, Metadata: pkg.ELFBinaryPackageNoteJSONPayload{}}
 
-	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE} {
+	unrelatedBinary := pkg.Package{Name: "package-b", Type: pkg.BinaryPkg} // binary detection named differently
+
+	for _, p := range []*pkg.Package{&packageA, &packageB, &packageC, &packageD, &packageE, &unrelatedBinary} {
 		p.SetID()
 	}
 
@@ -174,6 +203,12 @@ func TestIdentifyOverlappingBitnamiRelationship(t *testing.T) {
 			parent:     &packageD, // non-Bitnami package
 			child:      &packageC,
 			expectedID: "", // non-Bitnami parent, no exclusion
+		},
+		{
+			name:       "Bitnami package does not exclude differently-named binary",
+			parent:     &packageA, // bitnami pkg "package-a"
+			child:      &unrelatedBinary,
+			expectedID: "", // names differ, no exclusion (issue #5214)
 		},
 	}
 
