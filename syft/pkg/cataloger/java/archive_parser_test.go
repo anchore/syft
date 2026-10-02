@@ -806,6 +806,7 @@ func TestParseNestedJar(t *testing.T) {
 
 func Test_newPackageFromMavenData(t *testing.T) {
 	virtualPath := "given/virtual/path"
+	pomLicenseLoc := file.NewLocation(virtualPath)
 	tests := []struct {
 		name            string
 		props           pkg.JavaPomProperties
@@ -1132,6 +1133,67 @@ func Test_newPackageFromMavenData(t *testing.T) {
 						GroupID:    "some-group-id",
 						ArtifactID: "some-parent-name",
 						Version:    "NOT_THE_PARENT_VERSION",
+					},
+					Parent: nil,
+				},
+			},
+			expectedPackage: nil,
+		},
+		{
+			name: "child matches parent by key and inherits pom licenses",
+			props: pkg.JavaPomProperties{
+				Name:       "some-name",
+				GroupID:    "some-group-id",
+				ArtifactID: "some-parent-name", // note: matches parent package
+				Version:    "2.0",              // note: matches parent package
+			},
+			project: &parsedPomProject{
+				project: &maven.Project{
+					Name:       ptr("some-parent-name"),
+					GroupID:    ptr("some-group-id"),
+					ArtifactID: ptr("some-parent-name"),
+					Version:    ptr("2.0"),
+					Licenses: &[]maven.License{
+						{
+							Name: ptr("EPL-2.0"),
+							URL:  ptr("https://www.eclipse.org/legal/epl-2.0/"),
+						},
+					},
+				},
+			},
+			parent: &pkg.Package{
+				Name:    "some-parent-name",
+				Version: "2.0",
+				Type:    pkg.JavaPkg,
+				Licenses: pkg.NewLicenseSet(
+					// e.g. a raw Bundle-License value from the MANIFEST.MF
+					pkg.NewLicenseFromFieldsWithContext(pkgtest.Context(t), "EPLv2", "", nil),
+				),
+				Metadata: pkg.JavaArchive{
+					VirtualPath:   "some-parent-virtual-path",
+					Manifest:      nil,
+					PomProperties: nil,
+					Parent:        nil,
+				},
+			},
+			// note: the manifest-derived license is kept and the pom-derived license is added
+			expectedParent: pkg.Package{
+				Name:    "some-parent-name",
+				Version: "2.0",
+				Type:    pkg.JavaPkg,
+				Licenses: pkg.NewLicenseSet(
+					pkg.NewLicenseFromFieldsWithContext(pkgtest.Context(t), "EPLv2", "", nil),
+					pkg.NewLicenseFromFieldsWithContext(pkgtest.Context(t), "EPL-2.0", "https://www.eclipse.org/legal/epl-2.0/", &pomLicenseLoc),
+				),
+				Metadata: pkg.JavaArchive{
+					VirtualPath: "some-parent-virtual-path",
+					Manifest:    nil,
+					// note: we attach the discovered pom properties data
+					PomProperties: &pkg.JavaPomProperties{
+						Name:       "some-name",
+						GroupID:    "some-group-id",
+						ArtifactID: "some-parent-name", // note: matches parent package
+						Version:    "2.0",              // note: matches parent package
 					},
 					Parent: nil,
 				},
