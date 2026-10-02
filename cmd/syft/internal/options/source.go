@@ -36,7 +36,7 @@ var _ clio.PostLoader = (*imageSource)(nil)
 func (o *sourceConfig) DescribeFields(descriptions clio.FieldDescriptionSet) {
 	descriptions.Add(&o.File.Digests, `the file digest algorithms to use on the scanned file (options: "md5", "sha1", "sha224", "sha256", "sha384", "sha512")`)
 	descriptions.Add(&o.Image.DefaultPullSource, `allows users to specify which image source should be used to generate the sbom
-valid values are: registry, docker, podman`)
+valid values are: registry, docker, podman, containers-storage`)
 }
 
 type imageSource struct {
@@ -74,7 +74,7 @@ func (c *imageSource) PostLoad() error {
 	return checkDefaultSourceValues(c.DefaultPullSource)
 }
 
-var validDefaultSourceValues = []string{"registry", "docker", "podman", ""}
+var validDefaultSourceValues = []string{"registry", "docker", "podman", "containers-storage", ""}
 
 func checkDefaultSourceValues(source string) error {
 	validValues := strset.New(validDefaultSourceValues...)
