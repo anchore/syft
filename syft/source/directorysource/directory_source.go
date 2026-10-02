@@ -160,14 +160,23 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 
 	return []fileresolver.PathIndexVisitor{
 		func(_, path string, info os.FileInfo, _ error) error {
-			for _, exclusion := range exclusions {
-				// this is required to handle Windows filepaths
-				path = filepath.ToSlash(path)
-				matches, err := doublestar.Match(exclusion, path)
-				if err != nil {
-					return nil
+			// this is required to handle Windows filepaths
+			path = filepath.ToSlash(path)
+
+			// A symlink can point into an excluded directory even though the link
+			// itself sits on an unexcluded path, and the indexer follows such links
+			// by indexing the resolved target as an additional root (see indexAllRoots).
+			// That second pass never visits the excluded directory entry itself, so
+			// resolve the real path here and apply the exclusions to it as well.
+			realPath := path
+			if info != nil && info.Mode()&os.ModeSymlink != 0 {
+				if resolved, err := filepath.EvalSymlinks(path); err == nil {
+					realPath = filepath.ToSlash(resolved)
 				}
-				if matches {
+			}
+
+			for _, exclusion := range exclusions {
+				if exclusionMatches(exclusion, path) || exclusionMatches(exclusion, realPath) {
 					if info != nil && info.IsDir() {
 						return filepath.SkipDir
 					}
@@ -177,6 +186,31 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 			return nil
 		},
 	}, nil
+}
+
+// exclusionMatches reports whether the given path is covered by the exclusion
+// pattern. Exclusion patterns are absolute paths relative to the scan root.
+//
+// Besides the glob semantics of doublestar.Match, literal patterns (with no glob
+// metacharacters) are treated as directory exclusions: they must also match
+// descendants. The directory entry itself normally carries the exclusion via
+// SkipDir during the primary walk, but paths that are reached by other means
+// (e.g. symlink targets indexed as separate roots) never pass through the
+// excluded directory entry, so the path-prefix check is required to keep the
+// exclusion contract intact.
+func exclusionMatches(exclusion, path string) bool {
+	matches, err := doublestar.Match(exclusion, path)
+	if err != nil {
+		return false
+	}
+	if matches {
+		return true
+	}
+
+	if !strings.ContainsAny(exclusion, "*?[{") {
+		return strings.HasPrefix(path, exclusion+"/")
+	}
+	return false
 }
 
 // deriveIDFromDirectory generates an artifact ID from the given directory config. If an alias is provided, then
