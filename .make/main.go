@@ -139,7 +139,7 @@ func main() {
 		Task{
 			Name:         "unit:syft",
 			RunsOn:       lang.List("unit"),
-			Dependencies: Deps("refresh-fixtures"),
+			Dependencies: unitFixtureDeps(),
 		},
 		Task{
 			Name:   "clean:syft",
@@ -165,6 +165,15 @@ func raceEnabled() bool {
 		return enabled
 	}
 	return config.CI && !config.Windows
+}
+
+// unitFixtureDeps skips the fixture cache refresh on windows: it needs binny-managed tools (binny ships
+// no windows release) and linux docker, so fixture-backed tests there have to skip themselves instead.
+func unitFixtureDeps() []string {
+	if config.Windows {
+		return nil
+	}
+	return Deps("refresh-fixtures")
 }
 
 // race applies raceEnabled() to a gotest suite. gotest exposes no functional option

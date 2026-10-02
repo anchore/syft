@@ -96,12 +96,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Bootstrap environment
-        uses: ./.github/actions/bootstrap
+      # go-make's setup only (not ./.github/actions/bootstrap): binny ships no windows release, so binny tools
+      # and the fixture cache are unavailable here (`make unit` skips the fixture refresh on windows)
+      - name: Setup go + go-make tooling
+        uses: anchore/go-make/.github/actions/setup@fa5421b3bf24c9d18f11a736c5eb4172f2b7d683 # v0.8.1
         with:
-          # apt doesn't exist here
-          bootstrap-apt-packages: ""
-          download-test-fixture-cache: true
+          # keep in sync with the go-version default in ./.github/actions/bootstrap
+          go-version: "1.26.2"
 
       - name: Run unit tests
         run: make unit
