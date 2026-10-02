@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -86,11 +85,6 @@ func (r *rpmdbTestFileResolverMock) FilesByMediaType(...string) ([]file.Location
 }
 
 func TestParseRpmDB(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		// go-rpmdb's ndb.Open leaks its file handle when probing a non-ndb (bdb) database, so windows can't
-		// remove the temp copy of the db afterwards
-		t.Skip("upstream go-rpmdb leaks the bdb file handle")
-	}
 	ctx := context.TODO()
 	packagesLocation := file.NewLocation("testdata/Packages")
 	tests := []struct {

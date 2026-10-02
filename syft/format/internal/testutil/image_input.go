@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -35,10 +34,6 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 
 	switch cfg.fromSnapshot {
 	case true:
-		if runtime.GOOS == "windows" {
-			// stereoscope names uncompressed layer cache files "<index>-sha256:<digest>", and ':' isn't legal in a windows filename
-			t.Skip("stereoscope can't unpack image tarballs on windows (layer cache filename contains ':')")
-		}
 		img = imagetest.GetGoldenFixtureImage(t, testImage)
 	default:
 		testutils.SkipWithoutLinuxContainers(t)
