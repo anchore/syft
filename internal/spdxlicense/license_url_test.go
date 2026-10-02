@@ -42,6 +42,24 @@ func TestLicenseByURL(t *testing.T) {
 			wantFound: true,
 		},
 		{
+			name:      "GNU Classpath Exception URL",
+			url:       "https://www.gnu.org/software/classpath/license.html",
+			wantID:    "GPL-2.0-only WITH Classpath-exception-2.0",
+			wantFound: true,
+		},
+		{
+			name:      "Eclipse secondary GPL Classpath URL",
+			url:       "https://projects.eclipse.org/license/secondary-gpl-2.0-cp",
+			wantID:    "GPL-2.0-only WITH Classpath-exception-2.0",
+			wantFound: true,
+		},
+		{
+			name:      "Eclipse Public License legacy URL",
+			url:       "https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.txt",
+			wantID:    "EPL-2.0",
+			wantFound: true,
+		},
+		{
 			name:      "URL with trailing whitespace",
 			url:       "  http://opensource.org/licenses/MIT  ",
 			wantID:    "MIT",
