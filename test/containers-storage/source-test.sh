@@ -34,10 +34,12 @@ EOF
 
 build_context="$test_dir/context"
 mkdir -p "$build_context"
-printf 'containers-storage test payload\n' > "$build_context/payload.txt"
+cat > "$build_context/package.json" <<'EOF'
+{"name":"syft-containers-storage-fixture","version":"1.2.3"}
+EOF
 cat > "$build_context/Containerfile" <<'EOF'
 FROM scratch
-COPY payload.txt /payload.txt
+COPY package.json /app/node_modules/syft-containers-storage-fixture/package.json
 EOF
 
 image_ref="localhost/syft-containers-storage-test:latest"
@@ -50,5 +52,27 @@ case "$builder" in
     ;;
 esac
 
-"$syft_binary" --from containers-storage "$image_ref" --output json > "$test_dir/sbom.json"
-jq -e --arg image_ref "$image_ref" '.source.type == "image" and .source.metadata.userInput == $image_ref' "$test_dir/sbom.json" >/dev/null
+for scan_mode in explicit automatic; do
+  source_args=()
+  if [[ "$scan_mode" == explicit ]]; then
+    source_args=(--from containers-storage)
+  fi
+  printf 'Testing %s image resolution with %s\n' "$scan_mode" "$builder"
+  "$syft_binary" "${source_args[@]}" "$image_ref" --output json > "$test_dir/$scan_mode.json"
+  jq -e --arg image_ref "$image_ref" '
+    .source.type == "image" and
+    .source.metadata.userInput == $image_ref and
+    any(.artifacts[]; .name == "syft-containers-storage-fixture" and .version == "1.2.3" and .type == "npm")
+  ' "$test_dir/$scan_mode.json" >/dev/null
+done
+
+printf 'Testing missing image with %s\n' "$builder"
+if "$syft_binary" --from containers-storage localhost/syft-containers-storage-missing:latest --output json > "$test_dir/missing.json" 2> "$test_dir/missing.stderr"; then
+  printf 'Expected the missing containers-storage image scan to fail\n' >&2
+  exit 1
+fi
+grep -q 'containers-storage:' "$test_dir/missing.stderr"
+if grep -q 'oci-registry:' "$test_dir/missing.stderr"; then
+  printf 'Explicit containers-storage selection unexpectedly attempted registry resolution\n' >&2
+  exit 1
+fi
