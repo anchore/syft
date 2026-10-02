@@ -96,16 +96,15 @@ jobs:
         with:
           persist-credentials: false
 
-      # go-make's setup only (not ./.github/actions/bootstrap): no apt, binny tools, or fixture cache are needed
-      - name: Setup go + go-make tooling
-        uses: anchore/go-make/.github/actions/setup@fa5421b3bf24c9d18f11a736c5eb4172f2b7d683 # v0.8.1
+      - name: Bootstrap environment
+        uses: ./.github/actions/bootstrap
         with:
-          # keep in sync with the go-version default in ./.github/actions/bootstrap
-          go-version: "1.26.2"
+          # apt doesn't exist here
+          bootstrap-apt-packages: ""
+          download-test-fixture-cache: true
 
-      # the full unit suite leans on linux docker fixtures, so this runs the windows-relevant subset
       - name: Run unit tests
-        run: make unit:windows
+        run: make unit
 
   Integration-Test:
     # Note: changing this job name requires making the same update in the .github/workflows/release.yaml pipeline
