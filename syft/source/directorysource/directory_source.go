@@ -97,7 +97,7 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 		return s.resolver, nil
 	}
 
-	exclusionFunctions, err := GetDirectoryExclusionFunctions(s.config.Path, s.config.Exclude.Paths)
+	exclusionFunctions, err := GetDirectoryExclusionFunctionsFromConfig(s.config.Path, s.config.Exclude)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +123,65 @@ func (s *directorySource) Close() error {
 }
 
 func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
+	return getExclusionFunctions(root, exclusions)
+}
+
+func GetDirectoryExclusionFunctionsFromConfig(root string, cfg source.ExcludeConfig) ([]fileresolver.PathIndexVisitor, error) {
+	exclusions := cfg.Paths
+
+	if cfg.ExcludeFile != "" {
+		patterns, err := readExcludeFile(cfg.ExcludeFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read exclude file: %w", err)
+		}
+		exclusions = append(exclusions, patterns...)
+	}
+
+	if cfg.ExcludeGitignoreMode == "simple" {
+		gitignorePath := filepath.Join(root, ".gitignore")
+		patterns, err := readExcludeFile(gitignorePath)
+		if err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("unable to read .gitignore: %w", err)
+		}
+		exclusions = append(exclusions, patterns...)
+	}
+
+	return getExclusionFunctions(root, exclusions)
+}
+
+func readExcludeFile(path string) ([]string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var patterns []string
+	for _, line := range strings.Split(string(content), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "!") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "/") {
+			line = "." + line
+		} else if !strings.HasPrefix(line, "./") && !strings.HasPrefix(line, "*/") && !strings.HasPrefix(line, "**/") {
+			line = "**/" + line
+		}
+
+		if strings.HasSuffix(line, "/") {
+			line += "**"
+		}
+
+		patterns = append(patterns, line)
+	}
+	return patterns, nil
+}
+
+func getExclusionFunctions(root string, exclusions []string) ([]fileresolver.PathIndexVisitor, error) {
 	if len(exclusions) == 0 {
 		return nil, nil
 	}
