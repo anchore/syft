@@ -9,6 +9,7 @@ import (
 	"github.com/scylladb/go-set"
 	"github.com/scylladb/go-set/strset"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/pkg"
@@ -388,6 +389,55 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 			expected: []string{
 				"cpe:2.3:a:name:name:1\\:3.2:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "debian native deb package gets debian vendor",
+			p: pkg.Package{
+				Name:     "dpkg",
+				Version:  "1.20.9",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{},
+			},
+			expected: []string{
+				"cpe:2.3:a:debian:dpkg:1.20.9:*:*:*:*:*:*:*",
+				"cpe:2.3:a:dpkg:dpkg:1.20.9:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "debian native apt package gets debian vendor",
+			p: pkg.Package{
+				Name:     "apt",
+				Version:  "2.2.4",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{},
+			},
+			expected: []string{
+				"cpe:2.3:a:apt:apt:2.2.4:*:*:*:*:*:*:*",
+				"cpe:2.3:a:debian:apt:2.2.4:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "non-debian-native deb package does not get debian vendor",
+			p: pkg.Package{
+				Name:     "openssl",
+				Version:  "1.1.1n-0+deb11u3",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{},
+			},
+			expected: []string{
+				"cpe:2.3:a:openssl:openssl:1.1.1n-0\\+deb11u3:*:*:*:*:*:*:*",
+			},
+		},
+		{
+			name: "dpkg outside of a deb package does not get debian vendor",
+			p: pkg.Package{
+				Name:    "dpkg",
+				Version: "1.20.9",
+				Type:    pkg.BinaryPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:dpkg:dpkg:1.20.9:*:*:*:*:*:*:*",
 			},
 		},
 		{
@@ -959,6 +1009,44 @@ func TestGeneratePackageCPEs(t *testing.T) {
 					t.Logf("   %q,\n", d)
 				}
 			}
+		})
+	}
+}
+
+func TestDebianNativePackagePrefersDebianVendor(t *testing.T) {
+	// CycloneDX encodes only the first CPE, so the NVD debian-vendor CPE must sort first.
+	tests := []struct {
+		name     string
+		p        pkg.Package
+		expected string
+	}{
+		{
+			name: "dpkg",
+			p: pkg.Package{
+				Name:     "dpkg",
+				Version:  "1.20.9",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{},
+			},
+			expected: "cpe:2.3:a:debian:dpkg:1.20.9:*:*:*:*:*:*:*",
+		},
+		{
+			name: "apt",
+			p: pkg.Package{
+				Name:     "apt",
+				Version:  "2.2.4",
+				Type:     pkg.DebPkg,
+				Metadata: pkg.DpkgDBEntry{},
+			},
+			expected: "cpe:2.3:a:debian:apt:2.2.4:*:*:*:*:*:*:*",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cpes := FromPackageAttributes(test.p)
+			require.NotEmpty(t, cpes)
+			assert.Equal(t, test.expected, cpes[0].Attributes.String())
 		})
 	}
 }
