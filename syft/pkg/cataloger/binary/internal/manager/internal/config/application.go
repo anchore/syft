@@ -102,10 +102,10 @@ func (c Application) Validate() error {
 }
 
 func (c Application) GetBinaryFromImage(name, version string) *BinaryFromImage {
-	if strings.Contains(name, "@") && version == "" {
-		parts := strings.Split(name, "@")
-		name = parts[0]
-		version = parts[1]
+	if version == "" {
+		if n, v, ok := strings.Cut(name, "@"); ok {
+			name, version = n, v
+		}
 	}
 	for _, entry := range c.FromImages {
 		if entry.Name() == name && entry.Version == version {

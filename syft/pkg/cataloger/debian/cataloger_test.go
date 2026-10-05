@@ -285,6 +285,7 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 			pkgtest.NewCatalogTester().
 				WithImageResolver(t, tt.name).
 				IgnoreLocationLayer(). // this fixture can be rebuilt, thus the layer ID will change
+				WithErrorAssertion(require.NoError).
 				Expects(tt.expected, nil).
 				TestCataloger(t, c)
 		})

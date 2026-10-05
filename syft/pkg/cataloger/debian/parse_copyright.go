@@ -1,7 +1,6 @@
 package debian
 
 import (
-	"bufio"
 	"io"
 	"regexp"
 	"sort"
@@ -10,6 +9,7 @@ import (
 	"github.com/scylladb/go-set/strset"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 )
 
 // For more information see: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#license-syntax
@@ -34,7 +34,7 @@ const (
 
 func parseLicensesFromCopyright(reader io.Reader) []string {
 	findings := strset.New()
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 
 	// per the DEP-5 spec, machine-readable copyright files MUST have a
 	// Format field whose value is a URI for the specification. Only files
@@ -68,6 +68,9 @@ func parseLicensesFromCopyright(reader io.Reader) []string {
 		if found != "" {
 			findings.Add(found)
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.WithFields("error", err).Debug("failed to fully read debian copyright file")
 	}
 
 	if !formatVerified {

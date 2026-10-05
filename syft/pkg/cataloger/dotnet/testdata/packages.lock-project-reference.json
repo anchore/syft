@@ -1,0 +1,18 @@
+{
+    "version": 1,
+    "dependencies": {
+        "net8.0": {
+            "Newtonsoft.Json": {
+                "type": "Transitive",
+                "resolved": "13.0.3",
+                "contentHash": "newtonsoft1303hash=="
+            },
+            "mylib": {
+                "type": "Project",
+                "dependencies": {
+                    "Newtonsoft.Json": "[13.0.3, )"
+                }
+            }
+        }
+    }
+}

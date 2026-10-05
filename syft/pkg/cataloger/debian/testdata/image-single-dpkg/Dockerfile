@@ -2,7 +2,8 @@ FROM ubuntu:22.04 AS downloader
 
 RUN apt-get update && apt-get install -y curl
 
-RUN curl -o zlib1g.deb http://archive.ubuntu.com/ubuntu/pool/main/z/zlib/zlib1g_1.3.dfsg-3.1ubuntu2.1_amd64.deb
+# launchpad's +files URLs are immutable, unlike pool/main which only keeps the current version
+RUN curl -fsSL -o zlib1g.deb https://launchpad.net/ubuntu/+archive/primary/+files/zlib1g_1.3.dfsg-3.1ubuntu2.1_amd64.deb
 
 FROM scratch
 
