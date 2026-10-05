@@ -156,8 +156,8 @@ var busyboxVersionMatcher = regexp.MustCompile(`BusyBox v[\d.]+`)
 func parseBusyBox(contents string) (*Release, error) {
 	matches := busyboxVersionMatcher.FindAllString(contents, -1)
 	for _, match := range matches {
-		parts := strings.Split(match, " ")
-		version := strings.ReplaceAll(parts[1], "v", "")
+		_, version, _ := strings.Cut(match, " ")
+		version = strings.ReplaceAll(version, "v", "")
 
 		return simpleRelease(match, "busybox", version, ""), nil
 	}

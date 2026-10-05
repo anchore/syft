@@ -1,7 +1,14 @@
 package java
 
 import (
+	"bufio"
+	"context"
+	"io"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -68,4 +75,15 @@ func Test_parserGradleLockfile(t *testing.T) {
 			pkgtest.TestFileParser(t, test.input, parseGradleLockfile, test.expected, nil)
 		})
 	}
+}
+
+func Test_parserGradleLockfile_lineTooLong(t *testing.T) {
+	// packages before an oversized line are kept, and the scan error is still reported
+	contents := "org.example:before:1.0=compileClasspath\n" + strings.Repeat("a", 2<<20) + "\norg.example:after:2.0=compileClasspath\n"
+	reader := file.NewLocationReadCloser(file.NewLocation("gradle.lockfile"), io.NopCloser(strings.NewReader(contents)))
+
+	pkgs, _, err := parseGradleLockfile(context.Background(), nil, nil, reader)
+	require.ErrorIs(t, err, bufio.ErrTooLong)
+	require.Len(t, pkgs, 1)
+	assert.Equal(t, "before", pkgs[0].Name)
 }

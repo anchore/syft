@@ -7,9 +7,11 @@ import (
 	"net/http/httptest"
 	"os"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -1176,4 +1178,36 @@ func setupYarnRegistry() (mux *http.ServeMux, serverURL string, teardown func())
 	server := httptest.NewServer(apiHandler)
 
 	return mux, server.URL, server.Close
+}
+
+func TestParseYarnV1LockFile_missingValues(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		want    []yarnPackage
+	}{
+		{
+			// a dependency line without a constraint is dropped rather than indexed past its end
+			name:    "dependency without version",
+			content: "# yarn lockfile v1\n\na@1:\n  version \"1\"\n  dependencies:\n    b\n\n",
+			want:    []yarnPackage{{Name: "a", Version: "1", Dependencies: map[string]string{}}},
+		},
+		{
+			// a field line without a value leaves the field empty
+			name:    "field without value",
+			content: "# yarn lockfile v1\n\na@1:\n  version\n\n",
+			want:    []yarnPackage{{Name: "a", Dependencies: map[string]string{}}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got []yarnPackage
+			var err error
+			require.NotPanics(t, func() {
+				got, err = parseYarnV1LockFile(io.NopCloser(strings.NewReader(tt.content)))
+			})
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }

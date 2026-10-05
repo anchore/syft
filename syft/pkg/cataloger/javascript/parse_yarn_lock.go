@@ -67,12 +67,14 @@ type yarnV2PackageEntry struct {
 }
 
 type genericYarnLockAdapter struct {
-	cfg CatalogerConfig
+	cfg             CatalogerConfig
+	licenseResolver javascriptLicenseResolver
 }
 
 func newGenericYarnLockAdapter(cfg CatalogerConfig) genericYarnLockAdapter {
 	return genericYarnLockAdapter{
-		cfg: cfg,
+		cfg:             cfg,
+		licenseResolver: newJavascriptLicenseResolver(cfg),
 	}
 }
 
@@ -218,28 +220,16 @@ func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
 			continue
 		}
 		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "    ") {
-			line = strings.Trim(line, " ")
-			array := strings.Split(line, " ")
-			switch array[0] {
-			case "version":
-				pkg.Version = strings.Trim(array[1], "\"")
-			case "resolved":
-				name, version, resolved := findResolvedPackageAndVersion(line)
-				if name != "" && version != "" && resolved != "" {
-					pkg.Name = name
-					pkg.Version = version
-					pkg.Resolved = resolved
-				} else {
-					pkg.Resolved = strings.Trim(array[1], "\"")
-				}
-			case "integrity":
-				pkg.Integrity = strings.Trim(array[1], "\"")
-			}
+			applyYarnV1Field(&pkg, strings.Trim(line, " "))
 			continue
 		}
 		if strings.HasPrefix(line, "    ") {
 			line = strings.Trim(line, " ")
 			array := strings.Split(line, " ")
+			if len(array) < 2 {
+				// a dependency without a version constraint is malformed; skip it rather than guess
+				continue
+			}
 			dependencyName := strings.Trim(array[0], "\"")
 			dependencyVersion := strings.Trim(array[1], "\"")
 			dependencies[dependencyName] = dependencyVersion
@@ -254,6 +244,31 @@ func parseYarnV1LockFile(reader io.ReadCloser) ([]yarnPackage, error) {
 	}
 
 	return pkgs, nil
+}
+
+// applyYarnV1Field sets the package field described by a single (already trimmed) yarn v1 field line.
+func applyYarnV1Field(pkg *yarnPackage, line string) {
+	array := strings.Split(line, " ")
+	// a field line may be missing its value in a malformed lockfile
+	var value string
+	if len(array) > 1 {
+		value = strings.Trim(array[1], "\"")
+	}
+	switch array[0] {
+	case "version":
+		pkg.Version = value
+	case "resolved":
+		name, version, resolved := findResolvedPackageAndVersion(line)
+		if name != "" && version != "" && resolved != "" {
+			pkg.Name = name
+			pkg.Version = version
+			pkg.Resolved = resolved
+		} else {
+			pkg.Resolved = value
+		}
+	case "integrity":
+		pkg.Integrity = value
+	}
 }
 
 func parseYarnLockYaml(reader io.ReadCloser) ([]yarnPackage, error) {
@@ -321,7 +336,7 @@ func (a genericYarnLockAdapter) parseYarnLock(ctx context.Context, resolver file
 		if devOnlyPkgs[p.Name] && !a.cfg.IncludeDevDependencies {
 			continue
 		}
-		packages = append(packages, newYarnLockPackage(ctx, a.cfg, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies))
+		packages = append(packages, newYarnLockPackage(ctx, a.licenseResolver, resolver, reader.Location, p.Name, p.Version, p.Resolved, p.Integrity, p.Dependencies))
 	}
 
 	pkg.Sort(packages)

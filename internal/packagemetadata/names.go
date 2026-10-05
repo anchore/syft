@@ -71,6 +71,8 @@ var jsonTypes = makeJSONTypes(
 	jsonNames(pkg.ConanV2LockEntry{}, "c-conan-lock-v2-entry"),
 	jsonNames(pkg.ConanfileEntry{}, "c-conan-file-entry", "ConanMetadataType"),
 	jsonNames(pkg.ConaninfoEntry{}, "c-conan-info-entry"),
+	jsonNames(pkg.CpanDistribution{}, "cpan-distribution"),
+	jsonNames(pkg.CpanUnpackedRelease{}, "cpan-unpacked-release"),
 	jsonNames(pkg.DartPubspecLockEntry{}, "dart-pubspec-lock-entry", "DartPubMetadata"),
 	jsonNames(pkg.DartPubspec{}, "dart-pubspec"),
 	jsonNames(pkg.DenoLockEntry{}, "deno-lock-entry"),

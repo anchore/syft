@@ -3,10 +3,12 @@ package cpegenerate
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -145,8 +147,14 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 		return nil
 	}
 
-	vendors := candidateVendors(p)
-	products := candidateProducts(p)
+	// real CPE fields are short, and every byte of a field is paid once per generated CPE (key building and regex
+	// validation), so a hostile name or version is not worth generating candidates for at all.
+	if len(p.Name) > maxCandidateFieldLength || len(p.Version) > maxCandidateFieldLength {
+		return nil
+	}
+
+	vendors := boundCandidates(candidateVendors(p))
+	products := boundCandidates(candidateProducts(p))
 	targetSWs := candidateTargetSw(p)
 	if len(products) == 0 {
 		return nil
@@ -183,12 +191,42 @@ func FromPackageAttributes(p pkg.Package) []cpe.CPE {
 	return result
 }
 
+// maxCandidateFieldLength bounds the name, version, and each vendor and product candidate that reaches the
+// cross-product in FromPackageAttributes. Real values are well under this.
+const maxCandidateFieldLength = 512
+
+// maxCandidates bounds how many vendor and product candidates each feed the cross-product in FromPackageAttributes,
+// so a single package yields at most maxCandidates² CPEs. Some sources add a candidate per input element with no bound
+// of their own (e.g. one vendor per java groupID segment, one product per .NET executable), and real packages produce
+// a dozen or so candidates at most.
+const maxCandidates = 64
+
+// boundCandidates drops candidates longer than maxCandidateFieldLength and keeps at most maxCandidates of the rest.
+// Candidates are ordered shortest first (then lexically) so that truncation is deterministic and keeps the short,
+// generic values that tend to be real vendors and products.
+func boundCandidates(candidates []string) []string {
+	candidates = slices.DeleteFunc(candidates, func(c string) bool {
+		return len(c) > maxCandidateFieldLength
+	})
+	if len(candidates) <= maxCandidates {
+		return candidates
+	}
+	slices.SortFunc(candidates, func(a, b string) int {
+		return cmp.Or(cmp.Compare(len(a), len(b)), strings.Compare(a, b))
+	})
+	return candidates[:maxCandidates]
+}
+
 func candidateTargetSw(p pkg.Package) []string {
-	switch p.Type {
-	case pkg.WordpressPluginPkg:
+	switch {
+	case p.Type == pkg.WordpressPluginPkg:
 		return []string{"wordpress"}
-	case pkg.RustPkg:
+	case p.Type == pkg.RustPkg:
 		return []string{"rust"}
+	case p.Language == pkg.Perl:
+		// NVD records CPAN distributions with perl in target_sw, e.g.
+		// cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*
+		return []string{"perl"}
 	}
 
 	return []string{cpe.Any}
@@ -359,13 +397,19 @@ func addAllSubSelections(fields fieldCandidateSet) {
 	}
 }
 
+// maxSubSelections bounds how many prefixes generateSubSelections returns. Each prefix becomes a vendor candidate, so
+// without a bound a name with N separators yields O(N) vendors of O(N) length each (quadratic in time and memory).
+// Real package names rarely exceed a handful of segments.
+const maxSubSelections = 10
+
 // generateSubSelections attempts to split a field by hyphens and underscores and return a list of sensible sub-selections
-// that can be used as product or vendor candidates. E.g. jenkins-ci-tools -> [jenkins-ci-tools, jenkins-ci, jenkins].
+// that can be used as product or vendor candidates. E.g. jenkins-ci-tools -> [jenkins, jenkins-ci, jenkins-ci-tools].
+// At most maxSubSelections prefixes are returned, shortest first.
 func generateSubSelections(field string) (results []string) {
 	scanner := bufio.NewScanner(strings.NewReader(field))
 	scanner.Split(scanByHyphenOrUnderscore)
 	var lastToken uint8
-	for scanner.Scan() {
+	for len(results) < maxSubSelections && scanner.Scan() {
 		rawCandidate := scanner.Text()
 		if len(rawCandidate) == 0 {
 			break

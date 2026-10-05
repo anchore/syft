@@ -22,6 +22,12 @@ import (
 
 const modinfoName = ".modinfo"
 
+// maxDecompressedModuleSize bounds what a compressed kernel module may expand to. The compressed size
+// is bounded by the file in the image, what it expands to is not, and it lands in a temp file, so the
+// exposure is disk. Real modules are tens of MB. This bounds one spill, not the process: peak disk is
+// this times cataloger parallelism (NumCPU*4 by default, unbounded when --parallelism is negative).
+const maxDecompressedModuleSize = 256 * 1024 * 1024
+
 func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	unionReader, err := unionreader.GetUnionReader(reader)
 	if err != nil {
@@ -61,6 +67,11 @@ func parseLinuxKernelModuleFile(ctx context.Context, _ file.Resolver, _ *generic
 // the returned reader and must Close it; the underlying reader (r) is not closed by Close on the
 // passthrough path — its lifecycle is the caller's.
 func decompressedModuleReader(ctx context.Context, path string, r unionreader.UnionReader) (unionreader.UnionReader, error) {
+	return decompressedModuleReaderWithLimit(ctx, path, r, maxDecompressedModuleSize)
+}
+
+// decompressedModuleReaderWithLimit takes the bound as a parameter so tests can exercise it cheaply.
+func decompressedModuleReaderWithLimit(ctx context.Context, path string, r unionreader.UnionReader, maxDecompressed int64) (unionreader.UnionReader, error) {
 	// fast path: plain .ko files don't need format sniffing
 	if strings.HasSuffix(path, ".ko") {
 		return &nopCloseUnionReader{UnionReader: r}, nil
@@ -97,9 +108,16 @@ func decompressedModuleReader(ctx context.Context, path string, r unionreader.Un
 	}
 	tfr := &tempFileUnionReader{File: tempFile, cleanup: fileCleanup}
 
-	if _, err := io.Copy(tempFile, rc); err != nil {
+	// read one past the cap so hitting it is distinguishable from a module that ends there; truncating
+	// would hand the parser a partial ELF, which reads as corrupt rather than rejected.
+	written, err := io.Copy(tempFile, io.LimitReader(rc, maxDecompressed+1))
+	if err != nil {
 		_ = tfr.Close()
 		return nil, fmt.Errorf("unable to write decompressed kernel module: %w", err)
+	}
+	if written > maxDecompressed {
+		_ = tfr.Close()
+		return nil, fmt.Errorf("decompressed kernel module is larger than the max allowed size (%d bytes)", maxDecompressed)
 	}
 	if _, err := tempFile.Seek(0, io.SeekStart); err != nil {
 		_ = tfr.Close()

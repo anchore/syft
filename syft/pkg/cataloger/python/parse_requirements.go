@@ -1,7 +1,6 @@
 package python
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"regexp"
@@ -105,7 +104,7 @@ func (rp requirementsParser) parseRequirementsTxt(ctx context.Context, _ file.Re
 	var errs error
 	var packages []pkg.Package
 
-	scanner := bufio.NewScanner(reader)
+	scanner := internal.NewLineScanner(reader)
 	var lastLine string
 	for scanner.Scan() {
 		line := trimRequirementsTxtLine(scanner.Text())
@@ -214,9 +213,8 @@ func guessVersion(constraint string) string {
 	constraints := strings.Split(constraint, ",")
 	filteredVersions := map[string]struct{}{}
 	for _, part := range constraints {
-		if strings.Contains(part, "!=") {
-			parts := strings.Split(part, "!=")
-			filteredVersions[strings.TrimSpace(parts[1])] = struct{}{}
+		if _, excluded, ok := strings.Cut(part, "!="); ok {
+			filteredVersions[strings.TrimSpace(excluded)] = struct{}{}
 		}
 	}
 
@@ -236,9 +234,8 @@ func guessVersion(constraint string) string {
 			continue
 		}
 
-		if strings.Contains(part, "==") {
-			parts := strings.Split(part, "==")
-			return strings.TrimSpace(parts[1])
+		if _, pinned, ok := strings.Cut(part, "=="); ok {
+			return strings.TrimSpace(pinned)
 		}
 
 		if closestVersion == nil || version.GreaterThan(*closestVersion) {
