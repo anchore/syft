@@ -238,17 +238,18 @@ func parseBunPackageIdentifier(identifier string) (name, version string, ok bool
 }
 
 func findDevOnlyBunPkgs(bunPkgs []bunPackage, prodDeps map[string]string, devDeps map[string]bool) map[string]bool {
-	// Build a simplified dependency graph
-	depGraph := make(map[string][]string)
+	// Build a simplified dependency graph combining dependencies across all instances of each package
+	depGraph := make(map[string]map[string]struct{})
 	for _, p := range bunPkgs {
-		var deps []string
+		if depGraph[p.Name] == nil {
+			depGraph[p.Name] = make(map[string]struct{})
+		}
 		for depName := range p.Metadata.Dependencies {
-			deps = append(deps, depName)
+			depGraph[p.Name][depName] = struct{}{}
 		}
 		for depName := range p.Metadata.OptionalDependencies {
-			deps = append(deps, depName)
+			depGraph[p.Name][depName] = struct{}{}
 		}
-		depGraph[p.Name] = deps
 	}
 
 	// Find all packages reachable from production dependencies
@@ -259,7 +260,7 @@ func findDevOnlyBunPkgs(bunPkgs []bunPackage, prodDeps map[string]string, devDep
 			return
 		}
 		prodReachable[name] = true
-		for _, dep := range depGraph[name] {
+		for dep := range depGraph[name] {
 			visitProd(dep)
 		}
 	}
@@ -276,7 +277,7 @@ func findDevOnlyBunPkgs(bunPkgs []bunPackage, prodDeps map[string]string, devDep
 			return
 		}
 		devReachable[name] = true
-		for _, dep := range depGraph[name] {
+		for dep := range depGraph[name] {
 			visitDev(dep)
 		}
 	}
