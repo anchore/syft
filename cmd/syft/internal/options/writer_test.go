@@ -202,9 +202,9 @@ func Test_newSBOMMultiWriter(t *testing.T) {
 			if test.err {
 				assert.Error(t, err)
 				return
-			} else {
-				assert.NoError(t, err)
 			}
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = mw.Close() })
 
 			assert.Len(t, mw.writers, len(test.expected))
 

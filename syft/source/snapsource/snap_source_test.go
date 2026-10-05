@@ -30,6 +30,10 @@ import (
 )
 
 func TestNewFromLocal(t *testing.T) {
+	// the request is resolved with filepath.Abs, which adds a volume on windows
+	localSnap, err := filepath.Abs("/test/local.snap")
+	require.NoError(t, err)
+
 	tests := []struct {
 		name        string
 		cfg         Config
@@ -40,13 +44,13 @@ func TestNewFromLocal(t *testing.T) {
 		{
 			name: "local file exists",
 			cfg: Config{
-				Request:          "/test/local.snap",
+				Request:          localSnap,
 				DigestAlgorithms: []crypto.Hash{crypto.SHA256},
 			},
 			setup: func(fs afero.Fs) {
-				require.NoError(t, createMockSquashfsFile(fs, "/test/local.snap"))
+				require.NoError(t, createMockSquashfsFile(fs, localSnap))
 			},
-			wantRequest: "/test/local.snap",
+			wantRequest: localSnap,
 		},
 		{
 			name: "resolve home dir exists",
@@ -65,18 +69,18 @@ func TestNewFromLocal(t *testing.T) {
 		{
 			name: "local file with architecture specified",
 			cfg: Config{
-				Request: "/test/local.snap",
+				Request: localSnap,
 				Platform: &image.Platform{
 					Architecture: "arm64",
 				},
 			},
 			setup: func(fs afero.Fs) {
-				require.NoError(t, createMockSquashfsFile(fs, "/test/local.snap"))
+				require.NoError(t, createMockSquashfsFile(fs, localSnap))
 			},
 			wantErr: func(t assert.TestingT, err error, msgAndArgs ...any) bool {
 				return assert.Error(t, err, msgAndArgs...) && assert.Contains(t, err.Error(), "architecture cannot be specified for local snap files", msgAndArgs...)
 			},
-			wantRequest: "/test/local.snap",
+			wantRequest: localSnap,
 		},
 	}
 	for _, tt := range tests {
@@ -288,6 +292,8 @@ func writeSquashfs(t *testing.T, manifest string) string {
 		require.NoError(t, err)
 		_, err = w.Write([]byte(contents))
 		require.NoError(t, err)
+		// close before finalizing: windows directory listings can report a stale (zero) size for open files
+		require.NoError(t, w.Close())
 	}
 
 	// note: go-diskfs wants paths relative to the image root, without a leading slash

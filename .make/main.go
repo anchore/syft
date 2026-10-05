@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -17,6 +16,12 @@ import (
 	"github.com/anchore/go-make/tasks/gotest"
 )
 
+// buildTags must match the linux build in .goreleaser.yaml so tests and lint compile the same code that ships
+// (containers_image_openpgp compiles in stereoscope's real containers-storage provider instead of its stub).
+// exclude_graphdriver_btrfs drops the cgo-only btrfs driver, which needs libbtrfs headers whenever cgo is on (e.g.
+// under -race); release builds are CGO_ENABLED=0 and never include it anyway.
+const buildTags = "containers_image_openpgp,exclude_graphdriver_btrfs"
+
 func main() {
 	Makefile(
 		// shared anchore tasks
@@ -30,6 +35,7 @@ func main() {
 			gotest.Name("unit"),
 			gotest.ExcludeGlob("**/test/**"),
 			gotest.CoverageThreshold(62),
+			gotest.Tags(buildTags),
 			race(),
 		),
 
@@ -53,7 +59,7 @@ func main() {
 					raceFlag = " -race"
 				}
 				Run(
-					"go test -count=1 -timeout=30m"+raceFlag+" ./cmd/syft/internal/test/integration/...",
+					"go test -count=1 -timeout=30m -tags="+buildTags+raceFlag+" ./cmd/syft/internal/test/integration/...",
 					run.Env("GODEBUG", "dontfreezetheworld=1"),
 				)
 			},
@@ -67,7 +73,7 @@ func main() {
 					Log("race detector disabled (RACE=false); skipping race smoke")
 					return
 				}
-				Run("go run -race cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2")
+				Run("go run -race -tags="+buildTags+" cmd/syft/main.go anchore/test_images:grype-quality-dotnet-69f15d2")
 			},
 		},
 
@@ -97,19 +103,20 @@ func main() {
 			},
 		},
 
-		// windows unit tests: deliberately not hooked into "test" (no RunsOn). The full unit suite leans on
-		// linux docker fixture images and posix-only assumptions, so this covers the packages that own
-		// host path handling (where windows bugs live) and skips the tests that need docker image fixtures.
-		// ponytail: curated package list, widen it as more of the suite is made windows-safe.
+		// containers-storage tests: build a fixture image with BUILDER (podman or buildah) into an isolated local store
+		// and scan it with the snapshot binary. Linux only, and not hooked into "test" since it needs the builder installed.
 		Task{
-			Name:        "unit:windows",
-			Description: "run the windows-relevant subset of unit tests",
+			Name:        "containers-storage-test",
+			Description: "Run containers-storage tests (BUILDER=podman|buildah)",
 			Run: func() {
-				Run("go test -count=1"+
-					` -skip "Image|Squash|AllLayers|MixFileTypes|GivenCoordinates"`+
-					" ./syft/internal/windows/... ./syft/internal/fileresolver/... ./syft/source/directorysource/... ./syft/source/filesource/..."+
-					" ./syft/file ./syft/file/cataloger/filedigest/... ./syft/file/cataloger/filecontent/...",
-					run.Stdout(os.Stderr),
+				bin := snapshotBinPath()
+				if !file.Exists(bin) {
+					Log("snapshot binary not found at %s; building single-target snapshot", bin)
+					Run("make snapshot:single-target")
+				}
+				Run(
+					"bash test/containers-storage/source-test.sh "+config.Env("BUILDER", "podman"),
+					run.Env("SYFT_BINARY_LOCATION", bin),
 				)
 			},
 		},
@@ -157,7 +164,7 @@ func main() {
 		Task{
 			Name:         "unit:syft",
 			RunsOn:       lang.List("unit"),
-			Dependencies: Deps("refresh-fixtures"),
+			Dependencies: unitFixtureDeps(),
 		},
 		Task{
 			Name:   "clean:syft",
@@ -183,6 +190,15 @@ func raceEnabled() bool {
 		return enabled
 	}
 	return config.CI && !config.Windows
+}
+
+// unitFixtureDeps skips the fixture cache refresh on windows: it needs binny-managed tools (binny ships
+// no windows release) and linux docker, so fixture-backed tests there have to skip themselves instead.
+func unitFixtureDeps() []string {
+	if config.Windows {
+		return nil
+	}
+	return Deps("refresh-fixtures")
 }
 
 // race applies raceEnabled() to a gotest suite. gotest exposes no functional option

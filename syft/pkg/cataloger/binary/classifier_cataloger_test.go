@@ -17,6 +17,7 @@ import (
 
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -460,8 +461,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.12.5",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.12.5",
+				Type:      "cpan",
+				PURL:      "pkg:cpan/perl@5.12.5",
 				Locations: locations("perl"),
 				Metadata:  metadata("perl-binary"),
 			},
@@ -473,8 +474,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.20.0",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.20.0",
+				Type:      "cpan",
+				PURL:      "pkg:cpan/perl@5.20.0",
 				Locations: locations("perl"),
 				Metadata:  metadata("perl-binary"),
 			},
@@ -486,8 +487,8 @@ func Test_Cataloger_PositiveCases(t *testing.T) {
 			expected: pkg.Package{
 				Name:      "perl",
 				Version:   "5.37.8",
-				Type:      "binary",
-				PURL:      "pkg:generic/perl@5.37.8",
+				Type:      "cpan",
+				PURL:      "pkg:cpan/perl@5.37.8",
 				Locations: locations("perl"),
 				Metadata:  metadata("perl-binary"),
 			},
@@ -3169,6 +3170,7 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureImage)
 			src := stereoscopesource.New(img, stereoscopesource.ImageConfig{
 				Reference: test.fixtureImage,
@@ -3183,6 +3185,58 @@ func Test_Cataloger_DefaultClassifiers_PositiveCases_Image(t *testing.T) {
 			for _, p := range packages {
 				assertPackagesAreEqual(t, test.expected, p)
 			}
+		})
+	}
+}
+
+// Test_Cataloger_PackageTypes covers what assertPackagesAreEqual deliberately ignores: the package type and CPEs.
+// The perl interpreter is reported as cpan so it lines up with the rest of the CPAN ecosystem, everything else
+// keeps the default binary type.
+func Test_Cataloger_PackageTypes(t *testing.T) {
+	tests := []struct {
+		logicalFixture string
+		wantType       pkg.Type
+		wantPURL       string
+		wantCPEs       []string
+	}{
+		{
+			logicalFixture: "perl/5.20.0/linux-amd64",
+			wantType:       pkg.CpanPkg,
+			wantPURL:       "pkg:cpan/perl@5.20.0",
+			wantCPEs:       []string{"cpe:2.3:a:perl:perl:5.20.0:*:*:*:*:*:*:*"},
+		},
+		{
+			logicalFixture: "haproxy/1.5.14/linux-amd64",
+			wantType:       pkg.BinaryPkg,
+			wantPURL:       "pkg:generic/haproxy@1.5.14",
+			wantCPEs:       []string{"cpe:2.3:a:haproxy:haproxy:1.5.14:*:*:*:*:*:*:*"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.logicalFixture, func(t *testing.T) {
+			c := NewClassifierCataloger(DefaultClassifierCatalogerConfig())
+
+			path := testutil.SnippetOrBinary(t, test.logicalFixture, *mustUseOriginalBinaries)
+
+			src, err := directorysource.NewFromPath(path)
+			require.NoError(t, err)
+
+			resolver, err := src.FileResolver(source.SquashedScope)
+			require.NoError(t, err)
+
+			packages, _, err := c.Catalog(context.Background(), resolver)
+			require.NoError(t, err)
+			require.Len(t, packages, 1)
+
+			var cpes []string
+			for _, c := range packages[0].CPEs {
+				cpes = append(cpes, c.Attributes.BindToFmtString())
+			}
+
+			assert.Equal(t, test.wantType, packages[0].Type)
+			assert.Equal(t, test.wantPURL, packages[0].PURL)
+			assert.Equal(t, test.wantCPEs, cpes)
 		})
 	}
 }

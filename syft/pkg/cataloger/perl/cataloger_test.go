@@ -8,6 +8,7 @@ import (
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
 	"github.com/anchore/syft/internal/packagemetadata"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -523,6 +524,7 @@ func TestCpanCatalogers_metadataTypes(t *testing.T) {
 func imageResolver(t *testing.T, fixture string) file.Resolver {
 	t.Helper()
 
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", fixture)
 	resolver, err := stereoscopesource.New(img, stereoscopesource.ImageConfig{Reference: fixture}).
 		FileResolver(source.SquashedScope)

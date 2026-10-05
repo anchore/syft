@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 
@@ -67,7 +67,7 @@ func parseComponentsJSON(_ context.Context, _ file.Resolver, _ *generic.Environm
 			Revision:     revision,
 			Architecture: entry.Arch,
 			Distro:       entry.Distro,
-			Path:         filepath.Join(filepath.Dir(reader.RealPath), name),
+			Path:         path.Join(path.Dir(reader.RealPath), name),
 		}
 
 		p := pkg.Package{

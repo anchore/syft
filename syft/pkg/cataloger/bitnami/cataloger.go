@@ -5,7 +5,7 @@ package bitnami
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/anchore/syft/internal/log"
@@ -73,7 +73,7 @@ func parseSBOM(_ context.Context, resolver file.Resolver, _ *generic.Environment
 
 		// Bitnami packages reported in a SPDX file are shipped under the same directory
 		// as the SPDX file itself.
-		metadata.Path = filepath.Dir(reader.RealPath)
+		metadata.Path = path.Dir(reader.RealPath)
 		if p.ID() != mainPkgID {
 			metadata.Files = packageFiles(s.Relationships, p, metadata.Path)
 			secondaryPkgsFiles = append(secondaryPkgsFiles, metadata.Files...)

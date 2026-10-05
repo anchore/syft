@@ -61,6 +61,18 @@ syft <image> -o cyclonedx-json
 syft <image> -o spdx-json=./spdx.json -o cyclonedx-json=./cdx.json
 ```
 
+### Local containers-storage images
+
+On Linux, syft can scan images from a local containers-storage store (e.g. built with Buildah or Podman) when asked explicitly; plain image references never look there:
+
+```bash
+syft --from containers-storage localhost/myimage:latest
+
+# rootless stores must be read from inside the builder's user namespace
+podman unshare syft --from containers-storage localhost/myimage:latest
+```
+
+This is included in the Linux release binaries. When building from source, add `-tags containers_image_openpgp,exclude_graphdriver_btrfs`.
 
 > [!TIP]
 > **Check out the [Getting Started guide](https://oss.anchore.com/docs/guides/sbom/getting-started/)** to explore all of the capabilities and features.
