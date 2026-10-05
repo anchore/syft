@@ -19,6 +19,8 @@ func createTestFS(t *testing.T) filesystem.FileSystem {
 	filename := "test.squashfs"
 	f, err := os.Create(filepath.Join(dir, filename))
 	require.NoError(t, err)
+	// windows can't remove the temp dir while the backing file is open
+	t.Cleanup(func() { _ = f.Close() })
 
 	b := file.New(f, false)
 	fsys, err := squashfs.Create(b, 0, 0, 4096)

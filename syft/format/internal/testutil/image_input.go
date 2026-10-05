@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/stereoscope/pkg/filetree"
 	"github.com/anchore/stereoscope/pkg/image"
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/cpe"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/linux"
@@ -35,6 +36,7 @@ func ImageInput(t testing.TB, testImage string, options ...ImageOption) sbom.SBO
 	case true:
 		img = imagetest.GetGoldenFixtureImage(t, testImage)
 	default:
+		testutils.SkipWithoutLinuxContainers(t)
 		img = imagetest.GetFixtureImage(t, "docker-archive", testImage)
 	}
 

@@ -2,10 +2,11 @@ package options
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -20,7 +21,10 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
-var _ sbom.Writer = (*sbomMultiWriter)(nil)
+var _ interface {
+	io.Closer
+	sbom.Writer
+} = (*sbomMultiWriter)(nil)
 
 var _ interface {
 	io.Closer
@@ -164,6 +168,12 @@ func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, e
 	}
 
 	out := &sbomMultiWriter{}
+	defer func() {
+		// don't leak the files already opened when a later output fails
+		if err != nil {
+			_ = out.Close()
+		}
+	}()
 
 	for _, option := range options {
 		switch len(option.Path) {
@@ -172,8 +182,8 @@ func newSBOMMultiWriter(options ...sbomWriterDescription) (_ *sbomMultiWriter, e
 				format: option.Format,
 			})
 		default:
-			// create any missing subdirectories
-			dir := path.Dir(option.Path)
+			// create any missing subdirectories (option.Path is a host path, so this must be filepath)
+			dir := filepath.Dir(option.Path)
 			if dir != "" {
 				s, err := os.Stat(dir)
 				if err != nil {
@@ -205,6 +215,20 @@ func (m *sbomMultiWriter) Write(s sbom.SBOM) (errs error) {
 		err := w.Write(s)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("unable to write SBOM: %w", err))
+		}
+	}
+	return errs
+}
+
+// Close releases any files held by the writers. Write already closes each file it writes to, so this matters
+// when the SBOM is never written (e.g. an error after the writer was created).
+func (m *sbomMultiWriter) Close() error {
+	var errs error
+	for _, w := range m.writers {
+		if c, ok := w.(io.Closer); ok {
+			if err := c.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
+				errs = multierror.Append(errs, err)
+			}
 		}
 	}
 	return errs
