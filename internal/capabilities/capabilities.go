@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/scylladb/go-set/strset"
 	"go.yaml.in/yaml/v3"
@@ -21,16 +22,23 @@ var appconfigYAML []byte
 
 var catalogerFiles *embed.FS
 
+var loadDocumentOnce = sync.OnceValues(loadDocument)
+
 func RegisterCatalogerFiles(f embed.FS) {
 	catalogerFiles = &f
 }
 
-// LoadDocument loads and returns the complete document including configs and app-configs
+// LoadDocument loads and returns the complete document including configs and app-configs.
+// The returned document is shared and must not be modified.
 func LoadDocument() (*Document, error) {
 	if catalogerFiles == nil {
 		return nil, fmt.Errorf("cataloger files not registered")
 	}
 
+	return loadDocumentOnce()
+}
+
+func loadDocument() (*Document, error) {
 	// parse application config
 	var appDoc struct {
 		Application []ApplicationConfigField `yaml:"application"`
