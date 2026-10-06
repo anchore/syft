@@ -13,6 +13,29 @@ import (
 	"github.com/anchore/syft/syft/pkg"
 )
 
+func TestDefaultPackageTaskFactoriesDescribeConstructedTasks(t *testing.T) {
+	cfg := DefaultCatalogingFactoryConfig()
+
+	for _, factory := range DefaultPackageTaskFactories() {
+		t.Run(factory.Name(), func(t *testing.T) {
+			packageFactory, ok := factory.(PackageFactory)
+			require.True(t, ok)
+
+			cataloger := packageFactory.Cataloger(cfg)
+			require.NotNil(t, cataloger)
+			assert.Equal(t, factory.Name(), cataloger.Name())
+
+			tsk := factory.Task(cfg)
+			require.NotNil(t, tsk)
+			assert.Equal(t, factory.Name(), tsk.Name())
+
+			selector, ok := tsk.(Selector)
+			require.True(t, ok)
+			assert.ElementsMatch(t, factory.Selectors(), selector.Selectors())
+		})
+	}
+}
+
 func Test_hasAuthoritativeCPE(t *testing.T) {
 	tests := []struct {
 		name string

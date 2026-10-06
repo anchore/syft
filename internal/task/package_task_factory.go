@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -20,16 +21,46 @@ import (
 	cpeutils "github.com/anchore/syft/syft/pkg/cataloger/common/cpe"
 )
 
-func newPackageTaskFactory(catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return NewPackageTask(cfg, catalogerFactory(cfg), tags...)
+// PackageFactory describes a package cataloger task and creates its cataloger.
+type PackageFactory interface {
+	Factory
+	Cataloger(CatalogingFactoryConfig) pkg.Cataloger
+}
+
+type packageFactory struct {
+	name             string
+	tags             []string
+	catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger
+}
+
+func newPackageTaskFactory(name string, catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) packageFactory {
+	return packageFactory{
+		name:             name,
+		tags:             slices.Clone(tags),
+		catalogerFactory: catalogerFactory,
 	}
 }
 
-func newSimplePackageTaskFactory(catalogerFactory func() pkg.Cataloger, tags ...string) factory {
-	return func(cfg CatalogingFactoryConfig) Task {
-		return NewPackageTask(cfg, catalogerFactory(), tags...)
-	}
+func newSimplePackageTaskFactory(name string, catalogerFactory func() pkg.Cataloger, tags ...string) packageFactory {
+	return newPackageTaskFactory(name, func(CatalogingFactoryConfig) pkg.Cataloger {
+		return catalogerFactory()
+	}, tags...)
+}
+
+func (f packageFactory) Name() string {
+	return f.name
+}
+
+func (f packageFactory) Selectors() []string {
+	return selectors(f.name, append(slices.Clone(f.tags), pkgcataloging.PackageTag)...)
+}
+
+func (f packageFactory) Cataloger(cfg CatalogingFactoryConfig) pkg.Cataloger {
+	return f.catalogerFactory(cfg)
+}
+
+func (f packageFactory) Task(cfg CatalogingFactoryConfig) Task {
+	return NewPackageTask(cfg, f.Cataloger(cfg), f.tags...)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
@@ -67,7 +98,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 
 		return err
 	}
-	tags = append(tags, pkgcataloging.PackageTag)
+	tags = append(slices.Clone(tags), pkgcataloging.PackageTag)
 
 	return NewTask(c.Name(), fn, tags...)
 }
