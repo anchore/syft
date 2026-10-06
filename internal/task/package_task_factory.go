@@ -60,12 +60,32 @@ func (f packageFactory) Cataloger(cfg CatalogingFactoryConfig) pkg.Cataloger {
 }
 
 func (f packageFactory) Task(cfg CatalogingFactoryConfig) Task {
-	return NewPackageTask(cfg, f.Cataloger(cfg), f.tags...)
+	return NewPackageTaskFromFactory(cfg, f.name, f.catalogerFactory, f.tags...)
 }
 
 // NewPackageTask creates a Task function for a generic pkg.Cataloger, honoring the common configuration options.
 func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string) Task {
+	if c == nil {
+		return nil
+	}
+
+	return NewPackageTaskFromFactory(cfg, c.Name(), func(CatalogingFactoryConfig) pkg.Cataloger {
+		return c
+	}, tags...)
+}
+
+// NewPackageTaskFromFactory creates a package task without constructing its cataloger.
+func NewPackageTaskFromFactory(cfg CatalogingFactoryConfig, name string, catalogerFactory func(CatalogingFactoryConfig) pkg.Cataloger, tags ...string) Task {
+	if catalogerFactory == nil {
+		return nil
+	}
+
 	fn := func(ctx context.Context, resolver file.Resolver, sbom sbomsync.Builder) error {
+		c := catalogerFactory(cfg)
+		if c == nil {
+			return nil
+		}
+
 		catalogerName := c.Name()
 		log.WithFields("name", catalogerName).Trace("starting package cataloger")
 
@@ -100,7 +120,7 @@ func NewPackageTask(cfg CatalogingFactoryConfig, c pkg.Cataloger, tags ...string
 	}
 	tags = append(slices.Clone(tags), pkgcataloging.PackageTag)
 
-	return NewTask(c.Name(), fn, tags...)
+	return NewTask(name, fn, tags...)
 }
 
 func finalizePkgCatalogerResults(cfg CatalogingFactoryConfig, resolver file.PathResolver, catalogerName string, pkgs []pkg.Package, relationships []artifact.Relationship) ([]pkg.Package, []artifact.Relationship) {

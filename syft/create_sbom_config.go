@@ -2,7 +2,6 @@ package syft
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/anchore/syft/syft/cataloging/filecataloging"
 	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/file"
+	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
 	"github.com/anchore/syft/syft/source"
 )
@@ -179,6 +179,16 @@ func (c *CreateSBOMConfig) WithCatalogers(catalogerRefs ...pkgcataloging.Catalog
 	return c
 }
 
+// CatalogerSelectionRequest returns the package cataloger selection request.
+func (c *CreateSBOMConfig) CatalogerSelectionRequest() cataloging.SelectionRequest {
+	return c.CatalogerSelection
+}
+
+// CatalogerTasks returns the package cataloger tasks available to this configuration.
+func (c *CreateSBOMConfig) CatalogerTasks() (task.CatalogerTasks, error) {
+	return c.catalogerTasks(c.catalogingFactoryConfig())
+}
+
 // makeTaskGroups considers the entire configuration and finalizes the set of tasks to be run. Tasks are run in
 // groups, where each task in a group can be run concurrently, while tasks in different groups must be run serially.
 // The final set of task groups is returned along with a cataloger manifest that describes the catalogers that were
@@ -256,15 +266,7 @@ func (c *CreateSBOMConfig) fileTasks(cfg task.CatalogingFactoryConfig) ([]task.T
 
 // selectTasks returns the set of tasks that should be run to catalog packages and files.
 func (c *CreateSBOMConfig) selectTasks(src source.Description) ([]task.Task, []task.Task, *task.Selection, error) {
-	cfg := task.CatalogingFactoryConfig{
-		SearchConfig:         c.Search,
-		RelationshipsConfig:  c.Relationships,
-		DataGenerationConfig: c.DataGeneration,
-		PackagesConfig:       c.Packages,
-		LicenseConfig:        c.Licenses,
-		ComplianceConfig:     c.Compliance,
-		FilesConfig:          c.Files,
-	}
+	cfg := c.catalogingFactoryConfig()
 
 	persistentPkgTasks, selectablePkgTasks, err := c.allPackageTasks(cfg)
 	if err != nil {
@@ -368,40 +370,78 @@ func finalTaskSelectionRequest(req cataloging.SelectionRequest, src source.Descr
 }
 
 func (c *CreateSBOMConfig) allPackageTasks(cfg task.CatalogingFactoryConfig) ([]task.Task, []task.Task, error) {
-	persistentPackageTasks, selectablePackageTasks, err := c.userPackageTasks(cfg)
+	catalogerTasks, err := c.catalogerTasks(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tsks, err := c.packageTaskFactories.Tasks(cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to create package cataloger tasks: %w", err)
+	var persistentPackageTasks task.CatalogerTasks
+	var selectablePackageTasks task.CatalogerTasks
+	for _, catalogerTask := range catalogerTasks {
+		if catalogerTask.AlwaysEnabled() {
+			persistentPackageTasks = append(persistentPackageTasks, catalogerTask)
+			continue
+		}
+		selectablePackageTasks = append(selectablePackageTasks, catalogerTask)
 	}
 
-	return persistentPackageTasks, append(tsks, selectablePackageTasks...), nil
+	return packageTasks(persistentPackageTasks, cfg), packageTasks(selectablePackageTasks, cfg), nil
 }
 
-func (c *CreateSBOMConfig) userPackageTasks(cfg task.CatalogingFactoryConfig) ([]task.Task, []task.Task, error) {
-	var (
-		persistentPackageTasks []task.Task
-		selectablePackageTasks []task.Task
-	)
+func (c *CreateSBOMConfig) catalogingFactoryConfig() task.CatalogingFactoryConfig {
+	return task.CatalogingFactoryConfig{
+		SearchConfig:         c.Search,
+		RelationshipsConfig:  c.Relationships,
+		DataGenerationConfig: c.DataGeneration,
+		PackagesConfig:       c.Packages,
+		LicenseConfig:        c.Licenses,
+		ComplianceConfig:     c.Compliance,
+		FilesConfig:          c.Files,
+	}
+}
+
+func (c *CreateSBOMConfig) catalogerTasks(cfg task.CatalogingFactoryConfig) (task.CatalogerTasks, error) {
+	var catalogerTasks task.CatalogerTasks
+	for _, factory := range c.packageTaskFactories {
+		packageFactory, ok := factory.(task.PackageFactory)
+		if !ok {
+			continue
+		}
+
+		name := packageFactory.Name()
+		factory := packageFactory
+		catalogerTasks = append(catalogerTasks, task.NewCatalogerTaskFactory(name, func() pkg.Cataloger {
+			return factory.Cataloger(cfg)
+		}, packageFactory.Selectors()...))
+	}
 
 	for _, catalogerRef := range c.packageCatalogerReferences {
 		if catalogerRef.Cataloger == nil {
-			return nil, nil, errors.New("provided cataloger reference without a cataloger")
+			return nil, fmt.Errorf("provided cataloger reference without a cataloger")
 		}
+
+		catalogerTask := task.NewCatalogerTask(catalogerRef.Cataloger, catalogerRef.Tags...)
 		if catalogerRef.AlwaysEnabled {
-			persistentPackageTasks = append(persistentPackageTasks, task.NewPackageTask(cfg, catalogerRef.Cataloger, catalogerRef.Tags...))
-			continue
+			catalogerTask = catalogerTask.WithAlwaysEnabled()
 		}
-		if len(catalogerRef.Tags) == 0 {
-			return nil, nil, errors.New("provided cataloger reference without tags")
+		if !catalogerRef.AlwaysEnabled && len(catalogerRef.Tags) == 0 {
+			return nil, fmt.Errorf("provided cataloger reference without tags")
 		}
-		selectablePackageTasks = append(selectablePackageTasks, task.NewPackageTask(cfg, catalogerRef.Cataloger, catalogerRef.Tags...))
+		catalogerTasks = append(catalogerTasks, catalogerTask)
 	}
 
-	return persistentPackageTasks, selectablePackageTasks, nil
+	if err := catalogerTasks.Validate(); err != nil {
+		return nil, err
+	}
+	return catalogerTasks, nil
+}
+
+func packageTasks(catalogerTasks task.CatalogerTasks, cfg task.CatalogingFactoryConfig) []task.Task {
+	result := make([]task.Task, 0, len(catalogerTasks))
+	for _, catalogerTask := range catalogerTasks {
+		result = append(result, task.NewPackageTask(cfg, catalogerTask, catalogerTask.Tags()...))
+	}
+	return result
 }
 
 // scopeTasks returns the set of tasks that should be run to generate additional scope information

@@ -36,6 +36,20 @@ func TestDefaultPackageTaskFactoriesDescribeConstructedTasks(t *testing.T) {
 	}
 }
 
+func TestPackageFactoryTaskDoesNotConstructCataloger(t *testing.T) {
+	constructed := 0
+	factory := newPackageTaskFactory("test-cataloger", func(CatalogingFactoryConfig) pkg.Cataloger {
+		constructed++
+		return nil
+	})
+
+	tsk := factory.Task(DefaultCatalogingFactoryConfig())
+
+	require.NotNil(t, tsk)
+	assert.Equal(t, "test-cataloger", tsk.Name())
+	assert.Zero(t, constructed)
+}
+
 func Test_hasAuthoritativeCPE(t *testing.T) {
 	tests := []struct {
 		name string
