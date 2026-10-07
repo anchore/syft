@@ -41,6 +41,10 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 				stereoscope.SetBus(state.Bus)
 				bus.Set(state.Bus)
 
+				// reset the redact store from a previous command execution before wiring the new one. The store is
+				// process-global, and cli.Command() may be invoked more than once in the same process (e.g. when
+				// syft is embedded as a library); without the reset the second redact.Set panics.
+				redact.Reset()
 				redact.Set(state.RedactStore)
 
 				log.Set(state.Logger)

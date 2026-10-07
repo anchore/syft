@@ -13,6 +13,15 @@ func Set(s redact.Store) {
 	store = s
 }
 
+// Reset clears the global redaction store. It is meant to be called at the
+// start of a new command execution, so that the store of a previous run is
+// never reused and a fresh store can be Set again. Without it, invoking the
+// CLI more than once in the same process (e.g. syft embedded as a library)
+// panics on the second redact.Set call.
+func Reset() {
+	store = nil
+}
+
 func Get() redact.Store {
 	return store
 }
