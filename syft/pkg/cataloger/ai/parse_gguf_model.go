@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"runtime/debug"
 	"sort"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	gguf_parser "github.com/gpustack/gguf-parser-go"
 
 	"github.com/anchore/syft/internal"
+	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/internal/tmpdir"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -52,9 +54,7 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	}
 
 	// Parse using gguf-parser-go with options to skip unnecessary data
-	ggufFile, err := gguf_parser.ParseGGUFFile(tempPath,
-		gguf_parser.SkipLargeMetadata(),
-	)
+	ggufFile, err := parseGGUFFileSafely(tempPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse GGUF file: %w", err)
 	}
@@ -97,6 +97,30 @@ func parseGGUFModel(ctx context.Context, _ file.Resolver, _ *generic.Environment
 	)
 
 	return []pkg.Package{p}, nil, nil
+}
+
+// parseGGUFFileSafely wraps gguf_parser.ParseGGUFFile, which derives tensor sizes from
+// header values without validating them and panics on arithmetic overflow rather than
+// returning an error - "uint64 overflow in Bytes stride" on a file whose header claims an
+// implausible dimension. The header comes from an arbitrary file on disk, so that is input
+// to reject, not a condition to crash the cataloger over.
+func parseGGUFFileSafely(path string) (parsed *gguf_parser.GGUFFile, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.WithFields("path", path, "panic", r).Debug("recovered from panic while parsing GGUF file")
+			log.Tracef("GGUF parse panic stack:\n%s", debug.Stack())
+			parsed, err = nil, fmt.Errorf("recovered from panic while parsing GGUF file: %v", r)
+		}
+	}()
+
+	return parseGGUFFile(path)
+}
+
+// parseGGUFFile is the real parse, kept as a variable so the recover above can be
+// exercised: no fixture can reliably provoke an overflow panic from the library, and an
+// untested recover is one that quietly stops recovering.
+var parseGGUFFile = func(path string) (*gguf_parser.GGUFFile, error) {
+	return gguf_parser.ParseGGUFFile(path, gguf_parser.SkipLargeMetadata())
 }
 
 // computeKVMetadataHash computes a stable hash of the sanitized KV metadata for use as a global identifier
