@@ -173,7 +173,7 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, []string,
 				return nil, nil, fmt.Errorf("no package entries found in control file")
 			}
 			entry := pkg.DpkgArchiveEntry(entries[0].toDpkgEntry())
-			licenses = normalizeControlLicenses(entries[0].License)
+			licenses = declaredLicenseValues(entries[0].License)
 			metadata = &entry
 		case "md5sums":
 			// parseDpkgMD5Info streams via bufio.Scanner and reports its own clipping/scan errors
@@ -209,34 +209,6 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, []string,
 	// a clipped or unreadable file listing leaves the package usable, so hand both back and let the
 	// caller decide
 	return metadata, licenses, listingErr
-}
-
-func normalizeControlLicenses(rawLicense string) []string {
-	parts := strings.Split(rawLicense, "&")
-	licenses := make([]string, 0, len(parts))
-
-	for _, part := range parts {
-		license := strings.TrimSpace(part)
-		if license == "" {
-			continue
-		}
-
-		if strings.HasPrefix(license, "(") && strings.HasSuffix(license, ")") {
-			license = strings.TrimSpace(strings.TrimPrefix(strings.TrimSuffix(license, ")"), "("))
-		}
-
-		if strings.Contains(license, "|") {
-			alternatives := strings.Split(license, "|")
-			for i := range alternatives {
-				alternatives[i] = strings.TrimSpace(alternatives[i])
-			}
-			license = strings.Join(alternatives, " or ")
-		}
-
-		licenses = append(licenses, license)
-	}
-
-	return licenses
 }
 
 func newValidatedArReader(reader io.ReadCloser) (io.ReadCloser, error) {

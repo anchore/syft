@@ -429,7 +429,7 @@ func Test_decompressionStream_failsEarlyInsteadOfBuffering(t *testing.T) {
 		"a bounded stream must stop at the cap, not buffer the whole member and check afterwards")
 }
 
-func TestProcessControlTar_NormalizesLicenseList(t *testing.T) {
+func TestProcessControlTar_DeclaredLicense(t *testing.T) {
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
@@ -441,5 +441,5 @@ func TestProcessControlTar_NormalizesLicenseList(t *testing.T) {
 	metadata, licenses, err := processControlTar(io.NopCloser(bytes.NewReader(buf.Bytes())))
 	require.NoError(t, err)
 	require.NotNil(t, metadata)
-	assert.Equal(t, []string{"MIT", "BSD-3-Clause or Apache-2.0", "GPL-2.0-or-later"}, licenses)
+	assert.Equal(t, []string{"MIT AND (BSD-3-Clause OR Apache-2.0) AND (GPL-2.0-or-later)"}, licenses)
 }

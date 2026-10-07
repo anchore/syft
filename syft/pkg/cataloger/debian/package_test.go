@@ -3,6 +3,7 @@ package debian
 import (
 	"context"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -144,6 +145,36 @@ func Test_extractDeclaredLicenses(t *testing.T) {
 			name:     "non-expression space-separated list is split",
 			raw:      "GPL-2.0 BSD-3-Clause",
 			expected: []string{"GPL-2.0", "BSD-3-Clause"},
+		},
+		{
+			name:     "bitbake operators become an SPDX expression",
+			raw:      "MIT & (BSD-3-Clause | Apache-2.0) & ( GPL-2.0-or-later )",
+			expected: []string{"MIT AND (BSD-3-Clause OR Apache-2.0) AND (GPL-2.0-or-later)"},
+		},
+		{
+			name:     "bitbake grouping is preserved rather than split",
+			raw:      "(MIT & BSD-3-Clause) | Apache-2.0",
+			expected: []string{"(MIT AND BSD-3-Clause) OR Apache-2.0"},
+		},
+		{
+			name:     "parenthesized alternatives are preserved",
+			raw:      "(MIT) | (Apache-2.0)",
+			expected: []string{"(MIT) OR (Apache-2.0)"},
+		},
+		{
+			name:     "non-SPDX names drop operators and grouping",
+			raw:      "GPLv2+ & (LGPLv2.1 | BSD) & GPLv2+",
+			expected: []string{"GPLv2+", "LGPLv2.1", "BSD"},
+		},
+		{
+			name:     "oversized field is ignored",
+			raw:      strings.Repeat("MIT & ", maxDeclaredLicenseLen),
+			expected: nil,
+		},
+		{
+			name:     "deeply nested parens are ignored",
+			raw:      strings.Repeat("(", maxDeclaredLicenseLen) + "MIT" + strings.Repeat(")", maxDeclaredLicenseLen),
+			expected: nil,
 		},
 	}
 
