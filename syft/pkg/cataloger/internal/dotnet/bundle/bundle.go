@@ -209,7 +209,7 @@ func read7BitEncodedInt(r io.Reader) (int, error) {
 	shift := 0
 	for {
 		var b [1]byte
-		if _, err := r.Read(b[:]); err != nil {
+		if _, err := io.ReadFull(r, b[:]); err != nil {
 			return 0, err
 		}
 		result |= int(b[0]&0x7F) << shift

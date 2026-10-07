@@ -1,14 +1,14 @@
 package python
 
 import (
-	"bufio"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/go-viper/mapstructure/v2"
 
+	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/file"
 	"github.com/anchore/syft/syft/pkg"
@@ -48,13 +48,13 @@ func parseWheelOrEggMetadata(locationReader file.LocationReadCloser) (parsedData
 	}
 
 	// add additional metadata not stored in the egg/wheel metadata file
-	path := locationReader.Path()
+	metadataPath := locationReader.Path()
 
-	pd.SitePackagesRootPath = determineSitePackagesRootPath(path)
+	pd.SitePackagesRootPath = determineSitePackagesRootPath(metadataPath)
 	if pd.Licenses != "" || pd.LicenseExpression != "" {
-		pd.LicenseFilePath = path
+		pd.LicenseFilePath = metadataPath
 	} else if pd.LicenseFile != "" {
-		pd.LicenseFilePath = filepath.Join(filepath.Dir(path), pd.LicenseFile)
+		pd.LicenseFilePath = path.Join(path.Dir(metadataPath), pd.LicenseFile)
 	}
 
 	pd.DistInfoLocation = locationReader.Location
@@ -68,7 +68,7 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 
 	// though this spec is governed by RFC 5322 (mail message), the metadata files are not guaranteed to be compliant.
 	// We must survive parsing as much info as possible without failing and dropping the data.
-	scanner := bufio.NewScanner(locationReader)
+	scanner := internal.NewLineScanner(locationReader)
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimRight(line, "\n")
@@ -108,6 +108,10 @@ func extractRFC5322Fields(locationReader file.LocationReadCloser) (map[string]an
 			}
 		}
 	}
+	if err := scanner.Err(); err != nil {
+		// the caller discards everything on error, so keep the partial fields and log instead
+		log.WithFields("path", locationReader.Path(), "error", err).Debug("failed to fully read python wheel/egg metadata")
+	}
 	return fields, nil
 }
 
@@ -140,18 +144,18 @@ func getFieldType(key, in string) any {
 // isEggRegularFile determines if the specified path is the regular file variant
 // of egg metadata (as opposed to a directory that contains more metadata
 // files).
-func isEggRegularFile(path string) bool {
-	return doublestar.MatchUnvalidated(eggInfoGlob, path)
+func isEggRegularFile(p string) bool {
+	return doublestar.MatchUnvalidated(eggInfoGlob, p)
 }
 
 // determineSitePackagesRootPath returns the path of the site packages root,
 // given the egg metadata file or directory specified in the path.
-func determineSitePackagesRootPath(path string) string {
-	if isEggRegularFile(path) {
-		return filepath.Clean(filepath.Dir(path))
+func determineSitePackagesRootPath(p string) string {
+	if isEggRegularFile(p) {
+		return path.Clean(path.Dir(p))
 	}
 
-	return filepath.Clean(filepath.Dir(filepath.Dir(path)))
+	return path.Clean(path.Dir(path.Dir(p)))
 }
 
 // handleFieldBodyContinuation returns the updated value for the specified field after processing the specified line.

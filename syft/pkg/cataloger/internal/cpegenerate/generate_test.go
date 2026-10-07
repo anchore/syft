@@ -183,6 +183,24 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			// groovy moved to org.apache.groovy at 4.0 and real jars ship no pom metadata, so the known package
+			// list drives the vendor. See https://github.com/anchore/syft/issues/5311
+			name: "groovy 4 module without pom metadata",
+			p: pkg.Package{
+				Name:     "groovy-json",
+				Version:  "4.0.33",
+				FoundBy:  "some-analyzer",
+				Language: pkg.Java,
+				Type:     pkg.JavaPkg,
+				Metadata: pkg.JavaArchive{Manifest: &pkg.JavaManifest{}},
+			},
+			expected: []string{
+				"cpe:2.3:a:apache:groovy-json:4.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:apache:groovy_json:4.0.33:*:*:*:*:*:*:*",
+				"cpe:2.3:a:apache:groovy:4.0.33:*:*:*:*:*:*:*",
+			},
+		},
+		{
 			name: "java language with groupID",
 			p: pkg.Package{
 				Name:     "name",
@@ -778,6 +796,25 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			},
 		},
 		{
+			// NVD records CPAN distributions with perl in target_sw
+			name: "cpan distribution",
+			p: pkg.Package{
+				Name:     "Mojolicious",
+				Version:  "9.10",
+				Type:     pkg.CpanPkg,
+				Language: pkg.Perl,
+				Metadata: pkg.CpanDistribution{
+					Author: "SRI",
+					Path:   "S/SR/SRI/Mojolicious-9.10.tar.gz",
+				},
+			},
+			expected: []string{
+				// note: the distribution name keeps its casing here, as it does for every other ecosystem.
+				// NVD spells the same CPE lowercase (cpe:2.3:a:mojolicious:mojolicious:*:*:*:*:*:perl:*:*)
+				"cpe:2.3:a:Mojolicious:Mojolicious:9.10:*:*:*:*:perl:*:*",
+			},
+		},
+		{
 			name: "dotnet deps.json",
 			p: pkg.Package{
 				Name:    "Something",
@@ -874,6 +911,22 @@ func TestGeneratePackageCPEs(t *testing.T) {
 				"cpe:2.3:a:rust_package:rust_package:0.5.0:*:*:*:*:rust:*:*",
 			},
 		},
+		{
+			name: "conan expat: libexpat_project vendor and libexpat product",
+			p: pkg.Package{
+				Name:    "expat",
+				Version: "2.5.0",
+				Type:    pkg.ConanPkg,
+			},
+			expected: []string{
+				"cpe:2.3:a:expat:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:expat:libexpat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat:libexpat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat_project:expat:2.5.0:*:*:*:*:*:*:*",
+				"cpe:2.3:a:libexpat_project:libexpat:2.5.0:*:*:*:*:*:*:*",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -908,6 +961,39 @@ func TestGeneratePackageCPEs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTomcatEmbeddedCPEs(t *testing.T) {
+	packageFor := func(artifactID string) pkg.Package {
+		return pkg.Package{
+			Name:     artifactID,
+			Version:  "11.0.20",
+			Language: pkg.Java,
+			Type:     pkg.JavaPkg,
+			Metadata: pkg.JavaArchive{
+				PomProperties: &pkg.JavaPomProperties{
+					GroupID:    "org.apache.tomcat.embed",
+					ArtifactID: artifactID,
+				},
+			},
+		}
+	}
+
+	hasCPE := func(cpes []cpe.CPE, vendor, product string) bool {
+		for _, generated := range cpes {
+			if generated.Attributes.Vendor == vendor && generated.Attributes.Product == product {
+				return true
+			}
+		}
+		return false
+	}
+
+	elCPEs := FromPackageAttributes(packageFor("tomcat-embed-el"))
+	assert.False(t, hasCPE(elCPEs, "apache", "tomcat"), "EL-only module should not inherit the server CPE")
+	assert.True(t, hasCPE(elCPEs, "apache", "tomcat-embed-el"), "keep the artifact-specific CPE candidate")
+
+	coreCPEs := FromPackageAttributes(packageFor("tomcat-embed-core"))
+	assert.True(t, hasCPE(coreCPEs, "apache", "tomcat"), "core module should retain the Tomcat server CPE")
 }
 
 func TestCandidateProducts(t *testing.T) {
@@ -1103,6 +1189,11 @@ func Test_generateSubSelections(t *testing.T) {
 			field:    "_",
 			expected: nil,
 		},
+		{
+			// capped at maxSubSelections, keeping the shortest prefixes (the full name is not returned)
+			field:    "a_b_c_d_e_f_g_h_i_j_k_l",
+			expected: []string{"a", "a_b", "a_b_c", "a_b_c_d", "a_b_c_d_e", "a_b_c_d_e_f", "a_b_c_d_e_f_g", "a_b_c_d_e_f_g_h", "a_b_c_d_e_f_g_h_i", "a_b_c_d_e_f_g_h_i_j"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.field, func(t *testing.T) {
@@ -1246,4 +1337,60 @@ func TestAddBinaryPackageDigitVariations(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFromPackageAttributes_boundsSubSelectionBlowup(t *testing.T) {
+	// a name with many separators used to produce a vendor candidate per segment, each O(name length), which was
+	// quadratic in time and memory.
+	name := strings.Repeat("a_", 200) + "a"
+	p := pkg.Package{Name: name, Version: "1.0", Type: pkg.PythonPkg, Language: pkg.Python}
+
+	cpes := FromPackageAttributes(p)
+	assert.NotEmpty(t, cpes)
+	assert.LessOrEqual(t, len(cpes), 1000)
+}
+
+func TestFromPackageAttributes_boundsCandidateCrossProduct(t *testing.T) {
+	// every groupID segment becomes a vendor, and with no artifactID every segment past the second also becomes a
+	// product, so the vendor x product cross-product is quadratic in segment count without a bound.
+	var segments []string
+	for i := range 1000 {
+		segments = append(segments, fmt.Sprintf("s%d", i))
+	}
+	p := pkg.Package{
+		Name:     "thing",
+		Version:  "1.0",
+		Type:     pkg.JavaPkg,
+		Language: pkg.Java,
+		Metadata: pkg.JavaArchive{
+			Manifest: &pkg.JavaManifest{
+				Main: pkg.KeyValues{{Key: "Bundle-SymbolicName", Value: "com.x." + strings.Join(segments, ".")}},
+			},
+		},
+	}
+
+	cpes := FromPackageAttributes(p)
+	assert.NotEmpty(t, cpes)
+	assert.LessOrEqual(t, len(cpes), maxCandidates*maxCandidates)
+}
+
+func TestFromPackageAttributes_skipsOversizedFields(t *testing.T) {
+	long := strings.Repeat("a", maxCandidateFieldLength+1)
+
+	assert.Empty(t, FromPackageAttributes(pkg.Package{Name: long, Version: "1.0", Type: pkg.PythonPkg}))
+	assert.Empty(t, FromPackageAttributes(pkg.Package{Name: "thing", Version: long, Type: pkg.PythonPkg}))
+	assert.NotEmpty(t, FromPackageAttributes(pkg.Package{Name: "thing", Version: "1.0", Type: pkg.PythonPkg}))
+}
+
+func Test_boundCandidates(t *testing.T) {
+	long := strings.Repeat("a", maxCandidateFieldLength+1)
+	assert.Equal(t, []string{"b", "a"}, boundCandidates([]string{"b", long, "a"}), "under the cap order is untouched")
+
+	var many []string
+	for i := range maxCandidates + 10 {
+		many = append(many, strings.Repeat("x", maxCandidates+10-i))
+	}
+	got := boundCandidates(many)
+	assert.Len(t, got, maxCandidates)
+	assert.Equal(t, "x", got[0], "shortest candidates are kept")
 }

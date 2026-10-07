@@ -114,7 +114,7 @@ func fetchPkgFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, f
 
 func fetchBackupFiles(base string, resolver file.Resolver) ([]pkg.AlpmFileRecord, file.Location, error) {
 	// We only really do this to get any backup database entries from the files database
-	target := filepath.Join(base, "files")
+	target := path.Join(base, "files")
 
 	loc, err := getLocation(target, resolver)
 	if err != nil {
@@ -148,12 +148,7 @@ func parseAlpmDBEntry(reader io.Reader) (*parsedData, error) {
 }
 
 func newScanner(reader io.Reader) *bufio.Scanner {
-	// This is taken from the apk parser
-	// https://github.com/anchore/syft/blob/v0.47.0/syft/pkg/cataloger/apkdb/parse_apk_db.go#L37
-	const maxScannerCapacity = 1024 * 1024
-	bufScan := make([]byte, maxScannerCapacity)
-	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(bufScan, maxScannerCapacity)
+	scanner := internal.NewLineScanner(reader)
 	onDoubleLF := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		for i := range data {
 			if i > 0 && data[i-1] == '\n' && data[i] == '\n' {
@@ -400,7 +395,9 @@ func parseMtreeWithLimits(r io.Reader, maxSize int64, maxLines int) ([]pkg.AlpmF
 		if ok := ignoredFiles[f.Name]; ok {
 			continue
 		}
-		path := fmt.Sprintf("/%s", f.Name)
+		// go-mtree runs filepath.Clean on entry names, which turns them into host paths on windows.
+		// ponytail: a vis-encoded backslash (\134) in a name gets mangled on windows only, unvis first if that matters
+		path := fmt.Sprintf("/%s", filepath.ToSlash(f.Name))
 		fileFields["path"] = path
 		for _, kv := range f.Keywords {
 			kw := string(kv.Keyword())

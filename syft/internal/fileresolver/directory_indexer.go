@@ -351,17 +351,12 @@ func (r directoryIndexer) addFileToIndex(p string, info os.FileInfo) error {
 func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string, error) {
 	linkTarget, err := os.Readlink(p)
 	if err != nil {
-		isOnWindows := windows.HostRunningOnWindows()
-		if isOnWindows {
-			p = windows.FromPosix(p)
+		nativePath := p
+		if windows.HostRunningOnWindows() {
+			nativePath = windows.FromPosix(p)
 		}
 
-		linkTarget, err = filepath.EvalSymlinks(p)
-
-		if isOnWindows {
-			p = windows.ToPosix(p)
-		}
-
+		linkTarget, err = filepath.EvalSymlinks(nativePath)
 		if err != nil {
 			return "", fmt.Errorf("unable to readlink for path=%q: %w", p, err)
 		}
@@ -414,14 +409,19 @@ func (r directoryIndexer) addSymlinkToIndex(p string, info os.FileInfo) (string,
 		}
 	}
 
-	ref, err := r.tree.AddSymLink(file.Path(p), file.Path(linkTarget))
-	if err != nil {
-		return "", err
-	}
-
 	targetAbsPath := linkTarget
 	if !filepath.IsAbs(targetAbsPath) {
 		targetAbsPath = filepath.Clean(filepath.Join(path.Dir(p), linkTarget))
+	}
+
+	// the tree is posix (like p), but the joins above produce native separators on windows
+	if windows.HostRunningOnWindows() {
+		linkTarget = windows.ToPosix(linkTarget)
+	}
+
+	ref, err := r.tree.AddSymLink(file.Path(p), file.Path(linkTarget))
+	if err != nil {
+		return "", err
 	}
 
 	metadata := NewMetadataFromPath(p, info)

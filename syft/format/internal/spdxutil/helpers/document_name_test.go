@@ -1,8 +1,6 @@
 package helpers
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,11 +71,23 @@ func Test_DocumentName(t *testing.T) {
 			},
 			expected: "some/name",
 		},
+		{
+			name:        "no name or metadata",
+			srcMetadata: source.Description{},
+			expected:    "unknown",
+		},
+		{
+			name: "metadata without a name",
+			srcMetadata: source.Description{
+				Metadata: source.ImageMetadata{},
+			},
+			expected: "unknown",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := DocumentName(test.srcMetadata)
-			assert.True(t, strings.HasPrefix(actual, test.expected), fmt.Sprintf("actual name %q", actual))
+			assert.Equal(t, test.expected, actual)
 
 			// track each scheme tested (passed or not)
 			tracker.Tested(t, test.srcMetadata.Metadata)

@@ -88,6 +88,13 @@ func packageURL(name, version string) string {
 	var subPath string
 	var namespace string
 
+	// docker:// references are OCI images, not GitHub repos.
+	// They don't fit the pkg:github PURL shape, so skip them entirely
+	// (same treatment as local composite actions below).
+	if strings.HasPrefix(name, "docker:") {
+		return ""
+	}
+
 	fields := strings.SplitN(name, "/", 3)
 	switch len(fields) {
 	case 1:

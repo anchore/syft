@@ -95,7 +95,7 @@ func (c dbCataloger) selectDBParser(dbLocation file.Location, resolver file.Reso
 
 	scanner := bufio.NewScanner(schemaContents)
 	if !scanner.Scan() {
-		log.WithFields("path", loc.RealPath).Tracef("failed to read Nix database schema file, assuming %d", defaultSchema)
+		log.WithFields("path", loc.RealPath, "error", scanner.Err()).Tracef("failed to read Nix database schema file, assuming %d", defaultSchema)
 		return c.schemaProcessor[defaultSchema], 0
 	}
 

@@ -155,10 +155,10 @@ catalogers:
         packages:
           - class: perl-binary
             name: perl
-            purl: pkg:generic/perl
+            purl: pkg:cpan/perl
             cpes:
               - cpe:2.3:a:perl:perl:*:*:*:*:*:*:*:*
-            type: BinaryPkg
+            type: CpanPkg
       - method: glob
         criteria:
           - '**/composer*'

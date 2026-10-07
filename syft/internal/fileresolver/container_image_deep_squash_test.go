@@ -16,6 +16,7 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/anchore/stereoscope/pkg/imagetest"
+	"github.com/anchore/syft/internal/testutils"
 	"github.com/anchore/syft/syft/file"
 )
 
@@ -115,6 +116,7 @@ func Test_ContainerImageDeepSquash_FilesByPath(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageDeepSquash(img)
@@ -231,6 +233,7 @@ func Test_ContainerImageDeepSquash_FilesByGlob(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageDeepSquash(img)
@@ -288,6 +291,7 @@ func Test_ContainerImageDeepSquash_FilesByMIMEType(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.fixtureName, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", test.fixtureName)
 
 			resolver, err := NewFromContainerImageDeepSquash(img)
@@ -305,6 +309,7 @@ func Test_ContainerImageDeepSquash_FilesByMIMEType(t *testing.T) {
 }
 
 func Test_ContainerImageDeepSquash_hasFilesystemIDInLocation(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-duplicate-path")
 
 	resolver, err := NewFromContainerImageDeepSquash(img)
@@ -365,6 +370,7 @@ func Test_ContainerImageDeepSquash_FilesContents(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageDeepSquash(img)
@@ -389,6 +395,7 @@ func Test_ContainerImageDeepSquash_FilesContents(t *testing.T) {
 }
 
 func Test_ContainerImageDeepSquash_FilesContents_errorOnDirRequest(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 	resolver, err := NewFromContainerImageDeepSquash(img)
@@ -557,6 +564,7 @@ func Test_ContainerImageDeepSquash_resolvesLinks(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			testutils.SkipWithoutLinuxContainers(t)
 			img := imagetest.GetFixtureImage(t, "docker-archive", "image-symlinks")
 
 			resolver, err := NewFromContainerImageDeepSquash(img)
@@ -571,6 +579,7 @@ func Test_ContainerImageDeepSquash_resolvesLinks(t *testing.T) {
 }
 
 func Test_ContainerImageDeepSquash_AllLocations(t *testing.T) {
+	testutils.SkipWithoutLinuxContainers(t)
 	img := imagetest.GetFixtureImage(t, "docker-archive", "image-files-deleted")
 
 	resolver, err := NewFromContainerImageDeepSquash(img)
