@@ -117,21 +117,28 @@ func declaredLicenseValues(raw string) []string {
 
 func newDebArchivePackage(ctx context.Context, location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
 	p := pkg.Package{
-		Name:     metadata.Package,
-		Version:  metadata.Version,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
-		Type:     pkg.DebPkg,
-		PURL: packageURL(
-			pkg.DpkgDBEntry(metadata),
-			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
-			&linux.Release{IDLike: []string{"debian"}},
-		),
+		Name:      metadata.Package,
+		Version:   metadata.Version,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
+		Type:      pkg.DebPkg,
+		PURL:      packageURL(pkg.DpkgDBEntry(metadata), archiveDistro(location)),
 		Metadata:  metadata,
 		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 	}
 
 	p.SetID()
 	return p
+}
+
+// archiveDistro guesses the distro an archive was built for. We don't know the distro information, but a .deb
+// can reasonably be assumed to target a debian-based distro. An .ipk targets opkg-based distros (Yocto,
+// OpenWrt) which have no purl type, so it gets no distro and therefore no PURL, the same as packages found in
+// an opkg status DB.
+func archiveDistro(location file.Location) *linux.Release {
+	if strings.EqualFold(path.Ext(location.Path()), ".ipk") {
+		return nil
+	}
+	return &linux.Release{IDLike: []string{"debian"}}
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)

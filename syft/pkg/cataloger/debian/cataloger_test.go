@@ -286,7 +286,6 @@ func TestDpkgArchiveCataloger(t *testing.T) {
 					Locations: file.NewLocationSet(
 						file.NewLocation("/libz1_1.3.2-r0_x86-64-v3.ipk"),
 					),
-					PURL: "pkg:deb/libz1@1.3.2-r0?arch=x86-64-v3&upstream=zlib%401.3.2",
 					Type: pkg.DebPkg,
 					Metadata: pkg.DpkgArchiveEntry{
 						Package:       "libz1",

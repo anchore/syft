@@ -24,13 +24,16 @@ import (
 	"github.com/anchore/syft/syft/pkg/cataloger/generic"
 )
 
-// parseDebArchive parses a Debian package archive (.deb) file and returns the packages it contains.
-// A .deb file is an ar archive containing three main files:
-// - debian-binary: Version of the .deb format (usually "2.0")
+// parseDebArchive parses a Debian package archive (.deb) or opkg package (.ipk) file and returns the packages it
+// contains. Both are ar archives containing three main files:
+// - debian-binary: Version of the archive format (usually "2.0")
 // - control.tar.gz/xz/zst: Contains package metadata (control file, md5sums, conffiles)
 // - data.tar.gz/xz/zst: Contains the actual files to be installed (not processed by this cataloger)
 //
-// This function extracts and processes the control information to create package metadata.
+// This function extracts and processes the control information to create package metadata. Licenses come
+// from copyright files in the data tar, falling back to the control file's License field (common for .ipk).
+// Only ar-framed .ipk files are supported; the older gzipped-tar framing (e.g. OpenWrt's ipkg-build) is
+// rejected as an invalid archive.
 func parseDebArchive(ctx context.Context, _ file.Resolver, _ *generic.Environment, reader file.LocationReadCloser) ([]pkg.Package, []artifact.Relationship, error) {
 	validatedReader, err := newValidatedArReader(reader)
 	if err != nil {
@@ -139,9 +142,9 @@ func processDataTar(dcReader io.ReadCloser) ([]string, error) {
 }
 
 // processControlTar always returns whatever metadata it managed to parse, even alongside a non-nil
-// error. A non-nil error with non-nil metadata means the package is usable but incomplete (e.g. a
-// clipped file listing); nil metadata means nothing usable was found and the caller should treat it
-// as fatal.
+// error, along with any licenses declared in the control file's License field. A non-nil error with
+// non-nil metadata means the package is usable but incomplete (e.g. a clipped file listing); nil
+// metadata means nothing usable was found and the caller should treat it as fatal.
 func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, []string, error) {
 	defer internal.CloseAndLogError(dcReader, "")
 
@@ -211,6 +214,8 @@ func processControlTar(dcReader io.ReadCloser) (*pkg.DpkgArchiveEntry, []string,
 	return metadata, licenses, listingErr
 }
 
+// newValidatedArReader checks for the ar global header before handing the stream to the ar reader, which
+// otherwise skips those bytes unchecked and reads garbage headers from non-ar input.
 func newValidatedArReader(reader io.ReadCloser) (io.ReadCloser, error) {
 	prefix := make([]byte, len(ar.GLOBAL_HEADER))
 	if _, err := io.ReadFull(reader, prefix); err != nil {
