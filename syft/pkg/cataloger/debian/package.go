@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/scylladb/go-set/strset"
+
 	"github.com/anchore/packageurl-go"
 	"github.com/anchore/syft/internal"
 	"github.com/anchore/syft/internal/log"
@@ -61,38 +63,82 @@ func newDpkgPackage(ctx context.Context, d dpkgExtractedMetadata, dbLocation fil
 	return p
 }
 
+// a declared License field holds a single expression, a few hundred bytes at most in practice. Anything
+// much larger only feeds the expression parser (which recurses on parentheses) attacker-sized input.
+const maxDeclaredLicenseLen = 4096
+
+var (
+	// opkg/ipkg (Yocto via bitbake) declare licenses with "&" for AND and "|" for OR
+	bitbakeLicenseOperators = strings.NewReplacer("&", " AND ", "|", " OR ")
+	tightenParens           = strings.NewReplacer("( ", "(", " )", ")")
+	licenseListSeparators   = strings.NewReplacer("(", " ", ")", " ")
+)
+
 // extractDeclaredLicenses converts a License field from the status DB into a license set. Returns nil
 // for empty input so standard dpkg entries (which never declare License inline) incur no allocation.
-// Mirrors the alpine cataloger's approach: keep the value whole if it parses as a valid SPDX expression,
-// otherwise split on whitespace to handle space-separated lists.
 func extractDeclaredLicenses(ctx context.Context, raw string, dbLocation file.Location) []pkg.License {
+	values := declaredLicenseValues(raw)
+	if len(values) == 0 {
+		return nil
+	}
+	return pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, values...)
+}
+
+// declaredLicenseValues converts an inline License field (opkg status DB or an archive control file) into
+// license values. Bitbake operators are rewritten to SPDX ones and the value is kept whole if it then parses
+// as a valid SPDX expression (mirroring the alpine cataloger), otherwise it is treated as a list of license
+// names with operators and grouping dropped.
+func declaredLicenseValues(raw string) []string {
+	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return nil
 	}
-	licenseStrings := []string{raw}
-	if _, err := license.ParseExpression(raw); err != nil {
-		licenseStrings = strings.Fields(raw)
+	if len(raw) > maxDeclaredLicenseLen {
+		log.WithFields("length", len(raw)).Debug("ignoring oversized declared license field")
+		return nil
 	}
-	return pkg.NewLicensesFromLocationWithContext(ctx, dbLocation, licenseStrings...)
+
+	expr := tightenParens.Replace(strings.Join(strings.Fields(bitbakeLicenseOperators.Replace(raw)), " "))
+	if _, err := license.ParseExpression(expr); err == nil {
+		return []string{expr}
+	}
+
+	var values []string
+	seen := strset.New()
+	for _, field := range strings.Fields(licenseListSeparators.Replace(expr)) {
+		if field == "AND" || field == "OR" || seen.Has(field) {
+			continue
+		}
+		seen.Add(field)
+		values = append(values, field)
+	}
+	return values
 }
 
 func newDebArchivePackage(ctx context.Context, location file.Location, metadata pkg.DpkgArchiveEntry, licenseStrings []string) pkg.Package {
 	p := pkg.Package{
-		Name:     metadata.Package,
-		Version:  metadata.Version,
-		Licenses: pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
-		Type:     pkg.DebPkg,
-		PURL: packageURL(
-			pkg.DpkgDBEntry(metadata),
-			// we don't know the distro information, but since this is a deb file then we can reasonably assume it is a debian-based distro
-			&linux.Release{IDLike: []string{"debian"}},
-		),
+		Name:      metadata.Package,
+		Version:   metadata.Version,
+		Licenses:  pkg.NewLicenseSet(pkg.NewLicensesFromValuesWithContext(ctx, licenseStrings...)...),
+		Type:      pkg.DebPkg,
+		PURL:      packageURL(pkg.DpkgDBEntry(metadata), archiveDistro(location)),
 		Metadata:  metadata,
 		Locations: file.NewLocationSet(location.WithAnnotation(pkg.EvidenceAnnotationKey, pkg.PrimaryEvidenceAnnotation)),
 	}
 
 	p.SetID()
 	return p
+}
+
+// archiveDistro guesses the distro an archive was built for. We don't know the distro information, but a .deb
+// can reasonably be assumed to target a debian-based distro. An .ipk targets opkg-based distros (Yocto,
+// OpenWrt) which have no purl type, so it gets no distro and therefore no PURL, the same as packages found in
+// an opkg status DB.
+func archiveDistro(location file.Location) *linux.Release {
+	if strings.EqualFold(path.Ext(location.Path()), ".ipk") {
+		return nil
+	}
+	return &linux.Release{IDLike: []string{"debian"}}
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
