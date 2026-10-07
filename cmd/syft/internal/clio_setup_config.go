@@ -41,10 +41,8 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 				stereoscope.SetBus(state.Bus)
 				bus.Set(state.Bus)
 
-				// reset the redact store from a previous command execution before wiring the new one. The store is
-				// process-global, and cli.Command() may be invoked more than once in the same process (e.g. when
-				// syft is embedded as a library); without the reset the second redact.Set panics.
-				redact.Reset()
+				// the redact store is process-global and only cleared when a run ends (see the post-run below), so
+				// setting it while another run is still in flight panics rather than splitting secrets across stores.
 				redact.Set(state.RedactStore)
 
 				log.Set(state.Logger)
@@ -52,8 +50,14 @@ func AppClioSetupConfig(id clio.Identification, out io.Writer) *clio.SetupConfig
 				return nil
 			},
 		).
-		WithPostRuns(func(_ *clio.State, _ error) {
+		WithPostRuns(func(state *clio.State, _ error) {
 			stereoscope.Cleanup() //nolint:staticcheck // we don't have access to the image object here
+
+			// release the redact store now that nothing in this run can report anymore, so a later run in the same
+			// process (e.g. syft embedded as a library) can set its own. Only release the store this run set.
+			if redact.Get() == state.RedactStore {
+				redact.Reset()
+			}
 		})
 	return clioCfg
 }

@@ -4,28 +4,29 @@ import (
 	"io"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/anchore/clio"
 	"github.com/anchore/go-logger/adapter/discard"
 	gologgerredact "github.com/anchore/go-logger/adapter/redact"
-	"github.com/stretchr/testify/require"
+	"github.com/anchore/syft/internal/redact"
 )
 
-func TestAppClioSetupConfigInitializerCanRunMultipleTimes(t *testing.T) {
-	// https://github.com/anchore/syft/issues/2285
-	// cli.Command() may be invoked more than once in the same process (e.g.
-	// when syft is embedded as a library). Each invocation re-runs the clio
-	// initializers; the redact store is process-global, so the second run
-	// used to panic in internal/redact.Set with
-	// "replace existing redaction store (probably unintentional)".
+func TestAppClioSetupConfigInitializerPanicsWhileRunInFlight(t *testing.T) {
+	t.Cleanup(redact.Reset)
+
 	cfg := AppClioSetupConfig(clio.Identification{Name: "syft"}, io.Discard)
 	require.Len(t, cfg.Initializers, 1)
 
-	state := &clio.State{
-		Logger:      discard.New(),
-		RedactStore: gologgerredact.NewStore(),
+	newState := func() *clio.State {
+		return &clio.State{Logger: discard.New(), RedactStore: gologgerredact.NewStore()}
 	}
-	// First command execution.
-	require.NoError(t, cfg.Initializers[0](state))
-	// Second command execution in the same process.
-	require.NoError(t, cfg.Initializers[0](state))
+
+	require.NoError(t, cfg.Initializers[0](newState()))
+
+	// a second run starting before the first has finished must not silently replace the store, otherwise
+	// secrets added to the first store would no longer be redacted
+	require.PanicsWithValue(t, "replace existing redaction store (probably unintentional)", func() {
+		_ = cfg.Initializers[0](newState())
+	})
 }
