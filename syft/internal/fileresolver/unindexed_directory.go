@@ -210,10 +210,14 @@ func (u UnindexedDirectory) FilesByMIMEType(_ ...string) ([]file.Location, error
 	panic("FilesByMIMEType unsupported")
 }
 
-// RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
-// This is helpful when attempting to find a file that is in the same layer or lower as another file.
+// RelativeFileByPath fetches a single file at the given path: absolute paths are resolved from the
+// resolver root, while relative paths are resolved relative to the directory containing the given
+// location. This is helpful when attempting to find a file related to another file.
 func (u UnindexedDirectory) RelativeFileByPath(l file.Location, p string) *file.Location {
-	p = path.Clean(path.Join(l.RealPath, p))
+	if !path.IsAbs(p) {
+		p = path.Join(path.Dir(l.RealPath), p)
+	}
+	p = path.Clean(p)
 	locs, err := u.filesByPath(true, false, p)
 	if err != nil || len(locs) == 0 {
 		return nil
