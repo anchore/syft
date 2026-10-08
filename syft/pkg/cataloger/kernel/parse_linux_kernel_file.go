@@ -71,23 +71,31 @@ func parseLinuxKernelMetadata(magicType []string) (p pkg.LinuxKernel) {
 			p.RWRootFS = true
 		case strings.HasPrefix(t, "swap_dev "):
 			swapDevStr := strings.TrimPrefix(t, "swap_dev ")
-			swapDev, err := strconv.ParseInt(swapDevStr, 16, 32)
+			swapDev, err := parseHexDeviceNumber(swapDevStr)
 			if err != nil {
 				log.Debugf("unable to parse swap device: %s", err)
 				continue
 			}
-			p.SwapDevice = int(swapDev)
+			p.SwapDevice = swapDev
 		case strings.HasPrefix(t, "root_dev "):
 			rootDevStr := strings.TrimPrefix(t, "root_dev ")
-			rootDev, err := strconv.ParseInt(rootDevStr, 16, 32)
+			rootDev, err := parseHexDeviceNumber(rootDevStr)
 			if err != nil {
 				log.Debugf("unable to parse root device: %s", err)
 				continue
 			}
-			p.SwapDevice = int(rootDev)
+			p.RootDevice = rootDev
 		case strings.Contains(t, "VGA") || strings.Contains(t, "Video"):
 			p.VideoMode = t
 		}
 	}
 	return p
+}
+
+func parseHexDeviceNumber(value string) (int, error) {
+	value = strings.TrimPrefix(value, "0x")
+	value = strings.TrimPrefix(value, "0X")
+
+	device, err := strconv.ParseInt(value, 16, 32)
+	return int(device), err
 }
