@@ -501,6 +501,78 @@ var defaultCandidateAdditions = buildCandidateLookup(
 			candidateKey{PkgName: "dnsmasq", Vendor: "dnsmasq"},
 			candidateAddition{AdditionalVendors: []string{"thekelleys"}},
 		},
+		// Packages where Debian itself is the upstream. NVD uses "debian" as the
+		// vendor (see https://github.com/anchore/syft/issues/1139).
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "adequate"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "apt"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "apt-listchanges"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "debian-goodies"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "debmake"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "devscripts"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "dpkg"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "ifupdown"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "lintian"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "logcheck"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "mime-support"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "postgresql-common"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "reportbug"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
+		{
+			pkg.DebPkg,
+			candidateKey{PkgName: "reprepro"},
+			candidateAddition{AdditionalVendors: []string{"debian"}},
+		},
 		// Binary packages
 		{
 			pkg.BinaryPkg,
