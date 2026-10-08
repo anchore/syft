@@ -43,6 +43,9 @@ var kernelArchiveGlobs = []string{
 	"**/bzImage-*",
 	"**/zImage",
 	"**/zImage-*",
+	"**/Image",
+	"**/Image-*",
+	"**/Image.efi",
 }
 
 var kernelModuleGlobs = []string{
