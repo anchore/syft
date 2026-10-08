@@ -75,6 +75,7 @@ catalogers:
           method: glob # AUTO-GENERATED
           criteria: # AUTO-GENERATED
             - '**/*.deb'
+            - '**/*.ipk'
         metadata_types: # AUTO-GENERATED
           - pkg.DpkgArchiveEntry
         package_types: # AUTO-GENERATED
