@@ -731,7 +731,9 @@ func heldFiles(tempDir string) (names []string) {
 func isolatedTempDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	t.Setenv("TMPDIR", dir)
+	t.Setenv("TMPDIR", dir) // unix
+	t.Setenv("TMP", dir)    // windows
+	t.Setenv("TEMP", dir)   // windows fallback
 	require.Equal(t, dir, os.TempDir(), "extraction must be writing where the probe is looking")
 	return dir
 }

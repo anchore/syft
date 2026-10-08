@@ -99,6 +99,8 @@ func TestArchiveCataloger(t *testing.T) {
 	resolvedScanDir, err := filepath.EvalSymlinks(scanDir)
 	require.NoError(t, err)
 
+	resolvedScanDir = filepath.ToSlash(resolvedScanDir)
+
 	recorder := &recordingBus{}
 	bus.Set(recorder)
 	t.Cleanup(func() { bus.Set(nil) })
