@@ -194,8 +194,11 @@ func processLicenseURLs(l pkg.License, spdxID string, populate *cyclonedx.Licens
 func mergeSPDX(ex []string) string {
 	var candidate []string
 	for _, e := range ex {
-		// if the expression does not have balanced parens add them
-		if !strings.HasPrefix(e, "(") && !strings.HasSuffix(e, ")") {
+		// wrap when the expression does not have balanced parens, and also when it carries an OR
+		// outside of any parens: SPDX applies AND before OR, so joining
+		// "MIT OR (Apache-2.0 AND BSD-3-Clause)" as-is changes what it means, and the
+		// prefix/suffix check on its own does not catch that
+		if spdxlicense.HasTopLevelOr(e) || (!strings.HasPrefix(e, "(") && !strings.HasSuffix(e, ")")) {
 			e = "(" + e + ")"
 		}
 		candidate = append(candidate, e)
