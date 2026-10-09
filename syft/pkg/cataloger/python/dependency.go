@@ -209,6 +209,16 @@ func wheelEggRelationships(ctx context.Context, resolver file.Resolver, pkgs []p
 		if pkgsBySitePackageAndName[sitePackagesDir] == nil {
 			pkgsBySitePackageAndName[sitePackagesDir] = make(map[string]pkg.Package)
 		}
+		// a distribution can be installed both top-level and vendored inside another
+		// distribution's wheel, and both copies resolve to the same site-packages dir
+		// (deriveSitePackageDir walks up to the nearest one). Unconditionally
+		// overwriting kept whichever copy was catalogued last, so the package a
+		// dependency resolved to depended on cataloguing order. Prefer the shallower
+		// install instead, which is the top-level copy over the vendored one; only one
+		// copy can be kept anyway, since callers resolve dependencies by name.
+		if existing, ok := pkgsBySitePackageAndName[sitePackagesDir][p.Name]; ok && !preferPackage(p, existing) {
+			continue
+		}
 		pkgsBySitePackageAndName[sitePackagesDir][p.Name] = p
 	}
 
@@ -291,6 +301,27 @@ func deriveSitePackageDir(p pkg.Package) string {
 		if sitePackageDir != "" {
 			return sitePackageDir
 		}
+	}
+	return ""
+}
+
+// preferPackage reports whether candidate should replace incumbent as the copy of a
+// distribution name recorded for one site-packages dir. Shallower evidence wins, so a
+// top-level install beats one vendored inside another distribution's wheel; equal depths
+// tie-break on the path, so the outcome never depends on cataloguing order.
+func preferPackage(candidate, incumbent pkg.Package) bool {
+	cPath, iPath := primaryEvidencePath(candidate), primaryEvidencePath(incumbent)
+	if cDepth, iDepth := strings.Count(cPath, "/"), strings.Count(iPath, "/"); cDepth != iDepth {
+		return cDepth < iDepth
+	}
+	return cPath < iPath
+}
+
+// primaryEvidencePath returns the path of a package's primary evidence location, the
+// input deriveSitePackageDir reads.
+func primaryEvidencePath(p pkg.Package) string {
+	for _, l := range packagePrimaryLocations(p) {
+		return l.RealPath
 	}
 	return ""
 }
