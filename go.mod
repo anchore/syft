@@ -282,6 +282,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
+	github.com/sbomit/sbomit v0.0.0
 	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sigstore/fulcio v1.8.7 // indirect
@@ -355,3 +356,5 @@ retract (
 	v0.53.2
 	v0.53.1 // published accidentally with incorrect license in depdencies
 )
+
+replace github.com/sbomit/sbomit => github.com/sbomit/sbomit v0.2.2-0.20260923141738-2be17fc44adb
