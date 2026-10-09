@@ -12,6 +12,23 @@ import (
 	"github.com/anchore/syft/syft/sbom"
 )
 
+func TestDefaultFileTaskFactoriesDescribeConstructedTasks(t *testing.T) {
+	cfg := DefaultCatalogingFactoryConfig()
+
+	for _, factory := range DefaultFileTaskFactories() {
+		t.Run(factory.Name(), func(t *testing.T) {
+			tsk := factory.Task(cfg)
+			assert.NotNil(t, tsk)
+			assert.Equal(t, factory.Name(), tsk.Name())
+
+			selector, ok := tsk.(Selector)
+			if assert.True(t, ok) {
+				assert.ElementsMatch(t, factory.Selectors(), selector.Selectors())
+			}
+		})
+	}
+}
+
 func Test_coordinatesForSelection(t *testing.T) {
 
 	tests := []struct {
