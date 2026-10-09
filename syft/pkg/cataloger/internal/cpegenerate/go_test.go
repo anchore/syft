@@ -36,8 +36,28 @@ func TestCandidateProductForGo(t *testing.T) {
 			expected: "",
 		},
 		{
-			pkg:      "google.golang.org/genproto/googleapis/rpc/status",
+			pkg:      "google.golang.org/genproto",
 			expected: "genproto",
+		},
+		{
+			pkg:      "google.golang.org/genproto/googleapis/api",
+			expected: "genproto/googleapis/api",
+		},
+		{
+			pkg:      "google.golang.org/genproto/googleapis/rpc",
+			expected: "genproto/googleapis/rpc",
+		},
+		{
+			pkg:      "google.golang.org/genproto/googleapis/rpc/status",
+			expected: "genproto/googleapis/rpc/status",
+		},
+		{
+			pkg:      "google.golang.org/grpc",
+			expected: "grpc",
+		},
+		{
+			pkg:      "google.golang.org/protobuf/proto",
+			expected: "protobuf",
 		},
 		{
 			pkg:      "github.com/someone/something/long/package/name",
