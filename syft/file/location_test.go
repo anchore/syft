@@ -48,3 +48,12 @@ func TestLocation_ID(t *testing.T) {
 	}
 
 }
+
+func TestLocation_archivePathIsIdentity(t *testing.T) {
+	a := NewLocationFromCoordinates(Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: "/a.jar"})
+	b := NewLocationFromCoordinates(Coordinates{RealPath: "META-INF/MANIFEST.MF", ArchivePath: "/b.jar"})
+
+	assert.False(t, a.Equals(b))
+	assert.NotEqual(t, a.String(), b.String())
+	assert.Contains(t, a.String(), `ArchivePath="/a.jar"`)
+}

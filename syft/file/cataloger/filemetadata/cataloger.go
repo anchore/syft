@@ -53,7 +53,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 		}()
 	}
 
-	prog := catalogingProgress(-1)
+	prog := catalogingProgress(ctx, -1)
 	for location := range locations {
 		prog.AtomicStage.Set(location.Path())
 
@@ -76,7 +76,7 @@ func (i *Cataloger) Catalog(ctx context.Context, resolver file.Resolver, coordin
 	return results, errs
 }
 
-func catalogingProgress(locations int64) *monitor.TaskProgress {
+func catalogingProgress(ctx context.Context, locations int64) *monitor.TaskProgress {
 	info := monitor.GenericTask{
 		Title: monitor.Title{
 			Default: "File metadata",
@@ -84,5 +84,5 @@ func catalogingProgress(locations int64) *monitor.TaskProgress {
 		ParentID: monitor.TopLevelCatalogingTaskID,
 	}
 
-	return bus.StartCatalogerTask(info, locations, "")
+	return bus.StartCatalogerTask(ctx, info, locations, "")
 }

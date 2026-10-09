@@ -83,7 +83,12 @@ func LocationSorter(layers []string) func(a, b Location) int { //nolint:gocognit
 			return strings.Compare(a.AccessPath, b.AccessPath)
 		}
 
-		return strings.Compare(a.RealPath, b.RealPath)
+		if a.RealPath != b.RealPath {
+			return strings.Compare(a.RealPath, b.RealPath)
+		}
+
+		// the same path in different archives is a different file
+		return strings.Compare(a.ArchivePath, b.ArchivePath)
 	}
 }
 
@@ -118,6 +123,11 @@ func CoordinatesSorter(layers []string) func(a, b Coordinates) int {
 			}
 		}
 
-		return strings.Compare(a.RealPath, b.RealPath)
+		if a.RealPath != b.RealPath {
+			return strings.Compare(a.RealPath, b.RealPath)
+		}
+
+		// the same path in different archives is a different file
+		return strings.Compare(a.ArchivePath, b.ArchivePath)
 	}
 }

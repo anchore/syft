@@ -10,9 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/anchore/syft/internal/tmpdir"
-	"github.com/anchore/syft/syft/internal/fileresolver"
-
 	"github.com/anchore/syft/syft/artifact"
+	"github.com/anchore/syft/syft/internal/fileresolver"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/pkg/cataloger/internal/pkgtest"
 )

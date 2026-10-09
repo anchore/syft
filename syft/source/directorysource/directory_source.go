@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -18,7 +19,10 @@ import (
 	"github.com/anchore/syft/syft/source/internal"
 )
 
-var _ source.Source = (*directorySource)(nil)
+var (
+	_ source.Source       = (*directorySource)(nil)
+	_ source.PathExcluder = (*directorySource)(nil)
+)
 
 type Config struct {
 	Path    string
@@ -114,6 +118,11 @@ func (s *directorySource) FileResolver(_ source.Scope) (file.Resolver, error) {
 	return s.resolver, nil
 }
 
+// ExcludedPaths returns the exclusion patterns this source was configured with.
+func (s directorySource) ExcludedPaths() []string {
+	return slices.Clone(s.config.Exclude.Paths)
+}
+
 func (s *directorySource) Close() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -127,7 +136,12 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		return nil, nil
 	}
 
-	// this is what directoryResolver.indexTree is doing to get the absolute path:
+	// the indexer reports symlink-resolved absolute paths to every visitor, so the patterns must be
+	// anchored to a root resolved the same way, or a root under a symlink (macOS's /var) excludes nothing
+	if resolved, err := filepath.EvalSymlinks(root); err == nil {
+		root = resolved
+	}
+
 	root, err := filepath.Abs(root)
 	if err != nil {
 		return nil, err
@@ -140,15 +154,17 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 		root += "/"
 	}
 
+	// the given patterns are the source's configuration (see source.PathExcluder), so they are not rewritten in place
+	rooted := make([]string, 0, len(exclusions))
 	var errors []string
-	for idx, exclusion := range exclusions {
+	for _, exclusion := range exclusions {
 		// check exclusions for supported paths, these are all relative to the "scan root"
 		if strings.HasPrefix(exclusion, "./") || strings.HasPrefix(exclusion, "*/") || strings.HasPrefix(exclusion, "**/") {
 			exclusion = strings.TrimPrefix(exclusion, "./")
 			// a trailing slash signals a directory but is otherwise discarded by doublestar.Match,
 			// causing the pattern to silently match nothing (see issue #4839)
 			exclusion = strings.TrimSuffix(exclusion, "/")
-			exclusions[idx] = root + exclusion
+			rooted = append(rooted, root+exclusion)
 		} else {
 			errors = append(errors, exclusion)
 		}
@@ -160,7 +176,7 @@ func GetDirectoryExclusionFunctions(root string, exclusions []string) ([]fileres
 
 	return []fileresolver.PathIndexVisitor{
 		func(_, path string, info os.FileInfo, _ error) error {
-			for _, exclusion := range exclusions {
+			for _, exclusion := range rooted {
 				// this is required to handle Windows filepaths
 				path = filepath.ToSlash(path)
 				matches, err := doublestar.Match(exclusion, path)

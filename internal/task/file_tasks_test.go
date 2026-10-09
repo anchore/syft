@@ -1,10 +1,13 @@
 package task
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/anchore/syft/internal/archive"
 	"github.com/anchore/syft/internal/sbomsync"
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/file"
@@ -96,9 +99,30 @@ func Test_coordinatesForSelection(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			files, ok := coordinatesForSelection(tt.selection, sbomsync.NewBuilder(tt.sbom).(sbomsync.Accessor))
+			files, ok := coordinatesForSelection(context.Background(), tt.selection, sbomsync.NewBuilder(tt.sbom).(sbomsync.Accessor))
 			assert.Equal(t, tt.files, files)
 			assert.Equal(t, tt.ok, ok)
 		})
 	}
+}
+
+func Test_coordinatesForSelection_onlyTheResolversFrame(t *testing.T) {
+	// a package located at an archive in its parent's frame must not send the file catalogers looking up
+	// that path inside the archive's own resolver
+	atRoot := file.Coordinates{RealPath: "/app.war"}
+	inWar := file.Coordinates{RealPath: "WEB-INF/lib/dep.jar", ArchivePath: "/app.war"}
+	s := &sbom.SBOM{Artifacts: sbom.Artifacts{Packages: pkg.NewCollection(
+		pkg.Package{Name: "app", Locations: file.NewLocationSet(file.NewLocationFromCoordinates(atRoot))},
+		pkg.Package{Name: "dep", Locations: file.NewLocationSet(file.NewLocationFromCoordinates(inWar))},
+	)}}
+	accessor := sbomsync.NewBuilder(s).(sbomsync.Accessor)
+
+	got, ok := coordinatesForSelection(context.Background(), file.FilesOwnedByPackageSelection, accessor)
+	require.True(t, ok)
+	assert.Equal(t, []file.Coordinates{atRoot}, got, "at the scan root")
+
+	ctx := archive.WithTraversal(context.Background(), &archive.Traversal{Location: file.NewLocationFromCoordinates(atRoot)})
+	got, ok = coordinatesForSelection(ctx, file.FilesOwnedByPackageSelection, accessor)
+	require.True(t, ok)
+	assert.Equal(t, []file.Coordinates{inWar}, got, "inside app.war")
 }
