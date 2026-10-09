@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"unicode/utf16"
 
 	"github.com/scylladb/go-set/u32set"
@@ -68,6 +69,8 @@ type resourceWalk struct {
 
 	// fields collects version resource keys and their values
 	fields map[string]string
+	// langKeys tracks selected languages across resource leaves.
+	langKeys map[string]string
 
 	// hasCLRDebugInfo records whether a CLRDEBUGINFO resource name was seen
 	hasCLRDebugInfo bool
@@ -89,11 +92,12 @@ type resourceWalk struct {
 // every offset the walk derives, since there is no window in which a walk exists without them.
 func newResourceWalk(reader *bytes.Reader, baseRVA uint32) *resourceWalk {
 	return &resourceWalk{
-		reader:  reader,
-		baseRVA: baseRVA,
-		dirs:    u32set.New(),
-		fields:  make(map[string]string),
-		budget:  reader.Size() * peResourceBudgetFactor,
+		reader:   reader,
+		baseRVA:  baseRVA,
+		dirs:     u32set.New(),
+		fields:   make(map[string]string),
+		langKeys: make(map[string]string),
+		budget:   reader.Size() * peResourceBudgetFactor,
 	}
 }
 
@@ -758,7 +762,7 @@ func parseResourceDataEntry(rva uint32, w *resourceWalk) error {
 		return fmt.Errorf("error reading resource data: %w", err)
 	}
 
-	return parseVersionResourceSection(bytes.NewReader(data), w.fields)
+	return parseVersionResourceSection(bytes.NewReader(data), w.fields, w.langKeys)
 }
 
 // parseVersionResourceSection parses a PE version resource section from within a resource directory.
@@ -814,7 +818,7 @@ func parseResourceDataEntry(rva uint32, w *resourceWalk) error {
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/varfileinfo
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/stringfileinfo
 //   - https://learn.microsoft.com/en-us/windows/win32/menurc/stringtable
-func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string) error {
+func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string, langKeys map[string]string) error {
 	offset := 0
 
 	var info peVsVersionInfo
@@ -857,14 +861,15 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 
 		// note: the szKey for the prStringTable is the language
 		var stHeader peStringTable
-		if _, err := readIntoStructAndSzKey(reader, &stHeader, &offset, &stOffset); err != nil {
-			if isTruncated(err) {
+		stLangKey, stErr := readIntoStructAndSzKey(reader, &stHeader, &offset, &stOffset)
+		if stErr != nil {
+			if isTruncated(stErr) {
 				break
 			}
-			return fmt.Errorf("error reading PE string table header: %v", err)
+			return fmt.Errorf("error reading PE string table header: %v", stErr)
 		}
 
-		if err := parseStringTable(reader, int(stHeader.Length), &offset, &stOffset, fields); err != nil {
+		if err := parseStringTable(reader, int(stHeader.Length), &offset, &stOffset, fields, langKeys, stLangKey); err != nil {
 			return err
 		}
 	}
@@ -879,9 +884,15 @@ func parseVersionResourceSection(reader *bytes.Reader, fields map[string]string)
 	return nil
 }
 
+// isUSEnglishLangKey reports whether the given StringTable szKey (an 8-digit hex
+// language-id/codepage identifier, e.g. "040904b0") refers to US-English.
+func isUSEnglishLangKey(langKey string) bool {
+	return strings.EqualFold(langKey, "040904b0") || strings.EqualFold(langKey, "040904e4")
+}
+
 // parseStringTable reads the key/value pairs of a single string table into fields. length is what the
 // string table header claims it holds, and stOffset tracks how much of that has actually been consumed.
-func parseStringTable(reader *bytes.Reader, length int, offset, stOffset *int, fields map[string]string) error {
+func parseStringTable(reader *bytes.Reader, length int, offset, stOffset *int, fields, langKeys map[string]string, langKey string) error {
 	for *stOffset < length {
 		var stringHeader peString
 		if err := readIntoStruct(reader, &stringHeader, offset, stOffset); err != nil {
@@ -904,7 +915,11 @@ func parseStringTable(reader *bytes.Reader, length int, offset, stOffset *int, f
 			value = readUTF16(reader, offset, stOffset)
 		}
 
-		fields[key] = value
+		// Keep the first language unless a US-English table supplies the same key.
+		if previous, exists := langKeys[key]; !exists || isUSEnglishLangKey(langKey) && !isUSEnglishLangKey(previous) {
+			fields[key] = value
+			langKeys[key] = langKey
+		}
 
 		if err := alignAndSeek(reader, offset, stOffset); err != nil {
 			return fmt.Errorf("error aligning to next PE string table key: %w", err)
