@@ -33,6 +33,11 @@ type ArchiveCatalogerConfig struct {
 	// ResolveTransitiveDependencies enables resolving transitive dependencies for java packages found within archives.
 	// app-config: java.resolve-transitive-dependencies
 	ResolveTransitiveDependencies bool `yaml:"resolve-transitive-dependencies" json:"resolve-transitive-dependencies" mapstructure:"resolve-transitive-dependencies"`
+
+	// UseEmbeddedPOMDependencies enables building a hierarchical dependency graph from embedded pom.xml files within archives.
+	// When enabled, dependency relationships are wired to their actual Maven parent rather than all pointing to the root archive.
+	// app-config: java.use-embedded-pom-dependencies
+	UseEmbeddedPOMDependencies bool `yaml:"use-embedded-pom-dependencies" json:"use-embedded-pom-dependencies" mapstructure:"use-embedded-pom-dependencies"`
 }
 
 func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
@@ -45,6 +50,7 @@ func DefaultArchiveCatalogerConfig() ArchiveCatalogerConfig {
 		MavenBaseURL:                  strings.Join(mavenCfg.Repositories, ","),
 		MaxParentRecursiveDepth:       mavenCfg.MaxParentRecursiveDepth,
 		ResolveTransitiveDependencies: false,
+		UseEmbeddedPOMDependencies:    false,
 	}
 }
 
@@ -72,6 +78,11 @@ func (j ArchiveCatalogerConfig) WithMavenBaseURL(input string) ArchiveCatalogerC
 
 func (j ArchiveCatalogerConfig) WithResolveTransitiveDependencies(resolveTransitiveDependencies bool) ArchiveCatalogerConfig {
 	j.ResolveTransitiveDependencies = resolveTransitiveDependencies
+	return j
+}
+
+func (j ArchiveCatalogerConfig) WithUseEmbeddedPOMDependencies(input bool) ArchiveCatalogerConfig {
+	j.UseEmbeddedPOMDependencies = input
 	return j
 }
 
