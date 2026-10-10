@@ -12,16 +12,16 @@ require (
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/adrg/xdg v0.5.3
 	github.com/anchore/bubbly v0.2.2
-	github.com/anchore/clio v0.1.1
-	github.com/anchore/fangs v0.1.1
-	github.com/anchore/go-collections v0.1.1
-	github.com/anchore/go-homedir v0.1.1
+	github.com/anchore/clio v0.1.2-0.20261002204411-24bafbd9b0ee
+	github.com/anchore/fangs v0.1.2-0.20261002223621-c66dbbee7f74
+	github.com/anchore/go-collections v0.1.2-0.20260921135714-c0f67964e595
+	github.com/anchore/go-homedir v0.1.2-0.20261009171220-317f56795cce
 	github.com/anchore/go-logger v0.2.0
-	github.com/anchore/go-macholibre v0.1.1
+	github.com/anchore/go-macholibre v0.1.2-0.20260921134154-c7e390be1274
 	github.com/anchore/go-rpmdb v0.2.2
-	github.com/anchore/go-sync v0.1.2
+	github.com/anchore/go-sync v0.1.3-0.20260918235526-5c0edfbae654
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b
-	github.com/anchore/packageurl-go v0.2.0
+	github.com/anchore/packageurl-go v0.2.1-0.20260921141036-1a9c4d209963
 	github.com/anchore/stereoscope v0.3.4
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be
 	github.com/aquasecurity/go-pep440-version v0.0.1
@@ -128,7 +128,7 @@ require (
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
-	github.com/anchore/go-lzo v0.1.1 // indirect
+	github.com/anchore/go-lzo v0.1.2-0.20260921140633-dd485a18f3ab // indirect
 	github.com/anchore/go-struct-converter v0.2.0-rc2 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
