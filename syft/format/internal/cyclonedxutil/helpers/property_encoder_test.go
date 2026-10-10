@@ -41,6 +41,13 @@ type T5 struct {
 	Map map[string]string
 }
 
+// TRecursive refers to itself, like pkg.SafeTensorsModelInfo and pkg.GGUFFileHeader do through their Parts field
+type TRecursive struct {
+	Name     string
+	Children []TRecursive
+	Next     *TRecursive
+}
+
 func Test_EncodeDecodeCycle(t *testing.T) {
 	val := 99
 
@@ -120,6 +127,33 @@ func Test_EncodeDecodeCycle(t *testing.T) {
 			value: &[]T2{
 				{"t2 elem 0"},
 				{"t2 elem 1"},
+			},
+		},
+		{
+			name: "recursive type without children",
+			value: &TRecursive{
+				Name: "root",
+			},
+		},
+		{
+			name: "recursive type with nested children",
+			value: &TRecursive{
+				Name: "root",
+				Children: []TRecursive{
+					{
+						Name: "child 0",
+						Children: []TRecursive{
+							{Name: "grandchild 0"},
+						},
+					},
+					{
+						Name: "child 1",
+						Next: &TRecursive{Name: "next of child 1"},
+					},
+				},
+				Next: &TRecursive{
+					Name: "next",
+				},
 			},
 		},
 		{

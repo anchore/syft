@@ -339,6 +339,13 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 			return false
 		}
 	case reflect.Struct:
+		// every field is decoded from the property named prefix or from one nested below it, so there is
+		// nothing to decode when there is none. Stopping here also bounds the recursion for a type that refers
+		// to itself (e.g. a Parts []T field): otherwise decoding the first element of an absent []T decodes
+		// the same []T one level deeper, without end.
+		if !hasPropertyWithPrefix(vals, prefix) {
+			return false
+		}
 		values := false
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
@@ -359,6 +366,23 @@ func decode(vals map[string]string, value reflect.Value, prefix string, fn Field
 		return false
 	}
 	return true
+}
+
+// hasPropertyWithPrefix reports whether vals holds the property named prefix or any property nested below it
+func hasPropertyWithPrefix(vals map[string]string, prefix string) bool {
+	if prefix == "" {
+		return len(vals) > 0
+	}
+	if _, ok := vals[prefix]; ok {
+		return true
+	}
+	nested := prefix + ":"
+	for key := range vals {
+		if strings.HasPrefix(key, nested) {
+			return true
+		}
+	}
+	return false
 }
 
 func PtrToStruct(ptr any) any {
