@@ -346,6 +346,73 @@ func Test_decodeComponent(t *testing.T) {
 			wantPURL: "pkg:rpm/centos/acl@2.2.53-1.el8?arch=x86_64&upstream=acl-2.2.53-1.el8.src.rpm&distro=centos-8",
 		},
 		{
+			// regression: the self-referencing Parts field made decoding recurse without bound
+			name: "decode safetensors model metadata",
+			component: cyclonedx.Component{
+				Name:    "lib",
+				Version: "UNKNOWN",
+				Type:    cyclonedx.ComponentTypeMachineLearningModel,
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:package:foundBy", Value: "safetensors-cataloger"},
+					{Name: "syft:package:type", Value: "model"},
+					{Name: "syft:package:metadataType", Value: "safetensors-model-info"},
+					{Name: "syft:metadata:format", Value: "safetensors"},
+					{Name: "syft:metadata:metadataHash", Value: "afcae99661c33f88"},
+					{Name: "syft:metadata:parameters", Value: "16"},
+					{Name: "syft:metadata:quantization", Value: "I8"},
+					{Name: "syft:metadata:shardCount", Value: "1"},
+					{Name: "syft:metadata:tensorCount", Value: "1"},
+				},
+			},
+			wantMetadata: pkg.SafeTensorsModelInfo{
+				Format:       "safetensors",
+				MetadataHash: "afcae99661c33f88",
+				Parameters:   16,
+				Quantization: "I8",
+				ShardCount:   1,
+				TensorCount:  1,
+			},
+		},
+		{
+			name: "decode safetensors model metadata with parts",
+			component: cyclonedx.Component{
+				Name: "model",
+				Type: cyclonedx.ComponentTypeMachineLearningModel,
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:package:type", Value: "model"},
+					{Name: "syft:package:metadataType", Value: "safetensors-model-info"},
+					{Name: "syft:metadata:format", Value: "safetensors"},
+					{Name: "syft:metadata:parts:0:format", Value: "safetensors"},
+					{Name: "syft:metadata:parts:0:tensorCount", Value: "2"},
+					{Name: "syft:metadata:parts:1:tensorCount", Value: "3"},
+				},
+			},
+			wantMetadata: pkg.SafeTensorsModelInfo{
+				Format: "safetensors",
+				Parts: []pkg.SafeTensorsModelInfo{
+					{Format: "safetensors", TensorCount: 2},
+					{TensorCount: 3},
+				},
+			},
+		},
+		{
+			name: "decode gguf model metadata",
+			component: cyclonedx.Component{
+				Name: "model",
+				Type: cyclonedx.ComponentTypeMachineLearningModel,
+				Properties: &[]cyclonedx.Property{
+					{Name: "syft:package:type", Value: "model"},
+					{Name: "syft:package:metadataType", Value: "gguf-file-header"},
+					{Name: "syft:metadata:ggufVersion", Value: "3"},
+					{Name: "syft:metadata:tensorCount", Value: "291"},
+				},
+			},
+			wantMetadata: pkg.GGUFFileHeader{
+				GGUFVersion: 3,
+				TensorCount: 291,
+			},
+		},
+		{
 			name: "generate a purl from package type",
 			component: cyclonedx.Component{
 				Name:    "log4j",
