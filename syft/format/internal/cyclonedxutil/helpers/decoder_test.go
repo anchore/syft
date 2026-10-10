@@ -11,6 +11,7 @@ import (
 	"github.com/anchore/syft/syft/artifact"
 	"github.com/anchore/syft/syft/pkg"
 	"github.com/anchore/syft/syft/sbom"
+	"github.com/anchore/syft/syft/source"
 )
 
 func Test_decode(t *testing.T) {
@@ -480,4 +481,89 @@ func Test_useBomRefOverDerivedSyftArtifactID(t *testing.T) {
 	assert.Len(t, pkgsWithoutID, 1)
 	assert.NotEqual(t, "", pkgsWithoutID[0].ID())
 
+}
+
+// the metadata.component name, version, and supplier describe the source itself and must not be
+// dropped regardless of the component type, otherwise the source name and version set by
+// --source-name / --source-version cannot survive an encode-decode round trip.
+// see https://github.com/anchore/grype/issues/2418
+func Test_extractComponents_sourcePreservation(t *testing.T) {
+	tests := []struct {
+		name string
+		meta *cyclonedx.Metadata
+		want source.Description
+	}{
+		{
+			name: "application component",
+			meta: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeApplication,
+					Name:    "my-app",
+					Version: "0.1.0",
+				},
+			},
+			want: source.Description{
+				Name:    "my-app",
+				Version: "0.1.0",
+			},
+		},
+		{
+			name: "file component",
+			meta: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeFile,
+					Name:    "my-app",
+					Version: "0.1.0",
+				},
+			},
+			want: source.Description{
+				Name:     "my-app",
+				Version:  "0.1.0",
+				Metadata: source.FileMetadata{Path: "my-app"},
+			},
+		},
+		{
+			name: "container component keeps image metadata and gains name/version",
+			meta: &cyclonedx.Metadata{
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeContainer,
+					Name:    "alpine",
+					Version: "sha256:deadbeef",
+					BOMRef:  "ref-1",
+				},
+			},
+			want: source.Description{
+				Name:    "alpine",
+				Version: "sha256:deadbeef",
+				Metadata: source.ImageMetadata{
+					UserInput:      "alpine",
+					ID:             "ref-1",
+					ManifestDigest: "sha256:deadbeef",
+				},
+			},
+		},
+		{
+			name: "supplier falls back from metadata to component",
+			meta: &cyclonedx.Metadata{
+				Supplier: &cyclonedx.OrganizationalEntity{Name: "acme"},
+				Component: &cyclonedx.Component{
+					Type:    cyclonedx.ComponentTypeApplication,
+					Name:    "my-app",
+					Version: "0.1.0",
+				},
+			},
+			want: source.Description{
+				Name:     "my-app",
+				Version:  "0.1.0",
+				Supplier: "acme",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := extractComponents(test.meta)
+			assert.Equal(t, test.want, got)
+		})
+	}
 }
